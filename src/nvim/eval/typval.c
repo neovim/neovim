@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -52,22 +53,10 @@ const char *const tv_empty_string = "";
 ///          and specifically set lv_lock.
 ///
 /// @return [allocated] new list item.
-listitem_T *tv_list_item_alloc(void)
+static listitem_T *tv_list_item_alloc(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   return xmalloc(sizeof(listitem_T));
-}
-
-/// Free a list item
-///
-/// Also clears the value. Does not touch watchers.
-///
-/// @param[out]  item  Item to free.
-void tv_list_item_free(listitem_T *const item)
-  FUNC_ATTR_NONNULL_ALL
-{
-  tv_clear(TV_LIST_ITEM_TV(item));
-  xfree(item);
 }
 
 /// Remove a list item from a List and free it
@@ -76,11 +65,17 @@ void tv_list_item_free(listitem_T *const item)
 ///
 /// @param[out]  l  List to remove item from.
 /// @param[in,out]  item  Item to remove.
-void tv_list_item_remove(list_T *const l, listitem_T *const item)
+///
+/// @return Pointer to the list item just after removed one, NULL if removed
+///         item was the last one.
+listitem_T *tv_list_item_remove(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  tv_list_remove_items(l, item, item);
-  tv_list_item_free(item);
+  listitem_T *const next_item = TV_LIST_ITEM_NEXT(l, item);
+  tv_list_drop_items(l, item, item);
+  tv_clear(TV_LIST_ITEM_TV(item));
+  xfree(item);
+  return next_item;
 }
 
 //{{{2 List watchers
@@ -267,8 +262,8 @@ void tv_list_unref(list_T *const l)
 /// @param[out]  l  List to remove from.
 /// @param[in]  item  First item to remove.
 /// @param[in]  item2  Last item to remove.
-void tv_list_remove_items(list_T *const l, listitem_T *const item,
-                          listitem_T *const item2)
+void tv_list_drop_items(list_T *const l, listitem_T *const item,
+                        listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
   // Notify watchers.
@@ -290,6 +285,23 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
   l->lv_idx_item = NULL;
 }
 
+/// Like tv_list_drop_items, but also frees all removed items
+void tv_list_remove_items(list_T *const l, listitem_T *const item,
+                          listitem_T *const item2)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_list_drop_items(l, item, item2);
+  for (listitem_T *li = item;;) {
+    tv_clear(TV_LIST_ITEM_TV(li));
+    listitem_T *const nli = li->li_next;
+    xfree(li);
+    if (li == item2) {
+      break;
+    }
+    li = nli;
+  }
+}
+
 /// Move items "item" to "item2" from list "l" to the end of the list "tgt_l"
 ///
 /// @param[out]  l  List to move from.
@@ -302,7 +314,7 @@ void tv_list_move_items(list_T *const l, listitem_T *const item,
                         const int cnt)
   FUNC_ATTR_NONNULL_ALL
 {
-  tv_list_remove_items(l, item, item2);
+  tv_list_drop_items(l, item, item2);
   item->li_prev = tgt_l->lv_last;
   item2->li_next = NULL;
   if (tgt_l->lv_last == NULL) {
@@ -393,19 +405,30 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
   tv_list_append(l, li);
 }
 
+/// Like tv_list_append_tv(), but tv is moved to a list
+///
+/// This means that it is no longer valid to use contents of the typval_T after
+/// function exits.
+void tv_list_append_owned_tv(list_T *const l, typval_T tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  listitem_T *const li = tv_list_item_alloc();
+  *TV_LIST_ITEM_TV(li) = tv;
+  tv_list_append(l, li);
+}
+
 /// Append a list to a list as one item
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  itemlist  List to append. Reference count is increased.
-void tv_list_append_list(list_T *const list, list_T *const itemlist)
+void tv_list_append_list(list_T *const l, list_T *const itemlist)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  TV_LIST_ITEM_TV(li)->v_type = VAR_LIST;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_list = itemlist;
-  tv_list_append(list, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_LIST,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_list = itemlist,
+  });
   tv_list_ref(itemlist);
 }
 
@@ -413,15 +436,14 @@ void tv_list_append_list(list_T *const list, list_T *const itemlist)
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  dict  Dictionary to append. Reference count is increased.
-void tv_list_append_dict(list_T *const list, dict_T *const dict)
+void tv_list_append_dict(list_T *const l, dict_T *const dict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  TV_LIST_ITEM_TV(li)->v_type = VAR_DICT;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_dict = dict;
-  tv_list_append(list, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_DICT,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_dict = dict,
+  });
   if (dict != NULL) {
     dict->dv_refcount++;
   }
@@ -438,14 +460,15 @@ void tv_list_append_string(list_T *const l, const char *const str,
                            const ssize_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (str == NULL) {
-    assert(len == 0 || len == -1);
-    tv_list_append_allocated_string(l, NULL);
-  } else {
-    tv_list_append_allocated_string(l, (len >= 0
-                                        ? xmemdupz(str, (size_t)len)
-                                        : xstrdup(str)));
-  }
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (str == NULL
+                      ? NULL
+                      : (len >= 0
+                         ? xmemdupz(str, (size_t)len)
+                         : xstrdup(str))),
+  });
 }
 
 /// Append given string to the list
@@ -457,12 +480,11 @@ void tv_list_append_string(list_T *const l, const char *const str,
 void tv_list_append_allocated_string(list_T *const l, char *const str)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  tv_list_append(l, li);
-  TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)str;
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (char_u *)str,
+  });
 }
 
 /// Append number to the list
@@ -472,11 +494,11 @@ void tv_list_append_allocated_string(list_T *const l, char *const str)
 ///                listitem_T.
 void tv_list_append_number(list_T *const l, const varnumber_T n)
 {
-  listitem_T *const li = tv_list_item_alloc();
-  TV_LIST_ITEM_TV(li)->v_type = VAR_NUMBER;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_number = n;
-  tv_list_append(l, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_NUMBER,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_number = n,
+  });
 }
 
 //{{{2 Operations on the whole list
@@ -734,6 +756,47 @@ void tv_list_reverse(list_T *const l)
 #undef SWAP
 
   l->lv_idx = l->lv_len - l->lv_idx - 1;
+}
+
+// FIXME Add unit tests for tv_list_item_sort().
+
+/// Sort list using libc qsort
+///
+/// @param[in,out]  l  List to sort, will be sorted in-place.
+/// @param  ptrs  Preallocated array of items to sort, must have at least
+///               tv_list_len(l) entries. Should not be initialized.
+/// @param[in]  item_compare_func  Function used to compare list items.
+/// @param  errp  Location where information about whether error occurred is
+///               saved by item_compare_func. If boolean there appears to be
+///               true list will not be modified. Must be initialized to false
+///               by the caller.
+void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
+                       const ListSorter item_compare_func,
+                       bool *errp)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
+{
+  const int len = tv_list_len(l);
+  if (len <= 1) {
+    return;
+  }
+  int i = 0;
+  TV_LIST_ITER(l, li, {
+    ptrs[i].item = li;
+    ptrs[i].idx = i;
+    i++;
+  });
+  // Sort the array with item pointers.
+  qsort(ptrs, (size_t)len, sizeof(ListSortItem), item_compare_func);
+  if (!(*errp)) {
+    // Clear the list and append the items in the sorted order.
+    l->lv_first    = NULL;
+    l->lv_last     = NULL;
+    l->lv_idx_item = NULL;
+    l->lv_len      = 0;
+    for (i = 0; i < len; i++) {
+      tv_list_append(l, ptrs[i].item);
+    }
+  }
 }
 
 //{{{2 Indexing/searching

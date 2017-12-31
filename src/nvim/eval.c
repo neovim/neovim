@@ -215,6 +215,15 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
+/// Describe data to return from find_some_match()
+typedef enum {
+  kSomeMatch,  ///< Data for match().
+  kSomeMatchEnd,  ///< Data for matchend().
+  kSomeMatchList,  ///< Data for matchlist().
+  kSomeMatchStr,  ///< Data for matchstr().
+  kSomeMatchStrPos,  ///< Data for matchstrpos().
+} SomeMatchType;
+
 /// trans_function_name() flags
 typedef enum {
   TFN_INT = 1,  ///< May use internal function name
@@ -1506,7 +1515,6 @@ ex_let_vars (
 )
 {
   char_u *arg = arg_start;
-  int i;
   typval_T ltv;
 
   if (*arg != '[') {
@@ -1525,17 +1533,17 @@ ex_let_vars (
   }
   list_T *const l = tv->vval.v_list;
 
-  i = tv_list_len(l);
-  if (semicolon == 0 && var_count < i) {
+  const int len = tv_list_len(l);
+  if (semicolon == 0 && var_count < len) {
     EMSG(_("E687: Less targets than List items"));
     return FAIL;
   }
-  if (var_count - semicolon > i) {
+  if (var_count - semicolon > len) {
     EMSG(_("E688: More targets than List items"));
     return FAIL;
   }
-  // l may actually be NULL, but it should fail with E688 or even earlier if you
-  // try to do ":let [] = v:_null_list".
+  // List l may actually be NULL, but it should fail with E688 or even earlier
+  // if you try to do ":let [] = v:_null_list".
   assert(l != NULL);
 
   listitem_T *item = tv_list_first(l);
@@ -1543,11 +1551,11 @@ ex_let_vars (
     arg = skipwhite(arg + 1);
     arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, (const char_u *)",;]",
                      nextchars);
-    item = TV_LIST_ITEM_NEXT(l, item);
     if (arg == NULL) {
       return FAIL;
     }
 
+    item = TV_LIST_ITEM_NEXT(l, item);
     arg = skipwhite(arg);
     if (*arg == ';') {
       /* Put the rest of the list (may be empty) in the var after ';'.
@@ -1559,7 +1567,7 @@ ex_let_vars (
       }
 
       ltv.v_type = VAR_LIST;
-      ltv.v_lock = 0;
+      ltv.v_lock = VAR_UNLOCKED;
       ltv.vval.v_list = rest_list;
       tv_list_ref(rest_list);
 
@@ -2412,9 +2420,11 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
         // Need to add an empty item.
         tv_list_append_number(lp->ll_list, 0);
-        assert(TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li));
+        // ll_li may have become invalid after append, don’t use it.
+        lp->ll_li = tv_list_last(lp->ll_list);  // Valid again.
+      } else {
+        lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       }
-      lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       lp->ll_n1++;
     }
     if (ri != NULL) {
@@ -2887,28 +2897,25 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
-    listitem_T    *li;
-    listitem_T *ll_li = lp->ll_li;
-    int ll_n1 = lp->ll_n1;
-
-    while (ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= ll_n1)) {
-      li = TV_LIST_ITEM_NEXT(lp->ll_list, ll_li);
-      if (tv_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock,
+    // Delete a range of List items.
+    listitem_T *const first_li = lp->ll_li;
+    listitem_T *last_li = first_li;
+    for (;;) {
+      listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
+      if (tv_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
                         (const char *)lp->ll_name,
                         lp->ll_name_len)) {
         return false;
       }
-      ll_li = li;
-      ll_n1++;
-    }
-
-    // Delete a range of List items.
-    while (lp->ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      tv_list_item_remove(lp->ll_list, lp->ll_li);
       lp->ll_li = li;
       lp->ll_n1++;
+      if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
+        break;
+      } else {
+        last_li = lp->ll_li;
+      }
     }
+    tv_list_remove_items(lp->ll_list, first_li, last_li);
   } else {
     if (lp->ll_list != NULL) {
       // unlet a List item.
@@ -4522,7 +4529,7 @@ eval_index (
           item = tv_list_find(rettv->vval.v_list, n1);
           while (n1++ <= n2) {
             tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
-            item = TV_LIST_ITEM_NEXT(l, item);
+            item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
           }
           tv_clear(rettv);
           rettv->v_type = VAR_LIST;
@@ -4874,8 +4881,6 @@ void partial_unref(partial_T *pt)
 static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   list_T      *l = NULL;
-  typval_T tv;
-  listitem_T  *item;
 
   if (evaluate) {
     l = tv_list_alloc();
@@ -4883,13 +4888,13 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
-    if (eval1(arg, &tv, evaluate) == FAIL)      /* recursive! */
+    typval_T tv;
+    if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
       goto failret;
+    }
     if (evaluate) {
-      item = tv_list_item_alloc();
-      *TV_LIST_ITEM_TV(item) = tv;
-      TV_LIST_ITEM_TV(item)->v_lock = VAR_UNLOCKED;
-      tv_list_append(l, item);
+      tv.v_lock = VAR_UNLOCKED;
+      tv_list_append_owned_tv(l, tv);
     }
 
     if (**arg == ']') {
@@ -8469,7 +8474,6 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 {
   typval_T    *expr;
-  listitem_T  *li, *nli;
   list_T      *l = NULL;
   dictitem_T  *di;
   hashtab_T   *ht;
@@ -8553,20 +8557,21 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     } else {
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-      for (li = tv_list_first(l); li != NULL; li = nli) {
+      for (listitem_T *li = tv_list_first(l); li != NULL;) {
         if (map
             && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
                              TV_TRANSLATE)) {
           break;
         }
-        nli = TV_LIST_ITEM_NEXT(l, li);
         vimvars[VV_KEY].vv_nr = idx;
         if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
             || did_emsg) {
           break;
         }
         if (!map && rem) {
-          tv_list_item_remove(l, li);
+          li = tv_list_item_remove(l, li);
+        } else {
+          li = TV_LIST_ITEM_NEXT(l, li);
         }
         idx++;
       }
@@ -11441,40 +11446,38 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
   tv_list_alloc_ret(rettv);
 
   TV_DICT_ITER(tv->vval.v_dict, di, {
-    listitem_T *const li = tv_list_item_alloc();
-    tv_list_append(rettv->vval.v_list, li);
+    typval_T tv = { .v_lock = VAR_UNLOCKED };
 
     switch (what) {
       case kDictListKeys: {
-        TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_string = vim_strsave(di->di_key);
+        tv.v_type = VAR_STRING;
+        tv.vval.v_string = vim_strsave(di->di_key);
         break;
       }
       case kDictListValues: {
-        tv_copy(&di->di_tv, TV_LIST_ITEM_TV(li));
+        tv_copy(&di->di_tv, &tv);
         break;
       }
       case kDictListItems: {
         // items()
         list_T *const sub_l = tv_list_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_LIST;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_list = sub_l;
+        tv.v_type = VAR_LIST;
+        tv.vval.v_list = sub_l;
         tv_list_ref(sub_l);
 
-        listitem_T *sub_li = tv_list_item_alloc();
-        tv_list_append(sub_l, sub_li);
-        TV_LIST_ITEM_TV(sub_li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(sub_li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(sub_li)->vval.v_string = vim_strsave(di->di_key);
+        tv_list_append_owned_tv(sub_l, (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = (char_u *)xstrdup((const char *)di->di_key),
+        });
 
-        sub_li = tv_list_item_alloc();
-        tv_list_append(sub_l, sub_li);
-        tv_copy(&di->di_tv, TV_LIST_ITEM_TV(sub_li));
+        tv_list_append_tv(sub_l, &di->di_tv);
+
         break;
       }
     }
+
+    tv_list_append_owned_tv(rettv->vval.v_list, tv);
   });
 }
 
@@ -12190,7 +12193,8 @@ static void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
+static void find_some_match(typval_T *const argvars, typval_T *const rettv,
+                            const SomeMatchType type)
 {
   char_u      *str = NULL;
   long        len = 0;
@@ -12211,24 +12215,37 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
   p_cpo = (char_u *)"";
 
   rettv->vval.v_number = -1;
-  if (type == 3 || type == 4) {
-    // type 3: return empty list when there are no matches.
-    // type 4: return ["", -1, -1, -1]
-    tv_list_alloc_ret(rettv);
-    if (type == 4) {
+  switch (type) {
+    // matchlist(): return empty list when there are no matches.
+    case kSomeMatchList: {
+      tv_list_alloc_ret(rettv);
+      break;
+    }
+    // matchstrpos(): return ["", -1, -1, -1]
+    case kSomeMatchStrPos: {
+      tv_list_alloc_ret(rettv);
       tv_list_append_string(rettv->vval.v_list, "", 0);
       tv_list_append_number(rettv->vval.v_list, -1);
       tv_list_append_number(rettv->vval.v_list, -1);
       tv_list_append_number(rettv->vval.v_list, -1);
+      break;
     }
-  } else if (type == 2) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
+    case kSomeMatchStr: {
+      rettv->v_type = VAR_STRING;
+      rettv->vval.v_string = NULL;
+      break;
+    }
+    case kSomeMatch:
+    case kSomeMatchEnd: {
+      // Do nothing: zero is default.
+      break;
+    }
   }
 
   if (argvars[0].v_type == VAR_LIST) {
-    if ((l = argvars[0].vval.v_list) == NULL)
+    if ((l = argvars[0].vval.v_list) == NULL) {
       goto theend;
+    }
     li = tv_list_first(l);
   } else {
     expr = str = (char_u *)tv_get_string(&argvars[0]);
@@ -12318,63 +12335,73 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     }
 
     if (match) {
-      if (type == 4) {
-        list_T *const ret_l = rettv->vval.v_list;
-        listitem_T *li1 = tv_list_first(ret_l);
-        listitem_T *li2 = TV_LIST_ITEM_NEXT(ret_l, li1);
-        listitem_T *li3 = TV_LIST_ITEM_NEXT(ret_l, li2);
-        listitem_T *li4 = TV_LIST_ITEM_NEXT(ret_l, li3);
-        xfree(TV_LIST_ITEM_TV(li1)->vval.v_string);
+      switch (type) {
+        case kSomeMatchStrPos: {
+          list_T *const ret_l = rettv->vval.v_list;
+          listitem_T *li1 = tv_list_first(ret_l);
+          listitem_T *li2 = TV_LIST_ITEM_NEXT(ret_l, li1);
+          listitem_T *li3 = TV_LIST_ITEM_NEXT(ret_l, li2);
+          listitem_T *li4 = TV_LIST_ITEM_NEXT(ret_l, li3);
+          xfree(TV_LIST_ITEM_TV(li1)->vval.v_string);
 
-        const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
-        TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz(
-            (const char *)regmatch.startp[0], rd);
-        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(
-            regmatch.startp[0] - expr);
-        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(
-            regmatch.endp[0] - expr);
-        if (l != NULL) {
-          TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
-        }
-      } else if (type == 3) {
-        int i;
-
-        /* return list with matched string and submatches */
-        for (i = 0; i < NSUBEXP; ++i) {
-          if (regmatch.endp[i] == NULL) {
-            tv_list_append_string(rettv->vval.v_list, NULL, 0);
-          } else {
-            tv_list_append_string(rettv->vval.v_list,
-                                  (const char *)regmatch.startp[i],
-                                  (regmatch.endp[i] - regmatch.startp[i]));
+          const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
+          TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz(
+              (const char *)regmatch.startp[0], rd);
+          TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(
+              regmatch.startp[0] - expr);
+          TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(
+              regmatch.endp[0] - expr);
+          if (l != NULL) {
+            TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
           }
+          break;
         }
-      } else if (type == 2) {
-        // Return matched string.
-        if (l != NULL) {
-          tv_copy(TV_LIST_ITEM_TV(li), rettv);
-        } else {
-          rettv->vval.v_string = (char_u *)xmemdupz(
-              (const char *)regmatch.startp[0],
-              (size_t)(regmatch.endp[0] - regmatch.startp[0]));
+        case kSomeMatchList: {
+          // Return list with matched string and submatches.
+          for (int i = 0; i < NSUBEXP; i++) {
+            if (regmatch.endp[i] == NULL) {
+              tv_list_append_string(rettv->vval.v_list, NULL, 0);
+            } else {
+              tv_list_append_string(rettv->vval.v_list,
+                                    (const char *)regmatch.startp[i],
+                                    (regmatch.endp[i] - regmatch.startp[i]));
+            }
+          }
+          break;
         }
-      } else if (l != NULL) {
-        rettv->vval.v_number = idx;
-      } else {
-        if (type != 0) {
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.startp[0] - str);
-        } else {
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.endp[0] - str);
+        case kSomeMatchStr: {
+          // Return matched string.
+          if (l != NULL) {
+            tv_copy(TV_LIST_ITEM_TV(li), rettv);
+          } else {
+            rettv->vval.v_string = (char_u *)xmemdupz(
+                (const char *)regmatch.startp[0],
+                (size_t)(regmatch.endp[0] - regmatch.startp[0]));
+          }
+          break;
         }
-        rettv->vval.v_number += (varnumber_T)(str - expr);
+        case kSomeMatch:
+        case kSomeMatchEnd: {
+          if (l != NULL) {
+            rettv->vval.v_number = idx;
+          } else {
+            if (type == kSomeMatch) {
+              rettv->vval.v_number =
+                (varnumber_T)(regmatch.startp[0] - str);
+            } else {
+              rettv->vval.v_number =
+                (varnumber_T)(regmatch.endp[0] - str);
+            }
+            rettv->vval.v_number += (varnumber_T)(str - expr);
+          }
+          break;
+        }
       }
     }
     vim_regfree(regmatch.regprog);
   }
 
-  if (type == 4 && l == NULL) {
+  if (type == kSomeMatchStrPos && l == NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
     tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
@@ -12390,7 +12417,7 @@ theend:
  */
 static void f_match(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 1);
+  find_some_match(argvars, rettv, kSomeMatch);
 }
 
 /*
@@ -12505,12 +12532,12 @@ static void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tv_list_alloc_ret(rettv);
 
-  int id = tv_get_number(&argvars[0]);
+  const int id = tv_get_number(&argvars[0]);
 
   if (id >= 1 && id <= 3) {
-    matchitem_T *m;
+    matchitem_T *const m = (matchitem_T *)get_match(curwin, id);
 
-    if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
+    if (m != NULL) {
       tv_list_append_string(rettv->vval.v_list,
                             (const char *)syn_id2name(m->hlg_id), -1);
       tv_list_append_string(rettv->vval.v_list, (const char *)m->pattern, -1);
@@ -12535,7 +12562,7 @@ static void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 0);
+  find_some_match(argvars, rettv, kSomeMatchEnd);
 }
 
 /*
@@ -12543,7 +12570,7 @@ static void f_matchend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 3);
+  find_some_match(argvars, rettv, kSomeMatchList);
 }
 
 /*
@@ -12551,13 +12578,13 @@ static void f_matchlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 2);
+  find_some_match(argvars, rettv, kSomeMatchStr);
 }
 
 /// "matchstrpos()" function
 static void f_matchstrpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 4);
+  find_some_match(argvars, rettv, kSomeMatchStrPos);
 }
 
 /// Get maximal/minimal number value in a list or dictionary
@@ -12762,13 +12789,12 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         goto f_msgpackparse_exit;
       }
       if (result == MSGPACK_UNPACK_SUCCESS) {
-        listitem_T *li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_UNKNOWN;
-        tv_list_append(ret_list, li);
-        if (msgpack_to_vim(unpacked.data, TV_LIST_ITEM_TV(li)) == FAIL) {
+        typval_T tv = { .v_type = VAR_UNKNOWN };
+        if (msgpack_to_vim(unpacked.data, &tv) == FAIL) {
           EMSG2(_(e_invarg2), "Failed to convert msgpack string");
           goto f_msgpackparse_exit;
         }
+        tv_list_append_owned_tv(ret_list, tv);
       }
       if (result == MSGPACK_UNPACK_CONTINUE) {
         if (rlret == OK) {
@@ -12995,9 +13021,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   long prevlen  = 0;                    /* length of data in prev */
   long prevsize = 0;                    /* size of prev buffer */
   long maxline  = MAXLNUM;
-  long cnt      = 0;
-  char_u      *p;                       /* position in buf */
-  char_u      *start;                   /* start of current line */
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
@@ -13009,6 +13032,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   tv_list_alloc_ret(rettv);
+  list_T *const l = rettv->vval.v_list;
 
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
@@ -13018,19 +13042,20 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  while (cnt < maxline || maxline < 0) {
+  while (maxline < 0 || tv_list_len(l) < maxline) {
     readlen = (int)fread(buf, 1, io_size, fd);
 
-    /* This for loop processes what was read, but is also entered at end
-     * of file so that either:
-     * - an incomplete line gets written
-     * - a "binary" file gets an empty line at the end if it ends in a
-     *   newline.  */
+    // This for loop processes what was read, but is also entered at end
+    // of file so that either:
+    // - an incomplete line gets written
+    // - a "binary" file gets an empty line at the end if it ends in a
+    //   newline.
+    char_u *p;  // Position in buf.
+    char_u *start;  // Start of current line.
     for (p = buf, start = buf;
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
-         ++p) {
+         p++) {
       if (*p == '\n' || readlen <= 0) {
-        listitem_T  *li;
         char_u      *s  = NULL;
         size_t len = p - start;
 
@@ -13057,22 +13082,32 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           prevlen = prevsize = 0;
         }
 
-        li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_string = s;
-        tv_list_append(rettv->vval.v_list, li);
+        tv_list_append_owned_tv(l, (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = s,
+        });
 
-        start = p + 1;         /* step over newline */
-        if ((++cnt >= maxline && maxline >= 0) || readlen <= 0)
+        start = p + 1;  // Step over newline.
+        if (maxline < 0) {
+          if (tv_list_len(l) > -maxline) {
+            assert(tv_list_len(l) == 1 + (-maxline));
+            tv_list_item_remove(l, tv_list_first(l));
+          }
+        } else if (tv_list_len(l) >= maxline) {
+          assert(tv_list_len(l) == maxline);
           break;
-      } else if (*p == NUL)
+        }
+        if (readlen <= 0) {
+          break;
+        }
+      } else if (*p == NUL) {
         *p = '\n';
-      /* Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
-       * when finding the BF and check the previous two bytes. */
-      else if (*p == 0xbf && enc_utf8 && !binary) {
-        /* Find the two bytes before the 0xbf.	If p is at buf, or buf
-         * + 1, these may be in the "prev" string. */
+      // Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
+      // when finding the BF and check the previous two bytes.
+      } else if (*p == 0xbf && !binary) {
+        // Find the two bytes before the 0xbf.  If p is at buf, or buf + 1,
+        // these may be in the "prev" string.
         char_u back1 = p >= buf + 1 ? p[-1]
                        : prevlen >= 1 ? prev[prevlen - 1] : NUL;
         char_u back2 = p >= buf + 2 ? p[-2]
@@ -13106,8 +13141,9 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }     /* for */
 
-    if ((cnt >= maxline && maxline >= 0) || readlen <= 0)
+    if ((maxline >= 0 && tv_list_len(l) >= maxline) || readlen <= 0) {
       break;
+    }
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
       if (p - start + prevlen >= prevsize) {
@@ -13130,17 +13166,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       prevlen += (long)(p - start);
     }
   }   /* while */
-
-  /*
-   * For a negative line count use only the lines at the end of the file,
-   * free the rest.
-   */
-  if (maxline < 0)
-    while (cnt > -maxline) {
-      tv_list_item_remove(rettv->vval.v_list,
-                          tv_list_first(rettv->vval.v_list));
-      cnt--;
-    }
 
   xfree(prev);
   fclose(fd);
@@ -13291,7 +13316,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
         // Remove one item, return its value.
-        tv_list_remove_items(l, item, item);
+        tv_list_drop_items(l, item, item);
         *rettv = *TV_LIST_ITEM_TV(item);
         xfree(item);
       } else {
@@ -14310,11 +14335,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Copy addrs into a linked list.
   list_T *l = tv_list_alloc_ret(rettv);
   for (size_t i = 0; i < n; i++) {
-    listitem_T *li = tv_list_item_alloc();
-    TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-    TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-    TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)addrs[i];
-    tv_list_append(l, li);
+    tv_list_append_allocated_string(l, addrs[i]);
   }
   xfree(addrs);
 }
@@ -15120,12 +15141,6 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
 }
 
-/// struct used in the array that's given to qsort()
-typedef struct {
-  listitem_T *item;
-  int idx;
-} sortItem_T;
-
 /// struct storing information about current sort
 typedef struct {
   int item_compare_ic;
@@ -15146,8 +15161,8 @@ static sortinfo_T *sortinfo = NULL;
  */
 static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
-  sortItem_T *const si1 = (sortItem_T *)s1;
-  sortItem_T *const si2 = (sortItem_T *)s2;
+  ListSortItem *const si1 = (ListSortItem *)s1;
+  ListSortItem *const si2 = (ListSortItem *)s2;
 
   typval_T *const tv1 = TV_LIST_ITEM_TV(si1->item);
   typval_T *const tv2 = TV_LIST_ITEM_TV(si2->item);
@@ -15241,7 +15256,7 @@ static int item_compare_not_keeping_zero(const void *s1, const void *s2)
 
 static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
-  sortItem_T  *si1, *si2;
+  ListSortItem *si1, *si2;
   int res;
   typval_T rettv;
   typval_T argv[3];
@@ -15254,8 +15269,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
     return 0;
   }
 
-  si1 = (sortItem_T *)s1;
-  si2 = (sortItem_T *)s2;
+  si1 = (ListSortItem *)s1;
+  si2 = (ListSortItem *)s2;
 
   if (partial == NULL) {
     func_name = sortinfo->item_compare_func;
@@ -15312,7 +15327,7 @@ static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
  */
 static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 {
-  sortItem_T  *ptrs;
+  ListSortItem  *ptrs;
   long len;
   long i;
 
@@ -15401,43 +15416,22 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       }
     }
 
-    /* Make an array with each entry pointing to an item in the List. */
-    ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
+    // Make an array with each entry pointing to an item in the List.
+    ptrs = xmalloc((size_t)(len * sizeof(ListSortItem)));
 
-    i = 0;
     if (sort) {
-      // sort(): ptrs will be the list to sort.
-      TV_LIST_ITER(l, li, {
-        ptrs[i].item = li;
-        ptrs[i].idx = i;
-        i++;
-      });
-
       info.item_compare_func_err = false;
-      // Test the compare function.
-      if ((info.item_compare_func != NULL
-           || info.item_compare_partial != NULL)
-          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
-             == ITEM_COMPARE_FAIL) {
+      tv_list_item_sort(l, ptrs,
+                        ((info.item_compare_func == NULL
+                          && info.item_compare_partial == NULL)
+                         ? item_compare_not_keeping_zero
+                         : item_compare2_not_keeping_zero),
+                        &info.item_compare_func_err);
+      if (info.item_compare_func_err) {
         EMSG(_("E702: Sort compare function failed"));
-      } else {
-        // Sort the array with item pointers.
-        qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              (info.item_compare_func == NULL
-               && info.item_compare_partial == NULL ?
-               item_compare_not_keeping_zero :
-               item_compare2_not_keeping_zero));
-
-        if (!info.item_compare_func_err) {
-          // Clear the list and append the items in the sorted order.
-          tv_list_clear(l);
-          for (i = 0; i < len; i++) {
-            tv_list_append(l, ptrs[i].item);
-          }
-        }
       }
     } else {
-      int (*item_compare_func_ptr)(const void *, const void *);
+      ListSorter item_compare_func_ptr;
 
       // f_uniq(): ptrs will be a stack of items to remove.
       info.item_compare_func_err = false;
@@ -15450,18 +15444,17 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       int idx = 0;
       for (listitem_T *li = TV_LIST_ITEM_NEXT(l, tv_list_first(l))
-           ; li != NULL
-           ; li = TV_LIST_ITEM_NEXT(l, li)) {
+           ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
           if (info.item_compare_func_err) {
             EMSG(_("E882: Uniq compare function failed"));
             break;
           }
-          tv_list_item_remove(l, li);
-          li = tv_list_find(l, idx);
+          li = tv_list_item_remove(l, li);
         } else {
           idx++;
+          li = TV_LIST_ITEM_NEXT(l, li);
         }
       }
     }
@@ -15619,12 +15612,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     for (int i = 0; i < ga.ga_len; i++) {
       char *p = ((char **)ga.ga_data)[i];
-
-      listitem_T *const li = tv_list_item_alloc();
-      TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-      TV_LIST_ITEM_TV(li)->v_lock = VAR_LOCKED;
-      TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)p;
-      tv_list_append(rettv->vval.v_list, li);
+      tv_list_append_allocated_string(rettv->vval.v_list, p);
     }
     ga_clear(&ga);
   }

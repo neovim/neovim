@@ -296,6 +296,14 @@ typedef struct list_stack_S {
   struct list_stack_S *prev;
 } list_stack_T;
 
+/// Structure representing one list item, used for sort array.
+typedef struct {
+  listitem_T *item;  ///< Sorted list item.
+  int idx;  ///< Sorted list item index.
+} ListSortItem;
+
+typedef int (*ListSorter)(const void *, const void *);
+
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.
 
@@ -401,20 +409,6 @@ static inline list_T *tv_list_latest_copy(const list_T *const l)
 static inline list_T *tv_list_latest_copy(const list_T *const l)
 {
   return l->lv_copylist;
-}
-
-/// Clear the list without freeing anything at all
-///
-/// For use in sort() which saves items to a separate array and readds them back
-/// after sorting via a number of tv_list_append() calls.
-///
-/// @param[out]  l  List to clear.
-static inline void tv_list_clear(list_T *const l)
-{
-  l->lv_first    = NULL;
-  l->lv_last     = NULL;
-  l->lv_idx_item = NULL;
-  l->lv_len      = 0;
 }
 
 static inline int tv_list_uidx(const list_T *const l, int n)
