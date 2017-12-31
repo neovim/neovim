@@ -8,7 +8,6 @@ local ccs = {}
 local env_cc = os.getenv("CC")
 
 if ffi.os == "Windows" then
-  table.insert(ccs, {path = {"gcc"}, type = "gcc"})
   table.insert(ccs, {path = {"cl"}, type = "msvc"})
 else
   if env_cc then
