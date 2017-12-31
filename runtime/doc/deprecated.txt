@@ -37,8 +37,8 @@ Functions ~
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
-*jobclose()*	        Obsolete name for |chanclose()|
-*jobsend()*	        Obsolete name for |chansend()|
+*jobclose()*		Obsolete name for |chanclose()|
+*jobsend()*		Obsolete name for |chansend()|
 *last_buffer_nr()*	Obsolete name for bufnr("$").
 
 Modifiers ~
@@ -48,8 +48,10 @@ Modifiers ~
 *:map-special*		<> notation is always enabled. |cpo-<|
 
 Options ~
+'gd'
+'gdefault'		Enables the |:substitute| flag 'g' by default.
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
-*'highlight'* *'hl'* 	Names of builtin |highlight-groups| cannot be changed.
+*'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
 *'langnoremap'*		Deprecated alias to 'nolangremap'.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
