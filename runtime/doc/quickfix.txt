@@ -470,7 +470,11 @@ keep its height, ignoring 'winheight' and 'equalalways'.  You can change the
 height manually (e.g., by dragging the status line above it with the mouse).
 
 In the quickfix window, each line is one error.  The line number is equal to
-the error number.  You can use ":.cc" to jump to the error under the cursor.
+the error number.  The current entry is highlighted with the QuickFixLine
+highlighting.  You can change it to your liking, e.g.: >
+	:hi QuickFixLine ctermbg=Yellow guibg=Yellow
+
+You can use ":.cc" to jump to the error under the cursor.
 Hitting the <Enter> key or double-clicking the mouse on a line has the same
 effect.  The file containing the error is opened in the window above the
 quickfix window.  If there already is a window for that file, it is used

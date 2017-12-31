@@ -2712,6 +2712,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:s///g		  subst. one	  subst. all
 		:s///gg		  subst. all	  subst. one
 
+	DEPRECATED: Setting this option may break plugins that are not aware
+	of this option.  Also, many users get confused that adding the /g flag
+	has the opposite effect of that it normally does.
+
 						*'grepformat'* *'gfm'*
 'grepformat' 'gfm'	string	(default "%f:%l:%m,%f:%l%m,%f  %l%m")
 			global
