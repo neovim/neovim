@@ -3536,19 +3536,19 @@ theend:
 /*
  * Add completions from a list.
  */
-static void ins_compl_add_list(list_T *list)
+static void ins_compl_add_list(list_T *const list)
 {
-  listitem_T  *li;
   int dir = compl_direction;
 
-  /* Go through the List with matches and add each of them. */
-  for (li = list->lv_first; li != NULL; li = li->li_next) {
-    if (ins_compl_add_tv(&li->li_tv, dir) == OK)
-      /* if dir was BACKWARD then honor it just once */
+  // Go through the List with matches and add each of them.
+  TV_LIST_ITER(list, li, {
+    if (ins_compl_add_tv(TV_LIST_ITEM_TV(li), dir) == OK) {
+      // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
-    else if (did_emsg)
+    } else if (did_emsg) {
       break;
-  }
+    }
+  });
 }
 
 /*

@@ -599,6 +599,7 @@ static void on_stdio_input(Stream *stream, RBuffer *buf, size_t count,
   on_channel_output(stream, chan, buf, count, eof, &chan->on_stdout, "stdin");
 }
 
+/// @param type must have static lifetime
 static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
                               size_t count, bool eof, CallbackReader *reader,
                               const char *type)
@@ -613,14 +614,20 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
       if (reader->cb.type != kCallbackNone) {
         process_channel_event(chan, &reader->cb, type, reader->buffer.ga_data,
                               (size_t)reader->buffer.ga_len, 0);
-        ga_clear(&reader->buffer);
       } else if (reader->self) {
-        list_T *data = buffer_to_tv_list(reader->buffer.ga_data,
-                                         (size_t)reader->buffer.ga_len);
-        tv_dict_add_list(reader->self, type, strlen(type), data);
+        if (tv_dict_find(reader->self, type, -1) == NULL) {
+          list_T *data = buffer_to_tv_list(reader->buffer.ga_data,
+                                           (size_t)reader->buffer.ga_len);
+          tv_dict_add_list(reader->self, type, strlen(type), data);
+        } else {
+            // can't display error message now, defer it.
+            channel_incref(chan);
+            multiqueue_put(chan->events, on_buffered_error, 2, chan, type);
+        }
       } else {
         abort();
       }
+      ga_clear(&reader->buffer);
     } else if (reader->cb.type != kCallbackNone) {
       process_channel_event(chan, &reader->cb, type, ptr, 0, 0);
     }
@@ -639,6 +646,14 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   } else if (callback_reader_set(*reader)) {
     process_channel_event(chan, &reader->cb, type, ptr, count, 0);
   }
+}
+
+static void on_buffered_error(void **args)
+{
+  Channel *chan = (Channel *)args[0];
+  const char *stream = (const char *)args[1];
+  EMSG3(_(e_streamkey), stream, chan->id);
+  channel_decref(chan);
 }
 
 static void channel_process_exit_cb(Process *proc, int status, void *data)
@@ -673,7 +688,7 @@ static void on_channel_event(void **args)
     argv[1].v_type = VAR_LIST;
     argv[1].v_lock = VAR_UNLOCKED;
     argv[1].vval.v_list = ev->received;
-    argv[1].vval.v_list->lv_refcount++;
+    tv_list_ref(argv[1].vval.v_list);
   } else {
     argv[1].v_type = VAR_NUMBER;
     argv[1].v_lock = VAR_UNLOCKED;

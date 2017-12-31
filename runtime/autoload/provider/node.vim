@@ -3,7 +3,7 @@ if exists('g:loaded_node_provider')
 endif
 let g:loaded_node_provider = 1
 
-let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
+let s:job_opts = {'rpc': v:true, 'stderr_buffered': v:true}
 
 function! s:is_minimum_version(version, min_major, min_minor) abort
   if empty(a:version)
@@ -73,19 +73,18 @@ function! provider#node#Require(host) abort
   call add(args, provider#node#Prog())
 
   try
-    let channel_id = jobstart(args, s:job_opts)
+    let job = copy(s:job_opts)
+    let channel_id = jobstart(args, job)
     if rpcrequest(channel_id, 'poll') ==# 'ok'
       return channel_id
     endif
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in provider#get_stderr(channel_id)
+    for row in job.stderr
       echomsg row
     endfor
   endtry
-  finally
-    call provider#clear_stderr(channel_id)
   endtry
   throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_NODE_LOG_FILE')
 endfunction
@@ -115,7 +114,7 @@ let s:err = ''
 let s:prog = provider#node#Detect()
 
 if empty(s:prog)
-  let s:err = 'Cannot find the "neovim" node package. Try :CheckHealth'
+  let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
 endif
 
 call remote#host#RegisterPlugin('node-provider', 'node', [])

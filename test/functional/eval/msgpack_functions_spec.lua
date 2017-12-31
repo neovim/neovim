@@ -628,7 +628,7 @@ describe('msgpackdump() function', function()
   it('fails to dump a recursive (key) map in a special dict', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('call add(todump._VAL, [todump, 0])')
-    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 1',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 

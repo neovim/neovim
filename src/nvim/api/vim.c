@@ -900,9 +900,9 @@ typedef struct {
   Object *ret_node_p;
 } ExprASTConvStackItem;
 
-///@cond DOXYGEN_NOT_A_FUNCTION
+/// @cond DOXYGEN_NOT_A_FUNCTION
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
-///@endcond
+/// @endcond
 
 /// Parse a VimL expression
 ///
@@ -929,7 +929,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                        starting column and ending column (latter exclusive:
 ///                        one should highlight region [start_col, end_col)).
 ///
-/// @return AST: top-level dictionary holds keys
+/// @return AST: top-level dictionary with these keys:
 ///
 ///         "error": Dictionary with error, present only if parser saw some
 ///                  error. Contains the following keys:

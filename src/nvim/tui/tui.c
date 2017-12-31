@@ -1532,22 +1532,24 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // DECSCUSR (cursor shape) sequence is widely supported by several terminal
     // types.  https://github.com/gnachman/iTerm2/pull/92
     // xterm extension: vertical bar
-    if (!konsole && ((xterm && !vte_version)  // anything claiming xterm compat
-        // per MinTTY 0.4.3-1 release notes from 2009
-        || putty
-        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
-        || (vte_version >= 3900)
-        || tmux       // per tmux manual page
-        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
-        || screen
-        || st         // #7641
-        || rxvt       // per command.C
-        // per analysis of VT100Terminal.m
-        || iterm || iterm_pretending_xterm
-        || teraterm    // per TeraTerm "Supported Control Functions" doco
-        // Some linux-type terminals (such as console-terminal-emulator
-        // from the nosh toolset) implement the xterm extension.
-        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
+    if (!konsole
+        && ((xterm && !vte_version)  // anything claiming xterm compat
+            // per MinTTY 0.4.3-1 release notes from 2009
+            || putty
+            // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
+            || (vte_version >= 3900)
+            || tmux       // per tmux manual page
+            // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
+            || screen
+            || st         // #7641
+            || rxvt       // per command.C
+            // per analysis of VT100Terminal.m
+            || iterm || iterm_pretending_xterm
+            || teraterm    // per TeraTerm "Supported Control Functions" doco
+            // Some linux-type terminals implement the xterm extension.
+            // Example: console-terminal-emulator from the nosh toolset.
+            || (linuxvt
+                && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
