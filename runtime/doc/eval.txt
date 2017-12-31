@@ -4328,6 +4328,7 @@ getqflist([{what}])					*getqflist()*
 		returns only the items listed in {what} as a dictionary. The
 		following string items are supported in {what}:
 			context	get the context stored with |setqflist()|
+			items	quickfix list entries
 			nr	get information for this quickfix list; zero
 				means the current quickfix list and '$' means
 				the last quickfix list
@@ -4344,6 +4345,7 @@ getqflist([{what}])					*getqflist()*
 
 		The returned dictionary contains the following entries:
 			context	context information stored with |setqflist()|
+			items	quickfix list entries
 			nr	quickfix list number
 			title	quickfix list title text
 			winid	quickfix |window-ID| (if opened)
@@ -6892,6 +6894,8 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		argument is ignored.  The following items can be specified in
 		{what}:
 		    context	any Vim type can be stored as a context
+		    items	list of quickfix entries. Same as the {list}
+				argument.
 		    nr		list number in the quickfix stack; zero
 				means the current quickfix list and '$' means
 				the last quickfix list

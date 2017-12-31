@@ -1817,6 +1817,73 @@ func Xproperty_tests(cchar)
     call test_garbagecollect_now()
     let m = g:Xgetlist({'context' : 1})
     call assert_equal(["red", "blue", "green"], m.context)
+
+    " Test for setting/getting items
+    Xexpr ""
+    let qfprev = g:Xgetlist({'nr':0})
+    call g:Xsetlist([], ' ', {'title':'Green',
+		\ 'items' : [{'filename':'F1', 'lnum':10}]})
+    let qfcur = g:Xgetlist({'nr':0})
+    call assert_true(qfcur.nr == qfprev.nr + 1)
+    let l = g:Xgetlist({'items':1})
+    call assert_equal('F1', bufname(l.items[0].bufnr))
+    call assert_equal(10, l.items[0].lnum)
+    call g:Xsetlist([], 'a', {'items' : [{'filename':'F2', 'lnum':20},
+		\  {'filename':'F2', 'lnum':30}]})
+    let l = g:Xgetlist({'items':1})
+    call assert_equal('F2', bufname(l.items[2].bufnr))
+    call assert_equal(30, l.items[2].lnum)
+    call g:Xsetlist([], 'r', {'items' : [{'filename':'F3', 'lnum':40}]})
+    let l = g:Xgetlist({'items':1})
+    call assert_equal('F3', bufname(l.items[0].bufnr))
+    call assert_equal(40, l.items[0].lnum)
+    call g:Xsetlist([], 'r', {'items' : []})
+    let l = g:Xgetlist({'items':1})
+    call assert_equal(0, len(l.items))
+
+    " Save and restore the quickfix stack
+    call g:Xsetlist([], 'f')
+    call assert_equal(0, g:Xgetlist({'nr':'$'}).nr)
+    Xexpr "File1:10:Line1"
+    Xexpr "File2:20:Line2"
+    Xexpr "File3:30:Line3"
+    let last_qf = g:Xgetlist({'nr':'$'}).nr
+    call assert_equal(3, last_qf)
+    let qstack = []
+    for i in range(1, last_qf)
+	let qstack = add(qstack, g:Xgetlist({'nr':i, 'all':1}))
+    endfor
+    call g:Xsetlist([], 'f')
+    for i in range(len(qstack))
+	call g:Xsetlist([], ' ', qstack[i])
+    endfor
+    call assert_equal(3, g:Xgetlist({'nr':'$'}).nr)
+    call assert_equal(10, g:Xgetlist({'nr':1, 'items':1}).items[0].lnum)
+    call assert_equal(20, g:Xgetlist({'nr':2, 'items':1}).items[0].lnum)
+    call assert_equal(30, g:Xgetlist({'nr':3, 'items':1}).items[0].lnum)
+    call g:Xsetlist([], 'f')
+
+    " Swap two quickfix lists
+    Xexpr "File1:10:Line10"
+    Xexpr "File2:20:Line20"
+    Xexpr "File3:30:Line30"
+    call g:Xsetlist([], 'r', {'nr':1,'title':'Colors','context':['Colors']})
+    call g:Xsetlist([], 'r', {'nr':2,'title':'Fruits','context':['Fruits']})
+    let l1=g:Xgetlist({'nr':1,'all':1})
+    let l2=g:Xgetlist({'nr':2,'all':1})
+    let l1.nr=2
+    let l2.nr=1
+    call g:Xsetlist([], 'r', l1)
+    call g:Xsetlist([], 'r', l2)
+    let newl1=g:Xgetlist({'nr':1,'all':1})
+    let newl2=g:Xgetlist({'nr':2,'all':1})
+    call assert_equal(':Fruits', newl1.title)
+    call assert_equal(['Fruits'], newl1.context)
+    call assert_equal('Line20', newl1.items[0].text)
+    call assert_equal(':Colors', newl2.title)
+    call assert_equal(['Colors'], newl2.context)
+    call assert_equal('Line10', newl2.items[0].text)
+    call g:Xsetlist([], 'f')
 endfunc
 
 func Test_qf_property()
