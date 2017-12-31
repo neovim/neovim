@@ -168,16 +168,13 @@ minutes](http://learnxinyminutes.com/docs/lua/).
   Do not silently skip the test with `if-else`. If a functional test depends on
   some external factor (e.g. the existence of `md5sum` on `$PATH`), *and* you
   can't mock or fake the dependency, then skip the test via `pending()` if the
-  external factor is missing. This ensures that the *total* test-count (success
-  + fail + error + pending) is the same in all environments.
+  external factor is missing. This ensures that the *total* test-count
+  (success + fail + error + pending) is the same in all environments.
     - *Note:* `pending()` is ignored if it is missing an argument _unless_ it is
-      [contained in an `it()`
-      block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
-      Provide empty function argument if the `pending()` call is outside of
-      `it()`
+      [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
+      Provide empty function argument if the `pending()` call is outside of `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
-- Use `make testlint` for using the shipped luacheck program ([supported by
-  syntastic](https://github.com/scrooloose/syntastic/blob/d6b96c079be137c83009827b543a83aa113cc011/doc/syntastic-checkers.txt#L3546))
+- Use `make testlint` for using the shipped luacheck program ([supported by syntastic](https://github.com/scrooloose/syntastic/blob/d6b96c079be137c83009827b543a83aa113cc011/doc/syntastic-checkers.txt#L3546))
   to lint all tests.
 
 ### Where tests go
@@ -341,3 +338,9 @@ disables tracing (the fastest, but you get no data if tests crash and there was
 no core dump generated), `1` or empty/undefined leaves only C function cals and 
 returns in the trace (faster then recording everything), `2` records all 
 function calls, returns and lua source lines exuecuted.
+
+`NVIM_TEST_TRACE_ON_ERROR` (U) (1): makes unit tests yield trace on error in 
+addition to regular error message.
+
+`NVIM_TEST_MAXTRACE` (U) (N): specifies maximum number of trace lines to keep. 
+Default is 1024.

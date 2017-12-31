@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -52,22 +53,10 @@ const char *const tv_empty_string = "";
 ///          and specifically set lv_lock.
 ///
 /// @return [allocated] new list item.
-listitem_T *tv_list_item_alloc(void)
+static listitem_T *tv_list_item_alloc(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   return xmalloc(sizeof(listitem_T));
-}
-
-/// Free a list item
-///
-/// Also clears the value. Does not touch watchers.
-///
-/// @param[out]  item  Item to free.
-void tv_list_item_free(listitem_T *const item)
-  FUNC_ATTR_NONNULL_ALL
-{
-  tv_clear(&item->li_tv);
-  xfree(item);
 }
 
 /// Remove a list item from a List and free it
@@ -76,11 +65,17 @@ void tv_list_item_free(listitem_T *const item)
 ///
 /// @param[out]  l  List to remove item from.
 /// @param[in,out]  item  Item to remove.
-void tv_list_item_remove(list_T *const l, listitem_T *const item)
+///
+/// @return Pointer to the list item just after removed one, NULL if removed
+///         item was the last one.
+listitem_T *tv_list_item_remove(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  tv_list_remove_items(l, item, item);
-  tv_list_item_free(item);
+  listitem_T *const next_item = TV_LIST_ITEM_NEXT(l, item);
+  tv_list_drop_items(l, item, item);
+  tv_clear(TV_LIST_ITEM_TV(item));
+  xfree(item);
+  return next_item;
 }
 
 //{{{2 List watchers
@@ -153,6 +148,45 @@ list_T *tv_list_alloc(void)
   return list;
 }
 
+/// Initialize a static list with 10 items
+///
+/// @param[out]  sl  Static list to initialize.
+void tv_list_init_static10(staticList10_T *const sl)
+  FUNC_ATTR_NONNULL_ALL
+{
+#define SL_SIZE ARRAY_SIZE(sl->sl_items)
+  list_T *const l = &sl->sl_list;
+
+  memset(sl, 0, sizeof(staticList10_T));
+  l->lv_first = &sl->sl_items[0];
+  l->lv_last = &sl->sl_items[SL_SIZE - 1];
+  l->lv_refcount = DO_NOT_FREE_CNT;
+  tv_list_set_lock(l, VAR_FIXED);
+  sl->sl_list.lv_len = 10;
+
+  sl->sl_items[0].li_prev = NULL;
+  sl->sl_items[0].li_next = &sl->sl_items[1];
+  sl->sl_items[SL_SIZE - 1].li_prev = &sl->sl_items[SL_SIZE - 2];
+  sl->sl_items[SL_SIZE - 1].li_next = NULL;
+
+  for (size_t i = 1; i < SL_SIZE - 1; i++) {
+    listitem_T *const li = &sl->sl_items[i];
+    li->li_prev = li - 1;
+    li->li_next = li + 1;
+  }
+#undef SL_SIZE
+}
+
+/// Initialize static list with undefined number of elements
+///
+/// @param[out]  l  List to initialize.
+void tv_list_init_static(list_T *const l)
+  FUNC_ATTR_NONNULL_ALL
+{
+  memset(l, 0, sizeof(*l));
+  l->lv_refcount = DO_NOT_FREE_CNT;
+}
+
 /// Free items contained in a list
 ///
 /// @param[in,out]  l  List to clear.
@@ -221,15 +255,15 @@ void tv_list_unref(list_T *const l)
 
 //{{{2 Add/remove
 
-/// Remove items "item" to "item2" from list "l".
+/// Remove items "item" to "item2" from list "l"
 ///
 /// @warning Does not free the listitem or the value!
 ///
 /// @param[out]  l  List to remove from.
 /// @param[in]  item  First item to remove.
 /// @param[in]  item2  Last item to remove.
-void tv_list_remove_items(list_T *const l, listitem_T *const item,
-                          listitem_T *const item2)
+void tv_list_drop_items(list_T *const l, listitem_T *const item,
+                        listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
   // Notify watchers.
@@ -249,6 +283,47 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
     item->li_prev->li_next = item2->li_next;
   }
   l->lv_idx_item = NULL;
+}
+
+/// Like tv_list_drop_items, but also frees all removed items
+void tv_list_remove_items(list_T *const l, listitem_T *const item,
+                          listitem_T *const item2)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_list_drop_items(l, item, item2);
+  for (listitem_T *li = item;;) {
+    tv_clear(TV_LIST_ITEM_TV(li));
+    listitem_T *const nli = li->li_next;
+    xfree(li);
+    if (li == item2) {
+      break;
+    }
+    li = nli;
+  }
+}
+
+/// Move items "item" to "item2" from list "l" to the end of the list "tgt_l"
+///
+/// @param[out]  l  List to move from.
+/// @param[in]  item  First item to move.
+/// @param[in]  item2  Last item to move.
+/// @param[out]  tgt_l  List to move to.
+/// @param[in]  cnt  Number of items moved.
+void tv_list_move_items(list_T *const l, listitem_T *const item,
+                        listitem_T *const item2, list_T *const tgt_l,
+                        const int cnt)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_list_drop_items(l, item, item2);
+  item->li_prev = tgt_l->lv_last;
+  item2->li_next = NULL;
+  if (tgt_l->lv_last == NULL) {
+    tgt_l->lv_first = item;
+  } else {
+    tgt_l->lv_last->li_next = item;
+  }
+  tgt_l->lv_last = item2;
+  tgt_l->lv_len += cnt;
 }
 
 /// Insert list item
@@ -326,7 +401,19 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL
 {
   listitem_T *const li = tv_list_item_alloc();
-  tv_copy(tv, &li->li_tv);
+  tv_copy(tv, TV_LIST_ITEM_TV(li));
+  tv_list_append(l, li);
+}
+
+/// Like tv_list_append_tv(), but tv is moved to a list
+///
+/// This means that it is no longer valid to use contents of the typval_T after
+/// function exits.
+void tv_list_append_owned_tv(list_T *const l, typval_T tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  listitem_T *const li = tv_list_item_alloc();
+  *TV_LIST_ITEM_TV(li) = tv;
   tv_list_append(l, li);
 }
 
@@ -334,33 +421,29 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  itemlist  List to append. Reference count is increased.
-void tv_list_append_list(list_T *const list, list_T *const itemlist)
+void tv_list_append_list(list_T *const l, list_T *const itemlist)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  li->li_tv.v_type = VAR_LIST;
-  li->li_tv.v_lock = VAR_UNLOCKED;
-  li->li_tv.vval.v_list = itemlist;
-  tv_list_append(list, li);
-  if (itemlist != NULL) {
-    itemlist->lv_refcount++;
-  }
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_LIST,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_list = itemlist,
+  });
+  tv_list_ref(itemlist);
 }
 
 /// Append a dictionary to a list
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  dict  Dictionary to append. Reference count is increased.
-void tv_list_append_dict(list_T *const list, dict_T *const dict)
+void tv_list_append_dict(list_T *const l, dict_T *const dict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  li->li_tv.v_type = VAR_DICT;
-  li->li_tv.v_lock = VAR_UNLOCKED;
-  li->li_tv.vval.v_dict = dict;
-  tv_list_append(list, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_DICT,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_dict = dict,
+  });
   if (dict != NULL) {
     dict->dv_refcount++;
   }
@@ -374,17 +457,18 @@ void tv_list_append_dict(list_T *const list, dict_T *const dict)
 ///                  case string is considered to be usual zero-terminated
 ///                  string or NULL “empty” string.
 void tv_list_append_string(list_T *const l, const char *const str,
-                           const ptrdiff_t len)
+                           const ssize_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (str == NULL) {
-    assert(len == 0 || len == -1);
-    tv_list_append_allocated_string(l, NULL);
-  } else {
-    tv_list_append_allocated_string(l, (len >= 0
-                                        ? xmemdupz(str, (size_t)len)
-                                        : xstrdup(str)));
-  }
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (str == NULL
+                      ? NULL
+                      : (len >= 0
+                         ? xmemdupz(str, (size_t)len)
+                         : xstrdup(str))),
+  });
 }
 
 /// Append given string to the list
@@ -396,12 +480,11 @@ void tv_list_append_string(list_T *const l, const char *const str,
 void tv_list_append_allocated_string(list_T *const l, char *const str)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  tv_list_append(l, li);
-  li->li_tv.v_type = VAR_STRING;
-  li->li_tv.v_lock = VAR_UNLOCKED;
-  li->li_tv.vval.v_string = (char_u *)str;
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (char_u *)str,
+  });
 }
 
 /// Append number to the list
@@ -411,11 +494,11 @@ void tv_list_append_allocated_string(list_T *const l, char *const str)
 ///                listitem_T.
 void tv_list_append_number(list_T *const l, const varnumber_T n)
 {
-  listitem_T *const li = tv_list_item_alloc();
-  li->li_tv.v_type = VAR_NUMBER;
-  li->li_tv.v_lock = VAR_UNLOCKED;
-  li->li_tv.vval.v_number = n;
-  tv_list_append(l, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_NUMBER,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_number = n,
+  });
 }
 
 //{{{2 Operations on the whole list
@@ -439,33 +522,35 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
   }
 
   list_T *copy = tv_list_alloc();
+  tv_list_ref(copy);
   if (copyID != 0) {
     // Do this before adding the items, because one of the items may
     // refer back to this list.
     orig->lv_copyID = copyID;
     orig->lv_copylist = copy;
   }
-  listitem_T *item;
-  for (item = orig->lv_first; item != NULL && !got_int;
-       item = item->li_next) {
+  TV_LIST_ITER(orig, item, {
+    if (got_int) {
+      break;
+    }
     listitem_T *const ni = tv_list_item_alloc();
     if (deep) {
-      if (var_item_copy(conv, &item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
+      if (var_item_copy(conv, TV_LIST_ITEM_TV(item), TV_LIST_ITEM_TV(ni),
+                        deep, copyID) == FAIL) {
         xfree(ni);
-        break;
+        goto tv_list_copy_error;
       }
     } else {
-      tv_copy(&item->li_tv, &ni->li_tv);
+      tv_copy(TV_LIST_ITEM_TV(item), TV_LIST_ITEM_TV(ni));
     }
     tv_list_append(copy, ni);
-  }
-  copy->lv_refcount++;
-  if (item != NULL) {
-    tv_list_unref(copy);
-    copy = NULL;
-  }
+  });
 
   return copy;
+
+tv_list_copy_error:
+  tv_list_unref(copy);
+  return NULL;
 }
 
 /// Extend first list with the second
@@ -475,17 +560,17 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
 /// @param[in]  bef  If not NULL, extends before this item.
 void tv_list_extend(list_T *const l1, list_T *const l2,
                     listitem_T *const bef)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  int todo = l2->lv_len;
+  int todo = tv_list_len(l2);
   listitem_T *const befbef = (bef == NULL ? NULL : bef->li_prev);
   listitem_T *const saved_next = (befbef == NULL ? NULL : befbef->li_next);
   // We also quit the loop when we have inserted the original item count of
   // the list, avoid a hang when we extend a list with itself.
-  for (listitem_T *item = l2->lv_first
-       ; item != NULL && --todo >= 0
+  for (listitem_T *item = tv_list_first(l2)
+       ; item != NULL && todo--
        ; item = (item == befbef ? saved_next : item->li_next)) {
-    tv_list_insert_tv(l1, &item->li_tv, bef);
+    tv_list_insert_tv(l1, TV_LIST_ITEM_TV(item), bef);
   }
 }
 
@@ -540,13 +625,15 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
 {
   size_t sumlen = 0;
   bool first = true;
-  listitem_T  *item;
 
   // Stringify each item in the list.
-  for (item = l->lv_first; item != NULL && !got_int; item = item->li_next) {
+  TV_LIST_ITER(l, item, {
+    if (got_int) {
+      break;
+    }
     char *s;
     size_t len;
-    s = encode_tv2echo(&item->li_tv, &len);
+    s = encode_tv2echo(TV_LIST_ITEM_TV(item), &len);
     if (s == NULL) {
       return FAIL;
     }
@@ -557,7 +644,7 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
     p->tofree = p->s = (char_u *)s;
 
     line_breakcheck();
-  }
+  });
 
   // Allocate result buffer with its total size, avoid re-allocation and
   // multiple copy operations.  Add 2 for a tailing ']' and NUL.
@@ -591,16 +678,16 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
 ///
 /// @return OK in case of success, FAIL otherwise.
 int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (l->lv_len < 1) {
+  if (!tv_list_len(l)) {
     return OK;
   }
 
   garray_T join_ga;
   int retval;
 
-  ga_init(&join_ga, (int)sizeof(Join), l->lv_len);
+  ga_init(&join_ga, (int)sizeof(Join), tv_list_len(l));
   retval = list_join_inner(gap, l, sep, &join_ga);
 
 #define FREE_JOIN_TOFREE(join) xfree((join)->tofree)
@@ -632,16 +719,84 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
     return false;
   }
 
-  listitem_T *item1 = l1->lv_first;
-  listitem_T *item2 = l2->lv_first;
+  listitem_T *item1 = tv_list_first(l1);
+  listitem_T *item2 = tv_list_first(l2);
   for (; item1 != NULL && item2 != NULL
-       ; item1 = item1->li_next, item2 = item2->li_next) {
-    if (!tv_equal(&item1->li_tv, &item2->li_tv, ic, recursive)) {
+       ; (item1 = TV_LIST_ITEM_NEXT(l1, item1),
+          item2 = TV_LIST_ITEM_NEXT(l2, item2))) {
+    if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic,
+                  recursive)) {
       return false;
     }
   }
   assert(item1 == NULL && item2 == NULL);
   return true;
+}
+
+/// Reverse list in-place
+///
+/// @param[in,out]  l  List to reverse.
+void tv_list_reverse(list_T *const l)
+{
+  if (tv_list_len(l) <= 1) {
+    return;
+  }
+#define SWAP(a, b) \
+  do { \
+    tmp = a; \
+    a = b; \
+    b = tmp; \
+  } while (0)
+  listitem_T *tmp;
+
+  SWAP(l->lv_first, l->lv_last);
+  for (listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
+    SWAP(li->li_next, li->li_prev);
+  }
+#undef SWAP
+
+  l->lv_idx = l->lv_len - l->lv_idx - 1;
+}
+
+// FIXME Add unit tests for tv_list_item_sort().
+
+/// Sort list using libc qsort
+///
+/// @param[in,out]  l  List to sort, will be sorted in-place.
+/// @param  ptrs  Preallocated array of items to sort, must have at least
+///               tv_list_len(l) entries. Should not be initialized.
+/// @param[in]  item_compare_func  Function used to compare list items.
+/// @param  errp  Location where information about whether error occurred is
+///               saved by item_compare_func. If boolean there appears to be
+///               true list will not be modified. Must be initialized to false
+///               by the caller.
+void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
+                       const ListSorter item_compare_func,
+                       bool *errp)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
+{
+  const int len = tv_list_len(l);
+  if (len <= 1) {
+    return;
+  }
+  int i = 0;
+  TV_LIST_ITER(l, li, {
+    ptrs[i].item = li;
+    ptrs[i].idx = i;
+    i++;
+  });
+  // Sort the array with item pointers.
+  qsort(ptrs, (size_t)len, sizeof(ListSortItem), item_compare_func);
+  if (!(*errp)) {
+    // Clear the list and append the items in the sorted order.
+    l->lv_first    = NULL;
+    l->lv_last     = NULL;
+    l->lv_idx_item = NULL;
+    l->lv_len      = 0;
+    for (i = 0; i < len; i++) {
+      tv_list_append(l, ptrs[i].item);
+    }
+  }
 }
 
 //{{{2 Indexing/searching
@@ -662,13 +817,8 @@ listitem_T *tv_list_find(list_T *const l, int n)
     return NULL;
   }
 
-  // Negative index is relative to the end.
-  if (n < 0) {
-    n = l->lv_len + n;
-  }
-
-  // Check for index out of range.
-  if (n < 0 || n >= l->lv_len) {
+  n = tv_list_uidx(l, n);
+  if (n == -1) {
     return NULL;
   }
 
@@ -740,7 +890,7 @@ varnumber_T tv_list_find_nr(list_T *const l, const int n, bool *const ret_error)
     }
     return -1;
   }
-  return tv_get_number_chk(&li->li_tv, ret_error);
+  return tv_get_number_chk(TV_LIST_ITEM_TV(li), ret_error);
 }
 
 /// Get list item l[n] as a string
@@ -757,7 +907,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
     emsgf(_(e_listidx), (int64_t)n);
     return NULL;
   }
-  return tv_get_string(&li->li_tv);
+  return tv_get_string(TV_LIST_ITEM_TV(li));
 }
 
 /// Locate item in a list and return its index
@@ -772,15 +922,14 @@ long tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
   if (l == NULL) {
     return -1;
   }
-  long idx = 0;
-  const listitem_T *li;
-  for (li = l->lv_first; li != NULL && li != item; li = li->li_next) {
+  int idx = 0;
+  TV_LIST_ITER_CONST(l, li, {
+    if (li == item) {
+      return idx;
+    }
     idx++;
-  }
-  if (li == NULL) {
-    return -1;
-  }
-  return idx;
+  });
+  return -1;
 }
 
 //{{{1 Dictionaries
@@ -824,7 +973,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
 /// @param[in]  cb2  Second callback to check.
 ///
 /// @return True if they are equal, false otherwise.
-bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
+bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (cb1->type != cb2->type) {
@@ -843,8 +992,29 @@ bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
       return true;
     }
   }
-  assert(false);
+  abort();
   return false;
+}
+
+/// Unref/free callback
+void callback_free(Callback *callback)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (callback->type) {
+    case kCallbackFuncref: {
+      func_unref(callback->data.funcref);
+      xfree(callback->data.funcref);
+      break;
+    }
+    case kCallbackPartial: {
+      partial_unref(callback->data.partial);
+      break;
+    }
+    case kCallbackNone: {
+      break;
+    }
+  }
+  callback->type = kCallbackNone;
 }
 
 /// Remove watcher from a dictionary
@@ -1318,7 +1488,7 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_LIST;
   item->di_tv.vval.v_list = list;
-  list->lv_refcount++;
+  tv_list_ref(list);
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
@@ -1367,6 +1537,29 @@ int tv_dict_add_nr(dict_T *const d, const char *const key,
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_NUMBER;
   item->di_tv.vval.v_number = nr;
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Add a special entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val SpecialVarValue to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_special(dict_T *const d, const char *const key,
+                        const size_t key_len, SpecialVarValue val)
+{
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_lock = VAR_UNLOCKED;
+  item->di_tv.v_type = VAR_SPECIAL;
+  item->di_tv.vval.v_special = val;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
@@ -1633,7 +1826,7 @@ list_T *tv_list_alloc_ret(typval_T *const ret_tv)
   ret_tv->vval.v_list = l;
   ret_tv->v_type = VAR_LIST;
   ret_tv->v_lock = VAR_UNLOCKED;
-  l->lv_refcount++;
+  tv_list_ref(l);
   return l;
 }
 
@@ -1750,14 +1943,20 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
+static inline void _nothing_conv_empty_dict(typval_T *const tv,
+                                            dict_T **const dictp)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(2)
+{
+  tv_dict_unref(*dictp);
+  *dictp = NULL;
+  if (tv != NULL) {
+    tv->v_lock = VAR_UNLOCKED;
+  }
+}
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     do { \
       assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-      tv_dict_unref((dict_T *)dict); \
-      *((dict_T **)&dict) = NULL; \
-      if (tv != NULL) { \
-        ((typval_T *)tv)->v_lock = VAR_UNLOCKED; \
-      } \
+      _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
     } while (0)
 
 static inline int _nothing_conv_real_list_after_start(
@@ -1982,9 +2181,7 @@ void tv_copy(typval_T *const from, typval_T *const to)
       break;
     }
     case VAR_LIST: {
-      if (from->vval.v_list != NULL) {
-        to->vval.v_list->lv_refcount++;
-      }
+      tv_list_ref(to->vval.v_list);
       break;
     }
     case VAR_DICT: {
@@ -2040,9 +2237,9 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
         CHANGE_LOCK(lock, l->lv_lock);
         if (deep < 0 || deep > 1) {
           // Recursive: lock/unlock the items the List contains.
-          for (listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
-            tv_item_lock(&li->li_tv, deep - 1, lock);
-          }
+          TV_LIST_ITER(l, li, {
+            tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock);
+          });
         }
       }
       break;
@@ -2078,6 +2275,8 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
 
 /// Check whether VimL value is locked itself or refers to a locked container
 ///
+/// @warning Fixed container is not the same as locked.
+///
 /// @param[in]  tv  Value to check.
 ///
 /// @return True if value is locked, false otherwise.
@@ -2086,8 +2285,7 @@ bool tv_islocked(const typval_T *const tv)
 {
   return ((tv->v_lock == VAR_LOCKED)
           || (tv->v_type == VAR_LIST
-              && tv->vval.v_list != NULL
-              && (tv->vval.v_list->lv_lock == VAR_LOCKED))
+              && (tv_list_locked(tv->vval.v_list) == VAR_LOCKED))
           || (tv->v_type == VAR_DICT
               && tv->vval.v_dict != NULL
               && (tv->vval.v_dict->dv_lock == VAR_LOCKED)));

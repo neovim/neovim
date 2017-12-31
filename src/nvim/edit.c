@@ -1927,7 +1927,7 @@ bool vim_is_ctrl_x_key(int c)
   case CTRL_X_EVAL:
     return (c == Ctrl_P || c == Ctrl_N);
   }
-  EMSG(_(e_internal));
+  internal_error("vim_is_ctrl_x_key()");
   return false;
 }
 
@@ -3536,19 +3536,19 @@ theend:
 /*
  * Add completions from a list.
  */
-static void ins_compl_add_list(list_T *list)
+static void ins_compl_add_list(list_T *const list)
 {
-  listitem_T  *li;
   int dir = compl_direction;
 
-  /* Go through the List with matches and add each of them. */
-  for (li = list->lv_first; li != NULL; li = li->li_next) {
-    if (ins_compl_add_tv(&li->li_tv, dir) == OK)
-      /* if dir was BACKWARD then honor it just once */
+  // Go through the List with matches and add each of them.
+  TV_LIST_ITER(list, li, {
+    if (ins_compl_add_tv(TV_LIST_ITEM_TV(li), dir) == OK) {
+      // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
-    else if (did_emsg)
+    } else if (did_emsg) {
       break;
-  }
+    }
+  });
 }
 
 /*
@@ -4681,7 +4681,7 @@ static int ins_complete(int c, bool enable_pum)
       line = ml_get(curwin->w_cursor.lnum);
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
     } else {
-      EMSG2(_(e_intern2), "ins_complete()");
+      internal_error("ins_complete()");
       return FAIL;
     }
 
@@ -6066,27 +6066,30 @@ void free_last_insert(void)
 
 #endif
 
-/*
- * Add character "c" to buffer "s".  Escape the special meaning of K_SPECIAL
- * and CSI.  Handle multi-byte characters.
- * Returns a pointer to after the added bytes.
- */
+/// Add character "c" to buffer "s"
+///
+/// Escapes the special meaning of K_SPECIAL and CSI, handles multi-byte
+/// characters.
+///
+/// @param[in]  c  Character to add.
+/// @param[out]  s  Buffer to add to. Must have at least MB_MAXBYTES + 1 bytes.
+///
+/// @return Pointer to after the added bytes.
 char_u *add_char2buf(int c, char_u *s)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u temp[MB_MAXBYTES + 1];
-  int i;
-  int len;
-
-  len = (*mb_char2bytes)(c, temp);
-  for (i = 0; i < len; ++i) {
+  const int len = utf_char2bytes(c, temp);
+  for (int i = 0; i < len; i++) {
     c = temp[i];
-    /* Need to escape K_SPECIAL and CSI like in the typeahead buffer. */
+    // Need to escape K_SPECIAL and CSI like in the typeahead buffer.
     if (c == K_SPECIAL) {
       *s++ = K_SPECIAL;
       *s++ = KS_SPECIAL;
       *s++ = KE_FILLER;
-    } else
+    } else {
       *s++ = c;
+    }
   }
   return s;
 }

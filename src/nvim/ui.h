@@ -31,11 +31,9 @@ struct ui_t {
   bool ui_ext[UI_WIDGETS];  ///< Externalized widgets
   int width, height;
   void *data;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_events.generated.h"
 #endif
-
   void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
   void (*stop)(UI *ui);
 };

@@ -191,4 +191,123 @@ func Test_toupper()
   call assert_equal("ⱥ ⱦ", tolower("Ⱥ Ⱦ"))
 endfunc
 
+" Tests for the mode() function
+let current_modes = ''
+func! Save_mode()
+  let g:current_modes = mode(0) . '-' . mode(1)
+  return ''
+endfunc
 
+func! Test_mode()
+  new
+  call append(0, ["Blue Ball Black", "Brown Band Bowl", ""])
+
+  inoremap <F2> <C-R>=Save_mode()<CR>
+
+  normal! 3G
+  exe "normal i\<F2>\<Esc>"
+  call assert_equal('i-i', g:current_modes)
+  " i_CTRL-P: Multiple matches
+  exe "normal i\<C-G>uBa\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-P: Single match
+  exe "normal iBro\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X
+  exe "normal iBa\<C-X>\<F2>\<Esc>u"
+  call assert_equal('i-ix', g:current_modes)
+  " i_CTRL-X CTRL-P: Multiple matches
+  exe "normal iBa\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P: Single match
+  exe "normal iBro\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P + CTRL-P: Single match
+  exe "normal iBro\<C-X>\<C-P>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: Multiple matches
+  exe "normal i\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: Single match
+  exe "normal iBlu\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-P: No match
+  exe "normal iCom\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P: No match
+  exe "normal iCom\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: No match
+  exe "normal iabc\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+
+  " R_CTRL-P: Multiple matches
+  exe "normal RBa\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-P: Single match
+  exe "normal RBro\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X
+  exe "normal RBa\<C-X>\<F2>\<Esc>u"
+  call assert_equal('R-Rx', g:current_modes)
+  " R_CTRL-X CTRL-P: Multiple matches
+  exe "normal RBa\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P: Single match
+  exe "normal RBro\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P + CTRL-P: Single match
+  exe "normal RBro\<C-X>\<C-P>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: Multiple matches
+  exe "normal R\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: Single match
+  exe "normal RBlu\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-P: No match
+  exe "normal RCom\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P: No match
+  exe "normal RCom\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: No match
+  exe "normal Rabc\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+
+  call assert_equal('n', mode(0))
+  call assert_equal('n', mode(1))
+
+  " How to test operator-pending mode?
+
+  call feedkeys("v", 'xt')
+  call assert_equal('v', mode())
+  call assert_equal('v', mode(1))
+  call feedkeys("\<Esc>V", 'xt')
+  call assert_equal('V', mode())
+  call assert_equal('V', mode(1))
+  call feedkeys("\<Esc>\<C-V>", 'xt')
+  call assert_equal("\<C-V>", mode())
+  call assert_equal("\<C-V>", mode(1))
+  call feedkeys("\<Esc>", 'xt')
+
+  call feedkeys("gh", 'xt')
+  call assert_equal('s', mode())
+  call assert_equal('s', mode(1))
+  call feedkeys("\<Esc>gH", 'xt')
+  call assert_equal('S', mode())
+  call assert_equal('S', mode(1))
+  call feedkeys("\<Esc>g\<C-H>", 'xt')
+  call assert_equal("\<C-S>", mode())
+  call assert_equal("\<C-S>", mode(1))
+  call feedkeys("\<Esc>", 'xt')
+
+  call feedkeys(":echo \<C-R>=Save_mode()\<C-U>\<CR>", 'xt')
+  call assert_equal('c-c', g:current_modes)
+  call feedkeys("gQecho \<C-R>=Save_mode()\<CR>\<CR>vi\<CR>", 'xt')
+  call assert_equal('c-cv', g:current_modes)
+  " How to test Ex mode?
+
+  bwipe!
+  iunmap <F2>
+endfunc

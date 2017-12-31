@@ -4,6 +4,7 @@ local clear, command, nvim, nvim_dir =
   helpers.clear, helpers.command, helpers.nvim, helpers.nvim_dir
 local eval, eq, retry =
   helpers.eval, helpers.eq, helpers.retry
+local ok = helpers.ok
 
 if helpers.pending_win32(pending) then return end
 
@@ -41,7 +42,9 @@ describe('TermClose event', function()
     command('call jobstop(g:test_job)')
     retry(nil, nil, function() eq(1, eval('get(g:, "test_job_exited", 0)')) end)
     local duration = os.time() - start
-    eq(2, duration)
+    -- nvim starts sending SIGTERM after KILL_TIMEOUT_MS
+    ok(duration >= 2)
+    ok(duration <= 4)  -- <= 2 + delta because of slow CI
   end)
 
   it('kills pty job trapping SIGHUP and SIGTERM', function()
@@ -58,8 +61,8 @@ describe('TermClose event', function()
     retry(nil, nil, function() eq(1, eval('get(g:, "test_job_exited", 0)')) end)
     local duration = os.time() - start
     -- nvim starts sending kill after 2*KILL_TIMEOUT_MS
-    helpers.ok(4 <= duration)
-    helpers.ok(duration <= 7)  -- <= 4 + delta because of slow CI
+    ok(duration >= 4)
+    ok(duration <= 7)  -- <= 4 + delta because of slow CI
   end)
 
   it('reports the correct <abuf>', function()

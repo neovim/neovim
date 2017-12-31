@@ -7,7 +7,7 @@ let s:clipboard = {}
 
 " When caching is enabled, store the jobid of the xclip/xsel process keeping
 " ownership of the selection, so we know how long the cache is valid.
-let s:selection = { 'owner': 0, 'data': [], 'on_stderr': function('provider#stderr_collector') }
+let s:selection = { 'owner': 0, 'data': [], 'stderr_buffered': v:true }
 
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
@@ -16,12 +16,10 @@ function! s:selection.on_exit(jobid, data, event) abort
     let self.owner = 0
   endif
   if a:data != 0
-    let stderr = provider#get_stderr(a:jobid)
     echohl WarningMsg
-    echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(stderr)
+    echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(self.stderr)
     echohl None
   endif
-  call provider#clear_stderr(a:jobid)
 endfunction
 
 let s:selections = { '*': s:selection, '+': copy(s:selection) }
@@ -142,12 +140,13 @@ function! s:clipboard.set(lines, regtype, reg) abort
     return 0
   end
 
-  let selection = s:selections[a:reg]
-  if selection.owner > 0
+  if s:selections[a:reg].owner > 0
     " The previous provider instance should exit when the new one takes
     " ownership, but kill it to be sure we don't fill up the job table.
-    call jobstop(selection.owner)
+    call jobstop(s:selections[a:reg].owner)
   end
+  let s:selections[a:reg] = copy(s:selection)
+  let selection = s:selections[a:reg]
   let selection.data = [a:lines, a:regtype]
   let argv = split(s:copy[a:reg], " ")
   let selection.argv = argv

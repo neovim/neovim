@@ -4443,22 +4443,32 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @return true for end-of-file.
 bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 {
-  char        *eof;
-#define FGETS_SIZE 200
-  char tbuf[FGETS_SIZE];
+  char *retval;
 
+  assert(size > 0);
   buf[size - 2] = NUL;
-  eof = fgets((char *)buf, size, fp);
-  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
-    buf[size - 1] = NUL;            /* Truncate the line */
 
-    /* Now throw away the rest of the line: */
+  do {
+    errno = 0;
+    retval = fgets((char *)buf, size, fp);
+  } while (retval == NULL && errno == EINTR);
+
+  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
+    char tbuf[200];
+
+    buf[size - 1] = NUL;  // Truncate the line.
+
+    // Now throw away the rest of the line:
     do {
-      tbuf[FGETS_SIZE - 2] = NUL;
-      ignoredp = fgets((char *)tbuf, FGETS_SIZE, fp);
-    } while (tbuf[FGETS_SIZE - 2] != NUL && tbuf[FGETS_SIZE - 2] != '\n');
+      tbuf[sizeof(tbuf) - 2] = NUL;
+      errno = 0;
+      retval = fgets((char *)tbuf, sizeof(tbuf), fp);
+      if (retval == NULL && errno != EINTR) {
+        break;
+      }
+    } while (tbuf[sizeof(tbuf) - 2] != NUL && tbuf[sizeof(tbuf) - 2] != '\n');
   }
-  return eof == NULL;
+  return retval ? false : feof(fp);
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.

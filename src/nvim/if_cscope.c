@@ -553,9 +553,15 @@ static int cs_cnt_matches(size_t idx)
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
   for (;; ) {
+    errno = 0;
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
-      if (feof(csinfo[idx].fr_fp))
+      if (errno == EINTR) {
+        continue;
+      }
+
+      if (feof(csinfo[idx].fr_fp)) {
         errno = EIO;
+      }
 
       cs_reading_emsg(idx);
 
@@ -778,7 +784,6 @@ err_closing:
     if (execl("/bin/sh", "sh", "-c", cmd, (char *)NULL) == -1)
       PERROR(_("cs_create_connection exec failed"));
 
-    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
     exit(127);
   /* NOTREACHED */
   default:      /* parent. */
@@ -1007,9 +1012,9 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
       fclose(f);
       if (use_ll)           /* Use location list */
         wp = curwin;
-      /* '-' starts a new error list */
+      // '-' starts a new error list
       if (qf_init(wp, tmp, (char_u *)"%f%*\\t%l%*\\t%m",
-              *qfpos == '-', cmdline) > 0) {
+                  *qfpos == '-', cmdline, NULL) > 0) {
         if (postponed_split != 0) {
           (void)win_split(postponed_split > 0 ? postponed_split : 0,
                           postponed_split_flags);
@@ -1381,9 +1386,16 @@ static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
   char *p;
   char *name;
 
+retry:
+  errno = 0;
   if (fgets(buf, bufsize, csinfo[cnumber].fr_fp) == NULL) {
-    if (feof(csinfo[cnumber].fr_fp))
+    if (errno == EINTR) {
+      goto retry;
+    }
+
+    if (feof(csinfo[cnumber].fr_fp)) {
       errno = EIO;
+    }
 
     cs_reading_emsg(cnumber);
 

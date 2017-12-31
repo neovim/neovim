@@ -11,11 +11,11 @@ let g:loaded_python_provider = 1
 
 let [s:prog, s:err] = provider#pythonx#Detect(2)
 
-function! provider#python#Prog()
+function! provider#python#Prog() abort
   return s:prog
 endfunction
 
-function! provider#python#Error()
+function! provider#python#Error() abort
   return s:err
 endfunction
 
@@ -29,7 +29,7 @@ endif
 call remote#host#RegisterClone('legacy-python-provider', 'python')
 call remote#host#RegisterPlugin('legacy-python-provider', 'script_host.py', [])
 
-function! provider#python#Call(method, args)
+function! provider#python#Call(method, args) abort
   if s:err != ''
     return
   endif

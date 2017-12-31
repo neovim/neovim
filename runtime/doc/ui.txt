@@ -9,7 +9,7 @@ Nvim UI protocol							  *ui*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Introduction							     *ui-intro*
+UI Events							    *ui-events*
 
 GUIs can be implemented as external processes communicating with Nvim over the
 RPC API. The UI model consists of a terminal-like grid with a single,
@@ -79,6 +79,27 @@ Global Events							    *ui-global*
 	`mouse_shape`:	(To be implemented.)
 
 	Some keys are missing in some modes.
+
+["option_set", name, value]
+	The value of ui related option `name` changed. The sent options are
+	listed below:
+
+	'arabicshape'
+	'ambiwith'
+	'emoji'
+	'guifont'
+	'guifontset'
+	'guifontwide'
+	'showtabline'
+	'termguicolors'
+
+	Options are not added to the list if their effects are already taken
+	care of. For instance, instead of forwarding the raw 'mouse' option
+	value, `mouse_on` and `mouse_off` directly indicate if mouse support
+	is active right now. Some options like 'ambiwith' have already taken
+	effect on the grid, where appropriate empty cells are added, however
+	an ui might still use these options when rendering raw text sent from
+	Nvim, like the text of the cmdline when |ui-ext-cmdline| is set.
 
 ["mode_change", mode, mode_idx]
 	The mode changed.  The first parameter `mode` is a string representing

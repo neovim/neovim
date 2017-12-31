@@ -27,12 +27,8 @@ help() {
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
-  echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
-  echo '           By default latest tested version is used.'
-  echo
-  echo '           May use "--pvs detect" to try detecting latest version.'
-  echo '           That assumes certain viva64.com site properties and'
-  echo '           may be broken by the site update.'
+  echo '    --pvs: Fetch pvs-studio from URL.'
+  echo '    --pvs detect: Auto-detect latest version (by scraping viva64.com).'
   echo
   echo '    --deps: (for regular run) Use top-level Makefile and build deps.'
   echo '            Without this it assumes all dependencies are already'
@@ -360,12 +356,32 @@ run_analysis() {(
   plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
 )}
 
+detect_url() {
+  local url="${1:-detect}"
+  if test "$url" = detect ; then
+    curl --silent -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
+    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz' \
+    || echo FAILED
+  else
+    printf '%s' "$url"
+  fi
+}
+
 do_check() {
   local tgt="$1" ; shift
   local branch="$1" ; shift
   local pvs_url="$1" ; shift
   local deps="$1" ; shift
   local environment_cc="$1" ; shift
+
+  if test -z "$pvs_url" || test "$pvs_url" = FAILED ; then
+    pvs_url="$(detect_url detect)"
+    if test -z "$pvs_url" || test "$pvs_url" = FAILED ; then
+      echo "failed to auto-detect PVS URL"
+      exit 1
+    fi
+    echo "Auto-detected PVS URL: ${pvs_url}"
+  fi
 
   git clone --branch="$branch" . "$tgt"
 
@@ -397,22 +413,11 @@ do_analysis() {
   run_analysis "$tgt"
 }
 
-detect_url() {
-  local url="${1:-detect}"
-  if test "$url" = detect ; then
-    curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
-    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
-  else
-    printf '%s' "$url"
-  fi
-}
-
 main() {
-  local def_pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
   eval "$(
     getopts_long \
       help store_const \
-      pvs 'modify detect_url pvs_url "${def_pvs_url}"' \
+      pvs 'modify detect_url pvs_url' \
       patch store_const \
       only-build 'store_const --only-build' \
       recheck store_const \
@@ -431,7 +436,7 @@ main() {
     return 0
   fi
 
-  set -x
+  # set -x
 
   if test -n "$patch" ; then
     patch_sources "$tgt" "$only_build"

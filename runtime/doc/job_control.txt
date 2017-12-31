@@ -20,6 +20,8 @@ When a job starts it is assigned a number, unique for the life of the current
 Nvim session. Functions like |jobstart()| return job ids. Functions like
 |jobsend()|, |jobstop()|, |rpcnotify()|, and |rpcrequest()| take job ids.
 
+The job's stdio streams are represented as a |channel|. It is possible to send
+and recieve raw bytes, or use |msgpack-rpc|.
 ==============================================================================
 Usage							*job-control-usage*
 
@@ -28,7 +30,7 @@ To control jobs, use the "job…" family of functions: |jobstart()|,
 
 Example: >
 
-    function! s:JobHandler(job_id, data, event) dict
+    function! s:OnEvent(job_id, data, event) dict
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
@@ -40,9 +42,9 @@ Example: >
       call append(line('$'), str)
     endfunction
     let s:callbacks = {
-    \ 'on_stdout': function('s:JobHandler'),
-    \ 'on_stderr': function('s:JobHandler'),
-    \ 'on_exit': function('s:JobHandler')
+    \ 'on_stdout': function('s:OnEvent'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent')
     \ }
     let job1 = jobstart(['bash'], extend({'shell': 'shell 1'}, s:callbacks))
     let job2 = jobstart(['bash', '-c', 'for i in {1..10}; do echo hello $i!; sleep 1; done'], extend({'shell': 'shell 2'}, s:callbacks))
@@ -56,28 +58,16 @@ Description of what happens:
   - The first shell is idle, waiting to read commands from its stdin.
   - The second shell is started with -c which executes the command (a for-loop
     printing 0 through 9) and then exits.
-  - `JobHandler()` callback is passed to |jobstart()| to handle various job
+  - `OnEvent()` callback is passed to |jobstart()| to handle various job
     events. It displays stdout/stderr data received from the shells.
 
-							*on_stdout*
-Arguments passed to on_stdout callback:
-  0: |job-id|
-  1: List of lines read from the stream. If the last item is not "" (empty
-     string), then it is an incomplete line that might be continued at the
-     next on_stdout invocation. See Note 2 below.
-  2: Event type: "stdout"
-							*on_stderr*
-Arguments passed to on_stderr callback:
-  0: |job-id|
-  1: List of lines read from the stream. If the last item is not "" (empty
-     string), then it is an incomplete line that might be continued at the
-     next on_stderr invocation. See Note 2 below.
-  2: Event type: "stderr"
+For |on_stdout| and |on_stderr| see |channel-callback|.
 							*on_exit*
 Arguments passed to on_exit callback:
   0: |job-id|
   1: Exit-code of the process.
   2: Event type: "exit"
+
 
   Note: Buffered stdout/stderr data which has not been flushed by the sender
 	will not trigger the on_stdout/on_stderr callback (but if the process
@@ -137,13 +127,19 @@ The above example could be written in this "object-oriented" style: >
     let instance = Shell.new('bomb',
           \ 'for i in $(seq 9 -1 1); do echo $i 1>&$((i % 2 + 1)); sleep 1; done')
 <
-To send data to the job's stdin, use |jobsend()|: >
-    :call jobsend(job1, "ls\n")
-    :call jobsend(job1, "invalid-command\n")
-    :call jobsend(job1, "exit\n")
+To send data to the job's stdin, use |chansend()|: >
+    :call chansend(job1, "ls\n")
+    :call chansend(job1, "invalid-command\n")
+    :call chansend(job1, "exit\n")
 <
 A job may be killed with |jobstop()|: >
     :call jobstop(job1)
 <
+A job may be killed at any time with the |jobstop()| function:
+>
+    :call jobstop(job1)
+<
+Individual streams can be closed without killing the job, see |chanclose()|.
+
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

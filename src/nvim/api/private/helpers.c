@@ -12,6 +12,7 @@
 #include "nvim/api/private/handle.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -760,12 +761,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     case kObjectTypeWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
-      if (obj.data.integer > VARNUMBER_MAX
-          || obj.data.integer < VARNUMBER_MIN) {
-        api_set_error(err, kErrorTypeValidation, "Integer value outside range");
-        return false;
-      }
-
+      STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
+                    "Integer size must be <= VimL number size");
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = (varnumber_T)obj.data.integer;
       break;
@@ -790,18 +787,16 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = tv_list_item_alloc();
+        typval_T li_tv;
 
-        if (!object_to_vim(item, &li->li_tv, err)) {
-          // cleanup
-          tv_list_item_free(li);
+        if (!object_to_vim(item, &li_tv, err)) {
           tv_list_free(list);
           return false;
         }
 
-        tv_list_append(list, li);
+        tv_list_append_owned_tv(list, li_tv);
       }
-      list->lv_refcount++;
+      tv_list_ref(list);
 
       tv->v_type = VAR_LIST;
       tv->vval.v_list = list;

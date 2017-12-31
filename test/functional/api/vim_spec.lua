@@ -1,5 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local global_helpers = require('test.helpers')
+
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
@@ -9,6 +11,10 @@ local funcs = helpers.funcs
 local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
+
+local intchar2lua = global_helpers.intchar2lua
+local format_string = global_helpers.format_string
+local mergedicts_copy = global_helpers.mergedicts_copy
 
 describe('api', function()
   before_each(clear)
@@ -708,6 +714,199 @@ describe('api', function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
     ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+  end)
+
+  describe('nvim_parse_expression', function()
+    before_each(function()
+      meths.set_option('isident', '')
+    end)
+    local function simplify_east_api_node(line, east_api_node)
+      if east_api_node == NIL then
+        return nil
+      end
+      if east_api_node.children then
+        for k, v in pairs(east_api_node.children) do
+          east_api_node.children[k] = simplify_east_api_node(line, v)
+        end
+      end
+      local typ = east_api_node.type
+      if typ == 'Register' then
+        typ = typ .. ('(name=%s)'):format(
+          tostring(intchar2lua(east_api_node.name)))
+        east_api_node.name = nil
+      elseif typ == 'PlainIdentifier' then
+        typ = typ .. ('(scope=%s,ident=%s)'):format(
+          tostring(intchar2lua(east_api_node.scope)), east_api_node.ident)
+        east_api_node.scope = nil
+        east_api_node.ident = nil
+      elseif typ == 'PlainKey' then
+        typ = typ .. ('(key=%s)'):format(east_api_node.ident)
+        east_api_node.ident = nil
+      elseif typ == 'Comparison' then
+        typ = typ .. ('(type=%s,inv=%u,ccs=%s)'):format(
+          east_api_node.cmp_type, east_api_node.invert and 1 or 0,
+          east_api_node.ccs_strategy)
+        east_api_node.ccs_strategy = nil
+        east_api_node.cmp_type = nil
+        east_api_node.invert = nil
+      elseif typ == 'Integer' then
+        typ = typ .. ('(val=%u)'):format(east_api_node.ivalue)
+        east_api_node.ivalue = nil
+      elseif typ == 'Float' then
+        typ = typ .. format_string('(val=%e)', east_api_node.fvalue)
+        east_api_node.fvalue = nil
+      elseif typ == 'SingleQuotedString' or typ == 'DoubleQuotedString' then
+        typ = format_string('%s(val=%q)', typ, east_api_node.svalue)
+        east_api_node.svalue = nil
+      elseif typ == 'Option' then
+        typ = ('%s(scope=%s,ident=%s)'):format(
+          typ,
+          tostring(intchar2lua(east_api_node.scope)),
+          east_api_node.ident)
+        east_api_node.ident = nil
+        east_api_node.scope = nil
+      elseif typ == 'Environment' then
+        typ = ('%s(ident=%s)'):format(typ, east_api_node.ident)
+        east_api_node.ident = nil
+      elseif typ == 'Assignment' then
+        local aug = east_api_node.augmentation
+        if aug == '' then aug = 'Plain' end
+        typ = ('%s(%s)'):format(typ, aug)
+        east_api_node.augmentation = nil
+      end
+      typ = ('%s:%u:%u:%s'):format(
+        typ, east_api_node.start[1], east_api_node.start[2],
+        line:sub(east_api_node.start[2] + 1,
+                 east_api_node.start[2] + 1 + east_api_node.len - 1))
+      assert(east_api_node.start[2] + east_api_node.len - 1 <= #line)
+      for k, _ in pairs(east_api_node.start) do
+        assert(({true, true})[k])
+      end
+      east_api_node.start = nil
+      east_api_node.type = nil
+      east_api_node.len = nil
+      local can_simplify = true
+      for _, _ in pairs(east_api_node) do
+        if can_simplify then can_simplify = false end
+      end
+      if can_simplify then
+        return typ
+      else
+        east_api_node[1] = typ
+        return east_api_node
+      end
+    end
+    local function simplify_east_api(line, east_api)
+      if east_api.error then
+        east_api.err = east_api.error
+        east_api.error = nil
+        east_api.err.msg = east_api.err.message
+        east_api.err.message = nil
+      end
+      if east_api.ast then
+        east_api.ast = {simplify_east_api_node(line, east_api.ast)}
+        if #east_api.ast == 0 then
+          east_api.ast = nil
+        end
+      end
+      if east_api.len == #line then
+        east_api.len = nil
+      end
+      return east_api
+    end
+    local function simplify_east_hl(line, east_hl)
+      for i, v in ipairs(east_hl) do
+        east_hl[i] = ('%s:%u:%u:%s'):format(
+          v[4],
+          v[1],
+          v[2],
+          line:sub(v[2] + 1, v[3]))
+      end
+      return east_hl
+    end
+    local FLAGS_TO_STR = {
+      [0] = "",
+      [1] = "m",
+      [2] = "E",
+      [3] = "mE",
+      [4] = "l",
+      [5] = "lm",
+      [6] = "lE",
+      [7] = "lmE",
+    }
+    local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs,
+                                  nz_flags_exps)
+      if type(str) ~= 'string' then
+        return
+      end
+      local zflags = opts.flags[1]
+      nz_flags_exps = nz_flags_exps or {}
+      for _, flags in ipairs(opts.flags) do
+        local err, msg = pcall(function()
+          local east_api = meths.parse_expression(str, FLAGS_TO_STR[flags], true)
+          local east_hl = east_api.highlight
+          east_api.highlight = nil
+          local ast = simplify_east_api(str, east_api)
+          local hls = simplify_east_hl(str, east_hl)
+          local exps = {
+            ast = exp_ast,
+            hl_fs = exp_highlighting_fs,
+          }
+          local add_exps = nz_flags_exps[flags]
+          if not add_exps and flags == 3 + zflags then
+            add_exps = nz_flags_exps[1 + zflags] or nz_flags_exps[2 + zflags]
+          end
+          if add_exps then
+            if add_exps.ast then
+              exps.ast = mergedicts_copy(exps.ast, add_exps.ast)
+            end
+            if add_exps.hl_fs then
+              exps.hl_fs = mergedicts_copy(exps.hl_fs, add_exps.hl_fs)
+            end
+          end
+          eq(exps.ast, ast)
+          if exp_highlighting_fs then
+            local exp_highlighting = {}
+            local next_col = 0
+            for i, h in ipairs(exps.hl_fs) do
+              exp_highlighting[i], next_col = h(next_col)
+            end
+            eq(exp_highlighting, hls)
+          end
+        end)
+        if not err then
+          msg = format_string('Error while processing test (%r, %s):\n%s',
+                              str, FLAGS_TO_STR[flags], msg)
+          error(msg)
+        end
+      end
+    end
+    local function hl(group, str, shift)
+      return function(next_col)
+        local col = next_col + (shift or 0)
+        return (('%s:%u:%u:%s'):format(
+          'Nvim' .. group,
+          0,
+          col,
+          str)), (col + #str)
+      end
+    end
+    local function fmtn(typ, args, rest)
+      if (typ == 'UnknownFigure'
+          or typ == 'DictLiteral'
+          or typ == 'CurlyBracesIdentifier'
+          or typ == 'Lambda') then
+        return ('%s%s'):format(typ, rest)
+      elseif typ == 'DoubleQuotedString' or typ == 'SingleQuotedString' then
+        if args:sub(-4) == 'NULL' then
+          args = args:sub(1, -5) .. '""'
+        end
+        return ('%s(%s)%s'):format(typ, args, rest)
+      end
+    end
+    assert:set_parameter('TableFormatLevel', 1000000)
+    require('test.unit.viml.expressions.parser_tests')(
+        it, _check_parsing, hl, fmtn)
   end)
 
 end)

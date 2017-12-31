@@ -201,6 +201,7 @@ _ERROR_CATEGORIES = [
     'runtime/printf',
     'runtime/printf_format',
     'runtime/threadsafe_fn',
+    'runtime/deprecated',
     'syntax/parenthesis',
     'whitespace/alignment',
     'whitespace/blank_line',
@@ -2123,8 +2124,10 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                     + (level_starts[depth][2] == '{')):
                     if depth not in ignore_error_levels:
                         error(filename, linenum, 'whitespace/alignment', 2,
-                              'Inner expression should be aligned '
-                              'as opening brace + 1 (+ 2 in case of {)')
+                              ('Inner expression should be aligned '
+                               'as opening brace + 1 (+ 2 in case of {{). '
+                               'Relevant opening is on line {0!r}').format(
+                                   level_starts[depth][3]))
             prev_line_start = pos
         elif brace == 'e':
             pass
@@ -2141,7 +2144,8 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                     ignore_error_levels.add(depth)
                 line_ended_with_opening = (
                     pos == len(line) - 2 * (line.endswith(' \\')) - 1)
-                level_starts[depth] = (pos, line_ended_with_opening, brace)
+                level_starts[depth] = (pos, line_ended_with_opening, brace,
+                                       linenum)
                 if line_ended_with_opening:
                     depth_line_starts[depth] = (prev_line_start, brace)
             else:
@@ -3200,6 +3204,14 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcat or snprintf instead of %s' % match.group(1))
+    if not Search(r'eval/typval\.[ch]$', filename):
+        match = Search(r'(?:\.|->)'
+                       r'(?:lv_(?:first|last|refcount|len|watch|idx(?:_item)?'
+                                r'|copylist|lock)'
+                          r'|li_(?:next|prev|tv))\b', line)
+        if match:
+            error(filename, linenum, 'runtime/deprecated', 4,
+                  'Accessing list_T internals directly is prohibited')
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

@@ -254,16 +254,17 @@ static void add_buff(buffheader_T *const buf, const char *const s,
     return;
   }
 
-  if (buf->bh_first.b_next == NULL) {   /* first add to list */
+  if (buf->bh_first.b_next == NULL) {  // first add to list
     buf->bh_space = 0;
     buf->bh_curr = &(buf->bh_first);
-  } else if (buf->bh_curr == NULL) {  /* buffer has already been read */
-    EMSG(_("E222: Add to read buffer"));
+  } else if (buf->bh_curr == NULL) {  // buffer has already been read
+    IEMSG(_("E222: Add to read buffer"));
     return;
-  } else if (buf->bh_index != 0)
+  } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
-        buf->bh_first.b_next->b_str + buf->bh_index,
-        STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+            buf->bh_first.b_next->b_str + buf->bh_index,
+            STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+  }
   buf->bh_index = 0;
 
   size_t len;
@@ -1152,14 +1153,16 @@ void alloc_typebuf(void)
  */
 void free_typebuf(void)
 {
-  if (typebuf.tb_buf == typebuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 1");
-  else
+  if (typebuf.tb_buf == typebuf_init) {
+    internal_error("Free typebuf 1");
+  } else {
     xfree(typebuf.tb_buf);
-  if (typebuf.tb_noremap == noremapbuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 2");
-  else
+  }
+  if (typebuf.tb_noremap == noremapbuf_init) {
+    internal_error("Free typebuf 2");
+  } else {
     xfree(typebuf.tb_noremap);
+  }
 }
 
 /*
@@ -3905,7 +3908,7 @@ makemap (
           c1 = 't';
           break;
         default:
-          EMSG(_("E228: makemap: Illegal mode"));
+          IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
         do {            /* do this twice if c2 is set, 3 times with c3 */

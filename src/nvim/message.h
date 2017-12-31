@@ -49,6 +49,15 @@
 /// Like #EMSG, but for messages with one "%" PRIu64 inside
 #define EMSGU(s, n)                 emsgf((const char *) (s), (uint64_t)(n))
 
+/// Like #EMSG, but for internal messages
+#define IEMSG(s)                    iemsg((const char *)(s))
+
+/// Like #EMSG2, but for internal messages
+#define IEMSG2(s, p)                iemsgf((const char *)(s), (p))
+
+/// Like #EMSGN, but for internal messages
+#define IEMSGN(s, n)                iemsgf((const char *)(s), (int64_t)(n))
+
 /// Display message at the recorded position
 #define MSG_PUTS(s)                 msg_puts((const char *)(s))
 

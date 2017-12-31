@@ -114,9 +114,11 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     command("call clearmatches()")
     eq('\nE714: List required', redir_exec("let rf1 = setmatches(0)"))
     eq(-1, eval('rf1'))
-    eq('\nE474: Invalid argument', redir_exec("let rf2 = setmatches([0])"))
+    eq('\nE474: List item 0 is either not a dictionary or an empty one',
+       redir_exec("let rf2 = setmatches([0])"))
     eq(-1, eval('rf2'))
-    eq('\nE474: Invalid argument', redir_exec("let rf3 = setmatches([{'wrong key': 'wrong value'}])"))
+    eq('\nE474: List item 0 is missing one of the required keys',
+       redir_exec("let rf3 = setmatches([{'wrong key': 'wrong value'}])"))
     eq(-1, eval('rf3'))
 
     -- Check that "matchaddpos()" positions matches correctly

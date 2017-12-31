@@ -93,6 +93,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->suspend = remote_ui_suspend;
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
+  ui->option_set = remote_ui_option_set;
   ui->event = remote_ui_event;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
@@ -252,7 +253,7 @@ static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
   if (data->buffer.size > 0) {
-    channel_send_event(data->channel_id, "redraw", data->buffer);
+    rpc_send_event(data->channel_id, "redraw", data->buffer);
     data->buffer = (Array)ARRAY_DICT_INIT;
   }
 }
