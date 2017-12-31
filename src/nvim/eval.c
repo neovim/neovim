@@ -2417,6 +2417,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
         break;
       }
+      assert(lp->ll_li != NULL);
       if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
         // Need to add an empty item.
         tv_list_append_number(lp->ll_list, 0);
