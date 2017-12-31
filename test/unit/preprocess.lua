@@ -6,21 +6,23 @@ local ffi = require("ffi")
 local ccs = {}
 
 local env_cc = os.getenv("CC")
-if env_cc then
-  table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
-end
 
 if ffi.os == "Windows" then
+  table.insert(ccs, {path = {"gcc"}, type = "gcc"})
   table.insert(ccs, {path = {"cl"}, type = "msvc"})
-end
+else
+  if env_cc then
+    table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
+  end
 
-table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
-table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
+  table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
+end
 
 local shell_quote
 
