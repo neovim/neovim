@@ -22,12 +22,23 @@ table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
 table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
 
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
-  else
-    return str
+local shell_quote
+
+if ffi.os == "Windows" then
+  shell_quote = function (str)
+    -- standard argv
+    local escaped = '"'..string.gsub(str, [[(["\])]], [[\%1]])..'"'
+    -- cmd-specific
+    return escaped:gsub('([&|<>()@^%%!"])', '^%1')
+  end
+else
+  local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+  shell_quote = function (str)
+    if string.find(str, quote_me) or str == '' then
+      return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
+    else
+      return str
+    end
   end
 end
 
