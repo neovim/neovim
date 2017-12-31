@@ -144,7 +144,13 @@ before_each(function()
     EOB={bold = true, foreground = Screen.colors.Blue1},
     ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     SK={foreground = Screen.colors.Blue},
-    PE={bold = true, foreground = Screen.colors.SeaGreen4}
+    PE={bold = true, foreground = Screen.colors.SeaGreen4},
+    NUM={foreground = Screen.colors.Blue2},
+    NPAR={foreground = Screen.colors.Yellow},
+    SQ={foreground = Screen.colors.Blue3},
+    SB={foreground = Screen.colors.Blue4},
+    E={foreground = Screen.colors.Red, background = Screen.colors.Blue},
+    M={bold = true},
   })
 end)
 
@@ -863,7 +869,10 @@ describe('Ex commands coloring support', function()
 end)
 describe('Expressions coloring support', function()
   it('works', function()
-    meths.set_var('Nvim_color_expr', 'RainBowParens')
+    meths.command('hi clear NvimNumber')
+    meths.command('hi clear NvimNestingParenthesis')
+    meths.command('hi NvimNumber guifg=Blue2')
+    meths.command('hi NvimNestingParenthesis guifg=Yellow')
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
@@ -873,21 +882,103 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      ={RBP1:(}{RBP2:(}{RBP3:(}1{RBP3:)}{RBP2:)}{RBP1:)}^                                |
+      ={NPAR:(((}{NUM:1}{NPAR:)))}^                                |
     ]])
   end)
-  it('errors out when failing to get callback', function()
+  it('does not use Nvim_color_expr', function()
     meths.set_var('Nvim_color_expr', 42)
+    -- Used to error out due to failing to get callback.
+    meths.command('hi clear NvimNumber')
+    meths.command('hi NvimNumber guifg=Blue2')
     feed(':<C-r>=1')
     screen:expect([[
+                                              |
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      =                                       |
-      {ERR:E5409: Unable to get g:Nvim_color_expr c}|
-      {ERR:allback: Vim:E6000: Argument is not a fu}|
-      {ERR:nction or function name}                 |
-      =1^                                      |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={NUM:1}^                                      |
+    ]])
+  end)
+  it('works correctly with non-ASCII and control characters', function()
+    meths.command('hi clear NvimStringBody')
+    meths.command('hi clear NvimStringQuote')
+    meths.command('hi clear NvimInvalid')
+    meths.command('hi NvimStringQuote guifg=Blue3')
+    meths.command('hi NvimStringBody guifg=Blue4')
+    meths.command('hi NvimInvalid guifg=Red guibg=Blue')
+    feed('i<C-r>="«»"«»')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={SQ:"}{SB:«»}{SQ:"}{E:«»}^                                 |
+    ]])
+    feed('<C-c>')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {M:-- INSERT --}                            |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    feed(':<C-\\>e"<C-v><C-x>"<C-v><C-x>')
+    -- TODO(ZyX-I): Parser highlighting should not override special character
+    --              highlighting.
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={SQ:"}{SB:^X}{SQ:"}{ERR:^X}^                                 |
+    ]])
+    feed('<C-c>')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :^                                       |
+    ]])
+    funcs.setreg('a', {'\192'})
+    feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
+    -- TODO(ZyX-I): Parser highlighting should not override special character
+    --              highlighting.
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={SQ:"}{SB:<c0>}{SQ:"}{E:<c0>"}{SB:foo}{E:"}^                        |
     ]])
   end)
 end)

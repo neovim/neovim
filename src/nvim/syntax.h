@@ -45,6 +45,9 @@ typedef struct {
 } color_name_table_T;
 extern color_name_table_T color_name_table[];
 
+/// Array of highlight definitions, used for unit testing
+extern const char *const highlight_init_cmdline[];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.h.generated.h"
 #endif

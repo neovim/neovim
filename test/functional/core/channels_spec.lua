@@ -246,6 +246,22 @@ describe('channels', function()
     eq({"notification", "exit", {id, 0, {'10 PRINT "NVIM"',
                                          '20 GOTO 10', ''}}}, next_msg())
 
+    -- if dict is reused the new value is not stored,
+    -- but nvim also does not crash
+    command("let id = jobstart(['cat'], g:job_opts)")
+    id = eval("g:id")
+
+    command([[call chansend(id, "cat text\n")]])
+    sleep(10)
+    command("call chanclose(id, 'stdin')")
+
+    -- old value was not overwritten
+    eq({"notification", "exit", {id, 0, {'10 PRINT "NVIM"',
+                                         '20 GOTO 10', ''}}}, next_msg())
+
+    -- and an error was thrown.
+    eq("E5210: dict key 'stdout' already set for buffered stream in channel "..id, eval('v:errmsg'))
+
     -- reset dictionary
     source([[
       let g:job_opts = {
@@ -261,6 +277,5 @@ describe('channels', function()
 
     -- works correctly with no output
     eq({"notification", "exit", {id, 1, {''}}}, next_msg())
-
   end)
 end)

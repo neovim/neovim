@@ -174,7 +174,7 @@ function! s:check_terminal() abort
         \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
   endif
   for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
-    if !exists('$'.env_var)
+    if exists('$'.env_var)
       call health#report_info(printf("$%s='%s'", env_var, eval('$'.env_var)))
     endif
   endfor

@@ -11,11 +11,11 @@ let g:loaded_python3_provider = 1
 
 let [s:prog, s:err] = provider#pythonx#Detect(3)
 
-function! provider#python3#Prog()
+function! provider#python3#Prog() abort
   return s:prog
 endfunction
 
-function! provider#python3#Error()
+function! provider#python3#Error() abort
   return s:err
 endfunction
 
@@ -29,7 +29,7 @@ endif
 call remote#host#RegisterClone('legacy-python3-provider', 'python3')
 call remote#host#RegisterPlugin('legacy-python3-provider', 'script_host.py', [])
 
-function! provider#python3#Call(method, args)
+function! provider#python3#Call(method, args) abort
   if s:err != ''
     return
   endif

@@ -74,7 +74,9 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
+#include "nvim/os/lang.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -247,6 +249,7 @@ typedef struct vimoption {
 
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
+#define P_UI_OPTION    0x40000000U  ///< send option to remote ui
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -784,6 +787,8 @@ void set_init_1(void)
 
   didset_options2();
 
+  lang_init();
+
   // enc_locale() will try to find the encoding of the current locale.
   // This will be used when 'default' is used as encoding specifier
   // in 'fileencodings'
@@ -1185,6 +1190,7 @@ do_set (
         set_options_default(OPT_FREE | opt_flags);
         didset_options();
         didset_options2();
+        ui_refresh_options();
         redraw_all_later(CLEAR);
       } else {
         showoptions(1, opt_flags);
@@ -1812,6 +1818,10 @@ do_set (
                              NULL, false, NULL);
               reset_v_option_vars();
               xfree(saved_origval);
+              if (options[opt_idx].flags & P_UI_OPTION) {
+                ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                                   STRING_OBJ(cstr_as_string(*(char **)varp)));
+              }
             }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
@@ -2207,6 +2217,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_lw);
   check_string_option(&buf->b_p_bkc);
+  check_string_option(&buf->b_p_menc);
 }
 
 /*
@@ -2248,7 +2259,7 @@ int was_set_insecurely(char_u *opt, int opt_flags)
     uint32_t *flagp = insecure_flag(idx, opt_flags);
     return (*flagp & P_INSECURE) != 0;
   }
-  EMSG2(_(e_intern2), "was_set_insecurely()");
+  internal_error("was_set_insecurely()");
   return -1;
 }
 
@@ -2307,8 +2318,8 @@ set_string_option_direct (
   if (idx == -1) {  // Use name.
     idx = findoption((const char *)name);
     if (idx < 0) {  // Not found (should not happen).
-      EMSG2(_(e_intern2), "set_string_option_direct()");
-      EMSG2(_("For option %s"), name);
+      internal_error("set_string_option_direct()");
+      IEMSG2(_("For option %s"), name);
       return;
     }
   }
@@ -2414,6 +2425,10 @@ static char *set_string_option(const int opt_idx, const char *const value,
                    NULL, false, NULL);
     reset_v_option_vars();
     xfree(saved_oldval);
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         STRING_OBJ(cstr_as_string((char *)(*varp))));
+    }
   }
 
   return r;
@@ -2621,8 +2636,8 @@ did_set_string_option (
   else if (varp == &p_ei) {
     if (check_ei() == FAIL)
       errmsg = e_invarg;
-  /* 'encoding' and 'fileencoding' */
-  } else if (varp == &p_enc || gvarp == &p_fenc) {
+  // 'encoding', 'fileencoding' and 'makeencoding'
+  } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
     if (gvarp == &p_fenc) {
       if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL) {
         errmsg = e_modifiable;
@@ -4021,6 +4036,10 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         BOOLEAN_OBJ(value));
+    }
   }
 
   comp_col();                       /* in case 'ruler' or 'showcmd' changed */
@@ -4426,6 +4445,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         INTEGER_OBJ(value));
+    }
   }
 
   comp_col();                       /* in case 'columns' or 'ls' changed */
@@ -4906,15 +4929,14 @@ showoptions (
 
   vimoption_T **items = xmalloc(sizeof(vimoption_T *) * PARAM_COUNT);
 
-  /* Highlight title */
-  if (all == 2)
-    MSG_PUTS_TITLE(_("\n--- Terminal codes ---"));
-  else if (opt_flags & OPT_GLOBAL)
+  // Highlight title
+  if (opt_flags & OPT_GLOBAL) {
     MSG_PUTS_TITLE(_("\n--- Global option values ---"));
-  else if (opt_flags & OPT_LOCAL)
+  } else if (opt_flags & OPT_LOCAL) {
     MSG_PUTS_TITLE(_("\n--- Local option values ---"));
-  else
+  } else {
     MSG_PUTS_TITLE(_("\n--- Options ---"));
+  }
 
   /*
    * do the loop two times:
@@ -4995,6 +5017,29 @@ static int optval_default(vimoption_T *p, char_u *varp)
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
+}
+
+/// Send update to UIs with values of UI relevant options
+void ui_refresh_options(void)
+{
+  for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    uint32_t flags = options[opt_idx].flags;
+    if (!(flags & P_UI_OPTION)) {
+      continue;
+    }
+    String name = cstr_as_string(options[opt_idx].fullname);
+    void *varp = options[opt_idx].var;
+    Object value = OBJECT_INIT;
+    if (flags & P_BOOL) {
+      value = BOOLEAN_OBJ(*(int *)varp);
+    } else if (flags & P_NUM) {
+      value = INTEGER_OBJ(*(long *)varp);
+    } else if (flags & P_STRING) {
+      // cstr_as_string handles NULL string
+      value = STRING_OBJ(cstr_as_string(*(char **)varp));
+    }
+    ui_call_option_set(name, value);
+  }
 }
 
 /*
@@ -5356,6 +5401,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_LW:
       clear_string_option(&buf->b_p_lw);
       break;
+    case PV_MENC:
+      clear_string_option(&buf->b_p_menc);
+      break;
   }
 }
 
@@ -5389,6 +5437,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
     case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
+    case PV_MENC: return (char_u *)&(curbuf->b_p_menc);
     }
     return NULL;     /* "cannot happen" */
   }
@@ -5444,6 +5493,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_ul) : p->var;
   case PV_LW:   return *curbuf->b_p_lw != NUL
            ? (char_u *)&(curbuf->b_p_lw) : p->var;
+  case PV_MENC: return *curbuf->b_p_menc != NUL
+           ? (char_u *)&(curbuf->b_p_menc) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -5540,7 +5591,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
-  default:        EMSG(_("E356: get_varp ERROR"));
+  default:        IEMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
   return (char_u *)&(curbuf->b_p_wm);
@@ -5841,6 +5892,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_qe = vim_strsave(p_qe);
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
+      buf->b_p_menc = empty_option;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,

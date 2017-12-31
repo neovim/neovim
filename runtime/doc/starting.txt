@@ -249,14 +249,14 @@ argument.
 		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
-			vim -V8 foobar
+			nvim -V8
 
 -V[N]{filename}
-		Like -V and set 'verbosefile' to {filename}.  The result is
-		that messages are not displayed but written to the file
-		{filename}.  {filename} must not start with a digit.
+		Like -V and set 'verbosefile' to {filename}.  Messages are not
+		displayed; instead they are written to the file {filename}.
+		{filename} must not start with a digit.
 		Example: >
-			vim -V20vimlog foobar
+			nvim -V20vimlog
 <
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first

@@ -4619,7 +4619,8 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "/\\(\\)", "/\\%(\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-                             "[count]", "[quotex]", "[range]",
+                             "[count]", "[quotex]",
+                             "[range]", ":[range]",
                              "[pattern]", "\\|", "\\%$",
                              "s/\\~", "s/\\U", "s/\\L",
                              "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
@@ -4628,7 +4629,8 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-                             "\\[count]", "\\[quotex]", "\\[range]",
+                             "\\[count]", "\\[quotex]",
+                             "\\[range]", ":\\[range]",
                              "\\[pattern]", "\\\\bar", "/\\\\%\\$",
                              "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
                              "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
@@ -6334,7 +6336,6 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 void ex_oldfiles(exarg_T *eap)
 {
   list_T      *l = get_vim_var_list(VV_OLDFILES);
-  listitem_T  *li;
   long nr = 0;
 
   if (l == NULL) {
@@ -6342,19 +6343,22 @@ void ex_oldfiles(exarg_T *eap)
   } else {
     msg_start();
     msg_scroll = true;
-    for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
+    TV_LIST_ITER(l, li, {
+      if (got_int) {
+        break;
+      }
       nr++;
-      const char *fname = tv_get_string(&li->li_tv);
+      const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
       if (!message_filtered((char_u *)fname)) {
         msg_outnum(nr);
         MSG_PUTS(": ");
-        msg_outtrans((char_u *)tv_get_string(&li->li_tv));
+        msg_outtrans((char_u *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');
         ui_flush();                  // output one line at a time
         os_breakcheck();
       }
-    }
+    });
 
     // Assume "got_int" was set to truncate the listing.
     got_int = false;
@@ -6364,7 +6368,7 @@ void ex_oldfiles(exarg_T *eap)
       quit_more = false;
       nr = prompt_for_number(false);
       msg_starthere();
-      if (nr > 0 && nr <= l->lv_len) {
+      if (nr > 0 && nr <= tv_list_len(l)) {
         const char *const p = tv_list_find_str(l, nr - 1);
         if (p == NULL) {
           return;

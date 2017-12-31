@@ -36,6 +36,7 @@ local redraw_flags={
   all_windows='P_RALL',
   everything='P_RCLR',
   curswant='P_CURSWANT',
+  ui_option='P_UI_OPTION',
 }
 
 local list_flags={

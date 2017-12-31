@@ -251,11 +251,100 @@ local function which(exe)
 end
 
 local function shallowcopy(orig)
+  if type(orig) ~= 'table' then
+    return orig
+  end
   local copy = {}
   for orig_key, orig_value in pairs(orig) do
     copy[orig_key] = orig_value
   end
   return copy
+end
+
+local deepcopy
+
+local function id(v)
+  return v
+end
+
+local deepcopy_funcs = {
+  table = function(orig)
+    local copy = {}
+    for k, v in pairs(orig) do
+      copy[deepcopy(k)] = deepcopy(v)
+    end
+    return copy
+  end,
+  number = id,
+  string = id,
+  ['nil'] = id,
+  boolean = id,
+}
+
+deepcopy = function(orig)
+  return deepcopy_funcs[type(orig)](orig)
+end
+
+local REMOVE_THIS = {}
+
+local function mergedicts_copy(d1, d2)
+  local ret = shallowcopy(d1)
+  for k, v in pairs(d2) do
+    if d2[k] == REMOVE_THIS then
+      ret[k] = nil
+    elseif type(d1[k]) == 'table' and type(v) == 'table' then
+      ret[k] = mergedicts_copy(d1[k], v)
+    else
+      ret[k] = v
+    end
+  end
+  return ret
+end
+
+-- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
+--
+-- Note: does not do copies of d2 values used.
+local function dictdiff(d1, d2)
+  local ret = {}
+  local hasdiff = false
+  for k, v in pairs(d1) do
+    if d2[k] == nil then
+      hasdiff = true
+      ret[k] = REMOVE_THIS
+    elseif type(v) == type(d2[k]) then
+      if type(v) == 'table' then
+        local subdiff = dictdiff(v, d2[k])
+        if subdiff ~= nil then
+          hasdiff = true
+          ret[k] = subdiff
+        end
+      elseif v ~= d2[k] then
+        ret[k] = d2[k]
+        hasdiff = true
+      end
+    else
+      ret[k] = d2[k]
+      hasdiff = true
+    end
+  end
+  for k, v in pairs(d2) do
+    if d1[k] == nil then
+      ret[k] = shallowcopy(v)
+      hasdiff = true
+    end
+  end
+  if hasdiff then
+    return ret
+  else
+    return nil
+  end
+end
+
+local function updated(d, d2)
+  for k, v in pairs(d2) do
+    d[k] = v
+  end
+  return d
 end
 
 local function concat_tables(...)
@@ -294,6 +383,152 @@ local function dedent(str, leave_indent)
   return str
 end
 
+local function format_float(v)
+  -- On windows exponent appears to have three digits and not two
+  local ret = ('%.6e'):format(v)
+  local l, f, es, e = ret:match('^(%-?%d)%.(%d+)e([+%-])0*(%d%d+)$')
+  return l .. '.' .. f .. 'e' .. es .. e
+end
+
+local SUBTBL = {
+  '\\000', '\\001', '\\002', '\\003', '\\004',
+  '\\005', '\\006', '\\007', '\\008', '\\t',
+  '\\n',   '\\011', '\\012', '\\r',   '\\014',
+  '\\015', '\\016', '\\017', '\\018', '\\019',
+  '\\020', '\\021', '\\022', '\\023', '\\024',
+  '\\025', '\\026', '\\027', '\\028', '\\029',
+  '\\030', '\\031',
+}
+
+local format_luav
+
+format_luav = function(v, indent, opts)
+  opts = opts or {}
+  local linesep = '\n'
+  local next_indent_arg = nil
+  local indent_shift = opts.indent_shift or '  '
+  local next_indent
+  local nl = '\n'
+  if indent == nil then
+    indent = ''
+    linesep = ''
+    next_indent = ''
+    nl = ' '
+  else
+    next_indent_arg = indent .. indent_shift
+    next_indent = indent .. indent_shift
+  end
+  local ret = ''
+  if type(v) == 'string' then
+    if opts.literal_strings then
+      ret = v
+    else
+      ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub(
+        '[%z\1-\31]', function(match)
+          return SUBTBL[match:byte() + 1]
+        end)
+      ret = '\'' .. ret .. '\''
+    end
+  elseif type(v) == 'table' then
+    if v == REMOVE_THIS then
+      ret = 'REMOVE_THIS'
+    else
+      local processed_keys = {}
+      ret = '{' .. linesep
+      local non_empty = false
+      for i, subv in ipairs(v) do
+        ret = ('%s%s%s,%s'):format(ret, next_indent,
+                                   format_luav(subv, next_indent_arg, opts), nl)
+        processed_keys[i] = true
+        non_empty = true
+      end
+      for k, subv in pairs(v) do
+        if not processed_keys[k] then
+          if type(k) == 'string' and k:match('^[a-zA-Z_][a-zA-Z0-9_]*$') then
+            ret = ret .. next_indent .. k .. ' = '
+          else
+            ret = ('%s%s[%s] = '):format(ret, next_indent,
+                                         format_luav(k, nil, opts))
+          end
+          ret = ret .. format_luav(subv, next_indent_arg, opts) .. ',' .. nl
+          non_empty = true
+        end
+      end
+      if nl == ' ' and non_empty then
+        ret = ret:sub(1, -3)
+      end
+      ret = ret  .. indent .. '}'
+    end
+  elseif type(v) == 'number' then
+    if v % 1 == 0 then
+      ret = ('%d'):format(v)
+    else
+      ret = format_float(v)
+    end
+  elseif type(v) == 'nil' then
+    ret = 'nil'
+  else
+    print(type(v))
+    -- Not implemented yet
+    assert(false)
+  end
+  return ret
+end
+
+local function format_string(fmt, ...)
+  local i = 0
+  local args = {...}
+  local function getarg()
+    i = i + 1
+    return args[i]
+  end
+  local ret = fmt:gsub('%%[0-9*]*%.?[0-9*]*[cdEefgGiouXxqsr%%]', function(match)
+    local subfmt = match:gsub('%*', function()
+      return tostring(getarg())
+    end)
+    local arg = nil
+    if subfmt:sub(-1) ~= '%' then
+      arg = getarg()
+    end
+    if subfmt:sub(-1) == 'r' then
+      -- %r is like %q, but it is supposed to single-quote strings and not
+      -- double-quote them, and also work not only for strings.
+      subfmt = subfmt:sub(1, -2) .. 's'
+      arg = format_luav(arg)
+    end
+    if subfmt == '%e' then
+      return format_float(arg)
+    else
+      return subfmt:format(arg)
+    end
+  end)
+  return ret
+end
+
+local function intchar2lua(ch)
+  ch = tonumber(ch)
+  return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
+end
+
+local fixtbl_metatable = {
+  __newindex = function()
+    assert(false)
+  end,
+}
+
+local function fixtbl(tbl)
+  return setmetatable(tbl, fixtbl_metatable)
+end
+
+local function fixtbl_rec(tbl)
+  for _, v in pairs(tbl) do
+    if type(v) == 'table' then
+      fixtbl_rec(v)
+    end
+  end
+  return fixtbl(tbl)
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -308,6 +543,16 @@ return {
   hasenv = hasenv,
   which = which,
   shallowcopy = shallowcopy,
+  deepcopy = deepcopy,
+  mergedicts_copy = mergedicts_copy,
+  dictdiff = dictdiff,
+  REMOVE_THIS = REMOVE_THIS,
   concat_tables = concat_tables,
   dedent = dedent,
+  format_luav = format_luav,
+  format_string = format_string,
+  intchar2lua = intchar2lua,
+  updated = updated,
+  fixtbl = fixtbl,
+  fixtbl_rec = fixtbl_rec,
 }

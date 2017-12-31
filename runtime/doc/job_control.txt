@@ -30,7 +30,7 @@ To control jobs, use the "job…" family of functions: |jobstart()|,
 
 Example: >
 
-    function! s:JobHandler(job_id, data, event) dict
+    function! s:OnEvent(job_id, data, event) dict
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
@@ -58,7 +58,7 @@ Description of what happens:
   - The first shell is idle, waiting to read commands from its stdin.
   - The second shell is started with -c which executes the command (a for-loop
     printing 0 through 9) and then exits.
-  - `JobHandler()` callback is passed to |jobstart()| to handle various job
+  - `OnEvent()` callback is passed to |jobstart()| to handle various job
     events. It displays stdout/stderr data received from the shells.
 
 For |on_stdout| and |on_stderr| see |channel-callback|.
