@@ -251,10 +251,11 @@ local Msvc = {
   get_declarations_extra_flags = {'/nologo'},
 }
 
--- Like Gcc:define but ignore args parameter
--- cl.exe does not support function-like macros
 function Msvc:define(name, args, val)
   local define = '/D' .. name
+  if args ~= nil then
+    error("cl.exe does not support function-like macros")
+  end
   if val ~= nil then
     define = define .. '=' .. val
   end
