@@ -57,7 +57,7 @@ bin\nvim --version || goto :error
 
 :: Unit tests
 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %VS_ARCH%
-mingw32-make unittest VERBOSE=1
+mingw32-make unittest VERBOSE=1 || goto :error
 
 :: Functional tests
 mingw32-make functionaltest VERBOSE=1 || goto :error
