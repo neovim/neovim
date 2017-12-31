@@ -650,8 +650,6 @@ local function itp_child(wr, func)
     collectgarbage('stop')
     child_sethook(wr)
     err, emsg = pcall(func)
-    collectgarbage('restart')
-    collectgarbage()
     debug.sethook()
   end
   emsg = tostring(emsg)
@@ -662,14 +660,15 @@ local function itp_child(wr, func)
     end
     sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
     deinit()
-    sc.close(wr)
-    sc.exit(1)
   else
     sc.write(wr, '+\n')
     deinit()
-    sc.close(wr)
-    sc.exit(0)
   end
+  collectgarbage('restart')
+  collectgarbage()
+  sc.write(wr, '$\n')
+  sc.close(wr)
+  sc.exit(err and 0 or 1)
 end
 
 local function check_child_err(rd)
@@ -690,44 +689,48 @@ local function check_child_err(rd)
       break
     end
     trace[#trace + 1] = traceline
-    table.remove(trace, maxtrace + 1)
+    if #trace > maxtrace then
+      table.remove(trace, 1)
+    end
   end
   local res = sc.read(rd, 2)
-  if #res ~= 2 then
-    local error
-    if #trace == 0 then
-      error = '\nTest crashed, no trace available\n'
-    else
-      error = '\nTest crashed, trace:\n' .. tracehelp
-      for i = 1, #trace do
-        error = error .. trace[i]
+  if #res == 2 then
+    local err = ''
+    if res ~= '+\n' then
+      eq('-\n', res)
+      local len_s = sc.read(rd, 5)
+      local len = tonumber(len_s)
+      neq(0, len)
+      if os.getenv('NVIM_TEST_TRACE_ON_ERROR') == '1' and #trace ~= 0 then
+        err = '\nTest failed, trace:\n' .. tracehelp
+        for _, traceline in ipairs(trace) do
+          err = err .. traceline
+        end
+      end
+      err = err .. sc.read(rd, len + 1)
+    end
+    local eres = sc.read(rd, 2)
+    if eres ~= '$\n' then
+      if #trace == 0 then
+        err = '\nTest crashed, no trace available\n'
+      else
+        err = '\nTest crashed, trace:\n' .. tracehelp
+        for i = 1, #trace do
+          err = err .. trace[i]
+        end
+      end
+      if not did_traceline then
+        err = err .. '\nNo end of trace occurred'
+      end
+      local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
+      if not cc_err then
+        err = err .. '\ncheck_cores failed: ' .. cc_emsg
       end
     end
-    if not did_traceline then
-      error = error .. '\nNo end of trace occurred'
-    end
-    local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
-    if not cc_err then
-      error = error .. '\ncheck_cores failed: ' .. cc_emsg
-    end
-    assert.just_fail(error)
-  end
-  if res == '+\n' then
-    return
-  end
-  eq('-\n', res)
-  local len_s = sc.read(rd, 5)
-  local len = tonumber(len_s)
-  neq(0, len)
-  local err = ''
-  if os.getenv('NVIM_TEST_TRACE_ON_ERROR') == '1' and #trace ~= 0 then
-    err = '\nTest failed, trace:\n' .. tracehelp
-    for _, traceline in ipairs(trace) do
-      err = err .. traceline
+    if err ~= '' then
+      assert.just_fail(err)
     end
   end
-  err = err .. sc.read(rd, len + 1)
-  assert.just_fail(err)
 end
 
 local function itp_parent(rd, pid, allow_failure)

@@ -787,18 +787,16 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = tv_list_item_alloc();
+        typval_T li_tv;
 
-        if (!object_to_vim(item, &li->li_tv, err)) {
-          // cleanup
-          tv_list_item_free(li);
+        if (!object_to_vim(item, &li_tv, err)) {
           tv_list_free(list);
           return false;
         }
 
-        tv_list_append(list, li);
+        tv_list_append_owned_tv(list, li_tv);
       }
-      list->lv_refcount++;
+      tv_list_ref(list);
 
       tv->v_type = VAR_LIST;
       tv->vval.v_list = list;

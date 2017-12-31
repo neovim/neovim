@@ -355,14 +355,14 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       break;
     }
     case VAR_LIST: {
-      if (tv->vval.v_list == NULL || tv->vval.v_list->lv_len == 0) {
+      if (tv->vval.v_list == NULL || tv_list_len(tv->vval.v_list) == 0) {
         TYPVAL_ENCODE_CONV_EMPTY_LIST(tv);
         break;
       }
-      const int saved_copyID = tv->vval.v_list->lv_copyID;
+      const int saved_copyID = tv_list_copyid(tv->vval.v_list);
       _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, copyID,
                                              kMPConvList);
-      TYPVAL_ENCODE_CONV_LIST_START(tv, tv->vval.v_list->lv_len);
+      TYPVAL_ENCODE_CONV_LIST_START(tv, tv_list_len(tv->vval.v_list));
       assert(saved_copyID != copyID && saved_copyID != copyID - 1);
       _mp_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvList,
@@ -371,7 +371,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         .data = {
           .l = {
             .list = tv->vval.v_list,
-            .li = tv->vval.v_list->lv_first,
+            .li = tv_list_first(tv->vval.v_list),
           },
         },
       }));
@@ -440,23 +440,43 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             // bits is not checked), other unsigned and have at most 31
             // non-zero bits (number of bits is not checked).
             if (val_di->di_tv.v_type != VAR_LIST
-                || (val_list = val_di->di_tv.vval.v_list) == NULL
-                || val_list->lv_len != 4
-                || val_list->lv_first->li_tv.v_type != VAR_NUMBER
-                || (sign = val_list->lv_first->li_tv.vval.v_number) == 0
-                || val_list->lv_first->li_next->li_tv.v_type != VAR_NUMBER
-                || (highest_bits =
-                    val_list->lv_first->li_next->li_tv.vval.v_number) < 0
-                || val_list->lv_last->li_prev->li_tv.v_type != VAR_NUMBER
-                || (high_bits =
-                    val_list->lv_last->li_prev->li_tv.vval.v_number) < 0
-                || val_list->lv_last->li_tv.v_type != VAR_NUMBER
-                || (low_bits = val_list->lv_last->li_tv.vval.v_number) < 0) {
+                || tv_list_len(val_list = val_di->di_tv.vval.v_list) != 4) {
               goto _convert_one_value_regular_dict;
             }
-            uint64_t number = ((uint64_t)(((uint64_t)highest_bits) << 62)
-                               | (uint64_t)(((uint64_t)high_bits) << 31)
-                               | (uint64_t)low_bits);
+
+            const listitem_T *const sign_li = tv_list_first(val_list);
+            if (TV_LIST_ITEM_TV(sign_li)->v_type != VAR_NUMBER
+                || (sign = TV_LIST_ITEM_TV(sign_li)->vval.v_number) == 0) {
+              goto _convert_one_value_regular_dict;
+            }
+
+            const listitem_T *const highest_bits_li = (
+                TV_LIST_ITEM_NEXT(val_list, sign_li));
+            if (TV_LIST_ITEM_TV(highest_bits_li)->v_type != VAR_NUMBER
+                || ((highest_bits
+                     = TV_LIST_ITEM_TV(highest_bits_li)->vval.v_number)
+                    < 0)) {
+              goto _convert_one_value_regular_dict;
+            }
+
+            const listitem_T *const high_bits_li =  (
+                TV_LIST_ITEM_NEXT(val_list, highest_bits_li));
+            if (TV_LIST_ITEM_TV(high_bits_li)->v_type != VAR_NUMBER
+                || ((high_bits = TV_LIST_ITEM_TV(high_bits_li)->vval.v_number)
+                    < 0)) {
+              goto _convert_one_value_regular_dict;
+            }
+
+            const listitem_T *const low_bits_li = tv_list_last(val_list);
+            if (TV_LIST_ITEM_TV(low_bits_li)->v_type != VAR_NUMBER
+                || ((low_bits = TV_LIST_ITEM_TV(low_bits_li)->vval.v_number)
+                    < 0)) {
+              goto _convert_one_value_regular_dict;
+            }
+
+            const uint64_t number = ((uint64_t)(((uint64_t)highest_bits) << 62)
+                                     | (uint64_t)(((uint64_t)high_bits) << 31)
+                                     | (uint64_t)low_bits);
             if (sign > 0) {
               TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, number);
             } else {
@@ -495,12 +515,12 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             if (val_di->di_tv.v_type != VAR_LIST) {
               goto _convert_one_value_regular_dict;
             }
-            const int saved_copyID = val_di->di_tv.vval.v_list->lv_copyID;
+            const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
             _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list,
                                                    lv_copyID, copyID,
                                                    kMPConvList);
-            TYPVAL_ENCODE_CONV_LIST_START(tv,
-                                          val_di->di_tv.vval.v_list->lv_len);
+            TYPVAL_ENCODE_CONV_LIST_START(
+                tv, tv_list_len(val_di->di_tv.vval.v_list));
             assert(saved_copyID != copyID && saved_copyID != copyID - 1);
             _mp_push(*mpstack, ((MPConvStackVal) {
               .tv = tv,
@@ -509,7 +529,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
               .data = {
                 .l = {
                   .list = val_di->di_tv.vval.v_list,
-                  .li = val_di->di_tv.vval.v_list->lv_first,
+                  .li = tv_list_first(val_di->di_tv.vval.v_list),
                 },
               },
             }));
@@ -520,22 +540,21 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
               goto _convert_one_value_regular_dict;
             }
             list_T *const val_list = val_di->di_tv.vval.v_list;
-            if (val_list == NULL || val_list->lv_len == 0) {
+            if (val_list == NULL || tv_list_len(val_list) == 0) {
               TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, TYPVAL_ENCODE_NODICT_VAR);
               break;
             }
-            for (const listitem_T *li = val_list->lv_first; li != NULL;
-                 li = li->li_next) {
-              if (li->li_tv.v_type != VAR_LIST
-                  || li->li_tv.vval.v_list->lv_len != 2) {
+            TV_LIST_ITER_CONST(val_list, li, {
+              if (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
+                  || tv_list_len(TV_LIST_ITEM_TV(li)->vval.v_list) != 2) {
                 goto _convert_one_value_regular_dict;
               }
-            }
-            const int saved_copyID = val_di->di_tv.vval.v_list->lv_copyID;
+            });
+            const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
             _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_list, lv_copyID, copyID,
                                                    kMPConvPairs);
             TYPVAL_ENCODE_CONV_DICT_START(tv, TYPVAL_ENCODE_NODICT_VAR,
-                                          val_list->lv_len);
+                                          tv_list_len(val_list));
             assert(saved_copyID != copyID && saved_copyID != copyID - 1);
             _mp_push(*mpstack, ((MPConvStackVal) {
               .tv = tv,
@@ -544,7 +563,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
               .data = {
                 .l = {
                   .list = val_list,
-                  .li = val_list->lv_first,
+                  .li = tv_list_first(val_list),
                 },
               },
             }));
@@ -554,18 +573,23 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             const list_T *val_list;
             varnumber_T type;
             if (val_di->di_tv.v_type != VAR_LIST
-                || (val_list = val_di->di_tv.vval.v_list) == NULL
-                || val_list->lv_len != 2
-                || (val_list->lv_first->li_tv.v_type != VAR_NUMBER)
-                || (type = val_list->lv_first->li_tv.vval.v_number) > INT8_MAX
+                || tv_list_len((val_list = val_di->di_tv.vval.v_list)) != 2
+                || (TV_LIST_ITEM_TV(tv_list_first(val_list))->v_type
+                    != VAR_NUMBER)
+                || ((type
+                     = TV_LIST_ITEM_TV(tv_list_first(val_list))->vval.v_number)
+                    > INT8_MAX)
                 || type < INT8_MIN
-                || (val_list->lv_last->li_tv.v_type != VAR_LIST)) {
+                || (TV_LIST_ITEM_TV(tv_list_last(val_list))->v_type
+                    != VAR_LIST)) {
               goto _convert_one_value_regular_dict;
             }
             size_t len;
             char *buf;
-            if (!encode_vim_list_to_buf(val_list->lv_last->li_tv.vval.v_list,
-                                        &len, &buf)) {
+            if (!(
+                encode_vim_list_to_buf(
+                    TV_LIST_ITEM_TV(tv_list_last(val_list))->vval.v_list, &len,
+                    &buf))) {
               goto _convert_one_value_regular_dict;
             }
             TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type);
@@ -671,40 +695,45 @@ typval_encode_stop_converting_one_item:
       case kMPConvList: {
         if (cur_mpsv->data.l.li == NULL) {
           (void)_mp_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = cur_mpsv->saved_copyID;
+          tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_LIST_END(cur_mpsv->tv);
           continue;
-        } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) {
+        } else if (cur_mpsv->data.l.li
+                   != tv_list_first(cur_mpsv->data.l.list)) {
           TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(cur_mpsv->tv);
         }
-        tv = &cur_mpsv->data.l.li->li_tv;
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
+        tv = TV_LIST_ITEM_TV(cur_mpsv->data.l.li);
+        cur_mpsv->data.l.li = TV_LIST_ITEM_NEXT(cur_mpsv->data.l.list,
+                                                cur_mpsv->data.l.li);
         break;
       }
       case kMPConvPairs: {
         if (cur_mpsv->data.l.li == NULL) {
           (void)_mp_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = cur_mpsv->saved_copyID;
+          tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, TYPVAL_ENCODE_NODICT_VAR);
           continue;
-        } else if (cur_mpsv->data.l.li != cur_mpsv->data.l.list->lv_first) {
+        } else if (cur_mpsv->data.l.li
+                   != tv_list_first(cur_mpsv->data.l.list)) {
           TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(
               cur_mpsv->tv, TYPVAL_ENCODE_NODICT_VAR);
         }
-        const list_T *const kv_pair = cur_mpsv->data.l.li->li_tv.vval.v_list;
+        const list_T *const kv_pair = (
+            TV_LIST_ITEM_TV(cur_mpsv->data.l.li)->vval.v_list);
         TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(
-            encode_vim_to__error_ret, kv_pair->lv_first->li_tv);
-        if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(TYPVAL_ENCODE_FIRST_ARG_NAME,
-                                             &mpstack, cur_mpsv,
-                                             &kv_pair->lv_first->li_tv,
-                                             copyID,
-                                             objname) == FAIL) {
+            encode_vim_to__error_ret, *TV_LIST_ITEM_TV(tv_list_first(kv_pair)));
+        if (
+            _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
+                TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack, cur_mpsv,
+                TV_LIST_ITEM_TV(tv_list_first(kv_pair)), copyID, objname)
+            == FAIL) {
           goto encode_vim_to__error_ret;
         }
         TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(cur_mpsv->tv,
                                           TYPVAL_ENCODE_NODICT_VAR);
-        tv = &kv_pair->lv_last->li_tv;
-        cur_mpsv->data.l.li = cur_mpsv->data.l.li->li_next;
+        tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair));
+        cur_mpsv->data.l.li = TV_LIST_ITEM_NEXT(cur_mpsv->data.l.list,
+                                                cur_mpsv->data.l.li);
         break;
       }
       case kMPConvPartial: {

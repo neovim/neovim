@@ -1724,7 +1724,6 @@ void close_windows(buf_T *buf, int keep_curwin)
 {
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
-  int count = tabpage_index(NULL);
 
   ++RedrawingDisabled;
 
@@ -1761,10 +1760,6 @@ void close_windows(buf_T *buf, int keep_curwin)
   }
 
   --RedrawingDisabled;
-
-  if (count != tabpage_index(NULL)) {
-    apply_autocmds(EVENT_TABCLOSED, NULL, NULL, false, curbuf);
-  }
 
   redraw_tabline = true;
   if (h != tabline_height()) {
@@ -1848,7 +1843,6 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
   apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
   apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
   if (old_curbuf != curbuf) {
@@ -2108,19 +2102,29 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   /* When closing the last window in a tab page remove the tab page. */
   if (tp->tp_firstwin == tp->tp_lastwin) {
-    if (tp == first_tabpage)
+    char_u prev_idx[NUMBUFLEN];
+    if (has_event(EVENT_TABCLOSED)) {
+      vim_snprintf((char *)prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
+    }
+
+    if (tp == first_tabpage) {
       first_tabpage = tp->tp_next;
-    else {
+    } else {
       for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tp;
-           ptp = ptp->tp_next)
-        ;
+           ptp = ptp->tp_next) {
+        // loop
+      }
       if (ptp == NULL) {
         internal_error("win_close_othertab()");
         return;
       }
       ptp->tp_next = tp->tp_next;
     }
-    free_tp = TRUE;
+    free_tp = true;
+
+    if (has_event(EVENT_TABCLOSED)) {
+      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
+    }
   }
 
   /* Free the memory used for the window. */
@@ -5606,49 +5610,48 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
   }
 
   // Set up position matches
-  if (pos_list != NULL)
-  {
-    linenr_T	toplnum = 0;
-    linenr_T	botlnum = 0;
-    listitem_T	*li;
-    int		i;
+  if (pos_list != NULL) {
+    linenr_T toplnum = 0;
+    linenr_T botlnum = 0;
 
-    for (i = 0, li = pos_list->lv_first; li != NULL && i < MAXPOSMATCH;
-        i++, li = li->li_next) {
-      linenr_T	  lnum = 0;
-      colnr_T	  col = 0;
-      int	  len = 1;
-      list_T	  *subl;
-      listitem_T  *subli;
+    int i = 0;
+    TV_LIST_ITER(pos_list, li, {
+      linenr_T lnum = 0;
+      colnr_T col = 0;
+      int len = 1;
       bool error = false;
 
-      if (li->li_tv.v_type == VAR_LIST) {
-        subl = li->li_tv.vval.v_list;
-        if (subl == NULL) {
-          goto fail;
-        }
-        subli = subl->lv_first;
+      if (TV_LIST_ITEM_TV(li)->v_type == VAR_LIST) {
+        const list_T *const subl = TV_LIST_ITEM_TV(li)->vval.v_list;
+        const listitem_T *subli = tv_list_first(subl);
         if (subli == NULL) {
+          emsgf(_("E5030: Empty list at position %d"),
+                (int)tv_list_idx_of_item(pos_list, li));
           goto fail;
         }
-        lnum = tv_get_number_chk(&subli->li_tv, &error);
+        lnum = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
         if (error) {
           goto fail;
         }
-        if (lnum == 0) {
-          --i;
+        if (lnum <= 0) {
           continue;
         }
         m->pos.pos[i].lnum = lnum;
-        subli = subli->li_next;
+        subli = TV_LIST_ITEM_NEXT(subl, subli);
         if (subli != NULL) {
-          col = tv_get_number_chk(&subli->li_tv, &error);
+          col = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
           if (error) {
             goto fail;
           }
-          subli = subli->li_next;
+          if (col < 0) {
+            continue;
+          }
+          subli = TV_LIST_ITEM_NEXT(subl, subli);
           if (subli != NULL) {
-            len = tv_get_number_chk(&subli->li_tv, &error);
+            len = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+            if (len < 0) {
+              continue;
+            }
             if (error) {
               goto fail;
             }
@@ -5656,16 +5659,16 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
         }
         m->pos.pos[i].col = col;
         m->pos.pos[i].len = len;
-      } else if (li->li_tv.v_type == VAR_NUMBER) {
-        if (li->li_tv.vval.v_number == 0) {
-          --i;
+      } else if (TV_LIST_ITEM_TV(li)->v_type == VAR_NUMBER) {
+        if (TV_LIST_ITEM_TV(li)->vval.v_number <= 0) {
           continue;
         }
-        m->pos.pos[i].lnum = li->li_tv.vval.v_number;
+        m->pos.pos[i].lnum = TV_LIST_ITEM_TV(li)->vval.v_number;
         m->pos.pos[i].col = 0;
         m->pos.pos[i].len = 0;
       } else {
-        EMSG(_("List or number required"));
+        emsgf(_("E5031: List or number required at position %d"),
+              (int)tv_list_idx_of_item(pos_list, li));
         goto fail;
       }
       if (toplnum == 0 || lnum < toplnum) {
@@ -5674,7 +5677,11 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       if (botlnum == 0 || lnum >= botlnum) {
         botlnum = lnum + 1;
       }
-    }
+      i++;
+      if (i >= MAXPOSMATCH) {
+        break;
+      }
+    });
 
     // Calculate top and bottom lines for redrawing area 
     if (toplnum != 0){

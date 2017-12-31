@@ -270,9 +270,9 @@ External UIs are expected to implement these common features:
 - Send the "super" key (Windows key, Apple key) as a |<D-| chord.
 
 Implementation ~
-- Options can be monitored for changes by the |OptionSet| autocmd. E.g. if the
-  user sets the 'guifont' option, this autocmd notifies channel 42: >
-    autocmd OptionSet guifont call rpcnotify(42, 'option-changed', 'guifont', &guifont)
+- UI-related options ('guifont', 'ambiwidth', …) are published in the
+  "option_set" |ui-global| event.  The event is triggered when the UI first
+  connects to Nvim and whenever an option is changed by the user or a plugin.
 
 
  vim:tw=78:ts=8:ft=help:norl:
