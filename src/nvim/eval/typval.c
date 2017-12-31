@@ -2153,7 +2153,7 @@ void tv_free(typval_T *tv)
 ///
 /// @param[in]  from  Location to copy from.
 /// @param[out]  to  Location to copy to.
-void tv_copy(typval_T *const from, typval_T *const to)
+void tv_copy(const typval_T *const from, typval_T *const to)
 {
   to->v_type = from->v_type;
   to->v_lock = VAR_UNLOCKED;
