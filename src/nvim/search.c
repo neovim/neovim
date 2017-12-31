@@ -3671,7 +3671,7 @@ current_quote (
   if (VIsual_active) {
     // this only works within one line
     if (VIsual.lnum != curwin->w_cursor.lnum) {
-        return FALSE;
+        return false;
     }
 
     vis_bef_curs = lt(VIsual, curwin->w_cursor);
