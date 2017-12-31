@@ -285,7 +285,17 @@ function Msvc:new(obj)
   return obj
 end
 
-function Msvc:dependencies()
+function Msvc:dependencies(hdr)
+  local cmd = argss_to_cmd(self.path, {'/nologo', '/showIncludes', '/c', '/Tc'..hdr}) .. ' 2>&1'
+  local out = io.popen(cmd)
+  local deps = out:read("*a")
+  out:close()
+  if deps then
+    -- TODO: parse cl.exe output, incompatible with make
+    return nil
+  else
+    return nil
+  end
 end
 
 function Msvc:preprocess(previous_defines, ...)
