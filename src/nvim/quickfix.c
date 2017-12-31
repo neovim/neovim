@@ -4088,16 +4088,22 @@ enum {
 int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 {
   qf_info_T *qi = &ql_info;
+  dictitem_T *di;
 
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
     if (qi == NULL) {
+      // If querying for the size of the location list, return 0
+      if (((di = tv_dict_find(what, S_LEN("nr"))) != NULL)
+          && (di->di_tv.v_type == VAR_STRING)
+          && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+        return tv_dict_add_nr(retdict, S_LEN("nr"), 0);
+      }
       return FAIL;
     }
   }
 
   int status = OK;
-  dictitem_T *di;
   int flags = QF_GETLIST_NONE;
 
   int qf_idx = qi->qf_curlist;  // default is the current list
@@ -4110,6 +4116,17 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
         if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
           return FAIL;
         }
+      } else if (qi->qf_listcount == 0) {  // stack is empty
+        return FAIL;
+      }
+      flags |= QF_GETLIST_NR;
+    } else if (di->di_tv.v_type == VAR_STRING
+               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+      // Get the last quickfix list number
+      if (qi->qf_listcount > 0) {
+        qf_idx = qi->qf_listcount - 1;
+      } else {
+        qf_idx = -1;  // Quickfix stack is empty
       }
       flags |= QF_GETLIST_NR;
     } else {
@@ -4117,20 +4134,22 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     }
   }
 
-  if (tv_dict_find(what, S_LEN("all")) != NULL) {
-    flags |= QF_GETLIST_ALL;
-  }
+  if (qf_idx != -1) {
+    if (tv_dict_find(what, S_LEN("all")) != NULL) {
+      flags |= QF_GETLIST_ALL;
+    }
 
-  if (tv_dict_find(what, S_LEN("title")) != NULL) {
-    flags |= QF_GETLIST_TITLE;
-  }
+    if (tv_dict_find(what, S_LEN("title")) != NULL) {
+      flags |= QF_GETLIST_TITLE;
+    }
 
-  if (tv_dict_find(what, S_LEN("winid")) != NULL) {
-    flags |= QF_GETLIST_WINID;
-  }
+    if (tv_dict_find(what, S_LEN("winid")) != NULL) {
+      flags |= QF_GETLIST_WINID;
+    }
 
-  if (tv_dict_find(what, S_LEN("context")) != NULL) {
-    flags |= QF_GETLIST_CONTEXT;
+    if (tv_dict_find(what, S_LEN("context")) != NULL) {
+      flags |= QF_GETLIST_CONTEXT;
+    }
   }
 
   if (flags & QF_GETLIST_TITLE) {
@@ -4296,6 +4315,10 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }
+    } else if (di->di_tv.v_type == VAR_STRING
+               && strequal((const char *)di->di_tv.vval.v_string, "$")
+               && qi->qf_listcount > 0) {
+      qf_idx = qi->qf_listcount - 1;
     } else {
       return FAIL;
     }

@@ -4329,12 +4329,16 @@ getqflist([{what}])					*getqflist()*
 		following string items are supported in {what}:
 			context	get the context stored with |setqflist()|
 			nr	get information for this quickfix list; zero
-				means the current quickfix list
+				means the current quickfix list and '$' means
+				the last quickfix list
 			title	get the list title
 			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties
 		Non-string items in {what} are ignored.
 		If "nr" is not present then the current quickfix list is used.
+		To get the number of lists in the quickfix stack, set 'nr' to
+		'$' in {what}. The 'nr' value in the returned dictionary
+		contains the quickfix stack size.
 		In case of error processing {what}, an empty dictionary is
 		returned.
 
@@ -6888,7 +6892,9 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		argument is ignored.  The following items can be specified in
 		{what}:
 		    context	any Vim type can be stored as a context
-		    nr		list number in the quickfix stack
+		    nr		list number in the quickfix stack; zero
+				means the current quickfix list and '$' means
+				the last quickfix list
 		    title	quickfix list title text
 		Unsupported keys in {what} are ignored.
 		If the "nr" item is not present, then the current quickfix list
@@ -6993,18 +6999,22 @@ shellescape({string} [, {special}])			*shellescape()*
 		quotes within {string}.
 		Otherwise, it will enclose {string} in single quotes and
 		replace all "'" with "'\''".
+
 		When the {special} argument is present and it's a non-zero
 		Number or a non-empty String (|non-zero-arg|), then special
 		items such as "!", "%", "#" and "<cword>" will be preceded by
 		a backslash.  This backslash will be removed again by the |:!|
 		command.
+
 		The "!" character will be escaped (again with a |non-zero-arg|
 		{special}) when 'shell' contains "csh" in the tail.  That is
 		because for csh and tcsh "!" is used for history replacement
 		even when inside single quotes.
-		The <NL> character is also escaped.  With a |non-zero-arg|
-		{special} and 'shell' containing "csh" in the tail it's
+
+		With a |non-zero-arg| {special} the <NL> character is also
+		escaped.  When 'shell' containing "csh" in the tail it's
 		escaped a second time.
+
 		Example of use with a |:!| command: >
 		    :exe '!dir ' . shellescape(expand('<cfile>'), 1)
 <		This results in a directory listing for the file under the

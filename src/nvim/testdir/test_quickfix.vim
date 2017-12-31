@@ -1632,12 +1632,12 @@ func XbottomTests(cchar)
       call assert_fails('lbottom', 'E776:')
   endif
 
-  call g:Xsetlist([{'filename': 'foo', 'lnum': 42}]) 
+  call g:Xsetlist([{'filename': 'foo', 'lnum': 42}])
   Xopen
   let wid = win_getid()
   call assert_equal(1, line('.'))
   wincmd w
-  call g:Xsetlist([{'filename': 'var', 'lnum': 24}], 'a') 
+  call g:Xsetlist([{'filename': 'var', 'lnum': 24}], 'a')
   Xbottom
   call win_gotoid(wid)
   call assert_equal(2, line('.'))
@@ -2102,3 +2102,43 @@ func Test_bufoverflow()
   set efm&vim
 endfunc
 
+func Test_cclose_from_copen()
+    augroup QF_Test
+	au!
+	au FileType qf :cclose
+    augroup END
+    copen
+    augroup QF_Test
+	au!
+    augroup END
+    augroup! QF_Test
+endfunc
+
+" Tests for getting the quickfix stack size
+func XsizeTests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([], 'f')
+  call assert_equal(0, g:Xgetlist({'nr':'$'}).nr)
+  call assert_equal(1, len(g:Xgetlist({'nr':'$', 'all':1})))
+  call assert_equal(0, len(g:Xgetlist({'nr':0})))
+
+  Xexpr "File1:10:Line1"
+  Xexpr "File2:20:Line2"
+  Xexpr "File3:30:Line3"
+  Xolder | Xolder
+  call assert_equal(3, g:Xgetlist({'nr':'$'}).nr)
+  call g:Xsetlist([], 'f')
+
+  Xexpr "File1:10:Line1"
+  Xexpr "File2:20:Line2"
+  Xexpr "File3:30:Line3"
+  Xolder | Xolder
+  call g:Xsetlist([], 'a', {'nr':'$', 'title':'Compiler'})
+  call assert_equal('Compiler', g:Xgetlist({'nr':3, 'all':1}).title)
+endfunc
+
+func Test_Qf_Size()
+  call XsizeTests('c')
+  call XsizeTests('l')
+endfunc
