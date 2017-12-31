@@ -298,7 +298,8 @@ local type_to_class = {
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
 local function find_best_cc(compilers)
   for _, meta in pairs(compilers) do
-    local version = io.popen(tostring(meta.path) .. " -v 2>&1")
+    local cc_args = meta.type == 'msvc' and '' or '-v'
+    local version = io.popen(tostring(meta.path).." "..cc_args.." 2>&1")
     version:close()
     if version then
       return type_to_class[meta.type]:new({path = meta.path})
