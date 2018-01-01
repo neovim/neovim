@@ -43,3 +43,10 @@ func Test_dotregister_paste()
   call assert_equal('hello world world', getline(1))
   q!
 endfunc
+
+func Test_Visual_inner_quote()
+  new
+  normal oxX
+  normal vki'
+  bwipe!
+endfunc
