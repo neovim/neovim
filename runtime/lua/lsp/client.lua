@@ -5,6 +5,7 @@ local protocol = require('lsp.protocol')
 local message = require('lsp.message')
 local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
 local get_callback_function = require('lsp.callbacks').get_callback_function
+local should_send_message = require('lsp.checks').should_send
 
 local log = require('neovim.log')
 
@@ -72,6 +73,9 @@ client.new = function(name, ft, cmd, args)
     --      2 - data: corresponding data for the message
     _callbacks = {},
     _results = {},
+
+    -- Data fields, to be used internally
+    __data__ = {},
   }, client)
 
   active_jobs.add(job_id, self)
@@ -238,13 +242,16 @@ client.request_async = function(self, method, params, cb)
     self._callbacks[req.id] = cb
   end
 
-  log.debug('Sending request: ',  req:data())
-  lsp_doautocmd(method, 'pre')
 
-  vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
+  if should_send_message(self, req) then
+    lsp_doautocmd(method, 'pre')
+    -- log.trace('Sending request: ',  req:data())
+    vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
+    lsp_doautocmd(method, 'post')
+  else
+    log.debug('Request was cancelled')
+  end
 
-  lsp_doautocmd(method, 'post')
-  log.debug('Request sent successfully')
   return req.id
 end
 --- Send a notification to the server
@@ -344,14 +351,14 @@ client.on_stdout = function(self, data)
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
-      log.debug('Decoding (string): ', body)
       local ok, json_message = pcall(json.decode, body)
-      log.debug('Result   (table) : ', util.tostring(json_message))
 
       if not ok then
         log.info('Not a valid message. Calling self:on_error')
-        self:on_error(error_level.reset_state,
-          string.format('_on_read error: bad json_message (%s)', self._read_data))
+        self:on_error(
+          error_level.reset_state,
+          string.format('_on_read error: bad json_message (%s)', self._read_data)
+        )
         return
       end
 

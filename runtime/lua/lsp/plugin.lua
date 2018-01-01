@@ -93,6 +93,9 @@ plugin.client.get_callback = function(request_name, cb)
 
   return require('lsp.callbacks').get_callback_function(request_name)
 end
+plugin.client.has_started = function(filetype)
+  return plugin.client.get(filetype) ~= nil
+end
 -- Non-client commands
 -- Determines if a request is supported or not
 plugin.is_supported_request = function(request_name)

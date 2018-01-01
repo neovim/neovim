@@ -96,4 +96,20 @@ util.get_file_line = function(file_name, line_number)
 
   return ''
 end
+util.get_key = function(table, ...)
+  if type(table) ~= 'table' then
+    return nil
+  end
+
+  local result = table
+  for _, key in ipairs({...}) do
+    result = result[key]
+
+    if result == nil then
+      return nil
+    end
+  end
+
+  return result
+end
 return util

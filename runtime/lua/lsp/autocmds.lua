@@ -15,7 +15,9 @@ local autocmd_table = {
   ['textDocument/didOpen'] = {
     -- After initialization, make sure to tell the LSP that we opened the file
     {'User', 'initialize/post'},
+
     'BufReadPost',
+    -- 'BufEnter',
   },
 
   ['textDocument/willSave'] = {
