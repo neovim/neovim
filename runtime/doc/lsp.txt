@@ -130,6 +130,46 @@ lsp#client#add({ftype}, {configuration}):
             `command`     (string):   The command to start the server
             `arguments`   (list):     Any arguments to pass to the server
 
+
+                                                              *lsp-add_check()*
+require('lsp.checks').add_check({request}, {cb})
+    Configure when methods will be requested.
+    Can be used to disable certain methods, if you want the functionality to
+    be disabled in the plugin.
+
+    Parameters:~
+        {request}: The name of the request, i.e. 'textDocument/hover'
+
+        {cb}: A callback to execute to determine if the {request} should be
+        sent.
+
+        If `false`, the {request} will never be sent.
+
+    Example:~
+        To disable `'textDocument/hover'` in all python files, you could use
+        the following snippet in your |init.vim|
+>
+
+    lua << EOF
+        require('lsp.checks').add_check('textDocument/hover',
+            function(client, request)
+                if vim.api.nvim_buf_get_option(0, 'filetype') == 'python'
+                    return false
+                end
+
+                return true
+            end
+        )
+    EOF
+
+<
+        To completely disable a message request, you can simply pass
+        `false` as the callback.
+
+>
+    call luaeval("require('lsp.checks').add_check('textDocument/hover', false)")
+<
+
 ================================================================================
                                                             *lsp-handle-request*
 
