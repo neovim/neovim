@@ -2,7 +2,7 @@
 let s:LspClient = {}
 
 function s:LspClient.on_stdout(job_id, data, event) abort
-  call luaeval("require('runtime.lua.lsp.client').job_stdout(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
+  call luaeval("require('lsp.client').job_stdout(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
 endfunction
 
 function s:LspClient.on_exit(job_id, data, event) abort
