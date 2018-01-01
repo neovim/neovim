@@ -222,7 +222,8 @@ static void terminfo_start(UI *ui)
   const char *vte_version_env = os_getenv("VTE_VERSION");
   long vte_version = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
-  bool konsole = os_getenv("KONSOLE_PROFILE_NAME")
+  bool konsole = terminfo_is_term_family(term, "konsole")
+    || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
 
   patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);

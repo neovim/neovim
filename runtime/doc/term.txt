@@ -38,13 +38,13 @@ Otherwise Nvim cannot know what sequences your terminal expects, and weird
 or sub-optimal behavior will result (scrolling quirks, wrong colors, etc.).
 
 $TERM is also important because it is mirrored by SSH to the remote session,
-unlike other common client-end environment variables ($COLORTERM,
-$XTERM_VERSION, $VTE_VERSION, $KONSOLE_PROFILE_NAME, $TERM_PROGRAM, ...).
+unlike most other environment variables.
 
   For this terminal           Set $TERM to                  |builtin-terms|
   -------------------------------------------------------------------------
   iTerm (original)            iterm, iTerm.app                    N
   iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
+  Konsole                     konsole-256color                    N
   anything libvte-based       vte, vte-256color                   Y
    (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
   tmux                        tmux, tmux-256color                 Y
