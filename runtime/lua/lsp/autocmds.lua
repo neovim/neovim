@@ -48,7 +48,8 @@ local doautocmd = function(autocmd)
   end
 
   -- TODO: Was having problem with errors here... remove the silent for awhile to see why
-  return vim.api.nvim_command('silent! doautocmd User ' .. autocmd)
+  log.debug('Sending autocmd: ', autocmd)
+  return vim.api.nvim_command('silent doautocmd ' .. autocmd)
 end
 
 local lsp_doautocmd = function(method, stage)
@@ -66,7 +67,7 @@ local lsp_doautocmd = function(method, stage)
     method_name = 'UNKNOWN'
   end
 
-  doautocmd(method_name .. '/' .. stage)
+  doautocmd('LanguageSeverProtocol User ' .. method_name .. '/' .. stage)
 end
 
 local export_autocmds = function()
@@ -85,7 +86,7 @@ local export_autocmds = function()
       if #autocmd_string > 0 then
         vim.api.nvim_command(
           string.format(
-            [[autocmd %s call luaeval("require('lsp.plugin').client.request('%s')")]],
+            [[autocmd %s nested call luaeval("require('lsp.plugin').client.request_async('%s')")]],
             autocmd_string, request_name)
           )
       end

@@ -145,8 +145,10 @@ cb.textDocument.hover = function(success, data)
 
       log.debug('Hover: ', long_string)
       -- vim.api.nvim_out_write(long_string)
-    else
+    elseif type(data.contents) == 'table' then
       long_string = long_string .. data.contents.value
+    else
+      long_string = data.contents
     end
 
     vim.api.nvim_command('echon "' .. long_string .. '"')
@@ -160,7 +162,7 @@ cb.textDocument.definition = function(success, data)
     return nil
   end
 
-  if data == nil then
+  if data == nil or data == {} then
     log.info('No definition found')
     return nil
   end
@@ -169,8 +171,12 @@ cb.textDocument.definition = function(success, data)
 
   -- We can sometimes get a list of locations,
   -- so set the first value as the only value we want to handle
-  if data[1] ~= nil then
-    data = data[1]
+  -- if data[1] ~= nil then
+  --   data = data[1]
+  -- end
+
+  if data.uri == nil then
+    vim.api.nvim_err_writeln('[LSP] Could not find a valid definition')
   end
 
   if type(data.uri) ~= 'string' then

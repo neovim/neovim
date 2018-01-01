@@ -61,6 +61,10 @@ end
 --  false   A non-empty table
 --  nil     An empty table
 util.is_array = function(table)
+  if type(table) ~= 'table' then
+    return false
+  end
+
   local count = 0
 
   for k, _ in pairs(table) do

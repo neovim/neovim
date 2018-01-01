@@ -17,7 +17,7 @@ endfunction
 
 " TODO(tjdevries): Add non-default arguments
 function! lsp#start() abort
-  " call s:initialize_autocmds()
+  call s:initialize_autocmds()
 
   return luaeval(s:client_string . ".start().name")
 endfunction
@@ -37,16 +37,6 @@ function! lsp#request(request, ...) abort
         \ })
 
   return request_id
-
-  " while v:true
-  "   let result = luaeval(s:client_string . '.wait_request(_A.request_id)', {'request_id': request_id})
-
-  "   if type(result) != type(v:null)
-  "     return result
-  "   endif
-
-  "   sleep 10m
-  " endwhile
 endfunction
 
 ""
