@@ -16,10 +16,17 @@ function! s:initialize_autocmds() abort
 endfunction
 
 " TODO(tjdevries): Add non-default arguments
-function! lsp#start() abort
+function! lsp#start(...) abort
   call s:initialize_autocmds()
 
-  return luaeval(s:client_string . ".start().name")
+  let filetype = get(a:000, 0, &filetype)
+  let force = get(a:000, 1, v:false)
+
+  if force || !luaeval(s:client_string . ".has_started(_A)", filetype)
+    call luaeval(s:client_string . ".start(nil, nil, _A)", filetype)
+  else
+    echom '[LSP] Client for ' . filetype . ' has already started'
+  end
 endfunction
 
 " TODO(tjdevries): Make sure this works correctly

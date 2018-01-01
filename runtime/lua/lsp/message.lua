@@ -39,19 +39,10 @@ setmetatable(RequestMessage, { __index = Message })
 function RequestMessage:new(client, method, params)
   assert(self)
 
-  log.debug(
-    string.format('Creating new request method with: %s, %s, (default) %s',
-      util.tostring(client), util.tostring(method), util.tostring(params)
-    )
-  )
-
   local request_func = get_request_function(method)
   local request_params
   if request_func and type(request_func) == 'function' then
     request_params = request_func(client, params)
-    log.debug(string.format('Request function: %s returned params: %s',
-      util.tostring(request_func), util.tostring(request_params)
-    ))
   else
     log.info(string.format('No request function found for: %s', util.tostring(method)))
     request_params = params
