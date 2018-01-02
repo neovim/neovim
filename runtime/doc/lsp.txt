@@ -121,6 +121,9 @@ For the request 'textDocument/hover', the following autocmds will be fired:
 lsp#client#add({ftype}, {configuration}):
     Used to add a language server.
 
+    This will add an autocmd that will start the server and handle any other
+    startup activities whenever the |FileType| event is triggered for {ftype}.
+
     Parameters:~
         {ftype}: A string or list of strings of filetypes to associate with
         this server.

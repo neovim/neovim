@@ -35,8 +35,15 @@ function! lsp#client#add(ftype, configuration) abort
     return v:false
   endif
 
-  for key in type_list
-    let s:client_configuration[key] = a:configuration
+  for current_filetype in type_list
+    " Only add a new startup command if we haven't already
+    if !has_key(s:client_configuration, current_filetype)
+      augroup LanguageServerStartup
+        call execute(printf('autocmd FileType %s silent call lsp#start("%s")', current_filetype, current_filetype))
+      augroup END
+    endif
+
+    let s:client_configuration[current_filetype] = a:configuration
   endfor
 
   return v:true

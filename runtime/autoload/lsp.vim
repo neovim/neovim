@@ -15,15 +15,21 @@ function! s:initialize_autocmds() abort
 
 endfunction
 
-" TODO(tjdevries): Add non-default arguments
 function! lsp#start(...) abort
   call s:initialize_autocmds()
 
-  let filetype = get(a:000, 0, &filetype)
+  let start_filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
 
-  if force || !luaeval(s:client_string . ".has_started(_A)", filetype)
-    call luaeval(s:client_string . ".start(nil, nil, _A)", filetype)
+  if force || !luaeval(s:client_string . ".has_started(_A)", start_filetype)
+    call luaeval(s:client_string . ".start(nil, nil, _A)", start_filetype)
+
+    " Open the document in the lsp.
+    " Only do this if we just started the server, to make sure that this
+    " document has been opened. Afterwards, autocmds will handle this.
+    if &filetype == start_filetype
+      silent call lsp#request_async('textDocument/didOpen')
+    endif
   else
     echom '[LSP] Client for ' . filetype . ' has already started'
   end
