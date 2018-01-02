@@ -123,11 +123,14 @@ events are triggered.
 
 For the request 'textDocument/hover', the following autocmds will be fired:
 
-    'textDocument/hover/pre'
-    'textDocument/hover/post'
+    Before sending the request:
+        'textDocument/hover/pre'
 
-    -- FIXME: Implement response autocmds
-    'textDocument/hover/response'
+    After sending the request:
+        'textDocument/hover/post'
+
+    Before handling the response:
+        'textDocument/hover/response'
 
 ================================================================================
                                                             *lsp-configuration*
@@ -187,6 +190,10 @@ require('lsp.checks').add_check({request}, {cb})
 >
     call luaeval("require('lsp.checks').add_check('textDocument/hover', false)")
 <
+
+
+lsp#configure#file_log_level({level})
+    Configure the level of logging to a file.
 
 ================================================================================
                                                             *lsp-handle-request*

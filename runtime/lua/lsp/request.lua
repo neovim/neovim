@@ -43,6 +43,10 @@ requests.textDocument.didSave = function(client, params)
   return structures.DidSaveTextDocumentParams(params)
 end
 
+requests.textDocument.didChange = function(client, params)
+  return structures.DidChangeTextDocumentParams(params)
+end
+
 requests.textDocument.completion = function(client, params)
   return structures.CompletionParams(params)
 end

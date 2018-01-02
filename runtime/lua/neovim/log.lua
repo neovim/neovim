@@ -21,7 +21,7 @@ local levels = {
 }
 
 log.console_level = 'warn'
-log.file_level = 'trace'
+log.file_level = 'warn'
 log.prefix = ''
 log.outfile = vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt'
 

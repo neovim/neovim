@@ -8,7 +8,7 @@ function! s:initialize_autocmds() abort
 
   let s:autocmds_initialized = v:true
 
-  augroup LanguageSeverProtocol
+  augroup LanguageServerProtocol
     autocmd!
     call luaeval('require("lsp.autocmds").export_autocmds()')
   augroup END
