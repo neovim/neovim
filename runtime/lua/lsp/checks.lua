@@ -51,6 +51,17 @@ add_check('textDocument/didOpen', function(client, request)
   return true
 end)
 
+-- add_check('textDocument/didChange', function(client, request)
+--   local uri = util.get_key(request, 'params', 'textDocument', 'uri')
+
+--   if type(uri) ~= 'string' then
+--     return false
+--   end
+
+--   if client.__data__['textDocument/didChange'] == nil then
+--     client.__data__['textDocument/didChange'] = {}
+--   end
+
 return {
   add_check = add_check,
   should_send = should_send,

@@ -39,6 +39,10 @@ requests.textDocument.didOpen = function(client, params)
   return structures.DidOpenTextDocumentParams(params)
 end
 
+requests.textDocument.didSave = function(client, params)
+  return structures.DidSaveTextDocumentParams(params)
+end
+
 requests.textDocument.completion = function(client, params)
   return structures.CompletionParams(params)
 end

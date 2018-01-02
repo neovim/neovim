@@ -43,7 +43,7 @@ cb.textDocument.publishDiagnostics = function(success, data)
 
   local loclist = {}
 
-  for _, diagnostic in ipairs(data) do
+  for _, diagnostic in ipairs(data.diagnostics) do
     local range = diagnostic.range
     local severity = diagnostic.severity or protocol.DiagnosticSeverity.Information
 
@@ -64,11 +64,16 @@ cb.textDocument.publishDiagnostics = function(success, data)
       lnum = range.start.line + 1,
       col = range.start.character + 1,
       text = '[' .. source .. ']' .. message,
+      filename = lsp_util.get_filename(data.uri),
       ['type'] = message_type,
     })
   end
 
-  return vim.api.nvim_call_function('setloclist', {0, loclist})
+  local result = vim.api.nvim_call_function('setloclist', {0, loclist})
+  vim.api.nvim_command('lopen')
+  vim.api.nvim_command('wincmd p')
+
+  return result
 end
 cb.textDocument.completion = function(success, data)
   if not success then

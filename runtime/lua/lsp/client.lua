@@ -347,7 +347,7 @@ client.on_stdout = function(self, data)
       end
 
       -- Parse the message
-      -- TODO: Figur out why he uses a null value here
+      -- TODO: Figure out why he uses a null value here
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
@@ -370,7 +370,23 @@ end
 
 client.on_message = function(self, json_message)
   log.trace('on_message: ', json_message)
-  if not json_message.method and json_message.id then
+
+  -- Handle notifications
+  if json_message.method and json_message.params then
+    log.debug('notification: ', json_message.method)
+
+    local cb = get_callback_function(json_message.method)
+
+    if (not cb) or (type(cb) ~= 'function') then
+      log.info('Unsupported notification: ', json_message.method)
+      return
+    end
+
+    cb(true, json_message.params)
+
+    return
+  -- Handle responses
+  elseif not json_message.method and json_message.id then
     local cb = self._callbacks[json_message.id]
 
     -- Nothing left to do if we don't have a valid callback
