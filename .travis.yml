@@ -59,32 +59,32 @@ jobs:
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
     - stage: normal builds
       os: linux
-      compiler: gcc-5
+      compiler: gcc
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
       # Travis creates a cache per compiler.
       # Set a different value here to store 32-bit
       # dependencies in a separate cache.
-      compiler: gcc-5 -m32
+      compiler: gcc -m32
       env: BUILD_32BIT=ON
     - os: osx
       compiler: clang
       osx_image: xcode7.3  # macOS 10.11
     - os: osx
-      compiler: gcc-4.9
+      compiler: gcc
       osx_image: xcode7.3  # macOS 10.11
     - stage: lint
       os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
       os: linux
-      compiler: gcc-5
-      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      compiler: gcc
+      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
   allow_failures:
-    - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
@@ -97,8 +97,6 @@ after_success:  ci/after_success.sh
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
       - autoconf
       - automake
@@ -107,9 +105,7 @@ addons:
       - clang
       - cmake
       - cscope
-      - g++-5-multilib
       - g++-multilib
-      - gcc-5-multilib
       - gcc-multilib
       - gdb
       - language-pack-tr
