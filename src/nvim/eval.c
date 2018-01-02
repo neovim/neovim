@@ -21254,15 +21254,17 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
   }
 
+  const bool do_profiling_yes = do_profiling == PROF_YES;
+
   bool func_not_yet_profiling_but_should =
-    do_profiling == PROF_YES
+    do_profiling_yes
     && !fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should)
     func_do_profile(fp);
 
   bool func_or_func_caller_profiling =
-    do_profiling == PROF_YES
+    do_profiling_yes
     && (fp->uf_profiling
         || (fc->caller != NULL && fc->caller->func->uf_profiling));
 
@@ -21272,7 +21274,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     fp->uf_tm_children = profile_zero();
   }
 
-  if (do_profiling == PROF_YES) {
+  if (do_profiling_yes) {
     script_prof_save(&wait_start);
   }
 
@@ -21348,7 +21350,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
   current_SID = save_current_SID;
-  if (do_profiling == PROF_YES)
+  if (do_profiling_yes)
     script_prof_restore(&wait_start);
 
   if (p_verbose >= 12 && sourcing_name != NULL) {
