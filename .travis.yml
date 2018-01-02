@@ -10,7 +10,7 @@ env:
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-4.0/bin:$PATH"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$PATH"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -53,7 +53,7 @@ jobs:
   include:
     - stage: sanitizers
       os: linux
-      compiler: clang-4.0
+      compiler: clang
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
@@ -81,7 +81,7 @@ jobs:
       compiler: gcc-5
       env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
-      compiler: clang-4.0
+      compiler: clang
       env: CLANG_SANITIZER=TSAN
   allow_failures:
     - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
@@ -99,13 +99,12 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-4.0
     packages:
       - autoconf
       - automake
       - apport
       - build-essential
-      - clang-4.0
+      - clang
       - cmake
       - cscope
       - g++-5-multilib
@@ -116,7 +115,6 @@ addons:
       - language-pack-tr
       - libc6-dev-i386
       - libtool
-      - llvm-4.0-dev
       - locales
       - pkg-config
       - unzip

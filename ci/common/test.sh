@@ -71,7 +71,7 @@ valgrind_check() {
 }
 
 asan_check() {
-  check_logs "${1}" "*san.*"
+  check_logs "${1}" "*san.*" | asan_symbolize
 }
 
 run_unittests() {(
