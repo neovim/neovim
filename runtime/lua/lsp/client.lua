@@ -239,7 +239,10 @@ client.request_async = function(self, method, params, cb)
 
   -- After handling callback semantics, store it to call on reply.
   if cb then
-    self._callbacks[req.id] = cb
+    self._callbacks[req.id] = {
+      cb = cb,
+      method = req.method,
+    }
   end
 
 
@@ -387,12 +390,21 @@ client.on_message = function(self, json_message)
     return
   -- Handle responses
   elseif not json_message.method and json_message.id then
-    local cb = self._callbacks[json_message.id]
+    local cb_object = self._callbacks[json_message.id]
+
+    if cb_object == nil then
+      return
+    end
+
+    local cb = cb_object.cb
 
     -- Nothing left to do if we don't have a valid callback
     if (not cb) or (type(cb) ~= 'function') then
       return
     end
+
+    local method = cb_object.method
+    lsp_doautocmd(method, 'response')
 
     -- Clear the old callback
     self._callbacks[json_message.id] = nil

@@ -38,6 +38,14 @@ structures.TextDocumentIdentifier = function(args)
     uri = structures.DocumentUri(args.uri),
   }
 end
+structures.VersionedTextDocumentIdentifier = function(args)
+  args = check_table(args)
+
+  local result = structures.TextDocumentIdentifier(args)
+  result.version = structures.version(args.version)
+
+  return result
+end
 structures.TextDocumentItem = function(args)
   args = check_table(args)
 
@@ -102,6 +110,18 @@ structures.DidSaveTextDocumentParams = function(args)
   return {
     textDocument = structures.TextDocumentItem(args.textDocument),
     text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"),
+  }
+end
+-- TODO: Incremental changes.
+--  Maybe use the PR that externalizes that once its merged
+structures.DidChangeTextDocumentParams = function(args)
+  args = check_table(args)
+
+  return {
+    textDocument = structures.VersionedTextDocumentIdentifier(args.textDocument),
+    contentChanges = {
+      { text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") },
+    },
   }
 end
 structures.CompletionContext = function(args)

@@ -28,13 +28,15 @@ local autocmd_table = {
     'BufWritePost',
   },
 
-  -- TODO: Not too familiar with close autocommands
+  -- TODO(tjdevries): Not too familiar with close autocommands
   ['textDocument/didClose'] = {
     'BufDelete',
     'BufWipeout',
   },
 
   ['textDocument/didChange'] = {
+    'BufWritePost',
+    'TextChanged',
     'InsertLeave',
   },
 }
@@ -42,6 +44,7 @@ local autocmd_table = {
 local accepted_autocomand_postfixes = {
   pre = true,
   post = true,
+  response = true,
 }
 
 local doautocmd = function(autocmd)
@@ -69,7 +72,7 @@ local lsp_doautocmd = function(method, stage)
     method_name = 'UNKNOWN'
   end
 
-  doautocmd('LanguageSeverProtocol User ' .. method_name .. '/' .. stage)
+  doautocmd('LanguageServerProtocol User ' .. method_name .. '/' .. stage)
 end
 
 local export_autocmds = function()
@@ -96,8 +99,19 @@ local export_autocmds = function()
   end
 end
 
+-- Allow users to configure what autocmds are associated with messages
+local reset_method = function()
+  -- TODO(tjdevries)
+end
+
+local set_method = function()
+  -- TODO(tjdevries)
+end
+
 return {
   default_autocmd_table = autocmd_table,
   export_autocmds = export_autocmds,
   lsp_doautocmd = lsp_doautocmd,
+  reset_method = reset_method,
+  set_method = set_method,
 }
