@@ -2480,9 +2480,11 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
 notify:
     if (watched) {
       if (oldtv.v_type == VAR_UNKNOWN) {
+        assert(lp->ll_newkey != NULL);
         tv_dict_watcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
       } else {
         dictitem_T *di = lp->ll_di;
+        assert(di->di_key != NULL);
         tv_dict_watcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
         tv_clear(&oldtv);
       }
