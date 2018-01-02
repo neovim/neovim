@@ -1369,7 +1369,7 @@ static char *cs_manage_matches(char **matches, char **contexts,
   case Print:
     cs_print_tags_priv(mp, cp, cnt);
     break;
-  default:      /* should not reach here */
+  default:      // should not reach here
     IEMSG(_("E570: fatal error in cs_manage_matches"));
     return NULL;
   }

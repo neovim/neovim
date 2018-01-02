@@ -4413,7 +4413,7 @@ static int check_char_class(int class, int c)
     break;
 
   default:
-    /* should not be here :P */
+    // should not be here :P
     IEMSGN(_(e_ill_char_class), class);
     return FAIL;
   }
@@ -5992,8 +5992,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         int c = t->state->c;
 
 #ifdef REGEXP_DEBUG
-        if (c < 0)
+        if (c < 0) {
           IEMSGN("INTERNAL: Negative state char: %" PRId64, c);
+        }
 #endif
         result = (c == curc);
 
@@ -6462,12 +6463,13 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
    * (and count its size). */
   postfix = re2post();
   if (postfix == NULL) {
-    /* TODO: only give this error for debugging? */
-    if (post_ptr >= post_end)
+    // TODO(vim): only give this error for debugging?
+    if (post_ptr >= post_end) {
       IEMSGN("Internal error: estimated max number "
              "of states insufficient: %" PRId64,
              post_end - post_start);
-    goto fail;              /* Cascaded (syntax?) error */
+    }
+    goto fail;              // Cascaded (syntax?) error
   }
 
   /*
