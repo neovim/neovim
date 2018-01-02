@@ -51,14 +51,13 @@ env:
 
 jobs:
   include:
-    - stage: sanitizers
+    - stage: normal builds
       os: linux
       compiler: clang
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-    - stage: normal builds
-      os: linux
+    - os: linux
       compiler: gcc
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
@@ -73,8 +72,7 @@ jobs:
     - os: osx
       compiler: gcc
       osx_image: xcode7.3  # macOS 10.11
-    - stage: lint
-      os: linux
+    - os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
       os: linux
