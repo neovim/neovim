@@ -9,7 +9,7 @@
 --  textDocument/hover
 --  TODO: textDocument/signatureHelp
 --  textDocument/references
---  textDocument/documentHighlight
+--  TODO: textDocument/documentHighlight
 --  TODO: textDocument/documentSymbol
 --  TODO: textDocument/formatting
 --  TODO: textDocument/rangeFormatting
