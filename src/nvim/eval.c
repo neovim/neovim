@@ -19016,6 +19016,9 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
       return;
     }
 
+    // Make sure dict is valid
+    assert(dict != NULL);
+
     v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
     if (tv_dict_add(dict, v) == FAIL) {
