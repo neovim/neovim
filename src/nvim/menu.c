@@ -714,7 +714,7 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     }
   } else {
     // visit recursively all children
-    list_T *children_list = tv_list_alloc();
+    list_T *const children_list = tv_list_alloc(kListLenMayKnow);
     for (menu = menu->children; menu != NULL; menu = menu->next) {
         dict_T *dic = menu_get_recursive(menu, modes);
         if (tv_dict_len(dict) > 0) {

@@ -667,7 +667,7 @@ do_tag (
 
         fname = xmalloc(MAXPATHL + 1);
         cmd = xmalloc(CMDBUFFSIZE + 1);
-        list = tv_list_alloc();
+        list = tv_list_alloc(num_matches);
 
         for (i = 0; i < num_matches; ++i) {
           int len, cmd_len;

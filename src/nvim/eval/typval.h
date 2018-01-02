@@ -31,6 +31,25 @@ typedef double float_T;
 /// Refcount for dict or list that should not be freed
 enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
 
+/// Additional values for tv_list_alloc() len argument
+enum {
+  /// List length is not known in advance
+  ///
+  /// To be used when there is neither a way to know how many elements will be
+  /// needed nor are any educated guesses.
+  kListLenUnknown = -1,
+  /// List length *should* be known, but is actually not
+  ///
+  /// All occurrences of this value should be eventually removed. This is for
+  /// the case when the only reason why list length is not known is that it
+  /// would be hard to code without refactoring, but refactoring is needed.
+  kListLenShouldKnow = -2,
+  /// List length may be known in advance, but it requires too much effort
+  ///
+  /// To be used when it looks impractical to determine list length.
+  kListLenMayKnow = -3,
+} ListLenSpecials;
+
 /// Maximal possible value of varnumber_T variable
 #define VARNUMBER_MAX INT64_MAX
 #define UVARNUMBER_MAX UINT64_MAX

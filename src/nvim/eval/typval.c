@@ -132,8 +132,14 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
 ///
 /// Caller should take care of the reference count.
 ///
+/// @param[in]  len  Expected number of items to be populated before list
+///                  becomes accessible from VimL. It is still valid to
+///                  underpopulate a list, value only controls how many elements
+///                  will be allocated in advance. Currently does nothing.
+///                  @see ListLenSpecials.
+///
 /// @return [allocated] new list.
-list_T *tv_list_alloc(void)
+list_T *tv_list_alloc(const ptrdiff_t len)
   FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = xcalloc(1, sizeof(list_T));
@@ -521,7 +527,7 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
     return NULL;
   }
 
-  list_T *copy = tv_list_alloc();
+  list_T *copy = tv_list_alloc(tv_list_len(orig));
   tv_list_ref(copy);
   if (copyID != 0) {
     // Do this before adding the items, because one of the items may
@@ -1817,12 +1823,16 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
 /// Also sets reference count.
 ///
 /// @param[out]  ret_tv  Structure where list is saved.
+/// @param[in]  len  Expected number of items to be populated before list
+///                  becomes accessible from VimL. It is still valid to
+///                  underpopulate a list, value only controls how many elements
+///                  will be allocated in advance. @see ListLenSpecials.
 ///
 /// @return [allocated] pointer to the created list.
-list_T *tv_list_alloc_ret(typval_T *const ret_tv)
+list_T *tv_list_alloc_ret(typval_T *const ret_tv, const ptrdiff_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_T *const l = tv_list_alloc();
+  list_T *const l = tv_list_alloc(len);
   ret_tv->vval.v_list = l;
   ret_tv->v_type = VAR_LIST;
   ret_tv->v_lock = VAR_UNLOCKED;
