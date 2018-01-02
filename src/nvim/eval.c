@@ -2900,6 +2900,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
+    assert(lp->ll_list != NULL);
     // Delete a range of List items.
     listitem_T *const first_li = lp->ll_li;
     listitem_T *last_li = first_li;
@@ -2926,6 +2927,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
     } else {
       // unlet a Dictionary item.
       dict_T *d = lp->ll_dict;
+      assert(d != NULL);
       dictitem_T *di = lp->ll_di;
       bool watched = tv_dict_is_watched(d);
       char *key = NULL;
