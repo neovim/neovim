@@ -96,6 +96,14 @@ structures.DidOpenTextDocumentParams = function(args)
     textDocument = structures.TextDocumentItem(args.textDocument)
   }
 end
+structures.DidSaveTextDocumentParams = function(args)
+  args = check_table(args)
+
+  return {
+    textDocument = structures.TextDocumentItem(args.textDocument),
+    text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"),
+  }
+end
 structures.CompletionContext = function(args)
   args = check_table(args)
 
