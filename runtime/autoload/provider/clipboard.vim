@@ -9,6 +9,8 @@ let s:clipboard = {}
 " ownership of the selection, so we know how long the cache is valid.
 let s:selection = { 'owner': 0, 'data': [], 'stderr_buffered': v:true }
 
+let s:win_wsl = (system(['uname', '-a']) =~? 'Microsoft')
+
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
   " a new provider instance. Don't drop ownership in this case.
@@ -151,7 +153,7 @@ function! s:clipboard.set(lines, regtype, reg) abort
   let argv = split(s:copy[a:reg], " ")
   let selection.argv = argv
   let selection.detach = s:cache_enabled
-  let selection.cwd = "/"
+  let selection.cwd = s:win_wsl ? '/mnt/c/' : '/'
   let jobid = jobstart(argv, selection)
   if jobid > 0
     call jobsend(jobid, a:lines)
