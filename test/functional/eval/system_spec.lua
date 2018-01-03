@@ -187,6 +187,7 @@ describe('system()', function()
     end)
 
     it('`yes` and is interrupted with CTRL-C', function()
+      if helpers.pending_win32(pending) then return end
       feed(':call system("yes")<cr>')
       screen:expect([[
                                                              |
