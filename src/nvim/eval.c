@@ -16665,6 +16665,18 @@ static void f_test_garbagecollect_now(typval_T *argvars,
   garbage_collect(true);
 }
 
+// "test_write_list_log()" function
+static void f_test_write_list_log(typval_T *const argvars,
+                                  typval_T *const rettv,
+                                  FunPtr fptr)
+{
+  const char *const fname = tv_get_string_chk(&argvars[0]);
+  if (fname == NULL) {
+    return;
+  }
+  list_write_log(fname);
+}
+
 bool callback_from_typval(Callback *const callback, typval_T *const arg)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {

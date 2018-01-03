@@ -20,6 +20,9 @@
 #include "nvim/gettext.h"
 #include "nvim/message.h"
 #include "nvim/macros.h"
+#ifdef LOG_LIST_ACTIONS
+# include "nvim/memory.h"
+#endif
 
 /// Type used for VimL VAR_NUMBER values
 typedef int64_t varnumber_T;
@@ -323,6 +326,96 @@ typedef struct {
 
 typedef int (*ListSorter)(const void *, const void *);
 
+#ifdef LOG_LIST_ACTIONS
+
+/// List actions log entry
+typedef struct {
+  uintptr_t l;  ///< List log entry belongs to.
+  uintptr_t li1;  ///< First list item log entry belongs to, if applicable.
+  uintptr_t li2;  ///< Second list item log entry belongs to, if applicable.
+  int len;  ///< List length when log entry was created.
+  const char *action;  ///< Logged action.
+} ListLogEntry;
+
+typedef struct list_log ListLog;
+
+/// List actions log
+struct list_log {
+  ListLog *next;  ///< Next chunk or NULL.
+  size_t capacity;  ///< Number of entries in current chunk.
+  size_t size;  ///< Current chunk size.
+  ListLogEntry entries[];  ///< Actual log entries.
+};
+
+extern ListLog *list_log_first;  ///< First list log chunk, NULL if missing
+extern ListLog *list_log_last;  ///< Last list log chunk
+
+static inline ListLog *list_log_alloc(const size_t size)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Allocate a new log chunk and update globals
+///
+/// @param[in]  size  Number of entries in a new chunk.
+///
+/// @return [allocated] Newly allocated chunk.
+static inline ListLog *list_log_new(const size_t size)
+{
+  ListLog *ret = xmalloc(offsetof(ListLog, entries)
+                         + size * sizeof(ret->entries[0]));
+  ret->size = 0;
+  ret->capacity = size;
+  ret->next = NULL;
+  if (list_log_first == NULL) {
+    list_log_first = ret;
+  } else {
+    list_log_last->next = ret;
+  }
+  list_log_last = ret;
+  return ret;
+}
+
+static inline void list_log(const list_T *const l,
+                            const listitem_T *const li1,
+                            const listitem_T *const li2,
+                            const char *const action)
+  REAL_FATTR_ALWAYS_INLINE;
+
+/// Add new entry to log
+///
+/// If last chunk was filled it uses twice as much memory to allocate the next
+/// chunk.
+///
+/// @param[in]  l  List to which entry belongs.
+/// @param[in]  li1  List item 1.
+/// @param[in]  li2  List item 2, often used for integers and not list items.
+/// @param[in]  action  Logged action.
+static inline void list_log(const list_T *const l,
+                            const listitem_T *const li1,
+                            const listitem_T *const li2,
+                            const char *const action)
+{
+  ListLog *tgt;
+  if (list_log_first == NULL) {
+    tgt = list_log_new(128);
+  } else if (list_log_last->size == list_log_last->capacity) {
+    tgt = list_log_new(list_log_last->capacity * 2);
+  } else {
+    tgt = list_log_last;
+  }
+  tgt->entries[tgt->size++] = (ListLogEntry) {
+    .l = (uintptr_t)l,
+    .li1 = (uintptr_t)li1,
+    .li2 = (uintptr_t)li2,
+    .len = (l == NULL ? 0 : l->lv_len),
+    .action = action,
+  };
+}
+#else
+# define list_log(...)
+# define list_write_log(...)
+# define list_free_log()
+#endif
+
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.
 
@@ -396,6 +489,7 @@ static inline int tv_list_len(const list_T *const l)
 /// @param[in]  l  List to check.
 static inline int tv_list_len(const list_T *const l)
 {
+  list_log(l, NULL, NULL, "len");
   if (l == NULL) {
     return 0;
   }
@@ -479,8 +573,10 @@ static inline listitem_T *tv_list_first(const list_T *const l)
 static inline listitem_T *tv_list_first(const list_T *const l)
 {
   if (l == NULL) {
+    list_log(l, NULL, NULL, "first");
     return NULL;
   }
+  list_log(l, l->lv_first, NULL, "first");
   return l->lv_first;
 }
 
@@ -495,8 +591,10 @@ static inline listitem_T *tv_list_last(const list_T *const l)
 static inline listitem_T *tv_list_last(const list_T *const l)
 {
   if (l == NULL) {
+    list_log(l, NULL, NULL, "last");
     return NULL;
   }
+  list_log(l, l->lv_last, NULL, "last");
   return l->lv_last;
 }
 
@@ -564,6 +662,7 @@ extern bool tv_in_free_unref_items;
 #define _TV_LIST_ITER_MOD(modifier, l, li, code) \
     do { \
       modifier list_T *const l_ = (l); \
+      list_log(l_, NULL, NULL, "iter" #modifier); \
       if (l_ != NULL) { \
         for (modifier listitem_T *li = l_->lv_first; \
              li != NULL; li = li->li_next) { \

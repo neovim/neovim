@@ -277,6 +277,8 @@ else()
   set(DEBUG 0)
 endif()
 
+option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
+
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
