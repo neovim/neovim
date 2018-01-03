@@ -2417,6 +2417,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
         break;
       }
+      assert(lp->ll_li != NULL);
       if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
         // Need to add an empty item.
         tv_list_append_number(lp->ll_list, 0);
@@ -2479,9 +2480,11 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
 notify:
     if (watched) {
       if (oldtv.v_type == VAR_UNKNOWN) {
+        assert(lp->ll_newkey != NULL);
         tv_dict_watcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
       } else {
         dictitem_T *di = lp->ll_di;
+        assert(di->di_key != NULL);
         tv_dict_watcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
         tv_clear(&oldtv);
       }
@@ -2897,6 +2900,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
+    assert(lp->ll_list != NULL);
     // Delete a range of List items.
     listitem_T *const first_li = lp->ll_li;
     listitem_T *last_li = first_li;
@@ -2923,6 +2927,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
     } else {
       // unlet a Dictionary item.
       dict_T *d = lp->ll_dict;
+      assert(d != NULL);
       dictitem_T *di = lp->ll_di;
       bool watched = tv_dict_is_watched(d);
       char *key = NULL;
@@ -19011,6 +19016,9 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
       return;
     }
 
+    // Make sure dict is valid
+    assert(dict != NULL);
+
     v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
     if (tv_dict_add(dict, v) == FAIL) {
@@ -21251,15 +21259,17 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
   }
 
+  const bool do_profiling_yes = do_profiling == PROF_YES;
+
   bool func_not_yet_profiling_but_should =
-    do_profiling == PROF_YES
-    && !fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL);
+    do_profiling_yes
+    && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should)
     func_do_profile(fp);
 
   bool func_or_func_caller_profiling =
-    do_profiling == PROF_YES
+    do_profiling_yes
     && (fp->uf_profiling
         || (fc->caller != NULL && fc->caller->func->uf_profiling));
 
@@ -21269,7 +21279,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     fp->uf_tm_children = profile_zero();
   }
 
-  if (do_profiling == PROF_YES) {
+  if (do_profiling_yes) {
     script_prof_save(&wait_start);
   }
 
@@ -21345,8 +21355,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
   current_SID = save_current_SID;
-  if (do_profiling == PROF_YES)
+  if (do_profiling_yes) {
     script_prof_restore(&wait_start);
+  }
 
   if (p_verbose >= 12 && sourcing_name != NULL) {
     ++no_wait_return;
