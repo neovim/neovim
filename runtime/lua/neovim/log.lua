@@ -1,16 +1,6 @@
--- local fp
--- local log = setmetatable({}, {
---   -- luacheck: ignore 212
---   __gc = function(...)
---     if fp ~= nil then
---       fp:write("Closing file...")
---       fp:close()
---     end
---   end
--- })
 local log = {}
 
-local levels = {
+log.levels = {
   bad_level = 0,
   trace = 1,
   debug = 2,
@@ -26,7 +16,7 @@ log.prefix = ''
 log.outfile = vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt'
 
 log.write_file = function(level, message)
-  if levels[level] < levels[log.file_level] then
+  if log.levels[level] < log.levels[log.file_level] then
     return
   end
 
@@ -42,7 +32,7 @@ end
 
 -- TODO: Check github.com/rxi/log.lua
 
-for name in pairs(levels) do
+for name in pairs(log.levels) do
   log[name] = function(...)
     local message = ''
     for _, arg in ipairs({...}) do
@@ -62,7 +52,7 @@ for name in pairs(levels) do
 
     -- TODO: Error here instead?
     -- Only log messages with applicable levels
-    if levels[name] > levels[log.console_level] then
+    if log.levels[name] > log.levels[log.console_level] then
 
       if vim ~= nil and vim.api ~= nil then
         -- vim.api.nvim_command([[echom ']] .. log_message .. [[']])
