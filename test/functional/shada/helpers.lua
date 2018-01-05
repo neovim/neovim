@@ -37,7 +37,6 @@ local function add_argv(...)
 end
 
 local clear = function()
-  os.execute('cp ' .. tmpname .. ' /tmp/test.shada')
   os.remove(tmpname)
   append_argv = nil
 end
