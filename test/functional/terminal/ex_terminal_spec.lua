@@ -42,9 +42,9 @@ describe(':terminal', function()
 
   it("in normal-mode :split does not move cursor", function()
     if iswin() then
-      feed_command([[terminal for /L \\%I in (1,0,2) do echo \\%I]])
+      feed_command([[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]])
     else
-      feed_command([[terminal while true; do echo X; done]])
+      feed_command([[terminal while true; do echo foo; sleep .1; done]])
     end
     helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
     wait()
