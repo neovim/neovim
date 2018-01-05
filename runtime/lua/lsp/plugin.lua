@@ -36,10 +36,10 @@ plugin.client.get = function(filetype)
   return client_map[filetype]
 end
 plugin.client.add = function(ftype, configuration)
-  vim.api.nvim_call_function('lsp#client#add', {ftype, configuration})
+  vim.api.nvim_call_function('lsp#server#add', {ftype, configuration})
 end
 plugin.client.get_configuration = function(ftype)
-  return vim.api.nvim_call_function('lsp#client#get_configuration', {ftype})
+  return vim.api.nvim_call_function('lsp#server#get_configuration', {ftype})
 end
 plugin.client.start = function(cmd, args, filetype)
   filetype = lsp_util.get_filetype(filetype)
