@@ -1,4 +1,4 @@
-let s:client_configuration = get(s:, 'client_configuration', {})
+let s:server_configuration = get(s:, 'server_configuration', {})
 
 ""
 " Add a server option for a filetype
@@ -10,7 +10,7 @@ let s:client_configuration = get(s:, 'client_configuration', {})
 "   arguments   (list):     Any arguments to pass to the server
 "
 " @returns (bool): True if successful, else false
-function! lsp#client#add(ftype, configuration) abort
+function! lsp#server#add(ftype, configuration) abort
   if type(a:ftype) == v:t_string
     let type_list = [a:ftype]
   elseif type(a:ftype) == v:t_list
@@ -37,20 +37,20 @@ function! lsp#client#add(ftype, configuration) abort
 
   for current_filetype in type_list
     " Only add a new startup command if we haven't already
-    if !has_key(s:client_configuration, current_filetype)
+    if !has_key(s:server_configuration, current_filetype)
       augroup LanguageServerStartup
         call execute(printf('autocmd FileType %s silent call lsp#start("%s")', current_filetype, current_filetype))
       augroup END
     endif
 
-    let s:client_configuration[current_filetype] = a:configuration
+    let s:server_configuration[current_filetype] = a:configuration
   endfor
 
   return v:true
 endfunction
 
-function! lsp#client#get_configuration(ftype) abort
-  return get(s:client_configuration, a:ftype, {})
+function! lsp#server#get_configuration(ftype) abort
+  return get(s:server_configuration, a:ftype, {})
 endfunction
 
 
@@ -58,9 +58,9 @@ endfunction
 " Get the name for a filetype
 " @param ftype (string): The filetype to get the associated name
 "
-" @returns (string): The client's name
-function! lsp#client#get_name(ftype) abort
-  return get(lsp#client#get_configuration(a:ftype), 'name', '')
+" @returns (string): The server's name
+function! lsp#server#get_name(ftype) abort
+  return get(lsp#server#get_configuration(a:ftype), 'name', '')
 endfunction
 
 ""
@@ -68,12 +68,12 @@ endfunction
 " @param ftype (string): The filetype you want to get the command for
 "
 " @returns (string|list): The command to use to start the server
-function! lsp#client#get_command(ftype) abort
-  return get(lsp#client#get_configuration(a:ftype), 'command', '')
+function! lsp#server#get_command(ftype) abort
+  return get(lsp#server#get_configuration(a:ftype), 'command', '')
 endfunction
 
 ""
 " Get the arguments for a filetype
-function! lsp#client#get_arguments(ftype) abort
-  return get(lsp#client#get_configuration(a:ftype), 'arguments', '')
+function! lsp#server#get_arguments(ftype) abort
+  return get(lsp#server#get_configuration(a:ftype), 'arguments', '')
 endfunction

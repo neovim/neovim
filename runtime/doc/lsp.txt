@@ -135,8 +135,8 @@ For the request 'textDocument/hover', the following autocmds will be fired:
 ================================================================================
                                                             *lsp-configuration*
 
-                                                             *lsp#client#add()*
-lsp#client#add({ftype}, {configuration}):
+                                                             *lsp#server#add()*
+lsp#server#add({ftype}, {configuration}):
     Used to add a language server.
 
     This will add an autocmd that will start the server and handle any other
