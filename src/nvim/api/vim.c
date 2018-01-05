@@ -43,14 +43,15 @@
 #endif
 
 /// Executes an ex-command.
-/// On VimL error: Returns the VimL error; v:errmsg is not updated.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
 ///
 /// @param command  Ex-command string
-/// @param[out] err Error details (including actual VimL error), if any
+/// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  // Run the command
   try_start();
   do_cmdline_cmd(command.data);
   update_screen(VALID);
@@ -207,18 +208,39 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-String nvim_command_output(String str, Error *err)
+/// Executes an ex-command and returns its (non-error) output.
+/// Shell |:!| output is not captured.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
+///
+/// @param command  Ex-command string
+/// @param[out] err Error details (Vim error), if any
+String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  do_cmdline_cmd("redir => v:command_output");
-  nvim_command(str, err);
-  do_cmdline_cmd("redir END");
-
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(copy_string(command)));
+  ADD(args, STRING_OBJ(cstr_to_string("silent")));
+  String fn = cstr_to_string("execute");
+  Object rv = nvim_call_function(fn, args, err);
+  api_free_string(fn);
+  api_free_array(args);
   if (ERROR_SET(err)) {
+    assert(rv.type == kObjectTypeNil);
     return (String)STRING_INIT;
   }
 
-  return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
+  assert(rv.type == kObjectTypeString);
+  // execute() always(?) prepends a newline; remove it.
+  if (rv.data.string.size > 1) {
+    assert(rv.data.string.data[0] == '\n');
+    String *s = &rv.data.string;
+    s->size--;
+    memmove(s->data, s->data + 1, s->size);
+    s->data[s->size] = '\0';
+  }
+  return rv.data.string;
 }
 
 /// Evaluates a VimL expression (:help expression).

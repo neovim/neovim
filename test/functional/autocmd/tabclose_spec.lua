@@ -11,10 +11,10 @@ describe('TabClosed', function()
         repeat
           nvim('command', 'tabnew')
         until nvim('eval', 'tabpagenr()') == 6 -- current tab is now 6
-        eq("\ntabclosed:6:6:5", nvim('command_output', 'tabclose')) -- close last 6, current tab is now 5
-        eq("\ntabclosed:5:5:4", nvim('command_output', 'close')) -- close last window on tab, closes tab
-        eq("\ntabclosed:2:2:3", nvim('command_output', '2tabclose')) -- close tab 2, current tab is now 3
-        eq("\ntabclosed:1:1:2\ntabclosed:1:1:1", nvim('command_output', 'tabonly')) -- close tabs 1 and 2
+        eq("tabclosed:6:6:5", nvim('command_output', 'tabclose')) -- close last 6, current tab is now 5
+        eq("tabclosed:5:5:4", nvim('command_output', 'close')) -- close last window on tab, closes tab
+        eq("tabclosed:2:2:3", nvim('command_output', '2tabclose')) -- close tab 2, current tab is now 3
+        eq("tabclosed:1:1:2\ntabclosed:1:1:1", nvim('command_output', 'tabonly')) -- close tabs 1 and 2
       end)
 
       it('is triggered when closing a window via bdelete from another tab', function()
@@ -23,7 +23,7 @@ describe('TabClosed', function()
         nvim('command', '1tabedit Xtestfile')
         nvim('command', 'normal! 1gt')
         eq({1, 3}, nvim('eval', '[tabpagenr(), tabpagenr("$")]'))
-        eq("\ntabclosed:2:2:1\ntabclosed:2:2:1", nvim('command_output', 'bdelete Xtestfile'))
+        eq("tabclosed:2:2:1\ntabclosed:2:2:1", nvim('command_output', 'bdelete Xtestfile'))
         eq({1, 1}, nvim('eval', '[tabpagenr(), tabpagenr("$")]'))
       end)
 
@@ -35,7 +35,7 @@ describe('TabClosed', function()
 
         -- Only one tab is closed, and the alternate file is used for the other.
         eq({2, 3}, nvim('eval', '[tabpagenr(), tabpagenr("$")]'))
-        eq("\ntabclosed:2:2:2", nvim('command_output', 'bdelete Xtestfile2'))
+        eq("tabclosed:2:2:2", nvim('command_output', 'bdelete Xtestfile2'))
         eq('Xtestfile1', nvim('eval', 'bufname("")'))
       end)
     end)
@@ -48,9 +48,9 @@ describe('TabClosed', function()
           nvim('command',  'tabnew')
         until nvim('eval', 'tabpagenr()') == 7 -- current tab is now 7
         -- sanity check, we shouldn't match on tabs with numbers other than 2
-        eq("\ntabclosed:7:7:6", nvim('command_output', 'tabclose'))
+        eq("tabclosed:7:7:6", nvim('command_output', 'tabclose'))
         -- close tab page 2, current tab is now 5
-        eq("\ntabclosed:2:2:5\ntabclosed:match", nvim('command_output', '2tabclose'))
+        eq("tabclosed:2:2:5\ntabclosed:match", nvim('command_output', '2tabclose'))
       end)
     end)
 
@@ -59,7 +59,7 @@ describe('TabClosed', function()
         nvim('command', 'au! TabClosed * echom "tabclosed:".expand("<afile>").":".expand("<amatch>").":".tabpagenr()')
         nvim('command',  'tabedit Xtestfile')
         eq({2, 2}, nvim('eval', '[tabpagenr(), tabpagenr("$")]'))
-        eq("\ntabclosed:2:2:1", nvim('command_output', 'close'))
+        eq("tabclosed:2:2:1", nvim('command_output', 'close'))
         eq({1, 1}, nvim('eval', '[tabpagenr(), tabpagenr("$")]'))
       end)
     end)
