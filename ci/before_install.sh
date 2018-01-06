@@ -38,6 +38,11 @@ else
   pip3 -q install --user --upgrade pip || true
 fi
 
+if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+  echo "Update default Ruby"
+  brew switch ruby 2.2.5
+fi
+
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
   echo "Install node (LTS)"
 
