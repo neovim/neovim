@@ -4,8 +4,6 @@ local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
 local expect = helpers.expect
 local Screen = require('test.functional.ui.screen')
 
-if helpers.pending_win32(pending) then return end
-
 describe('mappings', function()
   local cid
 
