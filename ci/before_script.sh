@@ -25,6 +25,8 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   # That allows to test changing the group of the file by `os_fchown`.
   sudo dscl . -create /Groups/chown_test
   sudo dscl . -append /Groups/chown_test GroupMembership "${USER}"
+
+  macos_rvm_dance
 fi
 
 # Compile dependencies.

@@ -22,6 +22,10 @@ echo "Install neovim module for Python 3."
 CC=cc pip3 -q install --user --upgrade neovim || true
 
 echo "Install neovim RubyGem."
+if [ "${TRAVIS_OS_NAME}" = osx ] ; then
+  macos_rvm_dance
+  gem update --system
+fi
 gem install --no-document --version ">= 0.2.0" neovim
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
