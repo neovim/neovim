@@ -43,8 +43,6 @@ local wshada, _, fname = get_shada_rw('Xtest-functional-plugin-shada.shada')
 local wshada_tmp, _, fname_tmp =
   get_shada_rw('Xtest-functional-plugin-shada.shada.tmp.f')
 
-if helpers.pending_win32(pending) then return end
-
 describe('In autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
   before_each(function()
@@ -2140,6 +2138,7 @@ end)
 
 describe('In plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
+  local eol = helpers.iswin() and '\r\n' or '\n'
   before_each(function()
     reset()
     os.remove(fname)
@@ -2279,7 +2278,7 @@ describe('In plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2303,6 +2302,7 @@ describe('In plugin/shada.vim', function()
 
   describe('event FileWriteCmd', function()
     it('works', function()
+      if helpers.pending_win32(pending) then return end
       nvim('set_var', 'shada#add_own_header', 0)
       curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
@@ -2326,7 +2326,7 @@ describe('In plugin/shada.vim', function()
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2383,7 +2383,7 @@ describe('In plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
       shada_eq({{
         timestamp=0,
         type=8,

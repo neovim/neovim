@@ -13,8 +13,6 @@ local rmdir = helpers.rmdir
 
 describe('startup defaults', function()
   describe(':filetype', function()
-    if helpers.pending_win32(pending) then return end
-
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)
       screen:attach()
