@@ -40,7 +40,7 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Ruby"
-  brew upgrade ruby
+  brew install ruby
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
