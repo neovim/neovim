@@ -40,7 +40,8 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Update default Ruby"
-  brew switch ruby 2.2.5
+  brew install ruby
+  brew switch ruby
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
