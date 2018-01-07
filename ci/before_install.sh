@@ -38,6 +38,15 @@ else
   pip3 -q install --user --upgrade pip || true
 fi
 
+if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+  echo "Upgrade Ruby"
+  brew install rbenv
+  rbenv init
+  rbenv install 2.4.2-p198
+  rbenv rehash
+  rbenv global 2.4.2-p198
+fi
+
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
   echo "Install node (LTS)"
 
