@@ -40,8 +40,9 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Ruby"
-  brew install ruby
-  brew link --overwrite ruby
+  brew install rbenv
+  rbenv init
+  rbenv install 2.4.2-p198
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
