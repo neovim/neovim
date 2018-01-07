@@ -245,7 +245,8 @@ void channel_incref(Channel *channel)
 void channel_decref(Channel *channel)
 {
   if (!(--channel->refcount)) {
-    multiqueue_put(main_loop.fast_events, free_channel_event, 1, channel);
+    // delay free, so that libuv is done with the handles
+    multiqueue_put(main_loop.events, free_channel_event, 1, channel);
   }
 }
 
@@ -286,12 +287,15 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
+  pmap_del(uint64_t)(channels, chan->id);
+  chan->id = 0;
 
   if ((--chan->refcount != 0)) {
     abort();
   }
 
-  free_channel_event((void **)&chan);
+  // uv will keep a reference to handles until next loop tick, so delay free
+  multiqueue_put(main_loop.events, free_channel_event, 1, chan);
 }
 
 
