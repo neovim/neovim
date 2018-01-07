@@ -41,6 +41,7 @@ fi
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Ruby"
   brew install ruby
+  brew link --overwrite ruby
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
