@@ -38,14 +38,12 @@ else
   pip3 -q install --user --upgrade pip || true
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
-  echo "Install node (LTS)"
+echo "Install node (LTS)"
 
-  if [ ! -f ~/.nvm/nvm.sh ]; then
-    curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
-  fi
-
-  source ~/.nvm/nvm.sh
-  nvm install --lts
-  nvm use --lts
+if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
+  curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
 fi
+
+source ~/.nvm/nvm.sh
+nvm install --lts
+nvm use --lts
