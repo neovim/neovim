@@ -26,7 +26,5 @@ if ! [ "${TRAVIS_OS_NAME}" = osx ] ; then
   gem install --no-document --version ">= 0.2.0" neovim
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
-  echo "Install neovim npm package"
-  npm install -g neovim
-fi
+echo "Install neovim npm package"
+npm install -g neovim
