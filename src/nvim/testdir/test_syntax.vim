@@ -329,3 +329,14 @@ func Test_syn_clear()
   hi clear Foo
   hi clear Bar
 endfunc
+
+func Test_invalid_name()
+  syn clear
+  syn keyword Nop yes
+  call assert_fails("syntax keyword Wr\x17ong bar", 'E669:')
+  syntax keyword @Wrong bar
+  call assert_match('W18:', execute('1messages'))
+  syn clear
+  hi clear Nop
+  hi clear @Wrong
+endfunc
