@@ -5283,7 +5283,9 @@ get_id_list (
           id = SYNID_CONTAINED;
         id += current_syn_inc_tag;
       } else if (name[1] == '@')   {
-        if (!skip) {
+        if (skip) {
+            id = -1;
+        } else {
           id = syn_check_cluster(name + 2, (int)(end - p - 1));
         }
       } else {
