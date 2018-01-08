@@ -52,6 +52,7 @@ static bool did_syntax_onoff = false;
 struct hl_group {
   char_u      *sg_name;         ///< highlight group name
   char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_cleared;       	///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
   int sg_set;                   ///< combination of flags in \ref SG_SET
@@ -6490,6 +6491,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
         HL_TABLE()[from_id - 1].sg_link = to_id;
         HL_TABLE()[from_id - 1].sg_scriptID = current_SID;
+	HL_TABLE()[from_id - 1].sg_cleared = false;
         redraw_all_later(SOME_VALID);
       }
     }
@@ -6872,6 +6874,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         error = true;
         break;
       }
+      HL_TABLE()[idx].sg_cleared = false;
 
       // When highlighting has been given for a group, don't link it.
       if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
@@ -6953,6 +6956,8 @@ static int hl_has_settings(int idx, int check_link)
  */
 static void highlight_clear(int idx)
 {
+  HL_TABLE()[idx].sg_cleared = true;
+
   HL_TABLE()[idx].sg_attr = 0;
   HL_TABLE()[idx].sg_cterm = 0;
   HL_TABLE()[idx].sg_cterm_bold = FALSE;
@@ -7763,10 +7768,20 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
   } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
              && include_link != 0) {
     return "clear";
-  } else if (idx < 0 || idx >= highlight_ga.ga_len) {
+  } else if (idx < 0) {
     return NULL;
   }
-  return (const char *)HL_TABLE()[idx].sg_name;
+
+  /* Items are never removed from the table, skip the ones that were cleared.
+   */
+  int current_idx = idx; 
+  while (current_idx < highlight_ga.ga_len && HL_TABLE()[current_idx].sg_cleared) {
+      ++current_idx;
+  }
+  if (current_idx >= highlight_ga.ga_len) {
+      return NULL;
+  }
+  return (const char *)HL_TABLE()[current_idx].sg_name;
 }
 
 color_name_table_T color_name_table[] = {
