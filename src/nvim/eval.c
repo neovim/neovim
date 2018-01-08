@@ -2084,6 +2084,8 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
    * Loop until no more [idx] or .key is following.
    */
   lp->ll_tv = &v->di_tv;
+  var1.v_type = VAR_UNKNOWN;
+  var2.v_type = VAR_UNKNOWN;
   while (*p == '[' || (*p == '.' && lp->ll_tv->v_type == VAR_DICT)) {
     if (!(lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list != NULL)
         && !(lp->ll_tv->v_type == VAR_DICT
@@ -2134,9 +2136,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             EMSG(_(e_dictrange));
           }
-          if (!empty1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         if (rettv != NULL && (rettv->v_type != VAR_LIST
@@ -2144,9 +2144,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             emsgf(_("E709: [:] requires a List value"));
           }
-          if (!empty1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         p = skipwhite(p + 1);
@@ -2155,16 +2153,12 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         } else {
           lp->ll_empty2 = false;
           if (eval1(&p, &var2, true) == FAIL) {  // Recursive!
-            if (!empty1) {
-              tv_clear(&var1);
-            }
+            tv_clear(&var1);
             return NULL;
           }
           if (!tv_check_str(&var2)) {
             // Not a number or string.
-            if (!empty1) {
-              tv_clear(&var1);
-            }
+            tv_clear(&var1);
             tv_clear(&var2);
             return NULL;
           }
@@ -2177,12 +2171,8 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         if (!quiet) {
           emsgf(_(e_missbrac));
         }
-        if (!empty1) {
-          tv_clear(&var1);
-        }
-        if (lp->ll_range && !lp->ll_empty2) {
-          tv_clear(&var2);
-        }
+        tv_clear(&var1);
+        tv_clear(&var2);
         return NULL;
       }
 
@@ -2236,9 +2226,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             emsgf(_(e_dictkey), key);
           }
-          if (len == -1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         if (len == -1) {
@@ -2246,32 +2234,28 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         } else {
           lp->ll_newkey = vim_strnsave(key, len);
         }
-        if (len == -1) {
-          tv_clear(&var1);
-        }
+        tv_clear(&var1);
         break;
       // existing variable, need to check if it can be changed
       } else if (!(flags & GLV_READ_ONLY) && var_check_ro(lp->ll_di->di_flags,
                                                           (const char *)name,
                                                           (size_t)(p - name))) {
-        if (len == -1) {
-          tv_clear(&var1);
-        }
+        tv_clear(&var1);
         return NULL;
       }
 
-      if (len == -1) {
-        tv_clear(&var1);
-      }
+      tv_clear(&var1);
       lp->ll_tv = &lp->ll_di->di_tv;
     } else {
       // Get the number and item for the only or first index of the List.
       if (empty1) {
         lp->ll_n1 = 0;
       } else {
-        lp->ll_n1 = (long)tv_get_number(&var1);  // Is number or string.
-        tv_clear(&var1);
+        // Is number or string.
+        lp->ll_n1 = (long)tv_get_number(&var1);
       }
+      tv_clear(&var1);
+
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
       lp->ll_li = tv_list_find(lp->ll_list, lp->ll_n1);
@@ -2282,9 +2266,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         }
       }
       if (lp->ll_li == NULL) {
-        if (lp->ll_range && !lp->ll_empty2) {
-          tv_clear(&var2);
-        }
+        tv_clear(&var2);
         if (!quiet) {
           EMSGN(_(e_listidx), lp->ll_n1);
         }
@@ -2326,6 +2308,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
     }
   }
 
+  tv_clear(&var1);
   return p;
 }
 
