@@ -184,6 +184,10 @@ func Test_syntax_arg_skipped()
     call assert_match('conceal off', execute('syntax conceal'))
   endif
 
+  syntax conceal on
+  syntax conceal off
+  call assert_match('conceal off', execute('syntax conceal'))
+
   syntax region Tar start=/</ end=/>/
   if 0
     syntax region NotTest start=/</ end=/>/ contains=@Spell
