@@ -533,6 +533,9 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   list_T *const l = tv_list_alloc(kListLenMayKnow);
+  // Empty buffer should be represented by [''], encode_list_write() thinks
+  // empty list is fine for the case.
+  tv_list_append_string(l, "", 0);
   encode_list_write(l, buf, len);
   return l;
 }
