@@ -8116,8 +8116,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(capture_ga->ga_data);
-  ga_clear(capture_ga);
+  rettv->vval.v_string = capture_ga->ga_data;
 
   capture_ga = save_capture_ga;
 }

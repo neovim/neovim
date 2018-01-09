@@ -219,28 +219,38 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(copy_string(command)));
-  ADD(args, STRING_OBJ(cstr_to_string("silent")));
-  String fn = cstr_to_string("execute");
-  Object rv = nvim_call_function(fn, args, err);
-  api_free_string(fn);
-  api_free_array(args);
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  ga_init(&capture_local, 1, 80);
+
+  try_start();
+  msg_silent++;
+  capture_ga = &capture_local;
+  do_cmdline_cmd(command.data);
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
+
   if (ERROR_SET(err)) {
-    assert(rv.type == kObjectTypeNil);
-    return (String)STRING_INIT;
+    goto theend;
   }
 
-  assert(rv.type == kObjectTypeString);
-  // execute() always(?) prepends a newline; remove it.
-  if (rv.data.string.size > 1) {
-    assert(rv.data.string.data[0] == '\n');
-    String *s = &rv.data.string;
-    s->size--;
-    memmove(s->data, s->data + 1, s->size);
-    s->data[s->size] = '\0';
+  if (capture_local.ga_len > 1) {
+    // redir always(?) prepends a newline; remove it.
+    char *s = capture_local.ga_data;
+    assert(s[0] == '\n');
+    memmove(s, s + 1, (size_t)capture_local.ga_len);
+    s[capture_local.ga_len - 1] = '\0';
+    return (String) {  // Caller will free the memory.
+      .data = s,
+      .size = (size_t)(capture_local.ga_len - 1),
+    };
   }
-  return rv.data.string;
+
+theend:
+  ga_clear(&capture_local);
+  return (String)STRING_INIT;
 }
 
 /// Evaluates a VimL expression (:help expression).

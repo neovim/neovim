@@ -69,9 +69,34 @@ describe('api', function()
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
 
-    it('returns command output', function()
+    it('captures command output', function()
       eq('this is\nspinal tap',
          nvim('command_output', [[echo "this is\nspinal tap"]]))
+    end)
+
+    it('captures empty command output', function()
+      eq('', nvim('command_output', 'echo'))
+    end)
+
+    it('captures single-char command output', function()
+      eq('x', nvim('command_output', 'echo "x"'))
+    end)
+
+    it('captures multiple commands', function()
+      eq('foo\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output', 'echo "foo" | ls'))
+    end)
+
+    it('captures nested execute()', function()
+      eq('\nnested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo execute('echo "nested1\nnested2"') | ls]]))
+    end)
+
+    it('captures nested nvim_command_output()', function()
+      eq('nested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo nvim_command_output('echo "nested1\nnested2"') | ls]]))
     end)
 
     it('does not return shell |:!| output', function()
