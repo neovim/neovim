@@ -18,6 +18,10 @@ highlight default link manOptionDesc     Constant
 highlight default link manReference      PreProc
 highlight default link manSubHeading     Function
 
+highlight default manUnderline cterm=underline gui=underline
+highlight default manBold      cterm=bold      gui=bold
+highlight default manItalic    cterm=italic    gui=italic
+
 if &filetype != 'man'
   " May have been included by some other filetype.
   finish

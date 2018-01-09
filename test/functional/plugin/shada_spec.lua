@@ -43,7 +43,7 @@ local wshada, _, fname = get_shada_rw('Xtest-functional-plugin-shada.shada')
 local wshada_tmp, _, fname_tmp =
   get_shada_rw('Xtest-functional-plugin-shada.shada.tmp.f')
 
-describe('In autoload/shada.vim', function()
+describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
   before_each(function()
     reset()
@@ -2136,7 +2136,7 @@ describe('In autoload/shada.vim', function()
   end)
 end)
 
-describe('In plugin/shada.vim', function()
+describe('plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
   local eol = helpers.iswin() and '\r\n' or '\n'
   before_each(function()
