@@ -9346,6 +9346,10 @@ makeopens(
     /*
      * Restore the view of the window (options, file, cursor, etc.).
      */
+    if (put_line(fd, "let s:buffer_names = []") == FAIL) {
+      return FAIL;
+    }
+
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp))
         continue;
@@ -9355,6 +9359,16 @@ makeopens(
       if (nr > 1 && put_line(fd, "wincmd w") == FAIL)
         return FAIL;
       next_arg_idx = wp->w_arg_idx;
+    }
+
+    if (put_line(fd, "for [s:name, s:tbuf] in s:buffer_names") == FAIL
+        || put_line(fd, "  if buflisted(s:tbuf)") == FAIL
+        || put_line(fd, "    execute 'buffer' fnameescape(s:tbuf)") == FAIL
+        || put_line(fd, "    execute 'file' fnameescape(s:name)") == FAIL
+        || put_line(fd, "  endif") == FAIL
+        || put_line(fd, "endfor") == FAIL
+        || put_line(fd, "unlet! s:buffer_names s:tbuf s:name") == FAIL) {
+      return FAIL;
     }
 
     /* The argument index in the first tab page is zero, need to set it in
@@ -9659,6 +9673,19 @@ put_view(
           || fputs(" | else | edit ", fd) < 0
           || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
           || fputs(" | endif", fd) < 0
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+
+      if (fputs("call add(s:buffer_names, [bufname('%'),'", fd) < 0
+          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
+          || fputs("'])", fd) < 0
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+
+      if (fputs("file ", fd) < 0
+          || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
           || put_eol(fd) == FAIL) {
         return FAIL;
       }

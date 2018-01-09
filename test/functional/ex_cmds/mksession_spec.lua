@@ -91,4 +91,23 @@ describe(':mksession', function()
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
     command('qall!')
   end)
+
+	it('restores multiple windows with same terminal instances', function()
+		-- Create a view with two buffers referencing the same terminal instance
+		command('terminal')
+		command('split')
+		command('mksession ' .. session_file)
+
+		clear()
+
+		command('source ' .. session_file)
+		-- Getting the name of the buffer shown to compare with the other window
+		local eval = helpers.eval
+
+		command('exe 1 . "wincmd w"')
+		local expected_pid = eval('b:terminal_job_pid')
+
+		command('exe 2 . "wincmd w"')
+		eq(expected_pid, eval('b:terminal_job_pid'))
+	end)
 end)
