@@ -24,10 +24,8 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-Detail: The ":filetype on" command will load one of these files:
-		Mac	    $VIMRUNTIME/filetype.vim
-		MS-DOS	    $VIMRUNTIME\filetype.vim
-		Unix	    $VIMRUNTIME/filetype.vim
+Detail: The ":filetype on" command will load this file:
+		$VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the

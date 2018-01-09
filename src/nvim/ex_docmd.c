@@ -9718,17 +9718,18 @@ static void ex_filetype(exarg_T *eap)
     EMSG2(_(e_invarg2), arg);
 }
 
-/// Do ":filetype plugin indent on" if user did not already do some
-/// permutation thereof.
+/// Set all :filetype options ON if user did not explicitly set any to OFF.
 void filetype_maybe_enable(void)
 {
-  if (filetype_detect == kNone
-      && filetype_plugin == kNone
-      && filetype_indent == kNone) {
+  if (filetype_detect == kNone) {
     source_runtime((char_u *)FILETYPE_FILE, true);
     filetype_detect = kTrue;
+  }
+  if (filetype_plugin == kNone) {
     source_runtime((char_u *)FTPLUGIN_FILE, true);
     filetype_plugin = kTrue;
+  }
+  if (filetype_indent == kNone) {
     source_runtime((char_u *)INDENT_FILE, true);
     filetype_indent = kTrue;
   }

@@ -1,20 +1,41 @@
 " Tests for stat functions and checktime
 
-func Test_existent_file()
+func CheckFileTime(doSleep)
   let fname = 'Xtest.tmp'
+  let result = 0
 
   let ts = localtime()
+  if a:doSleep
+    sleep 1
+  endif
   let fl = ['Hello World!']
   call writefile(fl, fname)
   let tf = getftime(fname)
+  if a:doSleep
+    sleep 1
+  endif
   let te = localtime()
 
-  call assert_true(ts <= tf && tf <= te)
-  call assert_equal(strlen(fl[0] . "\n"), getfsize(fname))
-  call assert_equal('file', getftype(fname))
-  call assert_equal('rw-', getfperm(fname)[0:2])
+  let time_correct = (ts <= tf && tf <= te)
+  if a:doSleep || time_correct
+    call assert_true(time_correct)
+    call assert_equal(strlen(fl[0] . "\n"), getfsize(fname))
+    call assert_equal('file', getftype(fname))
+    call assert_equal('rw-', getfperm(fname)[0:2])
+    let result = 1
+  endif
 
   call delete(fname)
+  return result
+endfunc
+
+func Test_existent_file()
+  " On some systems the file timestamp is rounded to a multiple of 2 seconds.
+  " We need to sleep to handle that, but that makes the test slow.  First try
+  " without the sleep, and if it fails try again with the sleep.
+  if CheckFileTime(0) == 0
+    call CheckFileTime(1)
+  endif
 endfunc
 
 func Test_existent_directory()

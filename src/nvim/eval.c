@@ -2084,6 +2084,8 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
    * Loop until no more [idx] or .key is following.
    */
   lp->ll_tv = &v->di_tv;
+  var1.v_type = VAR_UNKNOWN;
+  var2.v_type = VAR_UNKNOWN;
   while (*p == '[' || (*p == '.' && lp->ll_tv->v_type == VAR_DICT)) {
     if (!(lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list != NULL)
         && !(lp->ll_tv->v_type == VAR_DICT
@@ -2134,9 +2136,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             EMSG(_(e_dictrange));
           }
-          if (!empty1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         if (rettv != NULL && (rettv->v_type != VAR_LIST
@@ -2144,9 +2144,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             emsgf(_("E709: [:] requires a List value"));
           }
-          if (!empty1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         p = skipwhite(p + 1);
@@ -2155,16 +2153,12 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         } else {
           lp->ll_empty2 = false;
           if (eval1(&p, &var2, true) == FAIL) {  // Recursive!
-            if (!empty1) {
-              tv_clear(&var1);
-            }
+            tv_clear(&var1);
             return NULL;
           }
           if (!tv_check_str(&var2)) {
             // Not a number or string.
-            if (!empty1) {
-              tv_clear(&var1);
-            }
+            tv_clear(&var1);
             tv_clear(&var2);
             return NULL;
           }
@@ -2177,12 +2171,8 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         if (!quiet) {
           emsgf(_(e_missbrac));
         }
-        if (!empty1) {
-          tv_clear(&var1);
-        }
-        if (lp->ll_range && !lp->ll_empty2) {
-          tv_clear(&var2);
-        }
+        tv_clear(&var1);
+        tv_clear(&var2);
         return NULL;
       }
 
@@ -2236,9 +2226,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           if (!quiet) {
             emsgf(_(e_dictkey), key);
           }
-          if (len == -1) {
-            tv_clear(&var1);
-          }
+          tv_clear(&var1);
           return NULL;
         }
         if (len == -1) {
@@ -2246,32 +2234,28 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         } else {
           lp->ll_newkey = vim_strnsave(key, len);
         }
-        if (len == -1) {
-          tv_clear(&var1);
-        }
+        tv_clear(&var1);
         break;
       // existing variable, need to check if it can be changed
       } else if (!(flags & GLV_READ_ONLY) && var_check_ro(lp->ll_di->di_flags,
                                                           (const char *)name,
                                                           (size_t)(p - name))) {
-        if (len == -1) {
-          tv_clear(&var1);
-        }
+        tv_clear(&var1);
         return NULL;
       }
 
-      if (len == -1) {
-        tv_clear(&var1);
-      }
+      tv_clear(&var1);
       lp->ll_tv = &lp->ll_di->di_tv;
     } else {
       // Get the number and item for the only or first index of the List.
       if (empty1) {
         lp->ll_n1 = 0;
       } else {
-        lp->ll_n1 = (long)tv_get_number(&var1);  // Is number or string.
-        tv_clear(&var1);
+        // Is number or string.
+        lp->ll_n1 = (long)tv_get_number(&var1);
       }
+      tv_clear(&var1);
+
       lp->ll_dict = NULL;
       lp->ll_list = lp->ll_tv->vval.v_list;
       lp->ll_li = tv_list_find(lp->ll_list, lp->ll_n1);
@@ -2282,9 +2266,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         }
       }
       if (lp->ll_li == NULL) {
-        if (lp->ll_range && !lp->ll_empty2) {
-          tv_clear(&var2);
-        }
+        tv_clear(&var2);
         if (!quiet) {
           EMSGN(_(e_listidx), lp->ll_n1);
         }
@@ -2326,6 +2308,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
     }
   }
 
+  tv_clear(&var1);
   return p;
 }
 
@@ -2417,6 +2400,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (ri == NULL || (!lp->ll_empty2 && lp->ll_n2 == lp->ll_n1)) {
         break;
       }
+      assert(lp->ll_li != NULL);
       if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
         // Need to add an empty item.
         tv_list_append_number(lp->ll_list, 0);
@@ -2479,9 +2463,11 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
 notify:
     if (watched) {
       if (oldtv.v_type == VAR_UNKNOWN) {
+        assert(lp->ll_newkey != NULL);
         tv_dict_watcher_notify(dict, (char *)lp->ll_newkey, lp->ll_tv, NULL);
       } else {
         dictitem_T *di = lp->ll_di;
+        assert(di->di_key != NULL);
         tv_dict_watcher_notify(dict, (char *)di->di_key, lp->ll_tv, &oldtv);
         tv_clear(&oldtv);
       }
@@ -2897,6 +2883,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
+    assert(lp->ll_list != NULL);
     // Delete a range of List items.
     listitem_T *const first_li = lp->ll_li;
     listitem_T *last_li = first_li;
@@ -2923,6 +2910,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
     } else {
       // unlet a Dictionary item.
       dict_T *d = lp->ll_dict;
+      assert(d != NULL);
       dictitem_T *di = lp->ll_di;
       bool watched = tv_dict_is_watched(d);
       char *key = NULL;
@@ -19011,6 +18999,9 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
       return;
     }
 
+    // Make sure dict is valid
+    assert(dict != NULL);
+
     v = xmalloc(sizeof(dictitem_T) + strlen(varname));
     STRCPY(v->di_key, varname);
     if (tv_dict_add(dict, v) == FAIL) {
@@ -21251,15 +21242,17 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
   }
 
+  const bool do_profiling_yes = do_profiling == PROF_YES;
+
   bool func_not_yet_profiling_but_should =
-    do_profiling == PROF_YES
-    && !fp->uf_profiling && has_profiling(FALSE, fp->uf_name, NULL);
+    do_profiling_yes
+    && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should)
     func_do_profile(fp);
 
   bool func_or_func_caller_profiling =
-    do_profiling == PROF_YES
+    do_profiling_yes
     && (fp->uf_profiling
         || (fc->caller != NULL && fc->caller->func->uf_profiling));
 
@@ -21269,7 +21262,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     fp->uf_tm_children = profile_zero();
   }
 
-  if (do_profiling == PROF_YES) {
+  if (do_profiling_yes) {
     script_prof_save(&wait_start);
   }
 
@@ -21345,8 +21338,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
   current_SID = save_current_SID;
-  if (do_profiling == PROF_YES)
+  if (do_profiling_yes) {
     script_prof_restore(&wait_start);
+  }
 
   if (p_verbose >= 12 && sourcing_name != NULL) {
     ++no_wait_return;

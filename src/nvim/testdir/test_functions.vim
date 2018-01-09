@@ -311,3 +311,45 @@ func! Test_mode()
   bwipe!
   iunmap <F2>
 endfunc
+
+func Test_getbufvar()
+  let bnr = bufnr('%')
+  let b:var_num = '1234'
+  let def_num = '5678'
+  call assert_equal('1234', getbufvar(bnr, 'var_num'))
+  call assert_equal('1234', getbufvar(bnr, 'var_num', def_num))
+
+  let bd = getbufvar(bnr, '')
+  call assert_equal('1234', bd['var_num'])
+  call assert_true(exists("bd['changedtick']"))
+  call assert_equal(2, len(bd))
+
+  let bd2 = getbufvar(bnr, '', def_num)
+  call assert_equal(bd, bd2)
+
+  unlet b:var_num
+  call assert_equal(def_num, getbufvar(bnr, 'var_num', def_num))
+  call assert_equal('', getbufvar(bnr, 'var_num'))
+
+  let bd = getbufvar(bnr, '')
+  call assert_equal(1, len(bd))
+  let bd = getbufvar(bnr, '',def_num)
+  call assert_equal(1, len(bd))
+
+  call assert_equal('', getbufvar(9999, ''))
+  call assert_equal(def_num, getbufvar(9999, '', def_num))
+  unlet def_num
+
+  call assert_equal(0, getbufvar(bnr, '&autoindent'))
+  call assert_equal(0, getbufvar(bnr, '&autoindent', 1))
+
+  " Open new window with forced option values
+  set fileformats=unix,dos
+  new ++ff=dos ++bin ++enc=iso-8859-2
+  call assert_equal('dos', getbufvar(bufnr('%'), '&fileformat'))
+  call assert_equal(1, getbufvar(bufnr('%'), '&bin'))
+  call assert_equal('iso-8859-2', getbufvar(bufnr('%'), '&fenc'))
+  close
+
+  set fileformats&
+endfunc

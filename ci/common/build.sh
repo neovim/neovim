@@ -87,3 +87,12 @@ build_nvim() {
 
   cd "${TRAVIS_BUILD_DIR}"
 }
+
+macos_rvm_dance() {
+  # neovim-ruby gem requires a ruby newer than the macOS default.
+  source ~/.rvm/scripts/rvm
+  rvm get stable --auto-dotfiles
+  rvm reload
+  rvm use 2.2.5
+  rvm use
+}

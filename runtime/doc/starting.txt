@@ -439,15 +439,14 @@ accordingly.  Vim proceeds in this order:
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
 		:runtime! indent.vim
-<	This step is skipped if ":filetype ..." was called before now or if
-	the "-u NONE" command line argument was given.
+<	Skipped if ":filetype … off" was called or if the "-u NONE" command
+	line argument was given.
 
 5. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
-<	Note: This enables filetype detection even if ":filetype off" was
-	called before now.
-	This step is skipped if the "-u NONE" command line argument was given.
+<	Skipped if ":syntax off" was called or if the "-u NONE" command
+	line argument was given.
 
 6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >

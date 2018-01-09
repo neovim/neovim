@@ -3,8 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local insert = helpers.insert
 
-if helpers.pending_win32(pending) then return end
-
 describe('Screen', function()
   local screen
 

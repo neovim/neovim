@@ -90,8 +90,8 @@ bool terminfo_is_term_family(const char *term, const char *family)
   size_t tlen = strlen(term);
   size_t flen = strlen(family);
   return tlen >= flen
-    && 0 == memcmp(term, family, flen) \
-    // Per the commentary in terminfo, minus sign is the suffix separator.
+    && 0 == memcmp(term, family, flen)
+    // Per commentary in terminfo, minus is the only valid suffix separator.
     && ('\0' == term[flen] || '-' == term[flen]);
 }
 
