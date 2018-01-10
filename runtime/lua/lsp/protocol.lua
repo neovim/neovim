@@ -2,38 +2,29 @@
 
 local protocol = {}
 
-local Enum = {
-  __index = function(t, k)
-    error("attempt to get unknown enum " .. k .. "from " .. tostring(t), 2)
-  end,
-  __newindex = function(t, k, v)
-    error(
-      string.format("attempt to update enum table with %s, %s, %s", t, k, v),
-      2)
-  end
-}
+local Enum = require('neovim.meta').Enum
 
-protocol.DiagnosticSeverity = setmetatable({
-    Error = 1,
-    Warning = 2,
-    Information = 3,
-    Hint = 4
-}, Enum)
+protocol.DiagnosticSeverity = Enum:new({
+  Error = 1,
+  Warning = 2,
+  Information = 3,
+  Hint = 4
+})
 
-protocol.MessageType  = setmetatable({
-    Error = 1,
-    Warning = 2,
-    Info = 3,
-    Log = 4
-}, Enum)
+protocol.MessageType = Enum:new({
+  Error = 1,
+  Warning = 2,
+  Info = 3,
+  Log = 4
+})
 
-protocol.FileChangeType = setmetatable({
+protocol.FileChangeType = Enum:new({
     Created = 1,
     Changed = 2,
     Deleted = 3
-}, Enum)
+})
 
-protocol.CompletionItemKind = setmetatable({
+protocol.CompletionItemKind = Enum:new({
     Text = 1,
     Method = 2,
     Function = 3,
@@ -59,20 +50,20 @@ protocol.CompletionItemKind = setmetatable({
     Event = 23,
     Operator = 24,
     TypeParameter = 25,
-}, Enum)
+})
 
-protocol.CompletionTriggerKind = setmetatable({
+protocol.CompletionTriggerKind = Enum:new({
   Invoked = 1,
   TriggerCharacter = 2,
-}, Enum)
+})
 
-protocol.DocumentHighlightKind = setmetatable({
+protocol.DocumentHighlightKind = Enum:new({
     Text = 1,
     Read = 2,
     Write = 3
-}, Enum)
+})
 
-protocol.SymbolKind = setmetatable({
+protocol.SymbolKind = Enum:new({
     File = 1,
     Module = 2,
     Namespace = 3,
@@ -91,7 +82,7 @@ protocol.SymbolKind = setmetatable({
     Number = 16,
     Boolean = 17,
     Array = 18,
-}, Enum)
+})
 
 protocol.errorCodes = {
   [-32700] = 'Parse error',

@@ -1,6 +1,8 @@
 local json = require('lsp.json')
 local util = require('neovim.util')
 
+local Enum = require('neovim.meta').Enum
+
 local protocol = require('lsp.protocol')
 local message = require('lsp.message')
 local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
@@ -9,17 +11,17 @@ local should_send_message = require('lsp.checks').should_send
 
 local log = require('neovim.log')
 
-local read_state = {
+local read_state = Enum:new({
   init = 0,
   header = 1,
   body = 2,
-}
+})
 
-local error_level = {
+local error_level = Enum:new({
   critical = 0,
   reset_state = 1,
   info = 2,
-}
+})
 
 
 local active_jobs = {}

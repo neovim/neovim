@@ -21,8 +21,8 @@ function! lsp#start(...) abort
   let start_filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
 
-  if force || !luaeval(s:client_string . ".has_started(_A)", start_filetype)
-    call luaeval(s:client_string . ".start(nil, nil, _A)", start_filetype)
+  if force || !luaeval(s:client_string . '.has_started(_A)', start_filetype)
+    call luaeval(s:client_string . '.start(nil, nil, _A)', start_filetype)
 
     " Open the document in the lsp.
     " Only do this if we just started the server, to make sure that this
@@ -31,7 +31,7 @@ function! lsp#start(...) abort
       silent call lsp#request_async('textDocument/didOpen')
     endif
   else
-    echom '[LSP] Client for ' . filetype . ' has already started'
+    echom '[LSP] Client for ' . start_filetype . ' has already started'
   end
 endfunction
 
