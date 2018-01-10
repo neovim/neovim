@@ -1,7 +1,7 @@
 " Test spell checking
 " TODO: move test58 tests here
 
-if !has('spell')
+if v:false
   finish
 endif
 
