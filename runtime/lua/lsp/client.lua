@@ -44,6 +44,7 @@ client.job_stdout = function(id, data)
 
   active_jobs[id]:on_stdout(data)
 end
+
 client.new = function(name, ft, cmd, args)
   log.debug('Starting new client: ', name)
 
@@ -84,6 +85,7 @@ client.new = function(name, ft, cmd, args)
 
   return self
 end
+
 client.initialize = function(self)
   local result = self:request_async('initialize', {
     -- Get neovim's process ID
@@ -174,6 +176,7 @@ client.initialize = function(self)
 
   return result
 end
+
 client.close = function(self)
   if self._closed then
     return
@@ -182,6 +185,10 @@ client.close = function(self)
   self._closed = true
   vim.api.nvim_call_function('jobclose', {self.job_id})
 end
+
+
+
+
 --- Make a request to the server
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
@@ -194,12 +201,9 @@ client.request = function(self, method, params, cb)
 
   local request_id = self:request_async(method, params, cb)
 
-  -- TODO(tjdevries): Make this configurable to the user
-  local timeout = 2
-  local later = os.time() + timeout
+  local later = os.time() + require('lsp.conf.request').timeout
 
   while (os.time() < later) and (self._results[request_id]  == nil) do
-    -- vim.api.nvim_call_function('eval', {'1'})
     vim.api.nvim_command('sleep 10m')
   end
 
@@ -209,6 +213,7 @@ client.request = function(self, method, params, cb)
 
   return self._results[request_id].result
 end
+
 --- Sends an async request to the client.
 -- If a callback is passed,
 --  it will be registered to run when the response is received.
@@ -259,12 +264,14 @@ client.request_async = function(self, method, params, cb)
 
   return req.id
 end
+
 --- Send a notification to the server
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
   self:request_async(method, params)
 end
+
 --- Parse an LSP Message's header
 -- @param header: The header to parse.
 client._parse_header = function(header)
