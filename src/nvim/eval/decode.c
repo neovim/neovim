@@ -285,7 +285,7 @@ typval_T decode_string(const char *const s, const size_t len,
       .v_type = VAR_STRING,
       .v_lock = VAR_UNLOCKED,
       .vval = { .v_string = (char_u *)(
-          s_allocated ? (char *)s : xmemdupz(s, len)) },
+          (s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
     };
   }
 }
