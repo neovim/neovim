@@ -506,6 +506,11 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   if (buf->b_nwindows > 0)
     --buf->b_nwindows;
 
+  #ifdef FEAT_DIFF
+      if(diffopt_hiddenoff() && !unload_buf && buf->b_windows == 0)
+        diff_buf_delete(buf); /* Clear 'diff' for hidden buffer. */
+  #endif
+
   /* Return when a window is displaying the buffer or when it's not
    * unloaded. */
   if (buf->b_nwindows > 0 || !unload_buf)
