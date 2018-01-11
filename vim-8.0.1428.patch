@@ -1,0 +1,35 @@
+commit 200ea8ffaa90e1ccc156b24ee097be87acdd5214
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Tue Jan 2 15:37:46 2018 +0100
+
+    patch 8.0.1428: compiler warning on 64 bit MS-Windows system
+    
+    Problem:    Compiler warning on 64 bit MS-Windows system.
+    Solution:   Change type from "int" to "size_t". (Mike Williams)
+
+diff --git a/src/ex_getln.c b/src/ex_getln.c
+index 2a2b08b..421c6b7 100644
+--- a/src/ex_getln.c
++++ b/src/ex_getln.c
+@@ -180,7 +180,7 @@ abandon_cmdline(void)
+     static int
+ empty_pattern(char_u *p)
+ {
+-    int n = STRLEN(p);
++    size_t n = STRLEN(p);
+ 
+     /* remove trailing \v and the like */
+     while (n >= 2 && p[n - 2] == '\\'
+diff --git a/src/version.c b/src/version.c
+index 15aec19..2bfb86c 100644
+--- a/src/version.c
++++ b/src/version.c
+@@ -772,6 +772,8 @@ static char *(features[]) =
+ static int included_patches[] =
+ {   /* Add new patch number below this line */
+ /**/
++    1428,
++/**/
+     1427,
+ /**/
+     1426,
