@@ -274,7 +274,7 @@ describe('system()', function()
     end)
   end)
 
-  describe('input passed as Number', function()
+  describe('treated as a buffer number', function()
     it('stringifies the input', function()
       eq('\n', eval('system("cat", 1)'))
     end)
