@@ -11110,6 +11110,7 @@ void get_user_input(const typval_T *const argvars,
   char defstr_buf[NUMBUFLEN];
   char cancelreturn_buf[NUMBUFLEN];
   char xp_name_buf[NUMBUFLEN];
+  char def[1] = { 0 };
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
       emsgf(_("E5050: {opts} must be the only argument"));
@@ -11124,7 +11125,6 @@ void get_user_input(const typval_T *const argvars,
     if (defstr == NULL) {
       return;
     }
-    char def[1] = { 0 };
     cancelreturn = tv_dict_get_string_buf_chk(dict, S_LEN("cancelreturn"),
                                               cancelreturn_buf, def);
     if (cancelreturn == NULL) {  // error
