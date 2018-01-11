@@ -1,8 +1,8 @@
 " Test spell checking
 " TODO: move test58 tests here
 
-if v:false
-  finish
+if v:true
+  return
 endif
 
 func Test_wrap_search()
