@@ -443,11 +443,10 @@ static void out_data_append_to_screen(char *output, size_t remaining,
   while (output != NULL && off < remaining) {
     // Found end of line?
     if (output[off] == NL) {
-      // Can we start a new line or do we need to continue the last one?
+      screen_puts_len((char_u *)output, (int)off, last_row, last_col, 0);
       if (last_col == 0) {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
       }
-      screen_puts_len((char_u *)output, (int)off, last_row, last_col, 0);
       last_col = 0;
 
       size_t skip = off + 1;
@@ -467,11 +466,11 @@ static void out_data_append_to_screen(char *output, size_t remaining,
   }
 
   if (output != NULL && remaining) {
+    screen_puts_len((char_u *)output, (int)remaining, last_row, last_col, 0);
+    last_col += (colnr_T)remaining;
     if (last_col == 0) {
       screen_del_lines(0, 0, 1, (int)Rows, NULL);
     }
-    screen_puts_len((char_u *)output, (int)remaining, last_row, last_col, 0);
-    last_col += (colnr_T)remaining;
   }
 
   if (new_line) {
