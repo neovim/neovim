@@ -302,12 +302,9 @@ readfile (
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
   int msg_save = msg_scroll;
-  linenr_T read_no_eol_lnum = 0;        /* non-zero lnum when last line of
-                                        * last read was missing the eol */
-  int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
-  int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
-  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
-  int file_rewind = FALSE;
+  linenr_T read_no_eol_lnum = 0;        // non-zero lnum when last line of
+                                        // last read was missing the eol
+  int file_rewind = false;
   int can_retry;
   linenr_T conv_error = 0;              /* line nr with conversion error */
   linenr_T illegal_byte = 0;            /* line nr with illegal byte */
@@ -639,37 +636,46 @@ readfile (
   curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
   curbuf->b_op_start.col = 0;
 
+  int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+  int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
   if (!read_buffer) {
     int m = msg_scroll;
     int n = msg_scrolled;
 
-    /*
-     * The file must be closed again, the autocommands may want to change
-     * the file before reading it.
-     */
-    if (!read_stdin)
-      close(fd);                /* ignore errors */
+    // The file must be closed again, the autocommands may want to change
+    // the file before reading it.
+    if (!read_stdin) {
+      close(fd);                // ignore errors
+    }
 
-    /*
-     * The output from the autocommands should not overwrite anything and
-     * should not be overwritten: Set msg_scroll, restore its value if no
-     * output was done.
-     */
-    msg_scroll = TRUE;
-    if (filtering)
+    // The output from the autocommands should not overwrite anything and
+    // should not be overwritten: Set msg_scroll, restore its value if no
+    // output was done.
+    msg_scroll = true;
+    if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (read_stdin)
+                           false, curbuf, eap);
+    } else if (read_stdin) {
       apply_autocmds_exarg(EVENT_STDINREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (newfile)
+                           false, curbuf, eap);
+    } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else
+                           false, curbuf, eap);
+    } else {
       apply_autocmds_exarg(EVENT_FILEREADPRE, sfname, sfname,
-          FALSE, NULL, eap);
-    if (msg_scrolled == n)
+                           false, NULL, eap);
+    }
+
+    // autocommands may have changed it
+    try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+    try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+    try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
+    if (msg_scrolled == n) {
       msg_scroll = m;
+    }
 
     if (aborting()) {       /* autocmds may abort script processing */
       --no_wait_return;
@@ -1616,7 +1622,8 @@ rewind_retry:
             *ptr = NUL;                         /* end of line */
             len = (colnr_T)(ptr - line_start + 1);
             if (fileformat == EOL_DOS) {
-              if (ptr[-1] == CAR) {             /* remove CR */
+              if (ptr > line_start && ptr[-1] == CAR) {
+                // remove CR before NL
                 ptr[-1] = NUL;
                 len--;
               } else if (ff_error != EOL_DOS) {
@@ -4436,22 +4443,32 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @return true for end-of-file.
 bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 {
-  char        *eof;
-#define FGETS_SIZE 200
-  char tbuf[FGETS_SIZE];
+  char *retval;
 
+  assert(size > 0);
   buf[size - 2] = NUL;
-  eof = fgets((char *)buf, size, fp);
-  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
-    buf[size - 1] = NUL;            /* Truncate the line */
 
-    /* Now throw away the rest of the line: */
+  do {
+    errno = 0;
+    retval = fgets((char *)buf, size, fp);
+  } while (retval == NULL && errno == EINTR);
+
+  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
+    char tbuf[200];
+
+    buf[size - 1] = NUL;  // Truncate the line.
+
+    // Now throw away the rest of the line:
     do {
-      tbuf[FGETS_SIZE - 2] = NUL;
-      ignoredp = fgets((char *)tbuf, FGETS_SIZE, fp);
-    } while (tbuf[FGETS_SIZE - 2] != NUL && tbuf[FGETS_SIZE - 2] != '\n');
+      tbuf[sizeof(tbuf) - 2] = NUL;
+      errno = 0;
+      retval = fgets((char *)tbuf, sizeof(tbuf), fp);
+      if (retval == NULL && errno != EINTR) {
+        break;
+      }
+    } while (tbuf[sizeof(tbuf) - 2] != NUL && tbuf[sizeof(tbuf) - 2] != '\n');
   }
-  return eof == NULL;
+  return retval ? false : feof(fp);
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.

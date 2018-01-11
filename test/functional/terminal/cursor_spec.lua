@@ -50,8 +50,8 @@ describe('terminal cursor', function()
     it('is positioned correctly when unfocused', function()
       screen:expect([[
         {7:  1 }tty ready                                     |
-        {7:  2 }{2:^ }                                             |
-        {7:  3 }                                              |
+        {7:  2 }^rows: 6, cols: 46                             |
+        {7:  3 }{2: }                                             |
         {7:  4 }                                              |
         {7:  5 }                                              |
         {7:  6 }                                              |
@@ -60,12 +60,21 @@ describe('terminal cursor', function()
     end)
 
     it('is positioned correctly when focused', function()
+      screen:expect([[
+        {7:  1 }tty ready                                     |
+        {7:  2 }^rows: 6, cols: 46                             |
+        {7:  3 }{2: }                                             |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        :set number                                       |
+      ]])
       feed('i')
       helpers.wait()
       screen:expect([[
         {7:  1 }tty ready                                     |
-        {7:  2 }{1: }                                             |
-        {7:  3 }                                              |
+        {7:  2 }rows: 6, cols: 46                             |
+        {7:  3 }{1: }                                             |
         {7:  4 }                                              |
         {7:  5 }                                              |
         {7:  6 }                                              |

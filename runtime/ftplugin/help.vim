@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         Vim help file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             Vim help file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish
@@ -90,7 +90,7 @@ if !exists('g:no_plugin_maps')
     let w:qf_toc = bufname
   endfunction
 
-  nnoremap <silent><buffer> <M-]> :call <sid>show_toc()<cr>
+  nnoremap <silent><buffer> gO :call <sid>show_toc()<cr>
 endif
 
 let &cpo = s:cpo_save

@@ -3376,8 +3376,7 @@ msgstr "-t метка    редактирование файла с указан
 #: ../main.c:2181
 msgid "-q [errorfile]  edit file with first error"
 msgstr ""
-"-q [файл-ошибок]\n"
-"\t\t\t\t    редактирование файла с первой ошибкой"
+"-q [файл-ошибок] редактирование файла с первой ошибкой"
 
 #: ../main.c:2187
 msgid ""
@@ -3479,8 +3478,8 @@ msgstr "-N\t\t\tРежим неполной совместимости с Vi: 'n
 #: ../main.c:2215
 msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
 msgstr ""
-"-V[N][файл]\t\tВыводить дополнительные сообщения\n"
-"\t\t\t\t[уровень N] [записывать в файл]"
+"-V[N][файл]\t\tВыводить дополнительные сообщения "
+"[уровень N] [записывать в файл]"
 
 #: ../main.c:2216
 msgid "-D\t\t\tDebugging mode"
@@ -4105,7 +4104,6 @@ msgstr ""
 #: ../memline.c:3245
 msgid "  Quit, or continue with caution.\n"
 msgstr ""
-" \n"
 "    Завершите работу или продолжайте с осторожностью.\n"
 
 #: ../memline.c:3246

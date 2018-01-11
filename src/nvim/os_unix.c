@@ -144,7 +144,9 @@ void mch_exit(int r) FUNC_ATTR_NORETURN
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
   }
-  stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  if (input_global_fd() >= 0) {
+    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  }
 
 #ifdef EXITFREE
   free_all_mem();

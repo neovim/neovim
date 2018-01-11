@@ -68,7 +68,8 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
+
       varname='p_arshape',
       defaults={if_true={vi=true}}
     },
@@ -91,7 +92,7 @@ return {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -293,6 +294,14 @@ return {
       type='string', scope={'global'},
       varname='p_cedit',
       defaults={if_true={vi="", vim=macros('CTRL_F_STR')}}
+    },
+    {
+      full_name='channel',
+      type='number', scope={'buffer'},
+      no_mkrc=true,
+      nodefault=true,
+      varname='p_channel',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='charconvert', abbreviation='ccv',
@@ -653,7 +662,7 @@ return {
       full_name='emoji', abbreviation='emo',
       type='bool', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_emoji',
       defaults={if_true={vi=true}}
     },
@@ -993,11 +1002,11 @@ return {
       expand=true,
       varname='p_gp',
       defaults={
-        condition='UNIX',
+        condition='WIN32',
         -- Add an extra file name so that grep will always
         -- insert a file name in the match line. */
-        if_true={vi="grep -n $* /dev/null"},
-        if_false={vi="grep -n "},
+        if_true={vi="findstr /n $* nul"},
+        if_false={vi="grep -n $* /dev/null"}
       }
     },
     {
@@ -1013,23 +1022,26 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifont',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontset', abbreviation='gfs',
       type='string', list='onecomma', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifontset',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontwide', abbreviation='gfw',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_guifontwide',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -1442,6 +1454,13 @@ return {
       vi_def=true,
       expand=true,
       varname='p_mef',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='makeencoding', abbreviation='menc',
+      type='string', scope={'global', 'buffer'},
+      vi_def=true,
+      varname='p_menc',
       defaults={if_true={vi=""}}
     },
     {
@@ -1924,7 +1943,7 @@ return {
       vi_def=true,
       varname='p_scbk',
       redraw={'current_buffer'},
-      defaults={if_true={vi=1000}}
+      defaults={if_true={vi=10000}}
     },
     {
       full_name='scrollbind', abbreviation='scb',
@@ -2156,7 +2175,7 @@ return {
       full_name='showtabline', abbreviation='stal',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'all_windows'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_stal',
       defaults={if_true={vi=1}}
     },
@@ -2427,7 +2446,7 @@ return {
       full_name='termguicolors', abbreviation='tgc',
       type='bool', scope={'global'},
       vi_def=false,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_tgc',
       defaults={if_true={vi=false}}
     },
@@ -2497,11 +2516,10 @@ return {
       full_name='titleold',
       type='string', scope={'global'},
       secure=true,
-      gettext=true,
       no_mkrc=true,
       vi_def=true,
       varname='p_titleold',
-      defaults={if_true={vi=N_("")}}
+      defaults={if_true={vi=""}}
     },
     {
       full_name='titlestring',
@@ -2610,7 +2628,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_vop',
-      defaults={if_true={vi="folds,options,cursor"}}
+      defaults={if_true={vi="folds,options,cursor,curdir"}}
     },
     {
       full_name='viminfo', abbreviation='vi',

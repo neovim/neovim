@@ -14,6 +14,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
 #include "nvim/ascii.h"
@@ -338,6 +339,7 @@ void ui_attach_impl(UI *ui)
   }
 
   uis[ui_count++] = ui;
+  ui_refresh_options();
   ui_refresh();
 }
 
@@ -484,6 +486,7 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
+  cmdline_ui_flush();
   ui_call_flush();
 }
 

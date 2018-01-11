@@ -1,9 +1,10 @@
 " Vim filetype plugin file
 " Language:	python
-" Maintainer:	James Sully <sullyj3@gmail.com>
+" Maintainer:	Tom Picton <tom@tompicton.co.uk>
+" Previous Maintainer: James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Change:	Tue, 09 October 2016
-" https://github.com/sullyj3/vim-ftplugin-python
+" Last Change:	Fri, 20 October 2017
+" https://github.com/tpict/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -24,31 +25,51 @@ set wildignore+=*.pyc
 
 let b:next_toplevel='\v%$\|^(class\|def\|async def)>'
 let b:prev_toplevel='\v^(class\|def\|async def)>'
+let b:next_endtoplevel='\v%$\|\S.*\n+(def\|class)'
+let b:prev_endtoplevel='\v\S.*\n+(def\|class)'
 let b:next='\v%$\|^\s*(class\|def\|async def)>'
 let b:prev='\v^\s*(class\|def\|async def)>'
+let b:next_end='\v\S\n*(%$\|^\s*(class\|def\|async def)\|^\S)'
+let b:prev_end='\v\S\n*(^\s*(class\|def\|async def)\|^\S)'
 
 execute "nnoremap <silent> <buffer> ]] :call <SID>Python_jump('n', '". b:next_toplevel."', 'W')<cr>"
 execute "nnoremap <silent> <buffer> [[ :call <SID>Python_jump('n', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "nnoremap <silent> <buffer> ][ :call <SID>Python_jump('n', '". b:next_endtoplevel."', 'W', 0)<cr>"
+execute "nnoremap <silent> <buffer> [] :call <SID>Python_jump('n', '". b:prev_endtoplevel."', 'Wb', 0)<cr>"
 execute "nnoremap <silent> <buffer> ]m :call <SID>Python_jump('n', '". b:next."', 'W')<cr>"
 execute "nnoremap <silent> <buffer> [m :call <SID>Python_jump('n', '". b:prev."', 'Wb')<cr>"
+execute "nnoremap <silent> <buffer> ]M :call <SID>Python_jump('n', '". b:next_end."', 'W', 0)<cr>"
+execute "nnoremap <silent> <buffer> [M :call <SID>Python_jump('n', '". b:prev_end."', 'Wb', 0)<cr>"
 
 execute "onoremap <silent> <buffer> ]] :call <SID>Python_jump('o', '". b:next_toplevel."', 'W')<cr>"
 execute "onoremap <silent> <buffer> [[ :call <SID>Python_jump('o', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "onoremap <silent> <buffer> ][ :call <SID>Python_jump('n', '". b:next_endtoplevel."', 'W', 0)<cr>"
+execute "onoremap <silent> <buffer> [] :call <SID>Python_jump('n', '". b:prev_endtoplevel."', 'Wb', 0)<cr>"
 execute "onoremap <silent> <buffer> ]m :call <SID>Python_jump('o', '". b:next."', 'W')<cr>"
 execute "onoremap <silent> <buffer> [m :call <SID>Python_jump('o', '". b:prev."', 'Wb')<cr>"
+execute "onoremap <silent> <buffer> ]M :call <SID>Python_jump('o', '". b:next_end."', 'W', 0)<cr>"
+execute "onoremap <silent> <buffer> [M :call <SID>Python_jump('o', '". b:prev_end."', 'Wb', 0)<cr>"
 
 execute "xnoremap <silent> <buffer> ]] :call <SID>Python_jump('x', '". b:next_toplevel."', 'W')<cr>"
 execute "xnoremap <silent> <buffer> [[ :call <SID>Python_jump('x', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "xnoremap <silent> <buffer> ][ :call <SID>Python_jump('n', '". b:next_endtoplevel."', 'W', 0)<cr>"
+execute "xnoremap <silent> <buffer> [] :call <SID>Python_jump('n', '". b:prev_endtoplevel."', 'Wb', 0)<cr>"
 execute "xnoremap <silent> <buffer> ]m :call <SID>Python_jump('x', '". b:next."', 'W')<cr>"
 execute "xnoremap <silent> <buffer> [m :call <SID>Python_jump('x', '". b:prev."', 'Wb')<cr>"
+execute "xnoremap <silent> <buffer> ]M :call <SID>Python_jump('x', '". b:next_end."', 'W', 0)<cr>"
+execute "xnoremap <silent> <buffer> [M :call <SID>Python_jump('x', '". b:prev_end."', 'Wb', 0)<cr>"
 
 if !exists('*<SID>Python_jump')
-  fun! <SID>Python_jump(mode, motion, flags) range
+  fun! <SID>Python_jump(mode, motion, flags, ...) range
+      let l:startofline = (a:0 >= 1) ? a:1 : 1
+
       if a:mode == 'x'
           normal! gv
       endif
 
-      normal! 0
+      if l:startofline == 1
+          normal! 0
+      endif
 
       let cnt = v:count1
       mark '
@@ -57,7 +78,9 @@ if !exists('*<SID>Python_jump')
           let cnt = cnt - 1
       endwhile
 
-      normal! ^
+      if l:startofline == 1
+          normal! ^
+      endif
   endfun
 endif
 

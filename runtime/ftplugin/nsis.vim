@@ -1,7 +1,7 @@
 " Vim ftplugin file
-" Language:         NSIS script
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             NSIS script
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 let s:cpo_save = &cpo
 set cpo&vim

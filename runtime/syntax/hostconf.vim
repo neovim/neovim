@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         host.conf(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-25
+" Language:             host.conf(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-06-25
 
 if exists("b:current_syntax")
   finish

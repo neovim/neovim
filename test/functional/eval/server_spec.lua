@@ -63,23 +63,33 @@ describe('serverstart(), serverstop()', function()
     eq({}, funcs.serverlist())
 
     local s = funcs.serverstart('127.0.0.1:0')  -- assign random port
-    assert(string.match(s, '127.0.0.1:%d+'))
-    eq(s, funcs.serverlist()[1])
-    clear_serverlist()
+    if #s > 0 then
+      assert(string.match(s, '127.0.0.1:%d+'))
+      eq(s, funcs.serverlist()[1])
+      clear_serverlist()
+    end
 
     s = funcs.serverstart('127.0.0.1:')  -- assign random port
-    assert(string.match(s, '127.0.0.1:%d+'))
-    eq(s, funcs.serverlist()[1])
-    clear_serverlist()
+    if #s > 0 then
+      assert(string.match(s, '127.0.0.1:%d+'))
+      eq(s, funcs.serverlist()[1])
+      clear_serverlist()
+    end
 
-    funcs.serverstart('127.0.0.1:12345')
-    funcs.serverstart('127.0.0.1:12345')  -- exists already; ignore
-    funcs.serverstart('::1:12345')
-    funcs.serverstart('::1:12345')        -- exists already; ignore
-    local expected = {
-      '127.0.0.1:12345',
-      '::1:12345',
-    }
+    local expected = {}
+    local v4 = '127.0.0.1:12345'
+    s = funcs.serverstart(v4)
+    if #s > 0 then
+      table.insert(expected, v4)
+      funcs.serverstart(v4)  -- exists already; ignore
+    end
+
+    local v6 = '::1:12345'
+    s = funcs.serverstart(v6)
+    if #s > 0 then
+      table.insert(expected, v6)
+      funcs.serverstart(v6)  -- exists already; ignore
+    end
     eq(expected, funcs.serverlist())
     clear_serverlist()
 

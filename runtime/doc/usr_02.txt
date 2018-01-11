@@ -543,7 +543,7 @@ Summary: 					*help-summary*  >
 8) Ex-commands always start with ":", so to go to the :s command help: >
 	:help :s
 
-9) Commands specifically for debugging start with ">".  To go to to the help
+9) Commands specifically for debugging start with ">".  To go to the help
    for the "cont" debug command: >
 	:help >cont
 
@@ -652,7 +652,7 @@ Summary: 					*help-summary*  >
 22) Autocommand events can be found by their name: >
      	:help BufWinLeave
 <    To see all possible events: >
-	:help autocommands-events
+	:help autocommand-events
 
 23) Command-line switches always start with "-".  So for the help of the -f
     command switch of Vim use: >

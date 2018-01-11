@@ -14,8 +14,6 @@
 #include "nvim/event/rstream.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
-#define FOCUSGAINED_KEY "<FocusGained>"
-#define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -201,18 +199,25 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Right");
   }
 
-  if (ev == TERMKEY_MOUSE_PRESS) {
-    if (button == 4) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
-    } else if (button == 5) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelDown");
-    } else {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
-    }
-  } else if (ev == TERMKEY_MOUSE_DRAG) {
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
-  } else if (ev == TERMKEY_MOUSE_RELEASE) {
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+  switch (ev) {
+    case TERMKEY_MOUSE_PRESS:
+      if (button == 4) {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
+      } else if (button == 5) {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len,
+                                "ScrollWheelDown");
+      } else {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
+      }
+      break;
+    case TERMKEY_MOUSE_DRAG:
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
+      break;
+    case TERMKEY_MOUSE_RELEASE:
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+      break;
+    case TERMKEY_MOUSE_UNKNOWN:
+      assert(false);
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);

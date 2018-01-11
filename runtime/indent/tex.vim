@@ -1,8 +1,8 @@
 " Vim indent file
 " Language:     LaTeX
-" Maintainer:   YiChao Zhou <broken.zhou AT gmail.com>
+" Maintainer:   Yichao Zhou <broken.zhou AT gmail.com>
 " Created:      Sat, 16 Feb 2002 16:50:19 +0100
-" Version: 0.9.2
+" Version: 0.9.4
 "   Please email me if you found something I can do.  Comments, bug report and
 "   feature request are welcome.
 
@@ -15,49 +15,53 @@
 "               2005/06/15, Moshe Kaminsky <kaminsky AT math.huji.ac.il>
 "               (*) New variables:
 "                   g:tex_items, g:tex_itemize_env, g:tex_noindent_env
-"               2011/3/6, by Zhou YiChao <broken.zhou AT gmail.com>
+"               2011/3/6, by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Don't change indentation of lines starting with '%'
 "                   I don't see any code with '%' and it doesn't work properly
 "                   so I add some code.
 "               (*) New features: Add smartindent-like indent for "{}" and  "[]".
 "               (*) New variables: g:tex_indent_brace
-"               2011/9/25, by Zhou Yichao <broken.zhou AT gmail.com>
+"               2011/9/25, by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Bug fix: smartindent-like indent for "[]"
 "               (*) New features: Align with "&".
 "               (*) New variable: g:tex_indent_and.
-"               2011/10/23 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2011/10/23 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Bug fix: improve the smartindent-like indent for "{}" and
 "               "[]".
-"               2012/02/27 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2012/02/27 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Bug fix: support default folding marker.
 "               (*) Indent with "&" is not very handy.  Make it not enable by
 "               default.
-"               2012/03/06 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2012/03/06 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Modify "&" behavior and make it default again.  Now "&"
 "               won't align when there are more then one "&" in the previous
 "               line.
 "               (*) Add indent "\left(" and "\right)"
 "               (*) Trust user when in "verbatim" and "lstlisting"
-"               2012/03/11 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2012/03/11 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Modify "&" so that only indent when current line start with
 "                   "&".
-"               2012/03/12 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2012/03/12 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Modify indentkeys.
-"               2012/03/18 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2012/03/18 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Add &cpo
-"               2013/05/02 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2013/05/02 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Fix problem about GetTeXIndent checker. Thank Albert Netymk
 "                   for reporting this.
-"               2014/06/23 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2014/06/23 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Remove the feature g:tex_indent_and because it is buggy.
 "               (*) If there is not any obvious indentation hints, we do not
 "                   alert our user's current indentation.
 "               (*) g:tex_indent_brace now only works if the open brace is the
 "                   last character of that line.
-"               2014/08/03 by Zhou Yichao <broken.zhou AT gmail.com>
+"               2014/08/03 by Yichao Zhou <broken.zhou AT gmail.com>
 "               (*) Indent current line if last line has larger indentation
-"               2014/08/09 by Zhou Yichao <broken.zhou AT gmail.com>
-"               (*) Add missing return value for s:GetEndIndentation(...)
+"               2016/11/08 by Yichao Zhou <broken.zhou AT gmail.com>
+"               (*) Fix problems for \[ and \].  Thanks Bruno for reporting.
+"               2017/04/30 by Yichao Zhou <broken.zhou AT gmail.com>
+"               (*) Fix a bug between g:tex_noindent_env and g:tex_indent_items
+"                   Now g:tex_noindent_env='document\|verbatim\|itemize' (Emacs
+"                   style) is supported.  Thanks Miles Wheeler for reporting.
 "
 " }}}
 
@@ -81,44 +85,44 @@
 "         % Example 2
 "         \tikzexternalize[
 "           prefix=tikz]
-"   
+"
 " * g:tex_indent_items
 "
 "   If this variable is set, item-environments are indented like Emacs does
 "   it, i.e., continuation lines are indented with a shiftwidth.
-"   
+"
 "   NOTE: I've already set the variable below; delete the corresponding line
 "   if you don't like this behaviour.
 "
 "   Per default, it is unset.
-"   
+"
 "              set                                unset
 "   ----------------------------------------------------------------
-"       \begin{itemize}                      \begin{itemize}  
+"       \begin{itemize}                      \begin{itemize}
 "         \item blablabla                      \item blablabla
-"           bla bla bla                        bla bla bla  
+"           bla bla bla                        bla bla bla
 "         \item blablabla                      \item blablabla
-"           bla bla bla                        bla bla bla  
-"       \end{itemize}                        \end{itemize}    
+"           bla bla bla                        bla bla bla
+"       \end{itemize}                        \end{itemize}
 "
 "
 " * g:tex_items
 "
-"   A list of tokens to be considered as commands for the beginning of an item 
-"   command. The tokens should be separated with '\|'. The initial '\' should 
+"   A list of tokens to be considered as commands for the beginning of an item
+"   command. The tokens should be separated with '\|'. The initial '\' should
 "   be escaped. The default is '\\bibitem\|\\item'.
 "
 " * g:tex_itemize_env
-" 
-"   A list of environment names, separated with '\|', where the items (item 
-"   commands matching g:tex_items) may appear. The default is 
+"
+"   A list of environment names, separated with '\|', where the items (item
+"   commands matching g:tex_items) may appear. The default is
 "   'itemize\|description\|enumerate\|thebibliography'.
 "
 " * g:tex_noindent_env
 "
-"   A list of environment names. separated with '\|', where no indentation is 
+"   A list of environment names. separated with '\|', where no indentation is
 "   required. The default is 'document\|verbatim'.
-" }}} 
+" }}}
 
 " Only define the function once
 if exists("b:did_indent")
@@ -146,7 +150,7 @@ if g:tex_indent_items
         let g:tex_itemize_env = 'itemize\|description\|enumerate\|thebibliography'
     endif
     if !exists('g:tex_items')
-        let g:tex_items = '\\bibitem\|\\item' 
+        let g:tex_items = '\\bibitem\|\\item'
     endif
 else
     let g:tex_items = ''
@@ -177,7 +181,7 @@ function! GetTeXIndent() " {{{
 
     " At the start of the file use zero indent.
     if lnum == 0
-        return 0 
+        return 0
     endif
 
     let line = substitute(getline(lnum), '\s*%.*', '','g')     " last line
@@ -191,9 +195,9 @@ function! GetTeXIndent() " {{{
             return indent(v:lnum)
         end
     endif
-    
+
     if lnum == 0
-        return 0 
+        return 0
     endif
 
     let ind = indent(lnum)
@@ -206,17 +210,19 @@ function! GetTeXIndent() " {{{
 
     " Add a 'shiftwidth' after beginning of environments.
     " Don't add it for \begin{document} and \begin{verbatim}
-    ""if line =~ '^\s*\\begin{\(.*\)}'  && line !~ 'verbatim' 
+    " if line =~ '^\s*\\begin{\(.*\)}'  && line !~ 'verbatim'
     " LH modification : \begin does not always start a line
     " ZYC modification : \end after \begin won't cause wrong indent anymore
-    if line =~ '\\begin{.*}' && line !~ g:tex_noindent_env
-        let ind = ind + &sw
-        let stay = 0
+    if line =~ '\\begin{.*}' 
+        if line !~ g:tex_noindent_env
+            let ind = ind + shiftwidth()
+            let stay = 0
+        endif
 
         if g:tex_indent_items
             " Add another sw for item-environments
             if line =~ g:tex_itemize_env
-                let ind = ind + &sw
+                let ind = ind + shiftwidth()
                 let stay = 0
             endif
         endif
@@ -235,39 +241,37 @@ function! GetTeXIndent() " {{{
         if g:tex_indent_items
             " Remove another sw for item-environments
             if cline =~ g:tex_itemize_env
-                let ind = ind - &sw
+                let ind = ind - shiftwidth()
                 let stay = 0
             endif
         endif
 
-        let ind = ind - &sw
+        let ind = ind - shiftwidth()
         let stay = 0
     endif
 
     if g:tex_indent_brace
-        let char = line[strlen(line)-1]
-        if char == '[' || char == '{'
-            let ind += &sw
+        if line =~ '[[{]$'
+            let ind += shiftwidth()
             let stay = 0
         endif
 
-        let cind = indent(v:lnum)
-        let char = cline[cind]
-        if (char == ']' || char == '}') &&
-                    \ s:CheckPairedIsLastCharacter(v:lnum, cind)
-            let ind -= &sw
+        if cline =~ '^\s*\\\?[\]}]' && s:CheckPairedIsLastCharacter(v:lnum, indent(v:lnum))
+            let ind -= shiftwidth()
             let stay = 0
         endif
 
-        for i in range(indent(lnum)+1, strlen(line)-1)
-            let char = line[i]
-            if char == ']' || char == '}'
-                if s:CheckPairedIsLastCharacter(lnum, i)
-                    let ind -= &sw
-                    let stay = 0
+        if line !~ '^\s*\\\?[\]}]'
+            for i in range(indent(lnum)+1, strlen(line)-1)
+                let char = line[i]
+                if char == ']' || char == '}'
+                    if s:CheckPairedIsLastCharacter(lnum, i)
+                        let ind -= shiftwidth()
+                        let stay = 0
+                    endif
                 endif
-            endif
-        endfor
+            endfor
+        endif
     endif
 
     " Special treatment for 'item'
@@ -276,12 +280,12 @@ function! GetTeXIndent() " {{{
     if g:tex_indent_items
         " '\item' or '\bibitem' itself:
         if cline =~ g:tex_items
-            let ind = ind - &sw
+            let ind = ind - shiftwidth()
             let stay = 0
         endif
         " lines following to '\item' are intented once again:
         if line =~ g:tex_items
-            let ind = ind + &sw
+            let ind = ind + shiftwidth()
             let stay = 0
         endif
     endif
@@ -309,13 +313,13 @@ function! s:GetLastBeginIndentation(lnum) " {{{
             let matchend -= 1
         endif
         if matchend == 0
-            if line =~ g:tex_itemize_env
-                return indent(lnum) + 2 * &sw
-            endif
             if line =~ g:tex_noindent_env
                 return indent(lnum)
             endif
-            return indent(lnum) + &sw
+            if line =~ g:tex_itemize_env
+                return indent(lnum) + 2 * shiftwidth()
+            endif
+            return indent(lnum) + shiftwidth()
         endif
     endfor
     return -1
@@ -343,17 +347,20 @@ function! s:GetEndIndentation(lnum) " {{{
             let min_indent = min([min_indent, indent(lnum)])
         endif
     endfor
-    return min_indent - &sw
+    return min_indent - shiftwidth()
 endfunction
 
 " Most of the code is from matchparen.vim
 function! s:CheckPairedIsLastCharacter(lnum, col) "{{{
-    " Get the character under the cursor and check if it's in 'matchpairs'.
     let c_lnum = a:lnum
     let c_col = a:col+1
 
+    let line = getline(c_lnum)
+    if line[c_col-1] == '\'
+        let c_col = c_col + 1
+    endif
+    let c = line[c_col-1]
 
-    let c = getline(c_lnum)[c_col-1]
     let plist = split(&matchpairs, '.\zs[:,]')
     let i = index(plist, c)
     if i < 0

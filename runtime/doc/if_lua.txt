@@ -1,30 +1,30 @@
 *if_lua.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL    by Luis Carvalho
+			    NVIM REFERENCE MANUAL
 
 
 Lua Interface to Nvim					*lua* *Lua*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Importing modules					*lua-require*
+Importing modules					*lua-require*
 
-Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
-according to effective &runtimepath value.  Adjustment happens after 
-'runtimepath' is changed. `package.path` is adjusted by simply appending 
-`/lua/?.lua` and `/lua/?/init.lua` to each directory from 'runtimepath' (`/` 
-is actually the first character of `package.config`).
+Nvim automatically adjusts `package.path` and `package.cpath` according to
+effective 'runtimepath' value.  Adjustment happens whenever 'runtimepath' is
+changed.  `package.path` is adjusted by simply appending `/lua/?.lua` and
+`/lua/?/init.lua` to each directory from 'runtimepath' (`/` is actually the
+first character of `package.config`).
 
-Similarly to `package.path`, modified directories from `runtimepath` are also 
-added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and 
-`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of 
-the existing `package.cpath` are used.  Here is an example:
+Similarly to `package.path`, modified directories from 'runtimepath' are also
+added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and
+`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of
+the existing `package.cpath` are used.  Example:
 
 1. Given that
    - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial (defined at compile time or derived from 
+   - initial (defined at compile-time or derived from 
      `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
      `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
 2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
@@ -61,7 +61,7 @@ paths when path is removed from 'runtimepath', adding paths when they are
 added and reordering `package.path`/`package.cpath` content if 'runtimepath' 
 was reordered.
 
-Note 2: even though adjustments happens automatically Neovim does not track 
+Note 2: even though adjustments happens automatically Nvim does not track 
 current values of `package.path` or `package.cpath`.  If you happened to 
 delete some paths from there you need to reset 'runtimepath' to make them 
 readded.  Just running `let &runtimepath = &runtimepath` should work.
@@ -72,7 +72,7 @@ badly written plugins using shell which will not work with paths containing
 semicolons it is better to not have them in 'runtimepath' at all.
 
 ------------------------------------------------------------------------------
-1.1. Example of the plugin which uses lua modules:	*lua-require-example*
+Example of a plugin that uses lua modules		*lua-require-example*
 
 The following example plugin adds a command `:MakeCharBlob` which transforms 
 current buffer into a long `unsigned char` array.  Lua contains transformation 
@@ -149,7 +149,7 @@ lua/charblob.lua: >
 	}
 
 ==============================================================================
-2. Commands						*lua-commands*
+Commands						*lua-commands*
 
 							*:lua*
 :[range]lua {chunk}
@@ -157,16 +157,19 @@ lua/charblob.lua: >
 
 Examples:
 >
-	:lua vim.api.nvim_command('echo "Hello, Neovim!"')
+	:lua vim.api.nvim_command('echo "Hello, Nvim!"')
+<
+To see the Lua version: >
+	:lua print(_VERSION)
+
+To see the LuaJIT version: >
+	:lua print(jit.version)
 <
 
 :[range]lua << {endmarker}
 {script}
 {endmarker}
 			Execute Lua script {script}.
-			Note: This command doesn't work when the Lua
-			feature wasn't compiled in.  To avoid errors, see
-			|script-here|.
 
 {endmarker} must NOT be preceded by any white space.  If {endmarker} is
 omitted from after the "<<", a dot '.' must be used after {script}, like
@@ -186,15 +189,8 @@ Example:
 	EOF
 	endfunction
 
-Note that the variables are prefixed with `local`: they will disappear when
-block finishes. This is not the case for globals.
-
-To see what version of Lua you have: >
-	:lua print(_VERSION)
-
-If you use LuaJIT you can also use this: >
-	:lua print(jit.version)
-<
+Note that the `local` variables will disappear when block finishes. This is
+not the case for globals.
 
 							*:luado*
 :[range]luado {body}	Execute Lua function "function (line, linenr) {body}
@@ -230,27 +226,80 @@ All these commands execute a Lua chunk from either the command line (:lua and
 :luado) or a file (:luafile) with the given line [range]. Similarly to the Lua
 interpreter, each chunk has its own scope and so only global variables are
 shared between command calls. All Lua default libraries are available. In
-addition, Lua "print" function has its output redirected to the Vim message
+addition, Lua "print" function has its output redirected to the Nvim message
 area, with arguments separated by a white space instead of a tab.
 
-Lua uses the "vim" module (see |lua-vim|) to issue commands to Neovim
+Lua uses the "vim" module (see |lua-vim|) to issue commands to Nvim
 and manage buffers (|lua-buffer|) and windows (|lua-window|). However,
 procedures that alter buffer content, open new buffers, and change cursor
 position are restricted when the command is executed in the |sandbox|.
 
 
 ==============================================================================
-2. The vim module					*lua-vim*
+The vim module						*lua-vim*
 
-Lua interfaces Vim through the "vim" module. Currently it only has `api` 
-submodule which is a table with all API functions. Descriptions of these 
-functions may be found in |api.txt|.
+Lua interfaces Nvim through the "vim" module. Currently it has the `api`
+submodule and some Nvim-specific utilities.
+
+------------------------------------------------------------------------------
+vim.api.* functions
+
+`vim.api` exposes the Nvim |API| as a table of Lua functions. All functions
+are available.
+
+For example, to use the "nvim_get_current_line()" API function, call
+"vim.api.nvim_get_current_line()": >
+
+	print(tostring(vim.api.nvim_get_current_line()))
+
+------------------------------------------------------------------------------
+vim.* utility functions
+
+vim.stricmp(a, b)					*lua-vim.stricmp*
+	Function used for case-insensitive string comparison.  Takes two 
+	string arguments and returns 0, 1 or -1 if strings are equal, a is 
+	greater then b or a is lesser then b respectively.
+
+vim.type_idx						*lua-vim.type_idx*
+	Type index for use in |lua-special-tables|.  Specifying one of the 
+	values from |lua-vim.types| allows typing the empty table (it is 
+	unclear whether empty lua table represents empty list or empty array) 
+	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
+	more details.
+
+vim.val_idx						*lua-vim.val_idx*
+	Value index for tables representing |Float|s.  A table representing 
+	floating-point value 1.0 looks like this: >
+		{
+		  [vim.type_idx] = vim.types.float,
+		  [vim.val_idx] = 1.0,
+		}
+<	See also |lua-vim.type_idx| and |lua-special-tbl|.
+
+vim.types						*lua-vim.types*
+	Table with possible values for |lua-vim.type_idx|.  Contains two sets 
+	of key-value pairs: first maps possible values for |lua-vim.type_idx| 
+	to human-readable strings, second maps human-readable type names to 
+	values for |lua-vim.type_idx|.  Currently contains pairs for `float`, 
+	`array` and `dictionary` types.
+
+	Note: one must expect that values corresponding to `vim.types.float`, 
+	`vim.types.array` and `vim.types.dictionary` fall under only two 
+	following assumptions:
+	1. Value may serve both as a key and as a value in a table.  Given the 
+	   properties of lua tables this basically means “value is not `nil`”.
+	2. For each value in `vim.types` table `vim.types[vim.types[value]]` 
+	   is the same as `value`.
+	No other restrictions are put on types, and it is not guaranteed that 
+	values corresponding to `vim.types.float`, `vim.types.array` and 
+	`vim.types.dictionary` will not change or that `vim.types` table will 
+	only contain values for these three types.
 
 ==============================================================================
-3. The luaeval function					*lua-luaeval* *lua-eval*
+The luaeval function					*lua-luaeval* *lua-eval*
 							*luaeval()*
 
-The (dual) equivalent of "vim.eval" for passing Lua values to Vim is
+The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
 "luaeval". "luaeval" takes an expression string and an optional argument used 
 for _A inside expression and returns the result of the expression. It is 
 semantically equivalent in Lua to:
@@ -262,7 +311,7 @@ semantically equivalent in Lua to:
 	end
 
 Note that "_A" receives the argument to "luaeval". Lua nils, numbers, strings, 
-tables and booleans are converted to their Vim respective types. An error is 
+tables and booleans are converted to their respective VimL types. An error is 
 thrown if conversion of any of the remaining Lua types is attempted.
 
 Note 2: lua tables are used as both dictionaries and lists, thus making it 
@@ -278,6 +327,7 @@ between these cases there is the following agreement:
 3. Table with string keys, at least one of which contains NUL byte, is also 
    considered to be a dictionary, but this time it is converted to 
    a |msgpack-special-map|.
+							*lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point 
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to 

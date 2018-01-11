@@ -8,7 +8,7 @@ Filetypes						*filetype* *file-type*
 
 Also see |autocmd.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
@@ -24,15 +24,13 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-Detail: The ":filetype on" command will load one of these files:
-		Mac	    $VIMRUNTIME/filetype.vim
-		MS-DOS	    $VIMRUNTIME\filetype.vim
-		Unix	    $VIMRUNTIME/filetype.vim
+Detail: The ":filetype on" command will load this file:
+		$VIMRUNTIME/filetype.vim
 	This file is a Vim script that defines autocommands for the
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
 	contents of the file.
-	When the GUI is running or will start soon, the menu.vim script is
+	When the GUI is running or will start soon, the |menu.vim| script is
 	also sourced.  See |'go-M'| about avoiding that.
 
 To add your own file types, see |new-filetype| below.  To search for help on a
@@ -309,12 +307,12 @@ define yourself.  There are a few ways to avoid this:
    You need to define your own mapping before the plugin is loaded (before
    editing a file of that type).  The plugin will then skip installing the
    default mapping.
-
+						*no_mail_maps*
 3. Disable defining mappings for a specific filetype by setting a variable,
    which contains the name of the filetype.  For the "mail" filetype this
    would be: >
 	:let no_mail_maps = 1
-
+<						*no_plugin_maps*
 4. Disable defining mappings for all filetypes by setting a variable: >
 	:let no_plugin_maps = 1
 <
@@ -540,7 +538,7 @@ K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
                           opened from.
-META-]                    Show the manpage outline in the |location-list|.
+gO                        Show the manpage outline. |gO|
 q                         :quit if invoked as $MANPAGER, otherwise :close.
 
 Variables:
@@ -722,6 +720,12 @@ Format description:
    3. "  = {msgpack-value}": raw values.  |{msgpack-value}| in this case may 
       have absolutely any type.  Special array syntax for register entries is 
       not recognized here as well.
+
+
+RUST							*ft-rust*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_rust.txt|.
 
 
 SQL							*ft-sql*

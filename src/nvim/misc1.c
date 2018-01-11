@@ -1273,8 +1273,8 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
   width = wp->w_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of lines of the screen
+  if (width <= 0 || col > 32000) {
+    return 32000;  // bigger than the number of screen columns
   }
   if (col <= (unsigned int)width) {
     return 1;
@@ -2622,7 +2622,10 @@ void preserve_exit(void)
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
-    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
+    if (input_global_fd() >= 0) {
+      // normalize stream (#2598)
+      stream_set_blocking(input_global_fd(), true);
+    }
     exit(2);
   }
 

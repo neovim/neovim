@@ -75,6 +75,8 @@ nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
 git add CMakeLists.txt
 git commit -m "$__BUMP_MSG"
 
+rm CMakeLists.txt.bk || true
+
 echo "
 Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt

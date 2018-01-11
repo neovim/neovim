@@ -6,7 +6,7 @@
 
 Starting Vim						*starting*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -249,14 +249,14 @@ argument.
 		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
-			vim -V8 foobar
+			nvim -V8
 
 -V[N]{filename}
-		Like -V and set 'verbosefile' to {filename}.  The result is
-		that messages are not displayed but written to the file
-		{filename}.  {filename} must not start with a digit.
+		Like -V and set 'verbosefile' to {filename}.  Messages are not
+		displayed; instead they are written to the file {filename}.
+		{filename} must not start with a digit.
 		Example: >
-			vim -V20vimlog foobar
+			nvim -V20vimlog
 <
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first
@@ -351,6 +351,8 @@ argument.
 
 							*--headless*
 --headless 	Do not start the built-in UI.
+                See |channel-stdio| for how to use stdio for other purposes
+                instead.
 		See also |silent-mode|, which does start a (limited) UI.
 
 ==============================================================================
@@ -437,15 +439,14 @@ accordingly.  Vim proceeds in this order:
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
 		:runtime! indent.vim
-<	This step is skipped if ":filetype ..." was called before now or if
-	the "-u NONE" command line argument was given.
+<	Skipped if ":filetype … off" was called or if the "-u NONE" command
+	line argument was given.
 
 5. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
-<	Note: This enables filetype detection even if ":filetype off" was
-	called before now.
-	This step is skipped if the "-u NONE" command line argument was given.
+<	Skipped if ":syntax off" was called or if the "-u NONE" command
+	line argument was given.
 
 6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
@@ -885,7 +886,7 @@ The output of ":mkview" contains these items:
 5. The scroll position and the cursor position in the file.  Doesn't work very
    well when there are closed folds.
 6. The local current directory, if it is different from the global current
-   directory.
+   directory and 'viewoptions' contains "curdir".
 
 Note that Views and Sessions are not perfect:
 - They don't restore everything.  For example, defined functions, autocommands

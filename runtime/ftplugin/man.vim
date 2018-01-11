@@ -31,7 +31,7 @@ setlocal nolist
 setlocal nofoldenable
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
-  nnoremap <silent> <buffer> <M-]>      :call man#show_toc()<CR>
+  nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
   nnoremap <silent> <buffer> <C-]>      :Man<CR>
   nnoremap <silent> <buffer> K          :Man<CR>
   nnoremap <silent> <buffer> <C-T>      :call man#pop_tag()<CR>

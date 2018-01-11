@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         ldap.conf(5) configuration file.
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-11
+" Language:             ldap.conf(5) configuration file.
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-11
 
 if exists("b:current_syntax")
   finish

@@ -2,13 +2,17 @@
 #define NVIM_SYNTAX_DEFS_H
 
 #include "nvim/highlight_defs.h"
-#include "nvim/regexp_defs.h"
 
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 # define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
 # define SST_FIX_STATES  7      /* size of sst_stack[]. */
 # define SST_DIST        16     /* normal distance between entries */
 # define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
+
+typedef struct syn_state synstate_T;
+
+#include "nvim/buffer_defs.h"
+#include "nvim/regexp_defs.h"
 
 typedef unsigned short disptick_T;      /* display tick type */
 
@@ -48,8 +52,6 @@ typedef struct buf_state {
  * syn_state contains the syntax state stack for the start of one line.
  * Used by b_sst_array[].
  */
-typedef struct syn_state synstate_T;
-
 struct syn_state {
   synstate_T  *sst_next;        /* next entry in used or free list */
   linenr_T sst_lnum;            /* line number for this state */

@@ -18,7 +18,7 @@ Terminal buffers behave like normal buffers, except:
   closing the terminal buffer.
 - 'bufhidden' defaults to "hide".
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 Start						*terminal-start*
@@ -117,8 +117,8 @@ variables:
 - *b:term_title* The settable title of the terminal, typically displayed in
   the window title or tab title of a graphical terminal emulator. Programs
   running in the terminal can set this title via an escape sequence.
-- *b:terminal_job_id* The nvim job ID of the job running in the terminal. See
-  |job-control| for more information.
+- |'channel'| The nvim channel ID for the underlying PTY.
+  |chansend()| can be used to send input to the terminal.
 - *b:terminal_job_pid* The PID of the top-level process running in the
   terminal.
 

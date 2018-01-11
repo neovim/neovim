@@ -12,7 +12,7 @@ a cscope query is just like jumping to any tag; it is saved on the tag stack
 so that with the right keyboard mappings, you can jump back and forth between
 functions as you normally would with |tags|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Cscope introduction					*cscope-intro*
@@ -82,9 +82,10 @@ suggested use.)
 2. Cscope related commands				*cscope-commands*
 
 		*:cscope* *:cs* *:scs* *:scscope* *E259* *E262* *E561* *E560*
-All cscope commands are accessed through suboptions to the main cscope
-command ":cscope".  The shortest abbreviation is ":cs".  The ":scscope"
-command does the same and also splits the window (short: "scs").
+All cscope commands are accessed through suboptions to the cscope commands.
+	`:cscope` or `:cs` is the main command
+	`:scscope` or `:scs` does the same and splits the window
+	`:lcscope` or `:lcs` uses the location list, see |:lcscope|
 
 The available subcommands are:
 

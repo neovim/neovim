@@ -26,7 +26,7 @@ The 'virtualedit' option can be set to make it possible to move the cursor to
 positions where there is no character or within a multi-column character (like
 a tab).
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Motions and operators				*operator*
@@ -184,7 +184,7 @@ l		or					*l*
 
 							*$* *<End>* *<kEnd>*
 $  or <End>		To the end of the line.  When a count is given also go
-			[count - 1] lines downward |inclusive|.
+			[count - 1] lines downward. |inclusive| motion.
 			In Visual mode the cursor goes to just after the last
 			character in the line.
 			When 'virtualedit' is active, "$" may move the cursor
@@ -886,6 +886,7 @@ was made yet in the current file.
 			then the position can be near the end of what the
 			command changed.  For example when inserting a word,
 			the position will be on the last character.
+			To jump to older changes use |g;|.
 
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|

@@ -15,6 +15,7 @@
 #ifndef NVIM_LIB_RINGBUF_H
 #define NVIM_LIB_RINGBUF_H
 
+#include <stddef.h>
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
@@ -72,6 +73,32 @@ typedef struct { \
   RBType *first; \
   RBType *buf_end; \
 } TypeName##RingBuffer;
+
+/// Dummy item free macros, for use in RINGBUF_INIT
+///
+/// This macros actually does nothing.
+///
+/// @param[in]  item  Item to be freed.
+#define RINGBUF_DUMMY_FREE(item)
+
+/// Static ring buffer
+///
+/// @warning Ring buffers created with this macros must neither be freed nor
+///          deallocated.
+///
+/// @param  scope  Ring buffer scope.
+/// @param  TypeName  Ring buffer type name.
+/// @param  RBType  Type of the single ring buffer element.
+/// @param  varname  Variable name.
+/// @param  rbsize  Ring buffer size.
+#define RINGBUF_STATIC(scope, TypeName, RBType, varname, rbsize) \
+static RBType _##varname##_buf[rbsize]; \
+scope TypeName##RingBuffer varname = { \
+  .buf = _##varname##_buf, \
+  .next = _##varname##_buf, \
+  .first = NULL, \
+  .buf_end = _##varname##_buf + rbsize - 1, \
+};
 
 /// Initialize a new ring buffer
 ///

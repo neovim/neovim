@@ -447,6 +447,9 @@ EXTERN char_u   *p_popt;        // 'printoptions'
 EXTERN char_u   *p_header;      // 'printheader'
 EXTERN int p_prompt;            // 'prompt'
 EXTERN char_u   *p_guicursor;   // 'guicursor'
+EXTERN char_u   *p_guifont;     // 'guifont'
+EXTERN char_u   *p_guifontset;  // 'guifontset'
+EXTERN char_u   *p_guifontwide;  // 'guifontwide'
 EXTERN char_u   *p_hf;          // 'helpfile'
 EXTERN long p_hh;               // 'helpheight'
 EXTERN char_u   *p_hlg;         // 'helplang'
@@ -486,6 +489,7 @@ EXTERN char_u   *p_lcs;         // 'listchars'
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
 EXTERN int p_magic;             // 'magic'
+EXTERN char_u   *p_menc;        // 'makeencoding'
 EXTERN char_u   *p_mef;         // 'makeef'
 EXTERN char_u   *p_mp;          // 'makeprg'
 EXTERN char_u   *p_cc;          // 'colorcolumn'
@@ -539,7 +543,7 @@ static char *(p_ssop_values[]) = {"buffers", "winpos", "resize", "winsize",
                                   "localoptions", "options", "help", "blank",
                                   "globals", "slash", "unix",
                                   "sesdir", "curdir", "folds", "cursor",
-                                  "tabpages", NULL};
+                                  "tabpages", NULL };
 # endif
 # define SSOP_BUFFERS           0x001
 # define SSOP_WINPOS            0x002
@@ -557,16 +561,17 @@ static char *(p_ssop_values[]) = {"buffers", "winpos", "resize", "winsize",
 # define SSOP_FOLDS             0x2000
 # define SSOP_CURSOR            0x4000
 # define SSOP_TABPAGES          0x8000
-EXTERN char_u   *p_sh;          /* 'shell' */
-EXTERN char_u   *p_shcf;        /* 'shellcmdflag' */
-EXTERN char_u   *p_sp;          /* 'shellpipe' */
-EXTERN char_u   *p_shq;         /* 'shellquote' */
-EXTERN char_u   *p_sxq;         /* 'shellxquote' */
-EXTERN char_u   *p_sxe;         /* 'shellxescape' */
-EXTERN char_u   *p_srr;         /* 'shellredir' */
-EXTERN int p_stmp;              /* 'shelltemp' */
+
+EXTERN char_u   *p_sh;          // 'shell'
+EXTERN char_u   *p_shcf;        // 'shellcmdflag'
+EXTERN char_u   *p_sp;          // 'shellpipe'
+EXTERN char_u   *p_shq;         // 'shellquote'
+EXTERN char_u   *p_sxq;         // 'shellxquote'
+EXTERN char_u   *p_sxe;         // 'shellxescape'
+EXTERN char_u   *p_srr;         // 'shellredir'
+EXTERN int p_stmp;              // 'shelltemp'
 #ifdef BACKSLASH_IN_FILENAME
-EXTERN int p_ssl;               /* 'shellslash' */
+EXTERN int p_ssl;               // 'shellslash'
 #endif
 EXTERN char_u   *p_stl;         // 'statusline'
 EXTERN int p_sr;                // 'shiftround'
@@ -694,6 +699,7 @@ enum {
   , BV_BIN
   , BV_BL
   , BV_BOMB
+  , BV_CHANNEL
   , BV_CI
   , BV_CIN
   , BV_CINK
@@ -731,6 +737,7 @@ enum {
   , BV_KP
   , BV_LISP
   , BV_LW
+  , BV_MENC
   , BV_MA
   , BV_ML
   , BV_MOD

@@ -109,7 +109,28 @@ describe('server -> client', function()
   end)
 
   describe('requests and notifications interleaved', function()
-    -- This tests that the following scenario won't happen:
+    it('does not delay notifications during pending request', function()
+      local received = false
+      local function on_setup()
+        eq("retval", funcs.rpcrequest(cid, "doit"))
+        stop()
+      end
+      local function on_request(method)
+        if method == "doit" then
+          funcs.rpcnotify(cid, "headsup")
+          eq(true,received)
+          return "retval"
+        end
+      end
+      local function on_notification(method)
+        if method == "headsup" then
+          received = true
+        end
+      end
+      run(on_request, on_notification, on_setup)
+    end)
+
+    -- This tests the following scenario:
     --
     -- server->client [request     ] (1)
     -- client->server [request     ] (2) triggered by (1)
@@ -124,36 +145,38 @@ describe('server -> client', function()
     -- only deals with one server->client request at a time. (In other words,
     -- the client cannot send a response to a request that is not at the top
     -- of nvim's request stack).
-    --
-    -- But above scenario shoudn't happen by the way notifications are dealt in
-    -- Nvim: they are only sent after there are no pending server->client
-    -- request(the request stack fully unwinds). So (3) is only sent after the
-    -- client returns (6).
-    it('works', function()
-      local expected = 300
-      local notified = 0
+    pending('will close connection if not properly synchronized', function()
       local function on_setup()
         eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
       local function on_request(method)
-        eq('notify', method)
-        eq(1, eval('rpcnotify('..cid..', "notification")'))
-        return 'notified!'
+        if method == "notify" then
+          eq(1, eval('rpcnotify('..cid..', "notification")'))
+          return 'notified!'
+        elseif method == "nested" then
+          -- do some busywork, so the first request will return
+          -- before this one
+          for _ = 1, 5 do
+            eq(2, eval("1+1"))
+          end
+          eq(1, eval('rpcnotify('..cid..', "nested_done")'))
+          return 'done!'
+        end
       end
 
       local function on_notification(method)
-        eq('notification', method)
-        if notified == expected then
-          stop()
-          return
+        if method == "notification" then
+          eq('done!', eval('rpcrequest('..cid..', "nested")'))
+        elseif method == "nested_done" then
+          -- this should never have been sent
+          ok(false)
         end
-        notified = notified + 1
-        eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
       run(on_request, on_notification, on_setup)
-      eq(expected, notified)
+      -- ignore disconnect failure, otherwise detected by after_each
+      clear()
     end)
   end)
 
@@ -239,6 +262,7 @@ describe('server -> client', function()
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
       eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_message())
       funcs.rpcrequest(jobid, "exit")
+      eq({'notification', 'stderr', {0, {''}}}, next_message())
       eq({'notification', 'exit', {0, 0}}, next_message())
     end)
   end)
@@ -281,11 +305,27 @@ describe('server -> client', function()
       connect_test(server, 'pipe', address)
     end)
 
-    it('via ip address', function()
+    it('via ipv4 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
       local address = funcs.serverstart("127.0.0.1:")
+      if #address == 0 then
+        pending('no ipv4 stack', function() end)
+        return
+      end
       eq('127.0.0.1:', string.sub(address,1,10))
+      connect_test(server, 'tcp', address)
+    end)
+
+    it('via ipv6 address', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart('::1:')
+      if #address == 0 then
+        pending('no ipv6 stack', function() end)
+        return
+      end
+      eq('::1:', string.sub(address,1,4))
       connect_test(server, 'tcp', address)
     end)
 

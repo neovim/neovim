@@ -64,11 +64,11 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 2)
-set(NVIM_VERSION_PATCH 1)
+set(NVIM_VERSION_PATCH 3)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 3)         # Bump this after any API change.
+set(NVIM_API_LEVEL 4)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -113,15 +113,14 @@ else()
   set(HAS_OG_FLAG 0)
 endif()
 
-# Set custom build flags for RelWithDebInfo.
-# -DNDEBUG purposely omitted because we want assertions.
+#
+# Build-type: RelWithDebInfo
+#
 if(HAS_OG_FLAG)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
-    CACHE STRING "Flags used by the compiler during release-with-debug builds." FORCE)
-elseif(NOT MSVC)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
-    CACHE STRING "Flags used by the compiler during release-with-debug builds." FORCE)
-elseif(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -Og -g")
+endif()
+# We _want_ assertions in RelWithDebInfo build-type.
+if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
@@ -479,20 +478,19 @@ install_helper(
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 # MIN_LOG_LEVEL for log.h
-if(DEFINED MIN_LOG_LEVEL)
+if("${MIN_LOG_LEVEL}" MATCHES "^$")
+  message(STATUS "MIN_LOG_LEVEL not specified")
+else()
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
     message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
   endif()
   message(STATUS "MIN_LOG_LEVEL set to ${MIN_LOG_LEVEL}")
-else()
-  message(STATUS "MIN_LOG_LEVEL not specified, defaulting to 1 (INFO)")
 endif()
 
 # Go down the tree.
 
 add_subdirectory(src/nvim)
-# Read compilation flags from src/nvim,
-# used in config subdirectory below.
+# Read compilation flags from src/nvim, used in config subdirectory below.
 include(GetCompileFlags)
 get_compile_flags(NVIM_VERSION_CFLAGS)
 

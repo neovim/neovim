@@ -3,10 +3,10 @@
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2013-07-21
+" Last Change:   2015-04-25
 "
-" Instration:
-"   put tt2.vim and tt2html.vim in to your syntax diretory.
+" Installation:
+"   put tt2.vim and tt2html.vim in to your syntax directory.
 "
 "   add below in your filetype.vim.
 "       au BufNewFile,BufRead *.tt2 setf tt2

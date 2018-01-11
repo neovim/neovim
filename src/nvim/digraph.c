@@ -1696,7 +1696,7 @@ static void printdigraph(digr_T *dp)
       }
     }
 
-    p = buf;
+    p = &buf[0];
     *p++ = dp->char1;
     *p++ = dp->char2;
     *p++ = ' ';

@@ -6,7 +6,7 @@
 
 Vim's Graphical User Interface				*gui* *GUI*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Starting the GUI				*gui-start* *E229* *E233*
@@ -46,7 +46,8 @@ When the GUI starts up initializations are carried out, in this order:
   already set.
 
 NOTE: All but the first one are not carried out if Vim was started with
-"-u NONE" and no "-U" argument was given, or when started with "-U NONE".
+"-u NONE" or "-u DEFAULTS" and no "-U" argument was given, or when started
+with "-U NONE".
 
 All this happens AFTER the normal Vim initializations, like reading your
 vimrc file.  See |initialization|.
@@ -382,6 +383,7 @@ menus and menu items.  They are most useful for things that you can't remember
 what the key sequence was.
 
 For creating menus in a different language, see |:menutrans|.
+If you don't want to use menus at all, see |'go-M'|.
 
 							*menu.vim*
 The default menus are read from the file "$VIMRUNTIME/menu.vim".  See
@@ -398,7 +400,11 @@ in the menu (which can take a bit of time to load).  If you want to have all
 filetypes already present at startup, add: >
 	:let do_syntax_sel_menu = 1
 
-<
+Note that the menu.vim is sourced when `:syntax on` or `:filetype on` is
+executed or after your .vimrc file is sourced.  This means that the 'encoding'
+option and the language of messages (`:language messages`) must be set before
+that (if you want to change them).
+
 							*console-menus*
 Although this documentation is in the GUI section, you can actually use menus
 in console mode too.  You will have to load |menu.vim| explicitly then, it is
@@ -647,6 +653,8 @@ nr  Name		Normal action  ~
 					*hidden-menus* *win32-hidden-menus*
 In the Win32 GUI, starting a menu name with ']' excludes that menu from the
 main menu bar.  You must then use the |:popup| command to display it.
+
+When splitting the window the window toolbar is not copied to the new window.
 
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed

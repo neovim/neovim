@@ -38,9 +38,15 @@ import subprocess
 
 from xml.dom import minidom
 
+if sys.version_info[0] < 3:
+    print("use Python 3")
+    sys.exit(1)
+
 doc_filename = 'api.txt'
 # String used to find the start of the generated part of the doc.
 section_start_token = '*api-global*'
+# Required prefix for API function names.
+api_func_name_prefix = 'nvim_'
 
 # Section name overrides.
 section_name = {
@@ -69,7 +75,7 @@ text_width = 78
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 src_dir = os.path.join(base_dir, 'src/nvim/api')
-out_dir = os.path.join(base_dir, 'tmp/api_doc')
+out_dir = os.path.join(base_dir, 'tmp-api-doc')
 filter_cmd = '%s %s' % (sys.executable, script_path)
 seen_funcs = set()
 
@@ -217,7 +223,12 @@ def parse_para(parent, width=62):
                                       width=width) + '\n')
             elif child.nodeName == 'simplesect':
                 kind = child.getAttribute('kind')
-                if kind == 'return':
+                if kind == 'note':
+                    lines.append('Note:')
+                    lines.append(doc_wrap(parse_para(child),
+                                          prefix='    ',
+                                          width=width))
+                elif kind == 'return':
                     lines.append('%s:~' % kind.title())
                     lines.append(doc_wrap(parse_para(child),
                                           prefix='    ',
@@ -251,11 +262,11 @@ def parse_parblock(parent, width=62):
 def parse_source_xml(filename):
     """Collects API functions.
 
-    This returns two strings:
-      1. The API functions
-      2. The deprecated API functions
+    Returns two strings:
+      1. API functions
+      2. Deprecated API functions
 
-    The caller decides what to do with the deprecated documentation.
+    Caller decides what to do with the deprecated documentation.
     """
     global xrefs
     xrefs = set()
@@ -280,13 +291,17 @@ def parse_source_xml(filename):
             parts = return_type.strip('_').split('_')
             return_type = '%s(%s)' % (parts[0], ', '.join(parts[1:]))
 
+        name = get_text(get_child(member, 'name'))
+
         annotations = get_text(get_child(member, 'argsstring'))
         if annotations and ')' in annotations:
             annotations = annotations.rsplit(')', 1)[-1].strip()
+        # XXX: (doxygen 1.8.11) 'argsstring' only includes attributes of
+        # non-void functions.  Special-case void functions here.
+        if name == 'nvim_get_mode' and len(annotations) == 0:
+            annotations += 'FUNC_API_ASYNC'
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
-
-        name = get_text(get_child(member, 'name'))
 
         vimtag = '*%s()*' % name
         args = []
@@ -365,7 +380,7 @@ def parse_source_xml(filename):
 
         if 'Deprecated' in xrefs:
             deprecated_functions.append(func_doc)
-        else:
+        elif name.startswith(api_func_name_prefix):
             functions.append(func_doc)
 
         xrefs.clear()
@@ -463,7 +478,7 @@ def gen_docs(config):
             docs += '\n\n\n'
 
     docs = docs.rstrip() + '\n\n'
-    docs += ' vim:tw=78:ts=8:ft=help:norl:'
+    docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
 
     doc_file = os.path.join(base_dir, 'runtime/doc', doc_filename)
     delete_lines_below(doc_file, section_start_token)

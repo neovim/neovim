@@ -16,7 +16,7 @@ user manual |usr_24.txt|.
 Also see 'virtualedit', for moving the cursor to positions where there is no
 character.  Useful for editing a table.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Special keys						*ins-special-keys*
@@ -146,7 +146,8 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
 		auto-indent.  Does the same as pasting with the mouse
-		|<MiddleMouse>|.
+		|<MiddleMouse>|. When the register is linewise this will
+		insert the text above the current line, like with `P`.
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
 		typed.
@@ -607,13 +608,13 @@ Completion can be done for:
 10. User defined completion				|i_CTRL-X_CTRL-U|
 11. omni completion					|i_CTRL-X_CTRL-O|
 12. Spelling suggestions				|i_CTRL-X_s|
-13. keywords in 'complete'				|i_CTRL-N|
+13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
 
-All these (except 2) are done in CTRL-X mode.  This is a sub-mode of Insert
-and Replace modes.  You enter CTRL-X mode by typing CTRL-X and one of the
-CTRL-X commands.  You exit CTRL-X mode by typing a key that is not a valid
-CTRL-X mode command.  Valid keys are the CTRL-X command itself, CTRL-N (next),
-and CTRL-P (previous).
+All these, except CTRL-N and CTRL-P, are done in CTRL-X mode.  This is a
+sub-mode of Insert and Replace modes.  You enter CTRL-X mode by typing CTRL-X
+and one of the CTRL-X commands.  You exit CTRL-X mode by typing a key that is
+not a valid CTRL-X mode command.  Valid keys are the CTRL-X command itself,
+CTRL-N (next), and CTRL-P (previous).
 
 Also see the 'infercase' option if you want to adjust the case of the match.
 
@@ -1077,7 +1078,7 @@ items:
 	empty		when non-zero this match will be added even when it is
 			an empty string
 
-All of these except 'icase', 'dup' and 'empty' must be a string.  If an item
+All of these except "icase", "dup" and "empty" must be a string.  If an item
 does not meet these requirements then an error message is given and further
 items in the list are not used.  You can mix string and Dictionary items in
 the returned list.

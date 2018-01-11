@@ -58,7 +58,7 @@ function! s:check_rplugin_manifest() abort
       let contents = join(readfile(script))
       if contents =~# '\<\%(from\|import\)\s\+neovim\>'
         if script =~# '[\/]__init__\.py$'
-          let script = fnamemodify(script, ':h')
+          let script = tr(fnamemodify(script, ':h'), '\', '/')
         endif
 
         if !has_key(existing_rplugins, script)
@@ -173,6 +173,11 @@ function! s:check_terminal() abort
     call health#report_info('key_dc (kdch1) terminfo entry: '
         \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
   endif
+  for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
+    if exists('$'.env_var)
+      call health#report_info(printf("$%s='%s'", env_var, eval('$'.env_var)))
+    endif
+  endfor
 endfunction
 
 function! health#nvim#check() abort

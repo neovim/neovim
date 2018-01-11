@@ -1,7 +1,7 @@
 " Vim indent file
 " Language: PoV-Ray Scene Description Language
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
-" Last Change: 2002-10-20
+" Last Change: 2017 Jun 13
 " URI: http://trific.ath.cx/Ftp/vim/indent/pov.vim
 
 " Only load this indent file when no other was loaded.
@@ -75,9 +75,9 @@ function GetPoVRayIndent()
   " opening line.
   let cur = s:MatchCount(v:lnum, '^\s*\%(#\s*\%(end\|else\)\>\|[]})]\)')
   if cur > 0
-    let final = plind + (chg - cur) * &sw
+    let final = plind + (chg - cur) * shiftwidth()
   else
-    let final = plind + chg * &sw
+    let final = plind + chg * shiftwidth()
   endif
 
   return final < 0 ? 0 : final

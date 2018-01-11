@@ -10,10 +10,10 @@ eight versions of the same file.
 
 The basics are explained in section |08.7| of the user manual.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Starting diff mode
+1. Starting diff mode					*start-vimdiff*
 
 To start editing in diff mode, run "nvim -d".  This starts Nvim as usual, and
 additionally sets up for viewing the differences between the arguments. >
@@ -214,8 +214,8 @@ The diffs are highlighted with these groups:
 				(searching from the end of the line).  The
 				text in between is highlighted.  This means
 				that parts in the middle that are still the
-				same are highlighted anyway.  Only "iwhite" of
-				'diffopt' is used here.
+				same are highlighted anyway.  The 'diffopt'
+				flags "iwhite" and "icase" are used here.
 |hl-DiffDelete|	DiffDelete	Deleted lines.  Also called filler lines,
 				because they don't really exist in this
 				buffer.
@@ -314,7 +314,7 @@ g:diff_translations to zero: >
 
     let g:diff_translations = 0
 <
-After setting this variable, Reload the syntax script: >
+After setting this variable, reload the syntax script: >
 
     set syntax=diff
 <

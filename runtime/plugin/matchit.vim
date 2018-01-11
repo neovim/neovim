@@ -1,7 +1,7 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: 2016 Aug 21
+"  Last Change: 2017 Sep 15
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
-"  Version:     1.13.2, for Vim 6.3+
+"  Version:     1.13.3, for Vim 6.3+
 "		Fix from Tommy Allen included.
 "		Fix from Fernando Torres included.
 "		Improvement from Ken Takata included.
@@ -90,12 +90,15 @@ let s:notslash = '\\\@<!\%(\\\\\)*'
 
 function! s:Match_wrapper(word, forward, mode) range
   " In s:CleanUp(), :execute "set" restore_options .
-  let restore_options = (&ic ? " " : " no") . "ignorecase"
-  if exists("b:match_ignorecase")
+  let restore_options = ""
+  if exists("b:match_ignorecase") && b:match_ignorecase != &ic
+    let restore_options .= (&ic ? " " : " no") . "ignorecase"
     let &ignorecase = b:match_ignorecase
   endif
-  let restore_options = " ve=" . &ve . restore_options
-  set ve=
+  if &ve != ''
+    let restore_options = " ve=" . &ve . restore_options
+    set ve=
+  endif
   " If this function was called from Visual mode, make sure that the cursor
   " is at the correct end of the Visual range:
   if a:mode == "v"
@@ -283,7 +286,9 @@ endfun
 " Restore options and do some special handling for Operator-pending mode.
 " The optional argument is the tail of the matching group.
 fun! s:CleanUp(options, mode, startline, startcol, ...)
-  execute "set" a:options
+  if strlen(a:options)
+    execute "set" a:options
+  endif
   " Open folds, if appropriate.
   if a:mode != "o"
     if &foldopen =~ "percent"
@@ -635,8 +640,9 @@ fun! s:MultiMatch(spflag, mode)
   if !exists("b:match_words") || b:match_words == ""
     return {}
   end
-  let restore_options = (&ic ? "" : "no") . "ignorecase"
-  if exists("b:match_ignorecase")
+  let restore_options = ""
+  if exists("b:match_ignorecase") && b:match_ignorecase != &ic
+    let restore_options .= (&ic ? " " : " no") . "ignorecase"
     let &ignorecase = b:match_ignorecase
   endif
   let startline = line(".")

@@ -13,8 +13,8 @@
 [![Clang Scan Build](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-studio Check](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs)
 
-<a href="https://buildd.debian.org/neovim"><img src="https://www.debian.org/logos/openlogo-nd-25.png" width="13" height="15">Debian</a>
-[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592000)](https://github.com/neovim/neovim/releases/)
+[![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
+[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -33,6 +33,11 @@ Install from source
 
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
+
+To install to a non-default location, specify `CMAKE_INSTALL_PREFIX`:
+
+    make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/full/path/"
+    make install
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 

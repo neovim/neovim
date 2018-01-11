@@ -439,6 +439,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 /// Gets a changed tick of a buffer
 ///
 /// @param[in]  buffer  Buffer handle.
+/// @param[out] err     Error details, if any
 ///
 /// @return `b:changedtick` value.
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
@@ -453,14 +454,14 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
-/// Get a list of dictionaries describing buffer-local mappings
-/// Note that the buffer key in the dictionary will represent the buffer
-/// handle where the mapping is present
+/// Gets a list of dictionaries describing buffer-local mappings.
+/// The "buffer" key in the returned dictionary reflects the buffer
+/// handle where the mapping is present.
 ///
-/// @param  mode  The abbreviation for the mode
-/// @param  buffer_id  Buffer handle
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
+/// @param  buffer     Buffer handle
 /// @param[out]  err   Error details, if any
-/// @returns An array of maparg() like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
     FUNC_API_SINCE(3)
 {
@@ -739,31 +740,31 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 
 /// Adds a highlight to buffer.
 ///
-/// This can be used for plugins which dynamically generate highlights to a
-/// buffer (like a semantic highlighter or linter). The function adds a single
+/// Useful for plugins that dynamically generate highlights to a buffer
+/// (like a semantic highlighter or linter). The function adds a single
 /// highlight to a buffer. Unlike matchaddpos() highlights follow changes to
 /// line numbering (as lines are inserted/removed above the highlighted line),
 /// like signs and marks do.
 ///
-/// "src_id" is useful for batch deletion/updating of a set of highlights. When
-/// called with src_id = 0, an unique source id is generated and returned.
-/// Succesive calls can pass in it as "src_id" to add new highlights to the same
-/// source group. All highlights in the same group can then be cleared with
-/// nvim_buf_clear_highlight. If the highlight never will be manually deleted
-/// pass in -1 for "src_id".
+/// `src_id` is useful for batch deletion/updating of a set of highlights. When
+/// called with `src_id = 0`, an unique source id is generated and returned.
+/// Successive calls can pass that `src_id` to associate new highlights with
+/// the same source group. All highlights in the same group can be cleared
+/// with `nvim_buf_clear_highlight`. If the highlight never will be manually
+/// deleted, pass `src_id = -1`.
 ///
-/// If "hl_group" is the empty string no highlight is added, but a new src_id
+/// If `hl_group` is the empty string no highlight is added, but a new `src_id`
 /// is still returned. This is useful for an external plugin to synchrounously
-/// request an unique src_id at initialization, and later asynchronously add and
-/// clear highlights in response to buffer changes.
+/// request an unique `src_id` at initialization, and later asynchronously add
+/// and clear highlights in response to buffer changes.
 ///
 /// @param buffer     Buffer handle
 /// @param src_id     Source group to use or 0 to use a new group,
 ///                   or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
-/// @param line       Line to highlight
-/// @param col_start  Start of range of columns to highlight
-/// @param col_end    End of range of columns to highlight,
+/// @param line       Line to highlight (zero-indexed)
+/// @param col_start  Start of (byte-indexed) column range to highlight
+/// @param col_end    End of (byte-indexed) column range to highlight,
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
 /// @return The src_id that was used
@@ -793,7 +794,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
-  int hlg_id = syn_name2id((char_u *)(hl_group.data ? hl_group.data : ""));
+  int hlg_id = 0;
+  if (hl_group.size > 0) {
+    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  }
+
   src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
                         (colnr_T)col_start+1, (colnr_T)col_end);
   return src_id;

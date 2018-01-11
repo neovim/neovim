@@ -33,9 +33,10 @@ int encode_vim_to_echo(garray_T *const packer,
 
 /// Structure defining state for read_from_list()
 typedef struct {
+  const list_T *const list;  ///< List being currently read.
   const listitem_T *li;  ///< Item currently read.
-  size_t offset;         ///< Byte offset inside the read item.
-  size_t li_length;      ///< Length of the string inside the read item.
+  size_t offset;  ///< Byte offset inside the read item.
+  size_t li_length;  ///< Length of the string inside the read item.
 } ListReaderState;
 
 /// Initialize ListReaderState structure
@@ -43,11 +44,13 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
   FUNC_ATTR_NONNULL_ALL
 {
   return (ListReaderState) {
-    .li = list->lv_first,
+    .list = list,
+    .li = tv_list_first(list),
     .offset = 0,
-    .li_length = (list->lv_first->li_tv.vval.v_string == NULL
+    .li_length = (TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string == NULL
                   ? 0
-                  : STRLEN(list->lv_first->li_tv.vval.v_string)),
+                  : STRLEN(TV_LIST_ITEM_TV(
+                      tv_list_first(list))->vval.v_string)),
   };
 }
 

@@ -12,6 +12,7 @@
 #include "nvim/api/private/handle.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -667,6 +668,22 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   return rv;
 }
 
+/// Allocates a String consisting of a single char. Does not support multibyte
+/// characters. The resulting string is also NUL-terminated, to facilitate
+/// interoperating with code using C strings.
+///
+/// @param char the char to convert
+/// @return the resulting String, if the input char was NUL, an
+///         empty String is returned
+String cchar_to_string(char c)
+{
+  char buf[] = { c, NUL };
+  return (String) {
+    .data = xmemdupz(buf, 1),
+    .size = (c != NUL) ? 1 : 0
+  };
+}
+
 /// Copies a C string into a String (binary safe string, characters + length).
 /// The resulting string is also NUL-terminated, to facilitate interoperating
 /// with code using C strings.
@@ -685,6 +702,23 @@ String cstr_to_string(const char *str)
         .data = xmemdupz(str, len),
         .size = len
     };
+}
+
+/// Copies buffer to an allocated String.
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
+///
+/// @param buf the buffer to copy
+/// @param size length of the buffer
+/// @return the resulting String, if the input string was NULL, an
+///         empty String is returned
+String cbuf_to_string(const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (String) {
+    .data = xmemdupz(buf, size),
+    .size = size
+  };
 }
 
 /// Creates a String using the given C string. Unlike
@@ -727,12 +761,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     case kObjectTypeWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
-      if (obj.data.integer > VARNUMBER_MAX
-          || obj.data.integer < VARNUMBER_MIN) {
-        api_set_error(err, kErrorTypeValidation, "Integer value outside range");
-        return false;
-      }
-
+      STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
+                    "Integer size must be <= VimL number size");
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = (varnumber_T)obj.data.integer;
       break;
@@ -757,18 +787,16 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = tv_list_item_alloc();
+        typval_T li_tv;
 
-        if (!object_to_vim(item, &li->li_tv, err)) {
-          // cleanup
-          tv_list_item_free(li);
+        if (!object_to_vim(item, &li_tv, err)) {
           tv_list_free(list);
           return false;
         }
 
-        tv_list_append(list, li);
+        tv_list_append_owned_tv(list, li_tv);
       }
-      list->lv_refcount++;
+      tv_list_ref(list);
 
       tv->v_type = VAR_LIST;
       tv->vval.v_list = list;

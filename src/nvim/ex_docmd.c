@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -3271,6 +3272,12 @@ const char * set_one_cmd_context(
   case CMD_echoerr:
   case CMD_call:
   case CMD_return:
+  case CMD_cexpr:
+  case CMD_caddexpr:
+  case CMD_cgetexpr:
+  case CMD_lexpr:
+  case CMD_laddexpr:
+  case CMD_lgetexpr:
     set_context_for_expression(xp, (char_u *)arg, ea.cmdidx);
     break;
 
@@ -3477,10 +3484,17 @@ char_u *skip_range(
 {
   unsigned delim;
 
-  while (vim_strchr((char_u *)" \t0123456789.$%'/?-+,;", *cmd) != NULL) {
-    if (*cmd == '\'') {
-      if (*++cmd == NUL && ctx != NULL)
+  while (vim_strchr((char_u *)" \t0123456789.$%'/?-+,;\\", *cmd) != NULL) {
+    if (*cmd == '\\') {
+      if (cmd[1] == '?' || cmd[1] == '/' || cmd[1] == '&') {
+        cmd++;
+      } else {
+        break;
+      }
+    } else if (*cmd == '\'') {
+      if (*++cmd == NUL && ctx != NULL) {
         *ctx = EXPAND_NOTHING;
+      }
     } else if (*cmd == '/' || *cmd == '?') {
       delim = *cmd++;
       while (*cmd != NUL && *cmd != delim)
@@ -5911,9 +5925,10 @@ static void ex_colorscheme(exarg_T *eap)
 
 static void ex_highlight(exarg_T *eap)
 {
-  if (*eap->arg == NUL && eap->cmd[2] == '!')
+  if (*eap->arg == NUL && eap->cmd[2] == '!') {
     MSG(_("Greetings, Vim user!"));
-  do_highlight(eap->arg, eap->forceit, FALSE);
+  }
+  do_highlight((const char *)eap->arg, eap->forceit, false);
 }
 
 
@@ -5995,7 +6010,7 @@ static void ex_quit(exarg_T *eap)
  */
 static void ex_cquit(exarg_T *eap)
 {
-  getout(1);
+  getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
 /*
@@ -6215,7 +6230,6 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp)
       break;
   }
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
 
   redraw_tabline = TRUE;
   if (h != tabline_height())
@@ -9349,15 +9363,18 @@ put_view (
     }
   }
 
-  /*
-   * Local directory.
-   */
-  if (wp->w_localdir != NULL) {
+  //
+  // Local directory, if the current flag is not view options or the "curdir"
+  // option is included.
+  //
+  if (wp->w_localdir != NULL
+      && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
         || ses_put_fname(fd, wp->w_localdir, flagp) == FAIL
-        || put_eol(fd) == FAIL)
+        || put_eol(fd) == FAIL) {
       return FAIL;
-    did_lcd = TRUE;
+    }
+    did_lcd = true;
   }
 
   return OK;
@@ -9701,17 +9718,18 @@ static void ex_filetype(exarg_T *eap)
     EMSG2(_(e_invarg2), arg);
 }
 
-/// Do ":filetype plugin indent on" if user did not already do some
-/// permutation thereof.
+/// Set all :filetype options ON if user did not explicitly set any to OFF.
 void filetype_maybe_enable(void)
 {
-  if (filetype_detect == kNone
-      && filetype_plugin == kNone
-      && filetype_indent == kNone) {
+  if (filetype_detect == kNone) {
     source_runtime((char_u *)FILETYPE_FILE, true);
     filetype_detect = kTrue;
+  }
+  if (filetype_plugin == kNone) {
     source_runtime((char_u *)FTPLUGIN_FILE, true);
     filetype_plugin = kTrue;
+  }
+  if (filetype_indent == kNone) {
     source_runtime((char_u *)INDENT_FILE, true);
     filetype_indent = kTrue;
   }
@@ -9882,13 +9900,19 @@ static void ex_terminal(exarg_T *eap)
 
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
 ///
-/// @param[in] cmd Commandline to check. May start with a range.
+/// @param[in] cmd Commandline to check. May start with a range or modifier.
 ///
 /// @return true if `cmd` is previewable
 bool cmd_can_preview(char_u *cmd)
 {
   if (cmd == NULL) {
     return false;
+  }
+
+  // Ignore any leading modifiers (:keeppatterns, :verbose, etc.)
+  for (int len = modifier_len(cmd); len != 0; len = modifier_len(cmd)) {
+    cmd += len;
+    cmd = skipwhite(cmd);
   }
 
   exarg_T ea;

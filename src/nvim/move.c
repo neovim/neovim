@@ -1989,9 +1989,8 @@ void halfpage(bool flag, linenr_T Prenum)
     while (n > 0 && curwin->w_botline <= curbuf->b_ml.ml_line_count) {
       if (curwin->w_topfill > 0) {
         i = 1;
-        if (--n < 0 && scrolled > 0)
-          break;
-        --curwin->w_topfill;
+        n--;
+        curwin->w_topfill--;
       } else {
         i = plines_nofill(curwin->w_topline);
         n -= i;
@@ -2067,9 +2066,8 @@ void halfpage(bool flag, linenr_T Prenum)
     while (n > 0 && curwin->w_topline > 1) {
       if (curwin->w_topfill < diff_check_fill(curwin, curwin->w_topline)) {
         i = 1;
-        if (--n < 0 && scrolled > 0)
-          break;
-        ++curwin->w_topfill;
+        n--;
+        curwin->w_topfill++;
       } else {
         i = plines_nofill(curwin->w_topline - 1);
         n -= i;

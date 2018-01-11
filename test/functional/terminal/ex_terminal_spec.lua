@@ -7,7 +7,6 @@ local retry = helpers.retry
 local iswin = helpers.iswin
 
 describe(':terminal', function()
-  if helpers.pending_win32(pending) then return end
   local screen
 
   before_each(function()
@@ -24,7 +23,11 @@ describe(':terminal', function()
       echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
-    feed_command([[terminal while true; do echo X; done]])
+    if iswin() then
+      feed_command([[terminal for /L \\%I in (1,0,2) do echo \\%I]])
+    else
+      feed_command([[terminal while true; do echo X; done]])
+    end
     helpers.feed([[<C-\><C-N>]])
     wait()
     screen:sleep(10)  -- Let some terminal activity happen.
@@ -38,7 +41,11 @@ describe(':terminal', function()
   end)
 
   it("in normal-mode :split does not move cursor", function()
-    feed_command([[terminal while true; do echo foo; sleep .1; done]])
+    if iswin() then
+      feed_command([[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]])
+    else
+      feed_command([[terminal while true; do echo foo; sleep .1; done]])
+    end
     helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
     wait()
     eq(3, eval("line('$')"))  -- window height

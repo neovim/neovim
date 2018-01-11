@@ -4,42 +4,33 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim's facilities for job control				  *job-control*
+Nvim job control					*job-control*
 
-				      Type <M-]> to see the table of contents.
-
-==============================================================================
-1. Introduction						    *job-control-intro*
-
-Job control is a simple way to perform multitasking in vimscript. Wikipedia
-contains a more generic/detailed description:
-
-"Job control in computing refers to the control of multiple tasks or Jobs on a
-computer system, ensuring that they each have access to adequate resources to
-perform correctly, that competition for limited resources does not cause a
-deadlock where two or more jobs are unable to complete, resolving such
-situations where they do occur, and terminating jobs that, for any reason, are
-not performing as expected."
-
-In a few words: It allows a vimscript programmer to concurrently spawn and
+Job control is a way to perform multitasking in Nvim, so scripts can spawn and
 control multiple processes without blocking the current Nvim instance.
 
-Nvim's job control was designed to be simple and familiar to vimscript
-programmers, instead of being very powerful but complex. Unlike Vim's
-facilities for calling with external commands, job control does not depend on
-available shells, instead relying on OS functionality for process management.
-
-Internally, Nvim job control is powered by libuv, which has a nice
-cross-platform API for managing processes. See https://github.com/libuv/libuv
-for details.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
-2. Usage						*job-control-usage*
+Concepts
 
-Job control is achieved by calling a combination of the |jobstart()|,
-|jobsend()| and |jobstop()| functions. Here's an example:
->
-    function! s:JobHandler(job_id, data, event) dict
+Job Id							*job-id*
+
+When a job starts it is assigned a number, unique for the life of the current
+Nvim session. Functions like |jobstart()| return job ids. Functions like
+|jobsend()|, |jobstop()|, |rpcnotify()|, and |rpcrequest()| take job ids.
+
+The job's stdio streams are represented as a |channel|. It is possible to send
+and recieve raw bytes, or use |msgpack-rpc|.
+==============================================================================
+Usage							*job-control-usage*
+
+To control jobs, use the "job…" family of functions: |jobstart()|,
+|jobsend()|, |jobstop()|.
+
+Example: >
+
+    function! s:OnEvent(job_id, data, event) dict
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
@@ -51,42 +42,36 @@ Job control is achieved by calling a combination of the |jobstart()|,
       call append(line('$'), str)
     endfunction
     let s:callbacks = {
-    \ 'on_stdout': function('s:JobHandler'),
-    \ 'on_stderr': function('s:JobHandler'),
-    \ 'on_exit': function('s:JobHandler')
+    \ 'on_stdout': function('s:OnEvent'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent')
     \ }
     let job1 = jobstart(['bash'], extend({'shell': 'shell 1'}, s:callbacks))
     let job2 = jobstart(['bash', '-c', 'for i in {1..10}; do echo hello $i!; sleep 1; done'], extend({'shell': 'shell 2'}, s:callbacks))
 
+To test the above script, copy it to a file ~/foo.vim and run it: >
+    nvim -u ~/foo.vim
 <
-To test the above, copy it to the file ~/jobcontrol.vim and start with a clean
-nvim instance:
->
-    nvim -u NONE -S ~/jobcontrol.vim
-<
-Here's what is happening:
+Description of what happens:
+  - Two bash shells are spawned by |jobstart()| with their stdin/stdout/stderr
+    streams connected to nvim.
+  - The first shell is idle, waiting to read commands from its stdin.
+  - The second shell is started with -c which executes the command (a for-loop
+    printing 0 through 9) and then exits.
+  - `OnEvent()` callback is passed to |jobstart()| to handle various job
+    events. It displays stdout/stderr data received from the shells.
 
-- Two bash instances are spawned by |jobstart()| with their stdin/stdout/stderr
-  connected to nvim.
-- The first shell is idle, waiting to read commands from its stdin.
-- The second shell is started with the -c argument, causing it to execute a
-  command then exit. In this case, the command is a for loop that will print 0
-  through 9 then exit.
-- The `JobHandler()` function is a callback passed to |jobstart()| to handle
-  various job events. It takes care of displaying stdout/stderr received from
-  the shells.
-						*on_stdout* *on_stderr* *on_exit*
-- The arguments passed to `JobHandler()` are:
+For |on_stdout| and |on_stderr| see |channel-callback|.
+							*on_exit*
+Arguments passed to on_exit callback:
+  0: |job-id|
+  1: Exit-code of the process.
+  2: Event type: "exit"
 
-  0: The job id
-  1: If the event is "stdout" or "stderr", a list with lines read from the
-     corresponding stream. For "exit", it is the status returned by the
-     program.
-  2: The event type, which is "stdout", "stderr" or "exit".
 
   Note: Buffered stdout/stderr data which has not been flushed by the sender
-        will not trigger the "stdout" callback (but if the process ends, the
-        "exit" callback will be triggered).
+	will not trigger the on_stdout/on_stderr callback (but if the process
+	ends, the on_exit callback will be invoked).
         For example, "ruby -e" buffers output, so small strings will be
         buffered unless "auto-flushing" ($stdout.sync=true) is enabled. >
           function! Receive(job_id, data, event)
@@ -97,9 +82,25 @@ Here's what is happening:
             \ {'on_stdout': 'Receive'})
 <       https://github.com/neovim/neovim/issues/1592
 
-The options dictionary is passed as the "self" variable to the callback
-function. Here's a more object-oriented version of the above:
->
+  Note 2:
+	Job event handlers may receive partial (incomplete) lines. For a given
+	invocation of on_stdout/on_stderr, `a:data` is not guaranteed to end
+	with a newline.
+	  - `abcdefg` may arrive as `['abc']`, `['defg']`.
+	  - `abc\nefg` may arrive as `['abc', '']`, `['efg']` or `['abc']`,
+	    `['','efg']`, or even `['ab']`, `['c','efg']`.
+	Easy way to deal with this: initialize a list as `['']`, then append
+	to it as follows: >
+	  let s:chunks = ['']
+	  func! s:on_stdout(job_id, data, event) dict
+	    let s:chunks[-1] .= a:data[0]
+	    call extend(s:chunks, a:data[1:])
+	  endf
+<
+
+The |jobstart-options| dictionary is passed as |self| to the callback.
+The above example could be written in this "object-oriented" style: >
+
     let Shell = {}
 
     function Shell.on_stdout(_job_id, data, event)
@@ -126,19 +127,19 @@ function. Here's a more object-oriented version of the above:
     let instance = Shell.new('bomb',
           \ 'for i in $(seq 9 -1 1); do echo $i 1>&$((i % 2 + 1)); sleep 1; done')
 <
-To send data to the job's stdin, one can use the |jobsend()| function, like
-this:
->
-    :call jobsend(job1, "ls\n")
-    :call jobsend(job1, "invalid-command\n")
-    :call jobsend(job1, "exit\n")
+To send data to the job's stdin, use |chansend()|: >
+    :call chansend(job1, "ls\n")
+    :call chansend(job1, "invalid-command\n")
+    :call chansend(job1, "exit\n")
+<
+A job may be killed with |jobstop()|: >
+    :call jobstop(job1)
 <
 A job may be killed at any time with the |jobstop()| function:
 >
     :call jobstop(job1)
 <
-When |jobstop()| is called, `SIGTERM` will be sent to the job. If a job does
-not exit after 2 seconds, `SIGKILL` will be sent.
+Individual streams can be closed without killing the job, see |chanclose()|.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

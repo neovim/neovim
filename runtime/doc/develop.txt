@@ -11,7 +11,7 @@ Nvim is open source software.  Everybody is encouraged to contribute.
 
 See src/nvim/README.md for an overview of the source code.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Design goals						*design-goals*
@@ -142,6 +142,8 @@ shell		The Vim application.  This can cover the whole screen (e.g.,
 window		View on a buffer.  There can be several windows in Vim,
 		together with the command line, menubar, toolbar, etc. they
 		fit in the shell.
+frame		Windows are kept in a tree of frames.  Each frame contains
+		a column, row, or window ("leaf" frame).
 
 PROVIDERS 						*dev-provider*
 
@@ -230,23 +232,47 @@ _not_ a Buffer). The common {action} "list" indicates that it lists all
 bufs (plural) in the global context.
 
 
+API-CLIENT						*dev-api-client*
+
+Package Naming ~
+API client packages should NOT be named something ambiguous like "neovim" or
+"python-client".  Use "nvim" as a prefix/suffix to some other identifier
+following ecosystem conventions.
+
+For example, Python packages tend to have "py" in the name, so "pynvim" is
+a good name: it's idiomatic and unambiguous. If the package is named "neovim",
+it confuses users, and complicates documentation and discussions.
+
+Examples of API-client package names:
+        GOOD: nvim-racket
+        GOOD: pynvim
+        BAD:  python-client
+        BAD:  neovim
+
+Implementation ~
+Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
+small, efficient, and C89-compatible. It can be easily inlined in your
+C project source, too.  https://github.com/libmpack/libmpack/
+
+
 EXTERNAL UI 						*dev-ui*
 
+Compatibility ~
 External UIs should be aware of the |api-contract|. In particular, future
-versions of Nvim may add optional, new items to existing events. The API is
-strongly backwards-compatible, but clients must not break if new fields are
-added to existing events.
+versions of Nvim may add new items to existing events. The API is strongly
+backwards-compatible, but clients must not break if new fields are added to
+existing events.
 
-External UIs are expected to implement some common features.
+Common Features ~
+External UIs are expected to implement these common features:
+- Cursor style (shape, color) should respond to the 'guicursor' properties
+  delivered with the mode_info_set UI event.
+- Send the "super" key (Windows key, Apple key) as a |<D-| chord.
 
-- Users may want to configure UI-specific options. The UI should publish the
-  |GUIEnter| autocmd after attaching to Nvim: >
-    doautocmd GUIEnter
-- Options can be monitored for changes by the |OptionSet| autocmd. E.g. if the
-  user sets the 'guifont' option, this autocmd notifies channel 42: >
-    autocmd OptionSet guifont call rpcnotify(42, 'option-changed', 'guifont', &guifont)
-- cursor-shape change: 'guicursor' properties are sent in the mode_info_set UI
-  event.
+Implementation ~
+- UI-related options ('guifont', 'ambiwidth', …) are published in the
+  "option_set" |ui-global| event.  The event is triggered when the UI first
+  connects to Nvim and whenever an option is changed by the user or a plugin.
 
 
  vim:tw=78:ts=8:ft=help:norl:

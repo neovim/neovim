@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         TeX (core definition)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             TeX (core definition)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish
@@ -11,7 +11,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " This follows the grouping (sort of) found at
-" http://www.tug.org/utilities/plain/cseq.html#top-fam
+" http: //www.tug.org/utilities/plain/cseq.html#top-fam
 
 syn keyword initexTodo                          TODO FIXME XXX NOTE
 

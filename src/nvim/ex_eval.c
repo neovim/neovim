@@ -517,7 +517,7 @@ static void discard_exception(except_T *excp, int was_finished)
   char_u              *saved_IObuff;
 
   if (excp == NULL) {
-    EMSG(_(e_internal));
+    internal_error("discard_exception()");
     return;
   }
 
@@ -619,8 +619,9 @@ static void catch_exception(except_T *excp)
  */
 static void finish_exception(except_T *excp)
 {
-  if (excp != caught_stack)
-    EMSG(_(e_internal));
+  if (excp != caught_stack) {
+    internal_error("finish_exception()");
+  }
   caught_stack = caught_stack->caught;
   if (caught_stack != NULL) {
     set_vim_var_string(VV_EXCEPTION, (char *) caught_stack->value, -1);
@@ -1422,8 +1423,9 @@ void ex_catch(exarg_T *eap)
        * ":endtry" or when the catch clause is left by a ":continue",
        * ":break", ":return", ":finish", error, interrupt, or another
        * exception. */
-      if (cstack->cs_exception[cstack->cs_idx] != current_exception)
-        EMSG(_(e_internal));
+      if (cstack->cs_exception[cstack->cs_idx] != current_exception) {
+        internal_error("ex_catch()");
+      }
     } else {
       /*
        * If there is a preceding catch clause and it caught the exception,
@@ -1547,7 +1549,7 @@ void ex_finally(exarg_T *eap)
          * exception will be discarded. */
         if (did_throw && cstack->cs_exception[cstack->cs_idx]
             != current_exception)
-          EMSG(_(e_internal));
+          internal_error("ex_finally()");
       }
 
       /*

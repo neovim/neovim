@@ -131,7 +131,7 @@ function GetOccamIndent()
   if line =~ s:FirstLevelIndent || (line =~ s:FirstLevelNonColonEndIndent && line !~ s:ColonEnd)
 	\ || (line !~ s:ColonStart && (prevline =~ s:SecondLevelIndent
 	\ || (prevline =~ s:SecondLevelNonColonEndIndent && prevline !~ s:ColonEnd)))
-    let curindent = curindent + &shiftwidth
+    let curindent = curindent + shiftwidth()
 
     " Restore magic
     if !save_magic|setlocal nomagic|endif
@@ -153,7 +153,7 @@ function GetOccamIndent()
 
   while !found
 
-    if indent(prevlinenum) == curindent - &shiftwidth
+    if indent(prevlinenum) == curindent - shiftwidth()
       let found = 1
     endif
 
@@ -171,7 +171,7 @@ function GetOccamIndent()
 
   if prevlinenum > 0
     if getline(prevlinenum) =~ s:SecondLevelIndent
-      let curindent = curindent + &shiftwidth
+      let curindent = curindent + shiftwidth()
     endif
   endif
 

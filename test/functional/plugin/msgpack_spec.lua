@@ -8,7 +8,7 @@ local NIL = helpers.NIL
 local plugin_helpers = require('test.functional.plugin.helpers')
 local reset = plugin_helpers.reset
 
-describe('In autoload/msgpack.vim', function()
+describe('autoload/msgpack.vim', function()
   before_each(reset)
 
   local sp = function(typ, val)

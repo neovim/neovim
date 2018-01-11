@@ -6,15 +6,14 @@ local write_file, merge_args = helpers.write_file, helpers.merge_args
 local mpack = require('mpack')
 
 local tmpname = helpers.tmpname()
-local additional_cmd = ''
+local append_argv = nil
 
-local function nvim_argv(shada_file)
+local function nvim_argv(shada_file, embed)
   local argv = {nvim_prog, '-u', 'NONE', '-i', shada_file or tmpname, '-N',
                 '--cmd', 'set shortmess+=I background=light noswapfile',
-                '--cmd', additional_cmd,
-                '--embed'}
-  if helpers.prepend_argv then
-    return merge_args(helpers.prepend_argv, argv)
+                embed or '--embed'}
+  if helpers.prepend_argv or append_argv then
+    return merge_args(helpers.prepend_argv, argv, append_argv)
   else
     return argv
   end
@@ -26,12 +25,20 @@ local reset = function(shada_file)
 end
 
 local set_additional_cmd = function(s)
-  additional_cmd = s
+  append_argv = {'--cmd', s}
+end
+
+local function add_argv(...)
+  if select('#', ...) == 0 then
+    append_argv = nil
+  else
+    append_argv = {...}
+  end
 end
 
 local clear = function()
   os.remove(tmpname)
-  set_additional_cmd('')
+  append_argv = nil
 end
 
 local get_shada_rw = function(fname)
@@ -80,7 +87,9 @@ end
 return {
   reset=reset,
   set_additional_cmd=set_additional_cmd,
+  add_argv=add_argv,
   clear=clear,
   get_shada_rw=get_shada_rw,
   read_shada_file=read_shada_file,
+  nvim_argv=nvim_argv,
 }

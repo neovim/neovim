@@ -2,9 +2,10 @@
 " This makes testing go faster, since Vim doesn't need to restart.
 
 source test_assign.vim
+source test_changedtick.vim
 source test_cursor_func.vim
-source test_execute_func.vim
 source test_ex_undo.vim
+source test_execute_func.vim
 source test_expr.vim
 source test_expr_utf8.vim
 source test_feedkeys.vim
@@ -12,6 +13,7 @@ source test_filter_cmd.vim
 source test_filter_map.vim
 source test_float_func.vim
 source test_functions.vim
+source test_ga.vim
 source test_goto.vim
 source test_jumps.vim
 source test_fileformat.vim
@@ -34,4 +36,5 @@ source test_taglist.vim
 source test_true_false.vim
 source test_unlet.vim
 source test_utf8.vim
+source test_virtualedit.vim
 source test_window_cmd.vim

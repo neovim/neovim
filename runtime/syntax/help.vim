@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	Bram Moolenaar (Bram@vim.org)
-" Last Change:	2016 Sep 02
+" Last Change:	2017 Oct 19
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -50,11 +50,13 @@ else
   syn match helpIgnore		"." contained
 endif
 syn keyword helpNote		note Note NOTE note: Note: NOTE: Notes Notes:
-syn keyword helpWarning		WARNING: Warning:
+syn keyword helpWarning		WARNING WARNING: Warning:
+syn keyword helpDeprecated	DEPRECATED DEPRECATED: Deprecated:
 syn match helpSpecial		"\<N\>"
 syn match helpSpecial		"\<N\.$"me=e-1
 syn match helpSpecial		"\<N\.\s"me=e-2
 syn match helpSpecial		"(N\>"ms=s+1
+
 syn match helpSpecial		"\[N]"
 " avoid highlighting N  N in help.txt
 syn match helpSpecial		"N  N"he=s+1
@@ -80,6 +82,9 @@ syn match helpSpecial		"\[arguments]"
 syn match helpSpecial		"\[ident]"
 syn match helpSpecial		"\[addr]"
 syn match helpSpecial		"\[group]"
+" Don't highlight [converted] and others that do not have a tag
+syn match helpNormal		"\[\(readonly\|fifo\|socket\|converted\|crypted\)]"
+
 syn match helpSpecial		"CTRL-."
 syn match helpSpecial		"CTRL-Break"
 syn match helpSpecial		"CTRL-PageUp"
@@ -165,6 +170,7 @@ hi def link helpOption		Type
 hi def link helpSpecial		Special
 hi def link helpNote		Todo
 hi def link helpWarning		Todo
+hi def link helpDeprecated	Todo
 
 hi def link helpComment		Comment
 hi def link helpConstant	Constant

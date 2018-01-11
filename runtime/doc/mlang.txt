@@ -11,7 +11,7 @@ multi-byte text see |multibyte|.
 
 The basics are explained in the user manual: |usr_45.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Messages						*multilang-messages*
@@ -172,6 +172,7 @@ Send an e-mail to the Vim maintainer <maintainer@vim.org>.
 			special characters like "&" and "<Tab>" need to be
 			included.  Spaces and dots need to be escaped with a
 			backslash, just like in other |:menu| commands.
+			Case in {english} is ignored.
 
 See the $VIMRUNTIME/lang directory for examples.
 

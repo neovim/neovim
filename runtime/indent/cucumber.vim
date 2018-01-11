@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Cucumber
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2016 Aug 29
+" Last Change:	2017 Jun 13
 
 if exists("b:did_indent")
   finish
@@ -27,7 +27,7 @@ function! GetCucumberIndent()
   let line  = getline(prevnonblank(v:lnum-1))
   let cline = getline(v:lnum)
   let nline = getline(nextnonblank(v:lnum+1))
-  let sw = exists('*shiftwidth') ? shiftwidth() : &sw
+  let sw = exists('*shiftwidth') ? shiftwidth() : shiftwidth()
   let syn = s:syn(prevnonblank(v:lnum-1))
   let csyn = s:syn(v:lnum)
   let nsyn = s:syn(nextnonblank(v:lnum+1))

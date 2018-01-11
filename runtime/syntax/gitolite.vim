@@ -1,8 +1,10 @@
 " Vim syntax file
 " Language:	gitolite configuration
-" URL:		https://github.com/tmatilai/gitolite.vim
-" Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>
-" Last Change:	2011-12-25
+" URL:		https://github.com/sitaramc/gitolite/blob/master/contrib/vim/syntax/gitolite.vim
+"	(https://raw.githubusercontent.com/sitaramc/gitolite/master/contrib/vim/syntax/gitolite.vim)
+" Maintainer:	Sitaram Chamarty <sitaramc@gmail.com>
+" (former Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>)
+" Last Change:	2017 Oct 05
 
 if exists("b:current_syntax")
   finish
@@ -11,74 +13,80 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-" Comment
-syn match	gitoliteComment		"\(^\|\s\)#.*" contains=gitoliteTodo
-syn keyword	gitoliteTodo		TODO FIXME XXX NOT contained
+" this seems to be the best way, for now.
+syntax sync fromstart
 
-" Groups, users and repos
-syn match	gitoliteGroupDef	"\(^\s*\)\@<=@[^=]\{-1,}\(\s*=\)\@=" contains=gitoliteSpaceError,gitoliteUserError nextgroup=gitoliteGroupDefSep
-syn match	gitoliteGroupDefSep	"\s*=" contained nextgroup=gitoliteRepoLine
-syn match	gitoliteRepoDef		"^\s*repo\s" nextgroup=gitoliteRepoLine
+" ---- common stuff
 
-syn match	gitoliteRepoLine	".*" contained transparent contains=gitoliteGroup,gitoliteWildRepo,gitoliteCreator,gitoliteExtCmdHelper,gitoliteRepoError,gitoliteComment
-syn match	gitoliteUserLine	".*" contained transparent contains=gitoliteGroup,gitolitePreProc,gitoliteUserError,gitoliteComment
+syn match   gitoliteGroup           '@\S\+'
 
-syn match	gitoliteWildRepo	"[ \t=]\@<=[^ \t]*[\\^$|()[\]*?{},][^ \t]*" contained contains=gitoliteCreator,gitoliteRepoError
-syn match	gitoliteGroup		"[ \t=]\@<=@[^ \t]\+" contained contains=gitoliteUserError
+syn match   gitoliteComment         '#.*' contains=gitoliteTodo
+syn keyword gitoliteTodo            TODO FIXME XXX NOT contained
 
-syn keyword	gitoliteCreator		CREATER CREATOR contained
-syn keyword	gitolitePreProc		CREATER CREATOR READERS WRITERS contained
+" ---- main section
 
-syn match	gitoliteExtCmdHelper	"[ \t=]\@<=EXTCMD/" contained nextgroup=gitoliteExtCmd
-syn match	gitoliteExtCmd		"rsync\(\s\|$\)" contained
+" catch template-data syntax appearing outside template-data section
+syn match   gitoliteRepoError       '^\s*repo.*='
+syn match   gitoliteRepoError       '^\s*\S\+\s*='  " this gets overridden later when first word is a perm, don't worry
 
-" Illegal characters
-syn match	gitoliteRepoError	"[^ \t0-9a-zA-Z._@+/\\^$|()[\]*?{},-]\+" contained
-syn match	gitoliteUserError	"[^ \t0-9a-zA-Z._@+-]\+" contained
-syn match	gitoliteSpaceError	"\s\+" contained
+" normal gitolite group and repo lines
+syn match   gitoliteGroupLine       '^\s*@\S\+\s*=\s*\S.*$' contains=gitoliteGroup,gitoliteComment
+syn match   gitoliteRepoLine        '^\s*repo\s\+[^=]*$' contains=gitoliteRepo,gitoliteGroup,gitoliteComment
+syn keyword gitoliteRepo            repo contained
 
-" Permission
-syn match	gitoliteKeyword		"^\s*\(C\|R\|RW\|RW+\|RWC\|RW+C\|RWD\|RW+D\|RWCD\|RW+CD\)[ \t=]\@=" nextgroup=gitoliteRefex
-syn match	gitoliteKeyword		"^\s*-[ \t=]\@=" nextgroup=gitoliteDenyRefex
-syn match	gitoliteRefex		"[^=]*="he=e-1 contained contains=gitoliteSpecialRefex,gitoliteGroup nextgroup=gitoliteUserLine
-syn match	gitoliteDenyRefex	"[^=]*="he=e-1 contained contains=gitoliteSpecialRefex,gitoliteGroup nextgroup=gitoliteDenyUsers
-syn match	gitoliteSpecialRefex	"\sNAME/"he=e-1 contained
-syn match	gitoliteSpecialRefex	"/USER/"hs=s+1,he=e-1 contained
-syn match	gitoliteDenyUsers	".*" contained contains=gitoliteUserError,gitoliteComment
+syn keyword gitoliteSpecialRepo     CREATOR
 
-" Configuration
-syn match	gitoliteKeyword		"^\s*config\s\+" nextgroup=gitoliteConfVariable
-syn match	gitoliteConfVariable	"[^=]*" contained
+" normal gitolite rule lines
+syn match   gitoliteRuleLine        '^\s*\(-\|C\|R\|RW+\?C\?D\?\)\s[^#]*' contains=gitoliteRule,gitoliteCreateRule,gitoliteDenyRule,gitoliteRefex,gitoliteUsers,gitoliteGroup
+syn match   gitoliteRule            '\(^\s*\)\@<=\(-\|C\|R\|RW+\?C\?D\?\)\s\@=' contained
+syn match   gitoliteRefex           '\(^\s*\(-\|R\|RW+\?C\?D\?\)\s\+\)\@<=\S.\{-}\(\s*=\)\@=' contains=gitoliteSpecialRefex
+syn match   gitoliteSpecialRefex    'NAME/'
+syn match   gitoliteSpecialRefex    '/USER/'
+syn match   gitoliteCreateRule      '\(^\s*C\s.*=\s*\)\@<=\S[^#]*[^# ]' contained contains=gitoliteGroup
+syn match   gitoliteDenyRule        '\(^\s*-\s.*=\s*\)\@<=\S[^#]*[^# ]' contained
 
-" Include
-syn match	gitoliteInclude		"^\s*\(include\|subconf\)\s"
+" normal gitolite config (and similar) lines
+syn match   gitoliteConfigLine      '^\s*\(config\|option\|include\|subconf\)\s[^#]*' contains=gitoliteConfigKW,gitoliteConfigKey,gitoliteConfigVal,gitoliteComment
+syn keyword gitoliteConfigKW        config option include subconf contained
+syn match   gitoliteConfigKey       '\(\(config\|option\)\s\+\)\@<=[^ =]*' contained
+syn match   gitoliteConfigVal       '\(=\s*\)\@<=\S.*' contained
 
-" String
-syn region	gitoliteString		start=+"+ end=+"+ oneline
+" ---- template-data section
 
-" Define the default highlighting
-hi def link gitoliteComment		Comment
-hi def link gitoliteTodo		Todo
-hi def link gitoliteGroupDef		gitoliteGroup
-hi def link gitoliteGroup		Identifier
-hi def link gitoliteWildRepo		Special
-hi def link gitoliteRepoError		gitoliteError
-hi def link gitoliteUserError		gitoliteError
-hi def link gitoliteSpaceError		gitoliteError
-hi def link gitoliteError		Error
-hi def link gitoliteCreator		gitolitePreProc
-hi def link gitolitePreProc		PreProc
-hi def link gitoliteExtCmdHelper	PreProc
-hi def link gitoliteExtCmd		Special
-hi def link gitoliteRepoDef		Type
-hi def link gitoliteKeyword		Keyword
-hi def link gitoliteRefex		String
-hi def link gitoliteDenyRefex		gitoliteRefex
-hi def link gitoliteSpecialRefex	PreProc
-hi def link gitoliteDenyUsers		WarningMsg
-hi def link gitoliteConfVariable	Identifier
-hi def link gitoliteInclude		Include
-hi def link gitoliteString		String
+syn region  gitoliteTemplateLine    matchgroup=PreProc start='^=begin template-data$' end='^=end$' contains=gitoliteTplRepoLine,gitoliteTplRoleLine,gitoliteGroup,gitoliteComment,gitoliteTplError
+
+syn match   gitoliteTplRepoLine     '^\s*repo\s\+\S.*=.*' contained contains=gitoliteTplRepo,gitoliteTplTemplates,gitoliteGroup
+syn keyword gitoliteTplRepo         repo contained
+syn match   gitoliteTplTemplates    '\(=\s*\)\@<=\S.*' contained contains=gitoliteGroup,gitoliteComment
+
+syn match   gitoliteTplRoleLine     '^\s*\S\+\s*=\s*.*' contained contains=gitoliteTplRole,gitoliteGroup,gitoliteComment
+syn match   gitoliteTplRole         '\S\+\s*='he=e-1 contained
+
+" catch normal gitolite rules appearing in template-data section
+syn match   gitoliteTplError        '^\s*repo[^=]*$' contained
+syn match   gitoliteTplError        '^\s*\(-\|R\|RW+\?C\?D\?\)\s'he=e-1 contained
+syn match   gitoliteTplError        '^\s*\(config\|option\|include\|subconf\)\s'he=e-1 contained
+syn match   gitoliteTplError        '^\s*@\S\+\s*=' contained contains=NONE
+
+hi def link gitoliteGroup           Identifier
+hi def link gitoliteComment         Comment
+hi def link gitoliteTodo            ToDo
+hi def link gitoliteRepoError       Error
+hi def link gitoliteGroupLine       PreProc
+hi def link gitoliteRepo            Keyword
+hi def link gitoliteSpecialRepo     PreProc
+hi def link gitoliteRule            Keyword
+hi def link gitoliteCreateRule      PreProc
+hi def link gitoliteDenyRule        WarningMsg
+hi def link gitoliteRefex           Constant
+hi def link gitoliteSpecialRefex    PreProc
+hi def link gitoliteConfigKW        Keyword
+hi def link gitoliteConfigKey       Identifier
+hi def link gitoliteConfigVal       String
+hi def link gitoliteTplRepo         Keyword
+hi def link gitoliteTplTemplates    Constant
+hi def link gitoliteTplRole         Constant
+hi def link gitoliteTplError        Error
 
 let b:current_syntax = "gitolite"
 

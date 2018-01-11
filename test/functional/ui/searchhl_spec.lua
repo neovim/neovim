@@ -3,8 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command = helpers.feed_command
 
-if helpers.pending_win32(pending) then return end
-
 describe('search highlighting', function()
   local screen
   local colors = Screen.colors

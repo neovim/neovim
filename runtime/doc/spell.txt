@@ -6,7 +6,7 @@
 
 Spell checking						*spell*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Quick start					*spell-quickstart* *E756*
@@ -459,7 +459,7 @@ Vim uses a binary file format for spelling.  This greatly speeds up loading
 the word list and keeps it small.
 						    *.aff* *.dic* *Myspell*
 You can create a Vim spell file from the .aff and .dic files that Myspell
-uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt 
+uses.  Myspell is used by OpenOffice.org and Mozilla. The OpenOffice .oxt
 files are zip files which contain the .aff and .dic files. You should be able
 to find them here:
 	http://extensions.services.openoffice.org/dictionary
@@ -704,7 +704,7 @@ Additionally the following items are recognized:
     =		Case must match exactly.
     ?		Rare word.
     !		Bad (wrong) word.
-    digit	A region in which the word is valid.  If no regions are
+    1 to 9	A region in which the word is valid.  If no regions are
 		specified the word is valid in all regions.
 
 Example:
@@ -1594,7 +1594,7 @@ COMPOUNDSYLLABLE  (Hunspell)			*spell-COMPOUNDSYLLABLE*
 KEY		(Hunspell)				*spell-KEY*
 		Define characters that are close together on the keyboard.
 		Used to give better suggestions.  Not supported.
-		
+
 LANG		(Hunspell)				*spell-LANG*
 		This specifies language-specific behavior.  This actually
 		moves part of the language knowledge into the program,

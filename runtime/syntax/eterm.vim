@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         eterm(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-21
+" Language:             eterm(1) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-21
 
 if exists("b:current_syntax")
   finish

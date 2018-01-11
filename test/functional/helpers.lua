@@ -100,6 +100,22 @@ local function next_message()
   return session:next_message()
 end
 
+local function expect_twostreams(msgs1, msgs2)
+  local pos1, pos2 = 1, 1
+  while pos1 <= #msgs1 or pos2 <= #msgs2 do
+    local msg = next_message()
+    if pos1 <= #msgs1 and pcall(eq, msgs1[pos1], msg) then
+      pos1 = pos1 + 1
+    elseif pos2 <= #msgs2 then
+      eq(msgs2[pos2], msg)
+      pos2 = pos2 + 1
+    else
+      -- already failed, but show the right error message
+      eq(msgs1[pos1], msg)
+    end
+  end
+end
+
 local function call_and_stop_on_error(...)
   local status, result = copcall(...)  -- luacheck: ignore
   if not status then
@@ -245,6 +261,7 @@ local function retry(max, max_ms, fn)
     if status then
       return result
     end
+    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
       if type(result) == "string" then
         result = "\nretry() attempts: "..tostring(tries).."\n"..result
@@ -317,8 +334,8 @@ local function feed_command(...)
 end
 
 -- Dedent the given text and write it to the file name.
-local function write_file(name, text, dont_dedent)
-  local file = io.open(name, 'w')
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -326,7 +343,7 @@ local function write_file(name, text, dont_dedent)
     for _, char in ipairs(bytes) do
       text = ('%s%c'):format(text, char)
     end
-  elseif not dont_dedent then
+  elseif not no_dedent then
     text = dedent(text)
   end
   file:write(text)
@@ -366,9 +383,8 @@ end
 
 local function set_shell_powershell()
   source([[
-    set shell=powershell shellquote=\" shellpipe=\| shellredir=>
-    set shellcmdflag=\ -NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-    let &shellxquote=' '
+    set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
+    set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
   ]])
 end
 
@@ -587,8 +603,17 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
+-- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
+-- Useful for communicating with child instances.
+local function new_pipename()
+  -- HACK: Start a server temporarily, get the name, then stop it.
+  local pipename = nvim_eval('serverstart()')
+  funcs.serverstop(pipename)
+  return pipename
+end
+
 local function missing_provider(provider)
-  if provider == 'ruby' then
+  if provider == 'ruby' or provider == 'node' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
@@ -618,6 +643,31 @@ local function alter_slashes(obj)
   end
 end
 
+local function hexdump(str)
+  local len = string.len(str)
+  local dump = ""
+  local hex = ""
+  local asc = ""
+
+  for i = 1, len do
+    if 1 == i % 8 then
+      dump = dump .. hex .. asc .. "\n"
+      hex = string.format("%04x: ", i - 1)
+      asc = ""
+    end
+
+    local ord = string.byte(str, i)
+    hex = hex .. string.format("%02x ", ord)
+    if ord >= 32 and ord <= 126 then
+      asc = asc .. string.char(ord)
+    else
+      asc = asc .. "."
+    end
+  end
+
+  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
+end
+
 local module = {
   prepend_argv = prepend_argv,
   clear = clear,
@@ -636,6 +686,7 @@ local module = {
   command = nvim_command,
   request = request,
   next_message = next_message,
+  expect_twostreams = expect_twostreams,
   run = run,
   stop = stop,
   eq = eq,
@@ -687,6 +738,8 @@ local module = {
   get_pathsep = get_pathsep,
   missing_provider = missing_provider,
   alter_slashes = alter_slashes,
+  hexdump = hexdump,
+  new_pipename = new_pipename,
 }
 
 return function(after_each)

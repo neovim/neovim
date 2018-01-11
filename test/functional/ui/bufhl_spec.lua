@@ -4,8 +4,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, request, neq = helpers.command, helpers.request, helpers.neq
 
-if helpers.pending_win32(pending) then return end
-
 describe('Buffer highlighting', function()
   local screen
   local curbuf
@@ -24,7 +22,8 @@ describe('Buffer highlighting', function()
       [6] = {foreground = Screen.colors.DarkCyan}, -- Identifier
       [7] = {bold = true},
       [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [9] = {foreground = Screen.colors.SlateBlue, underline = true}
+      [9] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [10] = {foreground = Screen.colors.Red}
     })
     curbuf = request('nvim_get_current_buf')
   end)
@@ -246,6 +245,34 @@ describe('Buffer highlighting', function()
 
     screen:expect([[
       Ta {6:båten} över {2:sjön}^!                     |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+  end)
+
+  it('works with new syntax groups', function()
+    insert([[
+      fancy code in a new fancy language]])
+    add_hl(-1, "FancyLangItem", 0, 0, 5)
+    screen:expect([[
+      fancy code in a new fancy languag^e      |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    command('hi FancyLangItem guifg=red')
+    screen:expect([[
+      {10:fancy} code in a new fancy languag^e      |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|

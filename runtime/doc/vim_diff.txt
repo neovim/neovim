@@ -9,7 +9,7 @@ Differences between Nvim and Vim			       *vim-differences*
 Nvim differs from Vim in many ways, big and small.  This document is
 a complete and centralized reference of those differences.
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-configuration*
@@ -60,14 +60,18 @@ a complete and centralized reference of those differences.
 
 MAJOR COMPONENTS ~
 
-Embedded terminal emulator	|terminal|
-RPC API				|RPC|
-Shared data			|shada|
-XDG base directories		|xdg|
+API				|API|
+Lua scripting			|lua|
 Job control			|job-control|
 Remote plugins			|remote-plugin|
-Python plugins			|provider-python|
-Clipboard integration		|provider-clipboard|
+Providers
+  Clipboard			|provider-clipboard|
+  Python plugins		|provider-python|
+  Ruby plugins			|provider-ruby|
+Shared data			|shada|
+Embedded terminal		|terminal|
+VimL parser			|nvim_parse_expression()|
+XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
 
@@ -87,6 +91,16 @@ Working intuitively and consistently is a major goal of Nvim.
 - Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
   not exposed (nor implemented); instead Nvim has a robust API.
 
+- Behaviors, options, documentation are removed if they cost users more time
+  than they save.
+
+Usability details have been improved where the benefit outweighs any
+backwards-compatibility cost. Some examples:
+
+- |K| in help documents can be used like |CTRL-]|.
+- Directories for 'directory' and 'undodir' are auto-created.
+- Terminal features such as 'guicursor' are enabled where possible.
+
 ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
@@ -100,7 +114,7 @@ by Nvim developers.
 
 FEATURES ~
 
-"Outline": Type <M-]> in |:Man| and |:help| pages to see a document outline.
+"Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
 
 |META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
 will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
@@ -130,6 +144,7 @@ Commands:
   |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
+  |:tchdir| tab-local |current-directory|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
@@ -145,19 +160,23 @@ Events:
   |TextYankPost|
 
 Highlight groups:
+  |hl-NormalNC| highlights non-current windows
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
   |hl-Whitespace| highlights 'listchars' whitespace
+  |expr-highlight| highlight groups (prefixed with "Nvim")
 
-UI:
-		*E5408* *E5409* *g:Nvim_color_expr* *g:Nvim_color_cmdline*
-  Command-line coloring is supported. Only |input()| and |inputdialog()| may
-  be colored. For testing purposes expressions (e.g. |i_CTRL-R_=|) and regular
-  command-line (|:|) are colored by callbacks defined in `g:Nvim_color_expr`
-  and `g:Nvim_color_cmdline` respectively (these callbacks are for testing
-  only, and will be removed in a future version). 
+Command-line highlighting:
+  The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
+  using a built-in VimL expression parser. |expr-highlight|
+					*E5408* *E5409*
+  |input()|, |inputdialog()| support custom highlighting. |input()-highlight|
+					*g:Nvim_color_cmdline*
+  (Experimental) Command-line (|:|) is colored by callback defined in
+  `g:Nvim_color_cmdline` (this callback is for testing only, and will be
+  removed in the future).
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*
@@ -284,6 +303,9 @@ Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
 
+VimL (Vim script) compatibility:
+  `count` does not alias to |v:count|
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 
@@ -310,20 +332,26 @@ Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
 
-	*t_xx* *:set-termcap* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
+			*t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
 Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
-						  *'term'* *E529* *E530* *E531*
-The 'term' option has a fixed value, present only for script compatibility and
-intentionally not the same as any known terminal type name.  It should be a
-rare case in Nvim where one needs |term-dependent-settings|.
+			*:set-termcap*
+Start Nvim with 'verbose' level 3 to see the terminal capabilities. >
+	nvim -V3
+<
+			*'term'* *E529* *E530* *E531*
+'term' reflects the terminal type derived from |$TERM| and other environment
+checks.  For debugging only; not reliable during startup. >
+	:echo &term
+"builtin_x" means one of the |builtin-terms| was chosen, because the expected
+terminfo file was not found on the system.
 
-								*termcap*
+			*termcap*
 Nvim never uses the termcap database, only |terminfo| and |builtin-terms|.
 
-						*xterm-8bit* *xterm-8-bit*
+			*xterm-8bit* *xterm-8-bit*
 Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this
 requires autodetection of whether the terminal is in UTF-8 mode or non-UTF-8
 mode, as the 8-bit CSI character has to be written differently in each case.
@@ -363,7 +391,7 @@ Other options:
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
-  'highlight' (the builtin |highlight-groups| cannot be changed)
+  'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

@@ -16,7 +16,7 @@ upwards in the buffer, the text in the window moves downwards on your screen.
 
 See section |03.7| of the user manual for an introduction.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Scrolling downwards					*scroll-down*
@@ -211,7 +211,7 @@ past its buffer's limits.
 However, if a 'scrollbind' window that has a relative offset that is past its
 buffer's limits is given the cursor focus, the other 'scrollbind' windows must
 jump to a location where the current window's relative offset is valid.  This
-behavior can be changed by clearing the 'jump' flag from the 'scrollopt'
+behavior can be changed by clearing the "jump" flag from the 'scrollopt'
 option.
 
 						*syncbind* *:syncbind* *:sync*

@@ -45,7 +45,7 @@ top one:
 	+----------------------------------+
 
 What you see here is two windows on the same file.  The line with "====" is
-that status line.  It displays information about the window above it.  (In
+the status line.  It displays information about the window above it.  (In
 practice the status line will be in reverse video.)
    The two windows allow you to view two parts of the same file.  For example,
 you could make the top window show the variable declarations of a program, and

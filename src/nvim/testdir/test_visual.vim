@@ -1,13 +1,13 @@
-" Tests for Visual mode
-if !has('multi_byte')
-  finish
-endif
-
+" Tests for various Visual mode.
 if !has('visual')
   finish
 endif
 
 func Test_block_shift_multibyte()
+  " Uses double-wide character.
+  if !has('multi_byte')
+    return
+  endif
   split
   call setline(1, ['xヹxxx', 'ヹxxx'])
   exe "normal 1G0l\<C-V>jl>"
@@ -33,5 +33,20 @@ func Test_Visual_vapo()
   new
   normal oxx
   normal vapo
+  bwipe!
+endfunc
+
+func Test_dotregister_paste()
+  new
+  exe "norm! ihello world\<esc>"
+  norm! 0ve".p
+  call assert_equal('hello world world', getline(1))
+  q!
+endfunc
+
+func Test_Visual_inner_quote()
+  new
+  normal oxX
+  normal vki'
   bwipe!
 endfunc

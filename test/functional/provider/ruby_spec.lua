@@ -15,9 +15,7 @@ local missing_provider = helpers.missing_provider
 do
   clear()
   if missing_provider('ruby') then
-    pending(
-      "Cannot find the neovim RubyGem. Try :checkhealth",
-      function() end)
+    pending("Missing neovim RubyGem.", function() end)
     return
   end
 end

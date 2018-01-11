@@ -89,7 +89,9 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if not iswin() then
+      if iswin() then
+        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'echo', '%PATH%'])"))
+      else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
     end)
@@ -185,6 +187,7 @@ describe('system()', function()
     end)
 
     it('`yes` and is interrupted with CTRL-C', function()
+      if helpers.pending_win32(pending) then return end
       feed(':call system("yes")<cr>')
       screen:expect([[
                                                              |
@@ -442,11 +445,13 @@ describe('systemlist()', function()
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
-    before_each(create_file_with_nuls(fname))
+    before_each(function()
+      command('set ff=unix')
+      create_file_with_nuls(fname)()
+    end)
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      if helpers.pending_win32(pending) then return end
       eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
     end)
   end)
