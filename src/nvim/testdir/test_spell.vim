@@ -2,7 +2,7 @@
 " TODO: move test58 tests here
 
 if v:true
-  return
+  finish
 endif
 
 func Test_wrap_search()
