@@ -9,11 +9,10 @@ describe('fnamemodify()', function()
   before_each(clear)
 
   it('works', function()
-    local drive_f = io.popen('cd', 'r')
-    local drive = string.gsub(drive_f:read('*a'), '[\n\r]', '')
-    drive_f:close()
-
     if iswin() then
+      local drive_f = io.popen('for %P in (%CD%) do @echo %~dP', 'r')
+      local drive = string.gsub(drive_f:read('*a'), '[\n\r]', '')
+      drive_f:close()
       local root = drive..[[\]]
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
