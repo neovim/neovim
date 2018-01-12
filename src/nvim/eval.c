@@ -17505,10 +17505,10 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     char *ret = xmalloc(*len + endnl);
     char *end = ret;
     TV_LIST_ITER_CONST(list, li, {
-      for (const char *s = tv_get_string(&li->li_tv); *s != NUL; s++) {
+      for (const char *s = tv_get_string(TV_LIST_ITEM_TV(li)); *s != NUL; s++) {
         *end++ = (*s == '\n') ? NUL : *s;
       }
-      if (endnl || li->li_next != NULL) {
+      if (endnl || TV_LIST_ITEM_NEXT(list, li) != NULL) {
         *end++ = '\n';
       }
     });
