@@ -18,3 +18,12 @@ func Test_wrap_search()
   bwipe!
   set nospell
 endfunc
+
+func Test_z_equal_on_invalid_utf8_word()
+  split
+  set spell
+  call setline(1, "\xff")
+  norm z=
+  set nospell
+  bwipe!
+endfunc
