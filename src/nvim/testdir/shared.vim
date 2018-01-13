@@ -1,5 +1,21 @@
 " Functions shared by several tests.
 
+" {Nvim}
+" Filepath captured from output may be truncated, like this:
+"   /home/va...estdir/Xtest-tmpdir/nvimxbXN4i/10
+" Get last 2 segments, then combine with $TMPDIR.
+func! Fix_truncated_tmpfile(fname)
+  " sanity check
+  if $TMPDIR ==# ''
+    throw '$TMPDIR is empty'
+  endif
+  if a:fname !~# $TMPDIR
+    throw '$TMPDIR not in fname: '.a:fname
+  endif
+  let last2segments = matchstr(a:fname, '[\/][^\/]\+[\/][^\/]\+$')
+  return $TMPDIR.last2segments
+endfunc
+
 " Get the name of the Python executable.
 " Also keeps it in s:python.
 func PythonProg()
