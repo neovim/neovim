@@ -40,10 +40,10 @@ describe('issues', function()
       ~                                                    |
       ~                                                    |
       :!ls bang_filter_spec                                |
-                                                           |
       f1                                                   |
       f2                                                   |
       f3                                                   |
+                                                           |
       Press ENTER or type command to continue^              |
     ]])
   end)
