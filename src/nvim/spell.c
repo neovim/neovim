@@ -1484,21 +1484,23 @@ spell_move_to (
       return found_len;
     }
 
-    if (curline)
+    if (curline) {
       break;            // only check cursor line
+    }
+
+    // If we are back at the starting line and searched it again there
+    // is no match, give up.
+    if (lnum == wp->w_cursor.lnum && wrapped) {
+      break;
+    }
 
     // Advance to next line.
     if (dir == BACKWARD) {
-      // If we are back at the starting line and searched it again there
-      // is no match, give up.
-      if (lnum == wp->w_cursor.lnum && wrapped)
-        break;
-
-      if (lnum > 1)
-        --lnum;
-      else if (!p_ws)
+      if (lnum > 1) {
+        lnum--;
+      } else if (!p_ws) {
         break;              // at first line and 'nowrapscan'
-      else {
+      } else {
         // Wrap around to the end of the buffer.  May search the
         // starting line again and accept the last match.
         lnum = wp->w_buffer->b_ml.ml_line_count;
@@ -1523,8 +1525,9 @@ spell_move_to (
 
       // If we are back at the starting line and there is no match then
       // give up.
-      if (lnum == wp->w_cursor.lnum && (!found_one || wrapped))
+      if (lnum == wp->w_cursor.lnum && !found_one) {
         break;
+      }
 
       // Skip the characters at the start of the next line that were
       // included in a match crossing line boundaries.
