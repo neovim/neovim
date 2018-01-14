@@ -56,7 +56,8 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
   size_t i = 0;
-  rv[i++] = xstrdup((const char *) p_sh);
+  rv[i++] = vim_strnsave_unquoted((const char *) p_sh,
+                                  strlen((const char *) p_sh));
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
