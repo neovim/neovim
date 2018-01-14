@@ -16,7 +16,7 @@ log.levels = Enum:new({
 })
 
 
-log.set_file_level = function(logger, file_name)
+log.set_outfile = function(logger, file_name)
   -- TODO(tjdevries): Check that it's a valid file path
   logger.outfile = file_name
 end
@@ -43,8 +43,8 @@ end
 for name in pairs(log.levels) do
   log[name] = function(self, logger, ...)
     -- If both levels are too high, just quit
-    if self.levels[name] > self.levels[logger.console_level] and
-        self.levels[name] > self.levels[logger.file_level] then
+    if self.levels[name] > logger.console_level and
+        self.levels[name] > logger.file_level then
 
       return
     end
@@ -63,11 +63,11 @@ for name in pairs(log.levels) do
       logger.prefix,
       message)
 
-    if self.levels[name] > self.levels[logger.file_level] then
-      logger:write_file(name, log_message)
+    if self.levels[name] > logger.file_level then
+      log.write_file(logger, name, log_message)
     end
 
-    if self.levels[name] > self.levels[logger.console_level] then
+    if self.levels[name] > logger.console_level then
       print(log_message .. "\n")
     end
   end
@@ -75,7 +75,7 @@ end
 
 log.create_functions = function(self, logger)
   for key, _ in pairs(log.levels) do
-    logger[key] = function(self, ...)
+    logger[key] = function(...)
       return self[key](self, logger, ...)
     end
   end
@@ -83,11 +83,15 @@ end
 
 
 log.new = function(self, name)
-  local new_logger = setmetatable({}, self)
+  local new_logger = setmetatable({
+    __index = self,
+  }, self)
 
   new_logger.prefix = '[' .. name .. ']'
 
   self:create_functions(new_logger)
+
+  return new_logger
 end
 
 return log
