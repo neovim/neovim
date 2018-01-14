@@ -148,7 +148,13 @@
 /// zero in those cases (-Wdiv-by-zero in GCC).
 #define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
-#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+// Windows defines a RGB macro that produces 0x00bbggrr color values for use
+// with GDI. Our macro is different, and we don't use GDI.
+#if defined(RGB)
+# undef RGB
+  // Duplicated from macros.h to avoid include-order sensitivity.
+# define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+#endif
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
