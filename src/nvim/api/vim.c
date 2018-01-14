@@ -43,14 +43,15 @@
 #endif
 
 /// Executes an ex-command.
-/// On VimL error: Returns the VimL error; v:errmsg is not updated.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
 ///
 /// @param command  Ex-command string
-/// @param[out] err Error details (including actual VimL error), if any
+/// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  // Run the command
   try_start();
   do_cmdline_cmd(command.data);
   update_screen(VALID);
@@ -207,18 +208,49 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-String nvim_command_output(String str, Error *err)
+/// Executes an ex-command and returns its (non-error) output.
+/// Shell |:!| output is not captured.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
+///
+/// @param command  Ex-command string
+/// @param[out] err Error details (Vim error), if any
+String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  do_cmdline_cmd("redir => v:command_output");
-  nvim_command(str, err);
-  do_cmdline_cmd("redir END");
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  ga_init(&capture_local, 1, 80);
+
+  try_start();
+  msg_silent++;
+  capture_ga = &capture_local;
+  do_cmdline_cmd(command.data);
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
 
   if (ERROR_SET(err)) {
-    return (String)STRING_INIT;
+    goto theend;
   }
 
-  return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
+  if (capture_local.ga_len > 1) {
+    // redir always(?) prepends a newline; remove it.
+    char *s = capture_local.ga_data;
+    assert(s[0] == '\n');
+    memmove(s, s + 1, (size_t)capture_local.ga_len);
+    s[capture_local.ga_len - 1] = '\0';
+    return (String) {  // Caller will free the memory.
+      .data = s,
+      .size = (size_t)(capture_local.ga_len - 1),
+    };
+  }
+
+theend:
+  ga_clear(&capture_local);
+  return (String)STRING_INIT;
 }
 
 /// Evaluates a VimL expression (:help expression).

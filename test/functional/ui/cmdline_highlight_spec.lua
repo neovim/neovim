@@ -849,7 +849,7 @@ describe('Ex commands coloring support', function()
       {EOB:~                                       }|
                                               |
     ]])
-    eq('\nError detected while processing :\nE605: Exception not caught: 42',
+    eq('Error detected while processing :\nE605: Exception not caught: 42',
        meths.command_output('messages'))
   end)
   it('errors out when failing to get callback', function()
