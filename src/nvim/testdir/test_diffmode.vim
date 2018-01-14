@@ -272,3 +272,78 @@ func Test_setting_cursor()
   call delete('Xtest1')
   call delete('Xtest2')
 endfunc
+
+func Test_diff_move_to()
+  new
+  call setline(1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  diffthis
+  vnew
+  call setline(1, [1, '2x', 3, 4, 4, 5, '6x', 7, '8x', 9, '10x'])
+  diffthis
+  norm ]c
+  call assert_equal(2, line('.'))
+  norm 3]c
+  call assert_equal(9, line('.'))
+  norm 10]c
+  call assert_equal(11, line('.'))
+  norm [c
+  call assert_equal(9, line('.'))
+  norm 2[c
+  call assert_equal(5, line('.'))
+  norm 10[c
+  call assert_equal(2, line('.'))
+  %bwipe!
+endfunc
+
+func Test_diffpatch()
+  " The patch program on MS-Windows may fail or hang.
+  if !executable('patch') || !has('unix')
+    return
+  endif
+  new
+  insert
+***************
+*** 1,3 ****
+  1
+! 2
+  3
+--- 1,4 ----
+  1
+! 2x
+  3
++ 4
+.
+  saveas Xpatch
+  bwipe!
+  new
+  call assert_fails('diffpatch Xpatch', 'E816:')
+  call setline(1, ['1', '2', '3'])
+  diffpatch Xpatch
+  call assert_equal(['1', '2x', '3', '4'], getline(1, '$'))
+  call delete('Xpatch')
+  bwipe!
+endfunc
+
+func Test_diff_too_many_buffers()
+  for i in range(1, 8)
+    exe "new Xtest" . i
+    diffthis
+  endfor
+  new Xtest9
+  call assert_fails('diffthis', 'E96:')
+  %bwipe!
+endfunc
+
+func Test_diff_nomodifiable()
+  new
+  call setline(1, [1, 2, 3, 4])
+  setl nomodifiable
+  diffthis
+  vnew
+  call setline(1, ['1x', 2, 3, 3, 4])
+  diffthis
+  call assert_fails('norm dp', 'E793:')
+  setl nomodifiable
+  call assert_fails('norm do', 'E21:')
+  %bwipe!
+endfunc
