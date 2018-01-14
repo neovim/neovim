@@ -7,7 +7,7 @@
 -- Also has a function to setup all the autocommands
 
 -- local requests = require('lsp.request').requests
-local log = require('neovim.log')
+local log = require('lsp.log')
 local util = require('neovim.util')
 
 

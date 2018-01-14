@@ -1,6 +1,11 @@
+-- Thanks to: github.com/rxi/log.lua
+-- For the inspiration for a lot of the base of this file
+
+local Enum = require('neovim.meta').Enum
+
 local log = {}
 
-log.levels = {
+log.levels = Enum:new({
   bad_level = 0,
   trace = 1,
   debug = 2,
@@ -8,19 +13,24 @@ log.levels = {
   warn  = 4,
   ['error'] = 5,
   fatal = 6,
-}
+})
 
-log.console_level = 'warn'
-log.file_level = 'warn'
-log.prefix = ''
-log.outfile = vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt'
 
-log.write_file = function(level, message)
-  if log.levels[level] < log.levels[log.file_level] then
-    return
-  end
+log.set_file_level = function(logger, file_name)
+  -- TODO(tjdevries): Check that it's a valid file path
+  logger.outfile = file_name
+end
 
-  local file_pointer = assert(io.open(log.outfile, 'a+'))
+log.set_console_level = function(logger, level)
+  logger.console_level = log.levels[level]
+end
+
+log.set_file_level = function(logger, level)
+  logger.file_level = log.levels[level]
+end
+
+log.write_file = function(self, level, message)
+  local file_pointer = assert(io.open(self.outfile, 'a+'))
 
   if file_pointer ~= nil then
     local log_message = message .. "\n"
@@ -30,10 +40,15 @@ log.write_file = function(level, message)
 
 end
 
--- TODO: Check github.com/rxi/log.lua
-
 for name in pairs(log.levels) do
-  log[name] = function(...)
+  log[name] = function(self, logger, ...)
+    -- If both levels are too high, just quit
+    if self.levels[name] > self.levels[logger.console_level] and
+        self.levels[name] > self.levels[logger.file_level] then
+
+      return
+    end
+
     local message = ''
     for _, arg in ipairs({...}) do
       message = message .. require('neovim.util').tostring(arg)
@@ -45,23 +60,34 @@ for name in pairs(log.levels) do
       os.date("%H:%M:%S"),
       info.short_src,
       info.currentline,
-      log.prefix,
+      logger.prefix,
       message)
 
-    log.write_file(name, log_message)
+    if self.levels[name] > self.levels[logger.file_level] then
+      logger:write_file(name, log_message)
+    end
 
-    -- TODO: Error here instead?
-    -- Only log messages with applicable levels
-    if log.levels[name] > log.levels[log.console_level] then
-
-      if vim ~= nil and vim.api ~= nil then
-        -- vim.api.nvim_command([[echom ']] .. log_message .. [[']])
-        print(log_message .. "\n")
-      else
-        print(log_message .. "\n")
-      end
+    if self.levels[name] > self.levels[logger.console_level] then
+      print(log_message .. "\n")
     end
   end
+end
+
+log.create_functions = function(self, logger)
+  for key, _ in pairs(log.levels) do
+    logger[key] = function(self, ...)
+      return self[key](self, logger, ...)
+    end
+  end
+end
+
+
+log.new = function(self, name)
+  local new_logger = setmetatable({}, self)
+
+  new_logger.prefix = '[' .. name .. ']'
+
+  self:create_functions(new_logger)
 end
 
 return log

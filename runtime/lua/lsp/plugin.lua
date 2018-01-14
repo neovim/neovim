@@ -2,7 +2,7 @@
 
 local ClientObject = require ('lsp.client')
 
-local log = require('neovim.log')
+local log = require('lsp.log')
 local lsp_util = require('lsp.util')
 
 local client_map = {}
