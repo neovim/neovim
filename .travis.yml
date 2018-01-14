@@ -57,13 +57,13 @@ jobs:
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+      sudo: true
     - os: linux
       compiler: gcc
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
-      # Travis creates a cache per compiler.
-      # Set a different value here to store 32-bit
-      # dependencies in a separate cache.
+      # Travis creates a cache per compiler. Set a different value here to
+      # store 32-bit dependencies in a separate cache.
       compiler: gcc -m32
       env: BUILD_32BIT=ON
     - os: osx

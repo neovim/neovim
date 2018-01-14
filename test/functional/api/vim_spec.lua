@@ -37,13 +37,89 @@ describe('api', function()
       os.remove(fname)
     end)
 
-    it("VimL error: fails (VimL error), does NOT update v:errmsg", function()
+    it("parse error: fails (specific error), does NOT update v:errmsg", function()
       -- Most API methods return generic errors (or no error) if a VimL
       -- expression fails; nvim_command returns the VimL error details.
       local status, rv = pcall(nvim, "command", "bogus_command")
       eq(false, status)                       -- nvim_command() failed.
       eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
       eq("", nvim("eval", "v:errmsg"))        -- v:errmsg was not updated.
+    end)
+
+    it("runtime error: fails (specific error)", function()
+      local status, rv = pcall(nvim, "command_output", "buffer 23487")
+      eq(false, status)                 -- nvim_command() failed.
+      eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    end)
+  end)
+
+  describe('nvim_command_output', function()
+    it('does not induce hit-enter prompt', function()
+      -- Induce a hit-enter prompt use nvim_input (non-blocking).
+      nvim('command', 'set cmdheight=1')
+      nvim('input', [[:echo "hi\nhi2"<CR>]])
+
+      -- Verify hit-enter prompt.
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+      nvim('input', [[<C-c>]])
+
+      -- Verify NO hit-enter prompt.
+      nvim('command_output', [[echo "hi\nhi2"]])
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it('captures command output', function()
+      eq('this is\nspinal tap',
+         nvim('command_output', [[echo "this is\nspinal tap"]]))
+    end)
+
+    it('captures empty command output', function()
+      eq('', nvim('command_output', 'echo'))
+    end)
+
+    it('captures single-char command output', function()
+      eq('x', nvim('command_output', 'echo "x"'))
+    end)
+
+    it('captures multiple commands', function()
+      eq('foo\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output', 'echo "foo" | ls'))
+    end)
+
+    it('captures nested execute()', function()
+      eq('\nnested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo execute('echo "nested1\nnested2"') | ls]]))
+    end)
+
+    it('captures nested nvim_command_output()', function()
+      eq('nested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo nvim_command_output('echo "nested1\nnested2"') | ls]]))
+    end)
+
+    it('does not return shell |:!| output', function()
+      eq(':!echo "foo"\r\n', nvim('command_output', [[!echo "foo"]]))
+    end)
+
+    it("parse error: fails (specific error), does NOT update v:errmsg", function()
+      local status, rv = pcall(nvim, "command_output", "bogus commannnd")
+      eq(false, status)                 -- nvim_command_output() failed.
+      eq("E492: Not an editor command: bogus commannnd",
+         string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      -- Verify NO hit-enter prompt.
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("runtime error: fails (specific error)", function()
+      local status, rv = pcall(nvim, "command_output", "buffer 42")
+      eq(false, status)                 -- nvim_command_output() failed.
+      eq("E86: Buffer 42 does not exist", string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      -- Verify NO hit-enter prompt.
+      eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
   end)
 

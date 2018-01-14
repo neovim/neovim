@@ -402,7 +402,6 @@ static struct vimvar {
   VV(VV_OLDFILES,       "oldfiles",         VAR_LIST, 0),
   VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO_SBX),
   VV(VV_PROGPATH,       "progpath",         VAR_STRING, VV_RO),
-  VV(VV_COMMAND_OUTPUT, "command_output",   VAR_STRING, 0),
   VV(VV_COMPLETED_ITEM, "completed_item",   VAR_DICT, VV_RO),
   VV(VV_OPTION_NEW,     "option_new",       VAR_STRING, VV_RO),
   VV(VV_OPTION_OLD,     "option_old",       VAR_STRING, VV_RO),
@@ -8117,8 +8116,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(capture_ga->ga_data);
-  ga_clear(capture_ga);
+  rettv->vval.v_string = capture_ga->ga_data;
 
   capture_ga = save_capture_ga;
 }
