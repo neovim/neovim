@@ -162,7 +162,7 @@ local function highlight_man_page()
   end
   buf_hls = {}
 
-  vim.api.nvim_command("let &modifiable = "..mod)
+  vim.api.nvim_command("let &modifiable = "..math.floor(mod))
 end
 
 return { highlight_man_page = highlight_man_page }
