@@ -26,7 +26,7 @@
 --
 --  TODO: documentLink/resolve
 
-local log = require('neovim.log')
+local log = require('lsp.log')
 local util = require('neovim.util')
 local lsp_util = require('lsp.util')
 

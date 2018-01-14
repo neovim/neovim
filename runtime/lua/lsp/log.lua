@@ -5,17 +5,11 @@
 
 local neovim_log = require('neovim.log')
 
-local log = setmetatable({}, {
-  __index = neovim_log,
-})
+local log = neovim_log:new('LSP')
 
-log.prefix = '[LSP]'
-
-for key, _ in pairs(neovim_log.levels) do
-  log[key] = function(...)
-    return log[key](log.prefix, ...)
-  end
-end
+neovim_log.set_console_level(log, 'warn')
+neovim_log.set_file_level(log, 'trace')
+neovim_log.set_outfile(log, vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt')
 
 return log
 

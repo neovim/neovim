@@ -9,7 +9,7 @@ local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
 local get_callback_function = require('lsp.callbacks').get_callback_function
 local should_send_message = require('lsp.checks').should_send
 
-local log = require('neovim.log')
+local log = require('lsp.log')
 
 local read_state = Enum:new({
   init = 0,
@@ -46,7 +46,7 @@ client.job_stdout = function(id, data)
 end
 
 client.new = function(name, ft, cmd, args)
-  log.debug('Starting new client: ', name)
+  log.debug('Starting new client: ', name, cmd, args)
 
   -- TODO: I'm a little concerned about the milliseconds after starting up the job.
   -- Not sure if we'll register ourselves faster than we will get stdin or out that we want...
