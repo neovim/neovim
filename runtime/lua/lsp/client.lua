@@ -428,7 +428,7 @@ client.on_message = function(self, json_message)
         error_code = error_code .. ': ' .. error_message
       end
 
-      local err = cb(false, error_code)
+      local err = cb(false, json_message.error)
 
       self._results[json_message.id] = {
         complete = true,
