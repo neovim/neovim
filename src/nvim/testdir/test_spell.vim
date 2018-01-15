@@ -4,6 +4,16 @@ if !has('spell')
   finish
 endif
 
+func TearDown()
+  set nospell
+  call delete('Xtest.aff')
+  call delete('Xtest.dic')
+  call delete('Xtest.latin1.add')
+  call delete('Xtest.latin1.add.spl')
+  call delete('Xtest.latin1.spl')
+  call delete('Xtest.latin1.sug')
+endfunc
+
 func Test_wrap_search()
   new
   call setline(1, ['The', '', 'A plong line with two zpelling mistakes', '', 'End'])
@@ -226,6 +236,7 @@ endfunc
 func Test_zz_sal_and_addition()
   set enc=latin1
   set spellfile=
+  call writefile(g:test_data_dic1, "Xtest.dic")
   call writefile(g:test_data_aff_sal, "Xtest.aff")
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
