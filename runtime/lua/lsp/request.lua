@@ -31,7 +31,7 @@ requests.initialize = function(client, params)
     processId = vim.api.nvim_call_function('getpid', {}),
 
     -- TODO(tjdevries): Give the user a way to specify this by filetype
-    rootUri = 'file:///tmp/',
+    rootUri = vim.api.nvim_call_function('lsp#server#get_root_uri', {client.ft}),
 
     capabilities = {
       textDocument = {
