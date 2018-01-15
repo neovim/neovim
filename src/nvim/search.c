@@ -746,8 +746,12 @@ int searchit(
                           win, buf, lnum + matchpos.lnum,
                           matchcol,
                           tm
-                          )) == 0)
+                          )) == 0) {
+                if (tm != NULL && profile_passed_limit(*tm)) {
+                  match_ok = false;
+                }
                 break;
+              }
 
               /* Need to get the line pointer again, a
                * multi-line search may have made it invalid. */
