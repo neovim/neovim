@@ -201,7 +201,8 @@ client.request = function(self, method, params, cb)
 
   local request_id = self:request_async(method, params, cb)
 
-  local later = os.time() + require('lsp.conf.request').timeout
+  -- local later = os.time() + require('lsp.conf.request').timeout
+  local later = os.time() + 2
 
   while (os.time() < later) and (self._results[request_id]  == nil) do
     vim.api.nvim_command('sleep 10m')

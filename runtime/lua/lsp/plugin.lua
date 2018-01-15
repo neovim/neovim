@@ -77,7 +77,7 @@ plugin.client.start = function(cmd, arguments, filetype)
   local name = plugin.server.get_configuration(filetype).name
 
   -- Start the client
-  log.debug('[LSP.plugin] Starting client...')
+  log.debug('[LSP.plugin] Starting client...', name, filetype, cmd, arguments)
   local client = ClientObject.new(name, filetype, cmd, arguments)
   if client == nil then
     log.error('client was nil with arguments: ', cmd, ' ', arguments)
@@ -113,8 +113,12 @@ end
 plugin.client.request_async = function(method, arguments, cb, filetype)
   local current_client = plugin.client.get(filetype)
 
+  if filetype == '' then
+    return
+  end
+
   if current_client == nil then
-    log.warn('async_request() failed', 'No client available for:', filetype)
+    log.warn('async_request() failed', 'No client available for:', filetype, ' with method: ', method)
     return
   end
 

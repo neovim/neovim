@@ -3,12 +3,13 @@
 local completion = {}
 
 completion.isCompletionList = function(data)
-  if data.isIncomplete ~= nil then
+  if data.items ~= nil then
     return true
   else
     return false
   end
 end
+
 completion.getItems = function(data)
   if completion.isCompletionList(data) then
     return data.items
@@ -16,6 +17,7 @@ completion.getItems = function(data)
     return data
   end
 end
+
 completion.getLabels = function(data)
   local items = completion.getItems(data)
 
@@ -26,7 +28,6 @@ completion.getLabels = function(data)
 
   return result
 end
-
 
 
 return completion
