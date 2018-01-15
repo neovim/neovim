@@ -44,7 +44,7 @@ function! lsp#request(request, ...) abort
 
   let request_id = luaeval(s:client_string . '.request(_A.request, _A.arguments, _A.callback, _A.filetype)', {
           \ 'request': a:request,
-          \ 'args': arguments,
+          \ 'arguments': arguments,
           \ 'callback': optional_callback,
           \ 'filetype': filetype,
         \ })
@@ -63,7 +63,7 @@ function! lsp#request_async(request, ...) abort
 
   let result = luaeval(s:client_string . '.request_async(_A.request, _A.arguments, _A.callback, _A.filetype)', {
           \ 'request': a:request,
-          \ 'args': arguments,
+          \ 'arguments': arguments,
           \ 'callback': optional_callback,
           \ 'filetype': filetype,
         \ })
