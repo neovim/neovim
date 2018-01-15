@@ -742,11 +742,9 @@ int searchit(
                 }
               }
               if (ptr[matchcol] == NUL
-                  || (nmatched = vim_regexec_multi(&regmatch,
-                          win, buf, lnum + matchpos.lnum,
-                          matchcol,
-                          tm
-                          )) == 0) {
+                  || (nmatched = vim_regexec_multi(
+                      &regmatch, hjwin, buf, lnum + matchpos.lnum, matchcol,
+                      tm)) == 0) {
                 if (tm != NULL && profile_passed_limit(*tm)) {
                   match_ok = false;
                 }
