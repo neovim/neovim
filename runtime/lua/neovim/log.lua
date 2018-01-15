@@ -43,8 +43,8 @@ end
 for name in pairs(log.levels) do
   log[name] = function(self, logger, ...)
     -- If both levels are too high, just quit
-    if self.levels[name] > logger.console_level and
-        self.levels[name] > logger.file_level then
+    if self.levels[name] < logger.console_level and
+        self.levels[name] < logger.file_level then
 
       return
     end
@@ -63,11 +63,11 @@ for name in pairs(log.levels) do
       logger.prefix,
       message)
 
-    if self.levels[name] > logger.file_level then
+    if self.levels[name] >= logger.file_level then
       log.write_file(logger, name, log_message)
     end
 
-    if self.levels[name] > logger.console_level then
+    if self.levels[name] >= logger.console_level then
       print(log_message .. "\n")
     end
   end

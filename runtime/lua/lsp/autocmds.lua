@@ -95,7 +95,7 @@ local export_autocmds = function()
       if #autocmd_string > 0 then
         vim.api.nvim_command(
           string.format(
-            [[autocmd %s nested call luaeval("require('lsp.plugin').client.request_async('%s')")]],
+            [[autocmd %s nested call luaeval("require('lsp.plugin').client.request_autocmd('%s')")]],
             autocmd_string,
             request_name)
           )

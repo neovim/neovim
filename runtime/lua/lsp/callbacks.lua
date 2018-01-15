@@ -128,6 +128,8 @@ cb.textDocument.references = function(success, data)
   return result
 end
 cb.textDocument.hover = function(success, data)
+  log.trace('textDocument/hover', data)
+
   if not success then
     -- TODO(tjdevries): Error Handling
     return nil
@@ -152,6 +154,8 @@ cb.textDocument.hover = function(success, data)
         local value
         if type(item) == 'table' then
           value = item.value
+        elseif item == nil then
+          value = ''
         else
           value = item
         end
@@ -173,6 +177,8 @@ cb.textDocument.hover = function(success, data)
 
 end
 cb.textDocument.definition = function(success, data)
+  log.trace('callback:textDocument/definiton', data)
+
   if not success then
     -- TODO(tjdevries): Error Handling
     return nil
@@ -187,12 +193,13 @@ cb.textDocument.definition = function(success, data)
 
   -- We can sometimes get a list of locations,
   -- so set the first value as the only value we want to handle
-  -- if data[1] ~= nil then
-  --   data = data[1]
-  -- end
+  if data[1] ~= nil then
+    data = data[1]
+  end
 
   if data.uri == nil then
     vim.api.nvim_err_writeln('[LSP] Could not find a valid definition')
+    return
   end
 
   if type(data.uri) ~= 'string' then

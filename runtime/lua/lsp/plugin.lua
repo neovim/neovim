@@ -125,6 +125,14 @@ plugin.client.request_async = function(method, arguments, cb, filetype)
   current_client:request_async(method, arguments, cb)
 end
 
+plugin.client.request_autocmd = function(method, arguments, cb, filetype)
+  if not plugin.client.has_started(filetype) then
+    return
+  end
+
+  return plugin.client.request_async(method, arguments, cb, filetype)
+end
+
 plugin.client.wait_request = function(request_id, filetype)
   if plugin.client.get(filetype) == nil then
     return
