@@ -35,9 +35,13 @@ local autocmd_table = {
   },
 
   ['textDocument/didChange'] = {
+    -- TODO(tjdevries): Do we need this one when we have the other options?
     'BufWritePost',
+
     'TextChanged',
     'InsertLeave',
+
+    -- {'User', 'textDocument/completion/pre'},
   },
 }
 
@@ -92,7 +96,8 @@ local export_autocmds = function()
         vim.api.nvim_command(
           string.format(
             [[autocmd %s nested call luaeval("require('lsp.plugin').client.request_async('%s')")]],
-            autocmd_string, request_name)
+            autocmd_string,
+            request_name)
           )
       end
     end

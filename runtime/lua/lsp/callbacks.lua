@@ -70,14 +70,19 @@ cb.textDocument.publishDiagnostics = function(success, data)
   end
 
   local result = vim.api.nvim_call_function('setloclist', {0, loclist})
-  vim.api.nvim_command('lopen')
-  vim.api.nvim_command('wincmd p')
+
+  if loclist ~= {} and not util.is_loclist_open() then
+    -- vim.api.nvim_command('lopen')
+    -- vim.api.nvim_command('wincmd p')
+  end
 
   return result
 end
 cb.textDocument.completion = function(success, data)
+  vim.api.nvim_set_var('__lsp_raw_completion', data)
   if not success then
-    return
+    log.warn('ERROR COMPLETIN', data)
+    return {}
   end
 
   if data == nil then
@@ -113,7 +118,13 @@ cb.textDocument.references = function(success, data)
   end
 
   local result = vim.api.nvim_call_function('setloclist', {0, loclist})
-  vim.api.nvim_command('lopen')
+
+  if loclist ~= {} and not util.is_loclist_open() then
+    -- vim.api.nvim_command('lopen')
+  else
+    vim.api.nvim_command('lclose')
+  end
+
   return result
 end
 cb.textDocument.hover = function(success, data)
