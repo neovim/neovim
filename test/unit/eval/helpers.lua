@@ -312,7 +312,7 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = populate_list(eval.tv_list_alloc(), l, processed)
+    local lst = populate_list(eval.tv_list_alloc(#l), l, processed)
     return typvalt(eval.VAR_LIST, {v_list=lst})
   end,
   [dict_type] = function(l, processed)
@@ -433,7 +433,8 @@ local function int(n)
 end
 
 local function list(...)
-  return populate_list(ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref),
+  return populate_list(ffi.gc(eval.tv_list_alloc(select('#', ...)),
+                              eval.tv_list_unref),
                        {...}, {})
 end
 

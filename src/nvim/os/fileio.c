@@ -39,9 +39,9 @@
 /// @param[in]  fname  File name to open.
 /// @param[in]  flags  Flags, @see FileOpenFlags. Currently reading from and
 ///                    writing to the file at once is not supported, so either
-///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
+///                    kFileWriteOnly or kFileReadOnly is required.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
+///                   does not have kFileCreate\*).
 ///
 /// @return Error code (@see os_strerror()) or 0.
 int file_open(FileDescriptor *const ret_fp, const char *const fname,
@@ -120,7 +120,7 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd, const bool wr)
 /// @param[in]  fname  File name to open.
 /// @param[in]  flags  Flags, @see FileOpenFlags.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
+///                   does not have kFileCreate\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_new(int *const error, const char *const fname,

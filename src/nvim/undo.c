@@ -2941,17 +2941,20 @@ bool curbufIsChanged(void)
           && (curbuf->b_changed || file_ff_differs(curbuf, true)));
 }
 
-/*
- * For undotree(): Append the list of undo blocks at "first_uhp" to "list".
- * Recursive.
- */
-void u_eval_tree(u_header_T *first_uhp, list_T *list)
+/// Append the list of undo blocks to a newly allocated list
+///
+/// For use in undotree(). Recursive.
+///
+/// @param[in]  first_uhp  Undo blocks list to start with.
+///
+/// @return [allocated] List with a representation of undo blocks.
+list_T *u_eval_tree(const u_header_T *const first_uhp)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  u_header_T  *uhp = first_uhp;
-  dict_T      *dict;
+  list_T *const list = tv_list_alloc(kListLenMayKnow);
 
-  while (uhp != NULL) {
-    dict = tv_dict_alloc();
+  for (const u_header_T *uhp = first_uhp; uhp != NULL; uhp = uhp->uh_prev.ptr) {
+    dict_T *const dict = tv_dict_alloc();
     tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
     tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
     if (uhp == curbuf->b_u_newhead) {
@@ -2965,14 +2968,12 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
     }
 
     if (uhp->uh_alt_next.ptr != NULL) {
-      list_T *alt_list = tv_list_alloc();
-
       // Recursive call to add alternate undo tree.
-      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
-      tv_dict_add_list(dict, S_LEN("alt"), alt_list);
+      tv_dict_add_list(dict, S_LEN("alt"), u_eval_tree(uhp->uh_alt_next.ptr));
     }
 
     tv_list_append_dict(list, dict);
-    uhp = uhp->uh_prev.ptr;
   }
+
+  return list;
 }

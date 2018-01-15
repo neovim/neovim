@@ -313,6 +313,7 @@ return {
     tempname={},
     termopen={args={1, 2}},
     test_garbagecollect_now={},
+    test_write_list_log={args=1},
     timer_info={args={0,1}},
     timer_pause={args=2},
     timer_start={args={2,3}},
