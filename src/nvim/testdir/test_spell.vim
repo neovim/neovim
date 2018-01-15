@@ -27,3 +27,20 @@ func Test_z_equal_on_invalid_utf8_word()
   set nospell
   bwipe!
 endfunc
+
+func Test_spellreall()
+  new
+  set spell
+  call assert_fails('spellrepall', 'E752:')
+  call setline(1, ['A speling mistake. The same speling mistake.',
+  \                'Another speling mistake.'])
+  call feedkeys(']s1z=', 'tx')
+  call assert_equal('A spelling mistake. The same speling mistake.', getline(1))
+  call assert_equal('Another speling mistake.', getline(2))
+  spellrepall
+  call assert_equal('A spelling mistake. The same spelling mistake.', getline(1))
+  call assert_equal('Another spelling mistake.', getline(2))
+  call assert_fails('spellrepall', 'E753:')
+  set spell&
+  bwipe!
+endfunc
