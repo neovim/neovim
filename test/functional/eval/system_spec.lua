@@ -5,6 +5,7 @@ local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
 local command = helpers.command
+local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
 
 local Screen = require('test.functional.ui.screen')
@@ -274,9 +275,12 @@ describe('system()', function()
     end)
   end)
 
-  describe('input passed as Number', function()
-    it('stringifies the input', function()
-      eq('1', eval('system("cat", 1)'))
+  describe('Number input', function()
+    it('is treated as a buffer id', function()
+      command("put ='text in buffer 1'")
+      eq('\ntext in buffer 1\n', eval('system("cat", 1)'))
+      eq('Vim(echo):E86: Buffer 42 does not exist',
+         exc_exec('echo system("cat", 42)'))
     end)
   end)
 

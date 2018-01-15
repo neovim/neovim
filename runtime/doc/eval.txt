@@ -7645,6 +7645,9 @@ system({cmd} [, {input}])				*system()* *E677*
 		|writefile()| does with {binary} set to "b" (i.e. with
 		a newline between each list item, and newlines inside list
 		items converted to NULs).
+		When {input} is given and is a valid buffer id, the content of
+		the buffer is written to the file line by line, each line
+		terminated by a NL (and NUL where the text has NL).
 								*E5677*
 		Note: system() cannot write to or read from backgrounded ("&")
 		shell commands, e.g.: >

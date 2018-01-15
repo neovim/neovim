@@ -17482,24 +17482,24 @@ write_list_error:
 
 /// Saves a typval_T as a string.
 ///
-/// For lists, replaces NLs with NUL and separates items with NLs.
+/// For lists or buffers, replaces NLs with NUL and separates items with NLs.
 ///
-/// @param[in]  tv   A value to store as a string.
-/// @param[out] len  The length of the resulting string or -1 on error.
+/// @param[in]  tv   Value to store as a string.
+/// @param[out] len  Length of the resulting string or -1 on error.
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
 static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
+  *len = 0;
   if (tv->v_type == VAR_UNKNOWN) {
-    *len = 0;
     return NULL;
   }
 
-  // For types other than list, let tv_get_string_buf_chk() get the value or
+  // For other types, let tv_get_string_buf_chk() get the value or
   // print an error.
-  if (tv->v_type != VAR_LIST) {
+  if (tv->v_type != VAR_LIST && tv->v_type != VAR_NUMBER) {
     const char *ret = tv_get_string_chk(tv);
     if (ret && (*len = strlen(ret))) {
       return xmemdupz(ret, (size_t)(*len));
@@ -17509,8 +17509,40 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     }
   }
 
+  if (tv->v_type == VAR_NUMBER) {  // Treat number as a buffer-id.
+    buf_T *buf = buflist_findnr(tv->vval.v_number);
+    if (buf) {
+      for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+        for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+          *len += 1;
+        }
+        *len += 1;
+      }
+    } else {
+      EMSGN(_(e_nobufnr), tv->vval.v_number);
+      *len = -1;
+      return NULL;
+    }
+
+    if (*len == 0) {
+      return NULL;
+    }
+
+    char *ret = xmalloc(*len + 1);
+    char *end = ret;
+    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+      for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+        *end++ = (*p == '\n') ? NUL : *p;
+      }
+      *end++ = '\n';
+    }
+    *end = NUL;
+    *len = end - ret;
+    return ret;
+  }
+
+  assert(tv->v_type == VAR_LIST);
   // Pre-calculate the resulting length.
-  *len = 0;
   list_T *list = tv->vval.v_list;
   TV_LIST_ITER_CONST(list, li, {
     *len += strlen(tv_get_string(TV_LIST_ITEM_TV(li))) + 1;
