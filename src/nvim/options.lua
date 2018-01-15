@@ -533,7 +533,7 @@ return {
       vi_def=true,
       vim=true,
       varname='p_csverbose',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='cursorbind', abbreviation='crb',

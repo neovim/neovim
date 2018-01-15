@@ -234,14 +234,6 @@ If 'csto' is set to zero, cscope database(s) are searched first, followed
 by tag file(s) if cscope did not return any matches.  If 'csto' is set to
 one, tag file(s) are searched before cscope database(s).  The default is zero.
 
-						*cscopeverbose* *csverb*
-If 'cscopeverbose' is not set (the default), messages will not be printed
-indicating success or failure when adding a cscope database.  Ideally, you
-should reset this option in your |init.vim| before adding any cscope 
-databases, and after adding them, set it.  From then on, when you add more 
-databases within Vim, you will get a (hopefully) useful message should the 
-database fail to be added.
-
 						      *cscopepathcomp* *cspc*
 'cscopepathcomp' determines how many components of a file's path to display.
 With the default value of zero the entire path will be displayed.
@@ -299,15 +291,13 @@ Copy this into your init.vim (adjust paths for your system): >
 		set csprg=/usr/local/bin/cscope
 		set csto=0
 		set cst
-		set nocsverb
 		" add any database in current directory
 		if filereadable("cscope.out")
-		    cs add cscope.out
+		    silent cs add cscope.out
 		" else add database pointed to by environment
 		elseif $CSCOPE_DB != ""
-		    cs add $CSCOPE_DB
+		    silent cs add $CSCOPE_DB
 		endif
-		set csverb
 	endif
 
 By setting 'cscopetag', we have effectively replaced all instances of the :tag
