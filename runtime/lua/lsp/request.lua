@@ -25,46 +25,147 @@ local requests = {
 
 -- luacheck: no unused args
 
+requests.initialize = function(client, params)
+  return {
+    -- Get neovim's process ID
+    processId = vim.api.nvim_call_function('getpid', {}),
+
+    -- TODO(tjdevries): Give the user a way to specify this by filetype
+    rootUri = 'file:///tmp/',
+
+    capabilities = {
+      textDocument = {
+        synchronization = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
+
+          -- Send textDocument/willSave before saving (BufWritePre)
+          willSave = true,
+
+          -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
+          willSaveWaitUntil = false,
+
+          -- Send textDocument/didSave after saving (BufWritePost)
+          didSave = true,
+        },
+
+        -- Capabilities relating to textDocument/completion
+        completion = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
+
+          -- base/completionItem
+          completionItem = {
+            -- TODO(tjdevries): Is it possible to implement this in plain lua?
+            snippetSupport = false,
+
+            -- TODO(tjdevries): What is this?
+            commitCharactersSupport = nil,
+
+            -- TODO(tjdevries): What is this?
+            documentationFormat = nil,
+          },
+
+          -- TODO(tjdevries): Handle different completion item kinds differently
+          -- completionItemKind = {
+          --   valueSet = nil
+          -- },
+
+          -- TODO(tjdevries): Implement this
+          contextSupport = false,
+        },
+
+        -- textDocument/hover
+        hover = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
+
+          -- Currently only support plaintext
+          --    In the future, if we have floating windows or display in a preview window,
+          --    we could say markdown
+          contentFormat = {'plaintext'},
+        },
+
+        -- textDocument/signatureHelp
+        signatureHelp = {
+          dynamicRegistration = nil,
+
+          signatureInformation = {
+            documentationFormat = {'plaintext'}
+          },
+        },
+
+        -- textDocument/references
+        -- references = {
+        --   dynamicRegistration = nil,
+        -- },
+
+        -- textDocument/highlight
+        -- documentHighlight = {
+        --   dynamicRegistration = nil,
+        -- },
+
+        -- textDocument/symbol
+        -- TODO(tjdevries): Implement
+
+        -- TODO(tjdevries): Finish these...
+      },
+    },
+  }, true
+end
+
 -- TODO: Determine what to do if it's not really a request, just a notification
 requests.textDocument.publishDiagnosticss = function(client, params)
-  return {}
+  return {}, true
 end
 
 -- TODO: Determine if we ever really need to pass client
 requests.textDocument.references = function(client, params)
-  return structures.ReferenceParams(params)
+  return structures.ReferenceParams(params), true
 end
 
 requests.textDocument.didOpen = function(client, params)
-  return structures.DidOpenTextDocumentParams(params)
+  return structures.DidOpenTextDocumentParams(params), true
 end
 
 requests.textDocument.didSave = function(client, params)
-  return structures.DidSaveTextDocumentParams(params)
+  return structures.DidSaveTextDocumentParams(params), true
 end
 
 requests.textDocument.didChange = function(client, params)
-  return structures.DidChangeTextDocumentParams(params)
+  return structures.DidChangeTextDocumentParams(params), true
 end
 
 requests.textDocument.completion = function(client, params)
-  return structures.CompletionParams(params)
+  if not client.capabilities.completionProvider then
+    return nil, false
+  end
+
+  return structures.CompletionParams(params), true
 end
 
 requests.textDocument.hover = function(client, params)
-  return structures.TextDocumentPositionParams(params)
+  if not client.capabilities.hoverProvider then
+    return nil, false
+  end
+
+  return structures.TextDocumentPositionParams(params), true
 end
 
 requests.textDocument.definition = function(client, params)
-  return structures.TextDocumentPositionParams(params)
+  if not client.capabilities.definitionProvider then
+    return nil, false
+  end
+
+  return structures.TextDocumentPositionParams(params), true
 end
 
 requests.textDocument.signatureHelp = function(client, params)
-  return structures.TextDocumentPositionParams(params)
+  return structures.TextDocumentPositionParams(params), true
 end
 
 requests.textDocument.documentHighlight = function(client, params)
-  return structures.TextDocumentPositionParams(params)
+  return structures.TextDocumentPositionParams(params), true
 end
 
 -- @name: get_request_function

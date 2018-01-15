@@ -70,6 +70,9 @@ client.new = function(name, ft, cmd, args)
     _read_data = '',
     _current_header = {},
 
+    -- Capabilities sent by server
+    capabilities = {},
+
     -- Results & Callback handling
     --  Callbacks must take two arguments:
     --      1 - success: true if successful, false if error
@@ -87,92 +90,9 @@ client.new = function(name, ft, cmd, args)
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', {
-    -- Get neovim's process ID
-    processId = vim.api.nvim_call_function('getpid', {}),
+  local result = self:request('initialize', nil, function(success, data) return data.capabilities end)
 
-    -- TODO(tjdevries): Give the user a way to specify this by filetype
-    rootUri = 'file:///tmp/',
-
-    capabilities = {
-      textDocument = {
-        synchronization = {
-          -- TODO(tjdevries): What is this?
-          dynamicRegistration = nil,
-
-          -- Send textDocument/willSave before saving (BufWritePre)
-          willSave = true,
-
-          -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
-          willSaveWaitUntil = false,
-
-          -- Send textDocument/didSave after saving (BufWritePost)
-          didSave = true,
-        },
-
-        -- Capabilities relating to textDocument/completion
-        completion = {
-          -- TODO(tjdevries): What is this?
-          dynamicRegistration = nil,
-
-          -- base/completionItem
-          completionItem = {
-            -- TODO(tjdevries): Is it possible to implement this in plain lua?
-            snippetSupport = false,
-
-            -- TODO(tjdevries): What is this?
-            commitCharactersSupport = nil,
-
-            -- TODO(tjdevries): What is this?
-            documentationFormat = nil,
-          },
-
-          -- TODO(tjdevries): Handle different completion item kinds differently
-          -- completionItemKind = {
-          --   valueSet = nil
-          -- },
-
-          -- TODO(tjdevries): Implement this
-          contextSupport = false,
-        },
-
-        -- textDocument/hover
-        hover = {
-          -- TODO(tjdevries): What is this?
-          dynamicRegistration = nil,
-
-          -- Currently only support plaintext
-          --    In the future, if we have floating windows or display in a preview window,
-          --    we could say markdown
-          contentFormat = {'plaintext'},
-        },
-
-        -- textDocument/signatureHelp
-        signatureHelp = {
-          dynamicRegistration = nil,
-
-          signatureInformation = {
-            documentationFormat = {'plaintext'}
-          },
-        },
-
-        -- textDocument/references
-        -- references = {
-        --   dynamicRegistration = nil,
-        -- },
-
-        -- textDocument/highlight
-        -- documentHighlight = {
-        --   dynamicRegistration = nil,
-        -- },
-
-        -- textDocument/symbol
-        -- TODO(tjdevries): Implement
-
-        -- TODO(tjdevries): Finish these...
-      },
-    },
-  })
+  self.capabilities = result
 
   return result
 end
@@ -233,6 +153,10 @@ end
 client.request_async = function(self, method, params, cb)
   local req = message.RequestMessage:new(self, method, params)
 
+  if req == nil then
+    return nil
+  end
+
   if cb == nil then
     cb = get_callback_function(method)
   elseif type(cb) == 'string' then
@@ -260,7 +184,7 @@ client.request_async = function(self, method, params, cb)
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
     lsp_doautocmd(method, 'post')
   else
-    log.debug('Request was cancelled')
+    log.debug(string.format('Request "%s" was cancelled with params %s', method, params))
   end
 
   return req.id
@@ -424,7 +348,7 @@ client.on_message = function(self, json_message)
       local error_code = protocol.errorCodes[json_message.error.code]
         or util.tostring(json_message.error.code)
 
-      if error_message then
+      if error_message ~= nil then
         error_code = error_code .. ': ' .. error_message
       end
 

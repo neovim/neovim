@@ -40,12 +40,19 @@ function RequestMessage:new(client, method, params)
   assert(self)
 
   local request_func = get_request_function(method)
-  local request_params
+  local request_params, acceptable_method
   if request_func and type(request_func) == 'function' then
-    request_params = request_func(client, params)
+    request_params, acceptable_method = request_func(client, params)
   else
     log.info(string.format('No request function found for: %s', util.tostring(method)))
     request_params = params
+  end
+
+  if acceptable_method == false then
+    vim.api.nvim_err_writeln(
+      string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name)
+    )
+    return nil
   end
 
   local object = {
