@@ -77,3 +77,15 @@ endfunction
 function! lsp#server#get_arguments(ftype) abort
   return get(lsp#server#get_configuration(a:ftype), 'arguments', '')
 endfunction
+
+""
+" Get the root path for a server
+function! lsp#server#get_root_uri(ftype) abort
+  let callbacks = get(lsp#server#get_configuration(a:ftype), 'callbacks', {})
+
+  if !has_key(callbacks, 'root_uri')
+    return 'file:///tmp/'
+  endif
+
+  return function(callbacks.root_uri, [a:ftype])()
+endfunction

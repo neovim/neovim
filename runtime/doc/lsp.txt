@@ -151,6 +151,24 @@ lsp#server#add({ftype}, {configuration}):
             `command`     (string):   The command to start the server
             `arguments`   (list):     Any arguments to pass to the server
 
+            `callbacks` (dict):     A dictionary of callbacks to configure the
+                                    server.
+
+              Available callbacks are:
+
+              `root_uri`: function(server) -> string.
+                This function returns a string to populate the `root_uri`
+                parameter in the initialize request for a server.
+
+                Example:~
+>
+  " Typescript configuration
+  call lsp#server#add('typescript', {
+      \ 'name': 'ts', ....
+      \ 'callbacks': {
+        \ 'root_uri': { server -> lsp#util#find_root_uri('tsconfig.json') }
+      \ }})
+<
 
                                                               *lsp-add_check()*
 require('lsp.checks').add_check({request}, {cb})
