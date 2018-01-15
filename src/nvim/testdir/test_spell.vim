@@ -234,6 +234,7 @@ endfunc
 
 "Test with SAL instead of SOFO items; test automatic reloading
 func Test_zz_sal_and_addition()
+  throw 'skipped: Nvim does not support enc=latin1'
   set enc=latin1
   set spellfile=
   call writefile(g:test_data_dic1, "Xtest.dic")
@@ -281,6 +282,7 @@ func Test_zeq_crash()
 endfunc
 
 func LoadAffAndDic(aff_contents, dic_contents)
+  throw 'skipped: Nvim does not support enc=latin1'
   set enc=latin1
   set spellfile=
   call writefile(a:aff_contents, "Xtest.aff")
