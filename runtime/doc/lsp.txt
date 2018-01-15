@@ -196,6 +196,19 @@ lsp#configure#file_log_level({level})
     Configure the level of logging to a file.
 
 ================================================================================
+                                                               *lsp-completion*
+
+To configure completion for a language server, add the following in your
+init.vim
+
+>
+  augroup MyLanguageServer
+    au!
+    autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#completion#complete()<CR>
+  augroup END
+<
+
+================================================================================
                                                             *lsp-handle-request*
 
 The callbacks used to handle the responses and requests of the language server

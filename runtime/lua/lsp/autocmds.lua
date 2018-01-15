@@ -41,7 +41,7 @@ local autocmd_table = {
     'TextChanged',
     'InsertLeave',
 
-    -- {'User', 'textDocument/completion/pre'},
+    {'User', 'textDocument/completion/pre'},
   },
 }
 
