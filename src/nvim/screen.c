@@ -3143,14 +3143,15 @@ win_line (
       }
       --n_extra;
     } else {
+      int c0;
+
       if (p_extra_free != NULL) {
         xfree(p_extra_free);
         p_extra_free = NULL;
       }
-      /*
-       * Get a character from the line itself.
-       */
-      c = *ptr;
+
+      // Get a character from the line itself.
+      c0 = c = *ptr;
       if (has_mbyte) {
         mb_c = c;
         if (enc_utf8) {
@@ -3160,11 +3161,12 @@ win_line (
           mb_utf8 = FALSE;
           if (mb_l > 1) {
             mb_c = utfc_ptr2char(ptr, u8cc);
-            /* Overlong encoded ASCII or ASCII with composing char
-             * is displayed normally, except a NUL. */
-            if (mb_c < 0x80)
-              c = mb_c;
-            mb_utf8 = TRUE;
+            // Overlong encoded ASCII or ASCII with composing char
+            // is displayed normally, except a NUL.
+            if (mb_c < 0x80) {
+              c0 = c = mb_c;
+            }
+            mb_utf8 = true;
 
             /* At start of the line we can have a composing char.
              * Draw it as a space with a composing char. */
@@ -3428,10 +3430,8 @@ win_line (
           char_attr = hl_combine_attr(char_attr, term_attrs[vcol]);
         }
 
-        /*
-         * Found last space before word: check for line break.
-         */
-        if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)) {
+        // Found last space before word: check for line break.
+        if (wp->w_p_lbr && c0 == c && vim_isbreak(c) && !vim_isbreak(*ptr)) {
           int mb_off = has_mbyte ? (*mb_head_off)(line, ptr - 1) : 0;
           char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?
