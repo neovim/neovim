@@ -33,11 +33,14 @@ local lsp_util = require('lsp.util')
 local protocol = require('lsp.protocol')
 local handle_completion = require('lsp.handle.completion')
 
+local error_callback = require('lsp.config.callbacks').error_callback
+
 local cb = {}
 cb.textDocument = {}
 
 cb.textDocument.publishDiagnostics = function(success, data)
   if not success then
+    error_callback('textDocument/publishDiagnostics', data)
     return nil
   end
 
@@ -78,11 +81,11 @@ cb.textDocument.publishDiagnostics = function(success, data)
 
   return result
 end
+
 cb.textDocument.completion = function(success, data)
-  vim.api.nvim_set_var('__lsp_raw_completion', data)
   if not success then
-    log.warn('ERROR COMPLETIN', data)
-    return {}
+    error_callback('textDocument/completion', data)
+    return nil
   end
 
   if data == nil then
@@ -91,9 +94,10 @@ cb.textDocument.completion = function(success, data)
 
   return handle_completion.getLabels(data)
 end
+
 cb.textDocument.references = function(success, data)
   if not success then
-    -- TODO(tjdevries): Error Handling
+    error_callback('textDocument/references', data)
     return nil
   end
 
@@ -127,11 +131,12 @@ cb.textDocument.references = function(success, data)
 
   return result
 end
+
 cb.textDocument.hover = function(success, data)
   log.trace('textDocument/hover', data)
 
   if not success then
-    -- TODO(tjdevries): Error Handling
+    error_callback('textDocument/hover', data)
     return nil
   end
 
@@ -176,11 +181,12 @@ cb.textDocument.hover = function(success, data)
   end
 
 end
+
 cb.textDocument.definition = function(success, data)
   log.trace('callback:textDocument/definiton', data)
 
   if not success then
-    -- TODO(tjdevries): Error Handling
+    error_callback('textDocument/definition', data)
     return nil
   end
 

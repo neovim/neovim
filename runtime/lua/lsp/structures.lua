@@ -127,6 +127,10 @@ end
 structures.CompletionContext = function(args)
   args = check_table(args)
 
+  if args.triggerKind == nil and args.triggerCharacter == nil then
+    return nil
+  end
+
   return {
     triggerKind = args.triggerKind or nil,
     triggerCharacter = args.triggerCharacter or nil,
