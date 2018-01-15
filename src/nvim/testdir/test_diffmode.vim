@@ -272,3 +272,23 @@ func Test_setting_cursor()
   call delete('Xtest1')
   call delete('Xtest2')
 endfunc
+
+func Test_diff_lastline()
+  enew!
+  only!
+  call setline(1, ['This is a ', 'line with five ', 'rows'])
+  diffthis
+  botright vert new
+  call setline(1, ['This is', 'a line with ', 'four rows'])
+  diffthis
+  1
+  call feedkeys("Je a\<CR>", 'tx')
+  call feedkeys("Je a\<CR>", 'tx')
+  let w1lines = winline()
+  wincmd w
+  $
+  let w2lines = winline()
+  call assert_equal(w2lines, w1lines)
+  bwipe!
+  bwipe!
+endfunc
