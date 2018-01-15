@@ -272,6 +272,15 @@ func Test_zz_sal_and_addition()
   call assert_equal("elekwint", SecondSpellWord())
 endfunc
 
+func Test_region_error()
+  messages clear
+  call writefile(["/regions=usgbnz", "elequint/0"], "Xtest.latin1.add")
+  mkspell! Xtest.latin1.add.spl Xtest.latin1.add
+  call assert_match('Invalid region nr in Xtest.latin1.add line 2: 0', execute('messages'))
+  call delete('Xtest.latin1.add')
+  call delete('Xtest.latin1.add.spl')
+endfunc
+
 " Check using z= in new buffer (crash fixed by patch 7.4a.028).
 func Test_zeq_crash()
   new
