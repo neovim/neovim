@@ -806,7 +806,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 
 /// Clears highlights from a given source group and a range of lines
 ///
-/// To clear a source group in the entire buffer, pass in 1 and -1 to
+/// To clear a source group in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
 ///
 /// @param buffer     Buffer handle
