@@ -5687,6 +5687,8 @@ static void nv_brackets(cmdarg_T *cap)
                         cap->nchar == 's', false, NULL) == 0) {
         clearopbeep(cap->oap);
         break;
+      } else {
+        curwin->w_set_curswant = true;
       }
     if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
       foldOpenCursor();

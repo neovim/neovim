@@ -15535,6 +15535,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     len = spell_move_to(curwin, FORWARD, true, true, &attr);
     if (len != 0) {
       word = (char *)get_cursor_pos_ptr();
+      curwin->w_set_curswant = true;
     }
   } else if (curwin->w_p_spell && *curbuf->b_s.b_p_spl != NUL) {
     const char *str = tv_get_string_chk(&argvars[0]);
