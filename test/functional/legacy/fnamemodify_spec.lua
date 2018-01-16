@@ -16,12 +16,10 @@ describe('filename modifiers', function()
       func Test_fnamemodify()
         if has('win32')
           set shellslash
-          let tmpdir = expand('$LOCALAPPDATA/Temp')
-          call assert_equal(tmpdir, expand('$USERPROFILE/AppData/Local/Temp'))
         else
-          let tmpdir = resolve('/tmp')
           set shell=sh
         endif
+        let tmpdir = $TMPDIR
         call assert_true(isdirectory(tmpdir))
         execute 'cd '. tmpdir
         let $HOME=fnamemodify('.', ':p:h:h:h')
@@ -30,11 +28,7 @@ describe('filename modifiers', function()
         call assert_equal('t', fnamemodify('test.out', ':p')[-1:])
         call assert_equal('test.out', fnamemodify('test.out', ':.'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':.'))
-        if has('win32')
-          call assert_equal('~/Local/Temp/test.out', fnamemodify('test.out', ':~'))
-        else
-          call assert_equal('test.out', fnamemodify('test.out', ':~'))
-        endif
+        call assert_equal('test.out', fnamemodify('test.out', ':~'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':~'))
         call assert_equal('a', fnamemodify('../testdir/a', ':t'))
         call assert_equal('', fnamemodify('.', ':p:t'))
