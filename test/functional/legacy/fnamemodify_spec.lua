@@ -19,7 +19,7 @@ describe('filename modifiers', function()
         else
           set shell=sh
         endif
-        let tmpdir = $TMPDIR
+        let tmpdir = resolve($TMPDIR)
         call assert_true(isdirectory(tmpdir))
         execute 'cd '. tmpdir
         let $HOME=fnamemodify('.', ':p:h:h:h')
