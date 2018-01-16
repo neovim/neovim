@@ -9259,7 +9259,9 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
   rettv->vval.v_string = NULL;
 
   if (buf == NULL || buf->b_ml.ml_mfp == NULL || start < 0 || end < start) {
-    tv_list_alloc_ret(rettv, 0);
+    if (retlist) {
+      tv_list_alloc_ret(rettv, 0);
+    }
     return;
   }
 
