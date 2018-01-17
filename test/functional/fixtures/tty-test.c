@@ -41,6 +41,7 @@ static void walk_cb(uv_handle_t *handle, void *arg)
   }
 }
 
+#ifndef WIN32
 static void sig_handler(int signum)
 {
   switch (signum) {
@@ -57,6 +58,7 @@ static void sig_handler(int signum)
     return;
   }
 }
+#endif
 
 #ifdef WIN32
 static void sigwinch_cb(uv_signal_t *handle, int signum)
