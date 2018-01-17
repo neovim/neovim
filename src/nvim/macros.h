@@ -188,4 +188,11 @@
 /// @return ((Type *)obj).
 #define STRUCT_CAST(Type, obj) ((Type *)(obj))
 
+// Type of uv_buf_t.len on Windows is ULONG, but others is size_t.
+#if defined(WIN32)
+# define UV_BUF_LEN(x)  (ULONG)(x)
+#else
+# define UV_BUF_LEN(x)  (x)
+#endif
+
 #endif  // NVIM_MACROS_H
