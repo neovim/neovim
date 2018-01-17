@@ -131,7 +131,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     }
     goto cleanup;
   }
-  proc->pid = GetProcessId(process_handle);
+  proc->pid = (int)GetProcessId(process_handle);
 
   if (!RegisterWaitForSingleObject(
       &ptyproc->finish_wait,

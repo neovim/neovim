@@ -738,7 +738,7 @@ static int command_line_execute(VimState *state, int key)
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr(" *?[{`$%#", ccline.cmdbuff[s->j + 1])
+            && vim_strchr((const char_u *)" *?[{`$%#", ccline.cmdbuff[s->j + 1])
             == NULL
 #endif
             ) {

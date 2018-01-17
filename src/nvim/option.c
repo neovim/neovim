@@ -844,7 +844,7 @@ set_option_default (
       if (options[opt_idx].indir == PV_SCROLL)
         win_comp_scroll(curwin);
       else {
-        *(long *)varp = (long)options[opt_idx].def_val[dvi];
+        *(long *)varp = (long)(intptr_t)options[opt_idx].def_val[dvi];
         /* May also set global value for local option. */
         if (both)
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
@@ -926,7 +926,7 @@ void set_number_default(char *name, long val)
 
   opt_idx = findoption(name);
   if (opt_idx >= 0) {
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
   }
 }
 
@@ -1442,7 +1442,7 @@ do_set (
              */
             ++arg;
             if (nextchar == '&')
-              value = (long)options[opt_idx].def_val[
+              value = (long)(intptr_t)options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
                 ?  VI_DEFAULT : VIM_DEFAULT];
             else if (nextchar == '<') {
@@ -5012,7 +5012,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
     return TRUE;            /* hidden option is always at default */
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM)
-    return *(long *)varp == (long)p->def_val[dvi];
+    return *(long *)varp == (long)(intptr_t)p->def_val[dvi];
   if (p->flags & P_BOOL)
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
