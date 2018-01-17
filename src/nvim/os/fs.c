@@ -990,7 +990,7 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
 char *os_resolve_shortcut(const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
