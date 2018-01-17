@@ -51,6 +51,18 @@
 #include "nvim/eval/encode.h"
 
 /*
+ * Fix warning on mingw32 and mingw64
+ * make isnan as _isnan
+ * fpclassify is used by isinf, so redefine it
+ */
+#ifdef __MINGW32__
+# undef fpclassify
+# define fpclassify __fpclassify
+# undef isnan
+# define isnan _isnan
+#endif
+
+/*
  * Copy "string" into newly allocated memory.
  */
 char_u *vim_strsave(const char_u *string)

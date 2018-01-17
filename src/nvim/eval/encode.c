@@ -288,6 +288,11 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
           : OK);
 }
 
+#ifdef __MINGW32__
+# undef fpclassify
+# define fpclassify __fpclassify
+#endif
+
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
     do { \
       const char *const buf_ = (const char *) buf; \
