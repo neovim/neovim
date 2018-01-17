@@ -229,7 +229,7 @@ int main(int argc, char **argv)
 #endif
 {
 #if defined(WIN32) && !defined(MAKE_LIB)
-  char *argv[argc];
+  char **argv = xmalloc((size_t)argc * sizeof(char *));
   for (int i = 0; i < argc; i++) {
     char *buf = NULL;
     utf16_to_utf8(argv_w[i], &buf);
@@ -571,6 +571,9 @@ int main(int argc, char **argv)
    */
   normal_enter(false, false);
 
+#if defined(WIN32) && !defined(MAKE_LIB)
+  xfree(argv);
+#endif
   return 0;
 }
 
