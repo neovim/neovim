@@ -195,4 +195,11 @@
 # define UV_BUF_LEN(x)  (x)
 #endif
 
+// Type of bufcnt for read/write on Windows is unsigned int, not size_t.
+#if defined(WIN32)
+# define IO_SIZE(x)  (unsigned)(x)
+#else
+# define IO_SIZE(x)  (x)
+#endif
+
 #endif  // NVIM_MACROS_H
