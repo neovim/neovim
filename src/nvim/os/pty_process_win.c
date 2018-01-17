@@ -339,20 +339,20 @@ static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
   }
 
   // Expected input/output:
-  //   input : hello"world
-  //   output: "hello\"world"
-  //   input : hello""world
-  //   output: "hello\"\"world"
-  //   input : hello\world
-  //   output: hello\world
-  //   input : hello\\world
-  //   output: hello\\world
-  //   input : hello\"world
-  //   output: "hello\\\"world"
-  //   input : hello\\"world
-  //   output: "hello\\\\\"world"
-  //   input : hello world\
-  //   output: "hello world\\"
+  //   input : 'hello"world'
+  //   output: '"hello\"world"'
+  //   input : 'hello""world'
+  //   output: '"hello\"\"world"'
+  //   input : 'hello\world'
+  //   output: 'hello\world'
+  //   input : 'hello\\world'
+  //   output: 'hello\\world'
+  //   input : 'hello\"world'
+  //   output: '"hello\\\"world"'
+  //   input : 'hello\\"world'
+  //   output: '"hello\\\\\"world"'
+  //   input : 'hello world\'
+  //   output: '"hello world\\"'
 
   assert(dest_remaining--);
   *(dest++) = NUL;
