@@ -881,6 +881,7 @@ static void syn_start_line(void)
 
   next_match_idx = -1;
   ++current_line_id;
+  next_seqnr = 1;
 }
 
 /*
@@ -1598,6 +1599,7 @@ get_syntax_attr (
     current_id = 0;
     current_trans_id = 0;
     current_flags = 0;
+    current_seqnr = 0;
     return 0;
   }
 
@@ -2041,6 +2043,7 @@ syn_current_attr (
   current_id = 0;
   current_trans_id = 0;
   current_flags = 0;
+  current_seqnr = 0;
   if (cur_si != NULL) {
     for (int idx = current_state.ga_len - 1; idx >= 0; --idx) {
       sip = &CUR_STATE(idx);
