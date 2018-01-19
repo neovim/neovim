@@ -719,6 +719,20 @@ void set_internal_string_var(char_u *name, char_u *value)
   set_var((const char *)name, STRLEN(name), (typval_T *)&tv, true);
 }
 
+/*
+ * Set an internal variable to a number value. Creates the variable if it does
+ * not already exist.
+ */
+void set_internal_number_var(char_u *name, varnumber_T value)
+{
+  const typval_T tv = {
+    .v_type = VAR_NUMBER,
+    .vval.v_number = value,
+  };
+
+  set_var((const char *)name, STRLEN(name), (typval_T *)&tv, true);
+}
+
 static lval_T   *redir_lval = NULL;
 static garray_T redir_ga;  // Only valid when redir_lval is not NULL.
 static char_u *redir_endp = NULL;
