@@ -1841,6 +1841,16 @@ void ex_loadkeymap(exarg_T *eap)
   status_redraw_curbuf();
 }
 
+/// Frees the buf_T.b_kmap_ga field of a buffer.
+void keymap_ga_clear(garray_T *kmap_ga)
+{
+  kmap_T *kp = (kmap_T *)kmap_ga->ga_data;
+  for (int i = 0; i < kmap_ga->ga_len; i++) {
+    xfree(kp[i].from);
+    xfree(kp[i].to);
+  }
+}
+
 /// Stop using 'keymap'.
 static void keymap_unload(void)
 {
@@ -1858,12 +1868,11 @@ static void keymap_unload(void)
   // clear the ":lmap"s
   kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
 
-  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
-    (void)do_map(1, buf, LANGMAP, FALSE);
-    xfree(kp[i].from);
-    xfree(kp[i].to);
+    (void)do_map(1, buf, LANGMAP, false);
   }
+  keymap_ga_clear(&curbuf->b_kmap_ga);
 
   p_cpo = save_cpo;
 
