@@ -1775,6 +1775,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
   clear_string_option(&buf->b_p_keymap);
+  keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);
   clear_string_option(&buf->b_p_com);
   clear_string_option(&buf->b_p_cms);
