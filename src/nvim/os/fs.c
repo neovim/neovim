@@ -461,7 +461,7 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
   while (read_bytes != size) {
     assert(size >= read_bytes);
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
-                                          size - read_bytes);
+                                          IO_COUNT(size - read_bytes));
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
     }
@@ -564,7 +564,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
   while (written_bytes != size) {
     assert(size >= written_bytes);
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
-                                              size - written_bytes);
+                                              IO_COUNT(size - written_bytes));
     if (cur_written_bytes > 0) {
       written_bytes += (size_t)cur_written_bytes;
     }
@@ -990,7 +990,7 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
 char *os_resolve_shortcut(const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;

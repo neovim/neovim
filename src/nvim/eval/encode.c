@@ -28,6 +28,11 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/eval/typval_encode.h"
 
+#ifdef __MINGW32__
+# undef fpclassify
+# define fpclassify __fpclassify
+#endif
+
 #define ga_concat(a, b) ga_concat(a, (char_u *)b)
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))

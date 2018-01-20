@@ -41,6 +41,7 @@ static void walk_cb(uv_handle_t *handle, void *arg)
   }
 }
 
+#ifndef WIN32
 static void sig_handler(int signum)
 {
   switch (signum) {
@@ -57,6 +58,7 @@ static void sig_handler(int signum)
     return;
   }
 }
+#endif
 
 #ifdef WIN32
 static void sigwinch_cb(uv_signal_t *handle, int signum)
@@ -94,7 +96,14 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_tty_init(&write_loop, &out, fileno(stdout), 0);
 
   uv_write_t req;
-  uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
+  uv_buf_t b = {
+    .base = buf->base,
+#ifdef WIN32
+    .len = (ULONG)cnt
+#else
+    .len = (size_t)cnt
+#endif
+  };
   uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
 
