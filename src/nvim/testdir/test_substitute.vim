@@ -106,3 +106,11 @@ function! Test_substitute_variants()
     endfor
   endfor
 endfunction
+
+func Test_substitute_repeat()
+  " This caused an invalid memory access.
+  split Xfile
+  s/^/x
+  call feedkeys("Qsc\<CR>y", 'tx')
+  bwipe!
+endfunc

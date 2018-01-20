@@ -500,7 +500,7 @@ static void final_column_wrap(UI *ui)
   UGrid *grid = &data->grid;
   if (grid->col == ui->width) {
     grid->col = 0;
-    if (grid->row < ui->height) {
+    if (grid->row < MIN(ui->height, grid->height - 1)) {
       grid->row++;
     }
   }

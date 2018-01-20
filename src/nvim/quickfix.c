@@ -4193,7 +4193,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     }
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
-    list_T *l = tv_list_alloc();
+    list_T *l = tv_list_alloc(kListLenMayKnow);
     (void)get_errorlist(wp, qf_idx, l);
     tv_dict_add_list(retdict, S_LEN("items"), l);
   }

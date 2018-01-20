@@ -6,15 +6,18 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
-local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
+local feed_data = thelpers.feed_data
 local clear = helpers.clear
+local command = helpers.command
+local eval = helpers.eval
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
+local wait = helpers.wait
 
 if helpers.pending_win32(pending) then return end
 
@@ -38,6 +41,28 @@ describe('tui', function()
 
   after_each(function()
     screen:detach()
+  end)
+
+  it('rapid resize #7572 #7628', function()
+    -- Need buffer rows to provoke the behavior.
+    feed_data(":edit test/functional/fixtures/bigfile.txt:")
+    command('call jobresize(b:terminal_job_id, 58, 9)')
+    command('call jobresize(b:terminal_job_id, 62, 13)')
+    command('call jobresize(b:terminal_job_id, 100, 42)')
+    command('call jobresize(b:terminal_job_id, 37, 1000)')
+    -- Resize to <5 columns.
+    screen:try_resize(4, 44)
+    command('call jobresize(b:terminal_job_id, 4, 1000)')
+    -- Resize to 1 row, then to 1 column, then increase rows to 4.
+    screen:try_resize(44, 1)
+    command('call jobresize(b:terminal_job_id, 44, 1)')
+    screen:try_resize(1, 1)
+    command('call jobresize(b:terminal_job_id, 1, 1)')
+    screen:try_resize(1, 4)
+    command('call jobresize(b:terminal_job_id, 1, 4)')
+    screen:try_resize(57, 17)
+    command('call jobresize(b:terminal_job_id, 57, 17)')
+    eq(2, eval("1+1"))  -- Still alive?
   end)
 
   it('accepts basic utf-8 input', function()
@@ -448,7 +473,7 @@ describe("tui 't_Co' (terminal colors)", function()
       nvim_set))
 
     feed_data(":echo &t_Co\n")
-    helpers.wait()
+    wait()
     local tline
     if maxcolors == 8 or maxcolors == 16 then
       tline = "~                                                 "

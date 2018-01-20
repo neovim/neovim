@@ -7044,7 +7044,7 @@ list_T *reg_submatch_list(int no)
     colnr_T scol = rsm.sm_mmatch->startpos[no].col;
     colnr_T ecol = rsm.sm_mmatch->endpos[no].col;
 
-    list = tv_list_alloc();
+    list = tv_list_alloc(elnum - slnum + 1);
 
     s = (const char *)reg_getline_submatch(slnum) + scol;
     if (slnum == elnum) {
@@ -7063,7 +7063,7 @@ list_T *reg_submatch_list(int no)
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       return NULL;
     }
-    list = tv_list_alloc();
+    list = tv_list_alloc(1);
     tv_list_append_string(list, s, (const char *)rsm.sm_match->endp[no] - s);
   }
 

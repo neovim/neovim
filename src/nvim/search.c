@@ -1382,13 +1382,13 @@ int searchc(cmdarg_T *cap, int t_cmd)
           col -= (*mb_head_off)(p, p + col - 1) + 1;
         }
         if (lastc_bytelen == 1) {
-          if (p[col] == c && stop)
+          if (p[col] == c && stop) {
             break;
-        } else {
-          if (memcmp(p + col, lastc_bytes, lastc_bytelen) == 0 && stop)
+          }
+        } else if (STRNCMP(p + col, lastc_bytes, lastc_bytelen) == 0 && stop) {
             break;
         }
-        stop = TRUE;
+        stop = true;
       }
     } else {
       for (;; ) {

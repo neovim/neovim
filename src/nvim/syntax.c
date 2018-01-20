@@ -52,6 +52,7 @@ static bool did_syntax_onoff = false;
 struct hl_group {
   char_u      *sg_name;         ///< highlight group name
   char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_cleared;               ///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
   int sg_set;                   ///< combination of flags in \ref SG_SET
@@ -3019,12 +3020,19 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2)
-    curwin->w_s->b_syn_conceal = TRUE;
-  else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3)
-    curwin->w_s->b_syn_conceal = FALSE;
-  else
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_conceal) {
+      MSG(_("syn conceal on"));
+    } else {
+      MSG(_("syn conceal off"));
+    }
+  } else if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2) {
+    curwin->w_s->b_syn_conceal = true;
+  } else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3) {
+    curwin->w_s->b_syn_conceal = false;
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+  }
 }
 
 /*
@@ -3040,12 +3048,19 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5)
-    curwin->w_s->b_syn_ic = FALSE;
-  else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6)
-    curwin->w_s->b_syn_ic = TRUE;
-  else
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_ic) {
+      MSG(_("syntax case ignore"));
+    } else {
+      MSG(_("syntax case match"));
+    }
+  } else if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5) {
+    curwin->w_s->b_syn_ic = false;
+  } else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6) {
+    curwin->w_s->b_syn_ic = true;
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+  }
 }
 
 /*
@@ -3061,7 +3076,15 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
+      MSG(_("syntax spell toplevel"));
+    } else if (curwin->w_s->b_syn_spell == SYNSPL_NOTOP) {
+      MSG(_("syntax spell notoplevel"));
+    } else {
+      MSG(_("syntax spell default"));
+    }
+  } else if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
   } else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10) {
     curwin->w_s->b_syn_spell = SYNSPL_NOTOP;
@@ -3121,10 +3144,11 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
  */
 void syntax_clear(synblock_T *block)
 {
-  block->b_syn_error = FALSE;       /* clear previous error */
-  block->b_syn_ic = FALSE;          /* Use case, by default */
-  block->b_syn_spell = SYNSPL_DEFAULT;   /* default spell checking */
-  block->b_syn_containedin = FALSE;
+  block->b_syn_error = false;           // clear previous error
+  block->b_syn_ic = false;              // Use case, by default
+  block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
+  block->b_syn_containedin = false;
+  block->b_syn_conceal = false;
 
   /* free the keywords */
   clear_keywtab(&block->b_keywtab);
@@ -4001,10 +4025,11 @@ get_group_name (
  * Return NULL for any error;
  */
 static char_u *
-get_syn_options (
-    char_u *arg,                   /* next argument to be checked */
-    syn_opt_arg_T *opt,                   /* various things */
-    int *conceal_char
+get_syn_options(
+    char_u *arg,            // next argument to be checked
+    syn_opt_arg_T *opt,     // various things
+    int *conceal_char,
+    int skip                // TRUE if skipping over command
 )
 {
   char_u      *gname_start, *gname;
@@ -4080,14 +4105,17 @@ get_syn_options (
         EMSG(_("E395: contains argument not accepted here"));
         return NULL;
       }
-      if (get_id_list(&arg, 8, &opt->cont_list) == FAIL)
+      if (get_id_list(&arg, 8, &opt->cont_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 2)   {
-      if (get_id_list(&arg, 11, &opt->cont_in_list) == FAIL)
+      if (get_id_list(&arg, 11, &opt->cont_in_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 3)   {
-      if (get_id_list(&arg, 9, &opt->next_list) == FAIL)
+      if (get_id_list(&arg, 9, &opt->next_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=')   {
       /* cchar=? */
       if (has_mbyte) {
@@ -4257,7 +4285,11 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
   rest = get_group_name(arg, &group_name_end);
 
   if (rest != NULL) {
-    syn_id = syn_check_group(arg, (int)(group_name_end - arg));
+    if (eap->skip) {
+      syn_id = -1;
+    } else {
+      syn_id = syn_check_group(arg, (int)(group_name_end - arg));
+    }
     if (syn_id != 0) {
       // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
@@ -4276,7 +4308,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       cnt = 0;
       p = keyword_copy;
       for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
         if (rest == NULL || ends_excmd(*rest)) {
           break;
         }
@@ -4375,17 +4407,18 @@ syn_cmd_match (
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   /* get the pattern. */
   init_syn_patterns();
   memset(&item, 0, sizeof(item));
   rest = get_syn_pattern(rest, &item);
-  if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL))
+  if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
     syn_opt_arg.flags |= HL_HAS_EOL;
+  }
 
-  /* Get options after the pattern */
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+  // Get options after the pattern
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   if (rest != NULL) {           /* all arguments are valid */
     /*
@@ -4497,14 +4530,13 @@ syn_cmd_region (
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
 
-  /*
-   * get the options, patterns and matchgroup.
-   */
+  // get the options, patterns and matchgroup.
   while (rest != NULL && !ends_excmd(*rest)) {
-    /* Check for option arguments */
-    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-    if (rest == NULL || ends_excmd(*rest))
+    // Check for option arguments
+    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+    if (rest == NULL || ends_excmd(*rest)) {
       break;
+    }
 
     /* must be a pattern or matchgroup then */
     key_end = rest;
@@ -4926,13 +4958,15 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
         break;
 
       clstr_list = NULL;
-      if (get_id_list(&rest, opt_len, &clstr_list) == FAIL) {
+      if (get_id_list(&rest, opt_len, &clstr_list, eap->skip) == FAIL) {
         EMSG2(_(e_invarg2), rest);
         break;
       }
-      syn_combine_list(&SYN_CLSTR(curwin->w_s)[scl_id].scl_list,
-          &clstr_list, list_op);
-      got_clstr = TRUE;
+      if (scl_id >= 0) {
+        syn_combine_list(&SYN_CLSTR(curwin->w_s)[scl_id].scl_list,
+                         &clstr_list, list_op);
+      }
+      got_clstr = true;
     }
 
     if (got_clstr) {
@@ -5180,9 +5214,10 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 static int 
 get_id_list (
     char_u **arg,
-    int keylen,                     /* length of keyword */
-    short **list             /* where to store the resulting list, if not
-                                   NULL, the list is silently skipped! */
+    int keylen,         // length of keyword
+    int16_t **list,     // where to store the resulting list, if not
+                        // NULL, the list is silently skipped!
+    int skip
 )
 {
   char_u      *p = NULL;
@@ -5251,7 +5286,11 @@ get_id_list (
           id = SYNID_CONTAINED;
         id += current_syn_inc_tag;
       } else if (name[1] == '@')   {
-        id = syn_check_cluster(name + 2, (int)(end - p - 1));
+        if (skip) {
+          id = -1;
+        } else {
+          id = syn_check_cluster(name + 2, (int)(end - p - 1));
+        }
       } else {
         /*
          * Handle full group name.
@@ -6457,6 +6496,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
         HL_TABLE()[from_id - 1].sg_link = to_id;
         HL_TABLE()[from_id - 1].sg_scriptID = current_SID;
+        HL_TABLE()[from_id - 1].sg_cleared = false;
         redraw_all_later(SOME_VALID);
       }
     }
@@ -6839,6 +6879,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         error = true;
         break;
       }
+      HL_TABLE()[idx].sg_cleared = false;
 
       // When highlighting has been given for a group, don't link it.
       if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
@@ -6920,6 +6961,8 @@ static int hl_has_settings(int idx, int check_link)
  */
 static void highlight_clear(int idx)
 {
+  HL_TABLE()[idx].sg_cleared = true;
+
   HL_TABLE()[idx].sg_attr = 0;
   HL_TABLE()[idx].sg_cterm = 0;
   HL_TABLE()[idx].sg_cterm_bold = FALSE;
@@ -7730,10 +7773,20 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
   } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
              && include_link != 0) {
     return "clear";
-  } else if (idx < 0 || idx >= highlight_ga.ga_len) {
+  } else if (idx < 0) {
     return NULL;
   }
-  return (const char *)HL_TABLE()[idx].sg_name;
+
+  // Items are never removed from the table, skip the ones that were cleared.
+  int current_idx = idx;
+  while (current_idx < highlight_ga.ga_len
+         && HL_TABLE()[current_idx].sg_cleared) {
+    current_idx++;
+  }
+  if (current_idx >= highlight_ga.ga_len) {
+    return NULL;
+  }
+  return (const char *)HL_TABLE()[current_idx].sg_name;
 }
 
 color_name_table_T color_name_table[] = {

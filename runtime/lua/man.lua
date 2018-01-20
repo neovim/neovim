@@ -148,8 +148,8 @@ local function highlight_line(line, linenr)
 end
 
 local function highlight_man_page()
-  local mod = vim.api.nvim_eval("&modifiable")
-  vim.api.nvim_command("set modifiable")
+  local mod = vim.api.nvim_buf_get_option(0, "modifiable")
+  vim.api.nvim_buf_set_option(0, "modifiable", true)
 
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   for i, line in ipairs(lines) do
@@ -162,7 +162,7 @@ local function highlight_man_page()
   end
   buf_hls = {}
 
-  vim.api.nvim_command("let &modifiable = "..mod)
+  vim.api.nvim_buf_set_option(0, "modifiable", mod)
 end
 
 return { highlight_man_page = highlight_man_page }

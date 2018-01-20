@@ -481,7 +481,7 @@ char_u *get_special_key_name(int c, int modifiers)
   return string;
 }
 
-/// Try translating a <> name
+/// Try translating a <> name ("keycode").
 ///
 /// @param[in,out]  srcp  Source from which <> are translated. Is advanced to
 ///                       after the <> name if there is a match.
@@ -619,9 +619,11 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
 
         // Modifier with single letter, or special key name.
         if (in_string && last_dash[1] == '\\' && last_dash[2] == '"') {
-          off = 2;
+          // Special case for a double-quoted string
+          off = l = 2;
+        } else {
+          l = mb_ptr2len(last_dash + 1);
         }
-        l = mb_ptr2len(last_dash + 1);
         if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = PTR2CHAR(last_dash + off);
         } else {
@@ -834,7 +836,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
       }
 
       slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true,
-                           true);
+                           false);
       if (slen) {
         dlen += slen;
         continue;

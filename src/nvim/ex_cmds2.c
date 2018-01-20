@@ -3758,7 +3758,7 @@ static void script_host_execute(char *name, exarg_T *eap)
   char *const script = script_get(eap, &len);
 
   if (script != NULL) {
-    list_T *const args = tv_list_alloc();
+    list_T *const args = tv_list_alloc(3);
     // script
     tv_list_append_allocated_string(args, script);
     // current range
@@ -3773,7 +3773,7 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   uint8_t buffer[MAXPATHL];
   vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
-  list_T *args = tv_list_alloc();
+  list_T *args = tv_list_alloc(3);
   // filename
   tv_list_append_string(args, (const char *)buffer, -1);
   // current range
@@ -3784,7 +3784,7 @@ static void script_host_execute_file(char *name, exarg_T *eap)
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
-  list_T *args = tv_list_alloc();
+  list_T *args = tv_list_alloc(3);
   tv_list_append_number(args, (int)eap->line1);
   tv_list_append_number(args, (int)eap->line2);
   tv_list_append_string(args, (const char *)eap->arg, -1);
