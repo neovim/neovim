@@ -3161,7 +3161,10 @@ int build_stl_str_hl(
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.
   if (fmt[0] == '%' && fmt[1] == '!') {
+    // Temporarily set the window the statusline is being evaluated for
+    set_vim_var_nr(VV_STL_WINID, wp->handle);
     usefmt = eval_to_string_safe(fmt + 2, NULL, use_sandbox);
+    set_vim_var_nr(VV_STL_WINID, -1);
     if (usefmt == NULL)
       usefmt = fmt;
   }
@@ -3563,8 +3566,11 @@ int build_stl_str_hl(
 
       // { Evaluate the expression
 
-      // Store the current buffer number as a string variable
-      set_internal_number_var((char_u *)"actual_curbuf", curbuf->b_fnum);
+      // Store the actual current window id so the expression can see
+      // can see both the stl-local one and the actual one
+      set_vim_var_nr(VV_ACTUAL_CURWINID, curwin->handle);
+      // Deprecated 'g:actual_curbuf' also set for compatibility
+      set_internal_number_var((char_u *)"g:actual_curbuf", curbuf->b_fnum);
 
       buf_T *o_curbuf = curbuf;
       win_T *o_curwin = curwin;
@@ -3577,7 +3583,8 @@ int build_stl_str_hl(
       curwin = o_curwin;
       curbuf = o_curbuf;
 
-      // Remove the variable we just stored
+      // Reset the variable we just set
+      set_vim_var_nr(VV_ACTUAL_CURWINID, -1);
       do_unlet(S_LEN("g:actual_curbuf"), true);
 
       // }
