@@ -1076,11 +1076,11 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     s->old_topfill = curwin->w_topfill;
     s->old_botline = curwin->w_botline;
     update_screen(NOT_VALID);
-    restore_last_search_pattern();
     redrawcmdline();
   } else {
     vim_beep(BO_ERROR);
   }
+  restore_last_search_pattern();
   return;
 }
 
