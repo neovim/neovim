@@ -403,13 +403,12 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   /*
    * "did_throw" will be set to TRUE when an exception is being thrown.
    */
-  did_throw = FALSE;
-  /*
-   * "did_emsg" will be set to TRUE when emsg() is used, in which case we
-   * cancel the whole command line, and any if/endif or loop.
-   * If force_abort is set, we cancel everything.
-   */
-  did_emsg = FALSE;
+  did_throw = false;
+  current_exception = NULL;
+  // "did_emsg" will be set to TRUE when emsg() is used, in which case we
+  // cancel the whole command line, and any if/endif or loop.
+  // If force_abort is set, we cancel everything.
+  did_emsg = false;
 
   /*
    * KeyTyped is only set when calling vgetc().  Reset it here when not
@@ -715,10 +714,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      */
     if (cstack.cs_lflags & CSL_HAD_FINA) {
       cstack.cs_lflags &= ~CSL_HAD_FINA;
-      report_make_pending(cstack.cs_pending[cstack.cs_idx]
-          & (CSTP_ERROR | CSTP_INTERRUPT | CSTP_THROW),
-          did_throw ? (void *)current_exception : NULL);
-      did_emsg = got_int = did_throw = FALSE;
+      report_make_pending((cstack.cs_pending[cstack.cs_idx]
+                           & (CSTP_ERROR | CSTP_INTERRUPT | CSTP_THROW)),
+                          (did_throw ? (void *)current_exception : NULL));
+      did_emsg = got_int = did_throw = false;
+      current_exception = NULL;
       cstack.cs_flags[cstack.cs_idx] |= CSF_ACTIVE | CSF_FINALLY;
     }
 
@@ -1782,13 +1782,14 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ));
 
 
-  /* forced commands */
+  // Forced commands.
   if (*p == '!' && ea.cmdidx != CMD_substitute
       && ea.cmdidx != CMD_smagic && ea.cmdidx != CMD_snomagic) {
-    ++p;
-    ea.forceit = TRUE;
-  } else
-    ea.forceit = FALSE;
+    p++;
+    ea.forceit = true;
+  } else {
+    ea.forceit = false;
+  }
 
   /*
    * 6. Parse arguments.

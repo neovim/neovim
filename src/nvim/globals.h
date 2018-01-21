@@ -325,7 +325,8 @@ EXTERN except_T *current_exception;
  * did_throw: An exception is being thrown.  Reset when the exception is caught
  * or as long as it is pending in a finally clause.
  */
-EXTERN int did_throw INIT(= FALSE);
+// FIXME: Replace did_throw checks with current_exception checks.
+EXTERN int did_throw INIT(= false);
 
 /*
  * need_rethrow: set to TRUE when a throw that cannot be handled in do_cmdline()

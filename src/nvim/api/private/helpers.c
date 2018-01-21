@@ -47,6 +47,9 @@ typedef struct {
 /// @param[out]  tstate  Location where try state should be saved.
 void try_enter(TryState *const tstate)
 {
+  // TODO(ZyX-I): Check whether try_enter()/try_leave() may use
+  //              enter_cleanup()/leave_cleanup(). Or
+  //              save_dbg_stuff()/restore_dbg_stuff().
   *tstate = (TryState) {
     .current_exception = current_exception,
     .msg_list = (const struct msglist *const *)msg_list,

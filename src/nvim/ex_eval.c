@@ -1426,6 +1426,10 @@ void ex_catch(exarg_T *eap)
       if (cstack->cs_exception[cstack->cs_idx] != current_exception) {
         internal_error("ex_catch()");
       }
+      // Discarding current_exceptions happens based on what is stored in
+      // cstack->cs_exception, *all* calls to discard_current_exception() are
+      // (and must be) guarded by did_throw which was already unset above.
+      current_exception = NULL;
     } else {
       /*
        * If there is a preceding catch clause and it caught the exception,
@@ -1785,7 +1789,8 @@ void enter_cleanup(cleanup_T *csp)
         cause_abort = FALSE;
       }
     }
-    did_emsg = got_int = did_throw = need_rethrow = FALSE;
+    did_emsg = got_int = did_throw = need_rethrow = false;
+    current_exception = NULL;
 
     /* Report if required by the 'verbose' option or when debugging.  */
     report_make_pending(pending, csp->exception);
