@@ -1242,6 +1242,16 @@ func Test_endfunction_trailing()
     set verbose=0
 endfunc
 
+func Test_delfunction_force()
+    delfunc! Xtest
+    delfunc! Xtest
+    func Xtest()
+	echo 'nothing'
+    endfunc
+    delfunc! Xtest
+    delfunc! Xtest
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker

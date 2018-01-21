@@ -20863,7 +20863,9 @@ void ex_delfunction(exarg_T *eap)
 
   if (!eap->skip) {
     if (fp == NULL) {
-      EMSG2(_(e_nofunc), eap->arg);
+      if (!eap->forceit) {
+        EMSG2(_(e_nofunc), eap->arg);
+      }
       return;
     }
     if (fp->uf_calls > 0) {
