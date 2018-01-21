@@ -1215,6 +1215,33 @@ func Test_bitwise_functions()
     call assert_fails("call invert({})", 'E728:')
 endfunc
 
+" Test trailing text after :endfunction				    {{{1
+func Test_endfunction_trailing()
+    call assert_false(exists('*Xtest'))
+
+    exe "func Xtest()\necho 'hello'\nendfunc\nlet done = 'yes'"
+    call assert_true(exists('*Xtest'))
+    call assert_equal('yes', done)
+    delfunc Xtest
+    unlet done
+
+    exe "func Xtest()\necho 'hello'\nendfunc|let done = 'yes'"
+    call assert_true(exists('*Xtest'))
+    call assert_equal('yes', done)
+    delfunc Xtest
+    unlet done
+
+    set verbose=1
+    exe "func Xtest()\necho 'hello'\nendfunc \" garbage"
+    call assert_true(exists('*Xtest'))
+    delfunc Xtest
+
+    call assert_fails("func Xtest()\necho 'hello'\nendfunc garbage", 'E946')
+    call assert_true(exists('*Xtest'))
+    delfunc Xtest
+    set verbose=0
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
