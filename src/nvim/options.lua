@@ -1399,8 +1399,9 @@ return {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_linespace',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='lisp',

@@ -24,6 +24,7 @@ describe('ui receives option updates', function()
     guifont='',
     guifontset='',
     guifontwide='',
+    linespace=0,
     showtabline=1,
     termguicolors=false,
   }
@@ -54,6 +55,18 @@ describe('ui receives option updates', function()
 
     command("set showtabline=0")
     changed.showtabline = 0
+    screen:expect(function()
+      eq(changed, screen.options)
+    end)
+
+    command("set linespace=13")
+    changed.linespace = 13
+    screen:expect(function()
+      eq(changed, screen.options)
+    end)
+
+    command("set linespace=-11")
+    changed.linespace = -11
     screen:expect(function()
       eq(changed, screen.options)
     end)

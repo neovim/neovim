@@ -3676,7 +3676,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Minimum value is 2, maximum value is 1000.
 
 						*'linespace'* *'lsp'*
-'linespace' 'lsp'	number	(default 0, 1 for Win32 GUI)
+'linespace' 'lsp'	number	(default 0)
 			global
 			{only in the GUI}
 	Number of pixel lines inserted between characters.  Useful if the font
