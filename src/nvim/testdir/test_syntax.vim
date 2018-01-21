@@ -360,12 +360,6 @@ func Test_conceal()
 
   set conceallevel=1
   call assert_equal('1X 6   ', ScreenLines(2, 7)[0])
-  " FIXME: with conceallevel=1, I would expect that the portion "45" of
-  " the line to be replaced with a space since ":help 'conceallevel'
-  " states that if listchars is not set, then the default replacement
-  " should be a space. But synconcealed() gives an empty string in
-  " the 2nd value of the returned list. Bug?
-  " So for now, the following line is commented out:
   call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ' '], [1, ' '], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
 
   set conceallevel=1
