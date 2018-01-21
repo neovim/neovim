@@ -1,5 +1,7 @@
 " Tests for editing the command line.
 
+set belloff=all
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")

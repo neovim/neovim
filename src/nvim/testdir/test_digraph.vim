@@ -3,6 +3,7 @@
 if !has("digraphs") || !has("multi_byte")
   finish
 endif
+set belloff=all
 
 func! Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars

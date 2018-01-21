@@ -4,6 +4,7 @@ if !has('textobjects')
   finish
 endif
 
+set belloff=all
 function! CpoM(line, useM, expected)
   new
 

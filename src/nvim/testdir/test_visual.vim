@@ -3,6 +3,8 @@ if !has('visual')
   finish
 endif
 
+set belloff=all
+
 func Test_block_shift_multibyte()
   " Uses double-wide character.
   if !has('multi_byte')
