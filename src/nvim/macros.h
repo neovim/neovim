@@ -148,6 +148,10 @@
 /// zero in those cases (-Wdiv-by-zero in GCC).
 #define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
+// Duplicated in os/win_defs.h to avoid include-order sensitivity.
+#if defined(WIN32) && defined(RGB)
+# undef RGB
+#endif
 #define RGB(r, g, b) ((r << 16) | (g << 8) | b)
 
 #define STR_(x) #x
@@ -182,5 +186,20 @@
 ///
 /// @return ((Type *)obj).
 #define STRUCT_CAST(Type, obj) ((Type *)(obj))
+
+// Type of uv_buf_t.len is platform-dependent.
+// Related: https://github.com/libuv/libuv/pull/1236
+#if defined(WIN32)
+# define UV_BUF_LEN(x)  (ULONG)(x)
+#else
+# define UV_BUF_LEN(x)  (x)
+#endif
+
+// Type of read()/write() `count` param is platform-dependent.
+#if defined(WIN32)
+# define IO_COUNT(x)  (unsigned)(x)
+#else
+# define IO_COUNT(x)  (x)
+#endif
 
 #endif  // NVIM_MACROS_H

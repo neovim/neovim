@@ -1417,7 +1417,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  xstrlcpy(buf, cmd, len);
+  xstrlcpy(buf, (char *)cmd, len);
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the

@@ -831,24 +831,26 @@ set_option_default (
     if (flags & P_STRING) {
       /* Use set_string_option_direct() for local options to handle
        * freeing and allocating the value. */
-      if (options[opt_idx].indir != PV_NONE)
+      if (options[opt_idx].indir != PV_NONE) {
         set_string_option_direct(NULL, opt_idx,
-            options[opt_idx].def_val[dvi], opt_flags, 0);
-      else {
-        if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED))
+                                 options[opt_idx].def_val[dvi], opt_flags, 0);
+      } else {
+        if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char_u **)(varp));
+        }
         *(char_u **)varp = options[opt_idx].def_val[dvi];
         options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
-      if (options[opt_idx].indir == PV_SCROLL)
+      if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
-      else {
-        *(long *)varp = (long)options[opt_idx].def_val[dvi];
-        /* May also set global value for local option. */
-        if (both)
+      } else {
+        *(long *)varp = (long)(intptr_t)options[opt_idx].def_val[dvi];
+        // May also set global value for local option.
+        if (both) {
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
             *(long *)varp;
+        }
       }
     } else {  /* P_BOOL */
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
@@ -926,7 +928,7 @@ void set_number_default(char *name, long val)
 
   opt_idx = findoption(name);
   if (opt_idx >= 0) {
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
   }
 }
 
@@ -1440,20 +1442,19 @@ do_set (
              * [-]0-9   set number
              * other    error
              */
-            ++arg;
-            if (nextchar == '&')
-              value = (long)options[opt_idx].def_val[
-                ((flags & P_VI_DEF) || cp_val)
-                ?  VI_DEFAULT : VIM_DEFAULT];
-            else if (nextchar == '<') {
-              /* For 'undolevels' NO_LOCAL_UNDOLEVEL means to
-               * use the global value. */
-              if ((long *)varp == &curbuf->b_p_ul
-                  && opt_flags == OPT_LOCAL)
+            arg++;
+            if (nextchar == '&') {
+              value = (long)(intptr_t)options[opt_idx].def_val[
+                  ((flags & P_VI_DEF) || cp_val) ? VI_DEFAULT : VIM_DEFAULT];
+            } else if (nextchar == '<') {
+              // For 'undolevels' NO_LOCAL_UNDOLEVEL means to
+              // use the global value.
+              if ((long *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
                 value = NO_LOCAL_UNDOLEVEL;
-              else
+              } else {
                 value = *(long *)get_varp_scope(
                     &(options[opt_idx]), OPT_GLOBAL);
+              }
             } else if (((long *)varp == &p_wc
                         || (long *)varp == &p_wcm)
                        && (*arg == '<'
@@ -5011,11 +5012,13 @@ static int optval_default(vimoption_T *p, char_u *varp)
   if (varp == NULL)
     return TRUE;            /* hidden option is always at default */
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
-  if (p->flags & P_NUM)
-    return *(long *)varp == (long)p->def_val[dvi];
-  if (p->flags & P_BOOL)
+  if (p->flags & P_NUM) {
+    return *(long *)varp == (long)(intptr_t)p->def_val[dvi];
+  }
+  if (p->flags & P_BOOL) {
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
-  /* P_STRING */
+  }
+  // P_STRING
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
 }
 

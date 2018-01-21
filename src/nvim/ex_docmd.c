@@ -3442,6 +3442,10 @@ const char * set_one_cmd_context(
   case CMD_profile:
     set_context_in_profile_cmd(xp, arg);
     break;
+  case CMD_checkhealth:
+    xp->xp_context = EXPAND_CHECKHEALTH;
+    xp->xp_pattern = (char_u *)arg;
+    break;
   case CMD_behave:
     xp->xp_context = EXPAND_BEHAVE;
     xp->xp_pattern = (char_u *)arg;
@@ -4871,6 +4875,7 @@ static struct {
   { EXPAND_AUGROUP, "augroup" },
   { EXPAND_BEHAVE, "behave" },
   { EXPAND_BUFFERS, "buffer" },
+  { EXPAND_CHECKHEALTH, "checkhealth" },
   { EXPAND_COLORS, "color" },
   { EXPAND_COMMANDS, "command" },
   { EXPAND_COMPILER, "compiler" },
