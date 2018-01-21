@@ -33,8 +33,8 @@ describe("shell command :!", function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
+      {4:~                                                 }|
       :!printf foo; sleep 200                           |
-                                                        |
       foo                                               |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -56,11 +56,11 @@ describe("shell command :!", function()
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
     screen:expect([[
-      XXXXXXXXXX 2996                                   |
       XXXXXXXXXX 2997                                   |
       XXXXXXXXXX 2998                                   |
       XXXXXXXXXX 2999                                   |
       XXXXXXXXXX 3000                                   |
+                                                        |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]])
