@@ -15,6 +15,7 @@ local command = helpers.command
 local intchar2lua = global_helpers.intchar2lua
 local format_string = global_helpers.format_string
 local mergedicts_copy = global_helpers.mergedicts_copy
+local uname = global_helpers.uname
 
 describe('api', function()
   before_each(clear)
@@ -99,8 +100,9 @@ describe('api', function()
           [[echo nvim_command_output('echo "nested1\nnested2"') | ls]]))
     end)
 
-    it('does not return shell |:!| output', function()
-      eq(':!echo "foo"\r\n', nvim('command_output', [[!echo "foo"]]))
+    it('returns shell |:!| output', function()
+      local win_lf = (uname() == 'Windows' and '\r') or ''
+      eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
     it("parse error: fails (specific error), does NOT update v:errmsg", function()
