@@ -925,7 +925,7 @@ void ex_diffpatch(exarg_T *eap)
   } else {
     // Build the patch command and execute it. Ignore errors.
 #ifdef UNIX
-    vim_snprintf((char *)buf, buflen, "patch -o %s %s < \"%s\"",
+    vim_snprintf((char *)buf, buflen, "patch -o %s %s < '%s'",
                  tmp_new, tmp_orig, fullname != NULL ? fullname : eap->arg);
 #else
     vim_snprintf((char *)buf, buflen, "patch -o %s %s < \"%s\"",
