@@ -1019,7 +1019,16 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   ui_flush();
 
   pos_T  t;
+  char_u *pat;
   int search_flags = SEARCH_NOOF;
+
+
+  if (s->firstc == ccline.cmdbuff[0]) {
+    pat = last_search_pattern();
+  } else {
+    pat = ccline.cmdbuff;
+  }
+
   save_last_search_pattern();
 
   if (next_match) {
@@ -1039,7 +1048,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   emsg_off++;
   s->i = searchit(curwin, curbuf, &t,
                   next_match ? FORWARD : BACKWARD,
-                  ccline.cmdbuff, s->count, search_flags,
+                  pat, s->count, search_flags,
                   RE_SEARCH, 0, NULL);
   emsg_off--;
   ui_busy_stop();

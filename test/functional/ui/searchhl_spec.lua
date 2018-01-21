@@ -243,6 +243,30 @@ describe('search highlighting', function()
       {1:~                                       }|
       /^                                       |
     ]])
+
+    -- 8.0.1304, test that C-g and C-t works with incsearch and empty pattern
+    feed('<esc>/fi<CR>')
+    feed('//')
+    screen:expect([[
+        the {3:fi}rst line                        |
+        in a little {2:fi}le                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      //^                                      |
+    ]])
+
+    feed('<C-g>')
+    screen:expect([[
+        the {2:fi}rst line                        |
+        in a little {3:fi}le                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      //^                                      |
+    ]])
   end)
 
   it('works with incsearch and offset', function()

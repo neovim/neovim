@@ -335,6 +335,12 @@ restore_last_search_pattern(void)
   SET_NO_HLSEARCH(saved_no_hlsearch);
 }
 
+    char_u *
+last_search_pattern(void)
+{
+  return spats[RE_SEARCH].pat;
+}
+
 /*
  * Return TRUE when case should be ignored for search pattern "pat".
  * Uses the 'ignorecase' and 'smartcase' options.
