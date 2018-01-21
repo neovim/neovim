@@ -502,7 +502,7 @@ func Test_diffpatch()
   new
   call assert_fails('diffpatch Xpatch', 'E816:')
 
-  for name in ['Xpatch', 'Xpatch$HOME']
+  for name in ['Xpatch', 'Xpatch$HOME', 'Xpa''tch']
     call setline(1, ['1', '2', '3'])
     if name != 'Xpatch'
       call rename('Xpatch', name)
