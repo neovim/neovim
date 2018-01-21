@@ -1252,6 +1252,15 @@ func Test_delfunction_force()
     delfunc! Xtest
 endfunc
 
+" Test using bang after user command				    {{{1
+func Test_user_command_with_bang()
+    command -bang Nieuw let nieuw = 1
+    Ni!
+    call assert_equal(1, nieuw)
+    unlet nieuw
+    delcommand Nieuw
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
