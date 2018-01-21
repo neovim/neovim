@@ -5751,9 +5751,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	evaluated and the result is used as the option value.  Example: >
 		:set statusline=%!MyStatusLine()
 <	The result can contain %{} items that will be evaluated too.
+							*v:stl_winid*
 	Note that the "%!" expression is evaluated in the context of the
-	current window and buffer, while %{} items are evaluated in the
-	context of the window that the statusline belongs to.
+	current window and buffer, while "%{}" items are evaluated in the
+	context of the window that the statusline belongs to.  The variable
+	"v:stl_winid" is set to the window whose statusline is currently
+	being drawn during evaluation of the "%!" expression.
 
 	When there is error while evaluating the option then it will be made
 	empty to avoid further errors.  Otherwise screen updating would loop.
@@ -5879,13 +5882,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	become empty.  This will make a group like the following disappear
 	completely from the statusline when none of the flags are set. >
 		:set statusline=...%(\ [%M%R%H]%)...
-<							*g:actual_curbuf*
+<							*v:actual_curwinid*
 	Beware that an expression is evaluated each and every time the status
 	line is displayed.  The current buffer and current window will be set
 	temporarily to that of the window (and buffer) whose statusline is
 	currently being drawn.  The expression will evaluate in this context.
-	The variable "actual_curbuf" is set to the 'bufnr()' number of the
-	real current buffer.
+	The variable "v:actual_curwinid" is set to the ID of the real current
+	window.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
