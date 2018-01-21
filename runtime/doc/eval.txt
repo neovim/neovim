@@ -7602,17 +7602,20 @@ synIDtrans({synID})					*synIDtrans()*
 		":highlight link" are followed.
 
 synconcealed({lnum}, {col})				*synconcealed()*
-		The result is a List. The first item in the list is 0 if the
-		character at the position {lnum} and {col} is not part of a
-		concealable region, 1 if it is. The second item in the list is
-		a string. If the first item is 1, the second item contains the
-		text which will be displayed in place of the concealed text,
-		depending on the current setting of 'conceallevel'. The third
-		and final item in the list is a unique number representing the
-		specific syntax region matched. This allows detection of the
-		beginning of a new concealable region if there are two
-		consecutive regions with the same replacement character.
-		For an example use see $VIMRUNTIME/syntax/2html.vim .
+		The result is a List with currently three items:
+		1. The first item in the list is 0 if the character at the
+		   position {lnum} and {col} is not part of a concealable
+		   region, 1 if it is.
+		2. The second item in the list is a string. If the first item
+		   is 1, the second item contains the text which will be
+		   displayed in place of the concealed text, depending on the
+		   current setting of 'conceallevel' and 'listchars'.
+		3. The third and final item in the list is a unique number
+		   representing the specific syntax region matched. This
+		   allows detection of the beginning of a new concealable
+		   region if there are two consecutive regions with the same
+		   replacement character.  For an example use see
+		   $VIMRUNTIME/syntax/2html.vim .
 
 
 synstack({lnum}, {col})					*synstack()*

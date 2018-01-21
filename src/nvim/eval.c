@@ -16274,8 +16274,8 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // get the conceal character
     if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
       cchar = syn_get_sub_char();
-      if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL) {
-        cchar = lcs_conceal;
+      if (cchar == NUL && curwin->w_p_cole == 1) {
+        cchar = (lcs_conceal == NUL) ? ' ' : lcs_conceal;
       }
       if (cchar != NUL) {
         utf_char2bytes(cchar, str);
