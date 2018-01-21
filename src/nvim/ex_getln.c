@@ -1781,6 +1781,20 @@ static int command_line_not_changed(CommandLineState *s)
   return command_line_changed(s);
 }
 
+/// Guess that the pattern matches everything.  Only finds specific cases, such
+/// as a trailing \|, which can happen while typing a pattern.
+static int empty_pattern(char_u *p)
+{
+  int n = STRLEN(p);
+
+  // remove trailing \v and the like
+  while (n >= 2 && p[n - 2] == '\\'
+         && vim_strchr((char_u *)"mMvVcCZ", p[n - 1]) != NULL) {
+    n -= 2;
+  }
+  return n == 0 || (n >= 2 && p[n - 2] == '\\' && p[n - 1] == '|');
+}
+
 static int command_line_changed(CommandLineState *s)
 {
   // 'incsearch' highlighting.
@@ -1854,6 +1868,13 @@ static int command_line_changed(CommandLineState *s)
       curwin->w_cursor = save_pos;
     } else {
       end_pos = curwin->w_cursor;         // shutup gcc 4
+    }
+
+
+    // Disable 'hlsearch' highlighting if the pattern matches8.0.1304
+    // everything. Avoids a flash when typing "foo\|".
+    if (empty_pattern(ccline.cmdbuff)) {
+      SET_NO_HLSEARCH(true);
     }
 
     validate_cursor();
