@@ -507,17 +507,6 @@ if(BUSTED_PRG)
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
 
-  # Set policy CMP0026 to OLD so we avoid CMake warnings on newer
-  # versions of cmake.
-  if(POLICY CMP0026)
-    cmake_policy(SET CMP0026 OLD)
-  endif()
-  if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
-  else()
-    get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
-  endif()
-
   # When running tests from 'ninja' we need to use the
   # console pool: to do so we need to use the USES_TERMINAL
   # option, but this is only available in CMake 3.2
@@ -526,9 +515,27 @@ if(BUSTED_PRG)
     list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
   endif()
 
-  configure_file(
-    test/config/paths.lua.in
-    ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
+    else()
+      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+    endif()
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  else()
+    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
+    # use configure_file() to add the generator expression and then generate
+    # the final file
+    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+    file(GENERATE
+      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
+      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+  endif()
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test)
