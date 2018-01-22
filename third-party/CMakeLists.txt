@@ -145,8 +145,11 @@ set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a
 set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
 set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
-set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
-set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
+if (USE_BUNDLED_WINPTY)
+set(WINPTY_URL https://github.com/zhaozg/winpty/archive/master.zip)
+set(WINPTY_SHA256 0806c69be23331b8794c177aaebffed9d944c1eaed3ad9a70169ea4ff3cbadaf)
+endif()
+
 if (USE_BUNDLED_ICONV)
 set(ICONV_URL https://github.com/win-iconv/win-iconv/archive/v0.0.8.tar.gz)
 set(ICONV_SHA256 23adea990a8303c6e69e32a64a30171efcb1b73824a1c2da1bbf576b0ae7c520)
