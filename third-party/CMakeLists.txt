@@ -30,6 +30,7 @@ option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 if (WIN32)
 option(USE_BUNDLED_ICONV "Use the bundled version of win-iconv." ${USE_BUNDLED})
+option(USE_BUNDLED_INTL "Use the bundled version of intl-lite." ${USE_BUNDLED})
 endif()
 
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
@@ -196,6 +197,10 @@ endif()
 
 if(USE_BUNDLED_ICONV)
   include(BuildIconv)
+endif()
+
+if(USE_BUNDLED_INTL)
+  include(BuildIntl)
 endif()
 
 include(GetBinaryDeps)

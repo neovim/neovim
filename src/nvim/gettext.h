@@ -19,4 +19,8 @@
 # define textdomain(x)  // empty
 #endif
 
+#ifdef LIBINTL_LITE_API
+#define libintl_
+#endif
+
 #endif  // NVIM_GETTEXT_H
