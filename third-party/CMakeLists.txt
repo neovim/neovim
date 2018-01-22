@@ -28,6 +28,10 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
+if (WIN32)
+option(USE_BUNDLED_ICONV "Use the bundled version of win-iconv." ${USE_BUNDLED})
+endif()
+
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
@@ -141,6 +145,10 @@ set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc086
 
 set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
 set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
+if (USE_BUNDLED_ICONV)
+set(ICONV_URL https://github.com/win-iconv/win-iconv/archive/v0.0.8.tar.gz)
+set(ICONV_SHA256 23adea990a8303c6e69e32a64a30171efcb1b73824a1c2da1bbf576b0ae7c520)
+endif()
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -184,6 +192,10 @@ endif()
 
 if(USE_BUNDLED_GPERF)
   include(BuildGperf)
+endif()
+
+if(USE_BUNDLED_ICONV)
+  include(BuildIconv)
 endif()
 
 include(GetBinaryDeps)
