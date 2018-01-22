@@ -31,6 +31,7 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 if (WIN32)
 option(USE_BUNDLED_ICONV "Use the bundled version of win-iconv." ${USE_BUNDLED})
 option(USE_BUNDLED_INTL "Use the bundled version of intl-lite." ${USE_BUNDLED})
+option(USE_BUNDLED_WINPTY "Use the bundled version of winpty." ${USE_BUNDLED})
 endif()
 
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
@@ -208,6 +209,10 @@ if(USE_BUNDLED_INTL)
   include(BuildIntl)
 endif()
 
+if(USE_BUNDLED_WINPTY)
+  include(BuildWinpty)
+endif()
+
 include(GetBinaryDeps)
 
 if(WIN32)
@@ -226,18 +231,6 @@ if(WIN32)
   elseif(TARGET_ARCH STREQUAL "X86")
     set(TARGET_ARCH ia32)
   endif()
-
-  GetBinaryDep(TARGET winpty
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*
-        -DTO=${DEPS_INSTALL_DIR}/bin/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/include/*
-        -DTO=${DEPS_INSTALL_DIR}/include/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/lib/*
-        -DTO=${DEPS_INSTALL_DIR}/lib/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
 endif()
 
 add_custom_target(clean-shared-libraries
