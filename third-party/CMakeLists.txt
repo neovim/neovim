@@ -151,6 +151,11 @@ set(ICONV_URL https://github.com/win-iconv/win-iconv/archive/v0.0.8.tar.gz)
 set(ICONV_SHA256 23adea990a8303c6e69e32a64a30171efcb1b73824a1c2da1bbf576b0ae7c520)
 endif()
 
+if (USE_BUNDLED_INTL)
+set(INTL_URL https://github.com/j-jorge/libintl-lite/archive/master.zip)
+set(INTL_SHA256 d30dd7aa39ca60ed15ddeae1b9c92514642bf32b19ae4d890029ffa435debbae)
+endif()
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
