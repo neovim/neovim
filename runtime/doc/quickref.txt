@@ -655,7 +655,6 @@ Short explanation of each option:		*option-list*
 'cscoperelative'  'csre'    Use cscope.out path basename as prefix
 'cscopetag'       'cst'     use cscope for tag commands
 'cscopetagorder'  'csto'    determines ":cstag" search order
-'cscopeverbose'   'csverb'  give messages when adding a cscope database
 'cursorbind'	  'crb'     move cursor in window as it moves in other windows
 'cursorcolumn'	  'cuc'	    highlight the screen column of the cursor
 'cursorline'	  'cul'	    highlight the screen line of the cursor

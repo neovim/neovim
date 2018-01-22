@@ -1807,12 +1807,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Determines the order in which ":cstag" performs a search.  See
 	|cscopetagorder|.
 
-					*'cscopeverbose'* *'csverb'*
-					*'nocscopeverbose'* *'nocsverb'*
-'cscopeverbose' 'csverb' boolean (default off)
-			global
-	Give messages when adding a cscope database.  See |cscopeverbose|.
-
 			*'cursorbind'* *'crb'* *'nocursorbind'* *'nocrb'*
 'cursorbind' 'crb'	boolean  (default off)
 			local to window
