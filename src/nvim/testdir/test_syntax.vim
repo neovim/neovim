@@ -1,5 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
+source view_util.vim
+
 func GetSyntaxItem(pat)
   let c = ''
   let a = ['a', getreg('a'), getregtype('a')]
@@ -339,4 +341,41 @@ func Test_invalid_name()
   syn clear
   hi clear Nop
   hi clear @Wrong
+endfunc
+
+
+func Test_conceal()
+  if !has('conceal')
+    return
+  endif
+
+  new
+  call setline(1, ['', '123456'])
+  syn match test23 "23" conceal cchar=X
+  syn match test45 "45" conceal
+
+  set conceallevel=0
+  call assert_equal('123456 ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [0, ''], [0, ''], [0, ''], [0, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=1
+  call assert_equal('1X 6   ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ' '], [1, ' '], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=1
+  set listchars=conceal:Y
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, 'Y'], [1, 'Y'], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal('1XY6   ', ScreenLines(2, 7)[0])
+
+  set conceallevel=2
+  call assert_match('1X6    ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=3
+  call assert_match('16     ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, ''], [1, ''], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  syn clear
+  set conceallevel&
+  bw!
 endfunc
