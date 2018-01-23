@@ -258,6 +258,9 @@ describe('system()', function()
       end
       eq(2, eval("1+1"))  -- Still alive?
     end)
+    it('works with an empty string', function()
+      eq("test\n", eval('system("echo test", "")'))
+    end)
   end)
 
   describe('passing a lot of input', function()
