@@ -85,7 +85,7 @@ Global Events							    *ui-global*
 	listed below:
 
 	'arabicshape'
-	'ambiwith'
+	'ambiwidth'
 	'emoji'
 	'guifont'
 	'guifontset'
@@ -97,7 +97,7 @@ Global Events							    *ui-global*
 	Options are not added to the list if their effects are already taken
 	care of. For instance, instead of forwarding the raw 'mouse' option
 	value, `mouse_on` and `mouse_off` directly indicate if mouse support
-	is active right now. Some options like 'ambiwith' have already taken
+	is active right now. Some options like 'ambiwidth' have already taken
 	effect on the grid, where appropriate empty cells are added, however
 	an ui might still use these options when rendering raw text sent from
 	Nvim, like the text of the cmdline when |ui-ext-cmdline| is set.
