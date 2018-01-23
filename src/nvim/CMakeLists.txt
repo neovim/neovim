@@ -493,6 +493,11 @@ if(LUAJIT_FOUND)
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
+  if(WIN32)
+    list(REMOVE_DUPLICATES NVIM_TEST_LINK_LIBRARIES)
+    # Static stdc++ runtime library must keep tail for static link 
+    list(APPEND NVIM_TEST_LINK_LIBRARIES -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++)
+  endif()
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
   target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
   set_property(
