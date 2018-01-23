@@ -3086,6 +3086,37 @@ typedef enum {
   kNumBaseHexadecimal = 16
 } NumberBase;
 
+typedef struct stl_item {
+  // Where the item starts in the status line output buffer
+  char_u *start;
+  // Function to run for ClickFunc items.
+  char *cmd;
+  // The minimum width of the item
+  int minwid;
+  // The maximum width of the item
+  int maxwid;
+  enum {
+    Normal,
+    Empty,
+    Group,
+    Separate,
+    Highlight,
+    TabPage,
+    ClickFunc,
+    Trunc
+  } type;
+} stl_item_t;
+
+static void stl_eval_highlight(char_u *start,
+    char_u *fmt_p,
+    char_u *out_p,
+    stl_item_t *current_item)
+{
+  current_item->type = Highlight;
+  current_item->start = out_p;
+  current_item->minwid = -syn_namen2id(start, (int)(fmt_p - start));
+  fmt_p++;
+}
 
 /// Build a string from the status line items in "fmt".
 /// Return length of string in screen cells.
@@ -3125,26 +3156,7 @@ int build_stl_str_hl(
 )
 {
   int groupitems[STL_MAX_ITEM];
-  struct stl_item {
-    // Where the item starts in the status line output buffer
-    char_u *start;
-    // Function to run for ClickFunc items.
-    char *cmd;
-    // The minimum width of the item
-    int minwid;
-    // The maximum width of the item
-    int maxwid;
-    enum {
-      Normal,
-      Empty,
-      Group,
-      Separate,
-      Highlight,
-      TabPage,
-      ClickFunc,
-      Trunc
-    } type;
-  } items[STL_MAX_ITEM];
+  struct stl_item items[STL_MAX_ITEM];
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -3540,19 +3552,16 @@ int build_stl_str_hl(
 
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
-      char_u *t = out_p;
-      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p)
+      char_u *t = fmt_p;
+      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p) {
         *out_p++ = *fmt_p++;
-      if (*fmt_p != '}')            /* missing '}' or out of space */
+      }
+      if (*fmt_p != '}') {
+        // missing '}' or out of space
         break;
+      }
       fmt_p++;
       *out_p = 0;
-
-      // Move our position in the output buffer
-      // to the beginning of the expression
-      out_p = t;
-
-      // { Evaluate the expression
 
       // Store the current buffer number as a string variable
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
@@ -3563,8 +3572,23 @@ int build_stl_str_hl(
       curwin = wp;
       curbuf = wp->w_buffer;
 
-      // Note: The result stored in `t` is unused.
-      str = eval_to_string_safe(out_p, &t, use_sandbox);
+      // Evaluate the expression
+      if ((out_p[0]) == '#') {
+      } else {
+        // Note: The result stored in `t` is unused.
+        str = eval_to_string_safe(out_p, &t, use_sandbox);
+
+        // Check if the evaluated result is a number.
+        // If so, convert the number to an int and free the string.
+        if (str != NULL && *str != 0) {
+          if (*skipdigits(str) == NUL) {
+            num = atoi((char *)str);
+            xfree(str);
+            str = NULL;
+            itemisflag = false;
+          }
+        }
+      }
 
       curwin = o_curwin;
       curbuf = o_curbuf;
@@ -3572,18 +3596,6 @@ int build_stl_str_hl(
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);
 
-      // }
-
-      // Check if the evaluated result is a number.
-      // If so, convert the number to an int and free the string.
-      if (str != NULL && *str != 0) {
-        if (*skipdigits(str) == NUL) {
-          num = atoi((char *)str);
-          xfree(str);
-          str = NULL;
-          itemisflag = false;
-        }
-      }
       break;
     }
 
@@ -3771,12 +3783,10 @@ int build_stl_str_hl(
 
       // Create a highlight item based on the name
       if (*fmt_p == '#') {
-        items[curitem].type = Highlight;
-        items[curitem].start = out_p;
-        items[curitem].minwid = -syn_namen2id(t, (int)(fmt_p - t));
+        stl_eval_highlight(t, fmt_p, out_p, &items[curitem]);
         curitem++;
-        fmt_p++;
       }
+
       continue;
     }
     }

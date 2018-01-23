@@ -452,5 +452,9 @@ describe('buffer functions', function()
       'Ą%=mid%=end',         'Ą@mid@@end',
       {fillchar=('@'):byte(), expected_byte_length=11})
 
+
+    -- recursive testing
+    statusline_test('does not error on recursive', 20,
+      'hello%{#{->"PreProc"}()}world', 'helloworld')
   end)
 end)
