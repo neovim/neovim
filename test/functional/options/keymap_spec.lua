@@ -181,6 +181,16 @@ describe("'keymap' / :lmap", function()
     command('lmapclear')
     command('lnoremap l a')
     command('imap a x')
+    feed('il<esc>')
+    expect('alllaaa')
+  end)
+  -- This is a problem introduced when introducting :lmap and macro
+  -- compatibility. There are no plans to fix this as the complexity involved
+  -- seems too great.
+  pending('mappings not applied to macro replay of :lnoremap', function()
+    command('lmapclear')
+    command('lnoremap l a')
+    command('imap a x')
     feed('qail<esc>q')
     expect('alllaaa')
     feed('@a')
