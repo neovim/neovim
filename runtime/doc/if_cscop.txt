@@ -4,42 +4,19 @@
 		  VIM REFERENCE MANUAL    by Andy Kahn
 
 							*cscope* *Cscope*
-This document explains how to use Vim's cscope interface.
+Cscope is a "code intelligence" tool that helps you navigate C programs. It
+can also perform some refactoring tasks, such as renaming a global variable in
+all source files.  Think of it as "ctags on steroids".
 
-Cscope is a tool like ctags, but think of it as ctags on steroids since it
-does a lot more than what ctags provides.  In Vim, jumping to a result from
-a cscope query is just like jumping to any tag; it is saved on the tag stack
-so that with the right keyboard mappings, you can jump back and forth between
-functions as you normally would with |tags|.
+See |cscope-usage| for a quickstart.
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Cscope introduction					*cscope-intro*
+Cscope introduction					*cscope-intro*
 
-The following text is taken from a version of the cscope man page:
 
-				    -----
-
-  Cscope is an interactive screen-oriented tool that helps you:
-
-       Learn how a C program works without endless flipping through a thick
-       listing.
-
-       Locate the section of code to change to fix a bug without having to
-       learn the entire program.
-
-       Examine the effect of a proposed change such as adding a value to an
-       enum variable.
-
-       Verify that a change has been made in all source files such as adding
-       an argument to an existing function.
-
-       Rename a global variable in all source files.
-
-       Change a constant to a preprocessor symbol in selected lines of files.
-
-  It is designed to answer questions like:
+Cscope is designed to answer questions like:
        Where is this symbol used?
        Where is it defined?
        Where did this variable get its value?
@@ -51,35 +28,17 @@ The following text is taken from a version of the cscope man page:
        Where is this source file in the directory structure?
        What files include this header file?
 
-  Cscope answers these questions from a symbol database that it builds the
-  first time it is used on the source files.  On a subsequent call, cscope
-  rebuilds the database only if a source file has changed or the list of
-  source files is different.  When the database is rebuilt the data for the
-  unchanged files is copied from the old database, which makes rebuilding
-  much faster than the initial build.
+Cscope answers these questions from a symbol database that it builds the first
+time it is used on the source files.  On a subsequent call, cscope rebuilds
+the database only if a source file has changed or the list of source files is
+different.  When the database is rebuilt the data for the unchanged files is
+copied from the old database, which makes rebuilding much faster than the
+initial build.
 
-				    -----
-
-When cscope is normally invoked, you will get a full-screen selection
-screen allowing you to make a query for one of the above questions.
-However, once a match is found to your query and you have entered your
-text editor to edit the source file containing match, you cannot simply
-jump from tag to tag as you normally would with vi's Ctrl-] or :tag
-command.
-
-Vim's cscope interface is done by invoking cscope with its line-oriented
-interface, and then parsing the output returned from a query.  The end
-result is that cscope query results become just like regular tags, so
-you can jump to them just like you do with normal tags (Ctrl-] or :tag)
-and then go back by popping off the tagstack with Ctrl-T.  (Please note
-however, that you don't actually jump to a cscope tag simply by doing
-Ctrl-] or :tag without remapping these commands or setting an option.
-See the remaining sections on how the cscope interface works and for
-suggested use.)
-
+See |cscope-usage| to get started.
 
 ==============================================================================
-2. Cscope related commands				*cscope-commands*
+Cscope commands						*cscope-commands*
 
 		*:cscope* *:cs* *:scs* *:scscope* *E259* *E262* *E561* *E560*
 All cscope commands are accessed through suboptions to the cscope commands.
@@ -232,7 +191,7 @@ through your tags file(s).
 
 
 ==============================================================================
-3. Cscope options					*cscope-options*
+Cscope options						*cscope-options*
 
 Use the |:set| command to set all cscope options.  Ideally, you would do
 this in one of your startup files (e.g., vimrc).  Some cscope related
@@ -245,7 +204,6 @@ started will have no effect!
 	:set csprg=/usr/local/bin/cscope
 <
 					    *cscopequickfix* *csqf* *E469*
-{not available when compiled without the |+quickfix| feature}
 'cscopequickfix' specifies whether to use quickfix window to show cscope
 results.  This is a list of comma-separated values. Each item consists of
 |cscope-find| command (s, g, d, c, t, e, f, i or a) and flag (+, - or 0).
@@ -260,81 +218,56 @@ seems to be useful: >
 If 'cscopetag' is set, the commands ":tag" and CTRL-] as well as "vim -t"
 will always use |:cstag| instead of the default :tag behavior.  Effectively,
 by setting 'cst', you will always search your cscope databases as well as
-your tag files.  The default is off.  Examples: >
-	:set cst
-	:set nocst
-<
+your tag files.  The default is off.
+
 							*cscoperelative* *csre*
 If 'cscoperelative' is set, then in absence of a prefix given to cscope
 (prefix is the argument of -P option of cscope), basename of cscope.out
 location (usually the project root directory) will be used as the prefix
 to construct an absolute path.  The default is off.  Note: This option is
 only effective when cscope (cscopeprg) is initialized without a prefix
-path (-P).  Examples: >
-	:set csre
-	:set nocsre
-<
+path (-P).
+
 							*cscopetagorder* *csto*
 The value of 'csto' determines the order in which |:cstag| performs a search.
 If 'csto' is set to zero, cscope database(s) are searched first, followed
 by tag file(s) if cscope did not return any matches.  If 'csto' is set to
 one, tag file(s) are searched before cscope database(s).  The default is zero.
-Examples: >
-	:set csto=0
-	:set csto=1
-<
-						*cscopeverbose* *csverb*
-If 'cscopeverbose' is not set (the default), messages will not be printed
-indicating success or failure when adding a cscope database.  Ideally, you
-should reset this option in your |init.vim| before adding any cscope 
-databases, and after adding them, set it.  From then on, when you add more 
-databases within Vim, you will get a (hopefully) useful message should the 
-database fail to be added.  Examples: >
-	:set csverb
-	:set nocsverb
-<
+
 						      *cscopepathcomp* *cspc*
-The value of 'cspc' determines how many components of a file's path to
-display.  With the default value of zero the entire path will be displayed.
+'cscopepathcomp' determines how many components of a file's path to display.
+With the default value of zero the entire path will be displayed.
 The value one will display only the filename with no path.  Other values
 display that many components.  For example: >
-	:set cspc=3
+	:set cscopepathcomp=3
 will display the last 3 components of the file's path, including the file
 name itself.
 
 ==============================================================================
-4. How to use cscope in Vim				*cscope-howtouse*
+Using cscope in Nvim			*cscope-usage* *cscope-howtouse*
 
-The first thing you need to do is to build a cscope database for your
-source files.  For the most basic case, simply do "cscope -b".  Please
-refer to the cscope man page for more details.
+To get started, build the cscope database in your project root directory: >
+	cscope -bcqR
 
-Assuming you have a cscope database, you need to "add" the database to Vim.
-This establishes a cscope "connection" and makes it available for Vim to use.
-You can do this in your vimrc file, or you can do it manually after starting
-vim.  For example, to add the cscope database "cscope.out", you would do:
+See the cscope manpage for details: >
+	:Man cscope
 
-	:cs add cscope.out
+By default the cscope database file is named "cscope.out". After building the
+database, connect to it from Nvim: >
+	:cscope add cscope.out
 
-You can double-check the result of this by executing ":cs show".  This will
-produce output which looks like this:
+That establishes a cscope connection for Nvim to use.  You can check the
+result with ":cs show".  It will show something like:
 
  # pid	  database name			      prepend path
  0 28806  cscope.out			      <none>
 
-Note:
-Because of the Microsoft RTL limitations, Win32 version shows 0 instead
-of the real pid.
-
 Once a cscope connection is established, you can make queries to cscope and
-the results will be printed to you.  Queries are made using the command
-":cs find".  For example:
-
+the results will be printed.  Queries are made using the command ":cs find".
+For example: >
 	:cs find g ALIGN_SIZE
 
-This can get a little cumbersome since one ends up doing a significant
-amount of typing.  Fortunately, there are ways around this by mapping
-shortcut keys.  See |cscope-suggestions| for suggested usage.
+To make this easier you can configure mappings, see |cscope-suggestions|.
 
 If the results return only one match, you will automatically be taken to it.
 If there is more than one match, you will be given a selection screen to pick
@@ -343,39 +276,28 @@ simply hit Ctrl-T to get back to the previous one.
 
 
 ==============================================================================
-5. Limitations						*cscope-limitations*
-
-Cscope support for Vim is only available on systems that support these four
-system calls: fork(), pipe(), execl(), waitpid().  This means it is mostly
-limited to Unix systems.
-
-Additionally Cscope support works for Win32.  For more information and a
-cscope version for Win32 see:
-
-	http://iamphet.nm.ru/cscope/index.html
+Limitations						*cscope-limitations*
 
 Hard-coded limitation: doing a |:tjump| when |:cstag| searches the tag files
 is not configurable (e.g., you can't do a tselect instead).
 
-==============================================================================
-6. Suggested usage					*cscope-suggestions*
 
-Put these entries in your vimrc (adjust the pathname accordingly to your
-setup): >
+==============================================================================
+Sample config						*cscope-suggestions*
+
+Copy this into your init.vim (adjust paths for your system): >
 
 	if has("cscope")
 		set csprg=/usr/local/bin/cscope
 		set csto=0
 		set cst
-		set nocsverb
 		" add any database in current directory
 		if filereadable("cscope.out")
-		    cs add cscope.out
+		    silent cs add cscope.out
 		" else add database pointed to by environment
 		elseif $CSCOPE_DB != ""
-		    cs add $CSCOPE_DB
+		    silent cs add $CSCOPE_DB
 		endif
-		set csverb
 	endif
 
 By setting 'cscopetag', we have effectively replaced all instances of the :tag
@@ -447,47 +369,6 @@ Cscope Home Page (http://cscope.sourceforge.net/): >
 		\:vert scs find d <C-R>=expand("<cword>")<CR><CR>
 	nmap <C-Space><C-Space>a
 		\:vert scs find a <C-R>=expand("<cword>")<CR><CR>
-
-==============================================================================
-7. Cscope availability and information			*cscope-info*
-
-If you do not already have cscope (it did not come with your compiler
-license or OS distribution), then you can download it for free from:
-	http://cscope.sourceforge.net/
-This is released by SCO under the BSD license.
-
-If you want a newer version of cscope, you will probably have to buy it.
-According to the (old) nvi documentation:
-
-	You can buy version 13.3 source with an unrestricted license
-	for $400 from AT&T Software Solutions by calling +1-800-462-8146.
-
-Also you can download cscope 13.x and mlcscope 14.x (multi-lingual cscope
-which supports C, C++, Java, lex, yacc, breakpoint listing, Ingres, and SDL)
-from World-Wide Exptools Open Source packages page:
-	http://www.bell-labs.com/project/wwexptools/packages.html
-
-In Solaris 2.x, if you have the C compiler license, you will also have
-cscope.  Both are usually located under /opt/SUNWspro/bin
-
-SGI developers can also get it.  Search for Cscope on this page:
-	http://freeware.sgi.com/index-by-alpha.html
-	https://toolbox.sgi.com/toolbox/utilities/cscope/
-The second one is for those who have a password for the SGI toolbox.
-
-There is source to an older version of a cscope clone (called "cs") available
-on the net.  Due to various reasons, this is not supported with Vim.
-
-The cscope interface/support for Vim was originally written by
-Andy Kahn <ackahn@netapp.com>.  The original structure (as well as a tiny
-bit of code) was adapted from the cscope interface in nvi.  Please report
-any problems, suggestions, patches, et al., you have for the usage of
-cscope within Vim to him.
-							*cscope-win32*
-For a cscope version for Win32 see:
-	http://code.google.com/p/cscope-win32/
-
-Win32 support was added by Sergey Khorev <sergey.khorev@gmail.com>.  Contact
-him if you have Win32-specific issues.
+<
 
  vim:tw=78:ts=8:ft=help:norl:

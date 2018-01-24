@@ -90,6 +90,7 @@ Global Events							    *ui-global*
 	'guifont'
 	'guifontset'
 	'guifontwide'
+	'linespace'
 	'showtabline'
 	'termguicolors'
 

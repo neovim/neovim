@@ -533,7 +533,7 @@ return {
       vi_def=true,
       vim=true,
       varname='p_csverbose',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='cursorbind', abbreviation='crb',
@@ -1399,8 +1399,9 @@ return {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_linespace',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='lisp',

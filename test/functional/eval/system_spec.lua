@@ -251,7 +251,7 @@ describe('system()', function()
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      feed_command('call system("cat - &")')
+      feed_command('call system("cat - &", "input")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)

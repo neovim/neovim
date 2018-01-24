@@ -1,6 +1,7 @@
 " A series of tests that can run in one Vim invocation.
 " This makes testing go faster, since Vim doesn't need to restart.
 
+set belloff=all
 source test_assign.vim
 source test_changedtick.vim
 source test_cursor_func.vim
@@ -21,7 +22,6 @@ source test_lambda.vim
 source test_menu.vim
 source test_mapping.vim
 source test_messages.vim
-source test_options.vim
 source test_partial.vim
 source test_popup.vim
 source test_regexp_utf8.vim
