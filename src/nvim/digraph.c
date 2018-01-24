@@ -1828,11 +1828,11 @@ void ex_loadkeymap(exarg_T *eap)
   }
 
   // setup ":lmap" to map the keys
-  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(0, buf, LANGMAP, FALSE);
+    (void)do_map(0, buf, LANGMAP, false);
   }
 
   p_cpo = save_cpo;
