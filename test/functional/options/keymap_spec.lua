@@ -17,94 +17,94 @@ describe("'keymap' / :lmap", function()
     feed('gg0')
   end)
 
-  describe("'keymap' as :lnoremap", function()
-    -- Shows that 'keymap' sets language mappings without allowing
-    -- remapping of those mappings.
-    -- This equivalence allows us to only test :lmap commands and assert
-    -- they behave the same as 'keymap' settings.
+  describe("'keymap' as :lmap", function()
+    -- Shows that 'keymap' sets language mappings that allows remapping.
+    -- This equivalence allows us to only test :lmap commands and assert they
+    -- behave the same as 'keymap' settings.
     -- It does rely on the absence of special code that implements 'keymap'
     -- and :lmap differently but shows mappings from the 'keymap' after
     -- typing :lmap.
+    -- At the moment this is the case.
     it("'keymap' mappings are shown with :lmap", function()
       command('lmapclear')
       command('lmapclear <buffer>')
       command('set keymap=dvorak')
       command('set nomore')
       local bindings = funcs.nvim_command_output('lmap')
-      eq(bindings, dedent([[
+      eq(dedent([[
 
-      l  "           *@_
-      l  '           *@-
-      l  +           *@}
-      l  ,           *@w
-      l  -           *@[
-      l  .           *@v
-      l  /           *@z
-      l  :           *@S
-      l  ;           *@s
-      l  <           *@W
-      l  =           *@]
-      l  >           *@V
-      l  ?           *@Z
-      l  A           *@A
-      l  B           *@X
-      l  C           *@J
-      l  D           *@E
-      l  E           *@>
-      l  F           *@U
-      l  G           *@I
-      l  H           *@D
-      l  I           *@C
-      l  J           *@H
-      l  K           *@T
-      l  L           *@N
-      l  M           *@M
-      l  N           *@B
-      l  O           *@R
-      l  P           *@L
-      l  Q           *@"
-      l  R           *@P
-      l  S           *@O
-      l  T           *@Y
-      l  U           *@G
-      l  V           *@K
-      l  W           *@<
-      l  X           *@Q
-      l  Y           *@F
-      l  Z           *@:
-      l  [           *@/
-      l  \           *@\
-      l  ]           *@=
-      l  _           *@{
-      l  a           *@a
-      l  b           *@x
-      l  c           *@j
-      l  d           *@e
-      l  e           *@.
-      l  f           *@u
-      l  g           *@i
-      l  h           *@d
-      l  i           *@c
-      l  j           *@h
-      l  k           *@t
-      l  l           *@n
-      l  m           *@m
-      l  n           *@b
-      l  o           *@r
-      l  p           *@l
-      l  q           *@'
-      l  r           *@p
-      l  s           *@o
-      l  t           *@y
-      l  u           *@g
-      l  v           *@k
-      l  w           *@,
-      l  x           *@q
-      l  y           *@f
-      l  z           *@;
-      l  {           *@?
-      l  |           *@|
-      l  }           *@+]]))
+      l  "            @_
+      l  '            @-
+      l  +            @}
+      l  ,            @w
+      l  -            @[
+      l  .            @v
+      l  /            @z
+      l  :            @S
+      l  ;            @s
+      l  <            @W
+      l  =            @]
+      l  >            @V
+      l  ?            @Z
+      l  A            @A
+      l  B            @X
+      l  C            @J
+      l  D            @E
+      l  E            @>
+      l  F            @U
+      l  G            @I
+      l  H            @D
+      l  I            @C
+      l  J            @H
+      l  K            @T
+      l  L            @N
+      l  M            @M
+      l  N            @B
+      l  O            @R
+      l  P            @L
+      l  Q            @"
+      l  R            @P
+      l  S            @O
+      l  T            @Y
+      l  U            @G
+      l  V            @K
+      l  W            @<
+      l  X            @Q
+      l  Y            @F
+      l  Z            @:
+      l  [            @/
+      l  \            @\
+      l  ]            @=
+      l  _            @{
+      l  a            @a
+      l  b            @x
+      l  c            @j
+      l  d            @e
+      l  e            @.
+      l  f            @u
+      l  g            @i
+      l  h            @d
+      l  i            @c
+      l  j            @h
+      l  k            @t
+      l  l            @n
+      l  m            @m
+      l  n            @b
+      l  o            @r
+      l  p            @l
+      l  q            @'
+      l  r            @p
+      l  s            @o
+      l  t            @y
+      l  u            @g
+      l  v            @k
+      l  w            @,
+      l  x            @q
+      l  y            @f
+      l  z            @;
+      l  {            @?
+      l  |            @|
+      l  }            @+]]), bindings)
     end)
   end)
   describe("'iminsert' option", function()
