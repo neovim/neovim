@@ -28,6 +28,12 @@ option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
+if (WIN32)
+option(USE_BUNDLED_ICONV "Use the bundled version of win-iconv." ${USE_BUNDLED})
+option(USE_BUNDLED_INTL "Use the bundled version of intl-lite." ${USE_BUNDLED})
+option(USE_BUNDLED_WINPTY "Use the bundled version of winpty." ${USE_BUNDLED})
+endif()
+
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
@@ -139,8 +145,20 @@ set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a
 set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
 set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
-set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
-set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
+if (USE_BUNDLED_WINPTY)
+set(WINPTY_URL https://github.com/zhaozg/winpty/archive/master.zip)
+set(WINPTY_SHA256 0806c69be23331b8794c177aaebffed9d944c1eaed3ad9a70169ea4ff3cbadaf)
+endif()
+
+if (USE_BUNDLED_ICONV)
+set(ICONV_URL https://github.com/win-iconv/win-iconv/archive/v0.0.8.tar.gz)
+set(ICONV_SHA256 23adea990a8303c6e69e32a64a30171efcb1b73824a1c2da1bbf576b0ae7c520)
+endif()
+
+if (USE_BUNDLED_INTL)
+set(INTL_URL https://github.com/j-jorge/libintl-lite/archive/master.zip)
+set(INTL_SHA256 d30dd7aa39ca60ed15ddeae1b9c92514642bf32b19ae4d890029ffa435debbae)
+endif()
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -186,6 +204,18 @@ if(USE_BUNDLED_GPERF)
   include(BuildGperf)
 endif()
 
+if(USE_BUNDLED_ICONV)
+  include(BuildIconv)
+endif()
+
+if(USE_BUNDLED_INTL)
+  include(BuildIntl)
+endif()
+
+if(USE_BUNDLED_WINPTY)
+  include(BuildWinpty)
+endif()
+
 include(GetBinaryDeps)
 
 if(WIN32)
@@ -204,18 +234,6 @@ if(WIN32)
   elseif(TARGET_ARCH STREQUAL "X86")
     set(TARGET_ARCH ia32)
   endif()
-
-  GetBinaryDep(TARGET winpty
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*
-        -DTO=${DEPS_INSTALL_DIR}/bin/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/include/*
-        -DTO=${DEPS_INSTALL_DIR}/include/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/lib/*
-        -DTO=${DEPS_INSTALL_DIR}/lib/
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
 endif()
 
 add_custom_target(clean-shared-libraries

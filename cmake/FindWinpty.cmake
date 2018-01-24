@@ -3,7 +3,7 @@ include(LibFindMacros)
 find_path(WINPTY_INCLUDE_DIR winpty.h)
 set(WINPTY_INCLUDE_DIRS ${WINPTY_INCLUDE_DIR})
 
-find_library(WINPTY_LIBRARY winpty)
+find_library(WINPTY_LIBRARY winpty-static)
 find_program(WINPTY_AGENT_EXE winpty-agent.exe)
 set(WINPTY_LIBRARIES ${WINPTY_LIBRARY})
 

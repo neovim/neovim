@@ -402,6 +402,12 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
+if(WIN32)
+  list(REMOVE_DUPLICATES NVIM_EXEC_LINK_LIBRARIES)
+  # Static stdc++ runtime library must keep tail for static link 
+  list(APPEND NVIM_EXEC_LINK_LIBRARIES -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++)
+endif()
+
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
@@ -451,7 +457,6 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
@@ -488,6 +493,11 @@ if(LUAJIT_FOUND)
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
+  if(WIN32)
+    list(REMOVE_DUPLICATES NVIM_TEST_LINK_LIBRARIES)
+    # Static stdc++ runtime library must keep tail for static link 
+    list(APPEND NVIM_TEST_LINK_LIBRARIES -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++)
+  endif()
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
   target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
   set_property(
