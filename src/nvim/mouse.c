@@ -634,13 +634,13 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     // When 'wrap' is enabled, only the row (of the wrapped line) needs to be
     // checked for concealed characters.
     while (offset--) {
-      ptr += utf_ptr2len(ptr);
+      ptr += utfc_ptr2len(ptr);
     }
     ptr_row_offset = ptr;
   }
 
   for (int i = 0; i < col; i++) {
-    ptr_end += utf_ptr2len(ptr_end);
+    ptr_end += utfc_ptr2len(ptr_end);
   }
 
   int matchid;
@@ -648,12 +648,12 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   int len = 0;
   int prev_len = 0;
 
-#define incr() col++; ptr_end += utf_ptr2len(ptr_end)
-#define decr() col--; ptr_end -= utf_ptr2len(ptr_end)
+#define incr() col++; ptr_end += utfc_ptr2len(ptr_end)
+#define decr() col--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end) {
     prev_len = len;
-    len = utf_ptr2len(ptr);
+    len = utfc_ptr2len(ptr);
     matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
                                    (colnr_T)(ptr - line));
     if (matchid != 0) {
@@ -682,7 +682,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
           incr();
           ptr += len;
           prev_len = len;
-          len = utf_ptr2len(ptr);
+          len = utfc_ptr2len(ptr);
           matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
                                          (colnr_T)(ptr - line));
         } while (prev_matchid == matchid);
