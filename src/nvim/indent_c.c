@@ -1368,7 +1368,7 @@ static int cin_skip2pos(pos_T *trypos)
     } else {
       new_p = skip_string(p);
       if (new_p == p) {
-        ++p;
+        p++;
       } else {
         p = new_p;
       }
