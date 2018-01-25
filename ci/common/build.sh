@@ -95,4 +95,7 @@ macos_rvm_dance() {
   rvm reload
   rvm use 2.2.5
   rvm use
+  # workaround against rvm overriding cd (revisit)
+  # https://github.com/travis-ci/travis-ci/issues/8703#ref-pullrequest-279112274
+  unset -f cd
 }
