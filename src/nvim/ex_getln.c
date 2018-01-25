@@ -738,7 +738,7 @@ static int command_line_execute(VimState *state, int key)
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr(" *?[{`$%#", ccline.cmdbuff[s->j + 1])
+            && vim_strchr((const char_u *)" *?[{`$%#", ccline.cmdbuff[s->j + 1])
             == NULL
 #endif
             ) {
@@ -2164,7 +2164,13 @@ getexmodeline (
     /* Get one character at a time.  Don't use inchar(), it can't handle
      * special characters. */
     prev_char = c1;
-    c1 = vgetc();
+
+    // Check for a ":normal" command and no more characters left.
+    if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
+        c1 = '\n';
+    } else {
+        c1 = vgetc();
+    }
 
     /*
      * Handle line editing.
@@ -4251,20 +4257,20 @@ addstar (
      * use with vim_regcomp().  First work out how long it will be:
      */
 
-    /* For help tags the translation is done in find_help_tags().
-     * For a tag pattern starting with "/" no translation is needed. */
+    // For help tags the translation is done in find_help_tags().
+    // For a tag pattern starting with "/" no translation is needed.
     if (context == EXPAND_HELP
+        || context == EXPAND_CHECKHEALTH
         || context == EXPAND_COLORS
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
         || context == EXPAND_PACKADD
-        || ((context == EXPAND_TAGS_LISTFILES
-             || context == EXPAND_TAGS)
-            && fname[0] == '/'))
+        || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
+            && fname[0] == '/')) {
       retval = vim_strnsave(fname, len);
-    else {
-      new_len = len + 2;                /* +2 for '^' at start, NUL at end */
+    } else {
+      new_len = len + 2;                // +2 for '^' at start, NUL at end
       for (i = 0; i < len; i++) {
         if (fname[i] == '*' || fname[i] == '~')
           new_len++;                    /* '*' needs to be replaced by ".*"
@@ -4659,6 +4665,10 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
+    return ExpandRTDir(pat, 0, num_file, file, directories);
+  }
+  if (xp->xp_context == EXPAND_CHECKHEALTH) {
+    char *directories[] = { "autoload/health", NULL };
     return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {

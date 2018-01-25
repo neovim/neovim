@@ -40,10 +40,12 @@ SCRIPTS ?= $(SCRIPTS_DEFAULT)
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
 NEW_TESTS ?= \
+	    test_arabic.res \
 	    test_autocmd.res \
 	    test_bufwintabinfo.res \
 	    test_changedtick.res \
 	    test_charsearch.res \
+	    test_cindent.res \
 	    test_cmdline.res \
 	    test_command_count.res \
 	    test_cscope.res \
@@ -76,6 +78,7 @@ NEW_TESTS ?= \
 	    test_nested_function.res \
 	    test_normal.res \
 	    test_number.res \
+	    test_options.res \
 	    test_profile.res \
 	    test_quickfix.res \
 	    test_retab.res \
@@ -88,6 +91,7 @@ NEW_TESTS ?= \
 	    test_startup_utf8.res \
 	    test_substitute.res \
 	    test_syntax.res \
+	    test_system.res \
 	    test_tabpage.res \
 	    test_textobjects.res \
 	    test_timers.res \

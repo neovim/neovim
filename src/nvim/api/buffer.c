@@ -399,7 +399,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   if (save_curbuf.br_buf == NULL) {
-    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra, false);
+    mark_adjust((linenr_T)start,
+                (linenr_T)(end - 1),
+                MAXLNUM,
+                (long)extra,
+                false);
   }
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
@@ -806,7 +810,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 
 /// Clears highlights from a given source group and a range of lines
 ///
-/// To clear a source group in the entire buffer, pass in 1 and -1 to
+/// To clear a source group in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
 ///
 /// @param buffer     Buffer handle

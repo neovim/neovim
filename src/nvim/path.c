@@ -332,7 +332,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
         && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
       break;
     }
-    len -= MB_PTR2LEN((const char_u *)p1);
+    len -= (size_t)MB_PTR2LEN((const char_u *)p1);
     p1 += MB_PTR2LEN((const char_u *)p1);
     p2 += MB_PTR2LEN((const char_u *)p2);
   }
@@ -1691,7 +1691,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
 #ifdef WIN32
-    slash_adjust(buf);
+    slash_adjust((char_u *)buf);
 #endif
     return FAIL;
   }
@@ -1706,7 +1706,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
 #ifdef WIN32
-  slash_adjust(buf);
+  slash_adjust((char_u *)buf);
 #endif
   return rv;
 }
@@ -1741,7 +1741,7 @@ char *fix_fname(const char *fname)
   path_fix_case((char_u *)fname);  // set correct case for file name
 # endif
 
-  return fname;
+  return (char *)fname;
 #endif
 }
 

@@ -1,6 +1,7 @@
 " Tests for user defined commands
 
 " Test for <mods> in user defined commands
+set belloff=all
 function Test_cmdmods()
   let g:mods = ''
 

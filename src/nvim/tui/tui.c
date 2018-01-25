@@ -500,7 +500,7 @@ static void final_column_wrap(UI *ui)
   UGrid *grid = &data->grid;
   if (grid->col == ui->width) {
     grid->col = 0;
-    if (grid->row < ui->height) {
+    if (grid->row < MIN(ui->height, grid->height - 1)) {
       grid->row++;
     }
   }
@@ -1744,14 +1744,14 @@ static void flush_buf(UI *ui)
     // cursor is visible. Write a "cursor invisible" command before writing the
     // buffer.
     bufp->base = data->invis;
-    bufp->len = data->invislen;
+    bufp->len = UV_BUF_LEN(data->invislen);
     bufp++;
     data->is_invisible = true;
   }
 
   if (data->bufpos > 0) {
     bufp->base = data->buf;
-    bufp->len = data->bufpos;
+    bufp->len = UV_BUF_LEN(data->bufpos);
     bufp++;
   }
 
@@ -1759,7 +1759,7 @@ static void flush_buf(UI *ui)
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
-    bufp->len = data->normlen;
+    bufp->len = UV_BUF_LEN(data->normlen);
     bufp++;
     data->is_invisible = data->busy;
   }

@@ -1,5 +1,8 @@
 " Test for various Normal mode commands
 
+source shared.vim
+
+set belloff=all
 func! Setup_NewWindow()
   10new
   call setline(1, range(1,100))
@@ -1069,10 +1072,10 @@ func! Test_normal18_z_fold()
 endfunc
 
 func! Test_normal19_z_spell()
-  throw "skipped: Nvim 'spell' requires download"
   if !has("spell") || !has('syntax')
     return
   endif
+  " let $TMPDIR=fnamemodify($TMPDIR, ':.')
   new
   call append(0, ['1 good', '2 goood', '3 goood'])
   set spell spellfile=./Xspellfile.add spelllang=en
@@ -1119,7 +1122,9 @@ func! Test_normal19_z_spell()
   " Test for zG
   let a=execute('unsilent norm! V$zG')
   call assert_match("Word '2 goood' added to .*", a)
+  set shortmess=
   let fname=matchstr(a, 'to\s\+\zs\f\+$')
+  let fname=Fix_truncated_tmpfile(fname)
   let cnt=readfile(fname)
   call assert_equal('2 goood', cnt[0])
 

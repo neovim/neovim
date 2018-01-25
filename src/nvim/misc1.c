@@ -749,8 +749,9 @@ open_line (
     // Postpone calling changed_lines(), because it would mess up folding
     // with markers.
     // Skip mark_adjust when adding a line after the last one, there can't
-    // be marks there.
-    if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count) {
+    // be marks there. But still needed in diff mode.
+    if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
+        || curwin->w_p_diff) {
       mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
     }
     did_append = true;
@@ -1864,8 +1865,8 @@ void appended_lines(linenr_T lnum, long count)
 void appended_lines_mark(linenr_T lnum, long count)
 {
   // Skip mark_adjust when adding a line after the last one, there can't
-  // be marks there.
-  if (lnum + count < curbuf->b_ml.ml_line_count) {
+  // be marks there. But it's still needed in diff mode.
+  if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
     mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count);

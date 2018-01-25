@@ -135,6 +135,7 @@ static void destroy_cells(UGrid *grid)
       xfree(grid->cells[i]);
     }
     xfree(grid->cells);
+    grid->cells = NULL;
   }
 }
 

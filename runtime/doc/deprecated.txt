@@ -48,6 +48,7 @@ Modifiers ~
 *:map-special*		<> notation is always enabled. |cpo-<|
 
 Options ~
+*'cscopeverbose'*	Enabled by default. Use |:silent| instead.
 'gd'
 'gdefault'		Enables the |:substitute| flag 'g' by default.
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.

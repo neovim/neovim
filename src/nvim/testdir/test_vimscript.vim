@@ -1215,6 +1215,62 @@ func Test_bitwise_functions()
     call assert_fails("call invert({})", 'E728:')
 endfunc
 
+" Test trailing text after :endfunction				    {{{1
+func Test_endfunction_trailing()
+    call assert_false(exists('*Xtest'))
+
+    exe "func Xtest()\necho 'hello'\nendfunc\nlet done = 'yes'"
+    call assert_true(exists('*Xtest'))
+    call assert_equal('yes', done)
+    delfunc Xtest
+    unlet done
+
+    exe "func Xtest()\necho 'hello'\nendfunc|let done = 'yes'"
+    call assert_true(exists('*Xtest'))
+    call assert_equal('yes', done)
+    delfunc Xtest
+    unlet done
+
+    " trailing line break
+    exe "func Xtest()\necho 'hello'\nendfunc\n"
+    call assert_true(exists('*Xtest'))
+    delfunc Xtest
+
+    set verbose=1
+    exe "func Xtest()\necho 'hello'\nendfunc \" garbage"
+    call assert_true(exists('*Xtest'))
+    delfunc Xtest
+
+    call assert_fails("func Xtest()\necho 'hello'\nendfunc garbage", 'E946')
+    call assert_true(exists('*Xtest'))
+    delfunc Xtest
+    set verbose=0
+
+    function Foo()
+	echo 'hello'
+    endfunction | echo 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    delfunc Foo
+endfunc
+
+func Test_delfunction_force()
+    delfunc! Xtest
+    delfunc! Xtest
+    func Xtest()
+	echo 'nothing'
+    endfunc
+    delfunc! Xtest
+    delfunc! Xtest
+endfunc
+
+" Test using bang after user command				    {{{1
+func Test_user_command_with_bang()
+    command -bang Nieuw let nieuw = 1
+    Ni!
+    call assert_equal(1, nieuw)
+    unlet nieuw
+    delcommand Nieuw
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker

@@ -136,8 +136,10 @@ if(USE_BUNDLED_BUSTED)
 
   if(WIN32)
     set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted.bat")
+    set(LUACHECK_EXE "${HOSTDEPS_BIN_DIR}/luacheck.bat")
   else()
     set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted")
+    set(LUACHECK_EXE "${HOSTDEPS_BIN_DIR}/luacheck")
   endif()
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${BUSTED_EXE}
@@ -148,12 +150,12 @@ if(USE_BUNDLED_BUSTED)
     DEPENDS ${BUSTED_EXE})
 
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
-  add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/luacheck
+  add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY}
     ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-scm-1.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
-    DEPENDS ${HOSTDEPS_BIN_DIR}/luacheck)
+    DEPENDS ${LUACHECK_EXE})
 
   set(LUV_DEPS luacheck luv-static)
   if(MINGW AND CMAKE_CROSSCOMPILING)

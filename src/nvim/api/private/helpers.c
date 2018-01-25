@@ -783,7 +783,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeArray: {
-      list_T *const list = tv_list_alloc();
+      list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];

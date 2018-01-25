@@ -1,4 +1,5 @@
 " Tests for diff mode
+set belloff=all
 
 func Test_diff_fold_sync()
   enew!
@@ -198,14 +199,69 @@ func Test_diffget_diffput()
   call assert_fails('diffget', 'E101:')
 
   windo diffoff
-  bwipe!
-  bwipe!
-  enew!
+  %bwipe!
+endfunc
+
+func Test_dp_do_buffer()
+  e! one
+  let bn1=bufnr('%')
+  let l = range(60)
+  call setline(1, l)
+  diffthis
+
+  new two
+  let l[10] = 'one'
+  let l[20] = 'two'
+  let l[30] = 'three'
+  let l[40] = 'four'
+  let l[50] = 'five'
+  call setline(1, l)
+  diffthis
+
+  " dp and do with invalid buffer number.
+  11
+  call assert_fails('norm 99999dp', 'E102:')
+  call assert_fails('norm 99999do', 'E102:')
+  call assert_fails('diffput non_existing_buffer', 'E94:')
+  call assert_fails('diffget non_existing_buffer', 'E94:')
+
+  " dp and do with valid buffer number.
+  call assert_equal('one', getline('.'))
+  exe 'norm ' . bn1 . 'do'
+  call assert_equal('10', getline('.'))
+  21
+  call assert_equal('two', getline('.'))
+  diffget one
+  call assert_equal('20', getline('.'))
+
+  31
+  exe 'norm ' . bn1 . 'dp'
+  41
+  diffput one
+  wincmd w
+  31
+  call assert_equal('three', getline('.'))
+  41
+  call assert_equal('four', getline('.'))
+
+  " dp and do with buffer number which is not in diff mode.
+  new not_in_diff_mode
+  let bn3=bufnr('%')
+  wincmd w
+  51
+  call assert_fails('exe "norm" . bn3 . "dp"', 'E103:')
+  call assert_fails('exe "norm" . bn3 . "do"', 'E103:')
+  call assert_fails('diffput not_in_diff_mode', 'E94:')
+  call assert_fails('diffget not_in_diff_mode', 'E94:')
+
+  windo diffoff
+  %bwipe!
 endfunc
 
 func Test_diffoff()
   enew!
   call setline(1, ['Two', 'Three'])
+  redraw
   let normattr = screenattr(1, 1)
   diffthis
   botright vert new
@@ -220,10 +276,107 @@ func Test_diffoff()
   bwipe!
 endfunc
 
+func Test_diffopt_icase()
+  set diffopt=icase,foldcolumn:0
+
+  e one
+  call setline(1, ['One', 'Two', 'Three', 'Four'])
+  redraw
+  let normattr = screenattr(1, 1)
+  diffthis
+
+  botright vert new two
+  call setline(1, ['one', 'TWO', 'Three ', 'Four'])
+  diffthis
+
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  call assert_equal(normattr, screenattr(2, 1))
+  call assert_notequal(normattr, screenattr(3, 1))
+  call assert_equal(normattr, screenattr(4, 1))
+
+  diffoff!
+  %bwipe!
+  set diffopt&
+endfunc
+
+func Test_diffopt_iwhite()
+  set diffopt=iwhite,foldcolumn:0
+
+  e one
+  " Difference in trailing spaces should be ignored,
+  " but not other space differences.
+  call setline(1, ["One \t", 'Two', 'Three', 'Four'])
+  redraw
+  let normattr = screenattr(1, 1)
+  diffthis
+
+  botright vert new two
+  call setline(1, ["One\t ", "Two\t ", 'Three', ' Four'])
+  diffthis
+
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  call assert_equal(normattr, screenattr(2, 1))
+  call assert_equal(normattr, screenattr(3, 1))
+  call assert_notequal(normattr, screenattr(4, 1))
+
+  diffoff!
+  %bwipe!
+  set diffopt&
+endfunc
+
+func Test_diffopt_context()
+  enew!
+  call setline(1, ['1', '2', '3', '4', '5', '6', '7'])
+  diffthis
+  new
+  call setline(1, ['1', '2', '3', '4', '5x', '6', '7'])
+  diffthis
+
+  set diffopt=context:2
+  call assert_equal('+--  2 lines: 1', foldtextresult(1))
+  set diffopt=context:1
+  call assert_equal('+--  3 lines: 1', foldtextresult(1))
+
+  diffoff!
+  %bwipe!
+  set diffopt&
+endfunc
+
+func Test_diffopt_horizontal()
+  set diffopt=horizontal
+  diffsplit
+
+  call assert_equal(&columns, winwidth(1))
+  call assert_equal(&columns, winwidth(2))
+  call assert_equal(&lines, winheight(1) + winheight(2) + 3)
+  call assert_inrange(0, 1, winheight(1) - winheight(2))
+
+  set diffopt&
+  diffoff!
+  %bwipe
+endfunc
+
+func Test_diffopt_vertical()
+  set diffopt=vertical
+  diffsplit
+
+  call assert_equal(&lines - 2, winheight(1))
+  call assert_equal(&lines - 2, winheight(2))
+  call assert_equal(&columns, winwidth(1) + winwidth(2) + 1)
+  call assert_inrange(0, 1, winwidth(1) - winwidth(2))
+
+  set diffopt&
+  diffoff!
+  %bwipe
+endfunc
+
 func Test_diffoff_hidden()
   set diffopt=filler,foldcolumn:0
   e! one
   call setline(1, ['Two', 'Three'])
+  redraw
   let normattr = screenattr(1, 1)
   diffthis
   botright vert new two
@@ -271,4 +424,141 @@ func Test_setting_cursor()
 
   call delete('Xtest1')
   call delete('Xtest2')
+endfunc
+
+func Test_diff_move_to()
+  new
+  call setline(1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  diffthis
+  vnew
+  call setline(1, [1, '2x', 3, 4, 4, 5, '6x', 7, '8x', 9, '10x'])
+  diffthis
+  norm ]c
+  call assert_equal(2, line('.'))
+  norm 3]c
+  call assert_equal(9, line('.'))
+  norm 10]c
+  call assert_equal(11, line('.'))
+  norm [c
+  call assert_equal(9, line('.'))
+  norm 2[c
+  call assert_equal(5, line('.'))
+  norm 10[c
+  call assert_equal(2, line('.'))
+  %bwipe!
+endfunc
+
+func Test_diffexpr()
+  if !executable('diff')
+    return
+  endif
+
+  func DiffExpr()
+    silent exe '!diff ' . v:fname_in . ' ' . v:fname_new . '>' . v:fname_out
+  endfunc
+  set diffexpr=DiffExpr()
+  set diffopt=foldcolumn:0
+
+  enew!
+  call setline(1, ['one', 'two', 'three'])
+  redraw
+  let normattr = screenattr(1, 1)
+  diffthis
+
+  botright vert new
+  call setline(1, ['one', 'two', 'three.'])
+  diffthis
+
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  call assert_equal(normattr, screenattr(2, 1))
+  call assert_notequal(normattr, screenattr(3, 1))
+
+  diffoff!
+  %bwipe!
+  set diffexpr& diffopt&
+endfunc
+
+func Test_diffpatch()
+  " The patch program on MS-Windows may fail or hang.
+  if !executable('patch') || !has('unix')
+    return
+  endif
+  new
+  insert
+***************
+*** 1,3 ****
+  1
+! 2
+  3
+--- 1,4 ----
+  1
+! 2x
+  3
++ 4
+.
+  saveas Xpatch
+  bwipe!
+  new
+  call assert_fails('diffpatch Xpatch', 'E816:')
+
+  for name in ['Xpatch', 'Xpatch$HOME', 'Xpa''tch']
+    call setline(1, ['1', '2', '3'])
+    if name != 'Xpatch'
+      call rename('Xpatch', name)
+    endif
+    exe 'diffpatch ' . escape(name, '$')
+    call assert_equal(['1', '2x', '3', '4'], getline(1, '$'))
+    if name != 'Xpatch'
+      call rename(name, 'Xpatch')
+    endif
+    bwipe!
+  endfor
+
+  call delete('Xpatch')
+  bwipe!
+endfunc
+
+func Test_diff_too_many_buffers()
+  for i in range(1, 8)
+    exe "new Xtest" . i
+    diffthis
+  endfor
+  new Xtest9
+  call assert_fails('diffthis', 'E96:')
+  %bwipe!
+endfunc
+
+func Test_diff_nomodifiable()
+  new
+  call setline(1, [1, 2, 3, 4])
+  setl nomodifiable
+  diffthis
+  vnew
+  call setline(1, ['1x', 2, 3, 3, 4])
+  diffthis
+  call assert_fails('norm dp', 'E793:')
+  setl nomodifiable
+  call assert_fails('norm do', 'E21:')
+  %bwipe!
+endfunc
+
+func Test_diff_lastline()
+  enew!
+  only!
+  call setline(1, ['This is a ', 'line with five ', 'rows'])
+  diffthis
+  botright vert new
+  call setline(1, ['This is', 'a line with ', 'four rows'])
+  diffthis
+  1
+  call feedkeys("Je a\<CR>", 'tx')
+  call feedkeys("Je a\<CR>", 'tx')
+  let w1lines = winline()
+  wincmd w
+  $
+  let w2lines = winline()
+  call assert_equal(w2lines, w1lines)
+  bwipe!
+  bwipe!
 endfunc

@@ -56,6 +56,6 @@ function! s:LoadRemotePlugins() abort
   endif
 endfunction
 
-command! UpdateRemotePlugins call remote#host#UpdateRemotePlugins()
+command! -bar UpdateRemotePlugins call remote#host#UpdateRemotePlugins()
 
 call s:LoadRemotePlugins()

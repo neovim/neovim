@@ -6,6 +6,7 @@ local clear = helpers.clear
 local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
 local eq = helpers.eq
+local getcompletion = helpers.funcs.getcompletion
 
 describe(':checkhealth', function()
   it("detects invalid $VIMRUNTIME", function()
@@ -30,6 +31,11 @@ describe(':checkhealth', function()
     command("checkhealth nvim")
     eq("ERROR: $VIM is invalid: zub",
        string.match(curbuf_contents(), "ERROR: $VIM .* zub"))
+  end)
+  it('completions can be listed via getcompletion()', function()
+    clear()
+    eq('nvim', getcompletion('nvim', 'checkhealth')[1])
+    eq('provider', getcompletion('prov', 'checkhealth')[1])
   end)
 end)
 

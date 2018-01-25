@@ -299,6 +299,12 @@ endfunction
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   let args = split(a:cmd_line)
+  let cmd_offset = index(args, 'Man')
+  if cmd_offset > 0
+    " Prune all arguments up to :Man itself. Otherwise modifier commands like
+    " :tab, :vertical, etc. would lead to a wrong length.
+    let args = args[cmd_offset:]
+  endif
   let l = len(args)
   if l > 3
     return

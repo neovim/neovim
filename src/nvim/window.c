@@ -5921,13 +5921,15 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
   }
 }
 
-void win_id2tabwin(typval_T *argvars, list_T *list)
+void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
 {
   int winnr = 1;
   int tabnr = 1;
   handle_T id = (handle_T)tv_get_number(&argvars[0]);
 
   win_get_tabwin(id, &tabnr, &winnr);
+
+  list_T *const list = tv_list_alloc_ret(rettv, 2);
   tv_list_append_number(list, tabnr);
   tv_list_append_number(list, winnr);
 }

@@ -3366,6 +3366,10 @@ set_context_in_map_cmd (
         arg = skipwhite(arg + 8);
         continue;
       }
+      if (STRNCMP(arg, "<special>", 9) == 0) {
+        arg = skipwhite(arg + 9);
+        continue;
+      }
       if (STRNCMP(arg, "<script>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
@@ -3408,21 +3412,24 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   for (round = 1; round <= 2; ++round) {
     count = 0;
 
-    for (i = 0; i < 6; ++i) {
-      if (i == 0)
+    for (i = 0; i < 7; i++) {
+      if (i == 0) {
         p = (char_u *)"<silent>";
-      else if (i == 1)
+      } else if (i == 1) {
         p = (char_u *)"<unique>";
-      else if (i == 2)
+      } else if (i == 2) {
         p = (char_u *)"<script>";
-      else if (i == 3)
+      } else if (i == 3) {
         p = (char_u *)"<expr>";
-      else if (i == 4 && !expand_buffer)
+      } else if (i == 4 && !expand_buffer) {
         p = (char_u *)"<buffer>";
-      else if (i == 5)
+      } else if (i == 5) {
         p = (char_u *)"<nowait>";
-      else
+      } else if (i == 6) {
+        p = (char_u *)"<special>";
+      } else {
         continue;
+      }
 
       if (vim_regexec(regmatch, p, (colnr_T)0)) {
         if (round == 1)

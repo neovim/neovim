@@ -1,5 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
+source view_util.vim
+
 func GetSyntaxItem(pat)
   let c = ''
   let a = ['a', getreg('a'), getregtype('a')]
@@ -152,9 +154,228 @@ func Test_syntax_completion()
   call feedkeys(":syn sync \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
 
+  " Check that clearing "Aap" avoids it showing up before Boolean.
+  hi Aap ctermfg=blue
+  call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^"syn list Aap Boolean Character ', @:)
+  hi clear Aap
+
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"syn list Boolean Character ', @:)
 
   call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"syn match Boolean Character ', @:)
+endfunc
+
+func Test_syntax_arg_skipped()
+  syn clear
+  syntax case ignore
+  if 0
+    syntax case match
+  endif
+  call assert_match('case ignore', execute('syntax case'))
+
+  syn keyword Foo foo
+  call assert_match('Foo', execute('syntax'))
+  syn clear
+  call assert_match('case match', execute('syntax case'))
+  call assert_notmatch('Foo', execute('syntax'))
+
+  if has('conceal')
+    syn clear
+    syntax conceal on
+    if 0
+      syntax conceal off
+    endif
+    call assert_match('conceal on', execute('syntax conceal'))
+    syn clear
+    call assert_match('conceal off', execute('syntax conceal'))
+  endif
+
+  syntax conceal on
+  syntax conceal off
+  call assert_match('conceal off', execute('syntax conceal'))
+
+  syntax region Bar start=/</ end=/>/
+  if 0
+    syntax region NotTest start=/</ end=/>/ contains=@Spell
+  endif
+  call assert_match('Bar', execute('syntax'))
+  call assert_notmatch('NotTest', execute('syntax'))
+  call assert_notmatch('Spell', execute('syntax'))
+
+  hi Foo ctermfg=blue
+  let a = execute('hi Foo')
+  if 0
+    syntax rest
+  endif
+  call assert_equal(a, execute('hi Foo'))
+  hi clear Bar
+  hi clear Foo
+
+  set ft=tags
+  syn off
+  if 0
+    syntax enable
+  endif
+  call assert_match('No Syntax items defined', execute('syntax'))
+  syntax enable
+  call assert_match('tagComment', execute('syntax'))
+  set ft=
+
+  syn clear
+  if 0
+    syntax include @Spell nothing
+  endif
+  call assert_notmatch('Spell', execute('syntax'))
+
+  syn clear
+  syn iskeyword 48-57,$,_
+  call assert_match('48-57,$,_', execute('syntax iskeyword'))
+  if 0
+    syn clear
+    syn iskeyword clear
+  endif
+  call assert_match('48-57,$,_', execute('syntax iskeyword'))
+  syn iskeyword clear
+  call assert_match('not set', execute('syntax iskeyword'))
+  syn iskeyword 48-57,$,_
+  syn clear
+  call assert_match('not set', execute('syntax iskeyword'))
+
+  syn clear
+  syn keyword Foo foo
+  if 0
+    syn keyword NotAdded bar
+  endif
+  call assert_match('Foo', execute('syntax'))
+  call assert_notmatch('NotAdded', execute('highlight'))
+
+  syn clear
+  syn keyword Foo foo
+  call assert_match('Foo', execute('syntax'))
+  call assert_match('Foo', execute('syntax list'))
+  call assert_notmatch('Foo', execute('if 0 | syntax | endif'))
+  call assert_notmatch('Foo', execute('if 0 | syntax list | endif'))
+
+  syn clear
+  syn match Fopi /asdf/
+  if 0
+    syn match Fopx /asdf/
+  endif
+  call assert_match('Fopi', execute('syntax'))
+  call assert_notmatch('Fopx', execute('syntax'))
+
+  syn clear
+  syn spell toplevel
+  call assert_match('spell toplevel', execute('syntax spell'))
+  if 0
+    syn spell notoplevel
+  endif
+  call assert_match('spell toplevel', execute('syntax spell'))
+  syn spell notoplevel
+  call assert_match('spell notoplevel', execute('syntax spell'))
+  syn spell default
+  call assert_match('spell default', execute('syntax spell'))
+
+  syn clear
+  if 0
+    syntax cluster Spell
+  endif
+  call assert_notmatch('Spell', execute('syntax'))
+
+  syn clear
+  syn keyword Foo foo
+  syn sync ccomment
+  syn sync maxlines=5
+  if 0
+    syn sync maxlines=11
+  endif
+  call assert_match('on C-style comments', execute('syntax sync'))
+  call assert_match('maximal 5 lines', execute('syntax sync'))
+  syn sync clear
+  if 0
+    syn sync ccomment
+  endif
+  call assert_notmatch('on C-style comments', execute('syntax sync'))
+
+  syn clear
+endfunc
+ 
+func Test_invalid_arg()
+  call assert_fails('syntax case asdf', 'E390:')
+  call assert_fails('syntax conceal asdf', 'E390:')
+  call assert_fails('syntax spell asdf', 'E390:')
+endfunc
+
+func Test_syn_sync()
+  syntax region HereGroup start=/this/ end=/that/
+  syntax sync match SyncHere grouphere HereGroup "pattern"
+  call assert_match('SyncHere', execute('syntax sync'))
+  syn sync clear
+  call assert_notmatch('SyncHere', execute('syntax sync'))
+  syn clear
+endfunc
+
+func Test_syn_clear()
+  syntax keyword Foo foo
+  syntax keyword Bar tar
+  call assert_match('Foo', execute('syntax'))
+  call assert_match('Bar', execute('syntax'))
+  syn clear Foo
+  call assert_notmatch('Foo', execute('syntax'))
+  call assert_match('Bar', execute('syntax'))
+  syn clear Foo Bar
+  call assert_notmatch('Foo', execute('syntax'))
+  call assert_notmatch('Bar', execute('syntax'))
+  hi clear Foo
+  hi clear Bar
+endfunc
+
+func Test_invalid_name()
+  syn clear
+  syn keyword Nop yes
+  call assert_fails("syntax keyword Wr\x17ong bar", 'E669:')
+  syntax keyword @Wrong bar
+  call assert_match('W18:', execute('1messages'))
+  syn clear
+  hi clear Nop
+  hi clear @Wrong
+endfunc
+
+
+func Test_conceal()
+  if !has('conceal')
+    return
+  endif
+
+  new
+  call setline(1, ['', '123456'])
+  syn match test23 "23" conceal cchar=X
+  syn match test45 "45" conceal
+
+  set conceallevel=0
+  call assert_equal('123456 ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [0, ''], [0, ''], [0, ''], [0, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=1
+  call assert_equal('1X 6   ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ' '], [1, ' '], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=1
+  set listchars=conceal:Y
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, 'Y'], [1, 'Y'], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal('1XY6   ', ScreenLines(2, 7)[0])
+
+  set conceallevel=2
+  call assert_match('1X6    ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  set conceallevel=3
+  call assert_match('16     ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, ''], [1, ''], [1, ''], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+
+  syn clear
+  set conceallevel&
+  bw!
 endfunc

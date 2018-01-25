@@ -4,6 +4,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
+#include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
@@ -522,32 +523,21 @@ err:
   return 0;
 }
 
-/// NB: mutates buf in place!
-static list_T *buffer_to_tv_list(char *buf, size_t count)
+/// Convert binary byte array to a readfile()-style list
+///
+/// @param[in]  buf  Array to convert.
+/// @param[in]  len  Array length.
+///
+/// @return [allocated] Converted list.
+static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
-  list_T *ret = tv_list_alloc();
-  char *ptr = buf;
-  size_t remaining = count;
-  size_t off = 0;
-
-  while (off < remaining) {
-    // append the line
-    if (ptr[off] == NL) {
-      tv_list_append_string(ret, ptr, (ssize_t)off);
-      size_t skip = off + 1;
-      ptr += skip;
-      remaining -= skip;
-      off = 0;
-      continue;
-    }
-    if (ptr[off] == NUL) {
-      // Translate NUL to NL
-      ptr[off] = NL;
-    }
-    off++;
-  }
-  tv_list_append_string(ret, ptr, (ssize_t)off);
-  return ret;
+  list_T *const l = tv_list_alloc(kListLenMayKnow);
+  // Empty buffer should be represented by [''], encode_list_write() thinks
+  // empty list is fine for the case.
+  tv_list_append_string(l, "", 0);
+  encode_list_write(l, buf, len);
+  return l;
 }
 
 // vimscript job callbacks must be executed on Nvim main loop

@@ -2564,7 +2564,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   dict_T *dict = get_vim_var_dict(VV_EVENT);
 
   // the yanked text
-  list_T *list = tv_list_alloc();
+  list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
@@ -3177,9 +3177,9 @@ error:
           curbuf->b_op_start.lnum++;
       }
       // Skip mark_adjust when adding lines after the last one, there
-      // can't be marks there.
+      // can't be marks there. But still needed in diff mode.
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
-          < curbuf->b_ml.ml_line_count) {
+          < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
                     (linenr_T)MAXLNUM, nr_lines, 0L, false);
       }
@@ -4854,7 +4854,7 @@ static void *get_reg_wrap_one_line(char_u *s, int flags)
   if (!(flags & kGRegList)) {
     return s;
   }
-  list_T *const list = tv_list_alloc();
+  list_T *const list = tv_list_alloc(1);
   tv_list_append_allocated_string(list, (char *)s);
   return list;
 }
@@ -4904,7 +4904,7 @@ void *get_reg_contents(int regname, int flags)
     return NULL;
 
   if (flags & kGRegList) {
-    list_T *list = tv_list_alloc();
+    list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
     for (size_t i = 0; i < reg->y_size; i++) {
       tv_list_append_string(list, (const char *)reg->y_array[i], -1);
     }
@@ -5593,7 +5593,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   }
   free_register(reg);
 
-  list_T *const args = tv_list_alloc();
+  list_T *const args = tv_list_alloc(1);
   const char regname = (char)name;
   tv_list_append_string(args, &regname, 1);
 
@@ -5712,14 +5712,12 @@ static void set_clipboard(int name, yankreg_T *reg)
     return;
   }
 
-  list_T *lines = tv_list_alloc();
+  list_T *const lines = tv_list_alloc(
+      (ptrdiff_t)reg->y_size + (reg->y_type != kMTCharWise));
 
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(lines, (const char *)reg->y_array[i], -1);
   }
-
-  list_T *args = tv_list_alloc();
-  tv_list_append_list(args, lines);
 
   char regtype;
   switch (reg->y_type) {
@@ -5741,10 +5739,11 @@ static void set_clipboard(int name, yankreg_T *reg)
       assert(false);
     }
   }
-  tv_list_append_string(args, &regtype, 1);
 
-  const char regname = (char)name;
-  tv_list_append_string(args, &regname, 1);
+  list_T *args = tv_list_alloc(3);
+  tv_list_append_list(args, lines);
+  tv_list_append_string(args, &regtype, 1);
+  tv_list_append_string(args, ((char[]) { (char)name }), 1);
 
   (void)eval_call_provider("clipboard", "set", args);
 }

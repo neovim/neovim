@@ -229,7 +229,7 @@ int main(int argc, char **argv)
 #endif
 {
 #if defined(WIN32) && !defined(MAKE_LIB)
-  char *argv[argc];
+  char **argv = xmalloc((size_t)argc * sizeof(char *));
   for (int i = 0; i < argc; i++) {
     char *buf = NULL;
     utf16_to_utf8(argv_w[i], &buf);
@@ -412,7 +412,7 @@ int main(int argc, char **argv)
   }
   // It's better to make v:oldfiles an empty list than NULL.
   if (get_vim_var_list(VV_OLDFILES) == NULL) {
-    set_vim_var_list(VV_OLDFILES, tv_list_alloc());
+    set_vim_var_list(VV_OLDFILES, tv_list_alloc(0));
   }
 
   /*
@@ -571,6 +571,9 @@ int main(int argc, char **argv)
    */
   normal_enter(false, false);
 
+#if defined(WIN32) && !defined(MAKE_LIB)
+  xfree(argv);
+#endif
   return 0;
 }
 
@@ -1250,12 +1253,12 @@ static void check_and_set_isatty(mparm_T *paramp)
   stdout_isatty
     = paramp->output_isatty = os_isatty(fileno(stdout));
   paramp->err_isatty = os_isatty(fileno(stderr));
+#ifndef WIN32
   int tty_fd = paramp->input_isatty
     ? OS_STDIN_FILENO
     : (paramp->output_isatty
        ? OS_STDOUT_FILENO
        : (paramp->err_isatty ? OS_STDERR_FILENO : -1));
-#ifndef WIN32
   pty_process_save_termios(tty_fd);
 #endif
   TIME_MSG("window checked");

@@ -1,5 +1,6 @@
 " Test for the search command
 
+set belloff=all
 func Test_search_cmdline()
   " See test/functional/legacy/search_spec.lua
   throw 'skipped: Nvim does not support test_disable_char_avail()'
@@ -298,3 +299,10 @@ func Test_searchpair()
   q!
 endfunc
 
+func Test_searchc()
+  " These commands used to cause memory overflow in searchc().
+  new
+  norm ixx
+  exe "norm 0t\u93cf"
+  bw!
+endfunc

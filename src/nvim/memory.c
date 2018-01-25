@@ -559,6 +559,7 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 #include "nvim/tag.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/eval/typval.h"
 
 /*
  * Free everything that we allocated.
@@ -692,6 +693,7 @@ void free_all_mem(void)
   free_screenlines();
 
   clear_hl_tables();
+  list_free_log();
 }
 
 #endif

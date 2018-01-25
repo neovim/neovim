@@ -692,7 +692,7 @@ return {
   },
   {
     command='delcommand',
-    flags=bit.bor(NEEDARG, WORD1, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delcommand',
   },

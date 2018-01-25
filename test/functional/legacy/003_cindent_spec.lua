@@ -1,4 +1,5 @@
 -- Test for 'cindent'.
+-- For new tests, consider putting them in test_cindent.vim.
 --
 -- There are 50+ test command blocks (the stuff between STARTTEST and ENDTEST)
 -- in the original test. These have been converted to "it" test cases here.

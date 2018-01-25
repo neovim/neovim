@@ -1,5 +1,7 @@
 " Tests for editing the command line.
 
+set belloff=all
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")
@@ -23,6 +25,26 @@ func Test_complete_wildmenu()
   call delete('Xtestfile1')
   call delete('Xtestfile2')
   set nowildmenu
+endfunc
+
+func Test_map_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  call feedkeys(":map <unique> <si\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <unique> <silent>', getreg(':'))
+  call feedkeys(":map <script> <un\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <script> <unique>', getreg(':'))
+  call feedkeys(":map <expr> <sc\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <expr> <script>', getreg(':'))
+  call feedkeys(":map <buffer> <e\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <buffer> <expr>', getreg(':'))
+  call feedkeys(":map <nowait> <b\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <nowait> <buffer>', getreg(':'))
+  call feedkeys(":map <special> <no\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <special> <nowait>', getreg(':'))
+  call feedkeys(":map <silent> <sp\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <silent> <special>', getreg(':'))
 endfunc
 
 func Test_expr_completion()

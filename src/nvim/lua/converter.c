@@ -211,7 +211,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           size_t len;
           const char *s = lua_tolstring(lstate, -2, &len);
           if (cur.special) {
-            list_T *const kv_pair = tv_list_alloc();
+            list_T *const kv_pair = tv_list_alloc(2);
 
             typval_T s_tv = decode_string(s, len, kTrue, false, false);
             if (s_tv.v_type == VAR_UNKNOWN) {
@@ -321,7 +321,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         switch (table_props.type) {
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
-            cur.tv->vval.v_list = tv_list_alloc();
+            cur.tv->vval.v_list = tv_list_alloc((ptrdiff_t)table_props.maxidx);
             tv_list_ref(cur.tv->vval.v_list);
             if (table_props.maxidx != 0) {
               cur.container = true;
@@ -338,7 +338,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             } else {
               cur.special = table_props.has_string_with_nul;
               if (table_props.has_string_with_nul) {
-                decode_create_map_special_dict(cur.tv);
+                decode_create_map_special_dict(
+                    cur.tv, (ptrdiff_t)table_props.string_keys_num);
                 assert(cur.tv->v_type == VAR_DICT);
                 dictitem_T *const val_di = tv_dict_find(cur.tv->vval.v_dict,
                                                         S_LEN("_VAL"));

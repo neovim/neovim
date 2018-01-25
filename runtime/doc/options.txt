@@ -1807,12 +1807,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Determines the order in which ":cstag" performs a search.  See
 	|cscopetagorder|.
 
-					*'cscopeverbose'* *'csverb'*
-					*'nocscopeverbose'* *'nocsverb'*
-'cscopeverbose' 'csverb' boolean (default off)
-			global
-	Give messages when adding a cscope database.  See |cscopeverbose|.
-
 			*'cursorbind'* *'crb'* *'nocursorbind'* *'nocrb'*
 'cursorbind' 'crb'	boolean  (default off)
 			local to window
@@ -3676,7 +3670,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Minimum value is 2, maximum value is 1000.
 
 						*'linespace'* *'lsp'*
-'linespace' 'lsp'	number	(default 0, 1 for Win32 GUI)
+'linespace' 'lsp'	number	(default 0)
 			global
 			{only in the GUI}
 	Number of pixel lines inserted between characters.  Useful if the font
