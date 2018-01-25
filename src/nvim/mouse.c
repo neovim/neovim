@@ -609,7 +609,7 @@ bool mouse_scroll_horiz(int dir)
 }
 
 // Adjust the clicked column position if there are concealed characters
-// before the current column.  But only when it's absolutely necessary.
+// before the current column.
 static int mouse_adjust_click(win_T *wp, int row, int col)
 {
   if (!(wp->w_p_cole > 0 && curbuf->b_p_smc > 0
@@ -617,64 +617,82 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     return col;
   }
 
-  int end = (colnr_T)STRLEN(ml_get(wp->w_cursor.lnum));
-  int vend = getviscol2(end, 0);
+  char_u *line = ml_get(wp->w_cursor.lnum);
+  char_u *ptr = line;
+  char_u *ptr_end = line;
+  char_u *ptr_row_offset = line;
 
-  if (col >= vend) {
-    return col;
-  }
-
-  int i = wp->w_leftcol;
-
+  int offset = wp->w_leftcol;
   if (row > 0) {
-    i += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp)
-                - wp->w_leftcol) + wp->w_skipcol;
+    offset += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp) -
+                     wp->w_leftcol + wp->w_skipcol);
   }
 
-  int start_col = i;
+  if (offset) {
+    // Skip everything up to an offset since nvim takes care of displaying the
+    // correct portion of the line when horizontally scrolling.
+    // When 'wrap' is enabled, only the row (of the wrapped line) needs to be
+    // checked for concealed characters.
+    while (offset--) {
+      ptr += utf_ptr2len(ptr);
+    }
+    ptr_row_offset = ptr;
+  }
+
+  for (int i = 0; i < col; i++) {
+    ptr_end += utf_ptr2len(ptr_end);
+  }
+
   int matchid;
-  int last_matchid;
-  int bcol = end - (vend - col);
+  int prev_matchid;
+  int len = 0;
+  int prev_len = 0;
 
-  while (i < bcol) {
-    matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum, i);
+#define incr() col++; ptr_end += utf_ptr2len(ptr_end)
+#define decr() col--; ptr_end -= utf_ptr2len(ptr_end)
 
+  while (ptr < ptr_end) {
+    prev_len = len;
+    len = utf_ptr2len(ptr);
+    matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
+                                   (colnr_T)(ptr - line));
     if (matchid != 0) {
       if (wp->w_p_cole == 3) {
-        bcol++;
+        incr();
       } else {
-        if (row > 0 && i == start_col) {
+        if (row > 0 && ptr == ptr_row_offset) {
           // Check if the current concealed character is actually part of
           // the previous wrapped row's conceal group.
-          last_matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
-                                              i - 1);
-          if (last_matchid == matchid) {
-            bcol++;
+          prev_matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
+                                              (colnr_T)((ptr - line)
+                                                        - prev_len));
+          if (prev_matchid == matchid) {
+            incr();
           }
         } else if (wp->w_p_cole == 1
                    || (wp->w_p_cole == 2
                        && (lcs_conceal != NUL
                            || syn_get_sub_char() != NUL))) {
           // At least one placeholder character will be displayed.
-          bcol--;
+          decr();
         }
 
-        last_matchid = matchid;
-
-        // Adjust for concealed text that spans more than one character.
+        prev_matchid = matchid;
         do {
-          i++;
-          bcol++;
-          matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum, i);
-        } while (last_matchid == matchid);
+          incr();
+          ptr += len;
+          prev_len = len;
+          len = utf_ptr2len(ptr);
+          matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
+                                         (colnr_T)(ptr - line));
+        } while (prev_matchid == matchid);
 
         continue;
       }
     }
 
-    i++;
+    ptr += len;
   }
 
-  return getviscol2(bcol, 0);
+  return col;
 }
-
