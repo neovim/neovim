@@ -646,13 +646,11 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   int matchid;
   int prev_matchid;
   int len = 0;
-  int prev_len = 0;
 
 #define incr() col++; ptr_end += utfc_ptr2len(ptr_end)
 #define decr() col--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end) {
-    prev_len = len;
     len = utfc_ptr2len(ptr);
     matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
                                    (colnr_T)(ptr - line));
@@ -660,19 +658,10 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
       if (wp->w_p_cole == 3) {
         incr();
       } else {
-        if (row > 0 && ptr == ptr_row_offset) {
-          // Check if the current concealed character is actually part of
-          // the previous wrapped row's conceal group.
-          prev_matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
-                                              (colnr_T)((ptr - line)
-                                                        - prev_len));
-          if (prev_matchid == matchid) {
-            incr();
-          }
-        } else if (wp->w_p_cole == 1
-                   || (wp->w_p_cole == 2
-                       && (lcs_conceal != NUL
-                           || syn_get_sub_char() != NUL))) {
+        if (!(row > 0 && ptr == ptr_row_offset)
+            && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
+                                      && (lcs_conceal != NUL
+                                          || syn_get_sub_char() != NUL)))) {
           // At least one placeholder character will be displayed.
           decr();
         }
@@ -681,7 +670,6 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
         do {
           incr();
           ptr += len;
-          prev_len = len;
           len = utfc_ptr2len(ptr);
           matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
                                          (colnr_T)(ptr - line));
