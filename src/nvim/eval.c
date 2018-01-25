@@ -17504,7 +17504,8 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   // print an error.
   if (tv->v_type != VAR_LIST && tv->v_type != VAR_NUMBER) {
     const char *ret = tv_get_string_chk(tv);
-    if (ret && (*len = strlen(ret))) {
+    if (ret) {
+      *len = strlen(ret);
       return xmemdupz(ret, (size_t)(*len));
     } else {
       *len = -1;
