@@ -244,40 +244,124 @@ connect to another with different type codes.
 ==============================================================================
 6. Live Updates				      *live-updates* *rpc-live-updates*
 
-A dedicated API has been created to allow co-processes to be notified in
-real-time when the user changes a buffer in any way. It is difficult and
-error-prone to try and do this with autocommands such as |TextChanged|.
+A dedicated API has been created to allow co-processes to be notified  when a
+buffer is changed in any way. It is difficult and error-prone to try and do
+this with autocommands such as |TextChanged|.
 
-							*live-updates-enabling*
-Setting Up~
+                                                              *live-updates-api*
+LiveUpdate Functions~
 
-If your API client is a standalone co-process, it can use the
-`"nvim_buf_live_updates"`API method to activate Live Update events for a
-specific buffer. For example, in python >
+nvim_buf_live_updates_start({send_buffer})     *nvim_buf_live_updates_start()*
+              Register a plugin to receive notifications on buffer changes. An
+              initial |LiveUpdateStart| notification will be sent as a
+              confirmation. After that, |LiveUpdate| notifications will be
+              sent for buffer updates, and |LiveUpdateTick| notifications for
+              a new changedtick without buffer change.
 
-	import sys, neovim
-	nvim = neovim.attach('stdio')
-	bufnr = sys.argv[1]
-	nvim.buffers[bufnr].live_updates_start(True)
+              Parameters:~
+                  {send_buffer}  Bool. If `"True"`, the initial
+                  |LiveUpdateStart| notification will also send the full
+                  buffer's content. If `"False"`, the notification will
+                  contain an empty list instead.
 
-After the `"nvim_buf_live_updates_start"` method is called with Argument `"True"`,
-neovim will send a series of notifications containing the entire buffer's
-contents and any subsequent changes. The buffer's contents are sent via
-notifications because if you were to use the other API methods to retrieve the
-buffer contents, the buffer could be changed again before you turn on live
-updates. This can cause a delay if your plugin activates live updates for a
-very large buffer, but it is the the most efficient way to maintain a copy of
-the entire buffer's contents inside your plugin.
+nvim_buf_live_updates_stop()                    *nvim_buf_live_updates_stop()*
+              Unregister a plugin from buffer change notifications. A final
+              |LiveUpdateEnd| notification will be sent as confirmation.
 
-						      *live-updates-disabling*
-Turning Off~
+                                                           *live-updates-events*
+LiveUpdate Events~
 
-You can use `"nvim_buf_live_updates_stop"` to turn off notifications. One
-final notification will be sent to indicate that live updates are no longer
-active for the specified buffer. Alternatively, you can just close the
-channel.
+The co-process will start receiving the following notification events:
 
-						    *live-updates-limitations*
+LiveUpdateStart[{buf}, {changedtick}, {linedata}, {more}]	 *LiveUpdateStart*
+
+  Neovim will send at least one of these notifications to confirm that
+  liveupdates are registered for this plugin, and possibly send the buffer's
+  contents. If the buffer is very large, neovim might send the contents through
+  in multiple events to avoid loading the entire buffer's contents into memory
+  at once.
+
+	{buf} is an API handle for the buffer.
+
+	{changedtick} is the value of |b:changedtick| for the buffer. If you
+	send an API command back to neovim you can check the value of
+	|b:changedtick| as part of your request to ensure that no other
+	changes have been made. 
+
+	{linedata} is a list of strings containing the buffer's contents. If
+	this list contains 100 strings, then they represent lines 1-100 of the
+	buffer.  Newline characters are not included in the strings, so empty
+	lines will be given as empty strings. If you receive another
+	|LiveUpdateStart| notification with another {linedata} list, then
+	these lines represent the next N lines of the buffer. I.e., a second
+  notification with another list of 100 strings will represent lines 101-200
+  of the buffer. If you send the |nvim_buf_live_updates_start| request with
+  its argument set to `"False"`, this will be empty.
+
+	{linedata} will always have at least 1 item, but the maximum length is
+	determined by neovim and not guaranteed to be any particular size.
+	Also the number of {linedata} items may vary between notifications, so
+	your plugin must be prepared to receive the line data in whatever size
+	lists neovim decides to split it into.
+
+  {more} is a boolean which tells you whether or not to expect more
+  |LiveUpdateStart| notifications. When {more} is false, you can be certain
+  that you now have the entire buffer's contents.
+
+LiveUpdate[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}] *LiveUpdate*
+
+  Indicates that the lines between {firstline} and {lastline} (end-exclusive,
+  zero-indexed) have been replaced with the new line data contained in the
+  {linedata} list.  All buffer changes (even adding single characters) will be
+  transmitted as whole-line changes.
+
+	{buf} is an API handle for the buffer.
+
+  {changedtick} is the value of |b:changedtick| for the buffer. If you send an
+  API command back to neovim you can check the value of |b:changedtick| as
+  part of your request to ensure that no other changes have been made.
+
+  {firstline} is the integer line number of the first line that was replaced.
+  Note that {firstline} is zero-indexed, so if line `1` was replaced then
+  {firstline} will be `0` instead of `1`. {firstline} is guaranteed to always
+  be less than or equal to the number of lines that were in the buffer before
+  the lines were replaced.
+
+  {lastline} is the integer line number of the first line that was not
+  replaced (i.e. the range {firstline}, {lastline} is end-exclusive). Note
+  that {lastline} is zero-indexed, so if line numbers 2 to 5 were replaced,
+  this will be `5` instead of `6`. {lastline} is guaranteed to always be less
+  than or equal to the number of lines that were in the buffer before the
+  lines were replaced.
+
+  {linedata} is a list of strings containing the contents of the new buffer
+  lines. Newline characters are not included in the strings, so empty lines
+  will be given as empty strings. 
+
+  Note: sometimes {changedtick} will be |v:null|, which means that the buffer
+  text *looks* like it has changed, but actually hasn't. In this case the
+  lines in {linedata} contain the modified text that is shown to the user, but
+  doesn't reflect the actual buffer contents. Currently this behaviour is only
+  used for the 'inccommand' option.
+
+LiveUpdateTick[{buf}, {changedtick}]		                   *LiveUpdateTick*
+
+  Indicates that |b:changedtick| was incremented for the buffer {buf}, but no
+  text was changed. This is currently only used by undo/redo.
+
+  {buf} is an API handle for the buffer.
+
+  {changedtick} is the new value of |b:changedtick| for that buffer.
+
+LiveUpdateEnd[{buf}]                                    		*LiveUpdateEnd*
+
+  {buf} is an API handle for the buffer.
+
+  Indicates that live updates for the nominated buffer have been disabled,
+  either by calling |nvim_buf_live_updates_stop| or because the buffer was
+  unloaded (see |live-updates-limitations| for more information).
+
+                                                      *live-updates-limitations*
 Limitations~
 
 Note that any of the following actions will also turn off live updates because
@@ -287,146 +371,42 @@ the buffer contents are unloaded from memory:
   - Using |:edit| to reload the buffer
   - reloading the buffer after it is changed from outside neovim.
 
-							  *live-updates-events*
-Handling Events~
-
-The co-process will start receiving the notification events which will be
-equivilent to the following |rpcnotify()| calls:
-
-1. rpcnotify({channel}, "LiveUpdateStart",		      *LiveUpdateStart*
-             [{buf}, {changedtick}, {linedata}, {more}])
-
-	Neovim will send at least one of these notifications to provide you
-	with the original buffer contents. If the buffer is very large, neovim
-	will send the contents through in multiple events to avoid loading the
-	entire buffer's contents into memory at once.
-
-	{buf} is an API handle for the buffer.
-
-	{changedtick} is the value of |b:changedtick| for the buffer. If you
-	send an API command back to neovim you can check the value of
-	|b:changedtick| as part of your request to ensure that no other
-	changes have been made. See |live-update-race-conditions| for more
-	information.
-
-	{linedata} is a list of strings containing the buffer's contents. If
-	this list contains 100 strings, then they represent lines 1-100 of the
-	buffer.  Newline characters are not included in the strings, so empty
-	lines will be given as empty strings. If you receive another
-	`"LiveUpdateStart"` notification with another {linedata} list, then
-	these lines represent the next N lines of the buffer. I.e., a second
-	notification with another list of 100 strings will represent lines
-	101-200 of the buffer.
-
-	{linedata} will always have at least 1 item, but the maximum length is
-	determined by neovim and not guaranteed to be any particular size.
-	Also the number of {linedata} items may vary between notifications, so
-	your plugin must be prepared to receive the line data in whatever size
-	lists neovim decides to split it into.
-
-	{more} is a boolean which tells you whether or not to expect more
-	`"LiveUpdateStart"` notifications. When {more} is false, you can
-	be certain that you now have the entire buffer's contents.
-
-2. rpcnotify({channel}, "LiveUpdate",				  *LiveUpdate*
-	     [{buf}, {changedtick}, {firstline}, {lastline}, {linedata}])
-
-  Indicates that the lines between {firstline} and {lastline} (end-exclusive,
-  zero-indexed) have been replaced with the new line data contained in the
-  {linedata} list.  All buffer changes (even adding single characters) will be
-  transmitted as whole-line changes.
-
-	{buf} is an API handle for the buffer.
-
-	{changedtick} is the value of |b:changedtick| for the buffer. If you
-	send an API command back to neovim you can check the value of
-	|b:changedtick| as part of your request to ensure that no other
-	changes have been made.
-
-	{firstline} is the integer line number of the first line that was
-	replaced. Note that {firstline} is zero-indexed, so if line `1` was
-	replaced then {firstline} will be `0` instead of `1`. {firstline} is
-	guaranteed to always be less than or equal to the number of lines that
-	were in the buffer before the lines were replaced.
-
-  {lastline} is the integer line number of the first line that was not
-  replaced. Note that {lastline} is zero-indexed, so if line numbers 2 to 5
-  were replaced, this will be `5` instead of `6`. {lastline} is guaranteed to
-  always be less than or equal to the number of lines that were in the buffer
-  before the lines were replaced.
-
-	{linedata} is a list of strings containing the contents of the new
-	buffer lines. Newline characters are not included in the strings, so
-	empty lines will be given as empty strings. If {numreplaced} is `1` or
-	more, then {linedata} may be an empty list (indicating that lines were
-	deleted from the buffer). But if {numreplaced} is `0` (indicating that
-	lines were added to the buffer) then {linedata} is guaranteed to
-	contain at least 1 item.
-
-	Note: sometimes {changedtick} will be |v:null|, which means that the
-	buffer text *looks* like it has changed, but actually hasn't. In this
-	case the lines in {linedata} contain the modified text that is shown
-	to the user, but doesn't reflect the actual buffer contents. Currently
-	this behaviour is only used for the 'inccommand' option.
-
-3. rpcnotify({channel}, "LiveUpdateTick",		      *LiveUpdateTick*
-	     [{buf}, {changedtick}])
-
-	Indicates that |b:changedtick| was incremented for the buffer {buf},
-	but no text was changed. This is currently only used by undo/redo.
-
-	{buf} is an API handle for the buffer.
-
-	{changedtick} is the new value of |b:changedtick| for that buffer.
-
-4. rpcnotify({channel}, "LiveUpdateEnd", [{buf}])		*LiveUpdateEnd*
-
-	{buf} is an API handle for the buffer.
-
-	Indicates that live updates for the nominated buffer have been
-	disabled, either by calling the api function `"nvim_buf_live_updates"`
-	with argument `false`, or because the buffer was unloaded (see
-	|live-updates-disabling| and |live-updates-limitations| for more
-	information).
-
-							*live-updates-examples*
+                                                       *live-updates-examples*
 Example Events~
 
 If live updates are activated a new empty buffer, the following
 |LiveUpdateStart| event will be sent: >
 
-	rpcnotify({channel}, "LiveUpdateStart", [{buf}, [""], v:false])
+  rpcnotify({channel}, "LiveUpdateStart", [{buf}, [""], v:false])
 
 If the user adds 2 new lines to the start of a buffer, the following event
 would be generated: >
 
-	rpcnotify({channel}, "LiveUpdate", [{buf}, 0, 0, ["line1", "line2"]])
+  rpcnotify({channel}, "LiveUpdate", [{buf}, 0, 0, ["line1", "line2"]])
 
 If the puts the cursor on a line containing the text `"Hello world"` and adds
 a `!` character to the end using insert mode, the following event would be
 generated: >
 
-	rpcnotify({channel}, "LiveUpdate",
-		  [{buf}, {linenr}, 1, ["Hello world!"]])
+  rpcnotify({channel}, "LiveUpdate", [{buf}, {linenr}, {linenr} + 1, ["Hello
+  world!"]])
 
 If the user moves their cursor to line 3 of a buffer and deletes 20 lines
 using `20dd`, the following event will be generated: >
 
-	rpcnotify({channel}, "LiveUpdate", [{buf}, 2, 20, []])
+  rpcnotify({channel}, "LiveUpdate", [{buf}, 2, 20, []])
 
 If the user selects lines 3-5 of a buffer using |linewise-visual| mode and
 then presses `p` to paste in a new block of 6 lines, then the following event
 would be sent to the co-process: >
 
-	rpcnotify({channel}, "LiveUpdate",
-		  [{buf}, 2, 3, ['pasted line 1', 'pasted line 2',
-				 'pasted line 3', 'pasted line 4',
-				 'pasted line 5', 'pasted line 6']])
+  rpcnotify({channel}, "LiveUpdate", [{buf}, 2, 5, ['pasted line 1', 'pasted
+  line 2', 'pasted line 3', 'pasted line 4', 'pasted line 5', 'pasted line
+  6']])
 
 If the user uses :edit to reload a buffer then the following event would be
 generated: >
 
-	rpcnotify({channel}, "LiveUpdateEnd", [{buf}])
-
+  rpcnotify({channel}, "LiveUpdateEnd", [{buf}])
 
  vim:tw=78:ts=8:ft=help:norl:
