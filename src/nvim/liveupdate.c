@@ -54,7 +54,7 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id)
   args.items[2] = ARRAY_OBJ(linedata);
   args.items[3] = BOOLEAN_OBJ(false);
 
-  channel_send_event(channel_id, "LiveUpdateStart", args);
+  rpc_send_event(channel_id, "LiveUpdateStart", args);
   return true;
 }
 
@@ -64,7 +64,7 @@ void liveupdate_send_end(buf_T *buf, uint64_t channelid)
     args.size = 1;
     args.items = xcalloc(sizeof(Object), args.size);
     args.items[0] = BUFFER_OBJ(buf->handle);
-    channel_send_event(channelid, "LiveUpdateEnd", args);
+    rpc_send_event(channelid, "LiveUpdateEnd", args);
 }
 
 void liveupdate_unregister(buf_T *buf, uint64_t channelid)
@@ -155,7 +155,7 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
         }
     }
     args.items[4] = ARRAY_OBJ(linedata);
-    if (!channel_send_event(channelid, "LiveUpdate", args)) {
+    if (!rpc_send_event(channelid, "LiveUpdate", args)) {
       // We can't unregister the channel while we're iterating over the
       // liveupdate_channels array, so we remember its ID to unregister it at
       // the end.
@@ -190,6 +190,6 @@ void liveupdate_send_tick(buf_T *buf)
     args.items[1] = INTEGER_OBJ(buf->b_changedtick);
 
     // don't try and clean up dead channels here
-    channel_send_event(channelid, "LiveUpdateTick", args);
+    rpc_send_event(channelid, "LiveUpdateTick", args);
   }
 }
