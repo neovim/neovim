@@ -87,6 +87,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 Boolean nvim_buf_live_updates(uint64_t channel_id,
                               Buffer buffer,
                               Boolean enabled,
+                              Boolean send_buffer,
                               Error *err)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
 {
@@ -97,7 +98,7 @@ Boolean nvim_buf_live_updates(uint64_t channel_id,
   }
 
   if (enabled) {
-    return liveupdate_register(buf, channel_id);
+    return liveupdate_register(buf, channel_id, send_buffer);
   }
 
   liveupdate_unregister(buf, channel_id);

@@ -6,7 +6,7 @@
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool liveupdate_register(buf_T *buf, uint64_t channel_id)
+bool liveupdate_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
 {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
@@ -27,21 +27,23 @@ bool liveupdate_register(buf_T *buf, uint64_t channel_id)
   // append the channelid to the list
   kv_push(buf->liveupdate_channels, channel_id);
 
-  // send through the full channel contents now
   Array linedata = ARRAY_DICT_INIT;
-  size_t line_count = buf->b_ml.ml_line_count;
-  linedata.size = line_count;
-  linedata.items = xcalloc(sizeof(Object), line_count);
-  for (size_t i = 0; i < line_count; i++) {
-    linenr_T lnum = 1 + (linenr_T)i;
+  if (send_buffer) {
+    // collect buffer contents
+    size_t line_count = buf->b_ml.ml_line_count;
+    linedata.size = line_count;
+    linedata.items = xcalloc(sizeof(Object), line_count);
+    for (size_t i = 0; i < line_count; i++) {
+      linenr_T lnum = 1 + (linenr_T)i;
 
-    const char *bufstr = (char *)ml_get_buf(buf, lnum, false);
-    Object str = STRING_OBJ(cstr_to_string(bufstr));
+      const char *bufstr = (char *)ml_get_buf(buf, lnum, false);
+      Object str = STRING_OBJ(cstr_to_string(bufstr));
 
-    // Vim represents NULs as NLs, but this may confuse clients.
-    strchrsub(str.data.string.data, '\n', '\0');
+      // Vim represents NULs as NLs, but this may confuse clients.
+      strchrsub(str.data.string.data, '\n', '\0');
 
-    linedata.items[i] = str;
+      linedata.items[i] = str;
+    }
   }
 
   Array args = ARRAY_DICT_INIT;
