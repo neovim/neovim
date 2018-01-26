@@ -89,7 +89,7 @@ Boolean nvim_buf_live_updates(uint64_t channel_id,
                               Boolean enabled,
                               Boolean send_buffer,
                               Error *err)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
