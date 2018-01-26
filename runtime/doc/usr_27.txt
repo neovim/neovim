@@ -224,10 +224,10 @@ specify a line offset, this can cause trouble.  For example: >
 
 	/const/-2
 
-This finds the next word "const" and then moves two lines up.  If you
-use "n" to search again, Vim could start at the current position and find the same
-"const" match.  Then using the offset again, you would be back where you started.
-You would be stuck!
+This finds the next word "const" and then moves two lines up.  If you use "n"
+to search again, Vim could start at the current position and find the same
+"const" match.  Then using the offset again, you would be back where you
+started.  You would be stuck!
    It could be worse: Suppose there is another match with "const" in the next
 line.  Then repeating the forward search would find this match and move two
 lines up.  Thus you would actually move the cursor back!
