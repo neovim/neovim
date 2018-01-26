@@ -85,9 +85,9 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @return False when live updates couldn't be enabled because the buffer isn't
 ///         loaded; otherwise True.
 Boolean nvim_buf_live_updates_start(uint64_t channel_id,
-                              Buffer buffer,
-                              Boolean send_buffer,
-                              Error *err)
+                                    Buffer buffer,
+                                    Boolean send_buffer,
+                                    Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -97,7 +97,6 @@ Boolean nvim_buf_live_updates_start(uint64_t channel_id,
   }
 
   return liveupdate_register(buf, channel_id, send_buffer);
-
 }
 //
 /// Deactivate live updates from this buffer to the current channel.
@@ -107,8 +106,8 @@ Boolean nvim_buf_live_updates_start(uint64_t channel_id,
 /// @return False when live updates couldn't be disabled because the buffer
 ///         isn't loaded; otherwise True.
 Boolean nvim_buf_live_updates_stop(uint64_t channel_id,
-                              Buffer buffer,
-                              Error *err)
+                                   Buffer buffer,
+                                   Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

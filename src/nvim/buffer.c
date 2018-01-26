@@ -1738,9 +1738,9 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (flags & BLN_DUMMY)
     buf->b_flags |= BF_DUMMY;
   buf_clear_file(buf);
-  clrallmarks(buf);                     /* clear marks */
-  fmarks_check_names(buf);              /* check file marks for this file */
-  buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
+  clrallmarks(buf);                     // clear marks
+  fmarks_check_names(buf);              // check file marks for this file
+  buf->b_p_bl = (flags & BLN_LISTED) ? true : false;    // init 'buflisted'
   kv_destroy(buf->liveupdate_channels);
   kv_init(buf->liveupdate_channels);
   if (!(flags & BLN_DUMMY)) {

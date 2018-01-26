@@ -10,7 +10,12 @@ local origlines = {"original line 1",
                    "original line 5",
                    "original line 6"}
 
-function sendkeys(keys)
+local function expectn(name, args)
+  -- expect the next message to be the specified notification event
+  eq({'notification', name, args}, next_message())
+end
+
+local function sendkeys(keys)
   nvim('input', keys)
   -- give neovim some time to process msgpack requests before possibly sending
   -- more key presses - otherwise they all pile up in the queue and get
@@ -19,16 +24,7 @@ function sendkeys(keys)
   repeat until os.clock() > ntime
 end
 
-function editoriginal(activate, lines)
-  if not lines then
-    lines = origlines
-  end
-  -- load up the file with the correct contents
-  helpers.clear()
-  return open(activate, lines)
-end
-
-function open(activate, lines)
+local function open(activate, lines)
   local filename = helpers.tmpname()
   helpers.write_file(filename, table.concat(lines, "\n").."\n", true)
   command('edit ' .. filename)
@@ -46,24 +42,28 @@ function open(activate, lines)
   return b, tick, filename
 end
 
-function reopen(buf, expectedlines)
+local function editoriginal(activate, lines)
+  if not lines then
+    lines = origlines
+  end
+  -- load up the file with the correct contents
+  helpers.clear()
+  return open(activate, lines)
+end
+
+local function reopen(buf, expectedlines)
   ok(buffer('live_updates_stop', buf))
   expectn('LiveUpdateEnd', {buf})
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
   ok(buffer('live_updates_start', buf, true))
-  expectn('LiveUpdateStart', {buf, tick, origlines, false})
+  expectn('LiveUpdateStart', {buf, tick, expectedlines, false})
   command('normal! gg')
   return tick
 end
 
-function expectn(name, args)
-  -- expect the next message to be the specified notification event
-  eq({'notification', name, args}, next_message())
-end
-
-function reopenwithfolds(b)
+local function reopenwithfolds(b)
   -- discard any changes to the buffer
   local tick = reopen(b, origlines)
 
@@ -141,7 +141,7 @@ describe('liveupdate', function()
     command('normal! gg4YGp')
     command('normal! Gp')
     command('normal! Gp')
-    firstfour = {'original line 4',
+    local firstfour = {'original line 4',
                  'original line 5',
                  'original line 6',
                  'original line 4'}
@@ -159,8 +159,8 @@ describe('liveupdate', function()
 
     -- add a line at the start of an empty file
     command('enew')
-    local tick = eval('b:changedtick')
-    b2 = nvim('get_current_buf')
+    tick = eval('b:changedtick')
+    local b2 = nvim('get_current_buf')
     ok(buffer('live_updates_start', b2, true))
     expectn('LiveUpdateStart', {b2, tick, {""}, false})
     eval('append(0, ["new line 1"])')
@@ -173,7 +173,7 @@ describe('liveupdate', function()
 
     -- add multiple lines to a blank file
     command('enew!')
-    b3 = nvim('get_current_buf')
+    local b3 = nvim('get_current_buf')
     ok(buffer('live_updates_start', b3, true))
     tick = eval('b:changedtick')
     expectn('LiveUpdateStart', {b3, tick, {""}, false})
@@ -230,7 +230,6 @@ describe('liveupdate', function()
 
   it('knows when you modify lines of text', function()
     local b, tick = editoriginal(true)
-    local channel = nvim('get_api_info')[1]
 
     -- some normal text editing
     command('normal! A555')
@@ -266,7 +265,7 @@ describe('liveupdate', function()
     command('enew!')
     tick = 2
     expectn('LiveUpdateEnd', {b})
-    bnew = nvim('get_current_buf')
+    local bnew = nvim('get_current_buf')
     ok(buffer('live_updates_start', bnew, true))
     expectn('LiveUpdateStart', {bnew, tick, {''}, false})
     sendkeys('i')
@@ -324,7 +323,7 @@ describe('liveupdate', function()
   end)
 
   it('sends a sensible event when you use "o"', function()
-    b, tick = editoriginal(true, {'AAA', 'BBB'})
+    local b, tick = editoriginal(true, {'AAA', 'BBB'})
     command('set noautoindent nosmartindent')
 
     -- use 'o' to start a new line from a line with no indent
@@ -391,14 +390,14 @@ describe('liveupdate', function()
   it('allows a channel to watch multiple buffers at once', function()
     -- edit 3 buffers, make sure they all have windows visible so that when we
     -- move between buffers, none of them are unloaded
-    b1, tick1, f1 = editoriginal(true, {'A1', 'A2'})
-    b1nr = eval('bufnr("")')
+    local b1, tick1 = editoriginal(true, {'A1', 'A2'})
+    local b1nr = eval('bufnr("")')
     command('split')
-    b2, tick2, f2 = open(true, {'B1', 'B2'})
-    b2nr = eval('bufnr("")')
+    local b2, tick2 = open(true, {'B1', 'B2'})
+    local b2nr = eval('bufnr("")')
     command('split')
-    b3, tick3, f3 = open(true, {'C1', 'C2'})
-    b3nr = eval('bufnr("")')
+    local b3, tick3 = open(true, {'C1', 'C2'})
+    local b3nr = eval('bufnr("")')
 
     -- make a new window for moving between buffers
     command('split')
@@ -470,12 +469,12 @@ describe('liveupdate', function()
     end
 
     -- create several new sessions, in addition to our main API
-    sessions = {}
+    local sessions = {}
     sessions[1] = addsession(helpers.tmpname()..'.1')
     sessions[2] = addsession(helpers.tmpname()..'.2')
     sessions[3] = addsession(helpers.tmpname()..'.3')
 
-    function request(sessionnr, method, ...)
+    local function request(sessionnr, method, ...)
       local status, rv = sessions[sessionnr]:request(method, ...)
       if not status then
         error(rv[2])
@@ -483,7 +482,7 @@ describe('liveupdate', function()
       return rv
     end
 
-    function wantn(sessionid, name, args)
+    local function wantn(sessionid, name, args)
       local session = sessions[sessionid]
       eq({'notification', name, args}, session:next_message())
     end
@@ -534,7 +533,7 @@ describe('liveupdate', function()
 
     -- make sure there are no other pending LiveUpdate messages going to
     -- channel 1
-    local channel1 = request(1, 'nvim_get_api_info')[1]
+    channel1 = request(1, 'nvim_get_api_info')[1]
     eval('rpcnotify('..channel1..', "Hello Again")')
     wantn(1, 'Hello Again', {})
   end)
@@ -573,7 +572,6 @@ describe('liveupdate', function()
 
   it('works with :left', function()
     local b, tick = editoriginal(true, {" A", "  B", "B", "\tB", "\t\tC"})
-    local channel = nvim('get_api_info')[1]
     command('2,4left')
     tick = tick + 1
     expectn('LiveUpdate', {b, tick, 1, 3, {"B", "B", "B"}})
@@ -585,7 +583,6 @@ describe('liveupdate', function()
                                         "\t  \tBB",
                                         " \tB",
                                         "\t\tC"})
-    local channel = nvim('get_api_info')[1]
     command('set ts=2 et')
     command('2,4retab')
     tick = tick + 1
@@ -594,7 +591,6 @@ describe('liveupdate', function()
 
   it('works with :move', function()
     local b, tick = editoriginal(true, origlines)
-    local channel = nvim('get_api_info')[1]
     -- move text down towards the end of the file
     command('2,3move 4')
     tick = tick + 2
@@ -614,9 +610,8 @@ describe('liveupdate', function()
   end)
 
   it('sends sensible events when you manually add/remove folds', function()
-    local b, tick = editoriginal(true)
-    local channel = nvim('get_api_info')[1]
-    tick = reopenwithfolds(b)
+    local b = editoriginal(true)
+    local tick = reopenwithfolds(b)
 
     -- delete the inner fold
     command('normal! zR3Gzd')
@@ -683,7 +678,7 @@ describe('liveupdate', function()
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
   end)
-  
+
   -- test what happens when a buffer is hidden
   it('keeps updates turned on if the buffer is hidden', function()
     local b, tick = editoriginal(true, {'AAA'})
@@ -720,10 +715,10 @@ describe('liveupdate', function()
     helpers.clear()
     -- need to make a new window with a buffer because :bunload doesn't let you
     -- unload the last buffer
-    for i, cmd in ipairs({'bunload', 'bdelete', 'bwipeout'}) do
+    for _, cmd in ipairs({'bunload', 'bdelete', 'bwipeout'}) do
       command('new')
       -- open a brand spanking new file
-      local b, filename = open(true, {'AAA'})
+      local b = open(true, {'AAA'})
 
       -- call :bunload or whatever the command is, and then check that we
       -- receive a LiveUpdateEnd

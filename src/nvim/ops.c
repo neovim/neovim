@@ -632,12 +632,13 @@ void op_reindent(oparg_T *oap, Indenter how)
   /* Mark changed lines so that they will be redrawn.  When Visual
    * highlighting was present, need to continue until the last line.  When
    * there is no change still need to remove the Visual highlighting. */
-  if (last_changed != 0)
+  if (last_changed != 0) {
     changed_lines(first_changed, 0,
                   oap->is_VIsual ? start_lnum + oap->line_count :
                   last_changed + 1, 0L, true);
-  else if (oap->is_VIsual)
+  } else if (oap->is_VIsual) {
     redraw_curbuf_later(INVERTED);
+  }
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
@@ -1856,8 +1857,9 @@ void op_tilde(oparg_T *oap)
       did_change |= one_change;
 
     }
-    if (did_change)
+    if (did_change) {
       changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
+    }
   } else {  // not block mode
     if (oap->motion_type == kMTLineWise) {
       oap->start.col = 0;

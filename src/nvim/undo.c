@@ -2030,7 +2030,7 @@ void undo_time(long step, int sec, int file, int absolute)
         break;
       curbuf->b_u_curhead = uhp;
       u_undoredo(true, true);
-      uhp->uh_walk = nomark;            /* don't go back down here */
+      uhp->uh_walk = nomark;            // don't go back down here
     }
 
     /*

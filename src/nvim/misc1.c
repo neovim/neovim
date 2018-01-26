@@ -837,7 +837,7 @@ open_line (
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
                       curwin->w_cursor.lnum + 1, 1L, true);
-        did_append = FALSE;
+        did_append = false;
 
         /* Move marks after the line break to the new line. */
         if (flags & OPENLINE_MARKFIX)
@@ -1914,12 +1914,12 @@ void deleted_lines_mark(linenr_T lnum, long count)
  * Takes care of calling changed() and updating b_mod_*.
  * Careful: may trigger autocommands that reload the buffer.
  */
-void 
-changed_lines (
-    linenr_T lnum,              /* first line with change */
-    colnr_T col,                /* column in first line with change */
-    linenr_T lnume,             /* line below last changed line */
-    long xtra,                  /* number of extra lines (negative when deleting) */
+void
+changed_lines(
+    linenr_T lnum,        // first line with change
+    colnr_T col,          // column in first line with change
+    linenr_T lnume,       // line below last changed line
+    long xtra,            // number of extra lines (negative when deleting)
     bool send_liveupdate  // some callers like undo/redo call changed_lines()
                           // and then increment b_changedtick *again*. This flag
                           // allows these callers to send the LiveUpdate events
