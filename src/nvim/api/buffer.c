@@ -78,15 +78,14 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 
 /// Activate live updates from this buffer to the current channel.
 ///
-///
 /// @param buffer The buffer handle
-/// @param enabled True turns on live updates, False turns them off.
+/// @param send_buffer Set to true if the initial notification should contain
+///        the whole buffer
 /// @param[out] err Details of an error that may have occurred
 /// @return False when live updates couldn't be enabled because the buffer isn't
 ///         loaded; otherwise True.
-Boolean nvim_buf_live_updates(uint64_t channel_id,
+Boolean nvim_buf_live_updates_start(uint64_t channel_id,
                               Buffer buffer,
-                              Boolean enabled,
                               Boolean send_buffer,
                               Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
@@ -97,8 +96,25 @@ Boolean nvim_buf_live_updates(uint64_t channel_id,
     return false;
   }
 
-  if (enabled) {
-    return liveupdate_register(buf, channel_id, send_buffer);
+  return liveupdate_register(buf, channel_id, send_buffer);
+
+}
+//
+/// Deactivate live updates from this buffer to the current channel.
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return False when live updates couldn't be disabled because the buffer
+///         isn't loaded; otherwise True.
+Boolean nvim_buf_live_updates_stop(uint64_t channel_id,
+                              Buffer buffer,
+                              Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
   }
 
   liveupdate_unregister(buf, channel_id);

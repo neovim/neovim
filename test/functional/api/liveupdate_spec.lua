@@ -39,7 +39,7 @@ function open(activate, lines)
   -- turn on live updates, ensure that the LiveUpdateStart messages
   -- arrive as expectected
   if activate then
-    ok(buffer('live_updates', b, true, true))
+    ok(buffer('live_updates_start', b, true))
     expectn('LiveUpdateStart', {b, tick, lines, false})
   end
 
@@ -47,12 +47,12 @@ function open(activate, lines)
 end
 
 function reopen(buf, expectedlines)
-  ok(buffer('live_updates', buf, false, true))
+  ok(buffer('live_updates_stop', buf))
   expectn('LiveUpdateEnd', {buf})
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
-  ok(buffer('live_updates', buf, true, true))
+  ok(buffer('live_updates_start', buf, true))
   expectn('LiveUpdateStart', {buf, tick, origlines, false})
   command('normal! gg')
   return tick
@@ -161,20 +161,20 @@ describe('liveupdate', function()
     command('enew')
     local tick = eval('b:changedtick')
     b2 = nvim('get_current_buf')
-    ok(buffer('live_updates', b2, true, true))
+    ok(buffer('live_updates_start', b2, true))
     expectn('LiveUpdateStart', {b2, tick, {""}, false})
     eval('append(0, ["new line 1"])')
     tick = tick + 1
     expectn('LiveUpdate', {b2, tick, 0, 0, {'new line 1'}})
 
     -- turn off live updates manually
-    buffer('live_updates', b2, false, true)
+    buffer('live_updates_stop', b2)
     expectn('LiveUpdateEnd', {b2})
 
     -- add multiple lines to a blank file
     command('enew!')
     b3 = nvim('get_current_buf')
-    ok(buffer('live_updates', b3, true, true))
+    ok(buffer('live_updates_start', b3, true))
     tick = eval('b:changedtick')
     expectn('LiveUpdateStart', {b3, tick, {""}, false})
     eval('append(0, ["new line 1", "new line 2", "new line 3"])')
@@ -267,7 +267,7 @@ describe('liveupdate', function()
     tick = 2
     expectn('LiveUpdateEnd', {b})
     bnew = nvim('get_current_buf')
-    ok(buffer('live_updates', bnew, true, true))
+    ok(buffer('live_updates_start', bnew, true))
     expectn('LiveUpdateStart', {bnew, tick, {''}, false})
     sendkeys('i')
     sendkeys('h')
@@ -440,21 +440,21 @@ describe('liveupdate', function()
     local b, tick = editoriginal(false)
 
     -- turn on live updates many times
-    ok(buffer('live_updates', b, true, true))
-    ok(buffer('live_updates', b, true, true))
-    ok(buffer('live_updates', b, true, true))
-    ok(buffer('live_updates', b, true, true))
-    ok(buffer('live_updates', b, true, true))
+    ok(buffer('live_updates_start', b, true))
+    ok(buffer('live_updates_start', b, true))
+    ok(buffer('live_updates_start', b, true))
+    ok(buffer('live_updates_start', b, true))
+    ok(buffer('live_updates_start', b, true))
     expectn('LiveUpdateStart', {b, tick, origlines, false})
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
 
     -- turn live updates off many times
-    ok(buffer('live_updates', b, false, true))
-    ok(buffer('live_updates', b, false, true))
-    ok(buffer('live_updates', b, false, true))
-    ok(buffer('live_updates', b, false, true))
-    ok(buffer('live_updates', b, false, true))
+    ok(buffer('live_updates_stop', b))
+    ok(buffer('live_updates_stop', b))
+    ok(buffer('live_updates_stop', b))
+    ok(buffer('live_updates_stop', b))
+    ok(buffer('live_updates_stop', b))
     expectn('LiveUpdateEnd', {b})
     eval('rpcnotify('..channel..', "Hello Again")')
     expectn('Hello Again', {})
@@ -493,9 +493,9 @@ describe('liveupdate', function()
     local b, tick = open(false, lines)
 
     -- turn on live updates for sessions 1, 2 and 3
-    ok(request(1, 'nvim_buf_live_updates', b, true, true))
-    ok(request(2, 'nvim_buf_live_updates', b, true, true))
-    ok(request(3, 'nvim_buf_live_updates', b, true, true))
+    ok(request(1, 'nvim_buf_live_updates_start', b, true))
+    ok(request(2, 'nvim_buf_live_updates_start', b, true))
+    ok(request(3, 'nvim_buf_live_updates_start', b, true))
     wantn(1, 'LiveUpdateStart', {b, tick, lines, false})
     wantn(2, 'LiveUpdateStart', {b, tick, lines, false})
     wantn(3, 'LiveUpdateStart', {b, tick, lines, false})
@@ -508,7 +508,7 @@ describe('liveupdate', function()
     wantn(3, 'LiveUpdate', {b, tick, 0, 1, {'AA'}})
 
     -- stop watching on channel 1
-    ok(request(1, 'nvim_buf_live_updates', b, false, true))
+    ok(request(1, 'nvim_buf_live_updates_stop', b))
     wantn(1, 'LiveUpdateEnd', {b})
 
     -- undo the change to buffer 1
@@ -735,7 +735,7 @@ describe('liveupdate', function()
   it('doesn\'t send the buffer\'s content when not requested', function()
     helpers.clear()
     local b, tick = editoriginal(false)
-    ok(buffer('live_updates', b, true, false))
+    ok(buffer('live_updates_start', b, false))
     expectn('LiveUpdateStart', {b, tick, {}, false})
   end)
 

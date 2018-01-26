@@ -258,24 +258,24 @@ specific buffer. For example, in python >
 	import sys, neovim
 	nvim = neovim.attach('stdio')
 	bufnr = sys.argv[1]
-	nvim.buffers[bufnr].live_updates(True)
+	nvim.buffers[bufnr].live_updates_start(True)
 
-After the `"nvim_buf_live_updates"` method is called, neovim will send a
-series of notifications containing the entire buffer's contents and any
-subsequent changes. The buffer's contents are sent via notifications because
-if you were to use the other API methods to retrieve the buffer contents, the
-buffer could be changed again before you turn on live updates. This can cause
-a delay if your plugin activates live updates for a very large buffer, but it
-is the the most efficient way to maintain a copy of the entire buffer's
-contents inside your plugin.
+After the `"nvim_buf_live_updates_start"` method is called with Argument `"True"`,
+neovim will send a series of notifications containing the entire buffer's
+contents and any subsequent changes. The buffer's contents are sent via
+notifications because if you were to use the other API methods to retrieve the
+buffer contents, the buffer could be changed again before you turn on live
+updates. This can cause a delay if your plugin activates live updates for a
+very large buffer, but it is the the most efficient way to maintain a copy of
+the entire buffer's contents inside your plugin.
 
 						      *live-updates-disabling*
 Turning Off~
 
-You can use `"nvim_buf_live_updates"` with an argument of `False` to turn off
-notifications. One final notification will be sent to indicate that live
-updates are no longer active for the specified buffer. Alternatively, you can
-just close the channel.
+You can use `"nvim_buf_live_updates_stop"` to turn off notifications. One
+final notification will be sent to indicate that live updates are no longer
+active for the specified buffer. Alternatively, you can just close the
+channel.
 
 						    *live-updates-limitations*
 Limitations~
