@@ -5,6 +5,8 @@ import sys
 from collections import defaultdict
 from enum import Enum
 
+import yaml
+
 
 class ListAllocState(Enum):
   '''Allocation state, used to determine when list allocation was finished.'''
@@ -1116,6 +1118,35 @@ class ListSessionHistory:
       prev_lhist = lhist
 
 
+def yaml_init(y):
+  '''Initialize parselog-specific representers
+
+  :param yaml.dumper.Dumper y:
+    Dumper class to add representers too. Passing ``yaml`` module itself works 
+    here too.
+  '''
+  def represent_alloc_state(dumper, data):
+    dumper.alias_key = None
+    return dumper.represent_scalar('!astate', data.name)
+
+  def represent_alloc_length_type(dumper, data):
+    dumper.alias_key = None
+    return dumper.represent_scalar('!altype', data.name)
+
+  def represent_list_history_entry(dumper, data):
+    return dumper.represent_mapping('!lhistentry', {
+      data.action: data.__dict__,
+    }, flow_style=True)
+
+  def represent_list_history(dumper, data):
+    return dumper.represent_yaml_object('!lhist', data, type(data))
+
+  y.add_representer(ListAllocState, represent_alloc_state)
+  y.add_representer(ListAllocLengthType, represent_alloc_length_type)
+  y.add_multi_representer(ListHistoryEntry, represent_list_history_entry)
+  y.add_representer(ListHistory, represent_list_history)
+
+
 def main(args):
   if args[0] == '--help':
     print('Usage: parselog.py log_fname')
@@ -1123,6 +1154,8 @@ def main(args):
   lses = ListSessionHistory()
   with open(args[0], 'r') as fp:
     lses.parsefile(fp)
+  yaml_init(yaml)
+  yaml.dump(lses, stream=sys.stdout)
   # FIXME: Do something with results
   return 0
 
