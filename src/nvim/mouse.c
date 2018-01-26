@@ -670,8 +670,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 
   vcol = offset;
 
-#define incr() col++; nudge++; ptr_end += utfc_ptr2len(ptr_end)
-#define decr() col--; nudge--; ptr_end -= utfc_ptr2len(ptr_end)
+#define incr() nudge++; ptr_end += utfc_ptr2len(ptr_end)
+#define decr() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
     cwidth = chartabsize(ptr, vcol);
@@ -712,5 +712,5 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     ptr += utfc_ptr2len(ptr);
   }
 
-  return col;
+  return col + nudge;
 }
