@@ -2,13 +2,15 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local clear = helpers.clear
+local command = helpers.command
+local eval = helpers.eval
 local meths = helpers.meths
 local redir_exec = helpers.redir_exec
 local source = helpers.source
 
 before_each(clear)
 
-describe(':let command', function()
+describe(':let', function()
   it('correctly lists variables with curly-braces', function()
     meths.set_var('v', {0})
     eq('\nv                     [0]', redir_exec('let {"v"}'))
@@ -41,5 +43,17 @@ describe(':let command', function()
       call garbagecollect(1)
       call feedkeys(":\e:echo l1 l3\n:echo 42\n:cq\n", "t")
     ]=])
+  end)
+
+  it("sets environment variables", function()
+    local multibyte_multiline = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
+                                  .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
+                                  .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
+    command("let $NVIM_TEST1 = 'AìaB'")
+    command("let $NVIM_TEST2 = 'AaあB'")
+    command("let $NVIM_TEST3 = '"..multibyte_multiline.."'")
+    eq('AìaB', eval('$NVIM_TEST1'))
+    eq('AaあB', eval('$NVIM_TEST2'))
+    eq(multibyte_multiline, eval('$NVIM_TEST3'))
   end)
 end)

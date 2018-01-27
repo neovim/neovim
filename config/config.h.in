@@ -27,7 +27,6 @@
 #cmakedefine HAVE_LOCALE_H
 #cmakedefine HAVE_NL_LANGINFO_CODESET
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
-#cmakedefine HAVE_PUTENV_S
 #cmakedefine HAVE_PWD_H
 #cmakedefine HAVE_READLINK
 #cmakedefine HAVE_UV_TRANSLATE_SYS_ERROR

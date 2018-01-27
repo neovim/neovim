@@ -52,29 +52,29 @@ int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
 #ifdef WIN32
-  size_t envbuflen = strlen(name) + strlen(value) + 2;
-  char *envbuf = xmalloc(envbuflen);
-  snprintf(envbuf, envbuflen, "%s=%s", name, value);
-
-  wchar_t *p;
-  utf8_to_utf16(envbuf, &p);
-  xfree(envbuf);
-  if (p == NULL) {
-    return -1;
-  }
-  _wputenv(p);
-  xfree(p);  // Unlike Unix systems, we can free the string for _wputenv().
-  return 0;
-#elif defined(HAVE_SETENV)
-  return setenv(name, value, overwrite);
-#elif defined(HAVE_PUTENV_S)
   if (!overwrite && os_getenv(name) != NULL) {
     return 0;
   }
-  if (_putenv_s(name, value) == 0) {
-    return 0;
+  wchar_t *wname;
+  utf8_to_utf16(name, &wname);
+  if (wname == NULL) {
+    return -1;
   }
-  return -1;
+  wchar_t *wvalue;
+  utf8_to_utf16(value, &wvalue);
+  if (wvalue == NULL) {
+    return -1;
+  }
+  int rv = (int)_wputenv_s(wname, wvalue);
+  xfree(wname);  // Unlike unix putenv(), we can free after _wputenv_s().
+  xfree(wvalue);
+  if (rv != 0) {
+    ELOG("_wputenv_s failed: %d: %s", rv, uv_strerror(rv));
+    return -1;
+  }
+  return 0;
+#elif defined(HAVE_SETENV)
+  return setenv(name, value, overwrite);
 #else
 # error "This system has no implementation available for os_setenv()"
 #endif
