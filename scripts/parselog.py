@@ -6,6 +6,7 @@ from collections import defaultdict
 from enum import Enum
 
 import yaml
+import numpy
 
 
 class ListAllocState(Enum):
@@ -137,6 +138,19 @@ class ListHistoryEntry(metaclass=ListHistoryEntryMeta):
     elif lhist.alloc_state == ListAllocState.unsure_allocating_unknown_amount:
       lhist.alloc_state = ListAllocState.alloc_unsure_interrupted
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Does nothing by default.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {}
+
 
 class ListLenHistoryEntry(ListHistoryEntry):
   '''Class representing list length query
@@ -156,6 +170,19 @@ class ListLenHistoryEntry(ListHistoryEntry):
     assert(arg2 == 0)
     self.length = length
     '''Actual list length.'''
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``lens`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'lens': 1}
 
 
 class ListFirstHistoryEntry(ListHistoryEntry):
@@ -196,6 +223,19 @@ class ListFirstHistoryEntry(ListHistoryEntry):
     else:
       assert(lhist.length == 0)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``firsts`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'firsts': 1}
+
 
 class ListLastHistoryEntry(ListHistoryEntry):
   '''Class representing :c:func:`tv_list_last` query
@@ -235,6 +275,19 @@ class ListLastHistoryEntry(ListHistoryEntry):
     else:
       assert(lhist.length == 0)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``lasts`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'lasts': 1}
+
 
 class ListIterHistoryEntry(ListHistoryEntry):
   '''Class representing start of TV_LIST_ITER cycle
@@ -266,6 +319,19 @@ class ListIterHistoryEntry(ListHistoryEntry):
       lhist.check_length(self.length)
     super(ListIterHistoryEntry, self).modhist(lhist)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``iters`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'iters': 1}
+
 
 class ListIterConstHistoryEntry(ListIterHistoryEntry):
   '''Class representing start of TV_LIST_ITER_CONST cycle
@@ -284,6 +350,19 @@ class ListIterConstHistoryEntry(ListIterHistoryEntry):
     assert(arg2 == 0)
     self.length = length
     '''Actual list length.'''
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``iters`` and ``iterconsts`` counters.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'iters': 1, 'iterconsts': 1}
 
 
 class ListAllocHistoryEntry(ListHistoryEntry):
@@ -339,6 +418,19 @@ class ListAllocHistoryEntry(ListHistoryEntry):
     else:
       assert(False)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``aallllocs`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'allallocs': 1}
+
 
 class ListS10InitHistoryEntry(ListHistoryEntry):
   '''Class representing initialization of a static list with 10 entries
@@ -374,6 +466,19 @@ class ListS10InitHistoryEntry(ListHistoryEntry):
     step = (self.last_entry - self.first_entry) // (lhist.length - 1)
     lhist.entries = list(range(self.first_entry, self.last_entry, step))
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``alls10inits`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'alls10inits': 1}
+
 
 class ListSInitHistoryEntry(ListHistoryEntry):
   '''Class representing initialization of a static list
@@ -405,6 +510,19 @@ class ListSInitHistoryEntry(ListHistoryEntry):
     '''
     super(ListSInitHistoryEntry, self).modhist(lhist)
     lhist.alloc_state = ListAllocState.alloc_static
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``allsinits`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'allsinits': 1}
 
 
 class ListFreeContentsHistoryEntry(ListHistoryEntry):
@@ -439,6 +557,19 @@ class ListFreeContentsHistoryEntry(ListHistoryEntry):
     lhist.entries.clear()
     lhist.cached_idx = None
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``allfreeconts`` counter and appends to ``freecontsizes`` list.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'allfreeconts': 1, 'freecontsizes': [self.length]}
+
 
 class ListFreeListHistoryEntry(ListHistoryEntry):
   '''Class representing :c:func:`tv_list_free_list` function call
@@ -468,6 +599,19 @@ class ListFreeListHistoryEntry(ListHistoryEntry):
     '''
     super(ListFreeListHistoryEntry, self).modhist(lhist)
     lhist.destroyed = True
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``allfreelists`` counter and appends to ``freelistsizes`` list.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'allfreelists': 1, 'freelistsizes': [self.length]}
 
 
 class ListDropItemsHistoryEntry(ListHistoryEntry):
@@ -524,6 +668,20 @@ class ListDropItemsHistoryEntry(ListHistoryEntry):
       lhist.entries[first_idx:last_idx + 1] = ()
       self.drop_size = last_idx - first_idx + 1
       lhist.length -= self.drop_size
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``drops`` counter and appends to ``dropsizes`` list.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    assert(self.drop_size is None or self.drop_size > 0)
+    return {'drops': 1, 'dropsizes': [self.drop_size] if self.drop_size else []}
 
 
 class ListAfterDropItemsHistoryEntry(ListHistoryEntry):
@@ -593,6 +751,19 @@ class ListRemoveItemsHistoryEntry(ListHistoryEntry):
     self.last_entry = arg2
     '''Address of the last removed list entry.'''
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``removes`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'removes': 1}
+
 
 class ListMoveItemsHistoryEntry(ListHistoryEntry):
   '''Class representing :c:func:`tv_list_move_items` call
@@ -638,6 +809,19 @@ class ListMoveItemsHistoryEntry(ListHistoryEntry):
     last_idx = lhist.entries.index(self.last_entry)
     assert(first_idx <= last_idx)
     self.last_moved_items.append(lhist.entries[first_idx:last_idx + 1])
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``moves`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'moves': 1}
 
 
 class ListAfterMoveItemsHistoryEntry(ListMoveItemsHistoryEntry):
@@ -738,6 +922,19 @@ class ListInsertHistoryEntry(ListHistoryEntry):
       lhist.length += 1
       assert(lhist.length == self.length)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``inserts`` counter and to ``startinserts`` counter if applicable.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'inserts': 1, 'startinserts': int(bool(self.entry_idx))}
+
 
 class ListAppendHistoryEntry(ListHistoryEntry):
   '''Class representing :c:func:`tv_list_append` call
@@ -795,6 +992,19 @@ class ListAppendHistoryEntry(ListHistoryEntry):
       self.allocating = False
     lhist.check_length(self.length + 1)
 
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``appends`` counter unless “allocating”.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'appends': int(not self.allocating)}
+
 
 class ListReverseHistoryEntry(ListHistoryEntry):
   '''Class representing :c:func:`tv_list_reverse` function call
@@ -829,6 +1039,19 @@ class ListReverseHistoryEntry(ListHistoryEntry):
     lhist.entries.reverse()
     if lhist.cached_idx is not None:
       lhist.cached_idx = lhist.length - lhist.cached_idx - 1
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``reverses`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'reverses': 1}
 
 
 class ListSortHistoryEntry(ListHistoryEntry):
@@ -868,6 +1091,19 @@ class ListSortHistoryEntry(ListHistoryEntry):
     lhist.entries.clear()
     lhist.length = 0
     lhist.cached_idx = None
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``sorts`` counter.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {'sorts': 1}
 
 
 class ListFindHistoryEntry(ListHistoryEntry):
@@ -915,6 +1151,31 @@ class ListFindHistoryEntry(ListHistoryEntry):
     else:
       lhist.entries[self.index] = self.entry
     lhist.cached_idx = self.index
+
+  def get_countersmod(self):
+    '''Compute modification of counters used to generate statistics
+
+    Adds to ``finds`` counters, also to ``startfinds``, ``endfinds``, 
+    ``findcachemisses`` if appropriate. Appends to ``findcachediffs`` (if 
+    appropriate), ``findstartdiffs`` and ``findenddiffs``.
+
+    :return:
+      Dictionary where keys are names of counters to add to and values 
+      are what value to add to counters. If type of the value is integer, then 
+      last entry in counters list is added to, if it is list then this list gets 
+      appended to the counters list.
+    '''
+    return {
+      'finds': 1,
+      'startfinds': int(not self.index),
+      'endfinds': int(self.index == self.length - 1),
+      'findcachemisses': int(self.index != self.cached_idx),
+      'findcachediffs': [] if self.cached_idx is None else [
+        self.index - self.cached_idx
+      ],
+      'findstartdiffs': [self.index],
+      'findenddiffs': [self.length - self.index - 1],
+    }
 
 
 class ListHistory:
@@ -1147,6 +1408,24 @@ def yaml_init(y):
   y.add_representer(ListHistory, represent_list_history)
 
 
+def apply_countersmod(counters, countersmod):
+  '''Apply counters modification to counters dictionary
+
+  Counters modification is supposed to be returned by 
+  :meth:`ListHistoryEntry.get_countersmod`.
+
+  :param dict counters:
+    Counters dictionary to modify.
+  :param dict countersmod:
+    Description of modifications to apply.
+  '''
+  for k, v in countersmod.items():
+    if isinstance(v, list):
+      counters[k] += v
+    else:
+      counters[k][-1] += v
+
+
 def main(args):
   if args[0] == '--help':
     print('Usage: parselog.py log_fname')
@@ -1154,9 +1433,98 @@ def main(args):
   lses = ListSessionHistory()
   with open(args[0], 'r') as fp:
     lses.parsefile(fp)
+  counters = {
+    'lens': [],  # Per-list amount of list length queries.
+    'firsts': [],  # Per-list amount of first item queries.
+    'lasts': [],  # Per-list amount of last item queries.
+    'iters': [],  # Per-list amount of _TV_LIST_ITER_MOD calls.
+    'iterconsts': [],  # Per-list amount of TV_LIST_ITER_CONST calls.
+    'allallocs': [0],  # Whole-log amount of list allocations.
+    'alls10inits': [0],  # Whole-log amount of staticList10_T inits.
+    'allsinits': [0],  # Whole-log amount of static list inits.
+    'allfreeconts': [0],  # Whole-log amount of list content frees.
+    'freecontsizes': [],  # Per-entry list lengths when freeing contents.
+    'allfreelists': [0],  # Whole-log amount of list frees.
+    'freelistsizes': [],  # Per-entry list lengths when freeing list.
+    'drops': [],  # Per-list amount of drop numbers.
+    'dropsizes': [],  # Per-entry drop sizes.
+    'removes': [],  # Per-list amount of tv_list_remove_items() calls.
+    'moves': [],  # Per-list amount of tv_list_move_items() calls.
+    'inserts': [],  # Per-list amount of inserts at any position.
+    'startinserts': [],  # Per-list amount of inserts at the list start.
+    'appends': [],  # Per-list amount of appends, minus “allocation” appends.
+    'reverses': [],  # Per-list amount of reverses.
+    'sorts': [],  # Per-list amount of sorts.
+    'finds': [],  # Per-list amount of querying list by index.
+    'startfinds': [],  # Per-list amount of querying list by zero index.
+    'endfinds': [0],  # Whole log amount of querying list by len-1 index.
+    'findcachemisses': [],  # Per-list amount of index cache misses.
+    'findcachediffs': [],  # Per-entry differences between queried/cached idxs.
+    'findstartdiffs': [],  # Per-entry indexes.
+    'findenddiffs': [],  # Per-entry differences between (len-1)/queried idxs.
+
+    'allknown_alloc_ints': [0],  # Whole-log number of unfinished C allocs.
+    'allunknown_allocs': [0],  # Whole-log number of allocs with unknown len.
+    'allstatic_allocs': [0],  # Whole-log number of static inits caught.
+    'known_alloc_lens': [],  # Per-list alloc_lens if allocated from C code.
+    'unknown_alloc_lens': [],  # Per-list alloc_lens if allocated from VimL.
+    'unsure_alloc_lens': [],  # Like above, but when “allocation” interrupted.
+    'maxlengths': [],  # Per-list maximal lengths.
+    'minlengths': [],  # Per-list minimal lengths.
+    'lengthdiffs': [],  # Per-list differences between maximal and minimal lens.
+  }
+  startzerocounters = [
+    'lens', 'firsts', 'lasts', 'iters', 'iterconsts', 'drops', 'removes',
+    'moves', 'inserts', 'startinserts', 'appends', 'reverses', 'sorts', 'finds',
+    'startfinds', 'endfinds', 'findcachemisses',
+  ]
+  for lhistlist in lses.listhist.values():
+    for lhist in lhistlist:
+      for cntr_name in startzerocounters:
+        counters[cntr_name].append(0)
+      for lhistentry in lhist.history:
+        apply_countersmod(counters, lhistentry.get_countersmod())
+      if lhist.entries_valid:
+        counters['maxlengths'].append(lhist.maxlength)
+        if lhist.minlength is not None:
+          counters['minlengths'].append(lhist.minlength)
+          counters['lengthdiffs'].append(lhist.maxlength - lhist.minlength)
+      apply_countersmod(counters, {
+        ListAllocState.just_created: {},
+        ListAllocState.allocating_known_amount: {},
+        ListAllocState.allocating_unknown_amount: {},
+        ListAllocState.unsure_allocating_unknown_amount: {},
+        ListAllocState.alloc_known_interrupted: {'allknown_alloc_ints': 1},
+        ListAllocState.alloc_known_finished: {
+          'known_alloc_lens': [lhist.alloc_len],
+        },
+        ListAllocState.alloc_unknown_interrupted: {
+          'unknown_alloc_lens': [lhist.alloc_len],
+        },
+        ListAllocState.alloc_unsure_interrupted: {
+          'unsure_alloc_lens': [lhist.alloc_len],
+        },
+        ListAllocState.alloc_unknown: {'allunknown_allocs': 1},
+        ListAllocState.alloc_static: {'allstatic_allocs': 1},
+      }[lhist.alloc_state])
+  statcounters = {k: numpy.array(v) for k, v in counters.items()}
+  statcounters['findcacheabsdiffs'] = abs(statcounters['findcachediffs'])
+  stats = {
+    k.rstrip('s').rstrip('e'): ({
+      'pct': numpy.percentile(v, [0, 10, 50, 90, 100]).tolist(),
+      'avg': numpy.mean(v).tolist(),
+      'len': len(v),
+      'sum': numpy.sum(v).tolist(),
+    } if not k.startswith('all') else v[0].tolist()) if len(v) else None
+    for k, v in statcounters.items()
+  }
   yaml_init(yaml)
+  print('---')
+  yaml.dump(stats, stream=sys.stdout)
+  print('---')
+  yaml.dump(counters, stream=sys.stdout)
+  print('---')
   yaml.dump(lses, stream=sys.stdout)
-  # FIXME: Do something with results
   return 0
 
 
