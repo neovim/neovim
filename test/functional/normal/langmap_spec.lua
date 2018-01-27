@@ -93,6 +93,15 @@ describe("'langmap'", function()
     expect('illllii hiwww')
   end)
 
+  it('conversions are recorded in macros', function()
+    feed('qiiq')
+    eq(eval('@w'), 'w')
+  end)
+  it('conversions of mappings are recorded in macros', function()
+    command('nnoremap w l')
+    feed('qxiq')
+    eq(eval('@x'), 'w')
+  end)
   describe('exceptions', function()
     -- All "command characters" that 'langmap' does not apply to.
     -- These tests consist of those places where some subset of ASCII
@@ -213,12 +222,18 @@ describe("'langmap'", function()
     iii]])
   end)
 
-  local function testrecording(command_string, expect_string, setup_function)
+  local function testrecording(command_string, expect_string, macro_string,
+                                setup_function)
     if setup_function then setup_function() end
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
-    eq(helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
-      eval('@a'))
+    if macro_string then
+      eq(helpers.funcs.nvim_replace_termcodes(macro_string, true, true, true),
+        eval('@a'))
+    else
+      eq(helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
+        eval('@a'))
+    end
     if setup_function then setup_function() end
     -- n.b. may need nvim_replace_termcodes() here.
     feed('@a')
@@ -234,38 +249,38 @@ describe("'langmap'", function()
   end
 
   it('does not affect recording special keys', function()
-    testrecording('A<BS><esc>', 'hell', local_setup)
-    testrecording('>><lt><lt>', 'hello', local_setup)
+    testrecording('A<BS><esc>', 'hell', nil, local_setup)
+    testrecording('>><lt><lt>', 'hello', nil, local_setup)
     command('nnoremap \\ x')
-    testrecording('\\', 'ello', local_setup)
-    testrecording('A<C-V><BS><esc>', 'hello<BS>', local_setup)
+    testrecording('\\', 'ello', nil, local_setup)
+    testrecording('A<C-V><BS><esc>', 'hello<BS>', nil, local_setup)
   end)
-  pending('Translates modified keys correctly', function()
+  it('Translates modified keys correctly', function()
     command('nnoremap <M-i> x')
     command('nnoremap <M-w> l')
-    testrecording('<M-w>', 'ello', local_setup)
-    testrecording('<M-i>x', 'hllo', local_setup)
+    testrecording('<M-w>', 'ello', '<M-i>', local_setup)
+    testrecording('<M-i>x', 'hllo', '<M-w>x', local_setup)
   end)
-  pending('handles multi-byte characters', function()
+  it('handles multi-byte characters', function()
     command('set langmap=ïx')
-    testrecording('ï', 'ello', local_setup)
+    testrecording('ï', 'ello', 'x', local_setup)
     -- The test below checks that what's recorded is correct.
     -- It doesn't check the behaviour, as in order to cause some behaviour we
     -- need to map the multi-byte character, and there is a known bug
     -- preventing this from working (see the test below).
     command('set langmap=xï')
-    testrecording('x', 'hello', local_setup)
+    testrecording('x', 'hello', 'ï', local_setup)
   end)
-  pending('handles multibyte mappings', function()
+  it('handles multibyte mappings', function()
     -- See this vim issue for the problem, may as well add a test.
     -- https://github.com/vim/vim/issues/297
     command('set langmap=ïx')
     command('nnoremap x diw')
-    testrecording('ï', '', local_setup)
+    testrecording('ï', '', 'x', local_setup)
     command('set nolangnoremap')
     command('set langmap=xï')
     command('nnoremap ï ix<esc>')
-    testrecording('x', 'xhello', local_setup)
+    testrecording('x', 'xhello', 'ï', local_setup)
   end)
   -- This test is to ensure the behaviour doesn't change from what's already
   -- around. I (hardenedapple) personally think this behaviour should be
@@ -273,8 +288,8 @@ describe("'langmap'", function()
   it('treats control modified keys as characters', function()
     command('nnoremap <C-w> iw<esc>')
     command('nnoremap <C-i> ii<esc>')
-    testrecording('<C-w>', 'whello', local_setup)
-    testrecording('<C-i>', 'ihello', local_setup)
+    testrecording('<C-w>', 'whello', '<C-w>', local_setup)
+    testrecording('<C-i>', 'ihello', '<C-i>', local_setup)
   end)
 
 end)
