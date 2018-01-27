@@ -699,11 +699,12 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
         }
 
         prev_matchid = matchid;
-        do {
+
+        while (prev_matchid == matchid && *ptr != NUL) {
           incr();
           ptr += utfc_ptr2len(ptr);
           matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
-        } while (prev_matchid == matchid);
+        }
 
         continue;
       }
