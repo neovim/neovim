@@ -75,7 +75,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (p_lrm || KeyTyped) \
+        && (p_lrm || (vgetc_busy ? typebuf_maplen() == 0 : KeyTyped)) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \
