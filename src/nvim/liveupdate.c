@@ -137,8 +137,8 @@ void liveupdate_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
     // the first line that changed (zero-indexed)
     args.items[2] = INTEGER_OBJ(firstline - 1);
 
-    // how many lines are being swapped out
-    args.items[3] = INTEGER_OBJ(num_removed);
+    // the last line that was changed
+    args.items[3] = INTEGER_OBJ(firstline - 1 + num_removed);
 
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;

@@ -329,12 +329,12 @@ equivilent to the following |rpcnotify()| calls:
 	be certain that you now have the entire buffer's contents.
 
 2. rpcnotify({channel}, "LiveUpdate",				  *LiveUpdate*
-	     [{buf}, {changedtick}, {firstline}, {numreplaced}, {linedata}])
+	     [{buf}, {changedtick}, {firstline}, {lastline}, {linedata}])
 
-	Indicates that {numreplaced} lines starting at line {firstline} have
-	been replaced with the new line data contained in the {linedata} list.
-	All buffer changes (even adding single characters) will be transmitted
-	as whole-line changes.
+  Indicates that the lines between {firstline} and {lastline} (end-exclusive,
+  zero-indexed) have been replaced with the new line data contained in the
+  {linedata} list.  All buffer changes (even adding single characters) will be
+  transmitted as whole-line changes.
 
 	{buf} is an API handle for the buffer.
 
@@ -349,11 +349,11 @@ equivilent to the following |rpcnotify()| calls:
 	guaranteed to always be less than or equal to the number of lines that
 	were in the buffer before the lines were replaced.
 
-	{numreplaced} is a positive integer indicating how many lines were
-	replaced. It will be `0` if new lines were added to the buffer but
-	none were replaced. If {numreplaced} is `0` then the new lines were
-	added
-	before the zero-indexed line number in {firstline}.
+  {lastline} is the integer line number of the first line that was not
+  replaced. Note that {lastline} is zero-indexed, so if line numbers 2 to 5
+  were replaced, this will be `5` instead of `6`. {lastline} is guaranteed to
+  always be less than or equal to the number of lines that were in the buffer
+  before the lines were replaced.
 
 	{linedata} is a list of strings containing the contents of the new
 	buffer lines. Newline characters are not included in the strings, so

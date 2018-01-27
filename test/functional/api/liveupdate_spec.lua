@@ -73,7 +73,7 @@ local function reopenwithfolds(b)
   -- add a fold
   command('2,4fold')
   tick = tick + 1
-  expectn('LiveUpdate', {b, tick, 1, 3, {'original line 2/*{{{*/',
+  expectn('LiveUpdate', {b, tick, 1, 4, {'original line 2/*{{{*/',
                                           'original line 3',
                                           'original line 4/*}}}*/'}})
   -- make a new fold that wraps lines 1-6
@@ -107,18 +107,18 @@ describe('liveupdate', function()
     -- add one line to the middle of the file, several times
     command('normal! ggYjjp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4'}})
     command('normal! p')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 4, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 4, 4, {'original line 4'}})
     command('normal! p')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 5, 5, {'original line 4'}})
 
     -- add multiple lines to the middle of the file
     command('normal! gg4Yjjp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 0, {'original line 4',
+    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4',
                                            'original line 5',
                                            'original line 6',
                                            'original line 4'}})
@@ -126,16 +126,16 @@ describe('liveupdate', function()
     -- add one line to the end of the file
     command('normal! ggYGp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 17, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 17, 17, {'original line 4'}})
 
     -- add one line to the end of the file, several times
     command('normal! ggYGppp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 18, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 18, 18, {'original line 4'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 19, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 19, 19, {'original line 4'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 20, 0, {'original line 4'}})
+    expectn('LiveUpdate', {b, tick, 20, 20, {'original line 4'}})
 
     -- add several lines to the end of the file, several times
     command('normal! gg4YGp')
@@ -146,11 +146,11 @@ describe('liveupdate', function()
                  'original line 6',
                  'original line 4'}
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 21, 0, firstfour})
+    expectn('LiveUpdate', {b, tick, 21, 21, firstfour})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 25, 0, firstfour})
+    expectn('LiveUpdate', {b, tick, 25, 25, firstfour})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 29, 0, firstfour})
+    expectn('LiveUpdate', {b, tick, 29, 29, firstfour})
 
     -- create a new empty buffer and wipe out the old one ... this will
     -- turn off live updates
@@ -206,26 +206,26 @@ describe('liveupdate', function()
     tick = reopen(b, origlines)
     command('normal! jj3dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {}})
+    expectn('LiveUpdate', {b, tick, 2, 5, {}})
 
     -- remove one line from the end of the file
     tick = reopen(b, origlines)
     command('normal! Gdd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 1, {}})
+    expectn('LiveUpdate', {b, tick, 5, 6, {}})
 
     -- remove multiple lines from the end of the file
     tick = reopen(b, origlines)
     command('normal! 4G3dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 3, {}})
+    expectn('LiveUpdate', {b, tick, 3, 6, {}})
 
     -- pretend to remove heaps lines from the end of the file but really
     -- just remove two
     tick = reopen(b, origlines)
     command('normal! Gk5dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 4, 2, {}})
+    expectn('LiveUpdate', {b, tick, 4, 6, {}})
   end)
 
   it('knows when you modify lines of text', function()
@@ -237,7 +237,7 @@ describe('liveupdate', function()
     expectn('LiveUpdate', {b, tick, 0, 1, {'original line 1555'}})
     command('normal! jj8X')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 1, {'origin3'}})
+    expectn('LiveUpdate', {b, tick, 2, 3, {'origin3'}})
 
     -- modify multiple lines at once using visual block mode
     tick = reopen(b, origlines)
@@ -245,19 +245,19 @@ describe('liveupdate', function()
     sendkeys('\x16jjllx')
     tick = tick + 1
     expectn('LiveUpdate',
-            {b, tick, 2, 3, {'original e 3', 'original e 4', 'original e 5'}})
+            {b, tick, 2, 5, {'original e 3', 'original e 4', 'original e 5'}})
 
     -- replace part of a line line using :s
     tick = reopen(b, origlines)
     command('3s/line 3/foo/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 1, {'original foo'}})
+    expectn('LiveUpdate', {b, tick, 2, 3, {'original foo'}})
 
     -- replace parts of several lines line using :s
     tick = reopen(b, origlines)
     command('%s/line [35]/foo/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {'original foo',
+    expectn('LiveUpdate', {b, tick, 2, 5, {'original foo',
                                            'original line 4',
                                            'original foo'}})
 
@@ -280,7 +280,7 @@ describe('liveupdate', function()
     expectn('LiveUpdate', {bnew, tick + 4, 0, 1, {'hell'}})
     expectn('LiveUpdate', {bnew, tick + 5, 0, 1, {'hello'}})
     expectn('LiveUpdate', {bnew, tick + 6, 0, 1, {'hello', ''}})
-    expectn('LiveUpdate', {bnew, tick + 7, 1, 1, {'world'}})
+    expectn('LiveUpdate', {bnew, tick + 7, 1, 2, {'world'}})
   end)
 
   it('knows when you replace lines', function()
@@ -289,23 +289,23 @@ describe('liveupdate', function()
     -- blast away parts of some lines with visual mode
     command('normal! jjwvjjllx')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 1, {'original '}})
+    expectn('LiveUpdate', {b, tick, 2, 3, {'original '}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 1, {}})
+    expectn('LiveUpdate', {b, tick, 3, 4, {}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 1, {'e 5'}})
+    expectn('LiveUpdate', {b, tick, 3, 4, {'e 5'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 1, {'original e 5'}})
+    expectn('LiveUpdate', {b, tick, 2, 3, {'original e 5'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 1, {}})
+    expectn('LiveUpdate', {b, tick, 3, 4, {}})
 
     -- blast away a few lines using :g
     tick = reopen(b, origlines)
     command('global/line [35]/delete')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 1, {}})
+    expectn('LiveUpdate', {b, tick, 2, 3, {}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 1, {}})
+    expectn('LiveUpdate', {b, tick, 3, 4, {}})
   end)
 
   it('knows when you filter lines', function()
@@ -317,9 +317,9 @@ describe('liveupdate', function()
     -- 1) addition of the new lines after the filtered lines
     -- 2) removal of the original lines
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 0, {"B", "C", "D", "E"}})
+    expectn('LiveUpdate', {b, tick, 5, 5, {"B", "C", "D", "E"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 4, {}})
+    expectn('LiveUpdate', {b, tick, 1, 5, {}})
   end)
 
   it('sends a sensible event when you use "o"', function()
@@ -329,12 +329,12 @@ describe('liveupdate', function()
     -- use 'o' to start a new line from a line with no indent
     command('normal! o')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 0, {""}})
+    expectn('LiveUpdate', {b, tick, 1, 1, {""}})
 
     -- undo the change, indent line 1 a bit, and try again
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {}})
+    expectn('LiveUpdate', {b, tick, 1, 2, {}})
     tick = tick + 1
     expectn('LiveUpdateTick', {b, tick})
     command('set autoindent')
@@ -343,16 +343,16 @@ describe('liveupdate', function()
     expectn('LiveUpdate', {b, tick, 0, 1, {"\tAAA"}})
     command('normal! ommm')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 0, {"\t"}})
+    expectn('LiveUpdate', {b, tick, 1, 1, {"\t"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {"\tmmm"}})
+    expectn('LiveUpdate', {b, tick, 1, 2, {"\tmmm"}})
 
     -- undo the change, and try again with 'O'
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {'\t'}})
+    expectn('LiveUpdate', {b, tick, 1, 2, {'\t'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {}})
+    expectn('LiveUpdate', {b, tick, 1, 2, {}})
     tick = tick + 1
     expectn('LiveUpdateTick', {b, tick})
     command('normal! ggOmmm')
@@ -556,7 +556,7 @@ describe('liveupdate', function()
     command('normal! G')
     command('diffget')
     tick1 = tick1 + 1
-    expectn('LiveUpdate', {b1, tick1, 2, 0, {"CCC"}})
+    expectn('LiveUpdate', {b1, tick1, 2, 2, {"CCC"}})
 
     eval('rpcnotify('..channel..', "Goodbye")')
     expectn('Goodbye', {})
@@ -574,7 +574,7 @@ describe('liveupdate', function()
     local b, tick = editoriginal(true, {" A", "  B", "B", "\tB", "\t\tC"})
     command('2,4left')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 3, {"B", "B", "B"}})
+    expectn('LiveUpdate', {b, tick, 1, 4, {"B", "B", "B"}})
   end)
 
   it('works with :right', function()
@@ -586,7 +586,7 @@ describe('liveupdate', function()
     command('set ts=2 et')
     command('2,4retab')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 3, {"    B", "      BB", "  B"}})
+    expectn('LiveUpdate', {b, tick, 1, 4, {"    B", "      BB", "  B"}})
   end)
 
   it('works with :move', function()
@@ -594,19 +594,19 @@ describe('liveupdate', function()
     -- move text down towards the end of the file
     command('2,3move 4')
     tick = tick + 2
-    expectn('LiveUpdate', {b, tick, 4, 0, {"original line 2",
+    expectn('LiveUpdate', {b, tick, 4, 4, {"original line 2",
                                            "original line 3"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 2, {}})
+    expectn('LiveUpdate', {b, tick, 1, 3, {}})
 
     -- move text up towards the start of the file
     tick = reopen(b, origlines)
     command('4,5move 2')
     tick = tick + 2
-    expectn('LiveUpdate', {b, tick, 2, 0, {"original line 4",
+    expectn('LiveUpdate', {b, tick, 2, 2, {"original line 4",
                                            "original line 5"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 2, {}})
+    expectn('LiveUpdate', {b, tick, 5, 7, {}})
   end)
 
   it('sends sensible events when you manually add/remove folds', function()
@@ -616,7 +616,7 @@ describe('liveupdate', function()
     -- delete the inner fold
     command('normal! zR3Gzd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 3, {'original line 2',
+    expectn('LiveUpdate', {b, tick, 1, 4, {'original line 2',
                                            'original line 3',
                                            'original line 4'}})
     -- delete the outer fold
@@ -643,12 +643,12 @@ describe('liveupdate', function()
     -- create a fold from line 4 to the end of the file
     command('normal! 4GA/*{{{*/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 1, {'original line 4/*{{{*/'}})
+    expectn('LiveUpdate', {b, tick, 3, 4, {'original line 4/*{{{*/'}})
 
     -- delete the fold which only has one marker
     command('normal! Gzd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4',
+    expectn('LiveUpdate', {b, tick, 3, 6, {'original line 4',
                                            'original line 5',
                                            'original line 6'}})
   end)
