@@ -69,7 +69,6 @@ typedef struct {
 typedef struct {
   UIBridgeData *bridge;
   Loop *loop;
-  bool stop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos;
@@ -124,7 +123,7 @@ static bool cursor_style_enabled = false;
 
 UI *tui_start(void)
 {
-  UI *ui = xcalloc(1, sizeof(UI));
+  UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
   ui->stop = tui_stop;
   ui->rgb = p_tgc;
   ui->resize = tui_resize;
@@ -324,11 +323,11 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  TUIData *data = ui->data;
-  data->stop = true;
+  // Flag UI as "stopped". Needed by tui_scheduler (called from main thread).
+  ui->data = NULL;
 }
 
-// Main function of the TUI thread
+/// Main function of the TUI thread.
 static void tui_main(UIBridgeData *bridge, UI *ui)
 {
   Loop tui_loop;
@@ -349,7 +348,6 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #endif
   term_input_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
-  data->stop = false;
 
   // Allow main thread to continue, we are ready to handle UI callbacks.
   CONTINUE(bridge);
@@ -358,17 +356,17 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
                          event_create(show_termcap_event, 1, data->ut));
 
   // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !data->stop;) {
+  for (size_t ms = 0; ms < 100 && !ui_is_stopped(ui);) {
     ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
   }
-  if (!data->stop) {
+  if (!ui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
     // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
     // terminal response may not get processed until user hits a key.
     loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
   }
   // "Passive" (I/O-driven) loop: TUI thread "main loop".
-  while (!data->stop) {
+  while (!ui_is_stopped(ui)) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
@@ -380,16 +378,19 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   loop_close(&tui_loop, false);
   kv_destroy(data->invalid_regions);
   xfree(data);
-  xfree(ui);
 }
 
 static void tui_dummy_event(void **argv)
 {
 }
 
+/// Handoff point between the main (ui_bridge) thread and the TUI thread.
 static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
+  if (ui_is_stopped(ui)) {
+    return;  // tui_stop was handled, teardown underway.
+  }
   TUIData *data = ui->data;
   loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }

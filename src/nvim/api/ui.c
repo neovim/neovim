@@ -43,10 +43,10 @@ void remote_ui_disconnect(uint64_t channel_id)
     return;
   }
   UIData *data = ui->data;
-  // destroy pending screen updates
-  api_free_array(data->buffer);
+  api_free_array(data->buffer);  // Destroy pending screen updates.
   pmap_del(uint64_t)(connected_uis, channel_id);
   xfree(ui->data);
+  ui->data = NULL;  // Flag UI as "stopped".
   ui_detach_impl(ui);
   xfree(ui);
 }
