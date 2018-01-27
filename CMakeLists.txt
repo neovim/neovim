@@ -250,13 +250,14 @@ if(HAS_DIAG_COLOR_FLAG)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.5")
-    # Array-bounds testing is broken in some GCC versions before 4.8.5.
-    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
-    check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
-    if(HAS_NO_ARRAY_BOUNDS_FLAG)
-      add_definitions(-Wno-array-bounds)
-    endif()
+  # 1. Array-bounds testing is broken in some GCC versions before 4.8.5.
+  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
+  # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
+  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66099
+  # So we must disable -Warray-bounds globally for GCC (for kbtree.h, #7083).
+  check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
+  if(HAS_NO_ARRAY_BOUNDS_FLAG)
+    add_definitions(-Wno-array-bounds)
   endif()
 endif()
 
