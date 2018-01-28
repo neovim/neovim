@@ -11,7 +11,7 @@ SCRIPTSOURCE := ../../../runtime
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := Xtest-tmpdir
+export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
            test14.out             \
