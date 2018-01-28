@@ -1087,6 +1087,9 @@ if has("quickfix")
   call <SID>OptionG("gp", &gp)
   call append("$", "grepformat\tlist of formats for output of 'grepprg'")
   call <SID>OptionG("gfm", &gfm)
+  call append("$", "makeencoding\tencoding of the \":make\" and \":grep\" output")
+  call append("$", "\t(global or local to buffer)")
+  call <SID>OptionG("menc", &menc)
 endif
 
 
