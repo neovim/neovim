@@ -1375,6 +1375,7 @@ int utf8_to_utf16(const char *str, wchar_t **strw)
 int utf16_to_utf8(const wchar_t *strw, char **str)
   FUNC_ATTR_NONNULL_ALL
 {
+  *str = NULL;
   // Compute the space required to store the string as UTF-8.
   DWORD utf8_len = WideCharToMultiByte(CP_UTF8,
                                        0,
@@ -1400,7 +1401,7 @@ int utf16_to_utf8(const wchar_t *strw, char **str)
                                  NULL,
                                  NULL);
   if (utf8_len == 0) {
-    free(*str);
+    xfree(*str);
     *str = NULL;
     return GetLastError();
   }
