@@ -57,13 +57,16 @@ describe('jobs', function()
 
   it('changes to given / directory', function()
     nvim('command', "let g:job_opts.cwd = '/'")
+    local root
     if iswin() then
       nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+      root = nvim_dir:sub(1, 3):gsub("/","\\")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
+      root = '/'
     end
     eq({'notification', 'stdout',
-      {0, {(iswin() and [[C:\]] or '/'), ''}}}, next_msg())
+      {0, {root, ''}}}, next_msg())
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
