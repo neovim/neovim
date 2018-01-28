@@ -45,15 +45,15 @@ describe(':let', function()
     ]=])
   end)
 
-  it("sets environment variables", function()
-    local multibyte_multiline = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
-                                  .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
-                                  .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
-    command("let $NVIM_TEST1 = 'AìaB'")
-    command("let $NVIM_TEST2 = 'AaあB'")
-    command("let $NVIM_TEST3 = '"..multibyte_multiline.."'")
-    eq('AìaB', eval('$NVIM_TEST1'))
-    eq('AaあB', eval('$NVIM_TEST2'))
-    eq(multibyte_multiline, eval('$NVIM_TEST3'))
+  it("multibyte environment variables", function()
+    command("let $NVIM_TEST = 'AìaB'")
+    eq('AìaB', eval('$NVIM_TEST'))
+    command("let $NVIM_TEST = 'AaあB'")
+    eq('AaあB', eval('$NVIM_TEST'))
+    local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
+                    .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
+                    .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
+    command("let $NVIM_TEST = '"..mbyte.."'")
+    eq(mbyte, eval('$NVIM_TEST'))
   end)
 end)

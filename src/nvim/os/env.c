@@ -36,25 +36,8 @@
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-#if !defined(WIN32)
   const char *e = getenv(name);
   return e == NULL || *e == NUL ? NULL : e;
-#else
-  wchar_t *wname;
-  utf8_to_utf16(name, &wname);
-  if (wname == NULL) {
-    xfree(wname);
-    return NULL;
-  }
-  wchar_t *wvalue = _wgetenv(wname);
-  char *value;
-  int rv = utf16_to_utf8(wvalue, &value);
-  if (rv != 0 || *value == NUL) {
-    xfree(value);
-    return NULL;
-  }
-  return value;  // TODO(jmk): this was allocated, but callers don't free it ...
-#endif
 }
 
 /// Returns `true` if the environment variable, `name`, has been defined
@@ -72,21 +55,9 @@ int os_setenv(const char *name, const char *value, int overwrite)
   if (!overwrite && os_getenv(name) != NULL) {
     return 0;
   }
-  wchar_t *wname;
-  utf8_to_utf16(name, &wname);
-  if (wname == NULL) {
-    return -1;
-  }
-  wchar_t *wvalue;
-  utf8_to_utf16(value, &wvalue);
-  if (wvalue == NULL) {
-    return -1;
-  }
-  int rv = (int)_wputenv_s(wname, wvalue);
-  xfree(wname);  // Unlike unix putenv(), we can free after _wputenv_s().
-  xfree(wvalue);
+  int rv = (int)_putenv_s(name, value);
   if (rv != 0) {
-    ELOG("_wputenv_s failed: %d: %s", rv, uv_strerror(rv));
+    ELOG("_putenv_s failed: %d: %s", rv, uv_strerror(rv));
     return -1;
   }
   return 0;
