@@ -152,8 +152,8 @@ func Test_set_completion()
 
   " Expand directories.
   call feedkeys(":set cdpath=./\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match(' ./samples/ ', @:)
-  call assert_notmatch(' ./small.vim ', @:)
+  call assert_match('./samples/ ', @:)
+  call assert_notmatch('./small.vim ', @:)
 
   " Expand files and directories.
   call feedkeys(":set tags=./\<C-A>\<C-B>\"\<CR>", 'tx')
