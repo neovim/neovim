@@ -4058,12 +4058,12 @@ static int showmatches(expand_T *xp, int wildmenu)
     msg_start();                        /* prepare for paging */
   }
 
-  if (got_int)
-    got_int = FALSE;            /* only int. the completion, not the cmd line */
-  else if (wildmenu)
-    win_redr_status_matches(xp, num_files, files_found, 0, showtail);
-  else {
-    /* find the length of the longest file name */
+  if (got_int) {
+    got_int = false;            // only int. the completion, not the cmd line
+  } else if (wildmenu) {
+    win_redr_status_matches(xp, num_files, files_found, -1, showtail);
+  } else {
+    // find the length of the longest file name
     maxlen = 0;
     for (i = 0; i < num_files; ++i) {
       if (!showtail && (xp->xp_context == EXPAND_FILES
