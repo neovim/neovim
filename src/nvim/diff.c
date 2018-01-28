@@ -941,9 +941,6 @@ void ex_diffpatch(exarg_T *eap)
   }
 #endif
 
-  // patch probably has written over the screen
-  redraw_later(CLEAR);
-
   // Delete any .orig or .rej file created.
   STRCPY(buf, tmp_new);
   STRCAT(buf, ".orig");
