@@ -98,6 +98,11 @@ void liveupdate_unregister(buf_T *buf, uint64_t channelid)
 
     // make a new copy of the active array without the channelid in it
     liveupdate_send_end(buf, channelid);
+
+    if (found == size) {
+      kv_destroy(buf->liveupdate_channels);
+      kv_init(buf->liveupdate_channels);
+    }
   }
 }
 
