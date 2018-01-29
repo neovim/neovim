@@ -4,8 +4,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 
-if helpers.pending_win32(pending) then return end
-
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
 end
@@ -16,17 +14,21 @@ describe('filename modifiers', function()
 
     source([=[
       func Test_fnamemodify()
-        let tmpdir = resolve('/tmp')
+        if has('win32')
+          set shellslash
+        else
+          set shell=sh
+        endif
+        let tmpdir = resolve($TMPDIR)
+        call assert_true(isdirectory(tmpdir))
         execute 'cd '. tmpdir
-        set shell=sh
-        set shellslash
         let $HOME=fnamemodify('.', ':p:h:h:h')
         call assert_equal('/', fnamemodify('.', ':p')[-1:])
-        call assert_equal('p', fnamemodify('.', ':p:h')[-1:])
+        call assert_equal(tmpdir[strchars(tmpdir) - 1], fnamemodify('.', ':p:h')[-1:])
         call assert_equal('t', fnamemodify('test.out', ':p')[-1:])
         call assert_equal('test.out', fnamemodify('test.out', ':.'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':.'))
-        call assert_equal('test.out', fnamemodify('test.out', ':~'))
+        call assert_equal(fnamemodify(tmpdir, ':~').'/test.out', fnamemodify('test.out', ':~'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':~'))
         call assert_equal('a', fnamemodify('../testdir/a', ':t'))
         call assert_equal('', fnamemodify('.', ':p:t'))
@@ -53,8 +55,10 @@ describe('filename modifiers', function()
         quit
 
         call assert_equal("'abc\ndef'", fnamemodify("abc\ndef", ':S'))
-        set shell=tcsh
-        call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
+        if executable('tcsh')
+          set shell=tcsh
+          call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
+        endif
       endfunc
 
       func Test_expand()
