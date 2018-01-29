@@ -1813,6 +1813,14 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
     if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
+  } else if (strequal(name, "key_mouse")) {
+    DLOG("libtermkey:kmous=%s", value);
+    // libtermkey assumes mouse encoding protocol is always X10 in its
+    // terminfo driver (driver-ti.c), which is wrong. Don't use it if it's SGR
+    // encoding. XXX how about other encodings (UTF-8, URXVT...)?
+    if (value != NULL && strequal("\033[<", value)) {
+      return NULL;
+    }
   }
 
   return value;
