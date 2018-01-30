@@ -53,6 +53,7 @@ NEW_TESTS ?= \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_filter_map.res \
+	    test_findfile.res \
 	    test_fnameescape.res \
 	    test_fold.res \
 	    test_ga.res \
