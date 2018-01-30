@@ -6907,7 +6907,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       if (try_match && *look == keytyped) {
         return true;
       }
-      look++;
+      if (*look != NUL) {
+        look++;
+      }
     }
 
     /*
