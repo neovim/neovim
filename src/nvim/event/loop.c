@@ -33,6 +33,9 @@ void loop_init(Loop *loop, void *data)
   loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
+/// Processes one `Loop.uv` event (at most).
+/// Processes all `Loop.fast_events` events.
+///
 /// @returns true if `ms` timeout was reached
 bool loop_poll_events(Loop *loop, int ms)
 {

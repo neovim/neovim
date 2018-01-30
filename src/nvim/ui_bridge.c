@@ -118,11 +118,12 @@ static void ui_bridge_stop(UI *b)
     if (stopped) {
       break;
     }
-    loop_poll_events(&main_loop, 10);
+    loop_poll_events(&main_loop, 10);  // Process one event.
   }
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
+  xfree(bridge->ui);  // Threads joined, now safe to free UI container. #7922
   ui_detach_impl(b);
   xfree(b);
 }

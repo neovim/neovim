@@ -7,12 +7,11 @@ ifeq ($(OS),Windows_NT)
 else
   NVIM_PRG ?= ../../../build/bin/nvim
 endif
-TMPDIR ?= Xtest-tmpdir
 SCRIPTSOURCE := ../../../runtime
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR
+export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
            test14.out             \

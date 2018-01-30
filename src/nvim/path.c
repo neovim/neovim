@@ -2202,7 +2202,13 @@ static int path_get_absolute_path(const char_u *fname, char_u *buf,
 
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
-    if ((p = vim_strrchr(fname, PATHSEP)) != NULL) {
+    p = vim_strrchr(fname, '/');
+#ifdef WIN32
+    if (p == NULL) {
+      p = vim_strrchr(fname, '\\');
+    }
+#endif
+    if (p != NULL) {
       // relative to root
       if (p == fname) {
         // only one path component

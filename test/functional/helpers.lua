@@ -603,6 +603,11 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
+local function pathroot()
+  local pathsep = package.config:sub(1,1)
+  return iswin() and (nvim_dir:sub(1,2)..pathsep) or '/'
+end
+
 -- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
 -- Useful for communicating with child instances.
 local function new_pipename()
@@ -736,6 +741,7 @@ local module = {
   meth_pcall = meth_pcall,
   NIL = mpack.NIL,
   get_pathsep = get_pathsep,
+  pathroot = pathroot,
   missing_provider = missing_provider,
   alter_slashes = alter_slashes,
   hexdump = hexdump,

@@ -9,8 +9,12 @@ func! Fix_truncated_tmpfile(fname)
   if $TMPDIR ==# ''
     throw '$TMPDIR is empty'
   endif
-  if a:fname !~# $TMPDIR
-    throw '$TMPDIR not in fname: '.a:fname
+  let tmpdir_tail = fnamemodify(substitute($TMPDIR, '[\/]\+$', '', 'g'), ':t')
+  if tmpdir_tail ==# ''
+    throw 'empty tmpdir_tail'
+  endif
+  if a:fname !~# tmpdir_tail
+    throw printf('$TMPDIR (%s) not in fname: %s', tmpdir_tail, a:fname)
   endif
   let last2segments = matchstr(a:fname, '[\/][^\/]\+[\/][^\/]\+$')
   return $TMPDIR.last2segments

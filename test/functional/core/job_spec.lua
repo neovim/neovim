@@ -9,6 +9,7 @@ local command = helpers.command
 local wait = helpers.wait
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
+local pathroot = helpers.pathroot
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local Screen = require('test.functional.ui.screen')
@@ -63,7 +64,7 @@ describe('jobs', function()
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
     eq({'notification', 'stdout',
-      {0, {(iswin() and [[C:\]] or '/'), ''}}}, next_msg())
+      {0, {pathroot(), ''}}}, next_msg())
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
