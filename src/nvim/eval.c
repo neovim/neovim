@@ -10671,6 +10671,9 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "windows",
     "winaltkeys",
     "writebackup",
+#if defined(NVIM_WSL)
+    "wsl",
+#endif
     "nvim",
   };
 
