@@ -68,7 +68,16 @@
 #define THROW_ON_INTERRUPT true
 #define THROW_ON_INTERRUPT_TRUE
 
-#define discard_pending_return(p) tv_free((typval_T *)(p))
+static inline void discard_pending_return(void *p)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE;
+
+// Free allocated VimL object and value stored inside
+// @param[in]  p  the pointer to typval_T object
+
+static inline void discard_pending_return(void *p)
+{
+  tv_free((typval_T *)(p));
+}
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until

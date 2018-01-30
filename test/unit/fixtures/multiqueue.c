@@ -9,7 +9,7 @@
 
 void ut_multiqueue_put(MultiQueue *this, const char *str)
 {
-  multiqueue_put(this, NULL, 1, str);
+  MULTIQUEUE_PUT(this, NULL, 1, str);
 }
 
 const char *ut_multiqueue_get(MultiQueue *this)

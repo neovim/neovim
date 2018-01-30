@@ -340,13 +340,13 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
     if (is_get_mode && !input_blocking()) {
       // Defer the event to a special queue used by os/input.c. #6247
-      multiqueue_put(ch_before_blocking_events, on_request_event, 1, evdata);
+      MULTIQUEUE_PUT(ch_before_blocking_events, on_request_event, 1, evdata);
     } else {
       // Invoke immediately.
       on_request_event((void **)&evdata);
     }
   } else {
-    multiqueue_put(channel->events, on_request_event, 1, evdata);
+    MULTIQUEUE_PUT(channel->events, on_request_event, 1, evdata);
   }
 }
 
@@ -529,7 +529,7 @@ void rpc_close(Channel *channel)
   channel_decref(channel);
 
   if (channel->streamtype == kChannelStreamStdio) {
-    multiqueue_put(main_loop.fast_events, exit_event, 0);
+    MULTIQUEUE_PUT(main_loop.fast_events, exit_event, 0);
   }
 }
 
