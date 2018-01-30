@@ -3360,10 +3360,11 @@ win_line (
 
             /* Use nextline[] if possible, it has the start of the
              * next line concatenated. */
-            if ((prev_ptr - line) - nextlinecol >= 0)
-              p = nextline + (prev_ptr - line) - nextlinecol;
-            else
+            if ((prev_ptr - line) - nextlinecol >= 0) {
+              p = nextline + ((prev_ptr - line) - nextlinecol);
+            } else {
               p = prev_ptr;
+            }
             cap_col -= (int)(prev_ptr - line);
             size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
             assert(tmplen <= INT_MAX);
