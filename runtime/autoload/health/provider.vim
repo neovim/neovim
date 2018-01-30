@@ -13,6 +13,12 @@ function! s:normalize_path(s) abort
   return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
 endfunction
 
+" Returns TRUE if `cmd` exits with success, else FALSE.
+function! s:cmd_ok(cmd) abort
+  call system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.', 0)
@@ -119,6 +125,13 @@ endfunction
 " Check for clipboard tools.
 function! s:check_clipboard() abort
   call health#report_start('Clipboard (optional)')
+
+  if !empty($TMUX) && executable('tmux') && executable('pbcopy') && !s:cmd_ok('pbcopy')
+    let tmux_version = matchstr(system('tmux -V'), '\d\+\.\d\+')
+    call health#report_error('pbcopy does not work with tmux version: '.tmux_version,
+          \ ['Install tmux 2.6+.  https://superuser.com/q/231130',
+          \  'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233'])
+  endif
 
   let clipboard_tool = provider#clipboard#Executable()
   if exists('g:clipboard') && empty(clipboard_tool)

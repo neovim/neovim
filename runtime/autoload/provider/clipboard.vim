@@ -26,7 +26,7 @@ let s:selections = { '*': s:selection, '+': copy(s:selection) }
 
 function! s:try_cmd(cmd, ...) abort
   let argv = split(a:cmd, " ")
-  let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
+  let out = systemlist(argv, (a:0 ? a:1 : ['']), 1)
   if v:shell_error
     if !exists('s:did_error_try_cmd')
       echohl WarningMsg
@@ -64,7 +64,7 @@ function! provider#clipboard#Executable() abort
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
-  elseif has('mac') && executable('pbcopy')
+  elseif has('mac') && executable('pbcopy') && s:cmd_ok('pbcopy')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
