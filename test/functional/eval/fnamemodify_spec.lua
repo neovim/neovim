@@ -31,6 +31,8 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[/]], ':p:h'))
       eq(root, fnamemodify([[/]], ':p'))
     end
+    eq(root..(iswin() and [[foo/bar/baz]] or [[foo\bar\baz]]),
+       fnamemodify([[/foo/bar/baz]], ':p'))
   end)
 
   it(':8 works', function()
