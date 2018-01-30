@@ -46,7 +46,7 @@ endif()
 
 if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-Microsoft")
   # Detect WSL, which is also UNIX but not Windows/WIN32/WIN64
-  add_definitions(-DWSL)
+  add_definitions(-DNVIM_WSL)
 endif()
 
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
