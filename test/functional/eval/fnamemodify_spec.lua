@@ -24,15 +24,19 @@ describe('fnamemodify()', function()
     if iswin() then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
+      eq(root..[[foo\bar\baz]], fnamemodify([[\foo\bar\baz]], ':p'))
+      eq(root..[[foo\bar\baz]], fnamemodify([[/foo/bar/baz]], ':p'))
       command('set shellslash')
       root = string.sub(root, 1, -2)..'/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
       eq(root, fnamemodify([[/]], ':p'))
+      eq(root..[[foo/bar/baz]], fnamemodify([[\foo\bar\baz]], ':p'))
+      eq(root..[[foo/bar/baz]], fnamemodify([[/foo/bar/baz]], ':p'))
+    else
+      eq([[/foo/bar/baz]], fnamemodify([[/foo/bar/baz]], ':p'))
     end
-    eq(root..(iswin() and [[foo/bar/baz]] or [[foo\bar\baz]]),
-       fnamemodify([[/foo/bar/baz]], ':p'))
   end)
 
   it(':8 works', function()
