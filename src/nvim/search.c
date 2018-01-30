@@ -2227,10 +2227,11 @@ int findsent(int dir, long count)
           break;
         found_dot = TRUE;
       }
-      if (decl(&pos) == -1)
+      if (decl(&pos) == -1) {
         break;
-      /* when going forward: Stop in front of empty line */
-      if (lineempty(pos.lnum) && dir == FORWARD) {
+      }
+      // when going forward: Stop in front of empty line
+      if (LINEEMPTY(pos.lnum) && dir == FORWARD) {
         incl(&pos);
         goto found;
       }
@@ -2534,10 +2535,12 @@ int bck_word(long count, int bigword, int stop)
        */
       while (cls() == 0) {
         if (curwin->w_cursor.col == 0
-            && lineempty(curwin->w_cursor.lnum))
+            && LINEEMPTY(curwin->w_cursor.lnum)) {
           goto finished;
-        if (dec_cursor() == -1)         /* hit start of file, stop here */
+        }
+        if (dec_cursor() == -1) {       // hit start of file, stop here
           return OK;
+        }
       }
 
       /*
@@ -2601,10 +2604,12 @@ int end_word(long count, int bigword, int stop, int empty)
        */
       while (cls() == 0) {
         if (empty && curwin->w_cursor.col == 0
-            && lineempty(curwin->w_cursor.lnum))
+            && LINEEMPTY(curwin->w_cursor.lnum)) {
           goto finished;
-        if (inc_cursor() == -1)             /* hit end of file, stop here */
+        }
+        if (inc_cursor() == -1) {           // hit end of file, stop here
           return FAIL;
+        }
       }
 
       /*
@@ -2657,10 +2662,12 @@ bckend_word (
      * Move backward to end of the previous word
      */
     while (cls() == 0) {
-      if (curwin->w_cursor.col == 0 && lineempty(curwin->w_cursor.lnum))
+      if (curwin->w_cursor.col == 0 && LINEEMPTY(curwin->w_cursor.lnum)) {
         break;
-      if ((i = dec_cursor()) == -1 || (eol && i == 1))
+      }
+      if ((i = dec_cursor()) == -1 || (eol && i == 1)) {
         return OK;
+      }
     }
   }
   return OK;

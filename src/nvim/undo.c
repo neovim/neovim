@@ -2268,12 +2268,14 @@ static void u_undoredo(int undo)
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
-  if ((old_flags & UH_EMPTYBUF) && bufempty())
+  if ((old_flags & UH_EMPTYBUF) && BUFEMPTY()) {
     curbuf->b_ml.ml_flags |= ML_EMPTY;
-  if (old_flags & UH_CHANGED)
+  }
+  if (old_flags & UH_CHANGED) {
     changed();
-  else
+  } else {
     unchanged(curbuf, FALSE);
+  }
 
   /*
    * restore marks from before undo/redo
