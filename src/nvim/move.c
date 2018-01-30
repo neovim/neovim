@@ -155,12 +155,11 @@ void update_topline(void)
   old_topline = curwin->w_topline;
   old_topfill = curwin->w_topfill;
 
-  /*
-   * If the buffer is empty, always set topline to 1.
-   */
-  if (bufempty()) {             /* special case - file is empty */
-    if (curwin->w_topline != 1)
+  // If the buffer is empty, always set topline to 1.
+  if (BUFEMPTY()) {             // special case - file is empty
+    if (curwin->w_topline != 1) {
       redraw_later(NOT_VALID);
+    }
     curwin->w_topline = 1;
     curwin->w_botline = 2;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;

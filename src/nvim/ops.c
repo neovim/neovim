@@ -2052,10 +2052,11 @@ void op_insert(oparg_T *oap, long count1)
       curwin->w_cursor = oap->end;
       check_cursor_col();
 
-      /* Works just like an 'i'nsert on the next character. */
-      if (!lineempty(curwin->w_cursor.lnum)
-          && oap->start_vcol != oap->end_vcol)
+      // Works just like an 'i'nsert on the next character.
+      if (!LINEEMPTY(curwin->w_cursor.lnum)
+          && oap->start_vcol != oap->end_vcol) {
         inc_cursor();
+      }
     }
   }
 
@@ -2180,9 +2181,10 @@ int op_change(oparg_T *oap)
   } else if (op_delete(oap) == FAIL)
     return FALSE;
 
-  if ((l > curwin->w_cursor.col) && !lineempty(curwin->w_cursor.lnum)
-      && !virtual_op)
+  if ((l > curwin->w_cursor.col) && !LINEEMPTY(curwin->w_cursor.lnum)
+      && !virtual_op) {
     inc_cursor();
+  }
 
   // check for still on same line (<CR> in inserted text meaningless)
   // skip blank lines too
@@ -2855,25 +2857,30 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     }
   } else if (y_type == kMTLineWise) {
     lnum = curwin->w_cursor.lnum;
-    /* Correct line number for closed fold.  Don't move the cursor yet,
-     * u_save() uses it. */
-    if (dir == BACKWARD)
+    // Correct line number for closed fold.  Don't move the cursor yet,
+    // u_save() uses it.
+    if (dir == BACKWARD) {
       (void)hasFolding(lnum, &lnum, NULL);
-    else
+    } else {
       (void)hasFolding(lnum, NULL, &lnum);
-    if (dir == FORWARD)
-      ++lnum;
-    /* In an empty buffer the empty line is going to be replaced, include
-     * it in the saved lines. */
-    if ((bufempty() ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL)
+    }
+    if (dir == FORWARD) {
+      lnum++;
+    }
+    // In an empty buffer the empty line is going to be replaced, include
+    // it in the saved lines.
+    if ((BUFEMPTY() ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
       goto end;
-    if (dir == FORWARD)
+    }
+    if (dir == FORWARD) {
       curwin->w_cursor.lnum = lnum - 1;
-    else
+    } else {
       curwin->w_cursor.lnum = lnum;
-    curbuf->b_op_start = curwin->w_cursor;      /* for mark_adjust() */
-  } else if (u_save_cursor() == FAIL)
+    }
+    curbuf->b_op_start = curwin->w_cursor;      // for mark_adjust()
+  } else if (u_save_cursor() == FAIL) {
     goto end;
+  }
 
   yanklen = (int)STRLEN(y_array[0]);
 
@@ -3997,7 +4004,7 @@ format_lines (
           && (do_second_indent || do_number_indent)
           && prev_is_end_par
           && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        if (do_second_indent && !lineempty(curwin->w_cursor.lnum + 1)) {
+        if (do_second_indent && !LINEEMPTY(curwin->w_cursor.lnum + 1)) {
           if (leader_len == 0 && next_leader_len == 0) {
             /* no comment found */
             second_indent =

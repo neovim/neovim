@@ -5031,26 +5031,21 @@ static void nv_right(cmdarg_T *cap)
     if ((!PAST_LINE && oneright() == false)
         || (PAST_LINE && *get_cursor_pos_ptr() == NUL)
         ) {
-      /*
-       *	  <Space> wraps to next line if 'whichwrap' has 's'.
-       *	      'l' wraps to next line if 'whichwrap' has 'l'.
-       * CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
-       */
-      if (       ((cap->cmdchar == ' '
-                   && vim_strchr(p_ww, 's') != NULL)
-                  || (cap->cmdchar == 'l'
-                      && vim_strchr(p_ww, 'l') != NULL)
-                  || (cap->cmdchar == K_RIGHT
-                      && vim_strchr(p_ww, '>') != NULL))
-                 && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        /* When deleting we also count the NL as a character.
-         * Set cap->oap->inclusive when last char in the line is
-         * included, move to next line after that */
-        if (       cap->oap->op_type != OP_NOP
-                   && !cap->oap->inclusive
-                   && !lineempty(curwin->w_cursor.lnum))
+      //	  <Space> wraps to next line if 'whichwrap' has 's'.
+      //	      'l' wraps to next line if 'whichwrap' has 'l'.
+      // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
+      if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
+           || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
+           || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
+          && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+        // When deleting we also count the NL as a character.
+        // Set cap->oap->inclusive when last char in the line is
+        // included, move to next line after that
+        if (cap->oap->op_type != OP_NOP
+            && !cap->oap->inclusive
+            && !LINEEMPTY(curwin->w_cursor.lnum)) {
           cap->oap->inclusive = true;
-        else {
+        } else {
           ++curwin->w_cursor.lnum;
           curwin->w_cursor.col = 0;
           curwin->w_cursor.coladd = 0;
@@ -5060,12 +5055,14 @@ static void nv_right(cmdarg_T *cap)
         continue;
       }
       if (cap->oap->op_type == OP_NOP) {
-        /* Only beep and flush if not moved at all */
-        if (n == cap->count1)
+        // Only beep and flush if not moved at all
+        if (n == cap->count1) {
           beep_flush();
+        }
       } else {
-        if (!lineempty(curwin->w_cursor.lnum))
+        if (!LINEEMPTY(curwin->w_cursor.lnum)) {
           cap->oap->inclusive = true;
+        }
       }
       break;
     } else if (PAST_LINE) {
@@ -5123,13 +5120,12 @@ static void nv_left(cmdarg_T *cap)
         coladvance((colnr_T)MAXCOL);
         curwin->w_set_curswant = true;
 
-        /* When the NL before the first char has to be deleted we
-         * put the cursor on the NUL after the previous line.
-         * This is a very special case, be careful!
-         * Don't adjust op_end now, otherwise it won't work. */
-        if (       (cap->oap->op_type == OP_DELETE
-                    || cap->oap->op_type == OP_CHANGE)
-                   && !lineempty(curwin->w_cursor.lnum)) {
+        // When the NL before the first char has to be deleted we
+        // put the cursor on the NUL after the previous line.
+        // This is a very special case, be careful!
+        // Don't adjust op_end now, otherwise it won't work.
+        if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
+            && !LINEEMPTY(curwin->w_cursor.lnum)) {
           char_u *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
@@ -6098,10 +6094,11 @@ static void n_swapchar(cmdarg_T *cap)
   pos_T startpos;
   int did_change = 0;
 
-  if (checkclearopq(cap->oap))
+  if (checkclearopq(cap->oap)) {
     return;
+  }
 
-  if (lineempty(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
+  if (LINEEMPTY(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
     clearopbeep(cap->oap);
     return;
   }

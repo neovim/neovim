@@ -129,7 +129,7 @@ read_buffer(
   if (read_stdin) {
     // Set or reset 'modified' before executing autocommands, so that
     // it can be changed there.
-    if (!readonlymode && !bufempty()) {
+    if (!readonlymode && !BUFEMPTY()) {
       changed();
     } else if (retval != FAIL) {
       unchanged(curbuf, false);
@@ -1616,7 +1616,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       && curbuf != NULL
       && curbuf->b_ffname == NULL
       && curbuf->b_nwindows <= 1
-      && (curbuf->b_ml.ml_mfp == NULL || bufempty())) {
+      && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())) {
     buf = curbuf;
     /* It's like this buffer is deleted.  Watch out for autocommands that
      * change curbuf!  If that happens, allocate a new buffer anyway. */
@@ -1872,7 +1872,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
     if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
-        && !bufempty()) {
+        && !BUFEMPTY()) {
       if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
       } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
@@ -4462,11 +4462,12 @@ do_arg_all (
   last_curwin = curwin;
   last_curtab = curtab;
   win_enter(lastwin, false);
-  /* ":drop all" should re-use an empty window to avoid "--remote-tab"
-   * leaving an empty tab page when executed locally. */
-  if (keep_tabs && bufempty() && curbuf->b_nwindows == 1
-      && curbuf->b_ffname == NULL && !curbuf->b_changed)
+  // ":drop all" should re-use an empty window to avoid "--remote-tab"
+  // leaving an empty tab page when executed locally.
+  if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
+      && curbuf->b_ffname == NULL && !curbuf->b_changed) {
     use_firstwin = TRUE;
+  }
 
   for (i = 0; i < count && i < opened_len && !got_int; ++i) {
     if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1)
