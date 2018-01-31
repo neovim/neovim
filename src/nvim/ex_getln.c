@@ -272,6 +272,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   ccline.last_colors = (ColoredCmdline){ .cmdbuff = NULL,
                                          .colors = KV_INITIAL_VALUE };
+  sb_text_start_cmdline();
 
   // autoindent for :insert and :append
   if (s->firstc <= 0) {
@@ -480,6 +481,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   xfree(s->save_p_icm);
   xfree(ccline.last_colors.cmdbuff);
   kv_destroy(ccline.last_colors.colors);
+
+  sb_text_end_cmdline();
 
   {
     char_u *p = ccline.cmdbuff;
