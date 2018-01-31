@@ -260,6 +260,7 @@ describe('system()', function()
     end)
     it('works with an empty string', function()
       eq("test\n", eval('system("echo test", "")'))
+      eq(2, eval("1+1"))  -- Still alive?
     end)
   end)
 
