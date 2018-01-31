@@ -193,14 +193,17 @@ endfunc
 
 " Tests for the mode() function
 let current_modes = ''
-func! Save_mode()
+func Save_mode()
   let g:current_modes = mode(0) . '-' . mode(1)
   return ''
 endfunc
 
-func! Test_mode()
+func Test_mode()
   new
   call append(0, ["Blue Ball Black", "Brown Band Bowl", ""])
+
+  " Only complete from the current buffer.
+  set complete=.
 
   inoremap <F2> <C-R>=Save_mode()<CR>
 
@@ -310,6 +313,7 @@ func! Test_mode()
 
   bwipe!
   iunmap <F2>
+  set complete&
 endfunc
 
 func Test_getbufvar()
