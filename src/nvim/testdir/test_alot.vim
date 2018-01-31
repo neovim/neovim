@@ -12,6 +12,7 @@ source test_expr_utf8.vim
 source test_feedkeys.vim
 source test_filter_cmd.vim
 source test_filter_map.vim
+source test_findfile.vim
 source test_float_func.vim
 source test_functions.vim
 source test_ga.vim

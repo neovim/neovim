@@ -28,15 +28,11 @@
 /// @return `s, sizeof(s) - 1`
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
-/*
- * lineempty() - return TRUE if the line is empty
- */
-#define lineempty(p) (*ml_get(p) == NUL)
+/// LINEEMPTY() - return TRUE if the line is empty
+#define LINEEMPTY(p) (*ml_get(p) == NUL)
 
-/*
- * bufempty() - return TRUE if the current buffer is empty
- */
-#define bufempty() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
+/// BUFEMPTY() - return TRUE if the current buffer is empty
+#define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
                     NUL)
 
 /*

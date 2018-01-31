@@ -48,6 +48,7 @@
 #cmakedefine HAVE_UTIME_H
 #cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
+#cmakedefine HAVE_WSL
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
 #cmakedefine HAVE_SYS_UIO_H

@@ -6907,7 +6907,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       if (try_match && *look == keytyped) {
         return true;
       }
-      look++;
+      if (*look != NUL) {
+        look++;
+      }
     }
 
     /*
@@ -7473,13 +7475,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int oldState;
   int cpc[MAX_MCO];                 /* composing characters */
 
-  /*
-   * can't delete anything in an empty file
-   * can't backup past first character in buffer
-   * can't backup past starting point unless 'backspace' > 1
-   * can backup to a previous line if 'backspace' == 0
-   */
-  if (bufempty()
+  // can't delete anything in an empty file
+  // can't backup past first character in buffer
+  // can't backup past starting point unless 'backspace' > 1
+  // can backup to a previous line if 'backspace' == 0
+  if (BUFEMPTY()
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)

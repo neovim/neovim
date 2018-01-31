@@ -8445,6 +8445,7 @@ win32			Windows version of Vim (32 or 64 bit).
 winaltkeys		Compiled with 'winaltkeys' option.
 windows			Compiled with support for more than one window.
 writebackup		Compiled with 'writebackup' default on.
+wsl			WSL (Windows Subsystem for Linux) version of Vim.
 
 							*string-match*
 Matching a pattern in a String
