@@ -1804,6 +1804,13 @@ static int empty_pattern(char_u *p)
 
 static int command_line_changed(CommandLineState *s)
 {
+  // Trigger CmdlineChanged autocommands.
+  char firstcbuf[2];
+  firstcbuf[0] = s->firstc > 0 ? s->firstc : '-';
+  firstcbuf[1] = 0;
+  apply_autocmds(EVENT_CMDLINECHANGED, (char_u *)firstcbuf, (char_u *)firstcbuf,
+                   false, curbuf);
+
   // 'incsearch' highlighting.
   if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
     pos_T end_pos;
