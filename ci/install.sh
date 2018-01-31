@@ -17,9 +17,7 @@ echo "Install neovim module and coveralls for Python 2."
 CC=cc pip2.7 -q install --user --upgrade neovim cpp-coveralls
 
 echo "Install neovim module for Python 3."
-# Allow failure. pyenv pip3 on travis is broken:
-# https://github.com/travis-ci/travis-ci/issues/8363
-CC=cc pip3 -q install --user --upgrade neovim || true
+CC=cc pip3 -q install --user --upgrade neovim
 
 if ! [ "${TRAVIS_OS_NAME}" = osx ] ; then
   echo "Install neovim RubyGem."

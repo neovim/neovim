@@ -8,7 +8,11 @@ if [[ "${CI_TARGET}" == lint ]]; then
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+  # Workaround for https://github.com/travis-ci/travis-ci/issues/8552
   brew update
+else
+  # Workaround for https://github.com/travis-ci/travis-ci/issues/8363
+  pyenv global 2.7 3.6
 fi
 
 echo 'python info:'
@@ -33,9 +37,7 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   pip3 -q install --user --upgrade pip
 else
   echo "Upgrade Python 3 pip."
-  # Allow failure. pyenv pip3 on travis is broken:
-  # https://github.com/travis-ci/travis-ci/issues/8363
-  pip3 -q install --user --upgrade pip || true
+  pip3 -q install --user --upgrade pip
 fi
 
 echo "Install node (LTS)"
