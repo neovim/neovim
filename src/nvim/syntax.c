@@ -7756,7 +7756,32 @@ static void highlight_list_two(int cnt, int attr)
 
 /*
  * Function given to ExpandGeneric() to obtain the list of group names.
- * Also used for synIDattr() function.
+ */
+const char *get_highlight_name_iter(expand_T *const xp, const int idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // TODO(justinmk): 'xp' is unused
+  if (idx == highlight_ga.ga_len && include_none != 0) {
+    return "none";
+  } else if (idx == highlight_ga.ga_len + include_none
+      && include_default != 0) {
+    return "default";
+  } else if (idx == highlight_ga.ga_len + include_none + include_default
+      && include_link != 0) {
+    return "link";
+  } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
+      && include_link != 0) {
+    return "clear";
+  } else if (idx < 0) {
+    return NULL;
+  }
+  if (HL_TABLE()[idx].sg_cleared)
+    return (const char *)"";
+  return (const char *)HL_TABLE()[idx].sg_name;
+}
+
+/*
+ * Used for synIDattr() function.
  */
 const char *get_highlight_name(expand_T *const xp, const int idx)
   FUNC_ATTR_WARN_UNUSED_RESULT

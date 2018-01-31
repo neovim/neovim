@@ -4716,7 +4716,7 @@ ExpandFromContext (
       { EXPAND_MENUNAMES, get_menu_names, false, true },
       { EXPAND_SYNTAX, get_syntax_name, true, true },
       { EXPAND_SYNTIME, get_syntime_arg, true, true },
-      { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
+      { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name_iter, true, true },
       { EXPAND_EVENTS, get_event_name, true, true },
       { EXPAND_AUGROUP, get_augroup_name, true, true },
       { EXPAND_CSCOPE, get_cscope_name, true, true },
