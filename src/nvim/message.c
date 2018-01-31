@@ -1930,7 +1930,7 @@ typedef enum {
 static sb_clear_T do_clear_sb_text = SB_CLEAR_NONE;
 
 /// Store part of a printed message for displaying when scrolling back.
-static void store_sb_text (
+static void store_sb_text(
     char_u **sb_str,           // start of string
     char_u *s,                 // just after string
     int attr,
