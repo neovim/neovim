@@ -1917,7 +1917,7 @@ static void inc_msg_scrolled(void)
   }
 }
 
-static msgchunk_T *last_msgchunk = NULL; // last displayed text
+static msgchunk_T *last_msgchunk = NULL;  // last displayed text
 
 typedef enum {
   SB_CLEAR_NONE = 0,
@@ -1997,7 +1997,7 @@ void sb_text_end_cmdline(void)
 void clear_sb_text(int all)
 {
   msgchunk_T  *mp;
-  msgchunk_T	**lastp;
+  msgchunk_T  **lastp;
 
   if (all) {
     lastp = &last_msgchunk;
