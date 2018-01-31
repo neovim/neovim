@@ -48,7 +48,7 @@ function! Test_System()
 endfunction
 
 function! Test_system_exmode()
-  let cmd=" -es -u NONE -c 'source Xscript' +q; echo $?"
+  let cmd=" --headless -u NONE -c 'source Xscript' +q; echo $?"
   " Need to put this in a script, "catch" isn't found after an unknown
   " function.
   call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
