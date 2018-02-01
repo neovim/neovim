@@ -130,12 +130,30 @@ add_custom_target(inspect
 
 list(APPEND THIRD_PARTY_DEPS inspect)
 
+if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
+  # DEPENDS on the previous module, because Luarocks breaks if parallel.
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build luabitop ${LUAROCKS_BUILDARGS}
+    DEPENDS inspect)
+  add_custom_target(luabitop
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop)
+
+  list(APPEND THIRD_PARTY_DEPS luabitop)
+endif()
+
 if(USE_BUNDLED_BUSTED)
+  if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
+    set(PENLIGHT_DEPENDS luabitop)
+  else()
+    set(PENLIGHT_DEPENDS inspect)
+  endif()
+
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
     COMMAND ${LUAROCKS_BINARY}
     ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
-    DEPENDS inspect)
+    DEPENDS ${PENLIGHT_DEPENDS})
   add_custom_target(penlight
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
 
