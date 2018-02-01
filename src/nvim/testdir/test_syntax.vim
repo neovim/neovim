@@ -356,24 +356,24 @@ func Test_conceal()
 
   set conceallevel=0
   call assert_equal('123456 ', ScreenLines(2, 7)[0])
-  call assert_equal([[0, ''], [0, ''], [0, ''], [0, ''], [0, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal([[0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
 
   set conceallevel=1
   call assert_equal('1X 6   ', ScreenLines(2, 7)[0])
-  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ' '], [1, ' '], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, ' ', 2], [1, ' ', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
 
   set conceallevel=1
   set listchars=conceal:Y
-  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, 'Y'], [1, 'Y'], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, 'Y', 2], [1, 'Y', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
   call assert_equal('1XY6   ', ScreenLines(2, 7)[0])
 
   set conceallevel=2
   call assert_match('1X6    ', ScreenLines(2, 7)[0])
-  call assert_equal([[0, ''], [1, 'X'], [1, 'X'], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
 
   set conceallevel=3
   call assert_match('16     ', ScreenLines(2, 7)[0])
-  call assert_equal([[0, ''], [1, ''], [1, ''], [1, ''], [1, ''], [0, '']], map(range(1, 6), 'synconcealed(2, v:val)[0:1]'))
+  call assert_equal([[0, '', 0], [1, '', 1], [1, '', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
 
   syn clear
   set conceallevel&
