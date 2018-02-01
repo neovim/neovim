@@ -61,23 +61,23 @@ function! Test_system_exmode()
   let a = system(v:progpath . cmd)
   call assert_notequal('0', a[0])
 
-  let cmd=" -es -u NONE -c 'source Xscript' +q"
+  let cmd=" --headless -u NONE -c 'source Xscript' +q"
   let a = system(v:progpath . cmd)
   call assert_notequal(0, v:shell_error)
 
-  let cmd=" -es -u NONE -c 'call doesnotexist()' +q; echo $?"
+  let cmd=" --headless -u NONE -c 'call doesnotexist()' +q; echo $?"
   let a = system(v:progpath. cmd)
   call assert_notequal(0, a[0])
 
-  let cmd=" -es -u NONE -c 'call doesnotexist()' +q"
+  let cmd=" --headless -u NONE -c 'call doesnotexist()' +q"
   let a = system(v:progpath. cmd)
   call assert_notequal(0, v:shell_error)
 
-  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q; echo $?"
+  let cmd=" --headless -u NONE -c 'call doesnotexist()|let a=1' +q; echo $?"
   let a = system(v:progpath. cmd)
   call assert_notequal(0, a[0])
 
-  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q"
+  let cmd=" --headless -u NONE -c 'call doesnotexist()|let a=1' +q"
   let a = system(v:progpath. cmd)
   call assert_notequal(0, v:shell_error)
 
