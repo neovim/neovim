@@ -56,13 +56,16 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   if(USE_BUNDLED_LUAJIT)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR}
-      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.0)
+      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.0
+      --lua-suffix=jit)
+  elseif(USE_BUNDLED_LUA)
+    list(APPEND LUAROCKS_OPTS
+      --with-lua=${HOSTDEPS_INSTALL_DIR})
   endif()
 
   BuildLuarocks(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-      --lua-suffix=jit
     INSTALL_COMMAND ${MAKE_PRG} bootstrap)
 elseif(MSVC OR MINGW)
 
@@ -94,6 +97,8 @@ if(USE_BUNDLED_LUAJIT)
   if(MINGW AND CMAKE_CROSSCOMPILING)
     add_dependencies(luarocks luajit_host)
   endif()
+elseif(USE_BUNDLED_LUA)
+  add_dependencies(luarocks lua)
 endif()
 
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
