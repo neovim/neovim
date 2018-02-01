@@ -6,6 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
+local wait = helpers.wait
 
 describe('search cmdline', function()
   local screen
@@ -470,5 +471,114 @@ describe('search cmdline', function()
     eq({lnum = 1, leftcol = 0, col = 0, topfill = 0, topline = 1,
         coladd = 0, skipcol = 0, curswant = 0},
        funcs.winsaveview())
+  end)
+
+  it("CTRL-G with 'incsearch' and ? goes in the right direction", function()
+    -- oldtest: Test_search_cmdline4().
+    screen:detach()
+    screen = Screen.new(40, 4)
+    screen:attach()
+    screen:set_default_attr_ids({
+      inc = {reverse = true},
+      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      tilde = { bold = true, foreground = Screen.colors.Blue1 },
+    })
+    command('enew!')
+    funcs.setline(1, {'  1 the first', '  2 the second', '  3 the third'})
+    command('set laststatus=0 shortmess+=s')
+    command('set incsearch')
+    command('$')
+    -- Send the input in chunks, so the cmdline logic regards it as
+    -- "interactive".  This mimics Vim's test_override("char_avail").
+    -- (See legacy test: test_search.vim)
+    feed('?the')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 the first                           |
+        2 the second                          |
+        3 ^the third                           |
+      ?the                                    |
+    ]])
+
+    command('$')
+    feed('?the')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 ^the first                           |
+        2 the second                          |
+        3 the third                           |
+      ?the                                    |
+    ]])
+
+    command('$')
+    feed('?the')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<c-g>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 the first                           |
+        2 ^the second                          |
+        3 the third                           |
+      ?the                                    |
+    ]])
+
+    command('$')
+    feed('?the')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 ^the first                           |
+        2 the second                          |
+        3 the third                           |
+      ?the                                    |
+    ]])
+
+    command('$')
+    feed('?the')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 the first                           |
+        2 the second                          |
+        3 ^the third                           |
+      ?the                                    |
+    ]])
+
+    command('$')
+    feed('?the')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<c-t>')
+    wait()
+    feed('<cr>')
+    screen:expect([[
+        1 the first                           |
+        2 ^the second                          |
+        3 the third                           |
+      ?the                                    |
+    ]])
   end)
 end)

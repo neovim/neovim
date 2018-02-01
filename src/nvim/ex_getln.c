@@ -1063,6 +1063,13 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
       s->search_start = t;
       (void)decl(&s->search_start);
     }
+    else if (next_match && s->firstc == '?') {
+      // move just after the current match, so that
+      // when nv_search finishes the cursor will be
+      // put back on the match
+      s->search_start = t;
+      (void)incl(&s->search_start);
+    }
     if (lt(t, s->search_start) && next_match) {
       // wrap around
       s->search_start = t;
