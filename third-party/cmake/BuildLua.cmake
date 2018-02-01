@@ -71,6 +71,7 @@ set(LUA_CONFIGURE_COMMAND
       -e "s@-lncurses@@g"
       -i ${DEPS_BUILD_DIR}/src/lua/src/Makefile &&
   sed -e "/#define LUA_USE_READLINE/d"
+      -e "s@\\(#define LUA_ROOT[ 	]*\"\\)/usr/local@\\1${DEPS_INSTALL_DIR}@"
       -i ${DEPS_BUILD_DIR}/src/lua/src/luaconf.h)
 set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 set(LUA_BUILD_COMMAND
