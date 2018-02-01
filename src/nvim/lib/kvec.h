@@ -48,6 +48,11 @@
      (++(x)))
 
 #define KV_INITIAL_VALUE { .size = 0, .capacity = 0, .items = NULL }
+#define KVI_INITIAL_VALUE(v) { \
+    .size = 0, \
+    .capacity = ARRAY_SIZE((v).init_array), \
+    .items = (v).init_array \
+  }
 
 #define kvec_t(type) \
     struct { \
@@ -77,40 +82,165 @@
     ((v).capacity = (s), \
      (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity))
 
+/// Resize vector when it is full
+///
+/// @param[out]  v  Vector to resize.
 #define kv_resize_full(v) \
     kv_resize(v, (v).capacity ? (v).capacity << 1 : 8)
 
-#define kv_copy(v1, v0) \
+/// Copy one vector into another
+///
+/// @warning Works only on vectors of the same item type, use kv or kvi variant
+///          of macros depending on destination vector.
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the destination vector to
+///               use.
+/// @param[out]  dv  Destination vector.
+/// @param[in]  sv  Source vector.
+#define _kv_copy(pref, v1, v0) \
     do { \
       if ((v1).capacity < (v0).size) { \
-        kv_resize(v1, (v0).size); \
+        pref##_resize(v1, (v0).size); \
       } \
       (v1).size = (v0).size; \
       memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
-    } while (0) \
+    } while (0)
 
-#define kv_pushp(v) \
-    ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
+/// Copy one vector into another
+///
+/// @warning Works only on vectors of the same item type, use kv or kvi variant
+///          of macros depending on destination vector.
+///
+/// @param[out]  dv  Destination vector.
+/// @param[in]  sv  Source vector.
+#define kv_copy(v1, v0) _kv_copy(kv, v1, v0)
+
+/// Get push pointer: pointer to the destination item
+///
+/// Increases vector size if necessary. Does not initialize new element.
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
+/// @param  v  Vector to push to.
+#define _kv_pushp(pref, v) \
+    ((((v).size == (v).capacity) ? (pref##_resize_full(v), 0) : 0), \
      ((v).items + ((v).size++)))
+
+/// Get push pointer: pointer to the destination item
+///
+/// Increases vector size if necessary. Does not initialize new element.
+///
+/// @param  v  Vector to push to.
+#define kv_pushp(v) _kv_pushp(kv, v)
 
 #define kv_push(v, x) \
     (*kv_pushp(v) = (x))
 
+/// Resize vector with rounding
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
+/// @param[out]  v  Vector to resize.
+/// @param[in]  s  New size (not rounded).
+#define _kv_resize_round(pref, v, s) \
+    ((v).capacity = (s), \
+     kv_roundup32((v).capacity), \
+     pref##_resize((v), (v).capacity))
+
+/// Resize vector with rounding
+///
+/// @param[out]  v  Vector to resize.
+/// @param[in]  s  New size (not rounded).
+#define kv_resize_round(v, s) _kv_resize_round(kv, v, s)
+
 #define kv_a(v, i) \
     (((v).capacity <= (size_t) (i) \
-      ? ((v).capacity = (v).size = (i) + 1, \
-         kv_roundup32((v).capacity), \
-         kv_resize((v), (v).capacity), 0) \
+      ? ((v).size = (i) + 1, \
+         kv_resize_round(v, (v).size), 0) \
       : ((v).size <= (size_t) (i) \
          ? (v).size = (i) + 1 \
          : 0)), \
      (v).items[(i)])
 
+/// Shrink vector by removing some of the elements in the middle or at the end
+///
+/// Does not do resizing though.
+///
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  First element to remove.
+/// @param[in]  len  Number of items to remove. `idx + len` must be less
+///                  or equal to #kv_size.
+#define kv_shrink(v, idx, len) \
+    (kv_memmove(v, idx, (idx) + (len), kv_size(v) - (idx) - (len)), \
+     (v).size -= (len))
+
+/// Expand vector by moving some of the elements further
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Where to create the gap.
+/// @param[in]  len  How many new elements to create.
+#define _kv_expand(pref, v, idx, len) \
+    (pref##_resize_round(v, kv_size(v) + len), \
+     kv_memmove(v, idx + len, idx, kv_size(v) - idx), \
+     (v).size += len)
+
+/// Expand vector by moving some of the elements further
+///
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Where to create the gap.
+/// @param[in]  len  How many new elements to create.
+#define kv_expand(v, idx, len) _kv_expand(kv, v, idx, len)
+
+/// Insert entry at the start or to the middle of the vector
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Index of element to insert.
+/// @param[in]  x  Entry to insert.
+#define _kv_insert(pref, v, idx, x) \
+    (pref##_resize_full(v), \
+     kv_memmove(v, (idx) + 1, idx, kv_size(v) - (idx)), \
+     kv_A(v, (idx)) = (x), \
+     (v).size++)
+
+/// Insert entry at the start or to the middle of the vector
+///
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Index of element to insert.
+/// @param[in]  x  Entry to insert.
+#define kv_insert(v, idx, x) _kv_insert(kv, v, idx, x)
+
+/// Copy part of one vector to another vector
+///
+/// Unsafe, does not do resizing or moving existing vector elements around.
+///
+/// @param[out]  dv  Vector to copy to.
+/// @param[in]  sv  Vector to copy from.
+/// @param[in]  di  Index to copy to.
+/// @param[in]  si  Index to copy from.
+/// @param[in]  s  Number of elements to copy.
+#define kv_memcpy(dv, sv, di, si, s) \
+    memcpy((dv).items + (di), (sv).items + (si), sizeof((dv).items[0]) * (s))
+
+/// Copy part of one vector onto itself
+///
+/// Unsafe, does not do resizing or moving existing vector elements around.
+///
+/// @param[out]  v  Vector to work with.
+/// @param[in]  di  Index to copy to.
+/// @param[in]  si  Index to copy from.
+/// @param[in]  s  Number of elements to move.
+#define kv_memmove(v, di, si, s) \
+    memmove((v).items + (di), (v).items + (si), sizeof((v).items[0]) * (s))
+
 /// Type of a vector with a few first members allocated on stack
 ///
-/// Is compatible with #kv_A, #kv_pop, #kv_size, #kv_max, #kv_last.
+/// Is compatible with #kv_A, #kv_pop, #kv_size, #kv_max, #kv_last,
+/// #kv_shrink, #kv_memcpy.
 /// Is not compatible with #kv_resize, #kv_resize_full, #kv_copy, #kv_push,
-/// #kv_pushp, #kv_a, #kv_destroy.
+/// #kv_pushp, #kv_a, #kv_destroy, #kv_insert, #kv_expand, #kv_resize_round.
+///
+/// It is essential that references to vectors with the same type, but different
+/// sizes are compatible as long as they are not resized.
 ///
 /// @param[in]  type  Type of vector elements.
 /// @param[in]  init_size  Number of the elements in the initial array.
@@ -181,9 +311,7 @@ static inline void *_memcpy_free(void *const restrict dest,
 /// @param[in,out]  v  Vector to push to.
 ///
 /// @return Pointer to the place where new value should be stored.
-#define kvi_pushp(v) \
-    ((((v).size == (v).capacity) ? (kvi_resize_full(v), 0) : 0), \
-     ((v).items + ((v).size++)))
+#define kvi_pushp(v) _kv_pushp(kvi, v)
 
 /// Push value to a vector with preallocated array
 ///
@@ -201,5 +329,34 @@ static inline void *_memcpy_free(void *const restrict dest,
         xfree((v).items); \
       } \
     } while (0)
+
+/// Copy one vector into another
+///
+/// @warning Works only on vectors of the same item type, use kv or kvi variant
+///          of macros depending on destination vector.
+///
+/// @param[out]  dv  Destination vector.
+/// @param[in]  sv  Source vector.
+#define kvi_copy(dv, sv) _kv_copy(kvi, dv, sv)
+
+/// Resize vector with rounding
+///
+/// @param[out]  v  Vector to resize.
+/// @param[in]  s  New size (not rounded).
+#define kvi_resize_round(v, s) _kv_resize_round(kvi, v, s)
+
+/// Expand vector by moving some of the elements further
+///
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Where to create the gap.
+/// @param[in]  len  How many new elements to create.
+#define kvi_expand(v, idx, len) _kv_expand(kvi, v, idx, len)
+
+/// Insert entry at the start or to the middle of the vector
+///
+/// @param[out]  v  Vector to modify.
+/// @param[in]  idx  Index of element to insert.
+/// @param[in]  x  Entry to insert.
+#define kvi_insert(v, idx, x) _kv_insert(kvi, v, idx, x)
 
 #endif  // NVIM_LIB_KVEC_H

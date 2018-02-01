@@ -270,8 +270,7 @@ struct funccall_S {
   ScopeDictDictItem l_vars_var;  ///< Variable for l: scope.
   dict_T l_avars;  ///< a: argument variables.
   ScopeDictDictItem l_avars_var;  ///< Variable for a: scope.
-  list_T l_varlist;  ///< List for a:000.
-  listitem_T l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
+  TvStaticArgList l_varlist;  ///< List for a:000.
   typval_T *rettv;  ///< Return value.
   linenr_T breakpoint;  ///< Next line with breakpoint or zero.
   int dbg_tick;  ///< Debug_tick when breakpoint was set.
@@ -2520,7 +2519,7 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
          * list being used in "tv". */
         fi->fi_list = l;
         tv_list_watch_add(l, &fi->fi_lw);
-        fi->fi_lw.lw_item = tv_list_first(l);
+        fi->fi_lw.lw_idx = 0;
       }
     }
   }
@@ -2532,21 +2531,23 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
 
 // TODO(ZyX-I): move to eval/ex_cmds
 
-/*
- * Use the first item in a ":for" list.  Advance to the next.
- * Assign the values to the variable (list).  "arg" points to the first one.
- * Return TRUE when a valid item was found, FALSE when at end of list or
- * something wrong.
- */
-bool next_for_item(void *fi_void, char_u *arg)
+/// Assign current item in :for list to variables and advance to next one
+///
+/// @param[in,out]  fi_void  Information about the current `:for` loop.
+/// @param[in]  arg  Variables to assign to, points to `:for` argument.
+///
+/// @return true when a valid item was found, false in case of error or when
+///         there are no more items.
+bool next_for_item(void *const fi_void, char_u *const arg)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  forinfo_T *fi = (forinfo_T *)fi_void;
+  forinfo_T *const fi = (forinfo_T *)fi_void;
 
-  listitem_T *item = fi->fi_lw.lw_item;
+  listitem_T *const item = tv_list_find(fi->fi_list, fi->fi_lw.lw_idx);
   if (item == NULL) {
     return false;
   } else {
-    fi->fi_lw.lw_item = TV_LIST_ITEM_NEXT(fi->fi_list, item);
+    fi->fi_lw.lw_idx++;
     return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
                         fi->fi_semicolon, fi->fi_varcount, NULL) == OK);
   }
@@ -2897,7 +2898,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
       }
       lp->ll_li = li;
       lp->ll_n1++;
-      if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
+      if (li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
         break;
       } else {
         last_li = lp->ll_li;
@@ -12393,7 +12394,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   if (type == kSomeMatchStrPos && l == NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
-    tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
+    tv_list_item_remove(ret_l, tv_list_find(ret_l, 1));
   }
 
 theend:
@@ -21160,9 +21161,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   tv_dict_add(&fc->l_avars, v);
   v->di_tv.v_type = VAR_LIST;
   v->di_tv.v_lock = VAR_FIXED;
-  v->di_tv.vval.v_list = &fc->l_varlist;
-  tv_list_init_static(&fc->l_varlist);
-  tv_list_set_lock(&fc->l_varlist, VAR_FIXED);
+  v->di_tv.vval.v_list = (list_T *)&fc->l_varlist;
+  tv_list_init_static_arglist(&fc->l_varlist);
 
   // Set a:firstline to "firstline" and a:lastline to "lastline".
   // Set a:name to named arguments.
@@ -21210,9 +21210,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {
-      tv_list_append(&fc->l_varlist, &fc->l_listitems[ai]);
-      *TV_LIST_ITEM_TV(&fc->l_listitems[ai]) = argvars[i];
-      TV_LIST_ITEM_TV(&fc->l_listitems[ai])->v_lock = VAR_FIXED;
+      typval_T tv = argvars[i];
+      tv.v_lock = VAR_FIXED;
+      tv_list_append_owned_tv((list_T *)&fc->l_varlist, tv);
     }
   }
 
@@ -21414,7 +21414,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     });
 
     // Make a copy of the a:000 items, since we didn't do that above.
-    TV_LIST_ITER(&fc->l_varlist, li, {
+    TV_LIST_ITER((list_T *)&fc->l_varlist, li, {
       tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
     });
   }
@@ -21501,7 +21501,7 @@ free_funccal (
 
   // Free the a:000 variables if they were allocated.
   if (free_val) {
-    TV_LIST_ITER(&fc->l_varlist, li, {
+    TV_LIST_ITER((list_T *)&fc->l_varlist, li, {
       tv_clear(TV_LIST_ITEM_TV(li));
     });
   }

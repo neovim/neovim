@@ -6498,9 +6498,9 @@ static int fill_submatch_list(int argc, typval_T *argv, int argcount)
   return 1;
 }
 
-static void clear_submatch_list(staticList10_T *sl)
+static void clear_submatch_list(staticList10_T *const sl)
 {
-  TV_LIST_ITER(&sl->sl_list, li, {
+  TV_LIST_ITER((list_T *)sl, li, {
     xfree(TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 }
@@ -6641,7 +6641,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         rettv.v_type = VAR_STRING;
         rettv.vval.v_string = NULL;
         argv[0].v_type = VAR_LIST;
-        argv[0].vval.v_list = &matchList.sl_list;
+        argv[0].vval.v_list = (list_T *)&matchList;
         if (expr->v_type == VAR_FUNC) {
           s = expr->vval.v_string;
           call_func(s, (int)STRLEN(s), &rettv, 1, argv,
@@ -6655,7 +6655,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                     fill_submatch_list, 0L, 0L, &dummy,
                     true, partial, NULL);
         }
-        if (tv_list_len(&matchList.sl_list) > 0) {
+        if (tv_list_len((list_T *)&matchList) > 0) {
           // fill_submatch_list() was called.
           clear_submatch_list(&matchList);
         }

@@ -2658,7 +2658,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
       }));
     }
     const varnumber_T end = tv_get_number_chk(
-        TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))), &error);
+        TV_LIST_ITEM_TV(tv_list_find(l, 1)), &error);
     if (error) {
       goto color_cmdline_error;
     } else if (!(start < end && end <= colored_ccline->cmdlen)) {
