@@ -1549,7 +1549,7 @@ static int command_line_handle_key(CommandLineState *s)
           }
           if (s->c != NUL) {
             if (s->c == s->firstc
-                || vim_strchr((char_u *)(p_magic ? "\\^$.*[" : "\\^$"), s->c)
+                || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), s->c)
                 != NULL) {
               // put a backslash before special characters
               stuffcharReadbuff(s->c);

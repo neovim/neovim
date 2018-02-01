@@ -306,3 +306,24 @@ func Test_searchc()
   exe "norm 0t\u93cf"
   bw!
 endfunc
+
+func Test_search_cmdline3()
+  throw 'skipped: Nvim does not support test_override()'
+  if !exists('+incsearch')
+    return
+  endif
+  " need to disable char_avail,
+  " so that expansion of commandline works
+  call test_override("char_avail", 1)
+  new
+  call setline(1, ['  1', '  2 the~e', '  3 the theother'])
+  set incsearch
+  1
+  " first match
+  call feedkeys("/the\<c-l>\<cr>", 'tx')
+  call assert_equal('  2 the~e', getline('.'))
+  " clean up
+  set noincsearch
+  call test_override("char_avail", 0)
+  bw!
+endfunc
