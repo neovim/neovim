@@ -426,7 +426,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     curwin->w_botline = s->old_botline;
     highlight_match = false;
     validate_cursor();          // needed for TAB
-    redraw_later(SOME_VALID);
+    redraw_all_later(SOME_VALID);
   }
 
   if (ccline.cmdbuff != NULL) {
@@ -1019,17 +1019,36 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   ui_flush();
 
   pos_T  t;
-  int search_flags = SEARCH_KEEP + SEARCH_NOOF + SEARCH_PEEK;
+  char_u *pat;
+  int search_flags = SEARCH_NOOF;
+
+
+  if (s->firstc == ccline.cmdbuff[0]) {
+    pat = last_search_pattern();
+  } else {
+    pat = ccline.cmdbuff;
+  }
+
+  save_last_search_pattern();
+
   if (next_match) {
     t = s->match_end;
+    if (lt(s->match_start, s->match_end)) {
+      // start searching at the end of the match
+      // not at the beginning of the next column
+      (void)decl(&t);
+    }
     search_flags += SEARCH_COL;
   } else {
     t = s->match_start;
   }
+  if (!p_hls) {
+    search_flags += SEARCH_KEEP;
+  }
   emsg_off++;
   s->i = searchit(curwin, curbuf, &t,
                   next_match ? FORWARD : BACKWARD,
-                  ccline.cmdbuff, s->count, search_flags,
+                  pat, s->count, search_flags,
                   RE_SEARCH, 0, NULL);
   emsg_off--;
   ui_busy_stop();
@@ -1070,6 +1089,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   } else {
     vim_beep(BO_ERROR);
   }
+  restore_last_search_pattern();
   return;
 }
 
@@ -1656,7 +1676,9 @@ static int command_line_handle_key(CommandLineState *s)
       if (char_avail()) {
         return 1;
       }
-      command_line_next_incsearch(s, s->c == Ctrl_G);
+      if (ccline.cmdlen != 0) {
+        command_line_next_incsearch(s, s->c == Ctrl_G);
+      }
       return command_line_not_changed(s);
     }
     break;
@@ -1759,6 +1781,20 @@ static int command_line_not_changed(CommandLineState *s)
   return command_line_changed(s);
 }
 
+/// Guess that the pattern matches everything.  Only finds specific cases, such
+/// as a trailing \|, which can happen while typing a pattern.
+static int empty_pattern(char_u *p)
+{
+  int n = STRLEN(p);
+
+  // remove trailing \v and the like
+  while (n >= 2 && p[n - 2] == '\\'
+         && vim_strchr((char_u *)"mMvVcCZ", p[n - 1]) != NULL) {
+    n -= 2;
+  }
+  return n == 0 || (n >= 2 && p[n - 2] == '\\' && p[n - 1] == '|');
+}
+
 static int command_line_changed(CommandLineState *s)
 {
   // 'incsearch' highlighting.
@@ -1773,20 +1809,27 @@ static int command_line_changed(CommandLineState *s)
     }
     s->incsearch_postponed = false;
     curwin->w_cursor = s->search_start;  // start at old position
+    save_last_search_pattern();
 
     // If there is no command line, don't do anything
     if (ccline.cmdlen == 0) {
       s->i = 0;
+      SET_NO_HLSEARCH(true);  // turn off previous highlight
+      redraw_all_later(SOME_VALID);
     } else {
+      int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
       ui_busy_start();
       ui_flush();
       ++emsg_off;            // So it doesn't beep if bad expr
       // Set the time limit to half a second.
       tm = profile_setlimit(500L);
+      if (!p_hls) {
+        search_flags += SEARCH_KEEP;
+      }
       s->i = do_search(NULL, s->firstc, ccline.cmdbuff, s->count,
-          SEARCH_KEEP + SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK,
-          &tm);
-      --emsg_off;
+                       search_flags,
+                       &tm);
+      emsg_off--;
       // if interrupted while searching, behave like it failed
       if (got_int) {
         (void)vpeekc();               // remove <C-C> from input stream
@@ -1827,6 +1870,12 @@ static int command_line_changed(CommandLineState *s)
       end_pos = curwin->w_cursor;         // shutup gcc 4
     }
 
+    // Disable 'hlsearch' highlighting if the pattern matches
+    // everything. Avoids a flash when typing "foo\|".
+    if (empty_pattern(ccline.cmdbuff)) {
+      SET_NO_HLSEARCH(true);
+    }
+
     validate_cursor();
     // May redraw the status line to show the cursor position.
     if (p_ru && curwin->w_status_height > 0) {
@@ -1836,6 +1885,7 @@ static int command_line_changed(CommandLineState *s)
     save_cmdline(&s->save_ccline);
     update_screen(SOME_VALID);
     restore_cmdline(&s->save_ccline);
+    restore_last_search_pattern();
 
     // Leave it at the end to make CTRL-R CTRL-W work.
     if (s->i != 0) {
