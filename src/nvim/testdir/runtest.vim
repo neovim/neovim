@@ -45,7 +45,7 @@ source setup.vim
 " This also enables use of line continuation.
 set viminfo+=nviminfo
 
-" Use utf-8 or latin1 be default, instead of whatever the system default
+" Use utf-8 or latin1 by default, instead of whatever the system default
 " happens to be.  Individual tests can overrule this at the top of the file.
 if has('multi_byte')
   set encoding=utf-8

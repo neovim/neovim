@@ -376,7 +376,6 @@ MS-DOS support:
 Test functions:
   test_alloc_fail()
   test_autochdir()
-  test_disable_char_avail()
   test_garbagecollect_now()
   test_null_channel()
   test_null_dict()
@@ -384,6 +383,7 @@ Test functions:
   test_null_list()
   test_null_partial()
   test_null_string()
+  test_override()
   test_settime()
 
 Other options:

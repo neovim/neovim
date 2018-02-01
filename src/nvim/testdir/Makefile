@@ -49,6 +49,7 @@ NEW_TESTS ?= \
 	    test_command_count.res \
 	    test_cscope.res \
 	    test_digraph.res \
+	    test_edit.res \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_filter_map.res \
