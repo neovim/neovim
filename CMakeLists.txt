@@ -515,28 +515,6 @@ if(BUSTED_PRG)
     list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
   endif()
 
-  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
-    if(CMAKE_GENERATOR MATCHES "Visual Studio")
-      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
-    else()
-      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
-    endif()
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
-  else()
-    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
-    # use configure_file() to add the generator expression and then generate
-    # the final file
-    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
-    file(GENERATE
-      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
-      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
-  endif()
-
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test)
   if(NOT WIN32)
@@ -571,6 +549,32 @@ if(BUSTED_PRG)
       ${TEST_TARGET_ARGS})
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
+  endif()
+
+  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
+    else()
+      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+    endif()
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  else()
+    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
+    # use configure_file() to add the generator expression and then generate
+    # the final file
+    if(LUA_HAS_FFI)
+      set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
+    else()
+      set(TEST_LIBNVIM_PATH "")
+    endif()
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+    file(GENERATE
+      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
+      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
   endif()
 
   add_custom_target(functionaltest
