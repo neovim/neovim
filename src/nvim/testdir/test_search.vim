@@ -363,3 +363,59 @@ func Test_search_cmdline4()
   call test_override("char_avail", 0)
   bw!
 endfunc
+
+" Tests for regexp with various magic settings
+func Test_search_regexp()
+  enew!
+
+  put ='1 a aa abb abbccc'
+  exe 'normal! /a*b\{2}c\+/e' . "\<CR>"
+  call assert_equal([0, 2, 17, 0], getpos('.'))
+
+  put ='2 d dd dee deefff'
+  exe 'normal! /\Md\*e\{2}f\+/e' . "\<CR>"
+  call assert_equal([0, 3, 17, 0], getpos('.'))
+
+  set nomagic
+  put ='3 g gg ghh ghhiii'
+  exe 'normal! /g\*h\{2}i\+/e' . "\<CR>"
+  call assert_equal([0, 4, 17, 0], getpos('.'))
+
+  put ='4 j jj jkk jkklll'
+  exe 'normal! /\mj*k\{2}l\+/e' . "\<CR>"
+  call assert_equal([0, 5, 17, 0], getpos('.'))
+
+  put ='5 m mm mnn mnnooo'
+  exe 'normal! /\vm*n{2}o+/e' . "\<CR>"
+  call assert_equal([0, 6, 17, 0], getpos('.'))
+
+  put ='6 x ^aa$ x'
+  exe 'normal! /\V^aa$' . "\<CR>"
+  call assert_equal([0, 7, 5, 0], getpos('.'))
+
+  set magic
+  put ='7 (a)(b) abbaa'
+  exe 'normal! /\v(a)(b)\2\1\1/e' . "\<CR>"
+  call assert_equal([0, 8, 14, 0], getpos('.'))
+
+  put ='8 axx [ab]xx'
+  exe 'normal! /\V[ab]\(\[xy]\)\1' . "\<CR>"
+  call assert_equal([0, 9, 7, 0], getpos('.'))
+
+  set undolevels=100
+  put ='9 foobar'
+  put =''
+  exe "normal! a\<C-G>u\<Esc>"
+  normal G
+  exe 'normal! dv?bar?' . "\<CR>"
+  call assert_equal('9 foo', getline('.'))
+  call assert_equal([0, 10, 5, 0], getpos('.'))
+  call assert_equal(10, line('$'))
+  normal u
+  call assert_equal('9 foobar', getline('.'))
+  call assert_equal([0, 10, 6, 0], getpos('.'))
+  call assert_equal(11, line('$'))
+
+  set undolevels&
+  enew!
+endfunc
