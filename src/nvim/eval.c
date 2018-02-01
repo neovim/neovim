@@ -1279,7 +1279,7 @@ varnumber_T call_func_retnr(char_u *func, int argc,
 char *call_func_retstr(const char *const func, const int argc,
                        const char_u *const *const argv,
                        const bool safe)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
   // All arguments are passed as strings, no conversion to number.
@@ -10731,6 +10731,17 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!n && eval_has_provider(name)) {
     n = true;
+  }
+
+  if (STRICMP(name, "ruby") == 0 && n == true) {
+    char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
+    if (rubyhost) {
+      if (*rubyhost == NUL) {
+        // Invalid rubyhost executable. Gem is probably not installed.
+        n = false;
+      }
+      xfree(rubyhost);
+    }
   }
 
   rettv->vval.v_number = n;
