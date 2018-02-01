@@ -60,7 +60,10 @@ jobs:
       sudo: true
     - os: linux
       compiler: gcc
-      env: FUNCTIONALTEST=functionaltest-lua
+      env: >
+        FUNCTIONALTEST=functionaltest-lua
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
     - os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
