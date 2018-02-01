@@ -47,10 +47,12 @@ NEW_TESTS ?= \
 	    test_cmdline.res \
 	    test_command_count.res \
 	    test_cscope.res \
+	    test_curswant.res \
 	    test_digraph.res \
 	    test_edit.res \
 	    test_diffmode.res \
 	    test_farsi.res \
+	    test_file_size.res \
 	    test_filter_map.res \
 	    test_findfile.res \
 	    test_fnameescape.res \
@@ -68,6 +70,8 @@ NEW_TESTS ?= \
 	    test_increment_dbcs.res \
 	    test_lambda.res \
 	    test_langmap.res \
+	    test_let.res \
+	    test_lineending.res \
 	    test_makeencoding.res \
 	    test_marks.res \
 	    test_match.res \
@@ -82,6 +86,7 @@ NEW_TESTS ?= \
 	    test_profile.res \
 	    test_quickfix.res \
 	    test_retab.res \
+	    test_scrollbind.res \
 	    test_search.res \
 	    test_signs.res \
 	    test_smartindent.res \
