@@ -2,13 +2,13 @@
 
 set belloff=all
 
-function! s:cleanup_buffers() abort
+func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
     if bufloaded(bnr) && bufnr('%') != bnr
       execute 'bd! ' . bnr
     endif
   endfor
-endfunction
+endfunc
 
 func Test_vim_did_enter()
   call assert_false(v:vim_did_enter)
@@ -49,7 +49,7 @@ if has('timers')
   endfunc
 endif
 
-function Test_bufunload()
+func Test_bufunload()
   augroup test_bufunload_group
     autocmd!
     autocmd BufUnload * call add(s:li, "bufunload")
@@ -80,7 +80,7 @@ function Test_bufunload()
 endfunc
 
 " SEGV occurs in older versions.  (At least 7.4.2005 or older)
-function Test_autocmd_bufunload_with_tabnext()
+func Test_autocmd_bufunload_with_tabnext()
   tabedit
   tabfirst
 
@@ -98,7 +98,7 @@ function Test_autocmd_bufunload_with_tabnext()
   quit
 endfunc
 
-function Test_autocmd_bufwinleave_with_tabfirst()
+func Test_autocmd_bufwinleave_with_tabfirst()
   tabedit
   augroup sample
     autocmd!
@@ -110,7 +110,7 @@ function Test_autocmd_bufwinleave_with_tabfirst()
 endfunc
 
 " SEGV occurs in older versions.  (At least 7.4.2321 or older)
-function Test_autocmd_bufunload_avoiding_SEGV_01()
+func Test_autocmd_bufunload_avoiding_SEGV_01()
   split aa.txt
   let lastbuf = bufnr('$')
 
@@ -128,7 +128,7 @@ function Test_autocmd_bufunload_avoiding_SEGV_01()
 endfunc
 
 " SEGV occurs in older versions.  (At least 7.4.2321 or older)
-function Test_autocmd_bufunload_avoiding_SEGV_02()
+func Test_autocmd_bufunload_avoiding_SEGV_02()
   setlocal buftype=nowrite
   let lastbuf = bufnr('$')
 
@@ -353,7 +353,7 @@ endfunc
 
 " Closing a window might cause an endless loop
 " E814 for older Vims
-function Test_autocmd_bufwipe_in_SessLoadPost()
+func Test_autocmd_bufwipe_in_SessLoadPost()
   tabnew
   set noswapfile
   mksession!
@@ -382,7 +382,7 @@ function Test_autocmd_bufwipe_in_SessLoadPost()
 endfunc
 
 " SEGV occurs in older versions.
-function Test_autocmd_bufwipe_in_SessLoadPost2()
+func Test_autocmd_bufwipe_in_SessLoadPost2()
   tabnew
   set noswapfile
   mksession!
@@ -605,4 +605,195 @@ func Test_BufLeave_Wipe()
   call delete('Xxx2')
   %bwipe
   au! BufLeave
+endfunc
+
+func s:AutoCommandOptionSet(match)
+  let item     = remove(g:options, 0)
+  let expected = printf("Option: <%s>, Oldval: <%s>, NewVal: <%s>, Scope: <%s>\n", item[0], item[1], item[2], item[3])
+  let actual   = printf("Option: <%s>, Oldval: <%s>, NewVal: <%s>, Scope: <%s>\n", a:match, v:option_old, v:option_new, v:option_type)
+  let g:opt    = [expected, actual]
+  "call assert_equal(expected, actual)
+endfunc
+
+func Test_OptionSet()
+  if !has("eval") || !has("autocmd") || !exists("+autochdir")
+    return
+  endif
+
+  call test_override('starting', 1)
+  set nocp
+  au OptionSet * :call s:AutoCommandOptionSet(expand("<amatch>"))
+
+  " 1: Setting number option"
+  let g:options=[['number', 0, 1, 'global']]
+  set nu
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 2: Setting local number option"
+  let g:options=[['number', 1, 0, 'local']]
+  setlocal nonu
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 3: Setting global number option"
+  let g:options=[['number', 1, 0, 'global']]
+  setglobal nonu
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 4: Setting local autoindent option"
+  let g:options=[['autoindent', 0, 1, 'local']]
+  setlocal ai
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 5: Setting global autoindent option"
+  let g:options=[['autoindent', 0, 1, 'global']]
+  setglobal ai
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 6: Setting global autoindent option"
+  let g:options=[['autoindent', 1, 0, 'global']]
+  set ai!
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " Should not print anything, use :noa
+  " 7: don't trigger OptionSet"
+  let g:options=[['invalid', 1, 1, 'invalid']]
+  noa set nonu
+  call assert_equal([['invalid', 1, 1, 'invalid']], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 8: Setting several global list and number option"
+  let g:options=[['list', 0, 1, 'global'], ['number', 0, 1, 'global']]
+  set list nu
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 9: don't trigger OptionSet"
+  let g:options=[['invalid', 1, 1, 'invalid'], ['invalid', 1, 1, 'invalid']]
+  noa set nolist nonu
+  call assert_equal([['invalid', 1, 1, 'invalid'], ['invalid', 1, 1, 'invalid']], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 10: Setting global acd"
+  let g:options=[['autochdir', 0, 1, 'local']]
+  setlocal acd
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 11: Setting global autoread (also sets local value)"
+  let g:options=[['autoread', 0, 1, 'global']]
+  set ar
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 12: Setting local autoread"
+  let g:options=[['autoread', 1, 1, 'local']]
+  setlocal ar
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 13: Setting global autoread"
+  let g:options=[['autoread', 1, 0, 'global']]
+  setglobal invar
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 14: Setting option backspace through :let"
+  let g:options=[['backspace', '', 'eol,indent,start', 'global']]
+  let &bs="eol,indent,start"
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 15: Setting option backspace through setbufvar()"
+  let g:options=[['backup', 0, 1, 'local']]
+  " try twice, first time, shouldn't trigger because option name is invalid,
+  " second time, it should trigger
+  call assert_fails("call setbufvar(1, '&l:bk', 1)", "E355")
+  " should trigger, use correct option name
+  call setbufvar(1, '&backup', 1)
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 16: Setting number option using setwinvar"
+  let g:options=[['number', 0, 1, 'local']]
+  call setwinvar(0, '&number', 1)
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 17: Setting key option, shouldn't trigger"
+  let g:options=[['key', 'invalid', 'invalid1', 'invalid']]
+  setlocal key=blah
+  setlocal key=
+  call assert_equal([['key', 'invalid', 'invalid1', 'invalid']], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " Cleanup
+  au! OptionSet
+  for opt in ['nu', 'ai', 'acd', 'ar', 'bs', 'backup', 'cul', 'cp']
+    exe printf(":set %s&vi", opt)
+  endfor
+  call test_override('starting', 0)
+  delfunc! AutoCommandOptionSet
+endfunc
+
+func Test_OptionSet_diffmode()
+  call test_override('starting', 1)
+  " 18: Changing an option when enetering diff mode
+  new
+  au OptionSet diff :let &l:cul=v:option_new
+
+  call setline(1, ['buffer 1', 'line2', 'line3', 'line4'])
+  call assert_equal(0, &l:cul)
+  diffthis
+  call assert_equal(1, &l:cul)
+
+  vnew
+  call setline(1, ['buffer 2', 'line 2', 'line 3', 'line4'])
+  call assert_equal(0, &l:cul)
+  diffthis
+  call assert_equal(1, &l:cul)
+
+  diffoff
+  call assert_equal(0, &l:cul)
+  call assert_equal(1, getwinvar(2, '&l:cul'))
+  bw!
+
+  call assert_equal(1, &l:cul)
+  diffoff!
+  call assert_equal(0, &l:cul)
+  call assert_equal(0, getwinvar(1, '&l:cul'))
+  bw!
+
+  " Cleanup
+  au! OptionSet
+  call test_override('starting', 0)
+endfunc
+
+func Test_OptionSet_diffmode_close()
+  call test_override('starting', 1)
+  " 19: Try to close the current window when entering diff mode
+  " should not segfault
+  new
+  au OptionSet diff close
+
+  call setline(1, ['buffer 1', 'line2', 'line3', 'line4'])
+  call assert_fails(':diffthis', 'E788')
+  call assert_equal(1, &diff)
+  vnew
+  call setline(1, ['buffer 2', 'line 2', 'line 3', 'line4'])
+  call assert_fails(':diffthis', 'E788')
+  call assert_equal(1, &diff)
+  bw!
+  call assert_fails(':diffoff!', 'E788')
+  bw!
+
+  " Cleanup
+  au! OptionSet
+  call test_override('starting', 0)
+  "delfunc! AutoCommandOptionSet
 endfunc

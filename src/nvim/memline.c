@@ -1336,7 +1336,8 @@ recover_names (
             && len > 1
             && p[-1] == p[-2]) {
           // Ends with '//', Use Full path for swap name
-          tail = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
+          tail = (char_u *)make_percent_swname((char *)dir_name,
+                                               (char *)fname_res);
         } else {
           tail = path_tail(fname_res);
           tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, TRUE);
