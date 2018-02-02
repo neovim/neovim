@@ -434,6 +434,7 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
+  throw 'skipped: Nvim does not support test_override()'
   if !has("eval") || !has("autocmd") || !exists("+autochdir")
     return
   endif
@@ -573,6 +574,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
+  throw 'skipped: Nvim does not support test_override()'
   call test_override('starting', 1)
   " 18: Changing an option when enetering diff mode
   new
@@ -606,6 +608,7 @@ func Test_OptionSet_diffmode()
 endfunc
 
 func Test_OptionSet_diffmode_close()
+  throw 'skipped: Nvim does not support test_override()'
   call test_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
