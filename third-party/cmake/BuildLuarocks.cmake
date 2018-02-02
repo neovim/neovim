@@ -152,7 +152,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-scm-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-dev-1.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${LUACHECK_EXE})
