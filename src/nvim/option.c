@@ -1498,6 +1498,7 @@ do_set (
             char_u      *newval;
             char_u      *origval = NULL;
             char *saved_origval = NULL;
+            char *saved_newval = NULL;
             unsigned newlen;
             int comma;
             int bs;
@@ -1793,10 +1794,10 @@ do_set (
             if (!starting && origval != NULL && newval != NULL) {
               // origval may be freed by
               // did_set_string_option(), make a copy.
-              saved_origval = xstrdup((char *) origval);
+              saved_origval = xstrdup((char *)origval);
               // newval (and varp) may become invalid if the
               // buffer is closed by autocommands.
-              saved_newval = vim_strsave(newval);
+              saved_newval = xstrdup((char *)newval);
             }
 
             // Handle side effects, and set the global value for
@@ -2397,7 +2398,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   *varp = s;
 
   char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
-  char *const *saved_newval = (starting ? NULL : xstrdup(s));
+  char *const saved_newval = (starting ? NULL : xstrdup(s));
 
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);

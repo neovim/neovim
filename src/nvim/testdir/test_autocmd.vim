@@ -421,190 +421,8 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
   endfor
 endfunc
 
-func Test_Cmdline()
-  au! CmdlineEnter : let g:entered = expand('<afile>')
-  au! CmdlineLeave : let g:left = expand('<afile>')
-  let g:entered = 0
-  let g:left = 0
-  call feedkeys(":echo 'hello'\<CR>", 'xt')
-  call assert_equal(':', g:entered)
-  call assert_equal(':', g:left)
-  au! CmdlineEnter
-  au! CmdlineLeave
-
-  au! CmdlineEnter / let g:entered = expand('<afile>')
-  au! CmdlineLeave / let g:left = expand('<afile>')
-  let g:entered = 0
-  let g:left = 0
-  call feedkeys("/hello<CR>", 'xt')
-  call assert_equal('/', g:entered)
-  call assert_equal('/', g:left)
-  au! CmdlineEnter
-  au! CmdlineLeave
-endfunc
-
-" Test for Bufleave autocommand that deletes the buffer we are about to edit.
-func Test_BufleaveWithDelete()
-  new | edit Xfile1
-
-  augroup test_bufleavewithdelete
-      autocmd!
-      autocmd BufLeave Xfile1 bwipe Xfile2
-  augroup END
-
-  call assert_fails('edit Xfile2', 'E143:')
-  call assert_equal('Xfile1', bufname('%'))
-
-  autocmd! test_bufleavewithdelete BufLeave Xfile1
-  augroup! test_bufleavewithdelete
-
-  new
-  bwipe! Xfile1
-endfunc
-
-" Test for Bufleave autocommand that deletes the buffer we are about to edit.
-func Test_BufleaveWithDelete()
-  new | edit Xfile1
-
-  augroup test_bufleavewithdelete
-      autocmd!
-      autocmd BufLeave Xfile1 bwipe Xfile2
-  augroup END
-
-  call assert_fails('edit Xfile2', 'E143:')
-  call assert_equal('Xfile1', bufname('%'))
-
-  autocmd! test_bufleavewithdelete BufLeave Xfile1
-  augroup! test_bufleavewithdelete
-
-  new
-  bwipe! Xfile1
-endfunc
-
-" Test for autocommand that changes the buffer list, when doing ":ball".
-func Test_Acmd_BufAll()
-  enew!
-  %bwipe!
-  call writefile(['Test file Xxx1'], 'Xxx1')
-  call writefile(['Test file Xxx2'], 'Xxx2')
-  call writefile(['Test file Xxx3'], 'Xxx3')
-
-  " Add three files to the buffer list
-  split Xxx1
-  close
-  split Xxx2
-  close
-  split Xxx3
-  close
-
-  " Wipe the buffer when the buffer is opened
-  au BufReadPost Xxx2 bwipe
-
-  call append(0, 'Test file Xxx4')
-  ball
-
-  call assert_equal(2, winnr('$'))
-  call assert_equal('Xxx1', bufname(winbufnr(winnr('$'))))
-  wincmd t
-
-  au! BufReadPost
-  %bwipe!
-  call delete('Xxx1')
-  call delete('Xxx2')
-  call delete('Xxx3')
-  enew! | only
-endfunc
-
-" Test for autocommand that changes current buffer on BufEnter event.
-" Check if modelines are interpreted for the correct buffer.
-func Test_Acmd_BufEnter()
-  %bwipe!
-  call writefile(['start of test file Xxx1',
-	      \ "\<Tab>this is a test",
-	      \ 'end of test file Xxx1'], 'Xxx1')
-  call writefile(['start of test file Xxx2',
-	      \ 'vim: set noai :',
-	      \ "\<Tab>this is a test",
-	      \ 'end of test file Xxx2'], 'Xxx2')
-
-  au BufEnter Xxx2 brew
-  set ai modeline modelines=3
-  edit Xxx1
-  " edit Xxx2, autocmd will do :brew
-  edit Xxx2
-  exe "normal G?this is a\<CR>"
-  " Append text with autoindent to this file
-  normal othis should be auto-indented
-  call assert_equal("\<Tab>this should be auto-indented", getline('.'))
-  call assert_equal(3, line('.'))
-  " Remove autocmd and edit Xxx2 again
-  au! BufEnter Xxx2
-  buf! Xxx2
-  exe "normal G?this is a\<CR>"
-  " append text without autoindent to Xxx
-  normal othis should be in column 1
-  call assert_equal("this should be in column 1", getline('.'))
-  call assert_equal(4, line('.'))
-
-  %bwipe!
-  call delete('Xxx1')
-  call delete('Xxx2')
-  set ai&vim modeline&vim modelines&vim
-endfunc
-
-" Test for issue #57
-" do not move cursor on <c-o> when autoindent is set
-func Test_ai_CTRL_O()
-  enew!
-  set ai
-  let save_fo = &fo
-  set fo+=r
-  exe "normal o# abcdef\<Esc>2hi\<CR>\<C-O>d0\<Esc>"
-  exe "normal o# abcdef\<Esc>2hi\<C-O>d0\<Esc>"
-  call assert_equal(['# abc', 'def', 'def'], getline(2, 4))
-
-  set ai&vim
-  let &fo = save_fo
-  enew!
-endfunc
-
-" Test for autocommand that deletes the current buffer on BufLeave event.
-" Also test deleting the last buffer, should give a new, empty buffer.
-func Test_BufLeave_Wipe()
-  %bwipe!
-  let content = ['start of test file Xxx',
-	      \ 'this is a test',
-	      \ 'end of test file Xxx']
-  call writefile(content, 'Xxx1')
-  call writefile(content, 'Xxx2')
-
-  au BufLeave Xxx2 bwipe
-  edit Xxx1
-  split Xxx2
-  " delete buffer Xxx2, we should be back to Xxx1
-  bwipe
-  call assert_equal('Xxx1', bufname('%'))
-  call assert_equal(1, winnr('$'))
-
-  " Create an alternate buffer
-  %write! test.out
-  call assert_equal('test.out', bufname('#'))
-  " delete alternate buffer
-  bwipe test.out
-  call assert_equal('Xxx1', bufname('%'))
-  call assert_equal('', bufname('#'))
-
-  au BufLeave Xxx1 bwipe
-  " delete current buffer, get an empty one
-  bwipe!
-  call assert_equal(1, line('$'))
-  call assert_equal('', bufname('%'))
-  call assert_equal(1, len(getbufinfo()))
-
-  call delete('Xxx1')
-  call delete('Xxx2')
-  %bwipe
-  au! BufLeave
+func Test_empty_doau()
+  doau \|
 endfunc
 
 func s:AutoCommandOptionSet(match)
@@ -796,4 +614,548 @@ func Test_OptionSet_diffmode_close()
   au! OptionSet
   call test_override('starting', 0)
   "delfunc! AutoCommandOptionSet
+endfunc
+
+" Test for Bufleave autocommand that deletes the buffer we are about to edit.
+func Test_BufleaveWithDelete()
+  new | edit Xfile1
+
+  augroup test_bufleavewithdelete
+      autocmd!
+      autocmd BufLeave Xfile1 bwipe Xfile2
+  augroup END
+
+  call assert_fails('edit Xfile2', 'E143:')
+  call assert_equal('Xfile1', bufname('%'))
+
+  autocmd! test_bufleavewithdelete BufLeave Xfile1
+  augroup! test_bufleavewithdelete
+
+  new
+  bwipe! Xfile1
+endfunc
+
+" Test for autocommand that changes the buffer list, when doing ":ball".
+func Test_Acmd_BufAll()
+  enew!
+  %bwipe!
+  call writefile(['Test file Xxx1'], 'Xxx1')
+  call writefile(['Test file Xxx2'], 'Xxx2')
+  call writefile(['Test file Xxx3'], 'Xxx3')
+
+  " Add three files to the buffer list
+  split Xxx1
+  close
+  split Xxx2
+  close
+  split Xxx3
+  close
+
+  " Wipe the buffer when the buffer is opened
+  au BufReadPost Xxx2 bwipe
+
+  call append(0, 'Test file Xxx4')
+  ball
+
+  call assert_equal(2, winnr('$'))
+  call assert_equal('Xxx1', bufname(winbufnr(winnr('$'))))
+  wincmd t
+
+  au! BufReadPost
+  %bwipe!
+  call delete('Xxx1')
+  call delete('Xxx2')
+  call delete('Xxx3')
+  enew! | only
+endfunc
+
+" Test for autocommand that changes current buffer on BufEnter event.
+" Check if modelines are interpreted for the correct buffer.
+func Test_Acmd_BufEnter()
+  %bwipe!
+  call writefile(['start of test file Xxx1',
+	      \ "\<Tab>this is a test",
+	      \ 'end of test file Xxx1'], 'Xxx1')
+  call writefile(['start of test file Xxx2',
+	      \ 'vim: set noai :',
+	      \ "\<Tab>this is a test",
+	      \ 'end of test file Xxx2'], 'Xxx2')
+
+  au BufEnter Xxx2 brew
+  set ai modeline modelines=3
+  edit Xxx1
+  " edit Xxx2, autocmd will do :brew
+  edit Xxx2
+  exe "normal G?this is a\<CR>"
+  " Append text with autoindent to this file
+  normal othis should be auto-indented
+  call assert_equal("\<Tab>this should be auto-indented", getline('.'))
+  call assert_equal(3, line('.'))
+  " Remove autocmd and edit Xxx2 again
+  au! BufEnter Xxx2
+  buf! Xxx2
+  exe "normal G?this is a\<CR>"
+  " append text without autoindent to Xxx
+  normal othis should be in column 1
+  call assert_equal("this should be in column 1", getline('.'))
+  call assert_equal(4, line('.'))
+
+  %bwipe!
+  call delete('Xxx1')
+  call delete('Xxx2')
+  set ai&vim modeline&vim modelines&vim
+endfunc
+
+" Test for issue #57
+" do not move cursor on <c-o> when autoindent is set
+func Test_ai_CTRL_O()
+  enew!
+  set ai
+  let save_fo = &fo
+  set fo+=r
+  exe "normal o# abcdef\<Esc>2hi\<CR>\<C-O>d0\<Esc>"
+  exe "normal o# abcdef\<Esc>2hi\<C-O>d0\<Esc>"
+  call assert_equal(['# abc', 'def', 'def'], getline(2, 4))
+
+  set ai&vim
+  let &fo = save_fo
+  enew!
+endfunc
+
+" Test for autocommand that deletes the current buffer on BufLeave event.
+" Also test deleting the last buffer, should give a new, empty buffer.
+func Test_BufLeave_Wipe()
+  %bwipe!
+  let content = ['start of test file Xxx',
+	      \ 'this is a test',
+	      \ 'end of test file Xxx']
+  call writefile(content, 'Xxx1')
+  call writefile(content, 'Xxx2')
+
+  au BufLeave Xxx2 bwipe
+  edit Xxx1
+  split Xxx2
+  " delete buffer Xxx2, we should be back to Xxx1
+  bwipe
+  call assert_equal('Xxx1', bufname('%'))
+  call assert_equal(1, winnr('$'))
+
+  " Create an alternate buffer
+  %write! test.out
+  call assert_equal('test.out', bufname('#'))
+  " delete alternate buffer
+  bwipe test.out
+  call assert_equal('Xxx1', bufname('%'))
+  call assert_equal('', bufname('#'))
+
+  au BufLeave Xxx1 bwipe
+  " delete current buffer, get an empty one
+  bwipe!
+  call assert_equal(1, line('$'))
+  call assert_equal('', bufname('%'))
+  let g:bufinfo = getbufinfo()
+  call assert_equal(1, len(g:bufinfo))
+
+  call delete('Xxx1')
+  call delete('Xxx2')
+  call delete('test.out')
+  %bwipe
+  au! BufLeave
+
+  " check that bufinfo doesn't contain a pointer to freed memory
+  call test_garbagecollect_now()
+endfunc
+
+func Test_QuitPre()
+  edit Xfoo
+  let winid = win_getid(winnr())
+  split Xbar
+  au! QuitPre * let g:afile = expand('<afile>')
+  " Close the other window, <afile> should be correct.
+  exe win_id2win(winid) . 'q'
+  call assert_equal('Xfoo', g:afile)
+ 
+  unlet g:afile
+  bwipe Xfoo
+  bwipe Xbar
+endfunc
+
+func Test_Cmdline()
+  au! CmdlineChanged : let g:text = getcmdline()
+  let g:text = 0
+  call feedkeys(":echom 'hello'\<CR>", 'xt')
+  call assert_equal("echom 'hello'", g:text)
+  au! CmdlineChanged
+
+  au! CmdlineChanged : let g:entered = expand('<afile>')
+  let g:entered = 0
+  call feedkeys(":echom 'hello'\<CR>", 'xt')
+  call assert_equal(':', g:entered)
+  au! CmdlineChanged
+
+  au! CmdlineEnter : let g:entered = expand('<afile>')
+  au! CmdlineLeave : let g:left = expand('<afile>')
+  let g:entered = 0
+  let g:left = 0
+  call feedkeys(":echo 'hello'\<CR>", 'xt')
+  call assert_equal(':', g:entered)
+  call assert_equal(':', g:left)
+  au! CmdlineEnter
+  au! CmdlineLeave
+
+  au! CmdlineEnter / let g:entered = expand('<afile>')
+  au! CmdlineLeave / let g:left = expand('<afile>')
+  let g:entered = 0
+  let g:left = 0
+  new
+  call setline(1, 'hello')
+  call feedkeys("/hello\<CR>", 'xt')
+  call assert_equal('/', g:entered)
+  call assert_equal('/', g:left)
+  bwipe!
+  au! CmdlineEnter
+  au! CmdlineLeave
+endfunc
+
+" Test for BufWritePre autocommand that deletes or unloads the buffer.
+func Test_BufWritePre()
+  %bwipe
+  au BufWritePre Xxx1 bunload
+  au BufWritePre Xxx2 bwipe
+
+  call writefile(['start of Xxx1', 'test', 'end of Xxx1'], 'Xxx1')
+  call writefile(['start of Xxx2', 'test', 'end of Xxx2'], 'Xxx2')
+
+  edit Xtest
+  e! Xxx2
+  bdel Xtest
+  e Xxx1
+  " write it, will unload it and give an error msg
+  call assert_fails('w', 'E203')
+  call assert_equal('Xxx2', bufname('%'))
+  edit Xtest
+  e! Xxx2
+  bwipe Xtest
+  " write it, will delete the buffer and give an error msg
+  call assert_fails('w', 'E203')
+  call assert_equal('Xxx1', bufname('%'))
+  au! BufWritePre
+  call delete('Xxx1')
+  call delete('Xxx2')
+endfunc
+
+" Test for BufUnload autocommand that unloads all the other buffers
+func Test_bufunload_all()
+  call writefile(['Test file Xxx1'], 'Xxx1')"
+  call writefile(['Test file Xxx2'], 'Xxx2')"
+
+  let content = [
+	      \ "func UnloadAllBufs()",
+	      \ "  let i = 1",
+	      \ "  while i <= bufnr('$')",
+	      \ "    if i != bufnr('%') && bufloaded(i)",
+	      \ "      exe  i . 'bunload'",
+	      \ "    endif",
+	      \ "    let i += 1",
+	      \ "  endwhile",
+	      \ "endfunc",
+	      \ "au BufUnload * call UnloadAllBufs()",
+	      \ "au VimLeave * call writefile(['Test Finished'], 'Xout')",
+	      \ "edit Xxx1",
+	      \ "split Xxx2",
+	      \ "q"]
+  call writefile(content, 'Xtest')
+
+  call delete('Xout')
+  call system(v:progpath. ' -u NORC -i NONE -N -S Xtest')
+  call assert_true(filereadable('Xout'))
+
+  call delete('Xxx1')
+  call delete('Xxx2')
+  call delete('Xtest')
+  call delete('Xout')
+endfunc
+
+" Some tests for buffer-local autocommands
+func Test_buflocal_autocmd()
+  let g:bname = ''
+  edit xx
+  au BufLeave <buffer> let g:bname = expand("%")
+  " here, autocommand for xx should trigger.
+  " but autocommand shall not apply to buffer named <buffer>.
+  edit somefile
+  call assert_equal('xx', g:bname)
+  let g:bname = ''
+  " here, autocommand shall be auto-deleted
+  bwipe xx
+  " autocmd should not trigger
+  edit xx
+  call assert_equal('', g:bname)
+  " autocmd should not trigger
+  edit somefile
+  call assert_equal('', g:bname)
+  enew
+  unlet g:bname
+endfunc
+
+" Test for "*Cmd" autocommands
+func Test_Cmd_Autocmds()
+  call writefile(['start of Xxx', "\tabc2", 'end of Xxx'], 'Xxx')
+
+  enew!
+  au BufReadCmd XtestA 0r Xxx|$del
+  edit XtestA			" will read text of Xxd instead
+  call assert_equal('start of Xxx', getline(1))
+
+  au BufWriteCmd XtestA call append(line("$"), "write")
+  write				" will append a line to the file
+  call assert_equal('write', getline('$'))
+  call assert_fails('read XtestA', 'E484')	" should not read anything
+  call assert_equal('write', getline(4))
+
+  " now we have:
+  " 1	start of Xxx
+  " 2		abc2
+  " 3	end of Xxx
+  " 4	write
+
+  au FileReadCmd XtestB '[r Xxx
+  2r XtestB			" will read Xxx below line 2 instead
+  call assert_equal('start of Xxx', getline(3))
+
+  " now we have:
+  " 1	start of Xxx
+  " 2		abc2
+  " 3	start of Xxx
+  " 4		abc2
+  " 5	end of Xxx
+  " 6	end of Xxx
+  " 7	write
+
+  au FileWriteCmd XtestC '[,']copy $
+  normal 4GA1
+  4,5w XtestC			" will copy lines 4 and 5 to the end
+  call assert_equal("\tabc21", getline(8))
+  call assert_fails('r XtestC', 'E484')	" should not read anything
+  call assert_equal("end of Xxx", getline(9))
+
+  " now we have:
+  " 1	start of Xxx
+  " 2		abc2
+  " 3	start of Xxx
+  " 4		abc21
+  " 5	end of Xxx
+  " 6	end of Xxx
+  " 7	write
+  " 8		abc21
+  " 9	end of Xxx
+
+  let g:lines = []
+  au FileAppendCmd XtestD call extend(g:lines, getline(line("'["), line("']")))
+  w >>XtestD			" will add lines to 'lines'
+  call assert_equal(9, len(g:lines))
+  call assert_fails('$r XtestD', 'E484')	" should not read anything
+  call assert_equal(9, line('$'))
+  call assert_equal('end of Xxx', getline('$'))
+
+  au BufReadCmd XtestE 0r Xxx|$del
+  sp XtestE			" split window with test.out
+  call assert_equal('end of Xxx', getline(3))
+
+  let g:lines = []
+  exe "normal 2Goasdf\<Esc>\<C-W>\<C-W>"
+  au BufWriteCmd XtestE call extend(g:lines, getline(0, '$'))
+  wall				" will write other window to 'lines'
+  call assert_equal(4, len(g:lines), g:lines)
+  call assert_equal('asdf', g:lines[2])
+
+  au! BufReadCmd
+  au! BufWriteCmd
+  au! FileReadCmd
+  au! FileWriteCmd
+  au! FileAppendCmd
+  %bwipe!
+  call delete('Xxx')
+  enew!
+endfunc
+
+func SetChangeMarks(start, end)
+  exe a:start. 'mark ['
+  exe a:end. 'mark ]'
+endfunc
+
+" Verify the effects of autocmds on '[ and ']
+func Test_change_mark_in_autocmds()
+  edit! Xtest
+  call feedkeys("ia\<CR>b\<CR>c\<CR>d\<C-g>u", 'xtn')
+
+  call SetChangeMarks(2, 3)
+  write
+  call assert_equal([1, 4], [line("'["), line("']")])
+
+  call SetChangeMarks(2, 3)
+  au BufWritePre * call assert_equal([1, 4], [line("'["), line("']")])
+  write
+  au! BufWritePre
+
+  if executable('cat')
+    write XtestFilter
+    write >> XtestFilter
+
+    call SetChangeMarks(2, 3)
+    " Marks are set to the entire range of the write
+    au FilterWritePre * call assert_equal([1, 4], [line("'["), line("']")])
+    " '[ is adjusted to just before the line that will receive the filtered
+    " data
+    au FilterReadPre * call assert_equal([4, 4], [line("'["), line("']")])
+    " The filtered data is read into the buffer, and the source lines are
+    " still present, so the range is after the source lines
+    au FilterReadPost * call assert_equal([5, 12], [line("'["), line("']")])
+    %!cat XtestFilter
+    " After the filtered data is read, the original lines are deleted
+    call assert_equal([1, 8], [line("'["), line("']")])
+    au! FilterWritePre,FilterReadPre,FilterReadPost
+    undo
+
+    call SetChangeMarks(1, 4)
+    au FilterWritePre * call assert_equal([2, 3], [line("'["), line("']")])
+    au FilterReadPre * call assert_equal([3, 3], [line("'["), line("']")])
+    au FilterReadPost * call assert_equal([4, 11], [line("'["), line("']")])
+    2,3!cat XtestFilter
+    call assert_equal([2, 9], [line("'["), line("']")])
+    au! FilterWritePre,FilterReadPre,FilterReadPost
+    undo
+
+    call delete('XtestFilter')
+  endif
+
+  call SetChangeMarks(1, 4)
+  au FileWritePre * call assert_equal([2, 3], [line("'["), line("']")])
+  2,3write Xtest2
+  au! FileWritePre
+
+  call SetChangeMarks(2, 3)
+  au FileAppendPre * call assert_equal([1, 4], [line("'["), line("']")])
+  write >> Xtest2
+  au! FileAppendPre
+
+  call SetChangeMarks(1, 4)
+  au FileAppendPre * call assert_equal([2, 3], [line("'["), line("']")])
+  2,3write >> Xtest2
+  au! FileAppendPre
+
+  call SetChangeMarks(1, 1)
+  au FileReadPre * call assert_equal([3, 1], [line("'["), line("']")])
+  au FileReadPost * call assert_equal([4, 11], [line("'["), line("']")])
+  3read Xtest2
+  au! FileReadPre,FileReadPost
+  undo
+
+  call SetChangeMarks(4, 4)
+  " When the line is 0, it's adjusted to 1
+  au FileReadPre * call assert_equal([1, 4], [line("'["), line("']")])
+  au FileReadPost * call assert_equal([1, 8], [line("'["), line("']")])
+  0read Xtest2
+  au! FileReadPre,FileReadPost
+  undo
+
+  call SetChangeMarks(4, 4)
+  " When the line is 0, it's adjusted to 1
+  au FileReadPre * call assert_equal([1, 4], [line("'["), line("']")])
+  au FileReadPost * call assert_equal([2, 9], [line("'["), line("']")])
+  1read Xtest2
+  au! FileReadPre,FileReadPost
+  undo
+
+  bwipe!
+  call delete('Xtest')
+  call delete('Xtest2')
+endfunc
+
+func Test_Filter_noshelltemp()
+  if !executable('cat')
+    return
+  endif
+
+  enew!
+  call setline(1, ['a', 'b', 'c', 'd'])
+
+  let shelltemp = &shelltemp
+  set shelltemp
+
+  let g:filter_au = 0
+  au FilterWritePre * let g:filter_au += 1
+  au FilterReadPre * let g:filter_au += 1
+  au FilterReadPost * let g:filter_au += 1
+  %!cat
+  call assert_equal(3, g:filter_au)
+
+  if has('filterpipe')
+    set noshelltemp
+
+    let g:filter_au = 0
+    au FilterWritePre * let g:filter_au += 1
+    au FilterReadPre * let g:filter_au += 1
+    au FilterReadPost * let g:filter_au += 1
+    %!cat
+    call assert_equal(0, g:filter_au)
+  endif
+
+  au! FilterWritePre,FilterReadPre,FilterReadPost
+  let &shelltemp = shelltemp
+  bwipe!
+endfunc
+
+func Test_TextYankPost()
+  enew!
+  call setline(1, ['foo'])
+
+  let g:event = []
+  au TextYankPost * let g:event = copy(v:event)
+
+  call assert_equal({}, v:event)
+  call assert_fails('let v:event = {}', 'E46:')
+  call assert_fails('let v:event.mykey = 0', 'E742:')
+
+  norm "ayiw
+  call assert_equal(
+    \{'regcontents': ['foo'], 'regname': 'a', 'operator': 'y', 'regtype': 'v'},
+    \g:event)
+  norm y_
+  call assert_equal(
+    \{'regcontents': ['foo'], 'regname': '',  'operator': 'y', 'regtype': 'V'},
+    \g:event)
+  call feedkeys("\<C-V>y", 'x')
+  call assert_equal(
+    \{'regcontents': ['f'], 'regname': '',  'operator': 'y', 'regtype': "\x161"},
+    \g:event)
+  norm "xciwbar
+  call assert_equal(
+    \{'regcontents': ['foo'], 'regname': 'x', 'operator': 'c', 'regtype': 'v'},
+    \g:event)
+  norm "bdiw
+  call assert_equal(
+    \{'regcontents': ['bar'], 'regname': 'b', 'operator': 'd', 'regtype': 'v'},
+    \g:event)
+
+  call assert_equal({}, v:event)
+
+  au! TextYankPost
+  unlet g:event
+  bwipe!
+endfunc
+
+func Test_nocatch_wipe_all_buffers()
+  " Real nasty autocommand: wipe all buffers on any event.
+  au * * bwipe *
+  call assert_fails('next x', 'E93')
+  bwipe
+  au!
+endfunc
+
+func Test_nocatch_wipe_dummy_buffer()
+  " Nasty autocommand: wipe buffer on any event.
+  au * x bwipe
+  call assert_fails('lv½ /x', 'E480')
+  au!
 endfunc
