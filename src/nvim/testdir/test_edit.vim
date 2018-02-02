@@ -506,8 +506,8 @@ func! Test_edit_CTRL_I()
   let path=expand("%:p:h")
   new
   call setline(1, [path."/", ''])
-  call feedkeys("Ate\<c-x>\<c-f>\<tab>\<cr>\<esc>", 'tnix')
-  call assert_match('test1\.in', getline(1))
+  call feedkeys("Arunt\<c-x>\<c-f>\<tab>\<cr>\<esc>", 'tnix')
+  call assert_match('runtest\.vim', getline(1))
   %d
   call writefile(['one', 'two', 'three'], 'Xinclude.txt')
   let include='#include Xinclude.txt'
