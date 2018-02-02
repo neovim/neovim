@@ -7,7 +7,7 @@ func Test_recover_root_dir()
   call assert_fails('recover', 'E305:')
   close!
 
-  if has('win32')
+  if has('win32') || filewritable('/') == 2
     " can write in / directory on MS-Windows
     set dir=/notexist/
   endif
