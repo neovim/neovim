@@ -1790,40 +1790,31 @@ do_set (
             /* Set the new value. */
             *(char_u **)(varp) = newval;
 
-            if (!starting && origval != NULL) {
+            if (!starting && origval != NULL && newval != NULL) {
               // origval may be freed by
               // did_set_string_option(), make a copy.
               saved_origval = xstrdup((char *) origval);
+              // newval (and varp) may become invalid if the
+              // buffer is closed by autocommands.
+              saved_newval = vim_strsave(newval);
             }
 
-            /* Handle side effects, and set the global value for
-             * ":set" on local options. */
+            // Handle side effects, and set the global value for
+            // ":set" on local options. Note: when setting 'syntax'
+            // or 'filetype' autocommands may be triggered that can
+            // cause havoc.
             errmsg = did_set_string_option(opt_idx, (char_u **)varp,
                 new_value_alloced, oldval, errbuf, opt_flags);
 
             // If error detected, print the error message.
             if (errmsg != NULL) {
               xfree(saved_origval);
+              xfree(saved_newval);
               goto skip;
             }
 
-            if (saved_origval != NULL) {
-              char buf_type[7];
-              vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-                           (opt_flags & OPT_LOCAL) ? "local" : "global");
-              set_vim_var_string(VV_OPTION_NEW, *(char **) varp, -1);
-              set_vim_var_string(VV_OPTION_OLD, saved_origval, -1);
-              set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-              apply_autocmds(EVENT_OPTIONSET,
-                             (char_u *)options[opt_idx].fullname,
-                             NULL, false, NULL);
-              reset_v_option_vars();
-              xfree(saved_origval);
-              if (options[opt_idx].flags & P_UI_OPTION) {
-                ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                                   STRING_OBJ(cstr_as_string(*(char **)varp)));
-              }
-            }
+            trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
+                                      saved_newval);
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
             // similar)
@@ -2406,6 +2397,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   *varp = s;
 
   char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
+  char *const *saved_newval = (starting ? NULL : xstrdup(s));
 
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
@@ -2414,23 +2406,8 @@ static char *set_string_option(const int opt_idx, const char *const value,
   }
 
   // call autocommand after handling side effects
-  if (saved_oldval != NULL) {
-    char buf_type[7];
-    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-                 (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_NEW, (char *)(*varp), -1);
-    set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
-    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    apply_autocmds(EVENT_OPTIONSET,
-                   (char_u *)options[opt_idx].fullname,
-                   NULL, false, NULL);
-    reset_v_option_vars();
-    xfree(saved_oldval);
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         STRING_OBJ(cstr_as_string((char *)(*varp))));
-    }
-  }
+  trigger_optionsset_string(opt_idx, opt_flags,
+                            saved_oldval, saved_newval);
 
   return r;
 }
@@ -4459,6 +4436,29 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   check_redraw(options[opt_idx].flags);
 
   return (char *)errmsg;
+}
+
+static void trigger_optionsset_string(int opt_idx, int opt_flags,
+                                      char *oldval, char *newval)
+{
+  if (oldval != NULL && newval != NULL) {
+    char buf_type[7];
+
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
+                 (opt_flags & OPT_LOCAL) ? "local" : "global");
+    set_vim_var_string(VV_OPTION_OLD, oldval, -1);
+    set_vim_var_string(VV_OPTION_NEW, newval, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    apply_autocmds(EVENT_OPTIONSET,
+                   (char_u *)options[opt_idx].fullname, NULL, false, NULL);
+    reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         STRING_OBJ(cstr_as_string(newval)));
+    }
+  }
+  xfree(oldval);
+  xfree(newval);
 }
 
 /*
