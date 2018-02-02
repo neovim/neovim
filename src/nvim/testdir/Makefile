@@ -85,6 +85,7 @@ NEW_TESTS ?= \
 	    test_options.res \
 	    test_profile.res \
 	    test_quickfix.res \
+	    test_recover.res \
 	    test_retab.res \
 	    test_scrollbind.res \
 	    test_search.res \
