@@ -42,8 +42,9 @@ endif
 " Common with all tests on all systems.
 source setup.vim
 
+" For consistency run all tests with 'nocompatible' set.
 " This also enables use of line continuation.
-set viminfo+=nviminfo
+set nocp viminfo+=nviminfo
 
 " Use utf-8 or latin1 by default, instead of whatever the system default
 " happens to be.  Individual tests can overrule this at the top of the file.
@@ -62,8 +63,23 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
-" Prepare for calling garbagecollect_for_testing().
+" Prepare for calling test_garbagecollect_now().
 let v:testing = 1
+
+" Support function: get the alloc ID by name.
+function GetAllocId(name)
+  exe 'split ' . s:srcdir . '/alloc.h'
+  let top = search('typedef enum')
+  if top == 0
+    call add(v:errors, 'typedef not found in alloc.h')
+  endif
+  let lnum = search('aid_' . a:name . ',')
+  if lnum == 0
+    call add(v:errors, 'Alloc ID ' . a:name . ' not defined')
+  endif
+  close
+  return lnum - top - 1
+endfunc
 
 func RunTheTest(test)
   echo 'Executing ' . a:test
