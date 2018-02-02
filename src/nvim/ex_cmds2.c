@@ -1558,11 +1558,16 @@ static char_u *do_one_arg(char_u *str)
 
 /// Separate the arguments in "str" and return a list of pointers in the
 /// growarray "gap".
-void get_arglist(garray_T *gap, char_u *str)
+static void get_arglist(garray_T *gap, char_u *str, int escaped)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
     GA_APPEND(char_u *, gap, str);
+
+    // If str is escaped, don't handle backslashes or spaces
+    if (!escaped) {
+      return;
+    }
 
     // Isolate one argument, change it in-place, put a NUL after it.
     str = do_one_arg(str);
@@ -1578,7 +1583,7 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
   garray_T ga;
   int i;
 
-  get_arglist(&ga, str);
+  get_arglist(&ga, str, true);
 
   if (wig) {
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
@@ -1609,6 +1614,7 @@ static int do_arglist(char_u *str, int what, int after)
   char_u      **exp_files;
   char_u      *p;
   int match;
+  int arg_escaped = true;
 
   // Set default argument for ":argadd" command.
   if (what == AL_ADD && *str == NUL) {
@@ -1616,10 +1622,11 @@ static int do_arglist(char_u *str, int what, int after)
       return FAIL;
     }
     str = curbuf->b_fname;
+    arg_escaped = false;
   }
 
   // Collect all file name arguments in "new_ga".
-  get_arglist(&new_ga, str);
+  get_arglist(&new_ga, str, arg_escaped);
 
   if (what == AL_DEL) {
     regmatch_T regmatch;
