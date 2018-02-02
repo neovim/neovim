@@ -24,12 +24,10 @@ SCRIPTS_DEFAULT = \
            test52.out             \
            test64.out             \
            test73.out             \
-           test79.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
            test17.out             \
-           test32.out             \
 
 endif
 
@@ -69,6 +67,7 @@ NEW_TESTS ?= \
 	    test_hlsearch.res \
 	    test_increment.res \
 	    test_increment_dbcs.res \
+	    test_ins_complete.res \
 	    test_lambda.res \
 	    test_langmap.res \
 	    test_let.res \
@@ -99,6 +98,7 @@ NEW_TESTS ?= \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_system.res \
+	    test_tab.res \
 	    test_tabpage.res \
 	    test_textobjects.res \
 	    test_timers.res \

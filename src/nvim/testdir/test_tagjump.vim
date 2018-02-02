@@ -95,4 +95,41 @@ function Test_keyword_jump()
   call delete('Xinclude')
 endfunction
 
+" Test for jumping to a tag with 'hidden' set, with symbolic link in path of
+" tag.  This only works for Unix, because of the symbolic link.
+func Test_tag_symbolic()
+  if !has('unix')
+    return
+  endif
+  set hidden
+  call delete("Xtest.dir", "rf")
+  call system("ln -s . Xtest.dir")
+  " Create a tags file with the current directory name inserted.
+  call writefile([
+        \ "SECTION_OFF	" . getcwd() . "/Xtest.dir/Xtest.c	/^#define  SECTION_OFF  3$/",
+        \ '',
+        \ ], 'Xtags')
+  call writefile(['#define  SECTION_OFF  3',
+        \ '#define  NUM_SECTIONS 3'], 'Xtest.c')
+
+  " Try jumping to a tag, but with a path that contains a symbolic link.  When
+  " wrong, this will give the ATTENTION message.  The next space will then be
+  " eaten by hit-return, instead of moving the cursor to 'd'.
+  set tags=Xtags
+  enew!
+  call append(0, 'SECTION_OFF')
+  call cursor(1,1)
+  exe "normal \<C-]> "
+  call assert_equal('Xtest.c', expand('%:t'))
+  call assert_equal(2, col('.'))
+
+  set hidden&
+  set tags&
+  enew!
+  call delete('Xtags')
+  call delete('Xtest.c')
+  call delete("Xtest.dir", "rf")
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

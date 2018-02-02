@@ -266,3 +266,19 @@ func Test_undofile_earlier()
   call delete('Xfile')
   call delete('Xundofile')
 endfunc
+
+" Test for undo working properly when executing commands from a register.
+" Also test this in an empty buffer.
+func Test_cmd_in_reg_undo()
+  enew!
+  let @a="Ox\<Esc>jAy\<Esc>kdd"
+  edit +/^$ test_undo.vim
+  normal @au
+  call assert_equal(0, &modified)
+  return
+  new
+  normal @au
+  call assert_equal(0, &modified)
+  only!
+  let @a=''
+endfunc
