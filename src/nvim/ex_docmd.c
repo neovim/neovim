@@ -5978,6 +5978,7 @@ static void ex_quit(exarg_T *eap)
   // Refuse to quit when locked or when the buffer in the last window is
   // being closed (can only happen in autocommands).
   if (curbuf_locked()
+      || !win_valid(wp)
       || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
     return;
   }
