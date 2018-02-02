@@ -364,6 +364,26 @@ func Test_search_cmdline4()
   bw!
 endfunc
 
+func Test_search_cmdline5()
+  if !exists('+incsearch')
+    return
+  endif
+  " Do not call test_override("char_avail", 1) so that <C-g> and <C-t> work
+  " regardless char_avail.
+  new
+  call setline(1, ['  1 the first', '  2 the second', '  3 the third'])
+  set incsearch
+  1
+  call feedkeys("/the\<c-g>\<c-g>\<cr>", 'tx')
+  call assert_equal('  3 the third', getline('.'))
+  $
+  call feedkeys("?the\<c-t>\<c-t>\<c-t>\<cr>", 'tx')
+  call assert_equal('  2 the second', getline('.'))
+  " clean up
+  set noincsearch
+  bw!
+endfunc
+
 " Tests for regexp with various magic settings
 func Test_search_regexp()
   enew!

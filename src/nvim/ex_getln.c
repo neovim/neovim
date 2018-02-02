@@ -443,14 +443,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
       }
     }
 
-    if (s->gotesc) {           // abandon command line
-      xfree(ccline.cmdbuff);
-      ccline.cmdbuff = NULL;
-      if (msg_scrolled == 0) {
-        compute_cmdrow();
-      }
-      MSG("");
-      redraw_cmdline = true;
+    if (s->gotesc) {
+      abandon_cmdline();
     }
   }
 
@@ -1680,9 +1674,6 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_G:  // next match
   case Ctrl_T:  // previous match
     if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
-      if (char_avail()) {
-        return 1;
-      }
       if (ccline.cmdlen != 0) {
         command_line_next_incsearch(s, s->c == Ctrl_G);
       }
@@ -1946,6 +1937,18 @@ static int command_line_changed(CommandLineState *s)
   }
 
   return 1;
+}
+
+/// Abandon the command line.
+static void abandon_cmdline(void)
+{
+  xfree(ccline.cmdbuff);
+  ccline.cmdbuff = NULL;
+  if (msg_scrolled == 0) {
+    compute_cmdrow();
+  }
+  MSG("");
+  redraw_cmdline = true;
 }
 
 /*
