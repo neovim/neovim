@@ -5974,15 +5974,17 @@ static void ex_quit(exarg_T *eap)
     wp = curwin;
   }
 
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked.
+  if (curbuf_locked()) {
+    return;
+  }
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
   // Refuse to quit when locked or when the buffer in the last window is
   // being closed (can only happen in autocommands).
-  if (curbuf_locked()
-      || !win_valid(wp)
+  if (!win_valid(wp)
       || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
     return;
   }
-
 
   /*
    * If there are more files or windows we won't exit.
