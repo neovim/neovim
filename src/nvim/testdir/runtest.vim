@@ -204,6 +204,9 @@ endif
 
 " Execute the tests in alphabetical order.
 for s:test in sort(s:tests)
+  " Silence, please!
+  set belloff=all
+
   call RunTheTest(s:test)
 
   if len(v:errors) > 0 && index(s:flaky, s:test) >= 0

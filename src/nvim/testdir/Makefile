@@ -50,6 +50,7 @@ NEW_TESTS ?= \
 	    test_curswant.res \
 	    test_digraph.res \
 	    test_edit.res \
+	    test_exists.res \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_file_size.res \
@@ -105,6 +106,7 @@ NEW_TESTS ?= \
 	    test_usercommands.res \
 	    test_vimscript.res \
 	    test_visual.res \
+	    test_winbuf_close.res \
 	    test_window_id.res \
 	    test_writefile.res \
 	    test_alot.res
