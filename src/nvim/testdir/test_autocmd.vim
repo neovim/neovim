@@ -797,18 +797,6 @@ func Test_QuitPre()
 endfunc
 
 func Test_Cmdline()
-  au! CmdlineChanged : let g:text = getcmdline()
-  let g:text = 0
-  call feedkeys(":echom 'hello'\<CR>", 'xt')
-  call assert_equal("echom 'hello'", g:text)
-  au! CmdlineChanged
-
-  au! CmdlineChanged : let g:entered = expand('<afile>')
-  let g:entered = 0
-  call feedkeys(":echom 'hello'\<CR>", 'xt')
-  call assert_equal(':', g:entered)
-  au! CmdlineChanged
-
   au! CmdlineEnter : let g:entered = expand('<afile>')
   au! CmdlineLeave : let g:left = expand('<afile>')
   let g:entered = 0
@@ -983,7 +971,7 @@ func Test_Cmd_Autocmds()
   au BufWriteCmd XtestE call extend(g:lines, getline(0, '$'))
   wall				" will write other window to 'lines'
   call assert_equal(4, len(g:lines), g:lines)
-  call assert_equal('asdf', g:lines[2])
+  call assert_equal("\tasdf", g:lines[2])
 
   au! BufReadCmd
   au! BufWriteCmd
