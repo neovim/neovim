@@ -1915,31 +1915,21 @@ void ex_next(exarg_T *eap)
 /// ":argedit"
 void ex_argedit(exarg_T *eap)
 {
-  int fnum;
-  int i;
-  char_u      *s;
+  int i = eap->addr_count ? (int)eap->line2 : curwin->w_arg_idx + 1;
 
-  // Add the argument to the buffer list and get the buffer number.
-  fnum = buflist_add(eap->arg, BLN_LISTED);
-
-  // Check if this argument is already in the argument list.
-  for (i = 0; i < ARGCOUNT; i++) {
-    if (ARGLIST[i].ae_fnum == fnum) {
-      break;
-    }
+  if (do_arglist(eap->arg, AL_ADD, i) == FAIL) {
+    return;
   }
-  if (i == ARGCOUNT) {
-    // Can't find it, add it to the argument list.
-    s = vim_strsave(eap->arg);
-    int after = eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1;
-    i = alist_add_list(1, &s, after);
-    curwin->w_arg_idx = i;
+  maketitle();
+
+  if (curwin->w_arg_idx == 0 && (curbuf->b_ml.ml_flags & ML_EMPTY)
+      && curbuf->b_ffname == NULL) {
+    i = 0;
   }
-
-  alist_check_arg_idx();
-
   // Edit the argument.
-  do_argfile(eap, i);
+  if (i < ARGCOUNT) {
+    do_argfile(eap, i);
+  }
 }
 
 /// ":argadd"
