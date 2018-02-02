@@ -423,7 +423,7 @@ format_luav = function(v, indent, opts)
     if opts.literal_strings then
       ret = v
     else
-      quote = opts.dquote_strings and '"' or '\''
+      local quote = opts.dquote_strings and '"' or '\''
       ret = quote .. tostring(v):gsub(
         opts.dquote_strings and '["\\]' or '[\'\\]',
         '\\%0'):gsub(
@@ -493,7 +493,7 @@ local function format_string(fmt, ...)
       arg = getarg()
     end
     if subfmt:sub(-1) == 'r' or subfmt:sub(-1) == 'q' then
-      -- %r is like built-in %q, but it is supposed to single-quote strings and 
+      -- %r is like built-in %q, but it is supposed to single-quote strings and
       -- not double-quote them, and also work not only for strings.
       -- Builtin %q is replaced here as it gives invalid and inconsistent with
       -- luajit results for e.g. "\e" on lua: luajit transforms that into `\27`,
