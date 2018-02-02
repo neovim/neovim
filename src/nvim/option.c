@@ -1515,6 +1515,16 @@ do_set (
             /* The old value is kept until we are sure that the
              * new value is valid. */
             oldval = *(char_u **)varp;
+
+            // When setting the local value of a global
+            // option, the old value may be the global value.
+            if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags
+                                                            & OPT_LOCAL)) {
+              origval = *(char_u **)get_varp(&options[opt_idx]);
+            } else {
+              origval = oldval;
+            }
+
             if (nextchar == '&') {              /* set to default val */
               newval = options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
@@ -1609,15 +1619,6 @@ do_set (
                              || varp == (char_u *)&p_bdir)) {
                 ++arg;
               }
-
-              /* When setting the local value of a global
-               * option, the old value may be the global value. */
-              if (((int)options[opt_idx].indir & PV_BOTH)
-                  && (opt_flags & OPT_LOCAL))
-                origval = *(char_u **)get_varp(
-                    &options[opt_idx]);
-              else
-                origval = oldval;
 
               /*
                * Copy the new string into allocated memory.
@@ -1788,7 +1789,7 @@ do_set (
               new_value_alloced = TRUE;
             }
 
-            /* Set the new value. */
+            // Set the new value.
             *(char_u **)(varp) = newval;
 
             if (!starting && origval != NULL && newval != NULL) {
@@ -1807,15 +1808,18 @@ do_set (
             errmsg = did_set_string_option(opt_idx, (char_u **)varp,
                 new_value_alloced, oldval, errbuf, opt_flags);
 
+            if (errmsg == NULL) {
+              trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
+                                        saved_newval);
+            }
+            xfree(saved_origval);
+            xfree(saved_newval);
+
             // If error detected, print the error message.
             if (errmsg != NULL) {
-              xfree(saved_origval);
-              xfree(saved_newval);
               goto skip;
             }
 
-            trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
-                                      saved_newval);
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
             // similar)
@@ -2407,8 +2411,12 @@ static char *set_string_option(const int opt_idx, const char *const value,
   }
 
   // call autocommand after handling side effects
-  trigger_optionsset_string(opt_idx, opt_flags,
-                            saved_oldval, saved_newval);
+  if (r == NULL) {
+    trigger_optionsset_string(opt_idx, opt_flags,
+                              saved_oldval, saved_newval);
+  }
+  xfree(saved_oldval);
+  xfree(saved_newval);
 
   return r;
 }
@@ -4458,8 +4466,6 @@ static void trigger_optionsset_string(int opt_idx, int opt_flags,
                          STRING_OBJ(cstr_as_string(newval)));
     }
   }
-  xfree(oldval);
-  xfree(newval);
 }
 
 /*

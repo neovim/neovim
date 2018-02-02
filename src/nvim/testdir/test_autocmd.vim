@@ -550,6 +550,19 @@ func Test_OptionSet()
   call assert_equal([['key', 'invalid', 'invalid1', 'invalid']], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
+  " 18: Setting string option"
+  let oldval = &tags
+  let g:options=[['tags', oldval, 'tagpath', 'global']]
+  set tags=tagpath
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
+  " 1l: Resetting string option"
+  let g:options=[['tags', 'tagpath', oldval, 'global']]
+  set tags&
+  call assert_equal([], g:options)
+  call assert_equal(g:opt[0], g:opt[1])
+
   " Cleanup
   au! OptionSet
   for opt in ['nu', 'ai', 'acd', 'ar', 'bs', 'backup', 'cul', 'cp']
