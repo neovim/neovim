@@ -1,6 +1,7 @@
 
 " Test for insert expansion
 func Test_ins_complete()
+  edit test_ins_complete.vim
   set ff=unix
   call writefile(["test11\t36Gepeto\t/Tag/",
 	      \ "asd\ttest11file\t36G",

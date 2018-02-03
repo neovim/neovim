@@ -4,7 +4,7 @@
 "
 " To execute only specific test functions, add a second argument.  It will be
 " matched against the names of the Test_ function.  E.g.:
-"   ../vim -u NONE -S runtest.vim test_channel.vim open_delay
+"	../vim -u NONE -S runtest.vim test_channel.vim open_delay
 " The output can be found in the "messages" file.
 "
 " The test script may contain anything, only functions that start with
@@ -83,6 +83,11 @@ endfunc
 
 func RunTheTest(test)
   echo 'Executing ' . a:test
+
+  " Some tests wipe out buffers.  To be consistent, always wipe out all
+  " buffers.
+  %bwipe!
+
   if exists("*SetUp")
     try
       call SetUp()
@@ -110,9 +115,12 @@ func RunTheTest(test)
     endtry
   endif
 
+  " Clear any autocommands
+  au!
+
   " Close any extra tab pages and windows and make the current one not modified.
   while tabpagenr('$') > 1
-    bwipe!
+    quit!
   endwhile
 
   while 1
@@ -127,15 +135,6 @@ func RunTheTest(test)
       break
     endif
   endwhile
-
-  " Wipe out all buffers except the current one, then wipe the current one.
-  for nr in range(1, bufnr('$'))
-    if nr != bufnr('%') && bufexists(nr)
-      exe nr . 'bwipe!'
-    endif
-  endfor
-  set nomodified
-  bwipe
 endfunc
 
 func AfterTheTest()
@@ -214,8 +213,8 @@ endif
 
 " Names of flaky tests.
 let s:flaky = [
-      \ 'Test_with_partial_callback()',
       \ 'Test_oneshot()',
+      \ 'Test_with_partial_callback()',
       \ 'Test_lambda_with_timer()',
       \ ]
 

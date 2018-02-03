@@ -50,6 +50,7 @@ endfunc
 " We don't check much of the contents.
 func Test_with_syntax()
   if has('postscript')
+    edit test_hardcopy.vim
     set printoptions=syntax:y
     syn on
     hardcopy > Xhardcopy

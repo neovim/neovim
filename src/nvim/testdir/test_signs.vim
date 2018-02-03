@@ -182,7 +182,7 @@ func Test_sign_invalid_commands()
   call assert_fails('sign define Sign1 xxx', 'E475:')
   call assert_fails('sign undefine', 'E156:')
   call assert_fails('sign list xxx', 'E155:')
-  call assert_fails('sign place 1 buffer=', 'E158:')
+  call assert_fails('sign place 1 buffer=999', 'E158:')
   call assert_fails('sign define Sign2 text=', 'E239:')
 endfunc
 
