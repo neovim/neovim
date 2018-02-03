@@ -1334,6 +1334,9 @@ au BufNewFile,BufRead *.mush			setf mush
 " Mutt setup file (also for Muttng)
 au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
 
+" N1QL
+au BufRead,BufNewfile *.n1ql,*.nql		setf n1ql
+
 " Nano
 au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 

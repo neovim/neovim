@@ -296,6 +296,7 @@ let s:filename_checks = {
     \ 'mush': ['file.mush'],
     \ 'muttrc': ['Muttngrc', 'Muttrc'],
     \ 'mysql': ['file.mysql'],
+    \ 'n1ql': ['file.n1ql', 'file.nql'],
     \ 'named': ['namedfile.conf', 'rndcfile.conf'],
     \ 'nanorc': ['/etc/nanorc', 'file.nanorc'],
     \ 'ncf': ['file.ncf'],
