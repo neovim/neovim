@@ -547,7 +547,7 @@ func Test_script_detection()
     for file in files
       call writefile(file, 'Xtest')
       split Xtest
-      call assert_equal(ft, &filetype)
+      call assert_equal(ft, &filetype, 'for text: ' . string(file))
       bwipe!
     endfor
   endfor

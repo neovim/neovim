@@ -110,7 +110,11 @@ func RunTheTest(test)
     endtry
   endif
 
-  " Close any extra windows and make the current one not modified.
+  " Close any extra tab pages and windows and make the current one not modified.
+  while tabpagenr('$') > 1
+    bwipe!
+  endwhile
+
   while 1
     let wincount = winnr('$')
     if wincount == 1
@@ -123,7 +127,15 @@ func RunTheTest(test)
       break
     endif
   endwhile
+
+  " Wipe out all buffers except the current one, then wipe the current one.
+  for nr in range(1, bufnr('$'))
+    if nr != bufnr('%') && bufexists(nr)
+      exe nr . 'bwipe!'
+    endif
+  endfor
   set nomodified
+  bwipe
 endfunc
 
 func AfterTheTest()

@@ -475,6 +475,7 @@ endfunc
 
 func Test_close_on_quitpre()
   " This once caused a crash
+  edit Xtest
   new
   only
   set bufhidden=delete
@@ -489,7 +490,7 @@ func Test_close_on_quitpre()
   while tabpagenr('$') > 1
     bwipe!
   endwhile
-  1b
+  buf Xtest
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
