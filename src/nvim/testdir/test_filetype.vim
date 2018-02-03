@@ -78,7 +78,7 @@ let s:filename_checks = {
     \ 'blank': ['file.bl'],
     \ 'bst': ['file.bst'],
     \ 'bzr': ['bzr_log.any'],
-    \ 'c': ['*enlightenment/file.cfg', 'file.qc', 'file.c'],
+    \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c'],
     \ 'cabal': ['file.cabal'],
     \ 'calendar': ['calendar'],
     \ 'catalog': ['catalog'],
@@ -136,7 +136,7 @@ let s:filename_checks = {
     \ 'dosbatch': ['file.bat', 'file.sys'],
     \ 'dosini': ['.editorconfig', '/etc/yum.conf', 'file.ini'],
     \ 'dot': ['file.dot'],
-    \ 'dracula': ['file.drac', 'file.drc', '*lvs', '*lpe'],
+    \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe'],
     \ 'dsl': ['file.dsl'],
     \ 'dtd': ['file.dtd'],
     \ 'dts': ['file.dts', 'file.dtsi'],
@@ -149,10 +149,10 @@ let s:filename_checks = {
     \ 'elmfilt': ['filter-rules'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
-    \ 'esmtprc': ['*esmtprc'],
+    \ 'esmtprc': ['anyesmtprc'],
     \ 'esqlc': ['file.ec', 'file.EC'],
     \ 'esterel': ['file.strl'],
-    \ 'eterm': ['*Eterm/file.cfg'],
+    \ 'eterm': ['anyEterm/file.cfg'],
     \ 'exim': ['exim.conf'],
     \ 'expect': ['file.exp'],
     \ 'exports': ['exports'],
@@ -174,13 +174,13 @@ let s:filename_checks = {
     \ 'gitconfig': ['file.git/config', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config'],
     \ 'gitolite': ['gitolite.conf'],
     \ 'gitrebase': ['git-rebase-todo'],
-    \ 'gitsendemail': ['.gitsendemail.msg.??????'],
-    \ 'gkrellmrc': ['gkrellmrc', 'gkrellmrc_?'],
+    \ 'gitsendemail': ['.gitsendemail.msg.xxxxxx'],
+    \ 'gkrellmrc': ['gkrellmrc', 'gkrellmrc_x'],
     \ 'gnash': ['gnashrc', '.gnashrc', 'gnashpluginrc', '.gnashpluginrc'],
     \ 'gnuplot': ['file.gpi'],
     \ 'go': ['file.go'],
     \ 'gp': ['file.gp', '.gprc'],
-    \ 'gpg': ['/.gnupg/options', '/.gnupg/gpg.conf', '/usr/*/gnupg/options.skel'],
+    \ 'gpg': ['/.gnupg/options', '/.gnupg/gpg.conf', '/usr/any/gnupg/options.skel'],
     \ 'grads': ['file.gs'],
     \ 'gretl': ['file.gretl'],
     \ 'groovy': ['file.gradle', 'file.groovy'],
@@ -208,7 +208,7 @@ let s:filename_checks = {
     \ 'icon': ['file.icn'],
     \ 'indent': ['.indent.pro', 'indentrc'],
     \ 'inform': ['file.inf', 'file.INF'],
-    \ 'initng': ['/etc/initng/*/file.i', 'file.ii'],
+    \ 'initng': ['/etc/initng/any/file.i', 'file.ii'],
     \ 'inittab': ['inittab'],
     \ 'ipfilter': ['ipf.conf', 'ipf6.conf', 'ipf.rules'],
     \ 'iss': ['file.iss'],
@@ -222,7 +222,7 @@ let s:filename_checks = {
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
-    \ 'jproperties': ['file.properties', 'file.properties_??', 'file.properties_??_??'],
+    \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx'],
     \ 'json': ['file.json', 'file.jsonp', 'file.webmanifest'],
     \ 'jsp': ['file.jsp'],
     \ 'kconfig': ['Kconfig', 'Kconfig.debug'],
@@ -236,16 +236,16 @@ let s:filename_checks = {
     \ 'ldif': ['file.ldif'],
     \ 'less': ['file.less'],
     \ 'lex': ['file.lex', 'file.l', 'file.lxx', 'file.l++'],
-    \ 'lftp': ['lftp.conf', '.lftprc', '*lftp/rc'],
+    \ 'lftp': ['lftp.conf', '.lftprc', 'anylftp/rc'],
     \ 'lhaskell': ['file.lhs'],
     \ 'libao': ['/etc/libao.conf', '/.libao'],
     \ 'lifelines': ['file.ll'],
     \ 'lilo': ['lilo.conf'],
-    \ 'limits': ['/etc/limits', '/etc/*limits.conf', '/etc/*limits.d/file.conf'],
+    \ 'limits': ['/etc/limits', '/etc/anylimits.conf', '/etc/anylimits.d/file.conf'],
     \ 'liquid': ['file.liquid'],
     \ 'lisp': ['sbclrc', '.sbclrc'],
     \ 'lite': ['file.lite', 'file.lt'],
-    \ 'litestep': ['/LiteStep/*/file.rc'],
+    \ 'litestep': ['/LiteStep/any/file.rc'],
     \ 'loginaccess': ['/etc/login.access'],
     \ 'logindefs': ['/etc/login.defs'],
     \ 'logtalk': ['file.lgt'],
@@ -284,7 +284,7 @@ let s:filename_checks = {
     \ 'mma': ['file.nb'],
     \ 'mmp': ['file.mmp'],
     \ 'modconf': ['/etc/modules.conf', '/etc/modules', '/etc/conf.modules'],
-    \ 'modula2': ['file.m2', 'file.DEF', 'file.MOD', 'file.mi'],
+    \ 'modula2': ['file.m2', 'file.mi'],
     \ 'monk': ['file.isc', 'file.monk', 'file.ssc', 'file.tsc'],
     \ 'moo': ['file.moo'],
     \ 'mp': ['file.mp'],
@@ -500,9 +500,12 @@ let s:filename_checks = {
     \ 'xpm': ['file.xpm'],
     \ }
 
-func Test_filetype_detection()
-  filetype on
-  for [ft, names] in items(s:filename_checks)
+let s:filename_case_checks = {
+    \ 'modula2': ['file.DEF', 'file.MOD'],
+    \ }
+
+func CheckItems(checks)
+  for [ft, names] in items(a:checks)
     for i in range(0, len(names) - 1)
       new
       try
@@ -514,4 +517,12 @@ func Test_filetype_detection()
       bwipe!
     endfor
   endfor
+endfunc
+
+func Test_filetype_detection()
+  filetype on
+  call CheckItems(s:filename_checks)
+  if has('fname_case')
+    call CheckItems(s:filename_case_checks)
+  endif
 endfunc
