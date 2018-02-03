@@ -9743,13 +9743,20 @@ void filetype_maybe_enable(void)
   }
 }
 
-/*
- * ":setfiletype {name}"
- */
+/// ":setfiletype [FALLBACK] {name}"
 static void ex_setfiletype(exarg_T *eap)
 {
   if (!did_filetype) {
-    set_option_value("filetype", 0L, (char *)eap->arg, OPT_LOCAL);
+    char_u *arg = eap->arg;
+
+    if (STRNCMP(arg, "FALLBACK ", 9) == 0) {
+      arg += 9;
+    }
+
+    set_option_value("filetype", 0L, (char *)arg, OPT_LOCAL);
+    if (arg != eap->arg) {
+      did_filetype = false;
+    }
   }
 }
 
