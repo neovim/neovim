@@ -526,4 +526,32 @@ func Test_filetype_detection()
   if has('fname_case')
     call CheckItems(s:filename_case_checks)
   endif
+  filetype off
 endfunc
+
+" Filetypes detected from the file contents by scripts.vim
+let s:script_checks = {
+      \ 'virata': [['% Virata'],
+      \		['', '% Virata'],
+      \		['', '', '% Virata'],
+      \		['', '', '', '% Virata'],
+      \		['', '', '', '', '% Virata']],
+      \ 'strace': [['execve("/usr/bin/pstree", ["pstree"], 0x7ff0 /* 63 vars */) = 0'],
+      \		['15:17:47 execve("/usr/bin/pstree", ["pstree"], ... "_=/usr/bin/strace"]) = 0'],
+      \		['__libc_start_main and something']],
+      \ }
+
+func Test_script_detection()
+  filetype on
+  for [ft, files] in items(s:script_checks)
+    for file in files
+      call writefile(file, 'Xtest')
+      split Xtest
+      call assert_equal(ft, &filetype)
+      bwipe!
+    endfor
+  endfor
+  call delete('Xtest')
+  filetype off
+endfunc
+
