@@ -101,6 +101,9 @@ static int get_attr_entry(HlEntry entry)
 /// When a UI connects, we need to send it the table of highlights used so far.
 void ui_send_all_hls(UI *ui)
 {
+  if (!ui->hl_attr_define) {
+    return;
+  }
   for (size_t i = 1; i < kv_size(attr_entries); i++) {
     Array inspect = hl_inspect((int)i);
     ui->hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,

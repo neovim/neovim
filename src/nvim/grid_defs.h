@@ -1,6 +1,8 @@
 #ifndef NVIM_GRID_DEFS_H
 #define NVIM_GRID_DEFS_H
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "nvim/types.h"
@@ -48,8 +50,15 @@ typedef struct {
   // offsets for the grid relative to the global screen
   int row_offset;
   int col_offset;
+
+  // state owned by the compositor.
+  int comp_row;
+  int comp_col;
+  size_t comp_index;
+  bool comp_disabled;
 } ScreenGrid;
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0 }
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, \
+                           false }
 
 #endif  // NVIM_GRID_DEFS_H

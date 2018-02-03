@@ -113,6 +113,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
   ui->option_set = remote_ui_option_set;
+  ui->win_scroll_over_start = remote_ui_win_scroll_over_start;
+  ui->win_scroll_over_reset = remote_ui_win_scroll_over_reset;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
 
