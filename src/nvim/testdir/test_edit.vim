@@ -217,6 +217,7 @@ func! Test_edit_07()
 endfunc
 
 func! Test_edit_08()
+  throw 'skipped: moved to test/functional/legacy/edit_spec.lua'
   " reset insertmode from i_ctrl-r_=
   new
   call setline(1, ['abc'])
