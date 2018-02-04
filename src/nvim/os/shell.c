@@ -189,6 +189,7 @@ static int do_os_system(char **argv,
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
+  bool has_input = (input != NULL && input[0] != '\0');
 
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -212,7 +213,7 @@ static int do_os_system(char **argv,
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
-  int status = process_spawn(proc, input != NULL, true, true);
+  int status = process_spawn(proc, has_input, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
@@ -231,7 +232,7 @@ static int do_os_system(char **argv,
   // deal with stream events as fast a possible.  It prevents closing the
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
-  if (input != NULL) {
+  if (has_input) {
     wstream_init(&proc->in, 0);
   }
   rstream_init(&proc->out, 0);
@@ -240,8 +241,8 @@ static int do_os_system(char **argv,
   rstream_start(&proc->err, data_cb, &buf);
 
   // write the input, if any
-  if (input) {
-    WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
+  if (has_input) {
+    WBuffer *input_buffer = wstream_new_buffer((char *)input, len, 1, NULL);
 
     if (!wstream_write(&proc->in, input_buffer)) {
       // couldn't write, stop the process and tell the user about it

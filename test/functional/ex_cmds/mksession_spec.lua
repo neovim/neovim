@@ -6,6 +6,7 @@ local command = helpers.command
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local funcs = helpers.funcs
+local rmdir = helpers.rmdir
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -20,7 +21,7 @@ describe(':mksession', function()
 
   after_each(function()
     os.remove(session_file)
-    lfs.rmdir(tab_dir)
+    rmdir(tab_dir)
   end)
 
   it('restores tab-local working directories', function()

@@ -1813,6 +1813,12 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
     if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
+  } else if (strequal(name, "key_mouse")) {
+    DLOG("libtermkey:kmous=%s", value);
+    // If key_mouse is found, libtermkey uses its terminfo driver (driver-ti.c)
+    // for mouse input, which by accident only supports X10 protocol.
+    // Force libtermkey to fallback to its CSI driver (driver-csi.c). #7948
+    return NULL;
   }
 
   return value;
