@@ -951,9 +951,20 @@ describe('api', function()
           end
         end)
         if not err then
-          msg = format_string('Error while processing test (%r, %s):\n%s',
-                              str, FLAGS_TO_STR[flags], msg)
-          error(msg)
+          if type(msg) == 'table' then
+            local merr, new_msg = pcall(
+              format_string, 'table error:\n%s\n\n(%r)', msg.message, msg)
+            if merr then
+              msg = new_msg
+            else
+              msg = format_string('table error without .message:\n(%r)',
+                                  msg)
+            end
+          elseif type(msg) ~= 'string' then
+            msg = format_string('non-string non-table error:\n%r', msg)
+          end
+          error(format_string('Error while processing test (%r, %s):\n%s',
+                              str, FLAGS_TO_STR[flags], msg))
         end
       end
     end

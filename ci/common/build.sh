@@ -71,9 +71,11 @@ build_nvim() {
       exit 1
     fi
 
-    echo "Building nvim-test."
-    if ! top_make nvim-test ; then
-      exit 1
+    if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
+      echo "Building nvim-test."
+      if ! top_make nvim-test ; then
+        exit 1
+      fi
     fi
   fi
 
