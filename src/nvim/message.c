@@ -466,15 +466,7 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-/*
- * emsg() - display an error message
- *
- * Rings the bell, if appropriate, and calls message() to do the real work
- * When terminal not initialized (yet) mch_errmsg(..) is used.
- *
- * return TRUE if wait_return not called
- */
-int emsg(const char_u *s_)
+static int _emsg(const char *s_, int (*msg_attr)(const char *s, const int attr))
 {
   const char *s = (const char *)s_;
   int attr;
@@ -572,8 +564,22 @@ int emsg(const char_u *s_)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_attr(s, attr);
+  return (*msg_attr)(s, attr);
 }
+
+/*
+ * emsg() - display an error message
+ *
+ * Rings the bell, if appropriate, and calls message() to do the real work
+ * When terminal not initialized (yet) mch_errmsg(..) is used.
+ *
+ * return TRUE if wait_return not called
+ */
+int emsg(const char_u *s_)
+{
+  return _emsg((const char *)s_, &msg_attr);
+}
+  
 
 void emsg_invreg(int name)
 {
