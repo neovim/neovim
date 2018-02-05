@@ -5216,7 +5216,7 @@ bool garbage_collect(bool testing)
 /// @note This function may only be called from garbage_collect().
 ///
 /// @param copyID Free lists/dictionaries that don't have this ID.
-/// @return true, if something was freed.
+/// @return true if something was freed.
 static int free_unref_items(int copyID)
 {
   dict_T *dd, *dd_next;

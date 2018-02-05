@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "auto/config.h"
+
 #define DEBUG_LOG_LEVEL 0
 #define INFO_LOG_LEVEL 1
 #define WARN_LOG_LEVEL 2

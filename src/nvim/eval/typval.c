@@ -9,6 +9,7 @@
 #include <stdbool.h>
 
 #include "nvim/lib/queue.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/executor.h"
@@ -32,6 +33,33 @@
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 #include "nvim/os/fileio.h"
+
+/// tv_clear() stack entry types
+typedef enum {
+  kTvClearList,  ///< Cleared list.
+  kTvClearDict,  ///< Cleared dictionary.
+  kTvClearPartial,  ///< Cleared partial.
+} TvClearStackItemType;
+
+/// Structure representing stack item for tv_clear() implementation
+typedef struct {
+  TvClearStackItemType type;  ///< Type of the stack entry.
+  union {
+    struct {
+      list_T *list;  ///< Cleared list.
+    } l;  ///< List data, for kTvClearList.
+    struct {
+      dict_T *dict;  ///< Cleared dictionary.
+      hashitem_T *hi;  ///< Cleared hash item.
+    } d;  ///< Dict data, for kTvClearDict.
+    struct {
+      partial_T *pt;  ///< Cleared partial.
+    } p;  ///< Partial data, for kTvClearPartial.
+  } data;  ///< Different data that depends on item type.
+} TvClearStackItem;
+
+/// tv_clear() stack type
+typedef kvec_withinit_t(TvClearStackItem, 8) TvClearStack;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.c.generated.h"
@@ -1184,22 +1212,39 @@ dict_T *tv_dict_alloc(void)
   return d;
 }
 
+/// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
+///
+/// @param  d  The Dictionary to clear
+void tv_dict_clear(dict_T *const d)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Lock the hashtab, we don't want it to resize while freeing items.
+  hash_lock(&d->dv_hashtab);
+  assert(d->dv_hashtab.ht_locked > 0);
+
+  hashtab_T *const ht = &d->dv_hashtab;
+  for (hashitem_T *hi = ht->ht_array; ht->ht_used; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      // Remove the item before deleting it, just in case there is
+      // something recursive causing trouble.
+      dictitem_T *const di = TV_DICT_HI2DI(hi);
+      hash_remove(&d->dv_hashtab, hi);
+      tv_dict_item_free(di);
+    }
+  }
+
+  hash_clear(&d->dv_hashtab);
+  d->dv_hashtab.ht_locked--;
+  hash_init(&d->dv_hashtab);
+}
+
 /// Free items contained in a dictionary
 ///
 /// @param[in,out]  d  Dictionary to clear.
 void tv_dict_free_contents(dict_T *const d)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Lock the hashtab, we don't want it to resize while freeing items.
-  hash_lock(&d->dv_hashtab);
-  assert(d->dv_hashtab.ht_locked > 0);
-  HASHTAB_ITER(&d->dv_hashtab, hi, {
-    // Remove the item before deleting it, just in case there is
-    // something recursive causing trouble.
-    dictitem_T *const di = TV_DICT_HI2DI(hi);
-    hash_remove(&d->dv_hashtab, hi);
-    tv_dict_item_free(di);
-  });
+  tv_dict_clear(d);
 
   while (!QUEUE_EMPTY(&d->watchers)) {
     QUEUE *w = QUEUE_HEAD(&d->watchers);
@@ -1207,10 +1252,6 @@ void tv_dict_free_contents(dict_T *const d)
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     tv_dict_watcher_free(watcher);
   }
-
-  hash_clear(&d->dv_hashtab);
-  d->dv_hashtab.ht_locked--;
-  hash_init(&d->dv_hashtab);
 }
 
 /// Free a dictionary itself, ignoring items it contains
@@ -1565,23 +1606,6 @@ int tv_dict_add_allocated_str(dict_T *const d,
 
 //{{{2 Operations on the whole dict
 
-/// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
-///
-/// @param  d  The Dictionary to clear
-void tv_dict_clear(dict_T *const d)
-  FUNC_ATTR_NONNULL_ALL
-{
-  hash_lock(&d->dv_hashtab);
-  assert(d->dv_hashtab.ht_locked > 0);
-
-  HASHTAB_ITER(&d->dv_hashtab, hi, {
-    tv_dict_item_free(TV_DICT_HI2DI(hi));
-    hash_remove(&d->dv_hashtab, hi);
-  });
-
-  hash_unlock(&d->dv_hashtab);
-}
-
 /// Extend dictionary with items from another dictionary
 ///
 /// @param  d1  Dictionary to extend.
@@ -1800,259 +1824,172 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 }
 
 //{{{3 Clear
-#define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
-#define TYPVAL_ENCODE_CONV_NIL(tv) \
-    do { \
-      tv->vval.v_special = kSpecialVarFalse; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    TYPVAL_ENCODE_CONV_NIL(tv)
-
-#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    do { \
-      (void)num; \
-      tv->vval.v_number = 0; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
-
-#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    do { \
-      tv->vval.v_float = 0; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
-    do { \
-      xfree(buf); \
-      tv->vval.v_string = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len)
-
-#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
-
-static inline int _nothing_conv_func_start(typval_T *const tv,
-                                           char_u *const fun)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
+/// Clear one item
+///
+/// @param  tv  Item to clear.
+/// @param[out]  tvc_stack  Stack to push to in case of containers.
+static void tv_clear_one(typval_T *const tv, TvClearStack *const tvc_stack)
+  FUNC_ATTR_NONNULL_ALL
 {
+  switch (tv->v_type) {
+    case VAR_UNKNOWN: {
+      emsgf(_(e_intern2), "tv_clear_one(UNKNOWN)");
+      break;
+    }
+    case VAR_FLOAT:
+    case VAR_SPECIAL:
+    case VAR_NUMBER: {
+      break;
+    }
+    case VAR_STRING: {
+      xfree(tv->vval.v_string);
+      break;
+    }
+    case VAR_FUNC: {
+      func_unref(tv->vval.v_string);
+      if ((const char *)tv->vval.v_string != tv_empty_string) {
+        xfree(tv->vval.v_string);
+      }
+      break;
+    }
+    case VAR_LIST: {
+      if (tv->vval.v_list == NULL) {
+        break;
+      }
+#ifdef TV_CLEAR_RECURSE_LIKE_VIM
+      tv_list_unref(tv->vval.v_list);
+      break;
+#endif
+      if (tv->vval.v_list->lv_refcount > 1) {
+        tv->vval.v_list->lv_refcount--;
+        break;
+      }
+      kvi_push(*tvc_stack, ((TvClearStackItem) {
+        .type = kTvClearList,
+        .data.l.list = tv->vval.v_list,
+      }));
+      break;
+    }
+    case VAR_DICT: {
+      if (tv->vval.v_dict == NULL) {
+        break;
+      }
+#ifdef TV_CLEAR_RECURSE_LIKE_VIM
+      tv_dict_unref(tv->vval.v_dict);
+      break;
+#endif
+      if (tv->vval.v_dict->dv_refcount > 1) {
+        tv->vval.v_dict->dv_refcount--;
+        break;
+      }
+      dict_T *const dict = tv->vval.v_dict;
+      hash_lock(&dict->dv_hashtab);
+      hashitem_T *hi = dict->dv_hashtab.ht_array;
+      if (dict->dv_hashtab.ht_used) {
+        while (HASHITEM_EMPTY(hi)) {
+          hi++;
+        }
+      }
+      kvi_push(*tvc_stack, ((TvClearStackItem) {
+        .type = kTvClearDict,
+        .data.d = {
+          .dict = dict,
+          .hi = hi,
+        },
+      }));
+      break;
+    }
+    case VAR_PARTIAL: {
+      if (tv->vval.v_partial == NULL) {
+        break;
+      }
+#ifdef TV_CLEAR_RECURSE_LIKE_VIM
+      partial_unref(tv->vval.v_partial);
+      break;
+#endif
+      if (tv->vval.v_partial->pt_refcount > 1) {
+        tv->vval.v_partial->pt_refcount--;
+        break;
+      }
+      kvi_push(*tvc_stack, ((TvClearStackItem) {
+        .type = kTvClearPartial,
+        .data.p.pt = tv->vval.v_partial,
+      }));
+      break;
+    }
+  }
+  memset(&tv->vval, 0, sizeof(tv->vval));
   tv->v_lock = VAR_UNLOCKED;
-  if (tv->v_type == VAR_PARTIAL) {
-    partial_T *const pt_ = tv->vval.v_partial;
-    if (pt_ != NULL && pt_->pt_refcount > 1) {
-      pt_->pt_refcount--;
-      tv->vval.v_partial = NULL;
-      return OK;
-    }
-  } else {
-    func_unref(fun);
-    if ((const char *)fun != tv_empty_string) {
-      xfree(fun);
-    }
-    tv->vval.v_string = NULL;
-  }
-  return NOTDONE;
 }
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    do { \
-      if (_nothing_conv_func_start(tv, fun) != NOTDONE) { \
-        return OK; \
-      } \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
-#define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
-
-static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
-{
-  if (tv->v_type == VAR_PARTIAL) {
-    partial_T *const pt = tv->vval.v_partial;
-    if (pt == NULL) {
-      return;
-    }
-    // Dictionary should already be freed by the time.
-    // If it was not freed then it is a part of the reference cycle.
-    assert(pt->pt_dict == NULL || pt->pt_dict->dv_copyID == copyID);
-    pt->pt_dict = NULL;
-    // As well as all arguments.
-    pt->pt_argc = 0;
-    assert(pt->pt_refcount <= 1);
-    partial_unref(pt);
-    tv->vval.v_partial = NULL;
-    assert(tv->v_lock == VAR_UNLOCKED);
-  }
-}
-#define TYPVAL_ENCODE_CONV_FUNC_END(tv) _nothing_conv_func_end(tv, copyID)
-
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    do { \
-      tv_list_unref(tv->vval.v_list); \
-      tv->vval.v_list = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
-
-static inline void _nothing_conv_empty_dict(typval_T *const tv,
-                                            dict_T **const dictp)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(2)
-{
-  tv_dict_unref(*dictp);
-  *dictp = NULL;
-  if (tv != NULL) {
-    tv->v_lock = VAR_UNLOCKED;
-  }
-}
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    do { \
-      assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-      _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
-    } while (0)
-
-static inline int _nothing_conv_real_list_after_start(
-    typval_T *const tv, MPConvStackVal *const mpsv)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  assert(tv != NULL);
-  tv->v_lock = VAR_UNLOCKED;
-  if (tv->vval.v_list->lv_refcount > 1) {
-    tv->vval.v_list->lv_refcount--;
-    tv->vval.v_list = NULL;
-    mpsv->data.l.li = NULL;
-    return OK;
-  }
-  return NOTDONE;
-}
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, len)
-
-#define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv) \
-    do { \
-      if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
-        goto typval_encode_stop_converting_one_item; \
-      } \
-    } while (0)
-
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)
-
-static inline void _nothing_conv_list_end(typval_T *const tv)
-  FUNC_ATTR_ALWAYS_INLINE
-{
-  if (tv == NULL) {
-    return;
-  }
-  assert(tv->v_type == VAR_LIST);
-  list_T *const list = tv->vval.v_list;
-  tv_list_unref(list);
-  tv->vval.v_list = NULL;
-}
-#define TYPVAL_ENCODE_CONV_LIST_END(tv) _nothing_conv_list_end(tv)
-
-static inline int _nothing_conv_real_dict_after_start(
-    typval_T *const tv, dict_T **const dictp, const void *const nodictvar,
-    MPConvStackVal *const mpsv)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (tv != NULL) {
-    tv->v_lock = VAR_UNLOCKED;
-  }
-  if ((const void *)dictp != nodictvar && (*dictp)->dv_refcount > 1) {
-    (*dictp)->dv_refcount--;
-    *dictp = NULL;
-    mpsv->data.d.todo = 0;
-    return OK;
-  }
-  return NOTDONE;
-}
-#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)
-
-#define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
-    do { \
-      if (_nothing_conv_real_dict_after_start( \
-          tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
-          &mpsv) != NOTDONE) { \
-        goto typval_encode_stop_converting_one_item; \
-      } \
-    } while (0)
-
-#define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(tv, dict)
-#define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
-
-static inline void _nothing_conv_dict_end(typval_T *const tv,
-                                          dict_T **const dictp,
-                                          const void *const nodictvar)
-  FUNC_ATTR_ALWAYS_INLINE
-{
-  if ((const void *)dictp != nodictvar) {
-    tv_dict_unref(*dictp);
-    *dictp = NULL;
-  }
-}
-#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-    _nothing_conv_dict_end(tv, (dict_T **)&dict, \
-                           (void *)&TYPVAL_ENCODE_NODICT_VAR)
-
-#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type)
-
-#define TYPVAL_ENCODE_SCOPE static
-#define TYPVAL_ENCODE_NAME nothing
-#define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
-#define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
-#define TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
-#include "nvim/eval/typval_encode.c.h"
-#undef TYPVAL_ENCODE_SCOPE
-#undef TYPVAL_ENCODE_NAME
-#undef TYPVAL_ENCODE_FIRST_ARG_TYPE
-#undef TYPVAL_ENCODE_FIRST_ARG_NAME
-#undef TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
-
-#undef TYPVAL_ENCODE_ALLOW_SPECIALS
-#undef TYPVAL_ENCODE_CONV_NIL
-#undef TYPVAL_ENCODE_CONV_BOOL
-#undef TYPVAL_ENCODE_CONV_NUMBER
-#undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER
-#undef TYPVAL_ENCODE_CONV_FLOAT
-#undef TYPVAL_ENCODE_CONV_STRING
-#undef TYPVAL_ENCODE_CONV_STR_STRING
-#undef TYPVAL_ENCODE_CONV_EXT_STRING
-#undef TYPVAL_ENCODE_CONV_FUNC_START
-#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
-#undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
-#undef TYPVAL_ENCODE_CONV_FUNC_END
-#undef TYPVAL_ENCODE_CONV_EMPTY_LIST
-#undef TYPVAL_ENCODE_CONV_EMPTY_DICT
-#undef TYPVAL_ENCODE_CONV_LIST_START
-#undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
-#undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_LIST_END
-#undef TYPVAL_ENCODE_CONV_DICT_START
-#undef TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
-#undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
-#undef TYPVAL_ENCODE_CONV_DICT_AFTER_KEY
-#undef TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS
-#undef TYPVAL_ENCODE_CONV_DICT_END
-#undef TYPVAL_ENCODE_CONV_RECURSE
 
 /// Free memory for a variable value and set the value to NULL or 0
 ///
 /// @param[in,out]  tv  Value to free.
 void tv_clear(typval_T *const tv)
 {
-  if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    // WARNING: do not translate the string here, gettext is slow and function
-    // is used *very* often. At the current state encode_vim_to_nothing() does
-    // not error out and does not use the argument anywhere.
-    //
-    // If situation changes and this argument will be used, translate it in the
-    // place where it is used.
-    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear() argument");
-    (void)evn_ret;
-    assert(evn_ret == OK);
+  if (tv == NULL || tv->v_type == VAR_UNKNOWN) {
+    return;
   }
+  TvClearStack tvc_stack = KVI_INITIAL_VALUE(tvc_stack);
+  tv_clear_one(tv, &tvc_stack);
+  while (kv_size(tvc_stack)) {
+    TvClearStackItem *si = &kv_last(tvc_stack);
+    switch (si->type) {
+      case kTvClearList: {
+        if (kv_size(si->data.l.list->lv_vec) == 0) {
+          tv_list_unref(si->data.l.list);
+          kv_drop(tvc_stack, 1);
+          break;
+        }
+        listitem_T li = kv_pop(si->data.l.list->lv_vec);
+        tv_clear_one((typval_T *)&li, &tvc_stack);
+        break;
+      }
+      case kTvClearDict: {
+        if (si->data.d.dict->dv_hashtab.ht_used == 0) {
+          si->data.d.dict->dv_hashtab.ht_locked--;
+          tv_dict_unref(si->data.d.dict);
+          kv_drop(tvc_stack, 1);
+          break;
+        }
+        dictitem_T *const di = TV_DICT_HI2DI(si->data.d.hi);
+        hash_remove(&si->data.d.dict->dv_hashtab, si->data.d.hi);
+        if (si->data.d.dict->dv_hashtab.ht_used) {
+          while (HASHITEM_EMPTY(si->data.d.hi)) {
+            si->data.d.hi++;
+          }
+        }
+        tv_clear_one(&di->di_tv, &tvc_stack);
+        if (di->di_flags & DI_FLAGS_ALLOC) {
+          xfree(di);
+        }
+        break;
+      }
+      case kTvClearPartial: {
+        partial_T *const pt = si->data.p.pt;
+        if (pt->pt_argc == 0) {
+          if (pt->pt_dict == NULL) {
+            partial_unref(pt);
+            kv_drop(tvc_stack, 1);
+            break;
+          }
+          typval_T tv = {
+            .v_type = VAR_DICT,
+            .v_lock = VAR_UNLOCKED,
+            .vval.v_dict = pt->pt_dict,
+          };
+          tv_clear_one(&tv, &tvc_stack);
+          pt->pt_dict = NULL;
+          break;
+        }
+        pt->pt_argc--;
+        tv_clear_one(&pt->pt_argv[pt->pt_argc], &tvc_stack);
+        break;
+      }
+    }
+  }
+  kvi_destroy(tvc_stack);
 }
 
 //{{{3 Free
