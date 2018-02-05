@@ -137,6 +137,84 @@ int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
   return msg_attr_keep((char_u *)s, attr, false);
 }
 
+int msg_echo_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
+{
+  return msg_echo_attr_keep(s, attr, false); 
+}
+
+int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNULL_ARG(1)
+{
+  static int entered = 0;
+  int retval;
+  char * buf = NULL;
+
+  if (!emsg_on_display && message_filtered((char_u *)s)) {
+    return true;
+  }
+
+  if (attr == 0) {
+    set_vim_var_string(VV_STATUSMSG, s, -1);
+  }
+
+  if (entered >= 3)
+    return TRUE;
+  ++entered;
+
+  if ((char_u *)s != keep_msg
+      || (*s != '<'
+          && last_msg_hist != NULL
+          && last_msg_hist->msg != NULL
+          && STRCMP(s, last_msg_hist->msg))) {
+    add_msg_hist(s, -1, attr);
+  }
+
+  if ((char_u *)s == keep_msg)
+    keep_msg = NULL;
+
+  bool needclr = true;
+
+  msg_start();
+  buf = (char *)msg_strtrunc((char_u *)s, FALSE);
+  if (buf != NULL)
+    s = buf;
+
+  char * spec_char = "\t\n\r";
+
+  char * next_spec = (char *)s;
+
+  while (next_spec != NULL) {
+    next_spec = (char *)vim_strpbrk(s, spec_char);
+
+    if(next_spec != NULL) {
+      /* Printing all char that are before spec_char found */
+      msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
+
+      if (*next_spec != TAB && needclr) {
+        msg_clr_eos();
+        needclr = false;
+      }
+      msg_putchar_attr((uint8_t)(*next_spec), attr);
+      s = next_spec + 1;
+    }
+  }
+
+  // Print the rest of the message. We know there is no special
+  // character because strpbrk returned NULL
+  msg_outtrans_attr((char_u *)s, attr);
+
+  msg_clr_eos();
+  retval = msg_end();
+
+  if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row -1)
+      * Columns + sc_col)
+    set_keep_msg((char_u *)s, 0);
+
+  xfree(buf);
+  -- entered;
+  return retval;
+}
+
+
 int
 msg_attr_keep (
     char_u *s,
@@ -579,7 +657,6 @@ int emsg(const char_u *s_)
 {
   return _emsg((const char *)s_, &msg_attr);
 }
-  
 
 void emsg_invreg(int name)
 {
@@ -599,6 +676,18 @@ bool emsgf(const char *const fmt, ...)
   return ret;
 }
 
+bool emsgf_echo(const char *const fmt, ...)
+{
+  bool ret;
+
+  va_list ap;
+  va_start(ap, fmt);
+  ret = emsgfv_echo(fmt, ap);
+  va_end(ap);
+
+  return ret;
+}
+
 /// Print an error message with unknown number of arguments
 static bool emsgfv(const char *fmt, va_list ap)
 {
@@ -610,6 +699,18 @@ static bool emsgfv(const char *fmt, va_list ap)
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
 
   return emsg((const char_u *)errbuf);
+}
+
+static bool emsgfv_echo(const char *fmt, va_list ap)
+{
+  static char  errbuf[IOSIZE];
+  if (emsg_not_now()) {
+    return true;
+  }
+
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+
+  return _emsg(errbuf, &msg_echo_attr);
 }
 
 /// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
