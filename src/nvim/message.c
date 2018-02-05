@@ -546,9 +546,8 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-static int _emsg(const char *s_, fct_msg_attr ret_fct) 
+static int _emsg(const char *s, fct_msg_attr ret_fct) 
 {
-  const char *s = (const char *)s_;
   int attr;
   int ignore = false;
   int severe;
