@@ -54,6 +54,8 @@ struct msgchunk_S {
   char_u sb_text[1];            /* text to be displayed, actually longer */
 };
 
+typedef int (*fct_msg_attr)(const char *s, const int attr);
+
 /* Magic chars used in confirm dialog strings */
 #define DLG_BUTTON_SEP  '\n'
 #define DLG_HOTKEY_CHAR '&'
@@ -544,7 +546,7 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-static int _emsg(const char *s_, int (*msg_attr)(const char *s, const int attr))
+static int _emsg(const char *s_, fct_msg_attr ret_fct) 
 {
   const char *s = (const char *)s_;
   int attr;
@@ -642,7 +644,7 @@ static int _emsg(const char *s_, int (*msg_attr)(const char *s, const int attr))
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return (*msg_attr)(s, attr);
+  return ret_fct(s, attr);
 }
 
 /*
@@ -655,7 +657,8 @@ static int _emsg(const char *s_, int (*msg_attr)(const char *s, const int attr))
  */
 int emsg(const char_u *s_)
 {
-  return _emsg((const char *)s_, &msg_attr);
+  fct_msg_attr f = &msg_attr;
+  return _emsg((const char *)s_, f);
 }
 
 void emsg_invreg(int name)
@@ -710,7 +713,8 @@ static bool emsgfv_echo(const char *fmt, va_list ap)
 
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
 
-  return _emsg(errbuf, &msg_echo_attr);
+  fct_msg_attr f = &msg_echo_attr;
+  return _emsg(errbuf, f);
 }
 
 /// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
