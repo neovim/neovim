@@ -54,6 +54,8 @@ struct msgchunk_S {
   char_u sb_text[1];            /* text to be displayed, actually longer */
 };
 
+typedef int (*FuncMsgAttr)(const char *s, const int attr);
+
 /* Magic chars used in confirm dialog strings */
 #define DLG_BUTTON_SEP  '\n'
 #define DLG_HOTKEY_CHAR '&'
@@ -132,10 +134,98 @@ int verb_msg(char_u *s)
   return n;
 }
 
-int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
+int msg_attr(const char *s, const int attr)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep((char_u *)s, attr, false);
 }
+
+int msg_echo_attr(const char *s, const int attr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return msg_echo_attr_keep(s, attr, false);
+}
+
+bool msg_attr_skip(const char *s, const int attr, int *const call)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Skip messages not match ":filter pattern".
+  // Don't filter when there is an error.
+  if (!emsg_on_display && message_filtered((char_u *)s)) {
+    return true;
+  }
+
+  if (attr == 0) {
+    set_vim_var_string(VV_STATUSMSG, s, -1);
+  }
+
+  /*
+   * It is possible that displaying a messages causes a problem (e.g.,
+   * when redrawing the window), which causes another message, etc..	To
+   * break this loop, limit the recursiveness to 3 levels.
+   */
+  if (*call >= 3) {
+    return true;
+  }
+
+  (*call)++;
+
+  return false;
+}
+
+
+bool msg_echo_attr_keep(const char *s, const int attr, const int keep)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static int entered = 0;
+
+  if (msg_attr_skip(s, attr, &entered)) {
+    return true;
+  }
+
+  msg_start();
+
+  char *const buf = (char *)msg_strtrunc((char_u *)s, false);
+  if (buf != NULL) {
+    s = buf;
+  }
+
+  const char *next_spec = s;
+
+  while (next_spec != NULL) {
+    next_spec = strpbrk(s, "\t\n\r");
+
+    if (next_spec != NULL) {
+      // Printing all char that are before the char found by strpbrk
+      msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
+
+      if (*next_spec != TAB) {
+        msg_clr_eos();
+      }
+      msg_putchar_attr((uint8_t)(*next_spec), attr);
+      s = next_spec + 1;
+    }
+  }
+
+  // Print the rest of the message. We know there is no special
+  // character because strpbrk returned NULL
+  if (*s != NUL) {
+    msg_outtrans_attr((char_u *)s, attr);
+  }
+
+  msg_clr_eos();
+  const bool retval = msg_end();
+
+  if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row -1)
+      * Columns + sc_col) {
+    set_keep_msg((char_u *)s, 0);
+  }
+
+  xfree((void *)buf);
+  entered--;
+  return retval;
+}
+
 
 int
 msg_attr_keep (
@@ -146,27 +236,14 @@ msg_attr_keep (
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
-  int retval;
-  char_u *buf = NULL;
 
-  // Skip messages not match ":filter pattern".
-  // Don't filter when there is an error.
-  if (!emsg_on_display && message_filtered(s)) {
+  if (msg_attr_skip((const char *)s, attr, &entered)) {
     return true;
   }
 
-  if (attr == 0) {
-    set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
-  }
+  int retval;
+  char_u *buf = NULL;
 
-  /*
-   * It is possible that displaying a messages causes a problem (e.g.,
-   * when redrawing the window), which causes another message, etc..	To
-   * break this loop, limit the recursiveness to 3 levels.
-   */
-  if (entered >= 3)
-    return TRUE;
-  ++entered;
 
   /* Add message to history (unless it's a repeated kept message or a
    * truncated message) */
@@ -468,17 +545,8 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-/*
- * emsg() - display an error message
- *
- * Rings the bell, if appropriate, and calls message() to do the real work
- * When terminal not initialized (yet) mch_errmsg(..) is used.
- *
- * return TRUE if wait_return not called
- */
-int emsg(const char_u *s_)
+static int _emsg(const char *s, FuncMsgAttr display_msg)
 {
-  const char *s = (const char *)s_;
   int attr;
   int ignore = false;
   int severe;
@@ -573,7 +641,20 @@ int emsg(const char_u *s_)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_attr(s, attr);
+  return display_msg(s, attr);
+}
+
+/*
+ * emsg() - display an error message
+ *
+ * Rings the bell, if appropriate, and calls message() to do the real work
+ * When terminal not initialized (yet) mch_errmsg(..) is used.
+ *
+ * return TRUE if wait_return not called
+ */
+int emsg(const char_u *s)
+{
+  return _emsg((const char *)s, &msg_attr);
 }
 
 void emsg_invreg(int name)
@@ -590,6 +671,27 @@ bool emsgf(const char *const fmt, ...)
   va_list ap;
   va_start(ap, fmt);
   ret = emsgfv(fmt, ap);
+  va_end(ap);
+
+  return ret;
+}
+
+bool emsgf_echo(const char *const fmt, ...)
+{
+  bool ret;
+  va_list ap;
+
+  va_start(ap, fmt);
+
+  static char  errbuf[IOSIZE];
+  if (emsg_not_now()) {
+    return true;
+  }
+
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+
+  FuncMsgAttr f = &msg_echo_attr;
+  ret = _emsg(errbuf, f);
   va_end(ap);
 
   return ret;
