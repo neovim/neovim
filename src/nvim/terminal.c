@@ -61,7 +61,6 @@
 #include "nvim/edit.h"
 #include "nvim/mouse.h"
 #include "nvim/memline.h"
-#include "nvim/mark.h"
 #include "nvim/map.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
@@ -376,8 +375,6 @@ void terminal_enter(void)
   // Ensure the terminal is properly sized.
   terminal_resize(s->term, 0, 0);
 
-  checkpcmark();
-  setpcmark();
   int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
