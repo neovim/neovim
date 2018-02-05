@@ -141,10 +141,16 @@ int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 
 int msg_echo_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_echo_attr_keep(s, attr, false); 
+  return msg_echo_attr_keep(s, attr, false);
 }
 
-int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNULL_ARG(1)
+int
+msg_echo_attr_keep(
+    const char *s,
+    const int attr,
+    int keep
+)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   static int entered = 0;
   int retval;
@@ -158,9 +164,10 @@ int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNUL
     set_vim_var_string(VV_STATUSMSG, s, -1);
   }
 
-  if (entered >= 3)
-    return TRUE;
-  ++entered;
+  if (entered >= 3) {
+    return true;
+  }
+  entered++;
 
   if ((char_u *)s != keep_msg
       || (*s != '<'
@@ -170,15 +177,17 @@ int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNUL
     add_msg_hist(s, -1, attr);
   }
 
-  if ((char_u *)s == keep_msg)
+  if ((char_u *)s == keep_msg) {
     keep_msg = NULL;
+  }
 
   bool needclr = true;
 
   msg_start();
-  buf = (char *)msg_strtrunc((char_u *)s, FALSE);
-  if (buf != NULL)
+  buf = (char *)msg_strtrunc((char_u *)s, false);
+  if (buf != NULL) {
     s = buf;
+  }
 
   char * spec_char = "\t\n\r";
 
@@ -187,8 +196,8 @@ int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNUL
   while (next_spec != NULL) {
     next_spec = (char *)vim_strpbrk(s, spec_char);
 
-    if(next_spec != NULL) {
-      /* Printing all char that are before spec_char found */
+    if (next_spec != NULL) {
+      // Printing all char that are before spec_char found
       msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
 
       if (*next_spec != TAB && needclr) {
@@ -208,11 +217,12 @@ int msg_echo_attr_keep(const char *s, const int attr, int keep) FUNC_ATTR_NONNUL
   retval = msg_end();
 
   if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row -1)
-      * Columns + sc_col)
+      * Columns + sc_col) {
     set_keep_msg((char_u *)s, 0);
+  }
 
   xfree(buf);
-  -- entered;
+  entered--;
   return retval;
 }
 
@@ -546,7 +556,7 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-static int _emsg(const char *s, fct_msg_attr ret_fct) 
+static int _emsg(const char *s, fct_msg_attr ret_fct)
 {
   int attr;
   int ignore = false;
