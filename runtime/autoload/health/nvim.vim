@@ -37,13 +37,16 @@ function! s:check_vimrc() abort
     let ok = v:false
     call health#report_warn("It seems you are new to neovim but used vim.",
           \ [ "The configuration file that is same as '.vimrc' in neovim is '~/.config/nvim/init.vim'.",
-          \   "To use your '.vimrc' file in neovim, add these line in '~/.config/nvim/init.vim'.",
-          \   "set runtimepath+=~/.vim,~/.vim/after",
-          \   "set packpath+=~/.vim",
-          \   "source ~/.vimrc",
-          \   "\nSee nvim-from-vim.txt for more details."])
+          \   "To use your '.vimrc' file in neovim, add these lines in '~/.config/nvim/init.vim'.\n",
+          \   "set runtimepath^=~/.vim runtimepath+=~/.vim/after",
+          \   "let &packpath = &runtimepath",
+          \   "source ~/.vimrc\n",
+          \   "See nvim-from-vim.txt for more details."])
   endif
 
+  if ok
+    call health#report_ok('no issues found')
+  endif
 endfunction
 
 " Load the remote plugin manifest file and check for unregistered plugins
@@ -199,6 +202,7 @@ endfunction
 
 function! health#nvim#check() abort
   call s:check_config()
+  call s:check_vimrc()
   call s:check_performance()
   call s:check_rplugin_manifest()
   call s:check_terminal()
