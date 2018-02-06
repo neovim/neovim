@@ -165,10 +165,6 @@ msg_echo_attr_keep(const char *s, const int attr, int keep)
   }
   entered++;
 
-  if (attr & MSG_HIST) {
-    add_msg_hist(s, -1, attr);
-  }
-
   if ((char_u *)s == keep_msg) {
     keep_msg = NULL;
   }
