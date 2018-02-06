@@ -214,6 +214,9 @@ The default value is "" (don't use quickfix anyway).  The following value
 seems to be useful: >
 	:set cscopequickfix=s-,c-,d-,i-,t-,e-,a-
 <
+If cscope was called with a bang (:cs!), vim will not jump to the first file
+in the quickfix window.
+
 							*cscopetag* *cst*
 If 'cscopetag' is set, the commands ":tag" and CTRL-] as well as "vim -t"
 will always use |:cstag| instead of the default :tag behavior.  Effectively,
