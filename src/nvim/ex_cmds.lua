@@ -632,7 +632,7 @@ return {
   },
   {
     command='cscope',
-    flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
+    flags=bit.bor(BANG, EXTRA, NOTRLCOM, XFILE),
     addr_type=ADDR_LINES,
     func='ex_cscope',
   },
