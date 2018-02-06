@@ -455,6 +455,9 @@ function Screen:_handle_visual_bell()
   self.visual_bell = true
 end
 
+function Screen:_handle_default_colors_set()
+end
+
 function Screen:_handle_update_fg(fg)
   self._fg = fg
 end

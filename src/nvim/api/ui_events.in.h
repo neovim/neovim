@@ -47,11 +47,14 @@ void visual_bell(void)
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void update_fg(Integer fg)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void update_bg(Integer bg)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void update_sp(Integer sp)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
+void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
+                        Integer cterm_fg, Integer cterm_bg)
+  FUNC_API_SINCE(4);
 void suspend(void)
   FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void set_title(String title)
@@ -59,7 +62,7 @@ void set_title(String title)
 void set_icon(String icon)
   FUNC_API_SINCE(3);
 void option_set(String name, Object value)
-  FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(4);
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;

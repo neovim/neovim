@@ -2929,11 +2929,11 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
       Array item = ARRAY_DICT_INIT;
 
       if (chunk.attr) {
-        attrentry_T *aep = syn_cterm_attr2entry(chunk.attr);
+        HlAttrs *aep = syn_cterm_attr2entry(chunk.attr);
         // TODO(bfredl): this desicion could be delayed by making attr_code a
         // recognized type
-        HlAttrs rgb_attrs = attrentry2hlattrs(aep, true);
-        ADD(item, DICTIONARY_OBJ(hlattrs2dict(rgb_attrs)));
+        Dictionary rgb_attrs = hlattrs2dict(aep, true);
+        ADD(item, DICTIONARY_OBJ(rgb_attrs));
       } else {
         ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
       }

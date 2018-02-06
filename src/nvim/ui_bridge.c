@@ -59,9 +59,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.put = ui_bridge_put;
   rv->bridge.bell = ui_bridge_bell;
   rv->bridge.visual_bell = ui_bridge_visual_bell;
-  rv->bridge.update_fg = ui_bridge_update_fg;
-  rv->bridge.update_bg = ui_bridge_update_bg;
-  rv->bridge.update_sp = ui_bridge_update_sp;
+  rv->bridge.default_colors_set = ui_bridge_default_colors_set;
   rv->bridge.flush = ui_bridge_flush;
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
@@ -144,29 +142,6 @@ static void ui_bridge_highlight_set_event(void **argv)
   UI *ui = UI(argv[0]);
   ui->highlight_set(ui, *((HlAttrs *)argv[1]));
   xfree(argv[1]);
-}
-
-static void ui_bridge_option_set(UI *ui, String name, Object value)
-{
-  // Assumes bridge is only used by TUI
-  if (strequal(name.data, "termguicolors")) {
-    ui->rgb = value.data.boolean;
-  }
-  String copy_name = copy_string(name);
-  Object *copy_value = xmalloc(sizeof(Object));
-  *copy_value = copy_object(value);
-  UI_BRIDGE_CALL(ui, option_set, 4, ui,
-                 copy_name.data, INT2PTR(copy_name.size), copy_value);
-}
-static void ui_bridge_option_set_event(void **argv)
-{
-  UI *ui = UI(argv[0]);
-  String name = (String){ .data = argv[1], .size = (size_t)argv[2] };
-  Object value = *(Object *)argv[3];
-  ui->option_set(ui, name, value);
-  api_free_string(name);
-  api_free_object(value);
-  xfree(argv[3]);
 }
 
 static void ui_bridge_suspend(UI *b)

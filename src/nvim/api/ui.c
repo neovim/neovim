@@ -86,6 +86,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->put = remote_ui_put;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
+  ui->default_colors_set = remote_ui_default_colors_set;
   ui->update_fg = remote_ui_update_fg;
   ui->update_bg = remote_ui_update_bg;
   ui->update_sp = remote_ui_update_sp;
@@ -243,7 +244,7 @@ static void push_call(UI *ui, char *name, Array args)
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
 {
   Array args = ARRAY_DICT_INIT;
-  Dictionary hl = hlattrs2dict(attrs);
+  Dictionary hl = hlattrs2dict(&attrs, ui->rgb);
 
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);
