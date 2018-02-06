@@ -54,7 +54,7 @@ struct msgchunk_S {
   char_u sb_text[1];            /* text to be displayed, actually longer */
 };
 
-typedef int (*fct_msg_attr)(const char *s, const int attr);
+typedef int (*FctMsgAttr)(const char *s, const int attr);
 
 /* Magic chars used in confirm dialog strings */
 #define DLG_BUTTON_SEP  '\n'
@@ -145,12 +145,8 @@ int msg_echo_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
 }
 
 int
-msg_echo_attr_keep(
-    const char *s,
-    const int attr,
-    int keep
-)
-  FUNC_ATTR_NONNULL_ARG(1)
+msg_echo_attr_keep(const char *s, const int attr, int keep)
+  FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
   int retval;
@@ -169,11 +165,7 @@ msg_echo_attr_keep(
   }
   entered++;
 
-  if ((char_u *)s != keep_msg
-      || (*s != '<'
-          && last_msg_hist != NULL
-          && last_msg_hist->msg != NULL
-          && STRCMP(s, last_msg_hist->msg))) {
+  if (attr & MSG_HIST) {
     add_msg_hist(s, -1, attr);
   }
 
@@ -189,12 +181,12 @@ msg_echo_attr_keep(
     s = buf;
   }
 
-  char * spec_char = "\t\n\r";
+  const char * spec_char = "\t\n\r";
 
-  char * next_spec = (char *)s;
+  const char * next_spec = s;
 
   while (next_spec != NULL) {
-    next_spec = (char *)vim_strpbrk(s, spec_char);
+    next_spec = strpbrk(s, spec_char);
 
     if (next_spec != NULL) {
       // Printing all char that are before spec_char found
@@ -211,7 +203,9 @@ msg_echo_attr_keep(
 
   // Print the rest of the message. We know there is no special
   // character because strpbrk returned NULL
-  msg_outtrans_attr((char_u *)s, attr);
+  if (s != NULL) {
+    msg_outtrans_attr((char_u *)s, attr);
+  }
 
   msg_clr_eos();
   retval = msg_end();
@@ -556,7 +550,7 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-static int _emsg(const char *s, fct_msg_attr ret_fct)
+static int _emsg(const char *s, FctMsgAttr display_msg)
 {
   int attr;
   int ignore = false;
@@ -653,7 +647,7 @@ static int _emsg(const char *s, fct_msg_attr ret_fct)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return ret_fct(s, attr);
+  return display_msg(s, attr);
 }
 
 /*
@@ -666,8 +660,7 @@ static int _emsg(const char *s, fct_msg_attr ret_fct)
  */
 int emsg(const char_u *s_)
 {
-  fct_msg_attr f = &msg_attr;
-  return _emsg((const char *)s_, f);
+  return _emsg((const char *)s_, &msg_attr);
 }
 
 void emsg_invreg(int name)
@@ -691,10 +684,19 @@ bool emsgf(const char *const fmt, ...)
 bool emsgf_echo(const char *const fmt, ...)
 {
   bool ret;
-
   va_list ap;
+
   va_start(ap, fmt);
-  ret = emsgfv_echo(fmt, ap);
+
+  static char  errbuf[IOSIZE];
+  if (emsg_not_now()) {
+    return true;
+  }
+
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+
+  FctMsgAttr f = &msg_echo_attr;
+  ret = _emsg(errbuf, f);
   va_end(ap);
 
   return ret;
@@ -711,19 +713,6 @@ static bool emsgfv(const char *fmt, va_list ap)
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
 
   return emsg((const char_u *)errbuf);
-}
-
-static bool emsgfv_echo(const char *fmt, va_list ap)
-{
-  static char  errbuf[IOSIZE];
-  if (emsg_not_now()) {
-    return true;
-  }
-
-  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
-
-  fct_msg_attr f = &msg_echo_attr;
-  return _emsg(errbuf, f);
 }
 
 /// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
