@@ -175,9 +175,9 @@ msg_echo_attr_keep(const char *s, const int attr, int keep)
     s = buf;
   }
 
-  const char * spec_char = "\t\n\r";
+  const char *spec_char = "\t\n\r";
 
-  const char * next_spec = s;
+  const char *next_spec = s;
 
   while (next_spec != NULL) {
     next_spec = strpbrk(s, spec_char);
