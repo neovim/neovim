@@ -169,8 +169,6 @@ msg_echo_attr_keep(const char *s, const int attr, int keep)
     keep_msg = NULL;
   }
 
-  bool needclr = true;
-
   msg_start();
   buf = (char *)msg_strtrunc((char_u *)s, false);
   if (buf != NULL) {
@@ -188,9 +186,8 @@ msg_echo_attr_keep(const char *s, const int attr, int keep)
       // Printing all char that are before spec_char found
       msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
 
-      if (*next_spec != TAB && needclr) {
+      if (*next_spec != TAB) {
         msg_clr_eos();
-        needclr = false;
       }
       msg_putchar_attr((uint8_t)(*next_spec), attr);
       s = next_spec + 1;
@@ -199,7 +196,7 @@ msg_echo_attr_keep(const char *s, const int attr, int keep)
 
   // Print the rest of the message. We know there is no special
   // character because strpbrk returned NULL
-  if (s != NULL) {
+  if (*s != NUL) {
     msg_outtrans_attr((char_u *)s, attr);
   }
 
