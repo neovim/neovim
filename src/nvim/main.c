@@ -577,8 +577,9 @@ int main(int argc, char **argv)
   return 0;
 }
 
-/* Exit properly */
+/// Exit properly
 void getout(int exitval)
+  FUNC_ATTR_NORETURN
 {
   tabpage_T   *tp, *next_tp;
 

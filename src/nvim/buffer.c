@@ -4466,7 +4466,7 @@ do_arg_all (
   // leaving an empty tab page when executed locally.
   if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
       && curbuf->b_ffname == NULL && !curbuf->b_changed) {
-    use_firstwin = TRUE;
+    use_firstwin = true;
   }
 
   for (i = 0; i < count && i < opened_len && !got_int; ++i) {

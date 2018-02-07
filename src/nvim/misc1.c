@@ -2610,13 +2610,12 @@ int match_user(char_u *name)
   return result;
 }
 
-/*
- * Preserve files and exit.
- * When called IObuff must contain a message.
- * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
- * functions, such as allocating memory.
- */
+/// Preserve files and exit.
+/// @note IObuff must contain a message.
+/// @note This may be called from deadly_signal() in a signal handler, avoid
+///       unsafe functions, such as allocating memory.
 void preserve_exit(void)
+  FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
