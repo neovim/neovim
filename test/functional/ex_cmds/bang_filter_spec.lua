@@ -4,6 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, command, clear = helpers.feed, helpers.command, helpers.clear
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 local feed_command = helpers.feed_command
+local eq = helpers.eq
 
 if helpers.pending_win32(pending) then return end
 
@@ -52,18 +53,21 @@ describe(':! command', function()
 
   it('handles binary and multibyte data', function()
     feed_command('!cat test/functional/fixtures/shell_data.txt')
+    screen.bell = false
     screen:expect([[
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
       :!cat test/functional/fixtures/shell_data.txt        |
-      {2:^@^A^B^C^D^E^F^G^H}                                   |
+      {2:^@^A^B^C^D^E^F^H}                                     |
       {2:^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_}                 |
       ö 한글 {2:<a5><c3>}                                      |
       t       {2:<ff>}                                         |
                                                            |
       {3:Press ENTER or type command to continue}^              |
-  ]])
+  ]], nil, nil, function()
+      eq(true, screen.bell)
+  end)
   end)
 
 end)

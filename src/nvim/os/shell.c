@@ -455,7 +455,7 @@ static void out_data_append_to_screen(char *output, size_t remaining,
 {
   char *p = output, *end = output + remaining;
   while (p < end) {
-    if (*p == '\n' || *p == '\r' || *p == TAB) {
+    if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_attr((uint8_t)(*p), 0);
       p++;
     } else {
