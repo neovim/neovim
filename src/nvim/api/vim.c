@@ -53,6 +53,7 @@
 /// @param end starting end
 /// @param err
 void nvim_fold_create(Window window, Integer start, Integer end, Error *err)
+  FUNC_API_SINCE(4)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -68,6 +69,7 @@ void nvim_fold_create(Window window, Integer start, Integer end, Error *err)
 /// When "recursive" is TRUE delete recursively.
 /// @param window 
 void nvim_fold_delete(Window window, Integer start, Integer end, Boolean recursive, Error *err)
+  FUNC_API_SINCE(4)
 {
   win_T *win = find_window_by_handle(window, err);
 
