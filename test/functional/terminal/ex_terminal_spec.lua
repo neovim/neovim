@@ -2,8 +2,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
+local feed = helpers.feed
 local feed_command, eval = helpers.feed_command, helpers.eval
+local funcs = helpers.funcs
 local retry = helpers.retry
+local ok = helpers.ok
 local iswin = helpers.iswin
 
 describe(':terminal', function()
@@ -24,13 +27,16 @@ describe(':terminal', function()
     ]])
     -- Invoke a command that emits frequent terminal activity.
     if iswin() then
-      feed_command([[terminal for /L \\%I in (1,0,2) do echo \\%I]])
+      feed_command([[terminal for /L \%I in (1,0,2) do echo \%I]])
     else
       feed_command([[terminal while true; do echo X; done]])
     end
-    helpers.feed([[<C-\><C-N>]])
+    feed([[<C-\><C-N>]])
     wait()
-    screen:sleep(10)  -- Let some terminal activity happen.
+    -- Wait for some terminal activity.
+    retry(nil, 4000, function()
+      ok(funcs.line('$') > 6)
+    end)
     feed_command("messages")
     screen:expect([[
       msg1                                              |
@@ -46,7 +52,7 @@ describe(':terminal', function()
     else
       feed_command([[terminal while true; do echo foo; sleep .1; done]])
     end
-    helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
+    feed([[<C-\><C-N>M]])  -- move cursor away from last line
     wait()
     eq(3, eval("line('$')"))  -- window height
     eq(2, eval("line('.')"))  -- cursor is in the middle
@@ -54,6 +60,32 @@ describe(':terminal', function()
     eq(2, eval("line('.')"))  -- cursor stays where we put it
     feed_command('split')
     eq(2, eval("line('.')"))  -- cursor stays where we put it
+  end)
+
+  it('Enter/Leave does not increment jumplist #3723', function()
+    feed_command('terminal')
+    local function enter_and_leave()
+      local lines_before = funcs.line('$')
+      -- Create a new line (in the shell). For a normal buffer this
+      -- increments the jumplist; for a terminal-buffer it should not. #3723
+      feed('i')
+      wait()
+      feed('<CR><CR><CR><CR>')
+      wait()
+      feed([[<C-\><C-N>]])
+      wait()
+      -- Wait for >=1 lines to be created.
+      retry(nil, 4000, function()
+        ok(funcs.line('$') > lines_before)
+      end)
+    end
+    enter_and_leave()
+    enter_and_leave()
+    enter_and_leave()
+    ok(funcs.line('$') > 6)   -- Verify assumption.
+    local jumps = funcs.split(funcs.execute('jumps'), '\n')
+    eq(' jump line  col file/text', jumps[1])
+    eq(3, #jumps)
   end)
 
 end)
@@ -151,12 +183,12 @@ describe(':terminal (with fake shell)', function()
 
   it('ignores writes if the backing stream closes', function()
       terminal_with_fake_shell()
-      helpers.feed('iiXXXXXXX')
+      feed('iiXXXXXXX')
       wait()
       -- Race: Though the shell exited (and streams were closed by SIGCHLD
       -- handler), :terminal cleanup is pending on the main-loop.
       -- This write should be ignored (not crash, #5445).
-      helpers.feed('iiYYYYYYY')
+      feed('iiYYYYYYY')
       eq(2, eval("1+1"))  -- Still alive?
   end)
 
@@ -175,7 +207,7 @@ describe(':terminal (with fake shell)', function()
       :terminal                                         |
     ]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
-    helpers.feed([[<C-\><C-N>]])
+    feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
     if iswin() then
       eq('scripts\\shadacat.py', eval('bufname("%")'))
@@ -192,9 +224,9 @@ describe(':terminal (with fake shell)', function()
       [Process exited 0]                                |
       :terminal echo "scripts/shadacat.py"              |
     ]])
-    helpers.feed([[<C-\><C-N>]])
+    feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
-    helpers.feed([[ggf"lgf]])
+    feed([[ggf"lgf]])
     eq('scripts/shadacat.py', eval('bufname("%")'))
   end)
 
