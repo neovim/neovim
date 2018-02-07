@@ -126,7 +126,7 @@ endfunction
 function! s:check_clipboard() abort
   call health#report_start('Clipboard (optional)')
 
-  if !empty($TMUX) && executable('tmux') && executable('pbcopy') && !s:cmd_ok('pbcopy')
+  if !empty($TMUX) && executable('tmux') && executable('pbpaste') && !s:cmd_ok('pbpaste')
     let tmux_version = matchstr(system('tmux -V'), '\d\+\.\d\+')
     call health#report_error('pbcopy does not work with tmux version: '.tmux_version,
           \ ['Install tmux 2.6+.  https://superuser.com/q/231130',
