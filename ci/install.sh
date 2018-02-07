@@ -13,8 +13,8 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
 fi
 
 # Use default CC to avoid compilation problems when installing Python modules.
-echo "Install neovim module and coveralls for Python 2."
-CC=cc pip2.7 -q install --user --upgrade neovim cpp-coveralls
+echo "Install neovim module for Python 2."
+CC=cc pip2.7 -q install --user --upgrade neovim
 
 echo "Install neovim module for Python 3."
 # Allow failure. pyenv pip3 on travis is broken:
