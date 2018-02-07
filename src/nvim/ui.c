@@ -453,6 +453,13 @@ void ui_puts(uint8_t *str)
       ui_linefeed();
     }
     p += clen;
+
+    if (p_wd) {  // 'writedelay': flush & delay each time.
+      ui_flush();
+      assert(p_wd >= 0
+             && (sizeof(long) <= sizeof(uint64_t) || p_wd <= UINT64_MAX));
+      os_delay((uint64_t)p_wd, false);
+    }
   }
 }
 

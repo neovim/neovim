@@ -5031,8 +5031,8 @@ static void nv_right(cmdarg_T *cap)
     if ((!PAST_LINE && oneright() == false)
         || (PAST_LINE && *get_cursor_pos_ptr() == NUL)
         ) {
-      //	  <Space> wraps to next line if 'whichwrap' has 's'.
-      //	      'l' wraps to next line if 'whichwrap' has 'l'.
+      //          <Space> wraps to next line if 'whichwrap' has 's'.
+      //              'l' wraps to next line if 'whichwrap' has 'l'.
       // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
       if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
            || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)

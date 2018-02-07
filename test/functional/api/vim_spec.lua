@@ -11,11 +11,11 @@ local funcs = helpers.funcs
 local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
+local iswin = helpers.iswin
 
 local intchar2lua = global_helpers.intchar2lua
 local format_string = global_helpers.format_string
 local mergedicts_copy = global_helpers.mergedicts_copy
-local uname = global_helpers.uname
 
 describe('api', function()
   before_each(clear)
@@ -101,7 +101,7 @@ describe('api', function()
     end)
 
     it('returns shell |:!| output', function()
-      local win_lf = (uname() == 'Windows' and '\r') or ''
+      local win_lf = iswin() and '\r' or ''
       eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
