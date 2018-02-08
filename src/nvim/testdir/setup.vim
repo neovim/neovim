@@ -3,6 +3,7 @@
 set noruler
 set noshowcmd
 set belloff=
+set sidescroll=0
 
 " Make sure 'runtimepath' and 'packpath' does not include $HOME.
 set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after

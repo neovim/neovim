@@ -2185,7 +2185,7 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ss',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='sidescrolloff', abbreviation='siso',

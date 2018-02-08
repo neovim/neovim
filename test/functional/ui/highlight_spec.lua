@@ -905,6 +905,7 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('background applies also to non-text', function()
+    command('set sidescroll=0')
     insert('Lorem ipsum dolor sit amet ')
     command('set shiftwidth=2')
     feed('>>')
