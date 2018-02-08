@@ -7,6 +7,7 @@ local command = helpers.command
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
+local insert = helpers.insert
 local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
@@ -115,7 +116,40 @@ describe('startup defaults', function()
     end)
   end)
 
-  describe('packpath', function()
+  describe("'fillchars'", function()
+    it('vert/fold flags', function()
+      clear()
+      local screen = Screen.new(50, 5)
+      screen:attach()
+      command('set laststatus=0')
+      insert([[
+        1
+        2
+        3
+        4]])
+      command('normal! ggjzfj')
+      command('vsp')
+      screen:expect([[
+        1                        │1                       |
+        ^+--  2 lines: 2··········│+--  2 lines: 2·········|
+        4                        │4                       |
+        ~                        │~                       |
+                                                          |
+      ]])
+
+      -- ambiwidth=double defaults to single-byte fillchars.
+      command('set ambiwidth=double')
+      screen:expect([[
+        1                        |1                       |
+        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        4                        |4                       |
+        ~                        |~                       |
+                                                          |
+      ]])
+    end)
+  end)
+
+  describe("'packpath'", function()
     it('defaults to &runtimepath', function()
       eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
     end)
