@@ -3376,37 +3376,40 @@ skip:
   return NULL;    /* no error */
 }
 
-/*
- * Handle setting 'listchars' or 'fillchars'.
- * Returns error message, NULL if it's OK.
- */
+
+/// Handle setting 'listchars' or 'fillchars'.
+/// Assume monocell characters
+///
+/// @param varp either &p_lcs ('listchars') or &p_fcs ('fillchar')
+/// @return error message, NULL if it's OK.
 static char_u *set_chars_option(char_u **varp)
 {
   int round, i, len, entries;
   char_u      *p, *s;
   int c1, c2 = 0;
   struct charstab {
-    int     *cp;
-    char    *name;
+    int     *cp;    ///< char value
+    char    *name;  ///< char id
+    int    def;  ///< default value
   };
   static struct charstab filltab[] =
   {
-    {&fill_stl,     "stl"},
-    {&fill_stlnc,   "stlnc"},
-    {&fill_vert,    "vert"},
-    {&fill_fold,    "fold"},
-    {&fill_diff,    "diff"},
+    { &fill_stl,                    "stl"  , ' '  },
+    { &fill_stlnc,                  "stlnc", ' '  },
+    { &fill_vert,                   "vert" , ' '  },
+    { &fill_fold,                   "fold" , '-'  },
+    { &fill_diff,                   "diff" , '-'  },
   };
   static struct charstab lcstab[] =
   {
-    {&lcs_eol,      "eol"},
-    {&lcs_ext,      "extends"},
-    {&lcs_nbsp,     "nbsp"},
-    {&lcs_prec,     "precedes"},
-    {&lcs_space,    "space"},
-    {&lcs_tab2,     "tab"},
-    {&lcs_trail,    "trail"},
-    {&lcs_conceal,  "conceal"},
+    {&lcs_eol,      "eol",     NUL},
+    {&lcs_ext,      "extends", NUL},
+    {&lcs_nbsp,     "nbsp",    NUL},
+    {&lcs_prec,     "precedes", NUL},
+    {&lcs_space,    "space", NUL},
+    {&lcs_tab2,     "tab", NUL},
+    {&lcs_trail,    "trail", NUL},
+    {&lcs_conceal,  "conceal", NUL},
   };
   struct charstab *tab;
 
@@ -3418,18 +3421,16 @@ static char_u *set_chars_option(char_u **varp)
     entries = ARRAY_SIZE(filltab);
   }
 
-  /* first round: check for valid value, second round: assign values */
+  // first round: check for valid value, second round: assign values
   for (round = 0; round <= 1; ++round) {
     if (round > 0) {
       /* After checking that the value is valid: set defaults: space for
        * 'fillchars', NUL for 'listchars' */
-      for (i = 0; i < entries; ++i)
-        if (tab[i].cp != NULL)
-          *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
-      if (varp == &p_lcs)
-        lcs_tab1 = NUL;
-      else
-        fill_diff = '-';
+      for (i = 0; i < entries; ++i) {
+        if (tab[i].cp != NULL) {
+          *(tab[i].cp) = tab[i].def;
+        }
+      }
     }
     p = *varp;
     while (*p) {
