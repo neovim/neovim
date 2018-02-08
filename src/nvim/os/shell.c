@@ -422,7 +422,7 @@ static void out_data_ring(char *output, size_t size)
   }
 
   if (output == NULL && size == SIZE_MAX) {   // Print mode
-    out_data_append_to_screen(last_skipped, last_skipped_len, true);
+    out_data_append_to_screen(last_skipped, &last_skipped_len, true);
     return;
   }
 
@@ -450,30 +450,40 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void out_data_append_to_screen(char *output, size_t remaining,
-                                      bool new_line)
+static void out_data_append_to_screen(char *output, size_t *count,
+                                      bool eof)
 {
-  char *p = output, *end = output + remaining;
+  char *p = output, *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_attr((uint8_t)(*p), 0);
       p++;
     } else {
+      // Note: this is not 100% precise:
+      // 1. we don't check if received continuation bytes are already invalid
+      //    and we thus do some buffering that could be avoided
+      // 2. we don't compose chars over buffer boundaries, even if we see an
+      //    incomplete UTF-8 sequence that could be composing with the last
+      //    complete sequence.
+      // This will be corrected when we switch to vterm based implementation
       int i = *p ? mb_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
+      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end-p)) {
+        *count = (size_t)(p - output);
+        goto end;
+      }
 
       (void)msg_outtrans_len_attr((char_u *)p, i, 0);
       p += i;
     }
   }
 
+end:
   ui_flush();
 }
 
 static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
     bool eof)
 {
-  // We always output the whole buffer, so the buffer can never
-  // wrap around.
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
@@ -482,12 +492,16 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
   } else {
-    out_data_append_to_screen(ptr, cnt, eof);
+    out_data_append_to_screen(ptr, &cnt, eof);
   }
 
   if (cnt) {
     rbuffer_consumed(buf, cnt);
   }
+
+  // Move remaining data to start of buffer, so the buffer can never
+  // wrap around.
+  rbuffer_reset(buf);
 }
 
 /// Parses a command string into a sequence of words, taking quotes into

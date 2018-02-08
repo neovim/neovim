@@ -9,6 +9,7 @@ local feed_command = helpers.feed_command
 local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
+local nvim_dir = helpers.nvim_dir
 
 describe("shell command :!", function()
   if helpers.pending_win32(pending) then return end
@@ -194,6 +195,30 @@ describe("shell command :!", function()
     ]], nil, nil, function()
         eq(true, screen.bell)
       end)
+    end)
+
+    it('handles multibyte sequences split over buffer boundaries', function()
+      command('cd '..nvim_dir)
+      local cmd
+      if iswin() then
+        cmd = '!shell-test UTF-8  '
+      else
+        cmd = '!./shell-test UTF-8'
+      end
+      feed_command(cmd)
+      -- Note: only the first example of split composed char works
+      screen:expect([[
+        {1:~                                                    }|
+        {1:~                                                    }|
+        :]]..cmd..[[                                 |
+        å                                                    |
+        ref: å̲                                               |
+        1: å̲                                                 |
+        2: å ̲                                               |
+        3: å ̲                                               |
+                                                             |
+        {3:Press ENTER or type command to continue}^              |
+      ]])
     end)
   end)
 end)
