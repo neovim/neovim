@@ -62,19 +62,8 @@ lang mess C
 " Always use forward slashes.
 set shellslash
 
-" Make sure $HOME does not get read or written.
-let $HOME = '/does/not/exist'
-
 " Prepare for calling garbagecollect_for_testing().
 let v:testing = 1
-
-" Align Nvim defaults to Vim.
-set directory^=.
-set backspace=
-set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
-set listchars=eol:$
-" Prevent Nvim log from writing to stderr.
-let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
 func RunTheTest(test)
   echo 'Executing ' . a:test
