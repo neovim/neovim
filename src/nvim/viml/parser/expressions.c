@@ -155,7 +155,7 @@ static inline float_T scale_number(const float_T num,
   if (num == 0 || exponent == 0) {
     return num;
   }
-  assert(base);
+  assert(base == 10);
   uvarnumber_T exp = exponent;
   float_T p_base = (float_T)base;
   float_T ret = num;
