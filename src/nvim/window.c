@@ -643,7 +643,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
     // We don't like to take lines for the new window from a
     // 'winfixwidth' window.  Take them from a window to the left or right
-	// instead, if possible. Add one for the separator.
+    // instead, if possible. Add one for the separator.
     if (oldwin->w_p_wfw) {
       win_setwidth_win(oldwin->w_width + new_size + 1, oldwin);
     }
