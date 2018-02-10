@@ -855,7 +855,7 @@ void ex_diffpatch(exarg_T *eap)
 {
   char_u *buf = NULL;
   win_T *old_curwin = curwin;
-  char_u *newname = NULL; // name of patched file buffer
+  char_u *newname = NULL;  // name of patched file buffer
   char_u *esc_name = NULL;
 
 #ifdef UNIX
@@ -886,9 +886,9 @@ void ex_diffpatch(exarg_T *eap)
 
   esc_name = vim_strsave_shellescape(
 #ifdef UNIX
-                                             fullname != NULL ? fullname :
+                                     fullname != NULL ? fullname :
 #endif
-                                             eap->arg, true, true);
+                                     eap->arg, true, true);
   if (esc_name == NULL) {
     goto theend;
   }

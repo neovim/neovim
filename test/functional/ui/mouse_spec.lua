@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
+local command = helpers.command
 
 describe('ui/mouse/input', function()
   local screen
@@ -706,6 +707,7 @@ describe('ui/mouse/input', function()
   end)
 
   it('horizontal scrolling', function()
+    command('set sidescroll=0')
     feed("<esc>:set nowrap<cr>")
 
     feed("a <esc>20Ab<esc>")

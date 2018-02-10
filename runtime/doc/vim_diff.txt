@@ -48,6 +48,7 @@ a complete and centralized reference of those differences.
 - 'ruler' is set by default
 - 'sessionoptions' doesn't include "options"
 - 'showcmd' is set by default
+- 'sidescroll' defaults to 1
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"

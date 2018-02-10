@@ -19372,14 +19372,10 @@ void ex_echo(exarg_T *eap)
             }
             msg_putchar_attr((uint8_t)(*p), echo_attr);
           } else {
-            if (has_mbyte) {
-              int i = (*mb_ptr2len)((const char_u *)p);
+            int i = (*mb_ptr2len)((const char_u *)p);
 
-              (void)msg_outtrans_len_attr((char_u *)p, i, echo_attr);
-              p += i - 1;
-            } else {
-              (void)msg_outtrans_len_attr((char_u *)p, 1, echo_attr);
-            }
+            (void)msg_outtrans_len_attr((char_u *)p, i, echo_attr);
+            p += i - 1;
           }
         }
       }

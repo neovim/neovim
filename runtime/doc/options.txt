@@ -5445,14 +5445,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |tab-page| for more information about tab pages.
 
 						*'sidescroll'* *'ss'*
-'sidescroll' 'ss'	number	(default 0)
+'sidescroll' 'ss'	number	(default 1)
 			global
 	The minimal number of columns to scroll horizontally.  Used only when
 	the 'wrap' option is off and the cursor is moved off of the screen.
 	When it is zero the cursor will be put in the middle of the screen.
-	When using a slow terminal set it to a large number or 0.  When using
-	a fast terminal use a small number or 1.  Not used for "zh" and "zl"
-	commands.
+	When using a slow terminal set it to a large number or 0.  Not used
+	for "zh" and "zl" commands.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)

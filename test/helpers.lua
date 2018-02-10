@@ -423,11 +423,13 @@ format_luav = function(v, indent, opts)
     if opts.literal_strings then
       ret = v
     else
-      ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub(
-        '[%z\1-\31]', function(match)
-          return SUBTBL[match:byte() + 1]
-        end)
-      ret = '\'' .. ret .. '\''
+      local quote = opts.dquote_strings and '"' or '\''
+      ret = quote .. tostring(v):gsub(
+        opts.dquote_strings and '["\\]' or '[\'\\]',
+        '\\%0'):gsub(
+          '[%z\1-\31]', function(match)
+            return SUBTBL[match:byte() + 1]
+          end) .. quote
     end
   elseif type(v) == 'table' then
     if v == REMOVE_THIS then
@@ -490,11 +492,14 @@ local function format_string(fmt, ...)
     if subfmt:sub(-1) ~= '%' then
       arg = getarg()
     end
-    if subfmt:sub(-1) == 'r' then
-      -- %r is like %q, but it is supposed to single-quote strings and not
-      -- double-quote them, and also work not only for strings.
+    if subfmt:sub(-1) == 'r' or subfmt:sub(-1) == 'q' then
+      -- %r is like built-in %q, but it is supposed to single-quote strings and
+      -- not double-quote them, and also work not only for strings.
+      -- Builtin %q is replaced here as it gives invalid and inconsistent with
+      -- luajit results for e.g. "\e" on lua: luajit transforms that into `\27`,
+      -- lua leaves as-is.
+      arg = format_luav(arg, nil, {dquote_strings = (subfmt:sub(-1) == 'q')})
       subfmt = subfmt:sub(1, -2) .. 's'
-      arg = format_luav(arg)
     end
     if subfmt == '%e' then
       return format_float(arg)

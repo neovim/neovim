@@ -56,13 +56,16 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   if(USE_BUNDLED_LUAJIT)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR}
-      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.0)
+      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.0
+      --lua-suffix=jit)
+  elseif(USE_BUNDLED_LUA)
+    list(APPEND LUAROCKS_OPTS
+      --with-lua=${HOSTDEPS_INSTALL_DIR})
   endif()
 
   BuildLuarocks(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-      --lua-suffix=jit
     INSTALL_COMMAND ${MAKE_PRG} bootstrap)
 elseif(MSVC OR MINGW)
 
@@ -94,6 +97,8 @@ if(USE_BUNDLED_LUAJIT)
   if(MINGW AND CMAKE_CROSSCOMPILING)
     add_dependencies(luarocks luajit_host)
   endif()
+elseif(USE_BUNDLED_LUA)
+  add_dependencies(luarocks lua)
 endif()
 
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
@@ -125,12 +130,30 @@ add_custom_target(inspect
 
 list(APPEND THIRD_PARTY_DEPS inspect)
 
+if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
+  # DEPENDS on the previous module, because Luarocks breaks if parallel.
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop
+    COMMAND ${LUAROCKS_BINARY}
+    ARGS build luabitop ${LUAROCKS_BUILDARGS}
+    DEPENDS inspect)
+  add_custom_target(luabitop
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop)
+
+  list(APPEND THIRD_PARTY_DEPS luabitop)
+endif()
+
 if(USE_BUNDLED_BUSTED)
+  if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
+    set(PENLIGHT_DEPENDS luabitop)
+  else()
+    set(PENLIGHT_DEPENDS inspect)
+  endif()
+
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
     COMMAND ${LUAROCKS_BINARY}
     ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
-    DEPENDS inspect)
+    DEPENDS ${PENLIGHT_DEPENDS})
   add_custom_target(penlight
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
 
