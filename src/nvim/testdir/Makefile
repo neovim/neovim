@@ -42,6 +42,7 @@ NEW_TESTS ?= \
 	    test_arabic.res \
 	    test_autocmd.res \
 	    test_bufwintabinfo.res \
+	    test_cd.res \
 	    test_changedtick.res \
 	    test_charsearch.res \
 	    test_cindent.res \

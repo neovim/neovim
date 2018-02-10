@@ -3,6 +3,7 @@
 
 set belloff=all
 source test_assign.vim
+source test_cd.vim
 source test_changedtick.vim
 source test_cursor_func.vim
 source test_ex_undo.vim
