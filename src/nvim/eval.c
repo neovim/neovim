@@ -614,17 +614,8 @@ void eval_init(void)
 #if defined(EXITFREE)
 void eval_clear(void)
 {
-  struct vimvar   *p;
-
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
-    p = &vimvars[i];
-    if (p->vv_di.di_tv.v_type == VAR_STRING) {
-      xfree(p->vv_str);
-      p->vv_str = NULL;
-    } else if (p->vv_di.di_tv.v_type == VAR_LIST) {
-      tv_list_unref(p->vv_list);
-      p->vv_list = NULL;
-    }
+    tv_clear(&vimvars[i].vv_di.di_tv);
   }
   hash_clear(&vimvarht);
   hash_init(&vimvarht);    /* garbage_collect() will access it */
