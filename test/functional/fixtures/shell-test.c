@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+
+static void wait(void)
+{
+  fflush(stdout);
+  usleep(10*1000);
+}
 
 static void help(void)
 {
@@ -61,6 +68,22 @@ int main(int argc, char **argv)
       for (uint8_t i = 0; i < number; i++) {
         printf("%d: %s\n", (int) i, argv[3]);
       }
+    } else if (strcmp(argv[1], "UTF-8") == 0) {
+      // test split-up UTF-8 sequence
+      printf("\xc3"); wait();
+      printf("\xa5\n"); wait();
+
+      // split up a 2+2 grapheme clusters all possible ways
+      printf("ref: \xc3\xa5\xcc\xb2\n"); wait();
+
+      printf("1: \xc3"); wait();
+      printf("\xa5\xcc\xb2\n"); wait();
+
+      printf("2: \xc3\xa5"); wait();
+      printf("\xcc\xb2\n"); wait();
+
+      printf("3: \xc3\xa5\xcc"); wait();
+      printf("\xb2\n"); wait();
     } else {
       fprintf(stderr, "Unknown first argument\n");
       return 3;
