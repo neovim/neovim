@@ -775,12 +775,17 @@ int searchit(
                 }
               }
               if (ptr[matchcol] == NUL
-                  || (nmatched = vim_regexec_multi(&regmatch,
-                          win, buf, lnum + matchpos.lnum,
-                          matchcol,
-                          tm
-                          )) == 0)
-                break;
+                  || (nmatched = vim_regexec_multi(
+                      &regmatch, win, buf, lnum + matchpos.lnum, matchcol,
+                      tm)) == 0) {
+                  // If the search timed out, we did find a match
+                  // but it might be the wrong one, so that's not
+                  // OK.
+                  if (tm != NULL && profile_passed_limit(*tm)) {
+                      match_ok = false;
+                  }
+                  break;
+              }
 
               /* Need to get the line pointer again, a
                * multi-line search may have made it invalid. */
