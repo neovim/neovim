@@ -128,8 +128,8 @@ typedef off_t off_T;
 /*
  * The characters and attributes cached for the screen.
  */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
+typedef char_u schar_T[MAX_MCO * 4 + 1];
+typedef int16_t sattr_T;
 
 /*
  * The characters that are currently on the screen are kept in ScreenLines[].
@@ -155,14 +155,7 @@ EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
  * ScreenLinesC[0][off] is only to be used when ScreenLinesUC[off] != 0.
  * Note: These three are only allocated when enc_utf8 is set!
  */
-EXTERN u8char_T *ScreenLinesUC INIT(= NULL);    /* decoded UTF-8 characters */
-EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
-EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
-                                                   allocating ScreenLinesC[] */
 
-/* Only used for euc-jp: Second byte of a character that starts with 0x8e.
- * These are single-width. */
-EXTERN schar_T  *ScreenLines2 INIT(= NULL);
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
