@@ -108,12 +108,13 @@ retnomove:
     goto retnomove;                             // ugly goto...
 
   // Remember the character under the mouse, it might be a '-' or '+' in the
-  // fold column.
+  // fold column. NB: only works for ASCII chars!
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && ScreenLines != NULL)
-    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col];
-  else
+      && ScreenLines != NULL) {
+    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col][0];
+  } else {
     mouse_char = ' ';
+  }
 
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;

@@ -131,37 +131,38 @@ typedef off_t off_T;
 /*
  * The characters and attributes cached for the screen.
  */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
+typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
+typedef int16_t sattr_T;
 
-/*
- * The characters that are currently on the screen are kept in ScreenLines[].
- * It is a single block of characters, the size of the screen plus one line.
- * The attributes for those characters are kept in ScreenAttrs[].
- *
- * "LineOffset[n]" is the offset from ScreenLines[] for the start of line 'n'.
- * The same value is used for ScreenLinesUC[] and ScreenAttrs[].
- *
- * Note: before the screen is initialized and when out of memory these can be
- * NULL.
- */
+/// ScreenLines[] contains a copy of the whole screen, as it currently is
+/// displayed. It is a single block of screen cells, the size of the screen
+/// plus one line. The extra line used as a buffer while redrawing a window
+/// line, so it can be compared with the previous state of that line. This way
+/// we can avoid sending bigger updates than neccessary to the Ul layer.
+///
+/// Screen cells are stored as NUL-terminated UTF-8 strings, and a cell can
+/// contain up to MAX_MCO composing characters after the base character.
+/// The composing characters are to be drawn on top of the original character.
+/// The content after the NUL is not defined (so comparison must be done a
+/// single cell at a time). Double-width characters are stored in the left cell,
+/// and the right cell should only contain the empty string. When a part of the
+/// screen is cleared, the cells should be filled with a single whitespace char.
+///
+/// ScreenAttrs[] contains the highlighting attribute for each cell.
+/// LineOffset[n] is the offset from ScreenLines[] and ScreenAttrs[] for the
+/// start of line 'n'. These offsets are in general not linear, as full screen
+/// scrolling is implemented by rotating the offsets in the LineOffset array.
+/// LineWraps[] is an array of boolean flags indicating if the screen line wraps
+/// to the next line. It can only be true if a window occupies the entire screen
+/// width.
+///
+///
+/// Note: before the screen is initialized and when out of memory these can be
+/// NULL.
 EXTERN schar_T  *ScreenLines INIT(= NULL);
 EXTERN sattr_T  *ScreenAttrs INIT(= NULL);
 EXTERN unsigned *LineOffset INIT(= NULL);
 EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
-
-/*
- * When using Unicode characters (in UTF-8 encoding) the character in
- * ScreenLinesUC[] contains the Unicode for the character at this position, or
- * NUL when the character in ScreenLines[] is to be used (ASCII char).
- * The composing characters are to be drawn on top of the original character.
- * ScreenLinesC[0][off] is only to be used when ScreenLinesUC[off] != 0.
- * Note: These three are only allocated when enc_utf8 is set!
- */
-EXTERN u8char_T *ScreenLinesUC INIT(= NULL);    /* decoded UTF-8 characters */
-EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
-EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
-                                                   allocating ScreenLinesC[] */
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
