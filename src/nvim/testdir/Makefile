@@ -73,7 +73,6 @@ NEW_TESTS ?= \
 	    test_ins_complete.res \
 	    test_lambda.res \
 	    test_langmap.res \
-	    test_listlbr.res \
 	    test_let.res \
 	    test_lineending.res \
 	    test_listchars.res \
