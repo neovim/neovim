@@ -221,6 +221,7 @@ endif
 " Names of flaky tests.
 let s:flaky = [
       \ 'Test_oneshot()',
+      \ 'Test_out_cb()',
       \ 'Test_paused()',
       \ 'Test_reltime()',
       \ 'Test_terminal_composing_unicode()',
