@@ -46,3 +46,40 @@ function! Test_System()
 
   call assert_fails('call system("wc -l", 99999)', 'E86:')
 endfunction
+
+function! Test_system_exmode()
+  let cmd=" -es -u NONE -c 'source Xscript' +q; echo $?"
+  " Need to put this in a script, "catch" isn't found after an unknown
+  " function.
+  call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+  let a = system(v:progpath . cmd)
+  call assert_equal('0', a[0])
+  call assert_equal(0, v:shell_error)
+
+  " Error before try does set error flag.
+  call writefile(['call nosuchfunction()', 'try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+  let a = system(v:progpath . cmd)
+  call assert_notequal('0', a[0])
+
+  let cmd=" -es -u NONE -c 'source Xscript' +q"
+  let a = system(v:progpath . cmd)
+  call assert_notequal(0, v:shell_error)
+
+  let cmd=" -es -u NONE -c 'call doesnotexist()' +q; echo $?"
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, a[0])
+
+  let cmd=" -es -u NONE -c 'call doesnotexist()' +q"
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, v:shell_error)
+
+  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q; echo $?"
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, a[0])
+
+  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q"
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, v:shell_error)
+
+  call delete('Xscript')
+endfunc
