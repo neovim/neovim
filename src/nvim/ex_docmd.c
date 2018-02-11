@@ -5986,13 +5986,12 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
-  /*
-   * If there are more files or windows we won't exit.
-   */
-  if (check_more(FALSE, eap->forceit) == OK && only_one_window())
-    exiting = TRUE;
-  if ((!buf_hide(curbuf)
-       && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
+  // If there are more files or windows we won't exit.
+  if (check_more(FALSE, eap->forceit) == OK && only_one_window()) {
+    exiting = true;
+  }
+  if ((!buf_hide(wp->w_buffer)
+       && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD))
       || check_more(true, eap->forceit) == FAIL

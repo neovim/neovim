@@ -1310,3 +1310,16 @@ func! Test_edit_rightleft()
   set norightleft
   bw!
 endfunc
+
+func Test_edit_quit()
+  edit foo.txt
+  split
+  new
+  call setline(1, 'hello')
+  3wincmd w
+  redraw!
+  call assert_fails('1q', 'E37:')
+  bwipe! foo.txt
+  only
+endfunc
+
