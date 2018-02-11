@@ -23,7 +23,6 @@ SCRIPTS_DEFAULT = \
            test49.out             \
            test52.out             \
            test64.out             \
-           test73.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
@@ -42,17 +41,21 @@ NEW_TESTS ?= \
 	    test_changedtick.res \
 	    test_charsearch.res \
 	    test_cindent.res \
+	    test_close_count.res \
 	    test_cmdline.res \
 	    test_command_count.res \
 	    test_cscope.res \
 	    test_curswant.res \
 	    test_digraph.res \
 	    test_edit.res \
+	    test_erasebackword.res \
 	    test_exists.res \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_file_size.res \
 	    test_filter_map.res \
+	    test_find_complete.res \
+	    test_fixeol.res \
 	    test_findfile.res \
 	    test_fnameescape.res \
 	    test_fold.res \
@@ -73,6 +76,7 @@ NEW_TESTS ?= \
 	    test_listlbr.res \
 	    test_let.res \
 	    test_lineending.res \
+	    test_listchars.res \
 	    test_makeencoding.res \
 	    test_marks.res \
 	    test_match.res \
