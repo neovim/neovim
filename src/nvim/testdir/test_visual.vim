@@ -121,6 +121,7 @@ endfunc
 
 " Test Virtual replace mode.
 func Test_virtual_replace()
+  throw 'skipped: TODO: '
   exe "set t_kD=\<C-V>x7f t_kb=\<C-V>x08"
   enew!
   exe "normal a\nabcdefghi\njk\tlmn\n    opq	rst\n\<C-D>uvwxyz"
@@ -136,6 +137,7 @@ func Test_virtual_replace()
 	      \ ], getline(1, 6))
   normal G
   mark a
+  inoremap <C-D> <Del>
   exe "normal o0\<C-D>\nabcdefghi\njk\tlmn\n    opq\trst\n\<C-D>uvwxyz\n"
   exe "normal 'ajgR0\<C-D> 1\nA\nBCDEFGHIJ\n\tKL\nMNO\nPQR" . repeat("\<BS>", 29)
   call assert_equal([' 1',
