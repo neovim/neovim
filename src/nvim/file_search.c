@@ -688,7 +688,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             && search_ctx->ffsc_start_dir) {
           if (STRLEN(search_ctx->ffsc_start_dir) + 1 < MAXPATHL) {
             STRCPY(file_path, search_ctx->ffsc_start_dir);
-            add_pathsep(file_path);
+            add_pathsep((char *)file_path);
           } else {
             goto fail;
           }
@@ -697,7 +697,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         // append the fix part of the search path
         if (STRLEN(file_path) + STRLEN(stackp->ffs_fix_path) + 1 < MAXPATHL) {
           STRCAT(file_path, stackp->ffs_fix_path);
-          add_pathsep(file_path);
+          add_pathsep((char *)file_path);
         } else {
           goto fail;
         }
@@ -794,7 +794,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             if (STRLEN(stackp->ffs_filearray[i]) + 1
                 + STRLEN(search_ctx->ffsc_file_to_search) < MAXPATHL) {
               STRCPY(file_path, stackp->ffs_filearray[i]);
-              add_pathsep(file_path);
+              add_pathsep((char *)file_path);
               STRCAT(file_path, search_ctx->ffsc_file_to_search);
             } else {
               goto fail;
@@ -948,7 +948,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (STRLEN(search_ctx->ffsc_start_dir) + 1
           + STRLEN(search_ctx->ffsc_fix_path) < MAXPATHL) {
         STRCPY(file_path, search_ctx->ffsc_start_dir);
-        add_pathsep(file_path);
+        add_pathsep((char *)file_path);
         STRCAT(file_path, search_ctx->ffsc_fix_path);
       } else {
         goto fail;
