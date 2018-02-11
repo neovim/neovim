@@ -109,6 +109,8 @@ NEW_TESTS ?= \
 	    test_winbuf_close.res \
 	    test_window_id.res \
 	    test_writefile.res \
+	    test_alot_latin.res \
+	    test_alot_utf8.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
