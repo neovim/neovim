@@ -3,7 +3,6 @@
 " undo-able pieces.  Do that by setting 'undolevels'.
 " Also tests :earlier and :later.
 
-set belloff=all
 func Test_undotree()
   exe "normal Aabc\<Esc>"
   set ul=100

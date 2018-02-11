@@ -1,6 +1,5 @@
 " Test for the search command
 
-set belloff=all
 func Test_search_cmdline()
   " See test/functional/legacy/search_spec.lua
   throw 'skipped: Nvim does not support test_override()'

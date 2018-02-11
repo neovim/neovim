@@ -22,7 +22,7 @@ endfunc
 " blocks.
 func Test_swap_file()
   set directory=.
-  set fileformat=unix undolevels=-1 belloff=all
+  set fileformat=unix undolevels=-1
   edit! Xtest
   let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
   let i = 1

@@ -1,6 +1,5 @@
 " Tests for autocommands
 
-set belloff=all
 
 func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
