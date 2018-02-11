@@ -5,6 +5,7 @@
 " runtest.vim.  Checking for the multi_byte feature is in the individual
 " files, so that they can be run by themselves.
 
+source test_charsearch_utf8.vim
 source test_expr_utf8.vim
 source test_matchadd_conceal_utf8.vim
 source test_regexp_utf8.vim
