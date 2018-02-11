@@ -1343,7 +1343,7 @@ void dialog_changed(buf_T *buf, int checkall)
 /// hidden, autowriting it or unloading it.
 bool can_abandon(buf_T *buf, int forceit)
 {
-  return P_HID(buf)
+  return buf_hide(buf)
          || !bufIsChanged(buf)
          || buf->b_nwindows > 1
          || autowrite(buf, forceit) == OK
@@ -1860,12 +1860,12 @@ void do_argfile(exarg_T *eap, int argn)
       // if 'hidden' set, only check for changed file when re-editing
       // the same buffer
       other = true;
-      if (P_HID(curbuf)) {
+      if (buf_hide(curbuf)) {
         p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
         other = otherfile(p);
         xfree(p);
       }
-      if ((!P_HID(curbuf) || !other)
+      if ((!buf_hide(curbuf) || !other)
           && check_changed(curbuf, CCGD_AW
                            | (other ? 0 : CCGD_MULTWIN)
                            | (eap->forceit ? CCGD_FORCEIT : 0)
@@ -1885,7 +1885,7 @@ void do_argfile(exarg_T *eap, int argn)
     // argument index.
     if (do_ecmd(0, alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
                 eap, ECMD_LAST,
-                (P_HID(curwin->w_buffer) ? ECMD_HIDE : 0)
+                (buf_hide(curwin->w_buffer) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0), curwin) == FAIL) {
       curwin->w_arg_idx = old_arg_idx;
     } else if (eap->cmdidx != CMD_argdo) {
@@ -1902,7 +1902,7 @@ void ex_next(exarg_T *eap)
 
   // check for changed buffer now, if this fails the argument list is not
   // redefined.
-  if (P_HID(curbuf)
+  if (buf_hide(curbuf)
       || eap->cmdidx == CMD_snext
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
@@ -2008,7 +2008,7 @@ void ex_listdo(exarg_T *eap)
 
   if (eap->cmdidx == CMD_windo
       || eap->cmdidx == CMD_tabdo
-      || P_HID(curbuf)
+      || buf_hide(curbuf)
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
@@ -3840,7 +3840,7 @@ void ex_drop(exarg_T   *eap)
     // to split the current window or data could be lost.
     // Skip the check if the 'hidden' option is set, as in this case the
     // buffer won't be lost.
-    if (!P_HID(curbuf)) {
+    if (!buf_hide(curbuf)) {
       emsg_off++;
       split = check_changed(curbuf, CCGD_AW | CCGD_EXCMD);
       emsg_off--;

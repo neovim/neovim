@@ -5991,7 +5991,7 @@ static void ex_quit(exarg_T *eap)
    */
   if (check_more(FALSE, eap->forceit) == OK && only_one_window())
     exiting = TRUE;
-  if ((!P_HID(curbuf)
+  if ((!buf_hide(curbuf)
        && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD))
@@ -6009,7 +6009,7 @@ static void ex_quit(exarg_T *eap)
       getout(0);
     }
     /* close window; may free buffer */
-    win_close(wp, !P_HID(wp->w_buffer) || eap->forceit);
+    win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
 }
 
@@ -6108,7 +6108,7 @@ ex_win_close (
   buf_T       *buf = win->w_buffer;
 
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
-  if (need_hide && !P_HID(buf) && !forceit) {
+  if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
@@ -6126,9 +6126,9 @@ ex_win_close (
 
   /* free buffer when not hiding it or when it's a scratch buffer */
   if (tp == NULL)
-    win_close(win, !need_hide && !P_HID(buf));
+    win_close(win, !need_hide && !buf_hide(buf));
   else
-    win_close_othertab(win, !need_hide && !P_HID(buf), tp);
+    win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
 }
 
 /*
@@ -6359,7 +6359,7 @@ static void ex_exit(exarg_T *eap)
       getout(0);
     }
     // Quit current window, may free the buffer.
-    win_close(curwin, !P_HID(curwin->w_buffer));
+    win_close(curwin, !buf_hide(curwin->w_buffer));
   }
 }
 
@@ -6931,7 +6931,7 @@ do_exedit (
     if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
             NULL, eap,
             eap->do_ecmd_lnum,
-            (P_HID(curbuf) ? ECMD_HIDE : 0)
+            (buf_hide(curbuf) ? ECMD_HIDE : 0)
             + (eap->forceit ? ECMD_FORCEIT : 0)
             // After a split we can use an existing buffer.
             + (old_curwin != NULL ? ECMD_OLDBUF : 0)
@@ -6940,13 +6940,13 @@ do_exedit (
       /* Editing the file failed.  If the window was split, close it. */
       if (old_curwin != NULL) {
         need_hide = (curbufIsChanged() && curbuf->b_nwindows <= 1);
-        if (!need_hide || P_HID(curbuf)) {
+        if (!need_hide || buf_hide(curbuf)) {
           cleanup_T cs;
 
           /* Reset the error/interrupt/exception state here so that
            * aborting() returns FALSE when closing a window. */
           enter_cleanup(&cs);
-          win_close(curwin, !need_hide && !P_HID(curbuf));
+          win_close(curwin, !need_hide && !buf_hide(curbuf));
 
           /* Restore the error/interrupt/exception state if not
            * discarded by a new aborting error, interrupt, or
