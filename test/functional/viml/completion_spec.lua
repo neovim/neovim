@@ -3,7 +3,10 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local curbufmeths = helpers.curbufmeths
+local command = helpers.command
 local meths = helpers.meths
+local wait = helpers.wait
 
 describe('completion', function()
   local screen
@@ -969,6 +972,93 @@ describe('ui/ext_popupmenu', function()
       {2:-- INSERT --}                                                |
     ]], nil, nil, function()
       eq(nil, items) -- popupmenu was hidden
+    end)
+  end)
+
+  describe('TextChangeP autocommand', function()
+    it('can trigger TextChangedP autocommand as expected',
+    function()
+      curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar'})
+      command('set complete=. completeopt=menuone')
+      command('let g:foo = []')
+      command('autocmd! TextChanged * :call add(g:foo, "N")')
+      command('autocmd! TextChangedI * :call add(g:foo, "I")')
+      command('autocmd! TextChangedP * :call add(g:foo, "P")')
+      command('call cursor(3, 1)')
+
+      command('let g:foo = []')
+      feed('o')
+      wait()
+      feed('<esc>')
+      assert.same({'I'}, eval('g:foo'))
+
+      command('let g:foo = []')
+      feed('S')
+      wait()
+      feed('f')
+      wait()
+      assert.same({'I', 'I'}, eval('g:foo'))
+      feed('<esc>')
+
+      command('let g:foo = []')
+      feed('S')
+      wait()
+      feed('f')
+      wait()
+      feed('<C-n>')
+      wait()
+      assert.same({'I', 'I', 'P'}, eval('g:foo'))
+      feed('<esc>')
+
+      command('let g:foo = []')
+      feed('S')
+      wait()
+      feed('f')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      wait()
+      assert.same({'I', 'I', 'P', 'P'}, eval('g:foo'))
+      feed('<esc>')
+
+      command('let g:foo = []')
+      feed('S')
+      wait()
+      feed('f')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      wait()
+      assert.same({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
+      feed('<esc>')
+
+      command('let g:foo = []')
+      feed('S')
+      wait()
+      feed('f')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      wait()
+      feed('<C-n>')
+      assert.same({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
+      feed('<esc>')
+
+      assert.same({'foo', 'bar', 'foobar', 'foo'}, eval('getline(1, "$")'))
+
+      source([[
+      au! TextChanged
+      au! TextChangedI
+      au! TextChangedP
+      set complete&vim completeopt&vim
+      ]])
     end)
   end)
 end)
