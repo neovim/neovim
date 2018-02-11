@@ -18,6 +18,52 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*help.txt\*')
   helpclose
 
+  help |
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*bar\*')
+  helpclose
+
+  help "*
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*quotestar\*')
+  helpclose
+
+  help sp?it
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:split\*')
+  helpclose
+
+  help :?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:?\*')
+  helpclose
+
+  help FileW*Post
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*FileWritePost\*')
+  helpclose
+
+  help `ls`
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:ls\*')
+  helpclose
+
+  help ^X
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*CTRL-X\*')
+  helpclose
+
+  help i_^_CTRL-D
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*i_^_CTRL-D\*')
+  helpclose
+
+  exec "help \<C-V>"
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*CTRL-V\*')
+  helpclose
+
+
   exec "help! ('textwidth'"
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ "\\*'textwidth'\\*")
@@ -46,6 +92,16 @@ func Test_help_tagjump()
   exec "help! {address}."
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*{address}\*')
+  helpclose
+
+  exusage
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:index\*')
+  helpclose
+
+  viusage
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*normal-index\*')
   helpclose
 endfunc
 
