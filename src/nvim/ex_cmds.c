@@ -35,7 +35,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
-#include "nvim/liveupdate.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -833,9 +833,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
                      -(last_line - dest - extra), 0L, true);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
-  // send live update regarding the new lines that were added
-  if (kv_size(curbuf->liveupdate_channels)) {
-    liveupdate_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  // send update regarding the new lines that were added
+  if (kv_size(curbuf->update_channels)) {
+    buffer_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
   }
 
   /*
@@ -872,9 +872,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
   }
 
-  // send LiveUpdate regarding lines that were deleted
-  if (kv_size(curbuf->liveupdate_channels)) {
-    liveupdate_send_changes(curbuf, line1 + extra, 0, num_lines, true);
+  // send nvim_buf_update regarding lines that were deleted
+  if (kv_size(curbuf->update_channels)) {
+    buffer_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
   }
 
   return OK;
@@ -2442,7 +2442,7 @@ int do_ecmd(
         goto theend;
       }
       u_unchanged(curbuf);
-      liveupdate_unregister_all(curbuf);
+      buffer_updates_unregister_all(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
@@ -3170,7 +3170,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 ///
 /// @return buffer used for 'inccommand' preview
 static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
-                     bool send_liveupdate_changedtick)
+                     bool send_buffer_update_changedtick)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -4018,11 +4018,11 @@ skip:
     i = curbuf->b_ml.ml_line_count - old_line_count;
     changed_lines(first_line, 0, last_line - i, i, false);
 
-    if (kv_size(curbuf->liveupdate_channels)) {
+    if (kv_size(curbuf->update_channels)) {
       int64_t num_added = last_line - first_line;
       int64_t num_removed = num_added - i;
-      liveupdate_send_changes(curbuf, first_line, num_added, num_removed,
-                              send_liveupdate_changedtick);
+      buffer_updates_send_changes(curbuf, first_line, num_added, num_removed,
+                              send_buffer_update_changedtick);
     }
   }
 

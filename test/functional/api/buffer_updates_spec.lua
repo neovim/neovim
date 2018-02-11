@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, ok = helpers.eq, helpers.ok
 local buffer, command, eval, nvim, next_message = helpers.buffer,
-  helpers.command, helpers.eval, helpers.nvim, helpers.next_message
+  helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -32,11 +32,11 @@ local function open(activate, lines)
   -- what is the value of b:changedtick?
   local tick = eval('b:changedtick')
 
-  -- turn on live updates, ensure that the LiveUpdateStart messages
+  -- turn on live updates, ensure that the nvim_buf_updates_start messages
   -- arrive as expectected
   if activate then
-    ok(buffer('live_updates_start', b, true))
-    expectn('LiveUpdateStart', {b, tick, lines, false})
+    ok(buffer('attach', b, true))
+    expectn('nvim_buf_updates_start', {b, tick, lines, false})
   end
 
   return b, tick, filename
@@ -52,13 +52,13 @@ local function editoriginal(activate, lines)
 end
 
 local function reopen(buf, expectedlines)
-  ok(buffer('live_updates_stop', buf))
-  expectn('LiveUpdateEnd', {buf})
+  ok(buffer('detach', buf))
+  expectn('nvim_buf_updates_end', {buf})
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
-  ok(buffer('live_updates_start', buf, true))
-  expectn('LiveUpdateStart', {buf, tick, expectedlines, false})
+  ok(buffer('attach', buf, true))
+  expectn('nvim_buf_updates_start', {buf, tick, expectedlines, false})
   command('normal! gg')
   return tick
 end
@@ -73,13 +73,13 @@ local function reopenwithfolds(b)
   -- add a fold
   command('2,4fold')
   tick = tick + 1
-  expectn('LiveUpdate', {b, tick, 1, 4, {'original line 2/*{{{*/',
+  expectn('nvim_buf_update', {b, tick, 1, 4, {'original line 2/*{{{*/',
                                           'original line 3',
                                           'original line 4/*}}}*/'}})
   -- make a new fold that wraps lines 1-6
   command('1,6fold')
   tick = tick + 1
-  expectn('LiveUpdate', {b, tick, 0, 6, {'original line 1/*{{{*/',
+  expectn('nvim_buf_update', {b, tick, 0, 6, {'original line 1/*{{{*/',
                                           'original line 2/*{{{*/',
                                           'original line 3',
                                           'original line 4/*}}}*/',
@@ -95,30 +95,30 @@ describe('liveupdate', function()
     -- add a new line at the start of the buffer
     command('normal! GyyggP')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 0, {'original line 6'}})
+    expectn('nvim_buf_update', {b, tick, 0, 0, {'original line 6'}})
 
     -- add multiple lines at the start of the file
     command('normal! GkkyGggP')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 0, {'original line 4',
+    expectn('nvim_buf_update', {b, tick, 0, 0, {'original line 4',
                                            'original line 5',
                                            'original line 6'}})
 
     -- add one line to the middle of the file, several times
     command('normal! ggYjjp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 3, 3, {'original line 4'}})
     command('normal! p')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 4, 4, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 4, 4, {'original line 4'}})
     command('normal! p')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 5, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 5, 5, {'original line 4'}})
 
     -- add multiple lines to the middle of the file
     command('normal! gg4Yjjp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 3, {'original line 4',
+    expectn('nvim_buf_update', {b, tick, 3, 3, {'original line 4',
                                            'original line 5',
                                            'original line 6',
                                            'original line 4'}})
@@ -126,16 +126,16 @@ describe('liveupdate', function()
     -- add one line to the end of the file
     command('normal! ggYGp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 17, 17, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 17, 17, {'original line 4'}})
 
     -- add one line to the end of the file, several times
     command('normal! ggYGppp')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 18, 18, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 18, 18, {'original line 4'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 19, 19, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 19, 19, {'original line 4'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 20, 20, {'original line 4'}})
+    expectn('nvim_buf_update', {b, tick, 20, 20, {'original line 4'}})
 
     -- add several lines to the end of the file, several times
     command('normal! gg4YGp')
@@ -146,47 +146,47 @@ describe('liveupdate', function()
                  'original line 6',
                  'original line 4'}
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 21, 21, firstfour})
+    expectn('nvim_buf_update', {b, tick, 21, 21, firstfour})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 25, 25, firstfour})
+    expectn('nvim_buf_update', {b, tick, 25, 25, firstfour})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 29, 29, firstfour})
+    expectn('nvim_buf_update', {b, tick, 29, 29, firstfour})
 
     -- create a new empty buffer and wipe out the old one ... this will
     -- turn off live updates
     command('enew!')
-    expectn('LiveUpdateEnd', {b})
+    expectn('nvim_buf_updates_end', {b})
 
     -- add a line at the start of an empty file
     command('enew')
     tick = eval('b:changedtick')
     local b2 = nvim('get_current_buf')
-    ok(buffer('live_updates_start', b2, true))
-    expectn('LiveUpdateStart', {b2, tick, {""}, false})
+    ok(buffer('attach', b2, true))
+    expectn('nvim_buf_updates_start', {b2, tick, {""}, false})
     eval('append(0, ["new line 1"])')
     tick = tick + 1
-    expectn('LiveUpdate', {b2, tick, 0, 0, {'new line 1'}})
+    expectn('nvim_buf_update', {b2, tick, 0, 0, {'new line 1'}})
 
     -- turn off live updates manually
-    buffer('live_updates_stop', b2)
-    expectn('LiveUpdateEnd', {b2})
+    buffer('detach', b2)
+    expectn('nvim_buf_updates_end', {b2})
 
     -- add multiple lines to a blank file
     command('enew!')
     local b3 = nvim('get_current_buf')
-    ok(buffer('live_updates_start', b3, true))
+    ok(buffer('attach', b3, true))
     tick = eval('b:changedtick')
-    expectn('LiveUpdateStart', {b3, tick, {""}, false})
+    expectn('nvim_buf_updates_start', {b3, tick, {""}, false})
     eval('append(0, ["new line 1", "new line 2", "new line 3"])')
     tick = tick + 1
-    expectn('LiveUpdate', {b3, tick, 0, 0, {'new line 1',
+    expectn('nvim_buf_update', {b3, tick, 0, 0, {'new line 1',
                                             'new line 2',
                                             'new line 3'}})
 
     -- use the API itself to add a line to the start of the buffer
     buffer('set_lines', b3, 0, 0, true, {'New First Line'})
     tick = tick + 1
-    expectn('LiveUpdate', {b3, tick, 0, 0, {"New First Line"}})
+    expectn('nvim_buf_update', {b3, tick, 0, 0, {"New First Line"}})
   end)
 
   it('knows when you remove lines from a buffer', function()
@@ -195,37 +195,37 @@ describe('liveupdate', function()
     -- remove one line from start of file
     command('normal! dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {}})
 
     -- remove multiple lines from the start of the file
     command('normal! 4dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 4, {}})
+    expectn('nvim_buf_update', {b, tick, 0, 4, {}})
 
     -- remove multiple lines from middle of file
     tick = reopen(b, origlines)
     command('normal! jj3dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 5, {}})
+    expectn('nvim_buf_update', {b, tick, 2, 5, {}})
 
     -- remove one line from the end of the file
     tick = reopen(b, origlines)
     command('normal! Gdd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 6, {}})
+    expectn('nvim_buf_update', {b, tick, 5, 6, {}})
 
     -- remove multiple lines from the end of the file
     tick = reopen(b, origlines)
     command('normal! 4G3dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 6, {}})
+    expectn('nvim_buf_update', {b, tick, 3, 6, {}})
 
     -- pretend to remove heaps lines from the end of the file but really
     -- just remove two
     tick = reopen(b, origlines)
     command('normal! Gk5dd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 4, 6, {}})
+    expectn('nvim_buf_update', {b, tick, 4, 6, {}})
   end)
 
   it('knows when you modify lines of text', function()
@@ -234,53 +234,53 @@ describe('liveupdate', function()
     -- some normal text editing
     command('normal! A555')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'original line 1555'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'original line 1555'}})
     command('normal! jj8X')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {'origin3'}})
+    expectn('nvim_buf_update', {b, tick, 2, 3, {'origin3'}})
 
     -- modify multiple lines at once using visual block mode
     tick = reopen(b, origlines)
     command('normal! jjw')
     sendkeys('\x16jjllx')
     tick = tick + 1
-    expectn('LiveUpdate',
+    expectn('nvim_buf_update',
             {b, tick, 2, 5, {'original e 3', 'original e 4', 'original e 5'}})
 
     -- replace part of a line line using :s
     tick = reopen(b, origlines)
     command('3s/line 3/foo/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {'original foo'}})
+    expectn('nvim_buf_update', {b, tick, 2, 3, {'original foo'}})
 
     -- replace parts of several lines line using :s
     tick = reopen(b, origlines)
     command('%s/line [35]/foo/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 5, {'original foo',
+    expectn('nvim_buf_update', {b, tick, 2, 5, {'original foo',
                                            'original line 4',
                                            'original foo'}})
 
     -- type text into the first line of a blank file, one character at a time
     command('enew!')
     tick = 2
-    expectn('LiveUpdateEnd', {b})
+    expectn('nvim_buf_updates_end', {b})
     local bnew = nvim('get_current_buf')
-    ok(buffer('live_updates_start', bnew, true))
-    expectn('LiveUpdateStart', {bnew, tick, {''}, false})
+    ok(buffer('attach', bnew, true))
+    expectn('nvim_buf_updates_start', {bnew, tick, {''}, false})
     sendkeys('i')
     sendkeys('h')
     sendkeys('e')
     sendkeys('l')
     sendkeys('l')
     sendkeys('o\nworld')
-    expectn('LiveUpdate', {bnew, tick + 1, 0, 1, {'h'}})
-    expectn('LiveUpdate', {bnew, tick + 2, 0, 1, {'he'}})
-    expectn('LiveUpdate', {bnew, tick + 3, 0, 1, {'hel'}})
-    expectn('LiveUpdate', {bnew, tick + 4, 0, 1, {'hell'}})
-    expectn('LiveUpdate', {bnew, tick + 5, 0, 1, {'hello'}})
-    expectn('LiveUpdate', {bnew, tick + 6, 0, 1, {'hello', ''}})
-    expectn('LiveUpdate', {bnew, tick + 7, 1, 2, {'world'}})
+    expectn('nvim_buf_update', {bnew, tick + 1, 0, 1, {'h'}})
+    expectn('nvim_buf_update', {bnew, tick + 2, 0, 1, {'he'}})
+    expectn('nvim_buf_update', {bnew, tick + 3, 0, 1, {'hel'}})
+    expectn('nvim_buf_update', {bnew, tick + 4, 0, 1, {'hell'}})
+    expectn('nvim_buf_update', {bnew, tick + 5, 0, 1, {'hello'}})
+    expectn('nvim_buf_update', {bnew, tick + 6, 0, 1, {'hello', ''}})
+    expectn('nvim_buf_update', {bnew, tick + 7, 1, 2, {'world'}})
   end)
 
   it('knows when you replace lines', function()
@@ -289,23 +289,23 @@ describe('liveupdate', function()
     -- blast away parts of some lines with visual mode
     command('normal! jjwvjjllx')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {'original '}})
+    expectn('nvim_buf_update', {b, tick, 2, 3, {'original '}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 4, {}})
+    expectn('nvim_buf_update', {b, tick, 3, 4, {}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 4, {'e 5'}})
+    expectn('nvim_buf_update', {b, tick, 3, 4, {'e 5'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {'original e 5'}})
+    expectn('nvim_buf_update', {b, tick, 2, 3, {'original e 5'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 4, {}})
+    expectn('nvim_buf_update', {b, tick, 3, 4, {}})
 
     -- blast away a few lines using :g
     tick = reopen(b, origlines)
     command('global/line [35]/delete')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 2, 3, {}})
+    expectn('nvim_buf_update', {b, tick, 2, 3, {}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 4, {}})
+    expectn('nvim_buf_update', {b, tick, 3, 4, {}})
   end)
 
   it('knows when you filter lines', function()
@@ -317,9 +317,9 @@ describe('liveupdate', function()
     -- 1) addition of the new lines after the filtered lines
     -- 2) removal of the original lines
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 5, {"C", "E", "B", "D"}})
+    expectn('nvim_buf_update', {b, tick, 5, 5, {"C", "E", "B", "D"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 5, {}})
+    expectn('nvim_buf_update', {b, tick, 1, 5, {}})
   end)
 
   it('sends a sensible event when you use "o"', function()
@@ -329,37 +329,37 @@ describe('liveupdate', function()
     -- use 'o' to start a new line from a line with no indent
     command('normal! o')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {""}})
+    expectn('nvim_buf_update', {b, tick, 1, 1, {""}})
 
     -- undo the change, indent line 1 a bit, and try again
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 2, {}})
+    expectn('nvim_buf_update', {b, tick, 1, 2, {}})
     tick = tick + 1
-    expectn('LiveUpdateTick', {b, tick})
+    expectn('nvim_buf_update_tick', {b, tick})
     command('set autoindent')
     command('normal! >>')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {"\tAAA"}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {"\tAAA"}})
     command('normal! ommm')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 1, {"\t"}})
+    expectn('nvim_buf_update', {b, tick, 1, 1, {"\t"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 2, {"\tmmm"}})
+    expectn('nvim_buf_update', {b, tick, 1, 2, {"\tmmm"}})
 
     -- undo the change, and try again with 'O'
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 2, {'\t'}})
+    expectn('nvim_buf_update', {b, tick, 1, 2, {'\t'}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 2, {}})
+    expectn('nvim_buf_update', {b, tick, 1, 2, {}})
     tick = tick + 1
-    expectn('LiveUpdateTick', {b, tick})
+    expectn('nvim_buf_update_tick', {b, tick})
     command('normal! ggOmmm')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 0, {"\t"}})
+    expectn('nvim_buf_update', {b, tick, 0, 0, {"\t"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {"\tmmm"}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {"\tmmm"}})
   end)
 
   it('deactivates when your buffer changes outside vim', function()
@@ -369,12 +369,12 @@ describe('liveupdate', function()
 
     command('normal! x')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'ine 1'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'ine 1'}})
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'Line 1'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'Line 1'}})
     tick = tick + 1
-    expectn('LiveUpdateTick', {b, tick})
+    expectn('nvim_buf_update_tick', {b, tick})
 
     -- change the file directly
     local f = io.open(filename, 'a')
@@ -384,7 +384,7 @@ describe('liveupdate', function()
 
     -- reopen the file and watch live updates shut down
     command('edit')
-    expectn('LiveUpdateEnd', {b})
+    expectn('nvim_buf_updates_end', {b})
   end)
 
   it('allows a channel to watch multiple buffers at once', function()
@@ -405,32 +405,32 @@ describe('liveupdate', function()
     command('b'..b1nr)
     command('normal! x')
     tick1 = tick1 + 1
-    expectn('LiveUpdate', {b1, tick1, 0, 1, {'1'}})
+    expectn('nvim_buf_update', {b1, tick1, 0, 1, {'1'}})
     command('undo')
     tick1 = tick1 + 1
-    expectn('LiveUpdate', {b1, tick1, 0, 1, {'A1'}})
+    expectn('nvim_buf_update', {b1, tick1, 0, 1, {'A1'}})
     tick1 = tick1 + 1
-    expectn('LiveUpdateTick', {b1, tick1})
+    expectn('nvim_buf_update_tick', {b1, tick1})
 
     command('b'..b2nr)
     command('normal! x')
     tick2 = tick2 + 1
-    expectn('LiveUpdate', {b2, tick2, 0, 1, {'1'}})
+    expectn('nvim_buf_update', {b2, tick2, 0, 1, {'1'}})
     command('undo')
     tick2 = tick2 + 1
-    expectn('LiveUpdate', {b2, tick2, 0, 1, {'B1'}})
+    expectn('nvim_buf_update', {b2, tick2, 0, 1, {'B1'}})
     tick2 = tick2 + 1
-    expectn('LiveUpdateTick', {b2, tick2})
+    expectn('nvim_buf_update_tick', {b2, tick2})
 
     command('b'..b3nr)
     command('normal! x')
     tick3 = tick3 + 1
-    expectn('LiveUpdate', {b3, tick3, 0, 1, {'1'}})
+    expectn('nvim_buf_update', {b3, tick3, 0, 1, {'1'}})
     command('undo')
     tick3 = tick3 + 1
-    expectn('LiveUpdate', {b3, tick3, 0, 1, {'C1'}})
+    expectn('nvim_buf_update', {b3, tick3, 0, 1, {'C1'}})
     tick3 = tick3 + 1
-    expectn('LiveUpdateTick', {b3, tick3})
+    expectn('nvim_buf_update_tick', {b3, tick3})
   end)
 
   it('doesn\'t get confused when you turn watching on/off many times',
@@ -439,22 +439,22 @@ describe('liveupdate', function()
     local b, tick = editoriginal(false)
 
     -- turn on live updates many times
-    ok(buffer('live_updates_start', b, true))
-    ok(buffer('live_updates_start', b, true))
-    ok(buffer('live_updates_start', b, true))
-    ok(buffer('live_updates_start', b, true))
-    ok(buffer('live_updates_start', b, true))
-    expectn('LiveUpdateStart', {b, tick, origlines, false})
+    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true))
+    expectn('nvim_buf_updates_start', {b, tick, origlines, false})
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
 
     -- turn live updates off many times
-    ok(buffer('live_updates_stop', b))
-    ok(buffer('live_updates_stop', b))
-    ok(buffer('live_updates_stop', b))
-    ok(buffer('live_updates_stop', b))
-    ok(buffer('live_updates_stop', b))
-    expectn('LiveUpdateEnd', {b})
+    ok(buffer('detach', b))
+    ok(buffer('detach', b))
+    ok(buffer('detach', b))
+    ok(buffer('detach', b))
+    ok(buffer('detach', b))
+    expectn('nvim_buf_updates_end', {b})
     eval('rpcnotify('..channel..', "Hello Again")')
     expectn('Hello Again', {})
   end)
@@ -488,46 +488,46 @@ describe('liveupdate', function()
     local b, tick = open(false, lines)
 
     -- turn on live updates for sessions 1, 2 and 3
-    ok(request(1, 'nvim_buf_live_updates_start', b, true))
-    ok(request(2, 'nvim_buf_live_updates_start', b, true))
-    ok(request(3, 'nvim_buf_live_updates_start', b, true))
-    wantn(1, 'LiveUpdateStart', {b, tick, lines, false})
-    wantn(2, 'LiveUpdateStart', {b, tick, lines, false})
-    wantn(3, 'LiveUpdateStart', {b, tick, lines, false})
+    ok(request(1, 'nvim_buf_attach', b, true))
+    ok(request(2, 'nvim_buf_attach', b, true))
+    ok(request(3, 'nvim_buf_attach', b, true))
+    wantn(1, 'nvim_buf_updates_start', {b, tick, lines, false})
+    wantn(2, 'nvim_buf_updates_start', {b, tick, lines, false})
+    wantn(3, 'nvim_buf_updates_start', {b, tick, lines, false})
 
     -- make a change to the buffer
     command('normal! x')
     tick = tick + 1
-    wantn(1, 'LiveUpdate', {b, tick, 0, 1, {'AA'}})
-    wantn(2, 'LiveUpdate', {b, tick, 0, 1, {'AA'}})
-    wantn(3, 'LiveUpdate', {b, tick, 0, 1, {'AA'}})
+    wantn(1, 'nvim_buf_update', {b, tick, 0, 1, {'AA'}})
+    wantn(2, 'nvim_buf_update', {b, tick, 0, 1, {'AA'}})
+    wantn(3, 'nvim_buf_update', {b, tick, 0, 1, {'AA'}})
 
     -- stop watching on channel 1
-    ok(request(1, 'nvim_buf_live_updates_stop', b))
-    wantn(1, 'LiveUpdateEnd', {b})
+    ok(request(1, 'nvim_buf_detach', b))
+    wantn(1, 'nvim_buf_updates_end', {b})
 
     -- undo the change to buffer 1
     command('undo')
     tick = tick + 1
-    wantn(2, 'LiveUpdate', {b, tick, 0, 1, {'AAA'}})
-    wantn(3, 'LiveUpdate', {b, tick, 0, 1, {'AAA'}})
+    wantn(2, 'nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
+    wantn(3, 'nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    wantn(2, 'LiveUpdateTick', {b, tick})
-    wantn(3, 'LiveUpdateTick', {b, tick})
+    wantn(2, 'nvim_buf_update_tick', {b, tick})
+    wantn(3, 'nvim_buf_update_tick', {b, tick})
 
-    -- make sure there are no other pending LiveUpdate messages going to
+    -- make sure there are no other pending nvim_buf_update messages going to
     -- channel 1
     local channel1 = request(1, 'nvim_get_api_info')[1]
     eval('rpcnotify('..channel1..', "Hello")')
     wantn(1, 'Hello', {})
 
-    -- close the buffer and channels 2 and 3 should get a LiveUpdateEnd
+    -- close the buffer and channels 2 and 3 should get a nvim_buf_updates_end
     -- notification
     command('edit')
-    wantn(2, 'LiveUpdateEnd', {b})
-    wantn(3, 'LiveUpdateEnd', {b})
+    wantn(2, 'nvim_buf_updates_end', {b})
+    wantn(3, 'nvim_buf_updates_end', {b})
 
-    -- make sure there are no other pending LiveUpdate messages going to
+    -- make sure there are no other pending nvim_buf_update messages going to
     -- channel 1
     channel1 = request(1, 'nvim_get_api_info')[1]
     eval('rpcnotify('..channel1..', "Hello Again")')
@@ -550,13 +550,13 @@ describe('liveupdate', function()
     command('normal! gg')
     command('diffput')
     tick2 = tick2 + 1
-    expectn('LiveUpdate', {b2, tick2, 0, 0, {"AAA"}})
+    expectn('nvim_buf_update', {b2, tick2, 0, 0, {"AAA"}})
 
     -- use :diffget to grab the other change from buffer 2
     command('normal! G')
     command('diffget')
     tick1 = tick1 + 1
-    expectn('LiveUpdate', {b1, tick1, 2, 2, {"CCC"}})
+    expectn('nvim_buf_update', {b1, tick1, 2, 2, {"CCC"}})
 
     eval('rpcnotify('..channel..', "Goodbye")')
     expectn('Goodbye', {})
@@ -567,14 +567,14 @@ describe('liveupdate', function()
     local b, tick = editoriginal(true, {"B", "D", "C", "A", "E"})
     command('%sort')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 5, {"A", "B", "C", "D", "E"}})
+    expectn('nvim_buf_update', {b, tick, 0, 5, {"A", "B", "C", "D", "E"}})
   end)
 
   it('works with :left', function()
     local b, tick = editoriginal(true, {" A", "  B", "B", "\tB", "\t\tC"})
     command('2,4left')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 4, {"B", "B", "B"}})
+    expectn('nvim_buf_update', {b, tick, 1, 4, {"B", "B", "B"}})
   end)
 
   it('works with :right', function()
@@ -586,7 +586,7 @@ describe('liveupdate', function()
     command('set ts=2 et')
     command('2,4retab')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 4, {"    B", "      BB", "  B"}})
+    expectn('nvim_buf_update', {b, tick, 1, 4, {"    B", "      BB", "  B"}})
   end)
 
   it('works with :move', function()
@@ -594,19 +594,19 @@ describe('liveupdate', function()
     -- move text down towards the end of the file
     command('2,3move 4')
     tick = tick + 2
-    expectn('LiveUpdate', {b, tick, 4, 4, {"original line 2",
+    expectn('nvim_buf_update', {b, tick, 4, 4, {"original line 2",
                                            "original line 3"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 3, {}})
+    expectn('nvim_buf_update', {b, tick, 1, 3, {}})
 
     -- move text up towards the start of the file
     tick = reopen(b, origlines)
     command('4,5move 2')
     tick = tick + 2
-    expectn('LiveUpdate', {b, tick, 2, 2, {"original line 4",
+    expectn('nvim_buf_update', {b, tick, 2, 2, {"original line 4",
                                            "original line 5"}})
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 5, 7, {}})
+    expectn('nvim_buf_update', {b, tick, 5, 7, {}})
   end)
 
   it('sends sensible events when you manually add/remove folds', function()
@@ -616,13 +616,13 @@ describe('liveupdate', function()
     -- delete the inner fold
     command('normal! zR3Gzd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 1, 4, {'original line 2',
+    expectn('nvim_buf_update', {b, tick, 1, 4, {'original line 2',
                                            'original line 3',
                                            'original line 4'}})
     -- delete the outer fold
     command('normal! zd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+    expectn('nvim_buf_update', {b, tick, 0, 6, origlines})
 
     -- discard changes and put the folds back
     tick = reopenwithfolds(b)
@@ -630,7 +630,7 @@ describe('liveupdate', function()
     -- remove both folds at once
     command('normal! ggzczD')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+    expectn('nvim_buf_update', {b, tick, 0, 6, origlines})
 
     -- discard changes and put the folds back
     tick = reopenwithfolds(b)
@@ -638,17 +638,17 @@ describe('liveupdate', function()
     -- now delete all folds at once
     command('normal! zE')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 6, origlines})
+    expectn('nvim_buf_update', {b, tick, 0, 6, origlines})
 
     -- create a fold from line 4 to the end of the file
     command('normal! 4GA/*{{{*/')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 4, {'original line 4/*{{{*/'}})
+    expectn('nvim_buf_update', {b, tick, 3, 4, {'original line 4/*{{{*/'}})
 
     -- delete the fold which only has one marker
     command('normal! Gzd')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 3, 6, {'original line 4',
+    expectn('nvim_buf_update', {b, tick, 3, 6, {'original line 4',
                                            'original line 5',
                                            'original line 6'}})
   end)
@@ -660,16 +660,16 @@ describe('liveupdate', function()
     -- test live updates are working
     command('normal! x')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'AA'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'AA'}})
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'AAA'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    expectn('LiveUpdateTick', {b, tick})
+    expectn('nvim_buf_update_tick', {b, tick})
 
     -- close our buffer by creating a new one
     command('enew')
-    expectn('LiveUpdateEnd', {b})
+    expectn('nvim_buf_updates_end', {b})
 
     -- reopen the original buffer, make sure there are no Live Updates sent
     command('b1')
@@ -687,18 +687,18 @@ describe('liveupdate', function()
     -- test live updates are working
     command('normal! x')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'AA'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'AA'}})
     command('undo')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'AAA'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    expectn('LiveUpdateTick', {b, tick})
+    expectn('nvim_buf_update_tick', {b, tick})
 
     -- close our buffer by creating a new one
     command('set hidden')
     command('enew')
 
-    -- note that no LiveUpdateEnd is sent
+    -- note that no nvim_buf_updates_end is sent
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
 
@@ -706,7 +706,7 @@ describe('liveupdate', function()
     command('b1')
     command('normal! x')
     tick = tick + 1
-    expectn('LiveUpdate', {b, tick, 0, 1, {'AA'}})
+    expectn('nvim_buf_update', {b, tick, 0, 1, {'AA'}})
   end)
 
   it('turns off live updates when a buffer is unloaded, deleted, or wiped',
@@ -721,17 +721,17 @@ describe('liveupdate', function()
       local b = open(true, {'AAA'})
 
       -- call :bunload or whatever the command is, and then check that we
-      -- receive a LiveUpdateEnd
+      -- receive a nvim_buf_updates_end
       command(cmd)
-      expectn('LiveUpdateEnd', {b})
+      expectn('nvim_buf_updates_end', {b})
     end
   end)
 
   it('doesn\'t send the buffer\'s content when not requested', function()
     helpers.clear()
     local b, tick = editoriginal(false)
-    ok(buffer('live_updates_start', b, false))
-    expectn('LiveUpdateStart', {b, tick, {}, false})
+    ok(buffer('attach', b, false))
+    expectn('nvim_buf_updates_start', {b, tick, {}, false})
   end)
 
 end)

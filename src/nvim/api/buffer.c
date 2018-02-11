@@ -25,7 +25,7 @@
 #include "nvim/window.h"
 #include "nvim/undo.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/liveupdate.h"
+#include "nvim/buffer_updates.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -76,18 +76,18 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// Activate live updates from this buffer to the current channel.
+/// Activate updates from this buffer to the current channel.
 ///
 /// @param buffer The buffer handle
 /// @param send_buffer Set to true if the initial notification should contain
 ///        the whole buffer
 /// @param[out] err Details of an error that may have occurred
-/// @return False when live updates couldn't be enabled because the buffer isn't
+/// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded; otherwise True.
-Boolean nvim_buf_live_updates_start(uint64_t channel_id,
-                                    Buffer buffer,
-                                    Boolean send_buffer,
-                                    Error *err)
+Boolean nvim_buf_attach(uint64_t channel_id,
+                                 Buffer buffer,
+                                 Boolean send_buffer,
+                                 Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -96,18 +96,18 @@ Boolean nvim_buf_live_updates_start(uint64_t channel_id,
     return false;
   }
 
-  return liveupdate_register(buf, channel_id, send_buffer);
+  return buffer_updates_register(buf, channel_id, send_buffer);
 }
 //
-/// Deactivate live updates from this buffer to the current channel.
+/// Deactivate updates from this buffer to the current channel.
 ///
 /// @param buffer The buffer handle
 /// @param[out] err Details of an error that may have occurred
-/// @return False when live updates couldn't be disabled because the buffer
+/// @return False when updates couldn't be disabled because the buffer
 ///         isn't loaded; otherwise True.
-Boolean nvim_buf_live_updates_stop(uint64_t channel_id,
-                                   Buffer buffer,
-                                   Error *err)
+Boolean nvim_buf_detach(uint64_t channel_id,
+                                 Buffer buffer,
+                                 Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -116,7 +116,7 @@ Boolean nvim_buf_live_updates_stop(uint64_t channel_id,
     return false;
   }
 
-  liveupdate_unregister(buf, channel_id);
+  buffer_updates_unregister(buf, channel_id);
   return true;
 }
 

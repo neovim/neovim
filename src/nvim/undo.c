@@ -92,7 +92,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/liveupdate.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -1698,7 +1698,7 @@ bool u_undo_and_forget(int count)
     count = 1;
   }
   undo_undoes = true;
-  // don't send a LiveUpdate for this undo is part of 'inccommand' playing with
+  // don't send a nvim_buf_update for this undo is part of 'inccommand' playing with
   // buffer contents
   u_doit(count, true, false);
 
@@ -1735,7 +1735,7 @@ bool u_undo_and_forget(int count)
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
-static void u_doit(int startcount, bool quiet, bool send_liveupdate)
+static void u_doit(int startcount, bool quiet, bool send_update)
 {
   int count = startcount;
 
@@ -1771,7 +1771,7 @@ static void u_doit(int startcount, bool quiet, bool send_liveupdate)
         break;
       }
 
-      u_undoredo(true, send_liveupdate);
+      u_undoredo(true, send_update);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1782,7 +1782,7 @@ static void u_doit(int startcount, bool quiet, bool send_liveupdate)
         break;
       }
 
-      u_undoredo(false, send_liveupdate);
+      u_undoredo(false, send_update);
 
       /* Advance for next redo.  Set "newhead" when at the end of the
        * redoable changes. */
@@ -2117,7 +2117,7 @@ void undo_time(long step, int sec, int file, int absolute)
  *
  * When "undo" is TRUE we go up in the tree, when FALSE we go down.
  */
-static void u_undoredo(int undo, bool send_liveupdate)
+static void u_undoredo(int undo, bool send_update)
 {
   char_u      **newarray = NULL;
   linenr_T oldsize;
@@ -2245,7 +2245,7 @@ static void u_undoredo(int undo, bool send_liveupdate)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize, send_liveupdate);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, send_update);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2281,10 +2281,10 @@ static void u_undoredo(int undo, bool send_liveupdate)
   }
 
   // because the calls to changed()/unchanged() above will bump b_changedtick
-  // again, we need to send a LiveUpdate with just the new value of
+  // again, we need to send a nvim_buf_update with just the new value of
   // b:changedtick
-  if (send_liveupdate && kv_size(curbuf->liveupdate_channels)) {
-    liveupdate_send_tick(curbuf);
+  if (send_update && kv_size(curbuf->update_channels)) {
+    buffer_updates_send_tick(curbuf);
   }
 
   /*
