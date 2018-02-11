@@ -3727,7 +3727,7 @@ current_quote (
 
         curwin->w_cursor = VIsual;
         VIsual = t;
-        vis_bef_curs = TRUE;
+        vis_bef_curs = true;
       }
       dec_cursor();
     }

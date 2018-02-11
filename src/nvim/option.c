@@ -1525,7 +1525,7 @@ do_set (
               origval = oldval;
             }
 
-            if (nextchar == '&') {              /* set to default val */
+            if (nextchar == '&') {              // set to default val
               newval = options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
                 ?  VI_DEFAULT : VIM_DEFAULT];

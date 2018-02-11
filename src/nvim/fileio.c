@@ -6276,9 +6276,9 @@ do_doautocmd (
 
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
-    if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, TRUE,
+    if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true,
                              group, curbuf, NULL)) {
-      nothing_done = FALSE;
+      nothing_done = false;
     }
   }
 
@@ -6757,7 +6757,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   if (autocmd_fname != NULL) {
     autocmd_fname = vim_strsave(autocmd_fname);
   }
-  autocmd_fname_full = FALSE;   /* call FullName_save() later */
+  autocmd_fname_full = false;   // call FullName_save() later
 
   /*
    * Set the buffer number to be used for <abuf>.

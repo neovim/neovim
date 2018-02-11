@@ -1637,11 +1637,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         /* Prepare for redoing.  Only use the nchar field for "r",
          * otherwise it might be the second char of the operator. */
         if (cap->cmdchar == 'g' && (cap->nchar == 'n'
-                                    || cap->nchar == 'N'))
+                                    || cap->nchar == 'N')) {
           prep_redo(oap->regname, cap->count0,
-              get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
-              oap->motion_force, cap->cmdchar, cap->nchar);
-        else if (cap->cmdchar != ':') {
+                    get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
+                    oap->motion_force, cap->cmdchar, cap->nchar);
+        } else if (cap->cmdchar != ':') {
           int nchar = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
 
           // reverse what nv_replace() did
@@ -1650,10 +1650,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           } else if (nchar == REPLACE_NL_NCHAR) {
             nchar = NL;
           }
-          prep_redo(oap->regname, 0L, NUL, 'v',
-              get_op_char(oap->op_type),
-              get_extra_op_char(oap->op_type),
-              nchar);
+          prep_redo(oap->regname, 0L, NUL, 'v', get_op_char(oap->op_type),
+                    get_extra_op_char(oap->op_type), nchar);
         }
         if (!redo_VIsual_busy) {
           redo_VIsual_mode = resel_VIsual_mode;
