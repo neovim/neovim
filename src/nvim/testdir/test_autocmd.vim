@@ -353,7 +353,9 @@ endfunc
 " Closing a window might cause an endless loop
 " E814 for older Vims
 func Test_autocmd_bufwipe_in_SessLoadPost()
+  edit Xtest
   tabnew
+  file Xsomething
   set noswapfile
   mksession!
 
@@ -361,7 +363,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
         \ 'let v:swapchoice="e"',
         \ 'augroup test_autocmd_sessionload',
         \ 'autocmd!',
-        \ 'autocmd SessionLoadPost * 4bw!',
+        \ 'autocmd SessionLoadPost * exe bufnr("Xsomething") . "bw!"',
         \ 'augroup END',
 	\ '',
 	\ 'func WriteErrors()',
