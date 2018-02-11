@@ -71,16 +71,13 @@ NEW_TESTS ?= \
 	    test_lambda.res \
 	    test_langmap.res \
 	    test_listlbr.res \
-	    test_listlbr_utf8.res \
 	    test_let.res \
 	    test_lineending.res \
 	    test_makeencoding.res \
 	    test_marks.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \
-	    test_matchadd_conceal_utf8.res \
 	    test_mksession.res \
-	    test_mksession_utf8.res \
 	    test_nested_function.res \
 	    test_normal.res \
 	    test_number.res \
@@ -96,7 +93,6 @@ NEW_TESTS ?= \
 	    test_spell.res \
 	    test_stat.res \
 	    test_startup.res \
-	    test_startup_utf8.res \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_system.res \
