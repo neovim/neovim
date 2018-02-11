@@ -282,3 +282,10 @@ func Test_cmd_in_reg_undo()
   only!
   let @a=''
 endfunc
+
+func Test_redo_empty_line()
+  new
+  exe "norm\x16r\x160"
+  exe "norm."
+  bwipe!
+endfunc

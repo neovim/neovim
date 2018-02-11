@@ -313,4 +313,8 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 # define OPEN_CHR_FILES
 #endif
 
+// Replacement for nchar used by nv_replace().
+#define REPLACE_CR_NCHAR    -1
+#define REPLACE_NL_NCHAR    -2
+
 #endif  // NVIM_VIM_H
