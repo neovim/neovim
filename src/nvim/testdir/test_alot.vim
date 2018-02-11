@@ -27,6 +27,7 @@ source test_popup.vim
 source test_recover.vim
 source test_regexp_utf8.vim
 source test_source_utf8.vim
+source test_sha256.vim
 source test_statusline.vim
 source test_syn_attr.vim
 source test_tabline.vim
