@@ -85,7 +85,8 @@ return {
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
-    'TextChangedI',           -- text was modified in Insert mode
+    'TextChangedI',           -- text was modified in Insert mode(no popup)
+    'TextChangedP',           -- text was modified in Insert mode(popup)
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
