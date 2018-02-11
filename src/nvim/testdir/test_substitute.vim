@@ -261,6 +261,7 @@ endfunc
 
 " Test for *:s%* on :substitute.
 func Test_sub_cmd_6()
+  throw "skipped: Nvim removed POSIX-related 'cpoptions' flags"
   set magic&
   set cpo+=/
 
