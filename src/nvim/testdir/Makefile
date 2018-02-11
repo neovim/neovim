@@ -75,6 +75,7 @@ NEW_TESTS ?= \
 	    test_langmap.res \
 	    test_let.res \
 	    test_lineending.res \
+	    test_listdict.res \
 	    test_listchars.res \
 	    test_makeencoding.res \
 	    test_marks.res \
