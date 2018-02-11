@@ -54,6 +54,9 @@ else
   set encoding=latin1
 endif
 
+" Avoid stopping at the "hit enter" prompt
+set nomore
+
 " Output all messages in English.
 lang mess C
 
