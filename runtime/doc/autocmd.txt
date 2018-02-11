@@ -325,6 +325,9 @@ Name			triggered by ~
 
 |TextChanged|		after a change was made to the text in Normal mode
 |TextChangedI|		after a change was made to the text in Insert mode
+			when popup menu is not visible
+|TextChangedP|		after a change was made to the text in Insert mode
+			when popup menu visible
 
 |ColorScheme|		after loading a color scheme
 
@@ -969,6 +972,11 @@ TextChangedI			After a change was made to the text in the
 				current buffer in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as TextChanged.
+							*TextChangedP*
+TextChangedP			After a change was made to the text in the
+				current buffer in Insert mode, only when the
+				popup menu is visible.  Otherwise the same as
+				TextChanged.
 							*User*
 User				Never executed automatically.  To be used for
 				autocommands that are only executed with
