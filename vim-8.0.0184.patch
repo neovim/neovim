@@ -1,0 +1,79 @@
+commit 2b7bc567b9238aaac682236cb4f727d0376e1302
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sat Jan 14 19:24:52 2017 +0100
+
+    patch 8.0.0184: when an error is caught Vim still exits with non-zero result
+    
+    Problem:    When in Ex mode and an error is caught by try-catch, Vim still
+                exits with a non-zero exit code.
+    Solution:   Don't set ex_exitval when inside a try-catch. (partly by Christian
+                Brabandt)
+
+diff --git a/src/nvim/message.c b/src/nvim/message.c
+index 7dda6fa89..2982a4051 100644
+--- a/src/nvim/message.c
++++ b/src/nvim/message.c
+@@ -578,8 +578,6 @@ emsg(char_u *s)
+ 	return TRUE;
+ 
+     called_emsg = TRUE;
+-    if (emsg_silent == 0)
+-	ex_exitval = 1;
+ 
+     /*
+      * If "emsg_severe" is TRUE: When an error exception is to be thrown,
+@@ -642,6 +640,8 @@ emsg(char_u *s)
+ 	    return TRUE;
+ 	}
+ 
++	ex_exitval = 1;
++
+ 	/* Reset msg_silent, an error causes messages to be switched back on. */
+ 	msg_silent = 0;
+ 	cmd_silent = FALSE;
+diff --git a/src/nvim/testdir/test_system.vim b/src/nvim/testdir/test_system.vim
+index 0446bd910..f82f751a9 100644
+--- a/src/nvim/testdir/test_system.vim
++++ b/src/nvim/testdir/test_system.vim
+@@ -46,3 +46,40 @@ function! Test_System()
+ 
+   call assert_fails('call system("wc -l", 99999)', 'E86:')
+ endfunction
++
++function! Test_system_exmode()
++  let cmd=" -es -u NONE -c 'source Xscript' +q; echo $?"
++  " Need to put this in a script, "catch" isn't found after an unknown
++  " function.
++  call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
++  let a = system(v:progpath . cmd)
++  call assert_equal('0', a[0])
++  call assert_equal(0, v:shell_error)
++
++  " Error before try does set error flag.
++  call writefile(['call nosuchfunction()', 'try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
++  let a = system(v:progpath . cmd)
++  call assert_notequal('0', a[0])
++
++  let cmd=" -es -u NONE -c 'source Xscript' +q"
++  let a = system(v:progpath . cmd)
++  call assert_notequal(0, v:shell_error)
++
++  let cmd=" -es -u NONE -c 'call doesnotexist()' +q; echo $?"
++  let a = system(v:progpath. cmd)
++  call assert_notequal(0, a[0])
++
++  let cmd=" -es -u NONE -c 'call doesnotexist()' +q"
++  let a = system(v:progpath. cmd)
++  call assert_notequal(0, v:shell_error)
++
++  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q; echo $?"
++  let a = system(v:progpath. cmd)
++  call assert_notequal(0, a[0])
++
++  let cmd=" -es -u NONE -c 'call doesnotexist()|let a=1' +q"
++  let a = system(v:progpath. cmd)
++  call assert_notequal(0, v:shell_error)
++
++  call delete('Xscript')
++endfunc
+/
