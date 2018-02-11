@@ -248,8 +248,17 @@ for s:test in sort(s:tests)
 
   if len(v:errors) > 0 && index(s:flaky, s:test) >= 0
     call add(s:messages, 'Flaky test failed, running it again')
+    let first_run = v:errors
+
     let v:errors = []
     call RunTheTest(s:test)
+    if len(v:errors) > 0
+      let second_run = v:errors
+      let v:errors = ['First run:']
+      call extend(v:errors, first_run)
+      call add(v:errors, 'Second run:')
+      call extend(v:errors, second_run)
+    endif
   endif
 
   call AfterTheTest()
