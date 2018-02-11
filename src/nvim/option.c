@@ -1584,6 +1584,9 @@ do_set (
                   break;
                 }
                 xfree(oldval);
+                if (origval == oldval) {
+                  origval = *(char_u **)varp;
+                }
                 oldval = *(char_u **)varp;
               }
               /*
