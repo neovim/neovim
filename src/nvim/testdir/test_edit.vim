@@ -216,14 +216,16 @@ endfunc
 func! Test_edit_08()
   throw 'skipped: moved to test/functional/legacy/edit_spec.lua'
   " reset insertmode from i_ctrl-r_=
+  let g:bufnr = bufnr('%')
   new
   call setline(1, ['abc'])
   call cursor(1, 4)
-  call feedkeys(":set im\<cr>ZZZ\<c-r>=setbufvar(1,'&im', 0)\<cr>",'tnix')
+  call feedkeys(":set im\<cr>ZZZ\<c-r>=setbufvar(g:bufnr,'&im', 0)\<cr>",'tnix')
   call assert_equal(['abZZZc'], getline(1,'$'))
   call assert_equal([0, 1, 1, 0], getpos('.'))
   call assert_false(0, '&im')
   bw!
+  unlet g:bufnr
 endfunc
 
 func! Test_edit_09()
