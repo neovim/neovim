@@ -98,14 +98,21 @@ func RunTheTest(test)
 
   call add(s:messages, 'Executing ' . a:test)
   let s:done += 1
-  try
+
+  if a:test =~ 'Test_nocatch_'
+    " Function handles errors itself.  This avoids skipping commands after the
+    " error.
     exe 'call ' . a:test
-  catch /^\cskipped/
-    call add(s:messages, '    Skipped')
-    call add(s:skipped, 'SKIPPED ' . a:test . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
-  catch
-    call add(v:errors, 'Caught exception in ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
-  endtry
+  else
+    try
+      exe 'call ' . a:test
+    catch /^\cskipped/
+      call add(s:messages, '    Skipped')
+      call add(s:skipped, 'SKIPPED ' . a:test . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
+    catch
+      call add(v:errors, 'Caught exception in ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
+    endtry
+  endif
 
   if exists("*TearDown")
     try
@@ -214,6 +221,7 @@ endif
 " Names of flaky tests.
 let s:flaky = [
       \ 'Test_oneshot()',
+      \ 'Test_terminal_composing_unicode()',
       \ 'Test_with_partial_callback()',
       \ 'Test_lambda_with_timer()',
       \ ]
