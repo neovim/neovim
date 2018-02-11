@@ -151,7 +151,7 @@ endfunc
 func XageTests(cchar)
   call s:setup_commands(a:cchar)
 
-  let list = [{'bufnr': 1, 'lnum': 1}]
+  let list = [{'bufnr': bufnr('%'), 'lnum': 1}]
   call g:Xsetlist(list)
 
   " Jumping to a non existent list should return error

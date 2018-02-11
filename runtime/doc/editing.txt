@@ -562,16 +562,16 @@ list of the current window.
 			buffer.
 			Also see |++opt| and |+cmd|.
 
-:[count]arge[dit][!] [++opt] [+cmd] {name}		*:arge* *:argedit*
-			Add {name} to the argument list and edit it.
+:[count]arge[dit][!] [++opt] [+cmd] {name} ..		*:arge* *:argedit*
+			Add {name}s to the argument list and edit it.
 			When {name} already exists in the argument list, this
 			entry is edited.
 			This is like using |:argadd| and then |:edit|.
-			Note that only one file name is allowed, and spaces
-			inside the file name are allowed, like with |:edit|.
+			Spaces in filenames have to be escaped with "\".
 			[count] is used like with |:argadd|.
-			[!] is required if the current file cannot be
-			|abandon|ed.
+			If the current file cannot be |abandon|ed {name}s will
+			still be added to the argument list, but won't be
+			edited. No check for duplicates is done.
 			Also see |++opt| and |+cmd|.
 
 :[count]arga[dd] {name} ..			*:arga* *:argadd* *E479*

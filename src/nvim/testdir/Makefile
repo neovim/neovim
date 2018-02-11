@@ -22,15 +22,12 @@ SCRIPTS_DEFAULT = \
            test48.out             \
            test49.out             \
            test52.out             \
-           test53.out             \
            test64.out             \
            test73.out             \
-           test79.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
            test17.out             \
-           test32.out             \
 
 endif
 
@@ -48,9 +45,13 @@ NEW_TESTS ?= \
 	    test_cmdline.res \
 	    test_command_count.res \
 	    test_cscope.res \
+	    test_curswant.res \
 	    test_digraph.res \
+	    test_edit.res \
+	    test_exists.res \
 	    test_diffmode.res \
 	    test_farsi.res \
+	    test_file_size.res \
 	    test_filter_map.res \
 	    test_findfile.res \
 	    test_fnameescape.res \
@@ -66,8 +67,11 @@ NEW_TESTS ?= \
 	    test_hlsearch.res \
 	    test_increment.res \
 	    test_increment_dbcs.res \
+	    test_ins_complete.res \
 	    test_lambda.res \
 	    test_langmap.res \
+	    test_let.res \
+	    test_lineending.res \
 	    test_makeencoding.res \
 	    test_marks.res \
 	    test_match.res \
@@ -81,7 +85,9 @@ NEW_TESTS ?= \
 	    test_options.res \
 	    test_profile.res \
 	    test_quickfix.res \
+	    test_recover.res \
 	    test_retab.res \
+	    test_scrollbind.res \
 	    test_search.res \
 	    test_signs.res \
 	    test_smartindent.res \
@@ -92,6 +98,7 @@ NEW_TESTS ?= \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_system.res \
+	    test_tab.res \
 	    test_tabpage.res \
 	    test_textobjects.res \
 	    test_timers.res \
@@ -99,6 +106,7 @@ NEW_TESTS ?= \
 	    test_usercommands.res \
 	    test_vimscript.res \
 	    test_visual.res \
+	    test_winbuf_close.res \
 	    test_window_id.res \
 	    test_writefile.res \
 	    test_alot.res

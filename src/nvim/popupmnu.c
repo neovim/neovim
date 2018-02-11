@@ -567,6 +567,7 @@ static int pum_set_selected(int n, int repeat)
         && (repeat <= 1)
         && (vim_strchr(p_cot, 'p') != NULL)) {
       win_T *curwin_save = curwin;
+      tabpage_T *curtab_save = curtab;
       int res = OK;
 
       // Open a preview window.  3 lines by default.  Prefer
@@ -647,7 +648,12 @@ static int pum_set_selected(int n, int repeat)
           curwin->w_cursor.lnum = 1;
           curwin->w_cursor.col = 0;
 
-          if ((curwin != curwin_save) && win_valid(curwin_save)) {
+          if ((curwin != curwin_save && win_valid(curwin_save))
+              || (curtab != curtab_save && valid_tabpage(curtab_save))) {
+            if (curtab != curtab_save && valid_tabpage(curtab_save)) {
+              goto_tabpage_tp(curtab_save, false, false);
+            }
+
             // When the first completion is done and the preview
             // window is not resized, skip the preview window's
             // status line redrawing.

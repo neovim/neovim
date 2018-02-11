@@ -1387,20 +1387,25 @@ void set_curbuf(buf_T *buf, int action)
   /* Don't restart Select mode after switching to another buffer. */
   VIsual_reselect = FALSE;
 
-  /* close_windows() or apply_autocmds() may change curbuf */
+  // close_windows() or apply_autocmds() may change curbuf and wipe out "buf"
   prevbuf = curbuf;
-  bufref_T bufref;
-  set_bufref(&bufref, prevbuf);
+  bufref_T newbufref;
+  bufref_T prevbufref;
+  set_bufref(&prevbufref, prevbuf);
+  set_bufref(&newbufref, buf);
 
+  // Autocommands may delete the curren buffer and/or the buffer we wan to go
+  // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
-      || (bufref_valid(&bufref) && !aborting())) {
+      || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
+          && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
     if (unload) {
       close_windows(prevbuf, false);
     }
-    if (bufref_valid(&bufref) && !aborting()) {
+    if (bufref_valid(&prevbufref) && !aborting()) {
       win_T  *previouswin = curwin;
       if (prevbuf == curbuf)
         u_sync(FALSE);

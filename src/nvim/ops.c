@@ -1629,13 +1629,18 @@ int op_replace(oparg_T *oap, int c)
   colnr_T oldlen;
   struct block_def bd;
   char_u              *after_p = NULL;
-  int had_ctrl_v_cr = (c == -1 || c == -2);
+  int had_ctrl_v_cr = false;
 
   if ((curbuf->b_ml.ml_flags & ML_EMPTY ) || oap->empty)
     return OK;              /* nothing to do */
 
-  if (had_ctrl_v_cr)
-    c = (c == -1 ? '\r' : '\n');
+  if (c == REPLACE_CR_NCHAR) {
+    had_ctrl_v_cr = true;
+    c = CAR;
+  } else if (c == REPLACE_NL_NCHAR) {
+    had_ctrl_v_cr = true;
+    c = NL;
+  }
 
   if (has_mbyte)
     mb_adjust_opend(oap);
@@ -1713,7 +1718,7 @@ int op_replace(oparg_T *oap, int c)
       // insert pre-spaces
       memset(newp + bd.textcol, ' ', (size_t)bd.startspaces);
       // insert replacement chars CHECK FOR ALLOCATED SPACE
-      // -1/-2 is used for entering CR literally.
+      // REPLACE_CR_NCHAR/REPLACE_NL_NCHAR is used for entering CR literally.
       size_t after_p_len = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
           // strlen(newp) at this point

@@ -2,7 +2,6 @@
 
 source shared.vim
 
-set belloff=all
 func! Setup_NewWindow()
   10new
   call setline(1, range(1,100))

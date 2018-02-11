@@ -6274,13 +6274,13 @@ do_doautocmd (
 
   fname = skipwhite(fname);
 
-  /*
-   * Loop over the events.
-   */
-  while (*arg && !ascii_iswhite(*arg))
-    if (apply_autocmds_group(event_name2nr(arg, &arg),
-            fname, NULL, TRUE, group, curbuf, NULL))
-      nothing_done = FALSE;
+  // Loop over the events.
+  while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
+    if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true,
+                             group, curbuf, NULL)) {
+      nothing_done = false;
+    }
+  }
 
   if (nothing_done && do_msg) {
     MSG(_("No matching autocommands"));
@@ -6671,12 +6671,12 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   proftime_T wait_time;
   bool did_save_redobuff = false;
 
-  /*
-   * Quickly return if there are no autocommands for this event or
-   * autocommands are blocked.
-   */
-  if (first_autopat[(int)event] == NULL || autocmd_blocked > 0)
+  // Quickly return if there are no autocommands for this event or
+  // autocommands are blocked.
+  if (event == NUM_EVENTS || first_autopat[(int)event] == NULL
+      || autocmd_blocked > 0) {
     goto BYPASS_AU;
+  }
 
   /*
    * When autocommands are busy, new autocommands are only executed when
@@ -6742,19 +6742,22 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET)
+    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET) {
       autocmd_fname = NULL;
-    else if (fname != NULL && *fname != NUL)
+    } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
-    else if (buf != NULL)
+    } else if (buf != NULL) {
       autocmd_fname = buf->b_ffname;
-    else
+    } else {
       autocmd_fname = NULL;
-  } else
+    }
+  } else {
     autocmd_fname = fname_io;
-  if (autocmd_fname != NULL)
+  }
+  if (autocmd_fname != NULL) {
     autocmd_fname = vim_strsave(autocmd_fname);
-  autocmd_fname_full = FALSE;   /* call FullName_save() later */
+  }
+  autocmd_fname_full = false;   // call FullName_save() later
 
   /*
    * Set the buffer number to be used for <abuf>.
