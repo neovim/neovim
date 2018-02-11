@@ -55,7 +55,7 @@ static int row = 0, col = 0;
 static struct {
   int top, bot, left, right;
 } sr;
-static int current_attr_code = 0;
+static int current_attr_code = -1;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
@@ -107,8 +107,9 @@ static char uilog_last_event[1024] = { 0 };
       } \
     } while (0)
 #endif
-#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, MORE, ZERO, ignore)
-#define SELECT_NTH(a1, a2, a3, a4, a5, a6, ...) a6
+#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, \
+                            MORE, MORE, ZERO, ignore)
+#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, ...) a7
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
 // Resolves to UI_CALL_MORE or UI_CALL_ZERO.
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
@@ -151,6 +152,9 @@ bool ui_is_stopped(UI *ui)
 
 bool ui_rgb_attached(void)
 {
+  if (!headless_mode && p_tgc) {
+    return true;
+  }
   for (size_t i = 0; i < ui_count; i++) {
     if (uis[i]->rgb) {
       return true;
@@ -174,84 +178,57 @@ void ui_event(char *name, Array args)
 }
 
 
-/// Converts an attrentry_T into an HlAttrs
+/// Converts an HlAttrs into Dictionary
 ///
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-HlAttrs attrentry2hlattrs(const attrentry_T *aep, bool use_rgb)
+Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
 {
   assert(aep);
-
-  HlAttrs attrs = HLATTRS_INIT;
-  int mask = 0;
-
-  mask = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
-
-  attrs.bold = mask & HL_BOLD;
-  attrs.underline = mask & HL_UNDERLINE;
-  attrs.undercurl = mask & HL_UNDERCURL;
-  attrs.italic = mask & HL_ITALIC;
-  attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
-
-  if (use_rgb) {
-    if (aep->rgb_fg_color != -1) {
-      attrs.foreground = aep->rgb_fg_color;
-    }
-
-    if (aep->rgb_bg_color != -1) {
-      attrs.background = aep->rgb_bg_color;
-    }
-
-    if (aep->rgb_sp_color != -1) {
-      attrs.special = aep->rgb_sp_color;
-    }
-  } else {
-    if (cterm_normal_fg_color != aep->cterm_fg_color) {
-      attrs.foreground = aep->cterm_fg_color - 1;
-    }
-
-    if (cterm_normal_bg_color != aep->cterm_bg_color) {
-        attrs.background = aep->cterm_bg_color - 1;
-    }
-  }
-
-  return attrs;
-}
-
-Dictionary hlattrs2dict(HlAttrs attrs)
-{
   Dictionary hl = ARRAY_DICT_INIT;
+  int mask  = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
 
-  if (attrs.bold) {
+  if (mask & HL_BOLD) {
     PUT(hl, "bold", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.underline) {
+  if (mask & HL_UNDERLINE) {
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.undercurl) {
+  if (mask & HL_UNDERCURL) {
     PUT(hl, "undercurl", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.italic) {
+  if (mask & HL_ITALIC) {
     PUT(hl, "italic", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.reverse) {
+  if (mask & (HL_INVERSE | HL_STANDOUT)) {
     PUT(hl, "reverse", BOOLEAN_OBJ(true));
   }
 
-  if (attrs.foreground != -1) {
-    PUT(hl, "foreground", INTEGER_OBJ(attrs.foreground));
-  }
 
-  if (attrs.background != -1) {
-    PUT(hl, "background", INTEGER_OBJ(attrs.background));
-  }
+  if (use_rgb) {
+    if (aep->rgb_fg_color != -1) {
+      PUT(hl, "foreground", INTEGER_OBJ(aep->rgb_fg_color));
+    }
 
-  if (attrs.special != -1) {
-    PUT(hl, "special", INTEGER_OBJ(attrs.special));
+    if (aep->rgb_bg_color != -1) {
+      PUT(hl, "background", INTEGER_OBJ(aep->rgb_bg_color));
+    }
+
+    if (aep->rgb_sp_color != -1) {
+      PUT(hl, "special", INTEGER_OBJ(aep->rgb_sp_color));
+    }
+  } else {
+    if (cterm_normal_fg_color != aep->cterm_fg_color) {
+      PUT(hl, "foreground", INTEGER_OBJ(aep->cterm_fg_color - 1));
+    }
+
+    if (cterm_normal_bg_color != aep->cterm_bg_color) {
+      PUT(hl, "background", INTEGER_OBJ(aep->cterm_bg_color - 1));
+    }
   }
 
   return hl;
@@ -296,6 +273,7 @@ void ui_refresh(void)
   ui_mode_info_set();
   old_mode_idx = -1;
   ui_cursor_shape();
+  current_attr_code = -1;
 }
 
 static void ui_refresh_event(void **argv)
@@ -313,6 +291,11 @@ void ui_resize(int new_width, int new_height)
   width = new_width;
   height = new_height;
 
+  // TODO(bfredl): update default colors when they changed, NOT on resize.
+  ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
+                             cterm_normal_fg_color, cterm_normal_bg_color);
+
+  // Deprecated:
   UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
   UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
   UI_CALL(update_sp, (ui->rgb ? normal_sp : -1));
@@ -406,26 +389,28 @@ void ui_reset_scroll_region(void)
   ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
-void ui_start_highlight(int attr_code)
+void ui_set_highlight(int attr_code)
 {
+  if (current_attr_code == attr_code) {
+    return;
+  }
   current_attr_code = attr_code;
 
-  if (!ui_active()) {
-    return;
+  HlAttrs attrs = HLATTRS_INIT;
+
+  if (attr_code != 0) {
+    HlAttrs *aep = syn_cterm_attr2entry(attr_code);
+    if (aep) {
+      attrs = *aep;
+    }
   }
 
-  set_highlight_args(current_attr_code);
+  UI_CALL(highlight_set, attrs);
 }
 
-void ui_stop_highlight(void)
+void ui_clear_highlight(void)
 {
-  current_attr_code = HL_NORMAL;
-
-  if (!ui_active()) {
-    return;
-  }
-
-  set_highlight_args(current_attr_code);
+  ui_set_highlight(0);
 }
 
 void ui_puts(uint8_t *str)
@@ -503,26 +488,6 @@ void ui_flush(void)
   ui_call_flush();
 }
 
-static void set_highlight_args(int attr_code)
-{
-  HlAttrs rgb_attrs = HLATTRS_INIT;
-  HlAttrs cterm_attrs = rgb_attrs;
-
-  if (attr_code == HL_NORMAL) {
-    goto end;
-  }
-  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
-
-  if (!aep) {
-    goto end;
-  }
-
-  rgb_attrs = attrentry2hlattrs(aep, true);
-  cterm_attrs = attrentry2hlattrs(aep, false);
-
-end:
-  UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
-}
 
 void ui_linefeed(void)
 {

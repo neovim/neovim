@@ -64,7 +64,7 @@ struct hl_group {
   int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
   int sg_gui;                   ///< "gui=" highlighting attributes
-                                ///< (combination of \ref HL_ATTRIBUTES)
+                                ///< (combination of \ref HlAttrFlags)
   RgbValue sg_rgb_fg;           ///< RGB foreground color
   RgbValue sg_rgb_bg;           ///< RGB background color
   RgbValue sg_rgb_sp;           ///< RGB special color
@@ -6796,7 +6796,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
-              cterm_normal_fg_bold = (HL_TABLE()[idx].sg_cterm & HL_BOLD);
               must_redraw = CLEAR;
             }
           } else {
@@ -6940,7 +6939,6 @@ void restore_cterm_colors(void)
   normal_bg = -1;
   normal_sp = -1;
   cterm_normal_fg_color = 0;
-  cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
 }
 
@@ -6994,9 +6992,9 @@ static void highlight_clear(int idx)
 /// GUI can redraw at any time for any buffer.
 static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 
-static inline attrentry_T * ATTR_ENTRY(int idx)
+static inline HlAttrs * ATTR_ENTRY(int idx)
 {
-  return &((attrentry_T *)attr_table.ga_data)[idx];
+  return &((HlAttrs *)attr_table.ga_data)[idx];
 }
 
 
@@ -7004,23 +7002,21 @@ static inline attrentry_T * ATTR_ENTRY(int idx)
 /// Add a new entry to the term_attr_table, attr_table or gui_attr_table
 /// if the combination is new.
 /// @return 0 for error.
-int get_attr_entry(attrentry_T *aep)
+int get_attr_entry(HlAttrs *aep)
 {
   garray_T *table = &attr_table;
-  attrentry_T *taep;
-  static int recursive = FALSE;
+  HlAttrs *taep;
+  static int recursive = false;
 
   /*
    * Init the table, in case it wasn't done yet.
    */
-  table->ga_itemsize = sizeof(attrentry_T);
+  table->ga_itemsize = sizeof(HlAttrs);
   ga_set_growsize(table, 7);
 
-  /*
-   * Try to find an entry with the same specifications.
-   */
-  for (int i = 0; i < table->ga_len; ++i) {
-    taep = &(((attrentry_T *)table->ga_data)[i]);
+  // Try to find an entry with the same specifications.
+  for (int i = 0; i < table->ga_len; i++) {
+    taep = &(((HlAttrs *)table->ga_data)[i]);
     if (aep->cterm_ae_attr == taep->cterm_ae_attr
         && aep->cterm_fg_color == taep->cterm_fg_color
         && aep->cterm_bg_color == taep->cterm_bg_color
@@ -7057,7 +7053,7 @@ int get_attr_entry(attrentry_T *aep)
 
   
   // This is a new combination of colors and font, add an entry.
-  taep = GA_APPEND_VIA_PTR(attrentry_T, table);
+  taep = GA_APPEND_VIA_PTR(HlAttrs, table);
   memset(taep, 0, sizeof(*taep));
   taep->cterm_ae_attr = aep->cterm_ae_attr;
   taep->cterm_fg_color = aep->cterm_fg_color;
@@ -7085,9 +7081,9 @@ void clear_hl_tables(void)
 // Return the resulting attributes.
 int hl_combine_attr(int char_attr, int prim_attr)
 {
-  attrentry_T *char_aep = NULL;
-  attrentry_T *spell_aep;
-  attrentry_T new_en = ATTRENTRY_INIT;
+  HlAttrs *char_aep = NULL;
+  HlAttrs *spell_aep;
+  HlAttrs new_en = HLATTRS_INIT;
 
   if (char_attr == 0) {
     return prim_attr;
@@ -7136,7 +7132,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 /// \note this function does not apply exclusively to cterm attr contrary
 /// to what its name implies
 /// \warn don't call it with attr 0 (i.e., the null attribute)
-attrentry_T *syn_cterm_attr2entry(int attr)
+HlAttrs *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
   if (attr >= attr_table.ga_len) {
@@ -7385,7 +7381,7 @@ syn_list_header(int did_header, int outlen, int id)
 /// @param idx corrected highlight index
 static void set_hl_attr(int idx)
 {
-  attrentry_T at_en = ATTRENTRY_INIT;
+  HlAttrs at_en = HLATTRS_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
 
@@ -8509,24 +8505,21 @@ RgbValue name_to_color(const char_u *name)
 /// Gets highlight description for id `attr_id` as a map.
 Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
 {
-  HlAttrs attrs = HLATTRS_INIT;
+  HlAttrs *aep = NULL;
   Dictionary dic = ARRAY_DICT_INIT;
 
   if (attr_id == 0) {
-    goto end;
+    return dic;
   }
 
-  attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
+  aep = syn_cterm_attr2entry((int)attr_id);
   if (!aep) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
 
-  attrs = attrentry2hlattrs(aep, rgb);
-
-end:
-  return hlattrs2dict(attrs);
+  return hlattrs2dict(aep, rgb);
 }
 
 
