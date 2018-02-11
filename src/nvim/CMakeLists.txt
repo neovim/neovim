@@ -142,7 +142,6 @@ set(CONV_SOURCES
   message.c
   regexp.c
   screen.c
-  buffer_updates.c
   search.c
   spell.c
   spellfile.c

@@ -1698,8 +1698,8 @@ bool u_undo_and_forget(int count)
     count = 1;
   }
   undo_undoes = true;
-  // don't send a nvim_buf_update for this undo is part of 'inccommand' playing with
-  // buffer contents
+  // don't send a nvim_buf_update for this undo is part of 'inccommand' playing
+  // with buffer contents
   u_doit(count, true, false);
 
   if (curbuf->b_u_curhead == NULL) {

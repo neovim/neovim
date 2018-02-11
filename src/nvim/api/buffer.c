@@ -85,9 +85,9 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded; otherwise True.
 Boolean nvim_buf_attach(uint64_t channel_id,
-                                 Buffer buffer,
-                                 Boolean send_buffer,
-                                 Error *err)
+                        Buffer buffer,
+                        Boolean send_buffer,
+                        Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -106,8 +106,8 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 /// @return False when updates couldn't be disabled because the buffer
 ///         isn't loaded; otherwise True.
 Boolean nvim_buf_detach(uint64_t channel_id,
-                                 Buffer buffer,
-                                 Error *err)
+                        Buffer buffer,
+                        Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

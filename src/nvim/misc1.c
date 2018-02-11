@@ -1921,9 +1921,9 @@ changed_lines(
     linenr_T lnume,       // line below last changed line
     long xtra,            // number of extra lines (negative when deleting)
     bool send_update  // some callers like undo/redo call changed_lines()
-                          // and then increment b_changedtick *again*. This flag
-                          // allows these callers to send the nvim_buf_update events
-                          // after they're done modifying b_changedtick.
+                      // and then increment b_changedtick *again*. This flag
+                      // allows these callers to send the nvim_buf_update events
+                      // after they're done modifying b_changedtick.
 )
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);

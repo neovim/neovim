@@ -4022,7 +4022,7 @@ skip:
       int64_t num_added = last_line - first_line;
       int64_t num_removed = num_added - i;
       buffer_updates_send_changes(curbuf, first_line, num_added, num_removed,
-                              send_buffer_update_changedtick);
+                                  send_buffer_update_changedtick);
     }
   }
 

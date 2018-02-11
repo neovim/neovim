@@ -2,6 +2,7 @@
 #include "nvim/memline.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/assert.h"
 
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
@@ -30,7 +31,10 @@ bool buffer_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
   Array linedata = ARRAY_DICT_INIT;
   if (send_buffer) {
     // collect buffer contents
-    size_t line_count = buf->b_ml.ml_line_count;
+    // True now, but a compile time reminder for future systems we support
+    STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t to small to hold the number of"
+                  " lines in a buffer");
+    size_t line_count = (size_t)buf->b_ml.ml_line_count;
     linedata.size = line_count;
     linedata.items = xcalloc(sizeof(Object), line_count);
     for (size_t i = 0; i < line_count; i++) {
@@ -118,8 +122,11 @@ void buffer_updates_unregister_all(buf_T *buf)
   }
 }
 
-void buffer_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
-                             int64_t num_removed, bool send_tick)
+void buffer_updates_send_changes(buf_T *buf,
+                                 linenr_T firstline,
+                                 int64_t num_added,
+                                 int64_t num_removed,
+                                 bool send_tick)
 {
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
@@ -148,8 +155,13 @@ void buffer_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_add
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;
     if (num_added > 0) {
-        linedata.size = num_added;
-        linedata.items = xcalloc(sizeof(Object), num_added);
+        // True now, but a compile time reminder for future systems we support
+        // Note that `num_added` is a `int64_t`, but still must be lower than
+        // `MAX_LNUM`
+        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t to small to hold the number "
+                      "of lines in a buffer");
+        linedata.size = (size_t)num_added;
+        linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
         for (int64_t i = 0; i < num_added; i++) {
           int64_t lnum = firstline + i;
           const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
