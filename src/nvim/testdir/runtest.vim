@@ -222,6 +222,7 @@ endif
 let s:flaky = [
       \ 'Test_oneshot()',
       \ 'Test_terminal_composing_unicode()',
+      \ 'Test_terminal_redir_file()',
       \ 'Test_with_partial_callback()',
       \ 'Test_lambda_with_timer()',
       \ ]
