@@ -2387,13 +2387,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  vert:c	'│'		vertical separators |:vsplit|
-	  fold:c	'·'		filling 'foldtext'
+	  vert:c	'│' or '|'	vertical separators |:vsplit|
+	  fold:c	'·' or '-'		filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
+
+	For "vert" and "fold", the new defaults '│' and '·' being of ambiguous
+	width for CJK languages, nvim will fallback to the old defaults '|' and
+	'-' when |ambiwidth| is set to "double".
 
 	Example: >
 	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-

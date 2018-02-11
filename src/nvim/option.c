@@ -3394,11 +3394,11 @@ static char_u *set_chars_option(char_u **varp)
   };
   static struct charstab filltab[] =
   {
-    { &fill_stl,                    "stl"  , ' '  },
-    { &fill_stlnc,                  "stlnc", ' '  },
-    { &fill_vert,                   "vert" , ' '  },
-    { &fill_fold,                   "fold" , '-'  },
-    { &fill_diff,                   "diff" , '-'  },
+    { &fill_stl,                  "stl"  , ' '  },
+    { &fill_stlnc,                "stlnc", ' '  },
+    { &fill_vert,                 "vert" , 9474 }, // '|'
+    { &fill_fold,                 "fold" , '_'   }, // '·' ▸
+    { &fill_diff,                 "diff" , '-'  },
   };
   static struct charstab lcstab[] =
   {
@@ -3419,6 +3419,17 @@ static char_u *set_chars_option(char_u **varp)
   } else {
     tab = filltab;
     entries = ARRAY_SIZE(filltab);
+    // hack to deal with default fillchars of ambiguous width:
+    // if ambiwidth=double then some fillchars take 2 columns which is forbidden
+    // so we fallback on old defaults
+    if ( *p_ambw == 'd') {
+      filltab[2].def = '|';
+      filltab[3].def = '.';
+    }
+    else {
+      filltab[2].def = 9474;
+      filltab[3].def = 183; // 183;
+    }
   }
 
   // first round: check for valid value, second round: assign values
@@ -3442,7 +3453,14 @@ static char_u *set_chars_option(char_u **varp)
           s = p + len + 1;
           c1 = mb_ptr2char_adv((const char_u **)&s);
           if (mb_char2cells(c1) > 1) {
+            // if ( (i == 2 || i == 3) && *p_ambw == 'd' && (c1 == filltab[2].def || c1 == filltab[3].def)) {
+              // setting ambiwidth=double will complain with current fillchar
+              // defaults (as fillchars are supposed to be monocell)
+            // } else {
+            DLOG("");
+
             continue;
+            // }
           }
           if (tab[i].cp == &lcs_tab2) {
             if (*s == NUL) {
