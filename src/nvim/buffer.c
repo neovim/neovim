@@ -1407,16 +1407,20 @@ void set_curbuf(buf_T *buf, int action)
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
       win_T  *previouswin = curwin;
-      if (prevbuf == curbuf)
-        u_sync(FALSE);
-      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL, prevbuf,
-          unload ? action : (action == DOBUF_GOTO
-                             && !buf_hide(prevbuf)
-                             && !bufIsChanged(
-                                 prevbuf)) ? DOBUF_UNLOAD : 0, FALSE);
-      if (curwin != previouswin && win_valid(previouswin))
-        /* autocommands changed curwin, Grr! */
+      if (prevbuf == curbuf) {
+        u_sync(false);
+      }
+      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL,
+                   prevbuf,
+                   unload
+                   ? action
+                   : (action == DOBUF_GOTO && !buf_hide(prevbuf)
+                      && !bufIsChanged(prevbuf)) ? DOBUF_UNLOAD : 0,
+                   false);
+      if (curwin != previouswin && win_valid(previouswin)) {
+        // autocommands changed curwin, Grr!
         curwin = previouswin;
+      }
     }
   }
   /* An autocommand may have deleted "buf", already entered it (e.g., when
@@ -4413,7 +4417,7 @@ do_arg_all (
       }
       wp->w_arg_idx = i;
 
-      if (i == opened_len && !keep_tabs) {    /* close this window */
+      if (i == opened_len && !keep_tabs) {    // close this window
         if (buf_hide(buf) || forceit || buf->b_nwindows > 1
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
@@ -4511,14 +4515,15 @@ do_arg_all (
         new_curwin = curwin;
         new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL,
-          ECMD_ONE,
-          ((buf_hide(curwin->w_buffer)
-            || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
-          + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
-        ++autocmd_no_leave;
-      use_firstwin = FALSE;
+      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
+                    ((buf_hide(curwin->w_buffer)
+                      || bufIsChanged(curwin->w_buffer))
+                     ? ECMD_HIDE : 0) + ECMD_OLDBUF,
+                    curwin);
+      if (use_firstwin) {
+        autocmd_no_leave++;
+      }
+      use_firstwin = false;
     }
     os_breakcheck();
 
@@ -4706,13 +4711,13 @@ void ex_buffer_all(exarg_T *eap)
    */
   for (wp = lastwin; open_wins > count; ) {
     r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, FALSE) == OK);
+         || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
     } else if (r) {
       win_close(wp, !buf_hide(wp->w_buffer));
-      --open_wins;
+      open_wins--;
       wp = lastwin;
     } else {
       wp = wp->w_prev;
