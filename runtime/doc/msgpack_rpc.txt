@@ -242,31 +242,11 @@ the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
 
 ==============================================================================
-6. Buffer Updates				      *buffer-updates* *rpc-buffer-updates*
+6. Buffer Updates				                *buffer-updates* *rpc-buffer-updates*
 
 A dedicated API has been created to allow co-processes to be notified  when a
 buffer is changed in any way. It is difficult and error-prone to try and do
 this with autocommands such as |TextChanged|.
-
-                                                              *buffer-updates-api*
-BufferUpdates Functions~
-
-nvim_buf_attach({send_buffer})                                *nvim_buf_attach()*
-              Register a plugin to receive notifications on buffer changes. An
-              initial |nvim_buf_updates_start| notification will be sent as a
-              confirmation. After that, |nvim_buf_update| notifications will be
-              sent for buffer updates, and |nvim_buf_update_tick| notifications
-              for a new changedtick without buffer change.
-
-              Parameters:~
-                  {send_buffer}  Bool. If `"True"`, the initial
-                  |nvim_buf_updates_start| notification will also send the full
-                  buffer's content. If `"False"`, the notification will contain
-                  an empty list instead.
-
-nvim_buf_detach()                                            *nvim_buf_detach()*
-              Unregister a plugin from buffer change notifications. A final
-              |nvim_buf_updates_end| notification will be sent as confirmation.
 
                                                            *buffer-updates-events*
 BufferUpdates Events~
@@ -372,41 +352,41 @@ the buffer contents are unloaded from memory:
   - reloading the buffer after it is changed from outside neovim.
 
                                                        *buffer-updates-examples*
-Example Events~
+Examples~
 
-If buffer updates are activated a new empty buffer, the following
+If buffer updates are activated a new empty buffer (and sending the buffer's
+content on the initial notification has been requested), the following
 |nvim_buf_updates_start| event will be sent: >
 
-  rpcnotify({channel}, "nvim_buf_updates_start", [{buf}, [""], v:false])
+  nvim_buf_updates_start[{buf}, [""], v:false]
 
 If the user adds 2 new lines to the start of a buffer, the following event
 would be generated: >
 
-  rpcnotify({channel}, "nvim_buf_update", [{buf}, 0, 0, ["line1", "line2"]])
+  nvim_buf_update[{buf}, 0, 0, ["line1", "line2"]]
 
 If the puts the cursor on a line containing the text `"Hello world"` and adds
 a `!` character to the end using insert mode, the following event would be
 generated: >
 
-  rpcnotify({channel}, "nvim_buf_update", [{buf}, {linenr}, {linenr} + 1, ["Hello
-  world!"]])
+  nvim_buf_update[{buf}, {linenr}, {linenr} + 1, ["Hello world!"]]
 
 If the user moves their cursor to line 3 of a buffer and deletes 20 lines
 using `20dd`, the following event will be generated: >
 
-  rpcnotify({channel}, "nvim_buf_update", [{buf}, 2, 20, []])
+  nvim_buf_update[{buf}, 2, 20, []]
 
 If the user selects lines 3-5 of a buffer using |linewise-visual| mode and
 then presses `p` to paste in a new block of 6 lines, then the following event
 would be sent to the co-process: >
 
-  rpcnotify({channel}, "nvim_buf_update", [{buf}, 2, 5, ['pasted line 1', 'pasted
+  nvim_buf_update[{buf}, 2, 5, ['pasted line 1', 'pasted
   line 2', 'pasted line 3', 'pasted line 4', 'pasted line 5', 'pasted line
-  6']])
+  6']]
 
 If the user uses :edit to reload a buffer then the following event would be
 generated: >
 
-  rpcnotify({channel}, "nvim_buf_updates_end", [{buf}])
+  nvim_buf_updates_end[{buf}]
 
  vim:tw=78:ts=8:ft=help:norl:

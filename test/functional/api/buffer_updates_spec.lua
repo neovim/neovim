@@ -242,7 +242,7 @@ describe('liveupdate', function()
     -- modify multiple lines at once using visual block mode
     tick = reopen(b, origlines)
     command('normal! jjw')
-    sendkeys('\x16jjllx')
+    sendkeys('<C-v>jjllx')
     tick = tick + 1
     expectn('nvim_buf_update',
             {b, tick, 2, 5, {'original e 3', 'original e 4', 'original e 5'}})
