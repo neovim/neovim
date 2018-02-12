@@ -568,7 +568,7 @@ static void cursor_goto(UI *ui, int row, int col)
     ugrid_goto(grid, row, col);
     return;
   }
-  if (1 != row
+  if (!(1 == row && 0 == col)
       && 0 == col ? col != grid->col :
       row != grid->row ? false :
       1 == col ? 2 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
