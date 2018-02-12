@@ -20,7 +20,7 @@ local function sendkeys(keys)
   -- give neovim some time to process msgpack requests before possibly sending
   -- more key presses - otherwise they all pile up in the queue and get
   -- processed at once
-  local ntime = os.clock() + 0.01
+  local ntime = os.clock() + 0.1
   repeat until os.clock() > ntime
 end
 
