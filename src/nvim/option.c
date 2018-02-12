@@ -3392,24 +3392,22 @@ static char_u *set_chars_option(char_u **varp)
     char    *name;  ///< char id
     int    def;  ///< default value
   };
-  static struct charstab filltab[] =
-  {
+  static struct charstab filltab[] = {
     { &fill_stl,                  "stl"  , ' '  },
     { &fill_stlnc,                "stlnc", ' '  },
-    { &fill_vert,                 "vert" , 9474 }, // '|'
-    { &fill_fold,                 "fold" , '_'   }, // '·' ▸
+    { &fill_vert,                 "vert" , 9474 },  // '|'
+    { &fill_fold,                 "fold" , 183  },  // '·'
     { &fill_diff,                 "diff" , '-'  },
   };
-  static struct charstab lcstab[] =
-  {
-    {&lcs_eol,      "eol",     NUL},
-    {&lcs_ext,      "extends", NUL},
-    {&lcs_nbsp,     "nbsp",    NUL},
-    {&lcs_prec,     "precedes", NUL},
-    {&lcs_space,    "space", NUL},
-    {&lcs_tab2,     "tab", NUL},
-    {&lcs_trail,    "trail", NUL},
-    {&lcs_conceal,  "conceal", NUL},
+  static struct charstab lcstab[] = {
+    { &lcs_eol,      "eol",      NUL },
+    { &lcs_ext,      "extends",  NUL },
+    { &lcs_nbsp,     "nbsp",     NUL },
+    { &lcs_prec,     "precedes", NUL },
+    { &lcs_space,    "space",    NUL },
+    { &lcs_tab2,     "tab",      NUL },
+    { &lcs_trail,    "trail",    NUL },
+    { &lcs_conceal,  "conceal",  NUL },
   };
   struct charstab *tab;
 
@@ -3422,25 +3420,26 @@ static char_u *set_chars_option(char_u **varp)
     // hack to deal with default fillchars of ambiguous width:
     // if ambiwidth=double then some fillchars take 2 columns which is forbidden
     // so we fallback on old defaults
-    if ( *p_ambw == 'd') {
+    if (*p_ambw == 'd') {
       filltab[2].def = '|';
-      filltab[3].def = '.';
-    }
-    else {
+      filltab[3].def = '-';
+    } else {
       filltab[2].def = 9474;
-      filltab[3].def = 183; // 183;
+      filltab[3].def = 183;
     }
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= 1; ++round) {
+  for (round = 0; round <= 1; round++) {
     if (round > 0) {
-      /* After checking that the value is valid: set defaults: space for
-       * 'fillchars', NUL for 'listchars' */
-      for (i = 0; i < entries; ++i) {
+      // After checking that the value is valid: set defaults
+      for (i = 0; i < entries; i++) {
         if (tab[i].cp != NULL) {
           *(tab[i].cp) = tab[i].def;
         }
+      }
+      if (varp == &p_lcs) {
+        lcs_tab1 = NUL;
       }
     }
     p = *varp;
@@ -3453,14 +3452,7 @@ static char_u *set_chars_option(char_u **varp)
           s = p + len + 1;
           c1 = mb_ptr2char_adv((const char_u **)&s);
           if (mb_char2cells(c1) > 1) {
-            // if ( (i == 2 || i == 3) && *p_ambw == 'd' && (c1 == filltab[2].def || c1 == filltab[3].def)) {
-              // setting ambiwidth=double will complain with current fillchar
-              // defaults (as fillchars are supposed to be monocell)
-            // } else {
-            DLOG("");
-
             continue;
-            // }
           }
           if (tab[i].cp == &lcs_tab2) {
             if (*s == NUL) {
