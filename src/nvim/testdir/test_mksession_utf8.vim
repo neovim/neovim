@@ -99,6 +99,7 @@ func Test_mksession_utf8()
   call delete('test_mks.out')
   call delete(tmpfile)
   let &wrap = wrap_save
+  set sessionoptions& splitbelow& fileencoding&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -7,7 +7,6 @@ source test_cursor_func.vim
 source test_ex_undo.vim
 source test_execute_func.vim
 source test_expr.vim
-source test_expr_utf8.vim
 source test_feedkeys.vim
 source test_filter_cmd.vim
 source test_filter_map.vim
@@ -28,6 +27,7 @@ source test_popup.vim
 source test_recover.vim
 source test_regexp_utf8.vim
 source test_source_utf8.vim
+source test_sha256.vim
 source test_statusline.vim
 source test_syn_attr.vim
 source test_tabline.vim

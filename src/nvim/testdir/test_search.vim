@@ -438,3 +438,18 @@ func Test_search_regexp()
   set undolevels&
   enew!
 endfunc
+
+" Test for search('multi-byte char', 'bce')
+func Test_search_multibyte()
+  if !has('multi_byte')
+    return
+  endif
+  let save_enc = &encoding
+  set encoding=utf8
+  enew!
+  call append('$', 'Ａ')
+  call cursor(2, 1)
+  call assert_equal(2, search('Ａ', 'bce', line('.')))
+  enew!
+  let &encoding = save_enc
+endfunc

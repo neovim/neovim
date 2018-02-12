@@ -590,7 +590,8 @@ func Test_popup_and_preview_autocommand()
   call setline(2, '                                 os.')
   $
   call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<enter>\<esc>", 'tx')
-  call assert_equal(["import os", "                                 os.EX_IOERR", ''], getline(1,'$'))
+  call assert_equal("import os", getline(1))
+  call assert_match('                                 os.\(EX_IOERR\|O_CREAT\)$', getline(2))
   call assert_equal(1, winnr('$'))
   " previewwindow option is not set
   call assert_equal(0, &previewwindow)
