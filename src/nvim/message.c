@@ -54,7 +54,7 @@ struct msgchunk_S {
   char_u sb_text[1];            /* text to be displayed, actually longer */
 };
 
-typedef int (*FctMsgAttr)(const char *s, const int attr);
+typedef int (*FuncMsgAttr)(const char *s, const int attr);
 
 /* Magic chars used in confirm dialog strings */
 #define DLG_BUTTON_SEP  '\n'
@@ -216,9 +216,8 @@ bool msg_echo_attr_keep(const char *s, const int attr, const int keep)
   msg_clr_eos();
   const bool retval = msg_end();
 
-  if (keep
-      && retval
-      && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row -1) * Columns + sc_col) {
+  if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row -1)
+      * Columns + sc_col) {
     set_keep_msg((char_u *)s, 0);
   }
 
@@ -544,7 +543,7 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-static int _emsg(const char *s, FctMsgAttr display_msg)
+static int _emsg(const char *s, FuncMsgAttr display_msg)
 {
   int attr;
   int ignore = false;
@@ -689,7 +688,7 @@ bool emsgf_echo(const char *const fmt, ...)
 
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
 
-  FctMsgAttr f = &msg_echo_attr;
+  FuncMsgAttr f = &msg_echo_attr;
   ret = _emsg(errbuf, f);
   va_end(ap);
 
