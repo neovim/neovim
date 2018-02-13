@@ -24,15 +24,6 @@ function! s:check_config() abort
           \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
   endif
 
-  if ok
-    call health#report_ok('no issues found')
-  endif
-endfunction
-
-function! s:check_vimrc() abort
-  let ok = v:true
-  call health#report_start('.vimrc File')
-
   if !filereadable($HOME.'/.config/nvim/init.vim') && filereadable($HOME.'/.vimrc')
     let ok = v:false
     call health#report_warn("It seems you are new to neovim but used vim.",
