@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local mpack = require('mpack')
 local clear, funcs, eq = helpers.clear, helpers.funcs, helpers.eq
+local call = helpers.call
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')
@@ -18,7 +19,7 @@ describe("api_info()['version']", function()
   before_each(clear)
 
   it("returns API level", function()
-    local version = helpers.call('api_info')['version']
+    local version = call('api_info')['version']
     local current = version['api_level']
     local compat  = version['api_compatible']
     eq("number", type(current))
@@ -27,7 +28,7 @@ describe("api_info()['version']", function()
   end)
 
   it("returns Nvim version", function()
-    local version = helpers.call('api_info')['version']
+    local version = call('api_info')['version']
     local major   = version['major']
     local minor   = version['minor']
     local patch   = version['patch']
@@ -146,4 +147,15 @@ describe("api functions", function()
     end
   end)
 
+end)
+
+describe("ui_options in metadata", function()
+  it('are correct', function()
+    -- TODO(bfredl) once a release freezes this into metadata,
+    -- instead check that all old options are present
+    local api = helpers.call('api_info')
+    local options = api.ui_options
+    eq({'rgb', 'ext_cmdline', 'ext_popupmenu',
+        'ext_tabline', 'ext_wildmenu'}, options)
+  end)
 end)

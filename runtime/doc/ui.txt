@@ -30,10 +30,22 @@ a dictionary with these (optional) keys:
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
 
-Nvim will then send msgpack-rpc notifications, with the method name "redraw"
-and a single argument, an array of screen update events.
-Update events are tuples whose first element is the event name and remaining
-elements the event parameters.
+Specifying a non-existent option is an error. To facilitate an ui that
+supports different versions of Nvim, the |api-metadata| key `ui_options`
+contains the list of supported options. Additionally Nvim currently requires
+that all connected UIs use the same set of widgets. Therefore the active
+widgets will be the intersection of the requested widget sets of all connected
+UIs. The "option_set" event will be used to specify which widgets actually are
+active.
+
+After attaching, Nvim will send msgpack-rpc notifications, with the method
+name "redraw" and a single argument, an array of screen update events.  Update
+events are arrays whose first element is the event name and remaining elements
+are each tuples of event parameters. This allows multiple events of the same
+kind to be sent in a row without the event name being repeated. This batching
+is mostly used for "put", as each "put" event just puts contents in one screen
+cell, but clients must be prepared for multiple argument sets being batched
+for all event kinds.
 
 Events must be handled in order. The user should only see the updated screen
 state after all events in the same "redraw" batch are processed (not any
@@ -93,6 +105,7 @@ Global Events							    *ui-global*
 	'linespace'
 	'showtabline'
 	'termguicolors'
+	`ext_*` (all |ui-ext-options|)
 
 	Options are not added to the list if their effects are already taken
 	care of. For instance, instead of forwarding the raw 'mouse' option

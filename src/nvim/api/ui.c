@@ -176,18 +176,6 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 
 static void ui_set_option(UI *ui, String name, Object value, Error *error)
 {
-#define UI_EXT_OPTION(o, e) \
-  do { \
-    if (strequal(name.data, #o)) { \
-      if (value.type != kObjectTypeBoolean) { \
-        api_set_error(error, kErrorTypeValidation, #o " must be a Boolean"); \
-        return; \
-      } \
-      ui->ui_ext[(e)] = value.data.boolean; \
-      return; \
-    } \
-  } while (0)
-
   if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
@@ -197,13 +185,21 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
     return;
   }
 
-  UI_EXT_OPTION(ext_cmdline, kUICmdline);
-  UI_EXT_OPTION(ext_popupmenu, kUIPopupmenu);
-  UI_EXT_OPTION(ext_tabline, kUITabline);
-  UI_EXT_OPTION(ext_wildmenu, kUIWildmenu);
+  for (UIExtension i = 0; i < kUIExtCount; i++) {
+    if (strequal(name.data, ui_ext_names[i])) {
+      if (value.type != kObjectTypeBoolean) {
+        snprintf((char *)IObuff, IOSIZE, "%s must be a Boolean",
+                 ui_ext_names[i]);
+        api_set_error(error, kErrorTypeValidation, (char *)IObuff);
+        return;
+      }
+      ui->ui_ext[i] = value.data.boolean;
+      return;
+    }
+  }
 
   if (strequal(name.data, "popupmenu_external")) {
-    // LEGACY: Deprecated option, use `ui_ext` instead.
+    // LEGACY: Deprecated option, use `ext_cmdline` instead.
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation,
                     "popupmenu_external must be a Boolean");
