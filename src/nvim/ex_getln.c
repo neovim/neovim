@@ -194,7 +194,8 @@ static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
 
-static Array cmdline_block;  ///< currently displayed block of context
+/// currently displayed block of context
+static Array cmdline_block = ARRAY_DICT_INIT;
 
 /*
  * Type used by call_user_expand_func
@@ -2990,6 +2991,7 @@ void ui_ext_cmdline_block_append(int indent, const char *line)
 void ui_ext_cmdline_block_leave(void)
 {
   api_free_array(cmdline_block);
+  cmdline_block = (Array)ARRAY_DICT_INIT;
   ui_call_cmdline_block_hide();
 }
 

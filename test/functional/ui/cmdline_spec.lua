@@ -348,6 +348,35 @@ describe('external cmdline', function()
            { { {}, '  line1'} } }, block)
     end)
 
+    feed('endfunction<cr>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq(nil, block)
+    end)
+
+    -- Try once more, to check buffer is reinitialized. #8007
+    feed(':function Bar()<cr>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "" } },
+        firstc = ":",
+        indent = 2,
+        pos = 0,
+        prompt = "",
+      }}, cmdline)
+      eq({ { { {}, 'function Bar()'} } }, block)
+    end)
 
     feed('endfunction<cr>')
     screen:expect([[
