@@ -67,7 +67,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.option_set = ui_bridge_option_set;
   rv->scheduler = scheduler;
 
-  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     rv->bridge.ui_ext[i] = ui->ui_ext[i];
   }
 
