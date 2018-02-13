@@ -651,9 +651,9 @@ static int _emsg(const char *s, FuncMsgAttr display_msg)
  *
  * return TRUE if wait_return not called
  */
-int emsg(const char_u *s_)
+int emsg(const char_u *s)
 {
-  return _emsg((const char *)s_, &msg_attr);
+  return _emsg((const char *)s, &msg_attr);
 }
 
 void emsg_invreg(int name)
