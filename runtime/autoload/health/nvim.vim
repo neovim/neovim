@@ -24,7 +24,7 @@ function! s:check_config() abort
           \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
   endif
 
-  if !filereadable($HOME.'/.config/nvim/init.vim') && filereadable($HOME.'/.vimrc')
+  if !filereadable($HOME.'/.config/nvim/init.vim') && filereadable($HOME.'/.vim/vimrc') && filereadable($HOME.'/.vimrc')
     let ok = v:false
     call health#report_warn("It seems you are new to neovim but used vim.",
           \ [ "The configuration file that is same as '.vimrc' in neovim is '~/.config/nvim/init.vim'.",
@@ -32,6 +32,8 @@ function! s:check_config() abort
           \   "set runtimepath^=~/.vim runtimepath+=~/.vim/after",
           \   "let &packpath = &runtimepath",
           \   "source ~/.vimrc\n",
+          \   "NOTE: If your .vimrc file is in '~/.vim/vimrc', you have to change the last line to this:\n",
+          \   "source ~/.vim/vimrc\n"
           \   "See nvim-from-vim.txt for more details."])
   endif
 
