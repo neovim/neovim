@@ -13298,9 +13298,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
         // Remove one item, return its value.
-        tv_list_drop_items(l, item, item);
-        *rettv = *TV_LIST_ITEM_TV(item);
-        xfree(item);
+        *rettv = tv_list_pop_item(l, item);
       } else {
         // Remove range of items, return list with values.
         end = tv_get_number_chk(&argvars[2], &error);

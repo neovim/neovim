@@ -389,6 +389,21 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
   tv_list_drop_items(l, item, item2);
 }
 
+/// Remove single item without freeing it
+///
+/// @param  l  List to remove item from.
+/// @param  item  Item to remove.
+///
+/// @return Contents of the removed item.
+typval_T tv_list_pop_item(list_T *const l, listitem_T *const item)
+  FUNC_ATTR_NONNULL_ALL
+{
+  list_log(l, item, NULL, "pop");
+  const typval_T ret_tv = *TV_LIST_ITEM_TV(item);
+  tv_list_drop_items(l, item, item);
+  return ret_tv;
+}
+
 /// Move items "item" to "item2" from list "l" to the end of the list "tgt_l"
 ///
 /// @param[out]  l  List to move from.
