@@ -1019,7 +1019,7 @@ au BufNewFile,BufRead *.java,*.jav		setf java
 au BufNewFile,BufRead *.jj,*.jjt		setf javacc
 
 " JavaScript, ECMAScript
-au BufNewFile,BufRead *.js,*.javascript,*.es,*.jsx   setf javascript
+au BufNewFile,BufRead *.js,*.javascript,*.es,*.jsx,*.mjs   setf javascript
 
 " Java Server Pages
 au BufNewFile,BufRead *.jsp			setf jsp
@@ -1183,14 +1183,21 @@ au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md  setf markdown
 " Mason
 au BufNewFile,BufRead *.mason,*.mhtml,*.comp	setf mason
 
-" Matlab or Objective C
+" Mathematica, Matlab, Murphi or Objective C
 au BufNewFile,BufRead *.m			call s:FTm()
 
 func! s:FTm()
   let n = 1
-  while n < 10
+  let saw_comment = 0 " Whether we've seen a multiline comment leader.
+  while n < 100
     let line = getline(n)
-    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\|//\)'
+    if line =~ '^\s*/\*'
+      " /* ... */ is a comment in Objective C and Murphi, so we can't conclude
+      " it's either of them yet, but track this as a hint in case we don't see
+      " anything more definitive.
+      let saw_comment = 1
+    endif
+    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|//\)'
       setf objc
       return
     endif
@@ -1202,11 +1209,23 @@ func! s:FTm()
       setf mma
       return
     endif
+    if line =~ '^\c\s*\(\(type\|var\)\>\|--\)'
+      setf murphi
+      return
+    endif
     let n = n + 1
   endwhile
-  if exists("g:filetype_m")
+
+  if saw_comment
+    " We didn't see anything definitive, but this looks like either Objective C
+    " or Murphi based on the comment leader. Assume the former as it is more
+    " common.
+    setf objc
+  elseif exists("g:filetype_m")
+    " Use user specified default filetype for .m
     exe "setf " . g:filetype_m
   else
+    " Default is matlab
     setf matlab
   endif
 endfunc
@@ -1314,6 +1333,9 @@ au BufNewFile,BufRead *.mush			setf mush
 
 " Mutt setup file (also for Muttng)
 au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
+
+" N1QL
+au BufRead,BufNewfile *.n1ql,*.nql		setf n1ql
 
 " Nano
 au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
@@ -2246,6 +2268,8 @@ func! s:FTtex()
     elseif format == 'plaintex'
       let format = 'plain'
     endif
+  elseif expand('%') =~ 'tex/context/.*/.*.tex'
+    let format = 'context'
   else
     " Default value, may be changed later:
     let format = exists("g:tex_flavor") ? g:tex_flavor : 'plain'
@@ -2287,7 +2311,7 @@ func! s:FTtex()
 endfunc
 
 " ConTeXt
-au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv,*.mkvi   setf context
+au BufNewFile,BufRead *.mkii,*.mkiv,*.mkvi   setf context
 
 " Texinfo
 au BufNewFile,BufRead *.texinfo,*.texi,*.txi	setf texinfo
@@ -2792,12 +2816,12 @@ runtime! ftdetect/*.vim
 " state.
 augroup END
 
-" Generic configuration file (check this last, it's just guessing!)
+" Generic configuration file. Use FALLBACK, it's just guessing!
 au filetypedetect BufNewFile,BufRead,StdinReadPost *
 	\ if !did_filetype() && expand("<amatch>") !~ g:ft_ignore_pat
 	\    && (getline(1) =~ '^#' || getline(2) =~ '^#' || getline(3) =~ '^#'
 	\	|| getline(4) =~ '^#' || getline(5) =~ '^#') |
-	\   setf conf |
+	\   setf FALLBACK conf |
 	\ endif
 
 

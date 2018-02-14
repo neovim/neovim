@@ -7,11 +7,8 @@ local missing_provider = helpers.missing_provider
 
 do
   clear()
-  local err = missing_provider('python3')
-  if err then
-    pending(
-      'Python 3 (or the Python 3 neovim module) is broken or missing:\n' .. err,
-      function() end)
+  if missing_provider('python3') then
+    pending('Python 3 (or the neovim module) is broken/missing', function() end)
     return
   end
 end

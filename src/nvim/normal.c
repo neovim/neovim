@@ -1637,16 +1637,22 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         /* Prepare for redoing.  Only use the nchar field for "r",
          * otherwise it might be the second char of the operator. */
         if (cap->cmdchar == 'g' && (cap->nchar == 'n'
-                                    || cap->nchar == 'N'))
+                                    || cap->nchar == 'N')) {
           prep_redo(oap->regname, cap->count0,
-              get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
-              oap->motion_force, cap->cmdchar, cap->nchar);
-        else if (cap->cmdchar != ':')
-          prep_redo(oap->regname, 0L, NUL, 'v',
-              get_op_char(oap->op_type),
-              get_extra_op_char(oap->op_type),
-              oap->op_type == OP_REPLACE
-              ? cap->nchar : NUL);
+                    get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
+                    oap->motion_force, cap->cmdchar, cap->nchar);
+        } else if (cap->cmdchar != ':') {
+          int nchar = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
+
+          // reverse what nv_replace() did
+          if (nchar == REPLACE_CR_NCHAR) {
+            nchar = CAR;
+          } else if (nchar == REPLACE_NL_NCHAR) {
+            nchar = NL;
+          }
+          prep_redo(oap->regname, 0L, NUL, 'v', get_op_char(oap->op_type),
+                    get_extra_op_char(oap->op_type), nchar);
+        }
         if (!redo_VIsual_busy) {
           redo_VIsual_mode = resel_VIsual_mode;
           redo_VIsual_vcol = resel_VIsual_vcol;
@@ -5224,12 +5230,12 @@ static void nv_gotofile(cmdarg_T *cap)
 
   if (ptr != NULL) {
     // do autowrite if necessary
-    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf)) {
+    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !buf_hide(curbuf)) {
       (void)autowrite(curbuf, false);
     }
     setpcmark();
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
-        P_HID(curbuf) ? ECMD_HIDE : 0, curwin);
+                  buf_hide(curbuf) ? ECMD_HIDE : 0, curwin);
     if (cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;
       check_cursor_lnum();
@@ -5854,10 +5860,13 @@ static void nv_replace(cmdarg_T *cap)
     if (got_int)
       reset_VIsual();
     if (had_ctrl_v) {
-      if (cap->nchar == '\r')
-        cap->nchar = -1;
-      else if (cap->nchar == '\n')
-        cap->nchar = -2;
+      // Use a special (negative) number to make a difference between a
+      // literal CR or NL and a line break.
+      if (cap->nchar == CAR) {
+        cap->nchar = REPLACE_CR_NCHAR;
+      } else if (cap->nchar == NL) {
+        cap->nchar = REPLACE_NL_NCHAR;
+      }
     }
     nv_operator(cap);
     return;

@@ -454,9 +454,6 @@ EXTERN char_u   *p_hf;          // 'helpfile'
 EXTERN long p_hh;               // 'helpheight'
 EXTERN char_u   *p_hlg;         // 'helplang'
 EXTERN int p_hid;               // 'hidden'
-// Use P_HID to check if a buffer is to be hidden when it is no longer
-// visible in a window.
-# define P_HID(buf) (buf_hide(buf))
 EXTERN char_u   *p_hl;          // 'highlight'
 EXTERN int p_hls;               // 'hlsearch'
 EXTERN long p_hi;               // 'history'

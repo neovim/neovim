@@ -139,11 +139,6 @@
                              * doesn't fit. */
 #define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
 
-/*
- * The attributes that are actually active for writing to the screen.
- */
-static int screen_attr = 0;
-
 static match_T search_hl;       /* used for 'hlsearch' highlight matching */
 
 static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
@@ -189,8 +184,6 @@ void redraw_win_later(win_T *wp, int type)
 void redraw_later_clear(void)
 {
   redraw_all_later(CLEAR);
-  /* Use attributes that is very unlikely to appear in text. */
-  screen_attr = HL_BOLD | HL_UNDERLINE | HL_INVERSE;
 }
 
 /*
@@ -3360,10 +3353,11 @@ win_line (
 
             /* Use nextline[] if possible, it has the start of the
              * next line concatenated. */
-            if ((prev_ptr - line) - nextlinecol >= 0)
-              p = nextline + (prev_ptr - line) - nextlinecol;
-            else
+            if ((prev_ptr - line) - nextlinecol >= 0) {
+              p = nextline + ((prev_ptr - line) - nextlinecol);
+            } else {
               p = prev_ptr;
+            }
             cap_col -= (int)(prev_ptr - line);
             size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
             assert(tmplen <= INT_MAX);
@@ -5847,30 +5841,16 @@ next_search_hl_pos(
   return 0;
 }
 
-static void screen_start_highlight(int attr)
-{
-  screen_attr = attr;
-  ui_start_highlight(attr);
-}
-
-static void screen_stop_highlight(void)
-{
-  ui_stop_highlight();
-  screen_attr = 0;
-}
-
 /*
  * Put character ScreenLines["off"] on the screen at position "row" and "col",
  * using the attributes from ScreenAttrs["off"].
  */
 static void screen_char(unsigned off, int row, int col)
 {
-  int attr;
-
-  /* Check for illegal values, just in case (could happen just after
-   * resizing). */
-  if (row >= screen_Rows || col >= screen_Columns)
+  // Check for illegal values, just in case (could happen just after resizing).
+  if (row >= screen_Rows || col >= screen_Columns) {
     return;
+  }
 
   // Outputting the last character on the screen may scrollup the screen.
   // Don't to it!  Mark the character invalid (update it when scrolled up)
@@ -5882,17 +5862,8 @@ static void screen_char(unsigned off, int row, int col)
     return;
   }
 
-  /*
-   * Stop highlighting first, so it's easier to move the cursor.
-   */
-  attr = ScreenAttrs[off];
-  if (screen_attr != attr)
-    screen_stop_highlight();
-
   ui_cursor_goto(row, col);
-
-  if (screen_attr != attr)
-    screen_start_highlight(attr);
+  ui_set_highlight(ScreenAttrs[off]);
 
   if (enc_utf8 && ScreenLinesUC[off] != 0) {
     char_u buf[MB_MAXBYTES + 1];
@@ -6001,7 +5972,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
           ++off;
       if (off < end_off) {              /* something to be cleared */
         col = off - LineOffset[row];
-        screen_stop_highlight();
+        ui_clear_highlight();
         ui_cursor_goto(row, col);        // clear rest of this screen line
         ui_call_eol_clear();
         col = end_col - col;
@@ -6383,8 +6354,7 @@ static void screenclear2(void)
     return;
   }
 
-  screen_stop_highlight();      /* don't want highlighting here */
-
+  ui_clear_highlight();  // don't want highlighting here
 
   /* blank out ScreenLines */
   for (i = 0; i < Rows; ++i) {

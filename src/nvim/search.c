@@ -775,12 +775,17 @@ int searchit(
                 }
               }
               if (ptr[matchcol] == NUL
-                  || (nmatched = vim_regexec_multi(&regmatch,
-                          win, buf, lnum + matchpos.lnum,
-                          matchcol,
-                          tm
-                          )) == 0)
-                break;
+                  || (nmatched = vim_regexec_multi(
+                      &regmatch, win, buf, lnum + matchpos.lnum, matchcol,
+                      tm)) == 0) {
+                  // If the search timed out, we did find a match
+                  // but it might be the wrong one, so that's not
+                  // OK.
+                  if (tm != NULL && profile_passed_limit(*tm)) {
+                      match_ok = false;
+                  }
+                  break;
+              }
 
               /* Need to get the line pointer again, a
                * multi-line search may have made it invalid. */
@@ -1375,13 +1380,15 @@ int searchc(cmdarg_T *cap, int t_cmd)
           lastc_bytelen += (*mb_char2bytes)(cap->ncharC2, lastc_bytes + lastc_bytelen);
       }
     }
-  } else {            /* repeat previous search */
-    if (*lastc == NUL)
+  } else {            // repeat previous search
+    if (*lastc == NUL && lastc_bytelen == 1) {
       return FAIL;
-    if (dir)            /* repeat in opposite direction */
+    }
+    if (dir) {        // repeat in opposite direction
       dir = -lastcdir;
-    else
+    } else {
       dir = lastcdir;
+    }
     t_cmd = last_t_cmd;
     c = *lastc;
     /* For multi-byte re-use last lastc_bytes[] and lastc_bytelen. */
@@ -3707,7 +3714,7 @@ current_quote (
   int selected_quote = FALSE;           /* Has quote inside selection */
   int i;
 
-  /* Correct cursor when 'selection' is exclusive */
+  // Correct cursor when 'selection' is "exclusive".
   if (VIsual_active) {
     // this only works within one line
     if (VIsual.lnum != curwin->w_cursor.lnum) {
@@ -3715,8 +3722,17 @@ current_quote (
     }
 
     vis_bef_curs = lt(VIsual, curwin->w_cursor);
-    if (*p_sel == 'e' && vis_bef_curs)
+    if (*p_sel == 'e') {
+      if (!vis_bef_curs) {
+        // VIsual needs to be start of Visual selection.
+        pos_T t = curwin->w_cursor;
+
+        curwin->w_cursor = VIsual;
+        VIsual = t;
+        vis_bef_curs = true;
+      }
       dec_cursor();
+    }
     vis_empty = equalpos(VIsual, curwin->w_cursor);
   }
 

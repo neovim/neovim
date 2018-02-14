@@ -2,7 +2,6 @@
 
 source shared.vim
 
-set belloff=all
 func! Setup_NewWindow()
   10new
   call setline(1, range(1,100))
@@ -2337,4 +2336,46 @@ func! Test_normal54_Ctrl_bsl()
 
 	" clean up
 	bw!
+endfunc
+
+" Test for the gr (virtual replace) command
+" Test for the bug fixed by 7.4.387
+func Test_gr_command()
+  enew!
+  let save_cpo = &cpo
+  call append(0, ['First line', 'Second line', 'Third line'])
+  exe "normal i\<C-G>u"
+  call cursor(2, 1)
+  set cpo-=X
+  normal 4gro
+  call assert_equal('oooond line', getline(2))
+  undo
+  set cpo+=X
+  normal 4gro
+  call assert_equal('ooooecond line', getline(2))
+  let &cpo = save_cpo
+  enew!
+endfunc
+
+" When splitting a window the changelist position is wrong.
+" Test the changelist position after splitting a window.
+" Test for the bug fixed by 7.4.386
+func Test_changelist()
+  let save_ul = &ul
+  enew!
+  call append('$', ['1', '2'])
+  exe "normal i\<C-G>u"
+  exe "normal Gkylpa\<C-G>u"
+  set ul=100
+  exe "normal Gylpa\<C-G>u"
+  set ul=100
+  normal gg
+  vsplit
+  normal g;
+  call assert_equal([3, 2], [line('.'), col('.')])
+  normal g;
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call assert_fails('normal g;', 'E662:')
+  %bwipe!
+  let &ul = save_ul
 endfunc

@@ -473,5 +473,24 @@ func Test_tabnext_on_buf_unload2()
   endwhile
 endfunc
 
+func Test_close_on_quitpre()
+  " This once caused a crash
+  edit Xtest
+  new
+  only
+  set bufhidden=delete
+  au QuitPre <buffer> close
+  tabnew tab1
+  tabnew tab2
+  1tabn
+  q!
+  call assert_equal(1, tabpagenr())
+  call assert_equal(2, tabpagenr('$'))
+  " clean up
+  while tabpagenr('$') > 1
+    bwipe!
+  endwhile
+  buf Xtest
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

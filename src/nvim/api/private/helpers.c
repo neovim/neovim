@@ -26,6 +26,7 @@
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/getchar.h"
+#include "nvim/ui.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -955,6 +956,12 @@ static void init_ui_event_metadata(Dictionary *metadata)
   msgpack_rpc_to_object(&unpacked.data, &ui_events);
   msgpack_unpacked_destroy(&unpacked);
   PUT(*metadata, "ui_events", ui_events);
+  Array ui_options = ARRAY_DICT_INIT;
+  ADD(ui_options, STRING_OBJ(cstr_to_string("rgb")));
+  for (UIExtension i = 0; i < kUIExtCount; i++) {
+    ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+  }
+  PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
 }
 
 static void init_error_type_metadata(Dictionary *metadata)

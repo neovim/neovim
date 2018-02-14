@@ -242,7 +242,7 @@ describe('tui', function()
       {9:~                                                 }|
       {9:~                                                 }|
       {3:[No Name] [+]                                     }|
-                                                        |
+      :set termguicolors                                |
       {4:-- TERMINAL --}                                    |
     ]])
 
@@ -253,7 +253,7 @@ describe('tui', function()
       {2:~                                                 }|
       {2:~                                                 }|
       {3:[No Name] [+]                                     }|
-                                                        |
+      :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
     ]])
   end)

@@ -1058,6 +1058,20 @@ void ex_diffthis(exarg_T *eap)
   diff_win_options(curwin, TRUE);
 }
 
+static void set_diff_option(win_T *wp, int value)
+{
+    win_T *old_curwin = curwin;
+
+    curwin = wp;
+    curbuf = curwin->w_buffer;
+    curbuf_lock++;
+    set_option_value("diff", (long)value, NULL, OPT_LOCAL);
+    curbuf_lock--;
+    curwin = old_curwin;
+    curbuf = curwin->w_buffer;
+}
+
+
 /// Set options in window "wp" for diff mode.
 ///
 /// @param addbuf Add buffer to diff.
@@ -1115,10 +1129,10 @@ void diff_win_options(win_T *wp, int addbuf)
     do_cmdline_cmd("set sbo+=hor");
   }
 
-  // Saved the current values, to be restored in ex_diffoff().
-  wp->w_p_diff_saved = TRUE;
+  // Save the current values, to be restored in ex_diffoff().
+  wp->w_p_diff_saved = true;
 
-  wp->w_p_diff = true;
+  set_diff_option(wp, true);
 
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
@@ -1139,7 +1153,7 @@ void ex_diffoff(exarg_T *eap)
       // Set 'diff' off. If option values were saved in
       // diff_win_options(), restore the ones whose settings seem to have
       // been left over from diff mode.
-      wp->w_p_diff = false;
+      set_diff_option(wp, false);
 
       if (wp->w_p_diff_saved) {
         if (wp->w_p_scb) {

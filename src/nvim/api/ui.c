@@ -86,6 +86,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->put = remote_ui_put;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
+  ui->default_colors_set = remote_ui_default_colors_set;
   ui->update_fg = remote_ui_update_fg;
   ui->update_bg = remote_ui_update_bg;
   ui->update_sp = remote_ui_update_sp;
@@ -175,18 +176,6 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 
 static void ui_set_option(UI *ui, String name, Object value, Error *error)
 {
-#define UI_EXT_OPTION(o, e) \
-  do { \
-    if (strequal(name.data, #o)) { \
-      if (value.type != kObjectTypeBoolean) { \
-        api_set_error(error, kErrorTypeValidation, #o " must be a Boolean"); \
-        return; \
-      } \
-      ui->ui_ext[(e)] = value.data.boolean; \
-      return; \
-    } \
-  } while (0)
-
   if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
@@ -196,13 +185,21 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
     return;
   }
 
-  UI_EXT_OPTION(ext_cmdline, kUICmdline);
-  UI_EXT_OPTION(ext_popupmenu, kUIPopupmenu);
-  UI_EXT_OPTION(ext_tabline, kUITabline);
-  UI_EXT_OPTION(ext_wildmenu, kUIWildmenu);
+  for (UIExtension i = 0; i < kUIExtCount; i++) {
+    if (strequal(name.data, ui_ext_names[i])) {
+      if (value.type != kObjectTypeBoolean) {
+        snprintf((char *)IObuff, IOSIZE, "%s must be a Boolean",
+                 ui_ext_names[i]);
+        api_set_error(error, kErrorTypeValidation, (char *)IObuff);
+        return;
+      }
+      ui->ui_ext[i] = value.data.boolean;
+      return;
+    }
+  }
 
   if (strequal(name.data, "popupmenu_external")) {
-    // LEGACY: Deprecated option, use `ui_ext` instead.
+    // LEGACY: Deprecated option, use `ext_cmdline` instead.
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation,
                     "popupmenu_external must be a Boolean");
@@ -243,7 +240,7 @@ static void push_call(UI *ui, char *name, Array args)
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
 {
   Array args = ARRAY_DICT_INIT;
-  Dictionary hl = hlattrs2dict(attrs);
+  Dictionary hl = hlattrs2dict(&attrs, ui->rgb);
 
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);

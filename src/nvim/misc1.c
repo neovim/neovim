@@ -1469,7 +1469,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
   }
 
-  char_u *newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
 
   // Copy bytes before the cursor.
   if (col > 0) {
@@ -1478,7 +1478,10 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // Copy bytes after the changed character(s).
   char_u *p = newp + col;
-  memmove(p + newlen, oldp + col + oldlen, (size_t)(linelen - col - oldlen));
+  if (linelen > col + oldlen) {
+    memmove(p + newlen, oldp + col + oldlen,
+            (size_t)(linelen - col - oldlen));
+  }
 
   // Insert or overwrite the new character.
   memmove(p, buf, charlen);
