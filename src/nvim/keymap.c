@@ -477,7 +477,7 @@ char_u *get_special_key_name(int c, int modifiers)
   } else {            // use name of special key
     size_t len = STRLEN(key_names_table[table_idx].name);
 
-    if (len + idx + 2 <= MAX_KEY_NAME_LEN) {
+    if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
         STRCPY(string + idx, key_names_table[table_idx].name);
         idx += (int)len;
     }
