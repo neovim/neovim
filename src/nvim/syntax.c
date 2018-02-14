@@ -4968,6 +4968,8 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
       if (scl_id >= 0) {
         syn_combine_list(&SYN_CLSTR(curwin->w_s)[scl_id].scl_list,
                          &clstr_list, list_op);
+      } else {
+        xfree(clstr_list);
       }
       got_clstr = true;
     }
@@ -5276,8 +5278,9 @@ get_id_list (
           break;
         }
         if (count != 0) {
-          EMSG2(_("E408: %s must be first in contains list"), name + 1);
-          failed = TRUE;
+          EMSG2(_("E408: %s must be first in contains list"),
+                name + 1);
+          failed = true;
           xfree(name);
           break;
         }
