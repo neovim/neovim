@@ -5,8 +5,8 @@ local clear, command, nvim, nvim_dir =
 local eval, eq, retry =
   helpers.eval, helpers.eq, helpers.retry
 local ok = helpers.ok
+local iswin = helpers.iswin
 
-if helpers.pending_win32(pending) then return end
 
 describe('TermClose event', function()
   before_each(function()
@@ -23,7 +23,7 @@ describe('TermClose event', function()
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
-    nvim('set_option', 'shell', 'sh')
+    nvim('set_option', 'shell', iswin() and 'cmd.exe' or 'sh')
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
@@ -31,6 +31,7 @@ describe('TermClose event', function()
   end)
 
   it('kills job trapping SIGTERM', function()
+    if helpers.pending_win32(pending) then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
@@ -48,6 +49,7 @@ describe('TermClose event', function()
   end)
 
   it('kills pty job trapping SIGHUP and SIGTERM', function()
+    if helpers.pending_win32(pending) then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]
