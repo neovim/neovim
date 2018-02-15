@@ -46,3 +46,14 @@ function! Test_System()
 
   call assert_fails('call system("wc -l", 99999)', 'E86:')
 endfunction
+
+function! Test_system_exmode()
+  if has('unix')
+    let cmd = ' -es -u NONE -c "source Xscript" +q; echo $?'
+	" Need to put this in a script, "catch" isn't found after an unknown
+	" function.
+	call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+	let a = system(v:progpath . cmd)
+	call assert_equal('0', a[0])
+	call assert_equal(0, v:shell_error)
+endif
