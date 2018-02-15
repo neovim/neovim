@@ -115,6 +115,13 @@
 /// @param[in]  sv  Source vector.
 #define kv_copy(v1, v0) _kv_copy(kv, v1, v0)
 
+/// Make space for one more item if there is no
+///
+/// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
+/// @param  v  Vector to resize.
+#define _kv_makespaceforone(pref, v) \
+    (((v).size == (v).capacity) ? (pref##_resize_full(v), 0) : 0)
+
 /// Get push pointer: pointer to the destination item
 ///
 /// Increases vector size if necessary. Does not initialize new element.
@@ -122,7 +129,7 @@
 /// @param  pref  Prefix: kv or kvi. Selects type of the vector to use.
 /// @param  v  Vector to push to.
 #define _kv_pushp(pref, v) \
-    ((((v).size == (v).capacity) ? (pref##_resize_full(v), 0) : 0), \
+    (_kv_makespaceforone(pref, v), \
      ((v).items + ((v).size++)))
 
 /// Get push pointer: pointer to the destination item
@@ -197,7 +204,7 @@
 /// @param[in]  idx  Index of element to insert.
 /// @param[in]  x  Entry to insert.
 #define _kv_insert(pref, v, idx, x) \
-    (pref##_resize_full(v), \
+    (_kv_makespaceforone(pref, v), \
      kv_memmove(v, (idx) + 1, idx, kv_size(v) - (idx)), \
      kv_A(v, (idx)) = (x), \
      (v).size++)
