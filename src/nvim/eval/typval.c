@@ -245,10 +245,10 @@ list_T *tv_list_alloc(const ptrdiff_t len)
   FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = xcalloc(1, sizeof(list_T));
-  kv_init(list->lv_vec);
-  if (len > 0) {
+  kvi_init(list->lv_vec);
+  if (len > (ptrdiff_t)kv_max(list->lv_vec)) {
     size_t new_len = (size_t)len;
-    kv_resize(list->lv_vec, kv_roundup32(new_len));
+    kvi_resize(list->lv_vec, kv_roundup32(new_len));
   }
 
   // Prepend the list to the list of lists for garbage collection.
@@ -297,8 +297,8 @@ void tv_list_free_contents(list_T *const l)
   TV_LIST_ITER(l, item, {
     tv_clear(TV_LIST_ITEM_TV(item));
   });
-  kv_destroy(l->lv_vec);
-  kv_init(l->lv_vec);
+  kvi_destroy(l->lv_vec);
+  kvi_init(l->lv_vec);
   assert(l->lv_watch == NULL);
 }
 
@@ -375,7 +375,7 @@ void tv_list_drop_items(list_T *const l, listitem_T *const item,
   size_t new_size = kv_size(l->lv_vec);
   kv_roundup32(new_size);
   if (free_elems > 16 && new_size < kv_max(l->lv_vec)) {
-    kv_resize(l->lv_vec, new_size);
+    kvi_resize(l->lv_vec, new_size);
   }
   list_log(l, tv_list_first(l), NULL, "afterdrop");
 }
@@ -439,13 +439,13 @@ void tv_list_insert(list_T *const l, listitem_T *const ni,
 {
   if (item == NULL) {
     // Append new item at end of list.
-    kv_push(l->lv_vec, *ni);
+    kvi_push(l->lv_vec, *ni);
   } else {
     // Insert new item before existing item.
     const long idx = tv_list_idx_of_item(l, item);
     assert(idx != -1);
     tv_list_watch_ins_fix(l, idx);
-    kv_insert(l->lv_vec, (size_t)idx, *ni);
+    kvi_insert(l->lv_vec, (size_t)idx, *ni);
     list_log(l, tv_list_first(l), item, "insert");
   }
 }
@@ -472,7 +472,7 @@ void tv_list_insert_tv(list_T *const l, typval_T *const tv,
 void tv_list_append(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  kv_push(l->lv_vec, *item);
+  kvi_push(l->lv_vec, *item);
 }
 
 /// Append VimL value to the end of list
@@ -616,13 +616,13 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
         break;
       }
       if (var_item_copy(conv, TV_LIST_ITEM_TV(orig_item),
-                        TV_LIST_ITEM_TV(kv_pushp(copy->lv_vec)),
+                        TV_LIST_ITEM_TV(kvi_pushp(copy->lv_vec)),
                         deep, copyID) == FAIL) {
         goto tv_list_copy_error;
       }
     });
   } else {
-    kv_copy(copy->lv_vec, orig->lv_vec);
+    kvi_copy(copy->lv_vec, orig->lv_vec);
     TV_LIST_ITER(copy, item, {
       tv_copy(TV_LIST_ITEM_TV(item), TV_LIST_ITEM_TV(item));
     });
@@ -654,12 +654,12 @@ void tv_list_extend(list_T *const l1, list_T *const l2,
     assert(bef_idx != -1);
     if (l1 == l2) {
       const size_t size = kv_size(l2->lv_vec);
-      kv_expand(l1->lv_vec, (size_t)bef_idx, size);
+      kvi_expand(l1->lv_vec, (size_t)bef_idx, size);
       kv_memcpy(l1->lv_vec, l1->lv_vec, (size_t)bef_idx, 0, (size_t)bef_idx);
       kv_memcpy(l1->lv_vec, l1->lv_vec, (size_t)bef_idx * 2,
                 (size_t)bef_idx + size, size - (size_t)bef_idx);
     } else {
-      kv_expand(l1->lv_vec, (size_t)bef_idx, kv_size(l2->lv_vec));
+      kvi_expand(l1->lv_vec, (size_t)bef_idx, kv_size(l2->lv_vec));
       kv_memcpy(l1->lv_vec, l2->lv_vec, bef_idx, 0, kv_size(l2->lv_vec));
     }
     for (int i = 0; i < todo; i++) {
@@ -878,12 +878,12 @@ void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
   // Sort the array with item pointers.
   qsort(ptrs, (size_t)len, sizeof(ListSortItem), item_compare_func);
   if (!(*errp)) {
-    TvListVector vec = KV_INITIAL_VALUE;
-    kv_copy(vec, l->lv_vec);
+    TvListVector vec = KVI_INITIAL_VALUE(vec);
+    kvi_copy(vec, l->lv_vec);
     for (i = 0; i < len; i++) {
       kv_A(l->lv_vec, i) = kv_A(vec, ptrs[i].idx);
     }
-    kv_destroy(vec);
+    kvi_destroy(vec);
   }
 }
 

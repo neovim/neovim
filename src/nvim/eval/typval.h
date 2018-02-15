@@ -160,7 +160,7 @@ struct listwatch_S {
 };
 
 /// Structure holding actual list data
-typedef kvec_t(listitem_T) TvListVector;
+typedef kvec_withinit_t(listitem_T, 4) TvListVector;
 
 ///< Common list header, shared with various static lists
 #define _LIST_HEADER \
