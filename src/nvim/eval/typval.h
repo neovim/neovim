@@ -373,6 +373,7 @@ typedef struct {
   uintptr_t li1;  ///< First list item log entry belongs to, if applicable.
   uintptr_t li2;  ///< Second list item log entry belongs to, if applicable.
   size_t len;  ///< List length when log entry was created.
+  size_t capacity;  ///< List vector capacity when log entry was created.
   const char *action;  ///< Logged action.
 } ListLogEntry;
 
@@ -446,6 +447,7 @@ static inline void list_log(const list_T *const l,
     .li1 = (uintptr_t)li1,
     .li2 = (uintptr_t)li2,
     .len = (l == NULL ? 0 : kv_size(l->lv_vec)),
+    .capacity = kv_max(l->lv_vec),
     .action = action,
   };
 }

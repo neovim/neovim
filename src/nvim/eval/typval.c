@@ -94,14 +94,17 @@ void list_write_log(const char *const fname)
   }
   for (ListLog *chunk = list_log_first; chunk != NULL;) {
     for (size_t i = 0; i < chunk->size; i++) {
-      char buf[10 + 1 + ((16 + 3) * 3) + (8 + 2) + 2];
-      //       act  :     hex  " c:"      len "[]" "\n\0"
+      char buf[10 + 1 + ((16 + 3) * 3) + (8 + 8 + 3) + 2];
+      //       act  :     hex  " c:"      len cap "[/]" "\n\0"
       const ListLogEntry entry = chunk->entries[i];
       const size_t snp_len = (size_t)snprintf(
           buf, sizeof(buf),
-          "%-10.10s: l:%016" PRIxPTR "[%08d] 1:%016" PRIxPTR " 2:%016" PRIxPTR
+          "%-10.10s: "
+          "l:%016" PRIxPTR "[%08d/%08d] "
+          "1:%016" PRIxPTR " 2:%016" PRIxPTR
           "\n",
-          entry.action, entry.l, (int)entry.len, entry.li1, entry.li2);
+          entry.action, entry.l, (int)entry.len, (int)entry.capacity, entry.li1,
+          entry.li2);
       assert(snp_len + 1 == sizeof(buf));
       const ptrdiff_t fw_ret = file_write(&fp, buf, snp_len);
       if (fw_ret != (ptrdiff_t)snp_len) {
