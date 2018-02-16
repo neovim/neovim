@@ -35,12 +35,17 @@
 #include "nvim/os/input.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
+#define MAX_UI_COUNT 16
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
 #endif
+
+extern UI *uis[MAX_UI_COUNT];
+extern size_t ui_count;
 
 /// Executes an ex-command.
 ///
@@ -1467,4 +1472,20 @@ Dictionary nvim__id_dictionary(Dictionary dct)
 Float nvim__id_float(Float flt)
 {
   return flt;
+}
+
+Array nvim_list_uis(void)
+  FUNC_API_SINCE(1)
+{
+  Array alluis = ARRAY_DICT_INIT;
+  for (unsigned int i = 0; i < ui_count ; i++) {
+    Dictionary dic = ARRAY_DICT_INIT;
+    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
+    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
+    for (UIExtension j = 0; j < kUIExtCount; j++) {
+      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
+    }
+    ADD(alluis, DICTIONARY_OBJ(dic));
+  }
+  return alluis;
 }

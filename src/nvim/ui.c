@@ -48,9 +48,9 @@
 
 #define MAX_UI_COUNT 16
 
-static UI *uis[MAX_UI_COUNT];
+UI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
-static size_t ui_count = 0;
+size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
   int top, bot, left, right;
