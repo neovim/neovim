@@ -29,7 +29,7 @@ function! provider#pythonx#Require(host) abort
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in job.stderr
+    for row in get(job, 'stderr', [])
       echomsg row
     endfor
   endtry
