@@ -7,13 +7,33 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-local eq = function(exp, act)
-  return assert.are.same(exp, act)
+local function eq(expected, actual)
+  return assert.are.same(expected, actual)
 end
-local neq = function(exp, act)
+-- Tries multiple accepted ("expected") values until one succeeds.
+-- First N-1 arguments are the accepted values.
+-- Last (Nth) argument is the "actual" value to be compared.
+local function eq_any(...)
+  if select('#', ...) < 2 then
+    error('need at least 2 arguments')
+  end
+  local args = {...}
+  local actual = args[#args]
+  local final_error = ''
+  for anum = 1, select('#', ...) - 1 do
+    local accepted = args[anum]
+    local status, result = pcall(eq, accepted, actual)
+    if status then
+      return result
+    end
+    final_error = final_error..tostring(result)
+  end
+  error(final_error)
+end
+local function neq(exp, act)
   return assert.are_not.same(exp, act)
 end
-local ok = function(res)
+local function ok(res)
   return assert.is_true(res)
 end
 
@@ -534,30 +554,50 @@ local function fixtbl_rec(tbl)
   return fixtbl(tbl)
 end
 
+-- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+local function table_flatten(arr)
+  local result = {}
+  local function _table_flatten(_arr)
+    local n = #_arr
+    for i = 1, n do
+      local v = _arr[i]
+      if type(v) == "table" then
+        _table_flatten(v)
+      elseif v then
+        table.insert(result, v)
+      end
+    end
+  end
+  _table_flatten(arr)
+  return result
+end
+
 return {
-  eq = eq,
-  neq = neq,
-  ok = ok,
-  check_logs = check_logs,
-  uname = uname,
-  tmpname = tmpname,
-  map = map,
-  filter = filter,
-  glob = glob,
-  check_cores = check_cores,
-  hasenv = hasenv,
-  which = which,
-  shallowcopy = shallowcopy,
-  deepcopy = deepcopy,
-  mergedicts_copy = mergedicts_copy,
-  dictdiff = dictdiff,
   REMOVE_THIS = REMOVE_THIS,
+  check_cores = check_cores,
+  check_logs = check_logs,
   concat_tables = concat_tables,
   dedent = dedent,
-  format_luav = format_luav,
-  format_string = format_string,
-  intchar2lua = intchar2lua,
-  updated = updated,
+  deepcopy = deepcopy,
+  dictdiff = dictdiff,
+  eq = eq,
+  eq_any = eq_any,
+  filter = filter,
   fixtbl = fixtbl,
   fixtbl_rec = fixtbl_rec,
+  format_luav = format_luav,
+  format_string = format_string,
+  glob = glob,
+  hasenv = hasenv,
+  intchar2lua = intchar2lua,
+  map = map,
+  mergedicts_copy = mergedicts_copy,
+  neq = neq,
+  ok = ok,
+  shallowcopy = shallowcopy,
+  table_flatten = table_flatten,
+  tmpname = tmpname,
+  uname = uname,
+  updated = updated,
+  which = which,
 }
