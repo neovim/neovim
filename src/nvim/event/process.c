@@ -201,6 +201,23 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   return proc->status;
 }
 
+/// Kills a process and its descendants.
+static void os_proc_tree_kill(int pid, int sig) {
+  assert(sig == SIGTERM || sig == SIGKILL);
+  int pgid = getpgid(pid);
+  if (pgid > 0) {  // Ignore error. Never kill self (pid=0).
+    if (pgid == pid) {
+      ILOG("sending %s to process group: -%d",
+           sig == SIGTERM ? "SIGTERM" : "SIGKILL",
+           pgid);
+      uv_kill(-pgid, sig);
+    } else {
+      // Should never happen, because process_spawn() did setsid() in the child.
+      ELOG("pgid %d != pid %d", pgid, pid);
+    }
+  }
+}
+
 /// Ask a process to terminate and eventually kill if it doesn't respond
 void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
@@ -215,8 +232,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       // stdout/stderr, they will be closed when it exits(possibly due to being
       // terminated after a timeout)
       stream_may_close(&proc->in);
-      ILOG("Sending SIGTERM to pid %d", proc->pid);
-      uv_kill(proc->pid, SIGTERM);
+      os_proc_tree_kill(proc->pid, SIGTERM);
       break;
     case kProcessTypePty:
       // close all streams for pty processes to send SIGHUP to the process
@@ -231,7 +247,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   if (!loop->children_stop_requests++) {
     // When there's at least one stop request pending, start a timer that
     // will periodically check if a signal should be send to the job.
-    ILOG("Starting job kill timer");
+    ILOG("starting job kill timer");
     uv_timer_start(&loop->children_kill_timer, children_kill_cb,
                    KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
   }
@@ -253,11 +269,9 @@ static void children_kill_cb(uv_timer_t *handle)
 
     if (elapsed >= KILL_TIMEOUT_MS) {
       int sig = proc->type == kProcessTypePty && elapsed < KILL_TIMEOUT_MS * 2
-                    ? SIGTERM
-                    : SIGKILL;
-      ILOG("Sending %s to pid %d", sig == SIGTERM ? "SIGTERM" : "SIGKILL",
-           proc->pid);
-      uv_kill(proc->pid, sig);
+                ? SIGTERM
+                : SIGKILL;
+      os_proc_tree_kill(proc->pid, sig);
     }
   }
 }
