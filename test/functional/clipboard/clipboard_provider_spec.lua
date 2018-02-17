@@ -121,7 +121,7 @@ describe('clipboard', function()
   it('invalid g:clipboard shows hint if :redir is not active', function()
     command("let g:clipboard = 'bogus'")
     eq('', eval('provider#clipboard#Executable()'))
-    eq('clipboard: invalid g:clipboard', eval('provider#clipboard#Error()'))
+    eq('g:clipboard is no Dictionary', eval('provider#clipboard#Error()'))
 
     local screen = Screen.new(72, 4)
     screen:attach()
