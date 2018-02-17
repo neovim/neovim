@@ -173,23 +173,9 @@ bool msg_attr_skip(const char *s, const int attr, int *const call)
   return false;
 }
 
-
-bool msg_echo_attr_keep(const char *s, const int attr, const int keep)
+void msg_echo_show(const char *s, int attr)
   FUNC_ATTR_NONNULL_ALL
 {
-  static int entered = 0;
-
-  if (msg_attr_skip(s, attr, &entered)) {
-    return true;
-  }
-
-  msg_start();
-
-  char *const buf = (char *)msg_strtrunc((char_u *)s, false);
-  if (buf != NULL) {
-    s = buf;
-  }
-
   const char *next_spec = s;
 
   while (next_spec != NULL) {
@@ -212,6 +198,25 @@ bool msg_echo_attr_keep(const char *s, const int attr, const int keep)
   if (*s != NUL) {
     msg_outtrans_attr((char_u *)s, attr);
   }
+}
+
+bool msg_echo_attr_keep(const char *s, const int attr, const int keep)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static int entered = 0;
+
+  if (msg_attr_skip(s, attr, &entered)) {
+    return true;
+  }
+
+  msg_start();
+
+  char *const buf = (char *)msg_strtrunc((char_u *)s, false);
+  if (buf != NULL) {
+    s = buf;
+  }
+
+  msg_echo_show(s, attr);
 
   msg_clr_eos();
   const bool retval = msg_end();
