@@ -48,20 +48,38 @@ endfunction
 let s:cache_enabled = 1
 let s:err = ''
 
+" Our code does a few assumptions about the clipboard dictionary.
+" Check for all required keys and their properly typed values.
+function! s:valid_clipboard_format(clipboard) abort
+  if type({}) != type(a:clipboard)
+    let s:err = 'g:clipboard is no Dictionary'
+  elseif type({}) != type(get(a:clipboard, 'copy', v:null))
+    let s:err = 'g:clipboard has no `copy` key with type Dictionary'
+  elseif type({}) != type(get(a:clipboard, 'paste', v:null))
+    let s:err = 'g:clipboard has no `paste` key with type Dictionary'
+  elseif type('') != type(get(a:clipboard.copy, '+', v:null))
+    let s:err = 'g:clipboard.copy has no `+` key with type String'
+  elseif type('') != type(get(a:clipboard.copy, '*', v:null))
+    let s:err = 'g:clipboard.copy has no `*` key with type String'
+  elseif type('') != type(get(a:clipboard.paste, '+', v:null))
+    let s:err = 'g:clipboard.paste has no `+` key with type String'
+  elseif type('') != type(get(a:clipboard.paste, '*', v:null))
+    let s:err = 'g:clipboard.paste has no `*` key with type String'
+  endif
+  return empty(s:err) ? 1 : 0
+endfunction
+
 function! provider#clipboard#Error() abort
   return s:err
 endfunction
 
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
-    if type({}) isnot# type(g:clipboard)
-          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
-          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
-      let s:err = 'clipboard: invalid g:clipboard'
+    if !s:valid_clipboard_format(g:clipboard)
       return ''
     endif
-    let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
-    let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
+    let s:copy = g:clipboard.copy
+    let s:paste = g:clipboard.paste
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac') && executable('pbpaste') && s:cmd_ok('pbpaste')
