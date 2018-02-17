@@ -58,7 +58,7 @@ static void comp_botline(win_T *wp)
    * Otherwise have to start at w_topline.
    */
   check_cursor_moved(wp);
-  if (wp->w_valid & VALID_CROW) {
+  if (wp->w_cursors[0].w_cursor_valid & CURSOR_VALID_CROW) {
     lnum = wp->w_cursors[0].w_cursor.lnum;
     done = wp->w_cursors[0].w_cline_row;
   } else {
@@ -82,7 +82,7 @@ static void comp_botline(win_T *wp)
       wp->w_cursors[0].w_cline_height = n;
       wp->w_cursors[0].w_cline_folded = folded;
       redraw_for_cursorline(wp);
-      wp->w_valid |= (VALID_CROW|VALID_CHEIGHT);
+      wp->w_cursors[0].w_cursor_valid |= (CURSOR_VALID_CROW|CURSOR_VALID_CHEIGHT);
     }
     if (done + n > wp->w_height)
       break;
@@ -104,7 +104,7 @@ static void comp_botline(win_T *wp)
 static void redraw_for_cursorline(win_T *wp)
 {
   if ((wp->w_p_rnu || wp->w_p_cul)
-      && (wp->w_valid & VALID_CROW) == 0
+      && (wp->w_cursors[0].w_cursor_valid & CURSOR_VALID_CROW) == 0
       && !pum_visible()) {
     redraw_win_later(wp, SOME_VALID);
   }
@@ -380,15 +380,16 @@ void update_curswant(void)
 void check_cursor_moved(win_T *wp)
 {
   if (wp->w_cursors[0].w_cursor.lnum != wp->w_cursors[0].w_valid_cursor.lnum) {
-    wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                     |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
+    wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_TOPLINE);
+    curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_VIRTCOL|CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
     wp->w_cursors[0].w_valid_cursor = wp->w_cursors[0].w_cursor;
     wp->w_cursors[0].w_valid_leftcol = wp->w_leftcol;
   } else if (wp->w_cursors[0].w_cursor.col != wp->w_cursors[0].w_valid_cursor.col
              || wp->w_leftcol != wp->w_cursors[0].w_valid_leftcol
              || wp->w_cursors[0].w_cursor.coladd != wp->w_cursors[0].w_valid_cursor.coladd
              ) {
-    wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+    wp->w_valid &= ~(VALID_WROW|VALID_WCOL);
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
     wp->w_cursors[0].w_valid_cursor.col = wp->w_cursors[0].w_cursor.col;
     wp->w_cursors[0].w_valid_leftcol = wp->w_leftcol;
     wp->w_cursors[0].w_valid_cursor.coladd = wp->w_cursors[0].w_cursor.coladd;
@@ -425,7 +426,8 @@ void set_topline(win_T *wp, linenr_T lnum)
   wp->w_topline = lnum;
   wp->w_topline_was_set = true;
   wp->w_topfill = 0;
-  wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
+  wp->w_valid &= ~(VALID_WROW|VALID_BOTLINE|VALID_TOPLINE);
+  wp->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   /* Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked. */
   redraw_later(VALID);
 }
@@ -442,8 +444,8 @@ void changed_cline_bef_curs(void)
 
 void changed_cline_bef_curs_win(win_T *wp)
 {
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                   |VALID_CHEIGHT|VALID_TOPLINE);
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_TOPLINE);
+  wp->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_VIRTCOL|CURSOR_VALID_CHEIGHT);
 }
 
 /*
@@ -458,8 +460,8 @@ void changed_line_abv_curs(void)
 
 void changed_line_abv_curs_win(win_T *wp)
 {
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
-                   |VALID_CHEIGHT|VALID_TOPLINE);
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_TOPLINE);
+  wp->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_VIRTCOL|CURSOR_VALID_CROW|CURSOR_VALID_CHEIGHT);
 }
 
 /*
@@ -564,7 +566,7 @@ static void curs_rows(win_T *wp)
   }
 
   check_cursor_moved(wp);
-  if (!(wp->w_valid & VALID_CHEIGHT)) {
+  if (!(wp->w_cursors[0].w_cursor_valid & CURSOR_VALID_CHEIGHT)) {
     if (all_invalid
         || i == wp->w_lines_valid
         || (i < wp->w_lines_valid
@@ -589,7 +591,7 @@ static void curs_rows(win_T *wp)
   }
 
   redraw_for_cursorline(curwin);
-  wp->w_valid |= VALID_CROW|VALID_CHEIGHT;
+  wp->w_cursors[0].w_cursor_valid |= CURSOR_VALID_CROW|CURSOR_VALID_CHEIGHT;
 }
 
 /*
@@ -606,9 +608,9 @@ void validate_virtcol(void)
 void validate_virtcol_win(win_T *wp)
 {
   check_cursor_moved(wp);
-  if (!(wp->w_valid & VALID_VIRTCOL)) {
+  if (!(wp->w_cursors[0].w_cursor_valid & CURSOR_VALID_VIRTCOL)) {
     getvvcol(wp, &wp->w_cursors[0].w_cursor, NULL, &(wp->w_cursors[0].w_virtcol), NULL);
-    wp->w_valid |= VALID_VIRTCOL;
+    wp->w_cursors[0].w_cursor_valid |= CURSOR_VALID_VIRTCOL;
     if (wp->w_p_cuc
         && !pum_visible()
         )
@@ -622,14 +624,14 @@ void validate_virtcol_win(win_T *wp)
 static void validate_cheight(void)
 {
   check_cursor_moved(curwin);
-  if (!(curwin->w_valid & VALID_CHEIGHT)) {
+  if (!(curwin->w_cursors[0].w_cursor_valid & CURSOR_VALID_CHEIGHT)) {
     if (curwin->w_cursors[0].w_cursor.lnum == curwin->w_topline)
       curwin->w_cursors[0].w_cline_height = plines_nofill(curwin->w_cursors[0].w_cursor.lnum)
                                + curwin->w_topfill;
     else
       curwin->w_cursors[0].w_cline_height = plines(curwin->w_cursors[0].w_cursor.lnum);
     curwin->w_cursors[0].w_cline_folded = hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL);
-    curwin->w_valid |= VALID_CHEIGHT;
+    curwin->w_cursors[0].w_cursor_valid |= CURSOR_VALID_CHEIGHT;
   }
 }
 
@@ -716,7 +718,7 @@ void curs_columns(
   update_topline();
 
   // Next make sure that w_cursors[0].w_cline_row is valid.
-  if (!(curwin->w_valid & VALID_CROW)) {
+  if (!(curwin->w_cursors[0].w_cursor_valid & CURSOR_VALID_CROW)) {
     curs_rows(curwin);
   }
 
@@ -912,12 +914,13 @@ void curs_columns(
     redraw_later(NOT_VALID);
 
   /* Redraw when w_cursors[0].w_virtcol changes and 'cursorcolumn' is set */
-  if (curwin->w_p_cuc && (curwin->w_valid & VALID_VIRTCOL) == 0
+  if (curwin->w_p_cuc && (curwin->w_cursors[0].w_cursor_valid & CURSOR_VALID_VIRTCOL) == 0
       && !pum_visible()) {
     redraw_later(SOME_VALID);
   }
 
-  curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+  curwin->w_valid |= VALID_WCOL|VALID_WROW;
+  curwin->w_cursors[0].w_cursor_valid |= CURSOR_VALID_VIRTCOL;
 }
 
 /*
@@ -989,8 +992,8 @@ scrolldown (
         curwin->w_cursors[0].w_cursor.lnum = first - 1;
     } else
       wrow -= plines(curwin->w_cursors[0].w_cursor.lnum--);
-    curwin->w_valid &=
-      ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
+    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL);
+    curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW|CURSOR_VALID_VIRTCOL);
     moved = true;
   }
   if (moved) {
@@ -1044,11 +1047,12 @@ scrollup (
     /* Make sure w_topline is at the first of a sequence of folded lines. */
     (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
 
-  curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
+  curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE);
+  curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   if (curwin->w_cursors[0].w_cursor.lnum < curwin->w_topline) {
     curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline;
-    curwin->w_valid &=
-      ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
+    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL);
+    curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW|CURSOR_VALID_VIRTCOL);
     coladvance(curwin->w_cursors[0].w_curswant);
   }
 }
@@ -1137,7 +1141,8 @@ void scrolldown_clamp(void)
     }
     (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
     --curwin->w_botline;            /* approximate w_botline */
-    curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
+    curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE);
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   }
 }
 
@@ -1175,7 +1180,8 @@ void scrollup_clamp(void)
       ++curwin->w_topline;
     }
     ++curwin->w_botline;                /* approximate w_botline */
-    curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
+    curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE);
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   }
 }
 
@@ -1362,9 +1368,10 @@ void scroll_cursor_top(int min_scroll, int always)
     check_topfill(curwin, false);
     if (curwin->w_topline != old_topline
         || curwin->w_topfill != old_topfill
-        )
-      curwin->w_valid &=
-        ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+        ) {
+      curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
+    }
     curwin->w_valid |= VALID_TOPLINE;
   }
 }
@@ -1431,8 +1438,10 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
     if (curwin->w_topline != old_topline
         || curwin->w_topfill != old_topfill
-        )
-      curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
+        ) {
+      curwin->w_valid &= ~VALID_WROW;
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
+    }
   } else
     validate_botline();
 
@@ -1620,7 +1629,8 @@ void scroll_cursor_halfway(int atend)
   if (old_topline > curwin->w_topline + curwin->w_height)
     curwin->w_botfill = false;
   check_topfill(curwin, false);
-  curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+  curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+  curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   curwin->w_valid |= VALID_TOPLINE;
 }
 
@@ -1708,13 +1718,13 @@ void cursor_correct(void)
   else {
     if (cln < topline && curwin->w_topline > 1) {
       curwin->w_cursors[0].w_cursor.lnum = topline;
-      curwin->w_valid &=
-        ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW);
+      curwin->w_valid &= ~(VALID_WROW|VALID_WCOL);
+      curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
     }
     if (cln > botline && curwin->w_botline <= curbuf->b_ml.ml_line_count) {
       curwin->w_cursors[0].w_cursor.lnum = botline;
-      curwin->w_valid &=
-        ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW);
+      curwin->w_valid &= ~(VALID_WROW|VALID_WCOL);
+      curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
     }
   }
   curwin->w_valid |= VALID_TOPLINE;
@@ -1773,7 +1783,8 @@ int onepage(int dir, long count)
         /* at end of file */
         curwin->w_topline = curbuf->b_ml.ml_line_count;
         curwin->w_topfill = 0;
-        curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
+        curwin->w_valid &= ~VALID_WROW;
+        curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       } else {
         /* For the overlap, start with the line just below the window
          * and go upwards. */
@@ -1785,8 +1796,9 @@ int onepage(int dir, long count)
         curwin->w_topfill = loff.fill;
         check_topfill(curwin, false);
         curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline;
-        curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|VALID_WROW|
-                             VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+        curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|
+                             VALID_BOTLINE|VALID_BOTLINE_AP);
+        curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
       }
     } else {  /* dir == BACKWARDS */
       if (curwin->w_topline == 1) {
@@ -1837,7 +1849,8 @@ int onepage(int dir, long count)
       if (loff.lnum < 1) {                      /* at begin of file */
         curwin->w_topline = 1;
         max_topfill();
-        curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
+        curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE);
+        curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       } else {
         /* Go two lines forward again. */
         topline_botline(&loff);
@@ -1865,13 +1878,14 @@ int onepage(int dir, long count)
           }
           comp_botline(curwin);
           curwin->w_cursors[0].w_cursor.lnum = curwin->w_botline - 1;
-          curwin->w_valid &=
-            ~(VALID_WCOL | VALID_CHEIGHT | VALID_WROW | VALID_CROW);
+          curwin->w_valid &= ~(VALID_WCOL | VALID_WROW);
+          curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
         } else {
           curwin->w_topline = loff.lnum;
           curwin->w_topfill = loff.fill;
           check_topfill(curwin, false);
-          curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
+          curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE);
+          curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
         }
       }
     }
@@ -1882,7 +1896,8 @@ int onepage(int dir, long count)
   if (retval == OK) {
     beginline(BL_SOL | BL_FIX);
   }
-  curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|VALID_VIRTCOL);
+  curwin->w_valid &= ~(VALID_WCOL|VALID_WROW);
+  curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
 
   /*
    * Avoid the screen jumping up and down when 'scrolloff' is non-zero.
@@ -2000,12 +2015,13 @@ void halfpage(bool flag, linenr_T Prenum)
 #ifndef KEEP_SCREEN_LINE
         if (curwin->w_cursors[0].w_cursor.lnum < curbuf->b_ml.ml_line_count) {
           ++curwin->w_cursors[0].w_cursor.lnum;
-          curwin->w_valid &=
-            ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
+          curwin->w_valid &= ~VALID_WCOL;
+          curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_CHEIGHT|CURSOR_VALID_VIRTCOL);
         }
 #endif
       }
-      curwin->w_valid &= ~(VALID_CROW|VALID_WROW);
+      curwin->w_valid &= ~VALID_WROW;
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       scrolled += i;
 
       /*
@@ -2074,13 +2090,14 @@ void halfpage(bool flag, linenr_T Prenum)
         (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         curwin->w_topfill = 0;
       }
-      curwin->w_valid &= ~(VALID_CROW|VALID_WROW|
-                           VALID_BOTLINE|VALID_BOTLINE_AP);
+      curwin->w_valid &= ~(VALID_WROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       scrolled += i;
 #ifndef KEEP_SCREEN_LINE
       if (curwin->w_cursors[0].w_cursor.lnum > 1) {
         --curwin->w_cursors[0].w_cursor.lnum;
-        curwin->w_valid &= ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
+        curwin->w_valid &= ~VALID_WCOL;
+        curwin->w_cursors[0].w_cursor_valid &= ~(CURSOR_VALID_VIRTCOL|CURSOR_VALID_CHEIGHT);
       }
 #endif
     }

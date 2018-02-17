@@ -1296,7 +1296,7 @@ static void normal_redraw(NormalState *s)
     }
 
     update_single_line(curwin, s->conceal_new_cursor_line);
-    curwin->w_valid &= ~VALID_CROW;
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
   }
 
   setcursor();
@@ -1421,7 +1421,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
        ) && oap->op_type != OP_NOP) {
     // Avoid a problem with unwanted linebreaks in block mode
     if (curwin->w_p_lbr) {
-      curwin->w_valid &= ~VALID_VIRTCOL;
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
     }
     curwin->w_p_lbr = false;
     oap->is_VIsual = VIsual_active;
@@ -1573,7 +1573,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       /* w_cursors[0].w_virtcol may have been updated; if the cursor goes back to its
        * previous position w_cursors[0].w_virtcol becomes invalid and isn't updated
        * automatically. */
-      curwin->w_valid &= ~VALID_VIRTCOL;
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
     } else {
       // Include folded lines completely.
       if (!VIsual_active && oap->motion_type == kMTLineWise) {
@@ -7052,7 +7052,7 @@ static void n_opencmd(cmdarg_T *cap)
       }
       if (curwin->w_p_cul) {
         // force redraw of cursorline
-        curwin->w_valid &= ~VALID_CROW;
+        curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       }
       invoke_edit(cap, false, cap->cmdchar, true);
     }

@@ -1396,7 +1396,7 @@ ins_redraw (
       update_single_line(curwin, conceal_old_cursor_line);
     update_single_line(curwin, conceal_new_cursor_line == 0
         ? curwin->w_cursors[0].w_cursor.lnum : conceal_new_cursor_line);
-    curwin->w_valid &= ~VALID_CROW;
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
   }
   showruler(FALSE);
   setcursor();

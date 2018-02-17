@@ -369,7 +369,7 @@ void update_screen(int type)
                && VIsual_active
                && curwin->w_old_cursor_lnum == curwin->w_cursors[0].w_cursor.lnum
                && curwin->w_old_visual_mode == VIsual_mode
-               && (curwin->w_valid & VALID_VIRTCOL)
+               && (curwin->w_cursors[0].w_cursor_valid & CURSOR_VALID_VIRTCOL)
                && curwin->w_old_curswant == curwin->w_cursors[0].w_curswant)
            ))
     curwin->w_redr_type = type;
@@ -2029,7 +2029,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     curwin->w_cursors[0].w_cline_row = row;
     curwin->w_cursors[0].w_cline_height = 1;
     curwin->w_cursors[0].w_cline_folded = true;
-    curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
+    curwin->w_cursors[0].w_cursor_valid |= (CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
   }
 }
 
@@ -3995,7 +3995,7 @@ win_line (
         curwin->w_cursors[0].w_cline_row = startrow;
         curwin->w_cursors[0].w_cline_height = row - startrow;
         curwin->w_cursors[0].w_cline_folded = false;
-        curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
+        curwin->w_cursors[0].w_cursor_valid |= (CURSOR_VALID_CHEIGHT|CURSOR_VALID_CROW);
       }
 
       break;

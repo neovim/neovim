@@ -249,7 +249,8 @@ retnomove:
       }
       check_topfill(curwin, false);
       curwin->w_valid &=
-        ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+        ~(VALID_WROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       redraw_later(VALID);
       row = 0;
     } else if (row >= curwin->w_height)   {
@@ -282,7 +283,8 @@ retnomove:
       check_topfill(curwin, false);
       redraw_later(VALID);
       curwin->w_valid &=
-        ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+        ~(VALID_WROW|VALID_BOTLINE|VALID_BOTLINE_AP);
+      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_CROW;
       row = curwin->w_height - 1;
     } else if (row == 0)   {
       // When dragging the mouse, while the text has been scrolled up as

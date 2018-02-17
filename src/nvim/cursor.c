@@ -57,10 +57,10 @@ int coladvance_force(colnr_T wcol)
   int rc = coladvance2(&curwin->w_cursors[0].w_cursor, true, false, wcol);
 
   if (wcol == MAXCOL) {
-    curwin->w_valid &= ~VALID_VIRTCOL;
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
   } else {
     /* Virtcol is valid */
-    curwin->w_valid |= VALID_VIRTCOL;
+    curwin->w_cursors[0].w_cursor_valid |= CURSOR_VALID_VIRTCOL;
     curwin->w_cursors[0].w_virtcol = wcol;
   }
   return rc;
@@ -80,10 +80,10 @@ int coladvance(colnr_T wcol)
   int rc = getvpos(&curwin->w_cursors[0].w_cursor, wcol);
 
   if (wcol == MAXCOL || rc == FAIL)
-    curwin->w_valid &= ~VALID_VIRTCOL;
+    curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
   else if (*get_cursor_pos_ptr() != TAB) {
     /* Virtcol is valid when not on a TAB */
-    curwin->w_valid |= VALID_VIRTCOL;
+    curwin->w_cursors[0].w_cursor_valid |= CURSOR_VALID_VIRTCOL;
     curwin->w_cursors[0].w_virtcol = wcol;
   }
   return rc;
