@@ -1475,7 +1475,7 @@ Float nvim__id_float(Float flt)
 }
 
 Array nvim_list_uis(void)
-  FUNC_API_SINCE(1)
+  FUNC_API_SINCE(4)
 {
   Array alluis = ARRAY_DICT_INIT;
   for (unsigned int i = 0; i < ui_count ; i++) {
