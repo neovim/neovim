@@ -6169,6 +6169,49 @@ int oneright(void)
   return OK;
 }
 
+int onerightcursor(win_T* win, cursor_T *cursor)
+{
+  char_u      *ptr;
+  int l;
+
+  // TODO multicursor virtual_active?
+  if (virtual_active()) {
+    pos_T prevpos = curwin->w_cursors[0].w_cursor;
+
+    /* Adjust for multi-wide char (excluding TAB) */
+    ptr = get_cursor_pos_ptr();
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(
+                                   (*mb_ptr2char)(ptr)
+                                   ))
+                              ? ptr2cells(ptr) : 1));
+    curwin->w_cursors[0].w_set_curswant = TRUE;
+    /* Return OK if the cursor moved, FAIL otherwise (at window edge). */
+    return (prevpos.col != curwin->w_cursors[0].w_cursor.col
+            || prevpos.coladd != curwin->w_cursors[0].w_cursor.coladd) ? OK : FAIL;
+  }
+
+  ptr = get_cursor_pos_ptr_cursor(cursor);
+  if (*ptr == NUL)
+    return FAIL;            /* already at the very end */
+
+  if (has_mbyte)
+    l = (*mb_ptr2len)(ptr);
+  else
+    l = 1;
+
+  /* move "l" bytes right, but don't end up on the NUL, unless 'virtualedit'
+   * contains "onemore". */
+  if (ptr[l] == NUL
+      && (ve_flags & VE_ONEMORE) == 0
+      )
+    return FAIL;
+  cursor->w_cursor.col += l;
+
+  cursor->w_set_curswant = TRUE;
+  redraw_win_later(win, SOME_VALID);
+  return OK;
+}
+
 int oneleft(void)
 {
   if (virtual_active()) {

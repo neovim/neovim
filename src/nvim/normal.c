@@ -5039,53 +5039,57 @@ static void nv_right(cmdarg_T *cap)
     PAST_LINE = 0;
 
   for (n = cap->count1; n > 0; --n) {
-    if ((!PAST_LINE && oneright() == false)
-        || (PAST_LINE && *get_cursor_pos_ptr() == NUL)
-        ) {
-      //          <Space> wraps to next line if 'whichwrap' has 's'.
-      //              'l' wraps to next line if 'whichwrap' has 'l'.
-      // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
-      if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
-           || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
-           || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
-          && curwin->w_cursors[0].w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        // When deleting we also count the NL as a character.
-        // Set cap->oap->inclusive when last char in the line is
-        // included, move to next line after that
-        if (cap->oap->op_type != OP_NOP
-            && !cap->oap->inclusive
-            && !LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
-          cap->oap->inclusive = true;
+    for (size_t i = 0; i < curwin->w_cursors_count; ++i) {
+      if ((!PAST_LINE && onerightcursor(curwin, &curwin->w_cursors[i]) == false)
+          || (PAST_LINE && *get_cursor_pos_ptr_cursor(&curwin->w_cursors[i]) == NUL)
+          ) {
+        //          <Space> wraps to next line if 'whichwrap' has 's'.
+        //              'l' wraps to next line if 'whichwrap' has 'l'.
+        // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
+        if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
+             || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
+             || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
+            && curwin->w_cursors[i].w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+          // When deleting we also count the NL as a character.
+          // Set cap->oap->inclusive when last char in the line is
+          // included, move to next line after that
+          if (cap->oap->op_type != OP_NOP
+              && !cap->oap->inclusive
+              && !LINEEMPTY(curwin->w_cursors[i].w_cursor.lnum)) {
+            cap->oap->inclusive = true;
+          } else {
+            ++curwin->w_cursors[i].w_cursor.lnum;
+            curwin->w_cursors[i].w_cursor.col = 0;
+            curwin->w_cursors[i].w_cursor.coladd = 0;
+            curwin->w_cursors[i].w_set_curswant = true;
+            cap->oap->inclusive = false;
+          }
+          continue;
+        }
+        if (cap->oap->op_type == OP_NOP) {
+          // Only beep and flush if not moved at all
+          if (n == cap->count1) {
+            beep_flush();
+          }
         } else {
-          ++curwin->w_cursors[0].w_cursor.lnum;
-          curwin->w_cursors[0].w_cursor.col = 0;
-          curwin->w_cursors[0].w_cursor.coladd = 0;
-          curwin->w_cursors[0].w_set_curswant = true;
-          cap->oap->inclusive = false;
+          if (!LINEEMPTY(curwin->w_cursors[i].w_cursor.lnum)) {
+            cap->oap->inclusive = true;
+          }
         }
-        continue;
-      }
-      if (cap->oap->op_type == OP_NOP) {
-        // Only beep and flush if not moved at all
-        if (n == cap->count1) {
-          beep_flush();
+        break;
+      } else if (PAST_LINE) {
+        curwin->w_cursors[i].w_set_curswant = true;
+        // TODO multicursor virtual_active?
+        if (virtual_active())
+          oneright();
+        else {
+          // TODO multicursor
+          if (has_mbyte)
+            curwin->w_cursors[i].w_cursor.col +=
+              (*mb_ptr2len)(get_cursor_pos_ptr());
+          else
+            ++curwin->w_cursors[i].w_cursor.col;
         }
-      } else {
-        if (!LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
-          cap->oap->inclusive = true;
-        }
-      }
-      break;
-    } else if (PAST_LINE) {
-      curwin->w_cursors[0].w_set_curswant = true;
-      if (virtual_active())
-        oneright();
-      else {
-        if (has_mbyte)
-          curwin->w_cursors[0].w_cursor.col +=
-            (*mb_ptr2len)(get_cursor_pos_ptr());
-        else
-          ++curwin->w_cursors[0].w_cursor.col;
       }
     }
   }
