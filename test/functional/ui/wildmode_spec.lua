@@ -60,15 +60,14 @@ describe("'wildmenu'", function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
     if iswin() then
-      helpers.set_shell_powershell()
-      feed([[:terminal for ($i = 1; $i -le 5000; $i++) {Write-Output foo foo foo; Start-Sleep -Milliseconds 100}<cr>]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
     end
 
     feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
-    screen:sleep(iswin() and 500 or 50) -- Allow some terminal output.
+    screen:sleep(50)        -- Allow some terminal output.
     screen:expect([[
       foo                      |
       foo                      |
@@ -80,7 +79,7 @@ describe("'wildmenu'", function()
     -- cmdline CTRL-D display should also be preserved.
     feed([[<C-\><C-N>]])
     feed([[:sign <C-D>]])   -- Invoke cmdline CTRL-D.
-    screen:sleep(iswin() and 500 or 50) -- Allow some terminal output.
+    screen:sleep(50)        -- Allow some terminal output.
     screen:expect([[
       :sign                    |
       define    place          |

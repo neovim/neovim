@@ -188,8 +188,9 @@ describe('system()', function()
     end)
 
     it('`yes` and is interrupted with CTRL-C', function()
-      if helpers.pending_win32(pending) then return end
-      feed(':call system("yes")<cr>')
+      feed(':call system("' .. (iswin()
+        and 'for /L %I in (1,0,2) do @echo y'
+        or  'yes') .. '")<cr>')
       screen:expect([[
                                                              |
         ~                                                    |
@@ -204,8 +205,11 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        :call system("yes")                                  |
-      ]])
+]] .. (iswin()
+        and [[
+        :call system("for /L %I in (1,0,2) do @echo y")      |]]
+        or  [[
+        :call system("yes")                                  |]]))
       feed('<c-c>')
       screen:expect([[
         ^                                                     |
