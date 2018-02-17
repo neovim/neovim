@@ -168,7 +168,7 @@ static const struct nv_cmd {
   { Ctrl_H,    nv_ctrlh,       0,                      0 },
   { Ctrl_I,    nv_pcmark,      0,                      0 },
   { NL,        nv_down,        0,                      false },
-  { Ctrl_K,    nv_error,       0,                      0 },
+  { Ctrl_K,    nv_add_cursor,  0,                      0 },
   { Ctrl_L,    nv_clear,       0,                      0 },
   { Ctrl_M,    nv_down,        0,                      true },
   { Ctrl_N,    nv_down,        NV_STS,                 false },
@@ -3628,6 +3628,11 @@ static void nv_addsub(cmdarg_T *cap)
   } else {
     clearop(cap->oap);
   }
+}
+
+static void nv_add_cursor(cmdarg_T *cap)
+{
+  add_cursor();
 }
 
 /*

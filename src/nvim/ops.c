@@ -88,7 +88,7 @@ struct block_def {
 
 /*
  * The names of operators.
- * IMPORTANT: Index must correspond with defines in vim.h!!!
+ * IMPORTANT: Index must correspond with defines in ops.h!!!
  * The third field indicates whether the operator always works on lines.
  */
 static char opchars[][3] =

@@ -508,3 +508,19 @@ char_u *get_cursor_pos_ptr(void)
          curwin->w_cursors[0].w_cursor.col;
 }
 
+void add_cursor(void)
+{
+  if (curwin->w_cursors_capacity == curwin->w_cursors_count) {
+    curwin->w_cursors_capacity = curwin->w_cursors_capacity ? 2*curwin->w_cursors_capacity : 4;
+    cursor_T* new_cursors = xcalloc(curwin->w_cursors_capacity , sizeof(cursor_T));
+    memcpy(new_cursors, curwin->w_cursors, curwin->w_cursors_count * sizeof(cursor_T));
+    xfree(curwin->w_cursors);
+    curwin->w_cursors = new_cursors;
+  }
+
+  curwin->w_cursors[curwin->w_cursors_count] =  curwin->w_cursors[curwin->w_cursors_count-1];
+
+  ++curwin->w_cursors[curwin->w_cursors_count].w_cursor.lnum;
+  ++curwin->w_cursors_count;
+  redraw_win_later(curwin, SOME_VALID);
+}

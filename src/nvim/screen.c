@@ -4042,6 +4042,13 @@ win_line (
       }
     }
 
+    for (size_t i = 1; i < wp->w_cursors_count; ++i) {
+      if (wp->w_cursors[i].w_cursor.lnum == lnum &&
+          wp->w_cursors[i].w_cursor.col == VCOL_HLC) {
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_L), char_attr);
+      }
+    }
+
     /*
      * Store character to be displayed.
      * Skip characters that are left of the screen for 'nowrap'.
