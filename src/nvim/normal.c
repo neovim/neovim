@@ -5114,46 +5114,48 @@ static void nv_left(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   for (n = cap->count1; n > 0; --n) {
-    if (oneleft() == false) {
-      /* <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
-       *		 'h' wraps to previous line if 'whichwrap' has 'h'.
-       *	   CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
-       */
-      if (       (((cap->cmdchar == K_BS
-                    || cap->cmdchar == Ctrl_H)
-                   && vim_strchr(p_ww, 'b') != NULL)
-                  || (cap->cmdchar == 'h'
-                      && vim_strchr(p_ww, 'h') != NULL)
-                  || (cap->cmdchar == K_LEFT
-                      && vim_strchr(p_ww, '<') != NULL))
-                 && curwin->w_cursors[0].w_cursor.lnum > 1) {
-        --(curwin->w_cursors[0].w_cursor.lnum);
-        coladvance((colnr_T)MAXCOL);
-        curwin->w_cursors[0].w_set_curswant = true;
+    for (size_t i = 0; i < curwin->w_cursors_count; ++i) {
+      if (oneleftcursor(curwin, &curwin->w_cursors[i]) == false) {
+        /* <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
+         *		 'h' wraps to previous line if 'whichwrap' has 'h'.
+         *	   CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
+         */
+        if (       (((cap->cmdchar == K_BS
+                      || cap->cmdchar == Ctrl_H)
+                     && vim_strchr(p_ww, 'b') != NULL)
+                    || (cap->cmdchar == 'h'
+                        && vim_strchr(p_ww, 'h') != NULL)
+                    || (cap->cmdchar == K_LEFT
+                        && vim_strchr(p_ww, '<') != NULL))
+                   && curwin->w_cursors[i].w_cursor.lnum > 1) {
+          --(curwin->w_cursors[i].w_cursor.lnum);
+          coladvancecursor(&curwin->w_cursors[i], (colnr_T)MAXCOL);
+          curwin->w_cursors[i].w_set_curswant = true;
 
-        // When the NL before the first char has to be deleted we
-        // put the cursor on the NUL after the previous line.
-        // This is a very special case, be careful!
-        // Don't adjust op_end now, otherwise it won't work.
-        if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
-            && !LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
-          char_u *cp = get_cursor_pos_ptr();
+          // When the NL before the first char has to be deleted we
+          // put the cursor on the NUL after the previous line.
+          // This is a very special case, be careful!
+          // Don't adjust op_end now, otherwise it won't work.
+          if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
+              && !LINEEMPTY(curwin->w_cursors[i].w_cursor.lnum)) {
+            char_u *cp = get_cursor_pos_ptr_cursor(&curwin->w_cursors[i]);
 
-          if (*cp != NUL) {
-            if (has_mbyte) {
-              curwin->w_cursors[0].w_cursor.col += (*mb_ptr2len)(cp);
-            } else {
-              curwin->w_cursors[0].w_cursor.col++;
+            if (*cp != NUL) {
+              if (has_mbyte) {
+                curwin->w_cursors[i].w_cursor.col += (*mb_ptr2len)(cp);
+              } else {
+                curwin->w_cursors[i].w_cursor.col++;
+              }
             }
+            cap->retval |= CA_NO_ADJ_OP_END;
           }
-          cap->retval |= CA_NO_ADJ_OP_END;
+          continue;
         }
-        continue;
+        /* Only beep and flush if not moved at all */
+        else if (cap->oap->op_type == OP_NOP && n == cap->count1)
+          beep_flush();
+        break;
       }
-      /* Only beep and flush if not moved at all */
-      else if (cap->oap->op_type == OP_NOP && n == cap->count1)
-        beep_flush();
-      break;
     }
   }
   if (n != cap->count1 && (fdo_flags & FDO_HOR) && KeyTyped

@@ -89,6 +89,20 @@ int coladvance(colnr_T wcol)
   return rc;
 }
 
+int coladvancecursor(cursor_T *cursor, colnr_T wcol)
+{
+  int rc = getvpos(&cursor->w_cursor, wcol);
+
+  if (wcol == MAXCOL || rc == FAIL)
+    cursor->w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
+  else if (*get_cursor_pos_ptr_cursor(cursor) != TAB) {
+    /* Virtcol is valid when not on a TAB */
+    cursor->w_cursor_valid |= CURSOR_VALID_VIRTCOL;
+    cursor->w_virtcol = wcol;
+  }
+  return rc;
+}
+
 static int coladvance2(
     pos_T *pos,
     bool addspaces,                /* change the text to achieve our goal? */
@@ -506,6 +520,12 @@ char_u *get_cursor_pos_ptr(void)
 {
   return ml_get_buf(curbuf, curwin->w_cursors[0].w_cursor.lnum, false) +
          curwin->w_cursors[0].w_cursor.col;
+}
+
+char_u *get_cursor_pos_ptr_cursor(cursor_T *cursor)
+{
+  return ml_get_buf(curbuf, cursor->w_cursor.lnum, false) +
+         cursor->w_cursor.col;
 }
 
 void add_cursor(void)

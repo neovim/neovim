@@ -6221,6 +6221,61 @@ int oneleft(void)
   return OK;
 }
 
+int oneleftcursor(win_T* win, cursor_T* cursor)
+{
+  // TODO multicursor wtf is virtual_active???
+  if (virtual_active()) {
+    int width;
+    int v = getviscol();
+
+    if (v == 0)
+      return FAIL;
+
+    /* We might get stuck on 'showbreak', skip over it. */
+    width = 1;
+    for (;; ) {
+      coladvance(v - width);
+      /* getviscol() is slow, skip it when 'showbreak' is empty,
+         'breakindent' is not set and there are no multi-byte
+         characters */
+      if ((*p_sbr == NUL
+           && !curwin->w_p_bri
+           && !has_mbyte
+           ) || getviscol() < v)
+        break;
+      ++width;
+    }
+
+    if (curwin->w_cursors[0].w_cursor.coladd == 1) {
+      char_u *ptr;
+
+      /* Adjust for multi-wide char (not a TAB) */
+      ptr = get_cursor_pos_ptr();
+      if (*ptr != TAB && vim_isprintc(
+              (*mb_ptr2char)(ptr)
+              ) && ptr2cells(ptr) > 1)
+        curwin->w_cursors[0].w_cursor.coladd = 0;
+    }
+
+    curwin->w_cursors[0].w_set_curswant = TRUE;
+    return OK;
+  }
+
+  if (cursor->w_cursor.col == 0)
+    return FAIL;
+
+  cursor->w_set_curswant = TRUE;
+  --cursor->w_cursor.col;
+  redraw_win_later(win, SOME_VALID);
+
+  // TODO multi_cursor
+  /* if the character on the left of the current cursor is a multi-byte
+   * character, move to its first byte */
+  if (has_mbyte)
+    mb_adjust_cursor();
+  return OK;
+}
+
 int
 cursor_up (
     long n,
