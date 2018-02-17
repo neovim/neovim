@@ -1356,7 +1356,7 @@ static int normal_check(VimState *state)
   may_garbage_collect = !s->cmdwin && !s->noexmode;
 
   // Update w_cursors[0].w_curswant if w_cursors[0].w_set_curswant has been set.
-  // Postponed until here to avoid computing w_virtcol too often.
+  // Postponed until here to avoid computing w_cursors[0].w_virtcol too often.
   update_curswant();
 
   if (exmode_active) {
@@ -1501,7 +1501,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           if (redo_VIsual_line_count <= 1) {
             validate_virtcol();
             curwin->w_cursors[0].w_curswant =
-              curwin->w_virtcol + redo_VIsual_vcol - 1;
+              curwin->w_cursors[0].w_virtcol + redo_VIsual_vcol - 1;
           } else
             curwin->w_cursors[0].w_curswant = redo_VIsual_vcol;
         } else {
@@ -1570,8 +1570,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       oap->end = curwin->w_cursors[0].w_cursor;
       curwin->w_cursors[0].w_cursor = oap->start;
 
-      /* w_virtcol may have been updated; if the cursor goes back to its
-       * previous position w_virtcol becomes invalid and isn't updated
+      /* w_cursors[0].w_virtcol may have been updated; if the cursor goes back to its
+       * previous position w_cursors[0].w_virtcol becomes invalid and isn't updated
        * automatically. */
       curwin->w_valid &= ~VALID_VIRTCOL;
     } else {
@@ -3882,8 +3882,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
         curwin->w_cursors[0].w_curswant = 0;
       else {
         curwin->w_cursors[0].w_curswant = width1 - 1;
-        if (curwin->w_virtcol > curwin->w_cursors[0].w_curswant)
-          curwin->w_cursors[0].w_curswant += ((curwin->w_virtcol
+        if (curwin->w_cursors[0].w_virtcol > curwin->w_cursors[0].w_curswant)
+          curwin->w_cursors[0].w_curswant += ((curwin->w_cursors[0].w_virtcol
                                   - curwin->w_cursors[0].w_curswant -
                                   1) / width2 + 1) * width2;
       }
@@ -3956,7 +3956,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
      * screenline or move two screenlines.
      */
     validate_virtcol();
-    colnr_T virtcol = curwin->w_virtcol;
+    colnr_T virtcol = curwin->w_cursors[0].w_virtcol;
     if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
         virtcol -= vim_strsize(p_sbr);
 
@@ -6395,7 +6395,7 @@ static void nv_visual(cmdarg_T *cap)
         if (resel_VIsual_line_count <= 1) {
           validate_virtcol();
           assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-          curwin->w_cursors[0].w_curswant = (curwin->w_virtcol
+          curwin->w_cursors[0].w_curswant = (curwin->w_cursors[0].w_virtcol
                                 + resel_VIsual_vcol * (int)cap->count0 - 1);
         } else
           curwin->w_cursors[0].w_curswant = resel_VIsual_vcol;
@@ -6407,7 +6407,7 @@ static void nv_visual(cmdarg_T *cap)
       } else if (VIsual_mode == Ctrl_V) {
         validate_virtcol();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-        curwin->w_cursors[0].w_curswant = (curwin->w_virtcol
+        curwin->w_cursors[0].w_curswant = (curwin->w_cursors[0].w_virtcol
                               + resel_VIsual_vcol * (int)cap->count0 - 1);
         coladvance(curwin->w_cursors[0].w_curswant);
       } else
@@ -6467,7 +6467,7 @@ static void n_start_visual_mode(int c)
    */
   if (c == Ctrl_V && (ve_flags & VE_BLOCK) && gchar_cursor() == TAB) {
     validate_virtcol();
-    coladvance(curwin->w_virtcol);
+    coladvance(curwin->w_cursors[0].w_virtcol);
   }
   VIsual = curwin->w_cursors[0].w_cursor;
 
@@ -6702,8 +6702,8 @@ static void nv_g_cmd(cmdarg_T *cap)
 
       validate_virtcol();
       i = 0;
-      if (curwin->w_virtcol >= (colnr_T)width1 && width2 > 0)
-        i = (curwin->w_virtcol - width1) / width2 * width2 + width1;
+      if (curwin->w_cursors[0].w_virtcol >= (colnr_T)width1 && width2 > 0)
+        i = (curwin->w_cursors[0].w_virtcol - width1) / width2 * width2 + width1;
     } else
       i = curwin->w_leftcol;
     /* Go to the middle of the screen line.  When 'number' or
@@ -6765,14 +6765,14 @@ static void nv_g_cmd(cmdarg_T *cap)
 
         validate_virtcol();
         i = width1 - 1;
-        if (curwin->w_virtcol >= (colnr_T)width1)
-          i += ((curwin->w_virtcol - width1) / width2 + 1)
+        if (curwin->w_cursors[0].w_virtcol >= (colnr_T)width1)
+          i += ((curwin->w_cursors[0].w_virtcol - width1) / width2 + 1)
                * width2;
         coladvance((colnr_T)i);
 
         /* Make sure we stick in this column. */
         validate_virtcol();
-        curwin->w_cursors[0].w_curswant = curwin->w_virtcol;
+        curwin->w_cursors[0].w_curswant = curwin->w_cursors[0].w_virtcol;
         curwin->w_cursors[0].w_set_curswant = false;
         if (curwin->w_cursors[0].w_cursor.col > 0 && curwin->w_p_wrap) {
           /*
@@ -6780,7 +6780,7 @@ static void nv_g_cmd(cmdarg_T *cap)
            * the end of the line.  We do not want to advance to
            * the next screen line.
            */
-          if (curwin->w_virtcol > (colnr_T)i)
+          if (curwin->w_cursors[0].w_virtcol > (colnr_T)i)
             --curwin->w_cursors[0].w_cursor.col;
         }
       } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false)
@@ -6791,7 +6791,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
       /* Make sure we stick in this column. */
       validate_virtcol();
-      curwin->w_cursors[0].w_curswant = curwin->w_virtcol;
+      curwin->w_cursors[0].w_curswant = curwin->w_cursors[0].w_virtcol;
       curwin->w_cursors[0].w_set_curswant = false;
     }
   }

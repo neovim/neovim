@@ -154,10 +154,10 @@ redo:
     // pum above "row"
 
     // Leave two lines of context if possible
-    if (curwin->w_wrow - curwin->w_cline_row >= 2) {
+    if (curwin->w_wrow - curwin->w_cursors[0].w_cline_row >= 2) {
       context_lines = 2;
     } else {
-      context_lines = curwin->w_wrow - curwin->w_cline_row;
+      context_lines = curwin->w_wrow - curwin->w_cursors[0].w_cline_row;
     }
 
     if (row >= size + context_lines) {
@@ -176,11 +176,11 @@ redo:
     // pum below "row"
 
     // Leave two lines of context if possible
-    if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
+    if (curwin->w_cursors[0].w_cline_row + curwin->w_cursors[0].w_cline_height - curwin->w_wrow >= 3) {
       context_lines = 3;
     } else {
-      context_lines = curwin->w_cline_row
-                      + curwin->w_cline_height - curwin->w_wrow;
+      context_lines = curwin->w_cursors[0].w_cline_row
+                      + curwin->w_cursors[0].w_cline_height - curwin->w_wrow;
     }
 
     pum_row = row + context_lines;

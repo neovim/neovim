@@ -3144,7 +3144,7 @@ did_set_string_option (
       /* Recompute cursor position in case the new 've' setting
        * changes something. */
       validate_virtcol();
-      coladvance(curwin->w_virtcol);
+      coladvance(curwin->w_cursors[0].w_virtcol);
     }
   } else if (varp == &p_csqf) {
     if (p_csqf != NULL) {

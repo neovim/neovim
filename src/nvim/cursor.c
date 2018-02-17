@@ -61,7 +61,7 @@ int coladvance_force(colnr_T wcol)
   } else {
     /* Virtcol is valid */
     curwin->w_valid |= VALID_VIRTCOL;
-    curwin->w_virtcol = wcol;
+    curwin->w_cursors[0].w_virtcol = wcol;
   }
   return rc;
 }
@@ -84,7 +84,7 @@ int coladvance(colnr_T wcol)
   else if (*get_cursor_pos_ptr() != TAB) {
     /* Virtcol is valid when not on a TAB */
     curwin->w_valid |= VALID_VIRTCOL;
-    curwin->w_virtcol = wcol;
+    curwin->w_cursors[0].w_virtcol = wcol;
   }
   return rc;
 }
@@ -443,10 +443,10 @@ bool leftcol_changed(void)
    * If the cursor is right or left of the screen, move it to last or first
    * character.
    */
-  if (curwin->w_virtcol > (colnr_T)(lastcol - p_siso)) {
+  if (curwin->w_cursors[0].w_virtcol > (colnr_T)(lastcol - p_siso)) {
     retval = true;
     coladvance((colnr_T)(lastcol - p_siso));
-  } else if (curwin->w_virtcol < curwin->w_leftcol + p_siso) {
+  } else if (curwin->w_cursors[0].w_virtcol < curwin->w_leftcol + p_siso) {
     retval = true;
     coladvance((colnr_T)(curwin->w_leftcol + p_siso));
   }

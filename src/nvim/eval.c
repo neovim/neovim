@@ -7463,7 +7463,7 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         char_u  *p = get_cursor_pos_ptr();
 
         if (curwin->w_cursors[0].w_cursor.coladd >= (colnr_T)chartabsize(p,
-                curwin->w_virtcol - curwin->w_cursors[0].w_cursor.coladd)) {
+                curwin->w_cursors[0].w_virtcol - curwin->w_cursors[0].w_cursor.coladd)) {
           int l;
 
           if (*p != NUL && p[(l = (*mb_ptr2len)(p))] == NUL)

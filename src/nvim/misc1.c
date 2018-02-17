@@ -2061,14 +2061,14 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       /* The change may cause lines above or below the change to become
        * included in a fold.  Set lnum/lnume to the first/last line that
        * might be displayed differently.
-       * Set w_cline_folded here as an efficient way to update it when
+       * Set w_cursors[0].w_cline_folded here as an efficient way to update it when
        * inserting lines just above a closed fold. */
       bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
       if (wp->w_cursors[0].w_cursor.lnum == lnum)
-        wp->w_cline_folded = folded;
+        wp->w_cursors[0].w_cline_folded = folded;
       folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
       if (wp->w_cursors[0].w_cursor.lnum == lnume)
-        wp->w_cline_folded = folded;
+        wp->w_cursors[0].w_cline_folded = folded;
 
       /* If the changed line is in a range of previously folded lines,
        * compare with the first line in that range. */

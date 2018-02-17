@@ -397,7 +397,7 @@ static void insert_enter(InsertState *s)
     validate_virtcol();
     update_curswant();
     if (((ins_at_eol && curwin->w_cursors[0].w_cursor.lnum == o_lnum)
-         || curwin->w_cursors[0].w_curswant > curwin->w_virtcol)
+         || curwin->w_cursors[0].w_curswant > curwin->w_cursors[0].w_virtcol)
         && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursors[0].w_cursor.col) != NUL) {
       if (s->ptr[1] == NUL) {
         ++curwin->w_cursors[0].w_cursor.col;
@@ -1525,7 +1525,7 @@ void display_dollar(colnr_T col)
   curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
   if (curwin->w_wcol < curwin->w_width) {
     edit_putchar('$', FALSE);
-    dollar_vcol = curwin->w_virtcol;
+    dollar_vcol = curwin->w_cursors[0].w_virtcol;
   }
   curwin->w_cursors[0].w_cursor.col = save_col;
 }
@@ -1647,7 +1647,7 @@ change_indent (
      * Compute the screen column where the cursor should be.
      */
     vcol = get_indent() - vcol;
-    curwin->w_virtcol = (colnr_T)((vcol < 0) ? 0 : vcol);
+    curwin->w_cursors[0].w_virtcol = (colnr_T)((vcol < 0) ? 0 : vcol);
 
     /*
      * Advance the cursor until we reach the right screen column.
@@ -1655,7 +1655,7 @@ change_indent (
     vcol = last_vcol = 0;
     new_cursor_col = -1;
     ptr = get_cursor_line_ptr();
-    while (vcol <= (int)curwin->w_virtcol) {
+    while (vcol <= (int)curwin->w_cursors[0].w_virtcol) {
       last_vcol = vcol;
       if (has_mbyte && new_cursor_col >= 0)
         new_cursor_col += (*mb_ptr2len)(ptr + new_cursor_col);
@@ -1669,9 +1669,9 @@ change_indent (
      * May need to insert spaces to be able to position the cursor on
      * the right screen column.
      */
-    if (vcol != (int)curwin->w_virtcol) {
+    if (vcol != (int)curwin->w_cursors[0].w_virtcol) {
       curwin->w_cursors[0].w_cursor.col = (colnr_T)new_cursor_col;
-      i = (int)curwin->w_virtcol - vcol;
+      i = (int)curwin->w_cursors[0].w_virtcol - vcol;
       ptr = xmallocz(i);
       memset(ptr, ' ', i);
       new_cursor_col += i;
@@ -2456,9 +2456,9 @@ static void ins_compl_upd_pum(void)
   int h;
 
   if (compl_match_array != NULL) {
-    h = curwin->w_cline_height;
+    h = curwin->w_cursors[0].w_cline_height;
     update_screen(0);
-    if (h != curwin->w_cline_height)
+    if (h != curwin->w_cursors[0].w_cline_height)
       ins_compl_del_pum();
   }
 }
@@ -7770,7 +7770,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
    * displayed even when there isn't.
    *  --pkv Sun Jan 19 01:56:40 EST 2003 */
   if (vim_strchr(p_cpo, CPO_BACKSPACE) != NULL && dollar_vcol == -1)
-    dollar_vcol = curwin->w_virtcol;
+    dollar_vcol = curwin->w_cursors[0].w_virtcol;
 
   // When deleting a char the cursor line must never be in a closed fold.
   // E.g., when 'foldmethod' is indent and deleting the first non-white
@@ -8430,11 +8430,11 @@ int ins_copychar(linenr_T lnum)
   line = ptr = ml_get(lnum);
   prev_ptr = ptr;
   validate_virtcol();
-  while ((colnr_T)temp < curwin->w_virtcol && *ptr != NUL) {
+  while ((colnr_T)temp < curwin->w_cursors[0].w_virtcol && *ptr != NUL) {
     prev_ptr = ptr;
     temp += lbr_chartabsize_adv(line, &ptr, (colnr_T)temp);
   }
-  if ((colnr_T)temp > curwin->w_virtcol)
+  if ((colnr_T)temp > curwin->w_cursors[0].w_virtcol)
     ptr = prev_ptr;
 
   c = (*mb_ptr2char)(ptr);
@@ -8564,7 +8564,7 @@ static void ins_try_si(int c)
 }
 
 /*
- * Get the value that w_virtcol would have when 'list' is off.
+ * Get the value that w_cursors[0].w_virtcol would have when 'list' is off.
  * Unless 'cpo' contains the 'L' flag.
  */
 static colnr_T get_nolist_virtcol(void)
@@ -8572,7 +8572,7 @@ static colnr_T get_nolist_virtcol(void)
   if (curwin->w_p_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
     return getvcol_nolist(&curwin->w_cursors[0].w_cursor);
   validate_virtcol();
-  return curwin->w_virtcol;
+  return curwin->w_cursors[0].w_virtcol;
 }
 
 /*

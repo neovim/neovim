@@ -795,7 +795,7 @@ void ex_diffupdate(exarg_T *eap)
   os_remove(tmp_orig);
 
   // force updating cursor position on screen
-  curwin->w_valid_cursor.lnum = 0;
+  curwin->w_cursors[0].w_valid_cursor.lnum = 0;
 
   diff_redraw(TRUE);
 

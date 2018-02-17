@@ -2006,7 +2006,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
   /* Show 'cursorcolumn' in the fold line. */
   if (wp->w_p_cuc) {
-    txtcol += wp->w_virtcol;
+    txtcol += wp->w_cursors[0].w_virtcol;
     if (wp->w_p_wrap)
       txtcol -= wp->w_skipcol;
     else
@@ -2020,15 +2020,15 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
               wp->w_width, false, wp);
 
   /*
-   * Update w_cline_height and w_cline_folded if the cursor line was
+   * Update w_cursors[0].w_cline_height and w_cursors[0].w_cline_folded if the cursor line was
    * updated (saves a call to plines() later).
    */
   if (wp == curwin
       && lnum <= curwin->w_cursors[0].w_cursor.lnum
       && lnume >= curwin->w_cursors[0].w_cursor.lnum) {
-    curwin->w_cline_row = row;
-    curwin->w_cline_height = 1;
-    curwin->w_cline_folded = true;
+    curwin->w_cursors[0].w_cline_row = row;
+    curwin->w_cursors[0].w_cline_height = 1;
+    curwin->w_cursors[0].w_cline_folded = true;
     curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
   }
 }
@@ -2104,7 +2104,7 @@ fill_foldcolumn (
 /*
  * Display line "lnum" of window 'wp' on the screen.
  * Start at row "startrow", stop when "endrow" is reached.
- * wp->w_virtcol needs to be valid.
+ * wp->w_cursors[0].w_virtcol needs to be valid.
  *
  * Return the number of last row the line occupies.
  */
@@ -2591,14 +2591,14 @@ win_line (
    */
   if (fromcol >= 0) {
     if (noinvcur) {
-      if ((colnr_T)fromcol == wp->w_virtcol) {
+      if ((colnr_T)fromcol == wp->w_cursors[0].w_virtcol) {
         /* highlighting starts at cursor, let it start just after the
          * cursor */
         fromcol_prev = fromcol;
         fromcol = -1;
-      } else if ((colnr_T)fromcol < wp->w_virtcol)
+      } else if ((colnr_T)fromcol < wp->w_cursors[0].w_virtcol)
         /* restart highlighting after the cursor */
-        fromcol_prev = wp->w_virtcol;
+        fromcol_prev = wp->w_cursors[0].w_virtcol;
     }
     if (fromcol >= tocol)
       fromcol = -1;
@@ -2888,14 +2888,14 @@ win_line (
 
     /* When still displaying '$' of change command, stop at cursor */
     if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursors[0].w_cursor.lnum && vcol >= (long)wp->w_virtcol
+        && lnum == wp->w_cursors[0].w_cursor.lnum && vcol >= (long)wp->w_cursors[0].w_virtcol
         && filler_todo <= 0
         ) {
       screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
-        row = wp->w_cline_row + wp->w_cline_height;
+        row = wp->w_cursors[0].w_cline_row + wp->w_cursors[0].w_cline_height;
       } else {
         row = wp->w_height;
       }
@@ -2913,7 +2913,7 @@ win_line (
         area_attr = attr;                       /* start highlighting */
       else if (area_attr != 0
                && (vcol == tocol
-                   || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
+                   || (noinvcur && (colnr_T)vcol == wp->w_cursors[0].w_virtcol)))
         area_attr = 0;                          /* stop highlighting */
 
       if (!n_extra) {
@@ -3592,7 +3592,7 @@ win_line (
                              (col < wp->w_width))
                            && !(noinvcur
                                 && lnum == wp->w_cursors[0].w_cursor.lnum
-                                && (colnr_T)vcol == wp->w_virtcol)))
+                                && (colnr_T)vcol == wp->w_cursors[0].w_virtcol)))
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
@@ -3750,7 +3750,7 @@ win_line (
     if (!did_wcol && draw_state == WL_LINE
         && wp == curwin && lnum == wp->w_cursors[0].w_cursor.lnum
         && conceal_cursor_line(wp)
-        && (int)wp->w_virtcol <= vcol + n_skip) {
+        && (int)wp->w_cursors[0].w_virtcol <= vcol + n_skip) {
       if (wp->w_p_rl) {
         wp->w_wcol = wp->w_width - col + boguscols - 1;
       } else {
@@ -3900,7 +3900,7 @@ win_line (
      * At end of the text line.
      */
     if (c == NUL) {
-      if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
+      if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_cursors[0].w_virtcol
           && lnum == wp->w_cursors[0].w_cursor.lnum) {
         /* highlight last char after line */
         --col;
@@ -3926,8 +3926,8 @@ win_line (
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
       if (((wp->w_p_cuc
-            && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
-            && (int)wp->w_virtcol <
+            && (int)wp->w_cursors[0].w_virtcol >= VCOL_HLC - eol_hl_off
+            && (int)wp->w_cursors[0].w_virtcol <
             wp->w_width * (row - startrow + 1) + v
             && lnum != wp->w_cursors[0].w_cursor.lnum)
            || draw_color_col)
@@ -3937,7 +3937,7 @@ win_line (
         int i;
 
         if (wp->w_p_cuc)
-          rightmost_vcol = wp->w_virtcol;
+          rightmost_vcol = wp->w_cursors[0].w_virtcol;
         if (draw_color_col)
           /* determine rightmost colorcolumn to possibly draw */
           for (i = 0; color_cols[i] >= 0; ++i)
@@ -3956,7 +3956,7 @@ win_line (
             draw_color_col = advance_color_col(VCOL_HLC,
                 &color_cols);
 
-          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
+          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_cursors[0].w_virtcol) {
             ScreenAttrs[off++] = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
             ScreenAttrs[off++] = mc_attr;
@@ -3988,13 +3988,13 @@ win_line (
       row++;
 
       /*
-       * Update w_cline_height and w_cline_folded if the cursor line was
+       * Update w_cursors[0].w_cline_height and w_cursors[0].w_cline_folded if the cursor line was
        * updated (saves a call to plines() later).
        */
       if (wp == curwin && lnum == curwin->w_cursors[0].w_cursor.lnum) {
-        curwin->w_cline_row = startrow;
-        curwin->w_cline_height = row - startrow;
-        curwin->w_cline_folded = false;
+        curwin->w_cursors[0].w_cline_row = startrow;
+        curwin->w_cursors[0].w_cline_height = row - startrow;
+        curwin->w_cursors[0].w_cline_folded = false;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
       }
 
@@ -4032,7 +4032,7 @@ win_line (
      * 'cursorcolumn' */
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area) {
-      if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
+      if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_cursors[0].w_virtcol
           && lnum != wp->w_cursors[0].w_cursor.lnum) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), char_attr);
@@ -7274,7 +7274,7 @@ static void win_redr_ruler(win_T *wp, int always)
              || always
              || wp->w_cursors[0].w_cursor.lnum != wp->w_ru_cursor.lnum
              || wp->w_cursors[0].w_cursor.col != wp->w_ru_cursor.col
-             || wp->w_virtcol != wp->w_ru_virtcol
+             || wp->w_cursors[0].w_virtcol != wp->w_ru_virtcol
              || wp->w_cursors[0].w_cursor.coladd != wp->w_ru_cursor.coladd
              || wp->w_topline != wp->w_ru_topline
              || wp->w_buffer->b_ml.ml_line_count != wp->w_ru_line_count
@@ -7301,7 +7301,7 @@ static void win_redr_ruler(win_T *wp, int always)
     }
 
     /* In list mode virtcol needs to be recomputed */
-    colnr_T virtcol = wp->w_virtcol;
+    colnr_T virtcol = wp->w_cursors[0].w_virtcol;
     if (wp->w_p_list && lcs_tab1 == NUL) {
       wp->w_p_list = FALSE;
       getvvcol(wp, &wp->w_cursors[0].w_cursor, NULL, &virtcol, NULL);
@@ -7373,7 +7373,7 @@ static void win_redr_ruler(win_T *wp, int always)
     /* don't redraw the cmdline because of showing the ruler */
     redraw_cmdline = i;
     wp->w_ru_cursor = wp->w_cursors[0].w_cursor;
-    wp->w_ru_virtcol = wp->w_virtcol;
+    wp->w_ru_virtcol = wp->w_cursors[0].w_virtcol;
     wp->w_ru_empty = empty_line;
     wp->w_ru_topline = wp->w_topline;
     wp->w_ru_line_count = wp->w_buffer->b_ml.ml_line_count;

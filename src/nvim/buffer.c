@@ -2841,7 +2841,7 @@ fileinfo (
     validate_virtcol();
     len = STRLEN(buffer);
     col_print(buffer + len, IOSIZE - len,
-        (int)curwin->w_cursors[0].w_cursor.col + 1, (int)curwin->w_virtcol + 1);
+        (int)curwin->w_cursors[0].w_cursor.col + 1, (int)curwin->w_cursors[0].w_virtcol + 1);
   }
 
   (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
@@ -3614,7 +3614,7 @@ int build_stl_str_hl(
     case STL_VIRTCOL_ALT:
     {
       // In list mode virtcol needs to be recomputed
-      colnr_T virtcol = wp->w_virtcol;
+      colnr_T virtcol = wp->w_cursors[0].w_virtcol;
       if (wp->w_p_list && lcs_tab1 == NUL) {
         wp->w_p_list = FALSE;
         getvcol(wp, &wp->w_cursors[0].w_cursor, NULL, &virtcol, NULL);

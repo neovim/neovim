@@ -2098,7 +2098,7 @@ static int vgetorpeek(int advance)
                   else
                     ++col;
                 }
-                curwin->w_wrow = curwin->w_cline_row
+                curwin->w_wrow = curwin->w_cursors[0].w_cline_row
                                  + curwin->w_wcol / curwin->w_width;
                 curwin->w_wcol %= curwin->w_width;
                 curwin->w_wcol += curwin_col_off();

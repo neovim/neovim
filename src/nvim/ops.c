@@ -3097,7 +3097,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           ml_replace(lnum, newp, FALSE);
           /* Place cursor on last putted char. */
           if (lnum == curwin->w_cursors[0].w_cursor.lnum) {
-            /* make sure curwin->w_virtcol is updated */
+            /* make sure curwin->w_cursors[0].w_virtcol is updated */
             changed_cline_bef_curs();
             curwin->w_cursors[0].w_cursor.col += (colnr_T)(totlen - 1);
           }
@@ -5461,7 +5461,7 @@ void cursor_pos_info(dict_T *dict)
         p = get_cursor_line_ptr();
         validate_virtcol();
         col_print(buf1, sizeof(buf1), (int)curwin->w_cursors[0].w_cursor.col + 1,
-                  (int)curwin->w_virtcol + 1);
+                  (int)curwin->w_cursors[0].w_virtcol + 1);
         col_print(buf2, sizeof(buf2), (int)STRLEN(p), linetabsize(p));
 
         if (char_count_cursor == byte_count_cursor

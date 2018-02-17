@@ -9348,22 +9348,22 @@ put_view (
       if (!wp->w_p_wrap && wp->w_leftcol > 0 && wp->w_width > 0) {
         if (fprintf(fd, "let s:c = %" PRId64 " - ((%" PRId64
                         " * winwidth(0) + %" PRId64 ") / %" PRId64 ")",
-                    (int64_t)(wp->w_virtcol + 1),
-                    (int64_t)(wp->w_virtcol - wp->w_leftcol),
+                    (int64_t)(wp->w_cursors[0].w_virtcol + 1),
+                    (int64_t)(wp->w_cursors[0].w_virtcol - wp->w_leftcol),
                     (int64_t)(wp->w_width / 2),
                     (int64_t)wp->w_width) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "if s:c > 0") == FAIL
             || fprintf(fd, "  exe 'normal! ' . s:c . '|zs' . %" PRId64 " . '|'",
-                (int64_t)(wp->w_virtcol + 1)) < 0
+                (int64_t)(wp->w_cursors[0].w_virtcol + 1)) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "else") == FAIL
-            || fprintf(fd, "  normal! 0%d|", wp->w_virtcol + 1) < 0
+            || fprintf(fd, "  normal! 0%d|", wp->w_cursors[0].w_virtcol + 1) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "endif") == FAIL)
           return FAIL;
       } else {
-        if (fprintf(fd, "normal! 0%d|", wp->w_virtcol + 1) < 0
+        if (fprintf(fd, "normal! 0%d|", wp->w_cursors[0].w_virtcol + 1) < 0
             || put_eol(fd) == FAIL)
           return FAIL;
       }
