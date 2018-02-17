@@ -2455,6 +2455,7 @@ did_set_string_option (
   int did_chartab = FALSE;
   char_u      **gvarp;
   bool free_oldval = (options[opt_idx].flags & P_ALLOCED);
+  int ft_changed = false;
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -3174,6 +3175,8 @@ did_set_string_option (
   } else if (gvarp == &p_ft) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
+    } else {
+      ft_changed = STRCMP(oldval, *varp) != 0;
     }
   } else if (gvarp == &p_syn) {
     if (!valid_filetype(*varp)) {
@@ -3256,10 +3259,12 @@ did_set_string_option (
       apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
           curbuf->b_fname, TRUE, curbuf);
     } else if (varp == &(curbuf->b_p_ft)) {
-      /* 'filetype' is set, trigger the FileType autocommand */
-      did_filetype = TRUE;
-      apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
-          curbuf->b_fname, TRUE, curbuf);
+      // 'filetype' is set, trigger the FileType autocommand
+      if (!(opt_flags & OPT_MODELINE) || ft_changed) {
+        did_filetype = true;
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
+                       curbuf->b_fname, true, curbuf);
+      }
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
       char_u fname[200];

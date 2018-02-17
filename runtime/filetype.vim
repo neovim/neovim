@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Nov 02
+" Last Change:	2018 Feb 14
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -47,6 +47,9 @@ func! s:StarSetf(ft)
     exe 'setf ' . a:ft
   endif
 endfunc
+
+" Vim help file
+au BufNewFile,BufRead $VIMRUNTIME/doc/*.txt setf help
 
 " Abaqus or Trasys
 au BufNewFile,BufRead *.inp			call s:Check_inp()
@@ -2804,8 +2807,13 @@ au BufNewFile,BufRead zsh*,zlog*		call s:StarSetf('zsh')
 
 " Plain text files, needs to be far down to not override others.  This avoids
 " the "conf" type being used if there is a line starting with '#'.
-au BufNewFile,BufRead *.txt,*.text,README	setf text
+au BufNewFile,BufRead *.text,README setf text
 
+" Help files match *.txt but should have a last line that is a modeline. 
+au BufNewFile,BufRead *.txt
+        \  if getline('$') !~ 'vim:.*ft=help'
+        \|   setf text
+        \| endif       
 
 " Use the filetype detect plugins.  They may overrule any of the previously
 " detected filetypes.
