@@ -1482,6 +1482,7 @@ Array nvim_list_uis(void)
     Dictionary dic = ARRAY_DICT_INIT;
     PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
     PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
+    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
     }
