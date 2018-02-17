@@ -2917,7 +2917,7 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
           }) do
-            lib.curwin.w_cursor.lnum = 46
+            lib.curwin.w_cursors[0].w_cursor.lnum = 46
             -- Using to_cstr, cannot free with tv_clear
             local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})

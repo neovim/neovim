@@ -3824,6 +3824,9 @@ static win_T *win_alloc(win_T *after, int hidden)
   win_T *new_wp = xcalloc(1, sizeof(win_T));
   win_alloc_lines(new_wp);
 
+  new_wp->w_cursors = xcalloc(1, sizeof(cursor_T));
+  new_wp->w_cursors_count = new_wp->w_cursors_capacity = 1;
+
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 

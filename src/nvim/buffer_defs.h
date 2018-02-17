@@ -928,6 +928,19 @@ struct matchitem {
   int conceal_char;         ///< cchar for Conceal highlighting
 };
 
+typedef struct cursor cursor_T;
+struct cursor {
+  pos_T w_cursor;                   /* cursor position in buffer */
+
+  colnr_T w_curswant;               /* The column we'd like to be at.  This is
+                                       used to try to stay in the same column
+                                       for up/down cursor motions. */
+
+  int w_set_curswant;               /* If set, then update w_cursors[0].w_curswant the next
+                                       time through cursupdate() to the
+                                       current virtual column */
+};
+
 /*
  * Structure which contains all information that belongs to a window
  *
@@ -956,15 +969,9 @@ struct window_S {
 
   frame_T     *w_frame;             /* frame containing this window */
 
-  pos_T w_cursor;                   /* cursor position in buffer */
-
-  colnr_T w_curswant;               /* The column we'd like to be at.  This is
-                                       used to try to stay in the same column
-                                       for up/down cursor motions. */
-
-  int w_set_curswant;               /* If set, then update w_curswant the next
-                                       time through cursupdate() to the
-                                       current virtual column */
+  cursor_T *w_cursors;
+  size_t w_cursors_count;
+  size_t w_cursors_capacity;
 
   // the next seven are used to update the visual part
   char w_old_visual_mode;           ///< last known VIsual_mode
