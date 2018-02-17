@@ -437,8 +437,7 @@ void set_topline(win_T *wp, linenr_T lnum)
  */
 void changed_cline_bef_curs(void)
 {
-  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                       |VALID_CHEIGHT|VALID_TOPLINE);
+  changed_cline_bef_curs_win(curwin);
 }
 
 void changed_cline_bef_curs_win(win_T *wp)
@@ -454,8 +453,7 @@ void changed_cline_bef_curs_win(win_T *wp)
  */
 void changed_line_abv_curs(void)
 {
-  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
-                       |VALID_CHEIGHT|VALID_TOPLINE);
+  changed_line_abv_curs_win(curwin);
 }
 
 void changed_line_abv_curs_win(win_T *wp)
