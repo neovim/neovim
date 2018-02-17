@@ -367,10 +367,10 @@ void update_screen(int type)
             && curwin->w_topline == curwin->w_lines[0].wl_lnum)
            || (type == INVERTED
                && VIsual_active
-               && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
+               && curwin->w_old_cursor_lnum == curwin->w_cursors[0].w_cursor.lnum
                && curwin->w_old_visual_mode == VIsual_mode
                && (curwin->w_valid & VALID_VIRTCOL)
-               && curwin->w_old_curswant == curwin->w_curswant)
+               && curwin->w_old_curswant == curwin->w_cursors[0].w_curswant)
            ))
     curwin->w_redr_type = type;
 
@@ -1033,12 +1033,12 @@ static void win_update(win_T *wp)
         // If the type of Visual selection changed, redraw the whole
         // selection.  Also when the ownership of the X selection is
         // gained or lost.
-        if (curwin->w_cursor.lnum < VIsual.lnum) {
-          from = curwin->w_cursor.lnum;
+        if (curwin->w_cursors[0].w_cursor.lnum < VIsual.lnum) {
+          from = curwin->w_cursors[0].w_cursor.lnum;
           to = VIsual.lnum;
         } else {
           from = VIsual.lnum;
-          to = curwin->w_cursor.lnum;
+          to = curwin->w_cursors[0].w_cursor.lnum;
         }
         /* redraw more when the cursor moved as well */
         if (wp->w_old_cursor_lnum < from)
@@ -1055,12 +1055,12 @@ static void win_update(win_T *wp)
          * between the old cursor position and the current cursor
          * position.  Also check if the Visual position changed.
          */
-        if (curwin->w_cursor.lnum < wp->w_old_cursor_lnum) {
-          from = curwin->w_cursor.lnum;
+        if (curwin->w_cursors[0].w_cursor.lnum < wp->w_old_cursor_lnum) {
+          from = curwin->w_cursors[0].w_cursor.lnum;
           to = wp->w_old_cursor_lnum;
         } else {
           from = wp->w_old_cursor_lnum;
-          to = curwin->w_cursor.lnum;
+          to = curwin->w_cursors[0].w_cursor.lnum;
           if (from == 0)                /* Visual mode just started */
             from = to;
         }
@@ -1080,7 +1080,7 @@ static void win_update(win_T *wp)
       }
 
       /*
-       * If in block mode and changed column or curwin->w_curswant:
+       * If in block mode and changed column or curwin->w_cursors[0].w_curswant:
        * update all lines.
        * First compute the actual start and end column.
        */
@@ -1091,10 +1091,10 @@ static void win_update(win_T *wp)
         if (curwin->w_p_lbr)
           ve_flags = VE_ALL;
 
-        getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
+        getvcols(wp, &VIsual, &curwin->w_cursors[0].w_cursor, &fromc, &toc);
         ve_flags = save_ve_flags;
         ++toc;
-        if (curwin->w_curswant == MAXCOL)
+        if (curwin->w_cursors[0].w_curswant == MAXCOL)
           toc = MAXCOL;
 
         if (fromc != wp->w_old_cursor_fcol
@@ -1179,10 +1179,10 @@ static void win_update(win_T *wp)
 
   if (VIsual_active && buf == curwin->w_buffer) {
     wp->w_old_visual_mode = VIsual_mode;
-    wp->w_old_cursor_lnum = curwin->w_cursor.lnum;
+    wp->w_old_cursor_lnum = curwin->w_cursors[0].w_cursor.lnum;
     wp->w_old_visual_lnum = VIsual.lnum;
     wp->w_old_visual_col = VIsual.col;
-    wp->w_old_curswant = curwin->w_curswant;
+    wp->w_old_curswant = curwin->w_cursors[0].w_curswant;
   } else {
     wp->w_old_visual_mode = 0;
     wp->w_old_cursor_lnum = 0;
@@ -1943,14 +1943,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * If all folded lines are in the Visual area, highlight the line.
    */
   if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
-    if (ltoreq(curwin->w_cursor, VIsual)) {
-      /* Visual is after curwin->w_cursor */
-      top = &curwin->w_cursor;
+    if (ltoreq(curwin->w_cursors[0].w_cursor, VIsual)) {
+      /* Visual is after curwin->w_cursors[0].w_cursor */
+      top = &curwin->w_cursors[0].w_cursor;
       bot = &VIsual;
     } else {
-      /* Visual is before curwin->w_cursor */
+      /* Visual is before curwin->w_cursors[0].w_cursor */
       top = &VIsual;
-      bot = &curwin->w_cursor;
+      bot = &curwin->w_cursors[0].w_cursor;
     }
     if (lnum >= top->lnum
         && lnume <= bot->lnum
@@ -2024,8 +2024,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * updated (saves a call to plines() later).
    */
   if (wp == curwin
-      && lnum <= curwin->w_cursor.lnum
-      && lnume >= curwin->w_cursor.lnum) {
+      && lnum <= curwin->w_cursors[0].w_cursor.lnum
+      && lnume >= curwin->w_cursors[0].w_cursor.lnum) {
     curwin->w_cline_row = row;
     curwin->w_cline_height = 1;
     curwin->w_cline_folded = true;
@@ -2327,13 +2327,13 @@ win_line (
   fromcol = -10;
   tocol = MAXCOL;
   if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
-    /* Visual is after curwin->w_cursor */
-    if (ltoreq(curwin->w_cursor, VIsual)) {
-      top = &curwin->w_cursor;
+    /* Visual is after curwin->w_cursors[0].w_cursor */
+    if (ltoreq(curwin->w_cursors[0].w_cursor, VIsual)) {
+      top = &curwin->w_cursors[0].w_cursor;
       bot = &VIsual;
-    } else {                          /* Visual is before curwin->w_cursor */
+    } else {                          /* Visual is before curwin->w_cursors[0].w_cursor */
       top = &VIsual;
-      bot = &curwin->w_cursor;
+      bot = &curwin->w_cursors[0].w_cursor;
     }
     lnum_in_visual_area = (lnum >= top->lnum && lnum <= bot->lnum);
     if (VIsual_mode == Ctrl_V) {        /* block mode */
@@ -2374,7 +2374,7 @@ win_line (
     }
 
     /* Check if the character under the cursor should not be inverted */
-    if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin
+    if (!highlight_match && lnum == curwin->w_cursors[0].w_cursor.lnum && wp == curwin
         )
       noinvcur = TRUE;
 
@@ -2389,14 +2389,14 @@ win_line (
    */
   else if (highlight_match
            && wp == curwin
-           && lnum >= curwin->w_cursor.lnum
-           && lnum <= curwin->w_cursor.lnum + search_match_lines) {
-    if (lnum == curwin->w_cursor.lnum)
-      getvcol(curwin, &(curwin->w_cursor),
+           && lnum >= curwin->w_cursors[0].w_cursor.lnum
+           && lnum <= curwin->w_cursors[0].w_cursor.lnum + search_match_lines) {
+    if (lnum == curwin->w_cursors[0].w_cursor.lnum)
+      getvcol(curwin, &(curwin->w_cursors[0].w_cursor),
           (colnr_T *)&fromcol, NULL, NULL);
     else
       fromcol = 0;
-    if (lnum == curwin->w_cursor.lnum + search_match_lines) {
+    if (lnum == curwin->w_cursors[0].w_cursor.lnum + search_match_lines) {
       pos.lnum = lnum;
       pos.col = search_match_endcol;
       getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
@@ -2554,16 +2554,16 @@ win_line (
       colnr_T linecol = (colnr_T)(ptr - line);
       hlf_T spell_hlf = HLF_COUNT;
 
-      pos = wp->w_cursor;
-      wp->w_cursor.lnum = lnum;
-      wp->w_cursor.col = linecol;
+      pos = wp->w_cursors[0].w_cursor;
+      wp->w_cursors[0].w_cursor.lnum = lnum;
+      wp->w_cursors[0].w_cursor.col = linecol;
       len = spell_move_to(wp, FORWARD, TRUE, TRUE, &spell_hlf);
 
       /* spell_move_to() may call ml_get() and make "line" invalid */
       line = ml_get_buf(wp->w_buffer, lnum, FALSE);
       ptr = line + linecol;
 
-      if (len == 0 || (int)wp->w_cursor.col > ptr - line) {
+      if (len == 0 || (int)wp->w_cursors[0].w_cursor.col > ptr - line) {
         /* no bad word found at line start, don't check until end of a
          * word */
         spell_hlf = HLF_COUNT;
@@ -2571,13 +2571,13 @@ win_line (
       } else {
         /* bad word found, use attributes until end of word */
         assert(len <= INT_MAX);
-        word_end = wp->w_cursor.col + (int)len + 1;
+        word_end = wp->w_cursors[0].w_cursor.col + (int)len + 1;
 
         /* Turn index into actual attributes. */
         if (spell_hlf != HLF_COUNT)
           spell_attr = highlight_attr[spell_hlf];
       }
-      wp->w_cursor = pos;
+      wp->w_cursors[0].w_cursor = pos;
 
       /* Need to restart syntax highlighting for this line. */
       if (has_syntax)
@@ -2667,7 +2667,7 @@ win_line (
   // Cursor line highlighting for 'cursorline' in the current window.  Not
   // when Visual mode is active, because it's not clear what is selected
   // then.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
+  if (wp->w_p_cul && lnum == wp->w_cursors[0].w_cursor.lnum
       && !(wp == curwin && VIsual_active)) {
     if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
         && qf_current_entry(wp) == lnum) {
@@ -2800,7 +2800,7 @@ win_line (
           // TODO(vim): Can we use CursorLine instead of CursorLineNr
           // when CursorLineNr isn't set?
           if ((wp->w_p_cul || wp->w_p_rnu)
-              && lnum == wp->w_cursor.lnum) {
+              && lnum == wp->w_cursors[0].w_cursor.lnum) {
             char_attr = win_hl_attr(wp, HLF_CLN);
           }
         }
@@ -2825,7 +2825,7 @@ win_line (
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
-            if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            if (wp->w_p_cul && lnum == wp->w_cursors[0].w_cursor.lnum) {
               char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
             }
           }
@@ -2866,7 +2866,7 @@ win_line (
           if (tocol == vcol)
             tocol += n_extra;
           /* combine 'showbreak' with 'cursorline' */
-          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          if (wp->w_p_cul && lnum == wp->w_cursors[0].w_cursor.lnum) {
             char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
           }
         }
@@ -2888,7 +2888,7 @@ win_line (
 
     /* When still displaying '$' of change command, stop at cursor */
     if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
+        && lnum == wp->w_cursors[0].w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
       screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp);
@@ -3034,7 +3034,7 @@ win_line (
           diff_hlf = HLF_CHD;                   // changed line
         }
         line_attr = win_hl_attr(wp, diff_hlf);
-        if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+        if (wp->w_p_cul && lnum == wp->w_cursors[0].w_cursor.lnum) {
           line_attr = hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
         }
       }
@@ -3368,10 +3368,10 @@ win_line (
              * doesn't touch the cursor. */
             if (spell_hlf != HLF_COUNT
                 && (State & INSERT) != 0
-                && wp->w_cursor.lnum == lnum
-                && wp->w_cursor.col >=
+                && wp->w_cursors[0].w_cursor.lnum == lnum
+                && wp->w_cursors[0].w_cursor.col >=
                 (colnr_T)(prev_ptr - line)
-                && wp->w_cursor.col < (colnr_T)word_end) {
+                && wp->w_cursors[0].w_cursor.col < (colnr_T)word_end) {
               spell_hlf = HLF_COUNT;
               spell_redraw_lnum = lnum;
             }
@@ -3591,7 +3591,7 @@ win_line (
                              wp->w_p_rl ? (col >= 0) :
                              (col < wp->w_width))
                            && !(noinvcur
-                                && lnum == wp->w_cursor.lnum
+                                && lnum == wp->w_cursors[0].w_cursor.lnum
                                 && (colnr_T)vcol == wp->w_virtcol)))
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
@@ -3680,7 +3680,7 @@ win_line (
             diff_hlf = HLF_CHD;
             if (attr == 0 || char_attr != attr) {
               char_attr = win_hl_attr(wp, diff_hlf);
-              if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+              if (wp->w_p_cul && lnum == wp->w_cursors[0].w_cursor.lnum) {
                 char_attr = hl_combine_attr(char_attr,
                                             win_hl_attr(wp, HLF_CUL));
               }
@@ -3690,7 +3690,7 @@ win_line (
       }
 
       if (wp->w_p_cole > 0
-          && (wp != curwin || lnum != wp->w_cursor.lnum
+          && (wp != curwin || lnum != wp->w_cursors[0].w_cursor.lnum
               || conceal_cursor_line(wp))
           && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
           && !(lnum_in_visual_area
@@ -3748,7 +3748,7 @@ win_line (
     /* In the cursor line and we may be concealing characters: correct
      * the cursor column when we reach its position. */
     if (!did_wcol && draw_state == WL_LINE
-        && wp == curwin && lnum == wp->w_cursor.lnum
+        && wp == curwin && lnum == wp->w_cursors[0].w_cursor.lnum
         && conceal_cursor_line(wp)
         && (int)wp->w_virtcol <= vcol + n_skip) {
       if (wp->w_p_rl) {
@@ -3830,7 +3830,7 @@ win_line (
           && ((area_attr != 0 && vcol == fromcol
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
-                   || lnum == curwin->w_cursor.lnum)
+                   || lnum == curwin->w_cursors[0].w_cursor.lnum)
                && c == NUL)
               /* highlight 'hlsearch' match at end of line */
               || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
@@ -3901,7 +3901,7 @@ win_line (
      */
     if (c == NUL) {
       if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
-          && lnum == wp->w_cursor.lnum) {
+          && lnum == wp->w_cursors[0].w_cursor.lnum) {
         /* highlight last char after line */
         --col;
         --off;
@@ -3929,7 +3929,7 @@ win_line (
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
             wp->w_width * (row - startrow + 1) + v
-            && lnum != wp->w_cursor.lnum)
+            && lnum != wp->w_cursors[0].w_cursor.lnum)
            || draw_color_col)
           && !wp->w_p_rl
           ) {
@@ -3991,7 +3991,7 @@ win_line (
        * Update w_cline_height and w_cline_folded if the cursor line was
        * updated (saves a call to plines() later).
        */
-      if (wp == curwin && lnum == curwin->w_cursor.lnum) {
+      if (wp == curwin && lnum == curwin->w_cursors[0].w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
         curwin->w_cline_folded = false;
@@ -4033,7 +4033,7 @@ win_line (
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area) {
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
-          && lnum != wp->w_cursor.lnum) {
+          && lnum != wp->w_cursors[0].w_cursor.lnum) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), char_attr);
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
@@ -7233,7 +7233,7 @@ static void win_redr_ruler(win_T *wp, int always)
    * Check if cursor.lnum is valid, since win_redr_ruler() may be called
    * after deleting lines, before cursor.lnum is corrected.
    */
-  if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count)
+  if (wp->w_cursors[0].w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count)
     return;
 
   /* Don't draw the ruler while doing insert-completion, it might overwrite
@@ -7263,7 +7263,7 @@ static void win_redr_ruler(win_T *wp, int always)
    */
   int empty_line = FALSE;
   if (!(State & INSERT)
-      && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE) == NUL)
+      && *ml_get_buf(wp->w_buffer, wp->w_cursors[0].w_cursor.lnum, FALSE) == NUL)
     empty_line = TRUE;
 
   /*
@@ -7272,10 +7272,10 @@ static void win_redr_ruler(win_T *wp, int always)
   validate_virtcol_win(wp);
   if (       redraw_cmdline
              || always
-             || wp->w_cursor.lnum != wp->w_ru_cursor.lnum
-             || wp->w_cursor.col != wp->w_ru_cursor.col
+             || wp->w_cursors[0].w_cursor.lnum != wp->w_ru_cursor.lnum
+             || wp->w_cursors[0].w_cursor.col != wp->w_ru_cursor.col
              || wp->w_virtcol != wp->w_ru_virtcol
-             || wp->w_cursor.coladd != wp->w_ru_cursor.coladd
+             || wp->w_cursors[0].w_cursor.coladd != wp->w_ru_cursor.coladd
              || wp->w_topline != wp->w_ru_topline
              || wp->w_buffer->b_ml.ml_line_count != wp->w_ru_line_count
              || wp->w_topfill != wp->w_ru_topfill
@@ -7304,7 +7304,7 @@ static void win_redr_ruler(win_T *wp, int always)
     colnr_T virtcol = wp->w_virtcol;
     if (wp->w_p_list && lcs_tab1 == NUL) {
       wp->w_p_list = FALSE;
-      getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
+      getvvcol(wp, &wp->w_cursors[0].w_cursor, NULL, &virtcol, NULL);
       wp->w_p_list = TRUE;
     }
 
@@ -7317,10 +7317,10 @@ static void win_redr_ruler(win_T *wp, int always)
      */
     vim_snprintf((char *)buffer, RULER_BUF_LEN, "%" PRId64 ",",
         (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L
-                                                 : (int64_t)wp->w_cursor.lnum);
+                                                 : (int64_t)wp->w_cursors[0].w_cursor.lnum);
     size_t len = STRLEN(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
-        empty_line ? 0 : (int)wp->w_cursor.col + 1,
+        empty_line ? 0 : (int)wp->w_cursors[0].w_cursor.col + 1,
         (int)virtcol + 1);
 
     /*
@@ -7372,7 +7372,7 @@ static void win_redr_ruler(win_T *wp, int always)
         fillchar, fillchar, attr);
     /* don't redraw the cmdline because of showing the ruler */
     redraw_cmdline = i;
-    wp->w_ru_cursor = wp->w_cursor;
+    wp->w_ru_cursor = wp->w_cursors[0].w_cursor;
     wp->w_ru_virtcol = wp->w_virtcol;
     wp->w_ru_empty = empty_line;
     wp->w_ru_topline = wp->w_topline;

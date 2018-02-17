@@ -645,8 +645,8 @@ static int pum_set_selected(int n, int repeat)
 
           curbuf->b_changed = false;
           curbuf->b_p_ma = FALSE;
-          curwin->w_cursor.lnum = 1;
-          curwin->w_cursor.col = 0;
+          curwin->w_cursors[0].w_cursor.lnum = 1;
+          curwin->w_cursors[0].w_cursor.col = 0;
 
           if ((curwin != curwin_save && win_valid(curwin_save))
               || (curtab != curtab_save && valid_tabpage(curtab_save))) {

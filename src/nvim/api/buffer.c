@@ -847,14 +847,14 @@ void nvim_buf_clear_highlight(Buffer buffer,
 // deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 {
-  if (curwin->w_cursor.lnum >= lo) {
+  if (curwin->w_cursors[0].w_cursor.lnum >= lo) {
     // Adjust the cursor position if it's in/after the changed
     // lines.
-    if (curwin->w_cursor.lnum >= hi) {
-      curwin->w_cursor.lnum += extra;
+    if (curwin->w_cursors[0].w_cursor.lnum >= hi) {
+      curwin->w_cursors[0].w_cursor.lnum += extra;
       check_cursor_col();
     } else if (extra < 0) {
-      curwin->w_cursor.lnum = lo;
+      curwin->w_cursors[0].w_cursor.lnum = lo;
       check_cursor();
     } else {
       check_cursor_col();

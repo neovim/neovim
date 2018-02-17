@@ -3701,11 +3701,11 @@ static int reg_match_visual(void)
   }
 
   if (VIsual_active) {
-    if (lt(VIsual, wp->w_cursor)) {
+    if (lt(VIsual, wp->w_cursors[0].w_cursor)) {
       top = VIsual;
-      bot = wp->w_cursor;
+      bot = wp->w_cursors[0].w_cursor;
     } else {
-      top = wp->w_cursor;
+      top = wp->w_cursors[0].w_cursor;
       bot = VIsual;
     }
     mode = VIsual_mode;
@@ -3883,10 +3883,10 @@ regmatch (
 
         case CURSOR:
           // Check if the buffer is in a window and compare the
-          // rex.reg_win->w_cursor position to the match position.
+          // rex.reg_win->w_cursors[0].w_cursor position to the match position.
           if (rex.reg_win == NULL
-              || (reglnum + rex.reg_firstlnum != rex.reg_win->w_cursor.lnum)
-              || ((colnr_T)(reginput - regline) != rex.reg_win->w_cursor.col)) {
+              || (reglnum + rex.reg_firstlnum != rex.reg_win->w_cursors[0].w_cursor.lnum)
+              || ((colnr_T)(reginput - regline) != rex.reg_win->w_cursors[0].w_cursor.col)) {
             status = RA_NOMATCH;
           }
           break;

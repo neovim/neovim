@@ -5945,9 +5945,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
       case NFA_CURSOR:
         result = (rex.reg_win != NULL
-                  && (reglnum + rex.reg_firstlnum == rex.reg_win->w_cursor.lnum)
+                  && (reglnum + rex.reg_firstlnum == rex.reg_win->w_cursors[0].w_cursor.lnum)
                   && ((colnr_T)(reginput - regline)
-                      == rex.reg_win->w_cursor.col));
+                      == rex.reg_win->w_cursors[0].w_cursor.col));
         if (result) {
           add_here = true;
           add_state = t->state->out;

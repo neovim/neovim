@@ -299,13 +299,13 @@ do_tag (
           }
           /* A BufReadPost autocommand may jump to the '" mark, but
            * we don't what that here. */
-          curwin->w_cursor.lnum = saved_fmark.mark.lnum;
+          curwin->w_cursors[0].w_cursor.lnum = saved_fmark.mark.lnum;
         } else {
           setpcmark();
-          curwin->w_cursor.lnum = saved_fmark.mark.lnum;
+          curwin->w_cursors[0].w_cursor.lnum = saved_fmark.mark.lnum;
         }
-        curwin->w_cursor.col = saved_fmark.mark.col;
-        curwin->w_set_curswant = TRUE;
+        curwin->w_cursors[0].w_cursor.col = saved_fmark.mark.col;
+        curwin->w_cursors[0].w_set_curswant = TRUE;
         check_cursor();
         if ((fdo_flags & FDO_TAG) && old_KeyTyped)
           foldOpenCursor();
@@ -389,7 +389,7 @@ do_tag (
        */
       saved_fmark = tagstack[tagstackidx].fmark;
       if (save_pos) {
-        tagstack[tagstackidx].fmark.mark = curwin->w_cursor;
+        tagstack[tagstackidx].fmark.mark = curwin->w_cursors[0].w_cursor;
         tagstack[tagstackidx].fmark.fnum = curbuf->b_fnum;
       }
 
@@ -2424,7 +2424,7 @@ jumpto_tag (
   keep_help_flag = FALSE;
 
   if (getfile_result <= 0) {            /* got to the right file */
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
     postponed_split = 0;
 
     save_secure = secure;
@@ -2463,8 +2463,8 @@ jumpto_tag (
       p_ws = true;              /* need 'wrapscan' for backward searches */
       p_ic = FALSE;             /* don't ignore case now */
       p_scs = FALSE;
-      save_lnum = curwin->w_cursor.lnum;
-      curwin->w_cursor.lnum = 0;        /* start search before first line */
+      save_lnum = curwin->w_cursors[0].w_cursor.lnum;
+      curwin->w_cursors[0].w_cursor.lnum = 0;        /* start search before first line */
       if (do_search(NULL, pbuf[0], pbuf + 1, (long)1,
               search_options, NULL))
         retval = OK;
@@ -2499,7 +2499,7 @@ jumpto_tag (
         }
         if (found == 0) {
           EMSG(_("E434: Can't find tag pattern"));
-          curwin->w_cursor.lnum = save_lnum;
+          curwin->w_cursors[0].w_cursor.lnum = save_lnum;
         } else {
           /*
            * Only give a message when really guessed, not when 'ic'
@@ -2523,7 +2523,7 @@ jumpto_tag (
        * of the line.  May need to correct that here. */
       check_cursor();
     } else {
-      curwin->w_cursor.lnum = 1;                /* start command in line 1 */
+      curwin->w_cursors[0].w_cursor.lnum = 1;                /* start command in line 1 */
       do_cmdline_cmd((char *)pbuf);
       retval = OK;
     }
@@ -2552,7 +2552,7 @@ jumpto_tag (
        * the help subject will be below it.
        */
       if (curbuf->b_help)
-        set_topline(curwin, curwin->w_cursor.lnum);
+        set_topline(curwin, curwin->w_cursors[0].w_cursor.lnum);
       if ((fdo_flags & FDO_TAG) && old_KeyTyped)
         foldOpenCursor();
     }

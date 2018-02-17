@@ -103,7 +103,7 @@ static char_u toF_Xor_X_(int c)
       tempc = _HE;
 
       if (p_ri
-          && (curwin->w_cursor.col + 1
+          && (curwin->w_cursors[0].w_cursor.col + 1
               < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
         inc_cursor();
         if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
@@ -323,8 +323,8 @@ static void put_curr_and_l_to_X(char_u c)
     return;
   }
 
-  if ((curwin->w_cursor.col < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
-    if (!p_ri || curwin->w_cursor.col) {
+  if ((curwin->w_cursors[0].w_cursor.col < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
+    if (!p_ri || curwin->w_cursors[0].w_cursor.col) {
       if (p_ri) {
         dec_cursor();
       } else {
@@ -403,7 +403,7 @@ static void chg_c_toX_orX(void)
         }
         dec_cursor();
       } else {
-        if (curwin->w_cursor.col) {
+        if (curwin->w_cursors[0].w_cursor.col) {
           dec_cursor();
 
           if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
@@ -462,7 +462,7 @@ static void chg_c_to_X_or_X(void)
 
   tempc = gchar_cursor();
 
-  if (curwin->w_cursor.col + 1 < (colnr_T)STRLEN(get_cursor_line_ptr())) {
+  if (curwin->w_cursors[0].w_cursor.col + 1 < (colnr_T)STRLEN(get_cursor_line_ptr())) {
     inc_cursor();
     if ((tempc == F_HE) && (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR))) {
       tempc = _HE_;
@@ -483,12 +483,12 @@ static void chg_l_to_X_orX_(void)
 {
   int tempc;
 
-  if ((curwin->w_cursor.col != 0)
-      && (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
+  if ((curwin->w_cursors[0].w_cursor.col != 0)
+      && (curwin->w_cursors[0].w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
     return;
   }
 
-  if (!curwin->w_cursor.col && p_ri) {
+  if (!curwin->w_cursors[0].w_cursor.col && p_ri) {
     return;
   }
 
@@ -529,12 +529,12 @@ static void chg_l_toXor_X(void)
 {
   char_u tempc;
 
-  if ((curwin->w_cursor.col != 0)
-      && (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
+  if ((curwin->w_cursors[0].w_cursor.col != 0)
+      && (curwin->w_cursors[0].w_cursor.col + 1 == (colnr_T)STRLEN(get_cursor_line_ptr()))) {
     return;
   }
 
-  if (!curwin->w_cursor.col && p_ri) {
+  if (!curwin->w_cursors[0].w_cursor.col && p_ri) {
     return;
   }
 
@@ -576,7 +576,7 @@ static void chg_r_to_Xor_X_(void)
   int tempc;
   char_u c;
 
-  if (curwin->w_cursor.col) {
+  if (curwin->w_cursors[0].w_cursor.col) {
     if (!p_ri) {
       dec_cursor();
     }
@@ -612,7 +612,7 @@ int fkmap(int c)
            || c == '=')
           && revins)) {
     if (!revins) {
-      if (curwin->w_cursor.col) {
+      if (curwin->w_cursors[0].w_cursor.col) {
         if (!p_ri) {
           dec_cursor();
         }
@@ -650,10 +650,10 @@ int fkmap(int c)
                     || gchar_cursor() == F_PERCENT
                     || gchar_cursor() == F_EQUALS))
                 && gchar_cursor() != NUL) {
-          curwin->w_cursor.col++;
+          curwin->w_cursors[0].w_cursor.col++;
         }
       } else {
-        if (curwin->w_cursor.col) {
+        if (curwin->w_cursors[0].w_cursor.col) {
           while ((F_isdigit(gchar_cursor())
                  || (gchar_cursor() == F_PERIOD
                      || gchar_cursor() == F_PLUS
@@ -662,12 +662,12 @@ int fkmap(int c)
                      || gchar_cursor() == F_DIVIDE
                      || gchar_cursor() == F_PERCENT
                      || gchar_cursor() == F_EQUALS))
-                 && --curwin->w_cursor.col) {
+                 && --curwin->w_cursors[0].w_cursor.col) {
           }
         }
 
         if (!F_isdigit(gchar_cursor())) {
-          ++curwin->w_cursor.col;
+          ++curwin->w_cursors[0].w_cursor.col;
         }
       }
     }
@@ -755,7 +755,7 @@ int fkmap(int c)
     case 'Y':
     case  NL:
     case  TAB:
-      if (p_ri && (c == NL) && curwin->w_cursor.col) {
+      if (p_ri && (c == NL) && curwin->w_cursors[0].w_cursor.col) {
         // If the char before the cursor is _X_ or X_ do not change
         // the one under the cursor with X type.
 
@@ -768,7 +768,7 @@ int fkmap(int c)
       }
 
       if (!p_ri) {
-        if (!curwin->w_cursor.col) {
+        if (!curwin->w_cursors[0].w_cursor.col) {
           switch (c) {
             case '0'  : return FARSI_0     ;
             case '1'  : return FARSI_1     ;
@@ -861,7 +861,7 @@ int fkmap(int c)
         case _AYN:
         case _AYN_:
           if (!p_ri) {
-            if (!curwin->w_cursor.col) {
+            if (!curwin->w_cursors[0].w_cursor.col) {
               put_curr_and_l_to_X(AYN);
               break;
             }
@@ -892,7 +892,7 @@ int fkmap(int c)
         case _GHAYN_:
 
           if (!p_ri) {
-            if (!curwin->w_cursor.col) {
+            if (!curwin->w_cursors[0].w_cursor.col) {
               put_curr_and_l_to_X(GHAYN);
               break;
             }
@@ -924,7 +924,7 @@ int fkmap(int c)
         case _YEE:
 
           if (!p_ri) {
-            if (!curwin->w_cursor.col) {
+            if (!curwin->w_cursors[0].w_cursor.col) {
               put_curr_and_l_to_X(
                   (tempc == _YE ? YE : tempc == _IE ? IE : YEE));
               break;
@@ -1026,7 +1026,7 @@ int fkmap(int c)
     case 'g' : tempc = _LAM  ; break;
 
     case 'G':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (gchar_cursor() == _LAM) {
           chg_c_toX_orX();
         } else if (p_ri) {
@@ -1035,7 +1035,7 @@ int fkmap(int c)
       }
 
       if (!p_ri) {
-        if (!curwin->w_cursor.col) {
+        if (!curwin->w_cursors[0].w_cursor.col) {
           return ALEF_U_H;
         }
         dec_cursor();
@@ -1059,14 +1059,14 @@ int fkmap(int c)
       return tempc;
 
     case 'h':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (p_ri) {
           chg_c_to_X_or_X();
         }
       }
 
       if (!p_ri) {
-        if (!curwin->w_cursor.col) {
+        if (!curwin->w_cursors[0].w_cursor.col) {
           return ALEF;
         }
         dec_cursor();
@@ -1098,7 +1098,7 @@ int fkmap(int c)
       return tempc;
 
     case 'i':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (!p_ri && !F_is_TyE(tempc)) {
           chg_c_to_X_orX_();
         }
@@ -1108,7 +1108,7 @@ int fkmap(int c)
         }
       }
 
-      if (!p_ri && !curwin->w_cursor.col) {
+      if (!p_ri && !curwin->w_cursors[0].w_cursor.col) {
         return _HE;
       }
 
@@ -1132,14 +1132,14 @@ int fkmap(int c)
       break;
 
     case 'J':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (p_ri) {
           chg_c_to_X_or_X();
         }
       }
 
       if (!p_ri) {
-        if (!curwin->w_cursor.col) {
+        if (!curwin->w_cursors[0].w_cursor.col) {
           return TEE;
         }
         dec_cursor();
@@ -1172,7 +1172,7 @@ int fkmap(int c)
     case 't' : tempc = _FE   ; break;
 
     case 'u':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (!p_ri && !F_is_TyE(tempc)) {
           chg_c_to_X_orX_();
         }
@@ -1182,7 +1182,7 @@ int fkmap(int c)
         }
       }
 
-      if (!p_ri && !curwin->w_cursor.col) {
+      if (!p_ri && !curwin->w_cursors[0].w_cursor.col) {
         return _AYN;
       }
 
@@ -1208,7 +1208,7 @@ int fkmap(int c)
     case 'X' : tempc = _TA  ; break;
 
     case 'y':
-      if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+      if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
         if (!p_ri && !F_is_TyE(tempc)) {
           chg_c_to_X_orX_();
         }
@@ -1218,7 +1218,7 @@ int fkmap(int c)
         }
       }
 
-      if (!p_ri && !curwin->w_cursor.col) {
+      if (!p_ri && !curwin->w_cursors[0].w_cursor.col) {
         return _GHAYN;
       }
 
@@ -1248,7 +1248,7 @@ int fkmap(int c)
   }
 
   if ((F_isalpha(tempc) || F_isdigit(tempc))) {
-    if (!curwin->w_cursor.col && STRLEN(get_cursor_line_ptr())) {
+    if (!curwin->w_cursors[0].w_cursor.col && STRLEN(get_cursor_line_ptr())) {
       if (!p_ri && !F_is_TyE(tempc)) {
         chg_c_to_X_orX_();
       }
@@ -1258,7 +1258,7 @@ int fkmap(int c)
       }
     }
 
-    if (curwin->w_cursor.col) {
+    if (curwin->w_cursors[0].w_cursor.col) {
       if (!p_ri) {
         dec_cursor();
       }

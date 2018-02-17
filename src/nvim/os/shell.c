@@ -625,7 +625,7 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
       // Insert the line
       if (to_buffer) {
         output[off] = NUL;
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
+        ml_append(curwin->w_cursors[0].w_cursor.lnum++, (char_u *)output, (int)off + 1,
                   false);
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
@@ -649,9 +649,9 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
     if (remaining) {
       if (to_buffer) {
         // append unfinished line
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+        ml_append(curwin->w_cursors[0].w_cursor.lnum++, (char_u *)output, 0, false);
         // remember that the NL was missing
-        curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
+        curbuf->b_no_eol_lnum = curwin->w_cursors[0].w_cursor.lnum;
       } else {
         screen_del_lines(0, 0, 1, (int)Rows, NULL);
         screen_puts_len((char_u *)output, (int)remaining, lastrow, 0, 0);

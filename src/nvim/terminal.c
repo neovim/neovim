@@ -241,7 +241,7 @@ Terminal *terminal_open(TerminalOptions opts)
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
   // Reset cursor in current window.
-  curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
+  curwin->w_cursors[0].w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
 
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
@@ -1264,12 +1264,12 @@ static void redraw(bool restore_cursor)
   } else if (term) {
     curwin->w_wrow = term->cursor.row;
     curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-    curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
+    curwin->w_cursors[0].w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
                                 row_to_linenr(term, term->cursor.row));
     // Nudge cursor when returning to normal-mode.
     int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-    curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
+    curwin->w_cursors[0].w_cursor.coladd = 0;
     mb_check_adjust_col(curwin);
   }
 
@@ -1284,15 +1284,15 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
-      bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
+      bool following = ml_end == wp->w_cursors[0].w_cursor.lnum + added;  // cursor at end?
 
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
-        wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
+        wp->w_cursors[0].w_cursor.lnum = ml_end;
+        set_topline(wp, MAX(wp->w_cursors[0].w_cursor.lnum - height + 1, 1));
       } else {
         // Ensure valid cursor for each window displaying this terminal.
-        wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
+        wp->w_cursors[0].w_cursor.lnum = MIN(wp->w_cursors[0].w_cursor.lnum, ml_end);
       }
       mb_check_adjust_col(wp);
     }

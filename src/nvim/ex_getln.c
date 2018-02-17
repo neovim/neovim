@@ -233,8 +233,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->save_State = State;
   s->save_p_icm = vim_strsave(p_icm);
   s->ignore_drag_release = true;
-  s->match_start = curwin->w_cursor;
-  s->init_curswant = curwin->w_curswant;
+  s->match_start = curwin->w_cursors[0].w_cursor;
+  s->init_curswant = curwin->w_cursors[0].w_curswant;
   s->init_leftcol = curwin->w_leftcol;
   s->init_topline = curwin->w_topline;
   s->init_topfill = curwin->w_topfill;
@@ -254,9 +254,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   ccline.level++;
   ccline.overstrike = false;                // always start in insert mode
   clearpos(&s->match_end);
-  s->save_cursor = curwin->w_cursor;        // may be restored later
-  s->search_start = curwin->w_cursor;
-  s->old_curswant = curwin->w_curswant;
+  s->save_cursor = curwin->w_cursors[0].w_cursor;        // may be restored later
+  s->search_start = curwin->w_cursors[0].w_cursor;
+  s->old_curswant = curwin->w_cursors[0].w_curswant;
   s->old_leftcol = curwin->w_leftcol;
   s->old_topline = curwin->w_topline;
   s->old_topfill = curwin->w_topfill;
@@ -411,16 +411,16 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (s->did_incsearch) {
     if (s->gotesc) {
-      curwin->w_cursor = s->save_cursor;
+      curwin->w_cursors[0].w_cursor = s->save_cursor;
     } else {
       if (!equalpos(s->save_cursor, s->search_start)) {
         // put the '" mark at the original position
-        curwin->w_cursor = s->save_cursor;
+        curwin->w_cursors[0].w_cursor = s->save_cursor;
         setpcmark();
       }
-      curwin->w_cursor = s->search_start;  // -V519
+      curwin->w_cursors[0].w_cursor = s->search_start;  // -V519
     }
-    curwin->w_curswant = s->old_curswant;
+    curwin->w_cursors[0].w_curswant = s->old_curswant;
     curwin->w_leftcol = s->old_leftcol;
     curwin->w_topline = s->old_topline;
     curwin->w_topfill = s->old_topfill;
@@ -1075,12 +1075,12 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     }
 
     set_search_match(&s->match_end);
-    curwin->w_cursor = s->match_start;
+    curwin->w_cursors[0].w_cursor = s->match_start;
     changed_cline_bef_curs();
     update_topline();
     validate_cursor();
     highlight_match = true;
-    s->old_curswant = curwin->w_curswant;
+    s->old_curswant = curwin->w_cursors[0].w_curswant;
     s->old_leftcol = curwin->w_leftcol;
     s->old_topline = curwin->w_topline;
     s->old_topfill = curwin->w_topfill;
@@ -1538,8 +1538,8 @@ static int command_line_handle_key(CommandLineState *s)
     if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
       // Add a character from under the cursor for 'incsearch'
       if (s->did_incsearch) {
-        curwin->w_cursor = s->match_end;
-        if (!equalpos(curwin->w_cursor, s->search_start)) {
+        curwin->w_cursors[0].w_cursor = s->match_end;
+        if (!equalpos(curwin->w_cursors[0].w_cursor, s->search_start)) {
           s->c = gchar_cursor();
           // If 'ignorecase' and 'smartcase' are set and the
           // command line has no uppercase characters, convert
@@ -1806,7 +1806,7 @@ static int command_line_changed(CommandLineState *s)
       return 1;
     }
     s->incsearch_postponed = false;
-    curwin->w_cursor = s->search_start;  // start at old position
+    curwin->w_cursors[0].w_cursor = s->search_start;  // start at old position
     save_last_search_pattern();
 
     // If there is no command line, don't do anything
@@ -1856,16 +1856,16 @@ static int command_line_changed(CommandLineState *s)
     update_topline();
 
     if (s->i != 0) {
-      pos_T save_pos = curwin->w_cursor;
+      pos_T save_pos = curwin->w_cursors[0].w_cursor;
 
-      s->match_start = curwin->w_cursor;
-      set_search_match(&curwin->w_cursor);
+      s->match_start = curwin->w_cursors[0].w_cursor;
+      set_search_match(&curwin->w_cursors[0].w_cursor);
       validate_cursor();
-      end_pos = curwin->w_cursor;
+      end_pos = curwin->w_cursors[0].w_cursor;
       s->match_end = end_pos;
-      curwin->w_cursor = save_pos;
+      curwin->w_cursors[0].w_cursor = save_pos;
     } else {
-      end_pos = curwin->w_cursor;         // shutup gcc 4
+      end_pos = curwin->w_cursors[0].w_cursor;         // shutup gcc 4
     }
 
     // Disable 'hlsearch' highlighting if the pattern matches
@@ -1887,7 +1887,7 @@ static int command_line_changed(CommandLineState *s)
 
     // Leave it at the end to make CTRL-R CTRL-W work.
     if (s->i != 0) {
-      curwin->w_cursor = end_pos;
+      curwin->w_cursors[0].w_cursor = end_pos;
     }
 
     msg_starthere();
@@ -1911,8 +1911,8 @@ static int command_line_changed(CommandLineState *s)
     emsg_silent--;  // Unblock error reporting
 
     // Restore the window "view".
-    curwin->w_cursor   = s->save_cursor;
-    curwin->w_curswant = s->old_curswant;
+    curwin->w_cursors[0].w_cursor   = s->save_cursor;
+    curwin->w_cursors[0].w_curswant = s->old_curswant;
     curwin->w_leftcol  = s->old_leftcol;
     curwin->w_topline  = s->old_topline;
     curwin->w_topfill  = s->old_topfill;
@@ -6083,8 +6083,8 @@ static int ex_window(void)
   /* Replace the empty last line with the current command-line and put the
    * cursor there. */
   ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, TRUE);
-  curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-  curwin->w_cursor.col = ccline.cmdpos;
+  curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  curwin->w_cursors[0].w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
   invalidate_botline();
   if (ui_is_external(kUICmdline)) {
@@ -6176,7 +6176,7 @@ static int ex_window(void)
     else {
       ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
       ccline.cmdbufflen = ccline.cmdlen + 1;
-      ccline.cmdpos = curwin->w_cursor.col;
+      ccline.cmdpos = curwin->w_cursors[0].w_cursor.col;
       if (ccline.cmdpos > ccline.cmdlen)
         ccline.cmdpos = ccline.cmdlen;
       if (cmdwin_result == K_IGNORE) {

@@ -576,8 +576,8 @@ static bool normal_need_redraw_mode_message(NormalState *s)
         // must restart insert mode(ctrl+o or ctrl+l) or we just entered visual
         // mode
         && (restart_edit != 0 || (VIsual_active
-                                  && s->old_pos.lnum == curwin->w_cursor.lnum
-                                  && s->old_pos.col == curwin->w_cursor.col))
+                                  && s->old_pos.lnum == curwin->w_cursors[0].w_cursor.lnum
+                                  && s->old_pos.col == curwin->w_cursors[0].w_cursor.col))
         // command-line must be cleared or redrawn
         && (clear_cmdline || redraw_cmdline)
         // some message was printed or scrolled
@@ -962,7 +962,7 @@ static int normal_execute(VimState *state, int key)
   NormalState *s = (NormalState *)state;
   s->command_finished = false;
   s->ctrl_w = false;                  /* got CTRL-W command */
-  s->old_col = curwin->w_curswant;
+  s->old_col = curwin->w_cursors[0].w_curswant;
   s->c = key;
 
   LANGMAP_ADJUST(s->c, get_real_state() != SELECTMODE);
@@ -1113,7 +1113,7 @@ static int normal_execute(VimState *state, int key)
     msg_col = 0;
   }
 
-  s->old_pos = curwin->w_cursor;           // remember where cursor was
+  s->old_pos = curwin->w_cursors[0].w_cursor;           // remember where cursor was
 
   // When 'keymodel' contains "startsel" some keys start Select/Visual
   // mode.
@@ -1195,18 +1195,18 @@ static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
   if (!finish_op && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
-      && !equalpos(last_cursormoved, curwin->w_cursor)) {
+      && !equalpos(last_cursormoved, curwin->w_cursors[0].w_cursor)) {
     if (has_event(EVENT_CURSORMOVED)) {
       apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
     }
 
     if (curwin->w_p_cole > 0) {
       s->conceal_old_cursor_line = last_cursormoved.lnum;
-      s->conceal_new_cursor_line = curwin->w_cursor.lnum;
+      s->conceal_new_cursor_line = curwin->w_cursors[0].w_cursor.lnum;
       s->conceal_update_lines = true;
     }
 
-    last_cursormoved = curwin->w_cursor;
+    last_cursormoved = curwin->w_cursors[0].w_cursor;
   }
 }
 
@@ -1355,7 +1355,7 @@ static int normal_check(VimState *state)
   // do_exmode() and normal_cmd().
   may_garbage_collect = !s->cmdwin && !s->noexmode;
 
-  // Update w_curswant if w_set_curswant has been set.
+  // Update w_cursors[0].w_curswant if w_cursors[0].w_set_curswant has been set.
   // Postponed until here to avoid computing w_virtcol too often.
   update_curswant();
 
@@ -1411,7 +1411,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   static int redo_VIsual_arg;               // extra argument
   bool include_line_break = false;
 
-  old_cursor = curwin->w_cursor;
+  old_cursor = curwin->w_cursors[0].w_cursor;
 
   /*
    * If an operation is pending, handle it...
@@ -1491,23 +1491,23 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (redo_VIsual_busy) {
       /* Redo of an operation on a Visual area. Use the same size from
        * redo_VIsual_line_count and redo_VIsual_vcol. */
-      oap->start = curwin->w_cursor;
-      curwin->w_cursor.lnum += redo_VIsual_line_count - 1;
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      oap->start = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor.lnum += redo_VIsual_line_count - 1;
+      if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count)
+        curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
       VIsual_mode = redo_VIsual_mode;
       if (redo_VIsual_vcol == MAXCOL || VIsual_mode == 'v') {
         if (VIsual_mode == 'v') {
           if (redo_VIsual_line_count <= 1) {
             validate_virtcol();
-            curwin->w_curswant =
+            curwin->w_cursors[0].w_curswant =
               curwin->w_virtcol + redo_VIsual_vcol - 1;
           } else
-            curwin->w_curswant = redo_VIsual_vcol;
+            curwin->w_cursors[0].w_curswant = redo_VIsual_vcol;
         } else {
-          curwin->w_curswant = MAXCOL;
+          curwin->w_cursors[0].w_curswant = MAXCOL;
         }
-        coladvance(curwin->w_curswant);
+        coladvance(curwin->w_cursors[0].w_curswant);
       }
       cap->count0 = redo_VIsual_count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
@@ -1515,13 +1515,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (!gui_yank) {
         /* Save the current VIsual area for '< and '> marks, and "gv" */
         curbuf->b_visual.vi_start = VIsual;
-        curbuf->b_visual.vi_end = curwin->w_cursor;
+        curbuf->b_visual.vi_end = curwin->w_cursors[0].w_cursor;
         curbuf->b_visual.vi_mode = VIsual_mode;
         if (VIsual_mode_orig != NUL) {
           curbuf->b_visual.vi_mode = VIsual_mode_orig;
           VIsual_mode_orig = NUL;
         }
-        curbuf->b_visual.vi_curswant = curwin->w_curswant;
+        curbuf->b_visual.vi_curswant = curwin->w_cursors[0].w_curswant;
         curbuf->b_visual_mode_eval = VIsual_mode;
       }
 
@@ -1530,12 +1530,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // Special case: gH<Del> deletes the last line.
       if (VIsual_select && VIsual_mode == 'V'
           && cap->oap->op_type != OP_DELETE) {
-        if (lt(VIsual, curwin->w_cursor)) {
+        if (lt(VIsual, curwin->w_cursors[0].w_cursor)) {
           VIsual.col = 0;
-          curwin->w_cursor.col =
-            (colnr_T)STRLEN(ml_get(curwin->w_cursor.lnum));
+          curwin->w_cursors[0].w_cursor.col =
+            (colnr_T)STRLEN(ml_get(curwin->w_cursors[0].w_cursor.lnum));
         } else {
-          curwin->w_cursor.col = 0;
+          curwin->w_cursors[0].w_cursor.col = 0;
           VIsual.col = (colnr_T)STRLEN(ml_get(VIsual.lnum));
         }
         VIsual_mode = 'v';
@@ -1556,19 +1556,19 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     /*
      * Set oap->start to the first position of the operated text, oap->end
-     * to the end of the operated text.  w_cursor is equal to oap->start.
+     * to the end of the operated text.  w_cursors[0].w_cursor is equal to oap->start.
      */
-    if (lt(oap->start, curwin->w_cursor)) {
+    if (lt(oap->start, curwin->w_cursors[0].w_cursor)) {
       /* Include folded lines completely. */
       if (!VIsual_active) {
         if (hasFolding(oap->start.lnum, &oap->start.lnum, NULL))
           oap->start.col = 0;
-        if (hasFolding(curwin->w_cursor.lnum, NULL,
-                &curwin->w_cursor.lnum))
-          curwin->w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+        if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL,
+                &curwin->w_cursors[0].w_cursor.lnum))
+          curwin->w_cursors[0].w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
       }
-      oap->end = curwin->w_cursor;
-      curwin->w_cursor = oap->start;
+      oap->end = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor = oap->start;
 
       /* w_virtcol may have been updated; if the cursor goes back to its
        * previous position w_virtcol becomes invalid and isn't updated
@@ -1577,16 +1577,16 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     } else {
       // Include folded lines completely.
       if (!VIsual_active && oap->motion_type == kMTLineWise) {
-        if (hasFolding(curwin->w_cursor.lnum, &curwin->w_cursor.lnum,
+        if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, &curwin->w_cursors[0].w_cursor.lnum,
                        NULL)) {
-          curwin->w_cursor.col = 0;
+          curwin->w_cursors[0].w_cursor.col = 0;
         }
         if (hasFolding(oap->start.lnum, NULL, &oap->start.lnum)) {
           oap->start.col = (colnr_T)STRLEN(ml_get(oap->start.lnum));
         }
       }
       oap->end = oap->start;
-      oap->start = curwin->w_cursor;
+      oap->start = curwin->w_cursors[0].w_cursor;
     }
 
     // Just in case lines were deleted that make the position invalid.
@@ -1605,7 +1605,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
          * size of the Visual text
          */
         resel_VIsual_mode = VIsual_mode;
-        if (curwin->w_curswant == MAXCOL)
+        if (curwin->w_cursors[0].w_curswant == MAXCOL)
           resel_VIsual_vcol = MAXCOL;
         else {
           if (VIsual_mode != Ctrl_V)
@@ -1723,7 +1723,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (l > 1)
         oap->end.col += l - 1;
     }
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
 
     /*
      * oap->empty is set when start and end are the same.  The inclusive
@@ -1793,7 +1793,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_JOIN:
       if (oap->line_count < 2)
         oap->line_count = 2;
-      if (curwin->w_cursor.lnum + oap->line_count - 1 >
+      if (curwin->w_cursors[0].w_cursor.lnum + oap->line_count - 1 >
           curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {
@@ -2024,10 +2024,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           && (oap->op_type == OP_LSHIFT || oap->op_type == OP_RSHIFT
               || oap->op_type == OP_DELETE)) {
         curwin->w_p_lbr = false;
-        coladvance(curwin->w_curswant = old_col);
+        coladvance(curwin->w_cursors[0].w_curswant = old_col);
       }
     } else {
-      curwin->w_cursor = old_cursor;
+      curwin->w_cursors[0].w_cursor = old_cursor;
     }
     clearop(oap);
   }
@@ -2044,18 +2044,18 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("'<,'>");
   } else {
     // Make the range look nice, so it can be repeated.
-    if (oap->start.lnum == curwin->w_cursor.lnum) {
+    if (oap->start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
       stuffcharReadbuff('.');
     } else {
       stuffnumReadbuff((long)oap->start.lnum);
     }
     if (oap->end.lnum != oap->start.lnum) {
       stuffcharReadbuff(',');
-      if (oap->end.lnum == curwin->w_cursor.lnum) {
+      if (oap->end.lnum == curwin->w_cursors[0].w_cursor.lnum) {
         stuffcharReadbuff('.');
       } else if (oap->end.lnum == curbuf->b_ml.ml_line_count) {
         stuffcharReadbuff('$');
-      } else if (oap->start.lnum == curwin->w_cursor.lnum) {
+      } else if (oap->start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
         stuffReadbuff(".+");
         stuffnumReadbuff(oap->line_count - 1);
       } else {
@@ -2202,7 +2202,7 @@ do_mouse (
   int old_mode = VIsual_mode;
   int regname;
 
-  save_cursor = curwin->w_cursor;
+  save_cursor = curwin->w_cursors[0].w_cursor;
 
   for (;; ) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
@@ -2478,7 +2478,7 @@ do_mouse (
           (void)call_func((char_u *)tab_page_click_defs[mouse_col].func,
                           (int)strlen(tab_page_click_defs[mouse_col].func),
                           &rettv, ARRAY_SIZE(argv), argv, NULL,
-                          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                          curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum,
                           &doesrange, true, NULL, NULL);
           tv_clear(&rettv);
           break;
@@ -2530,12 +2530,12 @@ do_mouse (
          * Remember the start and end of visual before moving the
          * cursor.
          */
-        if (lt(curwin->w_cursor, VIsual)) {
-          start_visual = curwin->w_cursor;
+        if (lt(curwin->w_cursors[0].w_cursor, VIsual)) {
+          start_visual = curwin->w_cursors[0].w_cursor;
           end_visual = VIsual;
         } else {
           start_visual = VIsual;
-          end_visual = curwin->w_cursor;
+          end_visual = curwin->w_cursors[0].w_cursor;
         }
       }
       jump_flags |= MOUSE_FOCUS;
@@ -2578,12 +2578,12 @@ do_mouse (
       && which_button == MOUSE_LEFT) {
     /* open or close a fold at this line */
     if (jump_flags & MOUSE_FOLD_OPEN)
-      openFold(curwin->w_cursor.lnum, 1L);
+      openFold(curwin->w_cursors[0].w_cursor.lnum, 1L);
     else
-      closeFold(curwin->w_cursor.lnum, 1L);
+      closeFold(curwin->w_cursors[0].w_cursor.lnum, 1L);
     /* don't move the cursor if still in the same window */
     if (curwin == old_curwin)
-      curwin->w_cursor = save_cursor;
+      curwin->w_cursors[0].w_cursor = save_cursor;
   }
 
 
@@ -2614,51 +2614,51 @@ do_mouse (
      */
     if (VIsual_mode == Ctrl_V) {
       getvcols(curwin, &start_visual, &end_visual, &leftcol, &rightcol);
-      if (curwin->w_curswant > (leftcol + rightcol) / 2)
+      if (curwin->w_cursors[0].w_curswant > (leftcol + rightcol) / 2)
         end_visual.col = leftcol;
       else
         end_visual.col = rightcol;
-      if (curwin->w_cursor.lnum >=
+      if (curwin->w_cursors[0].w_cursor.lnum >=
           (start_visual.lnum + end_visual.lnum) / 2) {
         end_visual.lnum = start_visual.lnum;
       }
 
       /* move VIsual to the right column */
-      start_visual = curwin->w_cursor;              /* save the cursor pos */
-      curwin->w_cursor = end_visual;
+      start_visual = curwin->w_cursors[0].w_cursor;              /* save the cursor pos */
+      curwin->w_cursors[0].w_cursor = end_visual;
       coladvance(end_visual.col);
-      VIsual = curwin->w_cursor;
-      curwin->w_cursor = start_visual;              /* restore the cursor */
+      VIsual = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor = start_visual;              /* restore the cursor */
     } else {
       /*
        * If the click is before the start of visual, change the start.
        * If the click is after the end of visual, change the end.  If
        * the click is inside the visual, change the closest side.
        */
-      if (lt(curwin->w_cursor, start_visual))
+      if (lt(curwin->w_cursors[0].w_cursor, start_visual))
         VIsual = end_visual;
-      else if (lt(end_visual, curwin->w_cursor))
+      else if (lt(end_visual, curwin->w_cursors[0].w_cursor))
         VIsual = start_visual;
       else {
         /* In the same line, compare column number */
         if (end_visual.lnum == start_visual.lnum) {
-          if (curwin->w_cursor.col - start_visual.col >
-              end_visual.col - curwin->w_cursor.col)
+          if (curwin->w_cursors[0].w_cursor.col - start_visual.col >
+              end_visual.col - curwin->w_cursors[0].w_cursor.col)
             VIsual = start_visual;
           else
             VIsual = end_visual;
         }
         /* In different lines, compare line number */
         else {
-          diff = (curwin->w_cursor.lnum - start_visual.lnum) -
-                 (end_visual.lnum - curwin->w_cursor.lnum);
+          diff = (curwin->w_cursors[0].w_cursor.lnum - start_visual.lnum) -
+                 (end_visual.lnum - curwin->w_cursors[0].w_cursor.lnum);
 
           if (diff > 0)                         /* closest to end */
             VIsual = start_visual;
           else if (diff < 0)            /* closest to start */
             VIsual = end_visual;
           else {                                /* in the middle line */
-            if (curwin->w_cursor.col <
+            if (curwin->w_cursors[0].w_cursor.col <
                 (start_visual.col + end_visual.col) / 2)
               VIsual = end_visual;
             else
@@ -2701,7 +2701,7 @@ do_mouse (
      * to this position
      */
     if (restart_edit != 0)
-      where_paste_started = curwin->w_cursor;
+      where_paste_started = curwin->w_cursors[0].w_cursor;
     do_put(regname, NULL, dir, count,
            (fixindent ? PUT_FIXINDENT : 0)| PUT_CURSEND);
   }
@@ -2756,7 +2756,7 @@ do_mouse (
         orig_cursor = VIsual;
       else {
         check_visual_highlight();
-        VIsual = curwin->w_cursor;
+        VIsual = curwin->w_cursors[0].w_cursor;
         orig_cursor = VIsual;
         VIsual_active = true;
         VIsual_reselect = true;
@@ -2786,7 +2786,7 @@ do_mouse (
         /* If the character under the cursor (skipping white space) is
          * not a word character, try finding a match and select a (),
          * {}, [], #if/#endif, etc. block. */
-        end_visual = curwin->w_cursor;
+        end_visual = curwin->w_cursors[0].w_cursor;
         while (gc = gchar_pos(&end_visual), ascii_iswhite(gc))
           inc(&end_visual);
         if (oap != NULL) {
@@ -2795,16 +2795,16 @@ do_mouse (
         if (oap != NULL
             && VIsual_mode == 'v'
             && !vim_iswordc(gchar_pos(&end_visual))
-            && equalpos(curwin->w_cursor, VIsual)
+            && equalpos(curwin->w_cursors[0].w_cursor, VIsual)
             && (pos = findmatch(oap, NUL)) != NULL) {
-          curwin->w_cursor = *pos;
+          curwin->w_cursors[0].w_cursor = *pos;
           if (oap->motion_type == kMTLineWise) {
             VIsual_mode = 'V';
           } else if (*p_sel == 'e') {
-            if (lt(curwin->w_cursor, VIsual)) {
+            if (lt(curwin->w_cursors[0].w_cursor, VIsual)) {
               VIsual.col++;
             } else {
-              curwin->w_cursor.col++;
+              curwin->w_cursors[0].w_cursor.col++;
             }
           }
         }
@@ -2813,18 +2813,18 @@ do_mouse (
       if (pos == NULL && (is_click || is_drag)) {
         /* When not found a match or when dragging: extend to include
          * a word. */
-        if (lt(curwin->w_cursor, orig_cursor)) {
-          find_start_of_word(&curwin->w_cursor);
+        if (lt(curwin->w_cursors[0].w_cursor, orig_cursor)) {
+          find_start_of_word(&curwin->w_cursors[0].w_cursor);
           find_end_of_word(&VIsual);
         } else {
           find_start_of_word(&VIsual);
           if (*p_sel == 'e' && *get_cursor_pos_ptr() != NUL)
-            curwin->w_cursor.col +=
+            curwin->w_cursors[0].w_cursor.col +=
               (*mb_ptr2len)(get_cursor_pos_ptr());
-          find_end_of_word(&curwin->w_cursor);
+          find_end_of_word(&curwin->w_cursors[0].w_cursor);
         }
       }
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
     }
     if (is_click)
       redraw_curbuf_later(INVERTED);            /* update the inversion */
@@ -2954,11 +2954,11 @@ void end_visual_mode(void)
   /* Save the current VIsual area for '< and '> marks, and "gv" */
   curbuf->b_visual.vi_mode = VIsual_mode;
   curbuf->b_visual.vi_start = VIsual;
-  curbuf->b_visual.vi_end = curwin->w_cursor;
-  curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  curbuf->b_visual.vi_end = curwin->w_cursors[0].w_cursor;
+  curbuf->b_visual.vi_curswant = curwin->w_cursors[0].w_curswant;
   curbuf->b_visual_mode_eval = VIsual_mode;
   if (!virtual_active())
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
 
   may_clear_cmdline();
 
@@ -3012,8 +3012,8 @@ void reset_VIsual(void)
  */
 size_t find_ident_under_cursor(char_u **string, int find_type)
 {
-  return find_ident_at_pos(curwin, curwin->w_cursor.lnum,
-      curwin->w_cursor.col, string, find_type);
+  return find_ident_at_pos(curwin, curwin->w_cursors[0].w_cursor.lnum,
+      curwin->w_cursors[0].w_cursor.col, string, find_type);
 }
 
 /*
@@ -3252,7 +3252,7 @@ void clear_showcmd(void)
     return;
 
   if (VIsual_active && !char_avail()) {
-    int cursor_bot = lt(VIsual, curwin->w_cursor);
+    int cursor_bot = lt(VIsual, curwin->w_cursors[0].w_cursor);
     long lines;
     colnr_T leftcol, rightcol;
     linenr_T top, bot;
@@ -3260,9 +3260,9 @@ void clear_showcmd(void)
     /* Show the size of the Visual area. */
     if (cursor_bot) {
       top = VIsual.lnum;
-      bot = curwin->w_cursor.lnum;
+      bot = curwin->w_cursors[0].w_cursor.lnum;
     } else {
-      top = curwin->w_cursor.lnum;
+      top = curwin->w_cursors[0].w_cursor.lnum;
       bot = VIsual.lnum;
     }
     // Include closed folds as a whole.
@@ -3275,11 +3275,11 @@ void clear_showcmd(void)
 
       /* Make 'sbr' empty for a moment to get the correct size. */
       p_sbr = empty_option;
-      getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
+      getvcols(curwin, &curwin->w_cursors[0].w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
       sprintf((char *)showcmd_buf, "%" PRId64 "x%" PRId64,
               (int64_t)lines, (int64_t)(rightcol - leftcol + 1));
-    } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum)
+    } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursors[0].w_cursor.lnum)
       sprintf((char *)showcmd_buf, "%" PRId64, (int64_t)lines);
     else {
       char_u  *s, *e;
@@ -3735,7 +3735,7 @@ find_decl (
   assert(len <= INT_MAX);
   sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",
           (int)len, ptr);
-  old_pos = curwin->w_cursor;
+  old_pos = curwin->w_cursors[0].w_cursor;
   save_p_ws = p_ws;
   save_p_scs = p_scs;
   p_ws = false;         /* don't wrap around end of file now */
@@ -3748,23 +3748,23 @@ find_decl (
    */
   if (!locally || !findpar(&incll, BACKWARD, 1L, '{', false)) {
     setpcmark();                        /* Set in findpar() otherwise */
-    curwin->w_cursor.lnum = 1;
-    par_pos = curwin->w_cursor;
+    curwin->w_cursors[0].w_cursor.lnum = 1;
+    par_pos = curwin->w_cursors[0].w_cursor;
   } else {
-    par_pos = curwin->w_cursor;
-    while (curwin->w_cursor.lnum > 1
+    par_pos = curwin->w_cursors[0].w_cursor;
+    while (curwin->w_cursors[0].w_cursor.lnum > 1
            && *skipwhite(get_cursor_line_ptr()) != NUL)
-      --curwin->w_cursor.lnum;
+      --curwin->w_cursors[0].w_cursor.lnum;
   }
-  curwin->w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.col = 0;
 
   /* Search forward for the identifier, ignore comment lines. */
   clearpos(&found_pos);
   for (;; ) {
     valid = false;
-    t = searchit(curwin, curbuf, &curwin->w_cursor, FORWARD,
+    t = searchit(curwin, curbuf, &curwin->w_cursors[0].w_cursor, FORWARD,
         pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL);
-    if (curwin->w_cursor.lnum >= old_pos.lnum)
+    if (curwin->w_cursors[0].w_cursor.lnum >= old_pos.lnum)
       t = false;         /* match after start is failure too */
 
     if (thisblock && t != false) {
@@ -3773,7 +3773,7 @@ find_decl (
       /* Check that the block the match is in doesn't end before the
        * position where we started the search from. */
       if ((pos = findmatchlimit(NULL, '}', FM_FORWARD,
-               (int)(old_pos.lnum - curwin->w_cursor.lnum + 1))) != NULL
+               (int)(old_pos.lnum - curwin->w_cursors[0].w_cursor.lnum + 1))) != NULL
           && pos->lnum < old_pos.lnum)
         continue;
     }
@@ -3781,33 +3781,33 @@ find_decl (
     if (t == false) {
       /* If we previously found a valid position, use it. */
       if (found_pos.lnum != 0) {
-        curwin->w_cursor = found_pos;
+        curwin->w_cursors[0].w_cursor = found_pos;
         t = true;
       }
       break;
     }
     if (get_leader_len(get_cursor_line_ptr(), NULL, false, true) > 0) {
       /* Ignore this line, continue at start of next line. */
-      ++curwin->w_cursor.lnum;
-      curwin->w_cursor.col = 0;
+      ++curwin->w_cursors[0].w_cursor.lnum;
+      curwin->w_cursors[0].w_cursor.col = 0;
       continue;
     }
-    valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
+    valid = is_ident(get_cursor_line_ptr(), curwin->w_cursors[0].w_cursor.col);
 
     // If the current position is not a valid identifier and a previous match is
     // present, favor that one instead.
     if (!valid && found_pos.lnum != 0) {
-      curwin->w_cursor = found_pos;
+      curwin->w_cursors[0].w_cursor = found_pos;
       break;
     }
     // global search: use first match found
     if (valid && !locally) {
       break;
     }
-    if (valid && curwin->w_cursor.lnum >= par_pos.lnum) {
+    if (valid && curwin->w_cursors[0].w_cursor.lnum >= par_pos.lnum) {
       // If we previously found a valid position, use it.
       if (found_pos.lnum != 0) {
-        curwin->w_cursor = found_pos;
+        curwin->w_cursors[0].w_cursor = found_pos;
       }
       break;
     }
@@ -3818,7 +3818,7 @@ find_decl (
     if (!valid) {
       clearpos(&found_pos);
     } else {
-      found_pos = curwin->w_cursor;
+      found_pos = curwin->w_cursors[0].w_cursor;
     }
     // Remove SEARCH_START from flags to avoid getting stuck at one position.
     searchflags &= ~SEARCH_START;
@@ -3826,9 +3826,9 @@ find_decl (
 
   if (t == false) {
     retval = false;
-    curwin->w_cursor = old_pos;
+    curwin->w_cursors[0].w_cursor = old_pos;
   } else {
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     /* "n" searches forward now */
     reset_search_dir();
   }
@@ -3859,7 +3859,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   int width2;                   /* test width for wrapped screen line */
 
   oap->motion_type = kMTCharWise;
-  oap->inclusive = (curwin->w_curswant == MAXCOL);
+  oap->inclusive = (curwin->w_cursors[0].w_curswant == MAXCOL);
 
   col_off1 = curwin_col_off();
   col_off2 = col_off1 - curwin_col_off2();
@@ -3875,16 +3875,16 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
      * Instead of sticking at the last character of the buffer line we
      * try to stick in the last column of the screen.
      */
-    if (curwin->w_curswant == MAXCOL) {
+    if (curwin->w_cursors[0].w_curswant == MAXCOL) {
       atend = true;
       validate_virtcol();
       if (width1 <= 0)
-        curwin->w_curswant = 0;
+        curwin->w_cursors[0].w_curswant = 0;
       else {
-        curwin->w_curswant = width1 - 1;
-        if (curwin->w_virtcol > curwin->w_curswant)
-          curwin->w_curswant += ((curwin->w_virtcol
-                                  - curwin->w_curswant -
+        curwin->w_cursors[0].w_curswant = width1 - 1;
+        if (curwin->w_virtcol > curwin->w_cursors[0].w_curswant)
+          curwin->w_cursors[0].w_curswant += ((curwin->w_virtcol
+                                  - curwin->w_cursors[0].w_curswant -
                                   1) / width2 + 1) * width2;
       }
     } else {
@@ -3892,31 +3892,31 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
         n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
       else
         n = width1;
-      if (curwin->w_curswant > (colnr_T)n + 1)
-        curwin->w_curswant -= ((curwin->w_curswant - n) / width2 + 1)
+      if (curwin->w_cursors[0].w_curswant > (colnr_T)n + 1)
+        curwin->w_cursors[0].w_curswant -= ((curwin->w_cursors[0].w_curswant - n) / width2 + 1)
                               * width2;
     }
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if ((long)curwin->w_curswant >= width2)
+        if ((long)curwin->w_cursors[0].w_curswant >= width2)
           /* move back within line */
-          curwin->w_curswant -= width2;
+          curwin->w_cursors[0].w_curswant -= width2;
         else {
           /* to previous line */
-          if (curwin->w_cursor.lnum == 1) {
+          if (curwin->w_cursors[0].w_cursor.lnum == 1) {
             retval = false;
             break;
           }
-          --curwin->w_cursor.lnum;
+          --curwin->w_cursors[0].w_cursor.lnum;
           /* Move to the start of a closed fold.  Don't do that when
            * 'foldopen' contains "all": it will open in a moment. */
           if (!(fdo_flags & FDO_ALL))
-            (void)hasFolding(curwin->w_cursor.lnum,
-                &curwin->w_cursor.lnum, NULL);
+            (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum,
+                &curwin->w_cursors[0].w_cursor.lnum, NULL);
           linelen = linetabsize(get_cursor_line_ptr());
           if (linelen > width1)
-            curwin->w_curswant += (((linelen - width1 - 1) / width2)
+            curwin->w_cursors[0].w_curswant += (((linelen - width1 - 1) / width2)
                                    + 1) * width2;
         }
       } else { /* dir == FORWARD */
@@ -3924,20 +3924,20 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
         else
           n = width1;
-        if (curwin->w_curswant + width2 < (colnr_T)n)
+        if (curwin->w_cursors[0].w_curswant + width2 < (colnr_T)n)
           /* move forward within line */
-          curwin->w_curswant += width2;
+          curwin->w_cursors[0].w_curswant += width2;
         else {
           /* to next line */
           /* Move to the end of a closed fold. */
-          (void)hasFolding(curwin->w_cursor.lnum, NULL,
-              &curwin->w_cursor.lnum);
-          if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
+          (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL,
+              &curwin->w_cursors[0].w_cursor.lnum);
+          if (curwin->w_cursors[0].w_cursor.lnum == curbuf->b_ml.ml_line_count) {
             retval = false;
             break;
           }
-          curwin->w_cursor.lnum++;
-          curwin->w_curswant %= width2;
+          curwin->w_cursors[0].w_cursor.lnum++;
+          curwin->w_cursors[0].w_curswant %= width2;
           linelen = linetabsize(get_cursor_line_ptr());
         }
       }
@@ -3947,9 +3947,9 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   if (virtual_active() && atend)
     coladvance(MAXCOL);
   else
-    coladvance(curwin->w_curswant);
+    coladvance(curwin->w_cursors[0].w_curswant);
 
-  if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
+  if (curwin->w_cursors[0].w_cursor.col > 0 && curwin->w_p_wrap) {
     /*
      * Check for landing on a character that got split at the end of the
      * last line.  We want to advance a screenline, not end up in the same
@@ -3960,16 +3960,16 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
     if (virtcol > (colnr_T)width1 && *p_sbr != NUL)
         virtcol -= vim_strsize(p_sbr);
 
-    if (virtcol > curwin->w_curswant
-        && (curwin->w_curswant < (colnr_T)width1
-            ? (curwin->w_curswant > (colnr_T)width1 / 2)
-            : ((curwin->w_curswant - width1) % width2
+    if (virtcol > curwin->w_cursors[0].w_curswant
+        && (curwin->w_cursors[0].w_curswant < (colnr_T)width1
+            ? (curwin->w_cursors[0].w_curswant > (colnr_T)width1 / 2)
+            : ((curwin->w_cursors[0].w_curswant - width1) % width2
                > (colnr_T)width2 / 2)))
-      --curwin->w_cursor.col;
+      --curwin->w_cursors[0].w_cursor.col;
   }
 
   if (atend)
-    curwin->w_curswant = MAXCOL;            /* stick in the last column */
+    curwin->w_cursors[0].w_curswant = MAXCOL;            /* stick in the last column */
 
   return retval;
 }
@@ -4038,7 +4038,7 @@ void scroll_redraw(int up, long count)
 {
   linenr_T prev_topline = curwin->w_topline;
   int prev_topfill = curwin->w_topfill;
-  linenr_T prev_lnum = curwin->w_cursor.lnum;
+  linenr_T prev_lnum = curwin->w_cursors[0].w_cursor.lnum;
 
   if (up)
     scrollup(count, true);
@@ -4058,11 +4058,11 @@ void scroll_redraw(int up, long count)
            && curwin->w_topfill == prev_topfill
            ) {
       if (up) {
-        if (curwin->w_cursor.lnum > prev_lnum
+        if (curwin->w_cursors[0].w_cursor.lnum > prev_lnum
             || cursor_down(1L, false) == false)
           break;
       } else {
-        if (curwin->w_cursor.lnum < prev_lnum
+        if (curwin->w_cursors[0].w_cursor.lnum < prev_lnum
             || prev_topline == 1L
             || cursor_up(1L, false) == false)
           break;
@@ -4073,8 +4073,8 @@ void scroll_redraw(int up, long count)
       curwin->w_valid |= VALID_TOPLINE;
     }
   }
-  if (curwin->w_cursor.lnum != prev_lnum)
-    coladvance(curwin->w_curswant);
+  if (curwin->w_cursors[0].w_cursor.lnum != prev_lnum)
+    coladvance(curwin->w_cursors[0].w_curswant);
   redraw_later(VALID);
 }
 
@@ -4145,12 +4145,12 @@ dozet:
    */
   if ((vim_strchr((char_u *)"+\r\nt.z^-b", nchar) != NULL)
       && cap->count0
-      && cap->count0 != curwin->w_cursor.lnum) {
+      && cap->count0 != curwin->w_cursors[0].w_cursor.lnum) {
     setpcmark();
     if (cap->count0 > curbuf->b_ml.ml_line_count)
-      curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
     else
-      curwin->w_cursor.lnum = cap->count0;
+      curwin->w_cursors[0].w_cursor.lnum = cap->count0;
     check_cursor_col();
   }
 
@@ -4161,9 +4161,9 @@ dozet:
       /* No count given: put cursor at the line below screen */
       validate_botline();               /* make sure w_botline is valid */
       if (curwin->w_botline > curbuf->b_ml.ml_line_count)
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+        curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
       else
-        curwin->w_cursor.lnum = curwin->w_botline;
+        curwin->w_cursors[0].w_cursor.lnum = curwin->w_botline;
     }
   /* FALLTHROUGH */
   case NL:
@@ -4192,11 +4192,11 @@ dozet:
                  * bottom of window. */
     if (cap->count0 != 0) {
       scroll_cursor_bot(0, true);
-      curwin->w_cursor.lnum = curwin->w_topline;
+      curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline;
     } else if (curwin->w_topline == 1)
-      curwin->w_cursor.lnum = 1;
+      curwin->w_cursors[0].w_cursor.lnum = 1;
     else
-      curwin->w_cursor.lnum = curwin->w_topline - 1;
+      curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline - 1;
   /* FALLTHROUGH */
   case '-':
     beginline(BL_WHITE | BL_FIX);
@@ -4240,10 +4240,10 @@ dozet:
 
   /* "zs" - scroll screen, cursor at the start */
   case 's':   if (!curwin->w_p_wrap) {
-      if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
+      if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL))
         col = 0;                        /* like the cursor is in col 0 */
       else
-        getvcol(curwin, &curwin->w_cursor, &col, NULL, NULL);
+        getvcol(curwin, &curwin->w_cursors[0].w_cursor, &col, NULL, NULL);
       if (col > l_p_siso)
         col -= l_p_siso;
       else
@@ -4257,10 +4257,10 @@ dozet:
 
   /* "ze" - scroll screen, cursor at the end */
   case 'e':   if (!curwin->w_p_wrap) {
-      if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
+      if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL))
         col = 0;                        /* like the cursor is in col 0 */
       else
-        getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
+        getvcol(curwin, &curwin->w_cursors[0].w_cursor, NULL, NULL, &col);
       n = curwin->w_width - curwin_col_off();
       if (col + l_p_siso < n)
         col = 0;
@@ -4297,8 +4297,8 @@ dozet:
       if (VIsual_active)
         nv_operator(cap);
       else
-        deleteFold(curwin->w_cursor.lnum,
-            curwin->w_cursor.lnum, nchar == 'D', false);
+        deleteFold(curwin->w_cursors[0].w_cursor.lnum,
+            curwin->w_cursors[0].w_cursor.lnum, nchar == 'D', false);
   }
     break;
 
@@ -4326,19 +4326,19 @@ dozet:
     break;
 
   /* "za": open closed fold or close open fold at cursor */
-  case 'a':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
-      openFold(curwin->w_cursor.lnum, cap->count1);
+  case 'a':   if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL))
+      openFold(curwin->w_cursors[0].w_cursor.lnum, cap->count1);
     else {
-      closeFold(curwin->w_cursor.lnum, cap->count1);
+      closeFold(curwin->w_cursors[0].w_cursor.lnum, cap->count1);
       curwin->w_p_fen = true;
     }
     break;
 
   /* "zA": open fold at cursor recursively */
-  case 'A':   if (hasFolding(curwin->w_cursor.lnum, NULL, NULL))
-      openFoldRecurse(curwin->w_cursor.lnum);
+  case 'A':   if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL))
+      openFoldRecurse(curwin->w_cursors[0].w_cursor.lnum);
     else {
-      closeFoldRecurse(curwin->w_cursor.lnum);
+      closeFoldRecurse(curwin->w_cursors[0].w_cursor.lnum);
       curwin->w_p_fen = true;
     }
     break;
@@ -4347,21 +4347,21 @@ dozet:
   case 'o':   if (VIsual_active)
       nv_operator(cap);
     else
-      openFold(curwin->w_cursor.lnum, cap->count1);
+      openFold(curwin->w_cursors[0].w_cursor.lnum, cap->count1);
     break;
 
   /* "zO": open fold recursively */
   case 'O':   if (VIsual_active)
       nv_operator(cap);
     else
-      openFoldRecurse(curwin->w_cursor.lnum);
+      openFoldRecurse(curwin->w_cursors[0].w_cursor.lnum);
     break;
 
   /* "zc": close fold at cursor or Visual area */
   case 'c':   if (VIsual_active)
       nv_operator(cap);
     else
-      closeFold(curwin->w_cursor.lnum, cap->count1);
+      closeFold(curwin->w_cursors[0].w_cursor.lnum, cap->count1);
     curwin->w_p_fen = true;
     break;
 
@@ -4369,7 +4369,7 @@ dozet:
   case 'C':   if (VIsual_active)
       nv_operator(cap);
     else
-      closeFoldRecurse(curwin->w_cursor.lnum);
+      closeFoldRecurse(curwin->w_cursors[0].w_cursor.lnum);
     curwin->w_p_fen = true;
     break;
 
@@ -4458,7 +4458,7 @@ dozet:
     if (VIsual_active && !get_visual_text(cap, &ptr, &len))
       return;
     if (ptr == NULL) {
-      pos_T pos = curwin->w_cursor;
+      pos_T pos = curwin->w_cursors[0].w_cursor;
 
       /* Find bad word under the cursor.  When 'spell' is
        * off this fails and find_ident_under_cursor() is
@@ -4466,9 +4466,9 @@ dozet:
       emsg_off++;
       len = spell_move_to(curwin, FORWARD, true, true, NULL);
       emsg_off--;
-      if (len != 0 && curwin->w_cursor.col <= pos.col)
-        ptr = ml_get_pos(&curwin->w_cursor);
-      curwin->w_cursor = pos;
+      if (len != 0 && curwin->w_cursors[0].w_cursor.col <= pos.col)
+        ptr = ml_get_pos(&curwin->w_cursors[0].w_cursor);
+      curwin->w_cursors[0].w_cursor = pos;
     }
 
     if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
@@ -4749,7 +4749,7 @@ static void nv_ident(cmdarg_T *cap)
      * it was.
      */
     setpcmark();
-    curwin->w_cursor.col = (colnr_T) (ptr - get_cursor_line_ptr());
+    curwin->w_cursors[0].w_cursor.col = (colnr_T) (ptr - get_cursor_line_ptr());
 
     if (!g_cmd && vim_iswordp(ptr))
       STRCPY(buf, "\\<");
@@ -4899,7 +4899,7 @@ get_visual_text (
 {
   if (VIsual_mode != 'V')
     unadjust_for_sel();
-  if (VIsual.lnum != curwin->w_cursor.lnum) {
+  if (VIsual.lnum != curwin->w_cursors[0].w_cursor.lnum) {
     if (cap != NULL)
       clearopbeep(cap->oap);
     return false;
@@ -4908,12 +4908,12 @@ get_visual_text (
     *pp = get_cursor_line_ptr();
     *lenp = STRLEN(*pp);
   } else {
-    if (lt(curwin->w_cursor, VIsual)) {
-      *pp = ml_get_pos(&curwin->w_cursor);
-      *lenp = (size_t)(VIsual.col - curwin->w_cursor.col + 1);
+    if (lt(curwin->w_cursors[0].w_cursor, VIsual)) {
+      *pp = ml_get_pos(&curwin->w_cursors[0].w_cursor);
+      *lenp = (size_t)(VIsual.col - curwin->w_cursors[0].w_cursor.col + 1);
     } else {
       *pp = ml_get_pos(&VIsual);
-      *lenp = (size_t)(curwin->w_cursor.col - VIsual.col + 1);
+      *lenp = (size_t)(curwin->w_cursors[0].w_cursor.col - VIsual.col + 1);
     }
     if (has_mbyte)
       /* Correct the length to include the whole last character. */
@@ -4947,20 +4947,20 @@ static void nv_scroll(cmdarg_T *cap)
 
   if (cap->cmdchar == 'L') {
     validate_botline();             /* make sure curwin->w_botline is valid */
-    curwin->w_cursor.lnum = curwin->w_botline - 1;
-    if (cap->count1 - 1 >= curwin->w_cursor.lnum)
-      curwin->w_cursor.lnum = 1;
+    curwin->w_cursors[0].w_cursor.lnum = curwin->w_botline - 1;
+    if (cap->count1 - 1 >= curwin->w_cursors[0].w_cursor.lnum)
+      curwin->w_cursors[0].w_cursor.lnum = 1;
     else {
       if (hasAnyFolding(curwin)) {
         /* Count a fold for one screen line. */
         for (n = cap->count1 - 1; n > 0
-             && curwin->w_cursor.lnum > curwin->w_topline; --n) {
-          (void)hasFolding(curwin->w_cursor.lnum,
-              &curwin->w_cursor.lnum, NULL);
-          --curwin->w_cursor.lnum;
+             && curwin->w_cursors[0].w_cursor.lnum > curwin->w_topline; --n) {
+          (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum,
+              &curwin->w_cursors[0].w_cursor.lnum, NULL);
+          --curwin->w_cursors[0].w_cursor.lnum;
         }
       } else
-        curwin->w_cursor.lnum -= cap->count1 - 1;
+        curwin->w_cursors[0].w_cursor.lnum -= cap->count1 - 1;
     }
   } else {
     if (cap->cmdchar == 'M') {
@@ -4997,9 +4997,9 @@ static void nv_scroll(cmdarg_T *cap)
         n = lnum - curwin->w_topline;
       }
     }
-    curwin->w_cursor.lnum = curwin->w_topline + n;
-    if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-      curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline + n;
+    if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count)
+      curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
   }
 
   cursor_correct();     /* correct for 'so' */
@@ -5043,19 +5043,19 @@ static void nv_right(cmdarg_T *cap)
       if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
            || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
            || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
-          && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+          && curwin->w_cursors[0].w_cursor.lnum < curbuf->b_ml.ml_line_count) {
         // When deleting we also count the NL as a character.
         // Set cap->oap->inclusive when last char in the line is
         // included, move to next line after that
         if (cap->oap->op_type != OP_NOP
             && !cap->oap->inclusive
-            && !LINEEMPTY(curwin->w_cursor.lnum)) {
+            && !LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
           cap->oap->inclusive = true;
         } else {
-          ++curwin->w_cursor.lnum;
-          curwin->w_cursor.col = 0;
-          curwin->w_cursor.coladd = 0;
-          curwin->w_set_curswant = true;
+          ++curwin->w_cursors[0].w_cursor.lnum;
+          curwin->w_cursors[0].w_cursor.col = 0;
+          curwin->w_cursors[0].w_cursor.coladd = 0;
+          curwin->w_cursors[0].w_set_curswant = true;
           cap->oap->inclusive = false;
         }
         continue;
@@ -5066,21 +5066,21 @@ static void nv_right(cmdarg_T *cap)
           beep_flush();
         }
       } else {
-        if (!LINEEMPTY(curwin->w_cursor.lnum)) {
+        if (!LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
           cap->oap->inclusive = true;
         }
       }
       break;
     } else if (PAST_LINE) {
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
       if (virtual_active())
         oneright();
       else {
         if (has_mbyte)
-          curwin->w_cursor.col +=
+          curwin->w_cursors[0].w_cursor.col +=
             (*mb_ptr2len)(get_cursor_pos_ptr());
         else
-          ++curwin->w_cursor.col;
+          ++curwin->w_cursors[0].w_cursor.col;
       }
     }
   }
@@ -5121,24 +5121,24 @@ static void nv_left(cmdarg_T *cap)
                       && vim_strchr(p_ww, 'h') != NULL)
                   || (cap->cmdchar == K_LEFT
                       && vim_strchr(p_ww, '<') != NULL))
-                 && curwin->w_cursor.lnum > 1) {
-        --(curwin->w_cursor.lnum);
+                 && curwin->w_cursors[0].w_cursor.lnum > 1) {
+        --(curwin->w_cursors[0].w_cursor.lnum);
         coladvance((colnr_T)MAXCOL);
-        curwin->w_set_curswant = true;
+        curwin->w_cursors[0].w_set_curswant = true;
 
         // When the NL before the first char has to be deleted we
         // put the cursor on the NUL after the previous line.
         // This is a very special case, be careful!
         // Don't adjust op_end now, otherwise it won't work.
         if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
-            && !LINEEMPTY(curwin->w_cursor.lnum)) {
+            && !LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum)) {
           char_u *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
             if (has_mbyte) {
-              curwin->w_cursor.col += (*mb_ptr2len)(cp);
+              curwin->w_cursors[0].w_cursor.col += (*mb_ptr2len)(cp);
             } else {
-              curwin->w_cursor.col++;
+              curwin->w_cursors[0].w_cursor.col++;
             }
           }
           cap->retval |= CA_NO_ADJ_OP_END;
@@ -5237,7 +5237,7 @@ static void nv_gotofile(cmdarg_T *cap)
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
                   buf_hide(curbuf) ? ECMD_HIDE : 0, curwin);
     if (cap->nchar == 'F' && lnum >= 0) {
-      curwin->w_cursor.lnum = lnum;
+      curwin->w_cursors[0].w_cursor.lnum = lnum;
       check_cursor_lnum();
       beginline(BL_SOL | BL_FIX);
     }
@@ -5271,7 +5271,7 @@ static void nv_dollar(cmdarg_T *cap)
    * Otherwise, send it to the end of the line. */
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP)
-    curwin->w_curswant = MAXCOL;        /* so we stay at the end */
+    curwin->w_cursors[0].w_curswant = MAXCOL;        /* so we stay at the end */
   if (cursor_down(cap->count1 - 1,
           cap->oap->op_type == OP_NOP) == false)
     clearopbeep(cap->oap);
@@ -5286,7 +5286,7 @@ static void nv_dollar(cmdarg_T *cap)
 static void nv_search(cmdarg_T *cap)
 {
   oparg_T     *oap = cap->oap;
-  pos_T save_cursor = curwin->w_cursor;
+  pos_T save_cursor = curwin->w_cursors[0].w_cursor;
 
   if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
     /* Translate "g??" to "g?g?" */
@@ -5306,7 +5306,7 @@ static void nv_search(cmdarg_T *cap)
   }
 
   (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
-                      (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
+                      (cap->arg || !equalpos(save_cursor, curwin->w_cursors[0].w_cursor))
                       ? 0 : SEARCH_MARK);
 }
 
@@ -5316,10 +5316,10 @@ static void nv_search(cmdarg_T *cap)
  */
 static void nv_next(cmdarg_T *cap)
 {
-  pos_T old = curwin->w_cursor;
+  pos_T old = curwin->w_cursors[0].w_cursor;
   int i = normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
 
-  if (i == 1 && equalpos(old, curwin->w_cursor)) {
+  if (i == 1 && equalpos(old, curwin->w_cursors[0].w_cursor)) {
     // Avoid getting stuck on the current cursor position, which can happen when
     // an offset is given and the cursor is on the last char in the buffer:
     // Repeat with count + 1.
@@ -5346,7 +5346,7 @@ static int normal_search(
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   cap->oap->use_reg_one = true;
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
 
   i = do_search(cap->oap, dir, pat, cap->count1,
                 opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL);
@@ -5356,7 +5356,7 @@ static int normal_search(
     if (i == 2) {
       cap->oap->motion_type = kMTLineWise;
     }
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
     if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
       foldOpenCursor();
   }
@@ -5386,16 +5386,16 @@ static void nv_csearch(cmdarg_T *cap)
   if (IS_SPECIAL(cap->nchar) || searchc(cap, t_cmd) == false) {
     clearopbeep(cap->oap);
   } else {
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     /* Include a Tab for "tx" and for "dfx". */
     if (gchar_cursor() == TAB && virtual_active() && cap->arg == FORWARD
         && (t_cmd || cap->oap->op_type != OP_NOP)) {
       colnr_T scol, ecol;
 
-      getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
-      curwin->w_cursor.coladd = ecol - scol;
+      getvcol(curwin, &curwin->w_cursors[0].w_cursor, &scol, NULL, &ecol);
+      curwin->w_cursors[0].w_cursor.coladd = ecol - scol;
     } else
-      curwin->w_cursor.coladd = 0;
+      curwin->w_cursors[0].w_cursor.coladd = 0;
     adjust_for_sel(cap);
     if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
@@ -5419,8 +5419,8 @@ static void nv_brackets(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  old_pos = curwin->w_cursor;
-  curwin->w_cursor.coladd = 0;              /* TODO: don't do this for an error. */
+  old_pos = curwin->w_cursors[0].w_cursor;
+  curwin->w_cursors[0].w_cursor.coladd = 0;              /* TODO: don't do this for an error. */
 
   /*
    * "[f" or "]f" : Edit file under the cursor (same as "gf")
@@ -5456,10 +5456,10 @@ static void nv_brackets(cmdarg_T *cap)
                             islower(cap->nchar) ? ACTION_SHOW :
                             ACTION_GOTO),
                            (cap->cmdchar == ']'
-                            ? curwin->w_cursor.lnum + 1
+                            ? curwin->w_cursors[0].w_cursor.lnum + 1
                             : (linenr_T)1),
                            MAXLNUM);
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
     }
   } else
   /*
@@ -5497,10 +5497,10 @@ static void nv_brackets(cmdarg_T *cap)
         break;
       }
       prev_pos = new_pos;
-      curwin->w_cursor = *pos;
+      curwin->w_cursors[0].w_cursor = *pos;
       new_pos = *pos;
     }
-    curwin->w_cursor = old_pos;
+    curwin->w_cursors[0].w_cursor = old_pos;
 
     /*
      * Handle "[m", "]m", "[M" and "[M".  The findmatchlimit() only
@@ -5516,7 +5516,7 @@ static void nv_brackets(cmdarg_T *cap)
       /* found a match: we were inside a method */
       if (prev_pos.lnum != 0) {
         pos = &prev_pos;
-        curwin->w_cursor = prev_pos;
+        curwin->w_cursors[0].w_cursor = prev_pos;
         if (norm)
           --n;
       } else
@@ -5535,14 +5535,14 @@ static void nv_brackets(cmdarg_T *cap)
             /* Must have found end/start of class: use it.
              * Or found the place to be at. */
             if ((c == findc && norm) || (n == 1 && !norm)) {
-              new_pos = curwin->w_cursor;
+              new_pos = curwin->w_cursors[0].w_cursor;
               pos = &new_pos;
               n = 0;
             }
             /* if no match found at all, we started outside of the
              * class and we're inside now.  Just go on. */
             else if (new_pos.lnum == 0) {
-              new_pos = curwin->w_cursor;
+              new_pos = curwin->w_cursors[0].w_cursor;
               pos = &new_pos;
             }
             /* found start/end of other method: go to match */
@@ -5551,20 +5551,20 @@ static void nv_brackets(cmdarg_T *cap)
                           0)) == NULL)
               n = 0;
             else
-              curwin->w_cursor = *pos;
+              curwin->w_cursors[0].w_cursor = *pos;
             break;
           }
         }
         --n;
       }
-      curwin->w_cursor = old_pos;
+      curwin->w_cursors[0].w_cursor = old_pos;
       if (pos == NULL && new_pos.lnum != 0)
         clearopbeep(cap->oap);
     }
     if (pos != NULL) {
       setpcmark();
-      curwin->w_cursor = *pos;
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_cursor = *pos;
+      curwin->w_cursors[0].w_set_curswant = true;
       if ((fdo_flags & FDO_BLOCK) && KeyTyped
           && cap->oap->op_type == OP_NOP)
         foldOpenCursor();
@@ -5579,7 +5579,7 @@ static void nv_brackets(cmdarg_T *cap)
     else
       flag = '}';                   /* "][" or "[]" */
 
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     /*
      * Imitate strange Vi behaviour: When using "]]" with an operator
      * we also stop at '}'.
@@ -5607,19 +5607,19 @@ static void nv_brackets(cmdarg_T *cap)
       pos_T start, end;
 
       if (VIsual_active) {
-        start = ltoreq(VIsual, curwin->w_cursor) ? VIsual : curwin->w_cursor;
-        end = equalpos(start, VIsual) ? curwin->w_cursor : VIsual;
-        curwin->w_cursor = (dir == BACKWARD ? start : end);
+        start = ltoreq(VIsual, curwin->w_cursors[0].w_cursor) ? VIsual : curwin->w_cursors[0].w_cursor;
+        end = equalpos(start, VIsual) ? curwin->w_cursors[0].w_cursor : VIsual;
+        curwin->w_cursors[0].w_cursor = (dir == BACKWARD ? start : end);
       }
       prep_redo_cmd(cap);
       do_put(regname, NULL, dir, cap->count1, PUT_FIXINDENT);
       if (was_visual) {
         VIsual = start;
-        curwin->w_cursor = end;
+        curwin->w_cursors[0].w_cursor = end;
         if (dir == BACKWARD) {
           /* adjust lines */
           VIsual.lnum += curbuf->b_ml.ml_line_count - line_count;
-          curwin->w_cursor.lnum += curbuf->b_ml.ml_line_count - line_count;
+          curwin->w_cursors[0].w_cursor.lnum += curbuf->b_ml.ml_line_count - line_count;
         }
 
         VIsual_active = true;
@@ -5642,7 +5642,7 @@ static void nv_brackets(cmdarg_T *cap)
    * "['", "[`", "]'" and "]`": jump to next mark
    */
   else if (cap->nchar == '\'' || cap->nchar == '`') {
-    pos = &curwin->w_cursor;
+    pos = &curwin->w_cursors[0].w_cursor;
     for (n = cap->count1; n > 0; --n) {
       prev_pos = *pos;
       pos = getnextmark(pos, cap->cmdchar == '[' ? BACKWARD : FORWARD,
@@ -5690,7 +5690,7 @@ static void nv_brackets(cmdarg_T *cap)
         clearopbeep(cap->oap);
         break;
       } else {
-        curwin->w_set_curswant = true;
+        curwin->w_cursors[0].w_set_curswant = true;
       }
     if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
       foldOpenCursor();
@@ -5706,7 +5706,7 @@ static void nv_brackets(cmdarg_T *cap)
 static void nv_percent(cmdarg_T *cap)
 {
   pos_T       *pos;
-  linenr_T lnum = curwin->w_cursor.lnum;
+  linenr_T lnum = curwin->w_cursors[0].w_cursor.lnum;
 
   cap->oap->inclusive = true;
   if (cap->count0) {  // {cnt}% : goto {cnt} percentage in file
@@ -5718,13 +5718,13 @@ static void nv_percent(cmdarg_T *cap)
       /* Round up, so CTRL-G will give same value.  Watch out for a
        * large line count, the line number must not go negative! */
       if (curbuf->b_ml.ml_line_count > 1000000)
-        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99L)
+        curwin->w_cursors[0].w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99L)
                                 / 100L * cap->count0;
       else
-        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count *
+        curwin->w_cursors[0].w_cursor.lnum = (curbuf->b_ml.ml_line_count *
                                  cap->count0 + 99L) / 100L;
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count)
+        curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
       beginline(BL_SOL | BL_FIX);
     }
   } else {  // "%" : go to matching paren
@@ -5734,14 +5734,14 @@ static void nv_percent(cmdarg_T *cap)
       clearopbeep(cap->oap);
     else {
       setpcmark();
-      curwin->w_cursor = *pos;
-      curwin->w_set_curswant = true;
-      curwin->w_cursor.coladd = 0;
+      curwin->w_cursors[0].w_cursor = *pos;
+      curwin->w_cursors[0].w_set_curswant = true;
+      curwin->w_cursors[0].w_cursor.coladd = 0;
       adjust_for_sel(cap);
     }
   }
   if (cap->oap->op_type == OP_NOP
-      && lnum != curwin->w_cursor.lnum
+      && lnum != curwin->w_cursors[0].w_cursor.lnum
       && (fdo_flags & FDO_PERCENT)
       && KeyTyped)
     foldOpenCursor();
@@ -5757,14 +5757,14 @@ static void nv_brace(cmdarg_T *cap)
   cap->oap->use_reg_one = true;
   /* The motion used to be inclusive for "(", but that is not what Vi does. */
   cap->oap->inclusive = false;
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
 
   if (findsent(cap->arg, cap->count1) == false)
     clearopbeep(cap->oap);
   else {
     /* Don't leave the cursor on the NUL past end of line. */
     adjust_cursor(cap->oap);
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
     if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
@@ -5790,11 +5790,11 @@ static void nv_findpar(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   cap->oap->use_reg_one = true;
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
   if (!findpar(&cap->oap->inclusive, cap->arg, cap->count1, NUL, false))
     clearopbeep(cap->oap);
   else {
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
     if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
@@ -5823,7 +5823,7 @@ static void nv_kundo(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
     u_undo((int)cap->count1);
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
   }
 }
 
@@ -5880,7 +5880,7 @@ static void nv_replace(cmdarg_T *cap)
       /* Add extra space and put the cursor on the first one. */
       coladvance_force((colnr_T)(getviscol() + cap->count1));
       assert(cap->count1 <= INT_MAX);
-      curwin->w_cursor.col -= (colnr_T)cap->count1;
+      curwin->w_cursors[0].w_cursor.col -= (colnr_T)cap->count1;
     } else if (gchar_cursor() == TAB)
       coladvance_force(getviscol());
   }
@@ -5929,7 +5929,7 @@ static void nv_replace(cmdarg_T *cap)
     prep_redo(cap->oap->regname, cap->count1,
         NUL, 'r', NUL, had_ctrl_v, cap->nchar);
 
-    curbuf->b_op_start = curwin->w_cursor;
+    curbuf->b_op_start = curwin->w_cursors[0].w_cursor;
     if (has_mbyte) {
       int old_State = State;
 
@@ -5944,13 +5944,13 @@ static void nv_replace(cmdarg_T *cap)
       for (n = cap->count1; n > 0; --n) {
         State = REPLACE;
         if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
-          int c = ins_copychar(curwin->w_cursor.lnum
+          int c = ins_copychar(curwin->w_cursors[0].w_cursor.lnum
               + (cap->nchar == Ctrl_Y ? -1 : 1));
           if (c != NUL)
             ins_char(c);
           else
             /* will be decremented further down */
-            ++curwin->w_cursor.col;
+            ++curwin->w_cursors[0].w_cursor.col;
         } else
           ins_char(cap->nchar);
         State = old_State;
@@ -5969,34 +5969,34 @@ static void nv_replace(cmdarg_T *cap)
          * released the line.  At the same time we let know that the
          * line will be changed.
          */
-        ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
+        ptr = ml_get_buf(curbuf, curwin->w_cursors[0].w_cursor.lnum, true);
         if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
-          int c = ins_copychar(curwin->w_cursor.lnum
+          int c = ins_copychar(curwin->w_cursors[0].w_cursor.lnum
                                + (cap->nchar == Ctrl_Y ? -1 : 1));
           if (c != NUL) {
             assert(c >= 0 && c <= UCHAR_MAX);
-            ptr[curwin->w_cursor.col] = (char_u)c;
+            ptr[curwin->w_cursors[0].w_cursor.col] = (char_u)c;
           }
         } else {
           assert(cap->nchar >= 0 && cap->nchar <= UCHAR_MAX);
-          ptr[curwin->w_cursor.col] = (char_u)cap->nchar;
+          ptr[curwin->w_cursors[0].w_cursor.col] = (char_u)cap->nchar;
         }
         if (p_sm && msg_silent == 0)
           showmatch(cap->nchar);
-        ++curwin->w_cursor.col;
+        ++curwin->w_cursors[0].w_cursor.col;
       }
 
       /* mark the buffer as changed and prepare for displaying */
-      changed_bytes(curwin->w_cursor.lnum,
-          (colnr_T)(curwin->w_cursor.col - cap->count1));
+      changed_bytes(curwin->w_cursors[0].w_cursor.lnum,
+          (colnr_T)(curwin->w_cursors[0].w_cursor.col - cap->count1));
     }
-    --curwin->w_cursor.col;         /* cursor on the last replaced char */
+    --curwin->w_cursors[0].w_cursor.col;         /* cursor on the last replaced char */
     /* if the character on the left of the current cursor is a multi-byte
      * character, move two characters left */
     if (has_mbyte)
       mb_adjust_cursor();
-    curbuf->b_op_end = curwin->w_cursor;
-    curwin->w_set_curswant = true;
+    curbuf->b_op_end = curwin->w_cursors[0].w_cursor;
+    curwin->w_cursors[0].w_set_curswant = true;
     set_last_insert(cap->nchar);
   }
 
@@ -6013,38 +6013,38 @@ static void v_swap_corners(int cmdchar)
   colnr_T left, right;
 
   if (cmdchar == 'O' && VIsual_mode == Ctrl_V) {
-    old_cursor = curwin->w_cursor;
+    old_cursor = curwin->w_cursors[0].w_cursor;
     getvcols(curwin, &old_cursor, &VIsual, &left, &right);
-    curwin->w_cursor.lnum = VIsual.lnum;
+    curwin->w_cursors[0].w_cursor.lnum = VIsual.lnum;
     coladvance(left);
-    VIsual = curwin->w_cursor;
+    VIsual = curwin->w_cursors[0].w_cursor;
 
-    curwin->w_cursor.lnum = old_cursor.lnum;
-    curwin->w_curswant = right;
+    curwin->w_cursors[0].w_cursor.lnum = old_cursor.lnum;
+    curwin->w_cursors[0].w_curswant = right;
     /* 'selection "exclusive" and cursor at right-bottom corner: move it
      * right one column */
     if (old_cursor.lnum >= VIsual.lnum && *p_sel == 'e')
-      ++curwin->w_curswant;
-    coladvance(curwin->w_curswant);
-    if (curwin->w_cursor.col == old_cursor.col
+      ++curwin->w_cursors[0].w_curswant;
+    coladvance(curwin->w_cursors[0].w_curswant);
+    if (curwin->w_cursors[0].w_cursor.col == old_cursor.col
         && (!virtual_active()
-            || curwin->w_cursor.coladd == old_cursor.coladd)
+            || curwin->w_cursors[0].w_cursor.coladd == old_cursor.coladd)
         ) {
-      curwin->w_cursor.lnum = VIsual.lnum;
+      curwin->w_cursors[0].w_cursor.lnum = VIsual.lnum;
       if (old_cursor.lnum <= VIsual.lnum && *p_sel == 'e')
         ++right;
       coladvance(right);
-      VIsual = curwin->w_cursor;
+      VIsual = curwin->w_cursors[0].w_cursor;
 
-      curwin->w_cursor.lnum = old_cursor.lnum;
+      curwin->w_cursors[0].w_cursor.lnum = old_cursor.lnum;
       coladvance(left);
-      curwin->w_curswant = left;
+      curwin->w_cursors[0].w_curswant = left;
     }
   } else {
-    old_cursor = curwin->w_cursor;
-    curwin->w_cursor = VIsual;
+    old_cursor = curwin->w_cursors[0].w_cursor;
+    curwin->w_cursors[0].w_cursor = VIsual;
     VIsual = old_cursor;
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
   }
 }
 
@@ -6107,7 +6107,7 @@ static void n_swapchar(cmdarg_T *cap)
     return;
   }
 
-  if (LINEEMPTY(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
+  if (LINEEMPTY(curwin->w_cursors[0].w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
     clearopbeep(cap->oap);
     return;
   }
@@ -6117,17 +6117,17 @@ static void n_swapchar(cmdarg_T *cap)
   if (u_save_cursor() == false)
     return;
 
-  startpos = curwin->w_cursor;
+  startpos = curwin->w_cursors[0].w_cursor;
   for (n = cap->count1; n > 0; --n) {
-    did_change |= swapchar(cap->oap->op_type, &curwin->w_cursor);
+    did_change |= swapchar(cap->oap->op_type, &curwin->w_cursors[0].w_cursor);
     inc_cursor();
     if (gchar_cursor() == NUL) {
       if (vim_strchr(p_ww, '~') != NULL
-          && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        ++curwin->w_cursor.lnum;
-        curwin->w_cursor.col = 0;
+          && curwin->w_cursors[0].w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+        ++curwin->w_cursors[0].w_cursor.lnum;
+        curwin->w_cursors[0].w_cursor.col = 0;
         if (n > 1) {
-          if (u_savesub(curwin->w_cursor.lnum) == false)
+          if (u_savesub(curwin->w_cursors[0].w_cursor.lnum) == false)
             break;
           u_clearline();
         }
@@ -6138,12 +6138,12 @@ static void n_swapchar(cmdarg_T *cap)
 
 
   check_cursor();
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
   if (did_change) {
-    changed_lines(startpos.lnum, startpos.col, curwin->w_cursor.lnum + 1,
+    changed_lines(startpos.lnum, startpos.col, curwin->w_cursors[0].w_cursor.lnum + 1,
         0L);
     curbuf->b_op_start = startpos;
-    curbuf->b_op_end = curwin->w_cursor;
+    curbuf->b_op_end = curwin->w_cursors[0].w_cursor;
     if (curbuf->b_op_end.col > 0)
       --curbuf->b_op_end.col;
   }
@@ -6162,7 +6162,7 @@ static void nv_cursormark(cmdarg_T *cap, int flag, pos_T *pos)
         || cap->cmdchar == '['
         || cap->cmdchar == ']')
       setpcmark();
-    curwin->w_cursor = *pos;
+    curwin->w_cursors[0].w_cursor = *pos;
     if (flag)
       beginline(BL_WHITE | BL_FIX);
     else
@@ -6173,7 +6173,7 @@ static void nv_cursormark(cmdarg_T *cap, int flag, pos_T *pos)
     cap->oap->use_reg_one = true;
   }
   cap->oap->inclusive = false;  // ignored if not kMTCharWise
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
 }
 
 /*
@@ -6190,7 +6190,7 @@ static void v_visop(cmdarg_T *cap)
       VIsual_mode_orig = VIsual_mode;
       VIsual_mode = 'V';
     } else if (cap->cmdchar == 'C' || cap->cmdchar == 'D')
-      curwin->w_curswant = MAXCOL;
+      curwin->w_cursors[0].w_curswant = MAXCOL;
   }
   cap->cmdchar = *(vim_strchr(trans, cap->cmdchar) + 1);
   nv_operator(cap);
@@ -6253,7 +6253,7 @@ static void nv_gomark(cmdarg_T *cap)
 {
   pos_T       *pos;
   int c;
-  pos_T old_cursor = curwin->w_cursor;
+  pos_T old_cursor = curwin->w_cursors[0].w_cursor;
   int old_KeyTyped = KeyTyped;              /* getting file may reset it */
 
   if (cap->cmdchar == 'g')
@@ -6272,7 +6272,7 @@ static void nv_gomark(cmdarg_T *cap)
 
   // May need to clear the coladd that a mark includes.
   if (!virtual_active()) {
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
   }
   check_cursor_col();
   if (cap->oap->op_type == OP_NOP
@@ -6290,7 +6290,7 @@ static void nv_gomark(cmdarg_T *cap)
 static void nv_pcmark(cmdarg_T *cap)
 {
   pos_T       *pos;
-  linenr_T lnum = curwin->w_cursor.lnum;
+  linenr_T lnum = curwin->w_cursors[0].w_cursor.lnum;
   int old_KeyTyped = KeyTyped;              /* getting file may reset it */
 
   if (!checkclearopq(cap->oap)) {
@@ -6299,7 +6299,7 @@ static void nv_pcmark(cmdarg_T *cap)
     else
       pos = movemark((int)cap->count1);
     if (pos == (pos_T *)-1) {           /* jump to other file */
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
       check_cursor();
     } else if (pos != NULL)                 /* can jump */
       nv_cursormark(cap, false, pos);
@@ -6313,7 +6313,7 @@ static void nv_pcmark(cmdarg_T *cap)
     } else
       clearopbeep(cap->oap);
     if (cap->oap->op_type == OP_NOP
-        && (pos == (pos_T *)-1 || lnum != curwin->w_cursor.lnum)
+        && (pos == (pos_T *)-1 || lnum != curwin->w_cursors[0].w_cursor.lnum)
         && (fdo_flags & FDO_MARK)
         && old_KeyTyped)
       foldOpenCursor();
@@ -6370,7 +6370,7 @@ static void nv_visual(cmdarg_T *cap)
     check_visual_highlight();
     if (cap->count0 > 0 && resel_VIsual_mode != NUL) {
       /* use previously selected part */
-      VIsual = curwin->w_cursor;
+      VIsual = curwin->w_cursors[0].w_cursor;
 
       VIsual_active = true;
       VIsual_reselect = true;
@@ -6385,33 +6385,33 @@ static void nv_visual(cmdarg_T *cap)
        * was only one -- webb
        */
       if (resel_VIsual_mode != 'v' || resel_VIsual_line_count > 1) {
-        curwin->w_cursor.lnum +=
+        curwin->w_cursors[0].w_cursor.lnum +=
           resel_VIsual_line_count * cap->count0 - 1;
-        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-          curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+        if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count)
+          curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
       }
       VIsual_mode = resel_VIsual_mode;
       if (VIsual_mode == 'v') {
         if (resel_VIsual_line_count <= 1) {
           validate_virtcol();
           assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-          curwin->w_curswant = (curwin->w_virtcol
+          curwin->w_cursors[0].w_curswant = (curwin->w_virtcol
                                 + resel_VIsual_vcol * (int)cap->count0 - 1);
         } else
-          curwin->w_curswant = resel_VIsual_vcol;
-        coladvance(curwin->w_curswant);
+          curwin->w_cursors[0].w_curswant = resel_VIsual_vcol;
+        coladvance(curwin->w_cursors[0].w_curswant);
       }
       if (resel_VIsual_vcol == MAXCOL) {
-        curwin->w_curswant = MAXCOL;
+        curwin->w_cursors[0].w_curswant = MAXCOL;
         coladvance((colnr_T)MAXCOL);
       } else if (VIsual_mode == Ctrl_V) {
         validate_virtcol();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-        curwin->w_curswant = (curwin->w_virtcol
+        curwin->w_cursors[0].w_curswant = (curwin->w_virtcol
                               + resel_VIsual_vcol * (int)cap->count0 - 1);
-        coladvance(curwin->w_curswant);
+        coladvance(curwin->w_cursors[0].w_curswant);
       } else
-        curwin->w_set_curswant = true;
+        curwin->w_cursors[0].w_set_curswant = true;
       redraw_curbuf_later(INVERTED);            /* show the inversion */
     } else {
       if (!cap->arg)
@@ -6463,13 +6463,13 @@ static void n_start_visual_mode(int c)
   VIsual_active = true;
   VIsual_reselect = true;
   /* Corner case: the 0 position in a tab may change when going into
-   * virtualedit.  Recalculate curwin->w_cursor to avoid bad hilighting.
+   * virtualedit.  Recalculate curwin->w_cursors[0].w_cursor to avoid bad hilighting.
    */
   if (c == Ctrl_V && (ve_flags & VE_BLOCK) && gchar_cursor() == TAB) {
     validate_virtcol();
     coladvance(curwin->w_virtcol);
   }
-  VIsual = curwin->w_cursor;
+  VIsual = curwin->w_cursors[0].w_cursor;
 
   foldAdjustVisual();
 
@@ -6483,8 +6483,8 @@ static void n_start_visual_mode(int c)
   /* Only need to redraw this line, unless still need to redraw an old
    * Visual area (when 'lazyredraw' is set). */
   if (curwin->w_redr_type < INVERTED) {
-    curwin->w_old_cursor_lnum = curwin->w_cursor.lnum;
-    curwin->w_old_visual_lnum = curwin->w_cursor.lnum;
+    curwin->w_old_cursor_lnum = curwin->w_cursors[0].w_cursor.lnum;
+    curwin->w_old_visual_lnum = curwin->w_cursors[0].w_cursor.lnum;
   }
 }
 
@@ -6560,35 +6560,35 @@ static void nv_g_cmd(cmdarg_T *cap)
                || curbuf->b_visual.vi_end.lnum == 0)
       beep_flush();
     else {
-      /* set w_cursor to the start of the Visual area, tpos to the end */
+      /* set w_cursors[0].w_cursor to the start of the Visual area, tpos to the end */
       if (VIsual_active) {
         i = VIsual_mode;
         VIsual_mode = curbuf->b_visual.vi_mode;
         curbuf->b_visual.vi_mode = i;
         curbuf->b_visual_mode_eval = i;
-        i = curwin->w_curswant;
-        curwin->w_curswant = curbuf->b_visual.vi_curswant;
+        i = curwin->w_cursors[0].w_curswant;
+        curwin->w_cursors[0].w_curswant = curbuf->b_visual.vi_curswant;
         curbuf->b_visual.vi_curswant = i;
 
         tpos = curbuf->b_visual.vi_end;
-        curbuf->b_visual.vi_end = curwin->w_cursor;
-        curwin->w_cursor = curbuf->b_visual.vi_start;
+        curbuf->b_visual.vi_end = curwin->w_cursors[0].w_cursor;
+        curwin->w_cursors[0].w_cursor = curbuf->b_visual.vi_start;
         curbuf->b_visual.vi_start = VIsual;
       } else {
         VIsual_mode = curbuf->b_visual.vi_mode;
-        curwin->w_curswant = curbuf->b_visual.vi_curswant;
+        curwin->w_cursors[0].w_curswant = curbuf->b_visual.vi_curswant;
         tpos = curbuf->b_visual.vi_end;
-        curwin->w_cursor = curbuf->b_visual.vi_start;
+        curwin->w_cursors[0].w_cursor = curbuf->b_visual.vi_start;
       }
 
       VIsual_active = true;
       VIsual_reselect = true;
 
-      /* Set Visual to the start and w_cursor to the end of the Visual
+      /* Set Visual to the start and w_cursors[0].w_cursor to the end of the Visual
        * area.  Make sure they are on an existing character. */
       check_cursor();
-      VIsual = curwin->w_cursor;
-      curwin->w_cursor = tpos;
+      VIsual = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor = tpos;
       check_cursor();
       update_topline();
       /*
@@ -6648,7 +6648,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     /* with 'nowrap' it works just like the normal "j" command; also when
      * in a closed fold */
     if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
+        || hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL)
         ) {
       oap->motion_type = kMTLineWise;
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
@@ -6663,7 +6663,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     /* with 'nowrap' it works just like the normal "k" command; also when
      * in a closed fold */
     if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
+        || hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL, NULL)
         ) {
       oap->motion_type = kMTLineWise;
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
@@ -6719,7 +6719,7 @@ static void nv_g_cmd(cmdarg_T *cap)
         i = gchar_cursor();
       while (ascii_iswhite(i) && oneright());
     }
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     break;
 
   case '_':
@@ -6727,7 +6727,7 @@ static void nv_g_cmd(cmdarg_T *cap)
      * downward. */
     cap->oap->motion_type = kMTCharWise;
     cap->oap->inclusive = true;
-    curwin->w_curswant = MAXCOL;
+    curwin->w_cursors[0].w_curswant = MAXCOL;
     if (cursor_down(cap->count1 - 1,
             cap->oap->op_type == OP_NOP) == false)
       clearopbeep(cap->oap);
@@ -6735,14 +6735,14 @@ static void nv_g_cmd(cmdarg_T *cap)
       char_u  *ptr = get_cursor_line_ptr();
 
       /* In Visual mode we may end up after the line. */
-      if (curwin->w_cursor.col > 0 && ptr[curwin->w_cursor.col] == NUL)
-        --curwin->w_cursor.col;
+      if (curwin->w_cursors[0].w_cursor.col > 0 && ptr[curwin->w_cursors[0].w_cursor.col] == NUL)
+        --curwin->w_cursors[0].w_cursor.col;
 
       /* Decrease the cursor column until it's on a non-blank. */
-      while (curwin->w_cursor.col > 0
-             && ascii_iswhite(ptr[curwin->w_cursor.col]))
-        --curwin->w_cursor.col;
-      curwin->w_set_curswant = true;
+      while (curwin->w_cursors[0].w_cursor.col > 0
+             && ascii_iswhite(ptr[curwin->w_cursors[0].w_cursor.col]))
+        --curwin->w_cursors[0].w_cursor.col;
+      curwin->w_cursors[0].w_set_curswant = true;
       adjust_for_sel(cap);
     }
     break;
@@ -6758,7 +6758,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     if (curwin->w_p_wrap
         && curwin->w_width != 0
         ) {
-      curwin->w_curswant = MAXCOL;              /* so we stay at the end */
+      curwin->w_cursors[0].w_curswant = MAXCOL;              /* so we stay at the end */
       if (cap->count1 == 1) {
         int width1 = curwin->w_width - col_off;
         int width2 = width1 + curwin_col_off2();
@@ -6772,16 +6772,16 @@ static void nv_g_cmd(cmdarg_T *cap)
 
         /* Make sure we stick in this column. */
         validate_virtcol();
-        curwin->w_curswant = curwin->w_virtcol;
-        curwin->w_set_curswant = false;
-        if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
+        curwin->w_cursors[0].w_curswant = curwin->w_virtcol;
+        curwin->w_cursors[0].w_set_curswant = false;
+        if (curwin->w_cursors[0].w_cursor.col > 0 && curwin->w_p_wrap) {
           /*
            * Check for landing on a character that got split at
            * the end of the line.  We do not want to advance to
            * the next screen line.
            */
           if (curwin->w_virtcol > (colnr_T)i)
-            --curwin->w_cursor.col;
+            --curwin->w_cursors[0].w_cursor.col;
         }
       } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false)
         clearopbeep(oap);
@@ -6791,8 +6791,8 @@ static void nv_g_cmd(cmdarg_T *cap)
 
       /* Make sure we stick in this column. */
       validate_virtcol();
-      curwin->w_curswant = curwin->w_virtcol;
-      curwin->w_set_curswant = false;
+      curwin->w_cursors[0].w_curswant = curwin->w_virtcol;
+      curwin->w_cursors[0].w_set_curswant = false;
     }
   }
   break;
@@ -6816,7 +6816,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'e':
   case 'E':
     oap->motion_type = kMTCharWise;
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     oap->inclusive = true;
     if (bckend_word(cap->count1, cap->nchar == 'E', false) == false)
       clearopbeep(oap);
@@ -6830,13 +6830,13 @@ static void nv_g_cmd(cmdarg_T *cap)
   // "gi": start Insert at the last position.
   case 'i':
     if (curbuf->b_last_insert.mark.lnum != 0) {
-      curwin->w_cursor = curbuf->b_last_insert.mark;
+      curwin->w_cursors[0].w_cursor = curbuf->b_last_insert.mark;
       check_cursor_lnum();
       i = (int)STRLEN(get_cursor_line_ptr());
-      if (curwin->w_cursor.col > (colnr_T)i) {
+      if (curwin->w_cursors[0].w_cursor.col > (colnr_T)i) {
         if (virtual_active())
-          curwin->w_cursor.coladd += curwin->w_cursor.col - i;
-        curwin->w_cursor.col = i;
+          curwin->w_cursors[0].w_cursor.coladd += curwin->w_cursors[0].w_cursor.col - i;
+        curwin->w_cursors[0].w_cursor.col = i;
       }
     }
     cap->cmdchar = 'i';
@@ -6921,7 +6921,7 @@ static void nv_g_cmd(cmdarg_T *cap)
    */
   case 'q':
   case 'w':
-    oap->cursor_start = curwin->w_cursor;
+    oap->cursor_start = curwin->w_cursors[0].w_cursor;
   /*FALLTHROUGH*/
   case '~':
   case 'u':
@@ -7027,27 +7027,27 @@ static void nv_g_cmd(cmdarg_T *cap)
  */
 static void n_opencmd(cmdarg_T *cap)
 {
-  linenr_T oldline = curwin->w_cursor.lnum;
+  linenr_T oldline = curwin->w_cursors[0].w_cursor.lnum;
 
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == 'O')
       /* Open above the first line of a folded sequence of lines */
-      (void)hasFolding(curwin->w_cursor.lnum,
-          &curwin->w_cursor.lnum, NULL);
+      (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum,
+          &curwin->w_cursors[0].w_cursor.lnum, NULL);
     else
       /* Open below the last line of a folded sequence of lines */
-      (void)hasFolding(curwin->w_cursor.lnum,
-          NULL, &curwin->w_cursor.lnum);
-    if (u_save((linenr_T)(curwin->w_cursor.lnum -
+      (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum,
+          NULL, &curwin->w_cursors[0].w_cursor.lnum);
+    if (u_save((linenr_T)(curwin->w_cursors[0].w_cursor.lnum -
                           (cap->cmdchar == 'O' ? 1 : 0)),
-            (linenr_T)(curwin->w_cursor.lnum +
+            (linenr_T)(curwin->w_cursors[0].w_cursor.lnum +
                        (cap->cmdchar == 'o' ? 1 : 0))
             )
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
                      has_format_option(FO_OPEN_COMS)
                      ? OPENLINE_DO_COM : 0,
                      0)) {
-      if (curwin->w_p_cole > 0 && oldline != curwin->w_cursor.lnum) {
+      if (curwin->w_p_cole > 0 && oldline != curwin->w_cursors[0].w_cursor.lnum) {
         update_single_line(curwin, oldline);
       }
       if (curwin->w_p_cul) {
@@ -7082,7 +7082,7 @@ static void nv_redo(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
     u_redo((int)cap->count1);
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
   }
 }
 
@@ -7101,7 +7101,7 @@ static void nv_Undo(cmdarg_T *cap)
     nv_operator(cap);
   } else if (!checkclearopq(cap->oap)) {
     u_undoline();
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
   }
 }
 
@@ -7132,7 +7132,7 @@ static void nv_operator(cmdarg_T *cap)
   if (op_type == cap->oap->op_type)         /* double operator works on lines */
     nv_lineop(cap);
   else if (!checkclearop(cap->oap)) {
-    cap->oap->start = curwin->w_cursor;
+    cap->oap->start = curwin->w_cursors[0].w_cursor;
     cap->oap->op_type = op_type;
     set_op_var(op_type);
   }
@@ -7212,12 +7212,12 @@ static void nv_pipe(cmdarg_T *cap)
   beginline(0);
   if (cap->count0 > 0) {
     coladvance((colnr_T)(cap->count0 - 1));
-    curwin->w_curswant = (colnr_T)(cap->count0 - 1);
+    curwin->w_cursors[0].w_curswant = (colnr_T)(cap->count0 - 1);
   } else
-    curwin->w_curswant = 0;
+    curwin->w_cursors[0].w_curswant = 0;
   /* keep curswant at the column where we wanted to go, not where
    * we ended; differs if line is too short */
-  curwin->w_set_curswant = false;
+  curwin->w_cursors[0].w_set_curswant = false;
 }
 
 /*
@@ -7228,7 +7228,7 @@ static void nv_bck_word(cmdarg_T *cap)
 {
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
   if (bck_word(cap->count1, cap->arg, false) == false)
     clearopbeep(cap->oap);
   else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
@@ -7244,7 +7244,7 @@ static void nv_wordcmd(cmdarg_T *cap)
   int n;
   bool word_end;
   bool flag = false;
-  pos_T startpos = curwin->w_cursor;
+  pos_T startpos = curwin->w_cursors[0].w_cursor;
 
   /*
    * Set inclusive for the "E" and "e" command.
@@ -7278,7 +7278,7 @@ static void nv_wordcmd(cmdarg_T *cap)
   }
 
   cap->oap->motion_type = kMTCharWise;
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
   if (word_end)
     n = end_word(cap->count1, cap->arg, flag, false);
   else
@@ -7286,7 +7286,7 @@ static void nv_wordcmd(cmdarg_T *cap)
 
   /* Don't leave the cursor on the NUL past the end of line. Unless we
    * didn't move it forward. */
-  if (lt(startpos, curwin->w_cursor))
+  if (lt(startpos, curwin->w_cursors[0].w_cursor))
     adjust_cursor(cap->oap);
 
   if (n == false && cap->oap->op_type == OP_NOP)
@@ -7310,11 +7310,11 @@ static void adjust_cursor(oparg_T *oap)
    * - not in Visual mode or 'selection' is "o"
    * - 'virtualedit' is not "all" and not "onemore".
    */
-  if (curwin->w_cursor.col > 0 && gchar_cursor() == NUL
+  if (curwin->w_cursors[0].w_cursor.col > 0 && gchar_cursor() == NUL
       && (!VIsual_active || *p_sel == 'o')
       && !virtual_active() && (ve_flags & VE_ONEMORE) == 0
       ) {
-    --curwin->w_cursor.col;
+    --curwin->w_cursors[0].w_cursor.col;
     /* prevent cursor from moving on the trail byte */
     if (has_mbyte)
       mb_adjust_cursor();
@@ -7343,11 +7343,11 @@ static void nv_beginline(cmdarg_T *cap)
 static void adjust_for_sel(cmdarg_T *cap)
 {
   if (VIsual_active && cap->oap->inclusive && *p_sel == 'e'
-      && gchar_cursor() != NUL && lt(VIsual, curwin->w_cursor)) {
+      && gchar_cursor() != NUL && lt(VIsual, curwin->w_cursors[0].w_cursor)) {
     if (has_mbyte)
       inc_cursor();
     else
-      ++curwin->w_cursor.col;
+      ++curwin->w_cursors[0].w_cursor.col;
     cap->oap->inclusive = false;
   }
 }
@@ -7361,9 +7361,9 @@ static bool unadjust_for_sel(void)
 {
   pos_T       *pp;
 
-  if (*p_sel == 'e' && !equalpos(VIsual, curwin->w_cursor)) {
-    if (lt(VIsual, curwin->w_cursor))
-      pp = &curwin->w_cursor;
+  if (*p_sel == 'e' && !equalpos(VIsual, curwin->w_cursors[0].w_cursor)) {
+    if (lt(VIsual, curwin->w_cursors[0].w_cursor))
+      pp = &curwin->w_cursors[0].w_cursor;
     else
       pp = &VIsual;
     if (pp->coladd > 0) {
@@ -7417,7 +7417,7 @@ static void nv_goto(cmdarg_T *cap)
     lnum = 1L;
   else if (lnum > curbuf->b_ml.ml_line_count)
     lnum = curbuf->b_ml.ml_line_count;
-  curwin->w_cursor.lnum = lnum;
+  curwin->w_cursors[0].w_cursor.lnum = lnum;
   beginline(BL_SOL | BL_FIX);
   if ((fdo_flags & FDO_JUMP) && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -7481,7 +7481,7 @@ static void nv_esc(cmdarg_T *cap)
   if (VIsual_active) {
     end_visual_mode();          /* stop Visual */
     check_cursor_col();         /* make sure cursor is not beyond EOL */
-    curwin->w_set_curswant = true;
+    curwin->w_cursors[0].w_set_curswant = true;
     redraw_curbuf_later(INVERTED);
   } else if (no_reason) {
     vim_beep(BO_ESC);
@@ -7518,7 +7518,7 @@ static void nv_edit(cmdarg_T *cap)
   } else if (!checkclearopq(cap->oap)) {
     switch (cap->cmdchar) {
     case 'A':           /* "A"ppend after the line */
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
       if (ve_flags == VE_ALL) {
         int save_State = State;
 
@@ -7528,7 +7528,7 @@ static void nv_edit(cmdarg_T *cap)
         coladvance((colnr_T)MAXCOL);
         State = save_State;
       } else
-        curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
+        curwin->w_cursors[0].w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
       break;
 
     case 'I':           /* "I"nsert before the first non-blank */
@@ -7539,16 +7539,16 @@ static void nv_edit(cmdarg_T *cap)
       /* increment coladd when in virtual space, increment the
        * column otherwise, also to append after an unprintable char */
       if (virtual_active()
-          && (curwin->w_cursor.coladd > 0
+          && (curwin->w_cursors[0].w_cursor.coladd > 0
               || *get_cursor_pos_ptr() == NUL
               || *get_cursor_pos_ptr() == TAB))
-        curwin->w_cursor.coladd++;
+        curwin->w_cursors[0].w_cursor.coladd++;
       else if (*get_cursor_pos_ptr() != NUL)
         inc_cursor();
       break;
     }
 
-    if (curwin->w_cursor.coladd && cap->cmdchar != 'A') {
+    if (curwin->w_cursors[0].w_cursor.coladd && cap->cmdchar != 'A') {
       int save_State = State;
 
       /* Pretend Insert mode here to allow the cursor on the
@@ -7667,7 +7667,7 @@ static void nv_object(cmdarg_T *cap)
   if (!flag)
     clearopbeep(cap->oap);
   adjust_cursor_col();
-  curwin->w_set_curswant = true;
+  curwin->w_cursors[0].w_set_curswant = true;
 }
 
 /*
@@ -7720,9 +7720,9 @@ static void nv_at(cmdarg_T *cap)
  */
 static void nv_halfpage(cmdarg_T *cap)
 {
-  if ((cap->cmdchar == Ctrl_U && curwin->w_cursor.lnum == 1)
+  if ((cap->cmdchar == Ctrl_U && curwin->w_cursors[0].w_cursor.lnum == 1)
       || (cap->cmdchar == Ctrl_D
-          && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count))
+          && curwin->w_cursors[0].w_cursor.lnum == curbuf->b_ml.ml_line_count))
     clearopbeep(cap->oap);
   else if (!checkclearop(cap->oap))
     halfpage(cap->cmdchar == Ctrl_D, cap->count0);
@@ -7739,14 +7739,14 @@ static void nv_join(cmdarg_T *cap)
     if (cap->count0 <= 1) {
       cap->count0 = 2;  // default for join is two lines!
     }
-    if (curwin->w_cursor.lnum + cap->count0 - 1 >
+    if (curwin->w_cursors[0].w_cursor.lnum + cap->count0 - 1 >
         curbuf->b_ml.ml_line_count) {
       // can't join when on the last line
       if (cap->count0 <= 2) {
         clearopbeep(cap->oap);
         return;
       }
-      cap->count0 = curbuf->b_ml.ml_line_count - curwin->w_cursor.lnum + 1;
+      cap->count0 = curbuf->b_ml.ml_line_count - curwin->w_cursors[0].w_cursor.lnum + 1;
     }
 
     prep_redo(cap->oap->regname, cap->count0,
@@ -7828,9 +7828,9 @@ static void nv_put(cmdarg_T *cap)
         flags |= PUT_LINE_FORWARD;
       dir = BACKWARD;
       if ((VIsual_mode != 'V'
-           && curwin->w_cursor.col < curbuf->b_op_start.col)
+           && curwin->w_cursors[0].w_cursor.col < curbuf->b_op_start.col)
           || (VIsual_mode == 'V'
-              && curwin->w_cursor.lnum < curbuf->b_op_start.lnum))
+              && curwin->w_cursors[0].w_cursor.lnum < curbuf->b_op_start.lnum))
         /* cursor is at the end of the line or end of file, put
          * forward. */
         dir = FORWARD;
@@ -7863,8 +7863,8 @@ static void nv_put(cmdarg_T *cap)
 
       /* If the cursor was in that line, move it to the end of the last
        * line. */
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count) {
+        curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
         coladvance((colnr_T)MAXCOL);
       }
     }
@@ -7929,12 +7929,12 @@ static void get_op_vcol(
   }
 
   // if '$' was used, get oap->end_vcol from longest line
-  if (curwin->w_curswant == MAXCOL) {
-    curwin->w_cursor.col = MAXCOL;
+  if (curwin->w_cursors[0].w_curswant == MAXCOL) {
+    curwin->w_cursors[0].w_cursor.col = MAXCOL;
     oap->end_vcol = 0;
-    for (curwin->w_cursor.lnum = oap->start.lnum;
-         curwin->w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursor.lnum) {
-      getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &end);
+    for (curwin->w_cursors[0].w_cursor.lnum = oap->start.lnum;
+         curwin->w_cursors[0].w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursors[0].w_cursor.lnum) {
+      getvvcol(curwin, &curwin->w_cursors[0].w_cursor, NULL, NULL, &end);
       if (end > oap->end_vcol) {
         oap->end_vcol = end;
       }
@@ -7948,13 +7948,13 @@ static void get_op_vcol(
   //
   // (Actually, this does convert column positions into character
   // positions)
-  curwin->w_cursor.lnum = oap->end.lnum;
+  curwin->w_cursors[0].w_cursor.lnum = oap->end.lnum;
   coladvance(oap->end_vcol);
-  oap->end = curwin->w_cursor;
+  oap->end = curwin->w_cursors[0].w_cursor;
 
-  curwin->w_cursor = oap->start;
+  curwin->w_cursors[0].w_cursor = oap->start;
   coladvance(oap->start_vcol);
-  oap->start = curwin->w_cursor;
+  oap->start = curwin->w_cursors[0].w_cursor;
 }
 
 // Handle an arbitrary event in normal mode

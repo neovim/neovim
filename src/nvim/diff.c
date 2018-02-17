@@ -1040,8 +1040,8 @@ void ex_diffsplit(exarg_T *eap)
 
         if (bufref_valid(&old_curbuf)) {
           // Move the cursor position to that of the old window.
-          curwin->w_cursor.lnum = diff_get_corresponding_line(
-              old_curbuf.br_buf, old_curwin->w_cursor.lnum);
+          curwin->w_cursors[0].w_cursor.lnum = diff_get_corresponding_line(
+              old_curbuf.br_buf, old_curwin->w_cursors[0].w_cursor.lnum);
         }
       }
       // Now that lines are folded scroll to show the cursor at the same
@@ -2072,8 +2072,8 @@ void nv_diffgetput(bool put, size_t count)
   }
 
   ea.addr_count = 0;
-  ea.line1 = curwin->w_cursor.lnum;
-  ea.line2 = curwin->w_cursor.lnum;
+  ea.line1 = curwin->w_cursors[0].w_cursor.lnum;
+  ea.line2 = curwin->w_cursors[0].w_cursor.lnum;
   ex_diffgetput(&ea);
 }
 
@@ -2338,13 +2338,13 @@ void ex_diffgetput(exarg_T *eap)
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
         mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added, false);
-        if (curwin->w_cursor.lnum >= lnum) {
+        if (curwin->w_cursors[0].w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
           // lines.
-          if (curwin->w_cursor.lnum >= lnum + count) {
-            curwin->w_cursor.lnum += added;
+          if (curwin->w_cursors[0].w_cursor.lnum >= lnum + count) {
+            curwin->w_cursors[0].w_cursor.lnum += added;
           } else if (added < 0) {
-            curwin->w_cursor.lnum = lnum;
+            curwin->w_cursors[0].w_cursor.lnum = lnum;
           }
         }
       }
@@ -2434,7 +2434,7 @@ bool diff_mode_buf(buf_T *buf)
 /// @return FAIL if there isn't such a diff block.
 int diff_move_to(int dir, long count)
 {
-  linenr_T lnum = curwin->w_cursor.lnum;
+  linenr_T lnum = curwin->w_cursors[0].w_cursor.lnum;
   int idx = diff_buf_idx(curbuf);
   if ((idx == DB_COUNT) || (curtab->tp_first_diff == NULL)) {
     return FAIL;
@@ -2478,13 +2478,13 @@ int diff_move_to(int dir, long count)
   }
 
   // When the cursor didn't move at all we fail.
-  if (lnum == curwin->w_cursor.lnum) {
+  if (lnum == curwin->w_cursors[0].w_cursor.lnum) {
     return FAIL;
   }
 
   setpcmark();
-  curwin->w_cursor.lnum = lnum;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.lnum = lnum;
+  curwin->w_cursors[0].w_cursor.col = 0;
 
   return OK;
 }
@@ -2533,15 +2533,15 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
     }
     if ((dp->df_lnum[idx1] == lnum1)
         && (dp->df_count[idx1] == 0)
-        && (dp->df_lnum[idx2] <= curwin->w_cursor.lnum)
+        && (dp->df_lnum[idx2] <= curwin->w_cursors[0].w_cursor.lnum)
         && ((dp->df_lnum[idx2] + dp->df_count[idx2])
-            > curwin->w_cursor.lnum)) {
+            > curwin->w_cursors[0].w_cursor.lnum)) {
       // Special case: if the cursor is just after a zero-count
       // block (i.e. all filler) and the target cursor is already
       // inside the corresponding block, leave the target cursor
       // unmoved. This makes repeated CTRL-W W operations work
       // as expected.
-      return curwin->w_cursor.lnum;
+      return curwin->w_cursors[0].w_cursor.lnum;
     }
     baseline = (dp->df_lnum[idx1] + dp->df_count[idx1])
                 - (dp->df_lnum[idx2] + dp->df_count[idx2]);

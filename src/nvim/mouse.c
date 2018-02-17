@@ -116,7 +116,7 @@ retnomove:
     mouse_char = ' ';
 
   old_curwin = curwin;
-  old_cursor = curwin->w_cursor;
+  old_cursor = curwin->w_cursors[0].w_cursor;
 
   if (!(flags & MOUSE_FOCUS)) {
     if (row < 0 || col < 0)                     // check if it makes sense
@@ -196,7 +196,7 @@ retnomove:
         return IN_SEP_LINE | CURSOR_MOVED;
     }
 
-    curwin->w_cursor.lnum = curwin->w_topline;
+    curwin->w_cursors[0].w_cursor.lnum = curwin->w_topline;
   } else if (on_status_line && which_button == MOUSE_LEFT)   {
     if (dragwin != NULL) {
       // Drag the status line
@@ -289,9 +289,9 @@ retnomove:
       // far as it goes, moving the mouse in the top line should scroll
       // the text down (done later when recomputing w_topline).
       if (mouse_dragging > 0
-          && curwin->w_cursor.lnum
+          && curwin->w_cursors[0].w_cursor.lnum
           == curwin->w_buffer->b_ml.ml_line_count
-          && curwin->w_cursor.lnum == curwin->w_topline) {
+          && curwin->w_cursors[0].w_cursor.lnum == curwin->w_topline) {
         curwin->w_valid &= ~(VALID_TOPLINE);
       }
     }
@@ -304,7 +304,7 @@ retnomove:
   }
 
   // compute the position in the buffer line from the posn on the screen
-  if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum)) {
+  if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursors[0].w_cursor.lnum)) {
     mouse_past_bottom = true;
   }
 
@@ -327,8 +327,8 @@ retnomove:
     }
   }
 
-  curwin->w_curswant = col;
-  curwin->w_set_curswant = false;       // May still have been true
+  curwin->w_cursors[0].w_curswant = col;
+  curwin->w_cursors[0].w_set_curswant = false;       // May still have been true
   if (coladvance(col) == FAIL) {        // Mouse click beyond end of line
     if (inclusive != NULL) {
       *inclusive = true;
@@ -339,8 +339,8 @@ retnomove:
   }
 
   count = IN_BUFFER;
-  if (curwin != old_curwin || curwin->w_cursor.lnum != old_cursor.lnum
-      || curwin->w_cursor.col != old_cursor.col) {
+  if (curwin != old_curwin || curwin->w_cursors[0].w_cursor.lnum != old_cursor.lnum
+      || curwin->w_cursors[0].w_cursor.col != old_cursor.col) {
     count |= CURSOR_MOVED;              // Cursor has moved
   }
 
@@ -545,8 +545,8 @@ static linenr_T find_longest_lnum(void)
   // Calculate maximum for horizontal scrollbar.  Check for reasonable
   // line numbers, topline and botline can be invalid when displaying is
   // postponed.
-  if (curwin->w_topline <= curwin->w_cursor.lnum
-      && curwin->w_botline > curwin->w_cursor.lnum
+  if (curwin->w_topline <= curwin->w_cursors[0].w_cursor.lnum
+      && curwin->w_botline > curwin->w_cursors[0].w_cursor.lnum
       && curwin->w_botline <= curbuf->b_ml.ml_line_count + 1) {
     long max = 0;
 
@@ -559,14 +559,14 @@ static linenr_T find_longest_lnum(void)
         max = len;
         ret = lnum;
       } else if (len == (colnr_T)max
-                 && abs((int)(lnum - curwin->w_cursor.lnum))
-                 < abs((int)(ret - curwin->w_cursor.lnum))) {
+                 && abs((int)(lnum - curwin->w_cursors[0].w_cursor.lnum))
+                 < abs((int)(ret - curwin->w_cursors[0].w_cursor.lnum))) {
         ret = lnum;
       }
     }
   } else {
     // Use cursor line only.
-    ret = curwin->w_cursor.lnum;
+    ret = curwin->w_cursors[0].w_cursor.lnum;
   }
 
   return ret;
@@ -600,9 +600,9 @@ bool mouse_scroll_horiz(int dir)
   // When the line of the cursor is too short, move the cursor to the
   // longest visible line.
   if (!virtual_active()
-      && (colnr_T)leftcol > scroll_line_len(curwin->w_cursor.lnum)) {
-      curwin->w_cursor.lnum = find_longest_lnum();
-      curwin->w_cursor.col = 0;
+      && (colnr_T)leftcol > scroll_line_len(curwin->w_cursors[0].w_cursor.lnum)) {
+      curwin->w_cursors[0].w_cursor.lnum = find_longest_lnum();
+      curwin->w_cursors[0].w_cursor.col = 0;
   }
 
   return leftcol_changed();
@@ -626,7 +626,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // tab that's 8 columns wide, we would want the cursor to be highlighting the
   // second byte, not the ninth.
 
-  linenr_T lnum = wp->w_cursor.lnum;
+  linenr_T lnum = wp->w_cursors[0].w_cursor.lnum;
   char_u *line = ml_get(lnum);
   char_u *ptr = line;
   char_u *ptr_end = line;

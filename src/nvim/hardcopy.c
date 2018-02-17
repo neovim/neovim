@@ -526,10 +526,10 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
      * set the first and current line number to the top line, and guess
      * that the page length is 64.
      */
-    tmp_lnum = curwin->w_cursor.lnum;
+    tmp_lnum = curwin->w_cursors[0].w_cursor.lnum;
     tmp_topline = curwin->w_topline;
     tmp_botline = curwin->w_botline;
-    curwin->w_cursor.lnum = lnum;
+    curwin->w_cursors[0].w_cursor.lnum = lnum;
     curwin->w_topline = lnum;
     curwin->w_botline = lnum + 63;
     printer_page_num = pagenum;
@@ -540,7 +540,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
         ' ', width, NULL, NULL);
 
     /* Reset line numbers */
-    curwin->w_cursor.lnum = tmp_lnum;
+    curwin->w_cursors[0].w_cursor.lnum = tmp_lnum;
     curwin->w_topline = tmp_topline;
     curwin->w_botline = tmp_botline;
   } else

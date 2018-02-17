@@ -405,7 +405,7 @@ wingotofile:
           win_close(curwin, false);
           goto_tabpage_win(oldtab, oldwin);
         } else if (nchar == 'F' && lnum >= 0) {
-          curwin->w_cursor.lnum = lnum;
+          curwin->w_cursors[0].w_cursor.lnum = lnum;
           check_cursor_lnum();
           beginline(BL_SOL | BL_FIX);
         }
@@ -429,7 +429,7 @@ wingotofile:
     find_pattern_in_path(ptr, 0, len, TRUE,
                          Prenum == 0 ? TRUE : FALSE,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
     break;
 
   case K_KENTER:
@@ -440,7 +440,7 @@ wingotofile:
      */
     if (bt_quickfix(curbuf)) {
       sprintf(cbuf, "split +%" PRId64 "%s",
-              (int64_t)curwin->w_cursor.lnum,
+              (int64_t)curwin->w_cursors[0].w_cursor.lnum,
               (curwin->w_llist_ref == NULL) ? "cc" : "ll");
       do_cmdline_cmd(cbuf);
     }
@@ -1008,10 +1008,10 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   newp->w_buffer = oldp->w_buffer;
   newp->w_s = &(oldp->w_buffer->b_s);
   oldp->w_buffer->b_nwindows++;
-  newp->w_cursor = oldp->w_cursor;
+  newp->w_cursors[0].w_cursor = oldp->w_cursors[0].w_cursor;
   newp->w_valid = 0;
-  newp->w_curswant = oldp->w_curswant;
-  newp->w_set_curswant = oldp->w_set_curswant;
+  newp->w_cursors[0].w_curswant = oldp->w_cursors[0].w_curswant;
+  newp->w_cursors[0].w_set_curswant = oldp->w_cursors[0].w_set_curswant;
   newp->w_topline = oldp->w_topline;
   newp->w_topfill = oldp->w_topfill;
   newp->w_leftcol = oldp->w_leftcol;
@@ -2879,9 +2879,9 @@ void win_init_empty(win_T *wp)
 {
   redraw_win_later(wp, NOT_VALID);
   wp->w_lines_valid = 0;
-  wp->w_cursor.lnum = 1;
-  wp->w_curswant = wp->w_cursor.col = 0;
-  wp->w_cursor.coladd = 0;
+  wp->w_cursors[0].w_cursor.lnum = 1;
+  wp->w_cursors[0].w_curswant = wp->w_cursors[0].w_cursor.col = 0;
+  wp->w_cursors[0].w_cursor.coladd = 0;
   wp->w_pcmark.lnum = 1;        /* pcmark not cleared but set to line 1 */
   wp->w_pcmark.col = 0;
   wp->w_prev_pcmark.lnum = 0;
@@ -3473,13 +3473,13 @@ void win_goto(win_T *wp)
   if (wp->w_buffer != curbuf)
     reset_VIsual_and_resel();
   else if (VIsual_active)
-    wp->w_cursor = curwin->w_cursor;
+    wp->w_cursors[0].w_cursor = curwin->w_cursors[0].w_cursor;
 
   win_enter(wp, true);
 
   /* Conceal cursor line in previous window, unconceal in current window. */
   if (win_valid(owp) && owp->w_p_cole > 0 && !msg_scrolled)
-    update_single_line(owp, owp->w_cursor.lnum);
+    update_single_line(owp, owp->w_cursors[0].w_cursor.lnum);
   if (curwin->w_p_cole > 0 && !msg_scrolled)
     need_cursor_line_redraw = TRUE;
 }
@@ -3677,7 +3677,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   curbuf = wp->w_buffer;
   check_cursor();
   if (!virtual_active())
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
   changed_line_abv_curs();      /* assume cursor position needs updating */
 
   // New directory is either the local directory of the window, tab or NULL.
@@ -3851,7 +3851,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_topline = 1;
   new_wp->w_topfill = 0;
   new_wp->w_botline = 2;
-  new_wp->w_cursor.lnum = 1;
+  new_wp->w_cursors[0].w_cursor.lnum = 1;
   new_wp->w_scbind_pos = 1;
 
   /* We won't calculate w_fraction until resizing the window */
@@ -4843,12 +4843,12 @@ void scroll_to_fraction(win_T *wp, int prev_height)
      * Find a value for w_topline that shows the cursor at the same
      * relative position in the window as before (more or less).
      */
-    lnum = wp->w_cursor.lnum;
+    lnum = wp->w_cursors[0].w_cursor.lnum;
     if (lnum < 1)               /* can happen when starting up */
       lnum = 1;
     wp->w_wrow = ((long)wp->w_fraction * (long)height - 1L + FRACTION_MULT / 2)
                  / FRACTION_MULT;
-    line_size = plines_win_col(wp, lnum, (long)(wp->w_cursor.col)) - 1;
+    line_size = plines_win_col(wp, lnum, (long)(wp->w_cursors[0].w_cursor.col)) - 1;
     sline = wp->w_wrow - line_size;
 
     if (sline >= 0) {
@@ -5080,7 +5080,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
 char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
   return file_name_in_line(get_cursor_line_ptr(),
-      curwin->w_cursor.col, options, count, curbuf->b_ffname,
+      curwin->w_cursors[0].w_cursor.col, options, count, curbuf->b_ffname,
       file_lnum);
 }
 
@@ -5301,8 +5301,8 @@ void check_lnums(int do_curwin)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
-      if (wp->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        wp->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      if (wp->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count) {
+        wp->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
       }
       if (wp->w_topline > curbuf->b_ml.ml_line_count) {
         wp->w_topline = curbuf->b_ml.ml_line_count;

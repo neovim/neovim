@@ -482,7 +482,7 @@ int main(int argc, char **argv)
 
   /* Ex starts at last line of the file */
   if (exmode_active)
-    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
 
   apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
   TIME_MSG("BufEnter autocommands");
@@ -1671,7 +1671,7 @@ static void exe_pre_commands(mparm_T *parmp)
   int i;
 
   if (cnt > 0) {
-    curwin->w_cursor.lnum = 0;     /* just in case.. */
+    curwin->w_cursors[0].w_cursor.lnum = 0;     /* just in case.. */
     sourcing_name = (char_u *)_("pre-vimrc command line");
     current_SID = SID_CMDARG;
     for (i = 0; i < cnt; ++i)
@@ -1695,8 +1695,8 @@ static void exe_commands(mparm_T *parmp)
    * with g`" was used.
    */
   msg_scroll = TRUE;
-  if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1)
-    curwin->w_cursor.lnum = 0;
+  if (parmp->tagname == NULL && curwin->w_cursors[0].w_cursor.lnum <= 1)
+    curwin->w_cursors[0].w_cursor.lnum = 0;
   sourcing_name = (char_u *)"command line";
   current_SID = SID_CARG;
   for (i = 0; i < parmp->n_commands; ++i) {
@@ -1706,8 +1706,8 @@ static void exe_commands(mparm_T *parmp)
   }
   sourcing_name = NULL;
   current_SID = 0;
-  if (curwin->w_cursor.lnum == 0)
-    curwin->w_cursor.lnum = 1;
+  if (curwin->w_cursors[0].w_cursor.lnum == 0)
+    curwin->w_cursors[0].w_cursor.lnum = 1;
 
   if (!exmode_active)
     msg_scroll = FALSE;

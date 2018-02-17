@@ -13,7 +13,7 @@ typedef struct {
   pos_T vi_start;               /* start pos of last VIsual */
   pos_T vi_end;                 /* end position of last VIsual */
   int vi_mode;                  /* VIsual_mode of last VIsual */
-  colnr_T vi_curswant;          /* MAXCOL from w_curswant */
+  colnr_T vi_curswant;          /* MAXCOL from w_cursors[0].w_curswant */
 } visualinfo_T;
 
 #include "nvim/buffer_defs.h"

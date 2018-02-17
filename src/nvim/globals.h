@@ -682,7 +682,7 @@ EXTERN int can_si INIT(= FALSE);
  */
 EXTERN int can_si_back INIT(= FALSE);
 
-// w_cursor before formatting text.
+// w_cursors[0].w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT(= INIT_POS_T(0, 0, 0));
 
 /*

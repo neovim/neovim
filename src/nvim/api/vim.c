@@ -316,7 +316,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
   int dummy;
   int r = call_func((char_u *)fname.data, (int)fname.size,
                     &rettv, (int)args.size, vim_args, NULL,
-                    curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
+                    curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum, &dummy,
                     true, NULL, NULL);
   if (r == FAIL) {
     api_set_error(err, kErrorTypeException, "Error calling function.");
@@ -447,7 +447,7 @@ void nvim_set_current_dir(String dir, Error *err)
 String nvim_get_current_line(Error *err)
   FUNC_API_SINCE(1)
 {
-  return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
+  return buffer_get_line(curbuf->handle, curwin->w_cursors[0].w_cursor.lnum - 1, err);
 }
 
 /// Sets the current line
@@ -457,7 +457,7 @@ String nvim_get_current_line(Error *err)
 void nvim_set_current_line(String line, Error *err)
   FUNC_API_SINCE(1)
 {
-  buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
+  buffer_set_line(curbuf->handle, curwin->w_cursors[0].w_cursor.lnum - 1, line, err);
 }
 
 /// Deletes the current line
@@ -466,7 +466,7 @@ void nvim_set_current_line(String line, Error *err)
 void nvim_del_current_line(Error *err)
   FUNC_API_SINCE(1)
 {
-  buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
+  buffer_del_line(curbuf->handle, curwin->w_cursors[0].w_cursor.lnum - 1, err);
 }
 
 /// Gets a global (g:) variable

@@ -762,7 +762,7 @@ int start_redo(long count, int old_redo)
   }
 
   if (c == 'v') {   /* redo Visual */
-    VIsual = curwin->w_cursor;
+    VIsual = curwin->w_cursors[0].w_cursor;
     VIsual_active = TRUE;
     VIsual_select = FALSE;
     VIsual_reselect = TRUE;
@@ -2078,7 +2078,7 @@ static int vgetorpeek(int advance)
           old_wrow = curwin->w_wrow;
 
           /* move cursor left, if possible */
-          if (curwin->w_cursor.col != 0) {
+          if (curwin->w_cursors[0].w_cursor.col != 0) {
             if (curwin->w_wcol > 0) {
               if (did_ai) {
                 /*
@@ -2088,7 +2088,7 @@ static int vgetorpeek(int advance)
                  */
                 col = vcol = curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
-                while (col < curwin->w_cursor.col) {
+                while (col < curwin->w_cursors[0].w_cursor.col) {
                   if (!ascii_iswhite(ptr[col]))
                     curwin->w_wcol = vcol;
                   vcol += lbr_chartabsize(ptr, ptr + col,
@@ -2105,12 +2105,12 @@ static int vgetorpeek(int advance)
                 col = 0;                        /* no correction needed */
               } else {
                 --curwin->w_wcol;
-                col = curwin->w_cursor.col - 1;
+                col = curwin->w_cursors[0].w_cursor.col - 1;
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
               --curwin->w_wrow;
               curwin->w_wcol = curwin->w_width - 1;
-              col = curwin->w_cursor.col - 1;
+              col = curwin->w_cursors[0].w_cursor.col - 1;
             }
             if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
               /* Correct when the cursor is on the right halve
@@ -3705,13 +3705,13 @@ eval_map_expr (
   ++textlock;
   ++ex_normal_lock;
   set_vim_var_char(c);    /* set v:char to the typed character */
-  save_cursor = curwin->w_cursor;
+  save_cursor = curwin->w_cursors[0].w_cursor;
   save_msg_col = msg_col;
   save_msg_row = msg_row;
   p = eval_to_string(expr, NULL, FALSE);
   --textlock;
   --ex_normal_lock;
-  curwin->w_cursor = save_cursor;
+  curwin->w_cursors[0].w_cursor = save_cursor;
   msg_col = save_msg_col;
   msg_row = save_msg_row;
 

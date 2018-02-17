@@ -123,8 +123,8 @@ read_buffer(
     }
   }
   // Put the cursor on the first line.
-  curwin->w_cursor.lnum = 1;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.lnum = 1;
+  curwin->w_cursors[0].w_cursor.col = 0;
 
   if (read_stdin) {
     // Set or reset 'modified' before executing autocommands, so that
@@ -447,8 +447,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
       set_last_cursor(win);
     }
     buflist_setfpos(buf, win,
-        win->w_cursor.lnum == 1 ? 0 : win->w_cursor.lnum,
-        win->w_cursor.col, TRUE);
+        win->w_cursors[0].w_cursor.lnum == 1 ? 0 : win->w_cursors[0].w_cursor.lnum,
+        win->w_cursors[0].w_cursor.col, TRUE);
   }
 
   bufref_T bufref;
@@ -1463,10 +1463,10 @@ void enter_buffer(buf_T *buf)
   curwin->w_s = &(buf->b_s);
 
   /* Cursor on first line by default. */
-  curwin->w_cursor.lnum = 1;
-  curwin->w_cursor.col = 0;
-  curwin->w_cursor.coladd = 0;
-  curwin->w_set_curswant = TRUE;
+  curwin->w_cursors[0].w_cursor.lnum = 1;
+  curwin->w_cursors[0].w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.coladd = 0;
+  curwin->w_cursors[0].w_set_curswant = TRUE;
   curwin->w_topline_was_set = FALSE;
 
   /* mark cursor position as being invalid */
@@ -1493,7 +1493,7 @@ void enter_buffer(buf_T *buf)
 
   /* If autocommands did not change the cursor position, restore cursor lnum
    * and possibly cursor col. */
-  if (curwin->w_cursor.lnum == 1 && inindent(0))
+  if (curwin->w_cursors[0].w_cursor.lnum == 1 && inindent(0))
     buflist_getfpos();
 
   check_arg_idx(curwin);                /* check for valid arg_idx */
@@ -1897,12 +1897,12 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
           lnum, forceit) <= 0) {
     --RedrawingDisabled;
 
-    /* cursor is at to BOL and w_cursor.lnum is checked due to getfile() */
+    /* cursor is at to BOL and w_cursors[0].w_cursor.lnum is checked due to getfile() */
     if (!p_sol && col != 0) {
-      curwin->w_cursor.col = col;
+      curwin->w_cursors[0].w_cursor.col = col;
       check_cursor_col();
-      curwin->w_cursor.coladd = 0;
-      curwin->w_set_curswant = TRUE;
+      curwin->w_cursors[0].w_cursor.coladd = 0;
+      curwin->w_cursors[0].w_set_curswant = TRUE;
     }
     return OK;
   }
@@ -1917,16 +1917,16 @@ void buflist_getfpos(void)
 
   fpos = buflist_findfpos(curbuf);
 
-  curwin->w_cursor.lnum = fpos->lnum;
+  curwin->w_cursors[0].w_cursor.lnum = fpos->lnum;
   check_cursor_lnum();
 
   if (p_sol)
-    curwin->w_cursor.col = 0;
+    curwin->w_cursors[0].w_cursor.col = 0;
   else {
-    curwin->w_cursor.col = fpos->col;
+    curwin->w_cursors[0].w_cursor.col = fpos->col;
     check_cursor_col();
-    curwin->w_cursor.coladd = 0;
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
   }
 }
 
@@ -2464,7 +2464,7 @@ void buflist_list(exarg_T *eap)
     } while (--i > 0 && len < IOSIZE - 18);
     vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
         _("line %" PRId64),
-        buf == curbuf ? (int64_t)curwin->w_cursor.lnum
+        buf == curbuf ? (int64_t)curwin->w_cursors[0].w_cursor.lnum
                       : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     ui_flush();            /* output one line at a time */
@@ -2679,7 +2679,7 @@ void buflist_slash_adjust(void)
  */
 void buflist_altfpos(win_T *win)
 {
-  buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, TRUE);
+  buflist_setfpos(curbuf, win, win->w_cursors[0].w_cursor.lnum, win->w_cursors[0].w_cursor.col, TRUE);
 }
 
 /// Check that "ffname" is not the same file as current file.
@@ -2817,11 +2817,11 @@ fileinfo (
       " " : "");
   /* With 32 bit longs and more than 21,474,836 lines multiplying by 100
    * causes an overflow, thus for large numbers divide instead. */
-  if (curwin->w_cursor.lnum > 1000000L)
-    n = (int)(((long)curwin->w_cursor.lnum) /
+  if (curwin->w_cursors[0].w_cursor.lnum > 1000000L)
+    n = (int)(((long)curwin->w_cursors[0].w_cursor.lnum) /
               ((long)curbuf->b_ml.ml_line_count / 100L));
   else
-    n = (int)(((long)curwin->w_cursor.lnum * 100L) /
+    n = (int)(((long)curwin->w_cursors[0].w_cursor.lnum * 100L) /
               (long)curbuf->b_ml.ml_line_count);
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
@@ -2835,13 +2835,13 @@ fileinfo (
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
         _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
-        (int64_t)curwin->w_cursor.lnum,
+        (int64_t)curwin->w_cursors[0].w_cursor.lnum,
         (int64_t)curbuf->b_ml.ml_line_count,
         n);
     validate_virtcol();
     len = STRLEN(buffer);
     col_print(buffer + len, IOSIZE - len,
-        (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
+        (int)curwin->w_cursors[0].w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
   (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
@@ -3173,16 +3173,16 @@ int build_stl_str_hl(
     fillchar = '-';
 
   // Get line & check if empty (cursorpos will show "0-1").
-  char_u *line_ptr = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false);
+  char_u *line_ptr = ml_get_buf(wp->w_buffer, wp->w_cursors[0].w_cursor.lnum, false);
   bool empty_line = (*line_ptr == NUL);
 
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr))
+  if (wp->w_cursors[0].w_cursor.col > (colnr_T)STRLEN(line_ptr))
     byteval = 0;
   else
-    byteval = (*mb_ptr2char)(line_ptr + wp->w_cursor.col);
+    byteval = (*mb_ptr2char)(line_ptr + wp->w_cursors[0].w_cursor.col);
 
   int groupdepth = 0;
 
@@ -3598,7 +3598,7 @@ int build_stl_str_hl(
 
     case STL_LINE:
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
-            ? 0L : (long)(wp->w_cursor.lnum);
+            ? 0L : (long)(wp->w_cursors[0].w_cursor.lnum);
       break;
 
     case STL_NUMLINES:
@@ -3607,7 +3607,7 @@ int build_stl_str_hl(
 
     case STL_COLUMN:
       num = !(State & INSERT) && empty_line
-            ? 0 : (int)wp->w_cursor.col + 1;
+            ? 0 : (int)wp->w_cursors[0].w_cursor.col + 1;
       break;
 
     case STL_VIRTCOL:
@@ -3617,21 +3617,21 @@ int build_stl_str_hl(
       colnr_T virtcol = wp->w_virtcol;
       if (wp->w_p_list && lcs_tab1 == NUL) {
         wp->w_p_list = FALSE;
-        getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
+        getvcol(wp, &wp->w_cursors[0].w_cursor, NULL, &virtcol, NULL);
         wp->w_p_list = TRUE;
       }
       ++virtcol;
       // Don't display %V if it's the same as %c.
       if (opt == STL_VIRTCOL_ALT
           && (virtcol == (colnr_T)(!(State & INSERT) && empty_line
-                                   ? 0 : (int)wp->w_cursor.col + 1)))
+                                   ? 0 : (int)wp->w_cursors[0].w_cursor.col + 1)))
         break;
       num = (long)virtcol;
       break;
     }
 
     case STL_PERCENTAGE:
-      num = (int)(((long)wp->w_cursor.lnum * 100L) /
+      num = (int)(((long)wp->w_cursors[0].w_cursor.lnum * 100L) /
                   (long)wp->w_buffer->b_ml.ml_line_count);
       break;
 
@@ -3677,10 +3677,10 @@ int build_stl_str_hl(
       // fallthrough
     case STL_OFFSET:
     {
-      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
+      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursors[0].w_cursor.lnum, NULL);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
             0L : l + 1 + (!(State & INSERT) && empty_line ?
-                          0 : (int)wp->w_cursor.col);
+                          0 : (int)wp->w_cursors[0].w_cursor.col);
       break;
     }
     case STL_BYTEVAL_X:

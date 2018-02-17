@@ -278,15 +278,15 @@ int set_indent(int size, int flags)
   memmove(s, p, (size_t)line_len);
 
   // Replace the line (unless undo fails).
-  if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursor.lnum) == OK)) {
-    ml_replace(curwin->w_cursor.lnum, newline, false);
+  if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursors[0].w_cursor.lnum) == OK)) {
+    ml_replace(curwin->w_cursors[0].w_cursor.lnum, newline, false);
 
     if (flags & SIN_CHANGED) {
-      changed_bytes(curwin->w_cursor.lnum, 0);
+      changed_bytes(curwin->w_cursors[0].w_cursor.lnum, 0);
     }
 
     // Correct saved cursor position if it is in this line.
-    if (saved_cursor.lnum == curwin->w_cursor.lnum) {
+    if (saved_cursor.lnum == curwin->w_cursors[0].w_cursor.lnum) {
       if (saved_cursor.col >= (colnr_T)(p - oldline)) {
         // Cursor was after the indent, adjust for the number of
         // bytes added/removed.
@@ -302,7 +302,7 @@ int set_indent(int size, int flags)
   } else {
     xfree(newline);
   }
-  curwin->w_cursor.col = ind_len;
+  curwin->w_cursors[0].w_cursor.col = ind_len;
   return retval;
 }
 
@@ -400,10 +400,10 @@ int copy_indent(int size, char_u *src)
   memmove(p, get_cursor_line_ptr(), (size_t)line_len);
 
   // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, false);
+  ml_replace(curwin->w_cursors[0].w_cursor.lnum, line, false);
 
   // Put the cursor after the indent.
-  curwin->w_cursor.col = ind_len;
+  curwin->w_cursors[0].w_cursor.col = ind_len;
   return true;
 }
 
@@ -509,7 +509,7 @@ int inindent(int extra)
     ptr++;
   }
 
-  if (col >= curwin->w_cursor.col + extra) {
+  if (col >= curwin->w_cursors[0].w_cursor.col + extra) {
     return true;
   } else {
     return false;
@@ -529,10 +529,10 @@ int get_expr_indent(void)
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.
-  save_pos = curwin->w_cursor;
-  save_curswant = curwin->w_curswant;
-  save_set_curswant = curwin->w_set_curswant;
-  set_vim_var_nr(VV_LNUM, (varnumber_T) curwin->w_cursor.lnum);
+  save_pos = curwin->w_cursors[0].w_cursor;
+  save_curswant = curwin->w_cursors[0].w_curswant;
+  save_set_curswant = curwin->w_cursors[0].w_set_curswant;
+  set_vim_var_nr(VV_LNUM, (varnumber_T) curwin->w_cursors[0].w_cursor.lnum);
 
   if (use_sandbox) {
     sandbox++;
@@ -550,9 +550,9 @@ int get_expr_indent(void)
   // command.
   save_State = State;
   State = INSERT;
-  curwin->w_cursor = save_pos;
-  curwin->w_curswant = save_curswant;
-  curwin->w_set_curswant = save_set_curswant;
+  curwin->w_cursors[0].w_cursor = save_pos;
+  curwin->w_cursors[0].w_curswant = save_curswant;
+  curwin->w_cursors[0].w_set_curswant = save_set_curswant;
   check_cursor();
   State = save_State;
 
@@ -593,8 +593,8 @@ int get_lisp_indent(void)
   // Set vi_lisp to use the vi-compatible method.
   vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
 
-  realpos = curwin->w_cursor;
-  curwin->w_cursor.col = 0;
+  realpos = curwin->w_cursors[0].w_cursor;
+  curwin->w_cursors[0].w_cursor.col = 0;
 
   if ((pos = findmatch(NULL, '(')) == NULL) {
     pos = findmatch(NULL, '[');
@@ -613,8 +613,8 @@ int get_lisp_indent(void)
     amount = -1;
     parencount = 0;
 
-    while (--curwin->w_cursor.lnum >= pos->lnum) {
-      if (linewhite(curwin->w_cursor.lnum)) {
+    while (--curwin->w_cursors[0].w_cursor.lnum >= pos->lnum) {
+      if (linewhite(curwin->w_cursors[0].w_cursor.lnum)) {
         continue;
       }
 
@@ -661,8 +661,8 @@ int get_lisp_indent(void)
     }
 
     if (amount == -1) {
-      curwin->w_cursor.lnum = pos->lnum;
-      curwin->w_cursor.col = pos->col;
+      curwin->w_cursors[0].w_cursor.lnum = pos->lnum;
+      curwin->w_cursors[0].w_cursor.col = pos->col;
       col = pos->col;
 
       that = get_cursor_line_ptr();
@@ -745,7 +745,7 @@ int get_lisp_indent(void)
   } else {
     amount = 0;  // No matching '(' or '[' found, use zero indent.
   }
-  curwin->w_cursor = realpos;
+  curwin->w_cursors[0].w_cursor = realpos;
 
   return amount;
 }

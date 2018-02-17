@@ -1023,7 +1023,7 @@ struct window_S {
    * valid or need to be recomputed.	
    */
   int w_valid;
-  pos_T w_valid_cursor;             /* last known position of w_cursor, used
+  pos_T w_valid_cursor;             /* last known position of w_cursors[0].w_cursor, used
                                        to adjust w_valid */
   colnr_T w_valid_leftcol;          /* last known w_leftcol */
 
