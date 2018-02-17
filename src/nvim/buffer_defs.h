@@ -62,12 +62,13 @@ typedef struct {
  */
 #define VALID_WROW      0x01    /* w_wrow (window row) is valid */
 #define VALID_WCOL      0x02    /* w_wcol (window col) is valid */
-#define VALID_VIRTCOL   0x04    /* w_virtcol (file col) is valid */
-#define VALID_CHEIGHT   0x08    /* w_cline_height and w_cline_folded valid */
-#define VALID_CROW      0x10    /* w_cline_row is valid */
 #define VALID_BOTLINE   0x20    /* w_botine and w_empty_rows are valid */
 #define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
 #define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
+
+#define CURSOR_VALID_VIRTCOL   0x04    /* w_virtcol (file col) is valid */
+#define CURSOR_VALID_CHEIGHT   0x08    /* w_cline_height and w_cline_folded valid */
+#define CURSOR_VALID_CROW      0x10    /* w_cline_row is valid */
 
 // flags for b_flags
 #define BF_RECOVERED    0x01    // buffer has been recovered
@@ -939,6 +940,40 @@ struct cursor {
   int w_set_curswant;               /* If set, then update w_cursors[0].w_curswant the next
                                        time through cursupdate() to the
                                        current virtual column */
+
+  /*
+   * === start of cached values ====
+   */
+  /*
+   * Recomputing is minimized by storing the result of computations.
+   * Use functions in screen.c to check if they are valid and to update.
+   * w_valid is a bitfield of flags, which indicate if specific values are
+   * valid or need to be recomputed.	
+   */
+  int w_cursor_valid;
+  pos_T w_valid_cursor;             /* last known position of w_cursors[0].w_cursor, used
+                                       to adjust w_valid */
+  colnr_T w_valid_leftcol;          /* last known w_leftcol */
+
+  /*
+   * w_cline_height is the number of physical lines taken by the buffer line
+   * that the cursor is on.  We use this to avoid extra calls to plines().
+   */
+  int w_cline_height;               /* current size of cursor line */
+  bool w_cline_folded;               /* cursor line is folded */
+
+  int w_cline_row;                  /* starting row of the cursor line */
+
+  colnr_T w_virtcol;                /* column number of the cursor in the
+                                       buffer line, as opposed to the column
+                                       number we're at on the screen.  This
+                                       makes a difference on lines which span
+                                       more than one screen line or when
+                                       w_leftcol is non-zero */
+
+  /*
+   * === end of cached values ===
+   */
 };
 
 /*
@@ -1023,25 +1058,6 @@ struct window_S {
    * valid or need to be recomputed.	
    */
   int w_valid;
-  pos_T w_valid_cursor;             /* last known position of w_cursors[0].w_cursor, used
-                                       to adjust w_valid */
-  colnr_T w_valid_leftcol;          /* last known w_leftcol */
-
-  /*
-   * w_cline_height is the number of physical lines taken by the buffer line
-   * that the cursor is on.  We use this to avoid extra calls to plines().
-   */
-  int w_cline_height;               /* current size of cursor line */
-  bool w_cline_folded;               /* cursor line is folded */
-
-  int w_cline_row;                  /* starting row of the cursor line */
-
-  colnr_T w_virtcol;                /* column number of the cursor in the
-                                       buffer line, as opposed to the column
-                                       number we're at on the screen.  This
-                                       makes a difference on lines which span
-                                       more than one screen line or when
-                                       w_leftcol is non-zero */
 
   /*
    * w_wrow and w_wcol specify the cursor position in the window.
