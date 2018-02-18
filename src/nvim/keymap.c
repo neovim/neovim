@@ -40,6 +40,7 @@ static const struct modmasktable {
   // 'A' must be the last one
   { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A' },
   { 0, 0, NUL }
+  // NOTE: when adding an entry, update MAX_KEY_NAME_LEN!
 };
 
 /*
@@ -285,6 +286,7 @@ static const struct key_name_entry {
   { K_PLUG,            "Plug" },
   { K_PASTE,           "Paste" },
   { 0,                 NULL }
+  // NOTE: When adding a long name update MAX_KEY_NAME_LEN.
 };
 
 static struct mousetable {
@@ -472,9 +474,13 @@ char_u *get_special_key_name(int c, int modifiers)
           string[idx++] = *s++;
       }
     }
-  } else {            /* use name of special key */
-    STRCPY(string + idx, key_names_table[table_idx].name);
-    idx = (int)STRLEN(string);
+  } else {            // use name of special key
+    size_t len = STRLEN(key_names_table[table_idx].name);
+
+    if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
+        STRCPY(string + idx, key_names_table[table_idx].name);
+        idx += (int)len;
+    }
   }
   string[idx++] = '>';
   string[idx] = NUL;
