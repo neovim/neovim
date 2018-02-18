@@ -10,28 +10,8 @@ local check_logs_useless_lines = {
 local function eq(expected, actual)
   return assert.are.same(expected, actual)
 end
--- Tries multiple accepted ("expected") values until one succeeds.
--- First N-1 arguments are the accepted values.
--- Last (Nth) argument is the "actual" value to be compared.
-local function eq_any(...)
-  if select('#', ...) < 2 then
-    error('need at least 2 arguments')
-  end
-  local args = {...}
-  local actual = args[#args]
-  local final_error = ''
-  for anum = 1, select('#', ...) - 1 do
-    local accepted = args[anum]
-    local status, result = pcall(eq, accepted, actual)
-    if status then
-      return result
-    end
-    final_error = final_error..tostring(result)
-  end
-  error(final_error)
-end
-local function neq(exp, act)
-  return assert.are_not.same(exp, act)
+local function neq(expected, actual)
+  return assert.are_not.same(expected, actual)
 end
 local function ok(res)
   return assert.is_true(res)
@@ -581,7 +561,6 @@ return {
   deepcopy = deepcopy,
   dictdiff = dictdiff,
   eq = eq,
-  eq_any = eq_any,
   filter = filter,
   fixtbl = fixtbl,
   fixtbl_rec = fixtbl_rec,
