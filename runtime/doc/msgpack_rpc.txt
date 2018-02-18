@@ -242,4 +242,4 @@ Even for statically compiled clients it is good practice to avoid hardcoding
 the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
 
-
+ vim:tw=78:ts=8:ft=help:norl:
