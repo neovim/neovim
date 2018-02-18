@@ -92,6 +92,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/liveupdate.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -1672,7 +1673,7 @@ void u_undo(int count)
     undo_undoes = TRUE;
   else
     undo_undoes = !undo_undoes;
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /*
@@ -1685,7 +1686,7 @@ void u_redo(int count)
     undo_undoes = false;
   }
 
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /// Undo and remove the branch from the undo tree.
@@ -1697,7 +1698,9 @@ bool u_undo_and_forget(int count)
     count = 1;
   }
   undo_undoes = true;
-  u_doit(count, true);
+  // don't send a LiveUpdate for this undo is part of 'inccommand' playing with
+  // buffer contents
+  u_doit(count, true, false);
 
   if (curbuf->b_u_curhead == NULL) {
     // nothing was undone.
@@ -1732,7 +1735,7 @@ bool u_undo_and_forget(int count)
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
-static void u_doit(int startcount, bool quiet)
+static void u_doit(int startcount, bool quiet, bool send_liveupdate)
 {
   int count = startcount;
 
@@ -1768,7 +1771,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(true);
+      u_undoredo(true, send_liveupdate);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1779,7 +1782,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, send_liveupdate);
 
       /* Advance for next redo.  Set "newhead" when at the end of the
        * redoable changes. */
@@ -2026,7 +2029,7 @@ void undo_time(long step, int sec, int file, int absolute)
           || (uhp->uh_seq == target && !above))
         break;
       curbuf->b_u_curhead = uhp;
-      u_undoredo(TRUE);
+      u_undoredo(true, true);
       uhp->uh_walk = nomark;            /* don't go back down here */
     }
 
@@ -2082,7 +2085,7 @@ void undo_time(long step, int sec, int file, int absolute)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, true);
 
       /* Advance "curhead" to below the header we last used.  If it
       * becomes NULL then we need to set "newhead" to this leaf. */
@@ -2114,7 +2117,7 @@ void undo_time(long step, int sec, int file, int absolute)
  *
  * When "undo" is TRUE we go up in the tree, when FALSE we go down.
  */
-static void u_undoredo(int undo)
+static void u_undoredo(int undo, bool send_liveupdate)
 {
   char_u      **newarray = NULL;
   linenr_T oldsize;
@@ -2242,7 +2245,7 @@ static void u_undoredo(int undo)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, send_liveupdate);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2275,6 +2278,13 @@ static void u_undoredo(int undo)
     changed();
   } else {
     unchanged(curbuf, FALSE);
+  }
+
+  // because the calls to changed()/unchanged() above will bump b_changedtick
+  // again, we need to send a LiveUpdate with just the new value of
+  // b:changedtick
+  if (send_liveupdate && kv_size(curbuf->liveupdate_channels)) {
+    liveupdate_send_tick(curbuf);
   }
 
   /*

@@ -72,6 +72,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
+#include "nvim/liveupdate.h"
 
 typedef enum {
   kBLSUnchanged = 0,
@@ -573,6 +574,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
+  // disable live updates for the current buffer
+  liveupdate_unregister_all(buf);
+
   /*
    * Remove the buffer from the list.
    */
@@ -783,6 +787,8 @@ free_buffer_stuff (
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
+
+  liveupdate_unregister_all(buf);
 }
 
 /*
@@ -1734,6 +1740,8 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   clrallmarks(buf);                     /* clear marks */
   fmarks_check_names(buf);              /* check file marks for this file */
   buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
+  kv_destroy(buf->liveupdate_channels);
+  kv_init(buf->liveupdate_channels);
   if (!(flags & BLN_DUMMY)) {
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
