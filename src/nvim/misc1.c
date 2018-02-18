@@ -1596,8 +1596,13 @@ int del_chars(long count, int fixpos)
 /// @return FAIL for failure, OK otherwise
 int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 {
-  linenr_T lnum = curwin->w_cursors[0].w_cursor.lnum;
-  colnr_T col = curwin->w_cursors[0].w_cursor.col;
+  return del_bytes_cursor(&curwin->w_cursors[0], count, fixpos_arg, use_delcombine);
+}
+
+int del_bytes_cursor(cursor_T *cursor, colnr_T count, bool fixpos_arg, bool use_delcombine)
+{
+  linenr_T lnum = cursor->w_cursor.lnum;
+  colnr_T col = cursor->w_cursor.col;
   bool fixpos = fixpos_arg;
   char_u *oldp = ml_get(lnum);
   colnr_T oldlen = (colnr_T)STRLEN(oldp);
@@ -1639,11 +1644,11 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     if (col > 0 && fixpos && restart_edit == 0
         && (ve_flags & VE_ONEMORE) == 0
         ) {
-      --curwin->w_cursors[0].w_cursor.col;
-      curwin->w_cursors[0].w_cursor.coladd = 0;
+      --cursor->w_cursor.col;
+      cursor->w_cursor.coladd = 0;
       if (has_mbyte)
-        curwin->w_cursors[0].w_cursor.col -=
-          (*mb_head_off)(oldp, oldp + curwin->w_cursors[0].w_cursor.col);
+        cursor->w_cursor.col -=
+          (*mb_head_off)(oldp, oldp + cursor->w_cursor.col);
     }
     count = oldlen - col;
     movelen = 1;
@@ -1664,7 +1669,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     ml_replace(lnum, newp, FALSE);
 
   /* mark the buffer as changed and prepare for displaying */
-  changed_bytes(lnum, curwin->w_cursors[0].w_cursor.col);
+  changed_bytes(lnum, cursor->w_cursor.col);
 
   return OK;
 }

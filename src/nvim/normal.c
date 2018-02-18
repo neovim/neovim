@@ -1566,40 +1566,42 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
      * Set oap->cursors[0].start to the first position of the operated text, oap->cursors[0].end
      * to the end of the operated text.  w_cursors[0].w_cursor is equal to oap->cursors[0].start.
      */
-    if (lt(oap->cursors[0].start, curwin->w_cursors[0].w_cursor)) {
-      /* Include folded lines completely. */
-      if (!VIsual_active) {
-        if (hasFolding(oap->cursors[0].start.lnum, &oap->cursors[0].start.lnum, NULL))
-          oap->cursors[0].start.col = 0;
-        if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL,
-                &curwin->w_cursors[0].w_cursor.lnum))
-          curwin->w_cursors[0].w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
-      }
-      oap->cursors[0].end = curwin->w_cursors[0].w_cursor;
-      curwin->w_cursors[0].w_cursor = oap->cursors[0].start;
+    for (size_t i = 0; i < oap->cursors_count; ++i) {
+      if (lt(oap->cursors[i].start, curwin->w_cursors[i].w_cursor)) {
+        /* Include folded lines completely. */
+        if (!VIsual_active) {
+          if (hasFolding(oap->cursors[i].start.lnum, &oap->cursors[i].start.lnum, NULL))
+            oap->cursors[i].start.col = 0;
+          if (hasFolding(curwin->w_cursors[i].w_cursor.lnum, NULL,
+                  &curwin->w_cursors[i].w_cursor.lnum))
+            curwin->w_cursors[i].w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+        }
+        oap->cursors[i].end = curwin->w_cursors[i].w_cursor;
+        curwin->w_cursors[i].w_cursor = oap->cursors[i].start;
 
-      /* w_cursors[0].w_virtcol may have been updated; if the cursor goes back to its
-       * previous position w_cursors[0].w_virtcol becomes invalid and isn't updated
-       * automatically. */
-      curwin->w_cursors[0].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
-    } else {
-      // Include folded lines completely.
-      if (!VIsual_active && oap->motion_type == kMTLineWise) {
-        if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, &curwin->w_cursors[0].w_cursor.lnum,
-                       NULL)) {
-          curwin->w_cursors[0].w_cursor.col = 0;
+        /* w_cursors[i].w_virtcol may have been updated; if the cursor goes back to its
+         * previous position w_cursors[i].w_virtcol becomes invalid and isn't updated
+         * automatically. */
+        curwin->w_cursors[i].w_cursor_valid &= ~CURSOR_VALID_VIRTCOL;
+      } else {
+        // Include folded lines completely.
+        if (!VIsual_active && oap->motion_type == kMTLineWise) {
+          if (hasFolding(curwin->w_cursors[i].w_cursor.lnum, &curwin->w_cursors[i].w_cursor.lnum,
+                         NULL)) {
+            curwin->w_cursors[i].w_cursor.col = 0;
+          }
+          if (hasFolding(oap->cursors[i].start.lnum, NULL, &oap->cursors[i].start.lnum)) {
+            oap->cursors[i].start.col = (colnr_T)STRLEN(ml_get(oap->cursors[i].start.lnum));
+          }
         }
-        if (hasFolding(oap->cursors[0].start.lnum, NULL, &oap->cursors[0].start.lnum)) {
-          oap->cursors[0].start.col = (colnr_T)STRLEN(ml_get(oap->cursors[0].start.lnum));
-        }
+        oap->cursors[i].end = oap->cursors[i].start;
+        oap->cursors[i].start = curwin->w_cursors[i].w_cursor;
       }
-      oap->cursors[0].end = oap->cursors[0].start;
-      oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
+
+      // Just in case lines were deleted that make the position invalid.
+      check_pos(curwin->w_buffer, &oap->cursors[i].end);
+      oap->cursors[i].line_count = oap->cursors[i].end.lnum - oap->cursors[i].start.lnum + 1;
     }
-
-    // Just in case lines were deleted that make the position invalid.
-    check_pos(curwin->w_buffer, &oap->cursors[0].end);
-    oap->cursors[0].line_count = oap->cursors[0].end.lnum - oap->cursors[0].start.lnum + 1;
 
     /* Set "virtual_op" before resetting VIsual_active. */
     virtual_op = virtual_active();
@@ -7152,7 +7154,14 @@ static void nv_operator(cmdarg_T *cap)
   if (op_type == cap->oap->op_type)         /* double operator works on lines */
     nv_lineop(cap);
   else if (!checkclearop(cap->oap)) {
-    cap->oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
+    opcursor_T *newcursors = xcalloc(curwin->w_cursors_count, sizeof(opcursor_T));
+    newcursors[0] = cap->oap->cursors[0];
+    xfree(cap->oap->cursors);
+    cap->oap->cursors = newcursors;
+    cap->oap->cursors_count = cap->oap->cursors_capacity = curwin->w_cursors_count;
+
+    for (size_t i = 0; i < curwin->w_cursors_count; ++i)
+      cap->oap->cursors[i].start = curwin->w_cursors[i].w_cursor;
     cap->oap->op_type = op_type;
     set_op_var(op_type);
   }
