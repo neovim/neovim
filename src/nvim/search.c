@@ -2842,7 +2842,7 @@ current_word (
       VIsual = start_pos;
       redraw_curbuf_later(INVERTED);            /* update the inversion */
     } else {
-      oap->start = start_pos;
+      oap->cursors[0].start = start_pos;
       oap->motion_type = kMTCharWise;
     }
     --count;
@@ -2909,7 +2909,7 @@ current_word (
         if (VIsual_active)
           VIsual = curwin->w_cursors[0].w_cursor;
         else
-          oap->start = curwin->w_cursors[0].w_cursor;
+          oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
       }
     }
     curwin->w_cursors[0].w_cursor = pos;     /* put cursor back at end */
@@ -3078,7 +3078,7 @@ extend:
       oap->inclusive = true;
     else
       oap->inclusive = false;
-    oap->start = start_pos;
+    oap->cursors[0].start = start_pos;
     oap->motion_type = kMTCharWise;
   }
   return OK;
@@ -3202,7 +3202,7 @@ current_block (
     redraw_curbuf_later(INVERTED);      /* update the inversion */
     showmode();
   } else {
-    oap->start = start_pos;
+    oap->cursors[0].start = start_pos;
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
     if (sol)
@@ -3449,7 +3449,7 @@ again:
     redraw_curbuf_later(INVERTED);      /* update the inversion */
     showmode();
   } else {
-    oap->start = start_pos;
+    oap->cursors[0].start = start_pos;
     oap->motion_type = kMTCharWise;
     if (lt(end_pos, start_pos)) {
       /* End is before the start: there is no text between tags; operate
@@ -3617,8 +3617,8 @@ extend:
     redraw_curbuf_later(INVERTED);      /* update the inversion */
     showmode();
   } else {
-    oap->start.lnum = start_lnum;
-    oap->start.col = 0;
+    oap->cursors[0].start.lnum = start_lnum;
+    oap->cursors[0].start.col = 0;
     oap->motion_type = kMTLineWise;
   }
   curwin->w_cursors[0].w_cursor.lnum = end_lnum;
@@ -3874,7 +3874,7 @@ current_quote (
       redraw_curbuf_later(INVERTED);
     }
   } else {
-    oap->start = curwin->w_cursors[0].w_cursor;
+    oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
     oap->motion_type = kMTCharWise;
   }
 

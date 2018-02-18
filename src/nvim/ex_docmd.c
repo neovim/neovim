@@ -7384,9 +7384,9 @@ static void ex_operators(exarg_T *eap)
   clear_oparg(&oa);
   oparg_init(&oa);
   oa.regname = eap->regname;
-  oa.start.lnum = eap->line1;
-  oa.end.lnum = eap->line2;
-  oa.line_count = eap->line2 - eap->line1 + 1;
+  oa.cursors[0].start.lnum = eap->line1;
+  oa.cursors[0].end.lnum = eap->line2;
+  oa.cursors[0].line_count = eap->line2 - eap->line1 + 1;
   oa.motion_type = kMTLineWise;
   virtual_op = false;
   if (eap->cmdidx != CMD_yank) {  // position cursor for undo

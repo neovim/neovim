@@ -1448,7 +1448,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     } else if (oap->motion_force == Ctrl_V) {
       // Change line- or characterwise motion into Visual block mode.
       VIsual_active = true;
-      VIsual = oap->start;
+      VIsual = oap->cursors[0].start;
       VIsual_mode = Ctrl_V;
       VIsual_select = false;
       VIsual_reselect = false;
@@ -1499,7 +1499,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (redo_VIsual_busy) {
       /* Redo of an operation on a Visual area. Use the same size from
        * redo_VIsual_line_count and redo_VIsual_vcol. */
-      oap->start = curwin->w_cursors[0].w_cursor;
+      oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
       curwin->w_cursors[0].w_cursor.lnum += redo_VIsual_line_count - 1;
       if (curwin->w_cursors[0].w_cursor.lnum > curbuf->b_ml.ml_line_count)
         curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
@@ -1555,28 +1555,28 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           unadjust_for_sel();
       }
 
-      oap->start = VIsual;
+      oap->cursors[0].start = VIsual;
       if (VIsual_mode == 'V') {
-        oap->start.col = 0;
-        oap->start.coladd = 0;
+        oap->cursors[0].start.col = 0;
+        oap->cursors[0].start.coladd = 0;
       }
     }
 
     /*
-     * Set oap->start to the first position of the operated text, oap->end
-     * to the end of the operated text.  w_cursors[0].w_cursor is equal to oap->start.
+     * Set oap->cursors[0].start to the first position of the operated text, oap->cursors[0].end
+     * to the end of the operated text.  w_cursors[0].w_cursor is equal to oap->cursors[0].start.
      */
-    if (lt(oap->start, curwin->w_cursors[0].w_cursor)) {
+    if (lt(oap->cursors[0].start, curwin->w_cursors[0].w_cursor)) {
       /* Include folded lines completely. */
       if (!VIsual_active) {
-        if (hasFolding(oap->start.lnum, &oap->start.lnum, NULL))
-          oap->start.col = 0;
+        if (hasFolding(oap->cursors[0].start.lnum, &oap->cursors[0].start.lnum, NULL))
+          oap->cursors[0].start.col = 0;
         if (hasFolding(curwin->w_cursors[0].w_cursor.lnum, NULL,
                 &curwin->w_cursors[0].w_cursor.lnum))
           curwin->w_cursors[0].w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
       }
-      oap->end = curwin->w_cursors[0].w_cursor;
-      curwin->w_cursors[0].w_cursor = oap->start;
+      oap->cursors[0].end = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor = oap->cursors[0].start;
 
       /* w_cursors[0].w_virtcol may have been updated; if the cursor goes back to its
        * previous position w_cursors[0].w_virtcol becomes invalid and isn't updated
@@ -1589,17 +1589,17 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
                        NULL)) {
           curwin->w_cursors[0].w_cursor.col = 0;
         }
-        if (hasFolding(oap->start.lnum, NULL, &oap->start.lnum)) {
-          oap->start.col = (colnr_T)STRLEN(ml_get(oap->start.lnum));
+        if (hasFolding(oap->cursors[0].start.lnum, NULL, &oap->cursors[0].start.lnum)) {
+          oap->cursors[0].start.col = (colnr_T)STRLEN(ml_get(oap->cursors[0].start.lnum));
         }
       }
-      oap->end = oap->start;
-      oap->start = curwin->w_cursors[0].w_cursor;
+      oap->cursors[0].end = oap->cursors[0].start;
+      oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
     }
 
     // Just in case lines were deleted that make the position invalid.
-    check_pos(curwin->w_buffer, &oap->end);
-    oap->line_count = oap->end.lnum - oap->start.lnum + 1;
+    check_pos(curwin->w_buffer, &oap->cursors[0].end);
+    oap->cursors[0].line_count = oap->cursors[0].end.lnum - oap->cursors[0].start.lnum + 1;
 
     /* Set "virtual_op" before resetting VIsual_active. */
     virtual_op = virtual_active();
@@ -1617,17 +1617,17 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           resel_VIsual_vcol = MAXCOL;
         else {
           if (VIsual_mode != Ctrl_V)
-            getvvcol(curwin, &(oap->end),
-                NULL, NULL, &oap->end_vcol);
-          if (VIsual_mode == Ctrl_V || oap->line_count <= 1) {
+            getvvcol(curwin, &(oap->cursors[0].end),
+                NULL, NULL, &oap->cursors[0].end_vcol);
+          if (VIsual_mode == Ctrl_V || oap->cursors[0].line_count <= 1) {
             if (VIsual_mode != Ctrl_V)
-              getvvcol(curwin, &(oap->start),
-                  &oap->start_vcol, NULL, NULL);
-            resel_VIsual_vcol = oap->end_vcol - oap->start_vcol + 1;
+              getvvcol(curwin, &(oap->cursors[0].start),
+                  &oap->cursors[0].start_vcol, NULL, NULL);
+            resel_VIsual_vcol = oap->cursors[0].end_vcol - oap->cursors[0].start_vcol + 1;
           } else
-            resel_VIsual_vcol = oap->end_vcol;
+            resel_VIsual_vcol = oap->cursors[0].end_vcol;
         }
-        resel_VIsual_line_count = oap->line_count;
+        resel_VIsual_line_count = oap->cursors[0].line_count;
       }
 
       /* can't redo yank (unless 'y' is in 'cpoptions') and ":" */
@@ -1671,7 +1671,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       }
 
       // oap->inclusive defaults to true.
-      // If oap->end is on a NUL (empty line) oap->inclusive becomes
+      // If oap->cursors[0].end is on a NUL (empty line) oap->inclusive becomes
       // false.  This makes "d}P" and "v}dP" work the same.
       if (oap->motion_force == NUL || oap->motion_type == kMTLineWise) {
         oap->inclusive = true;
@@ -1680,7 +1680,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         oap->motion_type = kMTLineWise;
       } else if (VIsual_mode == 'v') {
         oap->motion_type = kMTCharWise;
-        if (*ml_get_pos(&(oap->end)) == NUL
+        if (*ml_get_pos(&(oap->cursors[0].end)) == NUL
             && (include_line_break || !virtual_op)
             ) {
           oap->inclusive = false;
@@ -1688,11 +1688,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           // that works on lines only.
           if (*p_sel != 'o'
               && !op_on_lines(oap->op_type)
-              && oap->end.lnum < curbuf->b_ml.ml_line_count) {
-            oap->end.lnum++;
-            oap->end.col = 0;
-            oap->end.coladd = 0;
-            oap->line_count++;
+              && oap->cursors[0].end.lnum < curbuf->b_ml.ml_line_count) {
+            oap->cursors[0].end.lnum++;
+            oap->cursors[0].end.col = 0;
+            oap->cursors[0].end.coladd = 0;
+            oap->cursors[0].line_count++;
           }
         }
       }
@@ -1727,33 +1727,33 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (has_mbyte && oap->inclusive) {
       int l;
 
-      l = (*mb_ptr2len)(ml_get_pos(&oap->end));
+      l = (*mb_ptr2len)(ml_get_pos(&oap->cursors[0].end));
       if (l > 1)
-        oap->end.col += l - 1;
+        oap->cursors[0].end.col += l - 1;
     }
     curwin->w_cursors[0].w_set_curswant = true;
 
     /*
-     * oap->empty is set when start and end are the same.  The inclusive
+     * oap->cursors[0].empty is set when start and end are the same.  The inclusive
      * flag affects this too, unless yanking and the end is on a NUL.
      */
-    oap->empty = (oap->motion_type != kMTLineWise
+    oap->cursors[0].empty = (oap->motion_type != kMTLineWise
                   && (!oap->inclusive
                       || (oap->op_type == OP_YANK
-                          && gchar_pos(&oap->end) == NUL))
-                  && equalpos(oap->start, oap->end)
-                  && !(virtual_op && oap->start.coladd != oap->end.coladd)
+                          && gchar_pos(&oap->cursors[0].end) == NUL))
+                  && equalpos(oap->cursors[0].start, oap->cursors[0].end)
+                  && !(virtual_op && oap->cursors[0].start.coladd != oap->cursors[0].end.coladd)
                   );
     /*
      * For delete, change and yank, it's an error to operate on an
      * empty region, when 'E' included in 'cpoptions' (Vi compatible).
      */
-    empty_region_error = (oap->empty
+    empty_region_error = (oap->cursors[0].empty
                           && vim_strchr(p_cpo, CPO_EMPTYREGION) != NULL);
 
     /* Force a redraw when operating on an empty Visual region, when
      * 'modifiable is off or creating a fold. */
-    if (oap->is_VIsual && (oap->empty || !MODIFIABLE(curbuf)
+    if (oap->is_VIsual && (oap->cursors[0].empty || !MODIFIABLE(curbuf)
                            || oap->op_type == OP_FOLD
                            )) {
       curwin->w_p_lbr = lbr_saved;
@@ -1770,18 +1770,18 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (oap->motion_type == kMTCharWise
         && oap->inclusive == false
         && !(cap->retval & CA_NO_ADJ_OP_END)
-        && oap->end.col == 0
+        && oap->cursors[0].end.col == 0
         && (!oap->is_VIsual || *p_sel == 'o')
-        && oap->line_count > 1) {
+        && oap->cursors[0].line_count > 1) {
       oap->end_adjusted = true;  // remember that we did this
-      oap->line_count--;
-      oap->end.lnum--;
+      oap->cursors[0].line_count--;
+      oap->cursors[0].end.lnum--;
       if (inindent(0)) {
         oap->motion_type = kMTLineWise;
       } else {
-        oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
-        if (oap->end.col) {
-          --oap->end.col;
+        oap->cursors[0].end.col = (colnr_T)STRLEN(ml_get(oap->cursors[0].end.lnum));
+        if (oap->cursors[0].end.col) {
+          --oap->cursors[0].end.col;
           oap->inclusive = true;
         }
       }
@@ -1799,13 +1799,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_JOIN_NS:
     case OP_JOIN:
-      if (oap->line_count < 2)
-        oap->line_count = 2;
-      if (curwin->w_cursors[0].w_cursor.lnum + oap->line_count - 1 >
+      if (oap->cursors[0].line_count < 2)
+        oap->cursors[0].line_count = 2;
+      if (curwin->w_cursors[0].w_cursor.lnum + oap->cursors[0].line_count - 1 >
           curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {
-        do_join((size_t)oap->line_count, oap->op_type == OP_JOIN,
+        do_join((size_t)oap->cursors[0].line_count, oap->op_type == OP_JOIN,
                 true, true, true);
         auto_format(false, true);
       }
@@ -1984,7 +1984,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_FOLD:
       VIsual_reselect = false;          /* don't reselect now */
-      foldCreate(oap->start.lnum, oap->end.lnum);
+      foldCreate(oap->cursors[0].start.lnum, oap->cursors[0].end.lnum);
       break;
 
     case OP_FOLDOPEN:
@@ -1992,7 +1992,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FOLDCLOSE:
     case OP_FOLDCLOSEREC:
       VIsual_reselect = false;          /* don't reselect now */
-      opFoldRange(oap->start.lnum, oap->end.lnum,
+      opFoldRange(oap->cursors[0].start.lnum, oap->cursors[0].end.lnum,
           oap->op_type == OP_FOLDOPEN
           || oap->op_type == OP_FOLDOPENREC,
           oap->op_type == OP_FOLDOPENREC
@@ -2003,7 +2003,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FOLDDEL:
     case OP_FOLDDELREC:
       VIsual_reselect = false;          /* don't reselect now */
-      deleteFold(oap->start.lnum, oap->end.lnum,
+      deleteFold(oap->cursors[0].start.lnum, oap->cursors[0].end.lnum,
           oap->op_type == OP_FOLDDELREC, oap->is_VIsual);
       break;
 
@@ -2052,22 +2052,22 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("'<,'>");
   } else {
     // Make the range look nice, so it can be repeated.
-    if (oap->start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
+    if (oap->cursors[0].start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
       stuffcharReadbuff('.');
     } else {
-      stuffnumReadbuff((long)oap->start.lnum);
+      stuffnumReadbuff((long)oap->cursors[0].start.lnum);
     }
-    if (oap->end.lnum != oap->start.lnum) {
+    if (oap->cursors[0].end.lnum != oap->cursors[0].start.lnum) {
       stuffcharReadbuff(',');
-      if (oap->end.lnum == curwin->w_cursors[0].w_cursor.lnum) {
+      if (oap->cursors[0].end.lnum == curwin->w_cursors[0].w_cursor.lnum) {
         stuffcharReadbuff('.');
-      } else if (oap->end.lnum == curbuf->b_ml.ml_line_count) {
+      } else if (oap->cursors[0].end.lnum == curbuf->b_ml.ml_line_count) {
         stuffcharReadbuff('$');
-      } else if (oap->start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
+      } else if (oap->cursors[0].start.lnum == curwin->w_cursors[0].w_cursor.lnum) {
         stuffReadbuff(".+");
-        stuffnumReadbuff(oap->line_count - 1);
+        stuffnumReadbuff(oap->cursors[0].line_count - 1);
       } else {
-        stuffnumReadbuff((long)oap->end.lnum);
+        stuffnumReadbuff((long)oap->cursors[0].end.lnum);
       }
     }
   }
@@ -2104,8 +2104,8 @@ static void op_function(oparg_T *oap)
     EMSG(_("E774: 'operatorfunc' is empty"));
   else {
     /* Set '[ and '] marks to text to be operated on. */
-    curbuf->b_op_start = oap->start;
-    curbuf->b_op_end = oap->end;
+    curbuf->b_op_start = oap->cursors[0].start;
+    curbuf->b_op_end = oap->cursors[0].end;
     if (oap->motion_type != kMTLineWise && !oap->inclusive) {
       // Exclude the end position.
       decl(&curbuf->b_op_end);
@@ -4583,9 +4583,9 @@ static void nv_colon(cmdarg_T *cap)
       /* The Ex command failed, do not execute the operator. */
       clearop(cap->oap);
     else if (cap->oap->op_type != OP_NOP
-             && (cap->oap->start.lnum > curbuf->b_ml.ml_line_count
-                 || cap->oap->start.col >
-                 (colnr_T)STRLEN(ml_get(cap->oap->start.lnum))
+             && (cap->oap->cursors[0].start.lnum > curbuf->b_ml.ml_line_count
+                 || cap->oap->cursors[0].start.col >
+                 (colnr_T)STRLEN(ml_get(cap->oap->cursors[0].start.lnum))
                  || did_emsg
                  ))
       /* The start of the operator has become invalid by the Ex command.
@@ -6941,7 +6941,7 @@ static void nv_g_cmd(cmdarg_T *cap)
    */
   case 'q':
   case 'w':
-    oap->cursor_start = curwin->w_cursors[0].w_cursor;
+    oap->cursors[0].cursor_start = curwin->w_cursors[0].w_cursor;
   /*FALLTHROUGH*/
   case '~':
   case 'u':
@@ -7152,7 +7152,7 @@ static void nv_operator(cmdarg_T *cap)
   if (op_type == cap->oap->op_type)         /* double operator works on lines */
     nv_lineop(cap);
   else if (!checkclearop(cap->oap)) {
-    cap->oap->start = curwin->w_cursors[0].w_cursor;
+    cap->oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
     cap->oap->op_type = op_type;
     set_op_var(op_type);
   }
@@ -7657,7 +7657,7 @@ static void nv_object(cmdarg_T *cap)
     flag = current_block(cap->oap, cap->count1, include, '<', '>');
     break;
   case 't':       /* "at" = a tag block (xml and html) */
-    // Do not adjust oap->end in do_pending_operator()
+    // Do not adjust oap->cursors[0].end in do_pending_operator()
     // otherwise there are different results for 'dit'
     // (note leading whitespace in last line):
     // 1) <b>      2) <b>
@@ -7919,7 +7919,7 @@ static void get_op_vcol(
   colnr_T end;
 
   if (VIsual_mode != Ctrl_V
-      || (!initial && oap->end.col < curwin->w_width)) {
+      || (!initial && oap->cursors[0].end.col < curwin->w_width)) {
     return;
   }
 
@@ -7927,54 +7927,54 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
-    mark_mb_adjustpos(curwin->w_buffer, &oap->end);
+    mark_mb_adjustpos(curwin->w_buffer, &oap->cursors[0].end);
   }
 
-  getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, &oap->end_vcol);
+  getvvcol(curwin, &(oap->cursors[0].start), &oap->cursors[0].start_vcol, NULL, &oap->cursors[0].end_vcol);
   if (!redo_VIsual_busy) {
-    getvvcol(curwin, &(oap->end), &start, NULL, &end);
+    getvvcol(curwin, &(oap->cursors[0].end), &start, NULL, &end);
 
-    if (start < oap->start_vcol) {
-      oap->start_vcol = start;
+    if (start < oap->cursors[0].start_vcol) {
+      oap->cursors[0].start_vcol = start;
     }
-    if (end > oap->end_vcol) {
+    if (end > oap->cursors[0].end_vcol) {
       if (initial && *p_sel == 'e'
           && start >= 1
-          && start - 1 >= oap->end_vcol) {
-        oap->end_vcol = start - 1;
+          && start - 1 >= oap->cursors[0].end_vcol) {
+        oap->cursors[0].end_vcol = start - 1;
       } else {
-        oap->end_vcol = end;
+        oap->cursors[0].end_vcol = end;
       }
     }
   }
 
-  // if '$' was used, get oap->end_vcol from longest line
+  // if '$' was used, get oap->cursors[0].end_vcol from longest line
   if (curwin->w_cursors[0].w_curswant == MAXCOL) {
     curwin->w_cursors[0].w_cursor.col = MAXCOL;
-    oap->end_vcol = 0;
-    for (curwin->w_cursors[0].w_cursor.lnum = oap->start.lnum;
-         curwin->w_cursors[0].w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursors[0].w_cursor.lnum) {
+    oap->cursors[0].end_vcol = 0;
+    for (curwin->w_cursors[0].w_cursor.lnum = oap->cursors[0].start.lnum;
+         curwin->w_cursors[0].w_cursor.lnum <= oap->cursors[0].end.lnum; ++curwin->w_cursors[0].w_cursor.lnum) {
       getvvcol(curwin, &curwin->w_cursors[0].w_cursor, NULL, NULL, &end);
-      if (end > oap->end_vcol) {
-        oap->end_vcol = end;
+      if (end > oap->cursors[0].end_vcol) {
+        oap->cursors[0].end_vcol = end;
       }
     }
   } else if (redo_VIsual_busy) {
-    oap->end_vcol = oap->start_vcol + redo_VIsual_vcol - 1;
+    oap->cursors[0].end_vcol = oap->cursors[0].start_vcol + redo_VIsual_vcol - 1;
   }
 
-  // Correct oap->end.col and oap->start.col to be the
+  // Correct oap->cursors[0].end.col and oap->cursors[0].start.col to be the
   // upper-left and lower-right corner of the block area.
   //
   // (Actually, this does convert column positions into character
   // positions)
-  curwin->w_cursors[0].w_cursor.lnum = oap->end.lnum;
-  coladvance(oap->end_vcol);
-  oap->end = curwin->w_cursors[0].w_cursor;
+  curwin->w_cursors[0].w_cursor.lnum = oap->cursors[0].end.lnum;
+  coladvance(oap->cursors[0].end_vcol);
+  oap->cursors[0].end = curwin->w_cursors[0].w_cursor;
 
-  curwin->w_cursors[0].w_cursor = oap->start;
-  coladvance(oap->start_vcol);
-  oap->start = curwin->w_cursors[0].w_cursor;
+  curwin->w_cursors[0].w_cursor = oap->cursors[0].start;
+  coladvance(oap->cursors[0].start_vcol);
+  oap->cursors[0].start = curwin->w_cursors[0].w_cursor;
 }
 
 // Handle an arbitrary event in normal mode
