@@ -71,7 +71,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_target(helptags
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${GENERATED_RUNTIME_DIR}/doc
+  COMMAND ${CMAKE_COMMAND} -E remove ${GENERATED_RUNTIME_DIR}/doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
