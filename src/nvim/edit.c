@@ -3600,6 +3600,8 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     cptext[CPT_MENU] = tv_dict_get_string(tv->vval.v_dict, "menu", true);
     cptext[CPT_KIND] = tv_dict_get_string(tv->vval.v_dict, "kind", true);
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
+    cptext[CPT_USER_DATA] = tv_dict_get_string(tv->vval.v_dict,
+                                               "user_data", true);
 
     icase = (bool)tv_dict_get_number(tv->vval.v_dict, "icase");
     adup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
@@ -4043,8 +4045,9 @@ static void ins_compl_insert(int in_compl_func)
   // Set completed item.
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
-  tv_dict_add_str(dict, S_LEN("word"),
-                  (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
+  tv_dict_add_str(
+      dict, S_LEN("word"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
   tv_dict_add_str(
       dict, S_LEN("abbr"),
       (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
@@ -4057,6 +4060,9 @@ static void ins_compl_insert(int in_compl_func)
   tv_dict_add_str(
       dict, S_LEN("info"),
       (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
+  tv_dict_add_str(
+      dict, S_LEN("user_data"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_USER_DATA]));
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
   if (!in_compl_func) {
     compl_curr_match = compl_shown_match;

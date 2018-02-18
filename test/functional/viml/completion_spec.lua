@@ -59,7 +59,8 @@ describe('completion', function()
     it('returns expected dict in normal completion', function()
       feed('ifoo<ESC>o<C-x><C-n>')
       eq('foo', eval('getline(2)'))
-      eq({word = 'foo', abbr = '', menu = '', info = '', kind = ''},
+      eq({word = 'foo', abbr = '', menu = '',
+          info = '', kind = '', user_data = ''},
         eval('v:completed_item'))
     end)
     it('is readonly', function()
@@ -84,13 +85,18 @@ describe('completion', function()
       feed_command('let v:completed_item.kind = "bar"')
       neq(nil, string.find(eval('v:errmsg'), '^E46: '))
       feed_command('let v:errmsg = ""')
+
+      feed_command('let v:completed_item.user_data = "bar"')
+      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
+      feed_command('let v:errmsg = ""')
     end)
     it('returns expected dict in omni completion', function()
       source([[
       function! TestOmni(findstart, base) abort
         return a:findstart ? 0 : [{'word': 'foo', 'abbr': 'bar',
         \ 'menu': 'baz', 'info': 'foobar', 'kind': 'foobaz'},
-        \ {'word': 'word', 'abbr': 'abbr', 'menu': 'menu', 'info': 'info', 'kind': 'kind'}]
+        \ {'word': 'word', 'abbr': 'abbr', 'menu': 'menu',
+        \  'info': 'info', 'kind': 'kind'}]
       endfunction
       setlocal omnifunc=TestOmni
       ]])
@@ -107,7 +113,7 @@ describe('completion', function()
         {3:-- Omni completion (^O^N^P) }{4:match 1 of 2}                    |
       ]])
       eq({word = 'foo', abbr = 'bar', menu = 'baz',
-          info = 'foobar', kind = 'foobaz'},
+          info = 'foobar', kind = 'foobaz', user_data = ''},
         eval('v:completed_item'))
     end)
   end)
