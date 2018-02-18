@@ -8451,7 +8451,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 /*
  * Implementation of map() and filter().
  */
-static void filter_map(typval_T *argvars, typval_T *rettv, int map)
+static void filter_map(typval_T *argvars, typval_T *rettv, bool map)
 {
   typval_T    *expr;
   list_T      *l = NULL;
@@ -8461,14 +8461,13 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   dict_T      *d = NULL;
   typval_T save_val;
   typval_T save_key;
-  int rem = false;
+  bool rem = false;
   int todo;
   char_u *ermsg = (char_u *)(map ? "map()" : "filter()");
   const char *const arg_errmsg = (map
                                   ? N_("map() argument")
                                   : N_("filter() argument"));
   int save_did_emsg;
-  int idx = 0;
 
   if (argvars[0].v_type == VAR_LIST) {
     tv_copy(&argvars[0], rettv);
@@ -8537,23 +8536,33 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     } else {
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-      for (listitem_T *li = tv_list_first(l); li != NULL;) {
-        if (map
-            && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
-                             TV_TRANSLATE)) {
-          break;
+      if (map) {
+        TV_LIST_ITER(l, li, {
+          if (tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
+                            TV_TRANSLATE)) {
+            break;
+          }
+          vimvars[VV_KEY].vv_nr = (varnumber_T)TV_LIST_ITER_IDX(li);
+          if (filter_map_one(TV_LIST_ITEM_TV(li), expr, true, &rem) == FAIL
+              || did_emsg) {
+            break;
+          }
+        });
+      } else {
+        varnumber_T idx = 0;
+        for (listitem_T *li = tv_list_first(l); li != NULL;) {
+          vimvars[VV_KEY].vv_nr = idx;
+          if (filter_map_one(TV_LIST_ITEM_TV(li), expr, false, &rem) == FAIL
+              || did_emsg) {
+            break;
+          }
+          if (rem) {
+            li = tv_list_item_remove(l, li);
+          } else {
+            li = TV_LIST_ITEM_NEXT(l, li);
+          }
+          idx++;
         }
-        vimvars[VV_KEY].vv_nr = idx;
-        if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
-            || did_emsg) {
-          break;
-        }
-        if (!map && rem) {
-          li = tv_list_item_remove(l, li);
-        } else {
-          li = TV_LIST_ITEM_NEXT(l, li);
-        }
-        idx++;
       }
     }
 
@@ -8564,50 +8573,62 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   }
 }
 
-static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
+static inline int filter_map_one(typval_T *const tv, typval_T *const expr,
+                                 const bool map, bool *const remp)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_ALWAYS_INLINE
 {
   typval_T rettv;
-  typval_T argv[3];
   int retval = FAIL;
-  int dummy;
 
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
-  argv[0] = vimvars[VV_KEY].vv_tv;
-  argv[1] = vimvars[VV_VAL].vv_tv;
-  if (expr->v_type == VAR_FUNC) {
-    const char_u *const s = expr->vval.v_string;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
-      goto theend;
+  switch (expr->v_type) {
+    case VAR_PARTIAL:
+    case VAR_FUNC: {
+      int dummy;
+      typval_T argv[2];
+      argv[0] = vimvars[VV_KEY].vv_tv;
+      argv[1] = vimvars[VV_VAL].vv_tv;
+      partial_T *const partial = (expr->v_type == VAR_PARTIAL
+                                  ? expr->vval.v_partial
+                                  : NULL);
+      const char_u *const s = (expr->v_type == VAR_PARTIAL
+                               ? partial_name(partial)
+                               : expr->vval.v_string);
+      if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
+                    0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+        goto theend;
+      }
+      break;
     }
-  } else if (expr->v_type == VAR_PARTIAL) {
-    partial_T *partial = expr->vval.v_partial;
+    case VAR_NUMBER:
+    case VAR_STRING:
+    case VAR_SPECIAL:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN: {
+      char buf[NUMBUFLEN];
+      const char *s = tv_get_string_buf_chk(expr, buf);
+      if (s == NULL) {
+        goto theend;
+      }
+      s = (const char *)skipwhite((const char_u *)s);
+      if (eval1((char_u **)&s, &rettv, true) == FAIL) {
+        goto theend;
+      }
 
-    const char_u *const s = partial_name(partial);
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
-      goto theend;
-    }
-  } else {
-    char buf[NUMBUFLEN];
-    const char *s = tv_get_string_buf_chk(expr, buf);
-    if (s == NULL) {
-      goto theend;
-    }
-    s = (const char *)skipwhite((const char_u *)s);
-    if (eval1((char_u **)&s, &rettv, true) == FAIL) {
-      goto theend;
-    }
-
-    if (*s != NUL) {  // check for trailing chars after expr
-      emsgf(_(e_invexpr2), s);
-      goto theend;
+      if (*s != NUL) {  // check for trailing chars after expr
+        emsgf(_(e_invexpr2), s);
+        goto theend;
+      }
+      break;
     }
   }
   if (map) {
     // map(): replace the list item value.
     tv_clear(tv);
-    rettv.v_lock = 0;
+    rettv.v_lock = VAR_UNLOCKED;
     *tv = rettv;
   } else {
     bool error = false;

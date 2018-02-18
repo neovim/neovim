@@ -746,6 +746,28 @@ extern const char *const tv_empty_string;
 /// Specifies that free_unref_items() function has (not) been entered
 extern bool tv_in_free_unref_items;
 
+/// Index variable inside one of #TV_LIST_ITER* macros
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_IDX(li) li##_i_
+
+/// List variable inside one of #TV_LIST_ITER* macros
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_LIST(li) li##_l_
+
+/// Remove list element while iterating over a list
+///
+/// @warning Do not use other means to modify a list while iterating over it.
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_ITEM_REMOVE(li) \
+    do { \
+      tv_clear(TV_LIST_ITEM_TV(li)); \
+      tv_list_drop_items(TV_LIST_ITER_LIST(li), li, li); \
+      TV_LIST_ITER_IDX(li)--; \
+    } while (0)
+
 /// Iterate over a list
 ///
 /// @param  modifier  Modifier: expected to be const or nothing, volatile should
@@ -755,12 +777,14 @@ extern bool tv_in_free_unref_items;
 /// @param  code  Cycle body.
 #define _TV_LIST_ITER_MOD(modifier, l, li, code) \
     do { \
-      modifier list_T *const li##_l_ = (l); \
-      list_log(li##_l_, NULL, NULL, "iter" #modifier); \
-      if (li##_l_ != NULL) { \
-        for (size_t li##_i_ = 0; li##_i_ < kv_size(li##_l_->lv_vec); \
-             li##_i_++) { \
-          modifier listitem_T *const li = &kv_A(li##_l_->lv_vec, li##_i_); \
+      modifier list_T *const TV_LIST_ITER_LIST(li) = (l); \
+      list_log(TV_LIST_ITER_LIST(li), NULL, NULL, "iter" #modifier); \
+      if (TV_LIST_ITER_LIST(li) != NULL) { \
+        for (size_t TV_LIST_ITER_IDX(li) = 0; \
+             TV_LIST_ITER_IDX(li) < kv_size(TV_LIST_ITER_LIST(li)->lv_vec); \
+             TV_LIST_ITER_IDX(li)++) { \
+          modifier listitem_T *const li = &kv_A(TV_LIST_ITER_LIST(li)->lv_vec, \
+                                                TV_LIST_ITER_IDX(li)); \
           code \
         } \
       } \
