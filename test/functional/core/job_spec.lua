@@ -12,6 +12,7 @@ local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
+local expect_msg_seq = helpers.expect_msg_seq
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -78,9 +79,18 @@ describe('jobs', function()
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
-    eq({'notification', 'stdout', {0, {dir, ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {dir, ''} } },
+        {'notification', 'stdout', {0, {''} } },
+        {'notification', 'exit', {0, 0} }
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {dir} } },
+        {'notification', 'stdout', {0, {'', ''} } },
+        {'notification', 'stdout', {0, {''} } },
+        {'notification', 'exit', {0, 0} }
+      }
+    )
     rmdir(dir)
   end)
 
@@ -308,8 +318,15 @@ describe('jobs', function()
     nvim('command', 'unlet g:job_opts.on_exit')
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
-    eq({'notification', 'stdout', {5, {'foo', ''}}}, next_msg())
-    eq({'notification', 'stdout', {5, {''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {5, {'foo', ''} } },
+        {'notification', 'stdout', {5, {''} } }
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {5, {'foo'} } },
+        {'notification', 'stdout', {5, {'', ''} } }
+      }
+    )
   end)
 
   it('will pass return code with the exit event', function()
