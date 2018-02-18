@@ -1271,6 +1271,7 @@ openscript (
     restart_edit = 0;           /* don't go to Insert mode */
     p_im = FALSE;               /* don't use 'insertmode' */
     clear_oparg(&oa);
+    oparg_init(&oa);
     finish_op = FALSE;
 
     oldcurscript = curscript;

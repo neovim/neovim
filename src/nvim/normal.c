@@ -101,11 +101,19 @@ static int restart_VIsual_select = 0;
 # include "normal.c.generated.h"
 #endif
 
+void oparg_init(oparg_T *o)
+{
+  o->cursors = xcalloc(1, sizeof(opcursor_T));
+  o->cursors_capacity = o->cursors_count = 1;
+}
+
 static inline void normal_state_init(NormalState *s)
 {
   memset(s, 0, sizeof(NormalState));
   s->state.check = normal_check;
   s->state.execute = normal_execute;
+
+  oparg_init(&s->oa);
 }
 
 /*
@@ -4678,6 +4686,7 @@ void do_nv_ident(int c1, int c2)
   cmdarg_T ca;
 
   clear_oparg(&oa);
+  oparg_init(&oa);
   memset(&ca, 0, sizeof(ca));
   ca.oap = &oa;
   ca.cmdchar = c1;

@@ -7382,6 +7382,7 @@ static void ex_operators(exarg_T *eap)
   oparg_T oa;
 
   clear_oparg(&oa);
+  oparg_init(&oa);
   oa.regname = eap->regname;
   oa.start.lnum = eap->line1;
   oa.end.lnum = eap->line2;
@@ -8187,6 +8188,7 @@ void exec_normal(bool was_typed)
   oparg_T oa;
 
   clear_oparg(&oa);
+  oparg_init(&oa);
   finish_op = false;
   while ((!stuff_empty()
           || ((was_typed || !typebuf_typed())

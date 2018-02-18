@@ -21,6 +21,19 @@ typedef enum {
   kMTUnknown = -1      ///< Unknown or invalid motion type
 } MotionType;
 
+typedef struct opcursor_S {
+  pos_T start;                  // start of the operator
+  pos_T end;                    // end of the operator
+  pos_T cursor_start;           // cursor position before motion for "gw"
+
+  long line_count;              // number of lines from op_start to op_end
+                                // (inclusive)
+  bool empty;                   // op_start and op_end the same (only used by
+                                // op_change())
+  colnr_T start_vcol;           // start col for block mode operator
+  colnr_T end_vcol;             // end col for block mode operator
+} opcursor_T;
+
 /*
  * Arguments for operators.
  */
@@ -35,19 +48,13 @@ typedef struct oparg_S {
                                 // valid when motion_type is kMTCharWise)
   bool end_adjusted;            // backuped b_op_end one char (only used by
                                 // do_format())
-  pos_T start;                  // start of the operator
-  pos_T end;                    // end of the operator
-  pos_T cursor_start;           // cursor position before motion for "gw"
-
-  long line_count;              // number of lines from op_start to op_end
-                                // (inclusive)
-  bool empty;                   // op_start and op_end the same (only used by
-                                // op_change())
   bool is_VIsual;               // operator on Visual area
-  colnr_T start_vcol;           // start col for block mode operator
-  colnr_T end_vcol;             // end col for block mode operator
   long prev_opcount;            // ca.opcount saved for K_EVENT
   long prev_count0;             // ca.count0 saved for K_EVENT
+
+  opcursor_T* cursors;
+  size_t cursors_count;
+  size_t cursors_capacity;
 } oparg_T;
 
 /*

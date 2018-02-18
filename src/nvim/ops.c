@@ -5309,6 +5309,8 @@ void cursor_pos_info(dict_T *dict)
   const int l_VIsual_active = VIsual_active;
   const int l_VIsual_mode = VIsual_mode;
 
+  oparg_init(&oparg);
+
   // Compute the length of the file in characters.
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     if (dict == NULL) {
