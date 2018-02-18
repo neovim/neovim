@@ -608,7 +608,7 @@ function Screen:print_snapshot(attrs, ignore)
     local dict = "{"..self:_pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
-  local attrstr = "{"..table.concat(attrstrs, ", ").."}"
+  local attrstr = "{\n  "..table.concat(attrstrs, ",\n  ")..",\n}"
   print( "\nscreen:expect([[")
   print( table.concat(rv, '\n'))
   if alldefault then
