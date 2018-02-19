@@ -399,6 +399,7 @@ Other options:
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*
   *'macatsui'*
+  *'maxcombine' (six is alwayes used)
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
