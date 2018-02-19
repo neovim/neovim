@@ -4102,11 +4102,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_winwidth;
     }
   } else if (pp == &p_mco) {
-    if (value > MAX_MCO) {
-      errmsg = e_invarg;
-    } else if (value < 0) {
-      errmsg = e_positive;
-    }
+    value = MAX_MCO;
   } else if (pp == &p_titlelen) {
     if (value < 0) {
       errmsg = e_positive;
@@ -4268,8 +4264,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
-  } else if (pp == &p_mco) {
-    screenclear();          // will re-allocate the screen
   } else if (pp == &curbuf->b_p_iminsert) {
     showmode();
     // Show/unshow value of 'keymap' in status lines.

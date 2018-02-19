@@ -27,9 +27,8 @@ describe("folded lines", function()
   end)
 
   it("works with multibyte text", function()
-    -- Soon, we will always use the maximum value of 'maxcombine'.
-    feed_command("set maxcombine=6")
-
+    -- Currently the only allowed value of 'maxcombine'
+    eq(6, meths.get_option('maxcombine'))
     eq(true, meths.get_option('arabicshape'))
     insert([[
       å 语 x̨̣̘̫̲͚͎̎͂̀̂͛͛̾͢͟ العَرَبِيَّة

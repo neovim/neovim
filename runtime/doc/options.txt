@@ -3888,16 +3888,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set a time.  This is to be compatible with Nvi.
 
 						*'maxcombine'* *'mco'*
-'maxcombine' 'mco'	number (default 2)
-			global
-			{only available when compiled with the |+multi_byte|
-			feature}
-	The maximum number of combining characters supported for displaying.
-	The default is OK for most languages.  Hebrew may require 4.
-	Maximum value is 6.
-	Even when this option is set to 2 you can still edit text with more
-	combining characters, you just can't see them.  Use |g8| or |ga|.
-	See |mbyte-combining|.
+'maxcombine' 'mco'	Removed. |vim-differences| {Nvim}
+	Nvim always displays up to 6 combining characters.  You can still edit
+    text with more than 6 combining characters, you just can't see them.
+    Use |g8| or |ga|.  See |mbyte-combining|.
 
 						*'maxfuncdepth'* *'mfd'*
 'maxfuncdepth' 'mfd'	number	(default 100)
