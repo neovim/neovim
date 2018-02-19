@@ -1,0 +1,11 @@
+commit d7823d5b7c32f73ca720373ea9c16b1b47f086df
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sun Jan 28 15:36:42 2018 +0100
+
+    patch 8.0.1434: GTK: :promtfind does not put focus on text input
+    
+    Problem:    GTK: :promtfind does not put focus on text input. (Adam Novak)
+    Solution:   When re-opening the dialog put focus on the text input. (Kazunobu
+                Kuriyama, closes #2563)
+
+,
