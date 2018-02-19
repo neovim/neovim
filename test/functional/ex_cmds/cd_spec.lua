@@ -280,7 +280,6 @@ describe("getcwd()", function ()
 
   it("returns empty string if working directory does not exist", function()
     if helpers.iswin() then
-      pending('[Cannot delete working directory in Windows]')
       return
     end
     command("cd "..directories.global)

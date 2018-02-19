@@ -297,10 +297,6 @@ describe('jobs', function()
     eq({'notification', 'exit', {data, 0}}, next_msg())
   end)
 
-  it('can omit options', function()
-    ok(eval([[jobstart('echo ""')]]) > 0)
-  end)
-
   it('can omit data callbacks', function()
     nvim('command', 'unlet g:job_opts.on_stdout')
     nvim('command', 'let g:job_opts.user = 5')

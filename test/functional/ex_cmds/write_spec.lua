@@ -88,7 +88,6 @@ describe(':write', function()
     command('let $HOME=""')
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
-    -- FIXME: 'E13: File exists (add ! to override)' in Windows
     if not helpers.iswin() then
       eq(('\nE17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
         redir_exec('write .'))
