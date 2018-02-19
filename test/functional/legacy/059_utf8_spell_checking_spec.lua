@@ -5,8 +5,6 @@ local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 local write_file, call = helpers.write_file, helpers.call
 
-if helpers.pending_win32(pending) then return end
-
 local function write_latin1(name, text)
   text = call('iconv', text, 'utf-8', 'latin-1')
   write_file(name, text)
@@ -507,8 +505,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
   -- Vim function in the original legacy test.
   local function test_one(aff, dic)
     -- Generate a .spl file from a .dic and .aff file.
-    os.execute('cp -f Xtest'..aff..'.aff Xtest.aff')
-    os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
+    if helpers.iswin() then
+      os.execute('copy /y Xtest'..aff..'.aff Xtest.aff')
+      os.execute('copy /y Xtest'..dic..'.dic Xtest.dic')
+    else
+      os.execute('cp -f Xtest'..aff..'.aff Xtest.aff')
+      os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
+    end
     source([[
       set spellfile=
       function! SpellDumpNoShow()
@@ -559,7 +562,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
     feed_command([[$put =soundfold('kóopërÿnôven')]])
     feed_command([[$put =soundfold('oeverloos gezwets edale')]])
     -- And now with SAL instead of SOFO items; test automatic reloading.
-    os.execute('cp -f Xtest-sal.aff Xtest.aff')
+    if helpers.iswin() then
+      os.execute('copy /y Xtest-sal.aff Xtest.aff')
+    else
+      os.execute('cp -f Xtest-sal.aff Xtest.aff')
+    end
     feed_command('mkspell! Xtest Xtest')
     feed_command([[$put =soundfold('goobledygoook')]])
     feed_command([[$put =soundfold('kóopërÿnôven')]])
