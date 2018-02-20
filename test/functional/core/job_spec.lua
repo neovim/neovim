@@ -165,8 +165,15 @@ describe('jobs', function()
     else
       nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
     end
-    eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'abc\ndef', ''} } },
+        {'notification', 'stdout', {0, {''} } }
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'abc\ndef'} } },
+        {'notification', 'stdout', {0, {'', ''} } }
+      }
+    )
     eq({'notification', 'exit', {0, 0}}, next_msg())
     os.remove(filename)
 
@@ -420,7 +427,13 @@ describe('jobs', function()
     let g:job_opts = {'on_stdout': Callback}
     call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+      }
+    )
   end)
 
   it('jobstart() works with closures', function()
@@ -433,7 +446,13 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': MkFun()}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+      }
+    )
   end)
 
   it('jobstart() works when closure passed directly to `jobstart`', function()
@@ -441,7 +460,13 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+      }
+    )
   end)
 
   describe('jobwait', function()
