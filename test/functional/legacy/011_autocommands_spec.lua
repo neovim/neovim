@@ -18,10 +18,9 @@ local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
 
-if helpers.pending_win32(pending) then return end
-
 local function has_gzip()
-  return os.execute('gzip --help >/dev/null 2>&1') == 0
+  local null = helpers.iswin() and 'nul' or '/dev/null'
+  return os.execute('gzip --help >' .. null .. ' 2>&1') == 0
 end
 
 local function prepare_gz_file(name, text)
@@ -142,6 +141,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
 
   it('FilterReadPre, FilterReadPost', function()
+    if helpers.pending_win32(pending) then return end
     -- Write a special input file for this test block.
     write_file('test.out', dedent([[
       startstart

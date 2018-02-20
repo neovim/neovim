@@ -448,9 +448,10 @@ enum key_extra {
 
 /*
  * The length of the longest special key name, including modifiers.
- * Current longest is <M-C-S-T-4-MiddleRelease> (length includes '<' and '>').
+ * Current longest is <M-C-S-T-D-A-4-ScrollWheelRight> (length includes '<' and
+ * '>').
  */
-#define MAX_KEY_NAME_LEN    25
+#define MAX_KEY_NAME_LEN    32
 
 // Maximum length of a special key event as tokens.  This includes modifiers.
 // The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
