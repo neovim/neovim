@@ -151,7 +151,6 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool interrupted = false;
   if (!proc->refcount) {
     int status = proc->status;
     LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
@@ -173,7 +172,6 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
   if (got_int) {
-    interrupted = true;
     got_int = false;
     process_stop(proc);
     if (ms == -1) {
@@ -184,14 +182,13 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     } else {
       LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
+
+    proc->status = -2;
   }
 
   if (proc->refcount == 1) {
     // Job exited, collect status and manually invoke close_cb to free the job
     // resources
-    if (interrupted) {
-      proc->status = -2;
-    }
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
