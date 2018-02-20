@@ -388,15 +388,14 @@ describe('jobs', function()
   end)
 
   it('does not repeat output with slow output handlers', function()
-    if helpers.pending_win32(pending) then return end
     source([[
       let d = {'data': []}
       function! d.on_stdout(job, data, event) dict
-        call add(self.data, a:data)
+        call add(self.data, Normalize(a:data))
         sleep 200m
       endfunction
       if has('win32')
-        let cmd = '1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}'
+        let cmd = 'for ($i = 1; $i -le 5; $i++) {Write-Output $i; Start-Sleep -Milliseconds 100}'
       else
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
@@ -444,7 +443,12 @@ describe('jobs', function()
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 100; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 110; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 210; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 310; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.10; exit 4'),
       \  jobstart('sleep 0.110; exit 5'),
       \  jobstart('sleep 0.210; exit 6'),
@@ -464,7 +468,12 @@ describe('jobs', function()
         endif
         let g:exits += 1
       endfunction
-      call jobwait([
+      call jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 10; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 30; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 50; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 70; exit 5', g:dict)
+      \  ] : [
       \  jobstart('sleep 0.010; exit 5', g:dict),
       \  jobstart('sleep 0.030; exit 5', g:dict),
       \  jobstart('sleep 0.050; exit 5', g:dict),
@@ -477,7 +486,12 @@ describe('jobs', function()
 
     it('will return status codes in the order of passed ids', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 70; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 50; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 30; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 10; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.070; exit 4'),
       \  jobstart('sleep 0.050; exit 5'),
       \  jobstart('sleep 0.030; exit 6'),
@@ -491,7 +505,7 @@ describe('jobs', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
       \  -10,
-      \  jobstart('sleep 0.01; exit 5'),
+      \  jobstart((has('win32') ? 'Start-Sleep -Milliseconds 100' : 'sleep 0.01').'; exit 5'),
       \  ]))
       ]])
       eq({'notification', 'wait', {{-3, 5}}}, next_msg())
@@ -500,7 +514,9 @@ describe('jobs', function()
     it('will return -2 when interrupted without timeout', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("sleep 10; exit 55")]))')
+              'jobwait([jobstart("'..
+              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              '; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
       eq({'notification', 'wait', {{-2}}}, next_msg())
@@ -577,7 +593,10 @@ describe('jobs', function()
 
       it('can pass 0 to check if a job exists', function()
         source([[
-        call rpcnotify(g:channel, 'wait', jobwait([
+        call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+        \  jobstart('Start-Sleep -Milliseconds 50; exit 4'),
+        \  jobstart('Start-Sleep -Milliseconds 300; exit 5'),
+        \  ] : [
         \  jobstart('sleep 0.05; exit 4'),
         \  jobstart('sleep 0.3; exit 5'),
         \  ], 0))
