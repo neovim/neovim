@@ -156,18 +156,22 @@ describe('jobs', function()
   end)
 
   it('preserves NULs', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     -- Make a file with NULs in it.
     local filename = helpers.tmpname()
     write_file(filename, "abc\0def\n")
 
-    nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
+    if iswin() then
+      nvim('command', [[let j = jobstart('Get-Content "]]..filename..[["', g:job_opts)]])
+    else
+      nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
+    end
     eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
     os.remove(filename)
 
     -- jobsend() preserves NULs.
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', [[call jobsend(j, ["123\n456",""])]])
     eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
