@@ -5,8 +5,6 @@ local feed, clear, command = helpers.feed, helpers.clear, helpers.command
 local eq, write_file = helpers.eq, helpers.write_file
 local wait = helpers.wait
 
-if helpers.pending_win32(pending) then return end
-
 describe('fileformats option', function()
   setup(function()
     clear()

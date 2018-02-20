@@ -1077,6 +1077,8 @@ items:
 			item with the same word is already present.
 	empty		when non-zero this match will be added even when it is
 			an empty string
+	user_data 	custom data which is associated with the item and
+			available in |v:completed_item|
 
 All of these except "icase", "dup" and "empty" must be a string.  If an item
 does not meet these requirements then an error message is given and further
@@ -1170,6 +1172,8 @@ The menu is used when:
 
 The 'pumheight' option can be used to set a maximum height.  The default is to
 use all space available.
+The 'pumwidth' option can be used to set a minimum width.  The default is 15
+characters.
 
 There are three states:
 1. A complete match has been inserted, e.g., after using CTRL-N or CTRL-P.

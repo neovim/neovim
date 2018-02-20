@@ -103,8 +103,8 @@ set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
 set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v2.4.3.tar.gz)
 set(LUAROCKS_SHA256 ea1881d6954f2a98c34f93674571c8f0cbdbc28dedb3fa3cb56b6a91886d1a99)
 
-set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.2.1.tar.gz)
-set(UNIBILIUM_SHA256 6045b4f6adca7b1123284007675ca71f718f70942d3a93d8b9fa5bd442006ec1)
+set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v2.0.0.tar.gz)
+set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116bc1c1)
 
 if(WIN32)
 set(LIBTERMKEY_URL https://github.com/equalsraf/libtermkey/archive/tb-windows.zip)
