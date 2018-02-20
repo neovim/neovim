@@ -609,12 +609,11 @@ describe('jobs', function()
     end)
 
     describe('with timeout argument', function()
-      if helpers.pending_win32(pending) then return end
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
-        \  jobstart('sleep 10; exit 5'),
+        \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
         \  ], 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
