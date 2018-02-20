@@ -87,6 +87,7 @@ NEW_TESTS ?= \
 	    test_number.res \
 	    test_options.res \
 	    test_profile.res \
+	    test_put.res \
 	    test_quickfix.res \
 	    test_recover.res \
 	    test_retab.res \
