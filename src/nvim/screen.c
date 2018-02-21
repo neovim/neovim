@@ -6445,16 +6445,11 @@ void setcursor(void)
 /// Returns FAIL if the lines are not inserted, OK for success.
 int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
-  if (invalid)
-    wp->w_lines_valid = 0;
-
-  if (wp->w_height < 5)
+  if (wp->w_height < 5) {
     return FAIL;
+  }
 
-  if (line_count > wp->w_height - row)
-    line_count = wp->w_height - row;
-
-  return win_do_lines(wp, row, line_count, mayclear, FALSE);
+  return win_do_lines(wp, row, line_count, invalid, mayclear, false);
 }
 
 /// Delete "line_count" window lines at "row" in window "wp".
@@ -6464,19 +6459,18 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 /// Return OK for success, FAIL if the lines are not deleted.
 int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
-  if (invalid)
-    wp->w_lines_valid = 0;
-
-  if (line_count > wp->w_height - row)
-    line_count = wp->w_height - row;
-
-  return win_do_lines(wp, row, line_count, mayclear, TRUE);
+  return win_do_lines(wp, row, line_count, invalid, mayclear, true);
 }
 
 // Common code for win_ins_lines() and win_del_lines().
 // Returns OK or FAIL when the work has been done.
-static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int del)
+static int win_do_lines(win_T *wp, int row, int line_count,
+                        int invalid, int mayclear, int del)
 {
+  if (invalid) {
+    wp->w_lines_valid = 0;
+  }
+
   if (!redrawing() || line_count <= 0) {
     return FAIL;
   }
