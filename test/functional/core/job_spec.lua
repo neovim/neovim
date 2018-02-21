@@ -179,10 +179,16 @@ describe('jobs', function()
     os.remove(filename)
 
     -- jobsend() preserves NULs.
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', [[call jobsend(j, ["123\n456",""])]])
-    eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'123\n456', ''} } },
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'123\n456'} } },
+        {'notification', 'stdout', {0, {'', ''} } },
+      }
+    )
     nvim('command', "call jobstop(j)")
   end)
 
