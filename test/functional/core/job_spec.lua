@@ -171,7 +171,8 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', 'stdout', {0, {'abc\ndef'} } },
-        {'notification', 'stdout', {0, {'', ''} } }
+        {'notification', 'stdout', {0, {'', ''} } },
+        {'notification', 'stdout', {0, {''} } }
       }
     )
     eq({'notification', 'exit', {0, 0}}, next_msg())
@@ -325,7 +326,8 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', 'stdout', {5, {'foo'} } },
-        {'notification', 'stdout', {5, {'', ''} } }
+        {'notification', 'stdout', {5, {'', ''} } },
+        {'notification', 'stdout', {5, {''} } }
       }
     )
   end)
@@ -432,6 +434,7 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
       }
     )
   end)
@@ -451,6 +454,7 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
       }
     )
   end)
@@ -465,6 +469,7 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
       }
     )
   end)
