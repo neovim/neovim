@@ -614,7 +614,7 @@ describe('jobs', function()
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
         \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
-        \  ], 100))
+        \  ], has('win32') ? 1000 : 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
       end)
