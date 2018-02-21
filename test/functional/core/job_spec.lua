@@ -304,8 +304,16 @@ describe('jobs', function()
     nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     local data = {n = 5, s = 'str', l = {1}}
-    eq({'notification', 'stdout', {data, {'foo', ''}}}, next_msg())
-    eq({'notification', 'stdout', {data, {''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {data, {'foo', ''}}},
+        {'notification', 'stdout', {data, {''}}}
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {data, {'foo'}}},
+        {'notification', 'stdout', {data, {'', ''}}},
+        {'notification', 'stdout', {data, {''}}}
+      }
+    )
     eq({'notification', 'exit', {data, 0}}, next_msg())
   end)
 
@@ -619,7 +627,7 @@ describe('jobs', function()
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
         \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
-        \  ], has('win32') ? 1000 : 100))
+        \  ], has('win32') ? 5000 : 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
       end)
