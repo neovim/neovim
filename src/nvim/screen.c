@@ -6445,11 +6445,6 @@ void setcursor(void)
 /// Returns FAIL if the lines are not inserted, OK for success.
 int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
-  int did_delete;
-  int nextrow;
-  int lastrow;
-  int retval;
-
   if (invalid)
     wp->w_lines_valid = 0;
 
@@ -6459,50 +6454,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   if (line_count > wp->w_height - row)
     line_count = wp->w_height - row;
 
-  retval = win_do_lines(wp, row, line_count, mayclear, FALSE);
-  if (retval != MAYBE)
-    return retval;
-
-  /*
-   * If there is a next window or a status line, we first try to delete the
-   * lines at the bottom to avoid messing what is after the window.
-   * If this fails and there are following windows, don't do anything to avoid
-   * messing up those windows, better just redraw.
-   */
-  did_delete = FALSE;
-  if (wp->w_next != NULL || wp->w_status_height) {
-    if (screen_del_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, NULL) == OK)
-      did_delete = TRUE;
-    else if (wp->w_next)
-      return FAIL;
-  }
-  /*
-   * if no lines deleted, blank the lines that will end up below the window
-   */
-  if (!did_delete) {
-    wp->w_redr_status = TRUE;
-    redraw_cmdline = TRUE;
-    nextrow = wp->w_winrow + wp->w_height + wp->w_status_height;
-    lastrow = nextrow + line_count;
-    if (lastrow > Rows)
-      lastrow = Rows;
-    screen_fill(nextrow - line_count, lastrow - line_count,
-                wp->w_wincol, W_ENDCOL(wp),
-                ' ', ' ', 0);
-  }
-
-  if (screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL)
-      == FAIL) {
-    /* deletion will have messed up other windows */
-    if (did_delete) {
-      wp->w_redr_status = TRUE;
-      win_rest_invalid(wp->w_next);
-    }
-    return FAIL;
-  }
-
-  return OK;
+  return win_do_lines(wp, row, line_count, mayclear, FALSE);
 }
 
 /// Delete "line_count" window lines at "row" in window "wp".
@@ -6512,41 +6464,13 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 /// Return OK for success, FAIL if the lines are not deleted.
 int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
-  int retval;
-
   if (invalid)
     wp->w_lines_valid = 0;
 
   if (line_count > wp->w_height - row)
     line_count = wp->w_height - row;
 
-  retval = win_do_lines(wp, row, line_count, mayclear, TRUE);
-  if (retval != MAYBE)
-    return retval;
-
-  if (screen_del_lines(0, wp->w_winrow + row, line_count,
-          (int)Rows, NULL) == FAIL) {
-    return FAIL;
-  }
-
-  /*
-   * If there are windows or status lines below, try to put them at the
-   * correct place. If we can't do that, they have to be redrawn.
-   */
-  if (wp->w_next || wp->w_status_height || cmdline_row < Rows - 1) {
-    if (screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
-            line_count, (int)Rows, NULL) == FAIL) {
-      wp->w_redr_status = TRUE;
-      win_rest_invalid(wp->w_next);
-    }
-  }
-  /*
-   * If this is the last window and there is no status line, redraw the
-   * command line later.
-   */
-  else
-    redraw_cmdline = TRUE;
-  return OK;
+  return win_do_lines(wp, row, line_count, mayclear, TRUE);
 }
 
 // Common code for win_ins_lines() and win_del_lines().
