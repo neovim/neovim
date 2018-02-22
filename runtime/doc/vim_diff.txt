@@ -34,7 +34,7 @@ a complete and centralized reference of those differences.
 - 'complete' doesn't include "i"
 - 'cscopeverbose' is enabled
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
-- 'display' defaults to "lastline"
+- 'display' defaults to "lastline,msgsep"
 - 'fillchars' defaults (in effect) to "vert:│,fold:·"
 - 'formatoptions' defaults to "tcqj"
 - 'history' defaults to 10000 (the maximum)
@@ -130,7 +130,9 @@ Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 
 Options:
   'cpoptions' flags: |cpo-_|
+  'display' flag `msgsep` to minimize scrolling when showing messages
   'guicursor' works in the terminal
+  'fillchars' flag `msgsep` (see 'display' above)
   'inccommand' shows interactive results for |:substitute|-like commands
   'scrollback'
   'statusline' supports unlimited alignment sections
@@ -164,6 +166,7 @@ Events:
 
 Highlight groups:
   |hl-NormalNC| highlights non-current windows
+  |hl-MsgSeparator| highlights separator for scrolled messages
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|

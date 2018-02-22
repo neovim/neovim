@@ -24,6 +24,7 @@ before_each(function()
   clear()
   screen = Screen.new(40, 8)
   screen:attach()
+  command("set display-=msgsep")
   source([[
     highlight RBP1 guibg=Red
     highlight RBP2 guibg=Yellow

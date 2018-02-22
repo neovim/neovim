@@ -947,6 +947,7 @@ EXTERN int fill_stlnc INIT(= ' ');
 EXTERN int fill_vert INIT(= 9474);  // │
 EXTERN int fill_fold INIT(= 183);   // ·
 EXTERN int fill_diff INIT(= '-');
+EXTERN int fill_msgsep INIT(= ' ');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);

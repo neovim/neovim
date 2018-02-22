@@ -194,8 +194,8 @@ describe('ui/cursor', function()
         if m.blinkoff then m.blinkoff = 400 end
         if m.blinkwait then m.blinkwait = 700 end
       end
-      if m.hl_id then m.hl_id = 48 end
-      if m.id_lm then m.id_lm = 49 end
+      if m.hl_id then m.hl_id = 49 end
+      if m.id_lm then m.id_lm = 50 end
     end
 
     -- Assert the new expectation.

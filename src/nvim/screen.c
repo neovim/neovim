@@ -300,13 +300,25 @@ void update_screen(int type)
    * if the screen was scrolled up when displaying a message, scroll it down
    */
   if (msg_scrolled) {
-    clear_cmdline = TRUE;
-    if (msg_scrolled > Rows - 5)            /* clearing is faster */
+    clear_cmdline = true;
+    if (dy_flags & DY_MSGSEP) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        int valid = Rows - msg_scrollsize();
+        if (wp->w_winrow + wp->w_height > valid) {
+          wp->w_redr_type = NOT_VALID;
+          wp->w_lines_valid = 0;
+        }
+        if (wp->w_winrow + wp->w_height + wp->w_status_height > valid) {
+          wp->w_redr_status = true;
+        }
+      }
+    } else if (msg_scrolled > Rows - 5) {  // clearing is faster
       type = CLEAR;
-    else if (type != CLEAR) {
-      check_for_delay(FALSE);
-      if (screen_ins_lines(0, 0, msg_scrolled, (int)Rows, NULL) == FAIL)
+    } else if (type != CLEAR) {
+      check_for_delay(false);
+      if (screen_ins_lines(0, 0, msg_scrolled, (int)Rows, NULL) == FAIL) {
         type = CLEAR;
+      }
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_winrow < msg_scrolled) {
           if (wp->w_winrow + wp->w_height > msg_scrolled

@@ -355,7 +355,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it('execute command with multi-line output', function()
+    it('execute command with multi-line output without msgsep', function()
+      command("set display-=msgsep")
       feed(':ls<cr>')
       screen:expect([[
         {0:~                                                    }|
@@ -369,6 +370,28 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
+        :ls                                                  |
+          1 %a   "[No Name]"                    line 1       |
+        {7:Press ENTER or type command to continue}^              |
+      ]])
+      feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
+    end)
+
+    it('execute command with multi-line output and with msgsep', function()
+      command("set display+=msgsep")
+      feed(':ls<cr>')
+      screen:expect([[
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:                                                     }|
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
         {7:Press ENTER or type command to continue}^              |
@@ -573,6 +596,7 @@ describe('Screen', function()
       command('nnoremap <F1> :echo "TEST"<CR>')
       feed(':ls<CR>')
       screen:expect([[
+                                                             |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
@@ -582,8 +606,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {1:                                                     }|
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
         {7:Press ENTER or type command to continue}^              |

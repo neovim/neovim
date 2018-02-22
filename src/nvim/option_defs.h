@@ -394,11 +394,13 @@ EXTERN char_u   *p_dir;         /* 'directory' */
 EXTERN char_u   *p_dy;          /* 'display' */
 EXTERN unsigned dy_flags;
 #ifdef IN_OPTION_C
-static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", NULL };
+static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep",
+                                  NULL };
 #endif
 #define DY_LASTLINE             0x001
 #define DY_TRUNCATE             0x002
 #define DY_UHEX                 0x004
+#define DY_MSGSEP               0x008
 EXTERN int p_ed;                // 'edcompatible'
 EXTERN int p_emoji;             // 'emoji'
 EXTERN char_u   *p_ead;         // 'eadirection'
