@@ -289,9 +289,6 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-    if !empty(pythonx_errs)
-      call health#report_warn(pythonx_errs)
-    endif
   endif
 
   if !empty(pyname)
