@@ -3080,12 +3080,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
     // simple case: insert into current line
     if (y_type == kMTCharWise && y_size == 1) {
-      linenr_T end;
+      linenr_T end_lnum = 0;  // init for gcc
 
       if (VIsual_active) {
-        end = curbuf->b_visual.vi_end.lnum;
-        if (end < curbuf->b_visual.vi_start.lnum) {
-            end = curbuf->b_visual.vi_start.lnum;
+        end_lnum = curbuf->b_visual.vi_end.lnum;
+        if (end_lnum < curbuf->b_visual.vi_start.lnum) {
+            end_lnum = curbuf->b_visual.vi_start.lnum;
         }
       }
 
@@ -3116,7 +3116,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         if (VIsual_active) {
           lnum++;
         }
-      } while (VIsual_active && lnum <= end);
+      } while (VIsual_active && lnum <= end_lnum);
 
       if (VIsual_active) {  /* reset lnum to the last visual line */
         lnum--;
