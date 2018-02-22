@@ -260,8 +260,7 @@ function! s:check_python(version) abort
   let python_multiple = []
 
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
-    return
+    call health#report_info('Disabled ('.loaded_var.'='.eval(loaded_var).').  This might be due to some previous error.')
   endif
 
   if !empty(pyenv)
