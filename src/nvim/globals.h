@@ -948,11 +948,11 @@ EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= ' ');
 
-/* Characters from 'fillchars' option */
+// 'fillchars' characters, defaults are overriden in option.[c|lua]
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
 EXTERN int fill_vert INIT(= ' ');
-EXTERN int fill_fold INIT(= '-');
+EXTERN int fill_fold INIT(= ' ');
 EXTERN int fill_diff INIT(= '-');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
