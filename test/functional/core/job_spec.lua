@@ -755,6 +755,9 @@ describe("pty process teardown", function()
   local screen
   before_each(function()
     clear()
+    if iswin() then
+      command([[set shellcmdflag=/s/c shellxquote=\"]])
+    end
     screen = Screen.new(30, 6)
     screen:attach()
     screen:expect([[
@@ -771,22 +774,38 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
+    feed_command([[:terminal "]]..helpers.nvim_prog
+      ..[[" -u NONE -i NONE --cmd "]]..nvim_set
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
+      ..[[" -c terminal -c "]]..(iswin()
+        and [[!start /min ping -n 301 127.0.0.1]]
+        or  [[!(sleep 300 &)]])
+      ..[[" -c qa]])
+
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
-    screen:expect([[
+    if iswin() then
+      command('redraw!')
+      feed('G')
+      screen:expect([[
+                                    |
+                                    |
+                                   0|
+                                    |
+      ^[Process exited 0]            |
+                                    |
+      ]])
+    else
+      screen:expect([[
       ^                              |
       [Process exited 0]            |
                                     |
                                     |
                                     |
                                     |
-    ]])
+      ]])
+    end
   end)
 end)
