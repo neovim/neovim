@@ -3394,24 +3394,23 @@ static char_u *set_chars_option(char_u **varp)
     int     *cp;
     char    *name;
   };
-  static struct charstab filltab[] =
-  {
-    {&fill_stl,     "stl"},
-    {&fill_stlnc,   "stlnc"},
-    {&fill_vert,    "vert"},
-    {&fill_fold,    "fold"},
-    {&fill_diff,    "diff"},
+  static struct charstab filltab[] = {
+    { &fill_stl,     "stl" },
+    { &fill_stlnc,   "stlnc" },
+    { &fill_vert,    "vert" },
+    { &fill_fold,    "fold" },
+    { &fill_diff,    "diff" },
+    { &fill_eob,     "eob" }
   };
-  static struct charstab lcstab[] =
-  {
-    {&lcs_eol,      "eol"},
-    {&lcs_ext,      "extends"},
-    {&lcs_nbsp,     "nbsp"},
-    {&lcs_prec,     "precedes"},
-    {&lcs_space,    "space"},
-    {&lcs_tab2,     "tab"},
-    {&lcs_trail,    "trail"},
-    {&lcs_conceal,  "conceal"},
+  static struct charstab lcstab[] = {
+    { &lcs_eol,      "eol" },
+    { &lcs_ext,      "extends" },
+    { &lcs_nbsp,     "nbsp" },
+    { &lcs_prec,     "precedes" },
+    { &lcs_space,    "space" },
+    { &lcs_tab2,     "tab" },
+    { &lcs_trail,    "trail" },
+    { &lcs_conceal,  "conceal" },
   };
   struct charstab *tab;
 

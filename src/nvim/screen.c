@@ -1537,9 +1537,9 @@ static void win_update(win_T *wp)
     } else if (dollar_vcol == -1)
       wp->w_botline = lnum;
 
-    /* make sure the rest of the screen is blank */
-    /* put '~'s on rows that aren't part of the file. */
-    win_draw_end(wp, '~', ' ', row, wp->w_height, HLF_EOB);
+    // make sure the rest of the screen is blank
+    // write the 'fill_eob' character to rows that aren't part of the file.
+    win_draw_end(wp, fill_eob, ' ', row, wp->w_height, HLF_EOB);
   }
 
   /* Reset the type of redrawing required, the window has been updated. */
