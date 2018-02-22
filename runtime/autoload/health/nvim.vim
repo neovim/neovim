@@ -7,12 +7,12 @@ function! s:check_config() abort
   " If $VIM is empty we don't care. Else make sure it is valid.
   if !empty($VIM) && !filereadable($VIM.'/runtime/doc/nvim.txt')
     let ok = v:false
-    call health#report_error("$VIM is invalid: ".$VIM)
+    call health#report_error('$VIM is invalid: '.$VIM)
   endif
 
   if exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE')
     let ok = v:false
-    call health#report_warn("$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+",
+    call health#report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+',
           \ [ "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
   endif
@@ -100,8 +100,8 @@ function! s:check_performance() abort
   else
     call health#report_info(buildtype)
     call health#report_warn(
-          \ "Non-optimized build-type. Nvim will be slower.",
-          \ ["Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.",
+          \ 'Non-optimized build-type. Nvim will be slower.',
+          \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
 endfunction
