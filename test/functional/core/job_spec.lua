@@ -427,9 +427,19 @@ describe('jobs', function()
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
       call jobwait([jobstart(cmd, d)])
-      call rpcnotify(g:channel, 'data', d.data)
+      call call('rpcnotify', extend([g:channel, 'data'], d.data))
     ]])
-    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}}}}, next_msg())
+    expect_msg_seq(
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}
+      }}},
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4'}, {'', ''}, {'5', ''}, {''}
+      }}},
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5'}, {'', ''}, {''}
+      }}}
+    )
   end)
 
   it('jobstart() works with partial functions', function()
