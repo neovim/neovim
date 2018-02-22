@@ -144,12 +144,6 @@ void ui_builtin_stop(void)
   UI_CALL(stop);
 }
 
-/// Returns true if UI `ui` is stopped.
-bool ui_is_stopped(UI *ui)
-{
-  return ui->data == NULL;
-}
-
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {

@@ -106,6 +106,9 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
+  // Detach brigde first, so that "stop" is the last event the TUI loop
+  // receives from the main thread. #8041
+  ui_detach_impl(b);
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
   UI_BRIDGE_CALL(b, stop, 1, b);
@@ -122,7 +125,6 @@ static void ui_bridge_stop(UI *b)
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
   xfree(bridge->ui);  // Threads joined, now safe to free UI container. #7922
-  ui_detach_impl(b);
   xfree(b);
 }
 static void ui_bridge_stop_event(void **argv)
