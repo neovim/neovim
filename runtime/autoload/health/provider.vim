@@ -260,8 +260,7 @@ function! s:check_python(version) abort
   let python_multiple = []
 
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
-    return
+    call health#report_info('Disabled ('.loaded_var.'='.eval(loaded_var).').  This might be due to some previous error.')
   endif
 
   if !empty(pyenv)
@@ -289,9 +288,6 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-    if !empty(pythonx_errs)
-      call health#report_warn(pythonx_errs)
-    endif
   endif
 
   if !empty(pyname)
@@ -457,7 +453,7 @@ function! s:check_ruby() abort
 
   let host = provider#ruby#Detect()
   if empty(host)
-    call health#report_warn("`neovim-ruby-host` not found.",
+    call health#report_warn('`neovim-ruby-host` not found.',
           \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
           \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
           \  'If you are using rvm/rbenv/chruby, try "rehashing".',

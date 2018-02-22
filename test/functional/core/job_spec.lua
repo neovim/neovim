@@ -497,10 +497,19 @@ describe('jobs', function()
       eq({'notification', 'wait', {{-3, 5}}}, next_msg())
     end)
 
-    it('will return -2 when interrupted', function()
+    it('will return -2 when interrupted without timeout', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("sleep 10; exit 55")]))')
+      eq({'notification', 'ready', {}}, next_msg())
+      feed('<c-c>')
+      eq({'notification', 'wait', {{-2}}}, next_msg())
+    end)
+
+    it('will return -2 when interrupted with timeout', function()
+      feed_command('call rpcnotify(g:channel, "ready") | '..
+              'call rpcnotify(g:channel, "wait", '..
+              'jobwait([jobstart("sleep 10; exit 55")], 10000))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
       eq({'notification', 'wait', {{-2}}}, next_msg())
