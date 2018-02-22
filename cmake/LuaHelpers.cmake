@@ -5,8 +5,7 @@
 # Check if a module is available in Lua
 function(check_lua_module LUA_PRG_PATH MODULE RESULT_VAR)
   execute_process(COMMAND ${LUA_PRG_PATH} -e "require('${MODULE}')"
-    RESULT_VARIABLE module_missing
-    ERROR_QUIET)
+    RESULT_VARIABLE module_missing)
   if(module_missing)
     set(${RESULT_VAR} False PARENT_SCOPE)
   else()
