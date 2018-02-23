@@ -35,6 +35,7 @@ a complete and centralized reference of those differences.
 - 'cscopeverbose' is enabled
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
+- 'fillchars' defaults (in effect) to "vert:│,fold:·"
 - 'formatoptions' defaults to "tcqj"
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
