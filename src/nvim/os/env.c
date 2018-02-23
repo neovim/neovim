@@ -409,7 +409,11 @@ void expand_env_esc(char_u *restrict srcp,
     }
 
     copy_char = true;
-    if ((*src == '$') || (*src == '~' && at_start)) {
+    if ((*src == '$')
+#ifdef WIN32
+        || (*src == '%')
+#endif
+        || (*src == '~' && at_start)) {
       mustfree = false;
 
       // The variable name is copied into dst temporarily, because it may
@@ -429,26 +433,34 @@ void expand_env_esc(char_u *restrict srcp,
         } else // NOLINT
 #endif
         {
-          while (c-- > 0 && *tail != NUL && vim_isIDc(*tail)) {
+          while (c-- > 0 && *tail != NUL && ((vim_isIDc(*tail))
+#ifdef WIN32
+                                             || (*src == '%' && *tail != '%')
+#endif
+                                             )) {  //  NOLINT(whitespace/parens)
             *var++ = *tail++;
           }
         }
 
-#if defined(UNIX)
+#ifdef UNIX
         // Verify that we have found the end of a Unix ${VAR} style variable
         if (src[1] == '{' && *tail != '}') {
+#else
+        if (*src == '%' && *tail != '%') {
+#endif
           var = NULL;
         } else {
+#ifdef UNIX
           if (src[1] == '{') {
+#else
+          if (*src == '%') {
+#endif
             tail++;
           }
-#endif
         *var = NUL;
         var = (char_u *)vim_getenv((char *)dst);
         mustfree = true;
-#if defined(UNIX)
         }
-#endif
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
