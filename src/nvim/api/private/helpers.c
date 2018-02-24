@@ -701,7 +701,7 @@ String cchar_to_string(char c)
 String cstr_to_string(const char *str)
 {
     if (str == NULL) {
-        return (String) STRING_INIT;
+      return (String) STRING_INIT;
     }
 
     size_t len = strlen(str);
@@ -1149,7 +1149,7 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
-/// @returns An array of maparg() like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 {
   Array mappings = ARRAY_DICT_INIT;

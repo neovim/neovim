@@ -73,6 +73,7 @@
 #include "nvim/shada.h"
 #include "nvim/lua/executor.h"
 #include "nvim/globals.h"
+#include "nvim/api/private/helpers.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -4862,50 +4863,55 @@ static struct {
  * List of names for completion for ":command" with the EXPAND_ flag.
  * Must be alphabetical for completion.
  */
-static struct {
-  int expand;
-  char    *name;
-} command_complete[] =
+static const char *command_complete[] =
 {
-  { EXPAND_AUGROUP, "augroup" },
-  { EXPAND_BEHAVE, "behave" },
-  { EXPAND_BUFFERS, "buffer" },
-  { EXPAND_CHECKHEALTH, "checkhealth" },
-  { EXPAND_COLORS, "color" },
-  { EXPAND_COMMANDS, "command" },
-  { EXPAND_COMPILER, "compiler" },
-  { EXPAND_CSCOPE, "cscope" },
-  { EXPAND_USER_DEFINED, "custom" },
-  { EXPAND_USER_LIST, "customlist" },
-  { EXPAND_DIRECTORIES, "dir" },
-  { EXPAND_ENV_VARS, "environment" },
-  { EXPAND_EVENTS, "event" },
-  { EXPAND_EXPRESSION, "expression" },
-  { EXPAND_FILES, "file" },
-  { EXPAND_FILES_IN_PATH, "file_in_path" },
-  { EXPAND_FILETYPE, "filetype" },
-  { EXPAND_FUNCTIONS, "function" },
-  { EXPAND_HELP, "help" },
-  { EXPAND_HIGHLIGHT, "highlight" },
-  { EXPAND_HISTORY, "history" },
+  [EXPAND_AUGROUP] = "augroup",
+  [EXPAND_BEHAVE] = "behave",
+  [EXPAND_BUFFERS] = "buffer",
+  [EXPAND_CHECKHEALTH] = "checkhealth",
+  [EXPAND_COLORS] = "color",
+  [EXPAND_COMMANDS] = "command",
+  [EXPAND_COMPILER] = "compiler",
+  [EXPAND_CSCOPE] = "cscope",
+  [EXPAND_USER_DEFINED] = "custom",
+  [EXPAND_USER_LIST] = "customlist",
+  [EXPAND_DIRECTORIES] = "dir",
+  [EXPAND_ENV_VARS] = "environment",
+  [EXPAND_EVENTS] = "event",
+  [EXPAND_EXPRESSION] = "expression",
+  [EXPAND_FILES] = "file",
+  [EXPAND_FILES_IN_PATH] = "file_in_path",
+  [EXPAND_FILETYPE] = "filetype",
+  [EXPAND_FUNCTIONS] = "function",
+  [EXPAND_HELP] = "help",
+  [EXPAND_HIGHLIGHT] = "highlight",
+  [EXPAND_HISTORY] = "history",
 #ifdef HAVE_WORKING_LIBINTL
-  { EXPAND_LOCALES, "locale" },
+  [EXPAND_LOCALES] = "locale",
 #endif
-  { EXPAND_MAPPINGS, "mapping" },
-  { EXPAND_MENUS, "menu" },
-  { EXPAND_MESSAGES, "messages" },
-  { EXPAND_OWNSYNTAX, "syntax" },
-  { EXPAND_SYNTIME, "syntime" },
-  { EXPAND_SETTINGS, "option" },
-  { EXPAND_PACKADD, "packadd" },
-  { EXPAND_SHELLCMD, "shellcmd" },
-  { EXPAND_SIGN, "sign" },
-  { EXPAND_TAGS, "tag" },
-  { EXPAND_TAGS_LISTFILES, "tag_listfiles" },
-  { EXPAND_USER, "user" },
-  { EXPAND_USER_VARS, "var" },
-  { 0, NULL }
+  [EXPAND_MAPPINGS] = "mapping",
+  [EXPAND_MENUS] = "menu",
+  [EXPAND_MESSAGES] = "messages",
+  [EXPAND_OWNSYNTAX] = "syntax",
+  [EXPAND_SYNTIME] = "syntime",
+  [EXPAND_SETTINGS] = "option",
+  [EXPAND_PACKADD] = "packadd",
+  [EXPAND_SHELLCMD] = "shellcmd",
+  [EXPAND_SIGN] = "sign",
+  [EXPAND_TAGS] = "tag",
+  [EXPAND_TAGS_LISTFILES] = "tag_listfiles",
+  [EXPAND_USER] = "user",
+  [EXPAND_USER_VARS] = "var",
 };
+
+static char *get_command_complete(int arg)
+{
+  if (arg >= (int)(ARRAY_SIZE(command_complete))) {
+    return NULL;
+  } else {
+    return (char *)command_complete[arg];
+  }
+}
 
 static void uc_list(char_u *name, size_t name_len)
 {
@@ -5000,13 +5006,12 @@ static void uc_list(char_u *name, size_t name_len)
         IObuff[len++] = ' ';
       } while (len < 21);
 
-      /* Completion */
-      for (j = 0; command_complete[j].expand != 0; ++j)
-        if (command_complete[j].expand == cmd->uc_compl) {
-          STRCPY(IObuff + len, command_complete[j].name);
-          len += (int)STRLEN(IObuff + len);
-          break;
-        }
+      // Completion
+      char *cmd_compl = get_command_complete(cmd->uc_compl);
+      if (cmd_compl != NULL) {
+        STRCPY(IObuff + len, get_command_complete(cmd->uc_compl));
+        len += (int)STRLEN(IObuff + len);
+      }
 
       do {
         IObuff[len++] = ' ';
@@ -5797,7 +5802,15 @@ char_u *get_user_cmd_nargs(expand_T *xp, int idx)
  */
 char_u *get_user_cmd_complete(expand_T *xp, int idx)
 {
-  return (char_u *)command_complete[idx].name;
+  if (idx >= (int)ARRAY_SIZE(command_complete)) {
+    return NULL;
+  }
+  char *cmd_compl = get_command_complete(idx);
+  if (cmd_compl == NULL) {
+    return (char_u *)"";
+  } else {
+    return (char_u *)cmd_compl;
+  }
 }
 
 /*
@@ -5857,20 +5870,23 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp,
     }
   }
 
-  for (i = 0; command_complete[i].expand != 0; ++i) {
-    if ((int)STRLEN(command_complete[i].name) == valend
-        && STRNCMP(value, command_complete[i].name, valend) == 0) {
-      *complp = command_complete[i].expand;
-      if (command_complete[i].expand == EXPAND_BUFFERS)
+  for (i = 0; i < (int)ARRAY_SIZE(command_complete); i++) {
+    if (get_command_complete(i) == NULL) {
+      continue;
+    }
+    if ((int)STRLEN(command_complete[i]) == valend
+        && STRNCMP(value, command_complete[i], valend) == 0) {
+      *complp = i;
+      if (i == EXPAND_BUFFERS) {
         *argt |= BUFNAME;
-      else if (command_complete[i].expand == EXPAND_DIRECTORIES
-               || command_complete[i].expand == EXPAND_FILES)
+      } else if (i == EXPAND_DIRECTORIES || i == EXPAND_FILES) {
         *argt |= XFILE;
+      }
       break;
     }
   }
 
-  if (command_complete[i].expand == 0) {
+  if (i == (int)ARRAY_SIZE(command_complete)) {
     EMSG2(_("E180: Invalid complete value: %s"), value);
     return FAIL;
   }
@@ -5894,9 +5910,13 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp,
 
 int cmdcomplete_str_to_type(char_u *complete_str)
 {
-    for (int i = 0; command_complete[i].expand != 0; i++) {
-      if (STRCMP(complete_str, command_complete[i].name) == 0) {
-        return command_complete[i].expand;
+    for (int i = 0; i < (int)(ARRAY_SIZE(command_complete)); i++) {
+      char *cmd_compl = get_command_complete(i);
+      if (cmd_compl == NULL) {
+        continue;
+      }
+      if (STRCMP(complete_str, command_complete[i]) == 0) {
+        return i;
       }
     }
 
@@ -9947,4 +9967,88 @@ bool cmd_can_preview(char_u *cmd)
   }
 
   return false;
+}
+
+/// Gets a list of maps describing user-commands defined for buffer `buf`
+/// or defined globally if `buf` is NULL.
+///
+/// @param buf  Buffer to inspect, or NULL to get global commands.
+///
+/// @return Array of dictionaries describing commands
+ArrayOf(Dictionary) commands_array(buf_T *buf)
+{
+  Array rv = ARRAY_DICT_INIT;
+  garray_T *gap;
+  if (buf == NULL) {
+    gap = &ucmds;
+  } else {
+    gap = &buf->b_ucmds;
+  }
+  for (int i = 0; i < gap->ga_len; i++) {
+    char arg[2] = { 0, 0 };
+    Dictionary d = ARRAY_DICT_INIT;
+    char Range[10] = "";
+    ucmd_T *cmd = USER_CMD_GA(gap, i);
+
+    // Name
+    PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
+
+    // Argument
+    switch (cmd->uc_argt & (EXTRA|NOSPC|NEEDARG)) {
+    case 0:                    arg[0] = '0'; break;
+    case(EXTRA):               arg[0] = '*'; break;
+    case(EXTRA|NOSPC):         arg[0] = '?'; break;
+    case(EXTRA|NEEDARG):       arg[0] = '+'; break;
+    case(EXTRA|NOSPC|NEEDARG): arg[0] = '1'; break;
+    }
+    PUT(d, "nargs", STRING_OBJ(cstr_to_string((char *)arg)));
+
+    // Definition
+    PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
+
+    // Complete
+    char *cmd_compl = get_command_complete(cmd->uc_compl);
+    if (cmd_compl != NULL) {
+      PUT(d, "complete", STRING_OBJ(cstr_to_string(cmd_compl)));
+    }
+
+    // Complete Arg
+    if (cmd->uc_compl_arg != NULL) {
+      PUT(d, "complete_arg",
+          STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
+    }
+
+    // Range
+    if (cmd->uc_argt & (RANGE|COUNT)) {
+      if (cmd->uc_argt & COUNT) {
+        // -count=N
+        snprintf((char *)Range, sizeof(Range), "%" PRId64 "c",
+                 (int64_t)cmd->uc_def);
+      } else if (cmd->uc_argt & DFLALL) {
+        Range[0] = '%';
+      } else if (cmd->uc_def >= 0) {
+        // -range=N
+        snprintf((char *)Range, sizeof(Range), "%" PRId64 "",
+                 (int64_t)cmd->uc_def);
+      } else {
+        Range[0] = '.';
+      }
+      PUT(d, "range", STRING_OBJ(cstr_to_string((char *)Range)));
+    }
+
+    // Address
+    for (int j = 0; addr_type_complete[j].expand != -1; j++) {
+      if (addr_type_complete[j].expand != ADDR_LINES
+          && addr_type_complete[j].expand == cmd->uc_addr_type) {
+        PUT(d, "addr", STRING_OBJ(cstr_to_string(addr_type_complete[j].name)));
+        break;
+      }
+    }
+
+    // ScriptID
+    PUT(d, "script_id", INTEGER_OBJ(cmd->uc_scriptID));
+
+    ADD(rv, DICTIONARY_OBJ(d));
+  }
+  return rv;
 }
