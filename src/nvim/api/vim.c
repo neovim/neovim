@@ -44,9 +44,6 @@
 # include "api/vim.c.generated.h"
 #endif
 
-extern UI *uis[MAX_UI_COUNT];
-extern size_t ui_count;
-
 /// Executes an ex-command.
 ///
 /// On parse error: forwards the Vim error; does not update v:errmsg.
@@ -1477,16 +1474,5 @@ Float nvim__id_float(Float flt)
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {
-  Array alluis = ARRAY_DICT_INIT;
-  for (unsigned int i = 0; i < ui_count ; i++) {
-    Dictionary dic = ARRAY_DICT_INIT;
-    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
-    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
-    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
-    for (UIExtension j = 0; j < kUIExtCount; j++) {
-      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
-    }
-    ADD(alluis, DICTIONARY_OBJ(dic));
-  }
-  return alluis;
+  return ui_list();
 }

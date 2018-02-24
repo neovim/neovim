@@ -48,9 +48,9 @@
 
 #define MAX_UI_COUNT 16
 
-UI *uis[MAX_UI_COUNT];
+static UI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
-size_t ui_count = 0;
+static size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
   int top, bot, left, right;
@@ -532,4 +532,20 @@ void ui_cursor_shape(void)
 bool ui_is_external(UIExtension widget)
 {
   return ui_ext[widget];
+}
+
+Array ui_list(void)
+{
+  Array all_uis = ARRAY_DICT_INIT;
+  for (unsigned int i = 0; i < ui_count ; i++) {
+    Dictionary dic = ARRAY_DICT_INIT;
+    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
+    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
+    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
+    for (UIExtension j = 0; j < kUIExtCount; j++) {
+      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
+    }
+    ADD(all_uis, DICTIONARY_OBJ(dic));
+  }
+  return all_uis;
 }
