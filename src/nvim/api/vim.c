@@ -825,6 +825,19 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
+/// Gets a list of dictionaries describing global(non-buffer) commands.
+///
+/// @param  opts       Holds the API Metadata describing what type of commands
+///                    are needed.
+/// @param[out]  err   Error details, if any.
+///
+/// @returns Array of dictionaries describing commands.
+ArrayOf(Dictionary) nvim_get_commands(Dictionary opts, Error *err)
+    FUNC_API_SINCE(4)
+{
+  return commands_array(NULL);
+}
+
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
 /// 1 is the |api-metadata| map (Dictionary).
 ///
