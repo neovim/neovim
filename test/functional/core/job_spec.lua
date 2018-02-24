@@ -141,7 +141,8 @@ describe('jobs', function()
   end)
 
   it('allows interactive commands', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
     eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
@@ -178,7 +179,7 @@ describe('jobs', function()
     os.remove(filename)
 
     -- jobsend() preserves NULs.
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', [[call jobsend(j, ["123\n456",""])]])
     expect_msg_seq(
       { {'notification', 'stdout', {0, {'123\n456', ''} } },
@@ -192,6 +193,7 @@ describe('jobs', function()
   end)
 
   it("will not buffer data if it doesn't end in newlines", function()
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     if os.getenv("TRAVIS") and os.getenv("CC") == "gcc-4.9"
       and helpers.os_name() == "osx" then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
@@ -199,7 +201,7 @@ describe('jobs', function()
       return
     end
 
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
     nvim('command', "call jobstop(j)")
@@ -208,14 +210,16 @@ describe('jobs', function()
   end)
 
   it('preserves newlines', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
     eq({'notification', 'stdout',
       {0, {'a', '', 'c', '', '', '', 'b', '', ''}}}, next_msg())
   end)
 
   it('preserves NULs', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
     eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
       next_msg())
@@ -225,7 +229,8 @@ describe('jobs', function()
   end)
 
   it('avoids sending final newline', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["some data", "without\nfinal nl"])')
     eq({'notification', 'stdout', {0, {'some data', 'without\nfinal nl'}}},
       next_msg())
@@ -235,14 +240,16 @@ describe('jobs', function()
   end)
 
   it('closes the job streams with jobclose', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
   it("disallows jobsend on a job that closed stdin", function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq(false, pcall(function()
       nvim('command', 'call jobsend(j, ["some data"])')
@@ -255,7 +262,8 @@ describe('jobs', function()
   end)
 
   it('disallows jobstop twice on the same job', function()
-    nvim('command', "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     eq(true, pcall(eval, "jobstop(j)"))
     eq(false, pcall(eval, "jobstop(j)"))
@@ -667,9 +675,10 @@ describe('jobs', function()
   end)
 
   it('cannot have both rpc and pty options', function()
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     command("let g:job_opts.pty = v:true")
     command("let g:job_opts.rpc = v:true")
-    local _, err = pcall(command, "let j = jobstart(has('win32') ? 'cat.exe -' : ['cat', '-'], g:job_opts)")
+    local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
   end)
 
