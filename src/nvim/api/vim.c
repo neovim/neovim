@@ -38,7 +38,6 @@
 #include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
-#define MAX_UI_COUNT 16
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"

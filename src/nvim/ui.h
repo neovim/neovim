@@ -38,8 +38,6 @@ struct ui_t {
   void (*stop)(UI *ui);
 };
 
-Array ui_list(void);
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
 # include "ui_events_call.h.generated.h"
