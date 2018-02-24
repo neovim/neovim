@@ -4361,7 +4361,8 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
                       && comp_char_differs(off_from, off_to))
                   || ((*mb_off2cells)(off_from, off_from + cols) > 1
                       && ScreenLines[off_from + 1]
-                      != ScreenLines[off_to + 1])))));
+                      != ScreenLines[off_to + 1])))
+          || p_wd < 0));
 }
 
 /*
