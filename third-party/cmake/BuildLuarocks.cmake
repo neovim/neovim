@@ -150,12 +150,12 @@ if(USE_BUNDLED_BUSTED)
   endif()
 
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
-  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
+    ARGS build penlight ${LUAROCKS_BUILDARGS}
     DEPENDS ${PENLIGHT_DEPENDS})
   add_custom_target(penlight
-    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight)
 
   if(WIN32)
     set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted.bat")
@@ -167,7 +167,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc12-1/busted-2.0.rc12-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build busted ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted
     DEPENDS ${BUSTED_EXE})
@@ -175,7 +175,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://luarocks.org/manifests/mpeterv/luacheck-0.21.2-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build luacheck ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${LUACHECK_EXE})
@@ -200,7 +200,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-26/nvim-client-0.0.1-26.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build nvim-client ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
