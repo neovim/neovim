@@ -130,10 +130,8 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    -- TODO: hangs on Windows
-    if helpers.pending_win32(pending) then return end
     nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
-    nvim('command', [[call jobstart('echo ""', g:job_opts)]])
+    nvim('command', [[call jobstart(has('win32') ? ['cmd', '/c', 'echo.'] : 'echo ""', g:job_opts)]])
     expect_twostreams({{'notification', 'stdout', {0, {'', ''}}},
                        {'notification', 'stdout', {0, {''}}}},
                       {{'notification', 'stderr', {0, {''}}}})
