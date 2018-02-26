@@ -2408,10 +2408,37 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
+  Callback input_callback = { .type = kCallbackNone };
+  char_u *select;
+  int xp_type = EXPAND_NOTHING;
+  char *xp_arg = NULL;
+  int cmd_silent_save = cmd_silent;
+  const int save_ex_normal_busy = ex_normal_busy;
+
+  cmd_silent = false;  // Want to see the prompt.
+  cmdline_row = msg_row;
+
+  select = (char_u *)getcmdline_prompt('@', "", 0, xp_type, xp_arg,
+                                       input_callback);
+  /*select = (char_u *) getcmdline('@', 0, 0);*/
+
+  ex_normal_busy = save_ex_normal_busy;
+  callback_free(&input_callback);
+  xfree(xp_arg);
+
+  // Since the user typed this, no need to wait for return.
+  need_wait_return = false;
+  msg_didout = false;
+  cmd_silent = cmd_silent_save;
+
   no_mapping++;
   for (;; ) {
+
+    if (select) c = *select;
+    else break;
+    select++;
+
     ui_cursor_goto(msg_row, msg_col);
-    c = safe_vgetc();
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
@@ -2435,6 +2462,7 @@ get_number (
       break;
     } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
       break;
+    else break; /* if it is an alphabet */
   }
   no_mapping--;
   return n;
