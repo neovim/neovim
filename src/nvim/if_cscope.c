@@ -574,7 +574,7 @@ static int cs_cnt_matches(size_t idx)
     // Display/discard any output that doesn't match what we want.
     // Accept "\S*cscope: X lines", also matches "mlcscope".
     // Bail out for the "Unable to search" error.
-    if (strstr((const char *)stok, "Unable to search database") != NULL) {
+    if (strstr((const char *)buf, "Unable to search database") != NULL) {
         break;
     }
     if ((stok = strtok(buf, (const char *)" ")) == NULL) {
