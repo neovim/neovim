@@ -1685,8 +1685,15 @@ static int cs_read_prompt(size_t i)
   assert(IOSIZE >= cs_emsg_len);
   size_t maxlen = IOSIZE - cs_emsg_len;
 
-  for (;; ) {
-    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0]) {
+  while (1) {
+    while (1) {
+      do {
+        errno = 0;
+        ch = fgetc(csinfo[i].fr_fp);
+      } while (ch == EOF && errno == EINTR && ferror(csinfo[i].fr_fp));
+      if (ch == EOF || ch == CSCOPE_PROMPT[0]) {
+        break;
+      }
       // if there is room and char is printable
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
@@ -1715,9 +1722,13 @@ static int cs_read_prompt(size_t i)
       }
     }
 
-    for (size_t n = 0; n < strlen(CSCOPE_PROMPT); ++n) {
-      if (n > 0)
-        ch = (char)getc(csinfo[i].fr_fp);
+    for (size_t n = 0; n < strlen(CSCOPE_PROMPT); n++) {
+      if (n > 0) {
+        do {
+          errno = 0;
+          ch = fgetc(csinfo[i].fr_fp);
+        } while (ch == EOF && errno == EINTR && ferror(csinfo[i].fr_fp));
+      }
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
         if (buf != NULL && buf[0] != NUL)
