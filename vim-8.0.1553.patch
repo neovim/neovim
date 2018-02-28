@@ -1,0 +1,454 @@
+commit 5f73ef8d20070cd45c9aea4dc33c2e0657f5515c
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Tue Feb 27 21:09:30 2018 +0100
+
+    patch 8.0.1553: cannot see what digraph is used to insert a character
+    
+    Problem:    Cannot see what digraph is used to insert a character.
+    Solution:   Show the digraph with the "ga" command. (Christian Brabandt)
+
+diff --git a/runtime/doc/various.txt b/runtime/doc/various.txt
+index 213b19862..d026ea2ba 100644
+--- a/runtime/doc/various.txt
++++ b/runtime/doc/various.txt
+
+ 
+ 
+ 		  VIM REFERENCE MANUAL    by Bram Moolenaar
+@@ -40,23 +40,35 @@ CTRL-L			Clear and redraw the screen.  The redraw may happen
+ 
+ :as[cii]	or					*ga* *:as* *:ascii*
+ ga			Print the ascii value of the character under the
+-			cursor in decimal, hexadecimal and octal.  For
+-			example, when the cursor is on a 'R':
++			cursor in decimal, hexadecimal and octal.
++			Mnemonic: Get Ascii value.
++
++			For example, when the cursor is on a 'R':
+ 				<R>  82,  Hex 52,  Octal 122 ~
+ 			When the character is a non-standard ASCII character,
+ 			but printable according to the 'isprint' option, the
+-			non-printable version is also given.  When the
+-			character is larger than 127, the <M-x> form is also
+-			printed.  For example:
++			non-printable version is also given.
++			
++			When the character is larger than 127, the <M-x> form
++			is also printed.  For example:
+ 				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
+ 				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
+ 			(where <p> is a special character)
++
+ 			The <Nul> character in a file is stored internally as
+ 			<NL>, but it will be shown as:
+ 				<^@>  0,  Hex 00,  Octal 000 ~
++
+ 			If the character has composing characters these are
+ 			also shown.  The value of 'maxcombine' doesn't matter.
+-			Mnemonic: Get Ascii value.  {not in Vi}
++
++			If the character can be inserted as a digraph, also
++			output the two characters that can be used to create
++			the character:
++			    <ö> 246, Hex 00f6, Oct 366, Digr o: ~
++			This shows you can type CTRL-K o : to insert ö.
++
++			{not in Vi}
+ 
+ 							*g8*
+ g8			Print the hex values of the bytes used in the
+diff --git a/src/nvim/digraph.c b/src/nvim/digraph.c
+index 2c7ba9f0c..6f9c46ff7 100644
+--- a/src/nvim/digraph.c
++++ b/src/nvim/digraph.c
+@@ -1974,6 +1974,41 @@ do_digraph(int c)
+     return c;
+ }
+ 
++/*
++ * Find a digraph for "val".  If found return the string to display it.
++ * If not found return NULL.
++ */
++    char_u *
++get_digraph_for_char(val)
++    int val;
++{
++    int		i;
++    int		use_defaults;
++    digr_T	*dp;
++    static      char_u      r[3];
++
++    for (use_defaults = 0; use_defaults <= 1; use_defaults++)
++    {
++	if (use_defaults == 0)
++	    dp = (digr_T *)user_digraphs.ga_data;
++	else
++	    dp = digraphdefault;
++	for (i = 0; use_defaults ? dp->char1 != NUL
++					       : i < user_digraphs.ga_len; ++i)
++	{
++	    if (dp->result == val)
++	    {
++		r[0] = dp->char1;
++		r[1] = dp->char2;
++		r[2] = NUL;
++		return r;
++	    }
++	    ++dp;
++	}
++    }
++    return NULL;
++}
++
+ /*
+  * Get a digraph.  Used after typing CTRL-K on the command line or in normal
+  * mode.
+diff --git a/src/nvim/ex_cmds.c b/src/nvim/ex_cmds.c
+index e05215a59..5b8e2d522 100644
+--- a/src/nvim/ex_cmds.c
++++ b/src/nvim/ex_cmds.c
+@@ -49,6 +49,9 @@ do_ascii(exarg_T *eap UNUSED)
+     char	buf1[20];
+     char	buf2[20];
+     char_u	buf3[7];
++#ifdef FEAT_DIGRAPHS
++    char_u      *dig;
++#endif
+ #ifdef FEAT_MBYTE
+     int		cc[MAX_MCO];
+     int		ci = 0;
+@@ -94,7 +97,15 @@ do_ascii(exarg_T *eap UNUSED)
+ 	else
+ #endif
+ 	    buf2[0] = NUL;
+-	vim_snprintf((char *)IObuff, IOSIZE,
++#ifdef FEAT_DIGRAPHS
++	dig = get_digraph_for_char(cval);
++	if (dig != NULL)
++	    vim_snprintf((char *)IObuff, IOSIZE,
++		_("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
++			      transchar(c), buf1, buf2, cval, cval, cval, dig);
++	else
++#endif
++	    vim_snprintf((char *)IObuff, IOSIZE,
+ 		_("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+ 				  transchar(c), buf1, buf2, cval, cval, cval);
+ #ifdef FEAT_MBYTE
+@@ -121,9 +132,19 @@ do_ascii(exarg_T *eap UNUSED)
+ 		)
+ 	    IObuff[len++] = ' '; /* draw composing char on top of a space */
+ 	len += (*mb_char2bytes)(c, IObuff + len);
+-	vim_snprintf((char *)IObuff + len, IOSIZE - len,
+-			c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
+-				    : _("> %d, Hex %08x, Octal %o"), c, c, c);
++#ifdef FEAT_DIGRAPHS
++	dig = get_digraph_for_char(c);
++	if (dig != NULL)
++	    vim_snprintf((char *)IObuff + len, IOSIZE - len,
++			c < 0x10000 ? _("> %d, Hex %04x, Oct %o, Digr %s")
++				    : _("> %d, Hex %08x, Oct %o, Digr %s"),
++					c, c, c, dig);
++	else
++#endif
++	    vim_snprintf((char *)IObuff + len, IOSIZE - len,
++			 c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
++				     : _("> %d, Hex %08x, Octal %o"),
++				     c, c, c);
+ 	if (ci == MAX_MCO)
+ 	    break;
+ 	if (enc_utf8)
+diff --git a/src/nvim/testdir/shared.vim b/src/nvim/testdir/shared.vim
+index ef8551400..5fef6bd1d 100644
+--- a/src/nvim/testdir/shared.vim
++++ b/src/nvim/testdir/shared.vim
+@@ -259,3 +259,14 @@ endfunc
+ func CanRunGui()
+   return has('gui') && ($DISPLAY != "" || has('gui_running'))
+ endfunc
++
++" Get line "lnum" as displayed on the screen.
++" Trailing white space is trimmed.
++func! Screenline(lnum)
++  let chars = []
++  for c in range(1, winwidth(0))
++    call add(chars, nr2char(screenchar(a:lnum, c)))
++  endfor
++  let line = join(chars, '')
++  return matchstr(line, '^.\{-}\ze\s*$')
++endfunc
+diff --git a/src/nvim/testdir/test_arabic.vim b/src/nvim/testdir/test_arabic.vim
+index e62b02263..17e925ee7 100644
+--- a/src/nvim/testdir/test_arabic.vim
++++ b/src/nvim/testdir/test_arabic.vim
+@@ -16,9 +16,9 @@ func s:get_chars(lnum)
+   let numchars = strchars(getline('.'), 1)
+   for i in range(1, numchars)
+     exe 'norm ' i . '|'
+-    let c=execute('ascii')
+-    let c=substitute(c, '\n\?<.\{-}Hex\s*', 'U+', 'g')
+-    let c=substitute(c, ',\s*Octal\s*\d*', '', 'g')
++    let c = execute('ascii')
++    let c = substitute(c, '\n\?<.\{-}Hex\s*', 'U+', 'g')
++    let c = substitute(c, ',\s*Oct\(al\)\=\s\d*\(, Digr ..\)\=', '', 'g')
+     call add(chars, c)
+   endfor
+   return chars
+diff --git a/src/nvim/testdir/test_digraph.vim b/src/nvim/testdir/test_digraph.vim
+index 629068030..271066df4 100644
+--- a/src/nvim/testdir/test_digraph.vim
++++ b/src/nvim/testdir/test_digraph.vim
+@@ -4,15 +4,15 @@ if !has("digraphs") || !has("multi_byte")
+   finish
+ endif
+ 
+-func! Put_Dig(chars)
++func Put_Dig(chars)
+   exe "norm! o\<c-k>".a:chars
+ endfu
+ 
+-func! Put_Dig_BS(char1, char2)
++func Put_Dig_BS(char1, char2)
+   exe "norm! o".a:char1."\<bs>".a:char2
+ endfu
+ 
+-func! Test_digraphs()
++func Test_digraphs()
+   new
+   call Put_Dig("00")
+   call assert_equal("∞", getline('.'))
+@@ -214,7 +214,7 @@ func! Test_digraphs()
+   bw!
+ endfunc
+ 
+-func! Test_digraphs_option()
++func Test_digraphs_option()
+   " reset whichwrap option, so that testing <esc><bs>A works,
+   " without moving up a line
+   set digraph ww=
+@@ -420,7 +420,7 @@ func! Test_digraphs_option()
+   bw!
+ endfunc
+ 
+-func! Test_digraphs_output()
++func Test_digraphs_output()
+   new
+   let out = execute(':digraph')
+   call assert_equal('Eu €  8364',  matchstr(out, '\C\<Eu\D*8364\>'))
+@@ -436,7 +436,7 @@ func! Test_digraphs_output()
+   bw!
+ endfunc
+ 
+-func! Test_loadkeymap()
++func Test_loadkeymap()
+   if !has('keymap')
+     return
+   endif
+@@ -450,7 +450,7 @@ func! Test_loadkeymap()
+   bw!
+ endfunc
+ 
+-func! Test_digraph_cmndline()
++func Test_digraph_cmndline()
+   " Create digraph on commandline
+   " This is a hack, to let Vim create the digraph in commandline mode
+   let s = ''
+@@ -458,4 +458,11 @@ func! Test_digraph_cmndline()
+   call assert_equal("€", s)
+ endfunc
+ 
++func Test_show_digraph()
++  new
++  call Put_Dig("e=")
++  call assert_equal("\n<е> 1077, Hex 0435, Oct 2065, Digr e=", execute('ascii'))
++  bwipe!
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab
+diff --git a/src/nvim/testdir/test_ga.vim b/src/nvim/testdir/test_ga.vim
+index f9357ddc8..6a7cba28f 100644
+--- a/src/nvim/testdir/test_ga.vim
++++ b/src/nvim/testdir/test_ga.vim
+@@ -11,13 +11,13 @@ func Test_ga_command()
+   new
+   set display=uhex
+   call assert_equal("\nNUL",                            Do_ga(''))
+-  call assert_equal("\n<<01>>  1,  Hex 01,  Octal 001", Do_ga("\x01"))
+-  call assert_equal("\n<<09>>  9,  Hex 09,  Octal 011", Do_ga("\t"))
++  call assert_equal("\n<<01>>  1,  Hex 01,  Oct 001, Digr SH", Do_ga("\x01"))
++  call assert_equal("\n<<09>>  9,  Hex 09,  Oct 011, Digr HT", Do_ga("\t"))
+ 
+   set display=
+   call assert_equal("\nNUL",                             Do_ga(''))
+-  call assert_equal("\n<^A>  1,  Hex 01,  Octal 001",    Do_ga("\x01"))
+-  call assert_equal("\n<^I>  9,  Hex 09,  Octal 011",    Do_ga("\t"))
++  call assert_equal("\n<^A>  1,  Hex 01,  Oct 001, Digr SH",    Do_ga("\x01"))
++  call assert_equal("\n<^I>  9,  Hex 09,  Oct 011, Digr HT",    Do_ga("\t"))
+ 
+   call assert_equal("\n<e>  101,  Hex 65,  Octal 145",   Do_ga('e'))
+ 
+@@ -26,8 +26,8 @@ func Test_ga_command()
+   endif
+ 
+   " Test a few multi-bytes characters.
+-  call assert_equal("\n<é> 233, Hex 00e9, Octal 351",    Do_ga('é'))
+-  call assert_equal("\n<ẻ> 7867, Hex 1ebb, Octal 17273", Do_ga('ẻ'))
++  call assert_equal("\n<é> 233, Hex 00e9, Oct 351, Digr e'",    Do_ga('é'))
++  call assert_equal("\n<ẻ> 7867, Hex 1ebb, Oct 17273, Digr e2", Do_ga('ẻ'))
+ 
+   " Test with combining characters.
+   call assert_equal("\n<e>  101,  Hex 65,  Octal 145 < ́> 769, Hex 0301, Octal 1401", Do_ga("e\u0301"))
+diff --git a/src/nvim/testdir/test_matchadd_conceal.vim b/src/nvim/testdir/test_matchadd_conceal.vim
+index d285a4c75..123bdf066 100644
+--- a/src/nvim/testdir/test_matchadd_conceal.vim
++++ b/src/nvim/testdir/test_matchadd_conceal.vim
+@@ -7,17 +7,7 @@ if !has('gui_running') && has('unix')
+   set term=ansi
+ endif
+ 
+-function! s:screenline(lnum) abort
+-  let line = []
+-  for c in range(1, winwidth(0))
+-    call add(line, nr2char(screenchar(a:lnum, c)))
+-  endfor
+-  return s:trim(join(line, ''))
+-endfunction
+-
+-function! s:trim(str) abort
+-  return matchstr(a:str,'^\s*\zs.\{-}\ze\s*$')
+-endfunction
++source shared.vim
+ 
+ function! Test_simple_matchadd()
+   new
+@@ -30,7 +20,7 @@ function! Test_simple_matchadd()
+   call matchadd('Conceal', '\%2l ')
+   redraw!
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+@@ -53,7 +43,7 @@ function! Test_simple_matchadd_and_conceal()
+   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
+   redraw!
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -79,7 +69,7 @@ function! Test_matchadd_and_conceallevel_3()
+   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
+   redraw!
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -92,7 +82,7 @@ function! Test_matchadd_and_conceallevel_3()
+ 
+   call matchadd('ErrorMsg', '\%2l Test', 20, -1, {'conceal': 'X'})
+   redraw!
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2) , screenattr(lnum, 7))
+   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 10))
+@@ -116,7 +106,7 @@ function! Test_default_conceal_char()
+   call matchadd('Conceal', '\%2l ', 10, -1, {})
+   redraw!
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -129,7 +119,7 @@ function! Test_default_conceal_char()
+   set listchars=conceal:+
+   redraw!
+ 
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -153,7 +143,7 @@ function! Test_syn_and_match_conceal()
+   syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
+   redraw!
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -165,7 +155,7 @@ function! Test_syn_and_match_conceal()
+   call clearmatches()
+   redraw!
+ 
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -191,7 +181,7 @@ function! Test_clearmatches()
+   redraw!
+ 
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -204,7 +194,7 @@ function! Test_clearmatches()
+   call setmatches(a)
+   redraw!
+ 
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+@@ -232,7 +222,7 @@ function! Test_using_matchaddpos()
+   redraw!
+ 
+   let lnum = 2
+-  call assert_equal(expect, s:screenline(lnum))
++  call assert_equal(expect, Screenline(lnum))
+   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 2))
+   call assert_notequal(screenattr(lnum, 2) , screenattr(lnum, 7))
+   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 7))
+@@ -254,13 +244,13 @@ function! Test_matchadd_repeat_conceal_with_syntax_off()
+   1put ='TARGET_TARGETTARGET'
+   call cursor(1, 1)
+   redraw
+-  call assert_equal('TARGET_TARGETTARGET', s:screenline(2))
++  call assert_equal('TARGET_TARGETTARGET', Screenline(2))
+ 
+   setlocal conceallevel=2
+   call matchadd('Conceal', 'TARGET', 10, -1, {'conceal': 't'})
+ 
+   redraw
+-  call assert_equal('t_tt', s:screenline(2))
++  call assert_equal('t_tt', Screenline(2))
+ 
+   quit!
+ endfunction
+@@ -276,13 +266,13 @@ function! Test_matchadd_and_syn_conceal()
+   syntax on
+   syntax keyword coqKwd bool conceal cchar=-
+   redraw!
+-  call assert_equal(expect, s:screenline(1))
++  call assert_equal(expect, Screenline(1))
+   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
+   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
+   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
+   call matchadd('CheckedByCoq', '\%<2l\%>9c\%<16c')
+   redraw!
+-  call assert_equal(expect, s:screenline(1))
++  call assert_equal(expect, Screenline(1))
+   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
+   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
+   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
+/

@@ -4,15 +4,15 @@ if !has("digraphs") || !has("multi_byte")
   finish
 endif
 
-func! Put_Dig(chars)
+func Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars
 endfu
 
-func! Put_Dig_BS(char1, char2)
+func Put_Dig_BS(char1, char2)
   exe "norm! o".a:char1."\<bs>".a:char2
 endfu
 
-func! Test_digraphs()
+func Test_digraphs()
   new
   call Put_Dig("00")
   call assert_equal("∞", getline('.'))
@@ -214,7 +214,7 @@ func! Test_digraphs()
   bw!
 endfunc
 
-func! Test_digraphs_option()
+func Test_digraphs_option()
   " reset whichwrap option, so that testing <esc><bs>A works,
   " without moving up a line
   set digraph ww=
@@ -420,7 +420,7 @@ func! Test_digraphs_option()
   bw!
 endfunc
 
-func! Test_digraphs_output()
+func Test_digraphs_output()
   new
   let out = execute(':digraph')
   call assert_equal('Eu €  8364',  matchstr(out, '\C\<Eu\D*8364\>'))
@@ -436,7 +436,7 @@ func! Test_digraphs_output()
   bw!
 endfunc
 
-func! Test_loadkeymap()
+func Test_loadkeymap()
   if !has('keymap')
     return
   endif
@@ -450,12 +450,19 @@ func! Test_loadkeymap()
   bw!
 endfunc
 
-func! Test_digraph_cmndline()
+func Test_digraph_cmndline()
   " Create digraph on commandline
   " This is a hack, to let Vim create the digraph in commandline mode
   let s = ''
   exe "sil! norm! :let s.='\<c-k>Eu'\<cr>"
   call assert_equal("€", s)
+endfunc
+
+func Test_show_digraph()
+  new
+  call Put_Dig("e=")
+  call assert_equal("\n<е> 1077, Hex 0435, Oct 2065, Digr e=", execute('ascii'))
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
