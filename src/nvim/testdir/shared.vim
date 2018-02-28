@@ -237,3 +237,14 @@ func RunVimPiped(before, after, arguments, pipecmd)
   endif
   return 1
 endfunc
+
+" Get line "lnum" as displayed on the screen.
+" Trailing white space is trimmed.
+func! Screenline(lnum)
+  let chars = []
+  for c in range(1, winwidth(0))
+    call add(chars, nr2char(screenchar(a:lnum, c)))
+  endfor
+  let line = join(chars, '')
+  return matchstr(line, '^.\{-}\ze\s*$')
+endfunc

@@ -1397,7 +1397,7 @@ static digr_T digraphdefault[] =
   { 'O', '`', 210 },  // Ò
   { 'O', '^', 212 },  // Ô
   { 'O', '~', 213 },  // Õ
-  { '/', '\\', 215 }, // × - multiplication symbol in ISO 8859-1
+  { '/', '\\', 215 },  // × - multiplication symbol in ISO 8859-1
   { 'U', '`', 217 },  // Ù
   { 'U', '^', 219 },  // Û
   { 'I', 'p', 222 },  // Þ
@@ -1446,6 +1446,33 @@ int do_digraph(int c)
   }
   lastchar = c;
   return c;
+}
+
+/// Find a digraph for "val".  If found return the string to display it.
+/// If not found return NULL.
+char_u *get_digraph_for_char(int val)
+{
+  digr_T *dp;
+  static char_u r[3];
+
+  for (int use_defaults = 0; use_defaults <= 1; use_defaults++) {
+    if (use_defaults == 0) {
+      dp = (digr_T *)user_digraphs.ga_data;
+    } else {
+      dp = digraphdefault;
+    }
+    for (int i = 0;
+         use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
+      if (dp->result == val) {
+        r[0] = dp->char1;
+        r[1] = dp->char2;
+        r[2] = NUL;
+        return r;
+      }
+      dp++;
+    }
+  }
+  return NULL;
 }
 
 /// Get a digraph.  Used after typing CTRL-K on the command line or in normal
