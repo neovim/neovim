@@ -186,6 +186,10 @@ Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
     PUT(hl, "bold", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_STANDOUT) {
+    PUT(hl, "standout", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_UNDERLINE) {
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }
@@ -198,7 +202,7 @@ Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
     PUT(hl, "italic", BOOLEAN_OBJ(true));
   }
 
-  if (mask & (HL_INVERSE | HL_STANDOUT)) {
+  if (mask & HL_INVERSE) {
     PUT(hl, "reverse", BOOLEAN_OBJ(true));
   }
 
