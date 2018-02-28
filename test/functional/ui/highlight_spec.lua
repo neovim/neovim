@@ -312,7 +312,7 @@ describe('highlight defaults', function()
   end)
 end)
 
-describe('guisp (special/undercurl)', function()
+describe('highlight', function()
   local screen
 
   before_each(function()
@@ -321,7 +321,31 @@ describe('guisp (special/undercurl)', function()
     screen:attach()
   end)
 
-  it('can be set and is applied like foreground or background', function()
+  it('cterm=standout gui=standout', function()
+    screen:detach()
+    screen = Screen.new(20,5)
+    screen:attach()
+    screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+        [2] = {standout = true, bold = true, underline = true,
+        background = Screen.colors.Gray90, foreground = Screen.colors.Blue1},
+        [3] = {standout = true, underline = true,
+        background = Screen.colors.Gray90}
+    })
+    feed_command('hi CursorLine cterm=standout,underline gui=standout,underline')
+    feed_command('set cursorline')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed('i\t abcd <cr>\t abcd <cr><esc>k')
+    screen:expect([[
+    {1:>-------.}abcd{1:*¬}     |
+    {2:^>-------.}{3:abcd}{2:*¬}{3:     }|
+    {1:¬}                   |
+    {1:~                   }|
+                        |
+    ]])
+  end)
+
+  it('guisp (special/undercurl)', function()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
     feed_command('syn keyword TmpKeyword1 special')
