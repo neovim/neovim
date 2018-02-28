@@ -38,7 +38,6 @@
 +			    <ö> 246, Hex 00f6, Oct 366, Digr o: ~
 +			This shows you can type CTRL-K o : to insert ö.
 +
-+			{not in Vi}
  
  							*g8*
  g8			Print the hex values of the bytes used in the
