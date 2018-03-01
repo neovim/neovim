@@ -70,7 +70,9 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 elseif(MSVC OR MINGW)
 
   if(MINGW)
-    set(MINGW_FLAG /MW)
+    set(COMPILER_FLAG /MW)
+  elseif(MSVC)
+    set(COMPILER_FLAG /MSVC)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
@@ -82,7 +84,7 @@ elseif(MSVC OR MINGW)
     /P ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION} /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
-    ${MINGW_FLAG}
+    ${COMPILER_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION}/luarocks.bat)
