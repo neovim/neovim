@@ -60,6 +60,7 @@
 
 #ifdef _MSC_VER
 typedef SSIZE_T ssize_t;
+typedef int mode_t;
 #endif
 
 #ifndef SSIZE_MAX
