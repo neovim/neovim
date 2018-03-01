@@ -44,7 +44,7 @@ endif()
 
 if(MSVC)
   # The import library for the msgpack DLL has a different name
-  list(APPEND MSGPACK_NAMES msgpack_import)
+  list(APPEND MSGPACK_NAMES msgpackc_import)
 else()
   list(APPEND MSGPACK_NAMES msgpackc msgpack)
 endif()
