@@ -2377,7 +2377,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only normal file name characters can be used, "/\*?[|<>" are illegal.
 
 						*'fillchars'* *'fcs'*
-'fillchars' 'fcs'	string	(default "vert:|,fold:-")
+'fillchars' 'fcs'	string	(default "")
 			global
 			{not available when compiled without the |+windows|
 			and |+folding| features}
@@ -2387,16 +2387,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  vert:c	'|'		vertical separators |:vsplit|
-	  fold:c	'-'		filling 'foldtext'
+	  vert:c	'│' or '|'	vertical separators |:vsplit|
+	  fold:c	'·' or '-'	filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
+	If 'ambiwidth' is "double" then "vert" and "fold" default to
+	single-byte alternatives.
+
 	Example: >
-	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-
 <	This is similar to the default, except that these characters will also
 	be used when there is highlighting.
 
@@ -6919,7 +6922,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'writedelay' 'wd'	number	(default 0)
 			global
 	The number of milliseconds to wait for each character sent to the
-	screen.  When non-zero, characters are sent to the terminal one by
-	one.  For debugging purposes.
+	screen.  When positive, characters are sent to the UI one by one.
+	When negative, all redrawn characters cause a delay, even if the
+	character already was displayed by the UI.  For debugging purposes.
 
  vim:tw=78:ts=8:ft=help:noet:norl:

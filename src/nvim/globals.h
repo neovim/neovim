@@ -937,7 +937,7 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
-/* Characters from 'listchars' option */
+// 'listchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int lcs_eol INIT(= '$');
 EXTERN int lcs_ext INIT(= NUL);
 EXTERN int lcs_prec INIT(= NUL);
@@ -948,11 +948,11 @@ EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= ' ');
 
-/* Characters from 'fillchars' option */
+// 'fillchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= ' ');
-EXTERN int fill_fold INIT(= '-');
+EXTERN int fill_vert INIT(= 9474);  // │
+EXTERN int fill_fold INIT(= 183);   // ·
 EXTERN int fill_diff INIT(= '-');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */

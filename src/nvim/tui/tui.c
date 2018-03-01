@@ -319,8 +319,14 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  // Flag UI as "stopped". Needed by tui_scheduler (called from main thread).
+  // Flag UI as "stopped".
   ui->data = NULL;
+}
+
+/// Returns true if UI `ui` is stopped.
+static bool tui_is_stopped(UI *ui)
+{
+  return ui->data == NULL;
 }
 
 /// Main function of the TUI thread.
@@ -352,17 +358,17 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
                          event_create(show_termcap_event, 1, data->ut));
 
   // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !ui_is_stopped(ui);) {
+  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
     ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
   }
-  if (!ui_is_stopped(ui)) {
+  if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
     // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
     // terminal response may not get processed until user hits a key.
     loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
   }
   // "Passive" (I/O-driven) loop: TUI thread "main loop".
-  while (!ui_is_stopped(ui)) {
+  while (!tui_is_stopped(ui)) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
@@ -384,9 +390,6 @@ static void tui_dummy_event(void **argv)
 static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
-  if (ui_is_stopped(ui)) {
-    return;  // tui_stop was handled, teardown underway.
-  }
   TUIData *data = ui->data;
   loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }

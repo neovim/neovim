@@ -812,7 +812,7 @@ return {
       vi_def=true,
       redraw={'all_windows'},
       varname='p_fcs',
-      defaults={if_true={vi="vert:|,fold:-"}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='fixendofline', abbreviation='fixeol',

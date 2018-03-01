@@ -638,12 +638,12 @@ describe('ui/mouse/input', function()
     screen:try_resize(53, 14)
     feed_command('sp', 'vsp')
     screen:expect([[
-      lines                     {4:|}lines                     |
-      to                        {4:|}to                        |
-      test                      {4:|}test                      |
-      mouse scrolling           {4:|}mouse scrolling           |
-      ^                          {4:|}                          |
-      {0:~                         }{4:|}{0:~                         }|
+      lines                     {4:│}lines                     |
+      to                        {4:│}to                        |
+      test                      {4:│}test                      |
+      mouse scrolling           {4:│}mouse scrolling           |
+      ^                          {4:│}                          |
+      {0:~                         }{4:│}{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -655,12 +655,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelDown><0,0>')
     screen:expect([[
-      mouse scrolling           {4:|}lines                     |
-      ^                          {4:|}to                        |
-      {0:~                         }{4:|}test                      |
-      {0:~                         }{4:|}mouse scrolling           |
-      {0:~                         }{4:|}                          |
-      {0:~                         }{4:|}{0:~                         }|
+      mouse scrolling           {4:│}lines                     |
+      ^                          {4:│}to                        |
+      {0:~                         }{4:│}test                      |
+      {0:~                         }{4:│}mouse scrolling           |
+      {0:~                         }{4:│}                          |
+      {0:~                         }{4:│}{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -672,12 +672,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelUp><27,0>')
     screen:expect([[
-      mouse scrolling           {4:|}text                      |
-      ^                          {4:|}with                      |
-      {0:~                         }{4:|}many                      |
-      {0:~                         }{4:|}lines                     |
-      {0:~                         }{4:|}to                        |
-      {0:~                         }{4:|}test                      |
+      mouse scrolling           {4:│}text                      |
+      ^                          {4:│}with                      |
+      {0:~                         }{4:│}many                      |
+      {0:~                         }{4:│}lines                     |
+      {0:~                         }{4:│}to                        |
+      {0:~                         }{4:│}test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -689,12 +689,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     screen:expect([[
-      mouse scrolling           {4:|}text                      |
-      ^                          {4:|}with                      |
-      {0:~                         }{4:|}many                      |
-      {0:~                         }{4:|}lines                     |
-      {0:~                         }{4:|}to                        |
-      {0:~                         }{4:|}test                      |
+      mouse scrolling           {4:│}text                      |
+      ^                          {4:│}with                      |
+      {0:~                         }{4:│}many                      |
+      {0:~                         }{4:│}lines                     |
+      {0:~                         }{4:│}to                        |
+      {0:~                         }{4:│}test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
