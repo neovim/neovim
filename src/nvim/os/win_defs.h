@@ -45,6 +45,9 @@
 # ifndef restrict
 #  define restrict __restrict
 # endif
+# ifndef STDIN_FILENO
+#  define STDIN_FILENO _fileno(stdin)
+# endif
 # ifndef STDOUT_FILENO
 #  define STDOUT_FILENO _fileno(stdout)
 # endif
