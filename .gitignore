@@ -49,3 +49,8 @@ local.mk
 /runtime/doc/*.html
 /runtime/doc/tags.ref
 /runtime/doc/errors.log
+
+# files from patch(1)
+*.patch
+*.orig
+*.rej
