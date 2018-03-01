@@ -47,9 +47,10 @@ if(WIN32)
   set(LIBVTERM_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 else()
   set(LIBVTERM_INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                CFLAGS=-fPIC
-                                install)
+                                           PREFIX=${DEPS_INSTALL_DIR}
+                                           CFLAGS=-fPIC
+                                           ${DEFAULT_MAKE_CFLAGS}
+                                           install)
 endif()
 
 BuildLibvterm(CONFIGURE_COMMAND ${LIBVTERM_CONFIGURE_COMMAND}
