@@ -119,6 +119,9 @@ void do_ascii(exarg_T *eap)
   char buf1[20];
   char buf2[20];
   char_u buf3[7];
+#ifdef FEAT_DIGRAPHS
+  char_u      *dig;
+#endif
   int cc[MAX_MCO];
   int ci = 0;
   int len;
@@ -153,6 +156,16 @@ void do_ascii(exarg_T *eap)
           (char *)transchar(c & 0x7f));
     else
       buf2[0] = NUL;
+    
+#ifdef FEAT_DIGRAPHS
+	dig = get_digraph_for_char(cval);
+	if (dig != NULL)
+	    vim_snprintf((char *)IObuff, IOSIZE,
+		_("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
+			      transchar(c), buf1, buf2, cval, cval, cval, dig);
+	else
+#endif
+    
     vim_snprintf((char *)IObuff, IOSIZE,
         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
         transchar(c), buf1, buf2, cval, cval, cval);
@@ -176,6 +189,17 @@ void do_ascii(exarg_T *eap)
         )
       IObuff[len++] = ' ';       /* draw composing char on top of a space */
     len += (*mb_char2bytes)(c, IObuff + len);
+    
+#ifdef FEAT_DIGRAPHS
+	dig = get_digraph_for_char(c);
+	if (dig != NULL)
+	    vim_snprintf((char *)IObuff + len, IOSIZE - len,
+			c < 0x10000 ? _("> %d, Hex %04x, Oct %o, Digr %s")
+				    : _("> %d, Hex %08x, Oct %o, Digr %s"),
+					c, c, c, dig);
+	else
+#endif
+    
     vim_snprintf((char *)IObuff + len, IOSIZE - len,
         c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
         : _("> %d, Hex %08x, Octal %o"), c, c, c);
