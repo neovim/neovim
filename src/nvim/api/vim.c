@@ -1470,6 +1470,10 @@ Float nvim__id_float(Float flt)
   return flt;
 }
 
+/// Returns Array of UI Dictionaries for the currently running TUI
+/// and empty Array otherwise
+///
+/// @return Array of UI Dictionaries
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {

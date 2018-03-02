@@ -537,7 +537,7 @@ bool ui_is_external(UIExtension widget)
 Array ui_list(void)
 {
   Array all_uis = ARRAY_DICT_INIT;
-  for (unsigned int i = 0; i < ui_count ; i++) {
+  for (size_t i = 0; i < ui_count ; i++) {
     Dictionary dic = ARRAY_DICT_INIT;
     PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
     PUT(dic, "height", INTEGER_OBJ(uis[i]->height));

@@ -998,4 +998,29 @@ describe('api', function()
         it, _check_parsing, hl, fmtn)
   end)
 
+  describe('nvim_list_uis', function()
+    it('returns empty if --headless', function()
+      clear({args={'--headless'}})
+      local status = nvim("list_uis")
+      eq({ }, status)  -- nvim_list_uis() returned empty Array.
+    end)
+    it('returns attached UIs', function()
+      local screen1 = Screen.new(20, 4)
+      screen1:attach()
+      local status = nvim("list_uis")
+      local expected_status = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 4,
+          rgb = true,
+          width = 20
+        }
+      }
+      eq(expected_status, status)  -- nvim_list_uis() returned UI Dict.
+    end)
+  end)
+
 end)
