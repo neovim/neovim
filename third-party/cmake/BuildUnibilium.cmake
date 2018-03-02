@@ -11,12 +11,18 @@ if(WIN32)
       -DTARGET=unibilium
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/unibilium
-      -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
-      # Pass toolchain
-      -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
-      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-      -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UnibiliumCMakeLists.txt
+      ${DEPS_BUILD_DIR}/src/unibilium/CMakeLists.txt
+      COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/msvc-compat/unistd.h
+        ${DEPS_BUILD_DIR}/src/unibilium/msvc-compat/unistd.h
+      COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/unibilium
+        -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+        # Pass toolchain
+        -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
     INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 else()
