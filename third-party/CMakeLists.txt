@@ -114,13 +114,8 @@ set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar
 set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
 endif()
 
-if(MSVC)
-set(LIBVTERM_URL https://github.com/b-r-o-c-k/libvterm/archive/eb386b1d82f7d07363c9133b7aa06902ccd555fe.tar.gz)
-set(LIBVTERM_SHA256 be65c79611d306003440e651a3c52f603fc18b46e4117fe5957235ce7dd98233)
-else()
 set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
 set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afbd796)
-endif()
 
 set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.5.0/jemalloc-4.5.0.tar.bz2)
 set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f6780)
