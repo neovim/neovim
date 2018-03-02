@@ -47,7 +47,4 @@ ExternalProject_Add(libtermkey
 endif()
 
 list(APPEND THIRD_PARTY_DEPS libtermkey)
-if(NOT WIN32)
-  # There is no unibilium build recipe for Windows yet
-  add_dependencies(libtermkey unibilium)
-endif()
+add_dependencies(libtermkey unibilium)
