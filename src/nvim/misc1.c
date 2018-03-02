@@ -2393,12 +2393,17 @@ int get_keystroke(void)
 int 
 get_number (
     int colon,                              /* allow colon to abort */
-    int *mouse_used
+    int *mouse_used,
+    char *prompt
 )
 {
   int n = 0;
   int c;
   int typed = 0;
+  char *select;
+  Callback input_callback = { .type = kCallbackNone };
+  int cmd_silent_save = cmd_silent;
+  const int save_ex_normal_busy = ex_normal_busy;
 
   if (mouse_used != NULL)
     *mouse_used = FALSE;
@@ -2408,37 +2413,23 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-  Callback input_callback = { .type = kCallbackNone };
-  char_u *select;
-  int xp_type = EXPAND_NOTHING;
-  char *xp_arg = NULL;
-  int cmd_silent_save = cmd_silent;
-  const int save_ex_normal_busy = ex_normal_busy;
-
   cmd_silent = false;  // Want to see the prompt.
   cmdline_row = msg_row;
 
-  select = (char_u *)getcmdline_prompt('@', "", 0, xp_type, xp_arg,
-                                       input_callback);
-  /*select = (char_u *) getcmdline('@', 0, 0);*/
-
-  ex_normal_busy = save_ex_normal_busy;
-  callback_free(&input_callback);
-  xfree(xp_arg);
+  select = getcmdline_prompt('#', prompt, 0, EXPAND_NOTHING, NULL,
+                             input_callback);
 
   // Since the user typed this, no need to wait for return.
   need_wait_return = false;
   msg_didout = false;
   cmd_silent = cmd_silent_save;
+  ex_normal_busy = save_ex_normal_busy;
+  callback_free(&input_callback);
 
   no_mapping++;
-  for (;; ) {
-
-    if (select) c = *select;
-    else break;
+  while (select) {
+    c = *select;
     select++;
-
-    ui_cursor_goto(msg_row, msg_col);
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
@@ -2475,15 +2466,18 @@ get_number (
  */
 int prompt_for_number(int *mouse_used)
 {
-  int i;
+  int i = 0;
   int save_cmdline_row;
   int save_State;
+  char *msg;
 
   /* When using ":silent" assume that <CR> was entered. */
   if (mouse_used != NULL)
-    MSG_PUTS(_("Type number and <Enter> or click with mouse (empty cancels): "));
+    msg = "Type number and <Enter> or click with mouse (empty cancels): ";
   else
-    MSG_PUTS(_("Type number and <Enter> (empty cancels): "));
+    msg = "Type number and <Enter> (empty cancels): ";
+
+  i = get_number(TRUE, mouse_used, msg);
 
   /* Set the state such that text can be selected/copied/pasted and we still
    * get mouse events. */
@@ -2492,7 +2486,6 @@ int prompt_for_number(int *mouse_used)
   save_State = State;
   State = CMDLINE;
 
-  i = get_number(TRUE, mouse_used);
   if (KeyTyped) {
     /* don't call wait_return() now */
     /* msg_putchar('\n'); */

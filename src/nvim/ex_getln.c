@@ -263,7 +263,10 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->old_botline = curwin->w_botline;
 
   // set some variables for redrawcmd()
-  ccline.cmdfirstc = (s->firstc == '@' ? 0 : s->firstc);
+  if (s->firstc == '@' || s->firstc == '#')
+    ccline.cmdfirstc = 0;
+  else
+    ccline.cmdfirstc = s->firstc;
   ccline.cmdindent = (s->firstc > 0 ? s->indent : 0);
 
   // alloc initial ccline.cmdbuff
@@ -320,7 +323,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   State = CMDLINE;
 
-  if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@') {
+  if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@'
+      || s->firstc == '#') {
     // Use ":lmap" mappings for search pattern and input().
     if (curbuf->b_p_imsearch == B_IMODE_USE_INSERT) {
       s->b_im_ptr = &curbuf->b_p_iminsert;
@@ -1009,6 +1013,12 @@ static int command_line_execute(VimState *state, int key)
   }
 
   s->do_abbr = true;             // default: check for abbreviation
+
+  // if in number mode, key is alphabet
+  if (s->firstc == '#' && ASCII_ISALPHA(s->c)) {
+      return -1; // get another key
+  }
+
   return command_line_handle_key(s);
 }
 
@@ -1962,6 +1972,7 @@ static void abandon_cmdline(void)
  * firstc == '/' or '?'	    get search pattern
  * firstc == '='	    get expression
  * firstc == '@'	    get text for input() function
+ * firstc == '#'	    get number for input() function
  * firstc == '>'	    get text for debug mode
  * firstc == NUL	    get text for :insert command
  * firstc == -1		    like NUL, and break on CTRL-C
@@ -5294,6 +5305,7 @@ static HistoryType hist_char2type(const int c)
     case '=': {
       return HIST_EXPR;
     }
+    case '#':
     case '@': {
       return HIST_INPUT;
     }
