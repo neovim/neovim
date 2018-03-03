@@ -536,6 +536,31 @@ char_u *concat_str(const char_u *restrict str1, const char_u *restrict str2)
   return dest;
 }
 
+/*
+ * Reverse text into allocated memory.
+ * Returns the allocated string.
+ */
+char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
+{
+  /*
+   * Reverse the pattern.
+   */
+  size_t len = STRLEN(s);
+  char_u *rev = xmalloc(len + 1);
+  size_t rev_i = len;
+  for (size_t s_i = 0; s_i < len; ++s_i) {
+    if (has_mbyte) {
+      int mb_len = (*mb_ptr2len)(s + s_i);
+      rev_i -= mb_len;
+      memmove(rev + rev_i, s + s_i, mb_len);
+      s_i += mb_len - 1;
+    } else
+      rev[--rev_i] = s[s_i];
+  }
+  rev[len] = NUL;
+
+  return rev;
+}
 
 static const char *const e_printf =
     N_("E766: Insufficient arguments for printf()");
