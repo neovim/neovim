@@ -13990,10 +13990,7 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     c = -1;
   } else {
     off = LineOffset[row] + col;
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
-      c = ScreenLinesUC[off];
-    else
-      c = ScreenLines[off];
+    c = mb_ptr2char(ScreenLines[off]);
   }
   rettv->vval.v_number = c;
 }

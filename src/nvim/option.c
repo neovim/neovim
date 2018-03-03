@@ -4193,14 +4193,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
-  }
-  /* 'maxcombine' */
-  else if (pp == &p_mco) {
-    if (p_mco > MAX_MCO)
-      p_mco = MAX_MCO;
-    else if (p_mco < 0)
-      p_mco = 0;
-    screenclear();          /* will re-allocate the screen */
+  // 'maxcombine'
+  } else if (pp == &p_mco) {
+    // deprecated: always use maximum value
+    p_mco = MAX_MCO;
   } else if (pp == &curbuf->b_p_iminsert) {
     if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
       errmsg = e_invarg;
