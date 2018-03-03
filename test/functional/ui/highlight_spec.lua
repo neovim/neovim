@@ -778,6 +778,9 @@ describe("'winhighlight' highlight", function()
       [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [23] = {background = Screen.colors.LightMagenta},
       [24] = {background = Screen.colors.WebGray},
+      [25] = {bold = true, foreground = Screen.colors.Green1},
+      [26] = {background = Screen.colors.Red},
+      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
     })
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
@@ -1038,6 +1041,39 @@ describe("'winhighlight' highlight", function()
     screen:expect([[
       {10:  1 }{2:❮}{1: dolor ^sit ame}{2:❯}|
       {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+                          |
+    ]])
+  end)
+
+  it("background doesn't override syntax background", function()
+    command('syntax on')
+    command('syntax keyword Foobar foobar')
+    command('syntax keyword Article the')
+    command('hi Foobar guibg=#FF0000')
+    command('hi Article guifg=#00FF00 gui=bold')
+    insert('the foobar was foobar')
+    screen:expect([[
+      {25:the} {26:foobar} was {26:fooba}|
+      {26:^r}                   |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+
+    -- winhl=Normal:Group with background doesn't override syntax background,
+    -- but does combine with syntax foreground.
+    command('set winhl=Normal:Background1')
+    screen:expect([[
+      {27:the}{1: }{26:foobar}{1: was }{26:fooba}|
+      {26:^r}{1:                   }|
       {2:~                   }|
       {2:~                   }|
       {2:~                   }|
