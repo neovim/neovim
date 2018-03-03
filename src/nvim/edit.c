@@ -275,7 +275,9 @@ static void insert_enter(InsertState *s)
 
     set_vim_var_string(VV_INSERTMODE, (char *) s->ptr, 1);
     set_vim_var_string(VV_CHAR, NULL, -1);
+
     apply_autocmds(EVENT_INSERTENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_MODEENTER, NULL, NULL, false, curbuf);
 
     // Make sure the cursor didn't move.  Do call check_cursor_col() in
     // case the text was modified.  Since Insert mode was not started yet
@@ -469,6 +471,7 @@ static void insert_enter(InsertState *s)
   foldUpdateAfterInsert();
   if (s->cmdchar != 'r' && s->cmdchar != 'v') {
     apply_autocmds(EVENT_INSERTLEAVE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_MODELEAVE, NULL, NULL, false, curbuf);
   }
   did_cursorhold = false;
 }

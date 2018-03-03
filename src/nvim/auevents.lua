@@ -60,6 +60,8 @@ return {
     'InsertLeave',            -- when leaving Insert mode
     'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
+    'ModeEnter',              -- when entering a mode
+    'ModeLeave',              -- when leaving a mode
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
