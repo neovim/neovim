@@ -4,7 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef WIN32
+#include <Windows.h>
+#define usleep(usecs) Sleep(usecs/1000)
+#else
 #include <unistd.h>
+#endif
 
 static void wait(void)
 {
