@@ -593,7 +593,7 @@ describe('api', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {1:has bork}                                |
+        {1:chan 1: has bork}                        |
       ]])
     end)
 
@@ -605,8 +605,8 @@ describe('api', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {1:something happened}                      |
-        {1:very bad}                                |
+        {1:chan 1: something happened}              |
+        {1:chan 1: very bad}                        |
         {2:Press ENTER or type command to continue}^ |
       ]])
     end)
@@ -617,10 +617,10 @@ describe('api', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {1:FAILURE}                                 |
-        {1:ERROR}                                   |
-        {1:EXCEPTION}                               |
-        {1:TRACEBACK}                               |
+        {1:chan 1: FAILURE}                         |
+        {1:chan 1: ERROR}                           |
+        {1:chan 1: EXCEPTION}                       |
+        {1:chan 1: TRACEBACK}                       |
         {2:Press ENTER or type command to continue}^ |
       ]])
     end)
@@ -637,7 +637,7 @@ describe('api', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {1:very fail}                               |
+        {1:chan 1: very fail}                       |
       ]])
       helpers.wait()
 
@@ -649,8 +649,8 @@ describe('api', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {1:more fail}                               |
-        {1:too fail}                                |
+        {1:chan 1: more fail}                       |
+        {1:chan 1: too fail}                        |
         {2:Press ENTER or type command to continue}^ |
       ]])
       feed('<cr>')  -- exit the press ENTER screen

@@ -554,34 +554,39 @@ void nvim_set_option(String name, Object value, Error *err)
 
 /// Writes a message to the Vim output buffer. Does not append "\n", the
 /// message is buffered (won't display) until a linefeed is written.
+/// Prepends the channel id to the message text.
 ///
+/// @param channel_id Channel id (passed implicitly by the dispatcher)
 /// @param str Message
-void nvim_out_write(String str)
+void nvim_out_write(uint64_t channel_id, String str)
   FUNC_API_SINCE(1)
 {
-  write_msg(str, false);
+  write_msg(channel_id, str, false);
 }
 
 /// Writes a message to the Vim error buffer. Does not append "\n", the
 /// message is buffered (won't display) until a linefeed is written.
+/// Prepends the channel id to the message text.
 ///
+/// @param channel_id Channel id (passed implicitly by the dispatcher)
 /// @param str Message
-void nvim_err_write(String str)
+void nvim_err_write(uint64_t channel_id, String str)
   FUNC_API_SINCE(1)
 {
-  write_msg(str, true);
+  write_msg(channel_id, str, true);
 }
 
 /// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
-/// flushed (and displayed).
+/// flushed (and displayed). Prepends the channel id to the message text.
 ///
+/// @param channel_id Channel id (passed implicitly by the dispatcher)
 /// @param str Message
 /// @see nvim_err_write()
-void nvim_err_writeln(String str)
+void nvim_err_writeln(uint64_t channel_id, String str)
   FUNC_API_SINCE(1)
 {
-  nvim_err_write(str);
-  nvim_err_write((String) { .data = "\n", .size = 1 });
+  nvim_err_write(channel_id, str);
+  nvim_err_write(channel_id, (String) { .data = "\n", .size = 1 });
 }
 
 /// Gets the current list of buffer handles
@@ -747,7 +752,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 
 /// Subscribes to event broadcasts
 ///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param channel_id Channel id (passed implicitly by the dispatcher)
 /// @param event      Event type string
 void nvim_subscribe(uint64_t channel_id, String event)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
@@ -761,7 +766,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
 
 /// Unsubscribes to event broadcasts
 ///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param channel_id Channel id (passed implicitly by the dispatcher)
 /// @param event      Event type string
 void nvim_unsubscribe(uint64_t channel_id, String event)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
@@ -1387,14 +1392,21 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
 /// and flushed after each newline. Incomplete lines are kept for writing
 /// later.
 ///
+/// @param channel_id Channel id
 /// @param message  Message to write
 /// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
-static void write_msg(String message, bool to_err)
+static void write_msg(uint64_t channel_id, String message, bool to_err)
 {
-  static size_t out_pos = 0, err_pos = 0;
-  static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
+  static size_t out_pos = 0;
+  static size_t err_pos = 0;
+  static char out_line_buf[LINE_BUFFER_SIZE];
+  static char err_line_buf[LINE_BUFFER_SIZE];
 
 #define PUSH_CHAR(i, pos, line_buf, msg) \
+  if (pos == 0 && !is_internal_call(channel_id)) { \
+      pos += (size_t)snprintf(line_buf, LINE_BUFFER_SIZE, \
+                              "chan %" PRId64 ": ", channel_id); \
+  } \
   if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
     line_buf[pos] = NUL; \
     msg((char_u *)line_buf); \

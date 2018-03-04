@@ -6497,7 +6497,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(VIML_INTERNAL_CALL, args, &err);
 
   if (ERROR_SET(&err)) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    nvim_err_writeln(VIML_INTERNAL_CALL, cstr_as_string(err.msg));
     goto end;
   }
 
@@ -13848,7 +13848,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (ERROR_SET(&err)) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    nvim_err_writeln(VIML_INTERNAL_CALL, cstr_as_string(err.msg));
     goto end;
   }
 
