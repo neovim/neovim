@@ -7762,9 +7762,19 @@ static void highlight_list_two(int cnt, int attr)
  * Function given to ExpandGeneric() to obtain the list of group names.
  * Also used for synIDattr() function.
  */
-const char *get_highlight_name(expand_T *const xp, const int idx)
+const char *get_highlight_name(expand_T *const xp, int idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (idx < 0) {
+    return NULL;
+  }
+
+  // Items are never removed from the table, skip the ones that were cleared.
+  while (idx < highlight_ga.ga_len
+         && HL_TABLE()[idx].sg_cleared) {
+    idx++;
+  }
+
   // TODO(justinmk): 'xp' is unused
   if (idx == highlight_ga.ga_len && include_none != 0) {
     return "none";
@@ -7777,20 +7787,10 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
   } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
              && include_link != 0) {
     return "clear";
-  } else if (idx < 0) {
+  } else if (idx >= highlight_ga.ga_len) {
     return NULL;
   }
-
-  // Items are never removed from the table, skip the ones that were cleared.
-  int current_idx = idx;
-  while (current_idx < highlight_ga.ga_len
-         && HL_TABLE()[current_idx].sg_cleared) {
-    current_idx++;
-  }
-  if (current_idx >= highlight_ga.ga_len) {
-    return NULL;
-  }
-  return (const char *)HL_TABLE()[current_idx].sg_name;
+  return (const char *)HL_TABLE()[idx].sg_name;
 }
 
 color_name_table_T color_name_table[] = {
