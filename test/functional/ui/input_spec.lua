@@ -124,3 +124,20 @@ describe('input utf sequences that contain CSI/K_SPECIAL', function()
     expect('…')
   end)
 end)
+
+describe('text in cmdline lost when tab completing then triggering focuslost event', function()
+  before_each(clear)
+  it('ok', function()
+    local screen = Screen.new(40, 4)
+    screen:attach()
+    feed(':nn<tab>')
+    nvim('command',"silent! doautoall <nomodeline> FocusLost") 
+    screen:expect([[
+                                              |
+      ~                                       |
+      [No Name]                               |
+      :nnoremap^                               |
+    ]])
+    clear()
+  end)
+end)
