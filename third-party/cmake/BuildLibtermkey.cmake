@@ -1,5 +1,3 @@
-find_package(PkgConfig REQUIRED)
-
 if(WIN32)
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
@@ -24,6 +22,8 @@ ExternalProject_Add(libtermkey
   BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
   INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 else()
+find_package(PkgConfig REQUIRED)
+
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBTERMKEY_URL}
