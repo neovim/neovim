@@ -144,12 +144,6 @@ void ui_builtin_stop(void)
   UI_CALL(stop);
 }
 
-/// Returns true if UI `ui` is stopped.
-bool ui_is_stopped(UI *ui)
-{
-  return ui->data == NULL;
-}
-
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {
@@ -443,9 +437,8 @@ void ui_puts(uint8_t *str)
 
     if (p_wd) {  // 'writedelay': flush & delay each time.
       ui_flush();
-      assert(p_wd >= 0
-             && (sizeof(long) <= sizeof(uint64_t) || p_wd <= UINT64_MAX));
-      os_delay((uint64_t)p_wd, false);
+      uint64_t wd = (uint64_t)labs(p_wd);
+      os_delay(wd, false);
     }
   }
 }
@@ -532,4 +525,20 @@ void ui_cursor_shape(void)
 bool ui_is_external(UIExtension widget)
 {
   return ui_ext[widget];
+}
+
+Array ui_array(void)
+{
+  Array all_uis = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < ui_count; i++) {
+    Dictionary dic = ARRAY_DICT_INIT;
+    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
+    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
+    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
+    for (UIExtension j = 0; j < kUIExtCount; j++) {
+      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
+    }
+    ADD(all_uis, DICTIONARY_OBJ(dic));
+  }
+  return all_uis;
 }

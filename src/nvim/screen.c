@@ -4361,7 +4361,8 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
                       && comp_char_differs(off_from, off_to))
                   || ((*mb_off2cells)(off_from, off_from + cols) > 1
                       && ScreenLines[off_from + 1]
-                      != ScreenLines[off_to + 1])))));
+                      != ScreenLines[off_to + 1])))
+          || p_wd < 0));
 }
 
 /*
@@ -7088,11 +7089,7 @@ static int fillchar_status(int *attr, win_T *wp)
 static int fillchar_vsep(win_T *wp, int *attr)
 {
   *attr = win_hl_attr(wp, HLF_C);
-  if (*attr == 0 && fill_vert == ' ') {
-    return '|';
-  } else {
-    return fill_vert;
-  }
+  return fill_vert;
 }
 
 /*

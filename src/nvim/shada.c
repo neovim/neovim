@@ -2992,7 +2992,7 @@ shada_write_file_nomerge: {}
     } else {
       if (sw_ret == kSDWriteReadNotShada) {
         EMSG3(_(RNERR "Did not rename %s because %s "
-                "does not looks like a ShaDa file"), tempname, fname);
+                "does not look like a ShaDa file"), tempname, fname);
       } else {
         EMSG3(_(RNERR "Did not rename %s to %s because there were errors "
                 "during writing it"), tempname, fname);

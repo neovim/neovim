@@ -20,6 +20,7 @@ ExternalProject_Add(unibilium
   BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                             PREFIX=${DEPS_INSTALL_DIR}
                             CFLAGS=-fPIC
+                            ${DEFAULT_MAKE_CFLAGS}
   INSTALL_COMMAND ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR} install)
 
 list(APPEND THIRD_PARTY_DEPS unibilium)

@@ -2,6 +2,9 @@
 cmake_minimum_required (VERSION 2.8.7)
 project(NVIM_DEPS)
 
+# Needed for: check_c_compiler_flag()
+include(CheckCCompilerFlag)
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -9,6 +12,13 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # recipes (libuv, msgpack), make sure it is set
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
+
+check_c_compiler_flag(-Og HAS_OG_FLAG)
+if(HAS_OG_FLAG)
+  set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
 endif()
 
 set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
