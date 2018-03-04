@@ -1,8 +1,6 @@
 #ifndef NVIM_OS_UNIX_DEFS_H
 #define NVIM_OS_UNIX_DEFS_H
 
-// Windows doesn't have the following headers,
-// so we include them here to avoid numerous instances of `#ifdef WIN32'.
 #include <unistd.h>
 #include <sys/param.h>
 
