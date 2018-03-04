@@ -7,11 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#ifdef WIN32
-# include <wchar.h>
-# include <winnls.h>
-#endif
-
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
