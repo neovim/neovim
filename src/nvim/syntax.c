@@ -2133,9 +2133,11 @@ syn_current_attr (
 
   /* nextgroup ends at end of line, unless "skipnl" or "skipempty" present */
   if (current_next_list != NULL
-      && syn_getcurline()[current_col + 1] == NUL
-      && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY)))
+      && (line = syn_getcurline())[current_col] != NUL
+      && line[current_col + 1] == NUL
+      && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))) {
     current_next_list = NULL;
+  }
 
   if (!GA_EMPTY(&zero_width_next_ga))
     ga_clear(&zero_width_next_ga);

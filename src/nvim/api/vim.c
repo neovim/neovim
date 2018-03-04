@@ -35,6 +35,7 @@
 #include "nvim/os/input.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -1467,4 +1468,13 @@ Dictionary nvim__id_dictionary(Dictionary dct)
 Float nvim__id_float(Float flt)
 {
   return flt;
+}
+
+/// Gets a list of dictionaries representing attached UIs.
+///
+/// @return Array of UI dictionaries
+Array nvim_list_uis(void)
+  FUNC_API_SINCE(4)
+{
+  return ui_array();
 }

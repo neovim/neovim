@@ -745,7 +745,7 @@ describe('api', function()
     end)
   end)
 
-  describe('list_runtime_paths', function()
+  describe('nvim_list_runtime_paths', function()
     it('returns nothing with empty &runtimepath', function()
       meths.set_option('runtimepath', '')
       eq({}, meths.list_runtime_paths())
@@ -996,6 +996,45 @@ describe('api', function()
     assert:set_parameter('TableFormatLevel', 1000000)
     require('test.unit.viml.expressions.parser_tests')(
         it, _check_parsing, hl, fmtn)
+  end)
+
+  describe('nvim_list_uis', function()
+    it('returns empty if --headless', function()
+      -- --embed implies --headless.
+      eq({}, nvim("list_uis"))
+    end)
+    it('returns attached UIs', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      local expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 4,
+          rgb = true,
+          width = 20,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+
+      screen:detach()
+      screen = Screen.new(44, 99)
+      screen:attach({ rgb = false })
+      expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 99,
+          rgb = false,
+          width = 44,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+    end)
   end)
 
 end)
