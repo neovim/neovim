@@ -81,8 +81,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <fcntl.h>
 
+#include "nvim/os/fcntl.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"

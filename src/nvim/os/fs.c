@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include <assert.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <errno.h>
 
 #include "auto/config.h"
@@ -17,6 +16,7 @@
 
 #include <uv.h>
 
+#include "nvim/os/fcntl.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/ascii.h"

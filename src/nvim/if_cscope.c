@@ -10,12 +10,11 @@
  */
 
 #include <stdbool.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <fcntl.h>
 
+#include "nvim/os/fcntl.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/if_cscope.h"
