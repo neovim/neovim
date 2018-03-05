@@ -26,7 +26,7 @@ if "%CONFIGURATION:~0,5%" == "MINGW" (
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" || goto :error
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-%ARCH%-cmake mingw-w64-%ARCH%-perl mingw-w64-%ARCH%-diffutils mingw-w64-%ARCH%-unibilium gperf" || goto :error
 ) else if "%CONFIGURATION:~0,4%" == "MSVC" (
-  set CMAKE_GENERATOR_ARGS=/verbosity:detailed
+  set CMAKE_GENERATOR_ARGS=/verbosity:normal
 )
 
 :: Setup python (use AppVeyor system python)
