@@ -1825,17 +1825,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       } while (msg_col & 7);
     } else if (*s == BELL) {  // beep (from ":sh")
       vim_beep(BO_SH);
-    } else {
-      if (has_mbyte) {
-        cw = (*mb_ptr2cells)(s);
-        if (enc_utf8 && maxlen >= 0)
-          /* avoid including composing chars after the end */
-          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
-        else
-          l = (*mb_ptr2len)(s);
+    } else if (*s >= 0x20) {  // printable char
+      cw = mb_ptr2cells(s);
+      if (maxlen >= 0) {
+        // avoid including composing chars after the end
+        l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
       } else {
-        cw = 1;
-        l = 1;
+        l = utfc_ptr2len(s);
       }
       // When drawing from right to left or when a double-wide character
       // doesn't fit, draw a single character here.  Otherwise collect

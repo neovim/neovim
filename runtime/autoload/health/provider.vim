@@ -345,8 +345,8 @@ function! s:check_python(version) abort
     endif
   endif
 
-  if !empty(python_bin)
-    if empty(venv) && !empty(pyenv) && !exists('g:'.host_prog_var)
+  if !empty(python_bin) && !exists('g:'.host_prog_var)
+    if empty(venv) && !empty(pyenv)
           \ && !empty(pyenv_root) && resolve(python_bin) !~# '^'.pyenv_root.'/'
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
@@ -354,7 +354,7 @@ function! s:check_python(version) abort
             \ . 'the need to install the Neovim Python module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
-    elseif !empty(venv) && exists('g:'.host_prog_var)
+    elseif !empty(venv)
       if !empty(pyenv_root)
         let venv_root = pyenv_root
       else

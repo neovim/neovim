@@ -3078,15 +3078,26 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       --lnum;
     new_cursor = curwin->w_cursor;
 
-    /*
-     * simple case: insert into current line
-     */
+    // simple case: insert into current line
     if (y_type == kMTCharWise && y_size == 1) {
+      linenr_T end_lnum = 0;  // init for gcc
+
+      if (VIsual_active) {
+        end_lnum = curbuf->b_visual.vi_end.lnum;
+        if (end_lnum < curbuf->b_visual.vi_start.lnum) {
+            end_lnum = curbuf->b_visual.vi_start.lnum;
+        }
+      }
+
       do {
         totlen = (size_t)(count * yanklen);
         if (totlen > 0) {
           oldp = ml_get(lnum);
-          newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
+          if (VIsual_active && col > (int)STRLEN(oldp)) {
+            lnum++;
+            continue;
+          }
+          newp = (char_u *)xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
           memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < (size_t)count; i++) {
@@ -3102,11 +3113,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
         }
-        if (VIsual_active)
+        if (VIsual_active) {
           lnum++;
-      } while (VIsual_active
-               && (lnum <= curbuf->b_visual.vi_end.lnum
-                   || lnum <= curbuf->b_visual.vi_start.lnum));
+        }
+      } while (VIsual_active && lnum <= end_lnum);
 
       if (VIsual_active) {  /* reset lnum to the last visual line */
         lnum--;
