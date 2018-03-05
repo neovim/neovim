@@ -7768,7 +7768,7 @@ const char *get_highlight_name(expand_T *const xp, int idx)
 
 /// Obtain a highlight group name.
 /// When "skip_cleared" is TRUE don't return a cleared entry.
-char_u * get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
+const char *get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (idx < 0) {
@@ -7777,7 +7777,7 @@ char_u * get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
 
   // Items are never removed from the table, skip the ones that were cleared.
   if (skip_cleared && idx < highlight_ga.ga_len && HL_TABLE()[idx].sg_cleared) {
-    return (char_u *)"";
+    return "";
   }
 
   if (idx == highlight_ga.ga_len && include_none != 0) {
