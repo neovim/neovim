@@ -10,6 +10,8 @@ configuration:
 - MINGW_64-gcov
 matrix:
   allow_failures:
+    - configuration: MSVC_64
+    - configuration: MSVC_32
     - configuration: MINGW_64-gcov
 install: []
 before_build:
