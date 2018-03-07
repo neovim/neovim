@@ -2,11 +2,12 @@ echo on
 if "%CONFIGURATION%" == "MINGW_32" (
   set ARCH=i686
   set BITS=32
-) else if "%CONFIGURATION%" == "MINGW_64" (
+) else if "%CONFIGURATION:~0,8%" == "MINGW_64" (
   set ARCH=x86_64
   set BITS=64
-) else if "%CONFIGURATION%" == "MINGW_64-gcov" (
-  set USE_GCOV="-DUSE_GCOV=ON"
+  if "%CONFIGURATION%" == "MINGW_64-gcov" (
+    set USE_GCOV="-DUSE_GCOV=ON"
+  )
 ) else if "%CONFIGURATION%" == "MSVC_32" (
   set CMAKE_GENERATOR="Visual Studio 15 2017"
 ) else if "%CONFIGURATION%" == "MSVC_64" (
