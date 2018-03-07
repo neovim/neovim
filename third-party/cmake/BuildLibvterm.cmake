@@ -37,8 +37,8 @@ endfunction()
 if(WIN32)
   if(MSVC)
     set(LIBVTERM_PATCH_COMMAND
-      git -C ${DEPS_BUILD_DIR}/src/libvterm init
-      COMMAND git -C ${DEPS_BUILD_DIR}/src/libvterm apply
+    ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm init
+      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm apply
         ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch)
   endif()
   set(LIBVTERM_CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
