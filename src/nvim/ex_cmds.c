@@ -5839,7 +5839,7 @@ static void sign_list_defined(sign_T *sp)
   if (sp->sn_text_hl > 0) {
     msg_puts(" texthl=");
     const char *const p = get_highlight_name_ext(NULL,
-                                                 sp->sn_line_hl - 1, false);
+                                                 sp->sn_text_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
