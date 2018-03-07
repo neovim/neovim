@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #define usleep(usecs) Sleep(usecs/1000)
 #else
