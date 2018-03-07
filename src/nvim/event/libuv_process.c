@@ -51,12 +51,19 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+#ifdef WIN32
+    uvproc->uvstdio[0].flags |= UV_OVERLAPPED_PIPE;
+#endif
     uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->in.uv.pipe);
   }
 
   if (!proc->out.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+#ifdef WIN32
+    // pipe must be readable for IOCP to work.
+    uvproc->uvstdio[1].flags |= UV_READABLE_PIPE | UV_OVERLAPPED_PIPE;
+#endif
     uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->out.uv.pipe);
   }
