@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
-  helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
+  helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command

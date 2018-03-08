@@ -6,7 +6,7 @@ local Paths = require('test.config.paths')
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
-local source, next_message = helpers.source, helpers.next_message
+local source, next_msg = helpers.source, helpers.next_msg
 local ok = helpers.ok
 local meths = helpers.meths
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
@@ -258,12 +258,12 @@ describe('server -> client', function()
     it('rpc and text stderr can be combined', function()
       eq("ok",funcs.rpcrequest(jobid, "poll"))
       funcs.rpcnotify(jobid, "ping")
-      eq({'notification', 'pong', {}}, next_message())
+      eq({'notification', 'pong', {}}, next_msg())
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
-      eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_message())
+      eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_msg())
       funcs.rpcrequest(jobid, "exit")
-      eq({'notification', 'stderr', {0, {''}}}, next_message())
-      eq({'notification', 'exit', {0, 0}}, next_message())
+      eq({'notification', 'stderr', {0, {''}}}, next_msg())
+      eq({'notification', 'exit', {0, 0}}, next_msg())
     end)
   end)
 
