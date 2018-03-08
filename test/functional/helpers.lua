@@ -98,7 +98,7 @@ local function request(method, ...)
 end
 
 local function next_msg(timeout)
-  return session:next_message(timeout)
+  return session:next_message(timeout and timeout or 10000)
 end
 
 local function expect_twostreams(msgs1, msgs2)
