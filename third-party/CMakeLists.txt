@@ -50,9 +50,11 @@ endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
-find_package(Git)
-if(NOT Git_FOUND)
-  message(FATAL_ERROR "Git is required to apply patches to bundled dependencies")
+if(WIN32)
+  find_package(Git)
+  if(NOT Git_FOUND)
+    message(FATAL_ERROR "Git is required to apply patches for Windows.")
+  endif()
 endif()
 
 if(UNIX)

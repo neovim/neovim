@@ -70,13 +70,9 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   endif()
 
   BuildLuarocks(
-    PATCH_COMMAND
-      ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks apply
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/luarocks-Fix-siteconfig.patch
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-    INSTALL_COMMAND ${MAKE_PRG} bootstrap)
+    INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
 
   if(MINGW)
