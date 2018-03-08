@@ -464,7 +464,6 @@ void normal_enter(bool cmdwin, bool noexmode)
   state.noexmode = noexmode;
   state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
   state_enter(&state.state);
-  apply_autocmds(EVENT_MODEENTER, NULL, NULL, false, curbuf);
 }
 
 static void normal_prepare(NormalState *s)
@@ -899,7 +898,6 @@ static void normal_finish_command(NormalState *s)
 
   // Finish up after executing a Normal mode command.
 normal_end:
-  apply_autocmds(EVENT_MODELEAVE, NULL, NULL, false, curbuf);
 
   msg_nowait = false;
 
@@ -2949,7 +2947,7 @@ void check_visual_highlight(void)
 void end_visual_mode(void)
 {
 
-  apply_autocmds(EVENT_MODELEAVE, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_MODELEAVE, (char_u *)"visual", NULL, false, curbuf);
   VIsual_active = false;
   setmouse();
   mouse_dragging = 0;
@@ -6462,7 +6460,7 @@ static void n_start_visual_mode(int c)
   /* Check for redraw before changing the state. */
   conceal_check_cursur_line();
 
-  apply_autocmds(EVENT_MODEENTER, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_MODEENTER, (char_u *) "visual", NULL, false, curbuf);
 
   VIsual_mode = c;
   VIsual_active = true;
