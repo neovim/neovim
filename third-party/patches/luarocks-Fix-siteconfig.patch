@@ -1,0 +1,28 @@
+From dad6687372b1568f1543388d5014190a076e388a Mon Sep 17 00:00:00 2001
+Date: Thu, 8 Mar 2018 22:50:52 +0100
+Subject: [PATCH] Fix site_config
+
+---
+ src/luarocks/cfg.lua | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/luarocks/cfg.lua b/src/luarocks/cfg.lua
+index 1d5c9872e205..aa34a4f9748b 100644
+--- a/src/luarocks/cfg.lua
++++ b/src/luarocks/cfg.lua
+@@ -23,10 +23,10 @@ local version_suffix = cfg.lua_version:gsub("%.", "_")
+ 
+ -- Load site-local global configurations
+ local ok, site_config = pcall(require, "luarocks.site_config_"..version_suffix)
+-if not ok then
++if not ok or type(site_config) ~= "table" then
+    ok, site_config = pcall(require, "luarocks.site_config")
+ end
+-if not ok then
++if not ok or type(site_config) ~= "table" then
+    io.stderr:write("Site-local luarocks/site_config.lua file not found. Incomplete installation?\n")
+    site_config = {}
+ end
+-- 
+2.7.4
+
