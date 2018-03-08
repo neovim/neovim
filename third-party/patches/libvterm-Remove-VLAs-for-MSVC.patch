@@ -1,0 +1,50 @@
+From eb386b1d82f7d07363c9133b7aa06902ccd555fe Mon Sep 17 00:00:00 2001
+Date: Tue, 27 Feb 2018 17:54:20 -0600
+Subject: [PATCH] Remove VLAs for MSVC
+
+VLAs are replaced with calls to _alloca() because MSVC does not support them.
+---
+ src/state.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/state.c b/src/state.c
+index 84299df..f9aabb3 100644
+--- a/src/state.c
++++ b/src/state.c
+@@ -1,5 +1,6 @@
+ #include "vterm_internal.h"
+ 
++#include <malloc.h>
+ #include <stdio.h>
+ #include <string.h>
+ 
+@@ -236,7 +237,7 @@ static int on_text(const char bytes[], size_t len, void *user)
+   VTermPos oldpos = state->pos;
+ 
+   // We'll have at most len codepoints
+-  uint32_t codepoints[len];
++  uint32_t* codepoints = _alloca(len);
+   int npoints = 0;
+   size_t eaten = 0;
+ 
+@@ -313,7 +314,7 @@ static int on_text(const char bytes[], size_t len, void *user)
+ 
+     int width = 0;
+ 
+-    uint32_t chars[glyph_ends - glyph_starts + 1];
++    uint32_t* chars = _alloca(glyph_ends - glyph_starts + 1);
+ 
+     for( ; i < glyph_ends; i++) {
+       chars[i - glyph_starts] = codepoints[i];
+@@ -512,7 +513,7 @@ static int settermprop_int(VTermState *state, VTermProp prop, int v)
+ 
+ static int settermprop_string(VTermState *state, VTermProp prop, const char *str, size_t len)
+ {
+-  char strvalue[len+1];
++  char* strvalue = _alloca(len+1);
+   strncpy(strvalue, str, len);
+   strvalue[len] = 0;
+ 
+-- 
+2.16.1.windows.4
+

@@ -5936,6 +5936,14 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+
+#ifdef _MSC_VER
+// This prevents MSVC from replacing the functions with intrinsics,
+// and causing errors when trying to get their addresses in funcs.generated.h
+#pragma function (ceil)
+#pragma function (floor)
+#endif
+
 # include "funcs.generated.h"
 #endif
 

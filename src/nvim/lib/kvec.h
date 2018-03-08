@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include "nvim/memory.h"
+#include "nvim/os/os_defs.h"
 
 #define kv_roundup32(x) \
     ((--(x)), \

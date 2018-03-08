@@ -70,9 +70,6 @@ elseif(MSVC)
     # Make sure we use the same generator, otherwise we may
     # accidentaly end up using different MSVC runtimes
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
-  # Place the DLL in the bin folder
-  set(MSGPACK_INSTALL_COMMAND ${MSGPACK_INSTALL_COMMAND}
-    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_INSTALL_DIR}/lib/msgpack.dll ${DEPS_INSTALL_DIR}/bin)
 endif()
 
 BuildMsgpack(CONFIGURE_COMMAND ${MSGPACK_CONFIGURE_COMMAND}
