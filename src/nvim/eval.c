@@ -16216,7 +16216,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     case 'n': {  // name
-      p = get_highlight_name(NULL, id - 1);
+      p = get_highlight_name_ext(NULL, id - 1, false);
       break;
     }
     case 'r': {  // reverse

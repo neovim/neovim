@@ -7758,11 +7758,17 @@ static void highlight_list_two(int cnt, int attr)
 }
 
 
-/*
- * Function given to ExpandGeneric() to obtain the list of group names.
- * Also used for synIDattr() function.
- */
+/// Function given to ExpandGeneric() to obtain the list of group names.
 const char *get_highlight_name(expand_T *const xp, int idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return get_highlight_name_ext(xp, idx, true);
+}
+
+
+/// Obtain a highlight group name.
+/// When "skip_cleared" is TRUE don't return a cleared entry.
+const char *get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (idx < 0) {
@@ -7770,8 +7776,8 @@ const char *get_highlight_name(expand_T *const xp, int idx)
   }
 
   // Items are never removed from the table, skip the ones that were cleared.
-  while (idx < highlight_ga.ga_len && HL_TABLE()[idx].sg_cleared) {
-    idx++;
+  if (skip_cleared && idx < highlight_ga.ga_len && HL_TABLE()[idx].sg_cleared) {
+    return "";
   }
 
   if (idx == highlight_ga.ga_len && include_none != 0) {
