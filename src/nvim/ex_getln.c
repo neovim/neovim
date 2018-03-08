@@ -360,7 +360,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   firstcbuf[0] = firstc > 0 ? firstc : '-';
   firstcbuf[1] = 0;
 
-  if (has_event(EVENT_CMDLINEENTER)) {
+  if (has_event(EVENT_CMDLINEENTER) || au_exists("ModeEnter cmdline")) {
     // set v:event to a dictionary with information about the commandline
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
@@ -369,6 +369,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
     apply_autocmds(EVENT_CMDLINEENTER, (char_u *)firstcbuf, (char_u *)firstcbuf,
                    false, curbuf);
+    apply_autocmds(EVENT_MODEENTER, (char_u *)"cmdline", NULL, false, curbuf);
     tv_dict_clear(dict);
 
 
@@ -384,7 +385,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   state_enter(&s->state);
 
-  if (has_event(EVENT_CMDLINELEAVE)) {
+  if (has_event(EVENT_CMDLINELEAVE) || au_exists("ModeLeave cmdline")) {
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
