@@ -36,6 +36,14 @@ usage() {
   echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
 }
 
+msg_ok() {
+  printf "\e[32m✔\e[0m $@\n"
+}
+
+msg_err() {
+  printf "\e[31m✘\e[0m $@\n"
+}
+
 # Checks if a program is in the user's PATH, and is executable.
 check_executable() {
   test -x "$(command -v "${1}")"
@@ -73,20 +81,20 @@ get_vim_sources() {
   require_executable git
 
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
-    echo "Cloning Vim sources into '${VIM_SOURCE_DIR}'."
+    echo "Cloning Vim into: ${VIM_SOURCE_DIR}"
     git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
     if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
-      echo "✘ ${VIM_SOURCE_DIR} does not appear to be a git repository."
+      msg_err "${VIM_SOURCE_DIR} does not appear to be a git repository."
       echo "  Please remove it and try again."
       exit 1
     fi
     cd "${VIM_SOURCE_DIR}"
-    echo "Updating Vim sources in '${VIM_SOURCE_DIR}'."
+    echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
     git pull &&
-      echo "✔ Updated Vim sources." ||
-      echo "✘ Could not update Vim sources; ignoring error."
+      msg_ok "Updated Vim sources." ||
+      msg_err "Could not update Vim sources; ignoring error."
   fi
 }
 
@@ -178,10 +186,10 @@ get_vimpatch() {
   assign_commit_details "${1}"
 
   git log -1 "${vim_commit}" -- >/dev/null 2>&1 || {
-    >&2 echo "✘ Couldn't find Vim revision '${vim_commit}'."
+    >&2 msg_err "Couldn't find Vim revision '${vim_commit}'."
     exit 3
   }
-  echo "✔ Found Vim revision '${vim_commit}'."
+  msg_ok "Found Vim revision '${vim_commit}'."
 
   local patch_content
   patch_content="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}")"
@@ -194,7 +202,7 @@ get_vimpatch() {
   printf "Pre-processing patch...\n"
   preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
 
-  printf "✔ Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
+  msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
 }
 
 stage_patch() {
@@ -207,31 +215,32 @@ stage_patch() {
   checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
 
   if [[ "${checked_out_branch}" == ${BRANCH_PREFIX}* ]]; then
-    echo "✔ Current branch '${checked_out_branch}' seems to be a vim-patch"
+    msg_ok "Current branch '${checked_out_branch}' seems to be a vim-patch"
     echo "  branch; not creating a new branch."
   else
     printf "\nFetching '${git_remote}/master'.\n"
     output="$(git fetch "${git_remote}" master 2>&1)" &&
-      echo "✔ ${output}" ||
-      (echo "✘ ${output}"; false)
+      msg_ok "${output}" ||
+      (msg_err "${output}"; false)
 
     local nvim_branch="${BRANCH_PREFIX}${vim_version}"
     echo
     echo "Creating new branch '${nvim_branch}' based on '${git_remote}/master'."
     cd "${NVIM_SOURCE_DIR}"
     output="$(git checkout -b "${nvim_branch}" "${git_remote}/master" 2>&1)" &&
-      echo "✔ ${output}" ||
-      (echo "✘ ${output}"; false)
+      msg_ok "${output}" ||
+      (msg_err "${output}"; false)
   fi
 
   printf "\nCreating empty commit with correct commit message.\n"
   output="$(commit_message | git commit --allow-empty --file 2>&1 -)" &&
-    echo "✔ ${output}" ||
-    (echo "✘ ${output}"; false)
+    msg_ok "${output}" ||
+    (msg_err "${output}"; false)
 
   if test -n "$try_apply" ; then
     if ! check_executable patch; then
-      printf "\n✘ 'patch' command not found\n"
+      printf "\n"
+      msg_err "'patch' command not found\n"
     else
       printf "\nApplying patch...\n"
       patch -p1 < "${patch_file}" || true
@@ -283,7 +292,7 @@ submit_pr() {
   local checked_out_branch
   checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
   if [[ "${checked_out_branch}" != ${BRANCH_PREFIX}* ]]; then
-    echo "✘ Current branch '${checked_out_branch}' doesn't seem to be a vim-patch branch."
+    msg_err "Current branch '${checked_out_branch}' doesn't seem to be a vim-patch branch."
     exit 1
   fi
 
@@ -304,16 +313,16 @@ submit_pr() {
   if [[ $push_first -ne 0 ]]; then
     echo "Pushing to 'origin/${checked_out_branch}'."
     output="$(git push origin "${checked_out_branch}" 2>&1)" &&
-      echo "✔ ${output}" ||
-      (echo "✘ ${output}"; false)
+      msg_ok "${output}" ||
+      (msg_err "${output}"; false)
 
     echo
   fi
 
   echo "Creating pull request."
   output="$(${submit_fn} "${pr_message}" 2>&1)" &&
-    echo "✔ ${output}" ||
-    (echo "✘ ${output}"; false)
+    msg_ok "${output}" ||
+    (msg_err "${output}"; false)
 
   echo
   echo "Cleaning up files."
@@ -324,7 +333,7 @@ submit_pr() {
       continue
     fi
     rm -- "${NVIM_SOURCE_DIR}/${patch_file}"
-    echo "✔ Removed '${NVIM_SOURCE_DIR}/${patch_file}'."
+    msg_ok "Removed '${NVIM_SOURCE_DIR}/${patch_file}'."
   done
 }
 
@@ -421,9 +430,9 @@ review_commit() {
 
   echo
   if [[ -n "${vim_version}" ]]; then
-    echo "✔ Detected Vim patch '${vim_version}'."
+    msg_ok "Detected Vim patch '${vim_version}'."
   else
-    echo "✘ Could not detect the Vim patch number."
+    msg_err "Could not detect the Vim patch number."
     echo "  This script assumes that the PR contains only commits"
     echo "  with 'vim-patch:XXX' in their title."
     echo
@@ -446,9 +455,9 @@ review_commit() {
   local commit_message
   commit_message="$(tail -n +4 <<< "${nvim_patch}" | head -n "${message_length}")"
   if [[ "${commit_message#${git_patch_prefix}}" == "${expected_commit_message}" ]]; then
-    echo "✔ Found expected commit message."
+    msg_ok "Found expected commit message."
   else
-    echo "✘ Wrong commit message."
+    msg_err "Wrong commit message."
     echo "  Expected:"
     echo "${expected_commit_message}"
     echo "  Actual:"
@@ -458,7 +467,7 @@ review_commit() {
   echo
   echo "Creating files."
   echo "${nvim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
-  echo "✔ Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
+  msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
   get_vimpatch "${vim_version}"
