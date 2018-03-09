@@ -24,9 +24,6 @@ describe('jobs', function()
 
   before_each(function()
     clear()
-    if iswin() then
-      helpers.set_shell_powershell()
-    end
     channel = nvim('get_api_info')[1]
     nvim('set_var', 'channel', channel)
     source([[
@@ -52,7 +49,7 @@ describe('jobs', function()
   it('uses &shell and &shellcmdflag if passed a string', function()
     nvim('command', "let $VAR = 'abc'")
     if iswin() then
-      nvim('command', "let j = jobstart('echo $env:VAR', g:job_opts)")
+      nvim('command', "let j = jobstart('echo %VAR%', g:job_opts)")
     else
       nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
     end
@@ -64,7 +61,7 @@ describe('jobs', function()
   it('changes to given / directory', function()
     nvim('command', "let g:job_opts.cwd = '/'")
     if iswin() then
-      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
+      nvim('command', "let j = jobstart('cd', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
@@ -79,7 +76,7 @@ describe('jobs', function()
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
-      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
+      nvim('command', "let j = jobstart('cd', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
@@ -103,7 +100,7 @@ describe('jobs', function()
     local _, err = pcall(function()
       nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
       if iswin() then
-        nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+        nvim('command', "let j = jobstart('cd', g:job_opts)")
       else
         nvim('command', "let j = jobstart('pwd', g:job_opts)")
       end
@@ -294,7 +291,7 @@ describe('jobs', function()
 
   it('can pass user data to the callback', function()
     nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
-    nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
+    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
     local data = {n = 5, s = 'str', l = {1}}
     expect_msg_seq(
       { {'notification', 'stdout', {data, {'foo', ''}}},
@@ -312,14 +309,14 @@ describe('jobs', function()
   it('can omit data callbacks', function()
     nvim('command', 'unlet g:job_opts.on_stdout')
     nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
+    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
     eq({'notification', 'exit', {5, 0}}, next_msg())
   end)
 
   it('can omit exit callback', function()
     nvim('command', 'unlet g:job_opts.on_exit')
     nvim('command', 'let g:job_opts.user = 5')
-    nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
+    nvim('command', [[call jobstart('echo foo', g:job_opts)]])
     expect_msg_seq(
       { {'notification', 'stdout', {5, {'foo', ''} } },
         {'notification', 'stdout', {5, {''} } },
@@ -428,7 +425,7 @@ describe('jobs', function()
     endfunction
     let Callback = function('PrintArgs', ["foo", "bar"])
     let g:job_opts = {'on_stdout': Callback}
-    call jobstart('echo "some text"', g:job_opts)
+    call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
       { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
@@ -448,7 +445,7 @@ describe('jobs', function()
           return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
       endfun
       let g:job_opts = {'on_stdout': MkFun()}
-      call jobstart('echo "some text"', g:job_opts)
+      call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
       { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
@@ -463,7 +460,7 @@ describe('jobs', function()
   it('jobstart() works when closure passed directly to `jobstart`', function()
     source([[
       let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
-      call jobstart('echo "some text"', g:job_opts)
+      call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
       { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
@@ -476,9 +473,20 @@ describe('jobs', function()
   end)
 
   describe('jobwait', function()
+    before_each(function()
+      if iswin() then
+        helpers.set_shell_powershell()
+      end
+    end)
+
     it('returns a list of status codes', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 100; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 300; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 500; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 700; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.10; exit 4'),
       \  jobstart('sleep 0.110; exit 5'),
       \  jobstart('sleep 0.210; exit 6'),
@@ -498,7 +506,12 @@ describe('jobs', function()
         endif
         let g:exits += 1
       endfunction
-      call jobwait([
+      call jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 100; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 300; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 500; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 700; exit 5', g:dict)
+      \  ] : [
       \  jobstart('sleep 0.010; exit 5', g:dict),
       \  jobstart('sleep 0.030; exit 5', g:dict),
       \  jobstart('sleep 0.050; exit 5', g:dict),
@@ -511,7 +524,12 @@ describe('jobs', function()
 
     it('will return status codes in the order of passed ids', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 700; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 500; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 300; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 100; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.070; exit 4'),
       \  jobstart('sleep 0.050; exit 5'),
       \  jobstart('sleep 0.030; exit 6'),
@@ -525,7 +543,7 @@ describe('jobs', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
       \  -10,
-      \  jobstart('sleep 0.01; exit 5'),
+      \  jobstart((has('win32') ? 'Start-Sleep -Milliseconds 100' : 'sleep 0.01').'; exit 5'),
       \  ]))
       ]])
       eq({'notification', 'wait', {{-3, 5}}}, next_msg())
@@ -534,7 +552,9 @@ describe('jobs', function()
     it('will return -2 when interrupted without timeout', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("sleep 10; exit 55")]))')
+              'jobwait([jobstart("'..
+              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              '; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
       eq({'notification', 'wait', {{-2}}}, next_msg())
@@ -543,7 +563,9 @@ describe('jobs', function()
     it('will return -2 when interrupted with timeout', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("sleep 10; exit 55")], 10000))')
+              'jobwait([jobstart("'..
+              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              '; exit 55")], 10000))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
       eq({'notification', 'wait', {{-2}}}, next_msg())
@@ -598,20 +620,22 @@ describe('jobs', function()
     end)
 
     describe('with timeout argument', function()
-      if helpers.pending_win32(pending) then return end
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
-        \  jobstart('sleep 10; exit 5'),
-        \  ], 100))
+        \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
+        \  ], has('win32') ? 3000 : 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
       end)
 
       it('can pass 0 to check if a job exists', function()
         source([[
-        call rpcnotify(g:channel, 'wait', jobwait([
+        call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+        \  jobstart('Start-Sleep -Milliseconds 50; exit 4'),
+        \  jobstart('Start-Sleep -Milliseconds 300; exit 5'),
+        \  ] : [
         \  jobstart('sleep 0.05; exit 4'),
         \  jobstart('sleep 0.3; exit 5'),
         \  ], 0))
