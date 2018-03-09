@@ -140,15 +140,28 @@ describe('jobs', function()
   end)
 
   it('allows interactive commands', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
     eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
     nvim('command', 'call jobsend(j, "123\\nxyz\\n")')
-    eq({'notification', 'stdout', {0, {'123', 'xyz', ''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'123', 'xyz', ''}}}
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'123', ''}}},
+        {'notification', 'stdout', {0, {'xyz', ''}}}
+      }
+    )
     nvim('command', 'call jobsend(j, [123, "xyz", ""])')
-    eq({'notification', 'stdout', {0, {'123', 'xyz', ''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'123', 'xyz', ''}}}
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'123', ''}}},
+        {'notification', 'stdout', {0, {'xyz', ''}}}
+      }
+    )
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
@@ -221,16 +234,14 @@ describe('jobs', function()
   end)
 
   it('closes the job streams with jobclose', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    eq({'notification', 'exit', {0, iswin() and 1 or 0}}, next_msg())
   end)
 
   it("disallows jobsend on a job that closed stdin", function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq(false, pcall(function()
       nvim('command', 'call jobsend(j, ["some data"])')
@@ -243,8 +254,7 @@ describe('jobs', function()
   end)
 
   it('disallows jobstop twice on the same job', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', "let j = jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     eq(true, pcall(eval, "jobstop(j)"))
     eq(false, pcall(eval, "jobstop(j)"))
@@ -654,10 +664,9 @@ describe('jobs', function()
   end)
 
   it('cannot have both rpc and pty options', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     command("let g:job_opts.pty = v:true")
     command("let g:job_opts.rpc = v:true")
-    local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
+    local _, err = pcall(command, "let j = jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
   end)
 
