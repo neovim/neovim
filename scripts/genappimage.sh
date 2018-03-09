@@ -11,6 +11,8 @@ if [ -z "$ARCH" ]; then
   export ARCH="$(arch)"
 fi
 
+TAG=$1
+
 # App name, used by generate_appimage.
 APP=nvim
 
@@ -69,12 +71,16 @@ cd "$APP_BUILD_DIR" # Get out of AppImage directory.
 #   - Expects: $ARCH, $APP, $VERSION env vars
 #   - Expects: ./$APP.AppDir/ directory
 #   - Produces: ../out/$APP-$VERSION.glibc$GLIBC_NEEDED-$ARCH.AppImage
-generate_type2_appimage
+if [ -n "$TAG" ]; then
+  generate_type2_appimage -u "gh-releases-zsync|neovim|neovim|$TAG|nvim.appimage.zsync"
+else
+  generate_type2_appimage
+fi
 
 # Moving the final executable to a different folder so it isn't in the
 # way for a subsequent build.
 
-mv "$ROOT_DIR"/out/*.AppImage "$ROOT_DIR"/build/bin
+mv "$ROOT_DIR"/out/*.AppImage* "$ROOT_DIR"/build/bin
 # Remove the (now empty) folder the AppImage was built in
 rmdir "$ROOT_DIR"/out
 
