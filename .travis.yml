@@ -6,9 +6,6 @@ env:
   global:
     # To force rebuilding of third-party dependencies, set this to 'true'.
     - BUILD_NVIM_DEPS=false
-    # Travis has 1.5 virtual cores according to
-    # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
-    - MAKE_CMD="make -j2"
     # Update PATH for pip.
     - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$PATH"
     # Build directory for Neovim.
@@ -115,6 +112,7 @@ addons:
       - libc6-dev-i386
       - libtool
       - locales
+      - ninja-build
       - pkg-config
       - unzip
       - valgrind

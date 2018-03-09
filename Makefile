@@ -8,8 +8,6 @@ CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
-DOC_DOWNLOAD_URL_BASE := https://raw.githubusercontent.com/neovim/doc/gh-pages
-CLINT_ERRORS_FILE_PATH := /reports/clint/errors.json
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")

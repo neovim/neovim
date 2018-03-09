@@ -1,5 +1,8 @@
 top_make() {
-  ${MAKE_CMD} "$@"
+  echo '================================================================================'
+  # Travis has 1.5 virtual cores according to:
+  # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
+  ninja "$@"
 }
 
 build_make() {
@@ -36,7 +39,7 @@ build_deps() {
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
-  CC= cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
+  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
 
   if ! top_make; then
     exit 1
@@ -56,7 +59,7 @@ prepare_build() {
   mkdir -p "${BUILD_DIR}"
   cd "${BUILD_DIR}"
   echo "Configuring with '${CMAKE_FLAGS} $@'."
-  cmake ${CMAKE_FLAGS} "$@" "${TRAVIS_BUILD_DIR}"
+  cmake -G Ninja ${CMAKE_FLAGS} "$@" "${TRAVIS_BUILD_DIR}"
 }
 
 build_nvim() {
