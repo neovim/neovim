@@ -69,7 +69,7 @@ cd "$APP_BUILD_DIR" # Get out of AppImage directory.
 #   - Expects: $ARCH, $APP, $VERSION env vars
 #   - Expects: ./$APP.AppDir/ directory
 #   - Produces: ../out/$APP-$VERSION.glibc$GLIBC_NEEDED-$ARCH.AppImage
-generate_appimage
+generate_type2_appimage
 
 # Moving the final executable to a different folder so it isn't in the
 # way for a subsequent build.
