@@ -45,6 +45,9 @@
 # ifndef restrict
 #  define restrict __restrict
 # endif
+# ifndef STDIN_FILENO
+#  define STDIN_FILENO _fileno(stdin)
+# endif
 # ifndef STDOUT_FILENO
 #  define STDOUT_FILENO _fileno(stdout)
 # endif
@@ -60,6 +63,7 @@
 
 #ifdef _MSC_VER
 typedef SSIZE_T ssize_t;
+typedef int mode_t;
 #endif
 
 #ifndef SSIZE_MAX

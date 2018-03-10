@@ -322,13 +322,16 @@ func Test_syn_clear()
   syntax keyword Bar tar
   call assert_match('Foo', execute('syntax'))
   call assert_match('Bar', execute('syntax'))
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   syn clear Foo
   call assert_notmatch('Foo', execute('syntax'))
   call assert_match('Bar', execute('syntax'))
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   syn clear Foo Bar
   call assert_notmatch('Foo', execute('syntax'))
   call assert_notmatch('Bar', execute('syntax'))
   hi clear Foo
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   hi clear Bar
 endfunc
 

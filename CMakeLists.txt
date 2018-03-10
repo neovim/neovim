@@ -204,6 +204,7 @@ int main(void)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
@@ -223,6 +224,9 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+endif()
+if(WIN32)
+  # Windows Vista is the minimum supported version
   add_definitions(-D_WIN32_WINNT=0x0600)
 endif()
 

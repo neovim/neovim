@@ -76,15 +76,19 @@ elseif(WIN32 AND MSVC)
   endif()
 
   include(TargetArch)
-  if("${TARGET_ARCH}" STREQUAL "X86_64")
+  if(TARGET_ARCH STREQUAL "X86_64")
     set(TARGET_ARCH x64)
   elseif(TARGET_ARCH STREQUAL "X86")
     set(TARGET_ARCH x86)
   endif()
-  string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_BUILD_TYPE)
-  set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(TARGET_CONFIG debug)
+  else()
+    set(TARGET_CONFIG release)
+  endif()
+  set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${TARGET_CONFIG})
   BuildLibUv(
-    BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat shared ${LOWERCASE_BUILD_TYPE} ${TARGET_ARCH}
+	  BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat shared ${TARGET_CONFIG} ${TARGET_ARCH} 
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
       COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib
