@@ -2390,9 +2390,8 @@ int get_keystroke(void)
  * Get a number from the user.
  * When "mouse_used" is not NULL allow using the mouse.
  */
-int 
-get_number (
-    int colon,                              /* allow colon to abort */
+int get_number(
+    int colon,                              // allow colon to abort
     int *mouse_used,
     char *prompt
 )
@@ -2451,9 +2450,11 @@ get_number (
       skip_redraw = TRUE;           /* skip redraw once */
       do_redraw = FALSE;
       break;
-    } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
+    } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC) {
       break;
-    else break; /* if it is an alphabet */
+    } else {
+      break;  // if it is an alphabet
+    }
   }
   no_mapping--;
   return n;
@@ -2471,13 +2472,14 @@ int prompt_for_number(int *mouse_used)
   int save_State;
   char *msg;
 
-  /* When using ":silent" assume that <CR> was entered. */
-  if (mouse_used != NULL)
+  // When using ":silent" assume that <CR> was entered.
+  if (mouse_used != NULL) {
     msg = "Type number and <Enter> or click with mouse (empty cancels): ";
-  else
+  } else {
     msg = "Type number and <Enter> (empty cancels): ";
+  }
 
-  i = get_number(TRUE, mouse_used, msg);
+  i = get_number(true, mouse_used, msg);
 
   /* Set the state such that text can be selected/copied/pasted and we still
    * get mouse events. */
