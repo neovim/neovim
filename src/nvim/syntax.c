@@ -652,9 +652,9 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     current_lnum = start_lnum;
 
     /* set cursor to start of search */
-    cursor_save = wp->w_cursor;
-    wp->w_cursor.lnum = start_lnum;
-    wp->w_cursor.col = 0;
+    cursor_save = wp->w_cursors[0].w_cursor;
+    wp->w_cursors[0].w_cursor.lnum = start_lnum;
+    wp->w_cursors[0].w_cursor.col = 0;
 
     /*
      * If the line is inside a comment, need to find the syntax item that
@@ -674,7 +674,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     }
 
     /* restore cursor and buffer */
-    wp->w_cursor = cursor_save;
+    wp->w_cursors[0].w_cursor = cursor_save;
     curwin = curwin_save;
     curbuf = curbuf_save;
   }

@@ -2038,7 +2038,7 @@ win_found:
    * read the wanted file if needed, and check autowrite etc.
    */
   old_curbuf = curbuf;
-  old_lnum = curwin->w_cursor.lnum;
+  old_lnum = curwin->w_cursors[0].w_cursor.lnum;
 
   if (qf_ptr->qf_fnum != 0) {
     if (qf_ptr->qf_type == 1) {
@@ -2093,11 +2093,11 @@ win_found:
       if (i > 0) {
         if (i > curbuf->b_ml.ml_line_count)
           i = curbuf->b_ml.ml_line_count;
-        curwin->w_cursor.lnum = i;
+        curwin->w_cursors[0].w_cursor.lnum = i;
       }
       if (qf_ptr->qf_col > 0) {
-        curwin->w_cursor.col = qf_ptr->qf_col - 1;
-        curwin->w_cursor.coladd = 0;
+        curwin->w_cursors[0].w_cursor.col = qf_ptr->qf_col - 1;
+        curwin->w_cursors[0].w_cursor.coladd = 0;
         if (qf_ptr->qf_viscol == true) {
           // Check each character from the beginning of the error
           // line up to the error column.  For each tab character
@@ -2105,11 +2105,11 @@ win_found:
           // a tab character.
           line = get_cursor_line_ptr();
           screen_col = 0;
-          for (char_col = 0; char_col < curwin->w_cursor.col; ++char_col) {
+          for (char_col = 0; char_col < curwin->w_cursors[0].w_cursor.col; ++char_col) {
             if (*line == NUL)
               break;
             if (*line++ == '\t') {
-              curwin->w_cursor.col -= 7 - (screen_col % 8);
+              curwin->w_cursors[0].w_cursor.col -= 7 - (screen_col % 8);
               screen_col += 8 - (screen_col % 8);
             } else
               ++screen_col;
@@ -2122,11 +2122,11 @@ win_found:
       pos_T save_cursor;
 
       /* Move the cursor to the first line in the buffer */
-      save_cursor = curwin->w_cursor;
-      curwin->w_cursor.lnum = 0;
+      save_cursor = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor.lnum = 0;
       if (!do_search(NULL, '/', qf_ptr->qf_pattern, (long)1,
               SEARCH_KEEP, NULL))
-        curwin->w_cursor = save_cursor;
+        curwin->w_cursors[0].w_cursor = save_cursor;
     }
 
     if ((fdo_flags & FDO_QUICKFIX) && old_KeyTyped)
@@ -2148,7 +2148,7 @@ win_found:
        * flag is present in 'shortmess'; But when not jumping, print the
        * whole message. */
       i = msg_scroll;
-      if (curbuf == old_curbuf && curwin->w_cursor.lnum == old_lnum) {
+      if (curbuf == old_curbuf && curwin->w_cursors[0].w_cursor.lnum == old_lnum) {
         msg_scroll = true;
       } else if (!msg_scrolled && shortmess(SHM_OVERALL)) {
         msg_scroll = false;
@@ -2708,8 +2708,8 @@ void ex_copen(exarg_T *eap)
   // Fill the buffer with the quickfix list.
   qf_fill_buffer(qi, curbuf, NULL);
 
-  curwin->w_cursor.lnum = qi->qf_lists[qi->qf_curlist].qf_index;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.lnum = qi->qf_lists[qi->qf_curlist].qf_index;
+  curwin->w_cursors[0].w_cursor.col = 0;
   check_cursor();
   update_topline();             /* scroll to show the line */
 }
@@ -2721,10 +2721,10 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
 
   curwin = win;
   curbuf = win->w_buffer;
-  curwin->w_cursor.lnum = lnum;
-  curwin->w_cursor.col = 0;
-  curwin->w_cursor.coladd = 0;
-  curwin->w_curswant = 0;
+  curwin->w_cursors[0].w_cursor.lnum = lnum;
+  curwin->w_cursors[0].w_cursor.col = 0;
+  curwin->w_cursors[0].w_cursor.coladd = 0;
+  curwin->w_cursors[0].w_curswant = 0;
   update_topline();              // scroll to show the line
   redraw_later(VALID);
   curwin->w_redr_status = true;  // update ruler
@@ -2747,7 +2747,7 @@ void ex_cbottom(exarg_T *eap)
 
   win_T *win = qf_find_win(qi);
 
-  if (win != NULL && win->w_cursor.lnum != win->w_buffer->b_ml.ml_line_count) {
+  if (win != NULL && win->w_cursors[0].w_cursor.lnum != win->w_buffer->b_ml.ml_line_count) {
     qf_win_goto(win, win->w_buffer->b_ml.ml_line_count);
   }
 }

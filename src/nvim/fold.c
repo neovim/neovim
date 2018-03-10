@@ -444,7 +444,7 @@ void foldOpenCursor(void)
   if (hasAnyFolding(curwin))
     for (;; ) {
       done = DONE_NOTHING;
-      (void)setManualFold(curwin->w_cursor.lnum, TRUE, FALSE, &done);
+      (void)setManualFold(curwin->w_cursors[0].w_cursor.lnum, TRUE, FALSE, &done);
       if (!(done & DONE_ACTION))
         break;
     }
@@ -496,7 +496,7 @@ void foldCheckClose(void)
 {
   if (*p_fcl != NUL) {  /* can only be "all" right now */
     checkupdate(curwin);
-    if (checkCloseRec(&curwin->w_folds, curwin->w_cursor.lnum,
+    if (checkCloseRec(&curwin->w_folds, curwin->w_cursors[0].w_cursor.lnum,
             (int)curwin->w_p_fdl))
       changed_window_setting();
   }
@@ -853,11 +853,11 @@ foldMoveTo (
     gap = &curwin->w_folds;
     use_level = FALSE;
     maybe_small = FALSE;
-    lnum_found = curwin->w_cursor.lnum;
+    lnum_found = curwin->w_cursors[0].w_cursor.lnum;
     level = 0;
     last = FALSE;
     for (;; ) {
-      if (!foldFind(gap, curwin->w_cursor.lnum - lnum_off, &fp)) {
+      if (!foldFind(gap, curwin->w_cursors[0].w_cursor.lnum - lnum_off, &fp)) {
         if (!updown)
           break;
 
@@ -892,14 +892,14 @@ foldMoveTo (
           /* to start of next fold if there is one */
           if (fp + 1 - (fold_T *)gap->ga_data < gap->ga_len) {
             lnum = fp[1].fd_top + lnum_off;
-            if (lnum > curwin->w_cursor.lnum)
+            if (lnum > curwin->w_cursors[0].w_cursor.lnum)
               lnum_found = lnum;
           }
         } else {
           /* to end of previous fold if there is one */
           if (fp > (fold_T *)gap->ga_data) {
             lnum = fp[-1].fd_top + lnum_off + fp[-1].fd_len - 1;
-            if (lnum < curwin->w_cursor.lnum)
+            if (lnum < curwin->w_cursors[0].w_cursor.lnum)
               lnum_found = lnum;
           }
         }
@@ -908,11 +908,11 @@ foldMoveTo (
          * nested folds. */
         if (dir == FORWARD) {
           lnum = fp->fd_top + lnum_off + fp->fd_len - 1;
-          if (lnum > curwin->w_cursor.lnum)
+          if (lnum > curwin->w_cursors[0].w_cursor.lnum)
             lnum_found = lnum;
         } else {
           lnum = fp->fd_top + lnum_off;
-          if (lnum < curwin->w_cursor.lnum)
+          if (lnum < curwin->w_cursors[0].w_cursor.lnum)
             lnum_found = lnum;
         }
       }
@@ -925,11 +925,11 @@ foldMoveTo (
       lnum_off += fp->fd_top;
       ++level;
     }
-    if (lnum_found != curwin->w_cursor.lnum) {
+    if (lnum_found != curwin->w_cursors[0].w_cursor.lnum) {
       if (retval == FAIL)
         setpcmark();
-      curwin->w_cursor.lnum = lnum_found;
-      curwin->w_cursor.col = 0;
+      curwin->w_cursors[0].w_cursor.lnum = lnum_found;
+      curwin->w_cursors[0].w_cursor.col = 0;
       retval = OK;
     } else
       break;
@@ -980,11 +980,11 @@ void foldAdjustVisual(void)
   if (!VIsual_active || !hasAnyFolding(curwin))
     return;
 
-  if (ltoreq(VIsual, curwin->w_cursor)) {
+  if (ltoreq(VIsual, curwin->w_cursors[0].w_cursor)) {
     start = &VIsual;
-    end = &curwin->w_cursor;
+    end = &curwin->w_cursors[0].w_cursor;
   } else {
-    start = &curwin->w_cursor;
+    start = &curwin->w_cursors[0].w_cursor;
     end = &VIsual;
   }
   if (hasFolding(start->lnum, &start->lnum, NULL))
@@ -1006,7 +1006,7 @@ void foldAdjustVisual(void)
  */
 void foldAdjustCursor(void)
 {
-  (void)hasFolding(curwin->w_cursor.lnum, &curwin->w_cursor.lnum, NULL);
+  (void)hasFolding(curwin->w_cursors[0].w_cursor.lnum, &curwin->w_cursors[0].w_cursor.lnum, NULL);
 }
 
 /* Internal functions for "fold_T" {{{1 */
@@ -1160,7 +1160,7 @@ setManualFold (
      */
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
-        dlnum = diff_lnum_win(curwin->w_cursor.lnum, wp);
+        dlnum = diff_lnum_win(curwin->w_cursors[0].w_cursor.lnum, wp);
         if (dlnum != 0) {
           (void)setManualFoldWin(wp, dlnum, opening, recurse, NULL);
         }

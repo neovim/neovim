@@ -1885,9 +1885,9 @@ failed:
      * Otherwise: cursor at first new line.
      */
     if (exmode_active)
-      curwin->w_cursor.lnum = from + linecnt;
+      curwin->w_cursors[0].w_cursor.lnum = from + linecnt;
     else
-      curwin->w_cursor.lnum = from + 1;
+      curwin->w_cursors[0].w_cursor.lnum = from + 1;
     check_cursor_lnum();
     beginline(BL_WHITE | BL_FIX);           /* on first non-blank */
 
@@ -5077,7 +5077,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   // encoding to be the same.
 
   prep_exarg(&ea, buf);
-  old_cursor = curwin->w_cursor;
+  old_cursor = curwin->w_cursors[0].w_cursor;
   old_topline = curwin->w_topline;
 
   if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
@@ -5160,7 +5160,7 @@ void buf_reload(buf_T *buf, int orig_mode)
     curwin->w_topline = curbuf->b_ml.ml_line_count;
   else
     curwin->w_topline = old_topline;
-  curwin->w_cursor = old_cursor;
+  curwin->w_cursors[0].w_cursor = old_cursor;
   check_cursor();
   update_topline();
   keep_filetype = FALSE;

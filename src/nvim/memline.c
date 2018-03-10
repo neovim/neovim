@@ -3987,14 +3987,14 @@ void goto_byte(long cnt)
   }
   lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff);
   if (lnum < 1) {         // past the end
-    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    curwin->w_curswant = MAXCOL;
+    curwin->w_cursors[0].w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    curwin->w_cursors[0].w_curswant = MAXCOL;
     coladvance((colnr_T)MAXCOL);
   } else {
-    curwin->w_cursor.lnum = lnum;
-    curwin->w_cursor.col = (colnr_T)boff;
-    curwin->w_cursor.coladd = 0;
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_cursor.lnum = lnum;
+    curwin->w_cursors[0].w_cursor.col = (colnr_T)boff;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
   }
   check_cursor();
 

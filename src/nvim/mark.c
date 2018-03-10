@@ -59,7 +59,7 @@ static xfmark_T namedfm[NGLOBALMARKS];
  */
 int setmark(int c)
 {
-  return setmark_pos(c, &curwin->w_cursor, curbuf->b_fnum);
+  return setmark_pos(c, &curwin->w_cursors[0].w_cursor, curbuf->b_fnum);
 }
 
 /// Free fmark_T item
@@ -97,7 +97,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return FAIL;
 
   if (c == '\'' || c == '`') {
-    if (pos == &curwin->w_cursor) {
+    if (pos == &curwin->w_cursors[0].w_cursor) {
       setpcmark();
       /* keep it even when the cursor doesn't move */
       curwin->w_prev_pcmark = curwin->w_pcmark;
@@ -169,7 +169,7 @@ void setpcmark(void)
     return;
 
   curwin->w_prev_pcmark = curwin->w_pcmark;
-  curwin->w_pcmark = curwin->w_cursor;
+  curwin->w_pcmark = curwin->w_cursors[0].w_cursor;
 
   if (curwin->w_pcmark.lnum == 0) {
     curwin->w_pcmark.lnum = 1;
@@ -197,7 +197,7 @@ void setpcmark(void)
 void checkpcmark(void)
 {
   if (curwin->w_prev_pcmark.lnum != 0
-      && (equalpos(curwin->w_pcmark, curwin->w_cursor)
+      && (equalpos(curwin->w_pcmark, curwin->w_cursors[0].w_cursor)
           || curwin->w_pcmark.lnum == 0)) {
     curwin->w_pcmark = curwin->w_prev_pcmark;
     curwin->w_prev_pcmark.lnum = 0;             /* Show it has been checked */
@@ -249,7 +249,7 @@ pos_T *movemark(int count)
               0, FALSE) == FAIL)
         return (pos_T *)NULL;
       /* Set lnum again, autocommands my have changed it */
-      curwin->w_cursor = jmp->fmark.mark;
+      curwin->w_cursors[0].w_cursor = jmp->fmark.mark;
       pos = (pos_T *)-1;
     } else
       pos = &(jmp->fmark.mark);
@@ -334,26 +334,26 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     oparg_T oa;
     int slcb = listcmd_busy;
 
-    pos = curwin->w_cursor;
+    pos = curwin->w_cursors[0].w_cursor;
     listcmd_busy = TRUE;            /* avoid that '' is changed */
     if (findpar(&oa.inclusive,
             c == '}' ? FORWARD : BACKWARD, 1L, NUL, FALSE)) {
-      pos_copy = curwin->w_cursor;
+      pos_copy = curwin->w_cursors[0].w_cursor;
       posp = &pos_copy;
     }
-    curwin->w_cursor = pos;
+    curwin->w_cursors[0].w_cursor = pos;
     listcmd_busy = slcb;
   } else if (c == '(' || c == ')') {  /* to previous/next sentence */
     pos_T pos;
     int slcb = listcmd_busy;
 
-    pos = curwin->w_cursor;
+    pos = curwin->w_cursors[0].w_cursor;
     listcmd_busy = TRUE;            /* avoid that '' is changed */
     if (findsent(c == ')' ? FORWARD : BACKWARD, 1L)) {
-      pos_copy = curwin->w_cursor;
+      pos_copy = curwin->w_cursors[0].w_cursor;
       posp = &pos_copy;
     }
-    curwin->w_cursor = pos;
+    curwin->w_cursors[0].w_cursor = pos;
     listcmd_busy = slcb;
   } else if (c == '<' || c == '>') {  /* start/end of visual area */
     startp = &buf->b_visual.vi_start;
@@ -398,7 +398,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
         if (buflist_getfile(namedfm[c].fmark.fnum,
                 (linenr_T)1, GETF_SETMARK, FALSE) == OK) {
           /* Set the lnum now, autocommands could have changed it */
-          curwin->w_cursor = namedfm[c].fmark.mark;
+          curwin->w_cursors[0].w_cursor = namedfm[c].fmark.mark;
           return (pos_T *)-1;
         }
         pos_copy.lnum = -1;             /* can't get file */
@@ -1030,19 +1030,19 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }
-        if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
+        if (win->w_cursors[0].w_cursor.lnum >= line1 && win->w_cursors[0].w_cursor.lnum <= line2) {
           if (amount == MAXLNUM) {         /* line with cursor is deleted */
             if (line1 <= 1) {
-              win->w_cursor.lnum = 1;
+              win->w_cursors[0].w_cursor.lnum = 1;
             } else {
-              win->w_cursor.lnum = line1 - 1;
+              win->w_cursors[0].w_cursor.lnum = line1 - 1;
             }
-            win->w_cursor.col = 0;
+            win->w_cursors[0].w_cursor.col = 0;
           } else {                      /* keep cursor on the same line */
-            win->w_cursor.lnum += amount;
+            win->w_cursors[0].w_cursor.lnum += amount;
           }
-        } else if (amount_after && win->w_cursor.lnum > line2) {
-          win->w_cursor.lnum += amount_after;
+        } else if (amount_after && win->w_cursors[0].w_cursor.lnum > line2) {
+          win->w_cursors[0].w_cursor.lnum += amount_after;
         }
       }
 
@@ -1140,7 +1140,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
 
       /* cursor position for other windows with the same buffer */
       if (win != curwin) {
-        col_adjust(&win->w_cursor);
+        col_adjust(&win->w_cursors[0].w_cursor);
       }
     }
   }
@@ -1432,7 +1432,7 @@ void free_jumplist(win_T *wp)
 void set_last_cursor(win_T *win)
 {
   if (win->w_buffer != NULL) {
-    RESET_FMARK(&win->w_buffer->b_last_cursor, win->w_cursor, 0);
+    RESET_FMARK(&win->w_buffer->b_last_cursor, win->w_cursors[0].w_cursor, 0);
   }
 }
 

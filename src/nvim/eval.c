@@ -1229,7 +1229,7 @@ int call_vim_function(
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
   ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars, NULL,
-                  curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                  curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum,
                   &doesrange, true, NULL, NULL);
   if (safe) {
     --sandbox;
@@ -2727,9 +2727,9 @@ void ex_call(exarg_T *eap)
   }
   for (; lnum <= eap->line2; lnum++) {
     if (!eap->skip && eap->addr_count > 0) {  // -V560
-      curwin->w_cursor.lnum = lnum;
-      curwin->w_cursor.col = 0;
-      curwin->w_cursor.coladd = 0;
+      curwin->w_cursors[0].w_cursor.lnum = lnum;
+      curwin->w_cursors[0].w_cursor.col = 0;
+      curwin->w_cursors[0].w_cursor.coladd = 0;
     }
     arg = startarg;
     if (get_func_tv(name, (int)STRLEN(name), &rettv, &arg,
@@ -4224,7 +4224,7 @@ static int eval7(
 
         // Invoke the function.
         ret = get_func_tv(s, len, rettv, arg,
-                          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                          curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum,
                           &len, evaluate, partial, NULL);
 
         xfree(s);
@@ -6627,8 +6627,8 @@ static void f_append(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     appended_lines_mark(lnum, added);
-    if (curwin->w_cursor.lnum > lnum)
-      curwin->w_cursor.lnum += added;
+    if (curwin->w_cursors[0].w_cursor.lnum > lnum)
+      curwin->w_cursors[0].w_cursor.lnum += added;
   } else
     rettv->vval.v_number = 1;           /* Failed */
 }
@@ -7278,7 +7278,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial,
   });
 
   r = call_func(name, (int)STRLEN(name), rettv, argc, argv, NULL,
-                curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum,
                 &dummy, true, partial, selfdict);
 
 func_call_skip_call:
@@ -7428,12 +7428,12 @@ static void f_cindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   pos_T pos;
   linenr_T lnum;
 
-  pos = curwin->w_cursor;
+  pos = curwin->w_cursors[0].w_cursor;
   lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
-    curwin->w_cursor.lnum = lnum;
+    curwin->w_cursors[0].w_cursor.lnum = lnum;
     rettv->vval.v_number = get_c_indent();
-    curwin->w_cursor = pos;
+    curwin->w_cursors[0].w_cursor = pos;
   } else
     rettv->vval.v_number = -1;
 }
@@ -7467,11 +7467,11 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       col = fp->col + 1;
       /* col(".") when the cursor is on the NUL at the end of the line
        * because of "coladd" can be seen as an extra column. */
-      if (virtual_active() && fp == &curwin->w_cursor) {
+      if (virtual_active() && fp == &curwin->w_cursors[0].w_cursor) {
         char_u  *p = get_cursor_pos_ptr();
 
-        if (curwin->w_cursor.coladd >= (colnr_T)chartabsize(p,
-                curwin->w_virtcol - curwin->w_cursor.coladd)) {
+        if (curwin->w_cursors[0].w_cursor.coladd >= (colnr_T)chartabsize(p,
+                curwin->w_cursors[0].w_virtcol - curwin->w_cursors[0].w_cursor.coladd)) {
           int l;
 
           if (*p != NUL && p[(l = (*mb_ptr2len)(p))] == NUL)
@@ -7711,7 +7711,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     col = pos.col;
     coladd = pos.coladd;
     if (curswant >= 0) {
-      curwin->w_curswant = curswant - 1;
+      curwin->w_cursors[0].w_curswant = curswant - 1;
       set_curswant = false;
     }
   } else {
@@ -7726,12 +7726,12 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;             // type error; errmsg already given
   }
   if (line > 0) {
-    curwin->w_cursor.lnum = line;
+    curwin->w_cursors[0].w_cursor.lnum = line;
   }
   if (col > 0) {
-    curwin->w_cursor.col = col - 1;
+    curwin->w_cursors[0].w_cursor.col = col - 1;
   }
-  curwin->w_cursor.coladd = coladd;
+  curwin->w_cursors[0].w_cursor.coladd = coladd;
 
   // Make sure the cursor is in a valid position.
   check_cursor();
@@ -7740,7 +7740,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     mb_adjust_cursor();
   }
 
-  curwin->w_set_curswant = set_curswant;
+  curwin->w_cursors[0].w_set_curswant = set_curswant;
   rettv->vval.v_number = 0;
 }
 
@@ -9168,7 +9168,7 @@ static dict_T *get_buffer_info(buf_T *buf)
   tv_dict_add_str(dict, S_LEN("name"),
                   buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
   tv_dict_add_nr(dict, S_LEN("lnum"),
-                 buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
+                 buf == curbuf ? curwin->w_cursors[0].w_cursor.lnum : buflist_findlnum(buf));
   tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
   tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
   tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
@@ -10015,7 +10015,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
   int fnum = -1;
 
   if (getcurpos) {
-    fp = &curwin->w_cursor;
+    fp = &curwin->w_cursors[0].w_cursor;
   } else {
     fp = var2fpos(&argvars[0], true, &fnum);
   }
@@ -10033,9 +10033,9 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
       l, (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
     update_curswant();
-    tv_list_append_number(l, (curwin->w_curswant == MAXCOL
+    tv_list_append_number(l, (curwin->w_cursors[0].w_curswant == MAXCOL
                               ? (varnumber_T)MAXCOL
-                              : (varnumber_T)curwin->w_curswant + 1));
+                              : (varnumber_T)curwin->w_cursors[0].w_curswant + 1));
   }
 }
 
@@ -12044,12 +12044,12 @@ static void f_line2byte(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_lispindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const pos_T pos = curwin->w_cursor;
+  const pos_T pos = curwin->w_cursors[0].w_cursor;
   const linenr_T lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
-    curwin->w_cursor.lnum = lnum;
+    curwin->w_cursors[0].w_cursor.lnum = lnum;
     rettv->vval.v_number = get_lisp_indent();
-    curwin->w_cursor = pos;
+    curwin->w_cursors[0].w_cursor = pos;
   } else {
     rettv->vval.v_number = -1;
   }
@@ -13717,7 +13717,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     goto theend;
   }
 
-  pos = save_cursor = curwin->w_cursor;
+  pos = save_cursor = curwin->w_cursors[0].w_cursor;
   subpatnum = searchit(curwin, curbuf, &pos, dir, (char_u *)pat, 1,
                        options, RE_SEARCH, (linenr_T)lnum_stop, &tm);
   if (subpatnum != FAIL) {
@@ -13727,7 +13727,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
       retval = pos.lnum;
     if (flags & SP_SETPCMARK)
       setpcmark();
-    curwin->w_cursor = pos;
+    curwin->w_cursors[0].w_cursor = pos;
     if (match_pos != NULL) {
       /* Store the match cursor position */
       match_pos->lnum = pos.lnum;
@@ -13740,9 +13740,9 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 
   /* If 'n' flag is used: restore cursor position. */
   if (flags & SP_NOMOVE)
-    curwin->w_cursor = save_cursor;
+    curwin->w_cursors[0].w_cursor = save_cursor;
   else
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
 theend:
   p_ws = save_p_ws;
 
@@ -14220,8 +14220,8 @@ do_searchpair (
     options |= SEARCH_START;
   }
 
-  save_cursor = curwin->w_cursor;
-  pos = curwin->w_cursor;
+  save_cursor = curwin->w_cursors[0].w_cursor;
+  pos = curwin->w_cursors[0].w_cursor;
   clearpos(&firstpos);
   clearpos(&foundpos);
   pat = pat3;
@@ -14250,14 +14250,14 @@ do_searchpair (
 
     /* If the skip pattern matches, ignore this match. */
     if (*skip != NUL) {
-      save_pos = curwin->w_cursor;
-      curwin->w_cursor = pos;
+      save_pos = curwin->w_cursors[0].w_cursor;
+      curwin->w_cursors[0].w_cursor = pos;
       bool err;
       r = eval_to_bool(skip, &err, NULL, false);
-      curwin->w_cursor = save_pos;
+      curwin->w_cursors[0].w_cursor = save_pos;
       if (err) {
         /* Evaluating {skip} caused an error, break here. */
-        curwin->w_cursor = save_cursor;
+        curwin->w_cursors[0].w_cursor = save_cursor;
         retval = -1;
         break;
       }
@@ -14285,7 +14285,7 @@ do_searchpair (
         retval = pos.lnum;
       if (flags & SP_SETPCMARK)
         setpcmark();
-      curwin->w_cursor = pos;
+      curwin->w_cursors[0].w_cursor = pos;
       if (!(flags & SP_REPEAT))
         break;
       nest = 1;             /* search for next unmatched */
@@ -14294,13 +14294,13 @@ do_searchpair (
 
   if (match_pos != NULL) {
     /* Store the match cursor position */
-    match_pos->lnum = curwin->w_cursor.lnum;
-    match_pos->col = curwin->w_cursor.col + 1;
+    match_pos->lnum = curwin->w_cursors[0].w_cursor.lnum;
+    match_pos->col = curwin->w_cursors[0].w_cursor.col + 1;
   }
 
   /* If 'n' flag is used or search failed: restore cursor position. */
   if ((flags & SP_NOMOVE) || retval == 0)
-    curwin->w_cursor = save_cursor;
+    curwin->w_cursors[0].w_cursor = save_cursor;
 
   xfree(pat2);
   xfree(pat3);
@@ -14585,7 +14585,7 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (u_savesub(lnum) == OK
           && ml_replace(lnum, (char_u *)line, true) == OK) {
         changed_bytes(lnum, 0);
-        if (lnum == curwin->w_cursor.lnum)
+        if (lnum == curwin->w_cursors[0].w_cursor.lnum)
           check_cursor_col();
         rettv->vval.v_number = 0;               /* OK */
       }
@@ -14812,10 +14812,10 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (name[0] == '.' && name[1] == NUL) {
         // set cursor
         if (fnum == curbuf->b_fnum) {
-          curwin->w_cursor = pos;
+          curwin->w_cursors[0].w_cursor = pos;
           if (curswant >= 0) {
-            curwin->w_curswant = curswant - 1;
-            curwin->w_set_curswant = false;
+            curwin->w_cursors[0].w_curswant = curswant - 1;
+            curwin->w_cursors[0].w_set_curswant = false;
           }
           check_cursor();
           rettv->vval.v_number = 0;
@@ -15559,7 +15559,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     len = spell_move_to(curwin, FORWARD, true, true, &attr);
     if (len != 0) {
       word = (char *)get_cursor_pos_ptr();
-      curwin->w_set_curswant = true;
+      curwin->w_cursors[0].w_set_curswant = true;
     }
   } else if (curwin->w_p_spell && *curbuf->b_s.b_p_spl != NUL) {
     const char *str = tv_get_string_chk(&argvars[0]);
@@ -16750,7 +16750,7 @@ bool callback_call(Callback *const callback, const int argcount_in,
 
   int dummy;
   return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
-                   NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
+                   NULL, curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum, &dummy,
                    true, partial, NULL);
 }
 
@@ -17388,17 +17388,17 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     dictitem_T *di;
     if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
-      curwin->w_cursor.lnum = tv_get_number(&di->di_tv);
+      curwin->w_cursors[0].w_cursor.lnum = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("col"))) != NULL) {
-      curwin->w_cursor.col = tv_get_number(&di->di_tv);
+      curwin->w_cursors[0].w_cursor.col = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("coladd"))) != NULL) {
-      curwin->w_cursor.coladd = tv_get_number(&di->di_tv);
+      curwin->w_cursors[0].w_cursor.coladd = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("curswant"))) != NULL) {
-      curwin->w_curswant = tv_get_number(&di->di_tv);
-      curwin->w_set_curswant = false;
+      curwin->w_cursors[0].w_curswant = tv_get_number(&di->di_tv);
+      curwin->w_cursors[0].w_set_curswant = false;
     }
     if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
       set_topline(curwin, tv_get_number(&di->di_tv));
@@ -17436,11 +17436,11 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_alloc_ret(rettv);
   dict = rettv->vval.v_dict;
 
-  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)curwin->w_cursor.lnum);
-  tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)curwin->w_cursor.col);
-  tv_dict_add_nr(dict, S_LEN("coladd"), (varnumber_T)curwin->w_cursor.coladd);
+  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)curwin->w_cursors[0].w_cursor.lnum);
+  tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)curwin->w_cursors[0].w_cursor.col);
+  tv_dict_add_nr(dict, S_LEN("coladd"), (varnumber_T)curwin->w_cursors[0].w_cursor.coladd);
   update_curswant();
-  tv_dict_add_nr(dict, S_LEN("curswant"), (varnumber_T)curwin->w_curswant);
+  tv_dict_add_nr(dict, S_LEN("curswant"), (varnumber_T)curwin->w_cursors[0].w_curswant);
 
   tv_dict_add_nr(dict, S_LEN("topline"), (varnumber_T)curwin->w_topline);
   tv_dict_add_nr(dict, S_LEN("topfill"), (varnumber_T)curwin->w_topfill);
@@ -17758,13 +17758,13 @@ pos_T *var2fpos(const typval_T *const tv, const int dollar_lnum,
     return NULL;
   }
   if (name[0] == '.') {  // Cursor.
-    return &curwin->w_cursor;
+    return &curwin->w_cursors[0].w_cursor;
   }
   if (name[0] == 'v' && name[1] == NUL) {  // Visual start.
     if (VIsual_active) {
       return &VIsual;
     }
-    return &curwin->w_cursor;
+    return &curwin->w_cursors[0].w_cursor;
   }
   if (name[0] == '\'') {  // Mark.
     pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
@@ -17792,7 +17792,7 @@ pos_T *var2fpos(const typval_T *const tv, const int dollar_lnum,
       pos.lnum = curbuf->b_ml.ml_line_count;
       pos.col = 0;
     } else {
-      pos.lnum = curwin->w_cursor.lnum;
+      pos.lnum = curwin->w_cursors[0].w_cursor.lnum;
       pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
     }
     return &pos;
@@ -18473,7 +18473,7 @@ handle_subscript(
         s = (char_u *)"";
       }
       ret = get_func_tv(s, (int)STRLEN(s), rettv, (char_u **)arg,
-                        curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                        curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.lnum,
                         &len, evaluate, pt, selfdict);
 
       // Clear the funcref afterwards, so that deleting it while
@@ -22469,8 +22469,8 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
                   2,
                   argvars,
                   NULL,
-                  curwin->w_cursor.lnum,
-                  curwin->w_cursor.lnum,
+                  curwin->w_cursors[0].w_cursor.lnum,
+                  curwin->w_cursors[0].w_cursor.lnum,
                   &dummy,
                   true,
                   NULL,

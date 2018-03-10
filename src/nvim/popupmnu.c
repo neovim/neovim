@@ -154,10 +154,10 @@ redo:
     // pum above "row"
 
     // Leave two lines of context if possible
-    if (curwin->w_wrow - curwin->w_cline_row >= 2) {
+    if (curwin->w_wrow - curwin->w_cursors[0].w_cline_row >= 2) {
       context_lines = 2;
     } else {
-      context_lines = curwin->w_wrow - curwin->w_cline_row;
+      context_lines = curwin->w_wrow - curwin->w_cursors[0].w_cline_row;
     }
 
     if (row >= size + context_lines) {
@@ -176,11 +176,11 @@ redo:
     // pum below "row"
 
     // Leave two lines of context if possible
-    if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
+    if (curwin->w_cursors[0].w_cline_row + curwin->w_cursors[0].w_cline_height - curwin->w_wrow >= 3) {
       context_lines = 3;
     } else {
-      context_lines = curwin->w_cline_row
-                      + curwin->w_cline_height - curwin->w_wrow;
+      context_lines = curwin->w_cursors[0].w_cline_row
+                      + curwin->w_cursors[0].w_cline_height - curwin->w_wrow;
     }
 
     pum_row = row + context_lines;
@@ -645,8 +645,8 @@ static int pum_set_selected(int n, int repeat)
 
           curbuf->b_changed = false;
           curbuf->b_p_ma = FALSE;
-          curwin->w_cursor.lnum = 1;
-          curwin->w_cursor.col = 0;
+          curwin->w_cursors[0].w_cursor.lnum = 1;
+          curwin->w_cursors[0].w_cursor.col = 0;
 
           if ((curwin != curwin_save && win_valid(curwin_save))
               || (curtab != curtab_save && valid_tabpage(curtab_save))) {

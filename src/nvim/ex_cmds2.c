@@ -564,7 +564,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
 
   // Find optional line number.
   if (here) {
-    bp->dbg_lnum = curwin->w_cursor.lnum;
+    bp->dbg_lnum = curwin->w_cursors[0].w_cursor.lnum;
   } else if (gap != &prof_ga && ascii_isdigit(*p)) {
     bp->dbg_lnum = getdigits_long(&p);
     p = skipwhite(p);

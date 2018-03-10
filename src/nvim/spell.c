@@ -1372,7 +1372,7 @@ spell_move_to (
   // We concatenate the start of the next line, so that wrapped words work
   // (e.g. "et<line-break>cetera").  Doesn't work when searching backwards
   // though...
-  lnum = wp->w_cursor.lnum;
+  lnum = wp->w_cursors[0].w_cursor.lnum;
   clearpos(&found_pos);
 
   while (!got_int) {
@@ -1417,9 +1417,9 @@ spell_move_to (
       // When searching backward don't search after the cursor.  Unless
       // we wrapped around the end of the buffer.
       if (dir == BACKWARD
-          && lnum == wp->w_cursor.lnum
+          && lnum == wp->w_cursors[0].w_cursor.lnum
           && !wrapped
-          && (colnr_T)(p - buf) >= wp->w_cursor.col)
+          && (colnr_T)(p - buf) >= wp->w_cursors[0].w_cursor.col)
         break;
 
       // start of word
@@ -1432,11 +1432,11 @@ spell_move_to (
           // When searching forward only accept a bad word after
           // the cursor.
           if (dir == BACKWARD
-              || lnum != wp->w_cursor.lnum
+              || lnum != wp->w_cursors[0].w_cursor.lnum
               || wrapped
               || ((colnr_T)(curline
                             ? p - buf + (ptrdiff_t)len
-                            : p - buf) > wp->w_cursor.col)) {
+                            : p - buf) > wp->w_cursors[0].w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
@@ -1453,7 +1453,7 @@ spell_move_to (
               found_pos.coladd = 0;
               if (dir == FORWARD) {
                 // No need to search further.
-                wp->w_cursor = found_pos;
+                wp->w_cursors[0].w_cursor = found_pos;
                 xfree(buf);
                 if (attrp != NULL)
                   *attrp = attr;
@@ -1479,7 +1479,7 @@ spell_move_to (
 
     if (dir == BACKWARD && found_pos.lnum != 0) {
       // Use the last match in the line (before the cursor).
-      wp->w_cursor = found_pos;
+      wp->w_cursors[0].w_cursor = found_pos;
       xfree(buf);
       return found_len;
     }
@@ -1490,7 +1490,7 @@ spell_move_to (
 
     // If we are back at the starting line and searched it again there
     // is no match, give up.
-    if (lnum == wp->w_cursor.lnum && wrapped) {
+    if (lnum == wp->w_cursors[0].w_cursor.lnum && wrapped) {
       break;
     }
 
@@ -1525,7 +1525,7 @@ spell_move_to (
 
       // If we are back at the starting line and there is no match then
       // give up.
-      if (lnum == wp->w_cursor.lnum && !found_one) {
+      if (lnum == wp->w_cursors[0].w_cursor.lnum && !found_one) {
         break;
       }
 
@@ -2737,7 +2737,7 @@ int spell_check_sps(void)
 void spell_suggest(int count)
 {
   char_u      *line;
-  pos_T prev_cursor = curwin->w_cursor;
+  pos_T prev_cursor = curwin->w_cursors[0].w_cursor;
   char_u wcopy[MAXWLEN + 2];
   char_u      *p;
   int c;
@@ -2756,26 +2756,26 @@ void spell_suggest(int count)
   if (VIsual_active) {
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
-    if (curwin->w_cursor.lnum != VIsual.lnum) {
+    if (curwin->w_cursors[0].w_cursor.lnum != VIsual.lnum) {
       vim_beep(BO_SPELL);
       return;
     }
-    badlen = (int)curwin->w_cursor.col - (int)VIsual.col;
+    badlen = (int)curwin->w_cursors[0].w_cursor.col - (int)VIsual.col;
     if (badlen < 0)
       badlen = -badlen;
     else
-      curwin->w_cursor.col = VIsual.col;
+      curwin->w_cursors[0].w_cursor.col = VIsual.col;
     ++badlen;
     end_visual_mode();
   } else
   // Find the start of the badly spelled word.
   if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
-      || curwin->w_cursor.col > prev_cursor.col) {
+      || curwin->w_cursors[0].w_cursor.col > prev_cursor.col) {
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
-    curwin->w_cursor = prev_cursor;
+    curwin->w_cursors[0].w_cursor = prev_cursor;
     line = get_cursor_line_ptr();
-    p = line + curwin->w_cursor.col;
+    p = line + curwin->w_cursors[0].w_cursor.col;
     // Backup to before start of word.
     while (p > line && spell_iswordp_nmw(p, curwin))
       mb_ptr_back(line, p);
@@ -2787,13 +2787,13 @@ void spell_suggest(int count)
       beep_flush();
       return;
     }
-    curwin->w_cursor.col = (colnr_T)(p - line);
+    curwin->w_cursors[0].w_cursor.col = (colnr_T)(p - line);
   }
 
   // Get the word and its length.
 
   // Figure out if the word should be capitalised.
-  need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
+  need_cap = check_need_cap(curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
   line = vim_strsave(get_cursor_line_ptr());
@@ -2804,7 +2804,7 @@ void spell_suggest(int count)
     limit = (int)Rows - 2;
   else
     limit = sps_limit;
-  spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
+  spell_find_suggest(line + curwin->w_cursors[0].w_cursor.col, badlen, &sug, limit,
       true, need_cap, true);
 
   if (GA_EMPTY(&sug.su_ga))
@@ -2919,8 +2919,8 @@ void spell_suggest(int count)
     memmove(p, line, c);
     STRCPY(p + c, stp->st_word);
     STRCAT(p, sug.su_badptr + stp->st_orglen);
-    ml_replace(curwin->w_cursor.lnum, p, FALSE);
-    curwin->w_cursor.col = c;
+    ml_replace(curwin->w_cursors[0].w_cursor.lnum, p, FALSE);
+    curwin->w_cursors[0].w_cursor.col = c;
 
     // For redo we use a change-word command.
     ResetRedobuff();
@@ -2930,9 +2930,9 @@ void spell_suggest(int count)
     AppendCharToRedobuff(ESC);
 
     // After this "p" may be invalid.
-    changed_bytes(curwin->w_cursor.lnum, c);
+    changed_bytes(curwin->w_cursors[0].w_cursor.lnum, c);
   } else
-    curwin->w_cursor = prev_cursor;
+    curwin->w_cursors[0].w_cursor = prev_cursor;
 
   spell_find_cleanup(&sug);
   xfree(line);
@@ -3000,7 +3000,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
 // ":spellrepall"
 void ex_spellrepall(exarg_T *eap)
 {
-  pos_T pos = curwin->w_cursor;
+  pos_T pos = curwin->w_cursors[0].w_cursor;
   char_u      *frompat;
   int addlen;
   char_u      *line;
@@ -3020,7 +3020,7 @@ void ex_spellrepall(exarg_T *eap)
 
   sub_nsubs = 0;
   sub_nlines = 0;
-  curwin->w_cursor.lnum = 0;
+  curwin->w_cursors[0].w_cursor.lnum = 0;
   while (!got_int) {
     if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
         || u_save_cursor() == FAIL)
@@ -3029,26 +3029,26 @@ void ex_spellrepall(exarg_T *eap)
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
     line = get_cursor_line_ptr();
-    if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
+    if (addlen <= 0 || STRNCMP(line + curwin->w_cursors[0].w_cursor.col,
             repl_to, STRLEN(repl_to)) != 0) {
       p = xmalloc(STRLEN(line) + addlen + 1);
-      memmove(p, line, curwin->w_cursor.col);
-      STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
-      ml_replace(curwin->w_cursor.lnum, p, FALSE);
-      changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      memmove(p, line, curwin->w_cursors[0].w_cursor.col);
+      STRCPY(p + curwin->w_cursors[0].w_cursor.col, repl_to);
+      STRCAT(p, line + curwin->w_cursors[0].w_cursor.col + STRLEN(repl_from));
+      ml_replace(curwin->w_cursors[0].w_cursor.lnum, p, FALSE);
+      changed_bytes(curwin->w_cursors[0].w_cursor.lnum, curwin->w_cursors[0].w_cursor.col);
 
-      if (curwin->w_cursor.lnum != prev_lnum) {
+      if (curwin->w_cursors[0].w_cursor.lnum != prev_lnum) {
         ++sub_nlines;
-        prev_lnum = curwin->w_cursor.lnum;
+        prev_lnum = curwin->w_cursors[0].w_cursor.lnum;
       }
       ++sub_nsubs;
     }
-    curwin->w_cursor.col += (colnr_T)STRLEN(repl_to);
+    curwin->w_cursors[0].w_cursor.col += (colnr_T)STRLEN(repl_to);
   }
 
   p_ws = save_ws;
-  curwin->w_cursor = pos;
+  curwin->w_cursors[0].w_cursor = pos;
   xfree(frompat);
 
   if (sub_nsubs == 0)
@@ -7556,7 +7556,7 @@ static bool spell_expand_need_cap;
 
 void spell_expand_check_cap(colnr_T col)
 {
-  spell_expand_need_cap = check_need_cap(curwin->w_cursor.lnum, col);
+  spell_expand_need_cap = check_need_cap(curwin->w_cursors[0].w_cursor.lnum, col);
 }
 
 // Get list of spelling suggestions.

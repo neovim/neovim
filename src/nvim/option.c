@@ -3149,7 +3149,7 @@ did_set_string_option (
       /* Recompute cursor position in case the new 've' setting
        * changes something. */
       validate_virtcol();
-      coladvance(curwin->w_virtcol);
+      coladvance(curwin->w_cursors[0].w_virtcol);
     }
   } else if (varp == &p_csqf) {
     if (p_csqf != NULL) {
@@ -3302,9 +3302,9 @@ did_set_string_option (
     }
   }
 
-  if (curwin->w_curswant != MAXCOL
+  if (curwin->w_cursors[0].w_curswant != MAXCOL
       && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0)
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
 
   check_redraw(options[opt_idx].flags);
 
@@ -4056,9 +4056,9 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
   }
 
   comp_col();                       /* in case 'ruler' or 'showcmd' changed */
-  if (curwin->w_curswant != MAXCOL
+  if (curwin->w_cursors[0].w_curswant != MAXCOL
       && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0)
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
   check_redraw(options[opt_idx].flags);
 
   return NULL;
@@ -4465,9 +4465,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   }
 
   comp_col();                       /* in case 'columns' or 'ls' changed */
-  if (curwin->w_curswant != MAXCOL
+  if (curwin->w_cursors[0].w_curswant != MAXCOL
       && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0)
-    curwin->w_set_curswant = TRUE;
+    curwin->w_cursors[0].w_set_curswant = TRUE;
   check_redraw(options[opt_idx].flags);
 
   return (char *)errmsg;

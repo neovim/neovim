@@ -210,7 +210,7 @@ static void u_check(int newhead_may_be_NULL)                 {
  */
 int u_save_cursor(void)
 {
-  linenr_T cur = curwin->w_cursor.lnum;
+  linenr_T cur = curwin->w_cursors[0].w_cursor.lnum;
   linenr_T top = cur > 0 ? cur - 1 : 0;
   linenr_T bot = cur + 1;
 
@@ -458,8 +458,8 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     uhp->uh_walk = 0;
     uhp->uh_entry = NULL;
     uhp->uh_getbot_entry = NULL;
-    uhp->uh_cursor = curwin->w_cursor;          /* save cursor pos. for undo */
-    if (virtual_active() && curwin->w_cursor.coladd > 0)
+    uhp->uh_cursor = curwin->w_cursors[0].w_cursor;          /* save cursor pos. for undo */
+    if (virtual_active() && curwin->w_cursors[0].w_cursor.coladd > 0)
       uhp->uh_cursor_vcol = getviscol();
     else
       uhp->uh_cursor_vcol = -1;
@@ -2177,8 +2177,8 @@ static void u_undoredo(int undo)
        * where it was. */
       lnum = curhead->uh_cursor.lnum;
       if (lnum >= top && lnum <= top + newsize + 1) {
-        curwin->w_cursor = curhead->uh_cursor;
-        newlnum = curwin->w_cursor.lnum - 1;
+        curwin->w_cursors[0].w_cursor = curhead->uh_cursor;
+        newlnum = curwin->w_cursors[0].w_cursor.lnum - 1;
       } else {
         /* Use the first line that actually changed.  Avoids that
          * undoing auto-formatting puts the cursor in the previous
@@ -2188,10 +2188,10 @@ static void u_undoredo(int undo)
             break;
         if (i == newsize && newlnum == MAXLNUM && uep->ue_next == NULL) {
           newlnum = top;
-          curwin->w_cursor.lnum = newlnum + 1;
+          curwin->w_cursors[0].w_cursor.lnum = newlnum + 1;
         } else if (i < newsize)   {
           newlnum = top + i;
-          curwin->w_cursor.lnum = newlnum + 1;
+          curwin->w_cursors[0].w_cursor.lnum = newlnum + 1;
         }
       }
     }
@@ -2301,16 +2301,16 @@ static void u_undoredo(int undo)
    * before starting the change (for the "o" command).
    * Otherwise the cursor should go to the first undone line.
    */
-  if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
-      && curwin->w_cursor.lnum > 1)
-    --curwin->w_cursor.lnum;
-  if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
-    if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = curhead->uh_cursor.col;
+  if (curhead->uh_cursor.lnum + 1 == curwin->w_cursors[0].w_cursor.lnum
+      && curwin->w_cursors[0].w_cursor.lnum > 1)
+    --curwin->w_cursors[0].w_cursor.lnum;
+  if (curwin->w_cursors[0].w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+    if (curhead->uh_cursor.lnum == curwin->w_cursors[0].w_cursor.lnum) {
+      curwin->w_cursors[0].w_cursor.col = curhead->uh_cursor.col;
       if (virtual_active() && curhead->uh_cursor_vcol >= 0)
         coladvance((colnr_T)curhead->uh_cursor_vcol);
       else
-        curwin->w_cursor.coladd = 0;
+        curwin->w_cursors[0].w_cursor.coladd = 0;
     } else
       beginline(BL_SOL | BL_FIX);
   } else {
@@ -2318,8 +2318,8 @@ static void u_undoredo(int undo)
      * after adding lines at the end of the file, and then undoing it).
      * check_cursor() will move the cursor to the last line.  Move it to
      * the first column here. */
-    curwin->w_cursor.col = 0;
-    curwin->w_cursor.coladd = 0;
+    curwin->w_cursors[0].w_cursor.col = 0;
+    curwin->w_cursors[0].w_cursor.coladd = 0;
   }
 
   /* Make sure the cursor is on an existing line and column. */
@@ -2838,8 +2838,8 @@ void u_saveline(linenr_T lnum)
     return;
   u_clearline();
   curbuf->b_u_line_lnum = lnum;
-  if (curwin->w_cursor.lnum == lnum)
-    curbuf->b_u_line_colnr = curwin->w_cursor.col;
+  if (curwin->w_cursors[0].w_cursor.lnum == lnum)
+    curbuf->b_u_line_colnr = curwin->w_cursors[0].w_cursor.col;
   else
     curbuf->b_u_line_colnr = 0;
   curbuf->b_u_line_ptr = u_save_line(lnum);
@@ -2889,10 +2889,10 @@ void u_undoline(void)
   curbuf->b_u_line_ptr = oldp;
 
   t = curbuf->b_u_line_colnr;
-  if (curwin->w_cursor.lnum == curbuf->b_u_line_lnum)
-    curbuf->b_u_line_colnr = curwin->w_cursor.col;
-  curwin->w_cursor.col = t;
-  curwin->w_cursor.lnum = curbuf->b_u_line_lnum;
+  if (curwin->w_cursors[0].w_cursor.lnum == curbuf->b_u_line_lnum)
+    curbuf->b_u_line_colnr = curwin->w_cursors[0].w_cursor.col;
+  curwin->w_cursors[0].w_cursor.col = t;
+  curwin->w_cursors[0].w_cursor.lnum = curbuf->b_u_line_lnum;
   check_cursor_col();
 }
 
