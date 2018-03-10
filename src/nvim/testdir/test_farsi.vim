@@ -1,4 +1,5 @@
 " Simplistic testing of Farsi mode.
+" Note: must be edited with latin1 encoding.
 
 if !has('farsi') || has('nvim')  " Not supported in Nvim. #6192
   finish
@@ -80,5 +81,23 @@ func Test_farsi_map()
   set norl
   iunmap xyz
   set noaltkeymap
+  bwipe!
+endfunc
+
+func Test_input_farsi()
+  new
+  setlocal rightleft fkmap
+  " numbers switch input direction
+  call feedkeys("aabc0123456789.+-^%#=xyz\<Esc>", 'tx')
+  call assert_equal("\x8cÌÎ½®¥ª­«¦¹¸·¶µ´³²±°Ô\x93Õ", getline('.'))
+
+  " all non-number special chars
+  call feedkeys("aB E F H I K L M O P Q R T U W Y ` !  @ # $ % ^ & * () - _ = + \\ | : \" .  / < > ? \<Esc>", 'tx')
+  call assert_equal("\x8cÌÎ½®¥ª­«¦¹¸·¶µ´³²±°Ô\x93Õ¡ ô ú À ö æ ç Â [ ] ÷ ó ò ð õ ñ ¢ £  § ® ¤ ¥ ª ¬ è ¨© ­ é ½ « ë ê º » ¦  ¯ ¾ ¼ ¿ ", getline('.'))
+
+  " all letter chars
+  call feedkeys("aa A b c C d D e f g G h i j J k l m n N o p q r s S t u v V w x X y z Z ; \ , [ ] \<Esc>", 'tx')
+  call assert_equal("\x8cÌÎ½®¥ª­«¦¹¸·¶µ´³²±°Ô\x93Õ¡ ô ú À ö æ ç Â [ ] ÷ ó ò ð õ ñ ¢ £  § ® ¤ ¥ ª ¬ è ¨© ­ é ½ « ë ê º » ¦  ¯ ¾ ¼ ¿ Ñ ù Ì Î Ï á þ Æ Ã Ü ø Á à Å ü Þ Ý Ä Ë Ë Ê É Ó Ù Ð û Ø Ö Í Í Ò Ô Ô × Õ ý Ú  ß Ç È ", getline('.'))
+
   bwipe!
 endfunc
