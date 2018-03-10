@@ -16,9 +16,9 @@ install: []
 before_build:
 - ps: Install-Product node 8
 build_script:
-- call ci\build.bat
+- powershell ci\build.ps1
 cache:
-- C:\msys64\var\cache\pacman\pkg -> ci\build.bat
+- C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
 - .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
