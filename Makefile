@@ -141,6 +141,11 @@ check-single-includes: build/.ran-cmake
 appimage:
 	bash scripts/genappimage.sh
 
+# Build an appimage with embedded update information appimage-nightly for
+# nightly builds or appimage-latest for a release
+appimage-%:
+	bash scripts/genappimage.sh $*
+
 lint: check-single-includes clint testlint lualint
 
 .PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage
