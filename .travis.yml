@@ -6,8 +6,6 @@ env:
   global:
     # To force rebuilding of third-party dependencies, set this to 'true'.
     - BUILD_NVIM_DEPS=false
-    # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:$PATH"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -69,11 +67,9 @@ jobs:
     - os: osx
       compiler: clang
       osx_image: xcode7.3  # macOS 10.11
-      env: PATH="/usr/local/opt/python@2/bin:$PATH"
     - os: osx
       compiler: gcc
       osx_image: xcode7.3  # macOS 10.11
-      env: PATH="/usr/local/opt/python@2/bin:$PATH"
     - os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
