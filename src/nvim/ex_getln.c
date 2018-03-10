@@ -5340,6 +5340,7 @@ static char *(history_names[]) =
   "search",
   "expr",
   "input",
+  "number",
   "debug",
   NULL
 };
@@ -5351,7 +5352,7 @@ static char *(history_names[]) =
 static char_u *get_history_arg(expand_T *xp, int idx)
 {
   static char_u compl[2] = { NUL, NUL };
-  char *short_names = ":=@>?/";
+  char *short_names = ":=@#>?/";
   int short_names_count = (int)STRLEN(short_names);
   int history_name_count = ARRAY_SIZE(history_names) - 1;
 
@@ -5899,7 +5900,7 @@ void ex_history(exarg_T *eap)
   if (!(ascii_isdigit(*arg) || *arg == '-' || *arg == ',')) {
     end = arg;
     while (ASCII_ISALPHA(*end)
-           || vim_strchr((char_u *)":=@>/?", *end) != NULL)
+           || vim_strchr((char_u *)":=@#>/?", *end) != NULL)
       end++;
     histype1 = get_histtype((const char *)arg, end - arg, false);
     if (histype1 == HIST_INVALID) {
