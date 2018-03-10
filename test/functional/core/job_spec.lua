@@ -130,10 +130,8 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    -- TODO: hangs on Windows
-    if helpers.pending_win32(pending) then return end
     nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
-    nvim('command', [[call jobstart('echo ""', g:job_opts)]])
+    nvim('command', [[call jobstart(has('win32') ? ['cmd', '/c', 'echo.'] : 'echo ""', g:job_opts)]])
     expect_twostreams({{'notification', 'stdout', {0, {'', ''}}},
                        {'notification', 'stdout', {0, {''}}}},
                       {{'notification', 'stderr', {0, {''}}}})
@@ -156,21 +154,39 @@ describe('jobs', function()
   end)
 
   it('preserves NULs', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     -- Make a file with NULs in it.
     local filename = helpers.tmpname()
     write_file(filename, "abc\0def\n")
 
-    nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
-    eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
+    if iswin() then
+      nvim('command', [[let j = jobstart('Get-Content "]]..filename..[["', g:job_opts)]])
+    else
+      nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
+    end
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'abc\ndef', ''} } },
+        {'notification', 'stdout', {0, {''} } }
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'abc\ndef'} } },
+        {'notification', 'stdout', {0, {'', ''} } },
+        {'notification', 'stdout', {0, {''} } }
+      }
+    )
     eq({'notification', 'exit', {0, 0}}, next_msg())
     os.remove(filename)
 
     -- jobsend() preserves NULs.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', [[call jobsend(j, ["123\n456",""])]])
-    eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'123\n456', ''} } },
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'123\n456'} } },
+        {'notification', 'stdout', {0, {'', ''} } },
+      }
+    )
     nvim('command', "call jobstop(j)")
   end)
 
@@ -292,8 +308,16 @@ describe('jobs', function()
     nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     local data = {n = 5, s = 'str', l = {1}}
-    eq({'notification', 'stdout', {data, {'foo', ''}}}, next_msg())
-    eq({'notification', 'stdout', {data, {''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {data, {'foo', ''}}},
+        {'notification', 'stdout', {data, {''}}}
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {data, {'foo'}}},
+        {'notification', 'stdout', {data, {'', ''}}},
+        {'notification', 'stdout', {data, {''}}}
+      }
+    )
     eq({'notification', 'exit', {data, 0}}, next_msg())
   end)
 
@@ -314,7 +338,8 @@ describe('jobs', function()
       },
       -- Alternative sequence:
       { {'notification', 'stdout', {5, {'foo'} } },
-        {'notification', 'stdout', {5, {'', ''} } }
+        {'notification', 'stdout', {5, {'', ''} } },
+        {'notification', 'stdout', {5, {''} } }
       }
     )
   end)
@@ -388,22 +413,31 @@ describe('jobs', function()
   end)
 
   it('does not repeat output with slow output handlers', function()
-    if helpers.pending_win32(pending) then return end
     source([[
       let d = {'data': []}
       function! d.on_stdout(job, data, event) dict
-        call add(self.data, a:data)
+        call add(self.data, Normalize(a:data))
         sleep 200m
       endfunction
       if has('win32')
-        let cmd = '1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}'
+        let cmd = 'for ($i = 1; $i -le 5; $i++) {Write-Output $i; Start-Sleep -Milliseconds 100}'
       else
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
       call jobwait([jobstart(cmd, d)])
-      call rpcnotify(g:channel, 'data', d.data)
+      call call('rpcnotify', extend([g:channel, 'data'], d.data))
     ]])
-    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}}}}, next_msg())
+    expect_msg_seq(
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}
+      }}},
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4'}, {'', ''}, {'5', ''}, {''}
+      }}},
+      {{'notification', 'data', {
+        {'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5'}, {'', ''}, {''}
+      }}}
+    )
   end)
 
   it('jobstart() works with partial functions', function()
@@ -417,7 +451,14 @@ describe('jobs', function()
     let g:job_opts = {'on_stdout': Callback}
     call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
+      }
+    )
   end)
 
   it('jobstart() works with closures', function()
@@ -430,7 +471,14 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': MkFun()}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
+      }
+    )
   end)
 
   it('jobstart() works when closure passed directly to `jobstart`', function()
@@ -438,13 +486,25 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'} },
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'} },
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'} },
+      }
+    )
   end)
 
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 100; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 110; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 210; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 310; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.10; exit 4'),
       \  jobstart('sleep 0.110; exit 5'),
       \  jobstart('sleep 0.210; exit 6'),
@@ -464,7 +524,12 @@ describe('jobs', function()
         endif
         let g:exits += 1
       endfunction
-      call jobwait([
+      call jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 10; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 30; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 50; exit 5', g:dict),
+      \  jobstart('Start-Sleep -Milliseconds 70; exit 5', g:dict)
+      \  ] : [
       \  jobstart('sleep 0.010; exit 5', g:dict),
       \  jobstart('sleep 0.030; exit 5', g:dict),
       \  jobstart('sleep 0.050; exit 5', g:dict),
@@ -477,7 +542,12 @@ describe('jobs', function()
 
     it('will return status codes in the order of passed ids', function()
       source([[
-      call rpcnotify(g:channel, 'wait', jobwait([
+      call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+      \  jobstart('Start-Sleep -Milliseconds 70; exit 4'),
+      \  jobstart('Start-Sleep -Milliseconds 50; exit 5'),
+      \  jobstart('Start-Sleep -Milliseconds 30; exit 6'),
+      \  jobstart('Start-Sleep -Milliseconds 10; exit 7')
+      \  ] : [
       \  jobstart('sleep 0.070; exit 4'),
       \  jobstart('sleep 0.050; exit 5'),
       \  jobstart('sleep 0.030; exit 6'),
@@ -491,7 +561,7 @@ describe('jobs', function()
       source([[
       call rpcnotify(g:channel, 'wait', jobwait([
       \  -10,
-      \  jobstart('sleep 0.01; exit 5'),
+      \  jobstart((has('win32') ? 'Start-Sleep -Milliseconds 100' : 'sleep 0.01').'; exit 5'),
       \  ]))
       ]])
       eq({'notification', 'wait', {{-3, 5}}}, next_msg())
@@ -500,7 +570,9 @@ describe('jobs', function()
     it('will return -2 when interrupted without timeout', function()
       feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("sleep 10; exit 55")]))')
+              'jobwait([jobstart("'..
+              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
+              '; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
       feed('<c-c>')
       eq({'notification', 'wait', {{-2}}}, next_msg())
@@ -564,20 +636,22 @@ describe('jobs', function()
     end)
 
     describe('with timeout argument', function()
-      if helpers.pending_win32(pending) then return end
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
-        \  jobstart('sleep 10; exit 5'),
-        \  ], 100))
+        \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
+        \  ], has('win32') ? 5000 : 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
       end)
 
       it('can pass 0 to check if a job exists', function()
         source([[
-        call rpcnotify(g:channel, 'wait', jobwait([
+        call rpcnotify(g:channel, 'wait', jobwait(has('win32') ? [
+        \  jobstart('Start-Sleep -Milliseconds 50; exit 4'),
+        \  jobstart('Start-Sleep -Milliseconds 300; exit 5'),
+        \  ] : [
         \  jobstart('sleep 0.05; exit 4'),
         \  jobstart('sleep 0.3; exit 5'),
         \  ], 0))
@@ -689,6 +763,9 @@ describe("pty process teardown", function()
   local screen
   before_each(function()
     clear()
+    if iswin() then
+      command([[set shellcmdflag=/s/c shellxquote=\"]])
+    end
     screen = Screen.new(30, 6)
     screen:attach()
     screen:expect([[
@@ -705,22 +782,38 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
+    feed_command([[:terminal "]]..helpers.nvim_prog
+      ..[[" -u NONE -i NONE --cmd "]]..nvim_set
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
+      ..[[" -c terminal -c "]]..(iswin()
+        and [[!start /min ping -n 301 127.0.0.1]]
+        or  [[!(sleep 300 &)]])
+      ..[[" -c qa]])
+
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
-    screen:expect([[
+    if iswin() then
+      command('redraw!')
+      feed('G')
+      screen:expect([[
+                                    |
+                                    |
+                                   0|
+                                    |
+      ^[Process exited 0]            |
+                                    |
+      ]])
+    else
+      screen:expect([[
       ^                              |
       [Process exited 0]            |
                                     |
                                     |
                                     |
                                     |
-    ]])
+      ]])
+    end
   end)
 end)
