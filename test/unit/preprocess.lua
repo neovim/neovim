@@ -6,28 +6,40 @@ local ffi = require("ffi")
 local ccs = {}
 
 local env_cc = os.getenv("CC")
-if env_cc then
-  table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
-end
 
 if ffi.os == "Windows" then
   table.insert(ccs, {path = {"cl"}, type = "msvc"})
+else
+  if env_cc then
+    table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
+  end
+
+  table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
+  table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
+  table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
 end
 
-table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
-table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
+local shell_quote
 
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
-  else
-    return str
+if ffi.os == "Windows" then
+  shell_quote = function (str)
+    -- standard argv
+    local escaped = '"'..string.gsub(str, [[(["\])]], [[\%1]])..'"'
+    -- cmd-specific
+    return escaped:gsub('([&|<>()@^%%!"])', '^%1')
+  end
+else
+  local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+  shell_quote = function (str)
+    if string.find(str, quote_me) or str == '' then
+      return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
+    else
+      return str
+    end
   end
 end
 
@@ -245,7 +257,58 @@ function Gcc:preprocess(previous_defines, ...)
 end
 
 local Clang = Gcc:new()
-local Msvc = Gcc:new()
+local Msvc = {
+  preprocessor_extra_flags = {'/nologo'},
+  get_defines_extra_flags = {'/nologo'},
+  get_declarations_extra_flags = {'/nologo'},
+}
+
+function Msvc:define(name, args, val)
+  local define = '/D' .. name
+  if args ~= nil then
+    error("cl.exe does not support function-like macros")
+  end
+  if val ~= nil then
+    define = define .. '=' .. val
+  end
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = define
+end
+
+function Msvc:undefine(name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
+      '/U' .. name)
+end
+
+function Msvc:new(obj)
+  obj = obj or {}
+  setmetatable(obj, self)
+  self.__index = self
+  return obj
+end
+
+function Msvc:dependencies(hdr)
+  local cmd = argss_to_cmd(self.path, {'/nologo', '/showIncludes', '/c', '/Tc'..hdr}) .. ' 2>&1'
+  local out = io.popen(cmd)
+  local deps = out:read("*a")
+  out:close()
+  if deps then
+    -- TODO: parse cl.exe output, incompatible with make
+    return nil
+  else
+    return nil
+  end
+end
+
+function Msvc:preprocess(previous_defines, ...)
+end
+
+function Msvc:add_to_include_path(...)
+  for i = 1, select('#', ...) do
+    local path = select(i, ...)
+    local ef = self.preprocessor_extra_flags
+    ef[#ef + 1] = '/I' .. path
+  end
+end
 
 local type_to_class = {
   ["gcc"] = Gcc,
@@ -258,7 +321,8 @@ local type_to_class = {
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
 local function find_best_cc(compilers)
   for _, meta in pairs(compilers) do
-    local version = io.popen(tostring(meta.path) .. " -v 2>&1")
+    local cc_args = meta.type == 'msvc' and '' or '-v'
+    local version = io.popen(tostring(meta.path).." "..cc_args.." 2>&1")
     version:close()
     if version then
       return type_to_class[meta.type]:new({path = meta.path})

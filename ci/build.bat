@@ -1,9 +1,11 @@
 echo on
 if "%CONFIGURATION%" == "MINGW_32" (
   set ARCH=i686
+  set VS_ARCH=x86
   set BITS=32
 ) else if "%CONFIGURATION:~0,8%" == "MINGW_64" (
   set ARCH=x86_64
+  set VS_ARCH=x86_amd64
   set BITS=64
   if "%CONFIGURATION%" == "MINGW_64-gcov" (
     set "USE_GCOV=-DUSE_GCOV=ON"
@@ -59,6 +61,10 @@ cd build
 cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUSTED_OUTPUT_TYPE=nvim %USE_GCOV% -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
 cmake --build . --config RelWithDebInfo -- %CMAKE_GENERATOR_ARGS% || goto :error
 bin\nvim --version || goto :error
+
+:: Unit tests
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %VS_ARCH%
+mingw32-make unittest VERBOSE=1 || goto :error
 
 :: Functional tests
 cmake --build . --config RelWithDebInfo --target functionaltest -- %CMAKE_GENERATOR_ARGS% || goto :error
