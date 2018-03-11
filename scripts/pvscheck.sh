@@ -343,13 +343,15 @@ run_analysis() {(
 
   cd "$tgt"
 
+  # pvs-studio-analyzer exits with a non-zero exit code when there are detected
+  # errors, so ignore its return
   pvs-studio-analyzer \
     analyze \
       --threads "$(get_jobs_num)" \
       --output-file PVS-studio.log \
       --verbose \
       --file build/compile_commands.json \
-      --sourcetree-root .
+      --sourcetree-root . || true
 
   plog-converter -t xml -o PVS-studio.xml PVS-studio.log
   plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
