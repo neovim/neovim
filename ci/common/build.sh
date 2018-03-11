@@ -20,14 +20,13 @@ build_deps() {
 
   rm -rf "${DEPS_BUILD_DIR}"
 
-  # If there is a valid cache and we're not forced to recompile,
-  # use cached third-party dependencies.
-  if test -f "${CACHE_MARKER}" && test "${BUILD_NVIM_DEPS}" != "true" ; then
+  # Use cached dependencies if $CACHE_MARKER exists.
+  if test -f "${CACHE_MARKER}" && ! test "${CACHE_ENABLE}" = "false" ; then
     local statcmd="stat -c '%y'"
     if test "${TRAVIS_OS_NAME}" = osx ; then
       statcmd="stat -f '%Sm'"
     fi
-    echo "Using third-party dependencies from Travis's cache (last updated: $(${statcmd} "${CACHE_MARKER}"))."
+    echo "Using third-party dependencies from Travis cache (last update: $(${statcmd} "${CACHE_MARKER}"))."
 
     mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
     mv "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"

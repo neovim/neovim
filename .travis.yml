@@ -4,8 +4,8 @@ language: c
 
 env:
   global:
-    # To force rebuilding of third-party dependencies, set this to 'true'.
-    - BUILD_NVIM_DEPS=false
+    # Set "false" to force rebuild of third-party dependencies.
+    - CACHE_ENABLE=true
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -36,9 +36,7 @@ env:
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
-    # Cache marker for third-party dependencies cache.
-    # If this file exists, we know that the cache contains compiled
-    # dependencies and we can use it.
+    # If this file exists, the cache is valid (compile was successful).
     - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
