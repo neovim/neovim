@@ -671,7 +671,7 @@ int fkmap(int c)
           }
 
           if (!F_isdigit(gchar_cursor())) {
-            curwin->w_cursor.col;
+            curwin->w_cursor.col++;
           }
         }
       }
