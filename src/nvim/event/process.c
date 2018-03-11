@@ -12,6 +12,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
+#include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/globals.h"
 #include "nvim/macros.h"
@@ -199,23 +200,6 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   }
 
   return proc->status;
-}
-
-/// Kills a process and its descendants.
-static void os_proc_tree_kill(int pid, int sig) {
-  assert(sig == SIGTERM || sig == SIGKILL);
-  int pgid = getpgid(pid);
-  if (pgid > 0) {  // Ignore error. Never kill self (pid=0).
-    if (pgid == pid) {
-      ILOG("sending %s to process group: -%d",
-           sig == SIGTERM ? "SIGTERM" : "SIGKILL",
-           pgid);
-      uv_kill(-pgid, sig);
-    } else {
-      // Should never happen, because process_spawn() did setsid() in the child.
-      ELOG("pgid %d != pid %d", pgid, pid);
-    }
-  }
 }
 
 /// Ask a process to terminate and eventually kill if it doesn't respond
