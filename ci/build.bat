@@ -6,19 +6,19 @@ if "%CONFIGURATION%" == "MINGW_32" (
   set ARCH=x86_64
   set BITS=64
   if "%CONFIGURATION%" == "MINGW_64-gcov" (
-    set USE_GCOV="-DUSE_GCOV=ON"
+    set "USE_GCOV=-DUSE_GCOV=ON"
   )
 ) else if "%CONFIGURATION%" == "MSVC_32" (
-  set CMAKE_GENERATOR="Visual Studio 15 2017"
+  set "CMAKE_GENERATOR=Visual Studio 15 2017"
 ) else if "%CONFIGURATION%" == "MSVC_64" (
-  set CMAKE_GENERATOR="Visual Studio 15 2017 Win64"
+  set "CMAKE_GENERATOR=Visual Studio 15 2017 Win64"
 )
 
 if "%CONFIGURATION:~0,5%" == "MINGW" (
   :: These are native MinGW builds, but they use the toolchain inside
   :: MSYS2, this allows using all the dependencies and tools available
   :: in MSYS2, but we cannot build inside the MSYS2 shell.
-  set CMAKE_GENERATOR="MinGW Makefiles"
+  set "CMAKE_GENERATOR=MinGW Makefiles"
   set CMAKE_GENERATOR_ARGS=VERBOSE=1
   :: Add MinGW to the PATH and remove the Git directory because it
   :: has a conflicting sh.exe
@@ -49,14 +49,14 @@ where.exe neovim-node-host.cmd || goto :error
 
 mkdir .deps
 cd .deps
-cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=RelWithDebInfo ..\third-party\ || goto :error
+cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..\third-party\ || goto :error
 cmake --build . -- %CMAKE_GENERATOR_ARGS% || goto :error
 cd ..
 
 :: Build Neovim
 mkdir build
 cd build
-cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUSTED_OUTPUT_TYPE=nvim %USE_GCOV% -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
+cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUSTED_OUTPUT_TYPE=nvim %USE_GCOV% -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
 cmake --build . --config RelWithDebInfo -- %CMAKE_GENERATOR_ARGS% || goto :error
 bin\nvim --version || goto :error
 
@@ -78,7 +78,7 @@ if defined USE_GCOV (
 )
 
 :: The default cpack in the PATH is not CMake
-set PATH=C:\Program Files (x86)\CMake\bin\cpack.exe;%PATH%
+set "PATH=C:\Program Files (x86)\CMake\bin\cpack.exe;%PATH%"
 :: Build artifacts
 cpack -G ZIP -C RelWithDebInfo
 if defined APPVEYOR_REPO_TAG_NAME cpack -G NSIS -C RelWithDebInfo

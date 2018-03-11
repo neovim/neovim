@@ -24,19 +24,13 @@ echo 'python info:'
 ) | sed 's/^/  /'
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  echo "Install Python 2."
-  brew install python@2
-fi
-
-echo "Upgrade Python 2 pip."
-pip2.7 -q install --user --upgrade pip
-
-if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Python 3."
   brew upgrade python
   echo "Upgrade Python 3 pip."
   pip3 -q install --user --upgrade pip
 else
+  echo "Upgrade Python 2 pip."
+  pip2.7 -q install --user --upgrade pip
   echo "Upgrade Python 3 pip."
   # Allow failure. pyenv pip3 on travis is broken:
   # https://github.com/travis-ci/travis-ci/issues/8363

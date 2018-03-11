@@ -5,7 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local expect = helpers.expect
-local next_msg = helpers.next_message
+local next_msg = helpers.next_msg
 local feed = helpers.feed
 local meths = helpers.meths
 

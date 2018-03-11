@@ -72,7 +72,7 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   BuildLuarocks(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-    INSTALL_COMMAND ${MAKE_PRG} bootstrap)
+    INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
 
   if(MINGW)
