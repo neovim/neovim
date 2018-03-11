@@ -131,10 +131,8 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    -- TODO: hangs on Windows
-    if helpers.pending_win32(pending) then return end
     nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
-    nvim('command', [[call jobstart('echo ""', g:job_opts)]])
+    nvim('command', [[call jobstart(has('win32') ? 'echo:' : 'echo', g:job_opts)]])
     expect_twostreams({{'notification', 'stdout', {0, {'', ''}}},
                        {'notification', 'stdout', {0, {''}}}},
                       {{'notification', 'stderr', {0, {''}}}})
@@ -398,15 +396,14 @@ describe('jobs', function()
   end)
 
   it('does not repeat output with slow output handlers', function()
-    if helpers.pending_win32(pending) then return end
     source([[
       let d = {'data': []}
       function! d.on_stdout(job, data, event) dict
-        call add(self.data, a:data)
+        call add(self.data, Normalize(a:data))
         sleep 200m
       endfunction
       if has('win32')
-        let cmd = '1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}'
+        let cmd = 'for /L %I in (1,1,5) do @(echo %I& ping -n 2 127.0.0.1 > nul)'
       else
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
