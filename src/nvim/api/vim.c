@@ -33,6 +33,7 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/os/process.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
@@ -1477,4 +1478,37 @@ Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {
   return ui_array();
+}
+
+/// Gets the immediate children of process `pid`.
+///
+/// @return Array of child process ids, or empty array if process not found.
+Array nvim_get_proc_children(Integer pid, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Array proc_array = ARRAY_DICT_INIT;
+  int *proc_list = NULL;
+
+  if (pid <= 0 || pid > INT_MAX) {
+    api_set_error(err, kErrorTypeException, "Invalid pid: %d", pid);
+    goto end;
+  }
+
+  size_t proc_count;
+  int rv = os_proc_children((int)pid, &proc_list, &proc_count);
+  if (rv == 1) {
+    goto end;  // Process not found; return empty list.
+  } else if (rv != 0) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to get process children. pid=%d error=%d", pid, rv);
+    goto end;
+  }
+
+  for (size_t i = 0; i < proc_count; i++) {
+    ADD(proc_array, INTEGER_OBJ(proc_list[i]));
+  }
+
+end:
+  xfree(proc_list);
+  return proc_array;
 }

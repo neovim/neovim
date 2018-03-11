@@ -6,6 +6,17 @@
 # include <tlhelp32.h>  // for CreateToolhelp32Snapshot
 #endif
 
+#if defined(__FreeBSD__)  // XXX: OpenBSD, NetBSD ?
+# include <string.h>
+# include <sys/types.h>
+# include <sys/user.h>
+#endif
+
+#if defined(__APPLE__) || defined(BSD)
+# include <sys/sysctl.h>
+# include <pwd.h>
+#endif
+
 #include "nvim/log.h"
 #include "nvim/os/process.h"
 #include "nvim/os/os.h"
@@ -16,8 +27,7 @@
 #endif
 
 #ifdef WIN32
-/// Kills process `pid` and its descendants recursively.
-bool os_proc_tree_kill_rec(HANDLE process, int sig)
+static bool os_proc_tree_kill_rec(HANDLE process, int sig)
 {
   if (process == NULL) {
     return false;
@@ -35,7 +45,7 @@ bool os_proc_tree_kill_rec(HANDLE process, int sig)
 
       do {
         if (pe.th32ParentProcessID == pid) {
-          HANDLE ph = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID);
+          HANDLE ph = OpenProcess(PROCESS_ALL_ACCESS, false, pe.th32ProcessID);
           if (ph != NULL) {
             os_proc_tree_kill_rec(ph, sig);
             CloseHandle(ph);
@@ -50,13 +60,14 @@ bool os_proc_tree_kill_rec(HANDLE process, int sig)
 theend:
   return (bool)TerminateProcess(process, (unsigned int)sig);
 }
+/// Kills process `pid` and its descendants recursively.
 bool os_proc_tree_kill(int pid, int sig)
 {
   assert(sig >= 0);
   assert(sig == SIGTERM || sig == SIGKILL);
   if (pid > 0) {
     ILOG("terminating process tree: %d", pid);
-    HANDLE h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)pid);
+    HANDLE h = OpenProcess(PROCESS_ALL_ACCESS, false, (DWORD)pid);
     return os_proc_tree_kill_rec(h, sig);
   } else {
     ELOG("invalid pid: %d", pid);
@@ -85,3 +96,87 @@ bool os_proc_tree_kill(int pid, int sig)
   return false;
 }
 #endif
+
+/// Gets the process ids of the immediate children of process `ppid`.
+///
+/// @param ppid Process to inspect.
+/// @param[out,allocated] proc_list Child process ids.
+/// @param[out] proc_count Number of child processes.
+/// @return 0 on success, 1 if process not found, 2 on other error.
+int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
+{
+  //
+  // psutil is a good reference for cross-platform syscall voodoo:
+  // https://github.com/giampaolo/psutil/tree/master/psutil/arch
+  //
+
+  int *temp = NULL;
+  *proc_list = NULL;
+  *proc_count = 0;
+
+#if defined(__APPLE__) || defined(BSD)
+# if defined(__APPLE__)
+#  define KP_PID(o) o.kp_proc.p_pid
+#  define KP_PPID(o) o.kp_eproc.e_ppid
+# elif defined(__FreeBSD__)
+#  define KP_PID(o) o.ki_pid
+#  define KP_PPID(o) o.ki_ppid
+# else
+#  define KP_PID(o) o.p_pid
+#  define KP_PPID(o) o.p_ppid
+# endif
+  static int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+
+  // Get total process count.
+  size_t len = 0;
+  int rv = sysctl(name, ARRAY_SIZE(name) - 1, NULL, &len, NULL, 0);
+  if (rv) {
+    return 2;
+  }
+
+  // Get ALL processes.
+  struct kinfo_proc *p_list = xmalloc(len);
+  rv = sysctl(name, ARRAY_SIZE(name) - 1, p_list, &len, NULL, 0);
+  if (rv) {
+    xfree(p_list);
+    return 2;
+  }
+
+  // Collect processes whose parent matches `ppid`.
+  bool exists = false;
+  size_t p_count = len / sizeof(*p_list);
+  for (size_t i = 0; i < p_count; i++) {
+    exists = exists || KP_PID(p_list[i]) == ppid;
+    if (KP_PPID(p_list[i]) == ppid) {
+      temp = xrealloc(temp, (*proc_count + 1) * sizeof(*temp));
+      temp[*proc_count] = KP_PID(p_list[i]);
+      (*proc_count)++;
+    }
+  }
+  xfree(p_list);
+  if (!exists) {
+    return 1;  // Process not found.
+  }
+
+#elif defined(__linux__)
+  char proc_p[256] = { 0 };
+  // Collect processes whose parent matches `ppid`.
+  // Rationale: children are defined in thread with same ID of process.
+  snprintf(proc_p, sizeof(proc_p), "/proc/%d/task/%d/children", ppid, ppid);
+  FILE *fp = fopen(proc_p, "r");
+  if (fp == NULL) {
+    return 1;  // Process not found.
+  }
+  int match_pid;
+  while (fscanf(fp, "%d", &match_pid) > 0) {
+    temp = xrealloc(temp, (*proc_count + 1) * sizeof(*temp));
+    temp[*proc_count] = match_pid;
+    (*proc_count)++;
+  }
+  fclose(fp);
+#endif
+
+  *proc_list = temp;
+  return 0;
+}
+
