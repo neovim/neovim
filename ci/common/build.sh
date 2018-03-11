@@ -1,3 +1,11 @@
+_stat() {
+  if test "${TRAVIS_OS_NAME}" = osx ; then
+    stat -f %Sm "${@}"
+  else
+    stat -c %y "${@}"
+  fi
+}
+
 top_make() {
   echo '================================================================================'
   # Travis has 1.5 virtual cores according to:
@@ -19,19 +27,12 @@ build_deps() {
   fi
 
   rm -rf "${DEPS_BUILD_DIR}"
+  mkdir -p "${DEPS_BUILD_DIR}"
 
   # Use cached dependencies if $CACHE_MARKER exists.
   if test -f "${CACHE_MARKER}" && ! test "${CACHE_ENABLE}" = "false" ; then
-    local statcmd="stat -c '%y'"
-    if test "${TRAVIS_OS_NAME}" = osx ; then
-      statcmd="stat -f '%Sm'"
-    fi
-    echo "Using third-party dependencies from Travis cache (last update: $(${statcmd} "${CACHE_MARKER}"))."
-
-    mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
-    mv "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
-  else
-    mkdir -p "${DEPS_BUILD_DIR}"
+    echo "Using third-party dependencies from Travis cache (last update: $(_stat "${CACHE_MARKER}"))."
+    cp -r "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
   fi
 
   # Even if we're using cached dependencies, run CMake and make to
