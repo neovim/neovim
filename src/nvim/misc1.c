@@ -2399,7 +2399,7 @@ int get_number(
   int n = 0;
   int c;
   int typed = 0;
-  char *select;
+  char *select, *p;
   Callback input_callback = { .type = kCallbackNone };
   int cmd_silent_save = cmd_silent;
   const int save_ex_normal_busy = ex_normal_busy;
@@ -2417,6 +2417,7 @@ int get_number(
 
   select = getcmdline_prompt('#', prompt, 0, EXPAND_NOTHING, NULL,
                              input_callback);
+  p = select;
 
   // Since the user typed this, no need to wait for return.
   need_wait_return = false;
@@ -2456,6 +2457,8 @@ int get_number(
       break;  // if it is an alphabet
     }
   }
+
+  xfree(p);
   no_mapping--;
   return n;
 }
