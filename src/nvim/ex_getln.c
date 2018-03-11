@@ -321,8 +321,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   State = CMDLINE;
 
-  if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@'
-      || s->firstc == '#') {
+  if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@') {
     // Use ":lmap" mappings for search pattern and input().
     if (curbuf->b_p_imsearch == B_IMODE_USE_INSERT) {
       s->b_im_ptr = &curbuf->b_p_iminsert;
