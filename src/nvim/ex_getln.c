@@ -202,10 +202,11 @@ static Array cmdline_block = ARRAY_DICT_INIT;
  */
 typedef void *(*user_expand_func_T)(char_u *, int, char_u **, int);
 
-static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL, NULL};
-static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1, -1};    /* lastused entry */
-static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0, 0};
-/* identifying (unique) number of newest history entry */
+static histentry_T *(history[HIST_COUNT])
+    = { NULL, NULL, NULL, NULL, NULL, NULL };
+static int hisidx[HIST_COUNT] = { -1, -1, -1, -1, -1, -1 };  // lastused entry
+static int hisnum[HIST_COUNT] = { 0, 0, 0, 0, 0, 0 };
+// identifying (unique) number of newest history entry
 static int hislen = 0;                  /* actual length of history tables */
 
 /// Flag for command_line_handle_key to ignore <C-c>
@@ -2110,10 +2111,11 @@ static int cmdline_charsize(int idx)
 static void set_cmdspos(void)
 {
   if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-          && ccline.cmdfirstc != '#')
+      && ccline.cmdfirstc != '#') {
     ccline.cmdspos = 1 + ccline.cmdindent;
-  else
+  } else {
     ccline.cmdspos = 0 + ccline.cmdindent;
+  }
 }
 
 /*
@@ -3425,7 +3427,7 @@ static void redrawcmdprompt(void)
     return;
   }
   if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-          && ccline.cmdfirstc != '#') {
+      && ccline.cmdfirstc != '#') {
     msg_putchar(ccline.cmdfirstc);
   }
   if (ccline.cmdprompt != NULL) {
@@ -3433,7 +3435,7 @@ static void redrawcmdprompt(void)
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
     // do the reverse of set_cmdspos()
     if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-            && ccline.cmdfirstc != '#') {
+        && ccline.cmdfirstc != '#') {
       ccline.cmdindent--;
     }
   } else {
@@ -5900,8 +5902,9 @@ void ex_history(exarg_T *eap)
   if (!(ascii_isdigit(*arg) || *arg == '-' || *arg == ',')) {
     end = arg;
     while (ASCII_ISALPHA(*end)
-           || vim_strchr((char_u *)":=@#>/?", *end) != NULL)
+           || vim_strchr((char_u *)":=@#>/?", *end) != NULL) {
       end++;
+    }
     histype1 = get_histtype((const char *)arg, end - arg, false);
     if (histype1 == HIST_INVALID) {
       if (STRNICMP(arg, "all", end - arg) == 0) {
