@@ -399,7 +399,9 @@ void terminal_enter(void)
   redraw(false);
 
   s->state.execute = terminal_execute;
+  apply_autocmds(EVENT_MODEENTER, (char_u *)"term", NULL, false, curbuf);
   state_enter(&s->state);
+  apply_autocmds(EVENT_MODELEAVE, (char_u *)"term", NULL, false, curbuf);
 
   restart_edit = 0;
   State = save_state;
