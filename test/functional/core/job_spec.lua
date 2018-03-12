@@ -19,6 +19,13 @@ local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
 local Screen = require('test.functional.ui.screen')
 
+-- Kill process with given pid
+local function os_kill(pid)
+  return os.execute((iswin()
+    and 'taskkill /f /t /pid '..pid..' > nul'
+    or  'kill -9 '..pid..' > /dev/null'))
+end
+
 describe('jobs', function()
   local channel
 
@@ -265,36 +272,44 @@ describe('jobs', function()
   end)
 
   it('can get the pid value using getpid', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
-    nvim('command', "let j =  jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', "let j =  jobstart(has('win32') ? ['find', '/v', ''] : ['cat', '-'], g:job_opts)")
     local pid = eval('jobpid(j)')
-    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    neq(NIL, meths.get_proc(pid))
     nvim('command', 'call jobstop(j)')
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
-    neq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    if iswin() then
+      expect_msg_seq(
+        -- win64
+        { {'notification', 'exit', {0, 1}}
+        },
+        -- win32
+        { {'notification', 'exit', {0, 15}}
+        }
+      )
+    else
+      eq({'notification', 'exit', {0, 0}}, next_msg())
+    end
+    eq(NIL, meths.get_proc(pid))
   end)
 
   it("do not survive the exit of nvim", function()
-    if helpers.pending_win32(pending) then return end
     -- use sleep, which doesn't die on stdin close
-    nvim('command', "let g:j =  jobstart(['sleep', '1000'], g:job_opts)")
+    nvim('command', "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
     local pid = eval('jobpid(g:j)')
-    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    neq(NIL, meths.get_proc(pid))
     clear()
-    neq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    eq(NIL, meths.get_proc(pid))
   end)
 
   it('can survive the exit of nvim with "detach"', function()
-    if helpers.pending_win32(pending) then return end
     nvim('command', 'let g:job_opts.detach = 1')
-    nvim('command', "let g:j = jobstart(['sleep', '1000'], g:job_opts)")
+    nvim('command', "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
     local pid = eval('jobpid(g:j)')
-    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    neq(NIL, meths.get_proc(pid))
     clear()
-    eq(0,os.execute('ps -p '..pid..' > /dev/null'))
+    neq(NIL, meths.get_proc(pid))
     -- clean up after ourselves
-    os.execute('kill -9 '..pid..' > /dev/null')
+    eq(0, os_kill(pid))
   end)
 
   it('can pass user data to the callback', function()
