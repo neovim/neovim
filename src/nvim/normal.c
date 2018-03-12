@@ -4521,7 +4521,9 @@ static void nv_exmode(cmdarg_T *cap)
   if (VIsual_active) {
     vim_beep(BO_EX);
   } else if (!checkclearop(cap->oap)) {
+    apply_autocmds(EVENT_MODEENTER, (char_u *)"ex", NULL, false, curbuf);
     do_exmode(false);
+    apply_autocmds(EVENT_MODELEAVE, (char_u *)"ex", NULL, false, curbuf);
   }
 }
 
