@@ -2946,8 +2946,11 @@ void check_visual_highlight(void)
  */
 void end_visual_mode(void)
 {
-
-  apply_autocmds(EVENT_MODELEAVE, (char_u *)"visual", NULL, false, curbuf);
+  if (!VIsual_select) {
+    apply_autocmds(EVENT_MODELEAVE, (char_u *)"visual", NULL, false, curbuf);
+  } else {
+    apply_autocmds(EVENT_MODELEAVE, (char_u *)"select", NULL, false, curbuf);
+  }
   VIsual_active = false;
   setmouse();
   mouse_dragging = 0;
@@ -6462,7 +6465,11 @@ static void n_start_visual_mode(int c)
   /* Check for redraw before changing the state. */
   conceal_check_cursur_line();
 
-  apply_autocmds(EVENT_MODEENTER, (char_u *) "visual", NULL, false, curbuf);
+  if (!VIsual_select) {
+    apply_autocmds(EVENT_MODEENTER, (char_u *) "visual", NULL, false, curbuf);
+  } else {
+    apply_autocmds(EVENT_MODEENTER, (char_u *) "select", NULL, false, curbuf);
+  }
 
   VIsual_mode = c;
   VIsual_active = true;
