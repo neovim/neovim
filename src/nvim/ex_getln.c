@@ -370,6 +370,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     apply_autocmds(EVENT_CMDLINEENTER, (char_u *)firstcbuf, (char_u *)firstcbuf,
                    false, curbuf);
     apply_autocmds(EVENT_MODEENTER, (char_u *)"cmdline", NULL, false, curbuf);
+    apply_autocmds(EVENT_MODELEAVE, (char_u *)"norm", NULL, false, curbuf);
     tv_dict_clear(dict);
 
 
@@ -396,6 +397,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     apply_autocmds(EVENT_CMDLINELEAVE, (char_u *)firstcbuf, (char_u *)firstcbuf,
                    false, curbuf);
     apply_autocmds(EVENT_MODELEAVE, (char_u *)"cmdline", NULL, false, curbuf);
+    apply_autocmds(EVENT_MODEENTER, (char_u *)"norm", NULL, false, curbuf);
     // error printed below, to avoid redraw issues
     tl_ret = try_leave(&tstate, &err);
     if (tv_dict_get_number(dict, "abort") != 0) {
