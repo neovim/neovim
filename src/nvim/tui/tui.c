@@ -295,6 +295,10 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+  #define DECRQM_QUERY_8_BIT_CHECK "\033Pzz\033\\"
+  #define CSI_SEQUENCE_8_BIT_CHECK "\033[0%m"
+  out(ui, DECRQM_QUERY_8_BIT_CHECK, strlen(DECRQM_QUERY_8_BIT_CHECK));
+  out(ui, CSI_SEQUENCE_8_BIT_CHECK, strlen(CSI_SEQUENCE_8_BIT_CHECK));
 }
 
 static void tui_terminal_after_startup(UI *ui)

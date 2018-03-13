@@ -259,9 +259,22 @@ static void tk_getkeys(TermInput *input, bool force)
     } else if (key.type == TERMKEY_TYPE_UNICODE
                || key.type == TERMKEY_TYPE_FUNCTION
                || key.type == TERMKEY_TYPE_KEYSYM) {
+      ILOG("CODE is %c", key.code.codepoint);
+      ILOG("NUMBER is %d", key.code.number);
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
+       int initial, mode, value;
+       termkey_interpret_modereport(input->tk, &key, &initial, &mode, &value);
+       ILOG("TERMKEY_TYPE_MODEREPORT initial=%c mode=%d value=%d",
+            initial, mode, value);
+    } else if(key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+        long args[16];
+        size_t nargs = 16;
+        unsigned long command;
+        termkey_interpret_csi(input->tk, &key, args, &nargs, &command);
+				ILOG("Unrecognised CSI %c &ld;%ld %c%c\n", (char)(command >> 8), args[0], args[1], (char)(command >> 16), (char)command);
     }
   }
 
