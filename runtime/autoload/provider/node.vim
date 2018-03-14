@@ -38,6 +38,9 @@ function! provider#node#can_inspect() abort
 endfunction
 
 function! provider#node#Detect() abort
+  if exists('g:node_host_prog')
+    return g:node_host_prog
+  endif
   let global_modules = get(split(system('npm root -g'), "\n"), 0, '')
   if v:shell_error || !isdirectory(global_modules)
     return ''

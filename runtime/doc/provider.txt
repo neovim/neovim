@@ -112,7 +112,33 @@ To use an absolute path (e.g. to an rbenv installation): >
 To use the RVM "system" Ruby installation: >
     let g:ruby_host_prog = 'rvm system do neovim-ruby-host'
 <
+==============================================================================
+Node integration				*provider-node*
 
+The node provider allows nvim to run remote plugin managed by nodejs, see
+https://nodejs.org/
+
+NODE QUICKSTART~
+
+To use javascript remote plugins with Nvim, just install the latest `neovim`
+ package: >
+    $ npm install -g neovim
+<
+NODE PROVIDER CONFIGURATION~
+
+						*g:loaded_node_provider*
+To disable Node support: >
+    let g:loaded_node_provider = 1
+<
+						*g:node_host_prog*
+Command to start the Node host. By default this is `neovim-node-host` that
+searched from >
+    $ npm root -g
+<
+For user who want to speed up the command search or want to use specified
+version of `neovim-node-host`, an absolute path could be used: >
+    let g:node_host_prog = '/usr/local/bin/neovim-node-host'
+<
 ==============================================================================
 Clipboard integration 			      *provider-clipboard* *clipboard*
 
