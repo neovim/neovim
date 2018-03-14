@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
-local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
+local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local expect = helpers.expect
 local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
@@ -16,7 +16,7 @@ describe('mappings', function()
 
   local check_mapping = function(mapping, expected)
     feed(mapping)
-    eq({'notification', 'mapped', {expected}}, next_message())
+    eq({'notification', 'mapped', {expected}}, next_msg())
   end
 
   before_each(function()
