@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <uv.h>  // for HANDLE (win32)
+
 #ifdef WIN32
 # include <tlhelp32.h>  // for CreateToolhelp32Snapshot
 #endif
@@ -165,7 +166,7 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   snprintf(proc_p, sizeof(proc_p), "/proc/%d/task/%d/children", ppid, ppid);
   FILE *fp = fopen(proc_p, "r");
   if (fp == NULL) {
-    return 1;  // Process not found.
+    return 2;  // Process not found, or /proc/…/children not supported.
   }
   int match_pid;
   while (fscanf(fp, "%d", &match_pid) > 0) {

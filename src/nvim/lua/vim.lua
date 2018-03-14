@@ -1,3 +1,26 @@
+-- Gets the children of process `ppid` via the shell.
+-- Used by nvim_get_proc_children() as a fallback.
+local function _os_proc_children(ppid)
+  if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
+    error('invalid ppid')
+  end
+  local out = vim.api.nvim_call_function('system', { 'pgrep -P '..ppid })
+  local err = vim.api.nvim_get_vvar('shell_error')
+  if 1 == err and out == '' then
+    return {}  -- Process not found.
+  elseif 0 ~= err then
+    error('pgrep failed')
+  end
+  local children = {}
+  for s in string.gmatch(out, '%S+') do
+    local i = tonumber(s)
+    if i ~= nil then
+      table.insert(children, i)
+    end
+  end
+  return children
+end
+
 -- TODO(ZyX-I): Create compatibility layer.
 --{{{1 package.path updater function
 -- Last inserted paths. Used to clear out items from package.[c]path when they
@@ -61,4 +84,5 @@ end
 --{{{1 Module definition
 return {
   _update_package_paths = _update_package_paths,
+  _os_proc_children = _os_proc_children,
 }

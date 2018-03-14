@@ -1482,7 +1482,7 @@ Array nvim_list_uis(void)
 
 /// Gets the immediate children of process `pid`.
 ///
-/// @return Array of child process ids, or empty array if process not found.
+/// @return Array of child process ids. Empty array if process not found.
 Array nvim_get_proc_children(Integer pid, Error *err)
   FUNC_API_SINCE(4)
 {
@@ -1490,17 +1490,27 @@ Array nvim_get_proc_children(Integer pid, Error *err)
   int *proc_list = NULL;
 
   if (pid <= 0 || pid > INT_MAX) {
-    api_set_error(err, kErrorTypeException, "Invalid pid: %d", pid);
+    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
     goto end;
   }
 
   size_t proc_count;
   int rv = os_proc_children((int)pid, &proc_list, &proc_count);
-  if (rv == 1) {
-    goto end;  // Process not found; return empty list.
-  } else if (rv != 0) {
-    api_set_error(err, kErrorTypeException,
-                  "Failed to get process children. pid=%d error=%d", pid, rv);
+  if (rv != 0) {
+    // syscall failed (possibly because of kernel options), try shelling out.
+    Array a = ARRAY_DICT_INIT;
+    ADD(a, INTEGER_OBJ(pid));
+    String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
+    Object o = nvim_execute_lua(s, a, err);
+    api_free_string(s);
+    api_free_array(a);
+    if (o.type == kObjectTypeArray) {
+      proc_array = o.data.array;
+    } else if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get process children. pid=%" PRId64 " error=%d",
+                    pid, rv);
+    }
     goto end;
   }
 
