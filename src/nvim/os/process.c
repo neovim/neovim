@@ -43,7 +43,6 @@ static bool os_proc_tree_kill_rec(HANDLE process, int sig)
       if (!Process32First(h, &pe)) {
         goto theend;
       }
-
       do {
         if (pe.th32ParentProcessID == pid) {
           HANDLE ph = OpenProcess(PROCESS_ALL_ACCESS, false, pe.th32ProcessID);
@@ -53,7 +52,6 @@ static bool os_proc_tree_kill_rec(HANDLE process, int sig)
           }
         }
       } while (Process32Next(h, &pe));
-
       CloseHandle(h);
     }
   }
@@ -111,11 +109,40 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   // https://github.com/giampaolo/psutil/tree/master/psutil/arch
   //
 
+  if (ppid < 0) {
+    return 2;
+  }
+
   int *temp = NULL;
   *proc_list = NULL;
   *proc_count = 0;
 
-#if defined(__APPLE__) || defined(BSD)
+#ifdef WIN32
+  PROCESSENTRY32 pe;
+
+  // Snapshot of all processes.
+  HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if(h == INVALID_HANDLE_VALUE) {
+    return 2;
+  }
+
+  pe.dwSize = sizeof(PROCESSENTRY32);
+  // Get root process.
+  if(!Process32First(h, &pe)) {
+    CloseHandle(h);
+    return 2;
+  }
+  // Collect processes whose parent matches `ppid`.
+  do {
+    if (pe.th32ParentProcessID == (DWORD)ppid) {
+      temp = xrealloc(temp, (*proc_count + 1) * sizeof(*temp));
+      temp[*proc_count] = (int)pe.th32ProcessID;
+      (*proc_count)++;
+    }
+  } while (Process32Next(h, &pe));
+  CloseHandle(h);
+
+#elif defined(__APPLE__) || defined(BSD)
 # if defined(__APPLE__)
 #  define KP_PID(o) o.kp_proc.p_pid
 #  define KP_PPID(o) o.kp_eproc.e_ppid
