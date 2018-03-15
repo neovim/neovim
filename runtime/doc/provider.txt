@@ -132,9 +132,10 @@ To disable Node support: >
 						*g:node_host_prog*
 Command to start the Node host. Setting this makes startup faster.
 
-By default, Nvim searches for `neovim-node-host` using "npm root -g". This is
-rather slow, you can set g:node_host_prog to avoid it.
-
+By default, Nvim searches for `neovim-node-host` using "npm root -g", which
+can be slow. To avoid this, set g:node_host_prog to an absolute path: >
+    let g:node_host_prog = '/usr/local/bin/neovim-node-host'
+<
 ==============================================================================
 Clipboard integration 			      *provider-clipboard* *clipboard*
 
