@@ -26,7 +26,6 @@ build_deps() {
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 
-  rm -rf "${DEPS_BUILD_DIR}"
   mkdir -p "${DEPS_BUILD_DIR}"
 
   # Use cached dependencies if $CACHE_MARKER exists.
