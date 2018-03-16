@@ -121,6 +121,7 @@ cache:
   directories:
     - "$HOME/.cache/pip"
     - "$HOME/.cache/nvim-deps"
+    - "$HOME/.cache/nvim-deps-downloads"
 
 notifications:
   webhooks:

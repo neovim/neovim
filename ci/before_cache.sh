@@ -15,6 +15,10 @@ rm -f "${HOME}/.cache/pip/selfcheck.json"
 if ended_successfully; then
   rm -rf "${HOME}/.cache/nvim-deps"
   mv "${DEPS_BUILD_DIR}" "${HOME}/.cache/nvim-deps"
+
+  rm -rf "${HOME}/.cache/nvim-deps-downloads"
+  mv "${DEPS_DOWNLOAD_DIR}" "${HOME}/.cache/nvim-deps-downloads"
+
   touch "${CACHE_MARKER}"
   echo "Updated third-party dependencies (timestamp: $(_stat "${CACHE_MARKER}"))."
 fi
