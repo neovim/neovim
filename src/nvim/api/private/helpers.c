@@ -567,7 +567,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
     typval_encode_dict_end(edata)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    TYPVAL_ENCODE_CONV_NIL()
+    TYPVAL_ENCODE_CONV_NIL(val)
 
 #define TYPVAL_ENCODE_SCOPE static
 #define TYPVAL_ENCODE_NAME object
