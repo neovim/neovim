@@ -1,6 +1,11 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+/// OS process functions
+///
+/// psutil is a good reference for cross-platform syscall voodoo:
+/// https://github.com/giampaolo/psutil/tree/master/psutil/arch
+
 #include <uv.h>  // for HANDLE (win32)
 
 #ifdef WIN32
@@ -18,10 +23,12 @@
 # include <pwd.h>
 #endif
 
+#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/os/process.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/process.c.generated.h"
@@ -104,11 +111,6 @@ bool os_proc_tree_kill(int pid, int sig)
 /// @return 0 on success, 1 if process not found, 2 on other error.
 int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 {
-  //
-  // psutil is a good reference for cross-platform syscall voodoo:
-  // https://github.com/giampaolo/psutil/tree/master/psutil/arch
-  //
-
   if (ppid < 0) {
     return 2;
   }
@@ -122,13 +124,13 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 
   // Snapshot of all processes.
   HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if(h == INVALID_HANDLE_VALUE) {
+  if (h == INVALID_HANDLE_VALUE) {
     return 2;
   }
 
   pe.dwSize = sizeof(PROCESSENTRY32);
   // Get root process.
-  if(!Process32First(h, &pe)) {
+  if (!Process32First(h, &pe)) {
     CloseHandle(h);
     return 2;
   }
@@ -208,3 +210,44 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   return 0;
 }
 
+#ifdef WIN32
+/// Gets various properties of the process identified by `pid`.
+///
+/// @param pid Process to inspect.
+/// @return Map of process properties, empty on error.
+Dictionary os_proc_info(int pid)
+{
+  Dictionary pinfo = ARRAY_DICT_INIT;
+  PROCESSENTRY32 pe;
+
+  // Snapshot of all processes.  This is used instead of:
+  //    OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, …)
+  // to avoid ERROR_PARTIAL_COPY.  https://stackoverflow.com/a/29942376
+  HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (h == INVALID_HANDLE_VALUE) {
+    return pinfo;  // Return empty.
+  }
+
+  pe.dwSize = sizeof(PROCESSENTRY32);
+  // Get root process.
+  if (!Process32First(h, &pe)) {
+    CloseHandle(h);
+    return pinfo;  // Return empty.
+  }
+  // Find the process.
+  do {
+    if (pe.th32ProcessID == (DWORD)pid) {
+      break;
+    }
+  } while (Process32Next(h, &pe));
+  CloseHandle(h);
+
+  if (pe.th32ProcessID == (DWORD)pid) {
+    PUT(pinfo, "pid", INTEGER_OBJ(pid));
+    PUT(pinfo, "ppid", INTEGER_OBJ((int)pe.th32ParentProcessID));
+    PUT(pinfo, "name", STRING_OBJ(cstr_to_string(pe.szExeFile)));
+  }
+
+  return pinfo;
+}
+#endif

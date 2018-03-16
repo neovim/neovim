@@ -4,7 +4,7 @@
 /// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
-/// Neovim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
+/// Nvim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
 /// replacement.
 
 #include <assert.h>
@@ -43,7 +43,7 @@
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
 ///                   does not have kFileCreate\*).
 ///
-/// @return Error code (@see os_strerror()) or 0.
+/// @return Error code, or 0 on success. @see os_strerror()
 int file_open(FileDescriptor *const ret_fp, const char *const fname,
               const int flags, const int mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -115,8 +115,7 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd, const bool wr)
 
 /// Like file_open(), but allocate and return ret_fp
 ///
-/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
-///                     success.
+/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
 /// @param[in]  fname  File name to open.
 /// @param[in]  flags  Flags, @see FileOpenFlags.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
@@ -137,8 +136,7 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 
 /// Like file_open_fd(), but allocate and return ret_fp
 ///
-/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
-///                     success.
+/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
 /// @param[in]  fd  File descriptor to wrap.
 /// @param[in]  wr  True if fd is opened for writing only, false if it is read
 ///                 only.
