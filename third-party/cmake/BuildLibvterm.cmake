@@ -42,9 +42,12 @@ if(WIN32)
         ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch)
   endif()
   set(LIBVTERM_CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
-	  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt
-	  ${DEPS_BUILD_DIR}/src/libvterm/CMakeLists.txt
-	COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libvterm
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt
+      ${DEPS_BUILD_DIR}/src/libvterm/CMakeLists.txt
+    COMMAND ${CMAKE_COMMAND} -E copy
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Libvterm-tbl2inc_c.cmake
+      ${DEPS_BUILD_DIR}/src/libvterm/tbl2inc_c.cmake
+    COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libvterm
       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
