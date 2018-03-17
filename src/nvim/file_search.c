@@ -1560,7 +1560,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
   tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
-                 NULL);
+                 curbuf);
 
   tv_dict_clear(dict);
 
