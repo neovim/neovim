@@ -206,11 +206,11 @@ struct dictitem_S {
   char_u di_key[1];             ///< key (actually longer!)
 };
 
-#define TV_DICTITEM_STRUCT(KEY_LEN) \
+#define TV_DICTITEM_STRUCT(...) \
     struct { \
       typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
       uint8_t di_flags;  /* Flags. */ \
-      char_u di_key[KEY_LEN];  /* Key value. */ \
+      char_u di_key[__VA_ARGS__];  /* Key value. */ \
     }
 
 /// Structure to hold a scope dictionary
