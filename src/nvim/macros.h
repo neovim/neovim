@@ -145,10 +145,7 @@
 #define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
 // Duplicated in os/win_defs.h to avoid include-order sensitivity.
-#if defined(WIN32) && defined(RGB)
-# undef RGB
-#endif
-#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
