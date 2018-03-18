@@ -33,6 +33,7 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/os/process.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
@@ -1477,4 +1478,87 @@ Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {
   return ui_array();
+}
+
+/// Gets the immediate children of process `pid`.
+///
+/// @return Array of child process ids, empty if process not found.
+Array nvim_get_proc_children(Integer pid, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Array rvobj = ARRAY_DICT_INIT;
+  int *proc_list = NULL;
+
+  if (pid <= 0 || pid > INT_MAX) {
+    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+    goto end;
+  }
+
+  size_t proc_count;
+  int rv = os_proc_children((int)pid, &proc_list, &proc_count);
+  if (rv != 0) {
+    // syscall failed (possibly because of kernel options), try shelling out.
+    DLOG("fallback to vim._os_proc_children()");
+    Array a = ARRAY_DICT_INIT;
+    ADD(a, INTEGER_OBJ(pid));
+    String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
+    Object o = nvim_execute_lua(s, a, err);
+    api_free_string(s);
+    api_free_array(a);
+    if (o.type == kObjectTypeArray) {
+      rvobj = o.data.array;
+    } else if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get process children. pid=%" PRId64 " error=%d",
+                    pid, rv);
+    }
+    goto end;
+  }
+
+  for (size_t i = 0; i < proc_count; i++) {
+    ADD(rvobj, INTEGER_OBJ(proc_list[i]));
+  }
+
+end:
+  xfree(proc_list);
+  return rvobj;
+}
+
+/// Gets info describing process `pid`.
+///
+/// @return Map of process properties, or NIL if process not found.
+Object nvim_get_proc(Integer pid, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Object rvobj = OBJECT_INIT;
+  rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
+  rvobj.type = kObjectTypeDictionary;
+
+  if (pid <= 0 || pid > INT_MAX) {
+    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+    return NIL;
+  }
+#ifdef WIN32
+  rvobj.data.dictionary = os_proc_info((int)pid);
+  if (rvobj.data.dictionary.size == 0) {  // Process not found.
+    return NIL;
+  }
+#else
+  // Cross-platform process info APIs are miserable, so use `ps` instead.
+  Array a = ARRAY_DICT_INIT;
+  ADD(a, INTEGER_OBJ(pid));
+  String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
+  Object o = nvim_execute_lua(s, a, err);
+  api_free_string(s);
+  api_free_array(a);
+  if (o.type == kObjectTypeArray && o.data.array.size == 0) {
+    return NIL;  // Process not found.
+  } else if (o.type == kObjectTypeDictionary) {
+    rvobj.data.dictionary = o.data.dictionary;
+  } else if (!ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to get process info. pid=%" PRId64, pid);
+  }
+#endif
+  return rvobj;
 }
