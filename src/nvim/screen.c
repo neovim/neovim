@@ -1582,6 +1582,20 @@ static void win_update(win_T *wp)
     got_int = save_got_int;
 }
 
+/// Returns width of the signcolumn that should be used for the whole window
+///
+/// @param wp window we want signcolumn width from
+/// @return max width of signcolumn (cell unit)
+///
+/// @note Returns a constant for now but hopefully we can improve neovim so that
+///       the returned value width adapts to the maximum number of marks to draw
+///       for the window
+/// TODO(teto)
+int win_signcol_width(win_T *wp)
+{
+  // 2 is vim default value
+  return 2;
+}
 
 /*
  * Clear the rest of the window and mark the unused lines with "c1".  use "c2"
@@ -1609,7 +1623,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
     }
 
     if (signcolumn_on(wp)) {
-        int nn = n + 2;
+        int nn = n + win_signcol_width(wp);
 
         /* draw the sign column left of the fold column */
         if (nn > wp->w_width) {
@@ -1650,7 +1664,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
     }
 
     if (signcolumn_on(wp)) {
-        int nn = n + 2;
+        int nn = n + win_signcol_width(wp);
 
         /* draw the sign column after the fold column */
         if (nn > wp->w_width) {
@@ -1762,12 +1776,13 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * text */
   RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_width - col);
 
-  // If signs are being displayed, add two spaces.
+  // If signs are being displayed, add spaces.
   if (signcolumn_on(wp)) {
       len = wp->w_width - col;
       if (len > 0) {
-          if (len > 2) {
-              len = 2;
+          int len_max = win_signcol_width(wp);
+          if (len > len_max) {
+              len = len_max;
           }
           copy_text_attr(off + col, (char_u *)"  ", len,
                          win_hl_attr(wp, HLF_FL));
@@ -2735,18 +2750,26 @@ win_line (
            * buffer or when using Netbeans. */
           if (signcolumn_on(wp)) {
               int text_sign;
-              /* Draw two cells with the sign value or blank. */
+              // Draw cells with the sign value or blank.
               c_extra = ' ';
               char_attr = win_hl_attr(wp, HLF_SC);
               n_extra = 2;
+              n_extra = win_signcol_width(wp);
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
                   text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
+                      int symbol_blen = (int)STRLEN(p_extra);
                       if (p_extra != NULL) {
                           c_extra = NUL;
-                          n_extra = (int)STRLEN(p_extra);
+                          // symbol(s) bytes + (filling spaces) (one byte each)
+                          n_extra = symbol_blen +
+                            (win_signcol_width(wp) - mb_string2cells(p_extra));
+                          memset(extra, ' ', sizeof(extra));
+                          STRNCPY(extra, p_extra, STRLEN(p_extra));
+                          p_extra = extra;
+                          p_extra[n_extra] = NUL;
                       }
                       char_attr = sign_get_attr(text_sign, FALSE);
                   }
