@@ -671,8 +671,6 @@ describe('jobs', function()
   end)
 
   it('jobstop() kills entire process tree #6530', function()
-    command('set shell& shellcmdflag& shellquote& shellpipe& shellredir& shellxquote&')
-
     -- XXX: Using `nvim` isn't a good test, it reaps its children on exit.
     -- local c = 'call jobstart([v:progpath, "-u", "NONE", "-i", "NONE", "--headless"])'
     -- local j = eval("jobstart([v:progpath, '-u', 'NONE', '-i', 'NONE', '--headless', '-c', '"
