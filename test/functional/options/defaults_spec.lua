@@ -32,6 +32,21 @@ describe('startup defaults', function()
         'filetype detection:ON  plugin:ON  indent:ON       |')
     end)
 
+    it('noloadplugins after `-u NORCP`', function()
+      clear('-u', 'NORCP')
+    end)
+
+    it('syntax ON after `-u NORCP`', function()
+      clear('-u', 'NORCP')
+      eq(1, eval('g:syntax_on'))
+    end)
+
+    it('all ON after `-u NORCP`', function()
+      clear('-u', 'NORCP')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:ON       |')
+    end)
+
     it('all ON after `:syntax …` #7765', function()
       clear('-u', 'NORC', '--cmd', 'syntax on')
       expect_filetype(

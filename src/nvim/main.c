@@ -340,9 +340,11 @@ int main(int argc, char **argv)
   do_cmdline_cmd("augroup END");
 #undef PROTO
 
-  // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
+  // Reset 'loadplugins' for "-u NONE" or "-u NORCP" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") == 0) {
+  if (params.use_vimrc != NULL && (
+              strcmp(params.use_vimrc, "NONE") == 0 ||
+              strcmp(params.use_vimrc, "NORCP") == 0)) {
     p_lpl = false;
   }
 
@@ -1788,7 +1790,8 @@ static void source_startup_scripts(const mparm_T *const parmp)
   // nothing else.
   if (parmp->use_vimrc != NULL) {
     if (strcmp(parmp->use_vimrc, "NONE") == 0
-        || strcmp(parmp->use_vimrc, "NORC") == 0) {
+        || strcmp(parmp->use_vimrc, "NORC") == 0
+        || strcmp(parmp->use_vimrc, "NORCP") == 0) {
     } else {
       if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);

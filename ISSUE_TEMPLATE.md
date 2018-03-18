@@ -6,10 +6,10 @@
 - Terminal name/version:
 - `$TERM`:
 
-### Steps to reproduce using `nvim -u NORC`
+### Steps to reproduce using `nvim -u NORCP`
 
 ```
-nvim -u NORC
+nvim -u NORCP
 
 ```
 
