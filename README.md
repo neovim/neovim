@@ -34,10 +34,14 @@ Install from source
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
 
-To install to a non-default location, specify `CMAKE_INSTALL_PREFIX`:
+To install to a non-default location, set `CMAKE_INSTALL_PREFIX`:
 
     make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/full/path/"
     make install
+
+To list all targets:
+
+    cmake --build build --target help
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
