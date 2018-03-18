@@ -180,10 +180,12 @@ static Channel *channel_alloc(ChannelStreamType type)
 }
 
 /// Not implemented, only logging for now
-void channel_create_event(Channel *chan, char *ext_source)
+void channel_create_event(Channel *chan, const char *ext_source)
 {
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
-  char *stream_desc, *mode_desc, *source;
+  const char *stream_desc;
+  const char *mode_desc;
+  const char *source;
 
   switch (chan->streamtype) {
     case kChannelStreamProc:
@@ -223,8 +225,8 @@ void channel_create_event(Channel *chan, char *ext_source)
     // external events should be included.
     source = ext_source;
   } else {
-    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
-    source = (char *)IObuff;
+    eval_fmt_source_name_line((char *)IObuff, sizeof(IObuff));
+    source = (const char *)IObuff;
   }
 
   ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
@@ -392,17 +394,22 @@ uint64_t channel_connect(bool tcp, const char *address,
                          bool rpc, CallbackReader on_output,
                          int timeout, const char **error)
 {
+  Channel *channel;
+
   if (!tcp && rpc) {
     char *path = fix_fname(address);
-    if (server_owns_pipe_address(path)) {
-      // avoid deadlock
-      xfree(path);
-      return channel_create_internal_rpc();
-    }
+    bool loopback = server_owns_pipe_address(path);
     xfree(path);
+    if (loopback) {
+      // Create a loopback channel. This avoids deadlock if nvim connects to
+      // its own named pipe.
+      channel = channel_alloc(kChannelStreamInternal);
+      rpc_start(channel);
+      goto end;
+    }
   }
 
-  Channel *channel = channel_alloc(kChannelStreamSocket);
+  channel = channel_alloc(kChannelStreamSocket);
   if (!socket_connect(&main_loop, &channel->stream.socket,
                       tcp, address, timeout, error)) {
     channel_destroy_early(channel);
@@ -422,7 +429,8 @@ uint64_t channel_connect(bool tcp, const char *address,
     rstream_start(&channel->stream.socket, on_socket_output, channel);
   }
 
-  channel_create_event(channel, NULL);
+end:
+  channel_create_event(channel, address);
   return channel->id;
 }
 
@@ -439,15 +447,6 @@ void channel_from_connection(SocketWatcher *watcher)
   rstream_init(&channel->stream.socket, 0);
   rpc_start(channel);
   channel_create_event(channel, watcher->addr);
-}
-
-/// Creates a loopback channel. This is used to avoid deadlock
-/// when an instance connects to its own named pipe.
-static uint64_t channel_create_internal_rpc(void)
-{
-  Channel *channel = channel_alloc(kChannelStreamInternal);
-  rpc_start(channel);
-  return channel->id;
 }
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
