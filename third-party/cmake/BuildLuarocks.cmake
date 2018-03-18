@@ -85,7 +85,7 @@ elseif(MSVC OR MINGW)
   BuildLuarocks(
     PATCH_COMMAND
       ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks apply
+      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks apply --ignore-whitespace
         ${CMAKE_CURRENT_SOURCE_DIR}/patches/luarocks-Change-default-downloader-to-curl.patch
     INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
     /LUA ${DEPS_INSTALL_DIR}
