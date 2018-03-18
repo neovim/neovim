@@ -152,7 +152,8 @@ nongui: nolog $(SCRIPTS) newtests report
 gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
 
 .gdbinit:
-	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
+	@echo "[OLDTEST-PREP] Setting up .gdbinit"
+	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
 	@echo
@@ -192,24 +193,26 @@ clean:
 	        del
 
 test1.out: .gdbinit test1.in
-	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
-	mkdir -p $(TMPDIR)
-	/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
-	-rm -f wrongtermsize
-	-rm -rf X* viminfo
+	@echo "[OLDTEST-PREP] Running test1"
+	@rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
+	@mkdir -p $(TMPDIR)
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
+	@rm -f wrongtermsize
+	@rm -rf X* viminfo
 
 %.out: %.in .gdbinit
-	-rm -rf $*.failed test.ok $(RM_ON_RUN)
-	mkdir -p $(TMPDIR)
-	cp $*.ok test.ok
-	/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
-
-	-rm -rf X* test.ok viminfo
+	@echo "[OLDESTTEST] Running" $*
+	@rm -rf $*.failed test.ok $(RM_ON_RUN)
+	@mkdir -p $(TMPDIR)
+	@cp $*.ok test.ok
+	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
+	@rm -rf X* test.ok viminfo
 
 test49.out: test49.vim
 
 nolog:
-	-rm -f test.log messages
+	@echo "[OLDTEST-PREP] Removing test.log and messages"
+	@rm -f test.log messages
 
 
 # New style of tests uses Vim script with assert calls.  These are easier
@@ -225,5 +228,6 @@ newtests: newtestssilent
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
-	mkdir -p $(TMPDIR)
-	/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+	@echo "[OLDTESTS] Running" $*
+	@mkdir -p $(TMPDIR)
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
