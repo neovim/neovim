@@ -11,6 +11,9 @@ source "${CI_DIR}/common/suite.sh"
 rm -rf "${HOME}/.cache/pip/log"
 rm -f "${HOME}/.cache/pip/selfcheck.json"
 
+echo "before_cache.sh: cache size"
+du -d 2 "${HOME}/.cache" | sort -n
+
 # Update the third-party dependency cache only if the build was successful.
 if ended_successfully; then
   rm -rf "${HOME}/.cache/nvim-deps"
