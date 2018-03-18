@@ -111,7 +111,7 @@ struct cmdline_info {
   int cmdlen;                   // number of chars in command line
   int cmdpos;                   // current cursor position
   int cmdspos;                  // cursor column on screen
-  int cmdfirstc;                // ':', '/', '?', '=', '>', '@', '#' or NUL
+  int cmdfirstc;                // ':', '/', '?', '=', '>', '#' or NUL
   int cmdindent;                // number of spaces before cmdline
   char_u      *cmdprompt;       // message in front of cmdline
   int cmdattr;                  // attributes for prompt
@@ -264,7 +264,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->old_botline = curwin->w_botline;
 
   // set some variables for redrawcmd()
-  ccline.cmdfirstc = s->firstc;
+  ccline.cmdfirstc = (s->firstc == '@' ? 0 : s->firstc);
   ccline.cmdindent = (s->firstc > 0 ? s->indent : 0);
 
   // alloc initial ccline.cmdbuff
@@ -1970,7 +1970,7 @@ static void abandon_cmdline(void)
  * firstc == '/' or '?'	    get search pattern
  * firstc == '='	    get expression
  * firstc == '@'	    get text for input() function
- * firstc == '#'	    get number for input() function
+ * firstc == '#'	    get number for input_list() function
  * firstc == '>'	    get text for debug mode
  * firstc == NUL	    get text for :insert command
  * firstc == -1		    like NUL, and break on CTRL-C
@@ -2109,8 +2109,7 @@ static int cmdline_charsize(int idx)
  */
 static void set_cmdspos(void)
 {
-  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-      && ccline.cmdfirstc != '#') {
+  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
     ccline.cmdspos = 1 + ccline.cmdindent;
   } else {
     ccline.cmdspos = 0 + ccline.cmdindent;
@@ -3425,16 +3424,14 @@ static void redrawcmdprompt(void)
     ccline.redraw_state = kCmdRedrawAll;
     return;
   }
-  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-      && ccline.cmdfirstc != '#') {
+  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
     msg_putchar(ccline.cmdfirstc);
   }
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
     // do the reverse of set_cmdspos()
-    if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '@'
-        && ccline.cmdfirstc != '#') {
+    if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
       ccline.cmdindent--;
     }
   } else {

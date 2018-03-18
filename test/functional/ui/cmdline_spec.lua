@@ -168,7 +168,7 @@ describe('external cmdline', function()
     ]], nil, nil, function()
       eq({{
         content = { { {}, "default" } },
-        firstc = "@",
+        firstc = "",
         indent = 0,
         pos = 7,
         prompt = "input"
