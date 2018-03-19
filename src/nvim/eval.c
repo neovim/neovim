@@ -5936,6 +5936,14 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+
+#ifdef _MSC_VER
+// This prevents MSVC from replacing the functions with intrinsics,
+// and causing errors when trying to get their addresses in funcs.generated.h
+#pragma function (ceil)
+#pragma function (floor)
+#endif
+
 # include "funcs.generated.h"
 #endif
 
@@ -16216,7 +16224,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     case 'n': {  // name
-      p = get_highlight_name(NULL, id - 1);
+      p = get_highlight_name_ext(NULL, id - 1, false);
       break;
     }
     case 'r': {  // reverse
@@ -22513,11 +22521,13 @@ bool eval_has_provider(const char *name)
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
-void eval_format_source_name_line(char *buf, size_t bufsize)
+void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  snprintf(buf, bufsize, "%s:%" PRIdLINENR,
-           (sourcing_name ? sourcing_name : (char_u *)"?"),
-           (sourcing_name ? sourcing_lnum : 0));
+  if (sourcing_name) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
+  } else {
+    snprintf(buf, bufsize, "?");
+  }
 }
 
 /// ":checkhealth [plugins]"

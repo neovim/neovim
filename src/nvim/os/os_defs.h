@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -13,13 +12,6 @@
 #else
 # include "nvim/os/unix_defs.h"
 #endif
-
-/// File descriptor number used for standard IO streams
-enum {
-  OS_STDIN_FILENO = STDIN_FILENO,
-  OS_STDOUT_FILENO = STDOUT_FILENO,
-  OS_STDERR_FILENO = STDERR_FILENO,
-};
 
 #define BASENAMELEN (NAME_MAX - 5)
 

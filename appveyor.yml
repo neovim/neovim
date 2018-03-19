@@ -1,20 +1,24 @@
 version: '{build}'
 environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
+image: Visual Studio 2017
 configuration:
 - MINGW_64
 - MINGW_32
+- MSVC_64
+# - MSVC_32
 - MINGW_64-gcov
 matrix:
   allow_failures:
+    - configuration: MSVC_64
     - configuration: MINGW_64-gcov
 install: []
 before_build:
 - ps: Install-Product node 8
 build_script:
-- call ci\build.bat
+- powershell ci\build.ps1
 cache:
-- C:\msys64\var\cache\pacman\pkg -> ci\build.bat
+- C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
 - .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip

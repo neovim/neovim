@@ -7,11 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#ifdef WIN32
-# include <wchar.h>
-# include <winnls.h>
-#endif
-
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
@@ -795,7 +790,7 @@ static void command_line_scan(mparm_T *parmp)
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             FileDescriptor fp;
-            const int fof_ret = file_open_fd(&fp, OS_STDOUT_FILENO, true);
+            const int fof_ret = file_open_fd(&fp, STDOUT_FILENO, true);
             msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
 
             if (fof_ret != 0) {
@@ -1256,10 +1251,10 @@ static void check_and_set_isatty(mparm_T *paramp)
   paramp->err_isatty = os_isatty(fileno(stderr));
 #ifndef WIN32
   int tty_fd = paramp->input_isatty
-    ? OS_STDIN_FILENO
+    ? STDIN_FILENO
     : (paramp->output_isatty
-       ? OS_STDOUT_FILENO
-       : (paramp->err_isatty ? OS_STDERR_FILENO : -1));
+       ? STDOUT_FILENO
+       : (paramp->err_isatty ? STDERR_FILENO : -1));
   pty_process_save_termios(tty_fd);
 #endif
   TIME_MSG("window checked");

@@ -455,6 +455,8 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)
+else()
+  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
 
 add_library(

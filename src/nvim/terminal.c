@@ -180,13 +180,14 @@ void terminal_init(void)
       vterm_state_get_palette_color(state, color_index, &color);
     }
     map_put(int, int)(color_indexes,
-        RGB(color.red, color.green, color.blue), color_index + 1);
+                      RGB_(color.red, color.green, color.blue),
+                      color_index + 1);
   }
 
   VTermColor fg, bg;
   vterm_state_get_default_colors(state, &fg, &bg);
-  default_vt_fg = RGB(fg.red, fg.green, fg.blue);
-  default_vt_bg = RGB(bg.red, bg.green, bg.blue);
+  default_vt_fg = RGB_(fg.red, fg.green, fg.blue);
+  default_vt_bg = RGB_(bg.red, bg.green, bg.blue);
   default_vt_bg_rgb = bg;
   vterm_free(vt);
 }
@@ -565,8 +566,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
     // Get the rgb value set by libvterm.
-    int vt_fg = RGB(cell.fg.red, cell.fg.green, cell.fg.blue);
-    int vt_bg = RGB(cell.bg.red, cell.bg.green, cell.bg.blue);
+    int vt_fg = RGB_(cell.fg.red, cell.fg.green, cell.fg.blue);
+    int vt_bg = RGB_(cell.bg.red, cell.bg.green, cell.bg.blue);
     vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
     vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
     // Since libvterm does not expose the color index used by the program, we

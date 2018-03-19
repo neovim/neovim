@@ -5241,28 +5241,27 @@ insertchar (
 
     buf[0] = c;
     i = 1;
-    if (textwidth > 0)
+    if (textwidth > 0) {
       virtcol = get_nolist_virtcol();
-    /*
-     * Stop the string when:
-     * - no more chars available
-     * - finding a special character (command key)
-     * - buffer is full
-     * - running into the 'textwidth' boundary
-     * - need to check for abbreviation: A non-word char after a word-char
-     */
-    while (    (c = vpeekc()) != NUL
-               && !ISSPECIAL(c)
-               && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
-               && i < INPUT_BUFLEN
-               && (textwidth == 0
-                   || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
-               && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
+    }
+    // Stop the string when:
+    // - no more chars available
+    // - finding a special character (command key)
+    // - buffer is full
+    // - running into the 'textwidth' boundary
+    // - need to check for abbreviation: A non-word char after a word-char
+    while ((c = vpeekc()) != NUL
+           && !ISSPECIAL(c)
+           && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
+           && i < INPUT_BUFLEN
+           && !(p_fkmap && KeyTyped)  // Farsi mode mapping moves cursor
+           && (textwidth == 0
+               || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
+           && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
       c = vgetc();
-      if (p_hkmap && KeyTyped)
-        c = hkmap(c);                       /* Hebrew mode mapping */
-      if (p_fkmap && KeyTyped)
-        c = fkmap(c);                       /* Farsi mode mapping */
+      if (p_hkmap && KeyTyped) {
+        c = hkmap(c);                       // Hebrew mode mapping
+      }
       buf[i++] = c;
     }
 

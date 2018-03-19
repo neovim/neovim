@@ -672,7 +672,7 @@ int win_col_off(win_T *wp)
   return ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
          + (int)wp->w_p_fdc
-         + (signcolumn_on(wp) ? 2 : 0);
+         + (signcolumn_on(wp) ? win_signcol_width(wp) : 0);
 }
 
 int curwin_col_off(void)

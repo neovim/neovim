@@ -228,7 +228,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <wctype.h>
-#include <strings.h>
 
 #include "nvim/vim.h"
 #include "nvim/spell_defs.h"

@@ -21,3 +21,16 @@ func Test_put_char_block()
   call assert_equal(['Xfile_put 1', 'Xfile_put 2'], getline(1,2))
   bw!
 endfunc
+
+func Test_put_char_block2()
+  new
+  let a = [ getreg('a'), getregtype('a') ]
+  call setreg('a', ' one ', 'v')
+  call setline(1, ['Line 1', '', 'Line 3', ''])
+  " visually select the first 3 lines and put register a over it
+  exe "norm! ggl\<c-v>2j2l\"ap"
+  call assert_equal(['L one  1', '', 'L one  3', ''], getline(1,4))
+  " clean up
+  bw!
+  call setreg('a', a[0], a[1])
+endfunc

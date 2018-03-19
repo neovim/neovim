@@ -97,14 +97,14 @@ local function request(method, ...)
   return rv
 end
 
-local function next_message(timeout)
-  return session:next_message(timeout)
+local function next_msg(timeout)
+  return session:next_message(timeout and timeout or 10000)
 end
 
 local function expect_twostreams(msgs1, msgs2)
   local pos1, pos2 = 1, 1
   while pos1 <= #msgs1 or pos2 <= #msgs2 do
-    local msg = next_message()
+    local msg = next_msg()
     if pos1 <= #msgs1 and pcall(eq, msgs1[pos1], msg) then
       pos1 = pos1 + 1
     elseif pos2 <= #msgs2 then
@@ -117,7 +117,7 @@ local function expect_twostreams(msgs1, msgs2)
   end
 end
 
--- Expects a sequence of next_message() results. If multiple sequences are
+-- Expects a sequence of next_msg() results. If multiple sequences are
 -- passed they are tried until one succeeds, in order of shortest to longest.
 local function expect_msg_seq(...)
   if select('#', ...) < 1 then
@@ -140,7 +140,7 @@ local function expect_msg_seq(...)
     local expected_seq = seqs[anum]
     -- Collect enough messages to compare the next expected sequence.
     while #actual_seq < #expected_seq do
-      local msg = next_message(10000)  -- Big timeout for ASAN/valgrind.
+      local msg = next_msg(10000)  -- Big timeout for ASAN/valgrind.
       if msg == nil then
         error(cat_err(final_error,
                       string.format('got %d messages, expected %d',
@@ -754,7 +754,7 @@ local module = {
   mkdir = lfs.mkdir,
   neq = neq,
   new_pipename = new_pipename,
-  next_message = next_message,
+  next_msg = next_msg,
   nvim = nvim,
   nvim_argv = nvim_argv,
   nvim_async = nvim_async,

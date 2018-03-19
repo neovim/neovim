@@ -4623,7 +4623,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
                              "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
                              "[count]", "[quotex]",
                              "[range]", ":[range]",
@@ -4633,7 +4633,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(rtable[]) = {"star", "gstar", "[star", "]star",
                              "/star", "/\\\\star", "quotestar", "starstar",
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
                              "\\[count]", "\\[quotex]",
                              "\\[range]", ":\\[range]",
@@ -5828,7 +5828,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_line_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -5837,7 +5838,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_text_hl > 0) {
     msg_puts(" texthl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_text_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {

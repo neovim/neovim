@@ -596,78 +596,83 @@ static void chg_r_to_Xor_X_(void)
 int fkmap(int c)
 {
   int tempc;
-  static int revins;
+  int insert_mode = (State & INSERT);
+  static int revins = 0;
 
   if (IS_SPECIAL(c)) {
     return c;
   }
 
-  if (ascii_isdigit(c)
-      || ((c == '.'
-           || c == '+'
-           || c == '-'
-           || c == '^'
-           || c == '%'
-           || c == '#'
-           || c == '=')
-          && revins)) {
-    if (!revins) {
-      if (curwin->w_cursor.col) {
-        if (!p_ri) {
-          dec_cursor();
-        }
-
-        chg_c_toX_orX();
-        chg_l_toXor_X();
-        if (!p_ri) {
-          inc_cursor();
-        }
-      }
-    }
-
-    arrow_used = TRUE;
-    (void)stop_arrow();
-
-    if (!curwin->w_p_rl && revins) {
-      inc_cursor();
-    }
-
-    revins++;
-    p_ri = 1;
-  } else {
-    if (revins) {
-      arrow_used = TRUE;
-      (void)stop_arrow();
-
-      revins = 0;
-      if (curwin->w_p_rl) {
-        while ((F_isdigit(gchar_cursor())
-                || (gchar_cursor() == F_PERIOD
-                    || gchar_cursor() == F_PLUS
-                    || gchar_cursor() == F_MINUS
-                    || gchar_cursor() == F_MUL
-                    || gchar_cursor() == F_DIVIDE
-                    || gchar_cursor() == F_PERCENT
-                    || gchar_cursor() == F_EQUALS))
-                && gchar_cursor() != NUL) {
-          curwin->w_cursor.col++;
-        }
-      } else {
+  if (insert_mode) {
+    if (ascii_isdigit(c)
+        || ((c == '.'
+             || c == '+'
+             || c == '-'
+             || c == '^'
+             || c == '%'
+             || c == '#'
+             || c == '=')
+            && revins)) {
+      // Numbers are entered left-to-right.
+      if (!revins) {
         if (curwin->w_cursor.col) {
-          while ((F_isdigit(gchar_cursor())
-                 || (gchar_cursor() == F_PERIOD
-                     || gchar_cursor() == F_PLUS
-                     || gchar_cursor() == F_MINUS
-                     || gchar_cursor() == F_MUL
-                     || gchar_cursor() == F_DIVIDE
-                     || gchar_cursor() == F_PERCENT
-                     || gchar_cursor() == F_EQUALS))
-                 && --curwin->w_cursor.col) {
+          if (!p_ri) {
+            dec_cursor();
+          }
+
+          chg_c_toX_orX();
+          chg_l_toXor_X();
+          if (!p_ri) {
+            inc_cursor();
           }
         }
+      }
 
-        if (!F_isdigit(gchar_cursor())) {
-          ++curwin->w_cursor.col;
+      arrow_used = true;
+      (void)stop_arrow();
+
+      if (!curwin->w_p_rl && revins) {
+        inc_cursor();
+      }
+
+      revins++;
+      p_ri = 1;
+    } else {
+      if (revins) {
+        // Stop entering number.
+        arrow_used = true;
+        (void)stop_arrow();
+
+        revins = 0;
+        if (curwin->w_p_rl) {
+          while ((F_isdigit(gchar_cursor())
+                  || (gchar_cursor() == F_PERIOD
+                      || gchar_cursor() == F_PLUS
+                      || gchar_cursor() == F_MINUS
+                      || gchar_cursor() == F_MUL
+                      || gchar_cursor() == F_DIVIDE
+                      || gchar_cursor() == F_PERCENT
+                      || gchar_cursor() == F_EQUALS))
+                 && gchar_cursor() != NUL) {
+            curwin->w_cursor.col++;
+          }
+        } else {
+          if (curwin->w_cursor.col) {
+            while ((F_isdigit(gchar_cursor())
+                    || (gchar_cursor() == F_PERIOD
+                        || gchar_cursor() == F_PLUS
+                        || gchar_cursor() == F_MINUS
+                        || gchar_cursor() == F_MUL
+                        || gchar_cursor() == F_DIVIDE
+                        || gchar_cursor() == F_PERCENT
+                        || gchar_cursor() == F_EQUALS))
+                   && --curwin->w_cursor.col) {
+            }
+          }
+
+          if (!F_isdigit(gchar_cursor())) {
+            curwin->w_cursor.col++;
+          }
         }
       }
     }
@@ -755,7 +760,7 @@ int fkmap(int c)
     case 'Y':
     case  NL:
     case  TAB:
-      if (p_ri && (c == NL) && curwin->w_cursor.col) {
+      if (p_ri && (c == NL) && curwin->w_cursor.col && insert_mode) {
         // If the char before the cursor is _X_ or X_ do not change
         // the one under the cursor with X type.
 
@@ -826,135 +831,137 @@ int fkmap(int c)
         }
       }
 
-      if (!p_ri) {
-        dec_cursor();
-      }
+      if (insert_mode) {
+        if (!p_ri) {
+          dec_cursor();
+        }
 
-      switch ((tempc = gchar_cursor())) {
-        case _BE:
-        case _PE:
-        case _TE:
-        case _SE:
-        case _JIM:
-        case _CHE:
-        case _HE_J:
-        case _XE:
-        case _SIN:
-        case _SHIN:
-        case _SAD:
-        case _ZAD:
-        case _FE:
-        case _GHAF:
-        case _KAF:
-        case _KAF_H:
-        case _GAF:
-        case _LAM:
-        case _MIM:
-        case _NOON:
-        case _HE:
-        case _HE_:
-        case _TA:
-        case _ZA:
-          put_curr_and_l_to_X(toF_TyA((char_u)tempc));
-          break;
+        switch ((tempc = gchar_cursor())) {
+          case _BE:
+          case _PE:
+          case _TE:
+          case _SE:
+          case _JIM:
+          case _CHE:
+          case _HE_J:
+          case _XE:
+          case _SIN:
+          case _SHIN:
+          case _SAD:
+          case _ZAD:
+          case _FE:
+          case _GHAF:
+          case _KAF:
+          case _KAF_H:
+          case _GAF:
+          case _LAM:
+          case _MIM:
+          case _NOON:
+          case _HE:
+          case _HE_:
+          case _TA:
+          case _ZA:
+            put_curr_and_l_to_X(toF_TyA((char_u)tempc));
+            break;
 
-        case _AYN:
-        case _AYN_:
-          if (!p_ri) {
-            if (!curwin->w_cursor.col) {
-              put_curr_and_l_to_X(AYN);
-              break;
+          case _AYN:
+          case _AYN_:
+            if (!p_ri) {
+              if (!curwin->w_cursor.col) {
+                put_curr_and_l_to_X(AYN);
+                break;
+              }
             }
-          }
 
-          if (p_ri) {
-            inc_cursor();
-          } else {
-            dec_cursor();
-          }
-
-          if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
-            tempc = AYN_;
-          } else {
-            tempc = AYN;
-          }
-
-          if (p_ri) {
-            dec_cursor();
-          } else {
-            inc_cursor();
-          }
-
-          put_curr_and_l_to_X((char_u)tempc);
-          break;
-
-        case _GHAYN:
-        case _GHAYN_:
-
-          if (!p_ri) {
-            if (!curwin->w_cursor.col) {
-              put_curr_and_l_to_X(GHAYN);
-              break;
+            if (p_ri) {
+              inc_cursor();
+            } else {
+              dec_cursor();
             }
-          }
 
-          if (p_ri) {
-            inc_cursor();
-          } else {
-            dec_cursor();
-          }
-
-          if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
-            tempc = GHAYN_;
-          } else {
-            tempc = GHAYN;
-          }
-
-          if (p_ri) {
-            dec_cursor();
-          } else {
-            inc_cursor();
-          }
-
-          put_curr_and_l_to_X((char_u)tempc);
-          break;
-
-        case _YE:
-        case _IE:
-        case _YEE:
-
-          if (!p_ri) {
-            if (!curwin->w_cursor.col) {
-              put_curr_and_l_to_X(
-                  (tempc == _YE ? YE : tempc == _IE ? IE : YEE));
-              break;
+            if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
+              tempc = AYN_;
+            } else {
+              tempc = AYN;
             }
-          }
 
-          if (p_ri) {
-            inc_cursor();
-          } else {
-            dec_cursor();
-          }
+            if (p_ri) {
+              dec_cursor();
+            } else {
+              inc_cursor();
+            }
 
-          if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
-            tempc = (tempc == _YE ? YE_ : tempc == _IE ? IE_ : YEE_);
-          } else {
-            tempc = (tempc == _YE ? YE : tempc == _IE ? IE : YEE);
-          }
+            put_curr_and_l_to_X((char_u)tempc);
+            break;
 
-          if (p_ri) {
-            dec_cursor();
-          } else {
-            inc_cursor();
-          }
+          case _GHAYN:
+          case _GHAYN_:
 
-          put_curr_and_l_to_X((char_u)tempc);
-          break;
-      }
+            if (!p_ri) {
+              if (!curwin->w_cursor.col) {
+                put_curr_and_l_to_X(GHAYN);
+                break;
+              }
+            }
 
-      if (!p_ri) {
-        inc_cursor();
+            if (p_ri) {
+              inc_cursor();
+            } else {
+              dec_cursor();
+            }
+
+            if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
+              tempc = GHAYN_;
+            } else {
+              tempc = GHAYN;
+            }
+
+            if (p_ri) {
+              dec_cursor();
+            } else {
+              inc_cursor();
+            }
+
+            put_curr_and_l_to_X((char_u)tempc);
+            break;
+
+          case _YE:
+          case _IE:
+          case _YEE:
+
+            if (!p_ri) {
+              if (!curwin->w_cursor.col) {
+                put_curr_and_l_to_X(
+                    (tempc == _YE ? YE : tempc == _IE ? IE : YEE));
+                break;
+              }
+            }
+
+            if (p_ri) {
+              inc_cursor();
+            } else {
+              dec_cursor();
+            }
+
+            if (F_is_TyB_TyC_TyD(SRC_EDT, AT_CURSOR)) {
+              tempc = (tempc == _YE ? YE_ : tempc == _IE ? IE_ : YEE_);
+            } else {
+              tempc = (tempc == _YE ? YE : tempc == _IE ? IE : YEE);
+            }
+
+            if (p_ri) {
+              dec_cursor();
+            } else {
+              inc_cursor();
+            }
+
+            put_curr_and_l_to_X((char_u)tempc);
+            break;
+        }
+
+        if (!p_ri) {
+          inc_cursor();
+        }
       }
 
       tempc = 0;

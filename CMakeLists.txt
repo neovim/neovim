@@ -12,7 +12,11 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(PreventInTreeBuilds)
 
 # Prefer our bundled versions of dependencies.
+if(DEFINED ENV{DEPS_BUILD_DIR})
+set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+else()
 set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+endif()
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
   list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
@@ -204,6 +208,7 @@ int main(void)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
@@ -223,6 +228,9 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+endif()
+if(WIN32)
+  # Windows Vista is the minimum supported version
   add_definitions(-D_WIN32_WINNT=0x0600)
 endif()
 

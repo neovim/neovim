@@ -2,10 +2,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
-  helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
+  helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
+local funcs = helpers.funcs
+local retry = helpers.retry
+local meths = helpers.meths
+local NIL = helpers.NIL
 local wait = helpers.wait
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
@@ -292,8 +296,16 @@ describe('jobs', function()
     nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     local data = {n = 5, s = 'str', l = {1}}
-    eq({'notification', 'stdout', {data, {'foo', ''}}}, next_msg())
-    eq({'notification', 'stdout', {data, {''}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {data, {'foo', ''}}},
+        {'notification', 'stdout', {data, {''}}},
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {data, {'foo'}}},
+        {'notification', 'stdout', {data, {'', ''}}},
+        {'notification', 'stdout', {data, {''}}},
+      }
+    )
     eq({'notification', 'exit', {data, 0}}, next_msg())
   end)
 
@@ -310,11 +322,12 @@ describe('jobs', function()
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     expect_msg_seq(
       { {'notification', 'stdout', {5, {'foo', ''} } },
-        {'notification', 'stdout', {5, {''} } }
+        {'notification', 'stdout', {5, {''} } },
       },
       -- Alternative sequence:
       { {'notification', 'stdout', {5, {'foo'} } },
-        {'notification', 'stdout', {5, {'', ''} } }
+        {'notification', 'stdout', {5, {'', ''} } },
+        {'notification', 'stdout', {5, {''} } },
       }
     )
   end)
@@ -417,7 +430,14 @@ describe('jobs', function()
     let g:job_opts = {'on_stdout': Callback}
     call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      }
+    )
   end)
 
   it('jobstart() works with closures', function()
@@ -430,7 +450,14 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': MkFun()}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      }
+    )
   end)
 
   it('jobstart() works when closure passed directly to `jobstart`', function()
@@ -438,7 +465,14 @@ describe('jobs', function()
       let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
       call jobstart('echo "some text"', g:job_opts)
     ]])
-    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      }
+    )
   end)
 
   describe('jobwait', function()
@@ -604,6 +638,42 @@ describe('jobs', function()
     command("let g:job_opts.rpc = v:true")
     local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
+  end)
+
+  it('jobstop() kills entire process tree #6530', function()
+    command('set shell& shellcmdflag& shellquote& shellpipe& shellredir& shellxquote&')
+
+    -- XXX: Using `nvim` isn't a good test, it reaps its children on exit.
+    -- local c = 'call jobstart([v:progpath, "-u", "NONE", "-i", "NONE", "--headless"])'
+    -- local j = eval("jobstart([v:progpath, '-u', 'NONE', '-i', 'NONE', '--headless', '-c', '"
+    --                ..c.."', '-c', '"..c.."'])")
+
+    -- Create child with several descendants.
+    local j = (iswin()
+               and eval([=[jobstart('start /b cmd /c "ping 127.0.0.1 -n 1 -w 30000 > NUL"]=]
+                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 40000 > NUL"]=]
+                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 50000 > NUL"')]=])
+               or eval("jobstart('sleep 30 | sleep 30 | sleep 30')"))
+    local ppid = funcs.jobpid(j)
+    local children
+    retry(nil, nil, function()
+      children = meths.get_proc_children(ppid)
+      eq(3, #children)
+    end)
+    -- Assert that nvim_get_proc() sees the children.
+    for _, child_pid in ipairs(children) do
+      local info = meths.get_proc(child_pid)
+      -- eq((iswin() and 'nvim.exe' or 'nvim'), info.name)
+      eq(ppid, info.ppid)
+    end
+    -- Kill the root of the tree.
+    funcs.jobstop(j)
+    -- Assert that the children were killed.
+    retry(nil, nil, function()
+      for _, child_pid in ipairs(children) do
+        eq(NIL, meths.get_proc(child_pid))
+      end
+    end)
   end)
 
   describe('running tty-test program', function()
