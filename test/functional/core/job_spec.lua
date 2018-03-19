@@ -677,11 +677,10 @@ describe('jobs', function()
     --                ..c.."', '-c', '"..c.."'])")
 
     -- Create child with several descendants.
-    local j = (iswin()
-               and eval([=[jobstart('start /b cmd /c "ping 127.0.0.1 -n 1 -w 30000 > NUL"]=]
-                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 40000 > NUL"]=]
-                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 50000 > NUL"')]=])
-               or eval("jobstart('sleep 30 | sleep 30 | sleep 30')"))
+    local sleep_cmd = (iswin()
+      and 'ping -n 31 127.0.0.1'
+      or  'sleep 30')
+    local j = eval("jobstart('"..sleep_cmd..' | '..sleep_cmd..' | '..sleep_cmd.."')")
     local ppid = funcs.jobpid(j)
     local children
     retry(nil, nil, function()
