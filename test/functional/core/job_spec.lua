@@ -6,6 +6,10 @@ local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
+local funcs = helpers.funcs
+local retry = helpers.retry
+local meths = helpers.meths
+local NIL = helpers.NIL
 local wait = helpers.wait
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
@@ -634,6 +638,42 @@ describe('jobs', function()
     command("let g:job_opts.rpc = v:true")
     local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
+  end)
+
+  it('jobstop() kills entire process tree #6530', function()
+    command('set shell& shellcmdflag& shellquote& shellpipe& shellredir& shellxquote&')
+
+    -- XXX: Using `nvim` isn't a good test, it reaps its children on exit.
+    -- local c = 'call jobstart([v:progpath, "-u", "NONE", "-i", "NONE", "--headless"])'
+    -- local j = eval("jobstart([v:progpath, '-u', 'NONE', '-i', 'NONE', '--headless', '-c', '"
+    --                ..c.."', '-c', '"..c.."'])")
+
+    -- Create child with several descendants.
+    local j = (iswin()
+               and eval([=[jobstart('start /b cmd /c "ping 127.0.0.1 -n 1 -w 30000 > NUL"]=]
+                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 40000 > NUL"]=]
+                             ..[=[ & start /b cmd /c "ping 127.0.0.1 -n 1 -w 50000 > NUL"')]=])
+               or eval("jobstart('sleep 30 | sleep 30 | sleep 30')"))
+    local ppid = funcs.jobpid(j)
+    local children
+    retry(nil, nil, function()
+      children = meths.get_proc_children(ppid)
+      eq(3, #children)
+    end)
+    -- Assert that nvim_get_proc() sees the children.
+    for _, child_pid in ipairs(children) do
+      local info = meths.get_proc(child_pid)
+      -- eq((iswin() and 'nvim.exe' or 'nvim'), info.name)
+      eq(ppid, info.ppid)
+    end
+    -- Kill the root of the tree.
+    funcs.jobstop(j)
+    -- Assert that the children were killed.
+    retry(nil, nil, function()
+      for _, child_pid in ipairs(children) do
+        eq(NIL, meths.get_proc(child_pid))
+      end
+    end)
   end)
 
   describe('running tty-test program', function()

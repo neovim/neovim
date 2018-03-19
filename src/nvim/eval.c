@@ -22521,11 +22521,13 @@ bool eval_has_provider(const char *name)
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
-void eval_format_source_name_line(char *buf, size_t bufsize)
+void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  snprintf(buf, bufsize, "%s:%" PRIdLINENR,
-           (sourcing_name ? sourcing_name : (char_u *)"?"),
-           (sourcing_name ? sourcing_lnum : 0));
+  if (sourcing_name) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
+  } else {
+    snprintf(buf, bufsize, "?");
+  }
 }
 
 /// ":checkhealth [plugins]"

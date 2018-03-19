@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.11)
 project(libvterm LANGUAGES C)
 
 include(GNUInstallDirs)
-find_package(Perl REQUIRED)
+find_package(Perl)
 
 if(MSVC)
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -18,11 +18,19 @@ foreach(file ${TBL_FILES})
   set(tname encoding/${basename}.inc)
   add_custom_command(OUTPUT
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/encoding/
-    COMMAND ${PERL_EXECUTABLE} -CSD ${CMAKE_SOURCE_DIR}/tbl2inc_c.pl ${file} > ${CMAKE_BINARY_DIR}/${tname}
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/tbl2inc_c.cmake ${file} ${CMAKE_BINARY_DIR}/${tname}
     COMMENT "Generating ${tname}"
     OUTPUT ${CMAKE_BINARY_DIR}/${tname}
     )
   list(APPEND TBL_FILES_HEADERS ${tname})
+  # Only used for verifying that the output of tbl2inc_c.cmake is correct
+  set(tname encoding-test/${basename}.inc)
+  add_custom_command(OUTPUT
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/encoding-test/
+    COMMAND ${PERL_EXECUTABLE} -CSD ${CMAKE_SOURCE_DIR}/tbl2inc_c.pl ${file} > ${CMAKE_BINARY_DIR}/${tname}
+    COMMENT "Generating ${tname}"
+    OUTPUT ${CMAKE_BINARY_DIR}/${tname}
+    )
 endforeach()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -60,13 +68,24 @@ set_target_properties(harness PROPERTIES
   # run-test.pl expects to find the harness in t/.libs/
   RUNTIME_OUTPUT_DIRECTORY t/.libs)
 
-file(GLOB TESTFILES ${CMAKE_SOURCE_DIR}/t/*.test)
-add_custom_target(check)
-foreach(testfile ${TESTFILES})
-  get_filename_component(target_name ${testfile} NAME_WE)
-  add_custom_target(${target_name}
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/t/run-test.pl ${testfile}
-    COMMENT "**${target_name} **"
-    DEPENDS harness)
-  add_dependencies(check ${target_name})
-endforeach()
+if(Perl_FOUND)
+  file(GLOB TESTFILES ${CMAKE_SOURCE_DIR}/t/*.test)
+  add_custom_target(check)
+  foreach(testfile ${TESTFILES})
+    get_filename_component(target_name ${testfile} NAME_WE)
+    add_custom_target(${target_name}
+      COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/t/run-test.pl ${testfile}
+      COMMENT "**${target_name} **"
+      DEPENDS harness)
+    add_dependencies(check ${target_name})
+  endforeach()
+
+  foreach(header_path ${TBL_FILES_HEADERS})
+    get_filename_component(header_name ${header_path} NAME)
+    set(perl_header_path ${CMAKE_BINARY_DIR}/encoding-test/${header_name})
+    add_custom_target(test-${header_name}
+      COMMAND ${CMAKE_COMMAND} -E compare_files
+              ${header_path} ${perl_header_path}
+      DEPENDS ${header_path} ${perl_header_path})
+  endforeach()
+endif()

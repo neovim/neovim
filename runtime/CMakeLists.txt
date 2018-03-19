@@ -42,6 +42,7 @@ foreach(PACKAGE ${PACKAGES})
         nvim
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
+    add_dependencies(${PACKNAME}-tags nvim_runtime_deps)
 
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       DEPENDS
@@ -80,6 +81,7 @@ add_custom_target(helptags
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
+add_dependencies(helptags nvim_runtime_deps)
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   DEPENDS

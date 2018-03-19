@@ -145,8 +145,12 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
+static void init_child(PtyProcess *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
+  // New session/process-group. #6530
+  setsid();
+
   unsetenv("COLUMNS");
   unsetenv("LINES");
   unsetenv("TERMCAP");
