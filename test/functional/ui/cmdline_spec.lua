@@ -187,6 +187,36 @@ describe('external cmdline', function()
 
   end)
 
+  it("works with inputlist()", function()
+    feed(':call inputlist(["input0", "input1"])<cr>')
+    screen:expect([[
+      {1:~                        }|
+      {1:~                        }|
+      input0                   |
+      input1                   |
+            ^                   |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "" } },
+        firstc = "#",
+        indent = 0,
+        pos = 0,
+        prompt = "Type number and <Enter> or click with mouse (empty cancels): "
+      }}, cmdline)
+    end)
+    feed('<cr>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+
+  end)
+
   it("works with special chars and nested cmdline", function()
     feed(':xx<c-r>')
     screen:expect([[
