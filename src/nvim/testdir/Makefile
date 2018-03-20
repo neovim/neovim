@@ -7,7 +7,7 @@ ifeq ($(OS),Windows_NT)
 else
   NVIM_PRG ?= ../../../build/bin/nvim
 endif
-SCRIPTSOURCE := ../../../runtime
+ROOT := ../../..
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
@@ -134,7 +134,7 @@ ifdef USE_VALGRIND
 	                 $(VALGRIND_TOOL)                       \
 	                 --suppressions=../../.valgrind.supp \
 	                 --error-exitcode=123                   \
-	                 --log-file=valgrind.\%p.$*             \
+	                 --log-file=valgrind-\%p.$*             \
 	                 $(VGDB)                                \
 	                 --trace-children=yes
 else
@@ -152,7 +152,8 @@ nongui: nolog $(SCRIPTS) newtests report
 gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
 
 .gdbinit:
-	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
+	@echo "[OLDTEST-PREP] Setting up .gdbinit"
+	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
 	@echo
@@ -171,7 +172,7 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
+RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \
@@ -179,6 +180,7 @@ clean:
 	        *.res          \
 	        *.rej          \
 	        *.orig         \
+	        *.tlog         \
 	        test.log       \
 	        messages       \
 	        $(RM_ON_RUN)   \
@@ -191,59 +193,32 @@ clean:
 	        del
 
 test1.out: .gdbinit test1.in
-	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
-	mkdir -p $(TMPDIR)
-	$(RUN_VIM) $*.in
-	@/bin/sh -c "if test -e wrongtermsize; then                                 \
-	                 echo;                                                      \
-	                 echo test1 FAILED - terminal size must be 80x24 or larger; \
-	                 echo; exit 1;                                              \
-	             elif diff test.out $*.ok; then                                 \
-	                 mv -f test.out $*.out;                                     \
-	             else                                                           \
-	                 echo;                                                      \
-	                 echo test1 FAILED - Something basic is wrong;              \
-	                 echo;                                                      \
-	                 exit 1;                                                    \
-	             fi"
-	-rm -rf X* viminfo
+	@echo "[OLDTEST-PREP] Running test1"
+	@rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
+	@mkdir -p $(TMPDIR)
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
+	@rm -f wrongtermsize
+	@rm -rf X* viminfo
 
 %.out: %.in .gdbinit
-	-rm -rf $*.failed test.ok $(RM_ON_RUN)
-	mkdir -p $(TMPDIR)
-	cp $*.ok test.ok
-	# Sleep a moment to avoid that the xterm title is messed up.
-	# 200 msec is sufficient, but only modern sleep supports a fraction of
-	# a second, fall back to a second if it fails.
-	@-/bin/sh -c "sleep .2 > /dev/null 2>&1 || sleep 1"
-	$(RUN_VIM) $*.in
-
-	# Check if the test.out file matches test.ok.
-	@/bin/sh -c "if test -f test.out; then                \
-	                 if diff -u test.out $*.ok; then         \
-	                     mv -f test.out $*.out;           \
-	                 else                                 \
-	                     echo $* FAILED >> test.log;      \
-	                     mv -f test.out $*.failed;        \
-	                 fi;                                  \
-	             else                                     \
-	                 echo $* NO OUTPUT >>test.log;        \
-	             fi"
-	@/bin/sh -c "if test -f valgrind; then                \
-	                 mv -f valgrind valgrind.$*;          \
-	             fi"
-	-rm -rf X* test.ok viminfo
+	@echo "[OLDESTTEST] Running" $*
+	@rm -rf $*.failed test.ok $(RM_ON_RUN)
+	@mkdir -p $(TMPDIR)
+	@cp $*.ok test.ok
+	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
+	@rm -rf X* test.ok viminfo
 
 test49.out: test49.vim
 
 nolog:
-	-rm -f test.log messages
+	@echo "[OLDTEST-PREP] Removing test.log and messages"
+	@rm -f test.log messages
 
 
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
@@ -253,5 +228,6 @@ newtests: newtestssilent
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
-	mkdir -p $(TMPDIR)
-	$(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+	@echo "[OLDTEST] Running" $*
+	@mkdir -p $(TMPDIR)
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
