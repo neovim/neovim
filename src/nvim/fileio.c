@@ -6755,7 +6755,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     autocmd_fname = fname_io;
   }
   if (autocmd_fname != NULL) {
-    autocmd_fname = vim_strsave(autocmd_fname);
+    // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
+    autocmd_fname = vim_strnsave(autocmd_fname, MAXPATHL);
   }
   autocmd_fname_full = false;   // call FullName_save() later
 

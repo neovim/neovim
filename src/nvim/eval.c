@@ -13828,7 +13828,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccalp = save_funccal();
-    //
+
     current_SID = provider_caller_scope.SID;
     sourcing_name = provider_caller_scope.sourcing_name;
     sourcing_lnum = provider_caller_scope.sourcing_lnum;
@@ -22481,7 +22481,8 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   restore_funccal(provider_caller_scope.funccalp);
   provider_caller_scope = saved_provider_caller_scope;
   provider_call_nesting--;
-  
+  assert(provider_call_nesting >= 0);
+
   return rettv;
 }
 

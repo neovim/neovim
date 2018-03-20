@@ -3,6 +3,7 @@ local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
 local feed_command = helpers.feed_command
+local source = helpers.source
 local missing_provider = helpers.missing_provider
 
 do
@@ -13,7 +14,7 @@ do
   end
 end
 
-describe('python3 commands and functions', function()
+describe('python3 provider', function()
   before_each(function()
     clear()
     command('python3 import vim')
@@ -81,5 +82,21 @@ describe('python3 commands and functions', function()
 
   it('py3eval', function()
     eq({1, 2, {['key'] = 'val'}}, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
+  end)
+
+  it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
+    source([=[
+      python3 << EOF
+      import vim
+      def foo():
+        vim.eval('expand("<afile>:p")')
+        vim.eval('bufnr(expand("<afile>:p"))')
+      EOF
+      autocmd BufDelete * python3 foo()
+      autocmd BufUnload * python3 foo()]=])
+    feed_command("exe 'split' tempname()")
+    feed_command("bwipeout!")
+    feed_command('help help')
+    eq(2, eval('1+1'))  -- Still alive?
   end)
 end)

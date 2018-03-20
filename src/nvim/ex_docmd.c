@@ -8547,15 +8547,16 @@ eval_vars (
       break;
 
     case SPEC_AFILE:            /* file name for autocommand */
-      result = autocmd_fname;
-      if (result != NULL && !autocmd_fname_full) {
-        /* Still need to turn the fname into a full path.  It is
-         * postponed to avoid a delay when <afile> is not used. */
-        autocmd_fname_full = TRUE;
-        result = (char_u *)FullName_save((char *)autocmd_fname, FALSE);
-        xfree(autocmd_fname);
-        autocmd_fname = result;
+      if (autocmd_fname != NULL && !autocmd_fname_full) {
+        // Still need to turn the fname into a full path.  It was
+        // postponed to avoid a delay when <afile> is not used.
+        autocmd_fname_full = true;
+        result = (char_u *)FullName_save((char *)autocmd_fname, false);
+        // Copy into `autocmd_fname`, don't reassign it. #8165
+        xstrlcpy((char *)autocmd_fname, (char *)result, MAXPATHL);
+        xfree(result);
       }
+      result = autocmd_fname;
       if (result == NULL) {
         *errormsg = (char_u *)_(
             "E495: no autocommand file name to substitute for \"<afile>\"");
