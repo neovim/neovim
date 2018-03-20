@@ -175,7 +175,7 @@ endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
-  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
