@@ -5163,7 +5163,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	"bash.exe -c ls" or "cmd.exe /s /c "dir"".  For Windows
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
 	systems, the default is set according to the value of 'shell', to
 	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
