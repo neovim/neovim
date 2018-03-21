@@ -142,11 +142,15 @@ describe('system()', function()
         eq('a \n', eval([[system('echo a 2>&1')]]))
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
       end)
 
       it('with shell=cmd', function()
         command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
       end)
 
       it('with shell=$COMSPEC', function()
@@ -154,6 +158,8 @@ describe('system()', function()
         if comspecshell == 'cmd.exe' then
           command('set shell=$COMSPEC')
           eq('"a b"\n', eval([[system('echo "a b"')]]))
+          eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+          eq(0, eval('v:shell_error'))
         else
           pending('$COMSPEC is not cmd.exe: ' .. comspecshell)
         end
@@ -354,6 +360,8 @@ describe('systemlist()', function()
       eq(5, eval('v:shell_error'))
       eval([[systemlist('this-should-not-exist')]])
       eq(1, eval('v:shell_error'))
+      eval([[systemlist('"ping" "-n" "1" "127.0.0.1"')]])
+      eq(0, eval('v:shell_error'))
     else
       eval([[systemlist("sh -c 'exit'")]])
       eq(0, eval('v:shell_error'))
