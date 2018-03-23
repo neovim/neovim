@@ -1330,7 +1330,7 @@ recover_names (
         names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
         num_names = 3;
       } else {
-        int len = STRLEN(dir_name);
+        int len = (int)STRLEN(dir_name);
         p = dir_name + len;
         if (after_pathsep((char *)dir_name, (char *)p)
             && len > 1
@@ -3058,7 +3058,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #ifdef HAVE_READLINK
   char_u fname_buf[MAXPATHL];
 #endif
-  int len = STRLEN(dir_name);
+  int len = (int)STRLEN(dir_name);
 
   s = dir_name + len;
   if (after_pathsep((char *)dir_name, (char *)s)
