@@ -2683,7 +2683,7 @@ void buflist_altfpos(win_T *win)
 }
 
 /// Check that "ffname" is not the same file as current file.
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  ffname  full path name to check
 bool otherfile(char_u *ffname)
@@ -2693,7 +2693,7 @@ bool otherfile(char_u *ffname)
 }
 
 /// Check that "ffname" is not the same file as the file loaded in "buf".
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  buf            buffer to check
 /// @param  ffname         full path name to check

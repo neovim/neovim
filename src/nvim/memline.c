@@ -3020,20 +3020,17 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     }
     buf[ret] = NUL;
 
-    /*
-     * Check whether the symlink is relative or absolute.
-     * If it's relative, build a new path based on the directory
-     * portion of the filename (if any) and the path the symlink
-     * points to.
-     */
-    if (path_is_absolute_path(buf))
+    // Check whether the symlink is relative or absolute.
+    // If it's relative, build a new path based on the directory
+    // portion of the filename (if any) and the path the symlink
+    // points to.
+    if (path_is_absolute(buf)) {
       STRCPY(tmp, buf);
-    else {
-      char_u *tail;
-
-      tail = path_tail(tmp);
-      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL)
+    } else {
+      char_u *tail = path_tail(tmp);
+      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
         return FAIL;
+      }
       STRCPY(tail, buf);
     }
   }

@@ -4318,7 +4318,7 @@ void shorten_fnames(int force)
         && !path_with_url((char *)buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || path_is_absolute_path(buf->b_sfname))) {
+            || path_is_absolute(buf->b_sfname))) {
       xfree(buf->b_sfname);
       buf->b_sfname = NULL;
       p = path_shorten_fname(buf->b_ffname, dirname);

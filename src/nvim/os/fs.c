@@ -222,7 +222,7 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute_path(name);
+  bool no_path = !use_path || path_is_absolute(name);
 #ifndef WIN32
   // If the filename is "qualified" (relative or absolute) do not check $PATH.
   no_path |= (name[0] == '.'
@@ -244,7 +244,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 #endif
     if (ok) {
       if (abspath != NULL) {
-        *abspath = save_absolute_path(name);
+        *abspath = save_abs_path(name);
       }
       return true;
     }
@@ -357,7 +357,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #endif
     if (ok) {
       if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_absolute_path((char_u *)buf);
+        *abspath = save_abs_path((char_u *)buf);
       }
 
       rv = true;

@@ -886,7 +886,7 @@ bool os_setenv_append_path(const char *fname)
 // No prescribed maximum on unix.
 # define MAX_ENVPATHLEN INT_MAX
 #endif
-  if (!path_is_absolute_path((char_u *)fname)) {
+  if (!path_is_absolute((char_u *)fname)) {
     internal_error("os_setenv_append_path()");
     return false;
   }

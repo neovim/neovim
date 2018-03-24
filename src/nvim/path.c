@@ -452,10 +452,10 @@ char *FullName_save(const char *fname, bool force)
 /// Saves the absolute path.
 /// @param name An absolute or relative path.
 /// @return The absolute path of `name`.
-char_u *save_absolute_path(const char_u *name)
+char_u *save_abs_path(const char_u *name)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  if (!path_is_absolute_path(name)) {
+  if (!path_is_absolute(name)) {
     return (char_u *)FullName_save((char *)name, true);
   }
   return vim_strsave((char_u *) name);
@@ -814,7 +814,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       STRCPY(buf, curdir);  // relative to current directory
     } else if (path_with_url((char *)buf)) {
       continue;  // URL can't be used here
-    } else if (!path_is_absolute_path(buf)) {
+    } else if (!path_is_absolute(buf)) {
       // Expand relative path to their full path equivalent
       size_t len = STRLEN(curdir);
       if (len + STRLEN(buf) + 3 > MAXPATHL) {
@@ -949,19 +949,17 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       }
     }
 
-    if (path_is_absolute_path(path)) {
-      /*
-       * Last resort: shorten relative to curdir if possible.
-       * 'possible' means:
-       * 1. It is under the current directory.
-       * 2. The result is actually shorter than the original.
-       *
-       *	    Before		  curdir	After
-       *	    /foo/bar/file.txt	  /foo/bar	./file.txt
-       *	    c:\foo\bar\file.txt   c:\foo\bar	.\file.txt
-       *	    /file.txt		  /		/file.txt
-       *	    c:\file.txt		  c:\		.\file.txt
-       */
+    if (path_is_absolute(path)) {
+      // Last resort: shorten relative to curdir if possible.
+      // 'possible' means:
+      // 1. It is under the current directory.
+      // 2. The result is actually shorter than the original.
+      //
+      //     Before                curdir        After
+      //     /foo/bar/file.txt     /foo/bar      ./file.txt
+      //     c:\foo\bar\file.txt   c:\foo\bar    .\file.txt
+      //     /file.txt             /             /file.txt
+      //     c:\file.txt           c:\           .\file.txt
       short_name = path_shorten_fname(path, curdir);
       if (short_name != NULL && short_name > path + 1
           ) {
@@ -1221,7 +1219,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
        */
       if (path_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
-            && !path_is_absolute_path(p)
+            && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.' && vim_ispathsep(p[2]))))
@@ -1667,7 +1665,7 @@ int path_with_url(const char *fname)
  */
 bool vim_isAbsName(char_u *name)
 {
-  return path_with_url((char *)name) != 0 || path_is_absolute_path(name);
+  return path_with_url((char *)name) != 0 || path_is_absolute(name);
 }
 
 /// Save absolute file name to "buf[len]".
@@ -1701,7 +1699,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     return OK;
   }
 
-  int rv = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
+  int rv = path_to_absolute((char_u *)fname, (char_u *)buf, len, force);
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
@@ -1910,7 +1908,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
 ///   - Pointer into `full_path` if shortened.
 ///   - `full_path` unchanged if no shorter name is possible.
 ///   - NULL if `full_path` is NULL.
-char_u *path_shorten_fname_if_possible(char_u *full_path)
+char_u *path_try_shorten_fname(char_u *full_path)
 {
   char_u *dirname = xmalloc(MAXPATHL);
   char_u *p = full_path;
@@ -2191,8 +2189,8 @@ int append_path(char *path, const char *to_append, size_t max_len)
 /// @param  force  also expand when "fname" is already absolute.
 ///
 /// @return FAIL for failure, OK for success.
-static int path_get_absolute_path(const char_u *fname, char_u *buf,
-                                  size_t len, int force)
+static int path_to_absolute(const char_u *fname, char_u *buf, size_t len,
+                            int force)
 {
   char_u *p;
   *buf = NUL;
@@ -2201,7 +2199,7 @@ static int path_get_absolute_path(const char_u *fname, char_u *buf,
   char *end_of_path = (char *) fname;
 
   // expand it if forced or not an absolute path
-  if (force || !path_is_absolute_path(fname)) {
+  if (force || !path_is_absolute(fname)) {
     p = vim_strrchr(fname, '/');
 #ifdef WIN32
     if (p == NULL) {
@@ -2234,10 +2232,10 @@ static int path_get_absolute_path(const char_u *fname, char_u *buf,
   return append_path((char *)buf, end_of_path, len);
 }
 
-/// Check if the given file is absolute.
+/// Check if file `fname` is a full (absolute) path.
 ///
 /// @return `TRUE` if "fname" is absolute.
-int path_is_absolute_path(const char_u *fname)
+int path_is_absolute(const char_u *fname)
 {
 #ifdef WIN32
   // A name like "d:/foo" and "//server/share" is absolute
@@ -2262,7 +2260,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
 {
   char *path = getenv("PATH");
 
-  if (path == NULL || path_is_absolute_path((char_u *)argv0)) {
+  if (path == NULL || path_is_absolute((char_u *)argv0)) {
     xstrlcpy(buf, argv0, bufsize);
   } else if (argv0[0] == '.' || strchr(argv0, PATHSEP)) {
     // Relative to CWD.

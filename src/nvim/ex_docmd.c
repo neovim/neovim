@@ -8547,7 +8547,7 @@ eval_vars (
       break;
 
     case SPEC_AFILE:  // file name for autocommand
-      if (autocmd_fname != NULL && !path_is_absolute_path(autocmd_fname)) {
+      if (autocmd_fname != NULL && !path_is_absolute(autocmd_fname)) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
         result = (char_u *)FullName_save((char *)autocmd_fname, false);
@@ -8561,7 +8561,7 @@ eval_vars (
             "E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
       }
-      result = path_shorten_fname_if_possible(result);
+      result = path_try_shorten_fname(result);
       break;
 
     case SPEC_ABUF:             /* buffer number for autocommand */
