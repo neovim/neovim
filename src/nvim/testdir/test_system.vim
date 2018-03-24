@@ -48,38 +48,45 @@ function! Test_System()
 endfunction
 
 function! Test_system_exmode()
-  let cmd=" -es --headless -u NONE -c 'source Xscript' +q; echo $?"
-  " Need to put this in a script, "catch" isn't found after an unknown
-  " function.
-  call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
-  let a = system(v:progpath . cmd)
-  call assert_equal('0', a[0])
-  call assert_equal(0, v:shell_error)
+  if has('unix') " echo $? only works on Unix
+    let cmd = ' -es --headless -u NONE -c "source Xscript" +q; echo "result=$?"'
+    " Need to put this in a script, "catch" isn't found after an unknown
+    " function.
+    call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+    let a = system(v:progpath . cmd)
+    call assert_match('result=0', a)
+    call assert_equal(0, v:shell_error)
+  endif
 
   " Error before try does set error flag.
   call writefile(['call nosuchfunction()', 'try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+  if has('unix') " echo $? only works on Unix
+    let a = system(v:progpath . cmd)
+    call assert_notequal('0', a[0])
+  endif
+
+  let cmd = ' -es --headless -u NONE -c "source Xscript" +q'
   let a = system(v:progpath . cmd)
-  call assert_notequal('0', a[0])
-
-  let cmd=" -es --headless -u NONE -c 'source Xscript' +q"
-  let a = system(v:progpath . cmd)
   call assert_notequal(0, v:shell_error)
-
-  let cmd=" -es --headless -u NONE -c 'call doesnotexist()' +q; echo $?"
-  let a = system(v:progpath. cmd)
-  call assert_notequal(0, a[0])
-
-  let cmd=" -es --headless -u NONE -c 'call doesnotexist()' +q"
-  let a = system(v:progpath. cmd)
-  call assert_notequal(0, v:shell_error)
-
-  let cmd=" -es --headless -u NONE -c 'call doesnotexist()|let a=1' +q; echo $?"
-  let a = system(v:progpath. cmd)
-  call assert_notequal(0, a[0])
-
-  let cmd=" -es --headless -u NONE -c 'call doesnotexist()|let a=1' +q"
-  let a = system(v:progpath. cmd)
-  call assert_notequal(0, v:shell_error)
-
   call delete('Xscript')
+
+  if has('unix') " echo $? only works on Unix
+    let cmd = ' -es --headless -u NONE -c "call doesnotexist()" +q; echo $?'
+    let a = system(v:progpath. cmd)
+    call assert_notequal(0, a[0])
+  endif
+
+  let cmd = ' -es --headless -u NONE -c "call doesnotexist()" +q'
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, v:shell_error)
+
+  if has('unix') " echo $? only works on Unix
+    let cmd = ' -es --headless -u NONE -c "call doesnotexist()|let a=1" +q; echo $?'
+    let a = system(v:progpath. cmd)
+    call assert_notequal(0, a[0])
+  endif
+
+  let cmd = ' -es --headless -u NONE -c "call doesnotexist()|let a=1" +q'
+  let a = system(v:progpath. cmd)
+  call assert_notequal(0, v:shell_error)
 endfunc
