@@ -254,6 +254,8 @@ describe('system()', function()
       end
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("echo -n echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -269,6 +271,8 @@ describe('system()', function()
       eq("input", eval('system("cat -", "input")'))
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("cat - &", "input")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
