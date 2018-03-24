@@ -140,13 +140,23 @@ describe('system()', function()
         eq('"a b"\n', eval([[system('echo "a b"')]]))
         eq('a \nb\n', eval([[system('echo a & echo b')]]))
         eq('a \n', eval([[system('echo a 2>&1')]]))
+        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
+        eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
       end)
 
       it('with shell=cmd', function()
         command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
+        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
+        eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
       end)
 
       it('with shell=$COMSPEC', function()
@@ -154,6 +164,11 @@ describe('system()', function()
         if comspecshell == 'cmd.exe' then
           command('set shell=$COMSPEC')
           eq('"a b"\n', eval([[system('echo "a b"')]]))
+          eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+          eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+          eq(0, eval('v:shell_error'))
+          eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
+          eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
         else
           pending('$COMSPEC is not cmd.exe: ' .. comspecshell)
         end
@@ -239,6 +254,8 @@ describe('system()', function()
       end
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("echo -n echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -254,6 +271,8 @@ describe('system()', function()
       eq("input", eval('system("cat -", "input")'))
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("cat - &", "input")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -299,7 +318,7 @@ describe('system()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by SOH characters', function()
-      eq('part1\001part2\001part3\n', eval('system("cat '..fname..'")'))
+      eq('part1\001part2\001part3\n', eval([[system('"cat" "]]..fname..[["')]]))
     end)
   end)
 
@@ -352,8 +371,16 @@ describe('systemlist()', function()
       eq(1, eval('v:shell_error'))
       eval([[systemlist("cmd.exe /c exit 5")]])
       eq(5, eval('v:shell_error'))
+      eq('root = true\r', eval([[get(systemlist('"more" ".editorconfig"'), 0, '')]]))
+      eq(0, eval('v:shell_error'))
       eval([[systemlist('this-should-not-exist')]])
       eq(1, eval('v:shell_error'))
+      eval([[systemlist('"ping" "-n" "1" "127.0.0.1"')]])
+      eq(0, eval('v:shell_error'))
+      eq('"a b"\r', eval([[get(systemlist('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""'), 0, '')]]))
+      eq(0, eval('v:shell_error'))
+      eq('"a b"\r', eval([[get(systemlist('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"'''), 0, '')]]))
+      eq(0, eval('v:shell_error'))
     else
       eval([[systemlist("sh -c 'exit'")]])
       eq(0, eval('v:shell_error'))
@@ -464,7 +491,7 @@ describe('systemlist()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
+      eq({'part1\npart2\npart3'}, eval([[systemlist('"cat" "]]..fname..[["')]]))
     end)
   end)
 
