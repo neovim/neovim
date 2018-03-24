@@ -2205,6 +2205,13 @@ return {
       defaults={if_true={vi="auto"}}
     },
     {
+      full_name='smalldeletethreshold', abbreviation='sdt',
+      type='number', scope={'global'}, -- TODO: buffer
+      vi_def=true,
+      varname='p_sdt',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='smartcase', abbreviation='scs',
       type='bool', scope={'global'},
       vi_def=true,
