@@ -318,7 +318,7 @@ describe('system()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by SOH characters', function()
-      eq('part1\001part2\001part3\n', eval('system("cat '..fname..'")'))
+      eq('part1\001part2\001part3\n', eval([[system('"cat" "]]..fname..[["')]]))
     end)
   end)
 
@@ -491,7 +491,7 @@ describe('systemlist()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
+      eq({'part1\npart2\npart3'}, eval([[systemlist('"cat" "]]..fname..[["')]]))
     end)
   end)
 
