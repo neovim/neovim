@@ -416,7 +416,7 @@ EXTERN struct caller_scope {
   scid_T SID;
   uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
   linenr_T sourcing_lnum;
-  int autocmd_fname_full, autocmd_bufnr;
+  int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
@@ -872,7 +872,6 @@ EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
 EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
 EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline
 EXTERN char_u *autocmd_fname INIT(= NULL);     // fname for <afile> on cmdline
-EXTERN int autocmd_fname_full;                 // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd

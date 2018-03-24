@@ -13814,7 +13814,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   scid_T save_current_SID;
   uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
   linenr_T save_sourcing_lnum;
-  int save_autocmd_fname_full, save_autocmd_bufnr;
+  int save_autocmd_bufnr;
   void *save_funccalp;
 
   if (l_provider_call_nesting) {
@@ -13825,7 +13825,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_sourcing_lnum = sourcing_lnum;
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
-    save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccalp = save_funccal();
 
@@ -13834,7 +13833,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     sourcing_lnum = provider_caller_scope.sourcing_lnum;
     autocmd_fname = provider_caller_scope.autocmd_fname;
     autocmd_match = provider_caller_scope.autocmd_match;
-    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
     restore_funccal(provider_caller_scope.funccalp);
   }
@@ -13850,7 +13848,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     sourcing_lnum = save_sourcing_lnum;
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
-    autocmd_fname_full = save_autocmd_fname_full;
     autocmd_bufnr = save_autocmd_bufnr;
     restore_funccal(save_funccalp);
   }
@@ -22448,7 +22445,6 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
     .sourcing_lnum = sourcing_lnum,
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
-    .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
     .funccalp = save_funccal()
   };

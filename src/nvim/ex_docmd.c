@@ -8546,11 +8546,10 @@ eval_vars (
       resultbuf = result;                   /* remember allocated string */
       break;
 
-    case SPEC_AFILE:            /* file name for autocommand */
-      if (autocmd_fname != NULL && !autocmd_fname_full) {
+    case SPEC_AFILE:  // file name for autocommand
+      if (autocmd_fname != NULL && !path_is_absolute_path(autocmd_fname)) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
-        autocmd_fname_full = true;
         result = (char_u *)FullName_save((char *)autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
         xstrlcpy((char *)autocmd_fname, (char *)result, MAXPATHL);
