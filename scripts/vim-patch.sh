@@ -100,9 +100,9 @@ get_vim_sources() {
 
 commit_message() {
   if [[ -n "$vim_tag" ]]; then
-    printf '%s\n\n%s' "${vim_message}" "${vim_commit_url}"
+    printf '%s\n%s' "${vim_message}" "${vim_commit_url}"
   else
-    printf 'vim-patch:%s\n\n%s\n\n%s' "$vim_version" "$vim_message" "$vim_commit_url"
+    printf 'vim-patch:%s\n\n%s\n%s' "$vim_version" "$vim_message" "$vim_commit_url"
   fi
 }
 
