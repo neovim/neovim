@@ -237,16 +237,16 @@ void channel_create_event(Channel *chan, const char *ext_source)
 #endif
 }
 
-void channel_incref(Channel *channel)
+void channel_incref(Channel *chan)
 {
-  channel->refcount++;
+  chan->refcount++;
 }
 
-void channel_decref(Channel *channel)
+void channel_decref(Channel *chan)
 {
-  if (!(--channel->refcount)) {
+  if (!(--chan->refcount)) {
     // delay free, so that libuv is done with the handles
-    multiqueue_put(main_loop.events, free_channel_event, 1, channel);
+    multiqueue_put(main_loop.events, free_channel_event, 1, chan);
   }
 }
 
@@ -268,18 +268,18 @@ void callback_reader_start(CallbackReader *reader)
 
 static void free_channel_event(void **argv)
 {
-  Channel *channel = argv[0];
-  if (channel->is_rpc) {
-    rpc_free(channel);
+  Channel *chan = argv[0];
+  if (chan->is_rpc) {
+    rpc_free(chan);
   }
 
-  callback_reader_free(&channel->on_stdout);
-  callback_reader_free(&channel->on_stderr);
-  callback_free(&channel->on_exit);
+  callback_reader_free(&chan->on_stdout);
+  callback_reader_free(&chan->on_stderr);
+  callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(channels, channel->id);
-  multiqueue_free(channel->events);
-  xfree(channel);
+  pmap_del(uint64_t)(channels, chan->id);
+  multiqueue_free(chan->events);
+  xfree(chan);
 }
 
 static void channel_destroy_early(Channel *chan)
