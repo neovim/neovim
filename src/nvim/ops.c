@@ -1385,10 +1385,13 @@ int op_delete(oparg_T *oap)
 
     /*
      * Put deleted text into register 1 and shift number registers if the
-     * delete contains a line break, or when a regname has been specified.
+     * delete contains a line break, or when a regname has been specified,
+     * or when the number of deleted characters is larger than
+     * 'smalldeletethreshold'.
      */
     if (oap->regname != 0 || oap->motion_type == kMTLineWise
-        || oap->line_count > 1 || oap->use_reg_one) {
+        || oap->line_count > 1 || oap->use_reg_one
+        || (p_sdt > 0 && oap->end.col - oap->start.col >= p_sdt)) {
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
         y_regs[n] = y_regs[n - 1];

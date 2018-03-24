@@ -53,7 +53,6 @@ describe("'smalldeletethreshold' option", function()
     -- The second 'dw' yanks a 3-chars word, which is smaller 
     -- then smalldeletethreshold and is considered a small deletion.
     -- While the 'dd' should still always be a big deletion.
-    eq(getreg('"'), 'bb ')
     eq(getreg('1'), 'c\n')
     eq(getreg('2'), 'aaa ')
     eq(getreg('3'), '')
