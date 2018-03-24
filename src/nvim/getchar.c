@@ -86,6 +86,8 @@ static buffheader_T readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
 
 static int typeahead_char = 0;          /* typeahead char that's not flushed */
 
+static bool incomplete_mapping_state = false;
+
 /*
  * when block_redo is TRUE redo buffer will not be changed
  * used by edit() to repeat insertions and 'V' command for redoing
@@ -1372,6 +1374,8 @@ int vgetc(void)
     garbage_collect(false);
   }
 
+  incomplete_mapping_state = false;
+
   /*
    * If a character was put back with vungetc, it was already processed.
    * Return it directly.
@@ -1648,6 +1652,7 @@ static int vgetorpeek(int advance)
   start_stuff();
   if (advance && typebuf.tb_maplen == 0)
     Exec_reg = FALSE;
+
   do {
     /*
      * get a character: 1. from the stuffbuffer
@@ -1675,7 +1680,9 @@ static int vgetorpeek(int advance)
        * If a mapped key sequence is found we go back to the start to
        * try re-mapping.
        */
+
       for (;; ) {
+
         /*
          * os_breakcheck() is slow, don't use it too often when
          * inside a mapping.  But call it each time for typed
@@ -1712,6 +1719,9 @@ static int vgetorpeek(int advance)
           }
           cmd_silent = FALSE;
 
+          // if we got an interrupt, when nvim_get_mode finnaly gets called
+          // we don't have an incomplete mapping anymore.
+          incomplete_mapping_state = false;
           break;
         } else if (typebuf.tb_len > 0) {
           /*
@@ -2237,6 +2247,7 @@ static int vgetorpeek(int advance)
          * get a character: 3. from the user - get it
          */
         wait_tb_len = typebuf.tb_len;
+        //incomplete_mapping_state = true;
         c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
             typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
             !advance
@@ -2248,6 +2259,7 @@ static int vgetorpeek(int advance)
                : ((keylen == KEYLEN_PART_KEY && p_ttm >= 0)
                   ? p_ttm
                   : p_tm)), typebuf.tb_change_cnt);
+        //incomplete_mapping_state = false;
 
         if (i != 0)
           pop_showcmd();
@@ -2269,6 +2281,16 @@ static int vgetorpeek(int advance)
             timedout = TRUE;
             continue;
           }
+        // TODO(bfredl): I think this should only ever happen if events_enabled is true
+        } else if(c == 3 && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len] == K_SPECIAL
+                        && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len+1] == KS_EXTRA
+                        && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len+2] == KE_EVENT) {
+
+            ins_char_typebuf(K_EVENT);
+            // directly after processing the event,
+            // vgetc() will called again and will reset
+            // this flag.
+            incomplete_mapping_state = true;
         } else {          /* allow mapping for just typed characters */
           while (typebuf.tb_buf[typebuf.tb_off
                                 + typebuf.tb_len] != NUL)
@@ -4246,4 +4268,9 @@ mapblock_T *get_maphash(int index, buf_T *buf)
   }
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
+}
+
+bool has_incomplete_mapping(void)
+{
+  return incomplete_mapping_state;
 }

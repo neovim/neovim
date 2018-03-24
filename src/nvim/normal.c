@@ -635,6 +635,21 @@ static void normal_redraw_mode_message(NormalState *s)
   emsg_on_display = false;
 }
 
+static int add_vgetc(void)
+{
+   while(true) {
+     int key = state_vgetc("nx");
+     if (key == K_IGNORE) {
+       continue;
+     } else if (key == K_EVENT) {
+        state_process_events("nx");
+        continue;
+     }
+     return key;
+   }
+}
+
+
 // TODO(tarruda): Split into a "normal pending" state that can handle K_EVENT
 static void normal_get_additional_char(NormalState *s)
 {
@@ -651,7 +666,7 @@ static void normal_get_additional_char(NormalState *s)
   if (s->ca.cmdchar == 'g') {
     // For 'g' get the next character now, so that we can check for
     // "gr", "g'" and "g`".
-    s->ca.nchar = plain_vgetc();
+    s->ca.nchar = add_vgetc();
     LANGMAP_ADJUST(s->ca.nchar, true);
     s->need_flushbuf |= add_to_showcmd(s->ca.nchar);
     if (s->ca.nchar == 'r' || s->ca.nchar == '\'' || s->ca.nchar == '`'
@@ -691,7 +706,7 @@ static void normal_get_additional_char(NormalState *s)
       langmap_active = true;
     }
 
-    *cp = plain_vgetc();
+    *cp = add_vgetc();
 
     if (langmap_active) {
       // Undo the decrement done above
@@ -765,7 +780,7 @@ static void normal_get_additional_char(NormalState *s)
     // because if it's put back with vungetc() it's too late to apply
     // mapping.
     no_mapping--;
-    while (enc_utf8 && lang && (s->c = vpeekc()) > 0
+    while (lang && (s->c = vpeekc()) > 0
            && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
       s->c = plain_vgetc();
       if (!utf_iscomposing(s->c)) {

@@ -9414,16 +9414,15 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (argvars[0].v_type == VAR_UNKNOWN) {
       // getchar(): blocking wait.
-      if (!(char_avail() || using_script() || input_available())) {
-        input_enable_events();
-        (void)os_inchar(NULL, 0, -1, 0);
-        input_disable_events();
-        if (!multiqueue_empty(main_loop.events)) {
-          multiqueue_process_events(main_loop.events);
-          continue;
-        }
+
+      // TODO(bfredl): we might not do event processing unconditionally
+      // here, add a flag argument?
+      n = state_vgetc("XX");
+      if (n == K_EVENT) {
+        state_process_events("XX");
+        continue;
       }
-      n = safe_vgetc();
+
     } else if (tv_get_number_chk(&argvars[0], &error) == 1) {
       // getchar(1): only check if char avail
       n = vpeekc_any();

@@ -344,7 +344,7 @@ describe('api', function()
       eq({mode='n', blocking=false}, nvim("get_mode"))
 
       nvim("input", "g")
-      eq({mode='n', blocking=true}, nvim("get_mode"))
+      eq({mode='nx', blocking=false}, nvim("get_mode"))
 
       nvim("input", "k")                -- complete the operator
       eq(1, nvim("eval", "line('.')"))  -- verify the completed operator
@@ -357,7 +357,7 @@ describe('api', function()
       end
       nvim("input", "g")
       for _ = 1,4 do
-        eq({mode='n', blocking=true}, nvim("get_mode"))
+        eq({mode='nx', blocking=false}, nvim("get_mode"))
       end
       nvim("input", "g")
       for _ = 1,7 do
@@ -389,7 +389,7 @@ describe('api', function()
     it("during getchar() returns blocking=false", function()
       nvim("input", ":let g:test_input = nr2char(getchar())<CR>")
       -- Events are enabled during getchar(), RPC calls are *not* blocked. #5384
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='XX', blocking=false}, nvim("get_mode"))
       eq(0, nvim("eval", "exists('g:test_input')"))
       nvim("input", "J")
       eq("J", nvim("eval", "g:test_input"))
