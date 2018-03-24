@@ -512,8 +512,12 @@ static int command_line_execute(VimState *state, int key)
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
-  if (s->c == K_EVENT) {
-    multiqueue_process_events(main_loop.events);
+  if (s->c == K_EVENT || s->c == K_COMMAND) {
+    if (s->c == K_EVENT) {
+      multiqueue_process_events(main_loop.events);
+    } else {
+      do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+    }
     redrawcmdline();
     return 1;
   }

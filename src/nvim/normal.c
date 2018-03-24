@@ -345,6 +345,7 @@ static const struct nv_cmd {
   { K_F8,      farsi_f8,       0,                      0 },
   { K_F9,      farsi_f9,       0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
+  { K_COMMAND, nv_colon,       0,                      0 },
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -1473,13 +1474,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           AppendToRedobuffLit(cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
-      } else if (cap->cmdchar == ':') {
-        /* do_cmdline() has stored the first typed line in
-         * "repeat_cmdline".  When several lines are typed repeating
-         * won't be possible. */
-        if (repeat_cmdline == NULL)
+      } else if (cap->cmdchar == ':' || cap->cmdchar == K_COMMAND) {
+        // do_cmdline() has stored the first typed line in
+        // "repeat_cmdline".  When several lines are typed repeating
+        // won't be possible.
+        if (repeat_cmdline == NULL) {
           ResetRedobuff();
-        else {
+        } else {
           AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
           xfree(repeat_cmdline);
@@ -4524,23 +4525,22 @@ static void nv_exmode(cmdarg_T *cap)
   }
 }
 
-/*
- * Handle a ":" command.
- */
+/// Handle a ":" command and <Cmd>.
 static void nv_colon(cmdarg_T *cap)
 {
   int old_p_im;
   bool cmd_result;
+  bool is_cmdkey = cap->cmdchar == K_COMMAND;
 
-  if (VIsual_active)
+  if (VIsual_active && !is_cmdkey) {
     nv_operator(cap);
-  else {
+  } else {
     if (cap->oap->op_type != OP_NOP) {
       // Using ":" as a movement is characterwise exclusive.
       cap->oap->motion_type = kMTCharWise;
       cap->oap->inclusive = false;
-    } else if (cap->count0) {
-      /* translate "count:" into ":.,.+(count - 1)" */
+    } else if (cap->count0 && !is_cmdkey) {
+      // translate "count:" into ":.,.+(count - 1)"
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
         stuffReadbuff(",.+");
@@ -4554,9 +4554,9 @@ static void nv_colon(cmdarg_T *cap)
 
     old_p_im = p_im;
 
-    /* get a command line and execute it */
-    cmd_result = do_cmdline(NULL, getexline, NULL,
-        cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+    // get a command line and execute it
+    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+                            cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
 
     /* If 'insertmode' changed, enter or exit Insert mode */
     if (p_im != old_p_im) {

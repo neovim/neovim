@@ -1154,6 +1154,12 @@ EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 EXTERN char_u e_autocmd_err[] INIT(=N_(
     "E5500: autocmd has thrown an exception: %s"));
+EXTERN char_u e_cmdmap_err[] INIT(=N_(
+    "E5520: <Cmd> mapping must end with <CR>"));
+EXTERN char_u e_cmdmap_repeated[] INIT(=N_(
+    "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char_u e_cmdmap_key[] INIT(=N_(
+    "E5522: <Cmd> mapping must not include %s key"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
