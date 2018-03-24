@@ -1699,7 +1699,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     return OK;
   }
 
-  int rv = path_get_absolute_path((char_u *)fname, (char_u *)buf, len, force);
+  int rv = path_to_absolute((char_u *)fname, (char_u *)buf, len, force);
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
@@ -2189,8 +2189,8 @@ int append_path(char *path, const char *to_append, size_t max_len)
 /// @param  force  also expand when "fname" is already absolute.
 ///
 /// @return FAIL for failure, OK for success.
-static int path_get_absolute_path(const char_u *fname, char_u *buf,
-                                  size_t len, int force)
+static int path_to_absolute(const char_u *fname, char_u *buf, size_t len,
+                            int force)
 {
   char_u *p;
   *buf = NUL;
