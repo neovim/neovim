@@ -7,13 +7,13 @@ local command = helpers.command
 local getreg = helpers.funcs.getreg
 local reset, clear = shada_helpers.reset, shada_helpers.clear
 
--- 'smalldeletethreshold' configures the number of characters 
---  whose yank or deletion causes push into the "1.."9 registers stack.
+-- 'smalldel' configures the number of characters whose deletion
+--  causes them to be pushed into the "1.."9 registers stack.
 --  Possible values:
---  * 0 - default behavior (deletions larger than 1 line are considered big)
+--  * 0 - default behavior (push lines only)
 --  * 1 - any deletion (including 'x') appears in the "1.."9 registers
---  * N - deletions of N or more characters are considered big
-describe("'smalldeletethreshold' option", function()
+--  * N - deletions of N or more characters are pushed
+describe("'smalldel' option", function()
   before_each(reset)
   after_each(clear)
 
@@ -33,8 +33,7 @@ describe("'smalldeletethreshold' option", function()
   end)
 
   it("target behavior", function()
-    -- Set the new option
-    command('set smalldeletethreshold=2')
+    command('set smalldel=2')
 
     -- Do the same
     feed('iaaa bbb ccc\nd<Esc>k2dwddx')
@@ -47,11 +46,11 @@ describe("'smalldeletethreshold' option", function()
   end)
 
   it("edges check", function()
-    command('set smalldeletethreshold=4')
+    command('set smalldel=4')
     feed('iaaa bb c<Esc>^dwdwdd')
 
     -- The second 'dw' yanks a 3-chars word, which is smaller 
-    -- then smalldeletethreshold and is considered a small deletion.
+    -- then smalldel and is considered a small deletion.
     -- While the 'dd' should still always be a big deletion.
     eq(getreg('1'), 'c\n')
     eq(getreg('2'), 'aaa ')

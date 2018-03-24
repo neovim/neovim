@@ -2205,10 +2205,10 @@ return {
       defaults={if_true={vi="auto"}}
     },
     {
-      full_name='smalldeletethreshold', abbreviation='sdt',
+      full_name='smalldel', abbreviation='sd',
       type='number', scope={'global'},
       vi_def=true,
-      varname='p_sdt',
+      varname='p_sd',
       defaults={if_true={vi=0}}
     },
     {
