@@ -487,9 +487,6 @@ int emsg(const char_u *s_)
   }
 
   called_emsg = true;
-  if (emsg_silent == 0) {
-    ex_exitval = 1;
-  }
 
   // If "emsg_severe" is TRUE: When an error exception is to be thrown,
   // prefer this message over previous messages for the same command.
@@ -539,6 +536,8 @@ int emsg(const char_u *s_)
       }
       return true;
     }
+
+    ex_exitval = 1;
 
     // Reset msg_silent, an error causes messages to be switched back on.
     msg_silent = 0;
