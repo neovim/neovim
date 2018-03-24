@@ -3649,8 +3649,8 @@ void ex_vimgrep(exarg_T *eap)
   cur_qf_start = qi->qf_lists[qi->qf_curlist].qf_start;
 
   seconds = (time_t)0;
-  for (fi = 0; fi < fcount && !got_int && tomatch > 0; ++fi) {
-    fname = path_shorten_fname_if_possible(fnames[fi]);
+  for (fi = 0; fi < fcount && !got_int && tomatch > 0; fi++) {
+    fname = path_try_shorten_fname(fnames[fi]);
     if (time(NULL) > seconds) {
       /* Display the file name every second or so, show the user we are
        * working on it. */

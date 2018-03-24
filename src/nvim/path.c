@@ -1908,7 +1908,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
 ///   - Pointer into `full_path` if shortened.
 ///   - `full_path` unchanged if no shorter name is possible.
 ///   - NULL if `full_path` is NULL.
-char_u *path_shorten_fname_if_possible(char_u *full_path)
+char_u *path_try_shorten_fname(char_u *full_path)
 {
   char_u *dirname = xmalloc(MAXPATHL);
   char_u *p = full_path;
