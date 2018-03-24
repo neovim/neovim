@@ -2206,7 +2206,7 @@ return {
     },
     {
       full_name='smalldeletethreshold', abbreviation='sdt',
-      type='number', scope={'global'}, -- TODO: buffer
+      type='number', scope={'buffer'},
       vi_def=true,
       varname='p_sdt',
       defaults={if_true={vi=0}}
