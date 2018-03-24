@@ -14,16 +14,23 @@ typedef struct {
   colnr_T stop;  // last column to highlight
 } BufhlItem;
 
-typedef kvec_t(BufhlItem) BufhlItemVec;
+typedef struct {
+  char *text;
+  int hl_id;
+} VirtTextChunk;
+
+typedef kvec_t(VirtTextChunk) VirtText;
 
 typedef struct {
   linenr_T line;
-  BufhlItemVec items;
+  kvec_t(BufhlItem) items;
+  int virt_text_src;
+  VirtText virt_text;
 } BufhlLine;
-#define BUFHLLINE_INIT(l) { l, KV_INITIAL_VALUE }
+#define BUFHLLINE_INIT(l) { l, KV_INITIAL_VALUE, 0,  KV_INITIAL_VALUE }
 
 typedef struct {
-  BufhlItemVec entries;
+  BufhlLine *line;
   int current;
   colnr_T valid_to;
 } BufhlLineInfo;

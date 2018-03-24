@@ -132,6 +132,15 @@ static schar_T  *current_ScreenLine;
 StlClickDefinition *tab_page_click_defs = NULL;
 long tab_page_click_defs_size = 0;
 
+// for line_putchar. Contains the state that needs to be remembered from
+// putting one character to the next.
+typedef struct {
+  const char_u *p;
+  int prev_c;  // previous Arabic character
+  int prev_c1;  // first composing char for prev_c
+} LineState;
+#define LINE_STATE(p) { p, 0, 0 }
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -1731,6 +1740,56 @@ static int compute_foldcolumn(win_T *wp, int col)
   return fdc;
 }
 
+/// Put a single char from an UTF-8 buffer into a line buffer.
+///
+/// Handles composing chars and arabic shaping state.
+static int line_putchar(LineState *s, schar_T *dest, int maxcells, bool rl)
+{
+  const char_u *p = s->p;
+  int cells = utf_ptr2cells(p);
+  int c_len = utfc_ptr2len(p);
+  int u8c, u8cc[MAX_MCO];
+  if (cells > maxcells) {
+    return -1;
+  }
+  u8c = utfc_ptr2char(p, u8cc);
+  if (*p < 0x80 && u8cc[0] == 0) {
+    schar_from_ascii(dest[0], *p);
+    s->prev_c = u8c;
+  } else {
+    if (p_arshape && !p_tbidi && arabic_char(u8c)) {
+      // Do Arabic shaping.
+      int pc, pc1, nc;
+      int pcc[MAX_MCO];
+      int firstbyte = *p;
+
+      // The idea of what is the previous and next
+      // character depends on 'rightleft'.
+      if (rl) {
+        pc = s->prev_c;
+        pc1 = s->prev_c1;
+        nc = utf_ptr2char(p + c_len);
+        s->prev_c1 = u8cc[0];
+      } else {
+        pc = utfc_ptr2char(p + c_len, pcc);
+        nc = s->prev_c;
+        pc1 = pcc[0];
+      }
+      s->prev_c = u8c;
+
+      u8c = arabic_shape(u8c, &firstbyte, &u8cc[0], pc, pc1, nc);
+    } else {
+      s->prev_c = u8c;
+    }
+    schar_from_cc(dest[0], u8c, u8cc);
+  }
+  if (cells > 1) {
+    dest[1][0] = 0;
+  }
+  s->p += c_len;
+  return cells;
+}
+
 /*
  * Display one folded line.
  */
@@ -1863,13 +1922,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    *    Right-left text is put in columns 0 - number-col, normal text is put
    *    in columns number-col - window-width.
    */
-  int cells;
-  int u8c, u8cc[MAX_MCO];
   int idx;
-  int c_len;
-  char_u  *p;
-  int prev_c = 0;  // previous Arabic character
-  int prev_c1 = 0;  // first composing char for prev_c
 
   if (wp->w_p_rl) {
     idx = off;
@@ -1877,50 +1930,20 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     idx = off + col;
   }
 
-  // Store multibyte characters in ScreenLines[] et al. correctly.
-  for (p = text; *p != NUL; ) {
-    cells = utf_ptr2cells(p);
-    c_len = utfc_ptr2len(p);
-    if (col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) {
+  LineState s = LINE_STATE(text);
+
+  while (*s.p != NUL) {
+    // TODO(bfredl): cargo-culted from the old Vim code:
+    // if(col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) { break; }
+    // This is obvious wrong. If Vim ever fixes this, solve for "cells" again
+    // in the correct condition.
+    int maxcells = wp->w_width - col - (wp->w_p_rl ? col : 0);
+    int cells = line_putchar(&s, &ScreenLines[idx], maxcells, wp->w_p_rl);
+    if (cells == -1) {
       break;
-    }
-    u8c = utfc_ptr2char(p, u8cc);
-    if (*p < 0x80 && u8cc[0] == 0) {
-      schar_from_ascii(ScreenLines[idx], *p);
-      prev_c = u8c;
-    } else {
-      if (p_arshape && !p_tbidi && arabic_char(u8c)) {
-        // Do Arabic shaping.
-        int pc, pc1, nc;
-        int pcc[MAX_MCO];
-        int firstbyte = *p;
-
-        // The idea of what is the previous and next
-        // character depends on 'rightleft'.
-        if (wp->w_p_rl) {
-          pc = prev_c;
-          pc1 = prev_c1;
-          nc = utf_ptr2char(p + c_len);
-          prev_c1 = u8cc[0];
-        } else {
-          pc = utfc_ptr2char(p + c_len, pcc);
-          nc = prev_c;
-          pc1 = pcc[0];
-        }
-        prev_c = u8c;
-
-        u8c = arabic_shape(u8c, &firstbyte, &u8cc[0], pc, pc1, nc);
-      } else {
-        prev_c = u8c;
-      }
-      schar_from_cc(ScreenLines[idx], u8c, u8cc);
-    }
-    if (cells > 1) {
-      ScreenLines[idx + 1][0] = 0;
     }
     col += cells;
     idx += cells;
-    p += c_len;
   }
 
   /* Fill the rest of the line with the fold filler */
@@ -2215,9 +2238,9 @@ win_line (
   int did_line_attr = 0;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
-  bool has_bufhl = false;               // this buffer has highlight matches
-  int bufhl_attr = 0;                   // attributes desired by bufhl
   BufhlLineInfo bufhl_info;             // bufhl data for this line
+  bool has_bufhl = false;               // this buffer has highlight matches
+  bool do_virttext = false;             // draw virtual text for this line
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2279,8 +2302,13 @@ win_line (
     }
 
     if (bufhl_start_line(wp->w_buffer, lnum, &bufhl_info)) {
-      has_bufhl = true;
-      extra_check = true;
+      if (kv_size(bufhl_info.line->items)) {
+        has_bufhl = true;
+        extra_check = true;
+      }
+      if (kv_size(bufhl_info.line->virt_text)) {
+        do_virttext = true;
+      }
     }
 
     // Check for columns to display for 'colorcolumn'.
@@ -3429,7 +3457,7 @@ win_line (
         }
 
         if (has_bufhl && v > 0) {
-          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
+          int bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
           if (bufhl_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, bufhl_attr);
@@ -3949,40 +3977,87 @@ win_line (
             && (int)wp->w_virtcol <
             wp->w_width * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
-           || draw_color_col)
-          && !wp->w_p_rl
-          ) {
+           || draw_color_col || do_virttext)
+          && !wp->w_p_rl) {
         int rightmost_vcol = 0;
         int i;
 
-        if (wp->w_p_cuc)
+        VirtText virt_text = do_virttext ? bufhl_info.line->virt_text
+                                        : (VirtText)KV_INITIAL_VALUE;
+        size_t virt_pos = 0;
+        LineState s = LINE_STATE((char_u *)"");
+        int virt_attr = 0;
+
+        // Make sure alignment is the same regardless
+        // if listchars=eol:X is used or not.
+        bool delay_virttext = lcs_eol <= 0;
+
+        if (wp->w_p_cuc) {
           rightmost_vcol = wp->w_virtcol;
-        if (draw_color_col)
-          /* determine rightmost colorcolumn to possibly draw */
-          for (i = 0; color_cols[i] >= 0; ++i)
-            if (rightmost_vcol < color_cols[i])
+        }
+
+        if (draw_color_col) {
+          // determine rightmost colorcolumn to possibly draw
+          for (i = 0; color_cols[i] >= 0; i++) {
+            if (rightmost_vcol < color_cols[i]) {
               rightmost_vcol = color_cols[i];
+            }
+          }
+        }
 
         int cuc_attr = win_hl_attr(wp, HLF_CUC);
         int mc_attr = win_hl_attr(wp, HLF_MC);
 
         while (col < wp->w_width) {
-          schar_from_ascii(ScreenLines[off], ' ');
-          col++;
+          int cells = -1;
+          if (do_virttext && !delay_virttext) {
+            if (*s.p == NUL) {
+              if (virt_pos < virt_text.size) {
+                s.p = (char_u *)kv_A(virt_text, virt_pos).text;
+                int hl_id = kv_A(virt_text, virt_pos).hl_id;
+                virt_attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+                virt_pos++;
+              } else {
+               do_virttext = false;
+              }
+            }
+            if (*s.p != NUL) {
+              cells = line_putchar(&s, &ScreenLines[off], wp->w_width - col,
+                                   false);
+            }
+          }
+          delay_virttext = false;
+
+          if (cells == -1) {
+            schar_from_ascii(ScreenLines[off], ' ');
+            cells = 1;
+          }
+          col += cells;
           if (draw_color_col) {
             draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
           }
 
+          int attr = 0;
           if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
-            ScreenAttrs[off++] = cuc_attr;
+            attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
-            ScreenAttrs[off++] = mc_attr;
-          } else {
-            ScreenAttrs[off++] = wp->w_hl_attr_normal;
+            attr = mc_attr;
           }
 
-          if (VCOL_HLC >= rightmost_vcol)
+          if (do_virttext) {
+            attr = hl_combine_attr(attr, virt_attr);
+          }
+
+          ScreenAttrs[off] = attr;
+          if (cells == 2) {
+            ScreenAttrs[off+1] = attr;
+          }
+          off += cells;
+
+          if (VCOL_HLC >= rightmost_vcol && *s.p == NUL
+              && virt_pos >= virt_text.size) {
             break;
+          }
 
           ++vcol;
         }
