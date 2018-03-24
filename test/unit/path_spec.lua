@@ -585,22 +585,22 @@ describe('path.c', function()
     end)
   end)
 
-  describe('path_is_absolute_path', function()
-    local function path_is_absolute_path(filename)
+  describe('path_is_absolute', function()
+    local function path_is_absolute(filename)
       filename = to_cstr(filename)
-      return cimp.path_is_absolute_path(filename)
+      return cimp.path_is_absolute(filename)
     end
 
     itp('returns true if filename starts with a slash', function()
-      eq(OK, path_is_absolute_path('/some/directory/'))
+      eq(OK, path_is_absolute('/some/directory/'))
     end)
 
     itp('returns true if filename starts with a tilde', function()
-      eq(OK, path_is_absolute_path('~/in/my/home~/directory'))
+      eq(OK, path_is_absolute('~/in/my/home~/directory'))
     end)
 
     itp('returns false if filename starts not with slash nor tilde', function()
-      eq(FAIL, path_is_absolute_path('not/in/my/home~/directory'))
+      eq(FAIL, path_is_absolute('not/in/my/home~/directory'))
     end)
   end)
 end)

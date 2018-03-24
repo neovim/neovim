@@ -13496,7 +13496,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           q[-1] = NUL;
           q = (char *)path_tail((char_u *)p);
         }
-        if (q > p && !path_is_absolute_path((const char_u *)buf)) {
+        if (q > p && !path_is_absolute((const char_u *)buf)) {
           // Symlink is relative to directory of argument. Replace the
           // symlink with the resolved name in the same directory.
           const size_t p_len = strlen(p);

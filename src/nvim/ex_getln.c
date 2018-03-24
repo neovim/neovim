@@ -4923,13 +4923,14 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   flags |= EW_FILE | EW_EXEC | EW_SHELLCMD;
 
   bool mustfree = false;  // Track memory allocation for *path.
-  /* For an absolute name we don't use $PATH. */
-  if (path_is_absolute_path(pat))
+  // For an absolute name we don't use $PATH.
+  if (path_is_absolute(pat)) {
     path = (char_u *)" ";
-  else if ((pat[0] == '.' && (vim_ispathsep(pat[1])
-                              || (pat[1] == '.' && vim_ispathsep(pat[2])))))
+  } else if (pat[0] == '.' && (vim_ispathsep(pat[1])
+                               || (pat[1] == '.'
+                                   && vim_ispathsep(pat[2])))) {
     path = (char_u *)".";
-  else {
+  } else {
     path = (char_u *)vim_getenv("PATH");
     if (path == NULL) {
       path = (char_u *)"";
