@@ -46,12 +46,12 @@ describe("'smalldel' option", function()
   end)
 
   it("edges check", function()
-    command('set smalldel=4')
+    command('set sdel=4')
     feed('iaaa bb c<Esc>^dwdwdd')
 
     -- The second 'dw' yanks a 3-chars word, which is smaller 
-    -- then smalldel and is considered a small deletion.
-    -- While the 'dd' should still always be a big deletion.
+    -- then 'smalldel' and is considered a small deletion.
+    -- While the 'dd' should still always be a normal deletion.
     eq(getreg('1'), 'c\n')
     eq(getreg('2'), 'aaa ')
     eq(getreg('3'), '')

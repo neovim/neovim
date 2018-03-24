@@ -2205,10 +2205,10 @@ return {
       defaults={if_true={vi="auto"}}
     },
     {
-      full_name='smalldel', abbreviation='sd',
+      full_name='smalldel', abbreviation='sdel',
       type='number', scope={'global'},
       vi_def=true,
-      varname='p_sd',
+      varname='p_sdel',
       defaults={if_true={vi=0}}
     },
     {

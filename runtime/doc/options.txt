@@ -5483,6 +5483,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   "no"	    	never
 	   "yes"    	always
 
+						*'smalldel'* *'sdel'*
+'smalldel' 'sdel'	number	(default 0)
+			global
+	The minimal number of deleted characters to be pushed into the numbered
+	registers "1.."9 ('quote_number').  By default, the "1.."9 registers are
+	filled only with the deletions or changes larger than one line.  If this
+	option is set to 1, any deletion (including "x") is pushed into the "1.."9
+	registers. If this option is set to N, deletions of N or more characters
+	are pushed into the "1.."9 registers.
 
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*
 'smartcase' 'scs'	boolean	(default off)
