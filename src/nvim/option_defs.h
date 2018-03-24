@@ -581,6 +581,7 @@ EXTERN int p_sm;                // 'showmatch'
 EXTERN int p_smd;               // 'showmode'
 EXTERN long p_ss;               // 'sidescroll'
 EXTERN long p_siso;             // 'sidescrolloff'
+EXTERN int p_sdt;               // 'smalldeletethreshold'
 EXTERN int p_scs;               // 'smartcase'
 EXTERN int p_sta;               // 'smarttab'
 EXTERN int p_sb;                // 'splitbelow'
@@ -747,7 +748,6 @@ enum {
   , BV_QE
   , BV_RO
   , BV_SCBK
-  , BV_SDT
   , BV_SI
   , BV_SMC
   , BV_SYN
