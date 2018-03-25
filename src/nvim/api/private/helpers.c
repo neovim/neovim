@@ -47,13 +47,15 @@ typedef struct {
 /// @param[out]  tstate  Location where try state should be saved.
 void try_enter(TryState *const tstate)
 {
+  // TODO(ZyX-I): Check whether try_enter()/try_leave() may use
+  //              enter_cleanup()/leave_cleanup(). Or
+  //              save_dbg_stuff()/restore_dbg_stuff().
   *tstate = (TryState) {
     .current_exception = current_exception,
     .msg_list = (const struct msglist *const *)msg_list,
     .private_msg_list = NULL,
     .trylevel = trylevel,
     .got_int = got_int,
-    .did_throw = did_throw,
     .need_rethrow = need_rethrow,
     .did_emsg = did_emsg,
   };
@@ -61,7 +63,6 @@ void try_enter(TryState *const tstate)
   current_exception = NULL;
   trylevel = 1;
   got_int = false;
-  did_throw = false;
   need_rethrow = false;
   did_emsg = false;
 }
@@ -82,7 +83,6 @@ bool try_leave(const TryState *const tstate, Error *const err)
   assert(trylevel == 0);
   assert(!need_rethrow);
   assert(!got_int);
-  assert(!did_throw);
   assert(!did_emsg);
   assert(msg_list == &tstate->private_msg_list);
   assert(*msg_list == NULL);
@@ -91,7 +91,6 @@ bool try_leave(const TryState *const tstate, Error *const err)
   current_exception = tstate->current_exception;
   trylevel = tstate->trylevel;
   got_int = tstate->got_int;
-  did_throw = tstate->did_throw;
   need_rethrow = tstate->need_rethrow;
   did_emsg = tstate->did_emsg;
   return ret;
@@ -127,7 +126,7 @@ bool try_end(Error *err)
   did_emsg = false;
 
   if (got_int) {
-    if (did_throw) {
+    if (current_exception) {
       // If we got an interrupt, discard the current exception
       discard_current_exception();
     }
@@ -146,7 +145,7 @@ bool try_end(Error *err)
     if (should_free) {
       xfree(msg);
     }
-  } else if (did_throw) {
+  } else if (current_exception) {
     api_set_error(err, kErrorTypeException, "%s", current_exception->value);
     discard_current_exception();
   }

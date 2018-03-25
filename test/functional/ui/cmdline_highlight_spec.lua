@@ -737,6 +737,22 @@ describe('Command-line coloring', function()
     feed('<CR><CR>')
     eq('', meths.get_var('out'))
   end)
+  it('does not crash when callback has caught not-a-editor-command exception',
+  function()
+    source([[
+      function CaughtExc(cmdline) abort
+        try
+          gibberish
+        catch
+          " Do nothing
+        endtry
+        return []
+      endfunction
+    ]])
+    set_color_cb('CaughtExc')
+    start_prompt('1')
+    eq(1, meths.eval('1'))
+  end)
 end)
 describe('Ex commands coloring support', function()
   it('works', function()

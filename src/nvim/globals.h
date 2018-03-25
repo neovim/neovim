@@ -317,15 +317,9 @@ EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
 /*
  * The exception currently being thrown.  Used to pass an exception to
  * a different cstack.  Also used for discarding an exception before it is
- * caught or made pending.  Only valid when did_throw is TRUE.
+ * caught or made pending.
  */
 EXTERN except_T *current_exception;
-
-/*
- * did_throw: An exception is being thrown.  Reset when the exception is caught
- * or as long as it is pending in a finally clause.
- */
-EXTERN int did_throw INIT(= FALSE);
 
 /*
  * need_rethrow: set to TRUE when a throw that cannot be handled in do_cmdline()
