@@ -120,33 +120,47 @@ describe('system()', function()
     end
   end)
 
-  describe('executes shell function if passed a string', function()
+  describe('executes shell function', function()
     local screen
 
     before_each(function()
-        clear()
-        screen = Screen.new()
-        screen:attach()
+      clear()
+      screen = Screen.new()
+      screen:attach()
     end)
 
     after_each(function()
-        screen:detach()
+      screen:detach()
     end)
 
     if iswin() then
+      local function test_more()
+        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+      end
+      local function test_shell_unquoting()
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
+        eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
+      end
+
       it('with shell=cmd.exe', function()
         command('set shell=cmd.exe')
         eq('""\n', eval([[system('echo ""')]]))
         eq('"a b"\n', eval([[system('echo "a b"')]]))
         eq('a \nb\n', eval([[system('echo a & echo b')]]))
         eq('a \n', eval([[system('echo a 2>&1')]]))
+        test_more()
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
+        test_shell_unquoting()
       end)
 
       it('with shell=cmd', function()
         command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
+        test_more()
+        test_shell_unquoting()
       end)
 
       it('with shell=$COMSPEC', function()
@@ -154,6 +168,8 @@ describe('system()', function()
         if comspecshell == 'cmd.exe' then
           command('set shell=$COMSPEC')
           eq('"a b"\n', eval([[system('echo "a b"')]]))
+          test_more()
+          test_shell_unquoting()
         else
           pending('$COMSPEC is not cmd.exe: ' .. comspecshell)
         end
@@ -187,7 +203,7 @@ describe('system()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
+    it('`yes` interrupted with CTRL-C', function()
       feed(':call system("' .. (iswin()
         and 'for /L %I in (1,0,2) do @echo y'
         or  'yes') .. '")<cr>')
@@ -239,6 +255,8 @@ describe('system()', function()
       end
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("echo -n echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -254,6 +272,8 @@ describe('system()', function()
       eq("input", eval('system("cat -", "input")'))
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("cat - &", "input")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -299,7 +319,7 @@ describe('system()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by SOH characters', function()
-      eq('part1\001part2\001part3\n', eval('system("cat '..fname..'")'))
+      eq('part1\001part2\001part3\n', eval([[system('"cat" "]]..fname..[["')]]))
     end)
   end)
 
@@ -366,7 +386,7 @@ describe('systemlist()', function()
     end
   end)
 
-  describe('exectues shell function', function()
+  describe('executes shell function', function()
     local screen
 
     before_each(function()
@@ -399,7 +419,7 @@ describe('systemlist()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
+    it('`yes` interrupted with CTRL-C', function()
       feed(':call systemlist("yes | xargs")<cr>')
       screen:expect([[
                                                              |
@@ -464,7 +484,7 @@ describe('systemlist()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
+      eq({'part1\npart2\npart3'}, eval([[systemlist('"cat" "]]..fname..[["')]]))
     end)
   end)
 

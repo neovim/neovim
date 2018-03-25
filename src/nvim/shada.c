@@ -76,8 +76,8 @@ KHASH_SET_INIT_STR(strset)
     (vim_rename((char_u *)a, (char_u *)b))
 #define mb_strnicmp(a, b, c) \
     (mb_strnicmp((char_u *)a, (char_u *)b, c))
-#define path_shorten_fname_if_possible(b) \
-    ((char *)path_shorten_fname_if_possible((char_u *)b))
+#define path_try_shorten_fname(b) \
+    ((char *)path_try_shorten_fname((char_u *)b))
 #define buflist_new(ffname, sfname, ...) \
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 #define os_isdir(f) (os_isdir((char_u *) f))
@@ -1397,7 +1397,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDItemBufferList: {
         for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
-          char *const sfname = path_shorten_fname_if_possible(
+          char *const sfname = path_try_shorten_fname(
               cur_entry.data.buffer_list.buffers[i].fname);
           buf_T *const buf = buflist_new(
               cur_entry.data.buffer_list.buffers[i].fname, sfname, 0,

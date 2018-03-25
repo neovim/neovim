@@ -8,6 +8,7 @@ local funcs = helpers.funcs
 local retry = helpers.retry
 local ok = helpers.ok
 local iswin = helpers.iswin
+local command = helpers.command
 
 describe(':terminal', function()
   local screen
@@ -143,6 +144,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('executes a given command through the shell', function()
+    command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
@@ -154,6 +156,7 @@ describe(':terminal (with fake shell)', function()
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
@@ -164,6 +167,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('allows quotes and slashes', function()
+    command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
@@ -217,6 +221,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
+    command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |

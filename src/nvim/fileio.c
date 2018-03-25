@@ -4318,7 +4318,7 @@ void shorten_fnames(int force)
         && !path_with_url((char *)buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || path_is_absolute_path(buf->b_sfname))) {
+            || path_is_absolute(buf->b_sfname))) {
       xfree(buf->b_sfname);
       buf->b_sfname = NULL;
       p = path_shorten_fname(buf->b_ffname, dirname);
@@ -6655,7 +6655,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   char_u      *save_autocmd_fname;
-  int save_autocmd_fname_full;
   int save_autocmd_bufnr;
   char_u      *save_autocmd_match;
   int save_autocmd_busy;
@@ -6728,7 +6727,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * Save the autocmd_* variables and info about the current buffer.
    */
   save_autocmd_fname = autocmd_fname;
-  save_autocmd_fname_full = autocmd_fname_full;
   save_autocmd_bufnr = autocmd_bufnr;
   save_autocmd_match = autocmd_match;
   save_autocmd_busy = autocmd_busy;
@@ -6755,9 +6753,9 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     autocmd_fname = fname_io;
   }
   if (autocmd_fname != NULL) {
-    autocmd_fname = vim_strsave(autocmd_fname);
+    // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
+    autocmd_fname = vim_strnsave(autocmd_fname, MAXPATHL);
   }
-  autocmd_fname_full = false;   // call FullName_save() later
 
   /*
    * Set the buffer number to be used for <abuf>.
@@ -6924,7 +6922,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   sourcing_lnum = save_sourcing_lnum;
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
-  autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_SID = save_current_SID;

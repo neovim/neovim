@@ -1330,7 +1330,7 @@ recover_names (
         names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
         num_names = 3;
       } else {
-        int len = STRLEN(dir_name);
+        int len = (int)STRLEN(dir_name);
         p = dir_name + len;
         if (after_pathsep((char *)dir_name, (char *)p)
             && len > 1
@@ -3020,20 +3020,17 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     }
     buf[ret] = NUL;
 
-    /*
-     * Check whether the symlink is relative or absolute.
-     * If it's relative, build a new path based on the directory
-     * portion of the filename (if any) and the path the symlink
-     * points to.
-     */
-    if (path_is_absolute_path(buf))
+    // Check whether the symlink is relative or absolute.
+    // If it's relative, build a new path based on the directory
+    // portion of the filename (if any) and the path the symlink
+    // points to.
+    if (path_is_absolute(buf)) {
       STRCPY(tmp, buf);
-    else {
-      char_u *tail;
-
-      tail = path_tail(tmp);
-      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL)
+    } else {
+      char_u *tail = path_tail(tmp);
+      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
         return FAIL;
+      }
       STRCPY(tail, buf);
     }
   }
@@ -3058,7 +3055,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #ifdef HAVE_READLINK
   char_u fname_buf[MAXPATHL];
 #endif
-  int len = STRLEN(dir_name);
+  int len = (int)STRLEN(dir_name);
 
   s = dir_name + len;
   if (after_pathsep((char *)dir_name, (char *)s)
