@@ -237,6 +237,57 @@ char_u *get_inserted(void)
   return get_buffcont(&redobuff, FALSE);
 }
 
+///
+/// Prepend string to the head of current block of the given buffer.
+///
+static void prepend_buf(buffheader_T *buf, char_u *s)
+{
+  size_t slen = STRLEN(s);
+
+  if (buf->bh_index >= slen) {
+    // Easy case
+    buf->bh_index -= slen;
+    memmove(buf->bh_first.b_next->b_str + buf->bh_index, s, slen);
+  } else {
+    // Need to allocate a new buffer block
+    size_t len;
+    if (slen < MINIMAL_SIZE) {
+      len = MINIMAL_SIZE;
+    } else {
+      len = (size_t)slen;
+    }
+    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    memmove(p->b_str, s, slen);
+    char_u *str_head = buf->bh_first.b_next->b_str + buf->bh_index;
+    memmove(p->b_str + slen, str_head, STRLEN(str_head) + 1);
+
+    p->b_next = buf->bh_first.b_next->b_next;
+    buf->bh_first.b_next = p;
+  }
+
+  return;
+}
+
+/// Prepend string to the current block of the buffer with highest priority.
+///
+/// K_SPECIAL and CSI should have been escaped already.
+/// Return FAIL if both readbuf1 and readbuf2 are empty, otherwise OK.
+///
+/// @param[in]  s  String to prepend.
+/// @param[in]  slen  String length or -1 for NUL-terminated string.
+int prepend_buf_pri(char_u *s)
+{
+  if (read_readbuf(&readbuf1, false) != NUL) {
+    prepend_buf(&readbuf1, s);
+  } else if (read_readbuf(&readbuf2, false) != NUL) {
+    prepend_buf(&readbuf2, s);
+  } else {
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Add string after the current block of the given buffer
 ///
 /// K_SPECIAL and CSI should have been escaped already.

@@ -142,8 +142,19 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   } else {
       keys_esc = keys.data;
   }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-      insert ? 0 : typebuf.tb_len, !typed, false);
+
+  if (insert) {
+    // First, try to prepend to readbuffers.
+    // If they are empty, then prepend to typebuf.
+    int res = prepend_buf_pri((char_u *)keys_esc);
+    if (res == FAIL) {
+      ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                  0, !typed, false);
+    }
+  } else {
+    ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                typebuf.tb_len, !typed, false);
+  }
 
   if (escape_csi) {
       xfree(keys_esc);
