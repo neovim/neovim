@@ -10,6 +10,7 @@ func Test_load_menu()
   catch
     call assert_report('error while loading menus: ' . v:exception)
   endtry
+  call assert_match('browse confirm w', execute(':menu File.Save'))
   source $VIMRUNTIME/delmenu.vim
 endfunc
 
@@ -21,6 +22,8 @@ func Test_translate_menu()
     throw 'Skipped: translated menu not found'
   endif
 
+  " First delete any English menus.
+  source $VIMRUNTIME/delmenu.vim
   set langmenu=de_de
   source $VIMRUNTIME/menu.vim
   call assert_match('browse confirm w', execute(':menu Datei.Speichern'))
