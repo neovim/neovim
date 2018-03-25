@@ -26,6 +26,13 @@ describe('highlight api',function()
     undercurl = true,
     underline = true,
   }
+  local expected_cursorline_before = {
+    underline = true,
+  }
+  local expected_cursorline_after = {
+    underline = true,
+    standout = true,
+  }
 
   before_each(function()
     clear()
@@ -99,5 +106,11 @@ describe('highlight api',function()
     eq(false, err)
     eq('Invalid highlight name: ',
        string.match(emsg, 'Invalid.*'))
+    -- Test the cursorline
+    eq(expected_cursorline_before, meths.get_hl_by_name('cursorline', 0));
+    command('hi CursorLine cterm=standout,underline term=standout,underline gui=standout,underline')
+    command('set cursorline')
+    eq(expected_cursorline_after, meths.get_hl_by_name('cursorline', 0));
+
   end)
 end)

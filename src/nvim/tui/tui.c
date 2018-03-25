@@ -450,7 +450,8 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
   bool bold = attr & HL_BOLD;
   bool italic = attr & HL_ITALIC;
-  bool reverse = attr & (HL_INVERSE | HL_STANDOUT);
+  bool reverse = attr & HL_INVERSE;
+  bool standout = attr & HL_STANDOUT;
   bool underline = attr & (HL_UNDERLINE), undercurl = attr & (HL_UNDERCURL);
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
@@ -477,6 +478,9 @@ static void update_attrs(UI *ui, HlAttrs attrs)
     }
     if (underline || undercurl) {
       unibi_out(ui, unibi_enter_underline_mode);
+    }
+    if (standout) {
+      unibi_out(ui, unibi_enter_standout_mode);
     }
     if (reverse) {
       unibi_out(ui, unibi_enter_reverse_mode);

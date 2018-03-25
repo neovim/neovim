@@ -540,6 +540,27 @@ describe("'listchars' highlight", function()
     ]])
   end)
 
+  it("'cursorline' and 'standout'", function()
+    screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+        [2] = {standout = true, bold = true, underline = true,
+        background = Screen.colors.Gray90, foreground = Screen.colors.Blue1},
+        [3] = {standout = true, underline = true,
+        background = Screen.colors.Gray90}
+    })
+    feed_command('hi CursorLine cterm=standout,underline gui=standout,underline')
+    feed_command('set cursorline')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed('i\t abcd <cr>\t abcd <cr><esc>k')
+    screen:expect([[
+    {1:>-------.}abcd{1:*¬}     |
+    {2:^>-------.}{3:abcd}{2:*¬}{3:     }|
+    {1:¬}                   |
+    {1:~                   }|
+                        |
+    ]])
+  end)
+
   it("'listchar' in visual mode", function()
     screen:set_default_attr_ids({
       [1] = {background=Screen.colors.Grey90},
