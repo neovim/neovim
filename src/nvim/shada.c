@@ -2796,7 +2796,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Update numbered marks: '0' should be replaced with the current position,
   // '9' should be removed and all other marks shifted.
-  if (!ignore_buf(curbuf, &removable_bufs)) {
+  if (!ignore_buf(curbuf, &removable_bufs) && curwin->w_cursor.lnum != 0) {
     replace_numbered_mark(wms, 0, (PossiblyFreedShadaEntry) {
       .can_free_entry = false,
       .data = {
