@@ -39,8 +39,6 @@ if ($compiler -eq 'MINGW') {
 
   # Add MinGW to the PATH
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
-  # Remove the Git sh.exe from the PATH
-  $env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
 
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
@@ -55,6 +53,9 @@ elseif ($compiler -eq 'MSVC') {
     $cmakeGenerator = 'Visual Studio 15 2017 Win64'
   }
 }
+
+# Remove Git Unix utilities from the PATH
+$env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
 
 # Setup python (use AppVeyor system python)
 C:\Python27\python.exe -m pip install neovim ; exitIfFailed
