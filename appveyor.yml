@@ -3,14 +3,13 @@ environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
 image: Visual Studio 2017
 configuration:
+- MSVC_64
+- MSVC_32
 - MINGW_64
 - MINGW_32
-- MSVC_64
-# - MSVC_32
 - MINGW_64-gcov
 matrix:
   allow_failures:
-    - configuration: MSVC_64
     - configuration: MINGW_64-gcov
 install: []
 before_build:
