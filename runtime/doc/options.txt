@@ -1470,6 +1470,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    select one from the menu. Only works in combination with
 		    "menu" or "menuone".
 
+	     fuzzy  Use fuzzy matching algorithm in popup menu.
+
 
 						*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	string (default: "")
