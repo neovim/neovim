@@ -102,6 +102,7 @@ redo:
       Array arr = ARRAY_DICT_INIT;
       for (i = 0; i < size; i++) {
         Array item = ARRAY_DICT_INIT;
+        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_type)));
         ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
         ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
         ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_extra)));
@@ -208,6 +209,12 @@ redo:
 
   // Compute the width of the widest match and the widest extra.
   for (i = 0; i < size; ++i) {
+    w = vim_strsize(array[i].pum_type);
+
+    if (type_width < w) {
+      type_width = w;
+    }
+
     w = vim_strsize(array[i].pum_text);
 
     if (max_width < w) {
@@ -351,24 +358,27 @@ void pum_redraw(void)
     }
 
     // Display each entry, use two spaces for a Tab.
-    // Do this 3 times: For the main text, kind and extra info
+    // Do this 4 times: For the completion type, main text, kind and extra info
     col = pum_col;
     totwidth = 0;
 
-    for (round = 1; round <= 3; ++round) {
+    for (round = 1; round <= 4; ++round) {
       width = 0;
       s = NULL;
 
       switch (round) {
         case 1:
+          p = pum_array[idx].pum_type;
+          break;
+        case 2:
           p = pum_array[idx].pum_text;
           break;
 
-        case 2:
+        case 3:
           p = pum_array[idx].pum_kind;
           break;
 
-        case 3:
+        case 4:
           p = pum_array[idx].pum_extra;
           break;
       }
