@@ -33,6 +33,7 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/os/keyboard.h"
 #include "nvim/os/process.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
@@ -1563,4 +1564,18 @@ Object nvim_get_proc(Integer pid, Error *err)
   }
 #endif
   return rvobj;
+}
+
+/// Get information about keyboard locks state
+///
+/// @return dictionary with up to three keys, depending on which checks are
+///         implemented: `CapsLock`, `NumLock` and `ScrollLock`. Corresponding
+///         values are booleans, true if relevant lock is active and false
+///         otherwise. Dictionary may contain more keys in the future.
+Dictionary nvim_get_keyboard_mods(Error *err)
+  FUNC_API_SINCE(4)
+{
+  Dictionary res = ARRAY_DICT_INIT;
+  os_mods_status(&res, err);
+  return res;
 }

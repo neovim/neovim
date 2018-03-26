@@ -1040,4 +1040,31 @@ describe('api', function()
     end)
   end)
 
+  describe('nvim_get_keyboard_mods', function()
+    it('returs a dictionary on or the specific error', function()
+      -- Returns the dictionary on success otherwise a specified error
+      -- if the resources were not present on the system.
+
+      local status, rv = pcall(meths.get_keyboard_mods)
+      if status then
+        for k, v in pairs(rv) do
+          eq(true, ({CapsLock=true, NumLock=true, ScrollLock=true})[k])
+          eq('boolean', type(v))
+        end
+      else
+        if os_name() == 'unix' then
+          local errMch = rv:match("Unable to load")
+          if errMch == nil then
+            eq("Unable to open the display",
+               rv:match("Unable to open the display"))
+          else
+            eq("Unable to load", errMch)
+          end
+        elseif os_name() == 'osx' then
+          eq("Unable to get service",
+             rv:match("Unable to get service"))
+        end
+      end
+    end)
+  end)
 end)
