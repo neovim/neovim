@@ -9,7 +9,7 @@
 #include "bonus.h"
 
 char *strcasechr(const char *s, char c) {
-	const char accept[3] = {c, toupper(c), 0};
+	const char accept[3] = {c, (char)toupper(c), 0};
 	return strpbrk(s, accept);
 }
 
@@ -56,7 +56,7 @@ void mat_print(score_t *mat, char name, const char *needle, const char *haystack
 
 static void precompute_bonus(const char *haystack, score_t *match_bonus) {
 	/* Which positions are beginning of words */
-	int m = strlen(haystack);
+	int m = (int)strlen(haystack);
 	char last_ch = '/';
 	for (int i = 0; i < m; i++) {
 		char ch = haystack[i];
@@ -69,8 +69,11 @@ score_t match_positions(const char *needle, const char *haystack, size_t *positi
 	if (!*needle)
 		return SCORE_MIN;
 
-	int n = strlen(needle);
-	int m = strlen(haystack);
+	int n = (int)strlen(needle);
+	if (n > MAX_NEEDLE_SIZE) {
+		n = MAX_NEEDLE_SIZE;
+	}
+	int m = (int)strlen(haystack);
 
 	if (n == m) {
 		/* Since this method can only be called with a haystack which
@@ -79,11 +82,11 @@ score_t match_positions(const char *needle, const char *haystack, size_t *positi
 		 */
 		if (positions)
 			for (int i = 0; i < n; i++)
-				positions[i] = i;
+				positions[i] = (size_t)i;
 		return SCORE_MAX;
 	}
 
-	if (m > 1024) {
+	if (m > MAX_HAYSTACK_SIZE) {
 		/*
 		 * Unreasonably large candidate: return no score
 		 * If it is a valid match it will still be returned, it will
@@ -92,8 +95,9 @@ score_t match_positions(const char *needle, const char *haystack, size_t *positi
 		return SCORE_MIN;
 	}
 
-	score_t match_bonus[m];
-	score_t D[n][m], M[n][m];
+	static score_t match_bonus[MAX_HAYSTACK_SIZE];
+	static score_t D[MAX_NEEDLE_SIZE][MAX_HAYSTACK_SIZE];
+	static score_t M[MAX_NEEDLE_SIZE][MAX_HAYSTACK_SIZE];
 
 	/*
 	 * D[][] Stores the best score for this position ending with a match.
@@ -155,7 +159,7 @@ score_t match_positions(const char *needle, const char *haystack, size_t *positi
 					match_required =
 					    i && j &&
 					    M[i][j] == D[i - 1][j - 1] + SCORE_MATCH_CONSECUTIVE;
-					positions[i] = j--;
+					positions[i] = (size_t)(j--);
 					break;
 				}
 			}

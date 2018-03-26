@@ -16,6 +16,9 @@ typedef double score_t;
 #define SCORE_MATCH_CAPITAL 0.7
 #define SCORE_MATCH_DOT 0.6
 
+#define MAX_HAYSTACK_SIZE 512
+#define MAX_NEEDLE_SIZE 80
+
 int has_match(const char *needle, const char *haystack);
 score_t match_positions(const char *needle, const char *haystack, size_t *positions);
 score_t match(const char *needle, const char *haystack);
