@@ -63,6 +63,7 @@ static bool pum_external = false;
 void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
 {
   int w;
+  int type_width;
   int def_width;
   int max_width;
   int kind_width;
@@ -117,6 +118,7 @@ redo:
   }
 
   def_width = PUM_DEF_WIDTH;
+  type_width = 0;
   max_width = 0;
   kind_width = 0;
   extra_width = 0;
