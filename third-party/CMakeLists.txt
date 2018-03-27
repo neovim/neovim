@@ -30,8 +30,16 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ${USE_BUNDLED})
+
+if(WIN32)
+option(USE_BUNDLED_WINPTY "Use the bundled winpty." ${USE_BUNDLED})
+option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." OFF)
+option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." OFF)
+option(USE_BUNDLED_GPERF "Use the bundled version of gperf." OFF)
+else()
 option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
+endif()
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
@@ -240,17 +248,17 @@ if(WIN32)
   if(NVIM_BUILD_STATIC)
     include(BuildWinpty)
   else()
-    GetBinaryDep(TARGET winpty
-      INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-        COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*
-          -DTO=${DEPS_INSTALL_DIR}/bin/
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-        COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/include/*
-          -DTO=${DEPS_INSTALL_DIR}/include/
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-        COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/lib/*
-          -DTO=${DEPS_INSTALL_DIR}/lib/
-          -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
+  GetBinaryDep(TARGET winpty
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*
+        -DTO=${DEPS_INSTALL_DIR}/bin/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/include/*
+        -DTO=${DEPS_INSTALL_DIR}/include/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
+      COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/lib/*
+        -DTO=${DEPS_INSTALL_DIR}/lib/
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
   endif()
 endif()
 
