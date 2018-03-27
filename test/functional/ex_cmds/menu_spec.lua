@@ -363,14 +363,24 @@ describe('menu_get', function()
     local m = funcs.menu_get("Test","i")
     local expected = {
       {
-        mappings = {
-          i = {
-            sid = 1,
-            noremap = 1,
-            enabled = 1,
-            rhs = "insert",
-            silent = 0
-          }
+        shortcut = "T",
+        submenus = {
+          {
+            mappings = {
+              i = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "insert",
+                silent = 0
+              },
+            },
+            priority = 500,
+            name = "Test",
+            hidden = 0
+          },
+          {
+          },
         },
         priority = 500,
         name = "Test",

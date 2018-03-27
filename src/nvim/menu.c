@@ -754,22 +754,27 @@ bool menu_get(char_u *const path_name, int modes, list_T *list)
 /// @param menu top menu to start looking from
 /// @param name path towards the menu
 /// @return menu if \p name is null, found menu or NULL
-vimmenu_T *
-find_menu(vimmenu_T *menu, char_u * name, int modes)
+static vimmenu_T* find_menu(vimmenu_T *menu, char_u * name, int modes)
 {
   char_u *p;
 
   while (*name) {
+    // find the end of one dot-separated name and put a NUL at the dot
     p = menu_name_skip(name);
     while (menu != NULL) {
       if (menu_name_equal(name, menu)) {
-        /* Found menu */
+        // Found menu
         if (*p != NUL && menu->children == NULL) {
-          EMSG(_(e_notsubmenu));
-          return NULL;
-        } else if ((menu->modes & modes) == 0x0) {
-          EMSG(_(e_othermode));
-          return NULL;
+          if (*p != NUL) {
+            EMSG(_(e_notsubmenu));
+            return NULL;
+          } else if ((menu->modes & modes) == 0x0) {
+            EMSG(_(e_othermode));
+            return NULL;
+          }
+        }
+        if (*p == NUL) {  // found a full match
+          return menu;
         }
         break;
       }
@@ -780,6 +785,7 @@ find_menu(vimmenu_T *menu, char_u * name, int modes)
       EMSG2(_(e_nomenu), name);
       return NULL;
     }
+    // Found a match, search the sub-menu.
     name = p;
     menu = menu->children;
   }
@@ -1235,7 +1241,7 @@ static char_u *popup_mode_name(char_u *name, int idx)
 ///
 /// @return a pointer to allocated memory.
 static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
