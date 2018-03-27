@@ -8,6 +8,7 @@ configuration:
 - MSVC_64
 # - MSVC_32
 - MINGW_64-gcov
+- MINGW_64-static
 matrix:
   allow_failures:
     - configuration: MSVC_64
