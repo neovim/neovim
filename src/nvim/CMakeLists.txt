@@ -88,6 +88,7 @@ foreach(subdir
         tui
         event
         eval
+        fzy
         lua
         viml
         viml/parser

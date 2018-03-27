@@ -13,6 +13,25 @@
 #define CPT_USER_DATA   4   // "user data"
 #define CPT_COUNT       5   // Number of entries
 
+/*
+ * Structure used to store one match for insert completion.
+ */
+typedef struct compl_S compl_T;
+struct compl_S {
+  compl_T     *cp_next;
+  compl_T     *cp_prev;
+  char_u      *cp_str;          /* matched text */
+  char cp_icase;                /* TRUE or FALSE: ignore case */
+  char_u      *(cp_text[CPT_COUNT]);    /* text for the menu */
+  char_u      *cp_fname;        /* file containing the match, allocated when
+                                 * cp_flags has FREE_FNAME */
+  int cp_flags;                 /* ORIGINAL_TEXT, CONT_S_IPOS or FREE_FNAME */
+  int cp_number;                /* sequence number */
+};
+
+#define ORIGINAL_TEXT   (1)   /* the original text when the expansion begun */
+#define FREE_FNAME      (2)
+
 typedef int (*IndentGetter)(void);
 
 /* Values for in_cinkeys() */

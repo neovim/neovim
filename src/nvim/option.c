@@ -300,8 +300,9 @@ static char *(p_bs_values[]) =        { "indent", "eol", "start", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
-static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
-                                        "noinsert", "noselect", NULL };
+static char *(p_cot_values[]) =       { "menu", "menuone", "longest",
+                                        "preview", "noinsert", "noselect",
+                                        "fuzzy", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", NULL };
 

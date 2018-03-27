@@ -28,6 +28,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
+#include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -110,25 +111,6 @@ static char e_complwin[] = N_("E839: Completion function changed window");
 static char e_compldel[] = N_("E840: Completion function deleted text");
 
 /*
- * Structure used to store one match for insert completion.
- */
-typedef struct compl_S compl_T;
-struct compl_S {
-  compl_T     *cp_next;
-  compl_T     *cp_prev;
-  char_u      *cp_str;          /* matched text */
-  char cp_icase;                /* TRUE or FALSE: ignore case */
-  char_u      *(cp_text[CPT_COUNT]);    /* text for the menu */
-  char_u      *cp_fname;        /* file containing the match, allocated when
-                                 * cp_flags has FREE_FNAME */
-  int cp_flags;                 /* ORIGINAL_TEXT, CONT_S_IPOS or FREE_FNAME */
-  int cp_number;                /* sequence number */
-};
-
-#define ORIGINAL_TEXT   (1)   /* the original text when the expansion begun */
-#define FREE_FNAME      (2)
-
-/*
  * All the current matches are stored in a list.
  * "compl_first_match" points to the start of the list.
  * "compl_curr_match" points to the currently selected entry.
@@ -154,6 +136,7 @@ static int compl_no_insert = FALSE;             /* FALSE: select & insert
                                                    TRUE: noinsert */
 static int compl_no_select = FALSE;             /* FALSE: select & insert
                                                    TRUE: noselect */
+static int compl_fuzzy = FALSE;                 /* enable fuzzy matching */
 
 static int compl_used_match;            /* Selected one of the matches.  When
                                            FALSE the match was edited or using
@@ -2261,6 +2244,9 @@ static int ins_compl_add(char_u *const str, int len,
 static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
+  if (compl_fuzzy) {
+    return has_custom_match(str, match->cp_str, match->cp_icase);
+  }
   if (match->cp_icase) {
     return STRNICMP(match->cp_str, str, len) == 0;
   }
@@ -2381,11 +2367,15 @@ void completeopt_was_set(void)
 {
   compl_no_insert = false;
   compl_no_select = false;
+  compl_fuzzy = false;
   if (strstr((char *)p_cot, "noselect") != NULL) {
     compl_no_select = true;
   }
   if (strstr((char *)p_cot, "noinsert") != NULL) {
     compl_no_insert = true;
+  }
+  if (strstr((char *)p_cot, "fuzzy") != NULL) {
+    compl_fuzzy = true;
   }
 }
 
@@ -2538,7 +2528,6 @@ void ins_compl_show_pum(void)
     array_changed = true;
     // Need to build the popup menu list.
     compl_match_arraysize = 0;
-    compl = compl_first_match;
     /*
      * If it's user complete function and refresh_always,
      * not use "compl_leader" as prefix filter.
@@ -2547,8 +2536,13 @@ void ins_compl_show_pum(void)
       xfree(compl_leader);
       compl_leader = NULL;
     }
-    if (compl_leader != NULL)
+    if (compl_leader != NULL) {
       lead_len = (int)STRLEN(compl_leader);
+      if (compl_fuzzy) {
+        sort_custom_matches(compl_leader, &compl_first_match);
+      }
+    }
+    compl = compl_first_match;
     do {
       if ((compl->cp_flags & ORIGINAL_TEXT) == 0
           && (compl_leader == NULL
