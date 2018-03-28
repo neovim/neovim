@@ -1811,24 +1811,28 @@ int ml_line_alloced(void)
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
 }
 
-/*
- * Append a line after lnum (may be 0 to insert a line in front of the file).
- * "line" does not need to be allocated, but can't be another line in a
- * buffer, unlocking may make it invalid.
- *
- *   newfile: TRUE when starting to edit a new file, meaning that pe_old_lnum
- *		will be set for recovery
- * Check: The caller of this function should probably also call
- * appended_lines().
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-ml_append (
-    linenr_T lnum,                  /* append after this line (can be 0) */
-    char_u *line,              /* text of the new line */
-    colnr_T len,                    /* length of new line, including NUL, or 0 */
-    int newfile                    /* flag, see above */
+/// Append a line after lnum
+///
+/// @param lnum line after which to append (0 to insert in front of the file).
+/// "line" does not need to be allocated, but can't be another line in a
+/// buffer, unlocking may make it invalid.
+/// @param line text of the new line
+/// @param len length of new line, including NUL, or 0
+/// @param newfile TRUE when starting to edit a new file, meaning that
+/// pe_old_lnum will be set for recovery
+///
+/// @param flags flag, see above
+///
+/// Check: The caller of this function should probably also call
+/// appended_lines().
+///
+/// @return FAIL for failure, OK otherwise
+int
+ml_append(
+    linenr_T lnum,
+    char_u *line,
+    colnr_T len,
+    int newfile
 )
 {
   /* When starting up, we might still need to create the memfile */

@@ -12,6 +12,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer.h"
 #include "nvim/digraph.h"
 #include "nvim/charset.h"
 #include "nvim/ex_cmds2.h"
@@ -19,10 +20,12 @@
 #include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
 #include "nvim/mbyte.h"
+#include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/garray.h"
 #include "nvim/normal.h"
+#include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/os/input.h"
@@ -1637,15 +1640,23 @@ void putdigraph(char_u *str)
   }
 }
 
+static int lnum = 0;
+
 void listdigraphs(void)
 {
   digr_T *dp;
 
-  msg_putchar('\n');
+  // msg_putchar('\n');
+  buf_open_scratch(0, "digraphs");
+  buf_clear();
+
+  // dbuf = curbuf;
+  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+  lnum = 0;
 
   dp = digraphdefault;
 
-  for (int i = 0; dp->char1 != NUL && !got_int; ++i) {
+  for (int i = 0; dp->char1 != NUL && !got_int; i++) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1663,7 +1674,7 @@ void listdigraphs(void)
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
-  for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
+  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
     printdigraph(dp);
     os_breakcheck();
     dp++;
@@ -1678,23 +1689,25 @@ static void printdigraph(digr_T *dp)
   char_u buf[30];
   char_u *p;
 
-  int list_width;
+  // int list_width;
 
-  list_width = 13;
+  // list_width = 13;
 
   if (dp->result != 0) {
-    if (msg_col > Columns - list_width) {
-      msg_putchar('\n');
-    }
+    // if (msg_col > Columns - list_width) {
+    //   // msg_putchar('\n');
+    //   ml_append(lnum, (char_u *)'\n', (colnr_T)1, false);
+    // }
 
 
     // Make msg_col a multiple of list_width by using spaces.
-    if (msg_col % list_width != 0) {
-      int spaces = (msg_col / list_width + 1) * list_width - msg_col;
-      while (spaces--) {
-        msg_putchar(' ');
-      }
-    }
+    // if (msg_col % list_width != 0) {
+    //   int spaces = (msg_col / list_width + 1) * list_width - msg_col;
+    //   while (spaces--) {
+    //     // msg_putchar(' ');
+    //     ml_append(0, (char_u *)' ', (colnr_T)1, false);
+    //   }
+    // }
 
     p = &buf[0];
     *p++ = dp->char1;
@@ -1710,9 +1723,12 @@ static void printdigraph(digr_T *dp)
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
+
     assert(p >= buf);
-    vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
-    msg_outtrans(buf);
+    int len = vim_snprintf(
+        (char *)p, sizeof(buf) - (size_t)(p-buf), " %3d", dp->result);
+    int res = ml_append(lnum++, (char_u *)buf, (colnr_T)31, false);
+    assert(res == OK);
   }
 }
 
