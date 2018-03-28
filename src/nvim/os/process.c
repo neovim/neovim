@@ -12,7 +12,7 @@
 # include <tlhelp32.h>  // for CreateToolhelp32Snapshot
 #endif
 
-#if defined(__FreeBSD__)  // XXX: OpenBSD, NetBSD ?
+#if defined(__FreeBSD__)  // XXX: OpenBSD ?
 # include <string.h>
 # include <sys/types.h>
 # include <sys/user.h>
@@ -20,8 +20,6 @@
 
 #if defined(__NetBSD__)
 # include <sys/param.h>
-# include <kvm.h>
-# include <limits.h>
 #endif
 
 #if defined(__APPLE__) || defined(BSD)
@@ -161,8 +159,11 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 #  define KP_PID(o) o.p_pid
 #  define KP_PPID(o) o.p_ppid
 # endif
-# ifndef __NetBSD__
+# ifdef __NetBSD__
+  static int name[] = { CTL_KERN, KERN_PROC2, KERN_PROC_ALL, 0, (int)(sizeof(struct kinfo_proc2)), 0 };
+# else
   static int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+# endif
 
   // Get total process count.
   size_t len = 0;
@@ -172,31 +173,21 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   }
 
   // Get ALL processes.
+# ifdef __NetBSD__
+  struct kinfo_proc2 *p_list = xmalloc(len);
+# else
   struct kinfo_proc *p_list = xmalloc(len);
+# endif
   rv = sysctl(name, ARRAY_SIZE(name) - 1, p_list, &len, NULL, 0);
   if (rv) {
     xfree(p_list);
     return 2;
   }
-  typedef size_t p_count_size;
-# else
-  typedef int p_count_size;
-  p_count_size p_count = 0;
-  char *errbuf = malloc(_POSIX2_LINE_MAX * sizeof(char));
-  kvm_t *kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
-  struct kinfo_proc2 *p_list = xmalloc(sizeof(struct kinfo_proc2));
-  p_list = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &p_count);
-  if (!kd) {
-    free(errbuf);
-    return 2;
-  }
-# endif
+
   // Collect processes whose parent matches `ppid`.
   bool exists = false;
-# ifndef __NetBSD__
-  p_count_size p_count = len / sizeof(*p_list);
-# endif
-  for (p_count_size i = 0; i < p_count; i++) {
+  size_t p_count = len / sizeof(*p_list);
+  for (size_t i = 0; i < p_count; i++) {
     exists = exists || KP_PID(p_list[i]) == ppid;
     if (KP_PPID(p_list[i]) == ppid) {
       temp = xrealloc(temp, (*proc_count + 1) * sizeof(*temp));
