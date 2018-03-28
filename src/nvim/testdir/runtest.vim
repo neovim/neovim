@@ -61,7 +61,7 @@ set nomore
 lang mess C
 
 " Always use forward slashes.
-set shellslash
+" set shellslash
 
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1

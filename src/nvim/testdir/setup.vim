@@ -17,3 +17,11 @@ let &packpath = &rtp
 
 " Make sure $HOME does not get read or written.
 let $HOME = '/does/not/exist'
+
+" Use default shell on Windows to avoid segfault, caused by TUI
+if has('win32')
+  let $SHELL = ''
+  let $TERM = ''
+  let &shell = empty($COMSPEC) ? exepath('cmd.exe') : $COMSPEC
+  set shellcmdflag=/s/c shellxquote=\" shellredir=>%s\ 2>&1
+endif
