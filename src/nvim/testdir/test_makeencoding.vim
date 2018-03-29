@@ -13,12 +13,19 @@ endif
 
 let s:script = 'test_makeencoding.py'
 
-let s:message_tbl = {
+if has('iconv')
+  let s:message_tbl = {
       \ 'utf-8': 'ÀÈÌÒÙ こんにちは 你好',
       \ 'latin1': 'ÀÈÌÒÙ',
       \ 'cp932': 'こんにちは',
       \ 'cp936': '你好',
       \}
+else
+  let s:message_tbl = {
+      \ 'utf-8': 'ÀÈÌÒÙ こんにちは 你好',
+      \ 'latin1': 'ÀÈÌÒÙ',
+      \}
+endif
 
 
 " Tests for :cgetfile and :lgetfile.
