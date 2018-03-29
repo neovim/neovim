@@ -20,6 +20,10 @@ function exitIfFailed() {
 }
 
 if ($compiler -eq 'MINGW') {
+  if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $compileOption -ne 'gcov') {
+    exit 0
+  }
+
   if ($bits -eq 32) {
     $arch = 'i686'
   }
