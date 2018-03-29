@@ -160,7 +160,9 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 #  define KP_PPID(o) o.p_ppid
 # endif
 # ifdef __NetBSD__
-  static int name[] = { CTL_KERN, KERN_PROC2, KERN_PROC_ALL, 0, (int)(sizeof(struct kinfo_proc2)), 0 };
+  static int name[] = {
+    CTL_KERN, KERN_PROC2, KERN_PROC_ALL, 0, (int)(sizeof(struct kinfo_proc2)), 0
+  };
 # else
   static int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
 # endif
