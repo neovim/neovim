@@ -12,10 +12,14 @@
 # include <tlhelp32.h>  // for CreateToolhelp32Snapshot
 #endif
 
-#if defined(__FreeBSD__)  // XXX: OpenBSD, NetBSD ?
+#if defined(__FreeBSD__)  // XXX: OpenBSD ?
 # include <string.h>
 # include <sys/types.h>
 # include <sys/user.h>
+#endif
+
+#if defined(__NetBSD__)
+# include <sys/param.h>
 #endif
 
 #if defined(__APPLE__) || defined(BSD)
@@ -155,7 +159,11 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 #  define KP_PID(o) o.p_pid
 #  define KP_PPID(o) o.p_ppid
 # endif
+# ifdef __NetBSD__
+  static int name[] = { CTL_KERN, KERN_PROC2, KERN_PROC_ALL, 0, (int)(sizeof(struct kinfo_proc2)), 0 };
+# else
   static int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+# endif
 
   // Get total process count.
   size_t len = 0;
@@ -165,7 +173,11 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
   }
 
   // Get ALL processes.
+# ifdef __NetBSD__
+  struct kinfo_proc2 *p_list = xmalloc(len);
+# else
   struct kinfo_proc *p_list = xmalloc(len);
+# endif
   rv = sysctl(name, ARRAY_SIZE(name) - 1, p_list, &len, NULL, 0);
   if (rv) {
     xfree(p_list);
