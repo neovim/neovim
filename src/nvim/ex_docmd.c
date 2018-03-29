@@ -7719,6 +7719,11 @@ static void ex_redraw(exarg_T *eap)
   need_wait_return = FALSE;
 
   ui_flush();
+
+  while (!((got_int || (did_emsg && force_abort) || current_exception))){
+    printf("OPPPP");
+  }
+  // while(true){ line_breakcheck(); }
 }
 
 /*
