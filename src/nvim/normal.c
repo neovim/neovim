@@ -7461,8 +7461,6 @@ static void nv_esc(cmdarg_T *cap)
                && !p_im);
 
   if (cap->arg) {               /* true for CTRL-C */
-    need_wait_return = TRUE; // does not make any difference
-    ILOG("DOES NOT LOG WHEN CTRL-C IS HIT IN CANCELLING QUICKFIX COMMAND, LOGS OTHERWISE");
     if (restart_edit == 0
         && cmdwin_type == 0
         && !VIsual_active
