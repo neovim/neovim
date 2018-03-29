@@ -8,13 +8,12 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/main.h"
+#include "nvim/aucmd.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
-#define FOCUSGAINED_KEY "<FocusGained>"
-#define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -48,9 +47,11 @@ void term_input_init(TermInput *input, Loop *loop)
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
 #ifdef WIN32
-  uv_tty_init(loop, &input->tty_in, 0, 1);
+  uv_tty_init(&loop->uv, &input->tty_in, 0, 1);
   uv_tty_set_mode(&input->tty_in, UV_TTY_MODE_RAW);
-  rstream_init_stream(&input->read_stream, &input->tty_in, 0xfff);
+  rstream_init_stream(&input->read_stream,
+                      (uv_stream_t *)&input->tty_in,
+                      0xfff);
 #else
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
 #endif
@@ -200,18 +201,25 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Right");
   }
 
-  if (ev == TERMKEY_MOUSE_PRESS) {
-    if (button == 4) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
-    } else if (button == 5) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelDown");
-    } else {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
-    }
-  } else if (ev == TERMKEY_MOUSE_DRAG) {
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
-  } else if (ev == TERMKEY_MOUSE_RELEASE) {
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+  switch (ev) {
+    case TERMKEY_MOUSE_PRESS:
+      if (button == 4) {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
+      } else if (button == 5) {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len,
+                                "ScrollWheelDown");
+      } else {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
+      }
+      break;
+    case TERMKEY_MOUSE_DRAG:
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
+      break;
+    case TERMKEY_MOUSE_RELEASE:
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+      break;
+    case TERMKEY_MOUSE_UNKNOWN:
+      assert(false);
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
@@ -280,9 +288,9 @@ static void timer_cb(TimeWatcher *watcher, void *data)
 
 /// Handle focus events.
 ///
-/// If the upcoming sequence of bytes in the input stream matches either the
-/// escape code for focus gained `<ESC>[I` or focus lost `<ESC>[O` then consume
-/// that sequence and push the appropriate event into the input queue
+/// If the upcoming sequence of bytes in the input stream matches the termcode
+/// for "focus gained" or "focus lost", consume that sequence and schedule an
+/// event on the main loop.
 ///
 /// @param input the input stream
 /// @return true iff handle_focus_event consumed some input
@@ -294,11 +302,7 @@ static bool handle_focus_event(TermInput *input)
     // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     rbuffer_consumed(input->read_stream.buffer, 3);
-    if (focus_gained) {
-      enqueue_input(input, FOCUSGAINED_KEY, sizeof(FOCUSGAINED_KEY) - 1);
-    } else {
-      enqueue_input(input, FOCUSLOST_KEY, sizeof(FOCUSLOST_KEY) - 1);
-    }
+    aucmd_schedule_focusgained(focus_gained);
     return true;
   }
   return false;

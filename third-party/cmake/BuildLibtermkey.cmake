@@ -1,5 +1,3 @@
-find_package(PkgConfig REQUIRED)
-
 if(WIN32)
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
@@ -24,6 +22,8 @@ ExternalProject_Add(libtermkey
   BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
   INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 else()
+find_package(PkgConfig REQUIRED)
+
 ExternalProject_Add(libtermkey
   PREFIX ${DEPS_BUILD_DIR}
   URL ${LIBTERMKEY_URL}
@@ -43,11 +43,9 @@ ExternalProject_Add(libtermkey
                               PREFIX=${DEPS_INSTALL_DIR}
                               PKG_CONFIG_PATH=${DEPS_LIB_DIR}/pkgconfig
                               CFLAGS=-fPIC
+                              ${DEFAULT_MAKE_CFLAGS}
                               install)
 endif()
 
 list(APPEND THIRD_PARTY_DEPS libtermkey)
-if(NOT WIN32)
-  # There is no unibilium build recipe for Windows yet
-  add_dependencies(libtermkey unibilium)
-endif()
+add_dependencies(libtermkey unibilium)

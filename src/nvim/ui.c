@@ -8,11 +8,13 @@
 #include <limits.h>
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/ui.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
 #include "nvim/ascii.h"
@@ -47,17 +49,38 @@
 #define MAX_UI_COUNT 16
 
 static UI *uis[MAX_UI_COUNT];
-static bool ui_ext[UI_WIDGETS] = { 0 };
+static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
   int top, bot, left, right;
 } sr;
-static int current_attr_code = 0;
+static int current_attr_code = -1;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
 static int old_mode_idx = -1;
+
+#if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
+# define UI_LOG(funname, ...)
+#else
+static size_t uilog_seen = 0;
+static char uilog_last_event[1024] = { 0 };
+# define UI_LOG(funname, ...) \
+  do { \
+    if (strequal(uilog_last_event, STR(funname))) { \
+      uilog_seen++; \
+    } else { \
+      if (uilog_seen > 0) { \
+        do_log(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, \
+               "%s (+%zu times...)", uilog_last_event, uilog_seen); \
+      } \
+      do_log(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, STR(funname)); \
+      uilog_seen = 0; \
+      xstrlcpy(uilog_last_event, STR(funname), sizeof(uilog_last_event)); \
+    } \
+  } while (0)
+#endif
 
 // UI_CALL invokes a function on all registered UI instances. The functions can
 // have 0-5 arguments (configurable by SELECT_NTH).
@@ -67,6 +90,7 @@ static int old_mode_idx = -1;
 # define UI_CALL(funname, ...) \
     do { \
       flush_cursor_update(); \
+      UI_LOG(funname, 0); \
       for (size_t i = 0; i < ui_count; i++) { \
         UI *ui = uis[i]; \
         UI_CALL_MORE(funname, __VA_ARGS__); \
@@ -76,15 +100,18 @@ static int old_mode_idx = -1;
 # define UI_CALL(...) \
     do { \
       flush_cursor_update(); \
+      UI_LOG(__VA_ARGS__, 0); \
       for (size_t i = 0; i < ui_count; i++) { \
         UI *ui = uis[i]; \
         UI_CALL_HELPER(CNT(__VA_ARGS__), __VA_ARGS__); \
       } \
     } while (0)
 #endif
-#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, MORE, ZERO, ignore)
-#define SELECT_NTH(a1, a2, a3, a4, a5, a6, ...) a6
+#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, \
+                            MORE, MORE, ZERO, ignore)
+#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, ...) a7
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
+// Resolves to UI_CALL_MORE or UI_CALL_ZERO.
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
 #define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
 #define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
@@ -119,6 +146,9 @@ void ui_builtin_stop(void)
 
 bool ui_rgb_attached(void)
 {
+  if (!headless_mode && p_tgc) {
+    return true;
+  }
   for (size_t i = 0; i < ui_count; i++) {
     if (uis[i]->rgb) {
       return true;
@@ -141,6 +171,67 @@ void ui_event(char *name, Array args)
   }
 }
 
+
+/// Converts an HlAttrs into Dictionary
+///
+/// @param[in] aep data to convert
+/// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
+Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
+{
+  assert(aep);
+  Dictionary hl = ARRAY_DICT_INIT;
+  int mask  = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
+
+  if (mask & HL_BOLD) {
+    PUT(hl, "bold", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_STANDOUT) {
+    PUT(hl, "standout", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_UNDERLINE) {
+    PUT(hl, "underline", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_UNDERCURL) {
+    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_ITALIC) {
+    PUT(hl, "italic", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_INVERSE) {
+    PUT(hl, "reverse", BOOLEAN_OBJ(true));
+  }
+
+
+  if (use_rgb) {
+    if (aep->rgb_fg_color != -1) {
+      PUT(hl, "foreground", INTEGER_OBJ(aep->rgb_fg_color));
+    }
+
+    if (aep->rgb_bg_color != -1) {
+      PUT(hl, "background", INTEGER_OBJ(aep->rgb_bg_color));
+    }
+
+    if (aep->rgb_sp_color != -1) {
+      PUT(hl, "special", INTEGER_OBJ(aep->rgb_sp_color));
+    }
+  } else {
+    if (cterm_normal_fg_color != aep->cterm_fg_color) {
+      PUT(hl, "foreground", INTEGER_OBJ(aep->cterm_fg_color - 1));
+    }
+
+    if (cterm_normal_bg_color != aep->cterm_bg_color) {
+      PUT(hl, "background", INTEGER_OBJ(aep->cterm_bg_color - 1));
+    }
+  }
+
+  return hl;
+}
+
 void ui_refresh(void)
 {
   if (!ui_active()) {
@@ -153,8 +244,8 @@ void ui_refresh(void)
   }
 
   int width = INT_MAX, height = INT_MAX;
-  bool ext_widgets[UI_WIDGETS];
-  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+  bool ext_widgets[kUIExtCount];
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ext_widgets[i] = true;
   }
 
@@ -162,19 +253,27 @@ void ui_refresh(void)
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
       ext_widgets[i] &= ui->ui_ext[i];
     }
   }
 
   row = col = 0;
+
+  int save_p_lz = p_lz;
+  p_lz = false;  // convince redrawing() to return true ...
   screen_resize(width, height);
-  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
-    ui_set_external(i, ext_widgets[i]);
+  p_lz = save_p_lz;
+
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+    ui_ext[i] = ext_widgets[i];
+    ui_call_option_set(cstr_as_string((char *)ui_ext_names[i]),
+                       BOOLEAN_OBJ(ext_widgets[i]));
   }
   ui_mode_info_set();
   old_mode_idx = -1;
   ui_cursor_shape();
+  current_attr_code = -1;
 }
 
 static void ui_refresh_event(void **argv)
@@ -192,6 +291,11 @@ void ui_resize(int new_width, int new_height)
   width = new_width;
   height = new_height;
 
+  // TODO(bfredl): update default colors when they changed, NOT on resize.
+  ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
+                             cterm_normal_fg_color, cterm_normal_bg_color);
+
+  // Deprecated:
   UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
   UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
   UI_CALL(update_sp, (ui->rgb ? normal_sp : -1));
@@ -224,6 +328,7 @@ void ui_attach_impl(UI *ui)
   }
 
   uis[ui_count++] = ui;
+  ui_refresh_options();
   ui_refresh();
 }
 
@@ -284,26 +389,28 @@ void ui_reset_scroll_region(void)
   ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
-void ui_start_highlight(int attr_code)
+void ui_set_highlight(int attr_code)
 {
+  if (current_attr_code == attr_code) {
+    return;
+  }
   current_attr_code = attr_code;
 
-  if (!ui_count) {
-    return;
+  HlAttrs attrs = HLATTRS_INIT;
+
+  if (attr_code != 0) {
+    HlAttrs *aep = syn_cterm_attr2entry(attr_code);
+    if (aep) {
+      attrs = *aep;
+    }
   }
 
-  set_highlight_args(current_attr_code);
+  UI_CALL(highlight_set, attrs);
 }
 
-void ui_stop_highlight(void)
+void ui_clear_highlight(void)
 {
-  current_attr_code = HL_NORMAL;
-
-  if (!ui_count) {
-    return;
-  }
-
-  set_highlight_args(current_attr_code);
+  ui_set_highlight(0);
 }
 
 void ui_puts(uint8_t *str)
@@ -331,6 +438,12 @@ void ui_puts(uint8_t *str)
       ui_linefeed();
     }
     p += clen;
+
+    if (p_wd) {  // 'writedelay': flush & delay each time.
+      ui_flush();
+      uint64_t wd = (uint64_t)labs(p_wd);
+      os_delay(wd, false);
+    }
   }
 }
 
@@ -370,63 +483,10 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
+  cmdline_ui_flush();
   ui_call_flush();
 }
 
-static void set_highlight_args(int attr_code)
-{
-  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1, -1 };
-  HlAttrs cterm_attrs = rgb_attrs;
-
-  if (attr_code == HL_NORMAL) {
-    goto end;
-  }
-
-  int rgb_mask = 0;
-  int cterm_mask = 0;
-  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
-
-  if (!aep) {
-    goto end;
-  }
-
-  rgb_mask = aep->rgb_ae_attr;
-  cterm_mask = aep->cterm_ae_attr;
-
-  rgb_attrs.bold = rgb_mask & HL_BOLD;
-  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
-  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
-  rgb_attrs.italic = rgb_mask & HL_ITALIC;
-  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
-  cterm_attrs.bold = cterm_mask & HL_BOLD;
-  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
-  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
-  cterm_attrs.italic = cterm_mask & HL_ITALIC;
-  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
-
-  if (aep->rgb_fg_color != normal_fg) {
-    rgb_attrs.foreground = aep->rgb_fg_color;
-  }
-
-  if (aep->rgb_bg_color != normal_bg) {
-    rgb_attrs.background = aep->rgb_bg_color;
-  }
-
-  if (aep->rgb_sp_color != normal_sp) {
-    rgb_attrs.special = aep->rgb_sp_color;
-  }
-
-  if (cterm_normal_fg_color != aep->cterm_fg_color) {
-    cterm_attrs.foreground = aep->cterm_fg_color - 1;
-  }
-
-  if (cterm_normal_bg_color != aep->cterm_bg_color) {
-    cterm_attrs.background = aep->cterm_bg_color - 1;
-  }
-
-end:
-  UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
-}
 
 void ui_linefeed(void)
 {
@@ -466,15 +526,23 @@ void ui_cursor_shape(void)
 }
 
 /// Returns true if `widget` is externalized.
-bool ui_is_external(UIWidget widget)
+bool ui_is_external(UIExtension widget)
 {
   return ui_ext[widget];
 }
 
-/// Sets `widget` as "external".
-/// Such widgets are not drawn by Nvim; external UIs are expected to handle
-/// higher-level UI events and present the data.
-void ui_set_external(UIWidget widget, bool external)
+Array ui_array(void)
 {
-  ui_ext[widget] = external;
+  Array all_uis = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < ui_count; i++) {
+    Dictionary dic = ARRAY_DICT_INIT;
+    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
+    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
+    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
+    for (UIExtension j = 0; j < kUIExtCount; j++) {
+      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
+    }
+    ADD(all_uis, DICTIONARY_OBJ(dic));
+  }
+  return all_uis;
 }

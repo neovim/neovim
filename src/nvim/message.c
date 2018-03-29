@@ -487,9 +487,6 @@ int emsg(const char_u *s_)
   }
 
   called_emsg = true;
-  if (emsg_silent == 0) {
-    ex_exitval = 1;
-  }
 
   // If "emsg_severe" is TRUE: When an error exception is to be thrown,
   // prefer this message over previous messages for the same command.
@@ -540,6 +537,8 @@ int emsg(const char_u *s_)
       return true;
     }
 
+    ex_exitval = 1;
+
     // Reset msg_silent, an error causes messages to be switched back on.
     msg_silent = 0;
     cmd_silent = FALSE;
@@ -583,17 +582,58 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  bool ret;
+
+  va_list ap;
+  va_start(ap, fmt);
+  ret = emsgfv(fmt, ap);
+  va_end(ap);
+
+  return ret;
+}
+
+/// Print an error message with unknown number of arguments
+static bool emsgfv(const char *fmt, va_list ap)
+{
   static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
-  va_list ap;
-  va_start(ap, fmt);
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
-  va_end(ap);
 
   return emsg((const char_u *)errbuf);
+}
+
+/// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsg(const char *s)
+{
+    msg((char_u *)s);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Same as emsgf(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsgf(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    (void)emsgfv(s, ap);
+    va_end(ap);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Give an "Internal error" message.
+void internal_error(char *where)
+{
+    IEMSG2(_(e_intern2), where);
 }
 
 static void msg_emsgf_event(void **argv)
@@ -1196,7 +1236,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
       len -= mb_l - 1;
       str += mb_l;
     } else {
-      s = transchar_byte(*str);
+      s = transchar_byte((uint8_t)(*str));
       if (s[1] != NUL) {
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
@@ -1237,31 +1277,30 @@ void msg_make(char_u *arg)
   }
 }
 
-/*
- * Output the string 'str' upto a NUL character.
- * Return the number of characters it takes on the screen.
- *
- * If K_SPECIAL is encountered, then it is taken in conjunction with the
- * following character and shown as <F1>, <S-Up> etc.  Any other character
- * which is not printable shown in <> form.
- * If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
- * If a character is displayed in one of these special ways, is also
- * highlighted (its highlight name is '8' in the p_hl variable).
- * Otherwise characters are not highlighted.
- * This function is used to show mappings, where we want to see how to type
- * the character/string -- webb
- */
-int
-msg_outtrans_special (
-    char_u *strstart,
-    int from               /* TRUE for lhs of a mapping */
+/// Output the string 'str' upto a NUL character.
+/// Return the number of characters it takes on the screen.
+///
+/// If K_SPECIAL is encountered, then it is taken in conjunction with the
+/// following character and shown as <F1>, <S-Up> etc.  Any other character
+/// which is not printable shown in <> form.
+/// If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
+/// If a character is displayed in one of these special ways, is also
+/// highlighted (its highlight name is '8' in the p_hl variable).
+/// Otherwise characters are not highlighted.
+/// This function is used to show mappings, where we want to see how to type
+/// the character/string -- webb
+int msg_outtrans_special(
+    const char_u *strstart,
+    int from               ///< true for LHS of a mapping
 )
 {
-  char_u      *str = strstart;
+  if (strstart == NULL) {
+    return 0;  // Do nothing.
+  }
+  const char_u *str = strstart;
   int retval = 0;
-  int attr;
+  int attr = hl_attr(HLF_8);
 
-  attr = hl_attr(HLF_8);
   while (*str != NUL) {
     const char *string;
     // Leading and trailing spaces need to be displayed in <> form.
@@ -1269,7 +1308,7 @@ msg_outtrans_special (
       string = "<Space>";
       str++;
     } else {
-      string = (const char *)str2special((char_u **)&str, from);
+      string = str2special((const char **)&str, from, false);
     }
     const int len = vim_strsize((char_u *)string);
     // Highlight special keys
@@ -1281,108 +1320,125 @@ msg_outtrans_special (
   return retval;
 }
 
-/*
- * Return the lhs or rhs of a mapping, with the key codes turned into printable
- * strings, in an allocated string.
- */
-char_u *
-str2special_save (
-    char_u *str,
-    int is_lhs          /* TRUE for lhs, FALSE for rhs */
-)
+/// Convert string, replacing key codes with printables
+///
+/// Used for lhs or rhs of mappings.
+///
+/// @param[in]  str  String to convert.
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used fo
+///                             lhs, but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+///
+/// @return [allocated] Converted string.
+char *str2special_save(const char *const str, const bool replace_spaces,
+                       const bool replace_lt)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
-  char_u      *p = str;
-
   ga_init(&ga, 1, 40);
-  while (*p != NUL)
-    ga_concat(&ga, str2special(&p, is_lhs));
+
+  const char *p = str;
+  while (*p != NUL) {
+    ga_concat(&ga, (const char_u *)str2special(&p, replace_spaces, replace_lt));
+  }
   ga_append(&ga, NUL);
-  return (char_u *)ga.ga_data;
+  return (char *)ga.ga_data;
 }
 
-/*
- * Return the printable string for the key codes at "*sp".
- * Used for translating the lhs or rhs of a mapping to printable chars.
- * Advances "sp" to the next code.
- */
-char_u *
-str2special (
-    char_u **sp,
-    int from               /* TRUE for lhs of mapping */
-)
+/// Convert character, replacing key with printable representation.
+///
+/// @param[in,out]  sp  String to convert. Is advanced to the next key code.
+/// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
+///                             lhs, but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+///
+/// @return Converted key code, in a static buffer. Buffer is always one and the
+///         same, so save converted string somewhere before running str2special
+///         for the second time.
+const char *str2special(const char **const sp, const bool replace_spaces,
+                        const bool replace_lt)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  int c;
-  static char_u buf[7];
-  char_u              *str = *sp;
-  int modifiers = 0;
-  int special = FALSE;
+  static char buf[7];
 
-  if (has_mbyte) {
-    char_u  *p;
-
-    /* Try to un-escape a multi-byte character.  Return the un-escaped
-     * string if it is a multi-byte character. */
-    p = mb_unescape(sp);
-    if (p != NULL)
-      return p;
+  // Try to un-escape a multi-byte character.  Return the un-escaped
+  // string if it is a multi-byte character.
+  const char *const p = mb_unescape(sp);
+  if (p != NULL) {
+    return p;
   }
 
-  c = *str;
+  const char *str = *sp;
+  int c = (uint8_t)(*str);
+  int modifiers = 0;
+  bool special = false;
   if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-    if (str[1] == KS_MODIFIER) {
-      modifiers = str[2];
+    if ((uint8_t)str[1] == KS_MODIFIER) {
+      modifiers = (uint8_t)str[2];
       str += 3;
-      c = *str;
+      c = (uint8_t)(*str);
     }
     if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-      c = TO_SPECIAL(str[1], str[2]);
+      c = TO_SPECIAL((uint8_t)str[1], (uint8_t)str[2]);
       str += 2;
-      if (c == KS_ZERO)         /* display <Nul> as ^@ or <Nul> */
+      if (c == KS_ZERO) {  // display <Nul> as ^@ or <Nul>
         c = NUL;
+      }
     }
-    if (IS_SPECIAL(c) || modifiers)     /* special key */
-      special = TRUE;
+    if (IS_SPECIAL(c) || modifiers) {  // Special key.
+      special = true;
+    }
   }
 
-  if (has_mbyte && !IS_SPECIAL(c)) {
-    int len = (*mb_ptr2len)(str);
+  if (!IS_SPECIAL(c)) {
+    const int len = utf_ptr2len((const char_u *)str);
 
-    /* For multi-byte characters check for an illegal byte. */
-    if (has_mbyte && MB_BYTE2LEN(*str) > len) {
-      transchar_nonprint(buf, c);
+    // Check for an illegal byte.
+    if (MB_BYTE2LEN((uint8_t)(*str)) > len) {
+      transchar_nonprint((char_u *)buf, c);
       *sp = str + 1;
       return buf;
     }
-    /* Since 'special' is TRUE the multi-byte character 'c' will be
-     * processed by get_special_key_name() */
-    c = (*mb_ptr2char)(str);
+    // Since 'special' is TRUE the multi-byte character 'c' will be
+    // processed by get_special_key_name().
+    c = utf_ptr2char((const char_u *)str);
     *sp = str + len;
-  } else
+  } else {
     *sp = str + 1;
+  }
 
-  /* Make unprintable characters in <> form, also <M-Space> and <Tab>.
-   * Use <Space> only for lhs of a mapping. */
-  if (special || char2cells(c) > 1 || (from && c == ' '))
-    return get_special_key_name(c, modifiers);
+  // Make unprintable characters in <> form, also <M-Space> and <Tab>.
+  if (special
+      || char2cells(c) > 1
+      || (replace_spaces && c == ' ')
+      || (replace_lt && c == '<')) {
+    return (const char *)get_special_key_name(c, modifiers);
+  }
   buf[0] = c;
   buf[1] = NUL;
   return buf;
 }
 
-/*
- * Translate a key sequence into special key names.
- */
-void str2specialbuf(char_u *sp, char_u *buf, int len)
+/// Convert string, replacing key codes with printables
+///
+/// @param[in]  str  String to convert.
+/// @param[out]  buf  Buffer to save results to.
+/// @param[in]  len  Buffer length.
+void str2specialbuf(const char *sp, char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *s;
-
-  *buf = NUL;
   while (*sp) {
-    s = str2special(&sp, FALSE);
-    if ((int)(STRLEN(s) + STRLEN(buf)) < len)
-      STRCAT(buf, s);
+    const char *s = str2special(&sp, false, false);
+    const size_t s_len = strlen(s);
+    if (len <= s_len) {
+      break;
+    }
+    memcpy(buf, s, s_len);
+    buf += s_len;
+    len -= s_len;
   }
+  *buf = NUL;
 }
 
 /*
@@ -1611,6 +1667,27 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   }
 }
 
+/// Print a formatted message
+///
+/// Message printed is limited by #IOSIZE. Must not be used from inside
+/// msg_puts_attr().
+///
+/// @param[in]  attr  Highlight attributes.
+/// @param[in]  fmt  Format string.
+void msg_printf_attr(const int attr, const char *const fmt, ...)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  static char msgbuf[IOSIZE];
+
+  va_list ap;
+  va_start(ap, fmt);
+  const size_t len = vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap, NULL);
+  va_end(ap);
+
+  msg_scroll = true;
+  msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
+}
+
 /*
  * The display part of msg_puts_attr_len().
  * May be called recursively to display scroll-back text.
@@ -1747,17 +1824,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       } while (msg_col & 7);
     } else if (*s == BELL) {  // beep (from ":sh")
       vim_beep(BO_SH);
-    } else {
-      if (has_mbyte) {
-        cw = (*mb_ptr2cells)(s);
-        if (enc_utf8 && maxlen >= 0)
-          /* avoid including composing chars after the end */
-          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
-        else
-          l = (*mb_ptr2len)(s);
+    } else if (*s >= 0x20) {  // printable char
+      cw = mb_ptr2cells(s);
+      if (maxlen >= 0) {
+        // avoid including composing chars after the end
+        l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
       } else {
-        cw = 1;
-        l = 1;
+        l = utfc_ptr2len(s);
       }
       // When drawing from right to left or when a double-wide character
       // doesn't fit, draw a single character here.  Otherwise collect
@@ -2705,9 +2778,11 @@ do_dialog (
   int c;
   int i;
 
-  /* Don't output anything in silent mode ("ex -s") */
-  if (silent_mode)
-    return dfltbutton;       /* return default option */
+  if (silent_mode      // No dialogs in silent mode ("ex -s")
+      || !ui_active()  // Without a UI Nvim waits for input forever.
+      ) {
+    return dfltbutton;  // return default option
+  }
 
 
   oldState = State;

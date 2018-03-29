@@ -1,39 +1,181 @@
 *term.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+                            NVIM REFERENCE MANUAL
 
 
-Terminal information
+Terminal UI						*tui*
 
-Vim uses information about the terminal you are using to fill the screen and
-recognize what keys you hit.  If this information is not correct, the screen
-may be messed up or keys may not be recognized.  The actions which have to be
-performed on the screen are accomplished by outputting a string of
-characters.
+Nvim (except in |--headless| mode) uses information about the terminal you are
+using to present a built-in UI.  If that information is not correct, the
+screen may be messed up or keys may not be recognized.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Startup						*startup-terminal*
 
-When Vim is started a default terminal type is assumed.  for MS-DOS this is
-the pc terminal, for Unix an ansi terminal.
+Nvim (except in |--headless| mode) guesses a terminal type when it starts.
+|$TERM| is the primary hint that determines the terminal type.
 
-				*termcap* *terminfo* *E557* *E558* *E559*
-On Unix the terminfo database or termcap file is used.  This is referred to as
-"termcap" in all the documentation.
+					*terminfo* *E557* *E558* *E559*
+The terminfo database is used if available.
+
+The Unibilium library (used by Nvim to read terminfo) allows you to override
+the system terminfo with one in $HOME/.terminfo/ directory, in part or in
+whole.
+
+Building your own terminfo is usually as simple as running this as
+a non-superuser:
+>
+  curl -LO http://invisible-island.net/datafiles/current/terminfo.src.gz
+  gunzip terminfo.src.gz
+  tic terminfo.src
+<
+								*$TERM*
+The $TERM environment variable must match the terminal you are using!
+Otherwise Nvim cannot know what sequences your terminal expects, and weird
+or sub-optimal behavior will result (scrolling quirks, wrong colors, etc.).
+
+$TERM is also important because it is mirrored by SSH to the remote session,
+unlike most other environment variables.
+
+  For this terminal           Set $TERM to                  |builtin-terms|
+  -------------------------------------------------------------------------
+  iTerm (original)            iterm, iTerm.app                    N
+  iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
+  Konsole                     konsole-256color                    N
+  anything libvte-based       vte, vte-256color                   Y
+   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
+  tmux                        tmux, tmux-256color                 Y
+  screen                      screen, screen-256color             Y
+  PuTTY                       putty, putty-256color               Y
+  Terminal.app                nsterm                              N
+  Linux virtual terminal      linux, linux-256color               Y
+
+					*builtin-terms* *builtin_terms*
+If a |terminfo| database is not available, or no entry for the terminal type is
+found in that database, Nvim will use a compiled-in mini-database of terminfo
+entries for "xterm", "putty", "screen", "tmux", "rxvt", "iterm", "interix",
+"linux", "st", "vte", "gnome", and "ansi".
+
+The lookup matches the initial portion of the terminal type, so (for example)
+"putty-256color" and "putty" will both be mapped to the built-in "putty"
+entry.  The built-in terminfo entries describe the terminal as 256-colour
+capable if possible.  See |tui-colors|.
+
+If no built-in terminfo record matches the terminal type, the built-in "ansi"
+terminfo record is used as a final fallback.
+
+The built-in mini-database is not combined with an external terminfo database,
+nor can it be used in preference to one.  You can thus entirely override any
+omissions or out-of-date information in the built-in terminfo database by
+supplying an external one with entries for the terminal type.
 
 Settings depending on terminal			*term-dependent-settings*
 
-If you want to set options or mappings, depending on the terminal name, you
-can do this best in your vimrc.  Example: >
+If you want to set terminal-dependent options or mappings, you can do this in
+your init.vim.  Example: >
 
-   if &term == "xterm"
-     ... xterm maps and settings ...
-   elseif &term =~ "vt10."
-     ... vt100, vt102 maps and settings ...
-   endif
+    if $TERM =~ '^\(rxvt\|screen\|interix\|putty\)\(-.*\)\?$'
+        set notermguicolors
+    elseif $TERM =~ '^\(tmux\|iterm\|vte\|gnome\)\(-.*\)\?$'
+        set termguicolors
+    elseif $TERM =~ '^\(xterm\)\(-.*\)\?$'
+        if $XTERM_VERSION != ''
+            set termguicolors
+        elseif $KONSOLE_PROFILE_NAME != ''
+            set termguicolors
+        elseif $VTE_VERSION != ''
+            set termguicolors
+        else
+            set notermguicolors
+        endif
+    elseif $TERM =~ ...
+        ... and so forth ...
+    endif
+<
+					*scroll-region* *xterm-scroll-region*
+Where possible, Nvim will use the terminal's ability to set a scroll region in
+order to redraw faster when a window is scrolled.  If the terminal's terminfo
+description describes an ability to set top and bottom scroll margins, that is
+used.
+
+This will not speed up scrolling in a window that is not the full width of the
+terminal.  Xterm has an extra ability, not described by terminfo, to set left
+and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
+it will make use of this ability to speed up scrolling that is not the full
+width of the terminal.
+
+This ability is only present in genuine Xterm, not in the many terminal
+emulators that incorrectly describe themselves as xterm.  Nvim's detection of
+genuine Xterm will not work over an SSH connection, because the environment
+variable, set by genuine Xterm, that it looks for is not automatically
+replicated over an SSH login session.
+
+							*tui-colors*
+Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
+including "linux" (whose virtual terminals have had 256-colour support since
+4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
+contain the string "256".
+
+Nvim similarly assumes that any terminal emulator that sets $COLORTERM to any
+value, is capable of at least 16-colour operation.
+
+						*true-color* *xterm-true-color*
+Nvim emits true (24-bit) colours in the terminal, if 'termguicolors' is set.
+
+It uses the "setrgbf" and "setrgbb" |terminfo| extensions (proposed by Rüdiger
+Sonderfeld in 2013). If your terminfo definition is missing them, then Nvim
+will decide whether to add them to your terminfo definition, using the ISO
+8613-6:1994/ITU T.416:1993 control sequences for setting RGB colours (but
+modified to use semicolons instead of colons unless the terminal is known to
+follow the standard).
+
+Another convention, pioneered in 2016 by tmux, is the "Tc" terminfo extension.
+If terminfo has this flag, Nvim will add constructed "setrgbf" and "setrgbb"
+capabilities as if they had been in the terminfo definition.
+
+If terminfo does not (yet) have this flag, Nvim will fall back to $TERM and
+other environment variables.  It will add constructed "setrgbf" and "setrgbb"
+capabilities in the case of the the "rxvt", "linux", "st", "tmux", and "iterm"
+terminal types, or when Konsole, genuine Xterm, a libvte terminal emulator
+version 0.36 or later, or a terminal emulator that sets the COLORTERM
+environment variable to "truecolor" is detected.
+
+							*xterm-resize*
+Nvim can resize the terminal display on some terminals that implement an
+extension pioneered by dtterm.  |terminfo| does not have a flag for this
+extension.  So Nvim simply assumes that (all) "dtterm", "xterm", "teraterm",
+"rxvt" terminal types, and Konsole, are capable of this.
+
+							*tui-cursor-shape* 
+Nvim will adjust the shape of the cursor from a block to a line when in insert
+mode (or as specified by the 'guicursor' option), on terminals that support
+it.  It uses the same |terminfo| extensions that were pioneered by tmux for
+this: "Ss" and "Se".
+
+If your terminfo definition is missing them, then Nvim will decide whether to
+add them to your terminfo definition, by looking at $TERM and other
+environment variables.  For the "rxvt", "putty", "linux", "screen",
+"teraterm", and "iterm" terminal types, or when Konsole, a libvte-based
+terminal emulator, or genuine Xterm are detected, it will add constructed
+"Ss" and "Se" capabilities.
+
+Note: Sometimes it will appear that Nvim when run within tmux is not changing
+the cursor, but in fact it is tmux receiving instructions from Nvim to change
+the cursor and not knowing what to do in turn.  tmux has to translate what it
+receives from Nvim into whatever control sequence is appropriate for the
+terminal that it is outputting to.  It shares a common mechanism with Nvim, of
+using the "Ss" and "Se" capabilities from terminfo (for the output terminal)
+if they are present.  Unlike Nvim, if they are not present in terminfo you
+must add them by setting "terminal-overrides" in ~/.tmux.conf .
+
+See the tmux(1) manual page for the details of how and what to do in the tmux
+configuration file.  It will look something like: >
+	set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
+<or (alas!) for Konsole specifically, something more complex like: >
+	set -ga terminal-overrides 'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
 <
 							*cs7-problem*
 Note: If the terminal settings are changed after running Vim, you might have
@@ -69,20 +211,6 @@ them as a cursor key.  When you type you normally are not that fast, so they
 are recognized as individual typed commands, even though Vim receives the same
 sequence of bytes.
 
-						*xterm-8bit* *xterm-8-bit*
-Xterm can be run in a mode where it uses 8-bit escape sequences.  The CSI code
-is used instead of <Esc>[.  The advantage is that an <Esc> can quickly be
-recognized in Insert mode, because it can't be confused with the start of a
-special key.
-For the builtin termcap entries, Vim checks if the 'term' option contains
-"8bit" anywhere.  It then uses 8-bit characters for the termcap entries, the
-mouse and a few other things.  You would normally set $TERM in your shell to
-"xterm-8bit" and Vim picks this up and adjusts to the 8-bit setting
-automatically.
-When Vim receives a response to the "request version" sequence and it
-starts with CSI, it assumes that the terminal is in 8-bit mode and will
-convert all key sequences to their 8-bit variants.
-
 ==============================================================================
 Window size						*window-size*
 
@@ -93,53 +221,38 @@ On Unix systems, three methods are tried to get the window size:
 
 - an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
 - the environment variables "LINES" and "COLUMNS"
-- from the termcap entries "li" and "co"
+- from the |terminfo| entries "lines" and "columns"
 
 If everything fails a default size of 24 lines and 80 columns is assumed.  If
 a window-resize signal is received the size will be set again.  If the window
 size is wrong you can use the 'lines' and 'columns' options to set the
-correct values.
-
-One command can be used to set the screen size:
-
-						*:mod* *:mode*
-:mod[e]
-
-Detects the screen size and redraws the screen.
+correct values. See |:mode|.
 
 ==============================================================================
 Slow and fast terminals				*slow-fast-terminal*
 						*slow-terminal*
 
-If you have a fast terminal you may like to set the 'ruler' option.  The
-cursor position is shown in the status line.  If you are using horizontal
-scrolling ('wrap' option off) consider setting 'sidescroll' to a small
-number.
-
-If you have a slow terminal you may want to reset the 'showcmd' option.
-The command characters will not be shown in the status line.  If the terminal
-scrolls very slowly, set the 'scrolljump' to 5 or so.  If the cursor is moved
-off the screen (e.g., with "j") Vim will scroll 5 lines at a time.  Another
-possibility is to reduce the number of lines that Vim uses with the command
-"z{height}<CR>".
+If you have a slow terminal you may want to reset the 'showcmd' and 'ruler'
+options.  The command characters and cursor positions will not be shown in the
+status line (which involves a lot of cursor motions and attribute changes for
+every keypress or movement).  If the terminal scrolls very slowly, set the
+'scrolljump' to 5 or so.  If the cursor is moved off the screen (e.g., with
+"j") Vim will scroll 5 lines at a time.  Another possibility is to reduce the
+number of lines that Vim uses with the command "z{height}<CR>".
 
 If the characters from the terminal are arriving with more than 1 second
 between them you might want to set the 'timeout' and/or 'ttimeout' option.
 See the "Options" chapter |options|.
 
-If you are using a color terminal that is slow, use this command: >
+If you are using a color terminal that is slow when displaying lines beyond
+the end of a buffer, this is because Nvim is drawing the whitespace twice, in
+two sets of colours and attributes.  To prevent this, use this command: >
 	hi NonText cterm=NONE ctermfg=NONE
-This avoids that spaces are sent when they have different attributes.  On most
-terminals you can't see this anyway.
-
-If you are using Vim over a slow serial line, you might want to try running
-Vim inside the "screen" program.  Screen will optimize the terminal I/O quite
-a bit.
-
-If you are testing termcap options, but you cannot see what is happening,
-you might want to set the 'writedelay' option.  When non-zero, one character
-is sent to the terminal at a time (does not work for MS-DOS).  This makes the
-screen updating a lot slower, making it possible to see what is happening.
+This draws the spaces with the default colours and attributes, which allows the
+second pass of drawing to be optimized away.  Note: Although in theory the
+colours of whitespace are immaterial, in practice they change the colours of
+cursors and selections that cross them.  This may have a visible, but minor,
+effect on some UIs.
 
 ==============================================================================
 Using the mouse						*mouse-using*
@@ -219,13 +332,12 @@ before using the mouse:
 	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
 							*bracketed-paste-mode*
-Bracketed paste mode allows terminal emulators to distinguish between typed
-text and pasted text.
+Bracketed paste mode allows terminal applications to distinguish between typed
+text and pasted text. Thus you can paste text without Nvim trying to format or
+indent the text. See also https://cirw.in/blog/bracketed-paste
 
-For terminal emulators that support it, this mode is enabled by default. Thus
-you can paste text without Nvim giving any special meaning to it, e.g. it will
-not auto-indent the pasted text. See https://cirw.in/blog/bracketed-paste for
-technical details.
+Nvim enables bracketed paste by default. If it does not work in your terminal,
+try the 'paste' option instead.
 
 					*mouse-mode-table* *mouse-overview*
 A short overview of what the mouse buttons do, when 'mousemodel' is "extend":

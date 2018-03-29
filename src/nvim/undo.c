@@ -1838,11 +1838,9 @@ void undo_time(long step, int sec, int file, int absolute)
     }
     closest = -1;
   } else {
-    /* When doing computations with time_t subtract starttime, because
-     * time_t converted to a long may result in a wrong number. */
-    if (dosec)
-      target = (long)(curbuf->b_u_time_cur - starttime) + step;
-    else if (dofile) {
+    if (dosec) {
+      target = (long)(curbuf->b_u_time_cur) + step;
+    } else if (dofile) {
       if (step < 0) {
         /* Going back to a previous write. If there were changes after
          * the last write, count that as moving one file-write, so
@@ -1880,14 +1878,16 @@ void undo_time(long step, int sec, int file, int absolute)
         target = 0;
       closest = -1;
     } else {
-      if (dosec)
-        closest = (long)(time(NULL) - starttime + 1);
-      else if (dofile)
+      if (dosec) {
+        closest = (long)(os_time() + 1);
+      } else if (dofile) {
         closest = curbuf->b_u_save_nr_last + 2;
-      else
+      } else {
         closest = curbuf->b_u_seq_last + 2;
-      if (target >= closest)
+      }
+      if (target >= closest) {
         target = closest - 1;
+      }
     }
   }
   closest_start = closest;
@@ -1916,12 +1916,13 @@ void undo_time(long step, int sec, int file, int absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      if (dosec)
-        val = (long)(uhp->uh_time - starttime);
-      else if (dofile)
+      if (dosec) {
+        val = (long)(uhp->uh_time);
+      } else if (dofile) {
         val = uhp->uh_save_nr;
-      else
+      } else {
         val = uhp->uh_seq;
+      }
 
       if (round == 1 && !(dofile && val == 0)) {
         /* Remember the header that is closest to the target.
@@ -2095,8 +2096,8 @@ void undo_time(long step, int sec, int file, int absolute)
 
       uhp = uhp->uh_prev.ptr;
       if (uhp == NULL || uhp->uh_walk != mark) {
-        /* Need to redo more but can't find it... */
-        EMSG2(_(e_intern2), "undo_time()");
+        // Need to redo more but can't find it...
+        internal_error("undo_time()");
         break;
       }
     }
@@ -2162,8 +2163,8 @@ static void u_undoredo(int undo)
     if (top > curbuf->b_ml.ml_line_count || top >= bot
         || bot > curbuf->b_ml.ml_line_count + 1) {
       unblock_autocmds();
-      EMSG(_("E438: u_undo: line numbers wrong"));
-      changed();                /* don't want UNCHANGED now */
+      IEMSG(_("E438: u_undo: line numbers wrong"));
+      changed();                // don't want UNCHANGED now
       return;
     }
 
@@ -2267,12 +2268,14 @@ static void u_undoredo(int undo)
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
-  if ((old_flags & UH_EMPTYBUF) && bufempty())
+  if ((old_flags & UH_EMPTYBUF) && BUFEMPTY()) {
     curbuf->b_ml.ml_flags |= ML_EMPTY;
-  if (old_flags & UH_CHANGED)
+  }
+  if (old_flags & UH_CHANGED) {
     changed();
-  else
+  } else {
     unchanged(curbuf, FALSE);
+  }
 
   /*
    * restore marks from before undo/redo
@@ -2654,7 +2657,7 @@ static void u_unch_branch(u_header_T *uhp)
 static u_entry_T *u_get_headentry(void)
 {
   if (curbuf->b_u_newhead == NULL || curbuf->b_u_newhead->uh_entry == NULL) {
-    EMSG(_("E439: undo list corrupt"));
+    IEMSG(_("E439: undo list corrupt"));
     return NULL;
   }
   return curbuf->b_u_newhead->uh_entry;
@@ -2683,11 +2686,11 @@ static void u_getbot(void)
     extra = curbuf->b_ml.ml_line_count - uep->ue_lcount;
     uep->ue_bot = uep->ue_top + uep->ue_size + 1 + extra;
     if (uep->ue_bot < 1 || uep->ue_bot > curbuf->b_ml.ml_line_count) {
-      EMSG(_("E440: undo line missing"));
-      uep->ue_bot = uep->ue_top + 1;        /* assume all lines deleted, will
-                                             * get all the old lines back
-                                             * without deleting the current
-                                             * ones */
+      IEMSG(_("E440: undo line missing"));
+      uep->ue_bot = uep->ue_top + 1;        // assume all lines deleted, will
+                                            // get all the old lines back
+                                            // without deleting the current
+                                            // ones
     }
 
     curbuf->b_u_newhead->uh_getbot_entry = NULL;
@@ -2940,17 +2943,20 @@ bool curbufIsChanged(void)
           && (curbuf->b_changed || file_ff_differs(curbuf, true)));
 }
 
-/*
- * For undotree(): Append the list of undo blocks at "first_uhp" to "list".
- * Recursive.
- */
-void u_eval_tree(u_header_T *first_uhp, list_T *list)
+/// Append the list of undo blocks to a newly allocated list
+///
+/// For use in undotree(). Recursive.
+///
+/// @param[in]  first_uhp  Undo blocks list to start with.
+///
+/// @return [allocated] List with a representation of undo blocks.
+list_T *u_eval_tree(const u_header_T *const first_uhp)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  u_header_T  *uhp = first_uhp;
-  dict_T      *dict;
+  list_T *const list = tv_list_alloc(kListLenMayKnow);
 
-  while (uhp != NULL) {
-    dict = tv_dict_alloc();
+  for (const u_header_T *uhp = first_uhp; uhp != NULL; uhp = uhp->uh_prev.ptr) {
+    dict_T *const dict = tv_dict_alloc();
     tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
     tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
     if (uhp == curbuf->b_u_newhead) {
@@ -2964,14 +2970,12 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
     }
 
     if (uhp->uh_alt_next.ptr != NULL) {
-      list_T *alt_list = tv_list_alloc();
-
       // Recursive call to add alternate undo tree.
-      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
-      tv_dict_add_list(dict, S_LEN("alt"), alt_list);
+      tv_dict_add_list(dict, S_LEN("alt"), u_eval_tree(uhp->uh_alt_next.ptr));
     }
 
     tv_list_append_dict(list, dict);
-    uhp = uhp->uh_prev.ptr;
   }
+
+  return list;
 }

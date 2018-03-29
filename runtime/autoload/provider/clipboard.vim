@@ -3,10 +3,11 @@
 " available.
 let s:copy = {}
 let s:paste = {}
+let s:clipboard = {}
 
 " When caching is enabled, store the jobid of the xclip/xsel process keeping
 " ownership of the selection, so we know how long the cache is valid.
-let s:selection = { 'owner': 0, 'data': [] }
+let s:selection = { 'owner': 0, 'data': [], 'stderr_buffered': v:true }
 
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
@@ -14,17 +15,22 @@ function! s:selection.on_exit(jobid, data, event) abort
   if self.owner == a:jobid
     let self.owner = 0
   endif
+  if a:data != 0
+    echohl WarningMsg
+    echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(self.stderr)
+    echohl None
+  endif
 endfunction
 
-let s:selections = { '*': s:selection, '+': copy(s:selection)}
+let s:selections = { '*': s:selection, '+': copy(s:selection) }
 
 function! s:try_cmd(cmd, ...) abort
   let argv = split(a:cmd, " ")
-  let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
+  let out = systemlist(argv, (a:0 ? a:1 : ['']), 1)
   if v:shell_error
     if !exists('s:did_error_try_cmd')
       echohl WarningMsg
-      echomsg "clipboard: error: ".(len(out) ? out[0] : '')
+      echomsg "clipboard: error: ".(len(out) ? out[0] : v:shell_error)
       echohl None
       let s:did_error_try_cmd = 1
     endif
@@ -48,11 +54,17 @@ endfunction
 
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
+    if type({}) isnot# type(g:clipboard)
+          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
+          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
+      let s:err = 'clipboard: invalid g:clipboard'
+      return ''
+    endif
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
-    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 1)
+    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
-  elseif has('mac') && executable('pbcopy')
+  elseif has('mac') && executable('pbpaste') && s:cmd_ok('pbpaste')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
@@ -97,15 +109,16 @@ function! provider#clipboard#Executable() abort
     return 'tmux'
   endif
 
-  let s:err = 'clipboard: No clipboard tool available. :help clipboard'
+  let s:err = 'clipboard: No clipboard tool. :help clipboard'
   return ''
 endfunction
 
 if empty(provider#clipboard#Executable())
+  " provider#clipboard#Call() *must not* be defined if the provider is broken.
+  " Otherwise eval_has_provider() thinks the clipboard provider is
+  " functioning, and eval_call_provider() will happily call it.
   finish
 endif
-
-let s:clipboard = {}
 
 function! s:clipboard.get(reg) abort
   if s:selections[a:reg].owner > 0
@@ -127,28 +140,40 @@ function! s:clipboard.set(lines, regtype, reg) abort
     return 0
   end
 
-  let selection = s:selections[a:reg]
-  if selection.owner > 0
+  if s:selections[a:reg].owner > 0
     " The previous provider instance should exit when the new one takes
     " ownership, but kill it to be sure we don't fill up the job table.
-    call jobstop(selection.owner)
+    call jobstop(s:selections[a:reg].owner)
   end
+  let s:selections[a:reg] = copy(s:selection)
+  let selection = s:selections[a:reg]
   let selection.data = [a:lines, a:regtype]
   let argv = split(s:copy[a:reg], " ")
+  let selection.argv = argv
   let selection.detach = s:cache_enabled
   let selection.cwd = "/"
   let jobid = jobstart(argv, selection)
-  if jobid <= 0
+  if jobid > 0
+    call jobsend(jobid, a:lines)
+    call jobclose(jobid, 'stdin')
+    let selection.owner = jobid
+  else
     echohl WarningMsg
-    echo "clipboard: error when invoking provider"
+    echomsg 'clipboard: failed to execute: '.(s:copy[a:reg])
     echohl None
     return 0
   endif
-  call jobsend(jobid, a:lines)
-  call jobclose(jobid, 'stdin')
-  let selection.owner = jobid
+  return 1
 endfunction
 
 function! provider#clipboard#Call(method, args) abort
-  return call(s:clipboard[a:method],a:args,s:clipboard)
+  if get(s:, 'here', v:false)  " Clipboard provider must not recurse. #7184
+    return 0
+  endif
+  let s:here = v:true
+  try
+    return call(s:clipboard[a:method],a:args,s:clipboard)
+  finally
+    let s:here = v:false
+  endtry
 endfunction

@@ -6,7 +6,7 @@
 
 Printing						*printing*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*print-intro*
@@ -87,25 +87,25 @@ If the option is empty, then vim will use the system default printer for
 					Macintosh: mac-roman,
 					HPUX: hp-roman8)
 			global
-Sets the character encoding used when printing.  This option tells VIM which
+Sets the character encoding used when printing.  This option tells Vim which
 print character encoding file from the "print" directory in 'runtimepath' to
 use.
 
 This option will accept any value from |encoding-names|.  Any recognized names
-are converted to VIM standard names - see 'encoding' for more details.  Names
-not recognized by VIM will just be converted to lower case and underscores
+are converted to Vim standard names - see 'encoding' for more details.  Names
+not recognized by Vim will just be converted to lower case and underscores
 replaced with '-' signs.
 
-If 'printencoding' is empty or VIM cannot find the file then it will use
-'encoding' (if VIM is compiled with |+multi_byte| and it is set an 8-bit
-encoding) to find the print character encoding file.  If VIM is unable to find
+If 'printencoding' is empty or Vim cannot find the file then it will use
+'encoding' (if Vim is compiled with |+multi_byte| and it is set an 8-bit
+encoding) to find the print character encoding file.  If Vim is unable to find
 a character encoding file then it will use the "latin1" print character
 encoding file.
 
-When 'encoding' is set to a multi-byte encoding, VIM will try to convert
+When 'encoding' is set to a multi-byte encoding, Vim will try to convert
 characters to the printing encoding for printing (if 'printencoding' is empty
 then the conversion will be to latin1).  Conversion to a printing encoding
-other than latin1 will require VIM to be compiled with the |+iconv| feature.
+other than latin1 will require Vim to be compiled with the |+iconv| feature.
 If no conversion is possible then printing will fail.  Any characters that
 cannot be converted will be replaced with upside down question marks.
 
@@ -186,7 +186,7 @@ header is used when this option is empty.
 'printmbcharset' 'pmbcs'  string (default "")
 			  global
 Sets the CJK character set to be used when generating CJK output from
-|:hardcopy|.  The following predefined values are currently recognised by VIM:
+|:hardcopy|.  The following predefined values are currently recognised by Vim:
 
 		Value		Description ~
   Chinese	GB_2312-80
@@ -253,7 +253,7 @@ Japanese text you would do the following; >
 
 If 'printmbcharset' is not one of the above values then it is assumed to
 specify a custom multi-byte character set and no check will be made that it is
-compatible with the value for 'printencoding'.  VIM will look for a file
+compatible with the value for 'printencoding'.  Vim will look for a file
 defining the character set in the "print" directory in 'runtimepath'.
 
 							*pmbfn-option*
@@ -403,10 +403,10 @@ There are currently a number of limitations with PostScript printing:
   possible to get all the characters in an encoding to print by installing a
   new version of the Courier font family.
 
-- Multi-byte support - Currently VIM will try to convert multi-byte characters
+- Multi-byte support - Currently Vim will try to convert multi-byte characters
   to the 8-bit encoding specified by 'printencoding' (or latin1 if it is
   empty).  Any characters that are not successfully converted are shown as
-  unknown characters.  Printing will fail if VIM cannot convert the multi-byte
+  unknown characters.  Printing will fail if Vim cannot convert the multi-byte
   to the 8-bit encoding.
 
 ==============================================================================
@@ -417,11 +417,11 @@ you need to define your own PostScript font encoding vector.  Details on how
 to define a font encoding vector is beyond the scope of this help file, but
 you can find details in the PostScript Language Reference Manual, 3rd Edition,
 published by Addison-Wesley and available in PDF form at
-http://www.adobe.com/.  The following describes what you need to do for VIM to
+http://www.adobe.com/.  The following describes what you need to do for Vim to
 locate and use your print character encoding.
 
 i.   Decide on a unique name for your encoding vector, one that does not clash
-     with any of the recognized or standard encoding names that VIM uses (see
+     with any of the recognized or standard encoding names that Vim uses (see
      |encoding-names| for a list), and that no one else is likely to use.
 ii.  Copy $VIMRUNTIME/print/latin1.ps to the print subdirectory in your
      'runtimepath' and rename it with your unique name.
@@ -429,23 +429,23 @@ iii. Edit your renamed copy of latin1.ps, replacing all occurrences of latin1
      with your unique name (don't forget the line starting %%Title:), and
      modify the array of glyph names to define your new encoding vector.  The
      array must have exactly 256 entries or you will not be able to print!
-iv.  Within VIM, set 'printencoding' to your unique encoding name and then
-     print your file.  VIM will now use your custom print character encoding.
+iv.  Within Vim, set 'printencoding' to your unique encoding name and then
+     print your file.  Vim will now use your custom print character encoding.
 
-VIM will report an error with the resource file if you change the order or
+Vim will report an error with the resource file if you change the order or
 content of the first 3 lines, other than the name of the encoding on the line
 starting %%Title: or the version number on the line starting %%Version:.
 
-[Technical explanation for those that know PostScript - VIM looks for a file
+[Technical explanation for those that know PostScript - Vim looks for a file
 with the same name as the encoding it will use when printing.  The file
 defines a new PostScript Encoding resource called /VIM-name, where name is the
-print character encoding VIM will use.]
+print character encoding Vim will use.]
 
 ==============================================================================
 5. PostScript CJK Printing			*postscript-cjk-printing*
 							*E673* *E674* *E675*
 
-VIM supports printing of Chinese, Japanese, and Korean files.  Setting up VIM
+Vim supports printing of Chinese, Japanese, and Korean files.  Setting up Vim
 to correctly print CJK files requires setting up a few more options.
 
 Each of these countries has many standard character sets and encodings which
@@ -466,7 +466,7 @@ option allows you to specify different fonts to use when printing characters
 which are syntax highlighted with the font styles normal, italic, bold and
 bold-italic.
 
-No CJK fonts are supplied with VIM.  There are some free Korean, Japanese, and
+No CJK fonts are supplied with Vim.  There are some free Korean, Japanese, and
 Traditional Chinese fonts available at:
 
   http://examples.oreilly.com/cjkvinfo/adobe/samples/
@@ -481,7 +481,7 @@ CJK fonts can be large containing several thousand glyphs, and it is not
 uncommon to find that they only contain a subset of a national standard.  It
 is not unusual to find the fonts to not include characters for codes in the
 ASCII code range.  If you find half-width Roman characters are not appearing
-in your printout then you should configure VIM to use the Courier font the
+in your printout then you should configure Vim to use the Courier font the
 half-width ASCII characters with 'printmbfont'.  If your font does not include
 other characters then you will need to find another font that does.
 
@@ -489,7 +489,7 @@ Another issue with ASCII characters, is that the various national character
 sets specify a couple of different glyphs in the ASCII code range.  If you
 print ASCII text using the national character set you may see some unexpected
 characters.  If you want true ASCII code printing then you need to configure
-VIM to output ASCII characters for the ASCII code range with 'printmbfont'.
+Vim to output ASCII characters for the ASCII code range with 'printmbfont'.
 
 It is possible to define your own multi-byte character set although this
 should not be attempted lightly.  A discussion on the process if beyond the
@@ -508,13 +508,13 @@ print job completing.
 There are a number of possible causes as to why the printing may have failed:
 
 - Wrong version of the prolog resource file.  The prolog resource file
-  contains some PostScript that VIM needs to be able to print.  Each version
-  of VIM needs one particular version.  Make sure you have correctly installed
+  contains some PostScript that Vim needs to be able to print.  Each version
+  of Vim needs one particular version.  Make sure you have correctly installed
   the runtime files, and don't have any old versions of a file called prolog
   in the print directory in your 'runtimepath' directory.
 
 - Paper size.  Some PostScript printers will abort printing a file if they do
-  not support the requested paper size.  By default VIM uses A4 paper.  Find
+  not support the requested paper size.  By default Vim uses A4 paper.  Find
   out what size paper your printer normally uses and set the appropriate paper
   size with 'printoptions'.  If you cannot find the name of the paper used,
   measure a sheet and compare it with the table of supported paper sizes listed
@@ -645,7 +645,7 @@ complex print document creation.
 
 N-UP PRINTING
 
-The psnup utility takes an existing PostScript file generated from VIM and
+The psnup utility takes an existing PostScript file generated from Vim and
 convert it to an n-up version.  The simplest way to create a 2-up printout is
 to first create a PostScript file with: >
 
@@ -701,16 +701,16 @@ There are a couple of points to bear in mind:
 ==============================================================================
 8. Formfeed Characters					*printing-formfeed*
 
-By default VIM does not do any special processing of |formfeed| control
-characters.  Setting the 'printoptions' formfeed item will make VIM recognize
+By default Vim does not do any special processing of |formfeed| control
+characters.  Setting the 'printoptions' formfeed item will make Vim recognize
 formfeed characters and continue printing the current line at the beginning
 of the first line on a new page.  The use of formfeed characters provides
 rudimentary print control but there are certain things to be aware of.
 
-VIM will always start printing a line (including a line number if enabled)
+Vim will always start printing a line (including a line number if enabled)
 containing a formfeed character, even if it is the first character on the
 line.  This means if a line starting with a formfeed character is the first
-line of a page then VIM will print a blank page.
+line of a page then Vim will print a blank page.
 
 Since the line number is printed at the start of printing the line containing
 the formfeed character, the remainder of the line printed on the new page
@@ -719,7 +719,7 @@ lines of a long line when wrap in 'printoptions' is enabled).
 
 If the formfeed character is the last character on a line, then printing will
 continue on the second line of the new page, not the first.  This is due to
-VIM processing the end of the line after the formfeed character and moving
+Vim processing the end of the line after the formfeed character and moving
 down a line to continue printing.
 
 Due to the points made above it is recommended that when formfeed character

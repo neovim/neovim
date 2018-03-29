@@ -7,6 +7,34 @@
 
 typedef int32_t RgbValue;
 
+/// Highlighting attribute bits.
+typedef enum {
+  HL_INVERSE     = 0x01,
+  HL_BOLD        = 0x02,
+  HL_ITALIC      = 0x04,
+  HL_UNDERLINE   = 0x08,
+  HL_UNDERCURL   = 0x10,
+  HL_STANDOUT    = 0x20,
+} HlAttrFlags;
+
+/// Stores a complete highlighting entry, including colors and attributes
+/// for both TUI and GUI.
+typedef struct attr_entry {
+  int16_t rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
+  int cterm_fg_color, cterm_bg_color;
+} HlAttrs;
+
+#define HLATTRS_INIT (HlAttrs) { \
+  .rgb_ae_attr = 0, \
+  .cterm_ae_attr = 0, \
+  .rgb_fg_color = -1, \
+  .rgb_bg_color = -1, \
+  .rgb_sp_color = -1, \
+  .cterm_fg_color = 0, \
+  .cterm_bg_color = 0, \
+}
+
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names below!
 typedef enum {
@@ -117,7 +145,6 @@ EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user
 EXTERN int cterm_normal_fg_color INIT(= 0);
-EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
 EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);

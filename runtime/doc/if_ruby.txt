@@ -10,7 +10,7 @@ The Ruby Interface to Vim				*ruby* *Ruby*
 The home page for ruby is http://www.ruby-lang.org/.  You can find links for
 downloading Ruby there.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Commands						*ruby-commands*
@@ -63,7 +63,7 @@ To see what version of Ruby you have: >
 
 							*:rubyfile* *:rubyf*
 :rubyf[ile] {file}	Execute the Ruby script in {file}.  This is the same as
-			":ruby load 'file'", but allows file name completion.
+			`:ruby load 'file'`, but allows file name completion.
 
 Executing Ruby commands is not possible in the |sandbox|.
 

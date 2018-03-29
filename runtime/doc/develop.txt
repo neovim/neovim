@@ -11,7 +11,7 @@ Nvim is open source software.  Everybody is encouraged to contribute.
 
 See src/nvim/README.md for an overview of the source code.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Design goals						*design-goals*
@@ -63,12 +63,6 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
 - Documentation should be comprehensive and understandable.  Use examples.
 - Don't make the text unnecessarily long.  Less documentation means that an
   item is easier to find.
-- Do not prefix doc-tags with "nvim-". Use |vim_diff.txt| to document
-  differences from Vim. The {Nvim} annotation is also available
-  to mark a specific feature. No other distinction is necessary.
-- If a feature is removed, delete its doc entry and move its tag to
-  |vim_diff.txt|.
-- Move deprecated features to |deprecated.txt|.
 
 
 NVIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
@@ -113,7 +107,7 @@ include the kitchen sink... but it's good for plumbing."
 
 
 ==============================================================================
-Developer guidelines				        *dev-help*
+Developer guidelines				        *dev*
 
 
 JARGON	 						*dev-jargon*
@@ -148,6 +142,8 @@ shell		The Vim application.  This can cover the whole screen (e.g.,
 window		View on a buffer.  There can be several windows in Vim,
 		together with the command line, menubar, toolbar, etc. they
 		fit in the shell.
+frame		Windows are kept in a tree of frames.  Each frame contains
+		a column, row, or window ("leaf" frame).
 
 PROVIDERS 						*dev-provider*
 
@@ -192,6 +188,18 @@ defined if a valid external Python host is found. That works well with the
 Python host isn't installed then the plugin will "think" it is running in
 a Vim compiled without the |+python| feature.
 
+DOCUMENTATION						*dev-doc*
+
+- Do not prefix help tags with "nvim-". Use |vim_diff.txt| to document
+  differences from Vim; no other distinction is necessary.
+- If a Vim feature is removed, delete its help section and move its tag to
+  |vim_diff.txt|.
+- Move deprecated features to |deprecated.txt|.
+- Use consistent language.
+    - "terminal" in a help tag always means "the embedded terminal emulator", not
+      "the user host terminal".
+    - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
+      in prose if possible.
 
 API							*dev-api*
 
@@ -224,23 +232,47 @@ _not_ a Buffer). The common {action} "list" indicates that it lists all
 bufs (plural) in the global context.
 
 
+API-CLIENT						*dev-api-client*
+
+Package Naming ~
+API client packages should NOT be named something ambiguous like "neovim" or
+"python-client".  Use "nvim" as a prefix/suffix to some other identifier
+following ecosystem conventions.
+
+For example, Python packages tend to have "py" in the name, so "pynvim" is
+a good name: it's idiomatic and unambiguous. If the package is named "neovim",
+it confuses users, and complicates documentation and discussions.
+
+Examples of API-client package names:
+        GOOD: nvim-racket
+        GOOD: pynvim
+        BAD:  python-client
+        BAD:  neovim
+
+Implementation ~
+Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
+small, efficient, and C89-compatible. It can be easily inlined in your
+C project source, too.  https://github.com/libmpack/libmpack/
+
+
 EXTERNAL UI 						*dev-ui*
 
+Compatibility ~
 External UIs should be aware of the |api-contract|. In particular, future
-versions of Nvim may add optional, new items to existing events. The API is
-strongly backwards-compatible, but clients must not break if new fields are
-added to existing events.
+versions of Nvim may add new items to existing events. The API is strongly
+backwards-compatible, but clients must not break if new fields are added to
+existing events.
 
-External UIs are expected to implement some common features.
+Common Features ~
+External UIs are expected to implement these common features:
+- Cursor style (shape, color) should respond to the 'guicursor' properties
+  delivered with the mode_info_set UI event.
+- Send the "super" key (Windows key, Apple key) as a |<D-| chord.
 
-- Users may want to configure UI-specific options. The UI should publish the
-  |GUIEnter| autocmd after attaching to Nvim: >
-    doautocmd GUIEnter
-- Options can be monitored for changes by the |OptionSet| autocmd. E.g. if the
-  user sets the 'guifont' option, this autocmd notifies channel 42: >
-    autocmd OptionSet guifont call rpcnotify(42, 'option-changed', 'guifont', &guifont)
-- cursor-shape change: 'guicursor' properties are sent in the mode_info_set UI
-  event.
+Implementation ~
+- UI-related options ('guifont', 'ambiwidth', …) are published in the
+  "option_set" |ui-global| event.  The event is triggered when the UI first
+  connects to Nvim and whenever an option is changed by the user or a plugin.
 
 
  vim:tw=78:ts=8:ft=help:norl:

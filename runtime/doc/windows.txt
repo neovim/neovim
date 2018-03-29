@@ -13,7 +13,7 @@ differently when used in combination with more than one window.
 The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 |usr_08.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*
@@ -106,18 +106,10 @@ This option can be local to the window, so that you can have a different
 status line in each window.
 
 Normally, inversion is used to display the status line.  This can be changed
-with the 's' character in the 'highlight' option.  For example, "sb" sets it to
-bold characters.  If no highlighting is used for the status line ("sn"), the
-'^' character is used for the current window, and '=' for other windows.  If
-the mouse is supported and enabled with the 'mouse' option, a status line can
-be dragged to resize windows.
-
-Note: If you expect your status line to be in reverse video and it isn't,
-check if the 'highlight' option contains "si".  In version 3.0, this meant to
-invert the status line.  Now it should be "sr", reverse the status line, as
-"si" now stands for italic!  If italic is not available on your terminal, the
-status line is inverted anyway; you will only see this problem on terminals
-that have termcap codes for italics.
+with the |hl-StatusLine| highlight group.  If no highlighting is used for the
+status line, the '^' character is used for the current window, and '=' for
+other windows.  If 'mouse' is enabled, a status line can be dragged to resize
+windows.
 
 ==============================================================================
 3. Opening and closing a window				*opening-window* *E36*
@@ -319,8 +311,9 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
                                                                 *:hide*
 :hid[e]
 :{count}hid[e]
-		Quit the current window, unless it is the last window on the
-		screen. For {count} see |:quit|.
+		Without {count}: Quit the current window, unless it is the
+		last window on the screen.
+		If {count} is given quit the {count} window.
 
 		The buffer becomes hidden (unless there is another window
 		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
@@ -523,6 +516,9 @@ CTRL-W >	Increase current window width by N (default 1).
 :vertical res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
 CTRL-W |	Set current window width to N (default: widest possible).
 
+						*:mod* *:mode*
+:mod[e]		Detects the screen size and redraws the screen.
+
 You can also resize a window by dragging a status line up or down with the
 mouse.  Or by dragging a vertical separator line left or right.  This only
 works if the version of Vim that is being used supports the mouse and the
@@ -591,7 +587,8 @@ The minimal height and width of a window is set with 'winminheight' and
 41. :buffers		list of buffers
 
 The meaning of [N] depends on the command:
- [N] is number of buffers to go forward/backward on ?2, ?3, and ?4
+ [N] is the number of buffers to go forward/backward on 2/12/22/32,
+     3/13/23/33, and 4/14/24/34
  [N] is an argument number, defaulting to current argument, for 1 and 21
  [N] is a buffer number, defaulting to current buffer, for 11 and 31
  [N] is a count for 19 and 39
@@ -674,6 +671,8 @@ can also get to them with the buffer list commands, like ":bnext".
 		- If the file is not open in a window edit the file in the
 		  current window.  If the current buffer can't be |abandon|ed,
 		  the window is split first.
+		- Windows that are not in the argument list or are not full
+		  width will be closed if possible.
 		The |argument-list| is set, like with the |:next| command.
 		The purpose of this command is that it can be used from a
 		program that wants Vim to edit another file, e.g., a debugger.
@@ -997,6 +996,9 @@ list of buffers. |unlisted-buffer|
 			   displayed in a window |hidden-buffer|
 		   -	a buffer with 'modifiable' off
 		   =	a readonly buffer
+		   R	a terminal buffer with a running job
+		   F	a terminal buffer with a finished job
+		   ?    a terminal buffer without a job: `:terminal NONE`
 		    +	a modified buffer
 		    x   a buffer with read errors
 
@@ -1240,6 +1242,9 @@ help		Contains a help file.  Will only be created with the |:help|
 		command.  The flag that indicates a help buffer is internal
 		and can't be changed.  The 'buflisted' option will be reset
 		for a help buffer.
+
+terminal	A terminal window buffer, see |terminal|. The contents cannot
+		be read or changed until the job ends.
 
 directory	Displays directory contents.  Can be used by a file explorer
 		plugin.  The buffer is created with these settings: >

@@ -2,13 +2,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, request, neq = helpers.command, helpers.request, helpers.neq
-
-if helpers.pending_win32(pending) then return end
+local command, neq = helpers.command, helpers.neq
+local curbufmeths = helpers.curbufmeths
 
 describe('Buffer highlighting', function()
   local screen
-  local curbuf
 
   before_each(function()
     clear()
@@ -24,23 +22,17 @@ describe('Buffer highlighting', function()
       [6] = {foreground = Screen.colors.DarkCyan}, -- Identifier
       [7] = {bold = true},
       [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [9] = {foreground = Screen.colors.SlateBlue, underline = true}
+      [9] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [10] = {foreground = Screen.colors.Red}
     })
-    curbuf = request('nvim_get_current_buf')
   end)
 
   after_each(function()
     screen:detach()
   end)
 
-  local function add_hl(...)
-    return request('nvim_buf_add_highlight', curbuf, ...)
-  end
-
-  local function clear_hl(...)
-    return request('nvim_buf_clear_highlight', curbuf, ...)
-  end
-
+  local add_hl = curbufmeths.add_highlight
+  local clear_hl = curbufmeths.clear_highlight
 
   it('works', function()
     insert([[
@@ -246,6 +238,34 @@ describe('Buffer highlighting', function()
 
     screen:expect([[
       Ta {6:båten} över {2:sjön}^!                     |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+  end)
+
+  it('works with new syntax groups', function()
+    insert([[
+      fancy code in a new fancy language]])
+    add_hl(-1, "FancyLangItem", 0, 0, 5)
+    screen:expect([[
+      fancy code in a new fancy languag^e      |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    command('hi FancyLangItem guifg=red')
+    screen:expect([[
+      {10:fancy} code in a new fancy languag^e      |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|

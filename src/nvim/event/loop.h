@@ -16,10 +16,27 @@ KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
 
 typedef struct loop {
   uv_loop_t uv;
-  MultiQueue *events, *fast_events, *thread_events;
+  MultiQueue *events;
+  MultiQueue *thread_events;
+  // Immediate events:
+  //    "Processed after exiting uv_run() (to avoid recursion), but before
+  //    returning from loop_poll_events()." 502aee690c98
+  // Practical consequence (for main_loop): these events are processed by
+  //    state_enter()..os_inchar()
+  // whereas "regular" events (main_loop.events) are processed by
+  //    state_enter()..VimState.execute()
+  // But state_enter()..os_inchar() can be "too early" if you want the event
+  // to trigger UI updates and other user-activity-related side-effects.
+  MultiQueue *fast_events;
+
+  // used by process/job-control subsystem
   klist_t(WatcherPtr) *children;
   uv_signal_t children_watcher;
-  uv_timer_t children_kill_timer, poll_timer;
+  uv_timer_t children_kill_timer;
+
+  // generic timer, used by loop_poll_events()
+  uv_timer_t poll_timer;
+
   size_t children_stop_requests;
   uv_async_t async;
   uv_mutex_t mutex;

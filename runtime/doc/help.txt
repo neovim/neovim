@@ -30,7 +30,7 @@ Get specific help:  It is possible to go directly to whatever you want help
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
 
-VIM stands for Vi IMproved.  Most of VIM was made by Bram Moolenaar, but only
+Vim stands for Vi IMproved.  Most of Vim was made by Bram Moolenaar, but only
 through the help of many others.  See |credits|.
 ------------------------------------------------------------------------------
 						*doc-file-list* *Q_ct*
@@ -93,10 +93,9 @@ General subjects ~
 |helphelp.txt|	about using the help files
 |index.txt|	alphabetical index of all commands
 |help-tags|	all the tags you can jump to (index of tags)
-|howto.txt|	how to do the most common editing tasks
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
-|develop.txt|	development of Vim
+|develop.txt|	development of Nvim
 |debug.txt|	debugging Vim itself
 |uganda.txt|	Vim distribution conditions and what to do with your money
 
@@ -134,7 +133,6 @@ Advanced editing ~
 Special issues ~
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
-|term.txt|	using different terminals and mice
 |digraph.txt|	list of available digraphs
 |mbyte.txt|	multi-byte text support
 |mlang.txt|	non-English language support
@@ -143,6 +141,7 @@ Special issues ~
 |hebrew.txt|	Hebrew language support and editing
 |russian.txt|	Russian language support and editing
 |ft_ada.txt|	Ada (the programming language) support
+|ft_rust.txt|	Filetype plugin for Rust
 |ft_sql.txt|	about the SQL filetype plugin
 |rileft.txt|	right-to-left editing mode
 
@@ -163,6 +162,7 @@ Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens
+|pi_spec.txt|      Filetype plugin to work with rpm spec files
 |pi_tar.txt|       Tar file explorer
 |pi_zip.txt|       Zip archive explorer
 

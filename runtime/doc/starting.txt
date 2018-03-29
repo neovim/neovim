@@ -6,7 +6,7 @@
 
 Starting Vim						*starting*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -53,7 +53,7 @@ filename	One or more file names.  The first one will be the current
 <		Starting in Ex mode: >
 			nvim -e -
 			nvim -E
-<		Start editing in silent mode.  See |-s-ex|.
+<		Start editing in |silent-mode|.
 
 							*-t* *-tag*
 -t {tag}	A tag.  "tag" is looked up in the tags file, the associated
@@ -200,7 +200,7 @@ argument.
 							*-E*
 -E		Start Vim in improved Ex mode |gQ|.
 
-							*-s-ex*
+							*-s-ex* *silent-mode*
 -s		Silent or batch mode.  Only when "-s" is preceded by the "-e"
 		argument.  Otherwise see |-s|, which does take an argument
 		while this use of "-s" doesn't.  To be used when Vim is used
@@ -214,14 +214,14 @@ argument.
 			:set      to display option values.
 		When 'verbose' is non-zero messages are printed (for
 		debugging, to stderr).
-		$TERM is not used.
+		|$TERM| is not used.
 		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
 		get a prompt thus you can't see Vim is waiting for you to type
 		something.
 		Initializations are skipped (except the ones given with the
 		"-u" argument).
 		Example: >
-			vim -e -s  < thefilter  thefile
+			vim -es < thefilter  thefile
 <
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
@@ -249,14 +249,14 @@ argument.
 		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
-			vim -V8 foobar
+			nvim -V8
 
 -V[N]{filename}
-		Like -V and set 'verbosefile' to {filename}.  The result is
-		that messages are not displayed but written to the file
-		{filename}.  {filename} must not start with a digit.
+		Like -V and set 'verbosefile' to {filename}.  Messages are not
+		displayed; instead they are written to the file {filename}.
+		{filename} must not start with a digit.
 		Example: >
-			vim -V20vimlog foobar
+			nvim -V20vimlog
 <
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first
@@ -349,13 +349,19 @@ argument.
 							*--api-info*
 --api-info 	Print msgpack-encoded |api-metadata| and exit.
 
+							*--headless*
+--headless 	Do not start the built-in UI.
+                See |channel-stdio| for how to use stdio for other purposes
+                instead.
+		See also |silent-mode|, which does start a (limited) UI.
+
 ==============================================================================
 2. Initialization				*initialization* *startup*
 
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
 
-1. Set the 'shell' option		*SHELL* *COMSPEC* *TERM*
+1. Set the 'shell' option			*SHELL* *COMSPEC*
 	The environment variable SHELL, if it exists, is used to set the
 	'shell' option.  On Windows, the COMSPEC variable is used
 	if SHELL is not set.
@@ -433,15 +439,14 @@ accordingly.  Vim proceeds in this order:
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
 		:runtime! indent.vim
-<	This step is skipped if ":filetype ..." was called before now or if
-	the "-u NONE" command line argument was given.
+<	Skipped if ":filetype … off" was called or if the "-u NONE" command
+	line argument was given.
 
 5. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
-<	Note: This enables filetype detection even if ":filetype off" was
-	called before now.
-	This step is skipped if the "-u NONE" command line argument was given.
+<	Skipped if ":syntax off" was called or if the "-u NONE" command
+	line argument was given.
 
 6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
@@ -629,54 +634,40 @@ though.
 ==============================================================================
 3. $VIM and $VIMRUNTIME
 								*$VIM*
-The environment variable "$VIM" is used to locate various user files for Vim,
+The environment variable "$VIM" is used to locate various user files for Nvim,
 such as the user startup script |init.vim|.  This depends on the system, see
 |startup|.
 
-To avoid the need for every user to set the $VIM environment variable, Vim
-will try to get the value for $VIM in this order:
-1. The value defined by the $VIM environment variable.  You can use this to
-   make Vim look in a specific directory for its support files.  Example: >
-	setenv VIM /home/paul/vim
-2. The path from 'helpfile' is used, unless it contains some environment
-   variable too (the default is "$VIMRUNTIME/doc/help.txt": chicken-egg
-   problem).  The file name ("help.txt" or any other) is removed.  Then
-   trailing directory names are removed, in this order: "doc", "runtime" and
-   "vim{version}" (e.g., "vim54").
-3. For MSDOS and Win32 Vim tries to use the directory name of the
-   executable.  If it ends in "/src", this is removed.  This is useful if you
-   unpacked the .zip file in some directory, and adjusted the search path to
-   find the vim executable.  Trailing directory names are removed, in this
-   order: "runtime" and "vim{version}" (e.g., "vim54").
-4. For Unix the compile-time defined installation directory is used (see the
-   output of ":version").
+Nvim will try to get the value for $VIM in this order:
 
-Once Vim has done this once, it will set the $VIM environment variable.  To
-change it later, use a ":let" command like this: >
-	:let $VIM = "/home/paul/vim/"
-<
+1. Environment variable $VIM, if it is set.
+2. Path derived from the 'helpfile' option, unless it contains some
+   environment variable too (default is "$VIMRUNTIME/doc/help.txt").  File
+   name ("help.txt", etc.) is removed.  Trailing directory names are removed,
+   in this order: "doc", "runtime".
+3. Path derived from the location of the `nvim` executable.
+4. Compile-time defined installation directory (see output of ":version").
+
+After doing this once, Nvim sets the $VIM environment variable.
+
 								*$VIMRUNTIME*
 The environment variable "$VIMRUNTIME" is used to locate various support
-files, such as the on-line documentation and files used for syntax
-highlighting.  For example, the main help file is normally
-"$VIMRUNTIME/doc/help.txt".
-You don't normally set $VIMRUNTIME yourself, but let Vim figure it out.  This
-is the order used to find the value of $VIMRUNTIME:
-1. If the environment variable $VIMRUNTIME is set, it is used.  You can use
-   this when the runtime files are in an unusual location.
-2. If "$VIM/vim{version}" exists, it is used.  {version} is the version
-   number of Vim, without any '-' or '.'.  For example: "$VIM/vim54".  This is
-   the normal value for $VIMRUNTIME.
-3. If "$VIM/runtime" exists, it is used.
-4. The value of $VIM is used.  This is for backwards compatibility with older
-   versions.
-5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
-6. When the 'helpfile' option is set and doesn't contain a '$', its value is
-   used, with "doc/help.txt" removed from the end.
+files, such as the documentation and syntax-highlighting files.  For example,
+the main help file is normally "$VIMRUNTIME/doc/help.txt".
 
-Once Vim has done this once, it will set the $VIMRUNTIME environment variable.
-To change it later, use a ":let" command like this: >
-	:let $VIMRUNTIME = "/home/piet/vim/vim54"
+Nvim will try to get the value for $VIMRUNTIME in this order:
+
+1. Environment variable $VIMRUNTIME, if it is set.
+2. Directory path "$VIM/vim{version}", if it exists, where {version} is the
+   Vim version number without '-' or '.'.  For example: "$VIM/vim54".
+3. Directory path "$VIM/runtime", if it exists.
+4. Value of $VIM environment variable.  This is for backwards compatibility
+   with older Vim versions.
+5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
+6. Path derived from the 'helpfile' option (if it doesn't contain '$') with
+   "doc/help.txt" removed from the end.
+
+After doing this once, Nvim sets the $VIMRUNTIME environment variable.
 
 In case you need the value of $VIMRUNTIME in a shell (e.g., for a script that
 greps in the help files) you might be able to use this: >
@@ -895,7 +886,7 @@ The output of ":mkview" contains these items:
 5. The scroll position and the cursor position in the file.  Doesn't work very
    well when there are closed folds.
 6. The local current directory, if it is different from the global current
-   directory.
+   directory and 'viewoptions' contains "curdir".
 
 Note that Views and Sessions are not perfect:
 - They don't restore everything.  For example, defined functions, autocommands

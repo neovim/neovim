@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         Makefile
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-05-07
+" Language:             Makefile
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-05-07
 
 if exists("b:did_indent")
   finish
@@ -48,14 +48,14 @@ function GetMakeIndent()
     if prev_prev_line =~ s:continuation_rx
       return indent(prev_lnum)
     elseif prev_line =~ s:rule_rx
-      return &sw
+      return shiftwidth()
     elseif prev_line =~ s:assignment_rx
       call cursor(prev_lnum, 1)
       if search(s:assignment_rx, 'W') != 0
         return virtcol('.') - 1
       else
         " TODO: ?
-        return &sw
+        return shiftwidth()
       endif
     else
       " TODO: OK, this might be a continued shell command, so perhaps indent
@@ -66,7 +66,7 @@ function GetMakeIndent()
       "    return indent(prev_lnum) + 2
       "  endif
       "endif
-      return indent(prev_lnum) + &sw
+      return indent(prev_lnum) + shiftwidth()
     endif
   elseif prev_prev_line =~ s:continuation_rx
     let folded_line = s:remove_continuation(prev_prev_line) . ' ' . s:remove_continuation(prev_line)
@@ -102,13 +102,13 @@ function GetMakeIndent()
       return &ts
     endif
   elseif prev_line =~ s:conditional_directive_rx
-    return &sw
+    return shiftwidth()
   else
     let line = getline(v:lnum)
     if line =~ s:just_inserted_rule_rx
       return 0
     elseif line =~ s:end_conditional_directive_rx
-      return v:lnum - 1 == 0 ? 0 : indent(v:lnum - 1) - &sw
+      return v:lnum - 1 == 0 ? 0 : indent(v:lnum - 1) - shiftwidth()
     else
       return v:lnum - 1 == 0 ? 0 : indent(v:lnum - 1)
     endif

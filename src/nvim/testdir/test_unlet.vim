@@ -3,7 +3,7 @@
 func Test_read_only()
   try
     " this caused a crash
-    unlet count
+    unlet v:count
   catch
     call assert_true(v:exception =~ ':E795:')
   endtry
@@ -23,4 +23,8 @@ func Test_not_existing()
   catch
     call assert_true(v:exception =~ ':E108:')
   endtry
+endfunc
+
+func Test_unlet_fails()
+  call assert_fails('unlet v:["count"]', 'E46:')
 endfunc

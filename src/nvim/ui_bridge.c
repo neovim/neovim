@@ -24,30 +24,10 @@
 
 #define UI(b) (((UIBridgeData *)b)->ui)
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-static size_t        uilog_seen = 0;
-static argv_callback uilog_event = NULL;
-#define UI_CALL(ui, name, argc, ...) \
-  do { \
-    if (uilog_event == ui_bridge_##name##_event) { \
-      uilog_seen++; \
-    } else { \
-      if (uilog_seen > 0) { \
-        DLOG("UI bridge: ...%zu times", uilog_seen); \
-      } \
-      DLOG("UI bridge: " STR(name)); \
-      uilog_seen = 0; \
-      uilog_event = ui_bridge_##name##_event; \
-    } \
-    ((UIBridgeData *)ui)->scheduler( \
-        event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui)); \
-  } while (0)
-#else
 // Schedule a function call on the UI bridge thread.
-#define UI_CALL(ui, name, argc, ...) \
+#define UI_BRIDGE_CALL(ui, name, argc, ...) \
   ((UIBridgeData *)ui)->scheduler( \
       event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
-#endif
 
 #define INT2PTR(i) ((void *)(intptr_t)i)
 #define PTR2INT(p) ((Integer)(intptr_t)p)
@@ -79,16 +59,15 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.put = ui_bridge_put;
   rv->bridge.bell = ui_bridge_bell;
   rv->bridge.visual_bell = ui_bridge_visual_bell;
-  rv->bridge.update_fg = ui_bridge_update_fg;
-  rv->bridge.update_bg = ui_bridge_update_bg;
-  rv->bridge.update_sp = ui_bridge_update_sp;
+  rv->bridge.default_colors_set = ui_bridge_default_colors_set;
   rv->bridge.flush = ui_bridge_flush;
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
+  rv->bridge.option_set = ui_bridge_option_set;
   rv->scheduler = scheduler;
 
-  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     rv->bridge.ui_ext[i] = ui->ui_ext[i];
   }
 
@@ -102,6 +81,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
     abort();
   }
 
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!rv->ready) {
     uv_cond_wait(&rv->cond, &rv->mutex);
   }
@@ -126,9 +106,12 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
+  // Detach brigde first, so that "stop" is the last event the TUI loop
+  // receives from the main thread. #8041
+  ui_detach_impl(b);
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
-  UI_CALL(b, stop, 1, b);
+  UI_BRIDGE_CALL(b, stop, 1, b);
   for (;;) {
     uv_mutex_lock(&bridge->mutex);
     stopped = bridge->stopped;
@@ -136,12 +119,12 @@ static void ui_bridge_stop(UI *b)
     if (stopped) {
       break;
     }
-    loop_poll_events(&main_loop, 10);
+    loop_poll_events(&main_loop, 10);  // Process one event.
   }
   uv_thread_join(&bridge->ui_thread);
   uv_mutex_destroy(&bridge->mutex);
   uv_cond_destroy(&bridge->cond);
-  ui_detach_impl(b);
+  xfree(bridge->ui);  // Threads joined, now safe to free UI container. #7922
   xfree(b);
 }
 static void ui_bridge_stop_event(void **argv)
@@ -154,7 +137,7 @@ static void ui_bridge_highlight_set(UI *b, HlAttrs attrs)
 {
   HlAttrs *a = xmalloc(sizeof(HlAttrs));
   *a = attrs;
-  UI_CALL(b, highlight_set, 2, b, a);
+  UI_BRIDGE_CALL(b, highlight_set, 2, b, a);
 }
 static void ui_bridge_highlight_set_event(void **argv)
 {
@@ -167,9 +150,9 @@ static void ui_bridge_suspend(UI *b)
 {
   UIBridgeData *data = (UIBridgeData *)b;
   uv_mutex_lock(&data->mutex);
-  UI_CALL(b, suspend, 1, b);
+  UI_BRIDGE_CALL(b, suspend, 1, b);
   data->ready = false;
-  // suspend the main thread until CONTINUE is called by the UI thread
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!data->ready) {
     uv_cond_wait(&data->cond, &data->mutex);
   }

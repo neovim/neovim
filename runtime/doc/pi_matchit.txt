@@ -1,6 +1,6 @@
 *pi_matchit.txt*   Extended "%" matching
 
-For Vim version 6.3.  Last change:  2015 May 21
+For Vim version 6.3.  Last change:  2017 May 14
 
 *matchit* *matchit.vim*
 
@@ -211,7 +211,7 @@ Examples:
 	In LaTeX, since "%" is used as the comment character, you can >
 		:let b:match_skip = 'r:%'
 <	Unfortunately, this will skip anything after "\%", an escaped "%".  To
-	allow for this, and also "\\%" (an excaped backslash followed by the
+	allow for this, and also "\\%" (an escaped backslash followed by the
 	comment character) you can >
 		:let b:match_skip = 'r:\(^\|[^\\]\)\(\\\\\)*%'
 <
@@ -356,7 +356,8 @@ The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
 The various |:vmap|s defined in the script (%, |g%|, |[%|, |]%|, |a%|) may
 have undesired effects in Select mode |Select-mode-mapping|.  At least, if you
 want to replace the selection with any character in "ag%[]" there will be a
-pause of |'updatetime'| first.
+pause of |'updatetime'| first. E.g., "yV%" would normally work linewise, but
+the plugin mapping makes it characterwise.
 
 It would be nice if "\0" were recognized as the entire pattern.  That is, it
 would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".

@@ -6,6 +6,7 @@
 #include "nvim/lib/kvec.h"
 
 #include "nvim/ascii.h"
+#include "nvim/log.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
@@ -13,6 +14,8 @@
 #include "nvim/option_defs.h"
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/edit.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
@@ -25,10 +28,11 @@ void state_enter(VimState *s)
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
-      break;
+      break;     // Terminate this state.
     } else if (check_result == -1) {
-      continue;
+      continue;  // check() again.
     }
+    // Execute this state.
 
     int key;
 
@@ -47,11 +51,13 @@ getkey:
       ui_flush();
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the
-      // mapping engine. If an event was put into the queue, we send K_EVENT
-      // directly.
+      // mapping engine.
       (void)os_inchar(NULL, 0, -1, 0);
       input_disable_events();
-      key = !multiqueue_empty(main_loop.events) ? K_EVENT : safe_vgetc();
+      // If an event was put into the queue, we send K_EVENT directly.
+      key = !multiqueue_empty(main_loop.events)
+            ? K_EVENT
+            : safe_vgetc();
     }
 
     if (key == K_EVENT) {
@@ -123,19 +129,25 @@ char *get_mode(void)
     if (State & VREPLACE_FLAG) {
       buf[0] = 'R';
       buf[1] = 'v';
-    } else if (State & REPLACE_FLAG) {
-      buf[0] = 'R';
     } else {
-      buf[0] = 'i';
+      if (State & REPLACE_FLAG) {
+        buf[0] = 'R';
+      } else {
+        buf[0] = 'i';
+      }
+      if (ins_compl_active()) {
+        buf[1] = 'c';
+      } else if (ctrl_x_mode == 1) {
+        buf[1] = 'x';
+      }
     }
-  } else if (State & CMDLINE) {
+  } else if ((State & CMDLINE) || exmode_active) {
     buf[0] = 'c';
-    if (exmode_active) {
+    if (exmode_active == EXMODE_VIM) {
       buf[1] = 'v';
+    } else if (exmode_active == EXMODE_NORMAL) {
+      buf[1] = 'e';
     }
-  } else if (exmode_active) {
-    buf[0] = 'c';
-    buf[1] = 'e';
   } else if (State & TERM_FOCUS) {
     buf[0] = 't';
   } else {

@@ -306,20 +306,14 @@ func Test_window_width()
   set winfixwidth
   vsplit Xc
   let [ww1, ww2, ww3] = [winwidth(1), winwidth(2), winwidth(3)]
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2, winwidth(2))
+  call assert_equal(2, winwidth(2))
   call assert_inrange(ww3, ww3 + 1, ww1)
   3wincmd >
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2,       winwidth(2))
+  call assert_equal(2,       winwidth(2))
   call assert_equal(ww1 + 3, winwidth(1))
   call assert_equal(ww3 - 3, winwidth(3))
   wincmd =
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2,   winwidth(2))
+  call assert_equal(2,   winwidth(2))
   call assert_equal(ww1, winwidth(1))
   call assert_equal(ww3, winwidth(3))
 
@@ -334,6 +328,50 @@ func Test_window_width()
   call assert_inrange(ww3, ww3 + 1, ww2)
 
   bw Xa Xb Xc
+endfunc
+
+func Test_equalalways_on_close()
+  set equalalways
+  vsplit
+  windo split
+  split
+  wincmd J
+  " now we have a frame top-left with two windows, a frame top-right with two
+  " windows and a frame at the bottom, full-width.
+  let height_1 = winheight(1)
+  let height_2 = winheight(2)
+  let height_3 = winheight(3)
+  let height_4 = winheight(4)
+  " closing the bottom window causes all windows to be resized.
+  close
+  call assert_notequal(height_1, winheight(1))
+  call assert_notequal(height_2, winheight(2))
+  call assert_notequal(height_3, winheight(3))
+  call assert_notequal(height_4, winheight(4))
+  call assert_equal(winheight(1), winheight(3))
+  call assert_equal(winheight(2), winheight(4))
+
+  1wincmd w
+  split
+  4wincmd w
+  resize + 5
+  " left column has three windows, equalized heights.
+  " right column has two windows, top one a bit higher
+  let height_1 = winheight(1)
+  let height_2 = winheight(2)
+  let height_4 = winheight(4)
+  let height_5 = winheight(5)
+  3wincmd w
+  " closing window in left column equalizes heights in left column but not in
+  " the right column
+  close
+  call assert_notequal(height_1, winheight(1))
+  call assert_notequal(height_2, winheight(2))
+  call assert_equal(height_4, winheight(3))
+  call assert_equal(height_5, winheight(4))
+
+  only
+  set equalalways&
 endfunc
 
 func Test_window_jump_tag()

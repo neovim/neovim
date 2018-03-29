@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 
-describe('ui/tabline', function()
+describe('ui/ext_tabline', function()
   local screen
   local event_tabs, event_curtab
 
@@ -21,37 +21,34 @@ describe('ui/tabline', function()
     screen:detach()
   end)
 
-  describe('externalized', function()
-    it('publishes UI events', function()
-      command("tabedit another-tab")
+  it('publishes UI events', function()
+    command("tabedit another-tab")
 
-      local expected_tabs = {
-        {tab = { id = 1 }, name = '[No Name]'},
-        {tab = { id = 2 }, name = 'another-tab'},
-      }
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({ id = 2 }, event_curtab)
-        eq(expected_tabs, event_tabs)
-      end)
+    local expected_tabs = {
+      {tab = { id = 1 }, name = '[No Name]'},
+      {tab = { id = 2 }, name = 'another-tab'},
+    }
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({ id = 2 }, event_curtab)
+      eq(expected_tabs, event_tabs)
+    end)
 
-      command("tabNext")
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({ id = 1 }, event_curtab)
-        eq(expected_tabs, event_tabs)
-      end)
-
+    command("tabNext")
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({ id = 1 }, event_curtab)
+      eq(expected_tabs, event_tabs)
     end)
   end)
 end)

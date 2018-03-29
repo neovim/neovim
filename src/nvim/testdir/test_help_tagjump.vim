@@ -18,6 +18,52 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*help.txt\*')
   helpclose
 
+  help |
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*bar\*')
+  helpclose
+
+  help "*
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*quotestar\*')
+  helpclose
+
+  help sp?it
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:split\*')
+  helpclose
+
+  help :?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:?\*')
+  helpclose
+
+  help FileW*Post
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*FileWritePost\*')
+  helpclose
+
+  help `ls`
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:ls\*')
+  helpclose
+
+  help ^X
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*CTRL-X\*')
+  helpclose
+
+  help i_^_CTRL-D
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*i_^_CTRL-D\*')
+  helpclose
+
+  exec "help \<C-V>"
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*CTRL-V\*')
+  helpclose
+
+
   exec "help! ('textwidth'"
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ "\\*'textwidth'\\*")
@@ -46,6 +92,16 @@ func Test_help_tagjump()
   exec "help! {address}."
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*{address}\*')
+  helpclose
+
+  exusage
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:index\*')
+  helpclose
+
+  viusage
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*normal-index\*')
   helpclose
 endfunc
 
@@ -89,17 +145,8 @@ func s:doc_config_teardown()
   endif
 endfunc
 
-func s:get_cmd_compl_list(cmd)
-  let list = []
-  let str = ''
-  for cnt in range(1, 999)
-    call feedkeys(a:cmd . repeat("\<Tab>", cnt) . "'\<C-B>let str='\<CR>", 'tx')
-    if str ==# a:cmd[1:]
-      break
-    endif
-    call add(list, str)
-  endfor
-  return list
+func s:get_help_compl_list(cmd)
+  return getcompletion(a:cmd, 'help')
 endfunc
 
 func Test_help_complete()
@@ -111,49 +158,49 @@ func Test_help_complete()
     if has('multi_lang')
       set helplang=
     endif
-    let list = s:get_cmd_compl_list(":h test")
-    call assert_equal(['h test-col', 'h test-char'], list)
+    let list = s:get_help_compl_list("test")
+    call assert_equal(['test-col', 'test-char'], list)
 
     if has('multi_lang')
       " 'helplang=ab' and help file lang is 'en'
       set helplang=ab
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(['h test-col', 'h test-char'], list)
+      let list = s:get_help_compl_list("test")
+      call assert_equal(['test-col', 'test-char'], list)
 
       " 'helplang=' and help file lang is 'en' and 'ab'
       set rtp+=Xdir1/doc-ab
       set helplang=
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(sort(['h test-col@en', 'h test-col@ab',
-            \             'h test-char@en', 'h test-char@ab']), sort(list))
+      let list = s:get_help_compl_list("test")
+      call assert_equal(sort(['test-col@en', 'test-col@ab',
+            \             'test-char@en', 'test-char@ab']), sort(list))
 
       " 'helplang=ab' and help file lang is 'en' and 'ab'
       set helplang=ab
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(sort(['h test-col', 'h test-col@en',
-            \             'h test-char', 'h test-char@en']), sort(list))
+      let list = s:get_help_compl_list("test")
+      call assert_equal(sort(['test-col', 'test-col@en',
+            \             'test-char', 'test-char@en']), sort(list))
 
       " 'helplang=' and help file lang is 'en', 'ab' and 'ja'
       set rtp+=Xdir1/doc-ja
       set helplang=
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(sort(['h test-col@en', 'h test-col@ab',
-            \             'h test-col@ja', 'h test-char@en',
-            \             'h test-char@ab', 'h test-char@ja']), sort(list))
+      let list = s:get_help_compl_list("test")
+      call assert_equal(sort(['test-col@en', 'test-col@ab',
+            \             'test-col@ja', 'test-char@en',
+            \             'test-char@ab', 'test-char@ja']), sort(list))
 
       " 'helplang=ab' and help file lang is 'en', 'ab' and 'ja'
       set helplang=ab
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(sort(['h test-col', 'h test-col@en',
-            \             'h test-col@ja', 'h test-char',
-            \             'h test-char@en', 'h test-char@ja']), sort(list))
+      let list = s:get_help_compl_list("test")
+      call assert_equal(sort(['test-col', 'test-col@en',
+            \             'test-col@ja', 'test-char',
+            \             'test-char@en', 'test-char@ja']), sort(list))
 
       " 'helplang=ab,ja' and help file lang is 'en', 'ab' and 'ja'
       set helplang=ab,ja
-      let list = s:get_cmd_compl_list(":h test")
-      call assert_equal(sort(['h test-col', 'h test-col@ja',
-            \             'h test-col@en', 'h test-char',
-            \             'h test-char@ja', 'h test-char@en']), sort(list))
+      let list = s:get_help_compl_list("test")
+      call assert_equal(sort(['test-col', 'test-col@ja',
+            \             'test-col@en', 'test-char',
+            \             'test-char@ja', 'test-char@en']), sort(list))
     endif
   catch
     call assert_exception('X')

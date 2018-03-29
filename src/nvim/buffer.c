@@ -64,7 +64,6 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -91,6 +90,57 @@ static char *e_auabort = N_("E855: Autocommands caused command to abort");
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
 
+// Read data from buffer for retrying.
+static int
+read_buffer(
+    int     read_stdin,     // read file from stdin, otherwise fifo
+    exarg_T *eap,           // for forced 'ff' and 'fenc' or NULL
+    int     flags)          // extra flags for readfile()
+{
+  int       retval = OK;
+  linenr_T  line_count;
+
+  //
+  // Read from the buffer which the text is already filled in and append at
+  // the end.  This makes it possible to retry when 'fileformat' or
+  // 'fileencoding' was guessed wrong.
+  //
+  line_count = curbuf->b_ml.ml_line_count;
+  retval = readfile(
+      read_stdin ? NULL : curbuf->b_ffname,
+      read_stdin ? NULL : curbuf->b_fname,
+      (linenr_T)line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+      flags | READ_BUFFER);
+  if (retval == OK) {
+    // Delete the binary lines.
+    while (--line_count >= 0) {
+      ml_delete((linenr_T)1, false);
+    }
+  } else {
+    // Delete the converted lines.
+    while (curbuf->b_ml.ml_line_count > line_count) {
+      ml_delete(line_count, false);
+    }
+  }
+  // Put the cursor on the first line.
+  curwin->w_cursor.lnum = 1;
+  curwin->w_cursor.col = 0;
+
+  if (read_stdin) {
+    // Set or reset 'modified' before executing autocommands, so that
+    // it can be changed there.
+    if (!readonlymode && !BUFEMPTY()) {
+      changed();
+    } else if (retval != FAIL) {
+      unchanged(curbuf, false);
+    }
+
+    apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
+                          curbuf, &retval);
+  }
+  return retval;
+}
+
 /*
  * Open current buffer, that is: open the memfile and read the file into
  * memory.
@@ -106,6 +156,7 @@ open_buffer (
   int retval = OK;
   bufref_T       old_curbuf;
   long old_tw = curbuf->b_p_tw;
+  int read_fifo = false;
 
   /*
    * The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
@@ -156,13 +207,45 @@ open_buffer (
 
   if (curbuf->b_ffname != NULL) {
     int old_msg_silent = msg_silent;
+#ifdef UNIX
+    int save_bin = curbuf->b_p_bin;
+    int perm;
+
+    perm = os_getperm((const char *)curbuf->b_ffname);
+    if (perm >= 0 && (0
+# ifdef S_ISFIFO
+                      || S_ISFIFO(perm)
+# endif
+# ifdef S_ISSOCK
+                      || S_ISSOCK(perm)
+# endif
+# ifdef OPEN_CHR_FILES
+                      || (S_ISCHR(perm)
+                          && is_dev_fd_file(curbuf->b_ffname))
+# endif
+                      )
+        ) {
+      read_fifo = true;
+    }
+    if (read_fifo) {
+      curbuf->b_p_bin = true;
+    }
+#endif
     if (shortmess(SHM_FILEINFO)) {
       msg_silent = 1;
     }
 
     retval = readfile(curbuf->b_ffname, curbuf->b_fname,
                       (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-                      flags | READ_NEW);
+                      flags | READ_NEW | (read_fifo ? READ_FIFO : 0));
+#ifdef UNIX
+    if (read_fifo) {
+      curbuf->b_p_bin = save_bin;
+      if (retval == OK) {
+        retval = read_buffer(false, eap, flags);
+      }
+    }
+#endif
     msg_silent = old_msg_silent;
 
     // Help buffer is filtered.
@@ -171,7 +254,6 @@ open_buffer (
     }
   } else if (read_stdin) {
     int save_bin = curbuf->b_p_bin;
-    linenr_T line_count;
 
     /*
      * First read the text in binary mode into the buffer.
@@ -185,41 +267,13 @@ open_buffer (
         flags | (READ_NEW + READ_STDIN));
     curbuf->b_p_bin = save_bin;
     if (retval == OK) {
-      line_count = curbuf->b_ml.ml_line_count;
-      retval = readfile(NULL, NULL, (linenr_T)line_count,
-          (linenr_T)0, (linenr_T)MAXLNUM, eap,
-          flags | READ_BUFFER);
-      if (retval == OK) {
-        /* Delete the binary lines. */
-        while (--line_count >= 0)
-          ml_delete((linenr_T)1, FALSE);
-      } else {
-        /* Delete the converted lines. */
-        while (curbuf->b_ml.ml_line_count > line_count)
-          ml_delete(line_count, FALSE);
-      }
-      /* Put the cursor on the first line. */
-      curwin->w_cursor.lnum = 1;
-      curwin->w_cursor.col = 0;
-
-      // Set or reset 'modified' before executing autocommands, so that
-      // it can be changed there.
-      if (!readonlymode && !bufempty()) {
-        changed();
-      } else if (retval == OK) {
-        unchanged(curbuf, false);
-      }
-
-      if (retval == OK) {
-        apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
-                              curbuf, &retval);
-      }
+      retval = read_buffer(true, eap, flags);
     }
   }
 
   /* if first time loading this buffer, init b_chartab[] */
   if (curbuf->b_flags & BF_NEVERLOADED) {
-    (void)buf_init_chartab(curbuf, FALSE);
+    (void)buf_init_chartab(curbuf, false);
     parse_cino(curbuf);
   }
 
@@ -234,7 +288,7 @@ open_buffer (
       || modified_was_set               // ":set modified" used in autocmd
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
     changed();
-  } else if (retval == OK && !read_stdin) {
+  } else if (retval != FAIL && !read_stdin && !read_fifo) {
     unchanged(curbuf, false);
   }
   save_file_ff(curbuf);                 // keep this fileformat
@@ -416,8 +470,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
       return;
     }
 
-    /* When the buffer becomes hidden, but is not unloaded, trigger
-     * BufHidden */
+    // When the buffer becomes hidden, but is not unloaded, trigger
+    // BufHidden
     if (!unload_buf) {
       buf->b_locked++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
@@ -1148,8 +1202,8 @@ do_buffer (
      */
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
-           && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
-      if (win_close(curwin, FALSE) == FAIL)
+           && (!ONE_WINDOW || first_tabpage->tp_next != NULL)) {
+      if (win_close(curwin, false) == FAIL)
         break;
     }
 
@@ -1333,31 +1387,40 @@ void set_curbuf(buf_T *buf, int action)
   /* Don't restart Select mode after switching to another buffer. */
   VIsual_reselect = FALSE;
 
-  /* close_windows() or apply_autocmds() may change curbuf */
+  // close_windows() or apply_autocmds() may change curbuf and wipe out "buf"
   prevbuf = curbuf;
-  bufref_T bufref;
-  set_bufref(&bufref, prevbuf);
+  bufref_T newbufref;
+  bufref_T prevbufref;
+  set_bufref(&prevbufref, prevbuf);
+  set_bufref(&newbufref, buf);
 
+  // Autocommands may delete the curren buffer and/or the buffer we wan to go
+  // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
-      || (bufref_valid(&bufref) && !aborting())) {
+      || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
+          && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
     if (unload) {
       close_windows(prevbuf, false);
     }
-    if (bufref_valid(&bufref) && !aborting()) {
+    if (bufref_valid(&prevbufref) && !aborting()) {
       win_T  *previouswin = curwin;
-      if (prevbuf == curbuf)
-        u_sync(FALSE);
-      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL, prevbuf,
-          unload ? action : (action == DOBUF_GOTO
-                             && !P_HID(prevbuf)
-                             && !bufIsChanged(
-                                 prevbuf)) ? DOBUF_UNLOAD : 0, FALSE);
-      if (curwin != previouswin && win_valid(previouswin))
-        /* autocommands changed curwin, Grr! */
+      if (prevbuf == curbuf) {
+        u_sync(false);
+      }
+      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL,
+                   prevbuf,
+                   unload
+                   ? action
+                   : (action == DOBUF_GOTO && !buf_hide(prevbuf)
+                      && !bufIsChanged(prevbuf)) ? DOBUF_UNLOAD : 0,
+                   false);
+      if (curwin != previouswin && win_valid(previouswin)) {
+        // autocommands changed curwin, Grr!
         curwin = previouswin;
+      }
     }
   }
   /* An autocommand may have deleted "buf", already entered it (e.g., when
@@ -1408,12 +1471,6 @@ void enter_buffer(buf_T *buf)
 
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
-
-  if (buf->terminal) {
-    terminal_resize(buf->terminal,
-                    (uint16_t)curwin->w_width,
-                    (uint16_t)curwin->w_height);
-  }
 
   /* Make sure the buffer is loaded. */
   if (curbuf->b_ml.ml_mfp == NULL) {    /* need to load the file */
@@ -1568,7 +1625,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       && curbuf != NULL
       && curbuf->b_ffname == NULL
       && curbuf->b_nwindows <= 1
-      && (curbuf->b_ml.ml_mfp == NULL || bufempty())) {
+      && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())) {
     buf = curbuf;
     /* It's like this buffer is deleted.  Watch out for autocommands that
      * change curbuf!  If that happens, allocate a new buffer anyway. */
@@ -1727,6 +1784,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
   clear_string_option(&buf->b_p_keymap);
+  keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);
   clear_string_option(&buf->b_p_com);
   clear_string_option(&buf->b_p_cms);
@@ -1760,6 +1818,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
   clear_string_option(&buf->b_p_bkc);
+  clear_string_option(&buf->b_p_menc);
 }
 
 
@@ -1822,7 +1881,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
     if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
-        && !bufempty()) {
+        && !BUFEMPTY()) {
       if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
       } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
@@ -2624,7 +2683,7 @@ void buflist_altfpos(win_T *win)
 }
 
 /// Check that "ffname" is not the same file as current file.
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  ffname  full path name to check
 bool otherfile(char_u *ffname)
@@ -2634,7 +2693,7 @@ bool otherfile(char_u *ffname)
 }
 
 /// Check that "ffname" is not the same file as the file loaded in "buf".
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  buf            buffer to check
 /// @param  ffname         full path name to check
@@ -3014,8 +3073,8 @@ static bool ti_change(char_u *str, char_u **last)
 /// Set current window title
 void resettitle(void)
 {
-  ui_call_set_title(cstr_as_string((char *)lasttitle));
   ui_call_set_icon(cstr_as_string((char *)lasticon));
+  ui_call_set_title(cstr_as_string((char *)lasttitle));
   ui_flush();
 }
 
@@ -4358,12 +4417,12 @@ do_arg_all (
       }
       wp->w_arg_idx = i;
 
-      if (i == opened_len && !keep_tabs) {    /* close this window */
-        if (P_HID(buf) || forceit || buf->b_nwindows > 1
+      if (i == opened_len && !keep_tabs) {    // close this window
+        if (buf_hide(buf) || forceit || buf->b_nwindows > 1
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
            * try autowriting. */
-          if (!P_HID(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
+          if (!buf_hide(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
             bufref_T bufref;
             set_bufref(&bufref, buf);
             (void)autowrite(buf, false);
@@ -4373,15 +4432,17 @@ do_arg_all (
               continue;
             }
           }
-          /* don't close last window */
-          if (firstwin == lastwin
-              && (first_tabpage->tp_next == NULL || !had_tab))
-            use_firstwin = TRUE;
-          else {
-            win_close(wp, !P_HID(buf) && !bufIsChanged(buf));
-            /* check if autocommands removed the next window */
-            if (!win_valid(wpnext))
-              wpnext = firstwin;                /* start all over... */
+          // don't close last window
+          if (ONE_WINDOW
+              && (first_tabpage->tp_next == NULL || !had_tab)) {
+            use_firstwin = true;
+          } else {
+            win_close(wp, !buf_hide(buf) && !bufIsChanged(buf));
+            // check if autocommands removed the next window
+            if (!win_valid(wpnext)) {
+              // start all over...
+              wpnext = firstwin;                
+            }
           }
         }
       }
@@ -4410,11 +4471,12 @@ do_arg_all (
   last_curwin = curwin;
   last_curtab = curtab;
   win_enter(lastwin, false);
-  /* ":drop all" should re-use an empty window to avoid "--remote-tab"
-   * leaving an empty tab page when executed locally. */
-  if (keep_tabs && bufempty() && curbuf->b_nwindows == 1
-      && curbuf->b_ffname == NULL && !curbuf->b_changed)
-    use_firstwin = TRUE;
+  // ":drop all" should re-use an empty window to avoid "--remote-tab"
+  // leaving an empty tab page when executed locally.
+  if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
+      && curbuf->b_ffname == NULL && !curbuf->b_changed) {
+    use_firstwin = true;
+  }
 
   for (i = 0; i < count && i < opened_len && !got_int; ++i) {
     if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1)
@@ -4453,14 +4515,15 @@ do_arg_all (
         new_curwin = curwin;
         new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL,
-          ECMD_ONE,
-          ((P_HID(curwin->w_buffer)
-            || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
-          + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
-        ++autocmd_no_leave;
-      use_firstwin = FALSE;
+      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
+                    ((buf_hide(curwin->w_buffer)
+                      || bufIsChanged(curwin->w_buffer))
+                     ? ECMD_HIDE : 0) + ECMD_OLDBUF,
+                    curwin);
+      if (use_firstwin) {
+        autocmd_no_leave++;
+      }
+      use_firstwin = false;
     }
     os_breakcheck();
 
@@ -4538,7 +4601,7 @@ void ex_buffer_all(exarg_T *eap)
                - tabline_height()
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
-          && firstwin != lastwin
+          && !ONE_WINDOW
           && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);
@@ -4647,14 +4710,14 @@ void ex_buffer_all(exarg_T *eap)
    * Close superfluous windows.
    */
   for (wp = lastwin; open_wins > count; ) {
-    r = (P_HID(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, FALSE) == OK);
+    r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
+         || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
     } else if (r) {
-      win_close(wp, !P_HID(wp->w_buffer));
-      --open_wins;
+      win_close(wp, !buf_hide(wp->w_buffer));
+      open_wins--;
       wp = lastwin;
     } else {
       wp = wp->w_prev;
@@ -5219,6 +5282,44 @@ int bufhl_add_hl(buf_T *buf,
     redraw_buf_later(buf, VALID);
   }
   return src_id;
+}
+
+/// Add highlighting to a buffer, bounded by two cursor positions,
+/// with an offset.
+///
+/// @param buf Buffer to add highlights to
+/// @param src_id src_id to use or 0 to use a new src_id group,
+///               or -1 for ungrouped highlight.
+/// @param hl_id Highlight group id
+/// @param pos_start Cursor position to start the hightlighting at
+/// @param pos_end Cursor position to end the highlighting at
+/// @param offset Move the whole highlighting this many columns to the right
+void bufhl_add_hl_pos_offset(buf_T *buf,
+                             int src_id,
+                             int hl_id,
+                             lpos_T pos_start,
+                             lpos_T pos_end,
+                             colnr_T offset)
+{
+  colnr_T hl_start = 0;
+  colnr_T hl_end = 0;
+
+  for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
+    if (pos_start.lnum < lnum && lnum < pos_end.lnum) {
+      hl_start = offset;
+      hl_end = MAXCOL;
+    } else if (lnum == pos_start.lnum && lnum < pos_end.lnum) {
+      hl_start = pos_start.col + offset + 1;
+      hl_end = MAXCOL;
+    } else if (pos_start.lnum < lnum && lnum == pos_end.lnum) {
+      hl_start = offset;
+      hl_end = pos_end.col + offset;
+    } else if (pos_start.lnum == lnum && pos_end.lnum == lnum) {
+      hl_start = pos_start.col + offset + 1;
+      hl_end = pos_end.col + offset;
+    }
+    (void)bufhl_add_hl(buf, src_id, hl_id, lnum, hl_start, hl_end);
+  }
 }
 
 /// Clear bufhl highlights from a given source group and range of lines.

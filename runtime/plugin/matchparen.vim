@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2016 Feb 16
+" Last Change: 2017 Sep 30
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -186,9 +186,23 @@ function! s:Highlight_Matching_Pair()
 endfunction
 
 " Define commands that will disable and enable the plugin.
-command! NoMatchParen windo silent! call matchdelete(3) | unlet! g:loaded_matchparen |
-	  \ au! matchparen
-command! DoMatchParen runtime plugin/matchparen.vim | windo doau CursorMoved
+command! DoMatchParen call s:DoMatchParen()
+command! NoMatchParen call s:NoMatchParen()
+
+func! s:NoMatchParen()
+  let w = winnr()
+  noau windo silent! call matchdelete(3)
+  unlet! g:loaded_matchparen
+  exe "noau ". w . "wincmd w"
+  au! matchparen
+endfunc
+
+func! s:DoMatchParen()
+  runtime plugin/matchparen.vim
+  let w = winnr()
+  silent windo doau CursorMoved
+  exe "noau ". w . "wincmd w"
+endfunc
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

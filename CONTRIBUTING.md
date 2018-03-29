@@ -14,7 +14,7 @@ low-risk/isolated tasks:
 Developer guidelines
 --------------------
 
-- Nvim developers should read `:help dev-help`.
+- Nvim developers should read `:help dev`.
 - External UI developers should read `:help dev-ui`.
 
 Reporting problems
@@ -24,9 +24,10 @@ Reporting problems
 - Search [existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
 - Disable plugins incrementally, to narrow down the cause of the issue.
-- When reporting a crash, include a stacktrace.
+- When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/Development-tips#backtrace-linux).
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
+- Include `cmake --system-information` for **build** issues.
 
 Pull requests ("PRs")
 ---------------------
@@ -91,11 +92,12 @@ and [AppVeyor].
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
 - If any tests fail, the build will fail.
-  See [Building Neovim#running-tests][wiki-run-tests] to run tests locally.
+  See [test/README.md#running-tests][run-tests] to run tests locally.
   Passing locally doesn't guarantee passing the CI build, because of the
   different compilers and platforms tested against.
-- CI runs [ASan] and other analyzers. To run valgrind locally:
-  `VALGRIND=1 make test`
+- CI runs [ASan] and other analyzers.
+    - To run valgrind locally: `VALGRIND=1 make test`
+    - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
 - The `lint` build ([#3174][3174]) checks modified lines _and their immediate
   neighbors_. This is to encourage incrementally updating the legacy style to
   meet our style guidelines.
@@ -166,7 +168,7 @@ as context, use the `-W` argument as well.
 [hygiene]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [style-guide]: http://neovim.io/develop/style-guide.xml
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
-[wiki-run-tests]: https://github.com/neovim/neovim/wiki/Building-Neovim#running-tests
+[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174

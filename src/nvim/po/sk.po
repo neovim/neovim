@@ -3870,6 +3870,7 @@ msgid ""
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr "Potom vyma¾te odkladací súbor s príponou .swp.\n"
+"\n"
 
 #. use msg() to start the scrolling properly
 #: ../memline.c:1327

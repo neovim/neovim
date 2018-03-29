@@ -54,6 +54,7 @@ describe('utf8', function()
     eq(1, eval('strchars("\\u20dd", 1)'))
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('customlist completion', function()
     source([[
       function! CustomComplete1(lead, line, pos)

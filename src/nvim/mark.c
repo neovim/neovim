@@ -171,6 +171,10 @@ void setpcmark(void)
   curwin->w_prev_pcmark = curwin->w_pcmark;
   curwin->w_pcmark = curwin->w_cursor;
 
+  if (curwin->w_pcmark.lnum == 0) {
+    curwin->w_pcmark.lnum = 1;
+  }
+
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
     curwin->w_jumplistlen = JUMPLISTSIZE;
@@ -951,11 +955,17 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
     one_adjust_nodel(&(curbuf->b_visual.vi_start.lnum));
     one_adjust_nodel(&(curbuf->b_visual.vi_end.lnum));
 
-    /* quickfix marks */
-    qf_mark_adjust(NULL, line1, line2, amount, amount_after);
-    /* location lists */
+    // quickfix marks
+    if (!qf_mark_adjust(NULL, line1, line2, amount, amount_after)) {
+      curbuf->b_has_qf_entry &= ~BUF_HAS_QF_ENTRY;
+    }
+    // location lists
+    bool found_one = false;
     FOR_ALL_TAB_WINDOWS(tab, win) {
-      qf_mark_adjust(win, line1, line2, amount, amount_after);
+      found_one |= qf_mark_adjust(win, line1, line2, amount, amount_after);
+    }
+    if (!found_one) {
+      curbuf->b_has_qf_entry &= ~BUF_HAS_LL_ENTRY;
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);

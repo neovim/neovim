@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         Relax NG compact syntax
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-17
+" Language:             Relax NG compact syntax
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-06-17
 
 if exists("b:current_syntax")
   finish

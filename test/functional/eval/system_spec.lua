@@ -5,6 +5,7 @@ local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
 local command = helpers.command
+local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
 
 local Screen = require('test.functional.ui.screen')
@@ -89,7 +90,9 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if not iswin() then
+      if iswin() then
+        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'echo', '%PATH%'])"))
+      else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
     end)
@@ -117,33 +120,47 @@ describe('system()', function()
     end
   end)
 
-  describe('executes shell function if passed a string', function()
+  describe('executes shell function', function()
     local screen
 
     before_each(function()
-        clear()
-        screen = Screen.new()
-        screen:attach()
+      clear()
+      screen = Screen.new()
+      screen:attach()
     end)
 
     after_each(function()
-        screen:detach()
+      screen:detach()
     end)
 
     if iswin() then
+      local function test_more()
+        eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
+      end
+      local function test_shell_unquoting()
+        eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
+        eq(0, eval('v:shell_error'))
+        eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
+      end
+
       it('with shell=cmd.exe', function()
         command('set shell=cmd.exe')
         eq('""\n', eval([[system('echo ""')]]))
         eq('"a b"\n', eval([[system('echo "a b"')]]))
         eq('a \nb\n', eval([[system('echo a & echo b')]]))
         eq('a \n', eval([[system('echo a 2>&1')]]))
+        test_more()
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
+        test_shell_unquoting()
       end)
 
       it('with shell=cmd', function()
         command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
+        test_more()
+        test_shell_unquoting()
       end)
 
       it('with shell=$COMSPEC', function()
@@ -151,6 +168,8 @@ describe('system()', function()
         if comspecshell == 'cmd.exe' then
           command('set shell=$COMSPEC')
           eq('"a b"\n', eval([[system('echo "a b"')]]))
+          test_more()
+          test_shell_unquoting()
         else
           pending('$COMSPEC is not cmd.exe: ' .. comspecshell)
         end
@@ -184,8 +203,10 @@ describe('system()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
-      feed(':call system("yes")<cr>')
+    it('`yes` interrupted with CTRL-C', function()
+      feed(':call system("' .. (iswin()
+        and 'for /L %I in (1,0,2) do @echo y'
+        or  'yes') .. '")<cr>')
       screen:expect([[
                                                              |
         ~                                                    |
@@ -200,8 +221,11 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        :call system("yes")                                  |
-      ]])
+]] .. (iswin()
+        and [[
+        :call system("for /L %I in (1,0,2) do @echo y")      |]]
+        or  [[
+        :call system("yes")                                  |]]))
       feed('<c-c>')
       screen:expect([[
         ^                                                     |
@@ -231,6 +255,8 @@ describe('system()', function()
       end
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
       feed_command('call system("echo -n echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
@@ -246,12 +272,18 @@ describe('system()', function()
       eq("input", eval('system("cat -", "input")'))
     end)
     it('to backgrounded command does not crash', function()
+      -- cmd.exe doesn't background a command with &
+      if iswin() then return end
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      feed_command('call system("cat - &")')
+      feed_command('call system("cat - &", "input")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)
       end
+      eq(2, eval("1+1"))  -- Still alive?
+    end)
+    it('works with an empty string', function()
+      eq("test\n", eval('system("echo test", "")'))
       eq(2, eval("1+1"))  -- Still alive?
     end)
   end)
@@ -271,9 +303,12 @@ describe('system()', function()
     end)
   end)
 
-  describe('input passed as Number', function()
-    it('stringifies the input', function()
-      eq('1', eval('system("cat", 1)'))
+  describe('Number input', function()
+    it('is treated as a buffer id', function()
+      command("put ='text in buffer 1'")
+      eq('\ntext in buffer 1\n', eval('system("cat", 1)'))
+      eq('Vim(echo):E86: Buffer 42 does not exist',
+         exc_exec('echo system("cat", 42)'))
     end)
   end)
 
@@ -284,7 +319,7 @@ describe('system()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by SOH characters', function()
-      eq('part1\001part2\001part3\n', eval('system("cat '..fname..'")'))
+      eq('part1\001part2\001part3\n', eval([[system('"cat" "]]..fname..[["')]]))
     end)
   end)
 
@@ -351,7 +386,7 @@ describe('systemlist()', function()
     end
   end)
 
-  describe('exectues shell function', function()
+  describe('executes shell function', function()
     local screen
 
     before_each(function()
@@ -384,7 +419,7 @@ describe('systemlist()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
+    it('`yes` interrupted with CTRL-C', function()
       feed(':call systemlist("yes | xargs")<cr>')
       screen:expect([[
                                                              |
@@ -442,12 +477,14 @@ describe('systemlist()', function()
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
-    before_each(create_file_with_nuls(fname))
+    before_each(function()
+      command('set ff=unix')
+      create_file_with_nuls(fname)()
+    end)
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      if helpers.pending_win32(pending) then return end
-      eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
+      eq({'part1\npart2\npart3'}, eval([[systemlist('"cat" "]]..fname..[["')]]))
     end)
   end)
 

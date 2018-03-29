@@ -608,8 +608,7 @@ bool mouse_scroll_horiz(int dir)
   return leftcol_changed();
 }
 
-// Adjust the clicked column position if there are concealed characters
-// before the current column.  But only when it's absolutely necessary.
+/// Adjusts the clicked column position when 'conceallevel' > 0
 static int mouse_adjust_click(win_T *wp, int row, int col)
 {
   if (!(wp->w_p_cole > 0 && curbuf->b_p_smc > 0
@@ -617,64 +616,102 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     return col;
   }
 
-  int end = (colnr_T)STRLEN(ml_get(wp->w_cursor.lnum));
-  int vend = getviscol2(end, 0);
+  // `col` is the position within the current line that is highlighted by the
+  // cursor without consideration for concealed characters.  The current line is
+  // scanned *up to* `col`, nudging it left or right when concealed characters
+  // are encountered.
+  //
+  // chartabsize() is used to keep track of the virtual column position relative
+  // to the line's bytes.  For example: if col == 9 and the line starts with a
+  // tab that's 8 columns wide, we would want the cursor to be highlighting the
+  // second byte, not the ninth.
 
-  if (col >= vend) {
-    return col;
-  }
+  linenr_T lnum = wp->w_cursor.lnum;
+  char_u *line = ml_get(lnum);
+  char_u *ptr = line;
+  char_u *ptr_end = line;
+  char_u *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
 
-  int i = wp->w_leftcol;
-
+  // Find the offset where scanning should begin.
+  int offset = wp->w_leftcol;
   if (row > 0) {
-    i += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp)
-                - wp->w_leftcol) + wp->w_skipcol;
+    offset += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp) -
+                     wp->w_leftcol + wp->w_skipcol);
   }
 
-  int start_col = i;
+  int vcol;
+
+  if (offset) {
+    // Skip everything up to an offset since nvim takes care of displaying the
+    // correct portion of the line when horizontally scrolling.
+    // When 'wrap' is enabled, only the row (of the wrapped line) needs to be
+    // checked for concealed characters.
+    vcol = 0;
+    while (vcol < offset && *ptr != NUL) {
+      vcol += chartabsize(ptr, vcol);
+      ptr += utfc_ptr2len(ptr);
+    }
+
+    ptr_row_offset = ptr;
+  }
+
+  // Align `ptr_end` with `col`
+  vcol = offset;
+  ptr_end = ptr_row_offset;
+  while (vcol < col && *ptr_end != NUL) {
+    vcol += chartabsize(ptr_end, vcol);
+    ptr_end += utfc_ptr2len(ptr_end);
+  }
+
   int matchid;
-  int last_matchid;
-  int bcol = end - (vend - col);
+  int prev_matchid;
+  int nudge = 0;
+  int cwidth = 0;
 
-  while (i < bcol) {
-    matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum, i);
+  vcol = offset;
 
+#define incr() nudge++; ptr_end += utfc_ptr2len(ptr_end)
+#define decr() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
+
+  while (ptr < ptr_end && *ptr != NUL) {
+    cwidth = chartabsize(ptr, vcol);
+    vcol += cwidth;
+    if (cwidth > 1 && *ptr == '\t' && nudge > 0) {
+      // A tab will "absorb" any previous adjustments.
+      cwidth = MIN(cwidth, nudge);
+      while (cwidth > 0) {
+        decr();
+        cwidth--;
+      }
+    }
+
+    matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
     if (matchid != 0) {
       if (wp->w_p_cole == 3) {
-        bcol++;
+        incr();
       } else {
-        if (row > 0 && i == start_col) {
-          // Check if the current concealed character is actually part of
-          // the previous wrapped row's conceal group.
-          last_matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum,
-                                              i - 1);
-          if (last_matchid == matchid) {
-            bcol++;
-          }
-        } else if (wp->w_p_cole == 1
-                   || (wp->w_p_cole == 2
-                       && (lcs_conceal != NUL
-                           || syn_get_sub_char() != NUL))) {
+        if (!(row > 0 && ptr == ptr_row_offset)
+            && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
+                                      && (lcs_conceal != NUL
+                                          || syn_get_sub_char() != NUL)))) {
           // At least one placeholder character will be displayed.
-          bcol--;
+          decr();
         }
 
-        last_matchid = matchid;
+        prev_matchid = matchid;
 
-        // Adjust for concealed text that spans more than one character.
-        do {
-          i++;
-          bcol++;
-          matchid = syn_get_concealed_id(wp, wp->w_cursor.lnum, i);
-        } while (last_matchid == matchid);
+        while (prev_matchid == matchid && *ptr != NUL) {
+          incr();
+          ptr += utfc_ptr2len(ptr);
+          matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
+        }
 
         continue;
       }
     }
 
-    i++;
+    ptr += utfc_ptr2len(ptr);
   }
 
-  return getviscol2(bcol, 0);
+  return col + nudge;
 }
-

@@ -8,13 +8,13 @@
 
 [![Travis Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
-[![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
+[![codecov](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
 [![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang Scan Build](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-studio Check](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs)
 
-<a href="https://buildd.debian.org/neovim"><img src="https://www.debian.org/logos/openlogo-nd-25.png" width="13" height="15">Debian</a>
-[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592000)](https://github.com/neovim/neovim/releases/)
+[![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
+[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -34,6 +34,15 @@ Install from source
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
 
+To install to a non-default location, set `CMAKE_INSTALL_PREFIX`:
+
+    make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/full/path/"
+    make install
+
+To list all targets:
+
+    cmake --build build --target help
+
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
 Install from package
@@ -48,17 +57,24 @@ and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Project layout
 --------------
 
-    ├─ ci/            Build server scripts
-    ├─ cmake/         Build scripts
-    ├─ runtime/       User plugins/docs
-    ├─ src/           Source code
-    ├─ third-party/   CMake subproject to build dependencies 
-    └─ test/          Test code
+    ├─ ci/              build automation
+    ├─ cmake/           build scripts
+    ├─ runtime/         user plugins/docs
+    ├─ src/             application source code (see src/nvim/README.md)
+    │  ├─ api/          API subsystem
+    │  ├─ eval/         VimL subsystem
+    │  ├─ event/        event-loop subsystem
+    │  ├─ generators/   code generation (pre-compilation)
+    │  ├─ lib/          generic data structures
+    │  ├─ lua/          lua subsystem
+    │  ├─ msgpack_rpc/  RPC subsystem
+    │  ├─ os/           low-level platform code
+    │  └─ tui/          built-in UI
+    ├─ third-party/     cmake subproject to build dependencies
+    └─ test/            tests (see test/README.md)
 
-- `third-party/` is activated if `USE_BUNDLED_DEPS` is undefined or the
-  `USE_BUNDLED` CMake option is true.
-- [Source README](src/nvim/README.md)
-- [Test README](test/README.md)
+- To disable `third-party/` specify `USE_BUNDLED_DEPS=NO` or `USE_BUNDLED=NO`
+  (CMake option).
 
 Features
 --------

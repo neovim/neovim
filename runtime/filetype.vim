@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Jan 06
+" Last Change:	2018 Feb 14
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -47,6 +47,9 @@ func! s:StarSetf(ft)
     exe 'setf ' . a:ft
   endif
 endfunc
+
+" Vim help file
+au BufNewFile,BufRead $VIMRUNTIME/doc/*.txt setf help
 
 " Abaqus or Trasys
 au BufNewFile,BufRead *.inp			call s:Check_inp()
@@ -284,14 +287,15 @@ au BufNewFile,BufRead *.bib			setf bib
 au BufNewFile,BufRead *.bst			setf bst
 
 " BIND configuration
-au BufNewFile,BufRead named.conf,rndc.conf	setf named
+" sudoedit uses namedXXXX.conf
+au BufNewFile,BufRead named*.conf,rndc*.conf,rndc*.key	setf named
 
 " BIND zone
 au BufNewFile,BufRead named.root		setf bindzone
 au BufNewFile,BufRead *.db			call s:BindzoneCheck('')
 
 func! s:BindzoneCheck(default)
-  if getline(1).getline(2).getline(3).getline(4) =~ '^; <<>> DiG [0-9.]\+ <<>>\|BIND.*named\|$ORIGIN\|$TTL\|IN\s\+SOA'
+  if getline(1).getline(2).getline(3).getline(4) =~ '^; <<>> DiG [0-9.]\+.* <<>>\|$ORIGIN\|$TTL\|IN\s\+SOA'
     setf bindzone
   elseif a:default != ''
     exe 'setf ' . a:default
@@ -626,7 +630,13 @@ au BufNewFile,BufRead dict.conf,.dictrc		setf dictconf
 au BufNewFile,BufRead dictd.conf		setf dictdconf
 
 " Diff files
-au BufNewFile,BufRead *.diff,*.rej,*.patch	setf diff
+au BufNewFile,BufRead *.diff,*.rej		setf diff
+au BufNewFile,BufRead *.patch
+	\ if getline(1) =~ '^From [0-9a-f]\{40\} Mon Sep 17 00:00:00 2001$' |
+	\   setf gitsendemail |
+	\ else |
+	\   setf diff |
+	\ endif
 
 " Dircolors
 au BufNewFile,BufRead .dir_colors,.dircolors,*/etc/DIR_COLORS	setf dircolors
@@ -795,6 +805,7 @@ if !empty($XDG_CONFIG_HOME)
   au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config	setf gitconfig
 endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
+au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
 au BufNewFile,BufRead .msg.[0-9]*
       \ if getline(1) =~ '^From.*# This line is ignored.$' |
       \   setf gitsendemail |
@@ -975,7 +986,7 @@ au BufNewFile,BufRead */etc/initng/*/*.i,*.ii	setf initng
 
 " Innovation Data Processing
 au BufRead,BufNewFile upstream.dat\c,upstream.*.dat\c,*.upstream.dat\c 	setf upstreamdat
-au BufRead,BufNewFile upstream.log\c,upstream.*.log\c,*.upstream.log\c 	setf upstreamlog
+au BufRead,BufNewFile fdrupstream.log,upstream.log\c,upstream.*.log\c,*.upstream.log\c,UPSTREAM-*.log\c 	setf upstreamlog
 au BufRead,BufNewFile upstreaminstall.log\c,upstreaminstall.*.log\c,*.upstreaminstall.log\c setf upstreaminstalllog
 au BufRead,BufNewFile usserver.log\c,usserver.*.log\c,*.usserver.log\c 	setf usserverlog
 au BufRead,BufNewFile usw2kagt.log\c,usw2kagt.*.log\c,*.usw2kagt.log\c 	setf usw2kagtlog
@@ -1011,7 +1022,7 @@ au BufNewFile,BufRead *.java,*.jav		setf java
 au BufNewFile,BufRead *.jj,*.jjt		setf javacc
 
 " JavaScript, ECMAScript
-au BufNewFile,BufRead *.js,*.javascript,*.es,*.jsx   setf javascript
+au BufNewFile,BufRead *.js,*.javascript,*.es,*.jsx,*.mjs   setf javascript
 
 " Java Server Pages
 au BufNewFile,BufRead *.jsp			setf jsp
@@ -1139,8 +1150,8 @@ au BufNewFile,BufRead *.m4
 " MaGic Point
 au BufNewFile,BufRead *.mgp			setf mgp
 
-" Mail (for Elm, trn, mutt, muttng, rn, slrn)
-au BufNewFile,BufRead snd.\d\+,.letter,.letter.\d\+,.followup,.article,.article.\d\+,pico.\d\+,mutt{ng,}-*-\w\+,mutt[[:alnum:]_-]\\\{6\},ae\d\+.txt,/tmp/SLRN[0-9A-Z.]\+,*.eml setf mail
+" Mail (for Elm, trn, mutt, muttng, rn, slrn, neomutt)
+au BufNewFile,BufRead snd.\d\+,.letter,.letter.\d\+,.followup,.article,.article.\d\+,pico.\d\+,mutt{ng,}-*-\w\+,mutt[[:alnum:]_-]\\\{6\},neomutt-*-\w\+,neomutt[[:alnum:]_-]\\\{6\},ae\d\+.txt,/tmp/SLRN[0-9A-Z.]\+,*.eml setf mail
 
 " Mail aliases
 au BufNewFile,BufRead */etc/mail/aliases,*/etc/aliases	setf mailaliases
@@ -1175,14 +1186,21 @@ au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md  setf markdown
 " Mason
 au BufNewFile,BufRead *.mason,*.mhtml,*.comp	setf mason
 
-" Matlab or Objective C
+" Mathematica, Matlab, Murphi or Objective C
 au BufNewFile,BufRead *.m			call s:FTm()
 
 func! s:FTm()
   let n = 1
-  while n < 10
+  let saw_comment = 0 " Whether we've seen a multiline comment leader.
+  while n < 100
     let line = getline(n)
-    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\|//\)'
+    if line =~ '^\s*/\*'
+      " /* ... */ is a comment in Objective C and Murphi, so we can't conclude
+      " it's either of them yet, but track this as a hint in case we don't see
+      " anything more definitive.
+      let saw_comment = 1
+    endif
+    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|//\)'
       setf objc
       return
     endif
@@ -1194,11 +1212,23 @@ func! s:FTm()
       setf mma
       return
     endif
+    if line =~ '^\c\s*\(\(type\|var\)\>\|--\)'
+      setf murphi
+      return
+    endif
     let n = n + 1
   endwhile
-  if exists("g:filetype_m")
+
+  if saw_comment
+    " We didn't see anything definitive, but this looks like either Objective C
+    " or Murphi based on the comment leader. Assume the former as it is more
+    " common.
+    setf objc
+  elseif exists("g:filetype_m")
+    " Use user specified default filetype for .m
     exe "setf " . g:filetype_m
   else
+    " Default is matlab
     setf matlab
   endif
 endfunc
@@ -1307,6 +1337,9 @@ au BufNewFile,BufRead *.mush			setf mush
 " Mutt setup file (also for Muttng)
 au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
 
+" N1QL
+au BufRead,BufNewfile *.n1ql,*.nql		setf n1ql
+
 " Nano
 au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 
@@ -1315,6 +1348,9 @@ au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 
 " Natural
 au BufNewFile,BufRead *.NS[ACGLMNPS]		setf natural
+
+" Noemutt setup file
+au BufNewFile,BufRead Neomuttrc			setf neomuttrc
 
 " Netrc
 au BufNewFile,BufRead .netrc			setf netrc
@@ -1362,6 +1398,9 @@ endfunc
 " Not Quite C
 au BufNewFile,BufRead *.nqc			setf nqc
 
+" NSE - Nmap Script Engine - uses Lua syntax
+au BufNewFile,BufRead *.nse			setf lua
+
 " NSIS
 au BufNewFile,BufRead *.nsi,*.nsh		setf nsis
 
@@ -1404,14 +1443,17 @@ au BufNewFile,BufRead *.dpr			setf pascal
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
 
+" PCMK - HAE - crm configure edit 
+au BufNewFile,BufRead *.pcmk 			setf pcmk
+
 " Perl
 if has("fname_case")
   au BufNewFile,BufRead *.pl,*.PL		call s:FTpl()
 else
   au BufNewFile,BufRead *.pl			call s:FTpl()
 endif
-au BufNewFile,BufRead *.plx,*.al		setf perl
-au BufNewFile,BufRead *.p6,*.pm6,*.pl6	setf perl6
+au BufNewFile,BufRead *.plx,*.al,*.psgi		setf perl
+au BufNewFile,BufRead *.p6,*.pm6,*.pl6		setf perl6
 
 func! s:FTpl()
   if exists("g:filetype_pl")
@@ -1798,6 +1840,9 @@ au BufNewFile,BufRead *.sa			setf sather
 " Scala
 au BufNewFile,BufRead *.scala			setf scala
 
+" SBT - Scala Build Tool
+au BufNewFile,BufRead *.sbt			setf sbt
+
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
@@ -2124,7 +2169,10 @@ au BufNewFile,BufRead ssh_config,*/.ssh/config	setf sshconfig
 au BufNewFile,BufRead sshd_config		setf sshdconfig
 
 " Stata
-au BufNewFile,BufRead *.ado,*.class,*.do,*.imata,*.mata   setf stata
+au BufNewFile,BufRead *.ado,*.do,*.imata,*.mata	setf stata
+" Also *.class, but not when it's a Java bytecode file
+au BufNewFile,BufRead *.class
+	\ if getline(1) !~ "^\xca\xfe\xba\xbe" | setf stata | endif
 
 " SMCL
 au BufNewFile,BufRead *.hlp,*.ihlp,*.smcl	setf smcl
@@ -2219,8 +2267,12 @@ func! s:FTtex()
     let format = tolower(matchstr(firstline, '\a\+'))
     let format = substitute(format, 'pdf', '', '')
     if format == 'tex'
+      let format = 'latex'
+    elseif format == 'plaintex'
       let format = 'plain'
     endif
+  elseif expand('%') =~ 'tex/context/.*/.*.tex'
+    let format = 'context'
   else
     " Default value, may be changed later:
     let format = exists("g:tex_flavor") ? g:tex_flavor : 'plain'
@@ -2262,7 +2314,7 @@ func! s:FTtex()
 endfunc
 
 " ConTeXt
-au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv,*.mkvi   setf context
+au BufNewFile,BufRead *.mkii,*.mkiv,*.mkvi   setf context
 
 " Texinfo
 au BufNewFile,BufRead *.texinfo,*.texi,*.txi	setf texinfo
@@ -2275,6 +2327,9 @@ au BufNewFile,BufRead .tidyrc,tidyrc		setf tidy
 
 " TF mud client
 au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
+
+" tmux configuration
+au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
 
 " TPP - Text Presentation Program
 au BufNewFile,BufReadPost *.tpp			setf tpp
@@ -2385,6 +2440,9 @@ au BufNewFile,BufRead *.wbt			setf winbatch
 
 " WSML
 au BufNewFile,BufRead *.wsml			setf wsml
+
+" WPL
+au BufNewFile,BufRead *.wpl			setf xml
 
 " WvDial
 au BufNewFile,BufRead wvdial.conf,.wvdialrc	setf wvdial
@@ -2661,7 +2719,7 @@ au BufNewFile,BufRead [mM]akefile*		call s:StarSetf('make')
 au BufNewFile,BufRead [rR]akefile*		call s:StarSetf('ruby')
 
 " Mail (also matches muttrc.vim, so this is below the other checks)
-au BufNewFile,BufRead mutt[[:alnum:]._-]\\\{6\}	setf mail
+au BufNewFile,BufRead {neo,}mutt[[:alnum:]._-]\\\{6\}	setf mail
 
 au BufNewFile,BufRead reportbug-*		call s:StarSetf('mail')
 
@@ -2675,6 +2733,10 @@ au BufNewFile,BufRead */etc/modprobe.*		call s:StarSetf('modconf')
 " Mutt setup file
 au BufNewFile,BufRead .mutt{ng,}rc*,*/.mutt{ng,}/mutt{ng,}rc*	call s:StarSetf('muttrc')
 au BufNewFile,BufRead mutt{ng,}rc*,Mutt{ng,}rc*		call s:StarSetf('muttrc')
+
+" Neomutt setup file
+au BufNewFile,BufRead .neomuttrc*,*/.neomutt/neomuttrc*	call s:StarSetf('neomuttrc')
+au BufNewFile,BufRead neomuttrc*,Neomuttrc*		call s:StarSetf('neomuttrc')
 
 " Nroff macros
 au BufNewFile,BufRead tmac.*			call s:StarSetf('nroff')
@@ -2745,8 +2807,13 @@ au BufNewFile,BufRead zsh*,zlog*		call s:StarSetf('zsh')
 
 " Plain text files, needs to be far down to not override others.  This avoids
 " the "conf" type being used if there is a line starting with '#'.
-au BufNewFile,BufRead *.txt,*.text,README	setf text
+au BufNewFile,BufRead *.text,README setf text
 
+" Help files match *.txt but should have a last line that is a modeline. 
+au BufNewFile,BufRead *.txt
+        \  if getline('$') !~ 'vim:.*ft=help'
+        \|   setf text
+        \| endif       
 
 " Use the filetype detect plugins.  They may overrule any of the previously
 " detected filetypes.
@@ -2757,12 +2824,12 @@ runtime! ftdetect/*.vim
 " state.
 augroup END
 
-" Generic configuration file (check this last, it's just guessing!)
+" Generic configuration file. Use FALLBACK, it's just guessing!
 au filetypedetect BufNewFile,BufRead,StdinReadPost *
 	\ if !did_filetype() && expand("<amatch>") !~ g:ft_ignore_pat
 	\    && (getline(1) =~ '^#' || getline(2) =~ '^#' || getline(3) =~ '^#'
 	\	|| getline(4) =~ '^#' || getline(5) =~ '^#') |
-	\   setf conf |
+	\   setf FALLBACK conf |
 	\ endif
 
 

@@ -131,23 +131,14 @@ bool os_isdir(const char_u *name)
 ///         NODE_WRITABLE: writable device, socket, fifo, etc.
 ///         NODE_OTHER: non-writable things
 int os_nodetype(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-#ifdef WIN32
-  // Edge case from Vim os_win32.c:
-  // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
-  // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
-  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
-    return NODE_WRITABLE;
-  }
-#endif
-
+#ifndef WIN32  // Unix
   uv_stat_t statbuf;
   if (0 != os_stat(name, &statbuf)) {
     return NODE_NORMAL;  // File doesn't exist.
   }
-
-#ifndef WIN32
-  // libuv does not handle BLK and DIR in uv_handle_type.
+  // uv_handle_type does not distinguish BLK and DIR.
   //    Related: https://github.com/joyent/libuv/pull/1421
   if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
     return NODE_NORMAL;
@@ -155,48 +146,51 @@ int os_nodetype(const char *name)
   if (S_ISBLK(statbuf.st_mode)) {  // block device isn't writable
     return NODE_OTHER;
   }
-#endif
-
-  // Vim os_win32.c:mch_nodetype does this (since patch 7.4.015):
-  //    if (enc_codepage >= 0 && (int)GetACP() != enc_codepage) {
-  //      wn = enc_to_utf16(name, NULL);
-  //      hFile = CreatFile(wn, ...)
-  // to get a HANDLE. But libuv just calls win32's _get_osfhandle() on the fd we
-  // give it. uv_fs_open calls fs__capture_path which does a similar dance and
-  // saves us the hassle.
-
-  int nodetype = NODE_WRITABLE;
-  int fd = os_open(name, O_RDONLY
-#ifdef O_NONBLOCK
-                   | O_NONBLOCK
-#endif
-                   , 0);
-  if (fd == -1) {
-    return NODE_OTHER;  // open() failed.
+  // Everything else is writable?
+  // buf_write() expects NODE_WRITABLE for char device /dev/stderr.
+  return NODE_WRITABLE;
+#else  // Windows
+  // Edge case from Vim os_win32.c:
+  // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
+  // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
+  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
+    return NODE_WRITABLE;
   }
 
-  switch (uv_guess_handle(fd)) {
-    case UV_TTY:         // FILE_TYPE_CHAR
-      nodetype = NODE_WRITABLE;
-      break;
-    case UV_FILE:        // FILE_TYPE_DISK
-      nodetype = NODE_NORMAL;
-      break;
-    case UV_NAMED_PIPE:  // not handled explicitly in Vim os_win32.c
-    case UV_UDP:         // unix only
-    case UV_TCP:         // unix only
+  // Vim os_win32.c:mch_nodetype does (since 7.4.015):
+  //    wn = enc_to_utf16(name, NULL);
+  //    hFile = CreatFile(wn, ...)
+  // to get a HANDLE. Whereas libuv just calls _get_osfhandle() on the fd we
+  // give it. But uv_fs_open later calls fs__capture_path which does a similar
+  // utf8-to-utf16 dance and saves us the hassle.
+
+  // macOS: os_open(/dev/stderr) would return UV_EACCES.
+  int fd = os_open(name, O_RDONLY
+# ifdef O_NONBLOCK
+                   | O_NONBLOCK
+# endif
+                   , 0);
+  if (fd < 0) {  // open() failed.
+    return NODE_NORMAL;
+  }
+  int guess = uv_guess_handle(fd);
+  if (close(fd) == -1) {
+    ELOG("close(%d) failed. name='%s'", fd, name);
+  }
+
+  switch (guess) {
+    case UV_TTY:          // FILE_TYPE_CHAR
+      return NODE_WRITABLE;
+    case UV_FILE:         // FILE_TYPE_DISK
+      return NODE_NORMAL;
+    case UV_NAMED_PIPE:   // not handled explicitly in Vim os_win32.c
+    case UV_UDP:          // unix only
+    case UV_TCP:          // unix only
     case UV_UNKNOWN_HANDLE:
     default:
-#ifdef WIN32
-      nodetype = NODE_NORMAL;
-#else
-      nodetype = NODE_WRITABLE;  // Everything else is writable?
-#endif
-      break;
+      return NODE_OTHER;  // Vim os_win32.c default
   }
-
-  close(fd);
-  return nodetype;
+#endif
 }
 
 /// Gets the absolute path of the currently running executable.
@@ -228,7 +222,7 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute_path(name);
+  bool no_path = !use_path || path_is_absolute(name);
 #ifndef WIN32
   // If the filename is "qualified" (relative or absolute) do not check $PATH.
   no_path |= (name[0] == '.'
@@ -250,7 +244,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 #endif
     if (ok) {
       if (abspath != NULL) {
-        *abspath = save_absolute_path(name);
+        *abspath = save_abs_path(name);
       }
       return true;
     }
@@ -363,7 +357,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #endif
     if (ok) {
       if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_absolute_path((char_u *)buf);
+        *abspath = save_abs_path((char_u *)buf);
       }
 
       rv = true;
@@ -393,9 +387,11 @@ end:
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
 /// @return file descriptor, or libuv error code on failure
-int os_open(const char* path, int flags, int mode)
-  FUNC_ATTR_NONNULL_ALL
+int os_open(const char *path, int flags, int mode)
 {
+  if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
+    return UV_EINVAL;
+  }
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
@@ -465,7 +461,7 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
   while (read_bytes != size) {
     assert(size >= read_bytes);
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
-                                          size - read_bytes);
+                                          IO_COUNT(size - read_bytes));
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
     }
@@ -568,7 +564,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
   while (written_bytes != size) {
     assert(size >= written_bytes);
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
-                                              size - written_bytes);
+                                              IO_COUNT(size - written_bytes));
     if (cur_written_bytes > 0) {
       written_bytes += (size_t)cur_written_bytes;
     }
@@ -602,10 +598,13 @@ int os_fsync(int fd)
 
 /// Get stat information for a file.
 ///
-/// @return libuv return code.
+/// @return libuv return code, or -errno
 static int os_stat(const char *name, uv_stat_t *statbuf)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (!name) {
+    return UV_EINVAL;
+  }
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
@@ -617,7 +616,6 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 ///
 /// @return libuv error code on error.
 int32_t os_getperm(const char *name)
-  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   int stat_result = os_stat(name, &statbuf);
@@ -656,7 +654,6 @@ int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 ///
 /// @return `true` if `path` exists
 bool os_path_exists(const char_u *path)
-  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   return os_stat((char *)path, &statbuf) == kLibuvSuccess;
@@ -846,7 +843,7 @@ int os_remove(const char *path)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo(const char *path, FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
@@ -857,8 +854,11 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo_link(const char *path, FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (path == NULL) {
+    return false;
+  }
   uv_fs_t request;
   int result = uv_fs_lstat(&fs_loop, &request, path, NULL);
   file_info->stat = request.statbuf;
@@ -990,7 +990,7 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
 char *os_resolve_shortcut(const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
@@ -1073,7 +1073,8 @@ shortcut_end:
 
 #endif
 
-int os_translate_sys_error(int sys_errno) {
+int os_translate_sys_error(int sys_errno)
+{
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
   return uv_translate_sys_error(sys_errno);
 #elif defined(WIN32)

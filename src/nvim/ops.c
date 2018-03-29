@@ -55,12 +55,11 @@ static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 
-static bool clipboard_didwarn_unnamed = false;
-
 // for behavior between start_batch_changes() and end_batch_changes())
-static bool clipboard_delay_update = false;  // delay clipboard update
 static int batch_change_count = 0;           // inside a script
+static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
+static bool clipboard_didwarn = false;
 
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
@@ -1630,13 +1629,18 @@ int op_replace(oparg_T *oap, int c)
   colnr_T oldlen;
   struct block_def bd;
   char_u              *after_p = NULL;
-  int had_ctrl_v_cr = (c == -1 || c == -2);
+  int had_ctrl_v_cr = false;
 
   if ((curbuf->b_ml.ml_flags & ML_EMPTY ) || oap->empty)
     return OK;              /* nothing to do */
 
-  if (had_ctrl_v_cr)
-    c = (c == -1 ? '\r' : '\n');
+  if (c == REPLACE_CR_NCHAR) {
+    had_ctrl_v_cr = true;
+    c = CAR;
+  } else if (c == REPLACE_NL_NCHAR) {
+    had_ctrl_v_cr = true;
+    c = NL;
+  }
 
   if (has_mbyte)
     mb_adjust_opend(oap);
@@ -1714,7 +1718,7 @@ int op_replace(oparg_T *oap, int c)
       // insert pre-spaces
       memset(newp + bd.textcol, ' ', (size_t)bd.startspaces);
       // insert replacement chars CHECK FOR ALLOCATED SPACE
-      // -1/-2 is used for entering CR literally.
+      // REPLACE_CR_NCHAR/REPLACE_NL_NCHAR is used for entering CR literally.
       size_t after_p_len = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
           // strlen(newp) at this point
@@ -2053,15 +2057,16 @@ void op_insert(oparg_T *oap, long count1)
       curwin->w_cursor = oap->end;
       check_cursor_col();
 
-      /* Works just like an 'i'nsert on the next character. */
-      if (!lineempty(curwin->w_cursor.lnum)
-          && oap->start_vcol != oap->end_vcol)
+      // Works just like an 'i'nsert on the next character.
+      if (!LINEEMPTY(curwin->w_cursor.lnum)
+          && oap->start_vcol != oap->end_vcol) {
         inc_cursor();
+      }
     }
   }
 
   t1 = oap->start;
-  edit(NUL, false, (linenr_T)count1);
+  (void)edit(NUL, false, (linenr_T)count1);
 
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
@@ -2181,9 +2186,10 @@ int op_change(oparg_T *oap)
   } else if (op_delete(oap) == FAIL)
     return FALSE;
 
-  if ((l > curwin->w_cursor.col) && !lineempty(curwin->w_cursor.lnum)
-      && !virtual_op)
+  if ((l > curwin->w_cursor.col) && !LINEEMPTY(curwin->w_cursor.lnum)
+      && !virtual_op) {
     inc_cursor();
+  }
 
   // check for still on same line (<CR> in inserted text meaningless)
   // skip blank lines too
@@ -2565,11 +2571,11 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   dict_T *dict = get_vim_var_dict(VV_EVENT);
 
   // the yanked text
-  list_T *list = tv_list_alloc();
+  list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
-  list->lv_lock = VAR_FIXED;
+  tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // the register type
@@ -2736,7 +2742,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     // Autocommands may be executed when saving lines for undo, which may make
     // y_array invalid.  Start undo now to avoid that.
     if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
-      ELOG(_("Failed to save undo information"));
+      ELOG("Failed to save undo information");
       return;
     }
   }
@@ -2856,25 +2862,30 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     }
   } else if (y_type == kMTLineWise) {
     lnum = curwin->w_cursor.lnum;
-    /* Correct line number for closed fold.  Don't move the cursor yet,
-     * u_save() uses it. */
-    if (dir == BACKWARD)
+    // Correct line number for closed fold.  Don't move the cursor yet,
+    // u_save() uses it.
+    if (dir == BACKWARD) {
       (void)hasFolding(lnum, &lnum, NULL);
-    else
+    } else {
       (void)hasFolding(lnum, NULL, &lnum);
-    if (dir == FORWARD)
-      ++lnum;
-    /* In an empty buffer the empty line is going to be replaced, include
-     * it in the saved lines. */
-    if ((bufempty() ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL)
+    }
+    if (dir == FORWARD) {
+      lnum++;
+    }
+    // In an empty buffer the empty line is going to be replaced, include
+    // it in the saved lines.
+    if ((BUFEMPTY() ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
       goto end;
-    if (dir == FORWARD)
+    }
+    if (dir == FORWARD) {
       curwin->w_cursor.lnum = lnum - 1;
-    else
+    } else {
       curwin->w_cursor.lnum = lnum;
-    curbuf->b_op_start = curwin->w_cursor;      /* for mark_adjust() */
-  } else if (u_save_cursor() == FAIL)
+    }
+    curbuf->b_op_start = curwin->w_cursor;      // for mark_adjust()
+  } else if (u_save_cursor() == FAIL) {
     goto end;
+  }
 
   yanklen = (int)STRLEN(y_array[0]);
 
@@ -3067,15 +3078,26 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       --lnum;
     new_cursor = curwin->w_cursor;
 
-    /*
-     * simple case: insert into current line
-     */
+    // simple case: insert into current line
     if (y_type == kMTCharWise && y_size == 1) {
+      linenr_T end_lnum = 0;  // init for gcc
+
+      if (VIsual_active) {
+        end_lnum = curbuf->b_visual.vi_end.lnum;
+        if (end_lnum < curbuf->b_visual.vi_start.lnum) {
+            end_lnum = curbuf->b_visual.vi_start.lnum;
+        }
+      }
+
       do {
         totlen = (size_t)(count * yanklen);
         if (totlen > 0) {
           oldp = ml_get(lnum);
-          newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
+          if (VIsual_active && col > (int)STRLEN(oldp)) {
+            lnum++;
+            continue;
+          }
+          newp = (char_u *)xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
           memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < (size_t)count; i++) {
@@ -3091,11 +3113,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
         }
-        if (VIsual_active)
+        if (VIsual_active) {
           lnum++;
-      } while (VIsual_active
-               && (lnum <= curbuf->b_visual.vi_end.lnum
-                   || lnum <= curbuf->b_visual.vi_start.lnum));
+        }
+      } while (VIsual_active && lnum <= end_lnum);
 
       if (VIsual_active) {  /* reset lnum to the last visual line */
         lnum--;
@@ -3178,9 +3199,9 @@ error:
           curbuf->b_op_start.lnum++;
       }
       // Skip mark_adjust when adding lines after the last one, there
-      // can't be marks there.
+      // can't be marks there. But still needed in diff mode.
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
-          < curbuf->b_ml.ml_line_count) {
+          < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
                     (linenr_T)MAXLNUM, nr_lines, 0L, false);
       }
@@ -3998,7 +4019,7 @@ format_lines (
           && (do_second_indent || do_number_indent)
           && prev_is_end_par
           && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        if (do_second_indent && !lineempty(curwin->w_cursor.lnum + 1)) {
+        if (do_second_indent && !LINEEMPTY(curwin->w_cursor.lnum + 1)) {
           if (leader_len == 0 && next_leader_len == 0) {
             /* no comment found */
             second_indent =
@@ -4855,9 +4876,8 @@ static void *get_reg_wrap_one_line(char_u *s, int flags)
   if (!(flags & kGRegList)) {
     return s;
   }
-  list_T *list = tv_list_alloc();
-  tv_list_append_string(list, NULL, 0);
-  list->lv_first->li_tv.vval.v_string = s;
+  list_T *const list = tv_list_alloc(1);
+  tv_list_append_allocated_string(list, (char *)s);
   return list;
 }
 
@@ -4906,7 +4926,7 @@ void *get_reg_contents(int regname, int flags)
     return NULL;
 
   if (flags & kGRegList) {
-    list_T *list = tv_list_alloc();
+    list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
     for (size_t i = 0; i < reg->y_size; i++) {
       tv_list_append_string(list, (const char *)reg->y_array[i], -1);
     }
@@ -5524,7 +5544,7 @@ int get_default_register_name(void)
 }
 
 /// Determine if register `*name` should be used as a clipboard.
-/// In an unnammed operation, `*name` is `NUL` and will be adjusted to `'*'/'+'` if
+/// In an unnamed operation, `*name` is `NUL` and will be adjusted to */+ if
 /// `clipboard=unnamed[plus]` is set.
 ///
 /// @param name The name of register, or `NUL` if unnamed.
@@ -5535,33 +5555,41 @@ int get_default_register_name(void)
 /// if the register isn't a clipboard or provider isn't available.
 static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 {
-  if (*name == '*' || *name == '+') {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet) {
-        EMSG("clipboard: No provider. Try \":CheckHealth\" or "
-             "\":h clipboard\".");
-      }
-      return NULL;
+#define MSG_NO_CLIP "clipboard: No provider. " \
+  "Try \":checkhealth\" or \":h clipboard\"."
+
+  yankreg_T *target = NULL;
+  bool explicit_cb_reg = (*name == '*' || *name == '+');
+  bool implicit_cb_reg = (*name == NUL) && (cb_flags & CB_UNNAMEDMASK);
+  if (!explicit_cb_reg && !implicit_cb_reg) {
+    goto end;
+  }
+
+  if (!eval_has_provider("clipboard")) {
+    if (batch_change_count == 1 && !quiet
+        && (!clipboard_didwarn || (explicit_cb_reg && !redirecting()))) {
+      clipboard_didwarn = true;
+      // Do NOT error (emsg()) here--if it interrupts :redir we get into
+      // a weird state, stuck in "redirect mode".
+      msg((char_u *)MSG_NO_CLIP);
     }
-    return &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
-  } else if ((*name == NUL) && (cb_flags & CB_UNNAMEDMASK)) {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet && !clipboard_didwarn_unnamed) {
-        msg((char_u *)"clipboard: No provider. Try \":CheckHealth\" or "
-            "\":h clipboard\".");
-        clipboard_didwarn_unnamed = true;
-      }
-      return NULL;
-    }
+    // ... else, be silent (don't flood during :while, :redir, etc.).
+    goto end;
+  }
+
+  if (explicit_cb_reg) {
+    target = &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
+    goto end;
+  } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {
+      // For "set" (copy), defer the clipboard call.
       clipboard_needs_update = true;
-      return NULL;
+      goto end;
     } else if (!writing && clipboard_needs_update) {
-      // use the internal value
-      return NULL;
+      // For "get" (paste), use the internal value.
+      goto end;
     }
 
-    yankreg_T *target;
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = (cb_flags & CB_UNNAMED && writing) ? '"': '+';
       target = &y_regs[PLUS_REGISTER];
@@ -5569,10 +5597,11 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       *name = '*';
       target = &y_regs[STAR_REGISTER];
     }
-    return target; // unnamed register
+    goto end;
   }
-  // don't do anything for other register names
-  return NULL;
+
+end:
+  return target;
 }
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)
@@ -5586,7 +5615,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   }
   free_register(reg);
 
-  list_T *const args = tv_list_alloc();
+  list_T *const args = tv_list_alloc(1);
   const char regname = (char)name;
   tv_list_append_string(args, &regname, 1);
 
@@ -5602,13 +5631,14 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
 
   list_T *res = result.vval.v_list;
   list_T *lines = NULL;
-  if (res->lv_len == 2 && res->lv_first->li_tv.v_type == VAR_LIST) {
-    lines = res->lv_first->li_tv.vval.v_list;
-    if (res->lv_last->li_tv.v_type != VAR_STRING) {
+  if (tv_list_len(res) == 2
+      && TV_LIST_ITEM_TV(tv_list_first(res))->v_type == VAR_LIST) {
+    lines = TV_LIST_ITEM_TV(tv_list_first(res))->vval.v_list;
+    if (TV_LIST_ITEM_TV(tv_list_last(res))->v_type != VAR_STRING) {
       goto err;
     }
-    char_u *regtype = res->lv_last->li_tv.vval.v_string;
-    if (regtype == NULL || strlen((char*)regtype) > 1) {
+    char_u *regtype = TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
+    if (regtype == NULL || strlen((char *)regtype) > 1) {
       goto err;
     }
     switch (regtype[0]) {
@@ -5633,20 +5663,21 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_type = kMTUnknown;
   }
 
-  reg->y_array = xcalloc((size_t)lines->lv_len, sizeof(uint8_t *));
-  reg->y_size = (size_t)lines->lv_len;
+  reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(char_u *));
+  reg->y_size = (size_t)tv_list_len(lines);
   reg->additional_data = NULL;
   reg->timestamp = 0;
   // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
   int i = 0;
-  for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {
-    if (li->li_tv.v_type != VAR_STRING) {
+  TV_LIST_ITER_CONST(lines, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i++] = (char_u *)xstrdupnul((char *)li->li_tv.vval.v_string);
-  }
+    reg->y_array[i++] = (char_u *)xstrdupnul(
+        (const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
+  });
 
   if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
@@ -5703,14 +5734,12 @@ static void set_clipboard(int name, yankreg_T *reg)
     return;
   }
 
-  list_T *lines = tv_list_alloc();
+  list_T *const lines = tv_list_alloc(
+      (ptrdiff_t)reg->y_size + (reg->y_type != kMTCharWise));
 
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(lines, (const char *)reg->y_array[i], -1);
   }
-
-  list_T *args = tv_list_alloc();
-  tv_list_append_list(args, lines);
 
   char regtype;
   switch (reg->y_type) {
@@ -5732,25 +5761,25 @@ static void set_clipboard(int name, yankreg_T *reg)
       assert(false);
     }
   }
-  tv_list_append_string(args, &regtype, 1);
 
-  const char regname = (char)name;
-  tv_list_append_string(args, &regname, 1);
+  list_T *args = tv_list_alloc(3);
+  tv_list_append_list(args, lines);
+  tv_list_append_string(args, &regtype, 1);
+  tv_list_append_string(args, ((char[]) { (char)name }), 1);
 
   (void)eval_call_provider("clipboard", "set", args);
 }
 
-/// Avoid clipboard (slow) during batch operations (i.e., a script).
+/// Avoid slow things (clipboard) during batch operations (while/for-loops).
 void start_batch_changes(void)
 {
   if (++batch_change_count > 1) {
     return;
   }
   clipboard_delay_update = true;
-  clipboard_needs_update = false;
 }
 
-/// Update the clipboard after batch changes finished.
+/// Counterpart to start_batch_changes().
 void end_batch_changes(void)
 {
   if (--batch_change_count > 0) {
@@ -5759,10 +5788,36 @@ void end_batch_changes(void)
   }
   clipboard_delay_update = false;
   if (clipboard_needs_update) {
-    set_clipboard(NUL, y_previous);
+    // must be before, as set_clipboard will invoke
+    // start/end_batch_changes recursively
     clipboard_needs_update = false;
+    // unnamed ("implicit" clipboard)
+    set_clipboard(NUL, y_previous);
   }
 }
+
+int save_batch_count(void)
+{
+  int save_count = batch_change_count;
+  batch_change_count = 0;
+  clipboard_delay_update = false;
+  if (clipboard_needs_update) {
+    clipboard_needs_update = false;
+    // unnamed ("implicit" clipboard)
+    set_clipboard(NUL, y_previous);
+  }
+  return save_count;
+}
+
+void restore_batch_count(int save_count)
+{
+  assert(batch_change_count == 0);
+  batch_change_count = save_count;
+  if (batch_change_count > 0) {
+    clipboard_delay_update = true;
+  }
+}
+
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)

@@ -31,6 +31,30 @@ function History_Tests(hist)
   call assert_equal('ls', histget(a:hist, -1))
   call assert_equal(4, histnr(a:hist))
 
+  let a=execute('history ' . a:hist)
+  call assert_match("^\n      #  \\S* history\n      3  buffers\n>     4  ls$", a)
+  let a=execute('history all')
+  call assert_match("^\n      #  .* history\n      3  buffers\n>     4  ls", a)
+
+  if len(a:hist) > 0
+    let a=execute('history ' . a:hist . ' 2')
+    call assert_match("^\n      #  \\S* history$", a)
+    let a=execute('history ' . a:hist . ' 3')
+    call assert_match("^\n      #  \\S* history\n      3  buffers$", a)
+    let a=execute('history ' . a:hist . ' 4')
+    call assert_match("^\n      #  \\S* history\n>     4  ls$", a)
+    let a=execute('history ' . a:hist . ' 3,4')
+    call assert_match("^\n      #  \\S* history\n      3  buffers\n>     4  ls$", a)
+    let a=execute('history ' . a:hist . ' -1')
+    call assert_match("^\n      #  \\S* history\n>     4  ls$", a)
+    let a=execute('history ' . a:hist . ' -2')
+    call assert_match("^\n      #  \\S* history\n      3  buffers$", a)
+    let a=execute('history ' . a:hist . ' -2,')
+    call assert_match("^\n      #  \\S* history\n      3  buffers\n>     4  ls$", a)
+    let a=execute('history ' . a:hist . ' -3')
+    call assert_match("^\n      #  \\S* history$", a)
+  endif
+
   " Test for removing entries matching a pattern
   for i in range(1, 3)
       call histadd(a:hist, 'text_' . i)

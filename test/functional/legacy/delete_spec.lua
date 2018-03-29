@@ -2,8 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local eq, eval, command = helpers.eq, helpers.eval, helpers.command
 
-if helpers.pending_win32(pending) then return end
-
 describe('Test for delete()', function()
   before_each(clear)
 
@@ -48,7 +46,11 @@ describe('Test for delete()', function()
       split Xfile
       call setline(1, ['a', 'b'])
       wq
-      silent !ln -s Xfile Xlink
+      if has('win32')
+        silent !mklink Xlink Xfile
+      else
+        silent !ln -s Xfile Xlink
+      endif
     ]])
     -- Delete the link, not the file
     eq(0, eval("delete('Xlink')"))
@@ -58,7 +60,11 @@ describe('Test for delete()', function()
 
   it('symlink directory delete', function()
     command("call mkdir('Xdir1')")
-    command("silent !ln -s Xdir1 Xlink")
+    if helpers.iswin() then
+      command("silent !mklink /j Xlink Xdir1")
+    else
+      command("silent !ln -s Xdir1 Xlink")
+    end
     eq(1, eval("isdirectory('Xdir1')"))
     eq(1, eval("isdirectory('Xlink')"))
     -- Delete the link, not the directory
@@ -78,7 +84,11 @@ describe('Test for delete()', function()
       w Xdir3/subdir/Xfile
       w Xdir4/Xfile
       close
-      silent !ln -s ../Xdir4 Xdir3/Xlink
+      if has('win32')
+        silent !mklink /j Xdir3\Xlink Xdir4
+      else
+        silent !ln -s ../Xdir4 Xdir3/Xlink
+      endif
     ]])
 
     eq(1, eval("isdirectory('Xdir3')"))

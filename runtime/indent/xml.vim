@@ -1,6 +1,6 @@
 " Language:	xml
 " Maintainer:	Johannes Zellner <johannes@zellner.org>
-" Last Change:	2012 Jul 25
+" Last Change:	2017 Jun 13
 " Notes:	1) does not indent pure non-xml code (e.g. embedded scripts)
 "		2) will be confused by unbalanced tags in comments
 "		or CDATA sections.
@@ -67,7 +67,7 @@ endfun
 fun! <SID>XmlIndentSum(lnum, style, add)
     let line = getline(a:lnum)
     if a:style == match(line, '^\s*</')
-	return (&sw *
+	return (shiftwidth() *
 	\  (<SID>XmlIndentWithPattern(line, b:xml_indent_open)
 	\ - <SID>XmlIndentWithPattern(line, b:xml_indent_close)
 	\ - <SID>XmlIndentWithPattern(line, '.\{-}/>'))) + a:add

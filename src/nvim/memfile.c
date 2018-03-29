@@ -376,8 +376,9 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
 {
   unsigned flags = hp->bh_flags;
 
-  if ((flags & BH_LOCKED) == 0)
-    EMSG(_("E293: block was not locked"));
+  if ((flags & BH_LOCKED) == 0) {
+    IEMSG(_("E293: block was not locked"));
+  }
   flags &= ~BH_LOCKED;
   if (dirty) {
     flags |= BH_DIRTY;
@@ -895,6 +896,7 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
 {
   // fname cannot be NameBuff, because it must have been allocated.
   mf_set_fnames(mfp, fname);
+  assert(mfp->mf_fname != NULL);
 
   /// Extra security check: When creating a swap file it really shouldn't
   /// exist yet. If there is a symbolic link, this is most likely an attack.

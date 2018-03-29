@@ -30,8 +30,10 @@
 
 #define USE_CRNL
 
-// We have our own RGB macro in macros.h.
-#undef RGB
+// Windows defines a RGB macro that produces 0x00bbggrr color values for use
+// with GDI. Our macro is different, and we don't use GDI.
+// Duplicated from macros.h to avoid include-order sensitivity.
+#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
 
 #ifdef _MSC_VER
 # ifndef inline
@@ -39,6 +41,9 @@
 # endif
 # ifndef restrict
 #  define restrict __restrict
+# endif
+# ifndef STDIN_FILENO
+#  define STDIN_FILENO _fileno(stdin)
 # endif
 # ifndef STDOUT_FILENO
 #  define STDOUT_FILENO _fileno(stdout)
@@ -55,6 +60,7 @@
 
 #ifdef _MSC_VER
 typedef SSIZE_T ssize_t;
+typedef int mode_t;
 #endif
 
 #ifndef SSIZE_MAX
@@ -89,6 +95,16 @@ typedef SSIZE_T ssize_t;
 #endif
 #if !defined(S_ISCHR) && defined(S_IFCHR)
 # define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
+#endif
+
+#ifndef STDIN_FILENO
+# define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
 #endif
 
 #endif  // NVIM_OS_WIN_DEFS_H

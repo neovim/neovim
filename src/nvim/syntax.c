@@ -42,6 +42,7 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
 
@@ -51,6 +52,7 @@ static bool did_syntax_onoff = false;
 struct hl_group {
   char_u      *sg_name;         ///< highlight group name
   char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_cleared;               ///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
   int sg_set;                   ///< combination of flags in \ref SG_SET
@@ -62,7 +64,7 @@ struct hl_group {
   int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
   int sg_gui;                   ///< "gui=" highlighting attributes
-                                ///< (combination of \ref HL_ATTRIBUTES)
+                                ///< (combination of \ref HlAttrFlags)
   RgbValue sg_rgb_fg;           ///< RGB foreground color
   RgbValue sg_rgb_bg;           ///< RGB background color
   RgbValue sg_rgb_sp;           ///< RGB special color
@@ -78,10 +80,13 @@ struct hl_group {
 #define SG_LINK         8       // link has been set
 /// @}
 
-// highlight groups for 'highlight' option
+// builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
-#define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
+static inline struct hl_group * HL_TABLE(void)
+{
+  return ((struct hl_group *)((highlight_ga.ga_data)));
+}
 
 #define MAX_HL_ID       20000   /* maximum value for a highlight ID. */
 
@@ -100,10 +105,8 @@ static int include_none = 0;    /* when 1 include "nvim/None" */
 static int include_default = 0; /* when 1 include "nvim/default" */
 static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 
-/*
- * The "term", "cterm" and "gui" arguments can be any combination of the
- * following names, separated by commas (but no spaces!).
- */
+/// The "term", "cterm" and "gui" arguments can be any combination of the
+/// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
 {"bold", "standout", "underline", "undercurl",
  "italic", "reverse", "inverse", "NONE"};
@@ -878,7 +881,8 @@ static void syn_start_line(void)
   }
 
   next_match_idx = -1;
-  ++current_line_id;
+  current_line_id++;
+  next_seqnr = 1;
 }
 
 /*
@@ -1596,6 +1600,7 @@ get_syntax_attr (
     current_id = 0;
     current_trans_id = 0;
     current_flags = 0;
+    current_seqnr = 0;
     return 0;
   }
 
@@ -1666,8 +1671,9 @@ syn_current_attr (
      * If we found a match after the last column, use it.
      */
     if (next_match_idx >= 0 && next_match_col >= (int)current_col
-        && next_match_col != MAXCOL)
-      (void)push_next_match(NULL);
+        && next_match_col != MAXCOL) {
+      (void)push_next_match();
+    }
 
     current_finished = TRUE;
     current_state_stored = FALSE;
@@ -1774,8 +1780,9 @@ syn_current_attr (
                   cur_si->si_trans_id = CUR_STATE(
                       current_state.ga_len - 2).si_trans_id;
                 }
-              } else
+              } else {
                 cur_si->si_attr = syn_id2attr(syn_id);
+              }
               cur_si->si_cont_list = NULL;
               cur_si->si_next_list = next_list;
               check_keepend();
@@ -1985,9 +1992,10 @@ syn_current_attr (
              * endless loop). */
             GA_APPEND(int, &zero_width_next_ga, next_match_idx);
             next_match_idx = -1;
-          } else
-            cur_si = push_next_match(cur_si);
-          found_match = TRUE;
+          } else {
+            cur_si = push_next_match();
+          }
+          found_match = true;
         }
       }
     }
@@ -2036,6 +2044,7 @@ syn_current_attr (
   current_id = 0;
   current_trans_id = 0;
   current_flags = 0;
+  current_seqnr = 0;
   if (cur_si != NULL) {
     for (int idx = current_state.ga_len - 1; idx >= 0; --idx) {
       sip = &CUR_STATE(idx);
@@ -2124,9 +2133,11 @@ syn_current_attr (
 
   /* nextgroup ends at end of line, unless "skipnl" or "skipempty" present */
   if (current_next_list != NULL
-      && syn_getcurline()[current_col + 1] == NUL
-      && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY)))
+      && (line = syn_getcurline())[current_col] != NUL
+      && line[current_col + 1] == NUL
+      && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))) {
     current_next_list = NULL;
+  }
 
   if (!GA_EMPTY(&zero_width_next_ga))
     ga_clear(&zero_width_next_ga);
@@ -2167,9 +2178,10 @@ static int did_match_already(int idx, garray_T *gap)
 /*
  * Push the next match onto the stack.
  */
-static stateitem_T *push_next_match(stateitem_T *cur_si)
+static stateitem_T *push_next_match(void)
 {
-  synpat_T    *spp;
+  stateitem_T *cur_si;
+  synpat_T *spp;
   int save_flags;
 
   spp = &(SYN_ITEMS(syn_block)[next_match_idx]);
@@ -3013,12 +3025,19 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2)
-    curwin->w_s->b_syn_conceal = TRUE;
-  else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3)
-    curwin->w_s->b_syn_conceal = FALSE;
-  else
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_conceal) {
+      MSG(_("syn conceal on"));
+    } else {
+      MSG(_("syn conceal off"));
+    }
+  } else if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2) {
+    curwin->w_s->b_syn_conceal = true;
+  } else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3) {
+    curwin->w_s->b_syn_conceal = false;
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+  }
 }
 
 /*
@@ -3034,12 +3053,19 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5)
-    curwin->w_s->b_syn_ic = FALSE;
-  else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6)
-    curwin->w_s->b_syn_ic = TRUE;
-  else
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_ic) {
+      MSG(_("syntax case ignore"));
+    } else {
+      MSG(_("syntax case match"));
+    }
+  } else if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5) {
+    curwin->w_s->b_syn_ic = false;
+  } else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6) {
+    curwin->w_s->b_syn_ic = true;
+  } else {
     EMSG2(_("E390: Illegal argument: %s"), arg);
+  }
 }
 
 /*
@@ -3055,7 +3081,15 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
     return;
 
   next = skiptowhite(arg);
-  if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
+  if (*arg == NUL) {
+    if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
+      MSG(_("syntax spell toplevel"));
+    } else if (curwin->w_s->b_syn_spell == SYNSPL_NOTOP) {
+      MSG(_("syntax spell notoplevel"));
+    } else {
+      MSG(_("syntax spell default"));
+    }
+  } else if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
   } else if (STRNICMP(arg, "notoplevel", 10) == 0 && next - arg == 10) {
     curwin->w_s->b_syn_spell = SYNSPL_NOTOP;
@@ -3115,10 +3149,11 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
  */
 void syntax_clear(synblock_T *block)
 {
-  block->b_syn_error = FALSE;       /* clear previous error */
-  block->b_syn_ic = FALSE;          /* Use case, by default */
-  block->b_syn_spell = SYNSPL_DEFAULT;   /* default spell checking */
-  block->b_syn_containedin = FALSE;
+  block->b_syn_error = false;           // clear previous error
+  block->b_syn_ic = false;              // Use case, by default
+  block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
+  block->b_syn_containedin = false;
+  block->b_syn_conceal = false;
 
   /* free the keywords */
   clear_keywtab(&block->b_keywtab);
@@ -3995,18 +4030,19 @@ get_group_name (
  * Return NULL for any error;
  */
 static char_u *
-get_syn_options (
-    char_u *arg,                   /* next argument to be checked */
-    syn_opt_arg_T *opt,                   /* various things */
-    int *conceal_char
+get_syn_options(
+    char_u *arg,            // next argument to be checked
+    syn_opt_arg_T *opt,     // various things
+    int *conceal_char,
+    int skip                // TRUE if skipping over command
 )
 {
   char_u      *gname_start, *gname;
   int syn_id;
-  int len;
+  int len = 0;
   char        *p;
   int fidx;
-  static struct flag {
+  static const struct flag {
     char    *name;
     int argtype;
     int flags;
@@ -4029,7 +4065,7 @@ get_syn_options (
                   {"cCoOnNtTaAiInNsS",        1,      0},
                   {"cCoOnNtTaAiInNeEdDiInN",  2,      0},
                   {"nNeExXtTgGrRoOuUpP",      3,      0},};
-  static char *first_letters = "cCoOkKeEtTsSgGdDfFnN";
+  static const char *const first_letters = "cCoOkKeEtTsSgGdDfFnN";
 
   if (arg == NULL)              /* already detected error */
     return NULL;
@@ -4049,9 +4085,10 @@ get_syn_options (
     for (fidx = ARRAY_SIZE(flagtab); --fidx >= 0; ) {
       p = flagtab[fidx].name;
       int i;
-      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len)
+      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
         if (arg[len] != p[i] && arg[len] != p[i + 1])
           break;
+      }
       if (p[i] == NUL && (ascii_iswhite(arg[len])
                           || (flagtab[fidx].argtype > 0
                               ? arg[len] == '='
@@ -4073,14 +4110,17 @@ get_syn_options (
         EMSG(_("E395: contains argument not accepted here"));
         return NULL;
       }
-      if (get_id_list(&arg, 8, &opt->cont_list) == FAIL)
+      if (get_id_list(&arg, 8, &opt->cont_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 2)   {
-      if (get_id_list(&arg, 11, &opt->cont_in_list) == FAIL)
+      if (get_id_list(&arg, 11, &opt->cont_in_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 3)   {
-      if (get_id_list(&arg, 9, &opt->next_list) == FAIL)
+      if (get_id_list(&arg, 9, &opt->next_list, skip) == FAIL) {
         return NULL;
+      }
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=')   {
       /* cchar=? */
       if (has_mbyte) {
@@ -4199,11 +4239,11 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
    */
   eap->argt |= (XFILE | NOSPC);
   separate_nextcmd(eap);
-  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute_path(eap->arg)) {
-    /* For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the
-     * file.  Need to expand the file name first.  In other cases
-     * ":runtime!" is used. */
-    source = TRUE;
+  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute(eap->arg)) {
+    // For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the
+    // file.  Need to expand the file name first.  In other cases
+    // ":runtime!" is used.
+    source = true;
     if (expand_filename(eap, syn_cmdlinep, &errormsg) == FAIL) {
       if (errormsg != NULL)
         EMSG(errormsg);
@@ -4250,7 +4290,11 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
   rest = get_group_name(arg, &group_name_end);
 
   if (rest != NULL) {
-    syn_id = syn_check_group(arg, (int)(group_name_end - arg));
+    if (eap->skip) {
+      syn_id = -1;
+    } else {
+      syn_id = syn_check_group(arg, (int)(group_name_end - arg));
+    }
     if (syn_id != 0) {
       // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
@@ -4269,7 +4313,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       cnt = 0;
       p = keyword_copy;
       for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
         if (rest == NULL || ends_excmd(*rest)) {
           break;
         }
@@ -4368,17 +4412,18 @@ syn_cmd_match (
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   /* get the pattern. */
   init_syn_patterns();
   memset(&item, 0, sizeof(item));
   rest = get_syn_pattern(rest, &item);
-  if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL))
+  if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
     syn_opt_arg.flags |= HL_HAS_EOL;
+  }
 
-  /* Get options after the pattern */
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+  // Get options after the pattern
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   if (rest != NULL) {           /* all arguments are valid */
     /*
@@ -4490,14 +4535,13 @@ syn_cmd_region (
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
 
-  /*
-   * get the options, patterns and matchgroup.
-   */
+  // get the options, patterns and matchgroup.
   while (rest != NULL && !ends_excmd(*rest)) {
-    /* Check for option arguments */
-    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-    if (rest == NULL || ends_excmd(*rest))
+    // Check for option arguments
+    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+    if (rest == NULL || ends_excmd(*rest)) {
       break;
+    }
 
     /* must be a pattern or matchgroup then */
     key_end = rest;
@@ -4919,13 +4963,17 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
         break;
 
       clstr_list = NULL;
-      if (get_id_list(&rest, opt_len, &clstr_list) == FAIL) {
+      if (get_id_list(&rest, opt_len, &clstr_list, eap->skip) == FAIL) {
         EMSG2(_(e_invarg2), rest);
         break;
       }
-      syn_combine_list(&SYN_CLSTR(curwin->w_s)[scl_id].scl_list,
-          &clstr_list, list_op);
-      got_clstr = TRUE;
+      if (scl_id >= 0) {
+        syn_combine_list(&SYN_CLSTR(curwin->w_s)[scl_id].scl_list,
+                         &clstr_list, list_op);
+      } else {
+        xfree(clstr_list);
+      }
+      got_clstr = true;
     }
 
     if (got_clstr) {
@@ -5173,9 +5221,10 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 static int 
 get_id_list (
     char_u **arg,
-    int keylen,                     /* length of keyword */
-    short **list             /* where to store the resulting list, if not
-                                   NULL, the list is silently skipped! */
+    int keylen,         // length of keyword
+    int16_t **list,     // where to store the resulting list, if not
+                        // NULL, the list is silently skipped!
+    int skip
 )
 {
   char_u      *p = NULL;
@@ -5231,8 +5280,9 @@ get_id_list (
           break;
         }
         if (count != 0) {
-          EMSG2(_("E408: %s must be first in contains list"), name + 1);
-          failed = TRUE;
+          EMSG2(_("E408: %s must be first in contains list"),
+                name + 1);
+          failed = true;
           xfree(name);
           break;
         }
@@ -5244,17 +5294,19 @@ get_id_list (
           id = SYNID_CONTAINED;
         id += current_syn_inc_tag;
       } else if (name[1] == '@')   {
-        id = syn_check_cluster(name + 2, (int)(end - p - 1));
+        if (skip) {
+          id = -1;
+        } else {
+          id = syn_check_cluster(name + 2, (int)(end - p - 1));
+        }
       } else {
         /*
          * Handle full group name.
          */
-        if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL)
+        if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL) {
           id = syn_check_group(name + 1, (int)(end - p));
-        else {
-          /*
-           * Handle match of regexp with group names.
-           */
+        } else {
+          // Handle match of regexp with group names.
           *name = '^';
           STRCAT(name, "$");
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
@@ -5564,8 +5616,10 @@ bool syntax_present(win_T *win)
 
 
 static enum {
-  EXP_SUBCMD,       /* expand ":syn" sub-commands */
-  EXP_CASE          /* expand ":syn case" arguments */
+  EXP_SUBCMD,       // expand ":syn" sub-commands
+  EXP_CASE,         // expand ":syn case" arguments
+  EXP_SPELL,        // expand ":syn spell" arguments
+  EXP_SYNC          // expand ":syn sync" arguments
 } expand_what;
 
 /*
@@ -5609,6 +5663,10 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
+      } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+        expand_what = EXP_SPELL;
+      } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+        expand_what = EXP_SYNC;
       } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
                  || STRNICMP(arg, "match", p - arg) == 0
@@ -5621,17 +5679,33 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   }
 }
 
-static char *(case_args[]) = {"match", "ignore", NULL};
-
 /*
  * Function given to ExpandGeneric() to obtain the list syntax names for
  * expansion.
  */
 char_u *get_syntax_name(expand_T *xp, int idx)
 {
-  if (expand_what == EXP_SUBCMD)
-    return (char_u *)subcommands[idx].name;
-  return (char_u *)case_args[idx];
+  switch (expand_what) {
+    case EXP_SUBCMD:
+        return (char_u *)subcommands[idx].name;
+    case EXP_CASE: {
+        static char *case_args[] = { "match", "ignore", NULL };
+        return (char_u *)case_args[idx];
+    }
+    case EXP_SPELL: {
+        static char *spell_args[] =
+        { "toplevel", "notoplevel", "default", NULL };
+        return (char_u *)spell_args[idx];
+    }
+    case EXP_SYNC: {
+        static char *sync_args[] =
+        { "ccomment", "clear", "fromstart",
+         "linebreaks=", "linecont", "lines=", "match",
+         "maxlines=", "minlines=", "region", NULL };
+        return (char_u *)sync_args[idx];
+    }
+  }
+  return NULL;
 }
 
 
@@ -5842,9 +5916,12 @@ static void syntime_report(void)
     }
   }
 
-  /* sort on total time */
-  qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
-      syn_compare_syntime);
+  // Sort on total time. Skip if there are no items to avoid passing NULL
+  // pointer to qsort().
+  if (ga.ga_len > 1) {
+    qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
+          syn_compare_syntime);
+  }
 
   MSG_PUTS_TITLE(_(
           "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
@@ -5900,9 +5977,9 @@ static void syntime_report(void)
 //
 // When making changes here, also change runtime/colors/default.vim!
 
-static char *highlight_init_both[] =
-{
-  "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+static const char *highlight_init_both[] = {
+  "Conceal "
+      "ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
   "Cursor       guibg=fg guifg=bg",
   "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
@@ -5925,8 +6002,7 @@ static char *highlight_init_both[] =
   NULL
 };
 
-static char *highlight_init_light[] =
-{
+static const char *highlight_init_light[] = {
   "ColorColumn  ctermbg=LightRed guibg=LightRed",
   "CursorColumn ctermbg=LightGrey guibg=Grey90",
   "CursorLine   cterm=underline guibg=Grey90",
@@ -5955,11 +6031,11 @@ static char *highlight_init_light[] =
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
-static char *highlight_init_dark[] =
-{
+static const char *highlight_init_dark[] = {
   "ColorColumn  ctermbg=DarkRed guibg=DarkRed",
   "CursorColumn ctermbg=DarkGrey guibg=Grey40",
   "CursorLine   cterm=underline guibg=Grey40",
@@ -5988,23 +6064,230 @@ static char *highlight_init_dark[] =
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
-void 
-init_highlight (
-    int both,                   /* include groups where 'bg' doesn't matter */
-    int reset                  /* clear group first */
-)
-{
-  int i;
-  char        **pp;
-  static int had_both = FALSE;
+const char *const highlight_init_cmdline[] = {
+  // XXX When modifying a list modify it in both valid and invalid halfs.
+  // TODO(ZyX-I): merge valid and invalid groups via a macros.
 
-  /*
-   * Try finding the color scheme file.  Used when a color file was loaded
-   * and 'background' or 't_Co' is changed.
-   */
+  // NvimInternalError should appear only when highlighter has a bug.
+  "NvimInternalError ctermfg=Red ctermbg=Red guifg=Red guibg=Red",
+
+  // Highlight groups (links) used by parser:
+
+  "default link NvimAssignment Operator",
+  "default link NvimPlainAssignment NvimAssignment",
+  "default link NvimAugmentedAssignment NvimAssignment",
+  "default link NvimAssignmentWithAddition NvimAugmentedAssignment",
+  "default link NvimAssignmentWithSubtraction NvimAugmentedAssignment",
+  "default link NvimAssignmentWithConcatenation NvimAugmentedAssignment",
+
+  "default link NvimOperator Operator",
+
+  "default link NvimUnaryOperator NvimOperator",
+  "default link NvimUnaryPlus NvimUnaryOperator",
+  "default link NvimUnaryMinus NvimUnaryOperator",
+  "default link NvimNot NvimUnaryOperator",
+
+  "default link NvimBinaryOperator NvimOperator",
+  "default link NvimComparison NvimBinaryOperator",
+  "default link NvimComparisonModifier NvimComparison",
+  "default link NvimBinaryPlus NvimBinaryOperator",
+  "default link NvimBinaryMinus NvimBinaryOperator",
+  "default link NvimConcat NvimBinaryOperator",
+  "default link NvimConcatOrSubscript NvimConcat",
+  "default link NvimOr NvimBinaryOperator",
+  "default link NvimAnd NvimBinaryOperator",
+  "default link NvimMultiplication NvimBinaryOperator",
+  "default link NvimDivision NvimBinaryOperator",
+  "default link NvimMod NvimBinaryOperator",
+
+  "default link NvimTernary NvimOperator",
+  "default link NvimTernaryColon NvimTernary",
+
+  "default link NvimParenthesis Delimiter",
+  "default link NvimLambda NvimParenthesis",
+  "default link NvimNestingParenthesis NvimParenthesis",
+  "default link NvimCallingParenthesis NvimParenthesis",
+
+  "default link NvimSubscript NvimParenthesis",
+  "default link NvimSubscriptBracket NvimSubscript",
+  "default link NvimSubscriptColon NvimSubscript",
+  "default link NvimCurly NvimSubscript",
+
+  "default link NvimContainer NvimParenthesis",
+  "default link NvimDict NvimContainer",
+  "default link NvimList NvimContainer",
+
+  "default link NvimIdentifier Identifier",
+  "default link NvimIdentifierScope NvimIdentifier",
+  "default link NvimIdentifierScopeDelimiter NvimIdentifier",
+  "default link NvimIdentifierName NvimIdentifier",
+  "default link NvimIdentifierKey NvimIdentifier",
+
+  "default link NvimColon Delimiter",
+  "default link NvimComma Delimiter",
+  "default link NvimArrow Delimiter",
+
+  "default link NvimRegister SpecialChar",
+  "default link NvimNumber Number",
+  "default link NvimFloat NvimNumber",
+  "default link NvimNumberPrefix Type",
+
+  "default link NvimOptionSigil Type",
+  "default link NvimOptionName NvimIdentifier",
+  "default link NvimOptionScope NvimIdentifierScope",
+  "default link NvimOptionScopeDelimiter NvimIdentifierScopeDelimiter",
+
+  "default link NvimEnvironmentSigil NvimOptionSigil",
+  "default link NvimEnvironmentName NvimIdentifier",
+
+  "default link NvimString String",
+  "default link NvimStringBody NvimString",
+  "default link NvimStringQuote NvimString",
+  "default link NvimStringSpecial SpecialChar",
+
+  "default link NvimSingleQuote NvimStringQuote",
+  "default link NvimSingleQuotedBody NvimStringBody",
+  "default link NvimSingleQuotedQuote NvimStringSpecial",
+
+  "default link NvimDoubleQuote NvimStringQuote",
+  "default link NvimDoubleQuotedBody NvimStringBody",
+  "default link NvimDoubleQuotedEscape NvimStringSpecial",
+
+  "default link NvimFigureBrace NvimInternalError",
+  "default link NvimSingleQuotedUnknownEscape NvimInternalError",
+
+  "default link NvimSpacing Normal",
+
+  // NvimInvalid groups:
+
+  "default link NvimInvalidSingleQuotedUnknownEscape NvimInternalError",
+
+  "default link NvimInvalid Error",
+
+  "default link NvimInvalidAssignment NvimInvalid",
+  "default link NvimInvalidPlainAssignment NvimInvalidAssignment",
+  "default link NvimInvalidAugmentedAssignment NvimInvalidAssignment",
+  "default link NvimInvalidAssignmentWithAddition "
+      "NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithSubtraction "
+      "NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithConcatenation "
+      "NvimInvalidAugmentedAssignment",
+
+  "default link NvimInvalidOperator NvimInvalid",
+
+  "default link NvimInvalidUnaryOperator NvimInvalidOperator",
+  "default link NvimInvalidUnaryPlus NvimInvalidUnaryOperator",
+  "default link NvimInvalidUnaryMinus NvimInvalidUnaryOperator",
+  "default link NvimInvalidNot NvimInvalidUnaryOperator",
+
+  "default link NvimInvalidBinaryOperator NvimInvalidOperator",
+  "default link NvimInvalidComparison NvimInvalidBinaryOperator",
+  "default link NvimInvalidComparisonModifier NvimInvalidComparison",
+  "default link NvimInvalidBinaryPlus NvimInvalidBinaryOperator",
+  "default link NvimInvalidBinaryMinus NvimInvalidBinaryOperator",
+  "default link NvimInvalidConcat NvimInvalidBinaryOperator",
+  "default link NvimInvalidConcatOrSubscript NvimInvalidConcat",
+  "default link NvimInvalidOr NvimInvalidBinaryOperator",
+  "default link NvimInvalidAnd NvimInvalidBinaryOperator",
+  "default link NvimInvalidMultiplication NvimInvalidBinaryOperator",
+  "default link NvimInvalidDivision NvimInvalidBinaryOperator",
+  "default link NvimInvalidMod NvimInvalidBinaryOperator",
+
+  "default link NvimInvalidTernary NvimInvalidOperator",
+  "default link NvimInvalidTernaryColon NvimInvalidTernary",
+
+  "default link NvimInvalidDelimiter NvimInvalid",
+
+  "default link NvimInvalidParenthesis NvimInvalidDelimiter",
+  "default link NvimInvalidLambda NvimInvalidParenthesis",
+  "default link NvimInvalidNestingParenthesis NvimInvalidParenthesis",
+  "default link NvimInvalidCallingParenthesis NvimInvalidParenthesis",
+
+  "default link NvimInvalidSubscript NvimInvalidParenthesis",
+  "default link NvimInvalidSubscriptBracket NvimInvalidSubscript",
+  "default link NvimInvalidSubscriptColon NvimInvalidSubscript",
+  "default link NvimInvalidCurly NvimInvalidSubscript",
+
+  "default link NvimInvalidContainer NvimInvalidParenthesis",
+  "default link NvimInvalidDict NvimInvalidContainer",
+  "default link NvimInvalidList NvimInvalidContainer",
+
+  "default link NvimInvalidValue NvimInvalid",
+
+  "default link NvimInvalidIdentifier NvimInvalidValue",
+  "default link NvimInvalidIdentifierScope NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierScopeDelimiter NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierName NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierKey NvimInvalidIdentifier",
+
+  "default link NvimInvalidColon NvimInvalidDelimiter",
+  "default link NvimInvalidComma NvimInvalidDelimiter",
+  "default link NvimInvalidArrow NvimInvalidDelimiter",
+
+  "default link NvimInvalidRegister NvimInvalidValue",
+  "default link NvimInvalidNumber NvimInvalidValue",
+  "default link NvimInvalidFloat NvimInvalidNumber",
+  "default link NvimInvalidNumberPrefix NvimInvalidNumber",
+
+  "default link NvimInvalidOptionSigil NvimInvalidIdentifier",
+  "default link NvimInvalidOptionName NvimInvalidIdentifier",
+  "default link NvimInvalidOptionScope NvimInvalidIdentifierScope",
+  "default link NvimInvalidOptionScopeDelimiter "
+      "NvimInvalidIdentifierScopeDelimiter",
+
+  "default link NvimInvalidEnvironmentSigil NvimInvalidOptionSigil",
+  "default link NvimInvalidEnvironmentName NvimInvalidIdentifier",
+
+  // Invalid string bodies and specials are still highlighted as valid ones to
+  // minimize the red area.
+  "default link NvimInvalidString NvimInvalidValue",
+  "default link NvimInvalidStringBody NvimStringBody",
+  "default link NvimInvalidStringQuote NvimInvalidString",
+  "default link NvimInvalidStringSpecial NvimStringSpecial",
+
+  "default link NvimInvalidSingleQuote NvimInvalidStringQuote",
+  "default link NvimInvalidSingleQuotedBody NvimInvalidStringBody",
+  "default link NvimInvalidSingleQuotedQuote NvimInvalidStringSpecial",
+
+  "default link NvimInvalidDoubleQuote NvimInvalidStringQuote",
+  "default link NvimInvalidDoubleQuotedBody NvimInvalidStringBody",
+  "default link NvimInvalidDoubleQuotedEscape NvimInvalidStringSpecial",
+  "default link NvimInvalidDoubleQuotedUnknownEscape NvimInvalidValue",
+
+  "default link NvimInvalidFigureBrace NvimInvalidDelimiter",
+
+  "default link NvimInvalidSpacing ErrorMsg",
+
+  // Not actually invalid, but we highlight user that he is doing something
+  // wrong.
+  "default link NvimDoubleQuotedUnknownEscape NvimInvalidValue",
+  NULL,
+};
+
+/// Create default links for Nvim* highlight groups used for cmdline coloring
+void syn_init_cmdline_highlight(bool reset, bool init)
+{
+  for (size_t i = 0 ; highlight_init_cmdline[i] != NULL ; i++) {
+    do_highlight(highlight_init_cmdline[i], reset, init);
+  }
+}
+
+/// Load colors from a file if "g:colors_name" is set, otherwise load builtin
+/// colors
+///
+/// @param both include groups where 'bg' doesn't matter
+/// @param reset clear groups first
+void init_highlight(bool both, bool reset)
+{
+  static int had_both = false;
+
+  // Try finding the color scheme file.  Used when a color file was loaded
+  // and 'background' or 't_Co' is changed.
   char_u *p = get_var_value("g:colors_name");
   if (p != NULL) {
     // Value of g:colors_name could be freed in load_colors() and make
@@ -6021,39 +6304,40 @@ init_highlight (
    * Didn't use a color file, use the compiled-in colors.
    */
   if (both) {
-    had_both = TRUE;
-    pp = highlight_init_both;
-    for (i = 0; pp[i] != NULL; ++i)
-      do_highlight((char_u *)pp[i], reset, TRUE);
-  } else if (!had_both)
-    /* Don't do anything before the call with both == TRUE from main().
-     * Not everything has been setup then, and that call will overrule
-     * everything anyway. */
+    had_both = true;
+    const char *const *const pp = highlight_init_both;
+    for (size_t i = 0; pp[i] != NULL; i++) {
+      do_highlight(pp[i], reset, true);
+    }
+  } else if (!had_both) {
+    // Don't do anything before the call with both == TRUE from main().
+    // Not everything has been setup then, and that call will overrule
+    // everything anyway.
     return;
+  }
 
-  if (*p_bg == 'l')
-    pp = highlight_init_light;
-  else
-    pp = highlight_init_dark;
-  for (i = 0; pp[i] != NULL; ++i)
-    do_highlight((char_u *)pp[i], reset, TRUE);
+  const char *const *const pp = ((*p_bg == 'l')
+                                 ? highlight_init_light
+                                 : highlight_init_dark);
+  for (size_t i = 0; pp[i] != NULL; i++) {
+    do_highlight(pp[i], reset, true);
+  }
 
   /* Reverse looks ugly, but grey may not work for 8 colors.  Thus let it
    * depend on the number of colors available.
    * With 8 colors brown is equal to yellow, need to use black for Search fg
    * to avoid Statement highlighted text disappears.
    * Clear the attributes, needed when changing the t_Co value. */
-  if (t_colors > 8)
+  if (t_colors > 8) {
     do_highlight(
-        (char_u *)(*p_bg == 'l'
-                   ? "Visual cterm=NONE ctermbg=LightGrey"
-                   : "Visual cterm=NONE ctermbg=DarkGrey"), FALSE,
-        TRUE);
-  else {
-    do_highlight((char_u *)"Visual cterm=reverse ctermbg=NONE",
-        FALSE, TRUE);
-    if (*p_bg == 'l')
-      do_highlight((char_u *)"Search ctermfg=black", FALSE, TRUE);
+        (*p_bg == 'l'
+         ? "Visual cterm=NONE ctermbg=LightGrey"
+         : "Visual cterm=NONE ctermbg=DarkGrey"), false, true);
+  } else {
+    do_highlight("Visual cterm=reverse ctermbg=NONE", false, true);
+    if (*p_bg == 'l') {
+      do_highlight("Search ctermfg=black", false, true);
+    }
   }
 
   /*
@@ -6070,6 +6354,7 @@ init_highlight (
       recursive--;
     }
   }
+  syn_init_cmdline_highlight(false, false);
 }
 
 /*
@@ -6104,22 +6389,22 @@ int load_colors(char_u *name)
 }
 
 
-/// Handle the ":highlight .." command.
-/// When using ":hi clear" this is called recursively for each group with
-/// "forceit" and "init" both TRUE.
-/// @param init TRUE when called for initializing
-void
-do_highlight(
-    char_u *line,
-    int forceit,
-    int init
-)
+/// Handle ":highlight" command
+///
+/// When using ":highlight clear" this is called recursively for each group with
+/// forceit and init being both true.
+///
+/// @param[in]  line  Command arguments.
+/// @param[in]  forceit  True when bang is given, allows to link group even if
+///                      it has its own settings.
+/// @param[in]  init  True when initializing.
+void do_highlight(const char *line, const bool forceit, const bool init)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *name_end;
-  char_u      *linep;
-  char_u      *key_start;
-  char_u      *arg_start;
-  char_u      *key = NULL, *arg = NULL;
+  const char *name_end;
+  const char *linep;
+  const char *key_start;
+  const char *arg_start;
   long i;
   int off;
   int len;
@@ -6131,162 +6416,154 @@ do_highlight(
   int dolink = FALSE;
   int error = FALSE;
   int color;
-  int is_normal_group = FALSE;                  /* "Normal" group */
+  bool is_normal_group = false;   // "Normal" group
 
-  /*
-   * If no argument, list current highlighting.
-   */
-  if (ends_excmd(*line)) {
-    for (int i = 1; i <= highlight_ga.ga_len && !got_int; ++i)
-      /* TODO: only call when the group has attributes set */
+  // If no argument, list current highlighting.
+  if (ends_excmd((uint8_t)(*line))) {
+    for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+      // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
+    }
     return;
   }
 
-  /*
-   * Isolate the name.
-   */
-  name_end = skiptowhite(line);
-  linep = skipwhite(name_end);
+  // Isolate the name.
+  name_end = (const char *)skiptowhite((const char_u *)line);
+  linep = (const char *)skipwhite((const char_u *)name_end);
 
-  /*
-   * Check for "default" argument.
-   */
-  if (STRNCMP(line, "default", name_end - line) == 0) {
-    dodefault = TRUE;
+  // Check for "default" argument.
+  if (strncmp(line, "default", name_end - line) == 0) {
+    dodefault = true;
     line = linep;
-    name_end = skiptowhite(line);
-    linep = skipwhite(name_end);
+    name_end = (const char *)skiptowhite((const char_u *)line);
+    linep = (const char *)skipwhite((const char_u *)name_end);
   }
 
-  /*
-   * Check for "clear" or "link" argument.
-   */
-  if (STRNCMP(line, "clear", name_end - line) == 0)
-    doclear = TRUE;
-  if (STRNCMP(line, "link", name_end - line) == 0)
-    dolink = TRUE;
+  // Check for "clear" or "link" argument.
+  if (strncmp(line, "clear", name_end - line) == 0) {
+    doclear = true;
+  } else if (strncmp(line, "link", name_end - line) == 0) {
+    dolink = true;
+  }
 
-  /*
-   * ":highlight {group-name}": list highlighting for one group.
-   */
-  if (!doclear && !dolink && ends_excmd(*linep)) {
-    id = syn_namen2id(line, (int)(name_end - line));
-    if (id == 0)
-      EMSG2(_("E411: highlight group not found: %s"), line);
-    else
+  // ":highlight {group-name}": list highlighting for one group.
+  if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
+    id = syn_namen2id((const char_u *)line, (int)(name_end - line));
+    if (id == 0) {
+      emsgf(_("E411: highlight group not found: %s"), line);
+    } else {
       highlight_list_one(id);
+    }
     return;
   }
 
-  /*
-   * Handle ":highlight link {from} {to}" command.
-   */
+  // Handle ":highlight link {from} {to}" command.
   if (dolink) {
-    char_u      *from_start = linep;
-    char_u      *from_end;
-    char_u      *to_start;
-    char_u      *to_end;
+    const char *from_start = linep;
+    const char *from_end;
+    const char *to_start;
+    const char *to_end;
     int from_id;
     int to_id;
 
-    from_end = skiptowhite(from_start);
-    to_start = skipwhite(from_end);
-    to_end   = skiptowhite(to_start);
+    from_end = (const char *)skiptowhite((const char_u *)from_start);
+    to_start = (const char *)skipwhite((const char_u *)from_end);
+    to_end   = (const char *)skiptowhite((const char_u *)to_start);
 
-    if (ends_excmd(*from_start) || ends_excmd(*to_start)) {
-      EMSG2(_("E412: Not enough arguments: \":highlight link %s\""),
-          from_start);
+    if (ends_excmd((uint8_t)(*from_start))
+        || ends_excmd((uint8_t)(*to_start))) {
+      emsgf(_("E412: Not enough arguments: \":highlight link %s\""),
+            from_start);
       return;
     }
 
-    if (!ends_excmd(*skipwhite(to_end))) {
-      EMSG2(_("E413: Too many arguments: \":highlight link %s\""), from_start);
+    if (!ends_excmd(*skipwhite((const char_u *)to_end))) {
+      emsgf(_("E413: Too many arguments: \":highlight link %s\""), from_start);
       return;
     }
 
-    from_id = syn_check_group(from_start, (int)(from_end - from_start));
-    if (STRNCMP(to_start, "NONE", 4) == 0)
+    from_id = syn_check_group((const char_u *)from_start,
+                              (int)(from_end - from_start));
+    if (strncmp(to_start, "NONE", 4) == 0) {
       to_id = 0;
-    else
-      to_id = syn_check_group(to_start, (int)(to_end - to_start));
+    } else {
+      to_id = syn_check_group((const char_u *)to_start,
+                              (int)(to_end - to_start));
+    }
 
     if (from_id > 0 && (!init || HL_TABLE()[from_id - 1].sg_set == 0)) {
-      /*
-       * Don't allow a link when there already is some highlighting
-       * for the group, unless '!' is used
-       */
+      // Don't allow a link when there already is some highlighting
+      // for the group, unless '!' is used
       if (to_id > 0 && !forceit && !init
           && hl_has_settings(from_id - 1, dodefault)) {
-        if (sourcing_name == NULL && !dodefault)
+        if (sourcing_name == NULL && !dodefault) {
           EMSG(_("E414: group has settings, highlight link ignored"));
+        }
       } else {
         if (!init)
           HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
         HL_TABLE()[from_id - 1].sg_link = to_id;
         HL_TABLE()[from_id - 1].sg_scriptID = current_SID;
+        HL_TABLE()[from_id - 1].sg_cleared = false;
         redraw_all_later(SOME_VALID);
       }
     }
 
-    /* Only call highlight_changed() once, after sourcing a syntax file */
-    need_highlight_changed = TRUE;
+    // Only call highlight_changed() once, after sourcing a syntax file.
+    need_highlight_changed = true;
 
     return;
   }
 
   if (doclear) {
-    /*
-     * ":highlight clear [group]" command.
-     */
+    // ":highlight clear [group]" command.
     line = linep;
-    if (ends_excmd(*line)) {
+    if (ends_excmd((uint8_t)(*line))) {
       do_unlet(S_LEN("colors_name"), true);
       restore_cterm_colors();
 
-      /*
-       * Clear all default highlight groups and load the defaults.
-       */
-      for (int idx = 0; idx < highlight_ga.ga_len; ++idx) {
+      // Clear all default highlight groups and load the defaults.
+      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
         highlight_clear(idx);
       }
-      init_highlight(TRUE, TRUE);
+      init_highlight(true, true);
       highlight_changed();
       redraw_later_clear();
       return;
     }
-    name_end = skiptowhite(line);
-    linep = skipwhite(name_end);
+    name_end = (const char *)skiptowhite((const char_u *)line);
+    linep = (const char *)skipwhite((const char_u *)name_end);
   }
 
-  /*
-   * Find the group name in the table.  If it does not exist yet, add it.
-   */
-  id = syn_check_group(line, (int)(name_end - line));
-  if (id == 0)                          /* failed (out of memory) */
+  // Find the group name in the table.  If it does not exist yet, add it.
+  id = syn_check_group((const char_u *)line, (int)(name_end - line));
+  if (id == 0) {  // Failed (out of memory).
     return;
-  idx = id - 1;                         /* index is ID minus one */
+  }
+  idx = id - 1;  // Index is ID minus one.
 
-  /* Return if "default" was used and the group already has settings. */
-  if (dodefault && hl_has_settings(idx, TRUE))
+  // Return if "default" was used and the group already has settings
+  if (dodefault && hl_has_settings(idx, true)) {
     return;
+  }
 
-  if (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0)
-    is_normal_group = TRUE;
+  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0);
 
-  /* Clear the highlighting for ":hi clear {group}" and ":hi clear". */
+  // Clear the highlighting for ":hi clear {group}" and ":hi clear".
   if (doclear || (forceit && init)) {
     highlight_clear(idx);
     if (!doclear)
       HL_TABLE()[idx].sg_set = 0;
   }
 
-  if (!doclear)
-    while (!ends_excmd(*linep)) {
+  char *key = NULL;
+  char *arg = NULL;
+  if (!doclear) {
+    while (!ends_excmd((uint8_t)(*linep))) {
       key_start = linep;
       if (*linep == '=') {
-        EMSG2(_("E415: unexpected equal sign: %s"), key_start);
-        error = TRUE;
+        emsgf(_("E415: unexpected equal sign: %s"), key_start);
+        error = true;
         break;
       }
 
@@ -6296,61 +6573,58 @@ do_highlight(
         linep++;
       }
       xfree(key);
-      key = vim_strnsave_up(key_start, (int)(linep - key_start));
-      linep = skipwhite(linep);
+      key = (char *)vim_strnsave_up((const char_u *)key_start,
+                                    (int)(linep - key_start));
+      linep = (const char *)skipwhite((const char_u *)linep);
 
-      if (STRCMP(key, "NONE") == 0) {
+      if (strcmp(key, "NONE") == 0) {
         if (!init || HL_TABLE()[idx].sg_set == 0) {
-          if (!init)
+          if (!init) {
             HL_TABLE()[idx].sg_set |= SG_CTERM+SG_GUI;
+          }
           highlight_clear(idx);
         }
         continue;
       }
 
-      /*
-       * Check for the equal sign.
-       */
+      // Check for the equal sign.
       if (*linep != '=') {
-        EMSG2(_("E416: missing equal sign: %s"), key_start);
-        error = TRUE;
+        emsgf(_("E416: missing equal sign: %s"), key_start);
+        error = true;
         break;
       }
-      ++linep;
+      linep++;
 
-      /*
-       * Isolate the argument.
-       */
-      linep = skipwhite(linep);
-      if (*linep == '\'') {             /* guifg='color name' */
+      // Isolate the argument.
+      linep = (const char *)skipwhite((const char_u *)linep);
+      if (*linep == '\'') {  // guifg='color name'
         arg_start = ++linep;
-        linep = vim_strchr(linep, '\'');
+        linep = strchr(linep, '\'');
         if (linep == NULL) {
-          EMSG2(_(e_invarg2), key_start);
-          error = TRUE;
+          emsgf(_(e_invarg2), key_start);
+          error = true;
           break;
         }
       } else {
         arg_start = linep;
-        linep = skiptowhite(linep);
+        linep = (const char *)skiptowhite((const char_u *)linep);
       }
       if (linep == arg_start) {
-        EMSG2(_("E417: missing argument: %s"), key_start);
-        error = TRUE;
+        emsgf(_("E417: missing argument: %s"), key_start);
+        error = true;
         break;
       }
       xfree(arg);
-      arg = vim_strnsave(arg_start, (int)(linep - arg_start));
+      arg = xstrndup(arg_start, (size_t)(linep - arg_start));
 
-      if (*linep == '\'')
-        ++linep;
+      if (*linep == '\'') {
+        linep++;
+      }
 
-      /*
-       * Store the argument.
-       */
-      if (  STRCMP(key, "TERM") == 0
-            || STRCMP(key, "CTERM") == 0
-            || STRCMP(key, "GUI") == 0) {
+      // Store the argument.
+      if (strcmp(key, "TERM") == 0
+          || strcmp(key, "CTERM") == 0
+          || strcmp(key, "GUI") == 0) {
         attr = 0;
         off = 0;
         while (arg[off] != NUL) {
@@ -6363,36 +6637,40 @@ do_highlight(
             }
           }
           if (i < 0) {
-            EMSG2(_("E418: Illegal value: %s"), arg);
-            error = TRUE;
+            emsgf(_("E418: Illegal value: %s"), arg);
+            error = true;
             break;
           }
-          if (arg[off] == ',')                  /* another one follows */
-            ++off;
+          if (arg[off] == ',') {  // Another one follows.
+            off++;
+          }
         }
-        if (error)
+        if (error) {
           break;
+        }
         if (*key == 'C')   {
           if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
-            if (!init)
+            if (!init) {
               HL_TABLE()[idx].sg_set |= SG_CTERM;
+            }
             HL_TABLE()[idx].sg_cterm = attr;
             HL_TABLE()[idx].sg_cterm_bold = FALSE;
           }
         } else if (*key == 'G') {
           if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
-            if (!init)
+            if (!init) {
               HL_TABLE()[idx].sg_set |= SG_GUI;
+            }
             HL_TABLE()[idx].sg_gui = attr;
           }
         }
       } else if (STRCMP(key, "FONT") == 0)   {
-        /* in non-GUI fonts are simply ignored */
-      } else if (STRCMP(key,
-                     "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0)   {
+        // in non-GUI fonts are simply ignored
+      } else if (STRCMP(key, "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0) {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
-          if (!init)
+          if (!init) {
             HL_TABLE()[idx].sg_set |= SG_CTERM;
+          }
 
           /* When setting the foreground color, and previously the "bold"
            * flag was set for a light color, reset it now */
@@ -6401,14 +6679,14 @@ do_highlight(
             HL_TABLE()[idx].sg_cterm_bold = FALSE;
           }
 
-          if (ascii_isdigit(*arg))
+          if (ascii_isdigit(*arg)) {
             color = atoi((char *)arg);
-          else if (STRICMP(arg, "fg") == 0) {
-            if (cterm_normal_fg_color)
+          } else if (STRICMP(arg, "fg") == 0) {
+            if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
-            else {
+            } else {
               EMSG(_("E419: FG color unknown"));
-              error = TRUE;
+              error = true;
               break;
             }
           } else if (STRICMP(arg, "bg") == 0)   {
@@ -6416,79 +6694,94 @@ do_highlight(
               color = cterm_normal_bg_color - 1;
             else {
               EMSG(_("E420: BG color unknown"));
-              error = TRUE;
+              error = true;
               break;
             }
           } else {
-            static char *(color_names[28]) = {
+            static const char *color_names[] = {
               "Black", "DarkBlue", "DarkGreen", "DarkCyan",
               "DarkRed", "DarkMagenta", "Brown", "DarkYellow",
               "Gray", "Grey",
               "LightGray", "LightGrey", "DarkGray", "DarkGrey",
               "Blue", "LightBlue", "Green", "LightGreen",
               "Cyan", "LightCyan", "Red", "LightRed", "Magenta",
-              "LightMagenta", "Yellow", "LightYellow", "White", "NONE"
+              "LightMagenta", "Yellow", "LightYellow", "White",
+              "NONE"
             };
-            static int color_numbers_16[28] = {0, 1, 2, 3,
-                                               4, 5, 6, 6,
-                                               7, 7,
-                                               7, 7, 8, 8,
-                                               9, 9, 10, 10,
-                                               11, 11, 12, 12, 13,
-                                               13, 14, 14, 15, -1};
-            /* for xterm with 88 colors... */
-            static int color_numbers_88[28] = {0, 4, 2, 6,
-                                               1, 5, 32, 72,
-                                               84, 84,
-                                               7, 7, 82, 82,
-                                               12, 43, 10, 61,
-                                               14, 63, 9, 74, 13,
-                                               75, 11, 78, 15, -1};
-            /* for xterm with 256 colors... */
-            static int color_numbers_256[28] = {0, 4, 2, 6,
-                                                1, 5, 130, 130,
-                                                248, 248,
-                                                7, 7, 242, 242,
-                                                12, 81, 10, 121,
-                                                14, 159, 9, 224, 13,
-                                                225, 11, 229, 15, -1};
-            /* for terminals with less than 16 colors... */
-            static int color_numbers_8[28] = {0, 4, 2, 6,
-                                              1, 5, 3, 3,
-                                              7, 7,
-                                              7, 7, 0+8, 0+8,
-                                              4+8, 4+8, 2+8, 2+8,
-                                              6+8, 6+8, 1+8, 1+8, 5+8,
-                                              5+8, 3+8, 3+8, 7+8, -1};
+            static const int color_numbers_16[] = {
+              0, 1, 2, 3,
+              4, 5, 6, 6,
+              7, 7,
+              7, 7, 8, 8,
+              9, 9, 10, 10,
+              11, 11, 12, 12, 13,
+              13, 14, 14, 15,
+              -1
+            };
+            // For xterm with 88 colors:
+            static int color_numbers_88[] = {
+              0, 4, 2, 6,
+              1, 5, 32, 72,
+              84, 84,
+              7, 7, 82, 82,
+              12, 43, 10, 61,
+              14, 63, 9, 74, 13,
+              75, 11, 78, 15,
+              -1
+            };
+            // For xterm with 256 colors:
+            static int color_numbers_256[] = {
+              0, 4, 2, 6,
+              1, 5, 130, 130,
+              248, 248,
+              7, 7, 242, 242,
+              12, 81, 10, 121,
+              14, 159, 9, 224, 13,
+              225, 11, 229, 15,
+              -1
+            };
+            // For terminals with less than 16 colors:
+            static int color_numbers_8[28] = {
+              0, 4, 2, 6,
+              1, 5, 3, 3,
+              7, 7,
+              7, 7, 0+8, 0+8,
+              4+8, 4+8, 2+8, 2+8,
+              6+8, 6+8, 1+8, 1+8, 5+8,
+              5+8, 3+8, 3+8, 7+8,
+              -1
+            };
 
-            /* reduce calls to STRICMP a bit, it can be slow */
+            // Reduce calls to STRICMP a bit, it can be slow.
             off = TOUPPER_ASC(*arg);
-            for (i = ARRAY_SIZE(color_names); --i >= 0; )
+            for (i = ARRAY_SIZE(color_names); --i >= 0; ) {
               if (off == color_names[i][0]
-                  && STRICMP(arg + 1, color_names[i] + 1) == 0)
+                  && STRICMP(arg + 1, color_names[i] + 1) == 0) {
                 break;
+              }
+            }
             if (i < 0) {
-              EMSG2(_(
-                      "E421: Color name or number not recognized: %s"),
-                  key_start);
-              error = TRUE;
+              emsgf(_("E421: Color name or number not recognized: %s"),
+                    key_start);
+              error = true;
               break;
             }
 
-            /* Use the _16 table to check if its a valid color name. */
+            // Use the _16 table to check if its a valid color name.
             color = color_numbers_16[i];
             if (color >= 0) {
               if (t_colors == 8) {
-                /* t_Co is 8: use the 8 colors table */
+                // t_Co is 8: use the 8 colors table.
                 color = color_numbers_8[i];
                 if (key[5] == 'F') {
                   /* set/reset bold attribute to get light foreground
                    * colors (on some terminals, e.g. "linux") */
                   if (color & 8) {
                     HL_TABLE()[idx].sg_cterm |= HL_BOLD;
-                    HL_TABLE()[idx].sg_cterm_bold = TRUE;
-                  } else
+                    HL_TABLE()[idx].sg_cterm_bold = true;
+                  } else {
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+                  }
                 }
                 color &= 7;             // truncate to 8 colors
               } else if (t_colors == 16 || t_colors == 88 || t_colors >= 256) {
@@ -6502,16 +6795,13 @@ do_highlight(
               }
             }
           }
-          /* Add one to the argument, to avoid zero.  Zero is used for
-           * "NONE", then "color" is -1. */
+          // Add one to the argument, to avoid zero.  Zero is used for
+          // "NONE", then "color" is -1.
           if (key[5] == 'F') {
             HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
-              cterm_normal_fg_bold = (HL_TABLE()[idx].sg_cterm & HL_BOLD);
-              {
-                must_redraw = CLEAR;
-              }
+              must_redraw = CLEAR;
             }
           } else {
             HL_TABLE()[idx].sg_cterm_bg = color + 1;
@@ -6535,15 +6825,15 @@ do_highlight(
             }
           }
         }
-      } else if (STRCMP(key, "GUIFG") == 0)   {
+      } else if (strcmp(key, "GUIFG") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
           xfree(HL_TABLE()[idx].sg_rgb_fg_name);
-          if (STRCMP(arg, "NONE")) {
-            HL_TABLE()[idx].sg_rgb_fg_name = (uint8_t *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_fg = name_to_color(arg);
+          if (strcmp(arg, "NONE")) {
+            HL_TABLE()[idx].sg_rgb_fg_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_fg = name_to_color((const char_u *)arg);
           } else {
             HL_TABLE()[idx].sg_rgb_fg_name = NULL;
             HL_TABLE()[idx].sg_rgb_fg = -1;
@@ -6560,8 +6850,8 @@ do_highlight(
 
           xfree(HL_TABLE()[idx].sg_rgb_bg_name);
           if (STRCMP(arg, "NONE") != 0) {
-            HL_TABLE()[idx].sg_rgb_bg_name = (uint8_t *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_bg = name_to_color(arg);
+            HL_TABLE()[idx].sg_rgb_bg_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_bg = name_to_color((const char_u *)arg);
           } else {
             HL_TABLE()[idx].sg_rgb_bg_name = NULL;
             HL_TABLE()[idx].sg_rgb_bg = -1;
@@ -6571,15 +6861,15 @@ do_highlight(
         if (is_normal_group) {
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
-      } else if (STRCMP(key, "GUISP") == 0)   {
+      } else if (strcmp(key, "GUISP") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
           xfree(HL_TABLE()[idx].sg_rgb_sp_name);
-          if (STRCMP(arg, "NONE") != 0) {
-            HL_TABLE()[idx].sg_rgb_sp_name = (uint8_t *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_sp = name_to_color(arg);
+          if (strcmp(arg, "NONE") != 0) {
+            HL_TABLE()[idx].sg_rgb_sp_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_sp = name_to_color((const char_u *)arg);
           } else {
             HL_TABLE()[idx].sg_rgb_sp_name = NULL;
             HL_TABLE()[idx].sg_rgb_sp = -1;
@@ -6589,49 +6879,46 @@ do_highlight(
         if (is_normal_group) {
           normal_sp = HL_TABLE()[idx].sg_rgb_sp;
         }
-      } else if (STRCMP(key, "START") == 0 || STRCMP(key, "STOP") == 0)   {
+      } else if (strcmp(key, "START") == 0 || strcmp(key, "STOP") == 0)   {
         // Ignored for now
       } else {
-        EMSG2(_("E423: Illegal argument: %s"), key_start);
-        error = TRUE;
+        emsgf(_("E423: Illegal argument: %s"), key_start);
+        error = true;
         break;
       }
+      HL_TABLE()[idx].sg_cleared = false;
 
-      /*
-       * When highlighting has been given for a group, don't link it.
-       */
-      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK))
+      // When highlighting has been given for a group, don't link it.
+      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
         HL_TABLE()[idx].sg_link = 0;
+      }
 
-      /*
-       * Continue with next argument.
-       */
-      linep = skipwhite(linep);
+      // Continue with next argument.
+      linep = (const char *)skipwhite((const char_u *)linep);
     }
+  }
 
-  /*
-   * If there is an error, and it's a new entry, remove it from the table.
-   */
-  if (error && idx == highlight_ga.ga_len)
+  // If there is an error, and it's a new entry, remove it from the table.
+  if (error && idx == highlight_ga.ga_len) {
     syn_unadd_group();
-  else {
-    if (is_normal_group) {
-      HL_TABLE()[idx].sg_attr = 0;
+  } else {
+    if (!error && is_normal_group) {
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
-    } else
+    } else {
       set_hl_attr(idx);
+    }
     HL_TABLE()[idx].sg_scriptID = current_SID;
     redraw_all_later(NOT_VALID);
   }
   xfree(key);
   xfree(arg);
 
-  /* Only call highlight_changed() once, after sourcing a syntax file */
-  need_highlight_changed = TRUE;
+  // Only call highlight_changed() once, after sourcing a syntax file
+  need_highlight_changed = true;
 }
 
 #if defined(EXITFREE)
@@ -6657,7 +6944,6 @@ void restore_cterm_colors(void)
   normal_bg = -1;
   normal_sp = -1;
   cterm_normal_fg_color = 0;
-  cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
 }
 
@@ -6681,6 +6967,8 @@ static int hl_has_settings(int idx, int check_link)
  */
 static void highlight_clear(int idx)
 {
+  HL_TABLE()[idx].sg_cleared = true;
+
   HL_TABLE()[idx].sg_attr = 0;
   HL_TABLE()[idx].sg_cterm = 0;
   HL_TABLE()[idx].sg_cterm_bold = FALSE;
@@ -6704,37 +6992,36 @@ static void highlight_clear(int idx)
 }
 
 
-/*
- * Table with the specifications for an attribute number.
- * Note that this table is used by ALL buffers.  This is required because the
- * GUI can redraw at any time for any buffer.
- */
+/// Table with the specifications for an attribute number.
+/// Note that this table is used by ALL buffers.  This is required because the
+/// GUI can redraw at any time for any buffer.
 static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 
-#define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
+static inline HlAttrs * ATTR_ENTRY(int idx)
+{
+  return &((HlAttrs *)attr_table.ga_data)[idx];
+}
 
 
 /// Return the attr number for a set of colors and font.
 /// Add a new entry to the term_attr_table, attr_table or gui_attr_table
 /// if the combination is new.
 /// @return 0 for error.
-int get_attr_entry(attrentry_T *aep)
+int get_attr_entry(HlAttrs *aep)
 {
   garray_T *table = &attr_table;
-  attrentry_T *taep;
-  static int recursive = FALSE;
+  HlAttrs *taep;
+  static int recursive = false;
 
   /*
    * Init the table, in case it wasn't done yet.
    */
-  table->ga_itemsize = sizeof(attrentry_T);
+  table->ga_itemsize = sizeof(HlAttrs);
   ga_set_growsize(table, 7);
 
-  /*
-   * Try to find an entry with the same specifications.
-   */
-  for (int i = 0; i < table->ga_len; ++i) {
-    taep = &(((attrentry_T *)table->ga_data)[i]);
+  // Try to find an entry with the same specifications.
+  for (int i = 0; i < table->ga_len; i++) {
+    taep = &(((HlAttrs *)table->ga_data)[i]);
     if (aep->cterm_ae_attr == taep->cterm_ae_attr
         && aep->cterm_fg_color == taep->cterm_fg_color
         && aep->cterm_bg_color == taep->cterm_bg_color
@@ -6771,7 +7058,7 @@ int get_attr_entry(attrentry_T *aep)
 
   
   // This is a new combination of colors and font, add an entry.
-  taep = GA_APPEND_VIA_PTR(attrentry_T, table);
+  taep = GA_APPEND_VIA_PTR(HlAttrs, table);
   memset(taep, 0, sizeof(*taep));
   taep->cterm_ae_attr = aep->cterm_ae_attr;
   taep->cterm_fg_color = aep->cterm_fg_color;
@@ -6799,9 +7086,9 @@ void clear_hl_tables(void)
 // Return the resulting attributes.
 int hl_combine_attr(int char_attr, int prim_attr)
 {
-  attrentry_T *char_aep = NULL;
-  attrentry_T *spell_aep;
-  attrentry_T new_en;
+  HlAttrs *char_aep = NULL;
+  HlAttrs *spell_aep;
+  HlAttrs new_en = HLATTRS_INIT;
 
   if (char_attr == 0) {
     return prim_attr;
@@ -6817,8 +7104,6 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_aep != NULL) {
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
-  } else {
-    memset(&new_en, 0, sizeof(new_en));
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
@@ -6849,17 +7134,25 @@ int hl_combine_attr(int char_attr, int prim_attr)
   return get_attr_entry(&new_en);
 }
 
-attrentry_T *syn_cterm_attr2entry(int attr)
+/// \note this function does not apply exclusively to cterm attr contrary
+/// to what its name implies
+/// \warn don't call it with attr 0 (i.e., the null attribute)
+HlAttrs *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len)          /* did ":syntax clear" */
+  if (attr >= attr_table.ga_len) {
+    // did ":syntax clear"
     return NULL;
-  return &(ATTR_ENTRY(attr));
+  }
+  return ATTR_ENTRY(attr);
 }
 
+/// \addtogroup LIST_XXX
+/// @{
 #define LIST_ATTR   1
 #define LIST_STRING 2
 #define LIST_INT    3
+/// @}
 
 static void highlight_list_one(int id)
 {
@@ -6898,7 +7191,13 @@ static void highlight_list_one(int id)
     last_set_msg(sgp->sg_scriptID);
 }
 
-static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg, char *name)
+/// Outputs a highlight when doing ":hi MyHighlight"
+///
+/// @param type one of \ref LIST_XXX
+/// @param iarg integer argument used if \p type == LIST_INT
+/// @param sarg string used if \p type == LIST_STRING
+static int highlight_list_arg(int id, int didh, int type, int iarg,
+                              char_u *sarg, const char *name)
 {
   char_u buf[100];
   char_u      *ts;
@@ -7038,24 +7337,23 @@ const char *highlight_color(const int id, const char *const what,
   return NULL;
 }
 
-/*
- * Output the syntax list header.
- * Return TRUE when started a new line.
- */
-static int 
-syn_list_header (
-    int did_header,                 /* did header already */
-    int outlen,                     /* length of string that comes */
-    int id                         /* highlight group id */
-)
+/// Output the syntax list header.
+///
+/// @param did_header did header already
+/// @param outlen length of string that comes
+/// @param id highlight group id
+/// @return true when started a new line.
+static int
+syn_list_header(int did_header, int outlen, int id)
 {
   int endcol = 19;
   int newline = TRUE;
 
   if (!did_header) {
     msg_putchar('\n');
-    if (got_int)
-      return TRUE;
+    if (got_int) {
+      return true;
+    }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
     endcol = 15;
   } else if (msg_col + outlen + 1 >= Columns)   {
@@ -7083,21 +7381,14 @@ syn_list_header (
   return newline;
 }
 
-/*
- * Set the attribute numbers for a highlight group.
- * Called after one of the attributes has changed.
- */
-static void 
-set_hl_attr (
-    int idx                    /* index in array */
-)
+/// Set the attribute numbers for a highlight group.
+/// Called after one of the attributes has changed.
+/// @param idx corrected highlight index
+static void set_hl_attr(int idx)
 {
-  attrentry_T at_en;
+  HlAttrs at_en = HLATTRS_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-  /* The "Normal" group doesn't need an attribute number */
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0)
-    return;
 
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
@@ -7121,10 +7412,10 @@ set_hl_attr (
   }
 }
 
-/*
- * Lookup a highlight group name and return it's ID.
- * If it is not found, 0 is returned.
- */
+/// Lookup a highlight group name and return its ID.
+///
+/// @param highlight name e.g. 'Cursor', 'Normal'
+/// @return the highlight id, else 0 if \p name does not exist
 int syn_name2id(const char_u *name)
 {
   int i;
@@ -7164,7 +7455,7 @@ char_u *syn_id2name(int id)
 /*
  * Like syn_name2id(), but take a pointer + length argument.
  */
-int syn_namen2id(char_u *linep, int len)
+int syn_namen2id(const char_u *linep, int len)
 {
   char_u *name = vim_strnsave(linep, len);
   int id = syn_name2id(name);
@@ -7173,14 +7464,14 @@ int syn_namen2id(char_u *linep, int len)
   return id;
 }
 
-/// Find highlight group name in the table and return it's ID.
+/// Find highlight group name in the table and return its ID.
 /// If it doesn't exist yet, a new entry is created.
 ///
 /// @param pp Highlight group name
 /// @param len length of \p pp
 ///
 /// @return 0 for failure else the id of the group
-int syn_check_group(char_u *pp, int len)
+int syn_check_group(const char_u *pp, int len)
 {
   char_u  *name = vim_strnsave(pp, len);
   int id = syn_name2id(name);
@@ -7192,11 +7483,11 @@ int syn_check_group(char_u *pp, int len)
   return id;
 }
 
-/*
- * Add new highlight group and return it's ID.
- * "name" must be an allocated string, it will be consumed.
- * Return 0 for failure.
- */
+/// Add new highlight group and return it's ID.
+///
+/// @param name must be an allocated string, it will be consumed.
+/// @return 0 for failure, else the allocated group id
+/// @see syn_check_group syn_unadd_group
 static int syn_add_group(char_u *name)
 {
   char_u      *p;
@@ -7234,25 +7525,26 @@ static int syn_add_group(char_u *name)
   struct hl_group* hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
+  hlgp->sg_rgb_bg = -1;
+  hlgp->sg_rgb_fg = -1;
+  hlgp->sg_rgb_sp = -1;
   hlgp->sg_name_u = vim_strsave_up(name);
 
   return highlight_ga.ga_len;               /* ID is index plus one */
 }
 
-/*
- * When, just after calling syn_add_group(), an error is discovered, this
- * function deletes the new name.
- */
+/// When, just after calling syn_add_group(), an error is discovered, this
+/// function deletes the new name.
 static void syn_unadd_group(void)
 {
-  --highlight_ga.ga_len;
+  highlight_ga.ga_len--;
   xfree(HL_TABLE()[highlight_ga.ga_len].sg_name);
   xfree(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
 }
 
-/*
- * Translate a group ID to highlight attributes.
- */
+
+/// Translate a group ID to highlight attributes.
+/// @see syn_cterm_attr2entry
 int syn_id2attr(int hl_id)
 {
   struct hl_group     *sgp;
@@ -7466,14 +7758,28 @@ static void highlight_list_two(int cnt, int attr)
 }
 
 
-/*
- * Function given to ExpandGeneric() to obtain the list of group names.
- * Also used for synIDattr() function.
- */
-const char *get_highlight_name(expand_T *const xp, const int idx)
+/// Function given to ExpandGeneric() to obtain the list of group names.
+const char *get_highlight_name(expand_T *const xp, int idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  // TODO(justinmk): 'xp' is unused
+  return get_highlight_name_ext(xp, idx, true);
+}
+
+
+/// Obtain a highlight group name.
+/// When "skip_cleared" is TRUE don't return a cleared entry.
+const char *get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (idx < 0) {
+    return NULL;
+  }
+
+  // Items are never removed from the table, skip the ones that were cleared.
+  if (skip_cleared && idx < highlight_ga.ga_len && HL_TABLE()[idx].sg_cleared) {
+    return "";
+  }
+
   if (idx == highlight_ga.ga_len && include_none != 0) {
     return "none";
   } else if (idx == highlight_ga.ga_len + include_none
@@ -7485,7 +7791,7 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
   } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
              && include_link != 0) {
     return "clear";
-  } else if (idx < 0 || idx >= highlight_ga.ga_len) {
+  } else if (idx >= highlight_ga.ga_len) {
     return NULL;
   }
   return (const char *)HL_TABLE()[idx].sg_name;
@@ -7493,685 +7799,685 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
 
 color_name_table_T color_name_table[] = {
   // Colors from rgb.txt
-  { "AliceBlue", RGB(0xf0, 0xf8, 0xff) },
-  { "AntiqueWhite", RGB(0xfa, 0xeb, 0xd7) },
-  { "AntiqueWhite1", RGB(0xff, 0xef, 0xdb) },
-  { "AntiqueWhite2", RGB(0xee, 0xdf, 0xcc) },
-  { "AntiqueWhite3", RGB(0xcd, 0xc0, 0xb0) },
-  { "AntiqueWhite4", RGB(0x8b, 0x83, 0x78) },
-  { "Aqua", RGB(0x00, 0xff, 0xff) },
-  { "Aquamarine", RGB(0x7f, 0xff, 0xd4) },
-  { "Aquamarine1", RGB(0x7f, 0xff, 0xd4) },
-  { "Aquamarine2", RGB(0x76, 0xee, 0xc6) },
-  { "Aquamarine3", RGB(0x66, 0xcd, 0xaa) },
-  { "Aquamarine4", RGB(0x45, 0x8b, 0x74) },
-  { "Azure", RGB(0xf0, 0xff, 0xff) },
-  { "Azure1", RGB(0xf0, 0xff, 0xff) },
-  { "Azure2", RGB(0xe0, 0xee, 0xee) },
-  { "Azure3", RGB(0xc1, 0xcd, 0xcd) },
-  { "Azure4", RGB(0x83, 0x8b, 0x8b) },
-  { "Beige", RGB(0xf5, 0xf5, 0xdc) },
-  { "Bisque", RGB(0xff, 0xe4, 0xc4) },
-  { "Bisque1", RGB(0xff, 0xe4, 0xc4) },
-  { "Bisque2", RGB(0xee, 0xd5, 0xb7) },
-  { "Bisque3", RGB(0xcd, 0xb7, 0x9e) },
-  { "Bisque4", RGB(0x8b, 0x7d, 0x6b) },
-  { "Black", RGB(0x00, 0x00, 0x00) },
-  { "BlanchedAlmond", RGB(0xff, 0xeb, 0xcd) },
-  { "Blue", RGB(0x00, 0x00, 0xff) },
-  { "Blue1", RGB(0x0, 0x0, 0xff) },
-  { "Blue2", RGB(0x0, 0x0, 0xee) },
-  { "Blue3", RGB(0x0, 0x0, 0xcd) },
-  { "Blue4", RGB(0x0, 0x0, 0x8b) },
-  { "BlueViolet", RGB(0x8a, 0x2b, 0xe2) },
-  { "Brown", RGB(0xa5, 0x2a, 0x2a) },
-  { "Brown1", RGB(0xff, 0x40, 0x40) },
-  { "Brown2", RGB(0xee, 0x3b, 0x3b) },
-  { "Brown3", RGB(0xcd, 0x33, 0x33) },
-  { "Brown4", RGB(0x8b, 0x23, 0x23) },
-  { "BurlyWood", RGB(0xde, 0xb8, 0x87) },
-  { "Burlywood1", RGB(0xff, 0xd3, 0x9b) },
-  { "Burlywood2", RGB(0xee, 0xc5, 0x91) },
-  { "Burlywood3", RGB(0xcd, 0xaa, 0x7d) },
-  { "Burlywood4", RGB(0x8b, 0x73, 0x55) },
-  { "CadetBlue", RGB(0x5f, 0x9e, 0xa0) },
-  { "CadetBlue1", RGB(0x98, 0xf5, 0xff) },
-  { "CadetBlue2", RGB(0x8e, 0xe5, 0xee) },
-  { "CadetBlue3", RGB(0x7a, 0xc5, 0xcd) },
-  { "CadetBlue4", RGB(0x53, 0x86, 0x8b) },
-  { "ChartReuse", RGB(0x7f, 0xff, 0x00) },
-  { "Chartreuse1", RGB(0x7f, 0xff, 0x0) },
-  { "Chartreuse2", RGB(0x76, 0xee, 0x0) },
-  { "Chartreuse3", RGB(0x66, 0xcd, 0x0) },
-  { "Chartreuse4", RGB(0x45, 0x8b, 0x0) },
-  { "Chocolate", RGB(0xd2, 0x69, 0x1e) },
-  { "Chocolate1", RGB(0xff, 0x7f, 0x24) },
-  { "Chocolate2", RGB(0xee, 0x76, 0x21) },
-  { "Chocolate3", RGB(0xcd, 0x66, 0x1d) },
-  { "Chocolate4", RGB(0x8b, 0x45, 0x13) },
-  { "Coral", RGB(0xff, 0x7f, 0x50) },
-  { "Coral1", RGB(0xff, 0x72, 0x56) },
-  { "Coral2", RGB(0xee, 0x6a, 0x50) },
-  { "Coral3", RGB(0xcd, 0x5b, 0x45) },
-  { "Coral4", RGB(0x8b, 0x3e, 0x2f) },
-  { "CornFlowerBlue", RGB(0x64, 0x95, 0xed) },
-  { "Cornsilk", RGB(0xff, 0xf8, 0xdc) },
-  { "Cornsilk1", RGB(0xff, 0xf8, 0xdc) },
-  { "Cornsilk2", RGB(0xee, 0xe8, 0xcd) },
-  { "Cornsilk3", RGB(0xcd, 0xc8, 0xb1) },
-  { "Cornsilk4", RGB(0x8b, 0x88, 0x78) },
-  { "Crimson", RGB(0xdc, 0x14, 0x3c) },
-  { "Cyan", RGB(0x00, 0xff, 0xff) },
-  { "Cyan1", RGB(0x0, 0xff, 0xff) },
-  { "Cyan2", RGB(0x0, 0xee, 0xee) },
-  { "Cyan3", RGB(0x0, 0xcd, 0xcd) },
-  { "Cyan4", RGB(0x0, 0x8b, 0x8b) },
-  { "DarkBlue", RGB(0x00, 0x00, 0x8b) },
-  { "DarkCyan", RGB(0x00, 0x8b, 0x8b) },
-  { "DarkGoldenRod", RGB(0xb8, 0x86, 0x0b) },
-  { "DarkGoldenrod1", RGB(0xff, 0xb9, 0xf) },
-  { "DarkGoldenrod2", RGB(0xee, 0xad, 0xe) },
-  { "DarkGoldenrod3", RGB(0xcd, 0x95, 0xc) },
-  { "DarkGoldenrod4", RGB(0x8b, 0x65, 0x8) },
-  { "DarkGray", RGB(0xa9, 0xa9, 0xa9) },
-  { "DarkGreen", RGB(0x00, 0x64, 0x00) },
-  { "DarkGrey", RGB(0xa9, 0xa9, 0xa9) },
-  { "DarkKhaki", RGB(0xbd, 0xb7, 0x6b) },
-  { "DarkMagenta", RGB(0x8b, 0x00, 0x8b) },
-  { "DarkOliveGreen", RGB(0x55, 0x6b, 0x2f) },
-  { "DarkOliveGreen1", RGB(0xca, 0xff, 0x70) },
-  { "DarkOliveGreen2", RGB(0xbc, 0xee, 0x68) },
-  { "DarkOliveGreen3", RGB(0xa2, 0xcd, 0x5a) },
-  { "DarkOliveGreen4", RGB(0x6e, 0x8b, 0x3d) },
-  { "DarkOrange", RGB(0xff, 0x8c, 0x00) },
-  { "DarkOrange1", RGB(0xff, 0x7f, 0x0) },
-  { "DarkOrange2", RGB(0xee, 0x76, 0x0) },
-  { "DarkOrange3", RGB(0xcd, 0x66, 0x0) },
-  { "DarkOrange4", RGB(0x8b, 0x45, 0x0) },
-  { "DarkOrchid", RGB(0x99, 0x32, 0xcc) },
-  { "DarkOrchid1", RGB(0xbf, 0x3e, 0xff) },
-  { "DarkOrchid2", RGB(0xb2, 0x3a, 0xee) },
-  { "DarkOrchid3", RGB(0x9a, 0x32, 0xcd) },
-  { "DarkOrchid4", RGB(0x68, 0x22, 0x8b) },
-  { "DarkRed", RGB(0x8b, 0x00, 0x00) },
-  { "DarkSalmon", RGB(0xe9, 0x96, 0x7a) },
-  { "DarkSeaGreen", RGB(0x8f, 0xbc, 0x8f) },
-  { "DarkSeaGreen1", RGB(0xc1, 0xff, 0xc1) },
-  { "DarkSeaGreen2", RGB(0xb4, 0xee, 0xb4) },
-  { "DarkSeaGreen3", RGB(0x9b, 0xcd, 0x9b) },
-  { "DarkSeaGreen4", RGB(0x69, 0x8b, 0x69) },
-  { "DarkSlateBlue", RGB(0x48, 0x3d, 0x8b) },
-  { "DarkSlateGray", RGB(0x2f, 0x4f, 0x4f) },
-  { "DarkSlateGray1", RGB(0x97, 0xff, 0xff) },
-  { "DarkSlateGray2", RGB(0x8d, 0xee, 0xee) },
-  { "DarkSlateGray3", RGB(0x79, 0xcd, 0xcd) },
-  { "DarkSlateGray4", RGB(0x52, 0x8b, 0x8b) },
-  { "DarkSlateGrey", RGB(0x2f, 0x4f, 0x4f) },
-  { "DarkTurquoise", RGB(0x00, 0xce, 0xd1) },
-  { "DarkViolet", RGB(0x94, 0x00, 0xd3) },
-  { "DarkYellow", RGB(0xbb, 0xbb, 0x00) },
-  { "DeepPink", RGB(0xff, 0x14, 0x93) },
-  { "DeepPink1", RGB(0xff, 0x14, 0x93) },
-  { "DeepPink2", RGB(0xee, 0x12, 0x89) },
-  { "DeepPink3", RGB(0xcd, 0x10, 0x76) },
-  { "DeepPink4", RGB(0x8b, 0xa, 0x50) },
-  { "DeepSkyBlue", RGB(0x00, 0xbf, 0xff) },
-  { "DeepSkyBlue1", RGB(0x0, 0xbf, 0xff) },
-  { "DeepSkyBlue2", RGB(0x0, 0xb2, 0xee) },
-  { "DeepSkyBlue3", RGB(0x0, 0x9a, 0xcd) },
-  { "DeepSkyBlue4", RGB(0x0, 0x68, 0x8b) },
-  { "DimGray", RGB(0x69, 0x69, 0x69) },
-  { "DimGrey", RGB(0x69, 0x69, 0x69) },
-  { "DodgerBlue", RGB(0x1e, 0x90, 0xff) },
-  { "DodgerBlue1", RGB(0x1e, 0x90, 0xff) },
-  { "DodgerBlue2", RGB(0x1c, 0x86, 0xee) },
-  { "DodgerBlue3", RGB(0x18, 0x74, 0xcd) },
-  { "DodgerBlue4", RGB(0x10, 0x4e, 0x8b) },
-  { "Firebrick", RGB(0xb2, 0x22, 0x22) },
-  { "Firebrick1", RGB(0xff, 0x30, 0x30) },
-  { "Firebrick2", RGB(0xee, 0x2c, 0x2c) },
-  { "Firebrick3", RGB(0xcd, 0x26, 0x26) },
-  { "Firebrick4", RGB(0x8b, 0x1a, 0x1a) },
-  { "FloralWhite", RGB(0xff, 0xfa, 0xf0) },
-  { "ForestGreen", RGB(0x22, 0x8b, 0x22) },
-  { "Fuchsia", RGB(0xff, 0x00, 0xff) },
-  { "Gainsboro", RGB(0xdc, 0xdc, 0xdc) },
-  { "GhostWhite", RGB(0xf8, 0xf8, 0xff) },
-  { "Gold", RGB(0xff, 0xd7, 0x00) },
-  { "Gold1", RGB(0xff, 0xd7, 0x0) },
-  { "Gold2", RGB(0xee, 0xc9, 0x0) },
-  { "Gold3", RGB(0xcd, 0xad, 0x0) },
-  { "Gold4", RGB(0x8b, 0x75, 0x0) },
-  { "GoldenRod", RGB(0xda, 0xa5, 0x20) },
-  { "Goldenrod1", RGB(0xff, 0xc1, 0x25) },
-  { "Goldenrod2", RGB(0xee, 0xb4, 0x22) },
-  { "Goldenrod3", RGB(0xcd, 0x9b, 0x1d) },
-  { "Goldenrod4", RGB(0x8b, 0x69, 0x14) },
-  { "Gray", RGB(0x80, 0x80, 0x80) },
-  { "Gray0", RGB(0x0, 0x0, 0x0) },
-  { "Gray1", RGB(0x3, 0x3, 0x3) },
-  { "Gray10", RGB(0x1a, 0x1a, 0x1a) },
-  { "Gray100", RGB(0xff, 0xff, 0xff) },
-  { "Gray11", RGB(0x1c, 0x1c, 0x1c) },
-  { "Gray12", RGB(0x1f, 0x1f, 0x1f) },
-  { "Gray13", RGB(0x21, 0x21, 0x21) },
-  { "Gray14", RGB(0x24, 0x24, 0x24) },
-  { "Gray15", RGB(0x26, 0x26, 0x26) },
-  { "Gray16", RGB(0x29, 0x29, 0x29) },
-  { "Gray17", RGB(0x2b, 0x2b, 0x2b) },
-  { "Gray18", RGB(0x2e, 0x2e, 0x2e) },
-  { "Gray19", RGB(0x30, 0x30, 0x30) },
-  { "Gray2", RGB(0x5, 0x5, 0x5) },
-  { "Gray20", RGB(0x33, 0x33, 0x33) },
-  { "Gray21", RGB(0x36, 0x36, 0x36) },
-  { "Gray22", RGB(0x38, 0x38, 0x38) },
-  { "Gray23", RGB(0x3b, 0x3b, 0x3b) },
-  { "Gray24", RGB(0x3d, 0x3d, 0x3d) },
-  { "Gray25", RGB(0x40, 0x40, 0x40) },
-  { "Gray26", RGB(0x42, 0x42, 0x42) },
-  { "Gray27", RGB(0x45, 0x45, 0x45) },
-  { "Gray28", RGB(0x47, 0x47, 0x47) },
-  { "Gray29", RGB(0x4a, 0x4a, 0x4a) },
-  { "Gray3", RGB(0x8, 0x8, 0x8) },
-  { "Gray30", RGB(0x4d, 0x4d, 0x4d) },
-  { "Gray31", RGB(0x4f, 0x4f, 0x4f) },
-  { "Gray32", RGB(0x52, 0x52, 0x52) },
-  { "Gray33", RGB(0x54, 0x54, 0x54) },
-  { "Gray34", RGB(0x57, 0x57, 0x57) },
-  { "Gray35", RGB(0x59, 0x59, 0x59) },
-  { "Gray36", RGB(0x5c, 0x5c, 0x5c) },
-  { "Gray37", RGB(0x5e, 0x5e, 0x5e) },
-  { "Gray38", RGB(0x61, 0x61, 0x61) },
-  { "Gray39", RGB(0x63, 0x63, 0x63) },
-  { "Gray4", RGB(0xa, 0xa, 0xa) },
-  { "Gray40", RGB(0x66, 0x66, 0x66) },
-  { "Gray41", RGB(0x69, 0x69, 0x69) },
-  { "Gray42", RGB(0x6b, 0x6b, 0x6b) },
-  { "Gray43", RGB(0x6e, 0x6e, 0x6e) },
-  { "Gray44", RGB(0x70, 0x70, 0x70) },
-  { "Gray45", RGB(0x73, 0x73, 0x73) },
-  { "Gray46", RGB(0x75, 0x75, 0x75) },
-  { "Gray47", RGB(0x78, 0x78, 0x78) },
-  { "Gray48", RGB(0x7a, 0x7a, 0x7a) },
-  { "Gray49", RGB(0x7d, 0x7d, 0x7d) },
-  { "Gray5", RGB(0xd, 0xd, 0xd) },
-  { "Gray50", RGB(0x7f, 0x7f, 0x7f) },
-  { "Gray51", RGB(0x82, 0x82, 0x82) },
-  { "Gray52", RGB(0x85, 0x85, 0x85) },
-  { "Gray53", RGB(0x87, 0x87, 0x87) },
-  { "Gray54", RGB(0x8a, 0x8a, 0x8a) },
-  { "Gray55", RGB(0x8c, 0x8c, 0x8c) },
-  { "Gray56", RGB(0x8f, 0x8f, 0x8f) },
-  { "Gray57", RGB(0x91, 0x91, 0x91) },
-  { "Gray58", RGB(0x94, 0x94, 0x94) },
-  { "Gray59", RGB(0x96, 0x96, 0x96) },
-  { "Gray6", RGB(0xf, 0xf, 0xf) },
-  { "Gray60", RGB(0x99, 0x99, 0x99) },
-  { "Gray61", RGB(0x9c, 0x9c, 0x9c) },
-  { "Gray62", RGB(0x9e, 0x9e, 0x9e) },
-  { "Gray63", RGB(0xa1, 0xa1, 0xa1) },
-  { "Gray64", RGB(0xa3, 0xa3, 0xa3) },
-  { "Gray65", RGB(0xa6, 0xa6, 0xa6) },
-  { "Gray66", RGB(0xa8, 0xa8, 0xa8) },
-  { "Gray67", RGB(0xab, 0xab, 0xab) },
-  { "Gray68", RGB(0xad, 0xad, 0xad) },
-  { "Gray69", RGB(0xb0, 0xb0, 0xb0) },
-  { "Gray7", RGB(0x12, 0x12, 0x12) },
-  { "Gray70", RGB(0xb3, 0xb3, 0xb3) },
-  { "Gray71", RGB(0xb5, 0xb5, 0xb5) },
-  { "Gray72", RGB(0xb8, 0xb8, 0xb8) },
-  { "Gray73", RGB(0xba, 0xba, 0xba) },
-  { "Gray74", RGB(0xbd, 0xbd, 0xbd) },
-  { "Gray75", RGB(0xbf, 0xbf, 0xbf) },
-  { "Gray76", RGB(0xc2, 0xc2, 0xc2) },
-  { "Gray77", RGB(0xc4, 0xc4, 0xc4) },
-  { "Gray78", RGB(0xc7, 0xc7, 0xc7) },
-  { "Gray79", RGB(0xc9, 0xc9, 0xc9) },
-  { "Gray8", RGB(0x14, 0x14, 0x14) },
-  { "Gray80", RGB(0xcc, 0xcc, 0xcc) },
-  { "Gray81", RGB(0xcf, 0xcf, 0xcf) },
-  { "Gray82", RGB(0xd1, 0xd1, 0xd1) },
-  { "Gray83", RGB(0xd4, 0xd4, 0xd4) },
-  { "Gray84", RGB(0xd6, 0xd6, 0xd6) },
-  { "Gray85", RGB(0xd9, 0xd9, 0xd9) },
-  { "Gray86", RGB(0xdb, 0xdb, 0xdb) },
-  { "Gray87", RGB(0xde, 0xde, 0xde) },
-  { "Gray88", RGB(0xe0, 0xe0, 0xe0) },
-  { "Gray89", RGB(0xe3, 0xe3, 0xe3) },
-  { "Gray9", RGB(0x17, 0x17, 0x17) },
-  { "Gray90", RGB(0xe5, 0xe5, 0xe5) },
-  { "Gray91", RGB(0xe8, 0xe8, 0xe8) },
-  { "Gray92", RGB(0xeb, 0xeb, 0xeb) },
-  { "Gray93", RGB(0xed, 0xed, 0xed) },
-  { "Gray94", RGB(0xf0, 0xf0, 0xf0) },
-  { "Gray95", RGB(0xf2, 0xf2, 0xf2) },
-  { "Gray96", RGB(0xf5, 0xf5, 0xf5) },
-  { "Gray97", RGB(0xf7, 0xf7, 0xf7) },
-  { "Gray98", RGB(0xfa, 0xfa, 0xfa) },
-  { "Gray99", RGB(0xfc, 0xfc, 0xfc) },
-  { "Green", RGB(0x00, 0x80, 0x00) },
-  { "Green1", RGB(0x0, 0xff, 0x0) },
-  { "Green2", RGB(0x0, 0xee, 0x0) },
-  { "Green3", RGB(0x0, 0xcd, 0x0) },
-  { "Green4", RGB(0x0, 0x8b, 0x0) },
-  { "GreenYellow", RGB(0xad, 0xff, 0x2f) },
-  { "Grey", RGB(0x80, 0x80, 0x80) },
-  { "Grey0", RGB(0x0, 0x0, 0x0) },
-  { "Grey1", RGB(0x3, 0x3, 0x3) },
-  { "Grey10", RGB(0x1a, 0x1a, 0x1a) },
-  { "Grey100", RGB(0xff, 0xff, 0xff) },
-  { "Grey11", RGB(0x1c, 0x1c, 0x1c) },
-  { "Grey12", RGB(0x1f, 0x1f, 0x1f) },
-  { "Grey13", RGB(0x21, 0x21, 0x21) },
-  { "Grey14", RGB(0x24, 0x24, 0x24) },
-  { "Grey15", RGB(0x26, 0x26, 0x26) },
-  { "Grey16", RGB(0x29, 0x29, 0x29) },
-  { "Grey17", RGB(0x2b, 0x2b, 0x2b) },
-  { "Grey18", RGB(0x2e, 0x2e, 0x2e) },
-  { "Grey19", RGB(0x30, 0x30, 0x30) },
-  { "Grey2", RGB(0x5, 0x5, 0x5) },
-  { "Grey20", RGB(0x33, 0x33, 0x33) },
-  { "Grey21", RGB(0x36, 0x36, 0x36) },
-  { "Grey22", RGB(0x38, 0x38, 0x38) },
-  { "Grey23", RGB(0x3b, 0x3b, 0x3b) },
-  { "Grey24", RGB(0x3d, 0x3d, 0x3d) },
-  { "Grey25", RGB(0x40, 0x40, 0x40) },
-  { "Grey26", RGB(0x42, 0x42, 0x42) },
-  { "Grey27", RGB(0x45, 0x45, 0x45) },
-  { "Grey28", RGB(0x47, 0x47, 0x47) },
-  { "Grey29", RGB(0x4a, 0x4a, 0x4a) },
-  { "Grey3", RGB(0x8, 0x8, 0x8) },
-  { "Grey30", RGB(0x4d, 0x4d, 0x4d) },
-  { "Grey31", RGB(0x4f, 0x4f, 0x4f) },
-  { "Grey32", RGB(0x52, 0x52, 0x52) },
-  { "Grey33", RGB(0x54, 0x54, 0x54) },
-  { "Grey34", RGB(0x57, 0x57, 0x57) },
-  { "Grey35", RGB(0x59, 0x59, 0x59) },
-  { "Grey36", RGB(0x5c, 0x5c, 0x5c) },
-  { "Grey37", RGB(0x5e, 0x5e, 0x5e) },
-  { "Grey38", RGB(0x61, 0x61, 0x61) },
-  { "Grey39", RGB(0x63, 0x63, 0x63) },
-  { "Grey4", RGB(0xa, 0xa, 0xa) },
-  { "Grey40", RGB(0x66, 0x66, 0x66) },
-  { "Grey41", RGB(0x69, 0x69, 0x69) },
-  { "Grey42", RGB(0x6b, 0x6b, 0x6b) },
-  { "Grey43", RGB(0x6e, 0x6e, 0x6e) },
-  { "Grey44", RGB(0x70, 0x70, 0x70) },
-  { "Grey45", RGB(0x73, 0x73, 0x73) },
-  { "Grey46", RGB(0x75, 0x75, 0x75) },
-  { "Grey47", RGB(0x78, 0x78, 0x78) },
-  { "Grey48", RGB(0x7a, 0x7a, 0x7a) },
-  { "Grey49", RGB(0x7d, 0x7d, 0x7d) },
-  { "Grey5", RGB(0xd, 0xd, 0xd) },
-  { "Grey50", RGB(0x7f, 0x7f, 0x7f) },
-  { "Grey51", RGB(0x82, 0x82, 0x82) },
-  { "Grey52", RGB(0x85, 0x85, 0x85) },
-  { "Grey53", RGB(0x87, 0x87, 0x87) },
-  { "Grey54", RGB(0x8a, 0x8a, 0x8a) },
-  { "Grey55", RGB(0x8c, 0x8c, 0x8c) },
-  { "Grey56", RGB(0x8f, 0x8f, 0x8f) },
-  { "Grey57", RGB(0x91, 0x91, 0x91) },
-  { "Grey58", RGB(0x94, 0x94, 0x94) },
-  { "Grey59", RGB(0x96, 0x96, 0x96) },
-  { "Grey6", RGB(0xf, 0xf, 0xf) },
-  { "Grey60", RGB(0x99, 0x99, 0x99) },
-  { "Grey61", RGB(0x9c, 0x9c, 0x9c) },
-  { "Grey62", RGB(0x9e, 0x9e, 0x9e) },
-  { "Grey63", RGB(0xa1, 0xa1, 0xa1) },
-  { "Grey64", RGB(0xa3, 0xa3, 0xa3) },
-  { "Grey65", RGB(0xa6, 0xa6, 0xa6) },
-  { "Grey66", RGB(0xa8, 0xa8, 0xa8) },
-  { "Grey67", RGB(0xab, 0xab, 0xab) },
-  { "Grey68", RGB(0xad, 0xad, 0xad) },
-  { "Grey69", RGB(0xb0, 0xb0, 0xb0) },
-  { "Grey7", RGB(0x12, 0x12, 0x12) },
-  { "Grey70", RGB(0xb3, 0xb3, 0xb3) },
-  { "Grey71", RGB(0xb5, 0xb5, 0xb5) },
-  { "Grey72", RGB(0xb8, 0xb8, 0xb8) },
-  { "Grey73", RGB(0xba, 0xba, 0xba) },
-  { "Grey74", RGB(0xbd, 0xbd, 0xbd) },
-  { "Grey75", RGB(0xbf, 0xbf, 0xbf) },
-  { "Grey76", RGB(0xc2, 0xc2, 0xc2) },
-  { "Grey77", RGB(0xc4, 0xc4, 0xc4) },
-  { "Grey78", RGB(0xc7, 0xc7, 0xc7) },
-  { "Grey79", RGB(0xc9, 0xc9, 0xc9) },
-  { "Grey8", RGB(0x14, 0x14, 0x14) },
-  { "Grey80", RGB(0xcc, 0xcc, 0xcc) },
-  { "Grey81", RGB(0xcf, 0xcf, 0xcf) },
-  { "Grey82", RGB(0xd1, 0xd1, 0xd1) },
-  { "Grey83", RGB(0xd4, 0xd4, 0xd4) },
-  { "Grey84", RGB(0xd6, 0xd6, 0xd6) },
-  { "Grey85", RGB(0xd9, 0xd9, 0xd9) },
-  { "Grey86", RGB(0xdb, 0xdb, 0xdb) },
-  { "Grey87", RGB(0xde, 0xde, 0xde) },
-  { "Grey88", RGB(0xe0, 0xe0, 0xe0) },
-  { "Grey89", RGB(0xe3, 0xe3, 0xe3) },
-  { "Grey9", RGB(0x17, 0x17, 0x17) },
-  { "Grey90", RGB(0xe5, 0xe5, 0xe5) },
-  { "Grey91", RGB(0xe8, 0xe8, 0xe8) },
-  { "Grey92", RGB(0xeb, 0xeb, 0xeb) },
-  { "Grey93", RGB(0xed, 0xed, 0xed) },
-  { "Grey94", RGB(0xf0, 0xf0, 0xf0) },
-  { "Grey95", RGB(0xf2, 0xf2, 0xf2) },
-  { "Grey96", RGB(0xf5, 0xf5, 0xf5) },
-  { "Grey97", RGB(0xf7, 0xf7, 0xf7) },
-  { "Grey98", RGB(0xfa, 0xfa, 0xfa) },
-  { "Grey99", RGB(0xfc, 0xfc, 0xfc) },
-  { "Honeydew", RGB(0xf0, 0xff, 0xf0) },
-  { "Honeydew1", RGB(0xf0, 0xff, 0xf0) },
-  { "Honeydew2", RGB(0xe0, 0xee, 0xe0) },
-  { "Honeydew3", RGB(0xc1, 0xcd, 0xc1) },
-  { "Honeydew4", RGB(0x83, 0x8b, 0x83) },
-  { "HotPink", RGB(0xff, 0x69, 0xb4) },
-  { "HotPink1", RGB(0xff, 0x6e, 0xb4) },
-  { "HotPink2", RGB(0xee, 0x6a, 0xa7) },
-  { "HotPink3", RGB(0xcd, 0x60, 0x90) },
-  { "HotPink4", RGB(0x8b, 0x3a, 0x62) },
-  { "IndianRed", RGB(0xcd, 0x5c, 0x5c) },
-  { "IndianRed1", RGB(0xff, 0x6a, 0x6a) },
-  { "IndianRed2", RGB(0xee, 0x63, 0x63) },
-  { "IndianRed3", RGB(0xcd, 0x55, 0x55) },
-  { "IndianRed4", RGB(0x8b, 0x3a, 0x3a) },
-  { "Indigo", RGB(0x4b, 0x00, 0x82) },
-  { "Ivory", RGB(0xff, 0xff, 0xf0) },
-  { "Ivory1", RGB(0xff, 0xff, 0xf0) },
-  { "Ivory2", RGB(0xee, 0xee, 0xe0) },
-  { "Ivory3", RGB(0xcd, 0xcd, 0xc1) },
-  { "Ivory4", RGB(0x8b, 0x8b, 0x83) },
-  { "Khaki", RGB(0xf0, 0xe6, 0x8c) },
-  { "Khaki1", RGB(0xff, 0xf6, 0x8f) },
-  { "Khaki2", RGB(0xee, 0xe6, 0x85) },
-  { "Khaki3", RGB(0xcd, 0xc6, 0x73) },
-  { "Khaki4", RGB(0x8b, 0x86, 0x4e) },
-  { "Lavender", RGB(0xe6, 0xe6, 0xfa) },
-  { "LavenderBlush", RGB(0xff, 0xf0, 0xf5) },
-  { "LavenderBlush1", RGB(0xff, 0xf0, 0xf5) },
-  { "LavenderBlush2", RGB(0xee, 0xe0, 0xe5) },
-  { "LavenderBlush3", RGB(0xcd, 0xc1, 0xc5) },
-  { "LavenderBlush4", RGB(0x8b, 0x83, 0x86) },
-  { "LawnGreen", RGB(0x7c, 0xfc, 0x00) },
-  { "LemonChiffon", RGB(0xff, 0xfa, 0xcd) },
-  { "LemonChiffon1", RGB(0xff, 0xfa, 0xcd) },
-  { "LemonChiffon2", RGB(0xee, 0xe9, 0xbf) },
-  { "LemonChiffon3", RGB(0xcd, 0xc9, 0xa5) },
-  { "LemonChiffon4", RGB(0x8b, 0x89, 0x70) },
-  { "LightBlue", RGB(0xad, 0xd8, 0xe6) },
-  { "LightBlue1", RGB(0xbf, 0xef, 0xff) },
-  { "LightBlue2", RGB(0xb2, 0xdf, 0xee) },
-  { "LightBlue3", RGB(0x9a, 0xc0, 0xcd) },
-  { "LightBlue4", RGB(0x68, 0x83, 0x8b) },
-  { "LightCoral", RGB(0xf0, 0x80, 0x80) },
-  { "LightCyan", RGB(0xe0, 0xff, 0xff) },
-  { "LightCyan1", RGB(0xe0, 0xff, 0xff) },
-  { "LightCyan2", RGB(0xd1, 0xee, 0xee) },
-  { "LightCyan3", RGB(0xb4, 0xcd, 0xcd) },
-  { "LightCyan4", RGB(0x7a, 0x8b, 0x8b) },
-  { "LightGoldenrod", RGB(0xee, 0xdd, 0x82) },
-  { "LightGoldenrod1", RGB(0xff, 0xec, 0x8b) },
-  { "LightGoldenrod2", RGB(0xee, 0xdc, 0x82) },
-  { "LightGoldenrod3", RGB(0xcd, 0xbe, 0x70) },
-  { "LightGoldenrod4", RGB(0x8b, 0x81, 0x4c) },
-  { "LightGoldenRodYellow", RGB(0xfa, 0xfa, 0xd2) },
-  { "LightGray", RGB(0xd3, 0xd3, 0xd3) },
-  { "LightGreen", RGB(0x90, 0xee, 0x90) },
-  { "LightGrey", RGB(0xd3, 0xd3, 0xd3) },
-  { "LightMagenta", RGB(0xff, 0xbb, 0xff) },
-  { "LightPink", RGB(0xff, 0xb6, 0xc1) },
-  { "LightPink1", RGB(0xff, 0xae, 0xb9) },
-  { "LightPink2", RGB(0xee, 0xa2, 0xad) },
-  { "LightPink3", RGB(0xcd, 0x8c, 0x95) },
-  { "LightPink4", RGB(0x8b, 0x5f, 0x65) },
-  { "LightRed", RGB(0xff, 0xbb, 0xbb) },
-  { "LightSalmon", RGB(0xff, 0xa0, 0x7a) },
-  { "LightSalmon1", RGB(0xff, 0xa0, 0x7a) },
-  { "LightSalmon2", RGB(0xee, 0x95, 0x72) },
-  { "LightSalmon3", RGB(0xcd, 0x81, 0x62) },
-  { "LightSalmon4", RGB(0x8b, 0x57, 0x42) },
-  { "LightSeaGreen", RGB(0x20, 0xb2, 0xaa) },
-  { "LightSkyBlue", RGB(0x87, 0xce, 0xfa) },
-  { "LightSkyBlue1", RGB(0xb0, 0xe2, 0xff) },
-  { "LightSkyBlue2", RGB(0xa4, 0xd3, 0xee) },
-  { "LightSkyBlue3", RGB(0x8d, 0xb6, 0xcd) },
-  { "LightSkyBlue4", RGB(0x60, 0x7b, 0x8b) },
-  { "LightSlateBlue", RGB(0x84, 0x70, 0xff) },
-  { "LightSlateGray", RGB(0x77, 0x88, 0x99) },
-  { "LightSlateGrey", RGB(0x77, 0x88, 0x99) },
-  { "LightSteelBlue", RGB(0xb0, 0xc4, 0xde) },
-  { "LightSteelBlue1", RGB(0xca, 0xe1, 0xff) },
-  { "LightSteelBlue2", RGB(0xbc, 0xd2, 0xee) },
-  { "LightSteelBlue3", RGB(0xa2, 0xb5, 0xcd) },
-  { "LightSteelBlue4", RGB(0x6e, 0x7b, 0x8b) },
-  { "LightYellow", RGB(0xff, 0xff, 0xe0) },
-  { "LightYellow1", RGB(0xff, 0xff, 0xe0) },
-  { "LightYellow2", RGB(0xee, 0xee, 0xd1) },
-  { "LightYellow3", RGB(0xcd, 0xcd, 0xb4) },
-  { "LightYellow4", RGB(0x8b, 0x8b, 0x7a) },
-  { "Lime", RGB(0x00, 0xff, 0x00) },
-  { "LimeGreen", RGB(0x32, 0xcd, 0x32) },
-  { "Linen", RGB(0xfa, 0xf0, 0xe6) },
-  { "Magenta", RGB(0xff, 0x00, 0xff) },
-  { "Magenta1", RGB(0xff, 0x0, 0xff) },
-  { "Magenta2", RGB(0xee, 0x0, 0xee) },
-  { "Magenta3", RGB(0xcd, 0x0, 0xcd) },
-  { "Magenta4", RGB(0x8b, 0x0, 0x8b) },
-  { "Maroon", RGB(0x80, 0x00, 0x00) },
-  { "Maroon1", RGB(0xff, 0x34, 0xb3) },
-  { "Maroon2", RGB(0xee, 0x30, 0xa7) },
-  { "Maroon3", RGB(0xcd, 0x29, 0x90) },
-  { "Maroon4", RGB(0x8b, 0x1c, 0x62) },
-  { "MediumAquamarine", RGB(0x66, 0xcd, 0xaa) },
-  { "MediumBlue", RGB(0x00, 0x00, 0xcd) },
-  { "MediumOrchid", RGB(0xba, 0x55, 0xd3) },
-  { "MediumOrchid1", RGB(0xe0, 0x66, 0xff) },
-  { "MediumOrchid2", RGB(0xd1, 0x5f, 0xee) },
-  { "MediumOrchid3", RGB(0xb4, 0x52, 0xcd) },
-  { "MediumOrchid4", RGB(0x7a, 0x37, 0x8b) },
-  { "MediumPurple", RGB(0x93, 0x70, 0xdb) },
-  { "MediumPurple1", RGB(0xab, 0x82, 0xff) },
-  { "MediumPurple2", RGB(0x9f, 0x79, 0xee) },
-  { "MediumPurple3", RGB(0x89, 0x68, 0xcd) },
-  { "MediumPurple4", RGB(0x5d, 0x47, 0x8b) },
-  { "MediumSeaGreen", RGB(0x3c, 0xb3, 0x71) },
-  { "MediumSlateBlue", RGB(0x7b, 0x68, 0xee) },
-  { "MediumSpringGreen", RGB(0x00, 0xfa, 0x9a) },
-  { "MediumTurquoise", RGB(0x48, 0xd1, 0xcc) },
-  { "MediumVioletRed", RGB(0xc7, 0x15, 0x85) },
-  { "MidnightBlue", RGB(0x19, 0x19, 0x70) },
-  { "MintCream", RGB(0xf5, 0xff, 0xfa) },
-  { "MistyRose", RGB(0xff, 0xe4, 0xe1) },
-  { "MistyRose1", RGB(0xff, 0xe4, 0xe1) },
-  { "MistyRose2", RGB(0xee, 0xd5, 0xd2) },
-  { "MistyRose3", RGB(0xcd, 0xb7, 0xb5) },
-  { "MistyRose4", RGB(0x8b, 0x7d, 0x7b) },
-  { "Moccasin", RGB(0xff, 0xe4, 0xb5) },
-  { "NavajoWhite", RGB(0xff, 0xde, 0xad) },
-  { "NavajoWhite1", RGB(0xff, 0xde, 0xad) },
-  { "NavajoWhite2", RGB(0xee, 0xcf, 0xa1) },
-  { "NavajoWhite3", RGB(0xcd, 0xb3, 0x8b) },
-  { "NavajoWhite4", RGB(0x8b, 0x79, 0x5e) },
-  { "Navy", RGB(0x00, 0x00, 0x80) },
-  { "NavyBlue", RGB(0x0, 0x0, 0x80) },
-  { "OldLace", RGB(0xfd, 0xf5, 0xe6) },
-  { "Olive", RGB(0x80, 0x80, 0x00) },
-  { "OliveDrab", RGB(0x6b, 0x8e, 0x23) },
-  { "OliveDrab1", RGB(0xc0, 0xff, 0x3e) },
-  { "OliveDrab2", RGB(0xb3, 0xee, 0x3a) },
-  { "OliveDrab3", RGB(0x9a, 0xcd, 0x32) },
-  { "OliveDrab4", RGB(0x69, 0x8b, 0x22) },
-  { "Orange", RGB(0xff, 0xa5, 0x00) },
-  { "Orange1", RGB(0xff, 0xa5, 0x0) },
-  { "Orange2", RGB(0xee, 0x9a, 0x0) },
-  { "Orange3", RGB(0xcd, 0x85, 0x0) },
-  { "Orange4", RGB(0x8b, 0x5a, 0x0) },
-  { "OrangeRed", RGB(0xff, 0x45, 0x00) },
-  { "OrangeRed1", RGB(0xff, 0x45, 0x0) },
-  { "OrangeRed2", RGB(0xee, 0x40, 0x0) },
-  { "OrangeRed3", RGB(0xcd, 0x37, 0x0) },
-  { "OrangeRed4", RGB(0x8b, 0x25, 0x0) },
-  { "Orchid", RGB(0xda, 0x70, 0xd6) },
-  { "Orchid1", RGB(0xff, 0x83, 0xfa) },
-  { "Orchid2", RGB(0xee, 0x7a, 0xe9) },
-  { "Orchid3", RGB(0xcd, 0x69, 0xc9) },
-  { "Orchid4", RGB(0x8b, 0x47, 0x89) },
-  { "PaleGoldenRod", RGB(0xee, 0xe8, 0xaa) },
-  { "PaleGreen", RGB(0x98, 0xfb, 0x98) },
-  { "PaleGreen1", RGB(0x9a, 0xff, 0x9a) },
-  { "PaleGreen2", RGB(0x90, 0xee, 0x90) },
-  { "PaleGreen3", RGB(0x7c, 0xcd, 0x7c) },
-  { "PaleGreen4", RGB(0x54, 0x8b, 0x54) },
-  { "PaleTurquoise", RGB(0xaf, 0xee, 0xee) },
-  { "PaleTurquoise1", RGB(0xbb, 0xff, 0xff) },
-  { "PaleTurquoise2", RGB(0xae, 0xee, 0xee) },
-  { "PaleTurquoise3", RGB(0x96, 0xcd, 0xcd) },
-  { "PaleTurquoise4", RGB(0x66, 0x8b, 0x8b) },
-  { "PaleVioletRed", RGB(0xdb, 0x70, 0x93) },
-  { "PaleVioletRed1", RGB(0xff, 0x82, 0xab) },
-  { "PaleVioletRed2", RGB(0xee, 0x79, 0x9f) },
-  { "PaleVioletRed3", RGB(0xcd, 0x68, 0x89) },
-  { "PaleVioletRed4", RGB(0x8b, 0x47, 0x5d) },
-  { "PapayaWhip", RGB(0xff, 0xef, 0xd5) },
-  { "PeachPuff", RGB(0xff, 0xda, 0xb9) },
-  { "PeachPuff1", RGB(0xff, 0xda, 0xb9) },
-  { "PeachPuff2", RGB(0xee, 0xcb, 0xad) },
-  { "PeachPuff3", RGB(0xcd, 0xaf, 0x95) },
-  { "PeachPuff4", RGB(0x8b, 0x77, 0x65) },
-  { "Peru", RGB(0xcd, 0x85, 0x3f) },
-  { "Pink", RGB(0xff, 0xc0, 0xcb) },
-  { "Pink1", RGB(0xff, 0xb5, 0xc5) },
-  { "Pink2", RGB(0xee, 0xa9, 0xb8) },
-  { "Pink3", RGB(0xcd, 0x91, 0x9e) },
-  { "Pink4", RGB(0x8b, 0x63, 0x6c) },
-  { "Plum", RGB(0xdd, 0xa0, 0xdd) },
-  { "Plum1", RGB(0xff, 0xbb, 0xff) },
-  { "Plum2", RGB(0xee, 0xae, 0xee) },
-  { "Plum3", RGB(0xcd, 0x96, 0xcd) },
-  { "Plum4", RGB(0x8b, 0x66, 0x8b) },
-  { "PowderBlue", RGB(0xb0, 0xe0, 0xe6) },
-  { "Purple", RGB(0x80, 0x00, 0x80) },
-  { "Purple1", RGB(0x9b, 0x30, 0xff) },
-  { "Purple2", RGB(0x91, 0x2c, 0xee) },
-  { "Purple3", RGB(0x7d, 0x26, 0xcd) },
-  { "Purple4", RGB(0x55, 0x1a, 0x8b) },
-  { "RebeccaPurple", RGB(0x66, 0x33, 0x99) },
-  { "Red", RGB(0xff, 0x00, 0x00) },
-  { "Red1", RGB(0xff, 0x0, 0x0) },
-  { "Red2", RGB(0xee, 0x0, 0x0) },
-  { "Red3", RGB(0xcd, 0x0, 0x0) },
-  { "Red4", RGB(0x8b, 0x0, 0x0) },
-  { "RosyBrown", RGB(0xbc, 0x8f, 0x8f) },
-  { "RosyBrown1", RGB(0xff, 0xc1, 0xc1) },
-  { "RosyBrown2", RGB(0xee, 0xb4, 0xb4) },
-  { "RosyBrown3", RGB(0xcd, 0x9b, 0x9b) },
-  { "RosyBrown4", RGB(0x8b, 0x69, 0x69) },
-  { "RoyalBlue", RGB(0x41, 0x69, 0xe1) },
-  { "RoyalBlue1", RGB(0x48, 0x76, 0xff) },
-  { "RoyalBlue2", RGB(0x43, 0x6e, 0xee) },
-  { "RoyalBlue3", RGB(0x3a, 0x5f, 0xcd) },
-  { "RoyalBlue4", RGB(0x27, 0x40, 0x8b) },
-  { "SaddleBrown", RGB(0x8b, 0x45, 0x13) },
-  { "Salmon", RGB(0xfa, 0x80, 0x72) },
-  { "Salmon1", RGB(0xff, 0x8c, 0x69) },
-  { "Salmon2", RGB(0xee, 0x82, 0x62) },
-  { "Salmon3", RGB(0xcd, 0x70, 0x54) },
-  { "Salmon4", RGB(0x8b, 0x4c, 0x39) },
-  { "SandyBrown", RGB(0xf4, 0xa4, 0x60) },
-  { "SeaGreen", RGB(0x2e, 0x8b, 0x57) },
-  { "SeaGreen1", RGB(0x54, 0xff, 0x9f) },
-  { "SeaGreen2", RGB(0x4e, 0xee, 0x94) },
-  { "SeaGreen3", RGB(0x43, 0xcd, 0x80) },
-  { "SeaGreen4", RGB(0x2e, 0x8b, 0x57) },
-  { "SeaShell", RGB(0xff, 0xf5, 0xee) },
-  { "Seashell1", RGB(0xff, 0xf5, 0xee) },
-  { "Seashell2", RGB(0xee, 0xe5, 0xde) },
-  { "Seashell3", RGB(0xcd, 0xc5, 0xbf) },
-  { "Seashell4", RGB(0x8b, 0x86, 0x82) },
-  { "Sienna", RGB(0xa0, 0x52, 0x2d) },
-  { "Sienna1", RGB(0xff, 0x82, 0x47) },
-  { "Sienna2", RGB(0xee, 0x79, 0x42) },
-  { "Sienna3", RGB(0xcd, 0x68, 0x39) },
-  { "Sienna4", RGB(0x8b, 0x47, 0x26) },
-  { "Silver", RGB(0xc0, 0xc0, 0xc0) },
-  { "SkyBlue", RGB(0x87, 0xce, 0xeb) },
-  { "SkyBlue1", RGB(0x87, 0xce, 0xff) },
-  { "SkyBlue2", RGB(0x7e, 0xc0, 0xee) },
-  { "SkyBlue3", RGB(0x6c, 0xa6, 0xcd) },
-  { "SkyBlue4", RGB(0x4a, 0x70, 0x8b) },
-  { "SlateBlue", RGB(0x6a, 0x5a, 0xcd) },
-  { "SlateBlue1", RGB(0x83, 0x6f, 0xff) },
-  { "SlateBlue2", RGB(0x7a, 0x67, 0xee) },
-  { "SlateBlue3", RGB(0x69, 0x59, 0xcd) },
-  { "SlateBlue4", RGB(0x47, 0x3c, 0x8b) },
-  { "SlateGray", RGB(0x70, 0x80, 0x90) },
-  { "SlateGray1", RGB(0xc6, 0xe2, 0xff) },
-  { "SlateGray2", RGB(0xb9, 0xd3, 0xee) },
-  { "SlateGray3", RGB(0x9f, 0xb6, 0xcd) },
-  { "SlateGray4", RGB(0x6c, 0x7b, 0x8b) },
-  { "SlateGrey", RGB(0x70, 0x80, 0x90) },
-  { "Snow", RGB(0xff, 0xfa, 0xfa) },
-  { "Snow1", RGB(0xff, 0xfa, 0xfa) },
-  { "Snow2", RGB(0xee, 0xe9, 0xe9) },
-  { "Snow3", RGB(0xcd, 0xc9, 0xc9) },
-  { "Snow4", RGB(0x8b, 0x89, 0x89) },
-  { "SpringGreen", RGB(0x00, 0xff, 0x7f) },
-  { "SpringGreen1", RGB(0x0, 0xff, 0x7f) },
-  { "SpringGreen2", RGB(0x0, 0xee, 0x76) },
-  { "SpringGreen3", RGB(0x0, 0xcd, 0x66) },
-  { "SpringGreen4", RGB(0x0, 0x8b, 0x45) },
-  { "SteelBlue", RGB(0x46, 0x82, 0xb4) },
-  { "SteelBlue1", RGB(0x63, 0xb8, 0xff) },
-  { "SteelBlue2", RGB(0x5c, 0xac, 0xee) },
-  { "SteelBlue3", RGB(0x4f, 0x94, 0xcd) },
-  { "SteelBlue4", RGB(0x36, 0x64, 0x8b) },
-  { "Tan", RGB(0xd2, 0xb4, 0x8c) },
-  { "Tan1", RGB(0xff, 0xa5, 0x4f) },
-  { "Tan2", RGB(0xee, 0x9a, 0x49) },
-  { "Tan3", RGB(0xcd, 0x85, 0x3f) },
-  { "Tan4", RGB(0x8b, 0x5a, 0x2b) },
-  { "Teal", RGB(0x00, 0x80, 0x80) },
-  { "Thistle", RGB(0xd8, 0xbf, 0xd8) },
-  { "Thistle1", RGB(0xff, 0xe1, 0xff) },
-  { "Thistle2", RGB(0xee, 0xd2, 0xee) },
-  { "Thistle3", RGB(0xcd, 0xb5, 0xcd) },
-  { "Thistle4", RGB(0x8b, 0x7b, 0x8b) },
-  { "Tomato", RGB(0xff, 0x63, 0x47) },
-  { "Tomato1", RGB(0xff, 0x63, 0x47) },
-  { "Tomato2", RGB(0xee, 0x5c, 0x42) },
-  { "Tomato3", RGB(0xcd, 0x4f, 0x39) },
-  { "Tomato4", RGB(0x8b, 0x36, 0x26) },
-  { "Turquoise", RGB(0x40, 0xe0, 0xd0) },
-  { "Turquoise1", RGB(0x0, 0xf5, 0xff) },
-  { "Turquoise2", RGB(0x0, 0xe5, 0xee) },
-  { "Turquoise3", RGB(0x0, 0xc5, 0xcd) },
-  { "Turquoise4", RGB(0x0, 0x86, 0x8b) },
-  { "Violet", RGB(0xee, 0x82, 0xee) },
-  { "VioletRed", RGB(0xd0, 0x20, 0x90) },
-  { "VioletRed1", RGB(0xff, 0x3e, 0x96) },
-  { "VioletRed2", RGB(0xee, 0x3a, 0x8c) },
-  { "VioletRed3", RGB(0xcd, 0x32, 0x78) },
-  { "VioletRed4", RGB(0x8b, 0x22, 0x52) },
-  { "WebGray", RGB(0x80, 0x80, 0x80) },
-  { "WebGreen", RGB(0x0, 0x80, 0x0) },
-  { "WebGrey", RGB(0x80, 0x80, 0x80) },
-  { "WebMaroon", RGB(0x80, 0x0, 0x0) },
-  { "WebPurple", RGB(0x80, 0x0, 0x80) },
-  { "Wheat", RGB(0xf5, 0xde, 0xb3) },
-  { "Wheat1", RGB(0xff, 0xe7, 0xba) },
-  { "Wheat2", RGB(0xee, 0xd8, 0xae) },
-  { "Wheat3", RGB(0xcd, 0xba, 0x96) },
-  { "Wheat4", RGB(0x8b, 0x7e, 0x66) },
-  { "White", RGB(0xff, 0xff, 0xff) },
-  { "WhiteSmoke", RGB(0xf5, 0xf5, 0xf5) },
-  { "X11Gray", RGB(0xbe, 0xbe, 0xbe) },
-  { "X11Green", RGB(0x0, 0xff, 0x0) },
-  { "X11Grey", RGB(0xbe, 0xbe, 0xbe) },
-  { "X11Maroon", RGB(0xb0, 0x30, 0x60) },
-  { "X11Purple", RGB(0xa0, 0x20, 0xf0) },
-  { "Yellow", RGB(0xff, 0xff, 0x00) },
-  { "Yellow1", RGB(0xff, 0xff, 0x0) },
-  { "Yellow2", RGB(0xee, 0xee, 0x0) },
-  { "Yellow3", RGB(0xcd, 0xcd, 0x0) },
-  { "Yellow4", RGB(0x8b, 0x8b, 0x0) },
-  { "YellowGreen", RGB(0x9a, 0xcd, 0x32) },
+  { "AliceBlue", RGB_(0xf0, 0xf8, 0xff) },
+  { "AntiqueWhite", RGB_(0xfa, 0xeb, 0xd7) },
+  { "AntiqueWhite1", RGB_(0xff, 0xef, 0xdb) },
+  { "AntiqueWhite2", RGB_(0xee, 0xdf, 0xcc) },
+  { "AntiqueWhite3", RGB_(0xcd, 0xc0, 0xb0) },
+  { "AntiqueWhite4", RGB_(0x8b, 0x83, 0x78) },
+  { "Aqua", RGB_(0x00, 0xff, 0xff) },
+  { "Aquamarine", RGB_(0x7f, 0xff, 0xd4) },
+  { "Aquamarine1", RGB_(0x7f, 0xff, 0xd4) },
+  { "Aquamarine2", RGB_(0x76, 0xee, 0xc6) },
+  { "Aquamarine3", RGB_(0x66, 0xcd, 0xaa) },
+  { "Aquamarine4", RGB_(0x45, 0x8b, 0x74) },
+  { "Azure", RGB_(0xf0, 0xff, 0xff) },
+  { "Azure1", RGB_(0xf0, 0xff, 0xff) },
+  { "Azure2", RGB_(0xe0, 0xee, 0xee) },
+  { "Azure3", RGB_(0xc1, 0xcd, 0xcd) },
+  { "Azure4", RGB_(0x83, 0x8b, 0x8b) },
+  { "Beige", RGB_(0xf5, 0xf5, 0xdc) },
+  { "Bisque", RGB_(0xff, 0xe4, 0xc4) },
+  { "Bisque1", RGB_(0xff, 0xe4, 0xc4) },
+  { "Bisque2", RGB_(0xee, 0xd5, 0xb7) },
+  { "Bisque3", RGB_(0xcd, 0xb7, 0x9e) },
+  { "Bisque4", RGB_(0x8b, 0x7d, 0x6b) },
+  { "Black", RGB_(0x00, 0x00, 0x00) },
+  { "BlanchedAlmond", RGB_(0xff, 0xeb, 0xcd) },
+  { "Blue", RGB_(0x00, 0x00, 0xff) },
+  { "Blue1", RGB_(0x0, 0x0, 0xff) },
+  { "Blue2", RGB_(0x0, 0x0, 0xee) },
+  { "Blue3", RGB_(0x0, 0x0, 0xcd) },
+  { "Blue4", RGB_(0x0, 0x0, 0x8b) },
+  { "BlueViolet", RGB_(0x8a, 0x2b, 0xe2) },
+  { "Brown", RGB_(0xa5, 0x2a, 0x2a) },
+  { "Brown1", RGB_(0xff, 0x40, 0x40) },
+  { "Brown2", RGB_(0xee, 0x3b, 0x3b) },
+  { "Brown3", RGB_(0xcd, 0x33, 0x33) },
+  { "Brown4", RGB_(0x8b, 0x23, 0x23) },
+  { "BurlyWood", RGB_(0xde, 0xb8, 0x87) },
+  { "Burlywood1", RGB_(0xff, 0xd3, 0x9b) },
+  { "Burlywood2", RGB_(0xee, 0xc5, 0x91) },
+  { "Burlywood3", RGB_(0xcd, 0xaa, 0x7d) },
+  { "Burlywood4", RGB_(0x8b, 0x73, 0x55) },
+  { "CadetBlue", RGB_(0x5f, 0x9e, 0xa0) },
+  { "CadetBlue1", RGB_(0x98, 0xf5, 0xff) },
+  { "CadetBlue2", RGB_(0x8e, 0xe5, 0xee) },
+  { "CadetBlue3", RGB_(0x7a, 0xc5, 0xcd) },
+  { "CadetBlue4", RGB_(0x53, 0x86, 0x8b) },
+  { "ChartReuse", RGB_(0x7f, 0xff, 0x00) },
+  { "Chartreuse1", RGB_(0x7f, 0xff, 0x0) },
+  { "Chartreuse2", RGB_(0x76, 0xee, 0x0) },
+  { "Chartreuse3", RGB_(0x66, 0xcd, 0x0) },
+  { "Chartreuse4", RGB_(0x45, 0x8b, 0x0) },
+  { "Chocolate", RGB_(0xd2, 0x69, 0x1e) },
+  { "Chocolate1", RGB_(0xff, 0x7f, 0x24) },
+  { "Chocolate2", RGB_(0xee, 0x76, 0x21) },
+  { "Chocolate3", RGB_(0xcd, 0x66, 0x1d) },
+  { "Chocolate4", RGB_(0x8b, 0x45, 0x13) },
+  { "Coral", RGB_(0xff, 0x7f, 0x50) },
+  { "Coral1", RGB_(0xff, 0x72, 0x56) },
+  { "Coral2", RGB_(0xee, 0x6a, 0x50) },
+  { "Coral3", RGB_(0xcd, 0x5b, 0x45) },
+  { "Coral4", RGB_(0x8b, 0x3e, 0x2f) },
+  { "CornFlowerBlue", RGB_(0x64, 0x95, 0xed) },
+  { "Cornsilk", RGB_(0xff, 0xf8, 0xdc) },
+  { "Cornsilk1", RGB_(0xff, 0xf8, 0xdc) },
+  { "Cornsilk2", RGB_(0xee, 0xe8, 0xcd) },
+  { "Cornsilk3", RGB_(0xcd, 0xc8, 0xb1) },
+  { "Cornsilk4", RGB_(0x8b, 0x88, 0x78) },
+  { "Crimson", RGB_(0xdc, 0x14, 0x3c) },
+  { "Cyan", RGB_(0x00, 0xff, 0xff) },
+  { "Cyan1", RGB_(0x0, 0xff, 0xff) },
+  { "Cyan2", RGB_(0x0, 0xee, 0xee) },
+  { "Cyan3", RGB_(0x0, 0xcd, 0xcd) },
+  { "Cyan4", RGB_(0x0, 0x8b, 0x8b) },
+  { "DarkBlue", RGB_(0x00, 0x00, 0x8b) },
+  { "DarkCyan", RGB_(0x00, 0x8b, 0x8b) },
+  { "DarkGoldenRod", RGB_(0xb8, 0x86, 0x0b) },
+  { "DarkGoldenrod1", RGB_(0xff, 0xb9, 0xf) },
+  { "DarkGoldenrod2", RGB_(0xee, 0xad, 0xe) },
+  { "DarkGoldenrod3", RGB_(0xcd, 0x95, 0xc) },
+  { "DarkGoldenrod4", RGB_(0x8b, 0x65, 0x8) },
+  { "DarkGray", RGB_(0xa9, 0xa9, 0xa9) },
+  { "DarkGreen", RGB_(0x00, 0x64, 0x00) },
+  { "DarkGrey", RGB_(0xa9, 0xa9, 0xa9) },
+  { "DarkKhaki", RGB_(0xbd, 0xb7, 0x6b) },
+  { "DarkMagenta", RGB_(0x8b, 0x00, 0x8b) },
+  { "DarkOliveGreen", RGB_(0x55, 0x6b, 0x2f) },
+  { "DarkOliveGreen1", RGB_(0xca, 0xff, 0x70) },
+  { "DarkOliveGreen2", RGB_(0xbc, 0xee, 0x68) },
+  { "DarkOliveGreen3", RGB_(0xa2, 0xcd, 0x5a) },
+  { "DarkOliveGreen4", RGB_(0x6e, 0x8b, 0x3d) },
+  { "DarkOrange", RGB_(0xff, 0x8c, 0x00) },
+  { "DarkOrange1", RGB_(0xff, 0x7f, 0x0) },
+  { "DarkOrange2", RGB_(0xee, 0x76, 0x0) },
+  { "DarkOrange3", RGB_(0xcd, 0x66, 0x0) },
+  { "DarkOrange4", RGB_(0x8b, 0x45, 0x0) },
+  { "DarkOrchid", RGB_(0x99, 0x32, 0xcc) },
+  { "DarkOrchid1", RGB_(0xbf, 0x3e, 0xff) },
+  { "DarkOrchid2", RGB_(0xb2, 0x3a, 0xee) },
+  { "DarkOrchid3", RGB_(0x9a, 0x32, 0xcd) },
+  { "DarkOrchid4", RGB_(0x68, 0x22, 0x8b) },
+  { "DarkRed", RGB_(0x8b, 0x00, 0x00) },
+  { "DarkSalmon", RGB_(0xe9, 0x96, 0x7a) },
+  { "DarkSeaGreen", RGB_(0x8f, 0xbc, 0x8f) },
+  { "DarkSeaGreen1", RGB_(0xc1, 0xff, 0xc1) },
+  { "DarkSeaGreen2", RGB_(0xb4, 0xee, 0xb4) },
+  { "DarkSeaGreen3", RGB_(0x9b, 0xcd, 0x9b) },
+  { "DarkSeaGreen4", RGB_(0x69, 0x8b, 0x69) },
+  { "DarkSlateBlue", RGB_(0x48, 0x3d, 0x8b) },
+  { "DarkSlateGray", RGB_(0x2f, 0x4f, 0x4f) },
+  { "DarkSlateGray1", RGB_(0x97, 0xff, 0xff) },
+  { "DarkSlateGray2", RGB_(0x8d, 0xee, 0xee) },
+  { "DarkSlateGray3", RGB_(0x79, 0xcd, 0xcd) },
+  { "DarkSlateGray4", RGB_(0x52, 0x8b, 0x8b) },
+  { "DarkSlateGrey", RGB_(0x2f, 0x4f, 0x4f) },
+  { "DarkTurquoise", RGB_(0x00, 0xce, 0xd1) },
+  { "DarkViolet", RGB_(0x94, 0x00, 0xd3) },
+  { "DarkYellow", RGB_(0xbb, 0xbb, 0x00) },
+  { "DeepPink", RGB_(0xff, 0x14, 0x93) },
+  { "DeepPink1", RGB_(0xff, 0x14, 0x93) },
+  { "DeepPink2", RGB_(0xee, 0x12, 0x89) },
+  { "DeepPink3", RGB_(0xcd, 0x10, 0x76) },
+  { "DeepPink4", RGB_(0x8b, 0xa, 0x50) },
+  { "DeepSkyBlue", RGB_(0x00, 0xbf, 0xff) },
+  { "DeepSkyBlue1", RGB_(0x0, 0xbf, 0xff) },
+  { "DeepSkyBlue2", RGB_(0x0, 0xb2, 0xee) },
+  { "DeepSkyBlue3", RGB_(0x0, 0x9a, 0xcd) },
+  { "DeepSkyBlue4", RGB_(0x0, 0x68, 0x8b) },
+  { "DimGray", RGB_(0x69, 0x69, 0x69) },
+  { "DimGrey", RGB_(0x69, 0x69, 0x69) },
+  { "DodgerBlue", RGB_(0x1e, 0x90, 0xff) },
+  { "DodgerBlue1", RGB_(0x1e, 0x90, 0xff) },
+  { "DodgerBlue2", RGB_(0x1c, 0x86, 0xee) },
+  { "DodgerBlue3", RGB_(0x18, 0x74, 0xcd) },
+  { "DodgerBlue4", RGB_(0x10, 0x4e, 0x8b) },
+  { "Firebrick", RGB_(0xb2, 0x22, 0x22) },
+  { "Firebrick1", RGB_(0xff, 0x30, 0x30) },
+  { "Firebrick2", RGB_(0xee, 0x2c, 0x2c) },
+  { "Firebrick3", RGB_(0xcd, 0x26, 0x26) },
+  { "Firebrick4", RGB_(0x8b, 0x1a, 0x1a) },
+  { "FloralWhite", RGB_(0xff, 0xfa, 0xf0) },
+  { "ForestGreen", RGB_(0x22, 0x8b, 0x22) },
+  { "Fuchsia", RGB_(0xff, 0x00, 0xff) },
+  { "Gainsboro", RGB_(0xdc, 0xdc, 0xdc) },
+  { "GhostWhite", RGB_(0xf8, 0xf8, 0xff) },
+  { "Gold", RGB_(0xff, 0xd7, 0x00) },
+  { "Gold1", RGB_(0xff, 0xd7, 0x0) },
+  { "Gold2", RGB_(0xee, 0xc9, 0x0) },
+  { "Gold3", RGB_(0xcd, 0xad, 0x0) },
+  { "Gold4", RGB_(0x8b, 0x75, 0x0) },
+  { "GoldenRod", RGB_(0xda, 0xa5, 0x20) },
+  { "Goldenrod1", RGB_(0xff, 0xc1, 0x25) },
+  { "Goldenrod2", RGB_(0xee, 0xb4, 0x22) },
+  { "Goldenrod3", RGB_(0xcd, 0x9b, 0x1d) },
+  { "Goldenrod4", RGB_(0x8b, 0x69, 0x14) },
+  { "Gray", RGB_(0x80, 0x80, 0x80) },
+  { "Gray0", RGB_(0x0, 0x0, 0x0) },
+  { "Gray1", RGB_(0x3, 0x3, 0x3) },
+  { "Gray10", RGB_(0x1a, 0x1a, 0x1a) },
+  { "Gray100", RGB_(0xff, 0xff, 0xff) },
+  { "Gray11", RGB_(0x1c, 0x1c, 0x1c) },
+  { "Gray12", RGB_(0x1f, 0x1f, 0x1f) },
+  { "Gray13", RGB_(0x21, 0x21, 0x21) },
+  { "Gray14", RGB_(0x24, 0x24, 0x24) },
+  { "Gray15", RGB_(0x26, 0x26, 0x26) },
+  { "Gray16", RGB_(0x29, 0x29, 0x29) },
+  { "Gray17", RGB_(0x2b, 0x2b, 0x2b) },
+  { "Gray18", RGB_(0x2e, 0x2e, 0x2e) },
+  { "Gray19", RGB_(0x30, 0x30, 0x30) },
+  { "Gray2", RGB_(0x5, 0x5, 0x5) },
+  { "Gray20", RGB_(0x33, 0x33, 0x33) },
+  { "Gray21", RGB_(0x36, 0x36, 0x36) },
+  { "Gray22", RGB_(0x38, 0x38, 0x38) },
+  { "Gray23", RGB_(0x3b, 0x3b, 0x3b) },
+  { "Gray24", RGB_(0x3d, 0x3d, 0x3d) },
+  { "Gray25", RGB_(0x40, 0x40, 0x40) },
+  { "Gray26", RGB_(0x42, 0x42, 0x42) },
+  { "Gray27", RGB_(0x45, 0x45, 0x45) },
+  { "Gray28", RGB_(0x47, 0x47, 0x47) },
+  { "Gray29", RGB_(0x4a, 0x4a, 0x4a) },
+  { "Gray3", RGB_(0x8, 0x8, 0x8) },
+  { "Gray30", RGB_(0x4d, 0x4d, 0x4d) },
+  { "Gray31", RGB_(0x4f, 0x4f, 0x4f) },
+  { "Gray32", RGB_(0x52, 0x52, 0x52) },
+  { "Gray33", RGB_(0x54, 0x54, 0x54) },
+  { "Gray34", RGB_(0x57, 0x57, 0x57) },
+  { "Gray35", RGB_(0x59, 0x59, 0x59) },
+  { "Gray36", RGB_(0x5c, 0x5c, 0x5c) },
+  { "Gray37", RGB_(0x5e, 0x5e, 0x5e) },
+  { "Gray38", RGB_(0x61, 0x61, 0x61) },
+  { "Gray39", RGB_(0x63, 0x63, 0x63) },
+  { "Gray4", RGB_(0xa, 0xa, 0xa) },
+  { "Gray40", RGB_(0x66, 0x66, 0x66) },
+  { "Gray41", RGB_(0x69, 0x69, 0x69) },
+  { "Gray42", RGB_(0x6b, 0x6b, 0x6b) },
+  { "Gray43", RGB_(0x6e, 0x6e, 0x6e) },
+  { "Gray44", RGB_(0x70, 0x70, 0x70) },
+  { "Gray45", RGB_(0x73, 0x73, 0x73) },
+  { "Gray46", RGB_(0x75, 0x75, 0x75) },
+  { "Gray47", RGB_(0x78, 0x78, 0x78) },
+  { "Gray48", RGB_(0x7a, 0x7a, 0x7a) },
+  { "Gray49", RGB_(0x7d, 0x7d, 0x7d) },
+  { "Gray5", RGB_(0xd, 0xd, 0xd) },
+  { "Gray50", RGB_(0x7f, 0x7f, 0x7f) },
+  { "Gray51", RGB_(0x82, 0x82, 0x82) },
+  { "Gray52", RGB_(0x85, 0x85, 0x85) },
+  { "Gray53", RGB_(0x87, 0x87, 0x87) },
+  { "Gray54", RGB_(0x8a, 0x8a, 0x8a) },
+  { "Gray55", RGB_(0x8c, 0x8c, 0x8c) },
+  { "Gray56", RGB_(0x8f, 0x8f, 0x8f) },
+  { "Gray57", RGB_(0x91, 0x91, 0x91) },
+  { "Gray58", RGB_(0x94, 0x94, 0x94) },
+  { "Gray59", RGB_(0x96, 0x96, 0x96) },
+  { "Gray6", RGB_(0xf, 0xf, 0xf) },
+  { "Gray60", RGB_(0x99, 0x99, 0x99) },
+  { "Gray61", RGB_(0x9c, 0x9c, 0x9c) },
+  { "Gray62", RGB_(0x9e, 0x9e, 0x9e) },
+  { "Gray63", RGB_(0xa1, 0xa1, 0xa1) },
+  { "Gray64", RGB_(0xa3, 0xa3, 0xa3) },
+  { "Gray65", RGB_(0xa6, 0xa6, 0xa6) },
+  { "Gray66", RGB_(0xa8, 0xa8, 0xa8) },
+  { "Gray67", RGB_(0xab, 0xab, 0xab) },
+  { "Gray68", RGB_(0xad, 0xad, 0xad) },
+  { "Gray69", RGB_(0xb0, 0xb0, 0xb0) },
+  { "Gray7", RGB_(0x12, 0x12, 0x12) },
+  { "Gray70", RGB_(0xb3, 0xb3, 0xb3) },
+  { "Gray71", RGB_(0xb5, 0xb5, 0xb5) },
+  { "Gray72", RGB_(0xb8, 0xb8, 0xb8) },
+  { "Gray73", RGB_(0xba, 0xba, 0xba) },
+  { "Gray74", RGB_(0xbd, 0xbd, 0xbd) },
+  { "Gray75", RGB_(0xbf, 0xbf, 0xbf) },
+  { "Gray76", RGB_(0xc2, 0xc2, 0xc2) },
+  { "Gray77", RGB_(0xc4, 0xc4, 0xc4) },
+  { "Gray78", RGB_(0xc7, 0xc7, 0xc7) },
+  { "Gray79", RGB_(0xc9, 0xc9, 0xc9) },
+  { "Gray8", RGB_(0x14, 0x14, 0x14) },
+  { "Gray80", RGB_(0xcc, 0xcc, 0xcc) },
+  { "Gray81", RGB_(0xcf, 0xcf, 0xcf) },
+  { "Gray82", RGB_(0xd1, 0xd1, 0xd1) },
+  { "Gray83", RGB_(0xd4, 0xd4, 0xd4) },
+  { "Gray84", RGB_(0xd6, 0xd6, 0xd6) },
+  { "Gray85", RGB_(0xd9, 0xd9, 0xd9) },
+  { "Gray86", RGB_(0xdb, 0xdb, 0xdb) },
+  { "Gray87", RGB_(0xde, 0xde, 0xde) },
+  { "Gray88", RGB_(0xe0, 0xe0, 0xe0) },
+  { "Gray89", RGB_(0xe3, 0xe3, 0xe3) },
+  { "Gray9", RGB_(0x17, 0x17, 0x17) },
+  { "Gray90", RGB_(0xe5, 0xe5, 0xe5) },
+  { "Gray91", RGB_(0xe8, 0xe8, 0xe8) },
+  { "Gray92", RGB_(0xeb, 0xeb, 0xeb) },
+  { "Gray93", RGB_(0xed, 0xed, 0xed) },
+  { "Gray94", RGB_(0xf0, 0xf0, 0xf0) },
+  { "Gray95", RGB_(0xf2, 0xf2, 0xf2) },
+  { "Gray96", RGB_(0xf5, 0xf5, 0xf5) },
+  { "Gray97", RGB_(0xf7, 0xf7, 0xf7) },
+  { "Gray98", RGB_(0xfa, 0xfa, 0xfa) },
+  { "Gray99", RGB_(0xfc, 0xfc, 0xfc) },
+  { "Green", RGB_(0x00, 0x80, 0x00) },
+  { "Green1", RGB_(0x0, 0xff, 0x0) },
+  { "Green2", RGB_(0x0, 0xee, 0x0) },
+  { "Green3", RGB_(0x0, 0xcd, 0x0) },
+  { "Green4", RGB_(0x0, 0x8b, 0x0) },
+  { "GreenYellow", RGB_(0xad, 0xff, 0x2f) },
+  { "Grey", RGB_(0x80, 0x80, 0x80) },
+  { "Grey0", RGB_(0x0, 0x0, 0x0) },
+  { "Grey1", RGB_(0x3, 0x3, 0x3) },
+  { "Grey10", RGB_(0x1a, 0x1a, 0x1a) },
+  { "Grey100", RGB_(0xff, 0xff, 0xff) },
+  { "Grey11", RGB_(0x1c, 0x1c, 0x1c) },
+  { "Grey12", RGB_(0x1f, 0x1f, 0x1f) },
+  { "Grey13", RGB_(0x21, 0x21, 0x21) },
+  { "Grey14", RGB_(0x24, 0x24, 0x24) },
+  { "Grey15", RGB_(0x26, 0x26, 0x26) },
+  { "Grey16", RGB_(0x29, 0x29, 0x29) },
+  { "Grey17", RGB_(0x2b, 0x2b, 0x2b) },
+  { "Grey18", RGB_(0x2e, 0x2e, 0x2e) },
+  { "Grey19", RGB_(0x30, 0x30, 0x30) },
+  { "Grey2", RGB_(0x5, 0x5, 0x5) },
+  { "Grey20", RGB_(0x33, 0x33, 0x33) },
+  { "Grey21", RGB_(0x36, 0x36, 0x36) },
+  { "Grey22", RGB_(0x38, 0x38, 0x38) },
+  { "Grey23", RGB_(0x3b, 0x3b, 0x3b) },
+  { "Grey24", RGB_(0x3d, 0x3d, 0x3d) },
+  { "Grey25", RGB_(0x40, 0x40, 0x40) },
+  { "Grey26", RGB_(0x42, 0x42, 0x42) },
+  { "Grey27", RGB_(0x45, 0x45, 0x45) },
+  { "Grey28", RGB_(0x47, 0x47, 0x47) },
+  { "Grey29", RGB_(0x4a, 0x4a, 0x4a) },
+  { "Grey3", RGB_(0x8, 0x8, 0x8) },
+  { "Grey30", RGB_(0x4d, 0x4d, 0x4d) },
+  { "Grey31", RGB_(0x4f, 0x4f, 0x4f) },
+  { "Grey32", RGB_(0x52, 0x52, 0x52) },
+  { "Grey33", RGB_(0x54, 0x54, 0x54) },
+  { "Grey34", RGB_(0x57, 0x57, 0x57) },
+  { "Grey35", RGB_(0x59, 0x59, 0x59) },
+  { "Grey36", RGB_(0x5c, 0x5c, 0x5c) },
+  { "Grey37", RGB_(0x5e, 0x5e, 0x5e) },
+  { "Grey38", RGB_(0x61, 0x61, 0x61) },
+  { "Grey39", RGB_(0x63, 0x63, 0x63) },
+  { "Grey4", RGB_(0xa, 0xa, 0xa) },
+  { "Grey40", RGB_(0x66, 0x66, 0x66) },
+  { "Grey41", RGB_(0x69, 0x69, 0x69) },
+  { "Grey42", RGB_(0x6b, 0x6b, 0x6b) },
+  { "Grey43", RGB_(0x6e, 0x6e, 0x6e) },
+  { "Grey44", RGB_(0x70, 0x70, 0x70) },
+  { "Grey45", RGB_(0x73, 0x73, 0x73) },
+  { "Grey46", RGB_(0x75, 0x75, 0x75) },
+  { "Grey47", RGB_(0x78, 0x78, 0x78) },
+  { "Grey48", RGB_(0x7a, 0x7a, 0x7a) },
+  { "Grey49", RGB_(0x7d, 0x7d, 0x7d) },
+  { "Grey5", RGB_(0xd, 0xd, 0xd) },
+  { "Grey50", RGB_(0x7f, 0x7f, 0x7f) },
+  { "Grey51", RGB_(0x82, 0x82, 0x82) },
+  { "Grey52", RGB_(0x85, 0x85, 0x85) },
+  { "Grey53", RGB_(0x87, 0x87, 0x87) },
+  { "Grey54", RGB_(0x8a, 0x8a, 0x8a) },
+  { "Grey55", RGB_(0x8c, 0x8c, 0x8c) },
+  { "Grey56", RGB_(0x8f, 0x8f, 0x8f) },
+  { "Grey57", RGB_(0x91, 0x91, 0x91) },
+  { "Grey58", RGB_(0x94, 0x94, 0x94) },
+  { "Grey59", RGB_(0x96, 0x96, 0x96) },
+  { "Grey6", RGB_(0xf, 0xf, 0xf) },
+  { "Grey60", RGB_(0x99, 0x99, 0x99) },
+  { "Grey61", RGB_(0x9c, 0x9c, 0x9c) },
+  { "Grey62", RGB_(0x9e, 0x9e, 0x9e) },
+  { "Grey63", RGB_(0xa1, 0xa1, 0xa1) },
+  { "Grey64", RGB_(0xa3, 0xa3, 0xa3) },
+  { "Grey65", RGB_(0xa6, 0xa6, 0xa6) },
+  { "Grey66", RGB_(0xa8, 0xa8, 0xa8) },
+  { "Grey67", RGB_(0xab, 0xab, 0xab) },
+  { "Grey68", RGB_(0xad, 0xad, 0xad) },
+  { "Grey69", RGB_(0xb0, 0xb0, 0xb0) },
+  { "Grey7", RGB_(0x12, 0x12, 0x12) },
+  { "Grey70", RGB_(0xb3, 0xb3, 0xb3) },
+  { "Grey71", RGB_(0xb5, 0xb5, 0xb5) },
+  { "Grey72", RGB_(0xb8, 0xb8, 0xb8) },
+  { "Grey73", RGB_(0xba, 0xba, 0xba) },
+  { "Grey74", RGB_(0xbd, 0xbd, 0xbd) },
+  { "Grey75", RGB_(0xbf, 0xbf, 0xbf) },
+  { "Grey76", RGB_(0xc2, 0xc2, 0xc2) },
+  { "Grey77", RGB_(0xc4, 0xc4, 0xc4) },
+  { "Grey78", RGB_(0xc7, 0xc7, 0xc7) },
+  { "Grey79", RGB_(0xc9, 0xc9, 0xc9) },
+  { "Grey8", RGB_(0x14, 0x14, 0x14) },
+  { "Grey80", RGB_(0xcc, 0xcc, 0xcc) },
+  { "Grey81", RGB_(0xcf, 0xcf, 0xcf) },
+  { "Grey82", RGB_(0xd1, 0xd1, 0xd1) },
+  { "Grey83", RGB_(0xd4, 0xd4, 0xd4) },
+  { "Grey84", RGB_(0xd6, 0xd6, 0xd6) },
+  { "Grey85", RGB_(0xd9, 0xd9, 0xd9) },
+  { "Grey86", RGB_(0xdb, 0xdb, 0xdb) },
+  { "Grey87", RGB_(0xde, 0xde, 0xde) },
+  { "Grey88", RGB_(0xe0, 0xe0, 0xe0) },
+  { "Grey89", RGB_(0xe3, 0xe3, 0xe3) },
+  { "Grey9", RGB_(0x17, 0x17, 0x17) },
+  { "Grey90", RGB_(0xe5, 0xe5, 0xe5) },
+  { "Grey91", RGB_(0xe8, 0xe8, 0xe8) },
+  { "Grey92", RGB_(0xeb, 0xeb, 0xeb) },
+  { "Grey93", RGB_(0xed, 0xed, 0xed) },
+  { "Grey94", RGB_(0xf0, 0xf0, 0xf0) },
+  { "Grey95", RGB_(0xf2, 0xf2, 0xf2) },
+  { "Grey96", RGB_(0xf5, 0xf5, 0xf5) },
+  { "Grey97", RGB_(0xf7, 0xf7, 0xf7) },
+  { "Grey98", RGB_(0xfa, 0xfa, 0xfa) },
+  { "Grey99", RGB_(0xfc, 0xfc, 0xfc) },
+  { "Honeydew", RGB_(0xf0, 0xff, 0xf0) },
+  { "Honeydew1", RGB_(0xf0, 0xff, 0xf0) },
+  { "Honeydew2", RGB_(0xe0, 0xee, 0xe0) },
+  { "Honeydew3", RGB_(0xc1, 0xcd, 0xc1) },
+  { "Honeydew4", RGB_(0x83, 0x8b, 0x83) },
+  { "HotPink", RGB_(0xff, 0x69, 0xb4) },
+  { "HotPink1", RGB_(0xff, 0x6e, 0xb4) },
+  { "HotPink2", RGB_(0xee, 0x6a, 0xa7) },
+  { "HotPink3", RGB_(0xcd, 0x60, 0x90) },
+  { "HotPink4", RGB_(0x8b, 0x3a, 0x62) },
+  { "IndianRed", RGB_(0xcd, 0x5c, 0x5c) },
+  { "IndianRed1", RGB_(0xff, 0x6a, 0x6a) },
+  { "IndianRed2", RGB_(0xee, 0x63, 0x63) },
+  { "IndianRed3", RGB_(0xcd, 0x55, 0x55) },
+  { "IndianRed4", RGB_(0x8b, 0x3a, 0x3a) },
+  { "Indigo", RGB_(0x4b, 0x00, 0x82) },
+  { "Ivory", RGB_(0xff, 0xff, 0xf0) },
+  { "Ivory1", RGB_(0xff, 0xff, 0xf0) },
+  { "Ivory2", RGB_(0xee, 0xee, 0xe0) },
+  { "Ivory3", RGB_(0xcd, 0xcd, 0xc1) },
+  { "Ivory4", RGB_(0x8b, 0x8b, 0x83) },
+  { "Khaki", RGB_(0xf0, 0xe6, 0x8c) },
+  { "Khaki1", RGB_(0xff, 0xf6, 0x8f) },
+  { "Khaki2", RGB_(0xee, 0xe6, 0x85) },
+  { "Khaki3", RGB_(0xcd, 0xc6, 0x73) },
+  { "Khaki4", RGB_(0x8b, 0x86, 0x4e) },
+  { "Lavender", RGB_(0xe6, 0xe6, 0xfa) },
+  { "LavenderBlush", RGB_(0xff, 0xf0, 0xf5) },
+  { "LavenderBlush1", RGB_(0xff, 0xf0, 0xf5) },
+  { "LavenderBlush2", RGB_(0xee, 0xe0, 0xe5) },
+  { "LavenderBlush3", RGB_(0xcd, 0xc1, 0xc5) },
+  { "LavenderBlush4", RGB_(0x8b, 0x83, 0x86) },
+  { "LawnGreen", RGB_(0x7c, 0xfc, 0x00) },
+  { "LemonChiffon", RGB_(0xff, 0xfa, 0xcd) },
+  { "LemonChiffon1", RGB_(0xff, 0xfa, 0xcd) },
+  { "LemonChiffon2", RGB_(0xee, 0xe9, 0xbf) },
+  { "LemonChiffon3", RGB_(0xcd, 0xc9, 0xa5) },
+  { "LemonChiffon4", RGB_(0x8b, 0x89, 0x70) },
+  { "LightBlue", RGB_(0xad, 0xd8, 0xe6) },
+  { "LightBlue1", RGB_(0xbf, 0xef, 0xff) },
+  { "LightBlue2", RGB_(0xb2, 0xdf, 0xee) },
+  { "LightBlue3", RGB_(0x9a, 0xc0, 0xcd) },
+  { "LightBlue4", RGB_(0x68, 0x83, 0x8b) },
+  { "LightCoral", RGB_(0xf0, 0x80, 0x80) },
+  { "LightCyan", RGB_(0xe0, 0xff, 0xff) },
+  { "LightCyan1", RGB_(0xe0, 0xff, 0xff) },
+  { "LightCyan2", RGB_(0xd1, 0xee, 0xee) },
+  { "LightCyan3", RGB_(0xb4, 0xcd, 0xcd) },
+  { "LightCyan4", RGB_(0x7a, 0x8b, 0x8b) },
+  { "LightGoldenrod", RGB_(0xee, 0xdd, 0x82) },
+  { "LightGoldenrod1", RGB_(0xff, 0xec, 0x8b) },
+  { "LightGoldenrod2", RGB_(0xee, 0xdc, 0x82) },
+  { "LightGoldenrod3", RGB_(0xcd, 0xbe, 0x70) },
+  { "LightGoldenrod4", RGB_(0x8b, 0x81, 0x4c) },
+  { "LightGoldenRodYellow", RGB_(0xfa, 0xfa, 0xd2) },
+  { "LightGray", RGB_(0xd3, 0xd3, 0xd3) },
+  { "LightGreen", RGB_(0x90, 0xee, 0x90) },
+  { "LightGrey", RGB_(0xd3, 0xd3, 0xd3) },
+  { "LightMagenta", RGB_(0xff, 0xbb, 0xff) },
+  { "LightPink", RGB_(0xff, 0xb6, 0xc1) },
+  { "LightPink1", RGB_(0xff, 0xae, 0xb9) },
+  { "LightPink2", RGB_(0xee, 0xa2, 0xad) },
+  { "LightPink3", RGB_(0xcd, 0x8c, 0x95) },
+  { "LightPink4", RGB_(0x8b, 0x5f, 0x65) },
+  { "LightRed", RGB_(0xff, 0xbb, 0xbb) },
+  { "LightSalmon", RGB_(0xff, 0xa0, 0x7a) },
+  { "LightSalmon1", RGB_(0xff, 0xa0, 0x7a) },
+  { "LightSalmon2", RGB_(0xee, 0x95, 0x72) },
+  { "LightSalmon3", RGB_(0xcd, 0x81, 0x62) },
+  { "LightSalmon4", RGB_(0x8b, 0x57, 0x42) },
+  { "LightSeaGreen", RGB_(0x20, 0xb2, 0xaa) },
+  { "LightSkyBlue", RGB_(0x87, 0xce, 0xfa) },
+  { "LightSkyBlue1", RGB_(0xb0, 0xe2, 0xff) },
+  { "LightSkyBlue2", RGB_(0xa4, 0xd3, 0xee) },
+  { "LightSkyBlue3", RGB_(0x8d, 0xb6, 0xcd) },
+  { "LightSkyBlue4", RGB_(0x60, 0x7b, 0x8b) },
+  { "LightSlateBlue", RGB_(0x84, 0x70, 0xff) },
+  { "LightSlateGray", RGB_(0x77, 0x88, 0x99) },
+  { "LightSlateGrey", RGB_(0x77, 0x88, 0x99) },
+  { "LightSteelBlue", RGB_(0xb0, 0xc4, 0xde) },
+  { "LightSteelBlue1", RGB_(0xca, 0xe1, 0xff) },
+  { "LightSteelBlue2", RGB_(0xbc, 0xd2, 0xee) },
+  { "LightSteelBlue3", RGB_(0xa2, 0xb5, 0xcd) },
+  { "LightSteelBlue4", RGB_(0x6e, 0x7b, 0x8b) },
+  { "LightYellow", RGB_(0xff, 0xff, 0xe0) },
+  { "LightYellow1", RGB_(0xff, 0xff, 0xe0) },
+  { "LightYellow2", RGB_(0xee, 0xee, 0xd1) },
+  { "LightYellow3", RGB_(0xcd, 0xcd, 0xb4) },
+  { "LightYellow4", RGB_(0x8b, 0x8b, 0x7a) },
+  { "Lime", RGB_(0x00, 0xff, 0x00) },
+  { "LimeGreen", RGB_(0x32, 0xcd, 0x32) },
+  { "Linen", RGB_(0xfa, 0xf0, 0xe6) },
+  { "Magenta", RGB_(0xff, 0x00, 0xff) },
+  { "Magenta1", RGB_(0xff, 0x0, 0xff) },
+  { "Magenta2", RGB_(0xee, 0x0, 0xee) },
+  { "Magenta3", RGB_(0xcd, 0x0, 0xcd) },
+  { "Magenta4", RGB_(0x8b, 0x0, 0x8b) },
+  { "Maroon", RGB_(0x80, 0x00, 0x00) },
+  { "Maroon1", RGB_(0xff, 0x34, 0xb3) },
+  { "Maroon2", RGB_(0xee, 0x30, 0xa7) },
+  { "Maroon3", RGB_(0xcd, 0x29, 0x90) },
+  { "Maroon4", RGB_(0x8b, 0x1c, 0x62) },
+  { "MediumAquamarine", RGB_(0x66, 0xcd, 0xaa) },
+  { "MediumBlue", RGB_(0x00, 0x00, 0xcd) },
+  { "MediumOrchid", RGB_(0xba, 0x55, 0xd3) },
+  { "MediumOrchid1", RGB_(0xe0, 0x66, 0xff) },
+  { "MediumOrchid2", RGB_(0xd1, 0x5f, 0xee) },
+  { "MediumOrchid3", RGB_(0xb4, 0x52, 0xcd) },
+  { "MediumOrchid4", RGB_(0x7a, 0x37, 0x8b) },
+  { "MediumPurple", RGB_(0x93, 0x70, 0xdb) },
+  { "MediumPurple1", RGB_(0xab, 0x82, 0xff) },
+  { "MediumPurple2", RGB_(0x9f, 0x79, 0xee) },
+  { "MediumPurple3", RGB_(0x89, 0x68, 0xcd) },
+  { "MediumPurple4", RGB_(0x5d, 0x47, 0x8b) },
+  { "MediumSeaGreen", RGB_(0x3c, 0xb3, 0x71) },
+  { "MediumSlateBlue", RGB_(0x7b, 0x68, 0xee) },
+  { "MediumSpringGreen", RGB_(0x00, 0xfa, 0x9a) },
+  { "MediumTurquoise", RGB_(0x48, 0xd1, 0xcc) },
+  { "MediumVioletRed", RGB_(0xc7, 0x15, 0x85) },
+  { "MidnightBlue", RGB_(0x19, 0x19, 0x70) },
+  { "MintCream", RGB_(0xf5, 0xff, 0xfa) },
+  { "MistyRose", RGB_(0xff, 0xe4, 0xe1) },
+  { "MistyRose1", RGB_(0xff, 0xe4, 0xe1) },
+  { "MistyRose2", RGB_(0xee, 0xd5, 0xd2) },
+  { "MistyRose3", RGB_(0xcd, 0xb7, 0xb5) },
+  { "MistyRose4", RGB_(0x8b, 0x7d, 0x7b) },
+  { "Moccasin", RGB_(0xff, 0xe4, 0xb5) },
+  { "NavajoWhite", RGB_(0xff, 0xde, 0xad) },
+  { "NavajoWhite1", RGB_(0xff, 0xde, 0xad) },
+  { "NavajoWhite2", RGB_(0xee, 0xcf, 0xa1) },
+  { "NavajoWhite3", RGB_(0xcd, 0xb3, 0x8b) },
+  { "NavajoWhite4", RGB_(0x8b, 0x79, 0x5e) },
+  { "Navy", RGB_(0x00, 0x00, 0x80) },
+  { "NavyBlue", RGB_(0x0, 0x0, 0x80) },
+  { "OldLace", RGB_(0xfd, 0xf5, 0xe6) },
+  { "Olive", RGB_(0x80, 0x80, 0x00) },
+  { "OliveDrab", RGB_(0x6b, 0x8e, 0x23) },
+  { "OliveDrab1", RGB_(0xc0, 0xff, 0x3e) },
+  { "OliveDrab2", RGB_(0xb3, 0xee, 0x3a) },
+  { "OliveDrab3", RGB_(0x9a, 0xcd, 0x32) },
+  { "OliveDrab4", RGB_(0x69, 0x8b, 0x22) },
+  { "Orange", RGB_(0xff, 0xa5, 0x00) },
+  { "Orange1", RGB_(0xff, 0xa5, 0x0) },
+  { "Orange2", RGB_(0xee, 0x9a, 0x0) },
+  { "Orange3", RGB_(0xcd, 0x85, 0x0) },
+  { "Orange4", RGB_(0x8b, 0x5a, 0x0) },
+  { "OrangeRed", RGB_(0xff, 0x45, 0x00) },
+  { "OrangeRed1", RGB_(0xff, 0x45, 0x0) },
+  { "OrangeRed2", RGB_(0xee, 0x40, 0x0) },
+  { "OrangeRed3", RGB_(0xcd, 0x37, 0x0) },
+  { "OrangeRed4", RGB_(0x8b, 0x25, 0x0) },
+  { "Orchid", RGB_(0xda, 0x70, 0xd6) },
+  { "Orchid1", RGB_(0xff, 0x83, 0xfa) },
+  { "Orchid2", RGB_(0xee, 0x7a, 0xe9) },
+  { "Orchid3", RGB_(0xcd, 0x69, 0xc9) },
+  { "Orchid4", RGB_(0x8b, 0x47, 0x89) },
+  { "PaleGoldenRod", RGB_(0xee, 0xe8, 0xaa) },
+  { "PaleGreen", RGB_(0x98, 0xfb, 0x98) },
+  { "PaleGreen1", RGB_(0x9a, 0xff, 0x9a) },
+  { "PaleGreen2", RGB_(0x90, 0xee, 0x90) },
+  { "PaleGreen3", RGB_(0x7c, 0xcd, 0x7c) },
+  { "PaleGreen4", RGB_(0x54, 0x8b, 0x54) },
+  { "PaleTurquoise", RGB_(0xaf, 0xee, 0xee) },
+  { "PaleTurquoise1", RGB_(0xbb, 0xff, 0xff) },
+  { "PaleTurquoise2", RGB_(0xae, 0xee, 0xee) },
+  { "PaleTurquoise3", RGB_(0x96, 0xcd, 0xcd) },
+  { "PaleTurquoise4", RGB_(0x66, 0x8b, 0x8b) },
+  { "PaleVioletRed", RGB_(0xdb, 0x70, 0x93) },
+  { "PaleVioletRed1", RGB_(0xff, 0x82, 0xab) },
+  { "PaleVioletRed2", RGB_(0xee, 0x79, 0x9f) },
+  { "PaleVioletRed3", RGB_(0xcd, 0x68, 0x89) },
+  { "PaleVioletRed4", RGB_(0x8b, 0x47, 0x5d) },
+  { "PapayaWhip", RGB_(0xff, 0xef, 0xd5) },
+  { "PeachPuff", RGB_(0xff, 0xda, 0xb9) },
+  { "PeachPuff1", RGB_(0xff, 0xda, 0xb9) },
+  { "PeachPuff2", RGB_(0xee, 0xcb, 0xad) },
+  { "PeachPuff3", RGB_(0xcd, 0xaf, 0x95) },
+  { "PeachPuff4", RGB_(0x8b, 0x77, 0x65) },
+  { "Peru", RGB_(0xcd, 0x85, 0x3f) },
+  { "Pink", RGB_(0xff, 0xc0, 0xcb) },
+  { "Pink1", RGB_(0xff, 0xb5, 0xc5) },
+  { "Pink2", RGB_(0xee, 0xa9, 0xb8) },
+  { "Pink3", RGB_(0xcd, 0x91, 0x9e) },
+  { "Pink4", RGB_(0x8b, 0x63, 0x6c) },
+  { "Plum", RGB_(0xdd, 0xa0, 0xdd) },
+  { "Plum1", RGB_(0xff, 0xbb, 0xff) },
+  { "Plum2", RGB_(0xee, 0xae, 0xee) },
+  { "Plum3", RGB_(0xcd, 0x96, 0xcd) },
+  { "Plum4", RGB_(0x8b, 0x66, 0x8b) },
+  { "PowderBlue", RGB_(0xb0, 0xe0, 0xe6) },
+  { "Purple", RGB_(0x80, 0x00, 0x80) },
+  { "Purple1", RGB_(0x9b, 0x30, 0xff) },
+  { "Purple2", RGB_(0x91, 0x2c, 0xee) },
+  { "Purple3", RGB_(0x7d, 0x26, 0xcd) },
+  { "Purple4", RGB_(0x55, 0x1a, 0x8b) },
+  { "RebeccaPurple", RGB_(0x66, 0x33, 0x99) },
+  { "Red", RGB_(0xff, 0x00, 0x00) },
+  { "Red1", RGB_(0xff, 0x0, 0x0) },
+  { "Red2", RGB_(0xee, 0x0, 0x0) },
+  { "Red3", RGB_(0xcd, 0x0, 0x0) },
+  { "Red4", RGB_(0x8b, 0x0, 0x0) },
+  { "RosyBrown", RGB_(0xbc, 0x8f, 0x8f) },
+  { "RosyBrown1", RGB_(0xff, 0xc1, 0xc1) },
+  { "RosyBrown2", RGB_(0xee, 0xb4, 0xb4) },
+  { "RosyBrown3", RGB_(0xcd, 0x9b, 0x9b) },
+  { "RosyBrown4", RGB_(0x8b, 0x69, 0x69) },
+  { "RoyalBlue", RGB_(0x41, 0x69, 0xe1) },
+  { "RoyalBlue1", RGB_(0x48, 0x76, 0xff) },
+  { "RoyalBlue2", RGB_(0x43, 0x6e, 0xee) },
+  { "RoyalBlue3", RGB_(0x3a, 0x5f, 0xcd) },
+  { "RoyalBlue4", RGB_(0x27, 0x40, 0x8b) },
+  { "SaddleBrown", RGB_(0x8b, 0x45, 0x13) },
+  { "Salmon", RGB_(0xfa, 0x80, 0x72) },
+  { "Salmon1", RGB_(0xff, 0x8c, 0x69) },
+  { "Salmon2", RGB_(0xee, 0x82, 0x62) },
+  { "Salmon3", RGB_(0xcd, 0x70, 0x54) },
+  { "Salmon4", RGB_(0x8b, 0x4c, 0x39) },
+  { "SandyBrown", RGB_(0xf4, 0xa4, 0x60) },
+  { "SeaGreen", RGB_(0x2e, 0x8b, 0x57) },
+  { "SeaGreen1", RGB_(0x54, 0xff, 0x9f) },
+  { "SeaGreen2", RGB_(0x4e, 0xee, 0x94) },
+  { "SeaGreen3", RGB_(0x43, 0xcd, 0x80) },
+  { "SeaGreen4", RGB_(0x2e, 0x8b, 0x57) },
+  { "SeaShell", RGB_(0xff, 0xf5, 0xee) },
+  { "Seashell1", RGB_(0xff, 0xf5, 0xee) },
+  { "Seashell2", RGB_(0xee, 0xe5, 0xde) },
+  { "Seashell3", RGB_(0xcd, 0xc5, 0xbf) },
+  { "Seashell4", RGB_(0x8b, 0x86, 0x82) },
+  { "Sienna", RGB_(0xa0, 0x52, 0x2d) },
+  { "Sienna1", RGB_(0xff, 0x82, 0x47) },
+  { "Sienna2", RGB_(0xee, 0x79, 0x42) },
+  { "Sienna3", RGB_(0xcd, 0x68, 0x39) },
+  { "Sienna4", RGB_(0x8b, 0x47, 0x26) },
+  { "Silver", RGB_(0xc0, 0xc0, 0xc0) },
+  { "SkyBlue", RGB_(0x87, 0xce, 0xeb) },
+  { "SkyBlue1", RGB_(0x87, 0xce, 0xff) },
+  { "SkyBlue2", RGB_(0x7e, 0xc0, 0xee) },
+  { "SkyBlue3", RGB_(0x6c, 0xa6, 0xcd) },
+  { "SkyBlue4", RGB_(0x4a, 0x70, 0x8b) },
+  { "SlateBlue", RGB_(0x6a, 0x5a, 0xcd) },
+  { "SlateBlue1", RGB_(0x83, 0x6f, 0xff) },
+  { "SlateBlue2", RGB_(0x7a, 0x67, 0xee) },
+  { "SlateBlue3", RGB_(0x69, 0x59, 0xcd) },
+  { "SlateBlue4", RGB_(0x47, 0x3c, 0x8b) },
+  { "SlateGray", RGB_(0x70, 0x80, 0x90) },
+  { "SlateGray1", RGB_(0xc6, 0xe2, 0xff) },
+  { "SlateGray2", RGB_(0xb9, 0xd3, 0xee) },
+  { "SlateGray3", RGB_(0x9f, 0xb6, 0xcd) },
+  { "SlateGray4", RGB_(0x6c, 0x7b, 0x8b) },
+  { "SlateGrey", RGB_(0x70, 0x80, 0x90) },
+  { "Snow", RGB_(0xff, 0xfa, 0xfa) },
+  { "Snow1", RGB_(0xff, 0xfa, 0xfa) },
+  { "Snow2", RGB_(0xee, 0xe9, 0xe9) },
+  { "Snow3", RGB_(0xcd, 0xc9, 0xc9) },
+  { "Snow4", RGB_(0x8b, 0x89, 0x89) },
+  { "SpringGreen", RGB_(0x00, 0xff, 0x7f) },
+  { "SpringGreen1", RGB_(0x0, 0xff, 0x7f) },
+  { "SpringGreen2", RGB_(0x0, 0xee, 0x76) },
+  { "SpringGreen3", RGB_(0x0, 0xcd, 0x66) },
+  { "SpringGreen4", RGB_(0x0, 0x8b, 0x45) },
+  { "SteelBlue", RGB_(0x46, 0x82, 0xb4) },
+  { "SteelBlue1", RGB_(0x63, 0xb8, 0xff) },
+  { "SteelBlue2", RGB_(0x5c, 0xac, 0xee) },
+  { "SteelBlue3", RGB_(0x4f, 0x94, 0xcd) },
+  { "SteelBlue4", RGB_(0x36, 0x64, 0x8b) },
+  { "Tan", RGB_(0xd2, 0xb4, 0x8c) },
+  { "Tan1", RGB_(0xff, 0xa5, 0x4f) },
+  { "Tan2", RGB_(0xee, 0x9a, 0x49) },
+  { "Tan3", RGB_(0xcd, 0x85, 0x3f) },
+  { "Tan4", RGB_(0x8b, 0x5a, 0x2b) },
+  { "Teal", RGB_(0x00, 0x80, 0x80) },
+  { "Thistle", RGB_(0xd8, 0xbf, 0xd8) },
+  { "Thistle1", RGB_(0xff, 0xe1, 0xff) },
+  { "Thistle2", RGB_(0xee, 0xd2, 0xee) },
+  { "Thistle3", RGB_(0xcd, 0xb5, 0xcd) },
+  { "Thistle4", RGB_(0x8b, 0x7b, 0x8b) },
+  { "Tomato", RGB_(0xff, 0x63, 0x47) },
+  { "Tomato1", RGB_(0xff, 0x63, 0x47) },
+  { "Tomato2", RGB_(0xee, 0x5c, 0x42) },
+  { "Tomato3", RGB_(0xcd, 0x4f, 0x39) },
+  { "Tomato4", RGB_(0x8b, 0x36, 0x26) },
+  { "Turquoise", RGB_(0x40, 0xe0, 0xd0) },
+  { "Turquoise1", RGB_(0x0, 0xf5, 0xff) },
+  { "Turquoise2", RGB_(0x0, 0xe5, 0xee) },
+  { "Turquoise3", RGB_(0x0, 0xc5, 0xcd) },
+  { "Turquoise4", RGB_(0x0, 0x86, 0x8b) },
+  { "Violet", RGB_(0xee, 0x82, 0xee) },
+  { "VioletRed", RGB_(0xd0, 0x20, 0x90) },
+  { "VioletRed1", RGB_(0xff, 0x3e, 0x96) },
+  { "VioletRed2", RGB_(0xee, 0x3a, 0x8c) },
+  { "VioletRed3", RGB_(0xcd, 0x32, 0x78) },
+  { "VioletRed4", RGB_(0x8b, 0x22, 0x52) },
+  { "WebGray", RGB_(0x80, 0x80, 0x80) },
+  { "WebGreen", RGB_(0x0, 0x80, 0x0) },
+  { "WebGrey", RGB_(0x80, 0x80, 0x80) },
+  { "WebMaroon", RGB_(0x80, 0x0, 0x0) },
+  { "WebPurple", RGB_(0x80, 0x0, 0x80) },
+  { "Wheat", RGB_(0xf5, 0xde, 0xb3) },
+  { "Wheat1", RGB_(0xff, 0xe7, 0xba) },
+  { "Wheat2", RGB_(0xee, 0xd8, 0xae) },
+  { "Wheat3", RGB_(0xcd, 0xba, 0x96) },
+  { "Wheat4", RGB_(0x8b, 0x7e, 0x66) },
+  { "White", RGB_(0xff, 0xff, 0xff) },
+  { "WhiteSmoke", RGB_(0xf5, 0xf5, 0xf5) },
+  { "X11Gray", RGB_(0xbe, 0xbe, 0xbe) },
+  { "X11Green", RGB_(0x0, 0xff, 0x0) },
+  { "X11Grey", RGB_(0xbe, 0xbe, 0xbe) },
+  { "X11Maroon", RGB_(0xb0, 0x30, 0x60) },
+  { "X11Purple", RGB_(0xa0, 0x20, 0xf0) },
+  { "Yellow", RGB_(0xff, 0xff, 0x00) },
+  { "Yellow1", RGB_(0xff, 0xff, 0x0) },
+  { "Yellow2", RGB_(0xee, 0xee, 0x0) },
+  { "Yellow3", RGB_(0xcd, 0xcd, 0x0) },
+  { "Yellow4", RGB_(0x8b, 0x8b, 0x0) },
+  { "YellowGreen", RGB_(0x9a, 0xcd, 0x32) },
   { NULL, 0 },
 };
 
@@ -8182,7 +8488,7 @@ color_name_table_T color_name_table[] = {
 ///
 /// @param[in] name string value to convert to RGB
 /// return the hex value or -1 if could not find a correct value
-RgbValue name_to_color(const uint8_t *name)
+RgbValue name_to_color(const char_u *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])
@@ -8204,6 +8510,27 @@ RgbValue name_to_color(const uint8_t *name)
 
   return -1;
 }
+
+/// Gets highlight description for id `attr_id` as a map.
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
+{
+  HlAttrs *aep = NULL;
+  Dictionary dic = ARRAY_DICT_INIT;
+
+  if (attr_id == 0) {
+    return dic;
+  }
+
+  aep = syn_cterm_attr2entry((int)attr_id);
+  if (!aep) {
+    api_set_error(err, kErrorTypeException,
+                  "Invalid attribute id: %" PRId64, attr_id);
+    return dic;
+  }
+
+  return hlattrs2dict(aep, rgb);
+}
+
 
 /**************************************
 *  End of Highlighting stuff	      *

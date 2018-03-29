@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Go
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-go)
-" Last Change:	2014 Aug 16
+" Last Change:	2017 Jun 13
 "
 " TODO:
 " - function invocations split across lines
@@ -23,18 +23,6 @@ if exists('*GoIndent')
   finish
 endif
 
-" The shiftwidth() function is relatively new.
-" Don't require it to exist.
-if exists('*shiftwidth')
-  function s:sw() abort
-    return shiftwidth()
-  endfunction
-else
-  function s:sw() abort
-    return &shiftwidth
-  endfunction
-endif
-
 function! GoIndent(lnum)
   let l:prevlnum = prevnonblank(a:lnum-1)
   if l:prevlnum == 0
@@ -51,17 +39,17 @@ function! GoIndent(lnum)
 
   if l:prevl =~ '[({]\s*$'
     " previous line opened a block
-    let l:ind += s:sw()
+    let l:ind += shiftwidth()
   endif
   if l:prevl =~# '^\s*\(case .*\|default\):$'
     " previous line is part of a switch statement
-    let l:ind += s:sw()
+    let l:ind += shiftwidth()
   endif
   " TODO: handle if the previous line is a label.
 
   if l:thisl =~ '^\s*[)}]'
     " this line closed a block
-    let l:ind -= s:sw()
+    let l:ind -= shiftwidth()
   endif
 
   " Colons are tricky.
@@ -69,7 +57,7 @@ function! GoIndent(lnum)
   " We ignore trying to deal with jump labels because (a) they're rare, and
   " (b) they're hard to disambiguate from a composite literal key.
   if l:thisl =~# '^\s*\(case .*\|default\):$'
-    let l:ind -= s:sw()
+    let l:ind -= shiftwidth()
   endif
 
   return l:ind

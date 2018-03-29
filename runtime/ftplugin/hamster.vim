@@ -1,8 +1,8 @@
 " Vim filetype plugin
 " Language:    Hamster Script
 " Version:     2.0.6.0
-" Maintainer:  David Fishburn <fishburn@ianywhere.com>
-" Last Change: Wed Nov 08 2006 12:03:09 PM
+" Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
+" Last Change: 2017 Mar 18
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -13,7 +13,7 @@ endif
 let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
-set cpo-=C
+set cpo&vim
 
 let b:undo_ftplugin = "setl fo< com< tw< commentstring<"
 	\ . "| unlet! b:match_ignorecase b:match_words b:match_skip"

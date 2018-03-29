@@ -1,5 +1,7 @@
 " Test for various Normal mode commands
 
+source shared.vim
+
 func! Setup_NewWindow()
   10new
   call setline(1, range(1,100))
@@ -1069,7 +1071,6 @@ func! Test_normal18_z_fold()
 endfunc
 
 func! Test_normal19_z_spell()
-  throw "skipped: Nvim 'spell' requires download"
   if !has("spell") || !has('syntax')
     return
   endif
@@ -1120,6 +1121,7 @@ func! Test_normal19_z_spell()
   let a=execute('unsilent norm! V$zG')
   call assert_match("Word '2 goood' added to .*", a)
   let fname=matchstr(a, 'to\s\+\zs\f\+$')
+  let fname=Fix_truncated_tmpfile(fname)
   let cnt=readfile(fname)
   call assert_equal('2 goood', cnt[0])
 
@@ -1255,21 +1257,27 @@ func! Test_normal22_zet()
   " Test for ZZ
   " let shell = &shell
   " let &shell = 'sh'
-  call writefile(['1', '2'], 'Xfile')
-  let args = ' --headless -u NONE -N -U NONE -i NONE --noplugins'
-  call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile')
-  let a = readfile('Xfile')
-  call assert_equal([], a)
-  " Test for ZQ
-  call writefile(['1', '2'], 'Xfile')
-  call system(v:progpath . args . ' -c "%d" -c ":norm! ZQ" Xfile')
-  let a = readfile('Xfile')
-  call assert_equal(['1', '2'], a)
 
-  " clean up
-  for file in ['Xfile']
+  " Remove any stale test files from previous run.
+  for file in ['Xfile_Test_normal22_zet']
     call delete(file)
   endfor
+
+  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
+  let args = ' --headless -u NONE -N -U NONE -i NONE --noplugins'
+  call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile_Test_normal22_zet')
+  let a = readfile('Xfile_Test_normal22_zet')
+  call assert_equal([], a)
+  " Test for ZQ
+  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
+  call system(v:progpath . args . ' -c "%d" -c ":norm! ZQ" Xfile_Test_normal22_zet')
+  let a = readfile('Xfile_Test_normal22_zet')
+  call assert_equal(['1', '2'], a)
+
+  " Nvim: This sometimes hangs the TSAN build.
+  " for file in ['Xfile_Test_normal22_zet']
+  "   call delete(file)
+  " endfor
   " let &shell = shell
 endfunc
 
@@ -2328,4 +2336,46 @@ func! Test_normal54_Ctrl_bsl()
 
 	" clean up
 	bw!
+endfunc
+
+" Test for the gr (virtual replace) command
+" Test for the bug fixed by 7.4.387
+func Test_gr_command()
+  enew!
+  let save_cpo = &cpo
+  call append(0, ['First line', 'Second line', 'Third line'])
+  exe "normal i\<C-G>u"
+  call cursor(2, 1)
+  set cpo-=X
+  normal 4gro
+  call assert_equal('oooond line', getline(2))
+  undo
+  set cpo+=X
+  normal 4gro
+  call assert_equal('ooooecond line', getline(2))
+  let &cpo = save_cpo
+  enew!
+endfunc
+
+" When splitting a window the changelist position is wrong.
+" Test the changelist position after splitting a window.
+" Test for the bug fixed by 7.4.386
+func Test_changelist()
+  let save_ul = &ul
+  enew!
+  call append('$', ['1', '2'])
+  exe "normal i\<C-G>u"
+  exe "normal Gkylpa\<C-G>u"
+  set ul=100
+  exe "normal Gylpa\<C-G>u"
+  set ul=100
+  normal gg
+  vsplit
+  normal g;
+  call assert_equal([3, 2], [line('.'), col('.')])
+  normal g;
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call assert_fails('normal g;', 'E662:')
+  %bwipe!
+  let &ul = save_ul
 endfunc

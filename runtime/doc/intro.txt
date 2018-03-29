@@ -6,7 +6,7 @@
 
 Introduction to Vim					*ref* *reference*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*intro*
@@ -68,8 +68,8 @@ The Vim pages contain the most recent information about Vim.  They also
 contain links to the most recent version of Vim.  The FAQ is a list of
 Frequently Asked Questions.  Read this if you have problems.
 
-	VIM home page:	  http://www.vim.org/
-	VIM FAQ:	  http://vimdoc.sf.net/
+	Vim home page:	  http://www.vim.org/
+	Vim FAQ:	  http://vimdoc.sf.net/
 	Downloading:	  ftp://ftp.vim.org/pub/vim/MIRRORS
 
 
@@ -120,9 +120,14 @@ Report bugs on GitHub: https://github.com/neovim/neovim/issues
 
 Please be brief; all the time that is spent on answering mail is subtracted
 from the time that is spent on improving Vim!  Always give a reproducible
-example and try to find out which settings or other things influence the
-appearance of the bug.  Try different machines, if possible.  Send me patches
-if you can!
+example and try to find out which settings or other things trigger the bug.
+
+Preferably start Vim with: >
+	vim --clean -u reproduce.vim
+Where reproduce.vim is a script that reproduces the problem.  Try different
+machines, if relevant (is this an MS-Windows specific bug perhaps?).
+
+Send me patches if you can!
 
 It will help to include information about the version of Vim you are using and
 your setup.  You can get the information with this command: >
@@ -236,6 +241,10 @@ Vim would never have become what it is now, without the help of these people!
 	Juergen Weigert		Lattice version, AUX improvements, Unix and
 				MS-DOS ports, autoconf
 	Stefan 'Sec' Zehl	Maintainer of vim.org
+	Yasuhiro Matsumoto	many MS-Windows improvements
+	Ken Takata		fixes and features
+	Kazunobu Kuriyama	GTK 3
+	Christian Brabandt	many fixes, features, user support, etc.
 
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without
@@ -249,8 +258,7 @@ Vi	"the original".  Without further remarks this is the version
 	of Vi that appeared in Sun OS 4.x.  ":version" returns
 	"Version 3.7, 6/7/85".  Sometimes other versions are referred
 	to.  Only runs under Unix.  Source code only available with a
-	license.  More information on Vi can be found through:
-		http://vi-editor.org	[doesn't currently work...]
+	license.
 							*Nvi*
 Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
 	Very good compatibility with the original Vi, with a few extensions.
@@ -374,8 +382,7 @@ CTRL-{char}	{char} typed as a control character; that is, typing {char}
 
 					*key-notation* *key-codes* *keycodes*
 These names for keys are used in the documentation.  They can also be used
-with the ":map" command (insert the key name by pressing CTRL-K and then the
-key you want the name for).
+with the ":map" command.
 
 notation	meaning		    equivalent	decimal value(s)	~
 -----------------------------------------------------------------------
@@ -442,8 +449,8 @@ available on a few terminals.
 
 Note: There are two codes for the delete key.  127 is the decimal ASCII value
 for the delete key, which is always recognized.  Some delete keys send another
-value, in which case this value is obtained from the termcap entry "kD".  Both
-values have the same effect.
+value, in which case this value is obtained from the |terminfo| entry "key_dc".
+Both values have the same effect.
 
 Note: The keypad keys are used in the same way as the corresponding "normal"
 keys.  For example, <kHome> has the same effect as <Home>.  If a keypad key
@@ -715,9 +722,9 @@ special situation.  Vim will show only part of the line, around where the
 cursor is.  There are no special characters shown, so that you can edit all
 parts of this line.
 
-The '@' occasion in the 'highlight' option can be used to set special
-highlighting for the '@' and '~' characters.  This makes it possible to
-distinguish them from real characters in the buffer.
+The |hl-NonText| highlight group can be used to set special highlighting
+for the '@' and '~' characters.  This makes it possible to distinguish them
+from real characters in the buffer.
 
 The 'showbreak' option contains the string to put in front of wrapped lines.
 
@@ -784,10 +791,12 @@ by Vim.
 ==============================================================================
 8. Definitions						*definitions*
 
+  buffer		Contains lines of text, usually read from a file.
   screen		The whole area that Vim uses to work in.  This can be
 			a terminal emulator window.  Also called "the Vim
 			window".
-  window		A view on a buffer.
+  window		A view on a buffer.  There can be multiple windows for
+			one buffer.
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.

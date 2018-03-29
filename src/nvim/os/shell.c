@@ -123,6 +123,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
     if (opts & kShellOptRead) {
       output_ptr = &output;
       forward_output = false;
+    } else if (opts & kShellOptDoOut) {
+      // Caller has already redirected output
+      forward_output = false;
     }
   }
 
@@ -189,6 +192,7 @@ static int do_os_system(char **argv,
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
+  bool has_input = (input != NULL && input[0] != '\0');
 
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -207,16 +211,12 @@ static int do_os_system(char **argv,
   char prog[MAXPATHL];
   xstrlcpy(prog, argv[0], MAXPATHL);
 
-  Stream in, out, err;
   LibuvProcess uvproc = libuv_process_init(&main_loop, &buf);
   Process *proc = &uvproc.process;
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
-  proc->in = input != NULL ? &in : NULL;
-  proc->out = &out;
-  proc->err = &err;
-  int status = process_spawn(proc);
+  int status = process_spawn(proc, has_input, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
@@ -231,43 +231,54 @@ static int do_os_system(char **argv,
     return -1;
   }
 
-  // We want to deal with stream events as fast a possible while queueing
-  // process events, so reset everything to NULL. It prevents closing the
+  // Note: unlike process events, stream events are not queued, as we want to
+  // deal with stream events as fast a possible.  It prevents closing the
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
-  if (input != NULL) {
-    proc->in->events = NULL;
-    wstream_init(proc->in, 0);
+  if (has_input) {
+    wstream_init(&proc->in, 0);
   }
-  proc->out->events = NULL;
-  rstream_init(proc->out, 0);
-  rstream_start(proc->out, data_cb, &buf);
-  proc->err->events = NULL;
-  rstream_init(proc->err, 0);
-  rstream_start(proc->err, data_cb, &buf);
+  rstream_init(&proc->out, 0);
+  rstream_start(&proc->out, data_cb, &buf);
+  rstream_init(&proc->err, 0);
+  rstream_start(&proc->err, data_cb, &buf);
 
   // write the input, if any
-  if (input) {
-    WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
+  if (has_input) {
+    WBuffer *input_buffer = wstream_new_buffer((char *)input, len, 1, NULL);
 
-    if (!wstream_write(&in, input_buffer)) {
+    if (!wstream_write(&proc->in, input_buffer)) {
       // couldn't write, stop the process and tell the user about it
       process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    wstream_set_write_cb(&in, shell_write_cb, NULL);
+    wstream_set_write_cb(&proc->in, shell_write_cb, NULL);
   }
 
   // Invoke busy_start here so LOOP_PROCESS_EVENTS_UNTIL will not change the
   // busy state.
   ui_busy_start();
   ui_flush();
+  if (forward_output) {
+    msg_sb_eol();
+    msg_start();
+    msg_no_more = true;
+    lines_left = -1;
+  }
   int exitcode = process_wait(proc, -1, NULL);
   if (!got_int && out_data_decide_throttle(0)) {
     // Last chunk of output was skipped; display it now.
     out_data_ring(NULL, SIZE_MAX);
   }
+  if (forward_output) {
+    // caller should decide if wait_return is invoked
+    no_wait_return++;
+    msg_end();
+    no_wait_return--;
+    msg_no_more = false;
+  }
+
   ui_busy_stop();
 
   // prepare the out parameters if requested
@@ -411,7 +422,7 @@ static void out_data_ring(char *output, size_t size)
   }
 
   if (output == NULL && size == SIZE_MAX) {   // Print mode
-    out_data_append_to_screen(last_skipped, last_skipped_len, true);
+    out_data_append_to_screen(last_skipped, &last_skipped_len, true);
     return;
   }
 
@@ -439,78 +450,58 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void out_data_append_to_screen(char *output, size_t remaining,
-                                      bool new_line)
+static void out_data_append_to_screen(char *output, size_t *count,
+                                      bool eof)
 {
-  static colnr_T last_col = 0;  // Column of last row to append to.
-
-  size_t off = 0;
-  int last_row = (int)Rows - 1;
-
-  while (off < remaining) {
-    // Found end of line?
-    if (output[off] == NL) {
-      // Can we start a new line or do we need to continue the last one?
-      if (last_col == 0) {
-        screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  char *p = output, *end = output + *count;
+  while (p < end) {
+    if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
+      msg_putchar_attr((uint8_t)(*p), 0);
+      p++;
+    } else {
+      // Note: this is not 100% precise:
+      // 1. we don't check if received continuation bytes are already invalid
+      //    and we thus do some buffering that could be avoided
+      // 2. we don't compose chars over buffer boundaries, even if we see an
+      //    incomplete UTF-8 sequence that could be composing with the last
+      //    complete sequence.
+      // This will be corrected when we switch to vterm based implementation
+      int i = *p ? mb_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
+      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end-p)) {
+        *count = (size_t)(p - output);
+        goto end;
       }
-      screen_puts_len((char_u *)output, (int)off, last_row, last_col, 0);
-      last_col = 0;
 
-      size_t skip = off + 1;
-      output += skip;
-      remaining -= skip;
-      off = 0;
-      continue;
+      (void)msg_outtrans_len_attr((char_u *)p, i, 0);
+      p += i;
     }
-
-    // TODO(bfredl): using msg_puts would be better until
-    // terminal emulation is implemented.
-    if (output[off] < 0x20) {
-      output[off] = ' ';
-    }
-
-    off++;
   }
 
-  if (remaining) {
-    if (last_col == 0) {
-      screen_del_lines(0, 0, 1, (int)Rows, NULL);
-    }
-    screen_puts_len((char_u *)output, (int)remaining, last_row, last_col, 0);
-    last_col += (colnr_T)remaining;
-  }
-
-  if (new_line) {
-    last_col = 0;
-  }
-
+end:
   ui_flush();
 }
 
 static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
     bool eof)
 {
-  // We always output the whole buffer, so the buffer can never
-  // wrap around.
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  if (ptr == NULL || cnt == 0) {
-    // Nothing to read;
-    return;
-  }
-
-  if (out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+  if (ptr != NULL && cnt > 0
+      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
   } else {
-    out_data_append_to_screen(ptr, cnt, eof);
+    out_data_append_to_screen(ptr, &cnt, eof);
   }
 
   if (cnt) {
     rbuffer_consumed(buf, cnt);
   }
+
+  // Move remaining data to start of buffer, so the buffer can never
+  // wrap around.
+  rbuffer_reset(buf);
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
@@ -599,14 +590,10 @@ static void read_input(DynamicBuffer *buf)
 
     if (len == l) {
       // Finished a line, add a NL, unless this line should not have one.
-      // FIXME need to make this more readable
       if (lnum != curbuf->b_op_end.lnum
-          || (!curbuf->b_p_bin
-            && curbuf->b_p_fixeol)
+          || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
           || (lnum != curbuf->b_no_eol_lnum
-            && (lnum !=
-              curbuf->b_ml.ml_line_count
-              || curbuf->b_p_eol))) {
+              && (lnum != curbuf->b_ml.ml_line_count || curbuf->b_p_eol))) {
         dynamic_buffer_ensure(buf, buf->len + 1);
         buf->data[buf->len++] = NL;
       }
@@ -687,10 +674,6 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     // backgrounded (:call system("cat - &", "foo")). #3529 #5241
     msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
-  }
-  if (stream->closed) {  // Process may have exited before this write.
-    WLOG("stream was already closed");
-    return;
   }
   stream_close(stream, NULL, NULL);
 }

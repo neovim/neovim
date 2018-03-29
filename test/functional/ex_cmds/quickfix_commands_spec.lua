@@ -7,6 +7,7 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local curbufmeths = helpers.curbufmeths
+local source = helpers.source
 
 local file_base = 'Xtest-functional-ex_cmds-quickfix_commands'
 
@@ -81,3 +82,30 @@ for _, c in ipairs({'l', 'c'}) do
     end)
   end)
 end
+
+describe('quickfix', function()
+  it('location-list update on buffer modification', function()
+    source([[
+        new
+        setl bt=nofile
+        let lines = ['Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5']
+        call append(0, lines)
+        new
+        setl bt=nofile
+        call append(0, lines)
+        let qf_item = {
+          \ 'lnum': 4,
+          \ 'text': "This is the error line.",
+          \ }
+        let qf_item['bufnr'] = bufnr('%')
+        call setloclist(0, [qf_item])
+        wincmd p
+        let qf_item['bufnr'] = bufnr('%')
+        call setloclist(0, [qf_item])
+        1del _
+        call append(0, ['New line 1', 'New line 2', 'New line 3'])
+        silent ll
+    ]])
+    eq({0, 6, 1, 0, 1}, funcs.getcurpos())
+  end)
+end)

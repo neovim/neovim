@@ -11,6 +11,8 @@ local feed_command = helpers.feed_command
 describe('joining lines', function()
   before_each(clear)
 
+  -- luacheck: ignore 613 (Trailing whitespaces in a string)
+  -- luacheck: ignore 611 (Line contains only whitespaces)
   it("keeps marks with different 'joinspaces' settings", function()
     insert([[
       firstline

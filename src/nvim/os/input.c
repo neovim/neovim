@@ -37,7 +37,7 @@ typedef enum {
 static Stream read_stream = {.closed = true};
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
-static int global_fd = 0;
+static int global_fd = -1;
 static int events_enabled = 0;
 static bool blocking = false;
 
@@ -188,7 +188,7 @@ size_t input_enqueue(String keys)
     uint8_t buf[6] = { 0 };
     unsigned int new_size
         = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                        true);
+                        false);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);

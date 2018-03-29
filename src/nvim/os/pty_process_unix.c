@@ -36,31 +36,43 @@
 # include "os/pty_process_unix.c.generated.h"
 #endif
 
+/// termios saved at startup (for TUI) or initialized by pty_process_spawn().
+static struct termios termios_default;
+
+/// Saves the termios properties associated with `tty_fd`.
+///
+/// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
+void pty_process_save_termios(int tty_fd)
+{
+  if (tty_fd == -1 || tcgetattr(tty_fd, &termios_default) != 0) {
+    return;
+  }
+}
+
 /// @returns zero on success, or negative error code
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  static struct termios termios;
-  if (!termios.c_cflag) {
-    init_termios(&termios);
+  if (!termios_default.c_cflag) {
+    // TODO(jkeyes): We could pass NULL to forkpty() instead ...
+    init_termios(&termios_default);
   }
 
   int status = 0;  // zero or negative error code (libuv convention)
   Process *proc = (Process *)ptyproc;
-  assert(!proc->err);
+  assert(proc->err.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
   int master;
-  int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
+  int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
 
   if (pid < 0) {
     status = -errno;
     ELOG("forkpty failed: %s", strerror(errno));
     return status;
   } else if (pid == 0) {
-    init_child(ptyproc);
-    abort();
+    init_child(ptyproc);  // never returns
   }
 
   // make sure the master file descriptor is non blocking
@@ -83,12 +95,12 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
 
-  if (proc->in
-      && (status = set_duplicating_descriptor(master, &proc->in->uv.pipe))) {
+  if (!proc->in.closed
+      && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (proc->out
-      && (status = set_duplicating_descriptor(master, &proc->out->uv.pipe))) {
+  if (!proc->out.closed
+      && (status = set_duplicating_descriptor(master, &proc->out.uv.pipe))) {
     goto error;
   }
 
@@ -133,8 +145,12 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
+static void init_child(PtyProcess *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
+  // New session/process-group. #6530
+  setsid();
+
   unsetenv("COLUMNS");
   unsetenv("LINES");
   unsetenv("TERMCAP");
@@ -150,14 +166,15 @@ static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 
   Process *proc = (Process *)ptyproc;
   if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    fprintf(stderr, "chdir failed: %s\n", strerror(errno));
+    ELOG("chdir failed: %s", strerror(errno));
     return;
   }
 
   char *prog = ptyproc->process.argv[0];
   setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(prog, ptyproc->process.argv);
-  fprintf(stderr, "execvp failed: %s: %s\n", strerror(errno), prog);
+  ELOG("execvp failed: %s: %s", strerror(errno), prog);
+  _exit(122);  // 122 is EXEC_FAILED in the Vim source.
 }
 
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL

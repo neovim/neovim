@@ -199,7 +199,7 @@ describe('fs.c', function()
 
     itp('returns the absolute path when given an executable inside $PATH', function()
       local fullpath = exe('ls')
-      eq(1, fs.path_is_absolute_path(to_cstr(fullpath)))
+      eq(1, fs.path_is_absolute(to_cstr(fullpath)))
     end)
 
     itp('returns the absolute path when given an executable relative to the current dir', function()
@@ -862,6 +862,11 @@ describe('fs.c', function()
     end
 
     describe('os_fileinfo', function()
+      itp('returns false if path=NULL', function()
+        local file_info = file_info_new()
+        assert.is_false((fs.os_fileinfo(nil, file_info)))
+      end)
+
       itp('returns false if given a non-existing file', function()
         local file_info = file_info_new()
         assert.is_false((fs.os_fileinfo('/non-existent', file_info)))

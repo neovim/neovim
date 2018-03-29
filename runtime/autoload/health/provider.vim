@@ -13,6 +13,12 @@ function! s:normalize_path(s) abort
   return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
 endfunction
 
+" Returns TRUE if `cmd` exits with success, else FALSE.
+function! s:cmd_ok(cmd) abort
+  call system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.', 0)
@@ -120,10 +126,21 @@ endfunction
 function! s:check_clipboard() abort
   call health#report_start('Clipboard (optional)')
 
+  if !empty($TMUX) && executable('tmux') && executable('pbpaste') && !s:cmd_ok('pbpaste')
+    let tmux_version = matchstr(system('tmux -V'), '\d\+\.\d\+')
+    call health#report_error('pbcopy does not work with tmux version: '.tmux_version,
+          \ ['Install tmux 2.6+.  https://superuser.com/q/231130',
+          \  'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233'])
+  endif
+
   let clipboard_tool = provider#clipboard#Executable()
-  if empty(clipboard_tool)
+  if exists('g:clipboard') && empty(clipboard_tool)
+    call health#report_error(
+          \ provider#clipboard#Error(),
+          \ ["Use the example in :help g:clipboard as a template, or don't set g:clipboard at all."])
+  elseif empty(clipboard_tool)
     call health#report_warn(
-          \ 'No clipboard tool found. Clipboard registers will not work.',
+          \ 'No clipboard tool found. Clipboard registers (`"+` and `"*`) will not work.',
           \ [':help clipboard'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
@@ -235,7 +252,7 @@ function! s:check_python(version) abort
 
   let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
   let loaded_var = 'g:loaded_'.pyname.'_provider'
@@ -243,8 +260,24 @@ function! s:check_python(version) abort
   let python_multiple = []
 
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
-    return
+    call health#report_info('Disabled ('.loaded_var.'='.eval(loaded_var).').  This might be due to some previous error.')
+  endif
+
+  if !empty(pyenv)
+    if empty(pyenv_root)
+      call health#report_info(
+            \ 'pyenv was found, but $PYENV_ROOT is not set. `pyenv root` will be used.'
+            \ .' If you run into problems, try setting $PYENV_ROOT explicitly.'
+            \ )
+      let pyenv_root = s:trim(s:system([pyenv, 'root']))
+    endif
+
+    if !isdirectory(pyenv_root)
+      call health#report_error('Invalid pyenv root: '.pyenv_root)
+    else
+      call health#report_info(printf('pyenv: %s', pyenv))
+      call health#report_info(printf('pyenv root: %s', pyenv_root))
+    endif
   endif
 
   if exists('g:'.host_prog_var)
@@ -255,9 +288,6 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-    if !empty(pythonx_errs)
-      call health#report_warn(pythonx_errs)
-    endif
   endif
 
   if !empty(pyname)
@@ -278,15 +308,6 @@ function! s:check_python(version) abort
     endif
 
     if !empty(pyenv)
-      if empty(pyenv_root)
-        call health#report_warn(
-              \ 'pyenv was found, but $PYENV_ROOT is not set.',
-              \ ['Did you follow the final install instructions?']
-              \ )
-      else
-        call health#report_ok(printf('pyenv found: "%s"', pyenv))
-      endif
-
       let python_bin = s:trim(s:system([pyenv, 'which', pyname], '', 1))
 
       if empty(python_bin)
@@ -316,25 +337,24 @@ function! s:check_python(version) abort
 
         if python_bin =~# '\<shims\>'
           call health#report_warn(printf('`%s` appears to be a pyenv shim.', python_bin), [
-                      \ 'The `pyenv` executable is not in $PATH,',
-                      \ 'Your pyenv installation is broken. You should set '
-                      \ . '`g:'.host_prog_var.'` to avoid surprises.',
+                      \ '`pyenv` is not in $PATH, your pyenv installation is broken. '
+                      \ .'Set `g:'.host_prog_var.'` to avoid surprises.',
                       \ ])
         endif
       endif
     endif
   endif
 
-  if !empty(python_bin)
-    if empty(venv) && !empty(pyenv) && !exists('g:'.host_prog_var)
+  if !empty(python_bin) && !exists('g:'.host_prog_var)
+    if empty(venv) && !empty(pyenv)
           \ && !empty(pyenv_root) && resolve(python_bin) !~# '^'.pyenv_root.'/'
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
             \ . 'for Neovim using pyenv, and set `g:%s`.  This will avoid '
-            \ . 'the need to install Neovim''s Python module in each '
+            \ . 'the need to install the Neovim Python module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
-    elseif !empty(venv) && exists('g:'.host_prog_var)
+    elseif !empty(venv)
       if !empty(pyenv_root)
         let venv_root = pyenv_root
       else
@@ -359,25 +379,14 @@ function! s:check_python(version) abort
     let python_bin = ''
   endif
 
-  " Check if $VIRTUAL_ENV is active
-  let virtualenv_inactive = 0
-
+  " Check if $VIRTUAL_ENV is valid.
   if exists('$VIRTUAL_ENV')
-    if !empty(pyenv)
-      let pyenv_prefix = resolve(s:trim(s:system([pyenv, 'prefix'])))
-      if $VIRTUAL_ENV != pyenv_prefix
-        let virtualenv_inactive = 1
-      endif
-    elseif !empty(pyname) && exepath(pyname) !~# '^'.$VIRTUAL_ENV.'/'
-      let virtualenv_inactive = 1
+    if !empty(pyname) && $VIRTUAL_ENV !=# matchstr(exepath(pyname), '^\V'.$VIRTUAL_ENV)
+      call health#report_warn(
+        \ '$VIRTUAL_ENV exists but appears to be inactive. '
+        \ . 'This could lead to unexpected results.',
+        \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654' ])
     endif
-  endif
-
-  if virtualenv_inactive
-    call health#report_warn(
-      \ '$VIRTUAL_ENV exists but appears to be inactive. '
-      \ . 'This could lead to unexpected results.',
-      \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229' ])
   endif
 
   " Diagnostic output
@@ -444,10 +453,11 @@ function! s:check_ruby() abort
 
   let host = provider#ruby#Detect()
   if empty(host)
-    call health#report_warn('Missing "neovim" gem.',
-          \ ['Run in shell: gem install neovim',
-          \  'Is the gem bin directory in $PATH? Check `gem environment`.',
-          \  'If you are using rvm/rbenv/chruby, try "rehashing".'])
+    call health#report_warn('`neovim-ruby-host` not found.',
+          \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
+          \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
+          \  'If you are using rvm/rbenv/chruby, try "rehashing".',
+          \  'See :help g:ruby_host_prog for non-standard gem installations.'])
     return
   endif
   call health#report_info('Host: '. host)
@@ -480,9 +490,80 @@ function! s:check_ruby() abort
   endif
 endfunction
 
+function! s:check_node() abort
+  call health#report_start('Node.js provider (optional)')
+
+  let loaded_var = 'g:loaded_node_provider'
+  if exists(loaded_var) && !exists('*provider#node#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    return
+  endif
+
+  if !executable('node') || !executable('npm')
+    call health#report_warn(
+          \ '`node` and `npm` must be in $PATH.',
+          \ ['Install Node.js and verify that `node` and `npm` commands work.'])
+    return
+  endif
+  let node_v = get(split(s:system('node -v'), "\n"), 0, '')
+  call health#report_info('Node.js: '. node_v)
+  if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
+    call health#report_warn('Neovim node.js host does not support '.node_v)
+    " Skip further checks, they are nonsense if nodejs is too old.
+    return
+  endif
+  if !provider#node#can_inspect()
+    call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
+  endif
+
+  let host = provider#node#Detect()
+  if empty(host)
+    call health#report_warn('Missing "neovim" npm package.',
+          \ ['Run in shell: npm install -g neovim',
+          \  'Is the npm bin directory in $PATH?'])
+    return
+  endif
+  call health#report_info('Neovim node.js host: '. host)
+
+  let latest_npm_cmd = has('win32') ? 'cmd /c npm info neovim --json' : 'npm info neovim --json'
+  let latest_npm = s:system(split(latest_npm_cmd))
+  if s:shell_error || empty(latest_npm)
+    call health#report_error('Failed to run: '. latest_npm_cmd,
+          \ ["Make sure you're connected to the internet.",
+          \  'Are you behind a firewall or proxy?'])
+    return
+  endif
+  if !empty(latest_npm)
+    try
+      let pkg_data = json_decode(latest_npm)
+    catch /E474/
+      return 'error: '.latest_npm
+    endtry
+    let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
+  endif
+
+  let current_npm_cmd = ['node', host, '--version']
+  let current_npm = s:system(current_npm_cmd)
+  if s:shell_error
+    call health#report_error('Failed to run: '. string(current_npm_cmd),
+          \ ['Report this issue with the output of: ', string(current_npm_cmd)])
+    return
+  endif
+
+  if s:version_cmp(current_npm, latest_npm) == -1
+    call health#report_warn(
+          \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
+          \ current_npm, latest_npm),
+          \ ['Run in shell: npm update neovim'])
+  else
+    call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
+  endif
+endfunction
+
 function! health#provider#check() abort
   call s:check_clipboard()
   call s:check_python(2)
   call s:check_python(3)
   call s:check_ruby()
+  call s:check_node()
 endfunction

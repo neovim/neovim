@@ -8,7 +8,7 @@ Automatic commands					*autocommand*
 
 For a basic explanation, see section |40.3| in the user manual.
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*autocmd-intro*
@@ -55,7 +55,14 @@ Note: The ":autocmd" command can only be followed by another command when the
 '|' appears before {cmd}.  This works: >
 	:augroup mine | au! BufRead | augroup END
 But this sees "augroup" as part of the defined command: >
+	:augroup mine | au! BufRead * | augroup END
 	:augroup mine | au BufRead * set tw=70 | augroup END
+Instead you can put the group name into the command: >
+	:au! mine BufRead *
+	:au mine BufRead * set tw=70
+Or use `:execute`: >
+	:augroup mine | exe "au! BufRead *" | augroup END
+	:augroup mine | exe "au BufRead * set tw=70" | augroup END
 
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
@@ -252,13 +259,12 @@ Name			triggered by ~
 |BufNew|		just after creating a new buffer
 
 |SwapExists|		detected an existing swap file
-|TermOpen|		when a terminal buffer is starting
-|TermClose|		when a terminal buffer ends
+|TermOpen|		when a terminal job starts
+|TermClose|		when a terminal job ends
 
 	Options
 |FileType|		when the 'filetype' option has been set
 |Syntax|		when the 'syntax' option has been set
-|TermChanged|		after the value of 'term' has changed
 |OptionSet|		after setting any option
 
 	Startup and exit
@@ -303,6 +309,8 @@ Name			triggered by ~
 |TabNew|		when creating a new tab page
 |TabNewEntered|		after entering a new tab page
 |TabClosed|		after closing a tab page
+|CmdlineEnter|		after entering cmdline mode
+|CmdlineLeave|		before leaving cmdline mode
 |CmdwinEnter|		after entering the command-line window
 |CmdwinLeave|		before leaving the command-line window
 
@@ -485,6 +493,28 @@ CmdUndefined			When a user command is used but it isn't
 				command is defined.  An alternative is to
 				always define the user command and have it
 				invoke an autoloaded function.  See |autoload|.
+							*CmdlineEnter*
+CmdlineEnter			After moving the cursor to the command line,
+				where the user can type a command or search
+				string.
+				<afile> is set to a single character,
+				indicating the type of command-line.
+				|cmdline-char|
+				Sets these |v:event| keys:
+				    cmdlevel
+				    cmdtype
+							*CmdlineLeave*
+CmdlineLeave			Before leaving the command line.
+				<afile> is set to a single character,
+				indicating the type of command-line.
+				|cmdline-char|
+				Sets these |v:event| keys:
+				    abort (mutable)
+				    cmdlevel
+				    cmdtype
+				Note: `abort` can only be changed from false
+				to true. An autocmd cannot execute an already
+				aborted cmdline by changing it to false.
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for
@@ -605,7 +635,7 @@ FileChangedShell		When Vim notices that the modification time of
 				|timestamp|
 				Mostly triggered after executing a shell
 				command, but also with a |:checktime| command
-				or when Gvim regains input focus.
+				or when gvim regains input focus.
 				This autocommand is triggered for each changed
 				file.  It is not used when 'autoread' is set
 				and the buffer was not changed.  If a
@@ -616,7 +646,7 @@ FileChangedShell		When Vim notices that the modification time of
 				to tell Vim what to do next.
 				NOTE: When this autocommand is executed, the
 				current buffer "%" may be different from the
-				buffer that was changed "<afile>".
+				buffer that was changed, which is in "<afile>".
 				NOTE: The commands must not change the current
 				buffer, jump to another buffer or delete a
 				buffer.  *E246* *E811*
@@ -643,7 +673,8 @@ FileType			When the 'filetype' option has been set.  The
 				pattern is matched against the filetype.
 				<afile> can be used for the name of the file
 				where this option was set, and <amatch> for
-				the new value of 'filetype'.
+				the new value of 'filetype'.  Navigating to
+				another window or buffer is not allowed.
 				See |filetypes|.
 							*FileWriteCmd*
 FileWriteCmd			Before writing to a file, when not writing the
@@ -901,26 +932,20 @@ TabEnter			Just after entering a tab page. |tab-page|
 TabLeave			Just before leaving a tab page. |tab-page|
 				A WinLeave event will have been triggered
 				first.
-						 {Nvim} *TabNew*
+							*TabNew*
 TabNew				When creating a new tab page. |tab-page|
 				After WinEnter and before TabEnter.
-						 {Nvim} *TabNewEntered*
+							*TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
-						 {Nvim} *TabClosed*
+							*TabClosed*
 TabClosed			After closing a tab page. <afile> can be used
 				for the tab page number.
-							*TermChanged*
-TermChanged			After the value of 'term' has changed.  Useful
-				for re-loading the syntax file to update the
-				colors, fonts and other terminal-dependent
-				settings.  Executed for all loaded buffers.
-						 {Nvim} *TermClose*
-TermClose			When a terminal buffer ends.
-						 {Nvim} *TermOpen*
-TermOpen			When a terminal buffer is starting.  This can
-				be used to configure the terminal emulator by
-				setting buffer variables. |terminal-emulator|
+							*TermClose*
+TermClose			When a |terminal| job ends.
+							*TermOpen*
+TermOpen			When a |terminal| job is starting.  Can be
+				used to configure the terminal buffer.
 							*TermResponse*
 TermResponse			After the response to |t_RV| is received from
 				the terminal.  The value of |v:termresponse|
@@ -967,9 +992,9 @@ VimEnter			After doing all the startup stuff, including
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
 				VimLeavePre.
-				To detect an abnormal exit use |v:dying|.
-				When v:dying is 2 or more this event is not
-				triggered.
+<				Use |v:dying| to detect an abnormal exit.
+				Use |v:exiting| to get the exit code.
+				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
 				.shada file.  This is executed only once,
@@ -977,9 +1002,9 @@ VimLeavePre			Before exiting Vim, just before writing the
 				happens to be the current buffer when exiting.
 				Mostly useful with a "*" pattern. >
 	:autocmd VimLeavePre * call CleanupStuff()
-<				To detect an abnormal exit use |v:dying|.
-				When v:dying is 2 or more this event is not
-				triggered.
+<				Use |v:dying| to detect an abnormal exit.
+				Use |v:exiting| to get the exit code.
+				Not triggered if |v:dying| is 2 or more.
 							*VimResized*
 VimResized			After the Vim window was resized, thus 'lines'
 				and/or 'columns' changed.  Not when starting

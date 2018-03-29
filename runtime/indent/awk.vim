@@ -60,7 +60,7 @@ function! GetAwkIndent()
    " 'pattern { action }' (simple check match on /{/ increases the indent then)
 
    if s:Get_brace_balance( prev_data, '{', '}' ) > 0
-      return ind + &sw
+      return ind + shiftwidth()
    endif
 
    let brace_balance = s:Get_brace_balance( prev_data, '(', ')' )
@@ -99,7 +99,7 @@ function! GetAwkIndent()
 	  return s:Safe_indent( ind, s:First_word_len(prev_data), getline(v:lnum))
        else
 	 " if/for/while without '{'
-	 return ind + &sw
+	 return ind + shiftwidth()
        endif
      endif
    endif
@@ -140,7 +140,7 @@ function! GetAwkIndent()
 
    " Decrease indent if this line contains a '}'.
    if getline(v:lnum) =~ '^\s*}'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
    endif
 
    return ind

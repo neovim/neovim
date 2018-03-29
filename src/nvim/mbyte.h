@@ -1,6 +1,7 @@
 #ifndef NVIM_MBYTE_H
 #define NVIM_MBYTE_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -17,6 +18,9 @@
  */
 #define MB_BYTE2LEN(b)         utf8len_tab[b]
 #define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
+
+// max length of an unicode char
+#define MB_MAXCHAR     6
 
 /* properties used in enc_canon_table[] (first three mutually exclusive) */
 #define ENC_8BIT       0x01
@@ -56,6 +60,12 @@ typedef enum {
   CONV_ICONV     = 5,
 } ConvFlags;
 
+#define MBYTE_NONE_CONV { \
+  .vc_type = CONV_NONE, \
+  .vc_factor = 1, \
+  .vc_fail = false, \
+}
+
 /// Structure used for string conversions
 typedef struct {
   int vc_type;  ///< Zero or more ConvFlags.
@@ -66,6 +76,10 @@ typedef struct {
   bool vc_fail;  ///< What to do with invalid characters: if true, fail,
                  ///< otherwise use '?'.
 } vimconv_T;
+
+extern const uint8_t utf8len_tab_zero[256];
+
+extern const uint8_t utf8len_tab[256];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"

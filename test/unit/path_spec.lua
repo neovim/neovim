@@ -261,7 +261,7 @@ describe('path.c', function()
   end)
 end)
 
-describe('path_shorten_fname_if_possible', function()
+describe('path_try_shorten_fname', function()
   local cwd = lfs.currentdir()
 
   before_each(function()
@@ -273,22 +273,22 @@ describe('path_shorten_fname_if_possible', function()
     lfs.rmdir('ut_directory')
   end)
 
-  describe('path_shorten_fname_if_possible', function()
+  describe('path_try_shorten_fname', function()
     itp('returns shortened path if possible', function()
       lfs.chdir('ut_directory')
       local full = to_cstr(lfs.currentdir() .. '/subdir/file.txt')
-      eq('subdir/file.txt', (ffi.string(cimp.path_shorten_fname_if_possible(full))))
+      eq('subdir/file.txt', (ffi.string(cimp.path_try_shorten_fname(full))))
     end)
 
     itp('returns `full_path` if a shorter version is not possible', function()
       local old = lfs.currentdir()
       lfs.chdir('ut_directory')
       local full = old .. '/subdir/file.txt'
-      eq(full, (ffi.string(cimp.path_shorten_fname_if_possible(to_cstr(full)))))
+      eq(full, (ffi.string(cimp.path_try_shorten_fname(to_cstr(full)))))
     end)
 
     itp('returns NULL if `full_path` is NULL', function()
-      eq(NULL, (cimp.path_shorten_fname_if_possible(NULL)))
+      eq(NULL, (cimp.path_try_shorten_fname(NULL)))
     end)
   end)
 end)
@@ -366,120 +366,156 @@ describe('path.c', function()
   end)
 
   describe('vim_FullName', function()
-    local function vim_FullName(filename, buf, len, force)
-      filename = to_cstr(filename)
-      return cimp.vim_FullName(filename, buf, len, force)
+    local function vim_FullName(filename, buflen, do_expand)
+      local buf = cstr(buflen, '')
+      local result = cimp.vim_FullName(to_cstr(filename), buf, buflen, do_expand)
+      return buf, result
     end
 
-    before_each(function()
-      -- Create empty string buffer which will contain the resulting path.
-      length = (string.len(lfs.currentdir())) + 33
-      buffer = cstr(length, '')
-    end)
+    local function get_buf_len(s, t)
+      return math.max(string.len(s), string.len(t)) + 1
+    end
 
     itp('fails if given filename is NULL', function()
-      local force_expansion = 1
-      local result = cimp.vim_FullName(NULL, buffer, length, force_expansion)
+      local do_expand = 1
+      local buflen = 10
+      local buf = cstr(buflen, '')
+      local result = cimp.vim_FullName(NULL, buf, buflen, do_expand)
       eq(FAIL, result)
     end)
 
     itp('fails safely if given length is wrong #5737', function()
-      local force_expansion = 1
       local filename = 'foo/bar/bazzzzzzz/buz/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/a'
       local too_short_len = 8
       local buf = cstr(too_short_len, '')
-      local result = cimp.vim_FullName(filename, buf, too_short_len, force_expansion)
+      local do_expand = 1
+      local result = cimp.vim_FullName(filename, buf, too_short_len, do_expand)
       local expected = string.sub(filename, 1, (too_short_len - 1))
-      eq(expected, (ffi.string(buf)))
+      eq(expected, ffi.string(buf))
       eq(FAIL, result)
     end)
 
     itp('uses the filename if the filename is a URL', function()
-      local force_expansion = 1
       local filename = 'http://www.neovim.org'
-      local result = vim_FullName(filename, buffer, length, force_expansion)
-      eq(filename, (ffi.string(buffer)))
+      local buflen = string.len(filename) + 1
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(filename, ffi.string(buf))
       eq(OK, result)
     end)
 
     itp('fails and uses filename if given filename contains non-existing directory', function()
-      local force_expansion = 1
       local filename = 'non_existing_dir/test.file'
-      local result = vim_FullName(filename, buffer, length, force_expansion)
-      eq(filename, (ffi.string(buffer)))
+      local buflen = string.len(filename) + 1
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(filename, ffi.string(buf))
       eq(FAIL, result)
     end)
 
     itp('concatenates filename if it does not contain a slash', function()
-      local force_expansion = 1
-      local result = vim_FullName('test.file', buffer, length, force_expansion)
       local expected = lfs.currentdir() .. '/test.file'
-      eq(expected, (ffi.string(buffer)))
+      local filename = 'test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
       eq(OK, result)
     end)
 
     itp('concatenates directory name if it does not contain a slash', function()
-      local force_expansion = 1
-      local result = vim_FullName('..', buffer, length, force_expansion)
       local expected = lfs.currentdir() .. '/..'
-      eq(expected, (ffi.string(buffer)))
+      local filename = '..'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
       eq(OK, result)
     end)
 
-    -- Is it possible for every developer to enter '..' directory while running
-    -- the unit tests? Which other directory would be better?
     itp('enters given directory (instead of just concatenating the strings) if possible and if path contains a slash', function()
-      local force_expansion = 1
-      local result = vim_FullName('../test.file', buffer, length, force_expansion)
       local old_dir = lfs.currentdir()
       lfs.chdir('..')
       local expected = lfs.currentdir() .. '/test.file'
       lfs.chdir(old_dir)
-      eq(expected, (ffi.string(buffer)))
+      local filename = '../test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
       eq(OK, result)
     end)
 
     itp('just copies the path if it is already absolute and force=0', function()
-      local force_expansion = 0
       local absolute_path = '/absolute/path'
-      local result = vim_FullName(absolute_path, buffer, length, force_expansion)
-      eq(absolute_path, (ffi.string(buffer)))
+      local buflen = string.len(absolute_path) + 1
+      local do_expand = 0
+      local buf, result = vim_FullName(absolute_path, buflen, do_expand)
+      eq(absolute_path, ffi.string(buf))
       eq(OK, result)
     end)
 
     itp('fails and uses filename when the path is relative to HOME', function()
       eq(false, cimp.os_isdir('~')) -- sanity check: no literal "~" directory.
-      local force_expansion = 1
       local absolute_path = '~/home.file'
-      local result = vim_FullName(absolute_path, buffer, length, force_expansion)
-      eq(absolute_path, (ffi.string(buffer)))
+      local buflen = string.len(absolute_path) + 1
+      local do_expand = 1
+      local buf, result = vim_FullName(absolute_path, buflen, do_expand)
+      eq(absolute_path, ffi.string(buf))
       eq(FAIL, result)
     end)
 
     itp('works with some "normal" relative path with directories', function()
-      local force_expansion = 1
-      local result = vim_FullName('unit-test-directory/test.file', buffer, length, force_expansion)
+      local expected = lfs.currentdir() .. '/unit-test-directory/test.file'
+      local filename = 'unit-test-directory/test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
       eq(OK, result)
-      eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
     end)
 
     itp('does not modify the given filename', function()
-      local force_expansion = 1
+      local expected = lfs.currentdir() .. '/unit-test-directory/test.file'
       local filename = to_cstr('unit-test-directory/test.file')
-      -- Don't use the wrapper here but pass a cstring directly to the c
-      -- function.
-      local result = cimp.vim_FullName(filename, buffer, length, force_expansion)
-      eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
-      eq('unit-test-directory/test.file', (ffi.string(filename)))
+      local buflen = string.len(expected) + 1
+      local buf = cstr(buflen, '')
+      local do_expand = 1
+      -- Don't use the wrapper but pass a cstring directly to the c function.
+      eq('unit-test-directory/test.file', ffi.string(filename))
+      local result = cimp.vim_FullName(filename, buf, buflen, do_expand)
+      eq(expected, ffi.string(buf))
       eq(OK, result)
     end)
 
     itp('works with directories that have one path component', function()
-      local force_expansion = 1
-      local filename = to_cstr('/tmp')
-      local result = cimp.vim_FullName(filename, buffer, length, force_expansion)
-      eq('/tmp', ffi.string(buffer))
+      local filename = '/tmp'
+      local expected = filename
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq('/tmp', ffi.string(buf))
       eq(OK, result)
+    end)
+
+    itp('expands "./" to the current directory #7117', function()
+      local expected = lfs.currentdir() .. '/unit-test-directory/test.file'
+      local filename = './unit-test-directory/test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(OK, result)
+      eq(expected, ffi.string(buf))
+    end)
+
+    itp('collapses "foo/../foo" to "foo" #7117', function()
+      local expected = lfs.currentdir() .. '/unit-test-directory/test.file'
+      local filename = 'unit-test-directory/../unit-test-directory/test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(OK, result)
+      eq(expected, ffi.string(buf))
     end)
   end)
 
@@ -549,22 +585,22 @@ describe('path.c', function()
     end)
   end)
 
-  describe('path_is_absolute_path', function()
-    local function path_is_absolute_path(filename)
+  describe('path_is_absolute', function()
+    local function path_is_absolute(filename)
       filename = to_cstr(filename)
-      return cimp.path_is_absolute_path(filename)
+      return cimp.path_is_absolute(filename)
     end
 
     itp('returns true if filename starts with a slash', function()
-      eq(OK, path_is_absolute_path('/some/directory/'))
+      eq(OK, path_is_absolute('/some/directory/'))
     end)
 
     itp('returns true if filename starts with a tilde', function()
-      eq(OK, path_is_absolute_path('~/in/my/home~/directory'))
+      eq(OK, path_is_absolute('~/in/my/home~/directory'))
     end)
 
     itp('returns false if filename starts not with slash nor tilde', function()
-      eq(FAIL, path_is_absolute_path('not/in/my/home~/directory'))
+      eq(FAIL, path_is_absolute('not/in/my/home~/directory'))
     end)
   end)
 end)

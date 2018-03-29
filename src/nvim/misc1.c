@@ -749,8 +749,9 @@ open_line (
     // Postpone calling changed_lines(), because it would mess up folding
     // with markers.
     // Skip mark_adjust when adding a line after the last one, there can't
-    // be marks there.
-    if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count) {
+    // be marks there. But still needed in diff mode.
+    if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
+        || curwin->w_p_diff) {
       mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
     }
     did_append = true;
@@ -1273,8 +1274,8 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
   width = wp->w_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of lines of the screen
+  if (width <= 0 || col > 32000) {
+    return 32000;  // bigger than the number of screen columns
   }
   if (col <= (unsigned int)width) {
     return 1;
@@ -1468,7 +1469,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
   }
 
-  char_u *newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
 
   // Copy bytes before the cursor.
   if (col > 0) {
@@ -1477,7 +1478,10 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // Copy bytes after the changed character(s).
   char_u *p = newp + col;
-  memmove(p + newlen, oldp + col + oldlen, (size_t)(linelen - col - oldlen));
+  if (linelen > col + oldlen) {
+    memmove(p + newlen, oldp + col + oldlen,
+            (size_t)(linelen - col - oldlen));
+  }
 
   // Insert or overwrite the new character.
   memmove(p, buf, charlen);
@@ -1864,8 +1868,8 @@ void appended_lines(linenr_T lnum, long count)
 void appended_lines_mark(linenr_T lnum, long count)
 {
   // Skip mark_adjust when adding a line after the last one, there can't
-  // be marks there.
-  if (lnum + count < curbuf->b_ml.ml_line_count) {
+  // be marks there. But it's still needed in diff mode.
+  if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
     mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count);
@@ -2203,7 +2207,7 @@ change_warning (
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
-    if (msg_silent == 0 && !silent_mode) {
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
       os_delay(1000L, true);       /* give the user time to think about it */
     }
@@ -2609,20 +2613,22 @@ int match_user(char_u *name)
   return result;
 }
 
-/*
- * Preserve files and exit.
- * When called IObuff must contain a message.
- * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
- * functions, such as allocating memory.
- */
+/// Preserve files and exit.
+/// @note IObuff must contain a message.
+/// @note This may be called from deadly_signal() in a signal handler, avoid
+///       unsafe functions, such as allocating memory.
 void preserve_exit(void)
+  FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
-    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
+    if (input_global_fd() >= 0) {
+      // normalize stream (#2598)
+      stream_set_blocking(input_global_fd(), true);
+    }
     exit(2);
   }
 

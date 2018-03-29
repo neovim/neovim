@@ -42,6 +42,7 @@ foreach(PACKAGE ${PACKAGES})
         nvim
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
+    add_dependencies(${PACKNAME}-tags nvim_runtime_deps)
 
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       DEPENDS
@@ -71,6 +72,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_target(helptags
+  COMMAND ${CMAKE_COMMAND} -E remove ${GENERATED_RUNTIME_DIR}/doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
@@ -79,6 +81,7 @@ add_custom_target(helptags
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
+add_dependencies(helptags nvim_runtime_deps)
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   DEPENDS
@@ -100,20 +103,6 @@ add_custom_target(
     ${GENERATED_PACKAGE_TAGS}
 )
 
-# Optional targets for nvim.desktop file and icon.
-find_program(XDG_MENU_PRG xdg-desktop-menu)
-find_program(XDG_ICON_PRG xdg-icon-resource)
-if(XDG_MENU_PRG)
-  add_custom_target(desktop-file
-    COMMAND xdg-desktop-menu install --novendor ${PROJECT_SOURCE_DIR}/runtime/nvim.desktop)
-  # add_dependencies(runtime desktop-file)
-endif()
-if(XDG_ICON_PRG)
-  add_custom_target(desktop-icon
-    COMMAND xdg-icon-resource install --novendor --size 128 ${PROJECT_SOURCE_DIR}/runtime/nvim.png)
-  # add_dependencies(runtime desktop-icon)
-endif()
-
 # CMake is painful here.  It will create the destination using the user's
 # current umask, and we don't want that.  And we don't just want to install
 # the target directory, as it will mess with existing permissions.  So this
@@ -128,6 +117,16 @@ install_helper(
   FILES ${GENERATED_SYN_VIM}
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/syntax/vim)
 
+if(NOT APPLE)
+  install_helper(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.desktop
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+
+  install_helper(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pixmaps)
+endif()
+
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   *.awk *.sh *.bat)
@@ -140,7 +139,8 @@ endforeach()
 
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  *.vim *.dict *.py *.rb *.ps *.tutor)
+  rgb.txt
+  *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)

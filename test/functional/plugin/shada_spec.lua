@@ -3,6 +3,7 @@ local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.eq, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
   helpers.funcs, helpers.feed, helpers.curbuf
 local neq = helpers.neq
+local read_file = helpers.read_file
 
 local mpack = require('mpack')
 
@@ -43,9 +44,7 @@ local wshada, _, fname = get_shada_rw('Xtest-functional-plugin-shada.shada')
 local wshada_tmp, _, fname_tmp =
   get_shada_rw('Xtest-functional-plugin-shada.shada.tmp.f')
 
-if helpers.pending_win32(pending) then return end
-
-describe('In autoload/shada.vim', function()
+describe('autoload/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
   before_each(function()
     reset()
@@ -2076,13 +2075,14 @@ describe('In autoload/shada.vim', function()
     end
 
     it('works', function()
+      local version = nvim('get_vvar', 'version')
       getbstrings_eq({{timestamp='current', type=1, value={
         generator='shada.vim',
-        version=704,
+        version=version,
       }}}, {})
       getbstrings_eq({
         {timestamp='current', type=1, value={
-          generator='shada.vim', version=704
+          generator='shada.vim', version=version
         }},
         {timestamp=0, type=1, value={generator='test'}}
       }, {
@@ -2093,11 +2093,11 @@ describe('In autoload/shada.vim', function()
       nvim('set_var', 'shada#add_own_header', 1)
       getbstrings_eq({{timestamp='current', type=1, value={
         generator='shada.vim',
-        version=704,
+        version=version,
       }}}, {})
       getbstrings_eq({
         {timestamp='current', type=1, value={
-          generator='shada.vim', version=704
+          generator='shada.vim', version=version
         }},
         {timestamp=0, type=1, value={generator='test'}}
       }, {
@@ -2137,8 +2137,9 @@ describe('In autoload/shada.vim', function()
   end)
 end)
 
-describe('In plugin/shada.vim', function()
+describe('plugin/shada.vim', function()
   local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
+  local eol = helpers.iswin() and '\r\n' or '\n'
   before_each(function()
     reset()
     os.remove(fname)
@@ -2152,9 +2153,7 @@ describe('In plugin/shada.vim', function()
   end)
 
   local shada_eq = function(expected, fname_)
-    local fd = io.open(fname_)
-    local mpack_result = fd:read('*a')
-    fd:close()
+    local mpack_result = read_file(fname_)
     mpack_eq(expected, mpack_result)
   end
 
@@ -2278,7 +2277,7 @@ describe('In plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2302,6 +2301,7 @@ describe('In plugin/shada.vim', function()
 
   describe('event FileWriteCmd', function()
     it('works', function()
+      if helpers.pending_win32(pending) then return end
       nvim('set_var', 'shada#add_own_header', 0)
       curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
@@ -2325,7 +2325,7 @@ describe('In plugin/shada.vim', function()
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2382,7 +2382,7 @@ describe('In plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, '\n') .. '\n', io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,

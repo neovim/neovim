@@ -2,6 +2,9 @@
 cmake_minimum_required (VERSION 2.8.7)
 project(NVIM_DEPS)
 
+# Needed for: check_c_compiler_flag()
+include(CheckCCompilerFlag)
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -9,6 +12,13 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # recipes (libuv, msgpack), make sure it is set
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
+
+check_c_compiler_flag(-Og HAS_OG_FLAG)
+if(HAS_OG_FLAG)
+  set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
 endif()
 
 set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/usr" CACHE PATH "Dependencies install directory.")
@@ -19,6 +29,7 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
+option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ${USE_BUNDLED})
 option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
@@ -32,13 +43,20 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 
-if(USE_BUNDLED  AND (NOT WIN32))
-  option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ON)
+if(USE_BUNDLED AND MSVC)
+  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
 else()
-  option(USE_BUNDLED_GPERF "Use the bundled version of gperf." OFF)
+  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
+
+if(WIN32)
+  find_package(Git)
+  if(NOT Git_FOUND)
+    message(FATAL_ERROR "Git is required to apply patches for Windows.")
+  endif()
+endif()
 
 if(UNIX)
   find_program(MAKE_PRG NAMES gmake make)
@@ -90,28 +108,28 @@ include(ExternalProject)
 set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.12.0.tar.gz)
 set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca1250)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-2.1.3.tar.gz)
-set(MSGPACK_SHA256 42ff5c213fd24bd4388c45c1f21d84b476678ce6366ea4d4f4086618a1d2cd23)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-2.1.5/msgpack-2.1.5.tar.gz)
+set(MSGPACK_SHA256 6126375af9b204611b9d9f154929f4f747e4599e6ae8443b337915dcf2899d2b)
 
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/82151a4514e6538086f3f5e01cb8d4b22287b14f.tar.gz)
-set(LUAJIT_SHA256 8bc4e96ebab74e12ab84e751360e864714289bb089b51b6f396fa9a97df69798)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/7dbf0b05f1228c1c719866db5e5f3d58f87f74c8.tar.gz)
+set(LUAJIT_SHA256 cbae019b5e396164eb5f0d07777b55cc03931bb944f83c61a010c053c9f5fd5b)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
 
 # NOTE: Version must match LUAROCKS_VERSION in third-party/cmake/BuildLuarocks.cmake
-set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v2.4.2.tar.gz)
-set(LUAROCKS_SHA256 eef88c2429c715a7beb921e4b1ba571dddb7c74a250fbb0d3cc0d4be7a5865d9)
+set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v2.4.3.tar.gz)
+set(LUAROCKS_SHA256 ea1881d6954f2a98c34f93674571c8f0cbdbc28dedb3fa3cb56b6a91886d1a99)
 
-set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v1.2.0.tar.gz)
-set(UNIBILIUM_SHA256 623af1099515e673abfd3cae5f2fa808a09ca55dda1c65a7b5c9424eb304ead8)
+set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v2.0.0.tar.gz)
+set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116bc1c1)
 
 if(WIN32)
 set(LIBTERMKEY_URL https://github.com/equalsraf/libtermkey/archive/tb-windows.zip)
 set(LIBTERMKEY_SHA256 c81e33e38662b151a49847ff4feef4f8c4b2a66f3e159a28b575cbc9bcd8ffea)
 else()
-set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.19.tar.gz)
-set(LIBTERMKEY_SHA256 c505aa4cb48c8fa59c526265576b97a19e6ebe7b7da20f4ecaae898b727b48b7)
+set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
+set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
 endif()
 
 set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
@@ -130,14 +148,20 @@ set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.7/neovim-qt.zip)
-set(WINGUI_SHA256 b548f6e4045f16a10163b0e433f05b115b2f877cb47c4eacbf80eaad1a8429ab)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.8/neovim-qt.zip)
+set(WINGUI_SHA256 260efc686423e2529360b6a45c8e241fbbf276c8de6b04d44f45ab5b6fe8df8f)
 
-set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.3/win32yank.zip)
-set(WIN32YANK_SHA256 b474439ed2854a9a24941d66970c7fcfece219401eaaa5ebc0ffcc962e69887a)
+set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
+set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
 
-set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.2/winpty-0.4.2-msvc2015.zip)
-set(WINPTY_SHA256 b465f2584ff394b3fe27c01aa1dcfc679583c1ee951d0e83de3f859d8b8305b8)
+set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
+set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
+
+set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
+set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
+
+set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.8.1.tar.gz)
+set(GETTEXT_SHA256 ff942af0e438ced4a8b0ea4b0b6e0d6d657157c5e2364de57baa279c1c125c43)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -183,24 +207,29 @@ if(USE_BUNDLED_GPERF)
   include(BuildGperf)
 endif()
 
+if(USE_BUNDLED_GETTEXT)
+  include(BuildGettext)
+endif()
+
 include(GetBinaryDeps)
 
 if(WIN32)
   GetBinaryDep(TARGET wintools
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
-  GetBinaryDep(TARGET win32yank
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
-
   GetBinaryDep(TARGET wingui
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
 
   include(TargetArch)
+  GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+
   if("${TARGET_ARCH}" STREQUAL "X86_64")
     set(TARGET_ARCH x64)
   elseif(TARGET_ARCH STREQUAL "X86")
     set(TARGET_ARCH ia32)
   endif()
+
   GetBinaryDep(TARGET winpty
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*

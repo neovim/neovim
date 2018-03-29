@@ -462,7 +462,7 @@ static void insert_enter(InsertState *s)
 
   // Always update o_lnum, so that a "CTRL-O ." that adds a line
   // still puts the cursor back after the inserted text.
-  if (ins_at_eol && gchar_cursor() == NUL) {
+  if (ins_at_eol) {
     o_lnum = curwin->w_cursor.lnum;
   }
 
@@ -974,12 +974,8 @@ static int insert_handle_key(InsertState *s)
     multiqueue_process_events(main_loop.events);
     break;
 
-  case K_FOCUSGAINED:  // Neovim has been given focus
-    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-    break;
-
-  case K_FOCUSLOST:   // Neovim has lost focus
-    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
+  case K_COMMAND:       // some command
+    do_cmdline(NULL, getcmdkeycmd, NULL, 0);
     break;
 
   case K_HOME:        // <Home>
@@ -1935,7 +1931,7 @@ bool vim_is_ctrl_x_key(int c)
   case CTRL_X_EVAL:
     return (c == Ctrl_P || c == Ctrl_N);
   }
-  EMSG(_(e_internal));
+  internal_error("vim_is_ctrl_x_key()");
   return false;
 }
 
@@ -2406,6 +2402,7 @@ void set_completion(colnr_T startcol, list_T *list)
     ins_compl_prep(' ');
   }
   ins_compl_clear();
+  ins_compl_free();
 
   compl_direction = FORWARD;
   if (startcol > curwin->w_cursor.col)
@@ -3166,8 +3163,7 @@ static bool ins_compl_prep(int c)
 
   /* Ignore end of Select mode mapping and mouse scroll buttons. */
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
-      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
-      || c == K_FOCUSGAINED || c == K_FOCUSLOST) {
+      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT) {
     return retval;
   }
 
@@ -3544,19 +3540,19 @@ theend:
 /*
  * Add completions from a list.
  */
-static void ins_compl_add_list(list_T *list)
+static void ins_compl_add_list(list_T *const list)
 {
-  listitem_T  *li;
   int dir = compl_direction;
 
-  /* Go through the List with matches and add each of them. */
-  for (li = list->lv_first; li != NULL; li = li->li_next) {
-    if (ins_compl_add_tv(&li->li_tv, dir) == OK)
-      /* if dir was BACKWARD then honor it just once */
+  // Go through the List with matches and add each of them.
+  TV_LIST_ITER(list, li, {
+    if (ins_compl_add_tv(TV_LIST_ITEM_TV(li), dir) == OK) {
+      // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
-    else if (did_emsg)
+    } else if (did_emsg) {
       break;
-  }
+    }
+  });
 }
 
 /*
@@ -3608,6 +3604,8 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     cptext[CPT_MENU] = tv_dict_get_string(tv->vval.v_dict, "menu", true);
     cptext[CPT_KIND] = tv_dict_get_string(tv->vval.v_dict, "kind", true);
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
+    cptext[CPT_USER_DATA] = tv_dict_get_string(tv->vval.v_dict,
+                                               "user_data", true);
 
     icase = (bool)tv_dict_get_number(tv->vval.v_dict, "icase");
     adup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
@@ -4051,8 +4049,9 @@ static void ins_compl_insert(int in_compl_func)
   // Set completed item.
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
-  tv_dict_add_str(dict, S_LEN("word"),
-                  (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
+  tv_dict_add_str(
+      dict, S_LEN("word"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
   tv_dict_add_str(
       dict, S_LEN("abbr"),
       (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
@@ -4065,6 +4064,9 @@ static void ins_compl_insert(int in_compl_func)
   tv_dict_add_str(
       dict, S_LEN("info"),
       (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
+  tv_dict_add_str(
+      dict, S_LEN("user_data"),
+      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_USER_DATA]));
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
   if (!in_compl_func) {
     compl_curr_match = compl_shown_match;
@@ -4689,7 +4691,7 @@ static int ins_complete(int c, bool enable_pum)
       line = ml_get(curwin->w_cursor.lnum);
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
     } else {
-      EMSG2(_(e_intern2), "ins_complete()");
+      internal_error("ins_complete()");
       return FAIL;
     }
 
@@ -5243,28 +5245,27 @@ insertchar (
 
     buf[0] = c;
     i = 1;
-    if (textwidth > 0)
+    if (textwidth > 0) {
       virtcol = get_nolist_virtcol();
-    /*
-     * Stop the string when:
-     * - no more chars available
-     * - finding a special character (command key)
-     * - buffer is full
-     * - running into the 'textwidth' boundary
-     * - need to check for abbreviation: A non-word char after a word-char
-     */
-    while (    (c = vpeekc()) != NUL
-               && !ISSPECIAL(c)
-               && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
-               && i < INPUT_BUFLEN
-               && (textwidth == 0
-                   || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
-               && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
+    }
+    // Stop the string when:
+    // - no more chars available
+    // - finding a special character (command key)
+    // - buffer is full
+    // - running into the 'textwidth' boundary
+    // - need to check for abbreviation: A non-word char after a word-char
+    while ((c = vpeekc()) != NUL
+           && !ISSPECIAL(c)
+           && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
+           && i < INPUT_BUFLEN
+           && !(p_fkmap && KeyTyped)  // Farsi mode mapping moves cursor
+           && (textwidth == 0
+               || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
+           && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
       c = vgetc();
-      if (p_hkmap && KeyTyped)
-        c = hkmap(c);                       /* Hebrew mode mapping */
-      if (p_fkmap && KeyTyped)
-        c = fkmap(c);                       /* Farsi mode mapping */
+      if (p_hkmap && KeyTyped) {
+        c = hkmap(c);                       // Hebrew mode mapping
+      }
       buf[i++] = c;
     }
 
@@ -6074,27 +6075,30 @@ void free_last_insert(void)
 
 #endif
 
-/*
- * Add character "c" to buffer "s".  Escape the special meaning of K_SPECIAL
- * and CSI.  Handle multi-byte characters.
- * Returns a pointer to after the added bytes.
- */
+/// Add character "c" to buffer "s"
+///
+/// Escapes the special meaning of K_SPECIAL and CSI, handles multi-byte
+/// characters.
+///
+/// @param[in]  c  Character to add.
+/// @param[out]  s  Buffer to add to. Must have at least MB_MAXBYTES + 1 bytes.
+///
+/// @return Pointer to after the added bytes.
 char_u *add_char2buf(int c, char_u *s)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u temp[MB_MAXBYTES + 1];
-  int i;
-  int len;
-
-  len = (*mb_char2bytes)(c, temp);
-  for (i = 0; i < len; ++i) {
+  const int len = utf_char2bytes(c, temp);
+  for (int i = 0; i < len; i++) {
     c = temp[i];
-    /* Need to escape K_SPECIAL and CSI like in the typeahead buffer. */
+    // Need to escape K_SPECIAL and CSI like in the typeahead buffer.
     if (c == K_SPECIAL) {
       *s++ = K_SPECIAL;
       *s++ = KS_SPECIAL;
       *s++ = KE_FILLER;
-    } else
+    } else {
       *s++ = c;
+    }
   }
   return s;
 }
@@ -6912,7 +6916,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       if (try_match && *look == keytyped) {
         return true;
       }
-      look++;
+      if (*look != NUL) {
+        look++;
+      }
     }
 
     /*
@@ -7478,13 +7484,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int oldState;
   int cpc[MAX_MCO];                 /* composing characters */
 
-  /*
-   * can't delete anything in an empty file
-   * can't backup past first character in buffer
-   * can't backup past starting point unless 'backspace' > 1
-   * can backup to a previous line if 'backspace' == 0
-   */
-  if (bufempty()
+  // can't delete anything in an empty file
+  // can't backup past first character in buffer
+  // can't backup past starting point unless 'backspace' > 1
+  // can backup to a previous line if 'backspace' == 0
+  if (BUFEMPTY()
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)

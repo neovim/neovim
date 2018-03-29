@@ -41,6 +41,7 @@ local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
 
 local concat_tables = global_helpers.concat_tables
+local map = global_helpers.map
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
@@ -79,8 +80,6 @@ local function get_alloc_rets(exp_log, res)
   end
   return exp_log
 end
-
-local to_cstr_nofree = function(v) return lib.xstrdup(v) end
 
 local alloc_log = alloc_log_new()
 
@@ -121,87 +120,6 @@ end
 describe('typval.c', function()
   describe('list', function()
     describe('item', function()
-      describe('alloc()/free()', function()
-        itp('works', function()
-          local li = li_alloc(true)
-          neq(nil, li)
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-        end)
-        itp('also frees the value', function()
-          local li
-          local s
-          local l
-          local tv
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_NUMBER
-          li.li_tv.vval.v_number = 10
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_FLOAT
-          li.li_tv.vval.v_float = 10.5
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_STRING
-          li.li_tv.vval.v_string = nil
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(alloc_log.null),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_STRING
-          s = to_cstr_nofree('test')
-          li.li_tv.vval.v_string = s
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.str(s, #('test')),
-            a.freed(s),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_LIST
-          l = ffi.gc(list(), nil)
-          l.lv_refcount = 2
-          li.li_tv.vval.v_list = l
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.list(l),
-            a.freed(li),
-          })
-          eq(1, l.lv_refcount)
-
-          li = li_alloc(true)
-          tv = lua2typvalt({})
-          tv.vval.v_dict.dv_refcount = 2
-          li.li_tv = tv
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.dict(tv.vval.v_dict),
-            a.freed(li),
-          })
-          eq(1, tv.vval.v_dict.dv_refcount)
-        end)
-      end)
       describe('remove()', function()
         itp('works', function()
           local l = list(1, 2, 3, 4, 5, 6, 7)
@@ -218,21 +136,60 @@ describe('typval.c', function()
             a.li(lis[7]),
           })
 
-          lib.tv_list_item_remove(l, lis[1])
+          eq(lis[2], lib.tv_list_item_remove(l, lis[1]))
           alloc_log:check({
             a.freed(table.remove(lis, 1)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[6])
+          eq(lis[7], lib.tv_list_item_remove(l, lis[6]))
           alloc_log:check({
             a.freed(table.remove(lis)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[3])
+          eq(lis[4], lib.tv_list_item_remove(l, lis[3]))
           alloc_log:check({
             a.freed(table.remove(lis, 3)),
+          })
+          eq(lis, list_items(l))
+        end)
+        itp('also frees the value', function()
+          local l = list('a', 'b', 'c', 'd')
+          neq(nil, l)
+          local lis = list_items(l)
+          alloc_log:check({
+            a.list(l),
+            a.str(lis[1].li_tv.vval.v_string, 1),
+            a.li(lis[1]),
+            a.str(lis[2].li_tv.vval.v_string, 1),
+            a.li(lis[2]),
+            a.str(lis[3].li_tv.vval.v_string, 1),
+            a.li(lis[3]),
+            a.str(lis[4].li_tv.vval.v_string, 1),
+            a.li(lis[4]),
+          })
+          local strings = map(function(li) return li.li_tv.vval.v_string end,
+                              lis)
+
+          eq(lis[2], lib.tv_list_item_remove(l, lis[1]))
+          alloc_log:check({
+            a.freed(table.remove(strings, 1)),
+            a.freed(table.remove(lis, 1)),
+          })
+          eq(lis, list_items(l))
+
+          eq(lis[3], lib.tv_list_item_remove(l, lis[2]))
+          alloc_log:check({
+            a.freed(table.remove(strings, 2)),
+            a.freed(table.remove(lis, 2)),
+          })
+          eq(lis, list_items(l))
+
+          eq(nil, lib.tv_list_item_remove(l, lis[2]))
+          alloc_log:check({
+            a.freed(table.remove(strings, 2)),
+            a.freed(table.remove(lis, 2)),
           })
           eq(lis, list_items(l))
         end)
@@ -257,19 +214,19 @@ describe('typval.c', function()
             a.li(lis[7]),
           })
 
-          lib.tv_list_item_remove(l, lis[4])
+          eq(lis[5], lib.tv_list_item_remove(l, lis[4]))
           alloc_log:check({a.freed(lis[4])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-          lib.tv_list_item_remove(l, lis[2])
+          eq(lis[3], lib.tv_list_item_remove(l, lis[2]))
           alloc_log:check({a.freed(lis[2])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-          lib.tv_list_item_remove(l, lis[7])
+          eq(nil, lib.tv_list_item_remove(l, lis[7]))
           alloc_log:check({a.freed(lis[7])})
           eq({lis[1], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-          lib.tv_list_item_remove(l, lis[1])
+          eq(lis[3], lib.tv_list_item_remove(l, lis[1]))
           alloc_log:check({a.freed(lis[1])})
           eq({lis[3], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
@@ -449,7 +406,7 @@ describe('typval.c', function()
         })
       end)
     end)
-    describe('remove_items()', function()
+    describe('drop_items()', function()
       itp('works', function()
         local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13})
         local l = l_tv.vval.v_list
@@ -462,21 +419,92 @@ describe('typval.c', function()
         }
         alloc_log:clear()
 
-        lib.tv_list_remove_items(l, lis[1], lis[3])
+        lib.tv_list_drop_items(l, lis[1], lis[3])
         eq({4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, typvalt2lua(l_tv))
         eq({lis[4], lis[7], lis[13]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-        lib.tv_list_remove_items(l, lis[11], lis[13])
+        lib.tv_list_drop_items(l, lis[11], lis[13])
         eq({4, 5, 6, 7, 8, 9, 10}, typvalt2lua(l_tv))
         eq({lis[4], lis[7], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-        lib.tv_list_remove_items(l, lis[6], lis[8])
+        lib.tv_list_drop_items(l, lis[6], lis[8])
         eq({4, 5, 9, 10}, typvalt2lua(l_tv))
         eq({lis[4], lis[9], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+
+        lib.tv_list_drop_items(l, lis[4], lis[10])
+        eq(empty_list, typvalt2lua(l_tv))
+        eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
+
+        lib.tv_list_watch_remove(l, lws[1])
+        lib.tv_list_watch_remove(l, lws[2])
+        lib.tv_list_watch_remove(l, lws[3])
+
+        alloc_log:check({})
+      end)
+    end)
+    describe('remove_items()', function()
+      itp('works', function()
+        local l_tv = lua2typvalt({'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'})
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        local strings = map(function(li) return li.li_tv.vval.v_string end, lis)
+        -- Three watchers: pointing to first, middle and last elements.
+        local lws = {
+          list_watch(l, lis[1]),
+          list_watch(l, lis[7]),
+          list_watch(l, lis[13]),
+        }
+        alloc_log:clear()
+
+        lib.tv_list_remove_items(l, lis[1], lis[3])
+        eq({'4', '5', '6', '7', '8', '9', '10', '11', '12', '13'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], lis[13]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
+        alloc_log:check({
+          a.freed(strings[1]),
+          a.freed(lis[1]),
+          a.freed(strings[2]),
+          a.freed(lis[2]),
+          a.freed(strings[3]),
+          a.freed(lis[3]),
+        })
+
+        lib.tv_list_remove_items(l, lis[11], lis[13])
+        eq({'4', '5', '6', '7', '8', '9', '10'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+        alloc_log:check({
+          a.freed(strings[11]),
+          a.freed(lis[11]),
+          a.freed(strings[12]),
+          a.freed(lis[12]),
+          a.freed(strings[13]),
+          a.freed(lis[13]),
+        })
+
+        lib.tv_list_remove_items(l, lis[6], lis[8])
+        eq({'4', '5', '9', '10'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[9], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+        alloc_log:check({
+          a.freed(strings[6]),
+          a.freed(lis[6]),
+          a.freed(strings[7]),
+          a.freed(lis[7]),
+          a.freed(strings[8]),
+          a.freed(lis[8]),
+        })
 
         lib.tv_list_remove_items(l, lis[4], lis[10])
         eq(empty_list, typvalt2lua(l_tv))
         eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
+        alloc_log:check({
+          a.freed(strings[4]),
+          a.freed(lis[4]),
+          a.freed(strings[5]),
+          a.freed(lis[5]),
+          a.freed(strings[9]),
+          a.freed(lis[9]),
+          a.freed(strings[10]),
+          a.freed(lis[10]),
+        })
 
         lib.tv_list_watch_remove(l, lws[1])
         lib.tv_list_watch_remove(l, lws[2])
@@ -676,6 +704,66 @@ describe('typval.c', function()
           })
 
           eq({int(-100500), int(100500)}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('tv()', function()
+        itp('works', function()
+          local l_tv = lua2typvalt(empty_list)
+          local l = l_tv.vval.v_list
+
+          local l_l_tv = lua2typvalt(empty_list)
+          alloc_log:clear()
+          local l_l = l_l_tv.vval.v_list
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_append_tv(l, l_l_tv)
+          eq(2, l_l.lv_refcount)
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          alloc_log:check({
+            a.li(l.lv_first),
+          })
+
+          local l_s_tv = lua2typvalt('test')
+          alloc_log:check({
+            a.str(l_s_tv.vval.v_string, 'test'),
+          })
+          lib.tv_list_append_tv(l, l_s_tv)
+          alloc_log:check({
+            a.li(l.lv_last),
+            a.str(l.lv_last.li_tv.vval.v_string, 'test'),
+          })
+
+          eq({empty_list, 'test'}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('owned tv()', function()
+        itp('works', function()
+          local l_tv = lua2typvalt(empty_list)
+          local l = l_tv.vval.v_list
+
+          local l_l_tv = lua2typvalt(empty_list)
+          alloc_log:clear()
+          local l_l = l_l_tv.vval.v_list
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_append_owned_tv(l, l_l_tv)
+          eq(1, l_l.lv_refcount)
+          l_l.lv_refcount = l_l.lv_refcount + 1
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          alloc_log:check({
+            a.li(l.lv_first),
+          })
+
+          local l_s_tv = ffi.gc(lua2typvalt('test'), nil)
+          alloc_log:check({
+            a.str(l_s_tv.vval.v_string, 'test'),
+          })
+          lib.tv_list_append_owned_tv(l, l_s_tv)
+          eq(l_s_tv.vval.v_string, l.lv_last.li_tv.vval.v_string)
+          l_s_tv.vval.v_string = nil
+          alloc_log:check({
+            a.li(l.lv_last),
+          })
+
+          eq({empty_list, 'test'}, typvalt2lua(l_tv))
         end)
       end)
     end)
@@ -1948,8 +2036,8 @@ describe('typval.c', function()
           eq(OK, lib.tv_dict_add_str(d, 'testt', 3, 'TEST'))
           local dis = dict_items(d)
           alloc_log:check({
+            a.str(dis.tes.di_tv.vval.v_string, 'TEST'),
             a.di(dis.tes, 'tes'),
-            a.str(dis.tes.di_tv.vval.v_string, 'TEST')
           })
           eq({test=10, tes='TEST'}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_str(d, 'testt', 3, 'TEST') end,
@@ -1961,6 +2049,38 @@ describe('typval.c', function()
           lib.emsg_skip = lib.emsg_skip - 1
           alloc_log:clear_tmp_allocs()
           alloc_log:check({})
+        end)
+      end)
+      describe('allocated_str()', function()
+        itp('works', function()
+          local d = dict({test=10})
+          eq({test=10}, dct2tbl(d))
+          alloc_log:clear()
+          local s1 = lib.xstrdup('TEST')
+          local s2 = lib.xstrdup('TEST')
+          local s3 = lib.xstrdup('TEST')
+          alloc_log:check({
+            a.str(s1, 'TEST'),
+            a.str(s2, 'TEST'),
+            a.str(s3, 'TEST'),
+          })
+          eq(OK, lib.tv_dict_add_allocated_str(d, 'testt', 3, s1))
+          local dis = dict_items(d)
+          alloc_log:check({
+            a.di(dis.tes, 'tes'),
+          })
+          eq({test=10, tes='TEST'}, dct2tbl(d))
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s2) end,
+                              'E685: Internal error: hash_add()'))
+          alloc_log:clear()
+          lib.emsg_skip = lib.emsg_skip + 1
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s3) end,
+                              nil))
+          lib.emsg_skip = lib.emsg_skip - 1
+          alloc_log:clear_tmp_allocs()
+          alloc_log:check({
+            a.freed(s3),
+          })
         end)
       end)
     end)
@@ -1975,7 +2095,7 @@ describe('typval.c', function()
         local dis = dict_items(d)
         local di = dis.TES
         local di_s = di.di_tv.vval.v_string
-        alloc_log:check({a.di(di), a.str(di_s)})
+        alloc_log:check({a.str(di_s), a.di(di)})
         eq({TES='tEsT'}, dct2tbl(d))
         lib.tv_dict_clear(d)
         alloc_log:check({a.freed(di_s), a.freed(di)})
@@ -2287,7 +2407,7 @@ describe('typval.c', function()
       describe('list ret()', function()
         itp('works', function()
           local rettv = typvalt(lib.VAR_UNKNOWN)
-          local l = lib.tv_list_alloc_ret(rettv)
+          local l = lib.tv_list_alloc_ret(rettv, 0)
           eq(empty_list, typvalt2lua(rettv))
           eq(rettv.vval.v_list, l)
         end)

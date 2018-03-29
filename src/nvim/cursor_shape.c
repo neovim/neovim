@@ -102,11 +102,14 @@ char_u *parse_shape_opt(int what)
     }
     while (*modep != NUL) {
       colonp = vim_strchr(modep, ':');
-      if (colonp == NULL)
-        return (char_u *)N_("E545: Missing colon");
-      if (colonp == modep)
-        return (char_u *)N_("E546: Illegal mode");
       commap = vim_strchr(modep, ',');
+
+      if (colonp == NULL || (commap != NULL && commap < colonp)) {
+        return (char_u *)N_("E545: Missing colon");
+      }
+      if (colonp == modep) {
+        return (char_u *)N_("E546: Illegal mode");
+      }
 
       // Repeat for all modes before the colon.
       // For the 'a' mode, we loop to handle all the modes.

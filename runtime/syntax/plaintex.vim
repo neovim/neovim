@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         TeX (plain.tex format)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-10-26
+" Language:             TeX (plain.tex format)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-10-26
 
 if exists("b:current_syntax")
   finish

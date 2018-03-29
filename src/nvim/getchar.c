@@ -92,17 +92,15 @@ static int typeahead_char = 0;          /* typeahead char that's not flushed */
  */
 static int block_redo = FALSE;
 
-/*
- * Make a hash value for a mapping.
- * "mode" is the lower 4 bits of the State for the mapping.
- * "c1" is the first character of the "lhs".
- * Returns a value between 0 and 255, index in maphash.
- * Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
- */
+// Make a hash value for a mapping.
+// "mode" is the lower 4 bits of the State for the mapping.
+// "c1" is the first character of the "lhs".
+// Returns a value between 0 and 255, index in maphash.
+// Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
 #define MAP_HASH(mode, \
                  c1) (((mode) & \
                        (NORMAL + VISUAL + SELECTMODE + \
-                        OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
+                        OP_PENDING + TERM_FOCUS)) ? (c1) : ((c1) ^ 0x80))
 
 // Each mapping is put in one of the MAX_MAPHASH hash lists,
 // to speed up finding it.
@@ -256,16 +254,17 @@ static void add_buff(buffheader_T *const buf, const char *const s,
     return;
   }
 
-  if (buf->bh_first.b_next == NULL) {   /* first add to list */
+  if (buf->bh_first.b_next == NULL) {  // first add to list
     buf->bh_space = 0;
     buf->bh_curr = &(buf->bh_first);
-  } else if (buf->bh_curr == NULL) {  /* buffer has already been read */
-    EMSG(_("E222: Add to read buffer"));
+  } else if (buf->bh_curr == NULL) {  // buffer has already been read
+    IEMSG(_("E222: Add to read buffer"));
     return;
-  } else if (buf->bh_index != 0)
+  } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
-        buf->bh_first.b_next->b_str + buf->bh_index,
-        STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+            buf->bh_first.b_next->b_str + buf->bh_index,
+            STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+  }
   buf->bh_index = 0;
 
   size_t len;
@@ -870,20 +869,15 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
 
   addlen = (int)STRLEN(str);
 
-  /*
-   * Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
-   */
   if (offset == 0 && addlen <= typebuf.tb_off) {
+    // Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
     typebuf.tb_off -= addlen;
     memmove(typebuf.tb_buf + typebuf.tb_off, str, (size_t)addlen);
-  }
-  /*
-   * Need to allocate a new buffer.
-   * In typebuf.tb_buf there must always be room for 3 * MAXMAPLEN + 4
-   * characters.  We add some extra room to avoid having to allocate too
-   * often.
-   */
-  else {
+  } else {
+    // Need to allocate a new buffer.
+    // In typebuf.tb_buf there must always be room for 3 * MAXMAPLEN + 4
+    // characters.  We add some extra room to avoid having to allocate too
+    // often.
     newoff = MAXMAPLEN + 4;
     newlen = typebuf.tb_len + addlen + newoff + 4 * (MAXMAPLEN + 4);
     if (newlen < 0) {               /* string is getting too long */
@@ -1159,14 +1153,16 @@ void alloc_typebuf(void)
  */
 void free_typebuf(void)
 {
-  if (typebuf.tb_buf == typebuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 1");
-  else
+  if (typebuf.tb_buf == typebuf_init) {
+    internal_error("Free typebuf 1");
+  } else {
     xfree(typebuf.tb_buf);
-  if (typebuf.tb_noremap == noremapbuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 2");
-  else
+  }
+  if (typebuf.tb_noremap == noremapbuf_init) {
+    internal_error("Free typebuf 2");
+  } else {
     xfree(typebuf.tb_noremap);
+  }
 }
 
 /*
@@ -1665,10 +1661,10 @@ static int vgetorpeek(int advance)
     }
     if (c != NUL && !got_int) {
       if (advance) {
-        /* KeyTyped = FALSE;  When the command that stuffed something
-         * was typed, behave like the stuffed command was typed.
-         * needed for CTRL-W CTRl-] to open a fold, for example. */
-        KeyStuffed = TRUE;
+        // KeyTyped = FALSE;  When the command that stuffed something
+        // was typed, behave like the stuffed command was typed.
+        // needed for CTRL-W CTRL-] to open a fold, for example.
+        KeyStuffed = true;
       }
       if (typebuf.tb_no_abbr_cnt == 0)
         typebuf.tb_no_abbr_cnt = 1;             /* no abbreviations now */
@@ -1806,7 +1802,7 @@ static int vgetorpeek(int advance)
                  * <M-a> and then changing 'encoding'. Beware
                  * that 0x80 is escaped. */
                 char_u *p1 = mp->m_keys;
-                char_u *p2 = mb_unescape(&p1);
+                char_u *p2 = (char_u *)mb_unescape((const char **)&p1);
 
                 if (has_mbyte && p2 != NULL && MB_BYTE2LEN(c1) > MB_PTR2LEN(p2))
                   mlen = 0;
@@ -2537,7 +2533,6 @@ do_map (
   bool unique = false;
   bool nowait = false;
   bool silent = false;
-  bool special = false;
   bool expr = false;
   int noremap;
   char_u      *orig_rhs;
@@ -2583,12 +2578,9 @@ do_map (
       continue;
     }
 
-    /*
-     * Check for "<special>": accept special keys in <>
-     */
+    // Ignore obsolete "<special>" modifier.
     if (STRNCMP(keys, "<special>", 9) == 0) {
       keys = skipwhite(keys + 9);
-      special = true;
       continue;
     }
 
@@ -2657,7 +2649,7 @@ do_map (
   // needs to be freed later (*keys_buf and *arg_buf).
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
   if (haskey) {
-    keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, special,
+    keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, true,
                              CPO_TO_CPO_FLAGS);
   }
   orig_rhs = rhs;
@@ -2665,7 +2657,7 @@ do_map (
     if (STRICMP(rhs, "<nop>") == 0) {  // "<Nop>" means nothing
       rhs = (char_u *)"";
     } else {
-      rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, special,
+      rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, true,
                               CPO_TO_CPO_FLAGS);
     }
   }
@@ -3245,7 +3237,7 @@ bool map_to_exists(const char *const str, const char *const modechars,
 
   char_u *buf;
   char_u *const rhs = replace_termcodes((const char_u *)str, strlen(str), &buf,
-                                        false, true, false,
+                                        false, true, true,
                                         CPO_TO_CPO_FLAGS);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
@@ -3374,6 +3366,10 @@ set_context_in_map_cmd (
         arg = skipwhite(arg + 8);
         continue;
       }
+      if (STRNCMP(arg, "<special>", 9) == 0) {
+        arg = skipwhite(arg + 9);
+        continue;
+      }
       if (STRNCMP(arg, "<script>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
@@ -3416,21 +3412,24 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   for (round = 1; round <= 2; ++round) {
     count = 0;
 
-    for (i = 0; i < 6; ++i) {
-      if (i == 0)
+    for (i = 0; i < 7; i++) {
+      if (i == 0) {
         p = (char_u *)"<silent>";
-      else if (i == 1)
+      } else if (i == 1) {
         p = (char_u *)"<unique>";
-      else if (i == 2)
+      } else if (i == 2) {
         p = (char_u *)"<script>";
-      else if (i == 3)
+      } else if (i == 3) {
         p = (char_u *)"<expr>";
-      else if (i == 4 && !expand_buffer)
+      } else if (i == 4 && !expand_buffer) {
         p = (char_u *)"<buffer>";
-      else if (i == 5)
+      } else if (i == 5) {
         p = (char_u *)"<nowait>";
-      else
+      } else if (i == 6) {
+        p = (char_u *)"<special>";
+      } else {
         continue;
+      }
 
       if (vim_regexec(regmatch, p, (colnr_T)0)) {
         if (round == 1)
@@ -3916,7 +3915,7 @@ makemap (
           c1 = 't';
           break;
         default:
-          EMSG(_("E228: makemap: Illegal mode"));
+          IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
         do {            /* do this twice if c2 is set, 3 times with c3 */
@@ -3999,12 +3998,10 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
     return OK;
   }
 
-  for (; *str != NUL; ++str) {
-    char_u  *p;
-
-    /* Check for a multi-byte character, which may contain escaped
-     * K_SPECIAL and CSI bytes */
-    p = mb_unescape(&str);
+  for (; *str != NUL; str++) {
+    // Check for a multi-byte character, which may contain escaped
+    // K_SPECIAL and CSI bytes.
+    const char *p = mb_unescape((const char **)&str);
     if (p != NULL) {
       while (*p != NUL)
         if (fputc(*p++, fd) < 0)
@@ -4160,8 +4157,7 @@ void add_map(char_u *map, int mode)
 }
 
 // Translate an internal mapping/abbreviation representation into the
-// corresponding external one recognized by :map/:abbrev commands;
-// respects the current B/k/< settings of 'cpoption'.
+// corresponding external one recognized by :map/:abbrev commands.
 //
 // This function is called when expanding mappings/abbreviations on the
 // command-line, and for building the "Ambiguous mapping..." error message.
@@ -4181,7 +4177,6 @@ static char_u * translate_mapping (
   ga_init(&ga, 1, 40);
 
   bool cpo_bslash = !(cpo_flags&FLAG_CPO_BSLASH);
-  bool cpo_special = !(cpo_flags&FLAG_CPO_SPECI);
 
   for (; *str; ++str) {
     int c = *str;
@@ -4194,7 +4189,7 @@ static char_u * translate_mapping (
       }
       
       if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-        if (expmap && cpo_special) {
+        if (expmap) {
           ga_clear(&ga);
           return NULL;
         }
@@ -4205,8 +4200,8 @@ static char_u * translate_mapping (
         }
         str += 2;
       }
-      if (IS_SPECIAL(c) || modifiers) {         /* special key */
-        if (expmap && cpo_special) {
+      if (IS_SPECIAL(c) || modifiers) {         // special key
+        if (expmap) {
           ga_clear(&ga);
           return NULL;
         }
@@ -4216,7 +4211,7 @@ static char_u * translate_mapping (
     }
 
     if (c == ' ' || c == '\t' || c == Ctrl_J || c == Ctrl_V
-        || (c == '<' && !cpo_special) || (c == '\\' && !cpo_bslash)) {
+        || (c == '\\' && !cpo_bslash)) {
       ga_append(&ga, cpo_bslash ? Ctrl_V : '\\');
     }
 
@@ -4251,4 +4246,71 @@ mapblock_T *get_maphash(int index, buf_T *buf)
   }
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
+}
+
+/// Get command argument for <Cmd> key
+char_u * getcmdkeycmd(int promptc, void *cookie, int indent)
+{
+  garray_T line_ga;
+  int c1 = -1, c2;
+  int cmod = 0;
+  bool aborted = false;
+
+  ga_init(&line_ga, 1, 32);
+
+  no_mapping++;
+
+  got_int = false;
+  while (c1 != NUL && !aborted) {
+    ga_grow(&line_ga, 32);
+
+    if (vgetorpeek(false) == NUL) {
+      // incomplete <Cmd> is an error, because there is not much the user
+      // could do in this state.
+      EMSG(e_cmdmap_err);
+      aborted = true;
+      break;
+    }
+
+    // Get one character at a time.
+    c1 = vgetorpeek(true);
+    // Get two extra bytes for special keys
+    if (c1 == K_SPECIAL) {
+      c1 = vgetorpeek(true);          // no mapping for these chars
+      c2 = vgetorpeek(true);
+      if (c1 == KS_MODIFIER) {
+        cmod = c2;
+        continue;
+      }
+      c1 = TO_SPECIAL(c1, c2);
+    }
+
+
+    if (got_int) {
+      aborted = true;
+    } else if (c1 == '\r' || c1 == '\n') {
+      c1 = NUL;  // end the line
+    } else if (c1 == ESC) {
+      aborted = true;
+    } else if (c1 == K_COMMAND) {
+      // special case to give nicer error message
+      EMSG(e_cmdmap_repeated);
+      aborted = true;
+    } else if (IS_SPECIAL(c1)) {
+      EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
+      aborted = true;
+    } else {
+      ga_append(&line_ga, (char)c1);
+    }
+
+    cmod = 0;
+  }
+
+  no_mapping--;
+
+  if (aborted) {
+    ga_clear(&line_ga);
+  }
+
+  return (char_u *)line_ga.ga_data;
 }

@@ -10,6 +10,14 @@ if(USE_GCOV)
 endif()
 endif()
 
+if(WIN32)
+  # tell MinGW compiler to enable wmain
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreFoundation")
+endif()
+
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
@@ -81,6 +89,8 @@ foreach(subdir
         event
         eval
         lua
+        viml
+        viml/parser
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()
@@ -109,6 +119,9 @@ foreach(sfile ${NVIM_SOURCES})
     list(APPEND to_remove ${sfile})
   endif()
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
     list(APPEND to_remove ${sfile})
   endif()
 endforeach()
@@ -156,13 +169,13 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(DEFINED MIN_LOG_LEVEL)
+if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
-  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
@@ -174,6 +187,10 @@ get_directory_property(gen_includes INCLUDE_DIRECTORIES)
 foreach(gen_include ${gen_includes} ${LUA_PREFERRED_INCLUDE_DIRS})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_SYSROOT)
+  list(APPEND gen_cflags "-isysroot")
+  list(APPEND gen_cflags "${CMAKE_OSX_SYSROOT}")
+endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
 separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
@@ -350,6 +367,10 @@ if(Iconv_LIBRARIES)
   list(APPEND NVIM_LINK_LIBRARIES ${Iconv_LIBRARIES})
 endif()
 
+if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
+endif()
+
 # Put these last on the link line, since multiple things may depend on them.
 list(APPEND NVIM_LINK_LIBRARIES
   ${LIBUV_LIBRARIES}
@@ -415,6 +436,7 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
@@ -428,10 +450,13 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)
+else()
+  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
 
 add_library(
@@ -526,11 +551,7 @@ endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
-  regexp_defs.h
-  syntax_defs.h
-  terminal.h
-  undo.h
-  undo_defs.h
+  os/pty_process_win.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)

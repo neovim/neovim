@@ -7,10 +7,10 @@ func! ListMonths()
   if g:setting != ''
     exe ":set" g:setting
   endif
-  let mth=copy(g:months)
+  let mth = copy(g:months)
   let entered = strcharpart(getline('.'),0,col('.'))
   if !empty(entered)
-    let mth=filter(mth, 'v:val=~"^".entered')
+    let mth = filter(mth, 'v:val=~"^".entered')
   endif
   call complete(1, mth)
   return ''
@@ -468,7 +468,7 @@ endfunc
 " auto-wrap text.
 func Test_completion_ctrl_e_without_autowrap()
   new
-  let tw_save=&tw
+  let tw_save = &tw
   set tw=78
   let li = [
         \ '"                                                        zzz',
@@ -478,7 +478,7 @@ func Test_completion_ctrl_e_without_autowrap()
   call feedkeys("A\<C-X>\<C-N>\<C-E>\<Esc>", "tx")
   call assert_equal(li, getline(1, '$'))
 
-  let &tw=tw_save
+  let &tw = tw_save
   q!
 endfunc
 
@@ -539,6 +539,73 @@ func Test_completion_comment_formatting()
   endtry
   call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
   bwipe!
+endfunc
+
+function! DummyCompleteSix()
+  call complete(1, ['Hello', 'World'])
+  return ''
+endfunction
+
+" complete() correctly clears the list of autocomplete candidates
+func Test_completion_clear_candidate_list()
+  new
+  %d
+  " select first entry from the completion popup
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>", "tx")
+  call assert_equal('Hello', getline(1))
+  %d
+  " select second entry from the completion popup
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>", "tx")
+  call assert_equal('World', getline(1))
+  %d
+  " select original text
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>", "tx")
+  call assert_equal('    xxx', getline(1))
+  %d
+  " back at first entry from completion list
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>\<C-N>", "tx")
+  call assert_equal('Hello', getline(1))
+
+  bw!
+endfunc
+
+
+func Test_popup_and_preview_autocommand()
+  " This used to crash Vim
+  if !has('python')
+    return
+  endif
+  let h = winheight(0)
+  if h < 15
+    return
+  endif
+  new
+  augroup MyBufAdd
+    au!
+    au BufAdd * nested tab sball
+  augroup END
+  set omnifunc=pythoncomplete#Complete
+  call setline(1, 'import os')
+  " make the line long
+  call setline(2, '                                 os.')
+  $
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<enter>\<esc>", 'tx')
+  call assert_equal("import os", getline(1))
+  call assert_match('                                 os.\(EX_IOERR\|O_CREAT\)$', getline(2))
+  call assert_equal(1, winnr('$'))
+  " previewwindow option is not set
+  call assert_equal(0, &previewwindow)
+  norm! gt
+  call assert_equal(0, &previewwindow)
+  norm! gT
+  call assert_equal(12, tabpagenr('$'))
+  tabonly
+  pclose
+  augroup MyBufAdd
+    au!
+  augroup END
+  augroup! MyBufAdd
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

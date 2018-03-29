@@ -4,11 +4,24 @@ function! s:check_config() abort
   let ok = v:true
   call health#report_start('Configuration')
 
+  " If $VIM is empty we don't care. Else make sure it is valid.
+  if !empty($VIM) && !filereadable($VIM.'/runtime/doc/nvim.txt')
+    let ok = v:false
+    call health#report_error('$VIM is invalid: '.$VIM)
+  endif
+
   if exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE')
     let ok = v:false
-    call health#report_warn("$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+",
+    call health#report_warn('$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+',
           \ [ "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
+  endif
+
+  if &paste
+    let ok = v:false
+    call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
+          \ [ 'Remove `set paste` from your init.vim, if applicable.',
+          \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
   endif
 
   if ok
@@ -45,7 +58,7 @@ function! s:check_rplugin_manifest() abort
       let contents = join(readfile(script))
       if contents =~# '\<\%(from\|import\)\s\+neovim\>'
         if script =~# '[\/]__init__\.py$'
-          let script = fnamemodify(script, ':h')
+          let script = tr(fnamemodify(script, ':h'), '\', '/')
         endif
 
         if !has_key(existing_rplugins, script)
@@ -87,8 +100,8 @@ function! s:check_performance() abort
   else
     call health#report_info(buildtype)
     call health#report_warn(
-          \ "Non-optimized build-type. Nvim will be slower.",
-          \ ["Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.",
+          \ 'Non-optimized build-type. Nvim will be slower.',
+          \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
 endfunction
@@ -160,6 +173,11 @@ function! s:check_terminal() abort
     call health#report_info('key_dc (kdch1) terminfo entry: '
         \ .(empty(kbs_entry) ? '? (not found)' : kdch1_entry))
   endif
+  for env_var in ['XTERM_VERSION', 'VTE_VERSION', 'TERM_PROGRAM', 'COLORTERM', 'SSH_TTY']
+    if exists('$'.env_var)
+      call health#report_info(printf("$%s='%s'", env_var, eval('$'.env_var)))
+    endif
+  endfor
 endfunction
 
 function! health#nvim#check() abort

@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         lftp(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-06-17
+" Language:             lftp(1) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-06-17
 
 if exists("b:current_syntax")
   finish

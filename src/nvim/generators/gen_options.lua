@@ -36,6 +36,7 @@ local redraw_flags={
   all_windows='P_RALL',
   everything='P_RCLR',
   curswant='P_CURSWANT',
+  ui_option='P_UI_OPTION',
 }
 
 local list_flags={
@@ -74,6 +75,7 @@ local get_flags = function(o)
     {'gettext'},
     {'noglob'},
     {'normal_fname_chars', 'P_NFNAME'},
+    {'normal_dname_chars', 'P_NDNAME'},
     {'pri_mkrc'},
     {'deny_in_modelines', 'P_NO_ML'},
     {'deny_duplicates', 'P_NODUP'},

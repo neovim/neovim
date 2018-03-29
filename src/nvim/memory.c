@@ -559,6 +559,7 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 #include "nvim/tag.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/eval/typval.h"
 
 /*
  * Free everything that we allocated.
@@ -585,7 +586,7 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (firstwin != lastwin)
+  if (!ONE_WINDOW)
     do_cmdline_cmd("only!");
 
   /* Free all spell info. */
@@ -692,6 +693,7 @@ void free_all_mem(void)
   free_screenlines();
 
   clear_hl_tables();
+  list_free_log();
 }
 
 #endif

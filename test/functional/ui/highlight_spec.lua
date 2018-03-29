@@ -4,7 +4,7 @@ local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
 local eval, exc_exec = helpers.eval, helpers.exc_exec
-local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
+local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
 
 describe('colorscheme compatibility', function()
@@ -14,8 +14,6 @@ describe('colorscheme compatibility', function()
 
   it('t_Co is set to 256 by default', function()
     eq('256', eval('&t_Co'))
-    request('nvim_set_option', 't_Co', '88')
-    eq('88', eval('&t_Co'))
   end)
 end)
 
@@ -110,12 +108,12 @@ describe('highlight defaults', function()
     })
     feed_command('sp', 'vsp', 'vsp')
     screen:expect([[
-      ^                    {2:|}                {2:|}               |
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
+      ^                    {2:│}                {2:│}               |
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
       {1:[No Name]            }{2:[No Name]        [No Name]      }|
                                                            |
       {0:~                                                    }|
@@ -128,12 +126,12 @@ describe('highlight defaults', function()
     -- navigate to verify that the attributes are properly moved
     feed('<c-w>j')
     screen:expect([[
-                          {2:|}                {2:|}               |
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
-      {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
+                          {2:│}                {2:│}               |
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
+      {0:~                   }{2:│}{0:~               }{2:│}{0:~              }|
       {2:[No Name]            [No Name]        [No Name]      }|
       ^                                                     |
       {0:~                                                    }|
@@ -148,12 +146,12 @@ describe('highlight defaults', function()
     -- (upstream vim has the same behavior)
     feed('<c-w>k<c-w>l')
     screen:expect([[
-                          {2:|}^                    {2:|}           |
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
+                          {2:│}^                    {2:│}           |
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
       {2:[No Name]            }{1:[No Name]            }{2:[No Name]  }|
                                                            |
       {0:~                                                    }|
@@ -165,12 +163,12 @@ describe('highlight defaults', function()
     ]])
     feed('<c-w>l')
     screen:expect([[
-                          {2:|}           {2:|}^                    |
-      {0:~                   }{2:|}{0:~          }{2:|}{0:~                   }|
-      {0:~                   }{2:|}{0:~          }{2:|}{0:~                   }|
-      {0:~                   }{2:|}{0:~          }{2:|}{0:~                   }|
-      {0:~                   }{2:|}{0:~          }{2:|}{0:~                   }|
-      {0:~                   }{2:|}{0:~          }{2:|}{0:~                   }|
+                          {2:│}           {2:│}^                    |
+      {0:~                   }{2:│}{0:~          }{2:│}{0:~                   }|
+      {0:~                   }{2:│}{0:~          }{2:│}{0:~                   }|
+      {0:~                   }{2:│}{0:~          }{2:│}{0:~                   }|
+      {0:~                   }{2:│}{0:~          }{2:│}{0:~                   }|
+      {0:~                   }{2:│}{0:~          }{2:│}{0:~                   }|
       {2:[No Name]            [No Name]   }{1:[No Name]           }|
                                                            |
       {0:~                                                    }|
@@ -182,12 +180,12 @@ describe('highlight defaults', function()
     ]])
     feed('<c-w>h<c-w>h')
     screen:expect([[
-      ^                    {2:|}                    {2:|}           |
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
-      {0:~                   }{2:|}{0:~                   }{2:|}{0:~          }|
+      ^                    {2:│}                    {2:│}           |
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
+      {0:~                   }{2:│}{0:~                   }{2:│}{0:~          }|
       {1:[No Name]            }{2:[No Name]            [No Name]  }|
                                                            |
       {0:~                                                    }|
@@ -314,7 +312,7 @@ describe('highlight defaults', function()
   end)
 end)
 
-describe('guisp (special/undercurl)', function()
+describe('highlight', function()
   local screen
 
   before_each(function()
@@ -323,7 +321,31 @@ describe('guisp (special/undercurl)', function()
     screen:attach()
   end)
 
-  it('can be set and is applied like foreground or background', function()
+  it('cterm=standout gui=standout', function()
+    screen:detach()
+    screen = Screen.new(20,5)
+    screen:attach()
+    screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+        [2] = {standout = true, bold = true, underline = true,
+        background = Screen.colors.Gray90, foreground = Screen.colors.Blue1},
+        [3] = {standout = true, underline = true,
+        background = Screen.colors.Gray90}
+    })
+    feed_command('hi CursorLine cterm=standout,underline gui=standout,underline')
+    feed_command('set cursorline')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed('i\t abcd <cr>\t abcd <cr><esc>k')
+    screen:expect([[
+    {1:>-------.}abcd{1:*¬}     |
+    {2:^>-------.}{3:abcd}{2:*¬}{3:     }|
+    {1:¬}                   |
+    {1:~                   }|
+                        |
+    ]])
+  end)
+
+  it('guisp (special/undercurl)', function()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
     feed_command('syn keyword TmpKeyword1 special')
@@ -907,6 +929,7 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('background applies also to non-text', function()
+    command('set sidescroll=0')
     insert('Lorem ipsum dolor sit amet ')
     command('set shiftwidth=2')
     feed('>>')

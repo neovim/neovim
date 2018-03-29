@@ -6,7 +6,7 @@
 
 Help on help files					*helphelp*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Help commands					*online-help*
@@ -23,7 +23,7 @@ Help on help files					*helphelp*
 			The 'helplang' option is used to select a language, if
 			the main help file is available in several languages.
 
-			Type <M-]> to see the table of contents.
+			Type |gO| to see the table of contents.
 
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
@@ -140,7 +140,8 @@ Help on help files					*helphelp*
 			already opened, then the location list for that window
 			is used.  Otherwise, a new help window is opened and
 			the location list for that window is set.  The
-			location list for the current window is not changed.
+			location list for the current window is not changed
+			then.
 
 							*:exu* *:exusage*
 :exu[sage]		Show help on Ex commands.  Added to simulate the Nvi
@@ -305,7 +306,7 @@ the applicable Vim version.  The last field specifies the last modification
 date of the file.  Each field is separated by a tab.
 
 At the bottom of the help file, place a Vim modeline to set the 'textwidth'
-and 'tabstop' options and the 'filetype' to 'help'.  Never set a global option
+and 'tabstop' options and the 'filetype' to "help".  Never set a global option
 in such a modeline, that can have consequences undesired by whoever reads that
 help.
 

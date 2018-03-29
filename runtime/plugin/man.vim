@@ -5,7 +5,7 @@ if exists('g:loaded_man')
 endif
 let g:loaded_man = 1
 
-command! -range=0 -complete=customlist,man#complete -nargs=* Man call man#open_page(v:count, v:count1, <q-mods>, <f-args>)
+command! -bar -range=0 -complete=customlist,man#complete -nargs=* Man call man#open_page(v:count, v:count1, <q-mods>, <f-args>)
 
 augroup man
   autocmd!

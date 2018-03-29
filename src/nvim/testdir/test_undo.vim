@@ -237,3 +237,54 @@ func Test_insert_expr()
 
   close!
 endfunc
+
+func Test_undofile_earlier()
+  throw 'skipped: Nvim does not support test_settime()'
+
+  let t0 = localtime() - 43200
+  call test_settime(t0)
+  new Xfile
+  call feedkeys("ione\<Esc>", 'xt')
+  set ul=100
+  call test_settime(t0 + 1)
+  call feedkeys("otwo\<Esc>", 'xt')
+  set ul=100
+  call test_settime(t0 + 2)
+  call feedkeys("othree\<Esc>", 'xt')
+  set ul=100
+  w
+  wundo Xundofile
+  bwipe!
+  " restore normal timestamps.
+  call test_settime(0)
+  new Xfile
+  rundo Xundofile
+  earlier 1d
+  call assert_equal('', getline(1))
+  bwipe!
+  call delete('Xfile')
+  call delete('Xundofile')
+endfunc
+
+" Test for undo working properly when executing commands from a register.
+" Also test this in an empty buffer.
+func Test_cmd_in_reg_undo()
+  enew!
+  let @a="Ox\<Esc>jAy\<Esc>kdd"
+  edit +/^$ test_undo.vim
+  normal @au
+  call assert_equal(0, &modified)
+  return
+  new
+  normal @au
+  call assert_equal(0, &modified)
+  only!
+  let @a=''
+endfunc
+
+func Test_redo_empty_line()
+  new
+  exe "norm\x16r\x160"
+  exe "norm."
+  bwipe!
+endfunc

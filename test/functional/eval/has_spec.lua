@@ -57,4 +57,10 @@ describe('has()', function()
       eq(0, funcs.has("unnamedplus"))
     end
   end)
+
+  it('"wsl"', function()
+    if 1 == funcs.has('win32') or 1 == funcs.has('mac') then
+      eq(0, funcs.has('wsl'))
+    end
+  end)
 end)

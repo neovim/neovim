@@ -1,6 +1,15 @@
 . "${CI_DIR}/common/build.sh"
 . "${CI_DIR}/common/suite.sh"
 
+submit_coverage() {
+  if [ -n "${GCOV}" ]; then
+    if curl --fail --output codecov.bash --silent https://codecov.io/bash; then
+      bash codecov.bash -c -F "$1" || echo "codecov upload failed."
+      rm -f codecov.bash
+    fi
+  fi
+}
+
 print_core() {
   local app="$1"
   local core="$2"
@@ -71,7 +80,9 @@ valgrind_check() {
 }
 
 asan_check() {
-  check_logs "${1}" "*san.*"
+  if test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
+    check_logs "${1}" "*san.*" | asan_symbolize
+  fi
 }
 
 run_unittests() {(
@@ -80,6 +91,7 @@ run_unittests() {(
   if ! build_make unittest ; then
     fail 'unittests' F 'Unit tests failed'
   fi
+  submit_coverage unittest
   check_core_dumps "$(which luajit)"
   exit_suite
 )}
@@ -90,6 +102,7 @@ run_functionaltests() {(
   if ! build_make ${FUNCTIONALTEST}; then
     fail 'functionaltests' F 'Functional tests failed'
   fi
+  submit_coverage functionaltest
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
@@ -103,6 +116,7 @@ run_oldtests() {(
     reset
     fail 'oldtests' F 'Legacy tests failed'
   fi
+  submit_coverage oldtest
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps

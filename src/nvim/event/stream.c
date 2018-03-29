@@ -7,6 +7,7 @@
 
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
 #include "nvim/event/stream.h"
@@ -81,12 +82,20 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(!stream->closed);
+  DLOG("closing Stream: %p", stream);
   stream->closed = true;
   stream->close_cb = on_stream_close;
   stream->close_cb_data = data;
 
   if (!stream->pending_reqs) {
     stream_close_handle(stream);
+  }
+}
+
+void stream_may_close(Stream *stream)
+{
+  if (!stream->closed) {
+    stream_close(stream, NULL, NULL);
   }
 }
 

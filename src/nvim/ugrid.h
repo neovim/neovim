@@ -7,21 +7,21 @@
 typedef struct ucell UCell;
 typedef struct ugrid UGrid;
 
+#define CELLBYTES (4 * (MAX_MCO+1))
+
 struct ucell {
-  char data[6 * MAX_MCO + 1];
+  char data[CELLBYTES + 1];
   HlAttrs attrs;
 };
 
 struct ugrid {
   int top, bot, left, right;
   int row, col;
-  int bg, fg;
+  HlAttrs clear_attrs;
   int width, height;
   HlAttrs attrs;
   UCell **cells;
 };
-
-#define EMPTY_ATTRS ((HlAttrs){ false, false, false, false, false, -1, -1, -1 })
 
 #define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
   do { \

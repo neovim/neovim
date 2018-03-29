@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         Vim help file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             Vim help file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish
@@ -11,12 +11,15 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let b:undo_ftplugin = "setl fo< tw< cole< cocu<"
+let b:undo_ftplugin = "setl fo< tw< cole< cocu< keywordprg<"
 
 setlocal formatoptions+=tcroql textwidth=78
 if has("conceal")
   setlocal cole=2 cocu=nc
 endif
+
+" Prefer Vim help instead of manpages.
+setlocal keywordprg=:help
 
 if !exists('g:no_plugin_maps')
   function! s:show_toc() abort
@@ -87,7 +90,7 @@ if !exists('g:no_plugin_maps')
     let w:qf_toc = bufname
   endfunction
 
-  nnoremap <silent><buffer> <M-]> :call <sid>show_toc()<cr>
+  nnoremap <silent><buffer> gO :call <sid>show_toc()<cr>
 endif
 
 let &cpo = s:cpo_save

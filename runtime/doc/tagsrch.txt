@@ -8,7 +8,7 @@ Tags and special searches				*tags-and-searches*
 
 See section |29.1| of the user manual for an introduction.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Jump to a tag					*tag-commands*
@@ -189,6 +189,7 @@ the same entry.
 			information in the tags file(s).
 			When [ident] is not given, the last tag name from the
 			tag stack is used.
+			See |tag-!| for [!].
 			With a '>' in the first column is indicated which is
 			the current position in the list (if there is one).
 			[ident] can be a regexp pattern, see |tag-regexp|.

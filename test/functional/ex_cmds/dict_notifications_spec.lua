@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
-local eq, next_msg = helpers.eq, helpers.next_message
+local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local eval = helpers.eval

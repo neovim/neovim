@@ -95,7 +95,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
   buf->base = rbuffer_write_ptr(stream->buffer, &write_count);
-  buf->len = write_count;
+  buf->len = UV_BUF_LEN(write_count);
 }
 
 // Callback invoked by libuv after it copies the data into the buffer provided
@@ -105,19 +105,19 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
   Stream *stream = uvstream->data;
 
-  if (cnt > 0) {
-    stream->num_bytes += (size_t)cnt;
-  }
-
   if (cnt <= 0) {
-    if (cnt != UV_ENOBUFS
-        // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
-        // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
-        //
-        // We don't need to do anything with the RBuffer because the next call
-        // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
-        // won't be called)
-        && cnt != 0) {
+    // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
+    // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
+    //
+    // We don't need to do anything with the RBuffer because the next call
+    // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
+    // won't be called)
+    if (cnt == UV_ENOBUFS || cnt == 0) {
+      return;
+    } else if (cnt == UV_EOF && uvstream->type == UV_TTY) {
+      // The TTY driver might signal TTY without closing the stream
+      invoke_read_cb(stream, 0, true);
+    } else {
       DLOG("Closing Stream (%p): %s (%s)", stream,
            uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
@@ -130,6 +130,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 
   // at this point we're sure that cnt is positive, no error occurred
   size_t nread = (size_t)cnt;
+  stream->num_bytes += nread;
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(stream->buffer, nread);
@@ -145,7 +146,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
   stream->uvbuf.base = rbuffer_write_ptr(stream->buffer, &write_count);
-  stream->uvbuf.len = write_count;
+  stream->uvbuf.len = UV_BUF_LEN(write_count);
 
   // the offset argument to uv_fs_read is int64_t, could someone really try
   // to read more than 9 quintillion (9e18) bytes?
@@ -187,6 +188,7 @@ static void read_event(void **argv)
   if (stream->read_cb) {
     size_t count = (uintptr_t)argv[1];
     bool eof = (uintptr_t)argv[2];
+    stream->did_eof = eof;
     stream->read_cb(stream, stream->buffer, count, stream->cb_data, eof);
   }
   stream->pending_reqs--;

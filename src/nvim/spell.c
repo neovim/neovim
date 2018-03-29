@@ -1433,12 +1433,10 @@ spell_move_to (
           // the cursor.
           if (dir == BACKWARD
               || lnum != wp->w_cursor.lnum
-              || (lnum == wp->w_cursor.lnum
-                  && (wrapped
-                      || ((colnr_T)(curline
-                                    ? p - buf + (ptrdiff_t)len
-                                    : p - buf)
-                          > wp->w_cursor.col)))) {
+              || wrapped
+              || ((colnr_T)(curline
+                            ? p - buf + (ptrdiff_t)len
+                            : p - buf) > wp->w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
@@ -1486,21 +1484,23 @@ spell_move_to (
       return found_len;
     }
 
-    if (curline)
+    if (curline) {
       break;            // only check cursor line
+    }
+
+    // If we are back at the starting line and searched it again there
+    // is no match, give up.
+    if (lnum == wp->w_cursor.lnum && wrapped) {
+      break;
+    }
 
     // Advance to next line.
     if (dir == BACKWARD) {
-      // If we are back at the starting line and searched it again there
-      // is no match, give up.
-      if (lnum == wp->w_cursor.lnum && wrapped)
-        break;
-
-      if (lnum > 1)
-        --lnum;
-      else if (!p_ws)
+      if (lnum > 1) {
+        lnum--;
+      } else if (!p_ws) {
         break;              // at first line and 'nowrapscan'
-      else {
+      } else {
         // Wrap around to the end of the buffer.  May search the
         // starting line again and accept the last match.
         lnum = wp->w_buffer->b_ml.ml_line_count;
@@ -1525,8 +1525,9 @@ spell_move_to (
 
       // If we are back at the starting line and there is no match then
       // give up.
-      if (lnum == wp->w_cursor.lnum && (!found_one || wrapped))
+      if (lnum == wp->w_cursor.lnum && !found_one) {
         break;
+      }
 
       // Skip the characters at the start of the next line that were
       // included in a match crossing line boundaries.
@@ -2070,7 +2071,7 @@ char_u *did_set_spelllang(win_T *wp)
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
           ret_msg =
-            (char_u *)"E797: SpellFileMissing autocommand deleted buffer";
+            (char_u *)N_("E797: SpellFileMissing autocommand deleted buffer");
           goto theend;
         }
       }
@@ -2567,7 +2568,7 @@ static bool spell_iswordp(char_u *p, win_T *wp)
   int c;
 
   if (has_mbyte) {
-    l = MB_BYTE2LEN(*p);
+    l = MB_PTR2LEN(p);
     s = p;
     if (l == 1) {
       // be quick for ASCII
@@ -3138,8 +3139,13 @@ spell_find_suggest (
   if (su->su_badlen >= MAXWLEN)
     su->su_badlen = MAXWLEN - 1;        // just in case
   STRLCPY(su->su_badword, su->su_badptr, su->su_badlen + 1);
-  (void)spell_casefold(su->su_badptr, su->su_badlen,
-      su->su_fbadword, MAXWLEN);
+  (void)spell_casefold(su->su_badptr, su->su_badlen, su->su_fbadword, MAXWLEN);
+
+  // TODO(vim): make this work if the case-folded text is longer than the
+  // original text. Currently an illegal byte causes wrong pointer
+  // computations.
+  su->su_fbadword[su->su_badlen] = NUL;
+
   // get caps flags for bad word
   su->su_badflags = badword_captype(su->su_badptr,
       su->su_badptr + su->su_badlen);
@@ -3215,26 +3221,25 @@ spell_find_suggest (
 // Find suggestions by evaluating expression "expr".
 static void spell_suggest_expr(suginfo_T *su, char_u *expr)
 {
-  list_T      *list;
-  listitem_T  *li;
   int score;
   const char *p;
 
   // The work is split up in a few parts to avoid having to export
   // suginfo_T.
   // First evaluate the expression and get the resulting list.
-  list = eval_spell_expr(su->su_badword, expr);
+  list_T *const list = eval_spell_expr(su->su_badword, expr);
   if (list != NULL) {
     // Loop over the items in the list.
-    for (li = list->lv_first; li != NULL; li = li->li_next)
-      if (li->li_tv.v_type == VAR_LIST) {
+    TV_LIST_ITER(list, li, {
+      if (TV_LIST_ITEM_TV(li)->v_type == VAR_LIST) {
         // Get the word and the score from the items.
-        score = get_spellword(li->li_tv.vval.v_list, &p);
+        score = get_spellword(TV_LIST_ITEM_TV(li)->vval.v_list, &p);
         if (score >= 0 && score <= su->su_maxscore) {
           add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen,
                          score, 0, true, su->su_sallang, false);
         }
       }
+    });
     tv_list_unref(list);
   }
 
@@ -3635,7 +3640,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   // word).
   depth = 0;
   sp = &stack[0];
-  memset(sp, 0, sizeof(trystate_T));
+  memset(sp, 0, sizeof(trystate_T));  // -V512
   sp->ts_curi = 1;
 
   if (soundfold) {
@@ -4110,10 +4115,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 && goodword_ends) {
               int l;
 
-              if (has_mbyte)
-                l = MB_BYTE2LEN(fword[sp->ts_fidx]);
-              else
-                l = 1;
+              l = MB_PTR2LEN(fword + sp->ts_fidx);
               if (fword_ends) {
                 // Copy the skipped character to preword.
                 memmove(preword + sp->ts_prewordlen,
@@ -4259,8 +4261,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 // Correct ts_fidx for the byte length of the
                 // character (we didn't check that before).
                 sp->ts_fidx = sp->ts_fcharstart
-                              + MB_BYTE2LEN(
-                    fword[sp->ts_fcharstart]);
+                              + MB_PTR2LEN(fword + sp->ts_fcharstart);
 
                 // For changing a composing character adjust
                 // the score from SCORE_SUBST to
@@ -4366,11 +4367,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // results.
         if (has_mbyte) {
           c = mb_ptr2char(fword + sp->ts_fidx);
-          stack[depth].ts_fidx += MB_BYTE2LEN(fword[sp->ts_fidx]);
-          if (enc_utf8 && utf_iscomposing(c))
+          stack[depth].ts_fidx += MB_PTR2LEN(fword + sp->ts_fidx);
+          if (enc_utf8 && utf_iscomposing(c)) {
             stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
-          else if (c == mb_ptr2char(fword + stack[depth].ts_fidx))
+          } else if (c == mb_ptr2char(fword + stack[depth].ts_fidx)) {
             stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
+          }
         } else {
           ++stack[depth].ts_fidx;
           if (fword[sp->ts_fidx] == fword[sp->ts_fidx + 1])
@@ -4552,9 +4554,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo the STATE_SWAP swap: "21" -> "12".
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
+        n = MB_PTR2LEN(p);
         c = mb_ptr2char(p + n);
-        memmove(p + MB_BYTE2LEN(p[n]), p, n);
+        memmove(p + MB_PTR2LEN(p + n), p, n);
         mb_char2bytes(c, p);
       } else {
         c = *p;
@@ -4627,11 +4629,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo STATE_SWAP3: "321" -> "123"
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
+        n = MB_PTR2LEN(p);
         c2 = mb_ptr2char(p + n);
-        fl = MB_BYTE2LEN(p[n]);
+        fl = MB_PTR2LEN(p + n);
         c = mb_ptr2char(p + n + fl);
-        tl = MB_BYTE2LEN(p[n + fl]);
+        tl = MB_PTR2LEN(p + n + fl);
         memmove(p + fl + tl, p, n);
         mb_char2bytes(c, p);
         mb_char2bytes(c2, p + tl);
@@ -4690,10 +4692,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo ROT3L: "231" -> "123"
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        n = MB_BYTE2LEN(*p);
-        n += MB_BYTE2LEN(p[n]);
+        n = MB_PTR2LEN(p);
+        n += MB_PTR2LEN(p + n);
         c = mb_ptr2char(p + n);
-        tl = MB_BYTE2LEN(p[n]);
+        tl = MB_PTR2LEN(p + n);
         memmove(p + tl, p, n);
         mb_char2bytes(c, p);
       } else {
@@ -4743,9 +4745,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
         c = mb_ptr2char(p);
-        tl = MB_BYTE2LEN(*p);
-        n = MB_BYTE2LEN(p[tl]);
-        n += MB_BYTE2LEN(p[tl + n]);
+        tl = MB_PTR2LEN(p);
+        n = MB_PTR2LEN(p + tl);
+        n += MB_PTR2LEN(p + tl + n);
         memmove(p, p + tl, n);
         mb_char2bytes(c, p + n);
       } else {
@@ -5357,7 +5359,7 @@ add_sound_suggest (
   // Find the word nr in the soundfold tree.
   sfwordnr = soundfold_find(slang, goodword);
   if (sfwordnr < 0) {
-    EMSG2(_(e_intern2), "add_sound_suggest()");
+    internal_error("add_sound_suggest()");
     return;
   }
 
@@ -7145,7 +7147,7 @@ void ex_spelldump(exarg_T *eap)
   set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
-  if (!bufempty()) {
+  if (!BUFEMPTY()) {
     return;
   }
 

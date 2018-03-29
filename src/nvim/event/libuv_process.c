@@ -26,19 +26,22 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvopts.file = proc->argv[0];
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
-  if (proc->detach) {
-      uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
-  }
 #ifdef WIN32
   // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
   // expects a different syntax (must be prepared by the caller before now).
   if (os_shell_is_cmdexe(proc->argv[0])) {
     uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
   }
+  if (proc->detach) {
+    uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
+  }
+#else
+  // Always setsid() on unix-likes. #8107
+  uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
-  uvproc->uvopts.env = NULL;
+  uvproc->uvopts.env = NULL;  // Inherits the parent (nvim) env.
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;
   uvproc->uvstdio[0].flags = UV_IGNORE;
@@ -46,22 +49,22 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvstdio[2].flags = UV_IGNORE;
   uvproc->uv.data = proc;
 
-  if (proc->in) {
+  if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
     uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
-                                                 &proc->in->uv.pipe);
+                                                 &proc->in.uv.pipe);
   }
 
-  if (proc->out) {
+  if (!proc->out.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
-                                                 &proc->out->uv.pipe);
+                                                 &proc->out.uv.pipe);
   }
 
-  if (proc->err) {
+  if (!proc->err.closed) {
     uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
     uvproc->uvstdio[2].data.stream = STRUCT_CAST(uv_stream_t,
-                                                 &proc->err->uv.pipe);
+                                                 &proc->err.uv.pipe);
   }
 
   int status;

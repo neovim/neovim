@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         Relax NG compact syntax
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             Relax NG compact syntax
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

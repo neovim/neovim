@@ -6,7 +6,7 @@
 
 Various commands					*various*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Various commands					*various-cmds*
@@ -102,8 +102,7 @@ g8			Print the hex values of the bytes used in the
 							*:nu* *:number*
 :[range]nu[mber] [count] [flags]
 			Same as :print, but precede each line with its line
-			number.  (See also 'highlight' and 'numberwidth'
-			option).
+			number.  (See also |hl-LineNr| and 'numberwidth').
 			See |ex-flags| for [flags].
 
 							*:#*
@@ -208,22 +207,18 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal| buffer.
-			Equivalent to: >
-			      :enew
-			      :call termopen('{cmd}')
-			      :startinsert
-<
-			See |termopen()|.
+:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-emulator|
+			buffer. Without {cmd}, start an interactive 'shell'.
 
-			Without {cmd}, start an interactive shell.
+			Type |i| to enter |Terminal-mode|, then keys are sent to
+			the job running in the terminal. Type <C-\><C-N> to
+			leave Terminal-mode. |CTRL-\_CTRL-N|
 
-			Creating the terminal buffer fails when changes have been
-			made to the current buffer, unless 'hidden' is set.
+			Fails if changes have been made to the current buffer,
+			unless 'hidden' is set.
 
 			To enter |Terminal-mode| automatically: >
-			      autocmd BufEnter term://* startinsert
-			      autocmd BufLeave term://* stopinsert
+			      autocmd TermOpen * startinsert
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
@@ -276,6 +271,21 @@ g8			Print the hex values of the bytes used in the
 <			The screen is not redrawn then, thus you have to use
 			CTRL-L or ":redraw!" if the command did display
 			something.
+							*:!start*
+:!start	{cmd}		(Windows only). Special-case of |:!| which works
+			asynchronously, for running a program that does not
+			affect the files you are editing.
+			Optional arguments (can only use one at a time):
+				/min  window will be minimized
+				/b    no console window will be opened
+			Note: If the process requires input, /b will get an
+			EOF error because its input stream (stdin) would be
+			redirected to \\.\NUL (stdout and stderr too).
+
+			Programs begun with :!start do not get passed Vim's
+			open file handles, which means they do not have to be
+			closed before Vim. To avoid this special treatment,
+			use ":! start".
 
 							*:!!*
 :!!			Repeat last ":!{cmd}".
@@ -311,7 +321,7 @@ N  *+cindent*		|'cindent'|, C indenting
 N  *+clientserver*	Unix and Win32: Remote invocation |clientserver|
    *+clipboard*		|clipboard| support
 N  *+cmdline_compl*	command line completion |cmdline-completion|
-N  *+cmdline_hist*	command line history |cmdline-history|
+S  *+cmdline_hist*	command line history |cmdline-history|
 N  *+cmdline_info*	|'showcmd'| and |'ruler'|
 N  *+comments*		|'comments'| support
 B  *+conceal*		"conceal" support, see |conceal| |:syn-conceal| etc.
@@ -334,7 +344,7 @@ N  *+gettext*		message translations |multi-lang|
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
-N  *+jumplist*		|jumplist|
+S  *+jumplist*		|jumplist|
 B  *+keymap*		|'keymap'|
 N  *+lambda*		|lambda| and |closure|
 B  *+langmap*		|'langmap'|
@@ -383,14 +393,14 @@ N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
 N  *+user_commands*	User-defined commands. |user-commands|
-N  *+vertsplit*		Vertically split windows |:vsplit|
+   *+vertsplit*		Vertically split windows |:vsplit|
 N  *+virtualedit*	|'virtualedit'|
 S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.
 N  *+visualextra*	extra Visual mode commands |blockwise-operators|
 N  *+vreplace*		|gR| and |gr|
 N  *+wildignore*	|'wildignore'|
 N  *+wildmenu*		|'wildmenu'|
-S  *+windows*		more than one window
+   *+windows*		more than one window
 m  *+writebackup*	|'writebackup'| is default on
 m  *+xim*		X input method |xim|
    *+xfontset*		X fontset support |xfontset|
@@ -594,6 +604,13 @@ which it was defined is reported.
 			the keyword.  Only works when the highlighted text is
 			not more than one line.
 
+							*gO*
+gO			Show a filetype-specific, navigable "outline" of the
+			current buffer. For example, in a |help| buffer this
+			shows the table of contents.
+
+			Currently works in |help| and |:Man| buffers.
+
 [N]gs							*gs* *:sl* *:sleep*
 :[N]sl[eep] [N]	[m]	Do nothing for [N] seconds.  When [m] is included,
 			sleep for [N] milliseconds.  The count for "gs" always
@@ -632,4 +649,4 @@ LessInitFunc in your vimrc, for example: >
 	endfunc
 <
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

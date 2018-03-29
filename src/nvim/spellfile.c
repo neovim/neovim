@@ -228,7 +228,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <wctype.h>
-#include <strings.h>
 
 #include "nvim/vim.h"
 #include "nvim/spell_defs.h"
@@ -3656,7 +3655,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
           flags |= WF_REGION;
 
           l = *p - '0';
-          if (l > spin->si_region_count) {
+          if (l == 0 || l > spin->si_region_count) {
             smsg(_("Invalid region nr in %s line %d: %s"),
                  fname, lnum, p);
             break;

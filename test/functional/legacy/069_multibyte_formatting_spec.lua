@@ -27,7 +27,7 @@ describe('multibyte text', function()
       ＸＹＺ
       abc
       ＸＹＺ
-      
+
       ＸＹＺ
       abc
       ＸＹＺ
@@ -62,7 +62,7 @@ describe('multibyte text', function()
       Ｙ
       Ｘ
       Ｙ
-      
+
       Ｘ
       Ｘ
       a
@@ -125,7 +125,7 @@ describe('multibyte text', function()
       ab
       Ｘ
       Ｙ
-      
+
       Ｘ
       Ｘ
       a
@@ -166,7 +166,7 @@ describe('multibyte text', function()
         Ｘ
         Ｘ
         a
-      
+
         Ｘ
         Ｘ
         a
@@ -190,7 +190,7 @@ describe('multibyte text', function()
         Ｘ
         Ｘ
       a
-      
+
         Ｘ
         Ｘ
       a
@@ -239,7 +239,7 @@ describe('multibyte text', function()
       ＸＸ
       ＸＸa
       ＸＸＹ
-      
+
       Ｘ
       Ｘa
       Ｘa
@@ -259,7 +259,7 @@ describe('multibyte text', function()
   it('formatting in replace mode', function()
     insert([[
       {
-      
+
       }]])
     feed_command('/^{/+1')
     feed_command('set tw=2 fo=tm')

@@ -1,5 +1,16 @@
+_stat() {
+  if test "${TRAVIS_OS_NAME}" = osx ; then
+    stat -f %Sm "${@}"
+  else
+    stat -c %y "${@}"
+  fi
+}
+
 top_make() {
-  ${MAKE_CMD} "$@"
+  echo '================================================================================'
+  # Travis has 1.5 virtual cores according to:
+  # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
+  ninja "$@"
 }
 
 build_make() {
@@ -15,28 +26,21 @@ build_deps() {
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 
-  rm -rf "${DEPS_BUILD_DIR}"
+  mkdir -p "${DEPS_BUILD_DIR}"
+  mkdir -p "${DEPS_DOWNLOAD_DIR}"
 
-  # If there is a valid cache and we're not forced to recompile,
-  # use cached third-party dependencies.
-  if test -f "${CACHE_MARKER}" && test "${BUILD_NVIM_DEPS}" != "true" ; then
-    local statcmd="stat -c '%y'"
-    if test "${TRAVIS_OS_NAME}" = osx ; then
-      statcmd="stat -f '%Sm'"
-    fi
-    echo "Using third-party dependencies from Travis's cache (last updated: $(${statcmd} "${CACHE_MARKER}"))."
-
-    mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
-    mv "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
-  else
-    mkdir -p "${DEPS_BUILD_DIR}"
+  # Use cached dependencies if $CACHE_MARKER exists.
+  if test -f "${CACHE_MARKER}" && ! test "${CACHE_ENABLE}" = "false" ; then
+    echo "Using third-party dependencies from Travis cache (last update: $(_stat "${CACHE_MARKER}"))."
+    cp -r "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
+    cp -r "${HOME}/.cache/nvim-deps-downloads" "${DEPS_DOWNLOAD_DIR}"
   fi
 
   # Even if we're using cached dependencies, run CMake and make to
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
-  CC= cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
+  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
 
   if ! top_make; then
     exit 1
@@ -56,7 +60,7 @@ prepare_build() {
   mkdir -p "${BUILD_DIR}"
   cd "${BUILD_DIR}"
   echo "Configuring with '${CMAKE_FLAGS} $@'."
-  cmake ${CMAKE_FLAGS} "$@" "${TRAVIS_BUILD_DIR}"
+  cmake -G Ninja ${CMAKE_FLAGS} "$@" "${TRAVIS_BUILD_DIR}"
 }
 
 build_nvim() {
@@ -71,9 +75,11 @@ build_nvim() {
       exit 1
     fi
 
-    echo "Building nvim-test."
-    if ! top_make nvim-test ; then
-      exit 1
+    if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
+      echo "Building nvim-test."
+      if ! top_make nvim-test ; then
+        exit 1
+      fi
     fi
   fi
 
@@ -86,4 +92,13 @@ build_nvim() {
 
 
   cd "${TRAVIS_BUILD_DIR}"
+}
+
+macos_rvm_dance() {
+  # neovim-ruby gem requires a ruby newer than the macOS default.
+  source ~/.rvm/scripts/rvm
+  rvm get stable --auto-dotfiles
+  rvm reload
+  rvm use 2.2.5
+  rvm use
 }

@@ -95,7 +95,7 @@ Then there is the ":let i += 1" command.  This does the same thing as
 to the same variable.
 
 The example was given to explain the commands, but would you really want to
-make such a loop it can be written much more compact: >
+make such a loop, it can be written much more compact: >
 
 	:for i in range(1, 4)
 	:  echo "count is" i
@@ -692,6 +692,7 @@ Other computation:					*bitwise-function*
 Variables:						*var-functions*
 	type()			type of a variable
 	islocked()		check if a variable is locked
+	funcref()		get a Funcref for a function reference
 	function()		get a Funcref for a function name
 	getbufvar()		get a variable value from a specific buffer
 	setbufvar()		set a variable in a specific buffer
@@ -883,9 +884,11 @@ GUI:						*gui-functions*
 	getfontname()		get name of current font being used
 	getwinposx()		X position of the GUI Vim window
 	getwinposy()		Y position of the GUI Vim window
+	balloon_show()		set the balloon content
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
+	remote_startserver()	run a server
 	remote_send()		send command characters to a Vim server
 	remote_expr()		evaluate an expression in a Vim server
 	server2client()		send a reply to a client of a Vim server
@@ -1541,7 +1544,7 @@ WHITE SPACE
 Blank lines are allowed and ignored.
 
 Leading whitespace characters (blanks and TABs) are always ignored.  The
-whitespaces between parameters (e.g. between the 'set' and the 'cpoptions' in
+whitespaces between parameters (e.g. between the "set" and the "cpoptions" in
 the example below) are reduced to one blank character and plays the role of a
 separator, the whitespaces after the last (visible) character may or may not
 be ignored depending on the situation, see below.
@@ -2224,8 +2227,8 @@ plugin for the mail filetype: >
 	endif
 
 Two global variables are used:
-no_plugin_maps		disables mappings for all filetype plugins
-no_mail_maps		disables mappings for a specific filetype
+|no_plugin_maps|	disables mappings for all filetype plugins
+|no_mail_maps|		disables mappings for the "mail" filetype
 
 
 USER COMMANDS

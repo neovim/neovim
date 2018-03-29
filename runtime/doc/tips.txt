@@ -13,7 +13,7 @@ http://www.vim.org
 Don't forget to browse the user manual, it also contains lots of useful tips
 |usr_toc.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Editing C programs					*C-editing*
@@ -113,7 +113,6 @@ screen, you can use CTRL-X CTRL-E and CTRL-X CTRL-Y to scroll the screen.
 To make this easier, you could use these mappings: >
 	:inoremap <C-E> <C-X><C-E>
 	:inoremap <C-Y> <C-X><C-Y>
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 You then lose the ability to copy text from the line above/below the cursor
 |i_CTRL-E|.
 
@@ -128,8 +127,6 @@ Smooth scrolling					*scroll-smooth*
 If you like the scrolling to go a bit smoother, you can use these mappings: >
 	:map <C-U> <C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y>
 	:map <C-D> <C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E>
-
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 
 ==============================================================================
 Correcting common typing mistakes			*type-mistakes*
@@ -282,9 +279,7 @@ For Emacs-style editing on the command-line: >
 	:cnoremap <Esc><C-B>	<S-Left>
 	" forward one word
 	:cnoremap <Esc><C-F>	<S-Right>
-
-NOTE: This requires that the '<' flag is excluded from 'cpoptions'. |<>|
-
+<
 							*format-bullet-list*
 This mapping will format any bullet list.  It requires that there is an empty
 line above and below each list entry.  The expression commands are used to
@@ -300,8 +295,7 @@ be able to give comments to the parts of the mapping. >
 	:execute m			      |" define the mapping
 
 (<> notation |<>|.  Note that this is all typed literally.  ^W is "^" "W", not
-CTRL-W.  You can copy/paste this into Vim if '<' is not included in
-'cpoptions'.)
+CTRL-W.)
 
 Note that the last comment starts with |", because the ":execute" command
 doesn't accept a comment directly.

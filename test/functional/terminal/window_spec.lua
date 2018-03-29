@@ -2,8 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
-
-if helpers.pending_win32(pending) then return end
+local iswin = helpers.iswin
 
 describe('terminal window', function()
   local screen
@@ -13,9 +12,62 @@ describe('terminal window', function()
     screen = thelpers.screen_setup()
   end)
 
-  describe('with colorcolumn set', function()
+  describe("with 'number'", function()
+    it('wraps text', function()
+      feed([[<C-\><C-N>]])
+      feed([[:set numberwidth=1 number<CR>i]])
+      screen:expect([[
+        {7:1 }tty ready                                       |
+        {7:2 }rows: 6, cols: 48                               |
+        {7:3 }{1: }                                               |
+        {7:4 }                                                |
+        {7:5 }                                                |
+        {7:6 }                                                |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      thelpers.feed_data({'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      screen:expect([[
+        {7:1 }tty ready                                       |
+        {7:2 }rows: 6, cols: 48                               |
+        {7:3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV|
+        {7:4 }WXYZ{1: }                                           |
+        {7:5 }                                                |
+        {7:6 }                                                |
+        {3:-- TERMINAL --}                                    |
+      ]])
+
+      if iswin() then
+        return  -- win: :terminal resize is unreliable #7007
+      end
+
+      -- numberwidth=9
+      feed([[<C-\><C-N>]])
+      feed([[:set numberwidth=9 number<CR>i]])
+      screen:expect([[
+        {7:       1 }tty ready                                |
+        {7:       2 }rows: 6, cols: 48                        |
+        {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
+        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       5 }{1: }                                        |
+        {7:       6 }                                         |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      thelpers.feed_data({' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      screen:expect([[
+        {7:       1 }tty ready                                |
+        {7:       2 }rows: 6, cols: 48                        |
+        {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
+        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
+        {7:       6 }OPQRSTUVWXYZ{1: }                            |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
+  describe("with 'colorcolumn'", function()
     before_each(function()
-      feed('<c-\\><c-n>')
+      feed([[<C-\><C-N>]])
       screen:expect([[
         tty ready                                         |
         {2:^ }                                                 |
@@ -25,7 +77,7 @@ describe('terminal window', function()
                                                           |
                                                           |
       ]])
-      feed(':set colorcolumn=20<cr>i')
+      feed(':set colorcolumn=20<CR>i')
     end)
 
     it('wont show the color column', function()
@@ -43,7 +95,7 @@ describe('terminal window', function()
 
   describe('with fold set', function()
     before_each(function()
-      feed('<c-\\><c-n>:set foldenable foldmethod=manual<cr>i')
+      feed([[<C-\><C-N>:set foldenable foldmethod=manual<CR>i]])
       thelpers.feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
         tty ready                                         |
@@ -57,7 +109,7 @@ describe('terminal window', function()
     end)
 
     it('wont show any folds', function()
-      feed('<c-\\><c-n>ggvGzf')
+      feed([[<C-\><C-N>ggvGzf]])
       wait()
       screen:expect([[
         ^tty ready                                         |

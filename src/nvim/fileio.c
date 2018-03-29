@@ -247,6 +247,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
  *		stdin)
  * READ_DUMMY	read into a dummy buffer (to check if file contents changed)
  * READ_KEEP_UNDO  don't clear undo info or read it from a file
+ * READ_FIFO	read from fifo/socket instead of a file
  *
  * return FAIL for failure, NOTDONE for directory (failure), or OK
  */
@@ -267,6 +268,7 @@ readfile (
   int filtering = (flags & READ_FILTER);
   int read_stdin = (flags & READ_STDIN);
   int read_buffer = (flags & READ_BUFFER);
+  int read_fifo = (flags & READ_FIFO);
   int set_options = newfile || read_buffer
                     || (eap != NULL && eap->read_edit);
   linenr_T read_buf_lnum = 1;           /* next line to read from curbuf */
@@ -300,12 +302,9 @@ readfile (
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
   int msg_save = msg_scroll;
-  linenr_T read_no_eol_lnum = 0;        /* non-zero lnum when last line of
-                                        * last read was missing the eol */
-  int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
-  int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
-  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
-  int file_rewind = FALSE;
+  linenr_T read_no_eol_lnum = 0;        // non-zero lnum when last line of
+                                        // last read was missing the eol
+  int file_rewind = false;
   int can_retry;
   linenr_T conv_error = 0;              /* line nr with conversion error */
   linenr_T illegal_byte = 0;            /* line nr with illegal byte */
@@ -426,7 +425,7 @@ readfile (
     }
   }
 
-  if (!read_buffer && !read_stdin) {
+  if (!read_buffer && !read_stdin && !read_fifo) {
     perm = os_getperm((const char *)fname);
 #ifdef UNIX
     // On Unix it is possible to read a directory, so we have to
@@ -468,8 +467,8 @@ readfile (
   if (check_readonly && !readonlymode)
     curbuf->b_p_ro = FALSE;
 
-  if (newfile && !read_stdin && !read_buffer) {
-    /* Remember time of file. */
+  if (newfile && !read_stdin && !read_buffer && !read_fifo) {
+    // Remember time of file.
     FileInfo file_info;
     if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
@@ -637,37 +636,46 @@ readfile (
   curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
   curbuf->b_op_start.col = 0;
 
+  int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+  int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
   if (!read_buffer) {
     int m = msg_scroll;
     int n = msg_scrolled;
 
-    /*
-     * The file must be closed again, the autocommands may want to change
-     * the file before reading it.
-     */
-    if (!read_stdin)
-      close(fd);                /* ignore errors */
+    // The file must be closed again, the autocommands may want to change
+    // the file before reading it.
+    if (!read_stdin) {
+      close(fd);                // ignore errors
+    }
 
-    /*
-     * The output from the autocommands should not overwrite anything and
-     * should not be overwritten: Set msg_scroll, restore its value if no
-     * output was done.
-     */
-    msg_scroll = TRUE;
-    if (filtering)
+    // The output from the autocommands should not overwrite anything and
+    // should not be overwritten: Set msg_scroll, restore its value if no
+    // output was done.
+    msg_scroll = true;
+    if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (read_stdin)
+                           false, curbuf, eap);
+    } else if (read_stdin) {
       apply_autocmds_exarg(EVENT_STDINREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (newfile)
+                           false, curbuf, eap);
+    } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else
+                           false, curbuf, eap);
+    } else {
       apply_autocmds_exarg(EVENT_FILEREADPRE, sfname, sfname,
-          FALSE, NULL, eap);
-    if (msg_scrolled == n)
+                           false, NULL, eap);
+    }
+
+    // autocommands may have changed it
+    try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+    try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+    try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
+    if (msg_scrolled == n) {
       msg_scroll = m;
+    }
 
     if (aborting()) {       /* autocmds may abort script processing */
       --no_wait_return;
@@ -895,6 +903,7 @@ retry:
      * and we can't do it internally or with iconv().
      */
     if (fio_flags == 0 && !read_stdin && !read_buffer && *p_ccv != NUL
+        && !read_fifo
 #  ifdef USE_ICONV
         && iconv_fd == (iconv_t)-1
 #  endif
@@ -935,7 +944,7 @@ retry:
   /* Set "can_retry" when it's possible to rewind the file and try with
    * another "fenc" value.  It's FALSE when no other "fenc" to try, reading
    * stdin or fixed at a specific encoding. */
-  can_retry = (*fenc != NUL && !read_stdin && !keep_dest_enc);
+  can_retry = (*fenc != NUL && !read_stdin && !keep_dest_enc && !read_fifo);
 
   if (!skip_read) {
     linerest = 0;
@@ -947,6 +956,7 @@ retry:
                       && curbuf->b_ffname != NULL
                       && curbuf->b_p_udf
                       && !filtering
+                      && !read_fifo
                       && !read_stdin
                       && !read_buffer);
     if (read_undo_file)
@@ -1612,7 +1622,8 @@ rewind_retry:
             *ptr = NUL;                         /* end of line */
             len = (colnr_T)(ptr - line_start + 1);
             if (fileformat == EOL_DOS) {
-              if (ptr[-1] == CAR) {             /* remove CR */
+              if (ptr > line_start && ptr[-1] == CAR) {
+                // remove CR before NL
                 ptr[-1] = NUL;
                 len--;
               } else if (ff_error != EOL_DOS) {
@@ -1919,7 +1930,7 @@ failed:
     u_read_undo(NULL, hash, fname);
   }
 
-  if (!read_stdin && !read_buffer) {
+  if (!read_stdin && !read_fifo && (!read_buffer || sfname != NULL)) {
     int m = msg_scroll;
     int n = msg_scrolled;
 
@@ -1937,7 +1948,7 @@ failed:
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
                            false, curbuf, eap);
-    } else if (newfile) {
+    } else if (newfile || (read_buffer && sfname != NULL)) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
                            false, curbuf, eap);
       if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
@@ -1970,7 +1981,7 @@ failed:
 /// Do not accept "/dev/fd/[012]", opening these may hang Vim.
 ///
 /// @param fname file name to check
-static bool is_dev_fd_file(char_u *fname)
+bool is_dev_fd_file(char_u *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return STRNCMP(fname, "/dev/fd/", 8) == 0
@@ -2566,11 +2577,9 @@ buf_write (
       perm = -1;
     }
   }
-#else /* win32 */
-      /*
-       * Check for a writable device name.
-       */
-  c = os_nodetype((char *)fname);
+#else  // win32
+  // Check for a writable device name.
+  c = fname == NULL ? NODE_OTHER : os_nodetype((char *)fname);
   if (c == NODE_OTHER) {
     SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
     goto fail;
@@ -2590,9 +2599,8 @@ buf_write (
     if (overwriting) {
       os_fileinfo((char *)fname, &file_info_old);
     }
-
   }
-#endif /* !UNIX */
+#endif  // !UNIX
 
   if (!device && !newfile) {
     /*
@@ -3158,8 +3166,8 @@ nobackup:
 #ifdef UNIX
       FileInfo file_info;
 
-      /* Don't delete the file when it's a hard or symbolic link. */
-      if ((!newfile && os_fileinfo_hardlinks(&file_info) > 1)
+      // Don't delete the file when it's a hard or symbolic link.
+      if ((!newfile && os_fileinfo_hardlinks(&file_info_old) > 1)
           || (os_fileinfo_link((char *)fname, &file_info)
               && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
         SET_ERRMSG(_("E166: Can't open linked file for writing"));
@@ -4310,7 +4318,7 @@ void shorten_fnames(int force)
         && !path_with_url((char *)buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || path_is_absolute_path(buf->b_sfname))) {
+            || path_is_absolute(buf->b_sfname))) {
       xfree(buf->b_sfname);
       buf->b_sfname = NULL;
       p = path_shorten_fname(buf->b_ffname, dirname);
@@ -4435,22 +4443,32 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @return true for end-of-file.
 bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 {
-  char        *eof;
-#define FGETS_SIZE 200
-  char tbuf[FGETS_SIZE];
+  char *retval;
 
+  assert(size > 0);
   buf[size - 2] = NUL;
-  eof = fgets((char *)buf, size, fp);
-  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
-    buf[size - 1] = NUL;            /* Truncate the line */
 
-    /* Now throw away the rest of the line: */
+  do {
+    errno = 0;
+    retval = fgets((char *)buf, size, fp);
+  } while (retval == NULL && errno == EINTR);
+
+  if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
+    char tbuf[200];
+
+    buf[size - 1] = NUL;  // Truncate the line.
+
+    // Now throw away the rest of the line:
     do {
-      tbuf[FGETS_SIZE - 2] = NUL;
-      ignoredp = fgets((char *)tbuf, FGETS_SIZE, fp);
-    } while (tbuf[FGETS_SIZE - 2] != NUL && tbuf[FGETS_SIZE - 2] != '\n');
+      tbuf[sizeof(tbuf) - 2] = NUL;
+      errno = 0;
+      retval = fgets((char *)tbuf, sizeof(tbuf), fp);
+      if (retval == NULL && errno != EINTR) {
+        break;
+      }
+    } while (tbuf[sizeof(tbuf) - 2] != NUL && tbuf[sizeof(tbuf) - 2] != '\n');
   }
-  return eof == NULL;
+  return retval ? false : feof(fp);
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
@@ -4543,6 +4561,7 @@ int put_time(FILE *fd, time_t time_)
 ///
 /// @return -1 for failure, 0 for success
 int vim_rename(const char_u *from, const char_u *to)
+  FUNC_ATTR_NONNULL_ALL
 {
   int fd_in;
   int fd_out;
@@ -4818,6 +4837,7 @@ buf_check_timestamp (
     buf_T *buf,
     int focus               /* called for GUI focus event */
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
   char_u      *path;
@@ -5068,14 +5088,12 @@ void buf_reload(buf_T *buf, int orig_mode)
     flags |= READ_KEEP_UNDO;
   }
 
-  /*
-   * To behave like when a new file is edited (matters for
-   * BufReadPost autocommands) we first need to delete the current
-   * buffer contents.  But if reading the file fails we should keep
-   * the old contents.  Can't use memory only, the file might be
-   * too big.  Use a hidden buffer to move the buffer contents to.
-   */
-  if (bufempty() || saved == FAIL) {
+  // To behave like when a new file is edited (matters for
+  // BufReadPost autocommands) we first need to delete the current
+  // buffer contents.  But if reading the file fails we should keep
+  // the old contents.  Can't use memory only, the file might be
+  // too big.  Use a hidden buffer to move the buffer contents to.
+  if (BUFEMPTY() || saved == FAIL) {
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
@@ -5108,7 +5126,7 @@ void buf_reload(buf_T *buf, int orig_mode)
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
         // Put the text back from the save buffer.  First
         // delete any lines that readfile() added.
-        while (!bufempty()) {
+        while (!BUFEMPTY()) {
           if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
           }
@@ -6256,13 +6274,13 @@ do_doautocmd (
 
   fname = skipwhite(fname);
 
-  /*
-   * Loop over the events.
-   */
-  while (*arg && !ascii_iswhite(*arg))
-    if (apply_autocmds_group(event_name2nr(arg, &arg),
-            fname, NULL, TRUE, group, curbuf, NULL))
-      nothing_done = FALSE;
+  // Loop over the events.
+  while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
+    if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true,
+                             group, curbuf, NULL)) {
+      nothing_done = false;
+    }
+  }
 
   if (nothing_done && do_msg) {
     MSG(_("No matching autocommands"));
@@ -6637,7 +6655,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   char_u      *save_autocmd_fname;
-  int save_autocmd_fname_full;
   int save_autocmd_bufnr;
   char_u      *save_autocmd_match;
   int save_autocmd_busy;
@@ -6653,12 +6670,12 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   proftime_T wait_time;
   bool did_save_redobuff = false;
 
-  /*
-   * Quickly return if there are no autocommands for this event or
-   * autocommands are blocked.
-   */
-  if (first_autopat[(int)event] == NULL || autocmd_blocked > 0)
+  // Quickly return if there are no autocommands for this event or
+  // autocommands are blocked.
+  if (event == NUM_EVENTS || first_autopat[(int)event] == NULL
+      || autocmd_blocked > 0) {
     goto BYPASS_AU;
+  }
 
   /*
    * When autocommands are busy, new autocommands are only executed when
@@ -6710,7 +6727,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * Save the autocmd_* variables and info about the current buffer.
    */
   save_autocmd_fname = autocmd_fname;
-  save_autocmd_fname_full = autocmd_fname_full;
   save_autocmd_bufnr = autocmd_bufnr;
   save_autocmd_match = autocmd_match;
   save_autocmd_busy = autocmd_busy;
@@ -6724,19 +6740,22 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET)
+    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET) {
       autocmd_fname = NULL;
-    else if (fname != NULL && *fname != NUL)
+    } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
-    else if (buf != NULL)
+    } else if (buf != NULL) {
       autocmd_fname = buf->b_ffname;
-    else
+    } else {
       autocmd_fname = NULL;
-  } else
+    }
+  } else {
     autocmd_fname = fname_io;
-  if (autocmd_fname != NULL)
-    autocmd_fname = vim_strsave(autocmd_fname);
-  autocmd_fname_full = FALSE;   /* call FullName_save() later */
+  }
+  if (autocmd_fname != NULL) {
+    // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
+    autocmd_fname = vim_strnsave(autocmd_fname, MAXPATHL);
+  }
 
   /*
    * Set the buffer number to be used for <abuf>.
@@ -6903,7 +6922,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   sourcing_lnum = save_sourcing_lnum;
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
-  autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_SID = save_current_SID;

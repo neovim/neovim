@@ -1,14 +1,13 @@
-## Source code overview
+Nvim core
+=========
 
-This document is an overview of how Nvim works internally, focusing on parts
-that are different from Vim. Since Nvim inherited from Vim, some information in
-[its README](https://raw.githubusercontent.com/vim/vim/master/src/README.txt)
-still applies.
+Module-specific details are documented at the top of each module (`terminal.c`,
+`screen.c`, …).
 
-For module-specific details, read the source code. Some files are extensively
-commented at the top (e.g. terminal.c, screen.c).
+See `:help dev` for guidelines.
 
-### Source file name conventions
+Filename conventions
+--------------------
 
 The source files use extensions to hint about their purpose.
 
@@ -19,12 +18,98 @@ The source files use extensions to hint about their purpose.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
 
-### Top-level program loops
+Logs
+----
 
-Let's understand what a Vim-like program does by analyzing the workflow of
-a typical editing session:
+Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-01. Vim dispays the welcome screen
+You can use `LOG_CALLSTACK();` anywhere in the source to log the current
+stacktrace. To log in an alternate file, e.g. stderr, use
+`LOG_CALLSTACK_TO_FILE(FILE*)`. (Currently Linux-only.)
+
+UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
+
+    rm -rf build/
+    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+
+Build with ASAN
+---------------
+
+Building Nvim with Clang sanitizers (Address Sanitizer: ASan, Undefined
+Behavior Sanitizer: UBSan, Memory Sanitizer: MSan, Thread Sanitizer: TSan) is
+a good way to catch undefined behavior, leaks and other errors as soon as they
+happen.  It's significantly faster than Valgrind.
+
+Requires clang 3.4 or later:
+
+    clang --version
+
+Build Nvim with sanitizer instrumentation:
+
+    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+
+Create a directory to store logs:
+
+    mkdir -p "$HOME/logs"
+
+Enable the sanitizer(s) via these environment variables:
+
+    # Change to detect_leaks=1 to detect memory leaks (slower).
+    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
+
+    export MSAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
+    export TSAN_OPTIONS="external_symbolizer_path=/usr/lib/llvm-5.0/bin/llvm-symbolizer log_path=${HOME}/logs/tsan"
+
+Logs will be written to `${HOME}/logs/*san.PID`.
+
+TUI debugging
+-------------
+
+### TUI troubleshoot
+
+Nvim logs its internal terminfo state at 'verbose' level 3.  This makes it
+possible to see exactly what terminfo values Nvim is using on any system.
+
+    nvim -V3log
+
+### TUI trace
+
+The ancient `script` command is still the "state of the art" for tracing
+terminal behavior. The libvterm `vterm-dump` utility formats the result for
+human-readability.
+
+Record a Nvim terminal session and format it with `vterm-dump`:
+
+    script foo
+    ./build/bin/nvim -u NONE
+    # Exit the script session with CTRL-d
+
+    # Use `vterm-dump` utility to format the result.
+    ./.deps/usr/bin/vterm-dump foo > bar
+
+Then you can compare `bar` with another session, to debug TUI behavior.
+
+### TUI redraw
+
+Set the 'writedelay' option to see where and when the UI is painted.
+
+    :set writedelay=1
+
+### Terminal reference
+
+- `man terminfo`
+- http://bazaar.launchpad.net/~libvterm/libvterm/trunk/view/head:/doc/seqs.txt
+- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
+Nvim lifecycle
+--------------
+
+Following describes how Nvim processes input.
+
+Consider a typical Vim-like editing session:
+
+01. Vim displays the welcome screen
 02. User types: `:`
 03. Vim enters command-line mode
 04. User types: `edit README.txt<CR>`
@@ -154,7 +239,8 @@ modes managed by the `state_enter` loop:
 - insert mode: `insert_{enter,check,execute}()`(`edit.c`)
 - terminal mode: `terminal_{enter,execute}()`(`terminal.c`)
 
-### Async event support
+Async event support
+-------------------
 
 One of the features Nvim added is the support for handling arbitrary
 asynchronous events, which can include:

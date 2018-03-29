@@ -65,9 +65,9 @@ function! man#open_page(count, count1, mods, ...) abort
   try
     set eventignore+=BufReadCmd
     if a:mods !~# 'tab' && s:find_man()
-      execute 'silent edit' fnameescape(bufname)
+      execute 'silent keepalt edit' fnameescape(bufname)
     else
-      execute 'silent' a:mods 'split' fnameescape(bufname)
+      execute 'silent keepalt' a:mods 'split' fnameescape(bufname)
     endif
   finally
     set eventignore-=BufReadCmd
@@ -148,7 +148,8 @@ function! s:get_page(path) abort
   let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
-  let cmd = ['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'man']
+  " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
+  let cmd = ['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'MAN_KEEP_FORMATTING=1', 'man']
   return s:system(cmd + (s:localfile_arg ? ['-l', a:path] : [a:path]))
 endfunction
 
@@ -157,11 +158,10 @@ function! s:put_page(page) abort
   setlocal noreadonly
   silent keepjumps %delete _
   silent put =a:page
-  " Remove all backspaced/escape characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b\|\e\[\d\+m,,e'.(&gdefault?'':'g')
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
+  lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
 
@@ -299,6 +299,12 @@ endfunction
 " see man#extract_sect_and_name_ref on why tolower(sect)
 function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   let args = split(a:cmd_line)
+  let cmd_offset = index(args, 'Man')
+  if cmd_offset > 0
+    " Prune all arguments up to :Man itself. Otherwise modifier commands like
+    " :tab, :vertical, etc. would lead to a wrong length.
+    let args = args[cmd_offset:]
+  endif
   let l = len(args)
   if l > 3
     return
@@ -370,13 +376,12 @@ function! s:format_candidate(path, psect) abort
 endfunction
 
 function! man#init_pager() abort
-  " Remove all backspaced/escape characters.
-  execute 'silent keeppatterns keepjumps %substitute,.\b\|\e\[\d\+m,,e'.(&gdefault?'':'g')
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
     keepjumps 1
   endif
+  lua require("man").highlight_man_page()
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
   let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')

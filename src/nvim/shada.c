@@ -76,8 +76,8 @@ KHASH_SET_INIT_STR(strset)
     (vim_rename((char_u *)a, (char_u *)b))
 #define mb_strnicmp(a, b, c) \
     (mb_strnicmp((char_u *)a, (char_u *)b, c))
-#define path_shorten_fname_if_possible(b) \
-    ((char *)path_shorten_fname_if_possible((char_u *)b))
+#define path_try_shorten_fname(b) \
+    ((char *)path_try_shorten_fname((char_u *)b))
 #define buflist_new(ffname, sfname, ...) \
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 #define os_isdir(f) (os_isdir((char_u *) f))
@@ -1180,8 +1180,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
   const bool force = flags & kShaDaForceit;
   const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
-                              && (force || oldfiles_list == NULL
-                                  || oldfiles_list->lv_len == 0));
+                              && (force || tv_list_len(oldfiles_list) == 0));
   const bool want_marks = flags & kShaDaWantMarks;
   const unsigned srni_flags = (unsigned) (
       (flags & kShaDaWantInfo
@@ -1218,7 +1217,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   khash_t(fnamebufs) fname_bufs = KHASH_EMPTY_TABLE(fnamebufs);
   khash_t(strset) oldfiles_set = KHASH_EMPTY_TABLE(strset);
   if (get_old_files && (oldfiles_list == NULL || force)) {
-    oldfiles_list = tv_list_alloc();
+    oldfiles_list = tv_list_alloc(kListLenUnknown);
     set_vim_var_list(VV_OLDFILES, oldfiles_list);
   }
   ShaDaReadResult srni_ret;
@@ -1398,7 +1397,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDItemBufferList: {
         for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
-          char *const sfname = path_shorten_fname_if_possible(
+          char *const sfname = path_try_shorten_fname(
               cur_entry.data.buffer_list.buffers[i].fname);
           buf_T *const buf = buflist_new(
               cur_entry.data.buffer_list.buffers[i].fname, sfname, 0,
@@ -1599,13 +1598,13 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
 #define DUMP_ADDITIONAL_ELEMENTS(src, what) \
   do { \
     if ((src) != NULL) { \
-      for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
-        if (encode_vim_to_msgpack(spacker, &li->li_tv, \
+      TV_LIST_ITER((src), li, { \
+        if (encode_vim_to_msgpack(spacker, TV_LIST_ITEM_TV(li), \
                                   _("additional elements of ShaDa " what)) \
             == FAIL) { \
           goto shada_pack_entry_error; \
         } \
-      } \
+      }); \
     } \
   } while (0)
 #define DUMP_ADDITIONAL_DATA(src, what) \
@@ -1647,25 +1646,21 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
     case kSDItemHistoryEntry: {
       const bool is_hist_search =
           entry.data.history_item.histtype == HIST_SEARCH;
-      const size_t arr_size = 2 + (size_t) is_hist_search + (size_t) (
-          entry.data.history_item.additional_elements == NULL
-          ? 0
-          : entry.data.history_item.additional_elements->lv_len);
+      const size_t arr_size = 2 + (size_t)is_hist_search + (size_t)(
+          tv_list_len(entry.data.history_item.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
       PACK_BIN(cstr_as_string(entry.data.history_item.string));
       if (is_hist_search) {
-        msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
+        msgpack_pack_uint8(spacker, (uint8_t)entry.data.history_item.sep);
       }
       DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements,
                                "history entry item");
       break;
     }
     case kSDItemVariable: {
-      const size_t arr_size = 2 + (size_t) (
-          entry.data.global_var.additional_elements == NULL
-          ? 0
-          : entry.data.global_var.additional_elements->lv_len);
+      const size_t arr_size = 2 + (size_t)(
+          tv_list_len(entry.data.global_var.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       const String varname = cstr_as_string(entry.data.global_var.name);
       PACK_BIN(varname);
@@ -1684,10 +1679,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemSubString: {
-      const size_t arr_size = 1 + (size_t) (
-          entry.data.sub_string.additional_elements == NULL
-          ? 0
-          : entry.data.sub_string.additional_elements->lv_len);
+      const size_t arr_size = 1 + (size_t)(
+          tv_list_len(entry.data.sub_string.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       PACK_BIN(cstr_as_string(entry.data.sub_string.sub));
       DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements,
@@ -2564,6 +2557,12 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     xfmark_T fm;
     jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
 
+    if (fm.fmark.mark.lnum == 0) {
+      iemsgf("ShaDa: mark lnum zero (ji:%p, js:%p, len:%i)",
+             (void *)jump_iter, (void *)&curwin->w_jumplist[0],
+             curwin->w_jumplistlen);
+      continue;
+    }
     const buf_T *const buf = (fm.fmark.fnum == 0
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));
@@ -2993,7 +2992,7 @@ shada_write_file_nomerge: {}
     } else {
       if (sw_ret == kSDWriteReadNotShada) {
         EMSG3(_(RNERR "Did not rename %s because %s "
-                "does not looks like a ShaDa file"), tempname, fname);
+                "does not look like a ShaDa file"), tempname, fname);
       } else {
         EMSG3(_(RNERR "Did not rename %s to %s because there were errors "
                 "during writing it"), tempname, fname);
@@ -3413,8 +3412,16 @@ shada_read_next_item_start:
     return mru_ret;
   }
 
-  const size_t length = (size_t) length_u64;
-  entry->timestamp = (Timestamp) timestamp_u64;
+  if (length_u64 > PTRDIFF_MAX) {
+    emsgf(_(RCERR "Error while reading ShaDa file: "
+            "there is an item at position %" PRIu64 " "
+            "that is stated to be too long"),
+          initial_fpos);
+    return kSDReadStatusNotShaDa;
+  }
+
+  const size_t length = (size_t)length_u64;
+  entry->timestamp = (Timestamp)timestamp_u64;
 
   if (type_u64 == 0) {
     // kSDItemUnknown cannot possibly pass that far because it is -1 and that

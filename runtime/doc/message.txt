@@ -8,7 +8,7 @@ This file contains an alphabetical list of messages and error messages that
 Vim produces.  You can use this if you don't understand what the message
 means.  It is not complete though.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Old messages			*:messages* *:mes* *message-history*
@@ -449,12 +449,6 @@ changed.  To avoid the message reset the 'warn' option.
 Something inside Vim went wrong and resulted in a NULL pointer.  If you know
 how to reproduce this problem, please report it. |bugs|
 
-							*E172*  >
-  Only one file name allowed
-
-The ":edit" command only accepts one file name.  When you want to specify
-several files for editing use ":next" |:next|.
-
 						*E41* *E82* *E83* *E342*  >
   Out of memory!
   Out of memory!  (allocating {number} bytes)
@@ -631,6 +625,9 @@ starts.  It can be fixed in one of these ways:
 - Just write the file again the next day.  Or set your clock to the next day,
   write the file twice and set the clock back.
 
+If you get W11 all the time, you may need to disable "Acronis Active
+Protection" or register Vim as a trusted service/application.
+
 							*W12*  >
   Warning: File "{filename}" has changed and the buffer was changed in Vim as well
 
@@ -749,6 +746,13 @@ a user-defined command.
 
 You tried to set an option after startup that only allows changes during
 startup.
+
+							*E943*  >
+  Command table needs to be updated, run 'make cmdidxs'
+
+This can only happen when changing the source code, when adding a command in
+src/ex_cmds.h.  The lookup table then needs to be updated, by running: >
+	make cmdidxs
 
 ==============================================================================
 3. Messages						*messages*

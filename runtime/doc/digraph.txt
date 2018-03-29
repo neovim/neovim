@@ -14,7 +14,7 @@ with CTRL-V (see |i_CTRL-V|).
 There is a brief introduction on digraphs in the user manual: |24.9|
 An alternative is using the 'keymap' option.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Defining digraphs					*digraphs-define*
@@ -143,7 +143,7 @@ a standard meaning:
 	Two			2	Hook
 	Nine			9	Horn
 
-	Equals			=	Cyrillic (= used as second char) 
+	Equals			=	Cyrillic (= used as second char)
 	Asterisk		*	Greek
 	Percent sign		%	Greek/Cyrillic special
 	Plus			+	smalls: Arabic, capitals: Hebrew
@@ -922,6 +922,7 @@ char  digraph	hex	dec	official name ~
 †	/-	2020	8224	DAGGER
 ‡	/=	2021	8225	DOUBLE DAGGER
 ‥	..	2025	8229	TWO DOT LEADER
+…	,.	2026	8230	HORIZONTAL ELLIPSIS
 ‰	%0	2030	8240	PER MILLE SIGN
 ′	1'	2032	8242	PRIME
 ″	2'	2033	8243	DOUBLE PRIME

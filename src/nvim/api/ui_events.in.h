@@ -47,17 +47,22 @@ void visual_bell(void)
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void update_fg(Integer fg)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void update_bg(Integer bg)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void update_sp(Integer sp)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
+void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
+                        Integer cterm_fg, Integer cterm_bg)
+  FUNC_API_SINCE(4);
 void suspend(void)
   FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void option_set(String name, Object value)
+  FUNC_API_SINCE(4);
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
@@ -65,7 +70,30 @@ void popupmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void popupmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
 void tabline_update(Tabpage current, Array tabs)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
+void cmdline_show(Array content, Integer pos, String firstc, String prompt,
+                  Integer indent, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_pos(Integer pos, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_special_char(String c, Boolean shift, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_hide(Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_show(Array lines)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_append(Array lines)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_hide(void)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
+void wildmenu_show(Array items)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void wildmenu_select(Integer selected)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void wildmenu_hide(void)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 #endif  // NVIM_API_UI_EVENTS_IN_H

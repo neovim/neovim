@@ -4,13 +4,8 @@ language: c
 
 env:
   global:
-    # To force rebuilding of third-party dependencies, set this to 'true'.
-    - BUILD_NVIM_DEPS=false
-    # Travis has 1.5 virtual cores according to
-    # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
-    - MAKE_CMD="make -j2"
-    # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-4.0/bin:$PATH"
+    # Set "false" to force rebuild of third-party dependencies.
+    - CACHE_ENABLE=true
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -41,9 +36,7 @@ env:
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
-    # Cache marker for third-party dependencies cache.
-    # If this file exists, we know that the cache contains compiled
-    # dependencies and we can use it.
+    # If this file exists, the cache is valid (compile was successful).
     - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
@@ -51,40 +44,42 @@ env:
 
 jobs:
   include:
-    - stage: sanitizers
+    - stage: normal builds
       os: linux
-      compiler: clang-4.0
+      compiler: clang
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+      sudo: true
     - os: linux
-      compiler: clang-4.0
-      env: CLANG_SANITIZER=TSAN
-    - stage: normal builds
-      os: linux
-      compiler: gcc-5
-      env: FUNCTIONALTEST=functionaltest-lua
+      compiler: gcc
+      env: >
+        FUNCTIONALTEST=functionaltest-lua
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
     - os: linux
-      # Travis creates a cache per compiler.
-      # Set a different value here to store 32-bit
-      # dependencies in a separate cache.
-      compiler: gcc-5 -m32
+      # Travis creates a cache per compiler. Set a different value here to
+      # store 32-bit dependencies in a separate cache.
+      compiler: gcc -m32
       env: BUILD_32BIT=ON
     - os: osx
       compiler: clang
       osx_image: xcode7.3  # macOS 10.11
     - os: osx
-      compiler: gcc-4.9
+      compiler: gcc
       osx_image: xcode7.3  # macOS 10.11
-    - stage: lint
-      os: linux
+    - os: linux
       env: CI_TARGET=lint
-    - stage: coverage
+    - stage: Flaky builds
       os: linux
-      compiler: gcc-5
-      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      compiler: gcc
+      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - os: linux
+      compiler: clang
+      env: CLANG_SANITIZER=TSAN
   allow_failures:
-    - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
 before_install: ci/before_install.sh
@@ -96,27 +91,22 @@ after_success:  ci/after_success.sh
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-4.0
     packages:
       - autoconf
       - automake
       - apport
       - build-essential
-      - clang-4.0
+      - clang
       - cmake
       - cscope
-      - g++-5-multilib
       - g++-multilib
-      - gcc-5-multilib
       - gcc-multilib
       - gdb
       - language-pack-tr
       - libc6-dev-i386
       - libtool
-      - llvm-4.0-dev
       - locales
+      - ninja-build
       - pkg-config
       - unzip
       - valgrind
@@ -131,6 +121,7 @@ cache:
   directories:
     - "$HOME/.cache/pip"
     - "$HOME/.cache/nvim-deps"
+    - "$HOME/.cache/nvim-deps-downloads"
 
 notifications:
   webhooks:

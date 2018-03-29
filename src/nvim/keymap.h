@@ -243,6 +243,7 @@ enum key_extra {
   , KE_EVENT            // event
   , KE_PASTE            // special key to toggle the 'paste' option.
                         // sent only by UIs
+  , KE_COMMAND          // special key to execute command in any mode
 };
 
 /*
@@ -428,11 +429,10 @@ enum key_extra {
 #define K_CMDWIN        TERMCAP2KEY(KS_EXTRA, KE_CMDWIN)
 
 #define K_DROP          TERMCAP2KEY(KS_EXTRA, KE_DROP)
-#define K_FOCUSGAINED   TERMCAP2KEY(KS_EXTRA, KE_FOCUSGAINED)
-#define K_FOCUSLOST     TERMCAP2KEY(KS_EXTRA, KE_FOCUSLOST)
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
+#define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */
@@ -450,9 +450,10 @@ enum key_extra {
 
 /*
  * The length of the longest special key name, including modifiers.
- * Current longest is <M-C-S-T-4-MiddleRelease> (length includes '<' and '>').
+ * Current longest is <M-C-S-T-D-A-4-ScrollWheelRight> (length includes '<' and
+ * '>').
  */
-#define MAX_KEY_NAME_LEN    25
+#define MAX_KEY_NAME_LEN    32
 
 // Maximum length of a special key event as tokens.  This includes modifiers.
 // The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
@@ -464,13 +465,9 @@ enum key_extra {
 #define MAX_KEY_CODE_LEN    6
 
 #define FLAG_CPO_BSLASH    0x01
-#define FLAG_CPO_SPECI     0x02
-#define CPO_TO_CPO_FLAGS   (((vim_strchr(p_cpo, CPO_BSLASH) == NULL) \
-                             ? 0 \
-                             : FLAG_CPO_BSLASH)| \
-                            (vim_strchr(p_cpo, CPO_SPECI) == NULL \
-                             ? 0 \
-                             : FLAG_CPO_SPECI))
+#define CPO_TO_CPO_FLAGS   ((vim_strchr(p_cpo, CPO_BSLASH) == NULL) \
+                            ? 0 \
+                            : FLAG_CPO_BSLASH)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.h.generated.h"

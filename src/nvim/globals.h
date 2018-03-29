@@ -317,15 +317,9 @@ EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
 /*
  * The exception currently being thrown.  Used to pass an exception to
  * a different cstack.  Also used for discarding an exception before it is
- * caught or made pending.  Only valid when did_throw is TRUE.
+ * caught or made pending.
  */
 EXTERN except_T *current_exception;
-
-/*
- * did_throw: An exception is being thrown.  Reset when the exception is caught
- * or as long as it is pending in a finally clause.
- */
-EXTERN int did_throw INIT(= FALSE);
 
 /*
  * need_rethrow: set to TRUE when a throw that cannot be handled in do_cmdline()
@@ -407,13 +401,16 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 
 /* ID of script being sourced or was sourced to define the current function. */
 EXTERN scid_T current_SID INIT(= 0);
+
+EXTERN bool did_source_packages INIT(= false);
+
 // Scope information for the code that indirectly triggered the current
 // provider function call
 EXTERN struct caller_scope {
   scid_T SID;
   uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
   linenr_T sourcing_lnum;
-  int autocmd_fname_full, autocmd_bufnr;
+  int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
@@ -494,6 +491,7 @@ EXTERN int updating_screen INIT(= FALSE);
 EXTERN win_T    *firstwin;              /* first window */
 EXTERN win_T    *lastwin;               /* last window */
 EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
+# define ONE_WINDOW (firstwin == lastwin)
 /*
  * When using this macro "break" only breaks out of the inner loop. Use "goto"
  * to break out of the tabpage loop.
@@ -560,21 +558,22 @@ EXTERN int ru_col;              /* column for ruler */
 EXTERN int ru_wid;              /* 'rulerfmt' width of ruler when non-zero */
 EXTERN int sc_col;              /* column for shown command */
 
-/*
- * When starting or exiting some things are done differently (e.g. screen
- * updating).
- */
+//
+// When starting or exiting some things are done differently (e.g. screen
+// updating).
+//
+
+// First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT(= NO_SCREEN);
-/* first NO_SCREEN, then NO_BUFFERS and then
- * set to 0 when starting up finished */
-EXTERN int exiting INIT(= FALSE);
-/* TRUE when planning to exit Vim.  Might
- * still keep on running if there is a changed
- * buffer. */
-// volatile because it is used in signal handler deathtrap().
+// true when planning to exit. Might keep running if there is a changed buffer.
+EXTERN int exiting INIT(= false);
+// is stdin a terminal?
+EXTERN int stdin_isatty INIT(= true);
+// is stdout a terminal?
+EXTERN int stdout_isatty INIT(= true);
+// true when doing full-screen output, otherwise only writing some messages.
+// volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
-// TRUE when doing full-screen output
-// otherwise only writing some messages
 
 EXTERN int restricted INIT(= FALSE);
 // TRUE when started in restricted mode (-Z)
@@ -724,29 +723,6 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
 
-// To speed up BYTELEN(); keep a lookup table to quickly get the length in
-// bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
-// which are illegal when used as the first byte have a 1.  The NUL byte has
-// length 1.
-EXTERN char utf8len_tab[256] INIT(= {
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1,
-});
-
 # if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
 /* Pointers to functions and variables to be loaded at runtime */
 EXTERN size_t (*iconv)(iconv_t cd, const char **inbuf, size_t *inbytesleft,
@@ -890,7 +866,6 @@ EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
 EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
 EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline
 EXTERN char_u *autocmd_fname INIT(= NULL);     // fname for <afile> on cmdline
-EXTERN int autocmd_fname_full;                 // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
@@ -930,8 +905,11 @@ EXTERN char_u langmap_mapchar[256];     /* mapping for language keys */
 EXTERN int save_p_ls INIT(= -1);        /* Save 'laststatus' setting */
 EXTERN int save_p_wmh INIT(= -1);       /* Save 'winminheight' setting */
 EXTERN int wild_menu_showing INIT(= 0);
-# define WM_SHOWN       1               /* wildmenu showing */
-# define WM_SCROLLED    2               /* wildmenu showing with scroll */
+enum {
+  WM_SHOWN = 1,     ///< wildmenu showing
+  WM_SCROLLED = 2,  ///< wildmenu showing with scroll
+  WM_LIST = 3,      ///< cmdline CTRL-D
+};
 
 
 EXTERN char breakat_flags[256];         /* which characters are in 'breakat' */
@@ -952,7 +930,7 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
-/* Characters from 'listchars' option */
+// 'listchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int lcs_eol INIT(= '$');
 EXTERN int lcs_ext INIT(= NUL);
 EXTERN int lcs_prec INIT(= NUL);
@@ -963,20 +941,21 @@ EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= ' ');
 
-/* Characters from 'fillchars' option */
+// 'fillchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= ' ');
-EXTERN int fill_fold INIT(= '-');
+EXTERN int fill_vert INIT(= 9474);  // │
+EXTERN int fill_fold INIT(= 183);   // ·
 EXTERN int fill_diff INIT(= '-');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);
 EXTERN int km_startsel INIT(= FALSE);
 
-EXTERN int cedit_key INIT(= -1);        /* key value of 'cedit' option */
-EXTERN int cmdwin_type INIT(= 0);       /* type of cmdline window or 0 */
-EXTERN int cmdwin_result INIT(= 0);      /* result of cmdline window or 0 */
+EXTERN int cedit_key INIT(= -1);     ///< key value of 'cedit' option
+EXTERN int cmdwin_type INIT(= 0);    ///< type of cmdline window or 0
+EXTERN int cmdwin_result INIT(= 0);  ///< result of cmdline window or 0
+EXTERN int cmdwin_level INIT(= 0);   ///< cmdline recursion level
 
 EXTERN char_u no_lines_msg[] INIT(= N_("--No lines in buffer--"));
 
@@ -1057,6 +1036,7 @@ EXTERN char_u e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN char_u e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
+EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
 EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
@@ -1065,11 +1045,20 @@ EXTERN char_u e_invexpr2[] INIT(= N_("E15: Invalid expression: %s"));
 EXTERN char_u e_invrange[] INIT(= N_("E16: Invalid range"));
 EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
-EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
+EXTERN char_u e_invchan[] INIT(= N_("E900: Invalid channel id"));
+EXTERN char_u e_invchanjob[] INIT(= N_("E900: Invalid channel id: not a job"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobspawn[] INIT(= N_(
-        "E903: Process failed to start: %s: \"%s\""));
-EXTERN char_u e_jobnotpty[] INIT(= N_("E904: Job is not connected to a pty"));
+    "E903: Process failed to start: %s: \"%s\""));
+EXTERN char_u e_channotpty[] INIT(= N_("E904: channel is not a pty"));
+EXTERN char_u e_stdiochan2[] INIT(= N_(
+    "E905: Couldn't open stdio channel: %s"));
+EXTERN char_u e_invstream[] INIT(= N_("E906: invalid stream for channel"));
+EXTERN char_u e_invstreamrpc[] INIT(= N_(
+    "E906: invalid stream for rpc channel, use 'rpc'"));
+EXTERN char_u e_streamkey[] INIT(= N_(
+    "E5210: dict key '%s' already set for buffered stream in channel %"
+    PRIu64));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
@@ -1139,9 +1128,9 @@ EXTERN char_u e_winheight[] INIT(= N_(
 EXTERN char_u e_winwidth[] INIT(= N_(
         "E592: 'winwidth' cannot be smaller than 'winminwidth'"));
 EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
-EXTERN char_u e_zerocount[] INIT(= N_("Zero count"));
-EXTERN char_u e_usingsid[] INIT(= N_("E81: Using <SID> not in a script context"));
-EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
+EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
+EXTERN char_u e_usingsid[] INIT(= N_(
+    "E81: Using <SID> not in a script context"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
@@ -1157,6 +1146,14 @@ EXTERN char_u e_dirnotf[] INIT(= N_(
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
+EXTERN char_u e_autocmd_err[] INIT(=N_(
+    "E5500: autocmd has thrown an exception: %s"));
+EXTERN char_u e_cmdmap_err[] INIT(=N_(
+    "E5520: <Cmd> mapping must end with <CR>"));
+EXTERN char_u e_cmdmap_repeated[] INIT(=N_(
+    "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char_u e_cmdmap_key[] INIT(=N_(
+    "E5522: <Cmd> mapping must not include %s key"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
@@ -1177,9 +1174,9 @@ EXTERN char *ignoredp;
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
-
-/// next free id for a job or rpc channel
-EXTERN uint64_t next_chan_id INIT(= 1);
+// Dont try to start an user interface
+// or read/write to stdio (unless embedding)
+EXTERN bool headless_mode INIT(= false);
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

@@ -89,7 +89,7 @@ describe('assert function:', function()
 
     it('should change v:errors when expected is equal to actual', function()
       call('assert_notequal', 'foo', 'foo')
-      expected_errors({"Expected 'foo' differs from 'foo'"})
+      expected_errors({"Expected not equal to 'foo'"})
     end)
   end)
 
@@ -252,6 +252,11 @@ describe('assert function:', function()
         "Expected range 5 - 7, but got 4",
         "Expected range 5 - 7, but got 8",
       })
+    end)
+
+    it('assert_inrange(1, 1) returns E119', function()
+      eq('Vim(call):E119: Not enough arguments for function: assert_inrange',
+         exc_exec("call assert_inrange(1, 1)"))
     end)
   end)
 

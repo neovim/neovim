@@ -12,6 +12,7 @@
 #include "nvim/api/private/handle.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -25,6 +26,7 @@
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/getchar.h"
+#include "nvim/ui.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -37,7 +39,71 @@ typedef struct {
 # include "api/private/ui_events_metadata.generated.h"
 #endif
 
+/// Start block that may cause VimL exceptions while evaluating another code
+///
+/// Used when caller is supposed to be operating when other VimL code is being
+/// processed and that “other VimL code” must not be affected.
+///
+/// @param[out]  tstate  Location where try state should be saved.
+void try_enter(TryState *const tstate)
+{
+  // TODO(ZyX-I): Check whether try_enter()/try_leave() may use
+  //              enter_cleanup()/leave_cleanup(). Or
+  //              save_dbg_stuff()/restore_dbg_stuff().
+  *tstate = (TryState) {
+    .current_exception = current_exception,
+    .msg_list = (const struct msglist *const *)msg_list,
+    .private_msg_list = NULL,
+    .trylevel = trylevel,
+    .got_int = got_int,
+    .need_rethrow = need_rethrow,
+    .did_emsg = did_emsg,
+  };
+  msg_list = &tstate->private_msg_list;
+  current_exception = NULL;
+  trylevel = 1;
+  got_int = false;
+  need_rethrow = false;
+  did_emsg = false;
+}
+
+/// End try block, set the error message if any and restore previous state
+///
+/// @warning Return is consistent with most functions (false on error), not with
+///          try_end (true on error).
+///
+/// @param[in]  tstate  Previous state to restore.
+/// @param[out]  err  Location where error should be saved.
+///
+/// @return false if error occurred, true otherwise.
+bool try_leave(const TryState *const tstate, Error *const err)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const bool ret = !try_end(err);
+  assert(trylevel == 0);
+  assert(!need_rethrow);
+  assert(!got_int);
+  assert(!did_emsg);
+  assert(msg_list == &tstate->private_msg_list);
+  assert(*msg_list == NULL);
+  assert(current_exception == NULL);
+  msg_list = (struct msglist **)tstate->msg_list;
+  current_exception = tstate->current_exception;
+  trylevel = tstate->trylevel;
+  got_int = tstate->got_int;
+  need_rethrow = tstate->need_rethrow;
+  did_emsg = tstate->did_emsg;
+  return ret;
+}
+
 /// Start block that may cause vimscript exceptions
+///
+/// Each try_start() call should be mirrored by try_end() call.
+///
+/// To be used as a replacement of `:try … catch … endtry` in C code, in cases
+/// when error flag could not already be set. If there may be pending error
+/// state at the time try_start() is executed which needs to be preserved,
+/// try_enter()/try_leave() pair should be used instead.
 void try_start(void)
 {
   ++trylevel;
@@ -50,7 +116,9 @@ void try_start(void)
 /// @return true if an error occurred
 bool try_end(Error *err)
 {
-  --trylevel;
+  // Note: all globals manipulated here should be saved/restored in
+  // try_enter/try_leave.
+  trylevel--;
 
   // Without this it stops processing all subsequent VimL commands and
   // generates strange error messages if I e.g. try calling Test() in a
@@ -58,7 +126,7 @@ bool try_end(Error *err)
   did_emsg = false;
 
   if (got_int) {
-    if (did_throw) {
+    if (current_exception) {
       // If we got an interrupt, discard the current exception
       discard_current_exception();
     }
@@ -77,7 +145,7 @@ bool try_end(Error *err)
     if (should_free) {
       xfree(msg);
     }
-  } else if (did_throw) {
+  } else if (current_exception) {
     api_set_error(err, kErrorTypeException, "%s", current_exception->value);
     discard_current_exception();
   }
@@ -95,7 +163,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key not found");
+    api_set_error(err, kErrorTypeValidation, "Key '%s' not found", key.data);
     return (Object)OBJECT_INIT;
   }
 
@@ -498,7 +566,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
     typval_encode_dict_end(edata)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    TYPVAL_ENCODE_CONV_NIL()
+    TYPVAL_ENCODE_CONV_NIL(val)
 
 #define TYPVAL_ENCODE_SCOPE static
 #define TYPVAL_ENCODE_NAME object
@@ -600,6 +668,22 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   return rv;
 }
 
+/// Allocates a String consisting of a single char. Does not support multibyte
+/// characters. The resulting string is also NUL-terminated, to facilitate
+/// interoperating with code using C strings.
+///
+/// @param char the char to convert
+/// @return the resulting String, if the input char was NUL, an
+///         empty String is returned
+String cchar_to_string(char c)
+{
+  char buf[] = { c, NUL };
+  return (String) {
+    .data = xmemdupz(buf, 1),
+    .size = (c != NUL) ? 1 : 0
+  };
+}
+
 /// Copies a C string into a String (binary safe string, characters + length).
 /// The resulting string is also NUL-terminated, to facilitate interoperating
 /// with code using C strings.
@@ -618,6 +702,23 @@ String cstr_to_string(const char *str)
         .data = xmemdupz(str, len),
         .size = len
     };
+}
+
+/// Copies buffer to an allocated String.
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
+///
+/// @param buf the buffer to copy
+/// @param size length of the buffer
+/// @return the resulting String, if the input string was NULL, an
+///         empty String is returned
+String cbuf_to_string(const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (String) {
+    .data = xmemdupz(buf, size),
+    .size = size
+  };
 }
 
 /// Creates a String using the given C string. Unlike
@@ -660,12 +761,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     case kObjectTypeWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
-      if (obj.data.integer > VARNUMBER_MAX
-          || obj.data.integer < VARNUMBER_MIN) {
-        api_set_error(err, kErrorTypeValidation, "Integer value outside range");
-        return false;
-      }
-
+      STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
+                    "Integer size must be <= VimL number size");
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = (varnumber_T)obj.data.integer;
       break;
@@ -686,22 +783,20 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeArray: {
-      list_T *const list = tv_list_alloc();
+      list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = tv_list_item_alloc();
+        typval_T li_tv;
 
-        if (!object_to_vim(item, &li->li_tv, err)) {
-          // cleanup
-          tv_list_item_free(li);
+        if (!object_to_vim(item, &li_tv, err)) {
           tv_list_free(list);
           return false;
         }
 
-        tv_list_append(list, li);
+        tv_list_append_owned_tv(list, li_tv);
       }
-      list->lv_refcount++;
+      tv_list_ref(list);
 
       tv->v_type = VAR_LIST;
       tv->vval.v_list = list;
@@ -860,6 +955,12 @@ static void init_ui_event_metadata(Dictionary *metadata)
   msgpack_rpc_to_object(&unpacked.data, &ui_events);
   msgpack_unpacked_destroy(&unpacked);
   PUT(*metadata, "ui_events", ui_events);
+  Array ui_options = ARRAY_DICT_INIT;
+  ADD(ui_options, STRING_OBJ(cstr_to_string("rgb")));
+  for (UIExtension i = 0; i < kUIExtCount; i++) {
+    ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+  }
+  PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
 }
 
 static void init_error_type_metadata(Dictionary *metadata)

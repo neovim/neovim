@@ -9,7 +9,7 @@ Folding						*Folding* *folding* *folds*
 You can find an introduction on folding in chapter 28 of the user manual.
 |usr_28.txt|
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Fold methods					*fold-methods*
@@ -58,7 +58,7 @@ whichever is lower.  These are empty or white lines and lines starting
 with a character in 'foldignore'.  White space is skipped before checking for
 characters in 'foldignore'.  For C use "#" to ignore preprocessor lines.
 
-When you want to ignore lines in another way, use the 'expr' method.  The
+When you want to ignore lines in another way, use the "expr" method.  The
 |indent()| function can be used in 'foldexpr' to get the indent of a line.
 
 
@@ -73,7 +73,7 @@ This will call a function to compute the fold level: >
 	:set foldexpr=MyFoldLevel(v:lnum)
 This will make a fold out of paragraphs separated by blank lines: >
 	:set foldexpr=getline(v:lnum)=~'^\\s*$'&&getline(v:lnum+1)=~'\\S'?'<1':1
-this does the same: >
+This does the same: >
 	:set foldexpr=getline(v:lnum-1)=~'^\\s*$'&&getline(v:lnum)=~'\\S'?'>1':1
 
 Note that backslashes must be used to escape characters that ":set" handles
@@ -133,7 +133,7 @@ fold level.  But note that foldlevel() may return -1 if the level is not known
 yet.  And it returns the level at the start of the line, while a fold might
 end in that line.
 
-It may happened that folds are not updated properly.  You can use |zx| or |zX|
+It may happen that folds are not updated properly.  You can use |zx| or |zX|
 to force updating folds.
 
 
@@ -197,7 +197,7 @@ and the level given by the marker:
 1. If a marker with the same fold level is encountered, the previous fold
    ends and another fold with the same level starts.
 2. If a marker with a higher fold level is found, a nested fold is started.
-3. if a marker with a lower fold level is found, all folds up to and including
+3. If a marker with a lower fold level is found, all folds up to and including
    this level end and a fold with the specified level starts.
 
 The number indicates the fold level.  A zero cannot be used (a marker with

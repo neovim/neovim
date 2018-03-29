@@ -13,7 +13,7 @@ Command-line mode is used to enter Ex commands (":"), search patterns
 Basic command line editing is explained in chapter 20 of the user manual
 |usr_20.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Command-line editing					*cmdline-editing*
@@ -327,8 +327,11 @@ terminals)
 		List entries 6 to 12 from the search history: >
 			:history / 6,12
 <
-		List the recent five entries from all histories: >
-			:history all -5,
+		List the penultimate entry from all histories: >
+			:history all -2
+<
+		List the most recent two entries from all histories: >
+			:history all -2,
 
 :keepp[atterns] {command}			*:keepp* *:keeppatterns*
 		Execute {command}, without adding anything to the search
@@ -358,7 +361,7 @@ These are the commands that can be used:
 							*c_CTRL-D*
 CTRL-D		List names that match the pattern in front of the cursor.
 		When showing file names, directories are highlighted (see
-		'highlight' option).  Names where 'suffixes' matches are moved
+		|highlight-groups|).  Names where 'suffixes' matches are moved
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
@@ -416,6 +419,9 @@ a previous version <Esc> was used).  In the pattern standard wildcards '*' and
 matches exactly one character.
 
 The 'wildignorecase' option can be set to ignore case in filenames.
+
+The 'wildmenu' option can be set to show the matches just above the command
+line.
 
 If you like tcsh's autolist completion, you can use this mapping:
 	:cnoremap X <C-L><C-D>
@@ -775,6 +781,7 @@ Also see |`=|.
 			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
 			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
 			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
+			       *:<cexpr>* *<cexpr>*
 			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
 Note: these are typed literally, they are not special keys!
 	<cword>    is replaced with the word under the cursor (like |star|)
@@ -782,7 +789,8 @@ Note: these are typed literally, they are not special keys!
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name
-		   for a file read or write.
+		   of the buffer being manipulated, or the file for a read or
+		   write.
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
@@ -1080,7 +1088,7 @@ Another example: >
 	:au CmdwinEnter [/?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
 
-						*cmdwin-char*
+					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
 	:	normal Ex command
 	>	debug mode command |debug-mode|

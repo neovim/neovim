@@ -14,7 +14,7 @@ For an introduction to the most common features, see |usr_45.txt| in the user
 manual.
 For changing the language of messages and menus see |mlang.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Getting started						*mbyte-first*

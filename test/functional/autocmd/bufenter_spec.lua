@@ -31,4 +31,17 @@ describe('autocmd BufEnter', function()
     eq(1, eval("exists('g:dir_bufenter')"))  -- Did BufEnter for the directory.
     eq(2, eval("bufnr('%')"))                -- Switched to the dir buffer.
   end)
+
+  it('triggered by ":split normal|:help|:bw"', function()
+    command("split normal")
+    command("wincmd j")
+    command("helptags runtime/doc")
+    command("help")
+    command("wincmd L")
+    command("autocmd BufEnter normal let g:bufentered = 1")
+    command("bw")
+    eq(1, eval('bufnr("%")')) -- The cursor is back to the bottom window
+    eq(0, eval("exists('g:bufentered')")) -- The autocmd hasn't been triggered
+  end)
+
 end)

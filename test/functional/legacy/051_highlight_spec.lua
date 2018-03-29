@@ -8,8 +8,6 @@ local eq = helpers.eq
 local wait = helpers.wait
 local exc_exec = helpers.exc_exec
 
-if helpers.pending_win32(pending) then return end
-
 describe(':highlight', function()
   setup(clear)
 
@@ -37,6 +35,7 @@ describe(':highlight', function()
     feed('q')
     wait() -- wait until we're back to normal
     command('hi Search')
+    command('hi Normal')
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning

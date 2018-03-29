@@ -11,7 +11,7 @@ commands with the "." command.
 
 For inserting text see |insert.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Deleting text					*deleting* *E470*
@@ -648,6 +648,7 @@ g&			Synonym for `:%s//~/&` (repeat last substitute with
 							*:s_flags*
 The flags that you can use for the substitute commands:
 
+							*:&&*
 [&]	Must be the first one: Keep the flags from the previous substitute
 	command.  Examples: >
 		:&&
@@ -861,8 +862,7 @@ Exceptions:
 Substitute with an expression			*sub-replace-expression*
 						*sub-replace-\=* *s/\=*
 When the substitute string starts with "\=" the remainder is interpreted as an
-expression.  This does not work recursively: a |substitute()| function inside
-the expression cannot use "\=" for the substitute string.
+expression.
 
 The special meaning for characters as mentioned at |sub-replace-special| does
 not apply except for "<CR>".  A <NL> character is used as a line break, you

@@ -2,8 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, clear, eval, feed =
   helpers.eq, helpers.clear, helpers.eval, helpers.feed
 
-if helpers.pending_win32(pending) then return end
-
 describe('K', function()
   local test_file = 'K_spec_out'
   before_each(function()
@@ -29,7 +27,7 @@ describe('K', function()
   it("invokes non-prefixed 'keywordprg' as shell command", function()
     helpers.source([[
       let @a='fnord'
-      set keywordprg=echo\ fnord\ >>]])
+      set keywordprg=echo\ fnord>>]])
 
     -- K on the text "K_spec_out" resolves to `!echo fnord >> K_spec_out`.
     feed('i'..test_file..'<ESC>K')

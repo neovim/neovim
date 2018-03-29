@@ -7,6 +7,9 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe('breakindent', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
+  -- luacheck: ignore 611 (Line contains only whitespaces)
   it('is working', function()
     insert('dummy text')
 

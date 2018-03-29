@@ -19,21 +19,23 @@ get_jobs_num() {
 
 help() {
   echo 'Usage:'
-  echo '  pvscheck.sh [--pvs URL] [--deps] [target-directory [branch]]'
-  echo '  pvscheck.sh [--pvs URL] [--recheck|--only-analyse] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] [--deps] [--environment-cc]'
+  echo '              [target-directory [branch]]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck] [--environment-cc]'
+  echo '              [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] --only-analyse [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
-  echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
-  echo '           By default latest tested version is used.'
-  echo
-  echo '           May use "--pvs detect" to try detecting latest version.'
-  echo '           That assumes certain viva64.com site properties and'
-  echo '           may be broken by the site update.'
+  echo '    --pvs: Fetch pvs-studio from URL.'
+  echo '    --pvs detect: Auto-detect latest version (by scraping viva64.com).'
   echo
   echo '    --deps: (for regular run) Use top-level Makefile and build deps.'
   echo '            Without this it assumes all dependencies are already'
   echo '            installed.'
+  echo
+  echo '    --environment-cc: (for regular run and --recheck) Do not export'
+  echo '                      CC=clang. Build is still run with CFLAGS=-O0.'
   echo
   echo '    --only-build: (for --patch) Only patch files in ./build directory.'
   echo
@@ -270,8 +272,11 @@ install_pvs() {(
 create_compile_commands() {(
   local tgt="$1" ; shift
   local deps="$1" ; shift
+  local environment_cc="$1" ; shift
 
-  export CC=clang
+  if test -z "$environment_cc" ; then
+    export CC=clang
+  fi
   export CFLAGS=' -O0 '
 
   if test -z "$deps" ; then
@@ -338,37 +343,61 @@ run_analysis() {(
 
   cd "$tgt"
 
+  # pvs-studio-analyzer exits with a non-zero exit code when there are detected
+  # errors, so ignore its return
   pvs-studio-analyzer \
     analyze \
       --threads "$(get_jobs_num)" \
       --output-file PVS-studio.log \
       --verbose \
       --file build/compile_commands.json \
-      --sourcetree-root .
+      --sourcetree-root . || true
 
   plog-converter -t xml -o PVS-studio.xml PVS-studio.log
   plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
   plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
 )}
 
+detect_url() {
+  local url="${1:-detect}"
+  if test "$url" = detect ; then
+    curl --silent -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
+    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz' \
+    || echo FAILED
+  else
+    printf '%s' "$url"
+  fi
+}
+
 do_check() {
   local tgt="$1" ; shift
   local branch="$1" ; shift
   local pvs_url="$1" ; shift
   local deps="$1" ; shift
+  local environment_cc="$1" ; shift
+
+  if test -z "$pvs_url" || test "$pvs_url" = FAILED ; then
+    pvs_url="$(detect_url detect)"
+    if test -z "$pvs_url" || test "$pvs_url" = FAILED ; then
+      echo "failed to auto-detect PVS URL"
+      exit 1
+    fi
+    echo "Auto-detected PVS URL: ${pvs_url}"
+  fi
 
   git clone --branch="$branch" . "$tgt"
 
   install_pvs "$tgt" "$pvs_url"
 
-  do_recheck "$tgt" "$deps"
+  do_recheck "$tgt" "$deps" "$environment_cc"
 }
 
 do_recheck() {
   local tgt="$1" ; shift
   local deps="$1" ; shift
+  local environment_cc="$1" ; shift
 
-  create_compile_commands "$tgt" "$deps"
+  create_compile_commands "$tgt" "$deps" "$environment_cc"
 
   do_analysis "$tgt"
 }
@@ -386,28 +415,18 @@ do_analysis() {
   run_analysis "$tgt"
 }
 
-detect_url() {
-  local url="${1:-detect}"
-  if test "$url" = detect ; then
-    curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
-    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
-  else
-    printf '%s' "$url"
-  fi
-}
-
 main() {
-  local def_pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
   eval "$(
     getopts_long \
       help store_const \
-      pvs 'modify detect_url pvs_url "${def_pvs_url}"' \
+      pvs 'modify detect_url pvs_url' \
       patch store_const \
       only-build 'store_const --only-build' \
       recheck store_const \
       only-analyse store_const \
       pvs-install store_const \
       deps store_const \
+      environment-cc store_const \
       -- \
       'modify realdir tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
@@ -419,18 +438,18 @@ main() {
     return 0
   fi
 
-  set -x
+  # set -x
 
   if test -n "$patch" ; then
     patch_sources "$tgt" "$only_build"
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
-    do_recheck "$tgt" "$deps"
+    do_recheck "$tgt" "$deps" "$environment_cc"
   elif test -n "$only_analyse" ; then
     do_analysis "$tgt"
   else
-    do_check "$tgt" "$branch" "$pvs_url" "$deps"
+    do_check "$tgt" "$branch" "$pvs_url" "$deps" "$environment_cc"
   fi
 }
 

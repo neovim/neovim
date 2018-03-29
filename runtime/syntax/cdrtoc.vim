@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         cdrdao(1) TOC file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-05-10
+" Language:             cdrdao(1) TOC file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-05-10
 
 if exists("b:current_syntax")
   finish

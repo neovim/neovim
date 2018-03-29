@@ -1,4 +1,4 @@
-bit = require 'bit'
+local bit = require 'bit'
 
 -- Description of the values below is contained in ex_cmds_defs.h file.
 local RANGE      =    0x001
@@ -108,7 +108,7 @@ return {
   },
   {
     command='argedit',
-    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILE1, EDITCMD, ARGOPT, TRLBAR),
+    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILES, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_ARGUMENTS,
     func='ex_argedit',
   },
@@ -451,6 +451,12 @@ return {
     func='ex_changes',
   },
   {
+    command='checkhealth',
+    flags=bit.bor(EXTRA, TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_checkhealth',
+  },
+  {
     command='checkpath',
     flags=bit.bor(TRLBAR, BANG, CMDWIN),
     addr_type=ADDR_LINES,
@@ -614,7 +620,7 @@ return {
   },
   {
     command='cquit',
-    flags=bit.bor(TRLBAR, BANG),
+    flags=bit.bor(RANGE, NOTADR, COUNT, ZEROR, TRLBAR, BANG),
     addr_type=ADDR_LINES,
     func='ex_cquit',
   },
@@ -628,13 +634,13 @@ return {
     command='cscope',
     flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
     addr_type=ADDR_LINES,
-    func='do_cscope',
+    func='ex_cscope',
   },
   {
     command='cstag',
     flags=bit.bor(BANG, TRLBAR, WORD1),
     addr_type=ADDR_LINES,
-    func='do_cstag',
+    func='ex_cstag',
   },
   {
     command='cunmap',
@@ -686,7 +692,7 @@ return {
   },
   {
     command='delcommand',
-    flags=bit.bor(NEEDARG, WORD1, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delcommand',
   },
@@ -1076,7 +1082,7 @@ return {
   },
   {
     command='hide',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EXTRA, NOTRLCOM),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EXTRA, TRLBAR),
     addr_type=ADDR_WINDOWS,
     func='ex_hide',
   },
@@ -1324,7 +1330,7 @@ return {
     command='lcscope',
     flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
     addr_type=ADDR_LINES,
-    func='do_cscope',
+    func='ex_cscope',
   },
   {
     command='ldo',
@@ -2334,7 +2340,7 @@ return {
     command='scscope',
     flags=bit.bor(EXTRA, NOTRLCOM),
     addr_type=ADDR_LINES,
-    func='do_scscope',
+    func='ex_scscope',
   },
   {
     command='set',
