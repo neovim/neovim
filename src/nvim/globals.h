@@ -959,7 +959,7 @@ EXTERN int fill_diff INIT(= '-');
 EXTERN int fold_chars[] INIT(= {
   '|',     // kFoldOpenMid
   '-',     // kFoldOpenStart
-  '^',     // kFoldOpenLast
+  9492,    // kFoldOpenLast └
   '+'      // kFoldClosed
 });
 

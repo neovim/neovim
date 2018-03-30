@@ -3414,7 +3414,7 @@ static char_u *set_chars_option(char_u **varp)
     { &fold_chars[kFoldOpenStart],  "foldopen", '-' },
     { &fold_chars[kFoldClosed],     "foldclose", '+' },
     { &fold_chars[kFoldOpenMid],    "foldsep", '|' },
-    { &fold_chars[kFoldOpenLast],   "foldend", '^' },
+    { &fold_chars[kFoldOpenLast],   "foldend", 9492 },  // └
   };
   static struct charstab lcstab[] = {
     { &lcs_eol,      "eol",      NUL },
@@ -4341,7 +4341,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
   } else if (pp == &curwin->w_p_nuw) {
-    curwin->w_nrwidth_line_count = 0;
+    // curwin->w_nrwidth_line_count = 0;
   }
 
 
