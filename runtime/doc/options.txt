@@ -6927,7 +6927,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	character already was displayed by the UI.  For debugging purposes.
 
 	Once writedelay is set to some postitive or negative integer, it
-	can be reset to 0 by triggering two inturrupts (Hitting <C-C> two
+	can be reset to 0 by triggering two interrupts (Hitting <C-C> two
 	times)
 
  vim:tw=78:ts=8:ft=help:noet:norl:
