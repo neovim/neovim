@@ -438,16 +438,6 @@ void ui_puts(uint8_t *str)
       ui_linefeed();
     }
     p += clen;
-
-    if (p_wd) {  // 'writedelay': flush & delay each time.
-      ui_flush();
-      if (!((got_int || (did_emsg && force_abort) || current_exception))){
-        uint64_t wd = (uint64_t)labs(p_wd);
-        os_delay(wd, false);
-      } else {
-        p_wd = 0;
-      }
-    }
   }
 }
 

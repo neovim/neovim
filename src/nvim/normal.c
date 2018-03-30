@@ -1186,6 +1186,7 @@ static void normal_check_interrupt(NormalState *s)
       }
       got_int = false;
     }
+    if (s->previous_got_int) { p_wd = 0; }
     s->previous_got_int = true;
   } else {
     s->previous_got_int = false;
