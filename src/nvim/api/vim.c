@@ -142,8 +142,13 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   } else {
       keys_esc = keys.data;
   }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-      insert ? 0 : typebuf.tb_len, !typed, false);
+
+  int remap_arg = remap ? REMAP_YES : REMAP_NONE;
+  if (insert) {
+    prepend_buf_pri((char_u *)keys_esc, remap_arg, !typed, false);
+  } else {
+    ins_typebuf((char_u *)keys_esc, remap_arg, typebuf.tb_len, !typed, false);
+  }
 
   if (escape_csi) {
       xfree(keys_esc);

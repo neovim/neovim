@@ -237,6 +237,65 @@ char_u *get_inserted(void)
   return get_buffcont(&redobuff, FALSE);
 }
 
+///
+/// Prepend string to the head of current block of the given buffer.
+///
+static void prepend_buf(buffheader_T *buf, char_u *s)
+{
+  size_t slen = STRLEN(s);
+
+  if (buf->bh_index >= slen) {
+    // Easy case
+    buf->bh_index -= slen;
+    memmove(buf->bh_first.b_next->b_str + buf->bh_index, s, slen);
+  } else {
+    // Need to allocate a new buffer block
+    size_t len;
+    if (slen < MINIMAL_SIZE) {
+      len = MINIMAL_SIZE;
+    } else {
+      len = (size_t)slen;
+    }
+    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
+    memmove(p->b_str, s, slen);
+    char_u *str_head = buf->bh_first.b_next->b_str + buf->bh_index;
+    memmove(p->b_str + slen, str_head, STRLEN(str_head) + 1);
+
+    p->b_next = buf->bh_first.b_next->b_next;
+    buf->bh_first.b_next = p;
+  }
+
+  return;
+}
+
+/// Prepend string to the current block of the buffer with highest priority.
+///
+/// The priority of buffers are "readbuf1 > readbuf2 > typebuf".
+/// In order feedkeys(keys, "n") to behave as we expect, feedkeys(keys, "n")
+/// should prepend the keys according to this priority order.
+///   1. if readbuf1 has contents, prepend into readbuf1
+///   2. if readbuf1 is empty and readbuf2 has contents, prepend into readbuf2
+///   3. otherwise prepend into typebuf
+/// Return FAIL for failure in ins_typebuf, otherwise OK.
+/// K_SPECIAL and CSI should have been escaped already.
+///
+/// @param[in]  s  String to prepend.
+/// @param[in]  noremap   passed to ins_typebuf.
+/// @param[in]  nottyped  passed to ins_typebuf.
+/// @param[in]  silent    passed to ins_typebuf.
+int prepend_buf_pri(char_u *s, int noremap, int nottyped, bool silent)
+{
+  if (read_readbuf(&readbuf1, false) != NUL) {
+    prepend_buf(&readbuf1, s);
+    return OK;
+  } else if (read_readbuf(&readbuf2, false) != NUL) {
+    prepend_buf(&readbuf2, s);
+    return OK;
+  } else {
+    return ins_typebuf(s, noremap, 0, nottyped, silent);
+  }
+}
+
 /// Add string after the current block of the given buffer
 ///
 /// K_SPECIAL and CSI should have been escaped already.
