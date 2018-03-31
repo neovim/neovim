@@ -2036,6 +2036,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			column of the last screen line.  Overrules "lastline".
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
+	msgsep		When showing messages longer than 'cmdheight' lines,
+			only scroll the message lines and not the entire
+			screen. This also shows a separator line filled with
+			chars determined by 'fillchars' option, and
+			highlighted with the |MsgSeparator| group.
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
@@ -2390,6 +2395,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  vert:c	'│' or '|'	vertical separators |:vsplit|
 	  fold:c	'·' or '-'	filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
+	  msgsep:c	' '		message separator 'display'
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='

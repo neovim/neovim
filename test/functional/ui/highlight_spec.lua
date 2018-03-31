@@ -94,6 +94,7 @@ describe('highlight defaults', function()
     clear()
     screen = Screen.new()
     screen:attach()
+    command("set display-=msgsep")
   end)
 
   after_each(function()
@@ -670,6 +671,76 @@ describe("'listchars' highlight", function()
       {0:~                   }|
       {0:~                   }|
                           |
+    ]])
+  end)
+end)
+
+describe("MsgSeparator highlight and msgsep fillchar", function()
+  before_each(clear)
+  it("works", function()
+    local screen = Screen.new(50,5)
+    screen:set_default_attr_ids({
+      [1] = {bold=true, foreground=Screen.colors.Blue},
+      [2] = {bold=true, reverse=true},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [4] = {background = Screen.colors.Cyan, bold = true, reverse = true},
+      [5] = {bold = true, background = Screen.colors.Magenta}
+    })
+    screen:attach()
+
+    -- defaults
+    feed_command("ls")
+    screen:expect([[
+                                                        |
+      {2:                                                  }|
+      :ls                                               |
+        1 %a   "[No Name]"                    line 1    |
+      {3:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+
+    feed_command("set fillchars+=msgsep:-")
+    feed_command("ls")
+    screen:expect([[
+                                                        |
+      {2:--------------------------------------------------}|
+      :ls                                               |
+        1 %a   "[No Name]"                    line 1    |
+      {3:Press ENTER or type command to continue}^           |
+    ]])
+
+    -- linked to StatusLine per default
+    feed_command("hi StatusLine guibg=Cyan")
+    feed_command("ls")
+    screen:expect([[
+                                                        |
+      {4:--------------------------------------------------}|
+      :ls                                               |
+        1 %a   "[No Name]"                    line 1    |
+      {3:Press ENTER or type command to continue}^           |
+    ]])
+
+    -- but can be unlinked
+    feed_command("hi clear MsgSeparator")
+    feed_command("hi MsgSeparator guibg=Magenta gui=bold")
+    feed_command("ls")
+    screen:expect([[
+                                                        |
+      {5:--------------------------------------------------}|
+      :ls                                               |
+        1 %a   "[No Name]"                    line 1    |
+      {3:Press ENTER or type command to continue}^           |
+    ]])
+
+    -- when display doesn't contain msgsep, these options have no effect
+    feed_command("set display-=msgsep")
+    feed_command("ls")
+    screen:expect([[
+      {1:~                                                 }|
+      {1:~                                                 }|
+      :ls                                               |
+        1 %a   "[No Name]"                    line 1    |
+      {3:Press ENTER or type command to continue}^           |
     ]])
   end)
 end)

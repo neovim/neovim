@@ -40,10 +40,10 @@ describe("shell command :!", function()
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
     screen:expect([[
+                                                        |
       {4:~                                                 }|
       {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {5:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |
       {3:-- TERMINAL --}                                    |
@@ -99,6 +99,7 @@ describe("shell command :!", function()
     end
     local screen = Screen.new(50, 4)
     screen:attach()
+    command("set display-=msgsep")
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
     screen:expect([[
@@ -153,6 +154,7 @@ describe("shell command :!", function()
         [1] = {bold = true, foreground = Screen.colors.Blue1},
         [2] = {foreground = Screen.colors.Blue1},
         [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+        [4] = {bold = true, reverse = true},
       })
       screen:attach()
     end)
@@ -170,10 +172,10 @@ describe("shell command :!", function()
         or  [[:!ls bang_filter_spec    ]])
       feed([[\l]])
       screen:expect([[
+                                                             |
         {1:~                                                    }|
         {1:~                                                    }|
-        {1:~                                                    }|
-        {1:~                                                    }|
+        {4:                                                     }|
         ]]..result..[[                            |
         f1                                                   |
         f2                                                   |
@@ -187,9 +189,9 @@ describe("shell command :!", function()
       feed_command('!cat test/functional/fixtures/shell_data.txt')
       screen.bell = false
       screen:expect([[
+                                                             |
         {1:~                                                    }|
-        {1:~                                                    }|
-        {1:~                                                    }|
+        {4:                                                     }|
         :!cat test/functional/fixtures/shell_data.txt        |
         {2:^@^A^B^C^D^E^F^H}                                     |
         {2:^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_}                 |
@@ -213,8 +215,8 @@ describe("shell command :!", function()
       feed_command(cmd)
       -- Note: only the first example of split composed char works
       screen:expect([[
-        {1:~                                                    }|
-        {1:~                                                    }|
+                                                             |
+        {4:                                                     }|
         :]]..cmd..[[                                 |
         å                                                    |
         ref: å̲                                               |

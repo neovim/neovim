@@ -87,6 +87,7 @@ describe('debug.debug', function()
       E = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       cr = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
+    command("set display-=msgsep")
   end)
   it('works', function()
     command([[lua

@@ -26,6 +26,7 @@ describe('ui/mouse/input', function()
       [4] = {reverse = true},
       [5] = {bold = true, reverse = true},
     })
+    command("set display-=msgsep")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
     screen:expect([[
       testing                  |

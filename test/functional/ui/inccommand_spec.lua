@@ -63,6 +63,7 @@ local function common_setup(screen, inccommand, text)
     command("syntax on")
     command("set nohlsearch")
     command("hi Substitute guifg=red guibg=yellow")
+    command("set display-=msgsep")
     screen:attach()
     screen:set_default_attr_ids({
       [1]  = {foreground = Screen.colors.Fuchsia},

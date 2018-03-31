@@ -1875,13 +1875,29 @@ bool message_filtered(char_u *msg)
   return cmdmod.filter_force ? match : !match;
 }
 
+/// including horizontal separator
+int msg_scrollsize(void)
+{
+  return msg_scrolled + p_ch + 1;
+}
+
 /*
  * Scroll the screen up one line for displaying the next message line.
  */
 static void msg_scroll_up(void)
 {
-  /* scrolling up always works */
-  screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  if (dy_flags & DY_MSGSEP) {
+    if (msg_scrolled == 0) {
+      screen_fill(Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,
+                  fill_msgsep, fill_msgsep, hl_attr(HLF_MSGSEP));
+    }
+    int nscroll = MIN(msg_scrollsize()+1, Rows);
+    ui_call_set_scroll_region(Rows-nscroll, Rows-1, 0, Columns-1);
+    screen_del_lines(Rows-nscroll, 0, 1, nscroll, NULL);
+    ui_reset_scroll_region();
+  } else {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  }
 }
 
 /*
