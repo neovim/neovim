@@ -924,7 +924,7 @@ restofline:
         if (qfprev == NULL) {
           return QF_FAIL;
         }
-        if (*fields->errmsg && !qi->qf_multiignore) {
+        if (*fields->errmsg) {
           size_t len = STRLEN(qfprev->qf_text);
           qfprev->qf_text = xrealloc(qfprev->qf_text,
                                      len + STRLEN(fields->errmsg) + 2);
