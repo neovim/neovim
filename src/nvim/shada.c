@@ -2255,6 +2255,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
                                entry.data.filemark.mark)
                 && strcmp(wms_entry.data.filemark.fname,
                           entry.data.filemark.fname) == 0) {
+              shada_free_shada_entry(&entry);
               processed_mark = true;
               break;
             }
@@ -2262,6 +2263,8 @@ static inline ShaDaWriteResult shada_read_when_writing(
               processed_mark = true;
               if (i < ARRAY_SIZE(wms->numbered_marks)) {
                 replace_numbered_mark(wms, i, pfs_entry);
+              } else {
+                shada_free_shada_entry(&entry);
               }
               break;
             }
@@ -2539,7 +2542,7 @@ static inline void replace_numbered_mark(WriteMergerState *const wms,
   }
   for (size_t i = idx; i < ARRAY_SIZE(wms->numbered_marks) - 1; i++) {
     if (wms->numbered_marks[i].data.type == kSDItemGlobalMark) {
-      wms->numbered_marks[i].data.data.filemark.name = '0' + (char)i;
+      wms->numbered_marks[i].data.data.filemark.name = '0' + (char)i + 1;
     }
   }
   memmove(wms->numbered_marks + idx + 1, wms->numbered_marks + idx,
@@ -2781,6 +2784,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   // Initialize global marks
   if (dump_global_marks) {
     const void *global_mark_iter = NULL;
+    size_t digit_mark_idx = 0;
     do {
       char name = NUL;
       xfmark_T fm;
@@ -2803,24 +2807,26 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         }
         fname = (const char *) buf->b_ffname;
       }
-      *(ascii_isdigit(name)
-        ? &wms->numbered_marks[name - '0']
-        : &wms->global_marks[mark_global_index(name)]) = (
-            (PossiblyFreedShadaEntry) {
-              .can_free_entry = false,
-              .data = {
-                .type = kSDItemGlobalMark,
-                .timestamp = fm.fmark.timestamp,
-                .data = {
-                  .filemark = {
-                    .mark = fm.fmark.mark,
-                    .name = name,
-                    .additional_data = fm.fmark.additional_data,
-                    .fname = (char *)fname,
-                  }
-                }
-              },
-            });
+      const PossiblyFreedShadaEntry pf_entry = {
+        .can_free_entry = false,
+        .data = {
+          .type = kSDItemGlobalMark,
+          .timestamp = fm.fmark.timestamp,
+          .data = {
+            .filemark = {
+              .mark = fm.fmark.mark,
+              .name = name,
+              .additional_data = fm.fmark.additional_data,
+              .fname = (char *)fname,
+            }
+          }
+        },
+      };
+      if (ascii_isdigit(name)) {
+        replace_numbered_mark(wms, digit_mark_idx++, pf_entry);
+      } else {
+        wms->global_marks[mark_global_index(name)] = pf_entry;
+      }
     } while (global_mark_iter != NULL);
   }
 
