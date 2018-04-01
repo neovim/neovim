@@ -2542,14 +2542,14 @@ static inline void replace_numbered_mark(WriteMergerState *const wms,
   }
   for (size_t i = idx; i < ARRAY_SIZE(wms->numbered_marks) - 1; i++) {
     if (wms->numbered_marks[i].data.type == kSDItemGlobalMark) {
-      wms->numbered_marks[i].data.data.filemark.name = '0' + (char)i + 1;
+      wms->numbered_marks[i].data.data.filemark.name = (char)('0' + (int)i + 1);
     }
   }
   memmove(wms->numbered_marks + idx + 1, wms->numbered_marks + idx,
           sizeof(wms->numbered_marks[0])
           * (ARRAY_SIZE(wms->numbered_marks) - 1 - idx));
   wms->numbered_marks[idx] = entry;
-  wms->numbered_marks[idx].data.data.filemark.name = '0' + (char)idx;
+  wms->numbered_marks[idx].data.data.filemark.name = (char)('0' + (int)idx);
 }
 
 /// Write ShaDa file
