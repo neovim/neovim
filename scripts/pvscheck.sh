@@ -302,8 +302,16 @@ create_compile_commands() {(
 # realpath is not available in Ubuntu trusty yet.
 realdir() {(
   local dir="$1"
-  cd "$dir"
-  printf '%s\n' "$PWD"
+  local add=""
+  while ! cd "$dir" 2>/dev/null ; do
+    add="${dir##*/}/$add"
+    local new_dir="${dir%/*}"
+    if test "$new_dir" = "$dir" ; then
+      return 1
+    fi
+    dir="$new_dir"
+  done
+  printf '%s\n' "$PWD/$add"
 )}
 
 patch_sources() {(
