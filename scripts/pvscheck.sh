@@ -361,10 +361,10 @@ run_analysis() {(
       --file build/compile_commands.json \
       --sourcetree-root . || true
 
-  plog-converter -t xml -o PVS-studio.xml PVS-studio.log
-  plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
-  plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
-  plog-converter -t fullhtml -o PVS-studio.html.d PVS-studio.log
+  plog-converter -r . -t xml -o PVS-studio.xml PVS-studio.log
+  plog-converter -r . -t errorfile -o PVS-studio.err PVS-studio.log
+  plog-converter -r . -t tasklist -o PVS-studio.tsk PVS-studio.log
+  plog-converter -r . -t fullhtml -o PVS-studio.html.d PVS-studio.log
 )}
 
 detect_url() {
