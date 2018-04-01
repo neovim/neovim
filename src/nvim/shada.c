@@ -16,6 +16,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/vim.h"
+#include "nvim/pos.h"
 #include "nvim/ascii.h"
 #include "nvim/shada.h"
 #include "nvim/message.h"
@@ -2019,6 +2020,113 @@ shada_parse_msgpack_extra_bytes:
     msgpack_unpacked_destroy(&unpacked);
     xfree(buf);
   }
+  return ret;
+}
+
+/// Format shada entry for debugging purposes
+///
+/// @param[in]  entry  ShaDa entry to format.
+///
+/// @return string representing ShaDa entry in a static buffer.
+static const char *shada_format_entry(const ShadaEntry entry)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
+{
+  static char ret[1024];
+  ret[0] = 0;
+  vim_snprintf(S_LEN(ret), "[ ] ts=%" PRIu64 " ");
+  //                         ^ Space for `can_free_entry`
+  switch (entry.type) {
+    case kSDItemMissing: {
+      vim_snprintf_add(S_LEN(ret), "Missing");
+      break;
+    }
+    case kSDItemHeader: {
+      vim_snprintf_add(S_LEN(ret), "Header { TODO }");
+      break;
+    }
+    case kSDItemBufferList: {
+      vim_snprintf_add(S_LEN(ret), "BufferList { TODO }");
+      break;
+    }
+    case kSDItemUnknown: {
+      vim_snprintf_add(S_LEN(ret), "Unknown { TODO }");
+      break;
+    }
+    case kSDItemSearchPattern: {
+      vim_snprintf_add(S_LEN(ret), "SearchPattern { TODO }");
+      break;
+    }
+    case kSDItemSubString: {
+      vim_snprintf_add(S_LEN(ret), "SubString { TODO }");
+      break;
+    }
+    case kSDItemHistoryEntry: {
+      vim_snprintf_add(S_LEN(ret), "HistoryEntry { TODO }");
+      break;
+    }
+    case kSDItemRegister: {
+      vim_snprintf_add(S_LEN(ret), "Register { TODO }");
+      break;
+    }
+    case kSDItemVariable: {
+      vim_snprintf_add(S_LEN(ret), "Variable { TODO }");
+      break;
+    }
+#define FORMAT_MARK_ENTRY(entry_name, name_fmt, name_fmt_arg) \
+    do { \
+      typval_T ad_tv = { \
+        .v_type = VAR_DICT, \
+        .vval.v_dict = entry.data.filemark.additional_data \
+      }; \
+      size_t ad_len; \
+      char *const ad = encode_tv2string(&ad_tv, &ad_len); \
+      vim_snprintf_add( \
+          S_LEN(ret), \
+          entry_name " {" name_fmt " file=[%zu]\"%.512s\", " \
+          "pos={l=%" PRIdLINENR ",c=%" PRIdCOLNR ",a=%" PRIdCOLNR "}, " \
+          "ad={%p:[%zu]%.64s} }", \
+          name_fmt_arg, \
+          strlen(entry.data.filemark.fname), \
+          entry.data.filemark.fname, \
+          entry.data.filemark.mark.lnum, \
+          entry.data.filemark.mark.col, \
+          entry.data.filemark.mark.coladd, \
+          entry.data.filemark.additional_data, \
+          ad_len, \
+          ad); \
+    } while (0)
+    case kSDItemGlobalMark: {
+      FORMAT_MARK_ENTRY("GlobalMark", " name='%c',", entry.data.filemark.name);
+      break;
+    }
+    case kSDItemChange: {
+      FORMAT_MARK_ENTRY("Change", "%s", "");
+      break;
+    }
+    case kSDItemLocalMark: {
+      FORMAT_MARK_ENTRY("LocalMark", " name='%c',", entry.data.filemark.name);
+      break;
+    }
+    case kSDItemJump: {
+      FORMAT_MARK_ENTRY("Jump", "%s", "");
+      break;
+    }
+#undef FORMAT_MARK_ENTRY
+  }
+  return ret;
+}
+
+/// Format possibly freed shada entry for debugging purposes
+///
+/// @param[in]  entry  ShaDa entry to format.
+///
+/// @return string representing ShaDa entry in a static buffer.
+static const char *shada_format_pfreed_entry(
+    const PossiblyFreedShadaEntry pfs_entry)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_UNUSED FUNC_ATTR_NONNULL_RET
+{
+  char *ret = (char *)shada_format_entry(pfs_entry.data);
+  ret[1] = (pfs_entry.can_free_entry ? 'T' : 'F');
   return ret;
 }
 
