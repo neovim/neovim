@@ -525,6 +525,22 @@ describe('ShaDa marks support code', function()
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
+  it('can merge with file with mark 9 as the only numeric mark', function()
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161n9')
+    eq(0, exc_exec(sdrcmd()))
+    nvim_command('normal! `9oabc')
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local found = {}
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
+      end
+    end
+    eq({['0']=1, ['1']=1}, found)
+  end)
+
   it('uses last A mark with gt timestamp from file when reading with !',
   function()
     wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
