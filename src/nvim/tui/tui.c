@@ -40,6 +40,10 @@
 #include "nvim/syntax.h"
 #include "nvim/macros.h"
 
+#ifdef WIN32
+# include "nvim/os/cygterm.h"
+#endif
+
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
 #define CNORM_COMMAND_MAX_SIZE 32
@@ -83,6 +87,9 @@ typedef struct {
     uv_pipe_t pipe;
   } output_handle;
   bool out_isatty;
+#ifdef WIN32
+  CygTerm *cygterm;
+#endif
   SignalWatcher winch_handle, cont_handle;
   bool cont_received;
   UGrid grid;
@@ -197,6 +204,9 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
+#ifdef WIN32
+  data->cygterm = cygterm_new(fileno(stdin));
+#endif
 
   // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
@@ -248,7 +258,11 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
   uv_loop_init(&data->write_loop);
+#ifdef WIN32
+  if (data->out_isatty && !data->cygterm) {
+#else
   if (data->out_isatty) {
+#endif
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
 #ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
@@ -1229,11 +1243,19 @@ static void update_size(UI *ui)
   }
 
   // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
+#ifdef WIN32
+  if (data->out_isatty && !data->cygterm
+#else
   if (data->out_isatty
+#endif
       && !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
+#ifdef WIN32
+  } else if (data->cygterm
+            && cygterm_get_winsize(data->cygterm, &width, &height)) {
+    goto end;
+#endif
   }
-
   // 3 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
@@ -1780,9 +1802,22 @@ static void flush_buf(UI *ui)
     data->is_invisible = data->busy;
   }
 
+#ifdef WIN32
+  if (data->cygterm) {
+    // Workaround of issue that writing to pipe fails if nbumf >= 2
+    for (unsigned int i = 0; i < (unsigned)(bufp - bufs); i++) {
+      uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
+               &bufs[i], 1, NULL);
+      uv_run(&data->write_loop, UV_RUN_DEFAULT);
+    }
+  } else {
+#endif
   uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
            bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
+#ifdef WIN32
+  }
+#endif
   data->bufpos = 0;
   data->overflow = false;
 }

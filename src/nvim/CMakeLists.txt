@@ -124,6 +124,9 @@ foreach(sfile ${NVIM_SOURCES})
   if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if (NOT WIN32 AND ${f} MATCHES "^(cygterm.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
@@ -405,6 +408,24 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
+if(WIN32)
+  if(MSVC)
+    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
+    if("${TARGET_ARCH}" STREQUAL "X86_64")
+      list(APPEND NVIM_EXEC_LINK_LIBRARIES /ENTRY:cygloadCRTStartup)
+    elseif("${TARGET_ARCH}" STREQUAL "X86")
+      list(APPEND NVIM_EXEC_LINK_LIBRARIES /ENTRY:_cygloadCRTStartup@0)
+    endif()
+  else()
+    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
+    if("${TARGET_ARCH}" STREQUAL "X86_64")
+      list(APPEND NVIM_EXEC_LINK_LIBRARIES -Wl,-entry -Wl,cygloadCRTStartup)
+    elseif("${TARGET_ARCH}" STREQUAL "X86")
+      list(APPEND NVIM_EXEC_LINK_LIBRARIES -Wl,-entry -Wl,_cygloadCRTStartup@0)
+    endif()
+  endif()
+endif()
+
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
@@ -555,6 +576,7 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
+  os/cygterm.h
   os/win_defs.h
   os/pty_process_win.h
 )

@@ -29,6 +29,10 @@
 #include "nvim/state.h"
 #include "nvim/msgpack_rpc/channel.h"
 
+#ifdef WIN32
+#include "nvim/os/cygterm.h"
+#endif
+
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
 
@@ -174,64 +178,6 @@ void input_disable_events(void)
   events_enabled--;
 }
 
-#ifdef WIN32
-// Hack to detect mintty, ported from vim
-// https://fossies.org/linux/vim/src/iscygpty.c
-// See https://github.com/BurntSushi/ripgrep/issues/94#issuecomment-261745480
-// for an explanation on why this works
-static bool msys_tty_on_handle(int fd)
-{
-  const int size = sizeof(FILE_NAME_INFO) + sizeof(WCHAR) * MAX_PATH;
-  WCHAR *p = NULL;
-
-  const HANDLE h = (HANDLE)_get_osfhandle(fd);
-  if (h == INVALID_HANDLE_VALUE) {
-    return false;
-  }
-  // Cygwin/msys's pty is a pipe.
-  if (GetFileType(h) != FILE_TYPE_PIPE) {
-    return false;
-  }
-  FILE_NAME_INFO *nameinfo = xmalloc(size);
-  if (nameinfo == NULL) {
-    return false;
-  }
-  // Check the name of the pipe:
-  // '\{cygwin,msys}-XXXXXXXXXXXXXXXX-ptyN-{from,to}-master'
-  if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, size)) {
-    nameinfo->FileName[nameinfo->FileNameLength / sizeof(WCHAR)] = L'\0';
-    p = nameinfo->FileName;
-    if (wcsstr(p, L"\\cygwin-") == p) {
-      p += 8;
-    } else if (wcsstr(p, L"\\msys-") == p) {
-      p += 6;
-    } else {
-      p = NULL;
-    }
-    if (p != NULL) {
-      while (*p && isxdigit(*p)) {  // Skip 16-digit hexadecimal.
-        p++;
-      }
-      if (wcsstr(p, L"-pty") == p) {
-        p += 4;
-      } else {
-        p = NULL;
-      }
-    }
-    if (p != NULL) {
-      while (*p && isdigit(*p)) {  // Skip pty number.
-        p++;
-      }
-      if (wcsstr(p, L"-from-master") != p && wcsstr(p, L"-to-master") != p) {
-        p = NULL;
-      }
-    }
-  }
-  xfree(nameinfo);
-  return p != NULL;
-}
-#endif
-
 /// Test whether a file descriptor refers to a terminal.
 ///
 /// @param fd File descriptor.
@@ -242,7 +188,7 @@ bool os_isatty(int fd)
         return true;
     }
 #ifdef WIN32
-    return msys_tty_on_handle(fd);
+    return detect_mintty_type(fd) != kNoneMintty;
 #else
     return false;
 #endif
