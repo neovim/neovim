@@ -364,6 +364,7 @@ run_analysis() {(
   plog-converter -t xml -o PVS-studio.xml PVS-studio.log
   plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
   plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
+  plog-converter -t fullhtml -o PVS-studio.html.d PVS-studio.log
 )}
 
 detect_url() {
