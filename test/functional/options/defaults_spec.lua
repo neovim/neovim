@@ -442,7 +442,7 @@ describe('stdpath()', function()
           XDG_CONFIG_HOME=alter_slashes('/home/original'),
         }})
         eq(alter_slashes('/home/original/nvim'), funcs.stdpath('config'))
-        command('let $XDG_CONFIG_HOME="/home/new"')
+        command("let $XDG_CONFIG_HOME='"..alter_slashes('/home/new').."'")
         eq(alter_slashes('/home/new/nvim'), funcs.stdpath('config'))
       end)
 
@@ -456,7 +456,7 @@ describe('stdpath()', function()
 
       it("doesn't expand ~/", function()
         clear({env={
-          XDG_CONFIG_HOME='~/frobnitz',
+          XDG_CONFIG_HOME=alter_slashes('~/frobnitz'),
         }})
         eq(alter_slashes('~/frobnitz/nvim'), funcs.stdpath('config'))
       end)
@@ -487,7 +487,7 @@ describe('stdpath()', function()
           XDG_DATA_HOME=alter_slashes('/home/original'),
         }})
         eq(alter_slashes('/home/original' .. appended_dir), funcs.stdpath('data'))
-        command('let $XDG_DATA_HOME="/home/new"')
+        command("let $XDG_DATA_HOME='"..alter_slashes('/home/new').."'")
         eq(alter_slashes('/home/new' .. appended_dir), funcs.stdpath('data'))
       end)
 
@@ -501,7 +501,7 @@ describe('stdpath()', function()
 
       it("doesn't expand ~/", function()
         clear({env={
-          XDG_DATA_HOME='~/frobnitz',
+          XDG_DATA_HOME=alter_slashes('~/frobnitz'),
         }})
         eq(alter_slashes('~/frobnitz' .. appended_dir), funcs.stdpath('data'))
       end)
@@ -520,7 +520,7 @@ describe('stdpath()', function()
           XDG_CACHE_HOME=alter_slashes('/home/original'),
         }})
         eq(alter_slashes('/home/original/nvim'), funcs.stdpath('cache'))
-        command('let $XDG_CACHE_HOME="/home/new"')
+        command("let $XDG_CACHE_HOME='"..alter_slashes('/home/new').."'")
         eq(alter_slashes('/home/new/nvim'), funcs.stdpath('cache'))
       end)
 
@@ -534,7 +534,7 @@ describe('stdpath()', function()
 
       it("doesn't expand ~/", function()
         clear({env={
-          XDG_CACHE_HOME='~/frobnitz',
+          XDG_CACHE_HOME=alter_slashes('~/frobnitz'),
         }})
         eq(alter_slashes('~/frobnitz/nvim'), funcs.stdpath('cache'))
       end)
@@ -620,7 +620,10 @@ describe('stdpath()', function()
         "doesn't expand $VAR and $IBLES",
         'config_dirs', 'XDG_CONFIG_DIRS',
         { '$HOME', '$TMP' },
-        { '$HOME/nvim', '$TMP/nvim' })
+        {
+          alter_slashes('$HOME/nvim'),
+          alter_slashes('$TMP/nvim')
+        })
 
 
       behaves_like_dir_list_env(
@@ -663,7 +666,10 @@ describe('stdpath()', function()
         "doesn't expand $VAR and $IBLES",
         'data_dirs', 'XDG_DATA_DIRS',
         { '$HOME', '$TMP' },
-        { '$HOME/nvim', '$TMP/nvim' })
+        {
+          alter_slashes('$HOME/nvim'),
+          alter_slashes('$TMP/nvim')
+        })
 
       behaves_like_dir_list_env(
         "doesn't expand ~/",
