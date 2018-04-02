@@ -3615,6 +3615,9 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     memset(cptext, 0, sizeof(cptext));
   }
   if (word == NULL || (!aempty && *word == NUL)) {
+    for (size_t i = 0; i < CPT_COUNT; i++) {
+      xfree(cptext[i]);
+    }
     return FAIL;
   }
   return ins_compl_add((char_u *)word, -1, icase, NULL,
