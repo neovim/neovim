@@ -227,9 +227,10 @@ au BufNewFile,BufRead *.bl			setf blank
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " Bazel (http://bazel.io)
-autocmd BufRead,BufNewFile *.bzl,WORKSPACE setfiletype bzl
+autocmd BufRead,BufNewFile *.bzl,WORKSPACE 	setf bzl
 if has("fname_case")
-  autocmd BufRead,BufNewFile BUILD setfiletype bzl
+  " There is another check for BUILD further below.
+  autocmd BufRead,BufNewFile BUILD		setf bzl
 endif
 
 " C or lpc
@@ -1933,6 +1934,11 @@ au BufNewFile,BufRead *asterisk*/*voicemail.conf* call s:StarSetf('asteriskvm')
 
 " Bazaar version control
 au BufNewFile,BufRead bzr_log.*			setf bzr
+
+" Bazel build file
+if !has("fname_case")
+  au BufNewFile,BufRead BUILD			setf bzl
+endif
 
 " BIND zone
 au BufNewFile,BufRead */named/db.*,*/bind/db.*	call s:StarSetf('bindzone')
