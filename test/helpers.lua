@@ -469,6 +469,8 @@ format_luav = function(v, indent, opts)
     end
   elseif type(v) == 'nil' then
     ret = 'nil'
+  elseif type(v) == 'boolean' then
+    ret = (v and 'true' or 'false')
   else
     print(type(v))
     -- Not implemented yet
