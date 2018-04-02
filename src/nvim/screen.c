@@ -2044,7 +2044,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   }
 
   screen_line(row + wp->w_winrow, wp->w_wincol, wp->w_width,
-              wp->w_width, false, wp);
+              wp->w_width, false, wp, 0);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2463,10 +2463,6 @@ win_line (
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
     line_attr = win_hl_attr(wp, HLF_QFL);
-  }
-
-  if (wp->w_hl_attr_normal != 0) {
-    line_attr = hl_combine_attr(wp->w_hl_attr_normal, line_attr);
   }
 
   if (line_attr != 0) {
@@ -2926,7 +2922,8 @@ win_line (
         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
-      screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp);
+      screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp,
+                  wp->w_hl_attr_normal);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -4019,7 +4016,8 @@ win_line (
           col++;
         }
       }
-      screen_line(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl, wp);
+      screen_line(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl, wp,
+                  wp->w_hl_attr_normal);
       row++;
 
       /*
@@ -4242,7 +4240,7 @@ win_line (
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
       screen_line(screen_row, wp->w_wincol, col - boguscols,
-                  wp->w_width, wp->w_p_rl, wp);
+                  wp->w_width, wp->w_p_rl, wp, wp->w_hl_attr_normal);
       boguscols = 0;
       ++row;
       ++screen_row;
@@ -4412,7 +4410,7 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
  *    When FALSE and "clear_width" > 0, clear columns "endcol" to "clear_width"
  */
 static void screen_line(int row, int coloff, int endcol,
-                        int clear_width, int rlflag, win_T *wp)
+                        int clear_width, int rlflag, win_T *wp, int bg_attr)
 {
   unsigned off_from;
   unsigned off_to;
@@ -4445,20 +4443,28 @@ static void screen_line(int row, int coloff, int endcol,
     /* Clear rest first, because it's left of the text. */
     if (clear_width > 0) {
       while (col <= endcol && ScreenLines[off_to] == ' '
-             && ScreenAttrs[off_to] == 0
+             && ScreenAttrs[off_to] == bg_attr
              && (!enc_utf8 || ScreenLinesUC[off_to] == 0)
              ) {
         ++off_to;
         ++col;
       }
-      if (col <= endcol)
-        screen_fill(row, row + 1, col + coloff,
-            endcol + coloff + 1, ' ', ' ', 0);
+      if (col <= endcol) {
+        screen_fill(row, row + 1, col + coloff, endcol + coloff + 1, ' ', ' ',
+                    bg_attr);
+      }
     }
     col = endcol + 1;
     off_to = LineOffset[row] + col + coloff;
     off_from += col;
     endcol = (clear_width > 0 ? clear_width : -clear_width);
+  }
+
+  if (bg_attr) {
+    for (int c = col; c < endcol; c++) {
+      ScreenAttrs[off_from+c] = hl_combine_attr(bg_attr,
+                                                ScreenAttrs[off_from+c]);
+    }
   }
 
   redraw_next = char_needs_redraw(off_from, off_to, endcol - col);
@@ -4559,15 +4565,15 @@ static void screen_line(int row, int coloff, int endcol,
 
     /* blank out the rest of the line */
     while (col < clear_width && ScreenLines[off_to] == ' '
-           && ScreenAttrs[off_to] == 0
+           && ScreenAttrs[off_to] == bg_attr
            && (!enc_utf8 || ScreenLinesUC[off_to] == 0)
            ) {
       ++off_to;
       ++col;
     }
     if (col < clear_width) {
-      screen_fill(row, row + 1, col + coloff, clear_width + coloff,
-          ' ', ' ', 0);
+      screen_fill(row, row + 1, col + coloff, clear_width + coloff, ' ', ' ',
+                  bg_attr);
       off_to += clear_width - col;
       col = clear_width;
     }
