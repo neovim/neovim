@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
@@ -2913,7 +2914,6 @@ void maketitle(void)
       }
     }
 
-    t_str = buf;
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
         int use_sandbox = FALSE;
@@ -2921,43 +2921,48 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
         called_emsg = FALSE;
-        build_stl_str_hl(curwin, t_str, sizeof(buf),
+        build_stl_str_hl(curwin, buf, sizeof(buf),
             p_titlestring, use_sandbox,
             0, maxlen, NULL, NULL);
-        if (called_emsg)
-          set_string_option_direct((char_u *)"titlestring", -1,
-              (char_u *)"", OPT_FREE, SID_ERROR);
+        t_str = buf;
+        if (called_emsg) {
+          set_string_option_direct((char_u *)"titlestring", -1, (char_u *)"",
+                                   OPT_FREE, SID_ERROR);
+        }
         called_emsg |= save_called_emsg;
-      } else
+      } else {
         t_str = p_titlestring;
+      }
     } else {
       /* format: "fname + (path) (1 of 2) - VIM" */
 
-#define SPACE_FOR_FNAME (IOSIZE - 100)
-#define SPACE_FOR_DIR   (IOSIZE - 20)
-#define SPACE_FOR_ARGNR (IOSIZE - 10)  /* at least room for " - VIM" */
-      if (curbuf->b_fname == NULL)
+#define SPACE_FOR_FNAME (sizeof(buf) - 100)
+#define SPACE_FOR_DIR   (sizeof(buf) - 20)
+#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - VIM"
+      if (curbuf->b_fname == NULL) {
         STRLCPY(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
-      else {
+      } else {
         p = transstr(path_tail(curbuf->b_fname));
         STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
         xfree(p);
       }
 
       switch (bufIsChanged(curbuf)
-              + (curbuf->b_p_ro * 2)
-              + (!MODIFIABLE(curbuf) * 4)) {
-      case 1: STRCAT(buf, " +"); break;
-      case 2: STRCAT(buf, " ="); break;
-      case 3: STRCAT(buf, " =+"); break;
-      case 4:
-      case 6: STRCAT(buf, " -"); break;
-      case 5:
-      case 7: STRCAT(buf, " -+"); break;
+              | (curbuf->b_p_ro << 1)
+              | (!MODIFIABLE(curbuf) << 2)) {
+        case 0: break;
+        case 1: STRCAT(buf, " +"); break;
+        case 2: STRCAT(buf, " ="); break;
+        case 3: STRCAT(buf, " =+"); break;
+        case 4:
+        case 6: STRCAT(buf, " -"); break;
+        case 5:
+        case 7: STRCAT(buf, " -+"); break;
+        default: assert(false);
       }
 
       if (curbuf->b_fname != NULL) {
-        /* Get path of file, replace home dir with ~ */
+        // Get path of file, replace home dir with ~.
         off = (int)STRLEN(buf);
         buf[off++] = ' ';
         buf[off++] = '(';
@@ -2998,6 +3003,10 @@ void maketitle(void)
         if (vim_strsize(buf) > maxlen)
           trunc_string(buf, buf, maxlen, IOSIZE);
       }
+      t_str = buf;
+#undef SPACE_FOR_FNAME
+#undef SPACE_FOR_DIR
+#undef SPACE_FOR_ARGNR
     }
   }
   mustset = ti_change(t_str, &lasttitle);
