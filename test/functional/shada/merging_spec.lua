@@ -670,8 +670,7 @@ describe('ShaDa marks support code', function()
     eq({['0']=1, A=1}, found)
   end)
 
-  it('uses last A mark with gt timestamp from file when writing',
-  function()
+  it('uses last A mark with gt timestamp from file when writing', function()
     wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
     wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
@@ -687,7 +686,7 @@ describe('ShaDa marks support code', function()
         found[name] = t
       end
     end
-    eq({['0']={['/a/b/-']=1}, A={['/a/b/?']=1}}, found)
+    eq({['0']={[mock_file_path .. '-']=1}, A={[mock_file_path .. '?']=1}}, found)
   end)
 
   it('uses last a mark with gt timestamp from instance when reading',
