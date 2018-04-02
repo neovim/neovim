@@ -37,9 +37,17 @@ set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
   "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
 
+# Replace luv default rockspec with the alternate one under the "rockspecs"
+# directory
 set(LUV_PATCH_COMMAND
-  ${CMAKE_COMMAND} -DLUV_SRC_DIR=${LUV_SRC_DIR}
-  -P ${PROJECT_SOURCE_DIR}/cmake/PatchLuv.cmake)
+    ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
+if(MINGW)
+  set(LUV_PATCH_COMMAND
+    ${LUV_PATCH_COMMAND}
+    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} init
+    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/luv-Add-missing-definitions-for-MinGW.patch)
+endif()
 
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}
