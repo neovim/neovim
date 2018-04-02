@@ -18,7 +18,7 @@
 # include <sys/user.h>
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 # include <sys/param.h>
 #endif
 
