@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Nov 09
+" Last Change:	2017 Nov 11
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -10,7 +10,7 @@
 let s:cpo_save = &cpo
 set cpo&vim
 
-func filetype#Check_inp()
+func dist#ft#Check_inp()
   if getline(1) =~ '^\*'
     setf abaqus
   else
@@ -32,14 +32,14 @@ endfunc
 
 " This function checks for the kind of assembly that is wanted by the user, or
 " can be detected from the first five lines of the file.
-func filetype#FTasm()
+func dist#ft#FTasm()
   " make sure b:asmsyntax exists
   if !exists("b:asmsyntax")
     let b:asmsyntax = ""
   endif
 
   if b:asmsyntax == ""
-    call filetype#FTasmsyntax()
+    call dist#ft#FTasmsyntax()
   endif
 
   " if b:asmsyntax still isn't set, default to asmsyntax or GNU
@@ -54,7 +54,7 @@ func filetype#FTasm()
   exe "setf " . fnameescape(b:asmsyntax)
 endfunc
 
-func filetype#FTasmsyntax()
+func dist#ft#FTasmsyntax()
   " see if file contains any asmsyntax=foo overrides. If so, change
   " b:asmsyntax appropriately
   let head = " ".getline(1)." ".getline(2)." ".getline(3)." ".getline(4).
@@ -69,7 +69,7 @@ endfunc
 
 " Check if one of the first five lines contains "VB_Name".  In that case it is
 " probably a Visual Basic file.  Otherwise it's assumed to be "alt" filetype.
-func filetype#FTVB(alt)
+func dist#ft#FTVB(alt)
   if getline(1).getline(2).getline(3).getline(4).getline(5) =~? 'VB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)'
     setf vb
   else
@@ -77,7 +77,7 @@ func filetype#FTVB(alt)
   endif
 endfunc
 
-func filetype#FTbtm()
+func dist#ft#FTbtm()
   if exists("g:dosbatch_syntax_for_btm") && g:dosbatch_syntax_for_btm
     setf dosbatch
   else
@@ -85,7 +85,7 @@ func filetype#FTbtm()
   endif
 endfunc
 
-func filetype#BindzoneCheck(default)
+func dist#ft#BindzoneCheck(default)
   if getline(1).getline(2).getline(3).getline(4) =~ '^; <<>> DiG [0-9.]\+.* <<>>\|$ORIGIN\|$TTL\|IN\s\+SOA'
     setf bindzone
   elseif a:default != ''
@@ -93,7 +93,7 @@ func filetype#BindzoneCheck(default)
   endif
 endfunc
 
-func filetype#FTlpc()
+func dist#ft#FTlpc()
   if exists("g:lpc_syntax_for_c")
     let lnum = 1
     while lnum <= 12
@@ -107,7 +107,7 @@ func filetype#FTlpc()
   setf c
 endfunc
 
-func filetype#FTheader()
+func dist#ft#FTheader()
   if match(getline(1, min([line("$"), 200])), '^@\(interface\|end\|class\)') > -1
     if exists("g:c_syntax_for_h")
       setf objc
@@ -128,7 +128,7 @@ endfunc
 " If the first line starts with # or ! it's probably a ch file.
 " If a line has "main", "include", "//" ir "/*" it's probably ch.
 " Otherwise CHILL is assumed.
-func filetype#FTchange()
+func dist#ft#FTchange()
   let lnum = 1
   while lnum <= 10
     if getline(lnum)[0] == '@'
@@ -152,7 +152,7 @@ func filetype#FTchange()
   setf chill
 endfunc
 
-func filetype#FTent()
+func dist#ft#FTent()
   " This function checks for valid cl syntax in the first five lines.
   " Look for either an opening comment, '#', or a block start, '{".
   " If not found, assume SGML.
@@ -172,7 +172,7 @@ func filetype#FTent()
   setf dtd
 endfunc
 
-func filetype#EuphoriaCheck()
+func dist#ft#EuphoriaCheck()
   if exists('g:filetype_euphoria')
     exe 'setf ' . g:filetype_euphoria
   else
@@ -180,7 +180,7 @@ func filetype#EuphoriaCheck()
   endif
 endfunc
 
-func filetype#DtraceCheck()
+func dist#ft#DtraceCheck()
   let lines = getline(1, min([line("$"), 100]))
   if match(lines, '^module\>\|^import\>') > -1
     " D files often start with a module and/or import statement.
@@ -192,7 +192,7 @@ func filetype#DtraceCheck()
   endif
 endfunc
 
-func filetype#FTe()
+func dist#ft#FTe()
   if exists('g:filetype_euphoria')
     exe 'setf ' . g:filetype_euphoria
   else
@@ -209,7 +209,7 @@ func filetype#FTe()
 endfunc
 
 " Distinguish between HTML, XHTML and Django
-func filetype#FThtml()
+func dist#ft#FThtml()
   let n = 1
   while n < 10 && n < line("$")
     if getline(n) =~ '\<DTD\s\+XHTML\s'
@@ -226,7 +226,7 @@ func filetype#FThtml()
 endfunc
 
 " Distinguish between standard IDL and MS-IDL
-func filetype#FTidl()
+func dist#ft#FTidl()
   let n = 1
   while n < 50 && n < line("$")
     if getline(n) =~ '^\s*import\s\+"\(unknwn\|objidl\)\.idl"'
@@ -239,7 +239,7 @@ func filetype#FTidl()
 endfunc
 
 " Distinguish between "default" and Cproto prototype file. */
-func filetype#ProtoCheck(default)
+func dist#ft#ProtoCheck(default)
   " Cproto files have a comment in the first line and a function prototype in
   " the second line, it always ends in ";".  Indent files may also have
   " comments, thus we can't match comments to see the difference.
@@ -252,7 +252,7 @@ func filetype#ProtoCheck(default)
   endif
 endfunc
 
-func filetype#FTm()
+func dist#ft#FTm()
   let n = 1
   let saw_comment = 0 " Whether we've seen a multiline comment leader.
   while n < 100
@@ -296,7 +296,7 @@ func filetype#FTm()
   endif
 endfunc
 
-func filetype#FTmms()
+func dist#ft#FTmms()
   let n = 1
   while n < 10
     let line = getline(n)
@@ -315,7 +315,7 @@ endfunc
 
 " This function checks if one of the first five lines start with a dot.  In
 " that case it is probably an nroff file: 'filetype' is set and 1 is returned.
-func filetype#FTnroff()
+func dist#ft#FTnroff()
   if getline(1)[0] . getline(2)[0] . getline(3)[0] . getline(4)[0] . getline(5)[0] =~ '\.'
     setf nroff
     return 1
@@ -323,7 +323,7 @@ func filetype#FTnroff()
   return 0
 endfunc
 
-func filetype#FTmm()
+func dist#ft#FTmm()
   let n = 1
   while n < 10
     let line = getline(n)
@@ -336,7 +336,7 @@ func filetype#FTmm()
   setf nroff
 endfunc
 
-func filetype#FTpl()
+func dist#ft#FTpl()
   if exists("g:filetype_pl")
     exe "setf " . g:filetype_pl
   else
@@ -351,7 +351,7 @@ func filetype#FTpl()
   endif
 endfunc
 
-func filetype#FTinc()
+func dist#ft#FTinc()
   if exists("g:filetype_inc")
     exe "setf " . g:filetype_inc
   else
@@ -363,7 +363,7 @@ func filetype#FTinc()
     elseif lines =~ "<?"
       setf php
     else
-      call filetype#FTasmsyntax()
+      call dist#ft#FTasmsyntax()
       if exists("b:asmsyntax")
 	exe "setf " . fnameescape(b:asmsyntax)
       else
@@ -373,7 +373,7 @@ func filetype#FTinc()
   endif
 endfunc
 
-func filetype#FTprogress_cweb()
+func dist#ft#FTprogress_cweb()
   if exists("g:filetype_w")
     exe "setf " . g:filetype_w
     return
@@ -385,7 +385,7 @@ func filetype#FTprogress_cweb()
   endif
 endfunc
 
-func filetype#FTprogress_asm()
+func dist#ft#FTprogress_asm()
   if exists("g:filetype_i")
     exe "setf " . g:filetype_i
     return
@@ -396,7 +396,7 @@ func filetype#FTprogress_asm()
   while lnum <= 10 && lnum < line('$')
     let line = getline(lnum)
     if line =~ '^\s*;' || line =~ '^\*'
-      call filetype#FTasm()
+      call dist#ft#FTasm()
       return
     elseif line !~ '^\s*$' || line =~ '^/\*'
       " Not an empty line: Doesn't look like valid assembly code.
@@ -408,7 +408,7 @@ func filetype#FTprogress_asm()
   setf progress
 endfunc
 
-func filetype#FTprogress_pascal()
+func dist#ft#FTprogress_pascal()
   if exists("g:filetype_p")
     exe "setf " . g:filetype_p
     return
@@ -433,7 +433,7 @@ func filetype#FTprogress_pascal()
   setf progress
 endfunc
 
-func filetype#FTr()
+func dist#ft#FTr()
   let max = line("$") > 50 ? 50 : line("$")
 
   for n in range(1, max)
@@ -466,7 +466,7 @@ func filetype#FTr()
   endif
 endfunc
 
-func filetype#McSetf()
+func dist#ft#McSetf()
   " Rely on the file to start with a comment.
   " MS message text files use ';', Sendmail files use '#' or 'dnl'
   for lnum in range(1, min([line("$"), 20]))
@@ -483,21 +483,21 @@ func filetype#McSetf()
 endfunc
 
 " Called from filetype.vim and scripts.vim.
-func filetype#SetFileTypeSH(name)
+func dist#ft#SetFileTypeSH(name)
   if expand("<amatch>") =~ g:ft_ignore_pat
     return
   endif
   if a:name =~ '\<csh\>'
     " Some .sh scripts contain #!/bin/csh.
-    call filetype#SetFileTypeShell("csh")
+    call dist#ft#SetFileTypeShell("csh")
     return
   elseif a:name =~ '\<tcsh\>'
     " Some .sh scripts contain #!/bin/tcsh.
-    call filetype#SetFileTypeShell("tcsh")
+    call dist#ft#SetFileTypeShell("tcsh")
     return
   elseif a:name =~ '\<zsh\>'
     " Some .sh scripts contain #!/bin/zsh.
-    call filetype#SetFileTypeShell("zsh")
+    call dist#ft#SetFileTypeShell("zsh")
     return
   elseif a:name =~ '\<ksh\>'
     let b:is_kornshell = 1
@@ -524,13 +524,13 @@ func filetype#SetFileTypeSH(name)
       unlet b:is_bash
     endif
   endif
-  call filetype#SetFileTypeShell("sh")
+  call dist#ft#SetFileTypeShell("sh")
 endfunc
 
 " For shell-like file types, check for an "exec" command hidden in a comment,
 " as used for Tcl.
 " Also called from scripts.vim, thus can't be local to this script.
-func filetype#SetFileTypeShell(name)
+func dist#ft#SetFileTypeShell(name)
   if expand("<amatch>") =~ g:ft_ignore_pat
     return
   endif
@@ -550,18 +550,18 @@ func filetype#SetFileTypeShell(name)
   exe "setf " . a:name
 endfunc
 
-func filetype#CSH()
+func dist#ft#CSH()
   if exists("g:filetype_csh")
-    call filetype#SetFileTypeShell(g:filetype_csh)
+    call dist#ft#SetFileTypeShell(g:filetype_csh)
   elseif &shell =~ "tcsh"
-    call filetype#SetFileTypeShell("tcsh")
+    call dist#ft#SetFileTypeShell("tcsh")
   else
-    call filetype#SetFileTypeShell("csh")
+    call dist#ft#SetFileTypeShell("csh")
   endif
 endfunc
 
 let s:ft_rules_udev_rules_pattern = '^\s*\cudev_rules\s*=\s*"\([^"]\{-1,}\)/*".*'
-func filetype#FTRules()
+func dist#ft#FTRules()
   let path = expand('<amatch>:p')
   if path =~ '^/\(etc/udev/\%(rules\.d/\)\=.*\.rules\|lib/udev/\%(rules\.d/\)\=.*\.rules\)$'
     setf udevrules
@@ -594,7 +594,7 @@ func filetype#FTRules()
   setf hog
 endfunc
 
-func filetype#SQL()
+func dist#ft#SQL()
   if exists("g:filetype_sql")
     exe "setf " . g:filetype_sql
   else
@@ -608,7 +608,7 @@ endfunc
 " file.
 " (Slow test) If a file contains a 'use' statement then it is almost certainly
 " a Perl file.
-func filetype#FTperl()
+func dist#ft#FTperl()
   let dirname = expand("%:p:h:t")
   if expand("%:e") == 't' && (dirname == 't' || dirname == 'xt')
     setf perl
@@ -629,7 +629,7 @@ endfunc
 " 1. Check the first line of the file for "%&<format>".
 " 2. Check the first 1000 non-comment lines for LaTeX or ConTeXt keywords.
 " 3. Default to "latex" or to g:tex_flavor, can be set in user's vimrc.
-func filetype#FTtex()
+func dist#ft#FTtex()
   let firstline = getline(1)
   if firstline =~ '^%&\s*\a\+'
     let format = tolower(matchstr(firstline, '\a\+'))
@@ -681,7 +681,7 @@ func filetype#FTtex()
   return
 endfunc
 
-func filetype#FTxml()
+func dist#ft#FTxml()
   let n = 1
   while n < 100 && n < line("$")
     let line = getline(n)
@@ -707,7 +707,7 @@ func filetype#FTxml()
   setf xml
 endfunc
 
-func filetype#FTy()
+func dist#ft#FTy()
   let n = 1
   while n < 100 && n < line("$")
     let line = getline(n)
@@ -724,7 +724,7 @@ func filetype#FTy()
   setf yacc
 endfunc
 
-func filetype#Redif()
+func dist#ft#Redif()
   let lnum = 1
   while lnum <= 5 && lnum < line('$')
     if getline(lnum) =~ "^\ctemplate-type:"

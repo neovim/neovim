@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2017 Nov 09
+" Last change:	2017 Nov 11
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -66,19 +66,19 @@ if s:line1 =~# "^#!"
 
   " Bourne-like shell scripts: bash bash2 ksh ksh93 sh
   if s:name =~# '^\(bash\d*\|\|ksh\d*\|sh\)\>'
-    call filetype#SetFileTypeSH(s:line1)	" defined in filetype.vim
+    call dist#ft#SetFileTypeSH(s:line1)	" defined in filetype.vim
 
     " csh scripts
   elseif s:name =~# '^csh\>'
     if exists("g:filetype_csh")
-      call filetype#SetFileTypeShell(g:filetype_csh)
+      call dist#ft#SetFileTypeShell(g:filetype_csh)
     else
-      call filetype#SetFileTypeShell("csh")
+      call dist#ft#SetFileTypeShell("csh")
     endif
 
     " tcsh scripts
   elseif s:name =~# '^tcsh\>'
-    call filetype#SetFileTypeShell("tcsh")
+    call dist#ft#SetFileTypeShell("tcsh")
 
     " Z shell scripts
   elseif s:name =~# '^zsh\>'
@@ -185,7 +185,7 @@ else
 
   " Bourne-like shell scripts: sh ksh bash bash2
   if s:line1 =~# '^:$'
-    call filetype#SetFileTypeSH(s:line1)	" defined in filetype.vim
+    call dist#ft#SetFileTypeSH(s:line1)	" defined in filetype.vim
 
     " Z shell scripts
   elseif s:line1 =~# '^#compdef\>' || s:line1 =~# '^#autoload\>' ||
