@@ -1577,7 +1577,7 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
-/// get a character:
+/// Gets a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
 ///    Also used to redo a command for ".".
@@ -1595,7 +1595,7 @@ vungetc ( /* unget one character (can only be done once!) */
 /// if "advance" is FALSE (vpeekc()):
 ///    just look whether there is a character available.
 ///
-/// When "no_mapping" is zero, checks for mappings in the current mode.
+/// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
 static int vgetorpeek(int advance)

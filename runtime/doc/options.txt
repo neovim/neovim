@@ -6290,15 +6290,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'timeoutlen'* *'tm'*
 'timeoutlen' 'tm'	number	(default 1000)
 			global
-	The time in milliseconds that is waited for a mapped sequence to
-	complete.
+	Time in milliseconds to wait for a mapped sequence to complete.
 
 						*'ttimeoutlen'* *'ttm'*
 'ttimeoutlen' 'ttm'	number	(default 50)
 			global
-	The time in milliseconds that is waited for a key code
-	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
-	when part of a command has been typed.
+	Time in milliseconds to wait for a key code sequence to complete. Also
+	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
+	been typed.
 
 						*'title'* *'notitle'*
 'title'			boolean	(default off)
