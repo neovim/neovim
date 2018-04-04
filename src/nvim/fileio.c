@@ -4452,7 +4452,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @param size size of the buffer
 /// @param fp file to read from
 ///
-/// @return true for end-of-file.
+/// @return true for EOF or error
 bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 {
   char *retval;
@@ -4463,7 +4463,7 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
   do {
     errno = 0;
     retval = fgets((char *)buf, size, fp);
-  } while (retval == NULL && errno == EINTR);
+  } while (retval == NULL && errno == EINTR && ferror(fp));
 
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     char tbuf[200];
@@ -4475,12 +4475,12 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
       tbuf[sizeof(tbuf) - 2] = NUL;
       errno = 0;
       retval = fgets((char *)tbuf, sizeof(tbuf), fp);
-      if (retval == NULL && errno != EINTR) {
+      if (retval == NULL && (feof(fp) || errno != EINTR)) {
         break;
       }
     } while (tbuf[sizeof(tbuf) - 2] != NUL && tbuf[sizeof(tbuf) - 2] != '\n');
   }
-  return retval ? false : feof(fp);
+  return retval == NULL;
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
