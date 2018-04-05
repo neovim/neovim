@@ -924,7 +924,6 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   }
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
-  int shape = c.shape;
 
   if (c.id != 0 && ui->rgb) {
     int attr = syn_id2attr(c.id);
@@ -935,7 +934,8 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     }
   }
 
-  switch (shape) {
+  int shape;
+  switch (c.shape) {
     case SHAPE_BLOCK: shape = 1; break;
     case SHAPE_HOR:   shape = 3; break;
     case SHAPE_VER:   shape = 5; break;
