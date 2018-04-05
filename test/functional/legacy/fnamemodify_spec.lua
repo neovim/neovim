@@ -22,6 +22,8 @@ describe('filename modifiers', function()
         let tmpdir = resolve($TMPDIR)
         call assert_true(isdirectory(tmpdir))
         execute 'cd '. tmpdir
+        let save_home = $HOME
+        let save_shell = &shell
         let $HOME=fnamemodify('.', ':p:h:h:h')
         call assert_equal('/', fnamemodify('.', ':p')[-1:])
         call assert_equal(tmpdir[strchars(tmpdir) - 1], fnamemodify('.', ':p:h')[-1:])
@@ -59,6 +61,9 @@ describe('filename modifiers', function()
           set shell=tcsh
           call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
         endif
+
+        let $HOME = save_home
+        let &shell = save_shell
       endfunc
 
       func Test_expand()
