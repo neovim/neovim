@@ -2434,27 +2434,12 @@ int get_number(
       n = n * 10 + c - '0';
       msg_putchar(c);
       ++typed;
-    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
-      if (typed > 0) {
-        MSG_PUTS("\b \b");
-        --typed;
-      }
-      n /= 10;
     } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
       *mouse_used = TRUE;
       n = mouse_row + 1;
       break;
-    } else if (n == 0 && c == ':' && colon) {
-      stuffcharReadbuff(':');
-      if (!exmode_active)
-        cmdline_row = msg_row;
-      skip_redraw = TRUE;           /* skip redraw once */
-      do_redraw = FALSE;
-      break;
-    } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC) {
-      break;
     } else {
-      break;  // if it is an alphabet
+      break;
     }
   }
 
