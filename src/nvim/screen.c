@@ -5887,18 +5887,6 @@ static void screen_char(unsigned off, int row, int col)
   }
 
   ui_cursor_goto(row, col);
-
-  if (p_wd) {
-    if (!got_int) {
-      ui_set_highlight(ScreenAttrs[off] ^ HL_STANDOUT);
-      ui_putc('X');
-      ui_cursor_goto(row, col);
-      ui_flush();
-      uint64_t wd = (uint64_t)labs(p_wd);
-      os_delay(wd, false);
-    }
-  }
-
   ui_set_highlight(ScreenAttrs[off]);
 
   if (enc_utf8 && ScreenLinesUC[off] != 0) {

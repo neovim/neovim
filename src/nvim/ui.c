@@ -438,6 +438,16 @@ void ui_puts(uint8_t *str)
       ui_linefeed();
     }
     p += clen;
+
+    if (p_wd) {
+      if (!got_int) {
+        ui_cursor_goto(row, col);
+        ui_flush();
+        uint64_t wd = (uint64_t)labs(p_wd);
+        os_delay(wd, false);
+      }
+    }
+
   }
 }
 
