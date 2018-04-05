@@ -564,7 +564,6 @@ func Test_getpid()
 endfunc
 
 func Test_hlexists()
-  syntax off
   call assert_equal(0, hlexists('does_not_exist'))
   call assert_equal(0, hlexists('Number'))
   call assert_equal(0, highlight_exists('does_not_exist'))
