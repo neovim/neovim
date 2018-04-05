@@ -11284,9 +11284,12 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   msg_scroll = TRUE;
   msg_clr_eos();
 
+  listitem_T *last = tv_list_last(argvars[0].vval.v_list);
   TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
     msg_puts(tv_get_string(TV_LIST_ITEM_TV(li)));
-    msg_putchar('\n');
+    if (li != last) {
+        msg_putchar('\n');
+    }
   });
 
   // Ask for choice.

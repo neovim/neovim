@@ -192,9 +192,9 @@ describe('external cmdline', function()
     screen:expect([[
       {1:~                        }|
       {1:~                        }|
+      {1:~                        }|
       input0                   |
-      input1                   |
-            ^                   |
+      input1^                   |
     ]], nil, nil, function()
       eq({{
         content = { { {}, "" } },
