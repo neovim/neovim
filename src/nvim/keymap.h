@@ -443,7 +443,7 @@ enum key_extra {
 #define MOD_MASK_2CLICK     0x20        // use MOD_MASK_MULTI_CLICK
 #define MOD_MASK_3CLICK     0x40        // use MOD_MASK_MULTI_CLICK
 #define MOD_MASK_4CLICK     0x60        // use MOD_MASK_MULTI_CLICK
-#define MOD_MASK_CMD        0x80        // "super" key (OSX/Mac: command-key)
+#define MOD_MASK_CMD        0x80        // "super" key (macOS: command-key)
 
 #define MOD_MASK_MULTI_CLICK    (MOD_MASK_2CLICK|MOD_MASK_3CLICK| \
                                  MOD_MASK_4CLICK)

@@ -13,7 +13,8 @@
 //     add some code to didset_window_options().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
-// - If it's a numeric option, add any necessary bounds checks to do_set().
+// - If it's a numeric option, add any necessary bounds checks to
+//   set_num_option().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
 // - When adding an option with expansion (P_EXPAND), but with a different
 //   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
@@ -1467,8 +1468,7 @@ do_set (
                 goto skip;
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
-              // Allow negative (for 'undolevels'), octal and
-              // hex numbers.
+              // Allow negative, octal and hex numbers.
               vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
@@ -3411,6 +3411,7 @@ static char_u *set_chars_option(char_u **varp)
     { &fill_vert,    "vert" , 9474 },  // │
     { &fill_fold,    "fold" , 183  },  // ·
     { &fill_diff,    "diff" , '-'  },
+    { &fill_msgsep,  "msgsep", ' ' },
   };
   static struct charstab lcstab[] = {
     { &lcs_eol,      "eol",      NUL },
@@ -4089,110 +4090,207 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     return (char *)e_secure;
   }
 
+  // Many number options assume their value is in the signed int range.
+  if (value < INT_MIN || value > INT_MAX) {
+      return (char *)e_invarg;
+  }
+
+  // Options that need some validation.
+  if (pp == &p_wh) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (p_wmh > value) {
+      errmsg = e_winheight;
+    }
+  } else if (pp == &p_hh) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_wmh) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > p_wh) {
+      errmsg = e_winheight;
+    }
+  } else if (pp == &p_wiw) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (p_wmw > value) {
+      errmsg = e_winwidth;
+    }
+  } else if (pp == &p_wmw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > p_wiw) {
+      errmsg = e_winwidth;
+    }
+  } else if (pp == &p_mco) {
+    if (value > MAX_MCO) {
+      errmsg = e_invarg;
+    } else if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_titlelen) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_uc) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ch) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_tm) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_hi) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 10000) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_re) {
+    if (value < 0 || value > 2) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_report) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_titlelen) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_so) {
+    if (value < 0 && full_screen) {
+      errmsg = e_scroll;
+    }
+  } else if (pp == &p_siso) {
+    if (value < 0 && full_screen) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_cwh) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ut) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ss) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdl
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdl)) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdc
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdc)) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 12) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_cole
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_cole)) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 3) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_nuw
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_nuw)) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (value > 10) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
+    if (value < 0 || value > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
+    if (value < -1 || value > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
+    errmsg = e_invarg;
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    if (value < -1 || value > SB_MAX
+        || (value != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  }
+
+  // Don't change the value and return early if validation failed.
+  if (errmsg != NULL) {
+    return (char *)errmsg;
+  }
+
   *pp = value;
-  /* Remember where the option was set. */
+  // Remember where the option was set.
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
-  if (curbuf->b_p_sw < 0) {
-    errmsg = e_positive;
-    curbuf->b_p_sw = curbuf->b_p_ts;
-  }
-
-  /*
-   * Number options that need some action when changed
-   */
-  if (pp == &p_wh || pp == &p_hh) {
-    if (p_wh < 1) {
-      errmsg = e_positive;
-      p_wh = 1;
+  // For these options we want to fix some invalid values.
+  if (pp == &p_window) {
+    if (p_window < 1) {
+      p_window = Rows - 1;
+    } else if (p_window >= Rows) {
+      p_window = Rows - 1;
     }
-    if (p_wmh > p_wh) {
-      errmsg = e_winheight;
-      p_wh = p_wmh;
-    }
-    if (p_hh < 0) {
-      errmsg = e_positive;
-      p_hh = 0;
-    }
-
-    /* Change window height NOW */
-    if (!ONE_WINDOW) {
-      if (pp == &p_wh && curwin->w_height < p_wh)
-        win_setheight((int)p_wh);
-      if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
-        win_setheight((int)p_hh);
+  } else if (pp == &p_ch) {
+    if (p_ch > Rows - min_rows() + 1) {
+      p_ch = Rows - min_rows() + 1;
     }
   }
-  /* 'winminheight' */
-  else if (pp == &p_wmh) {
-    if (p_wmh < 0) {
-      errmsg = e_positive;
-      p_wmh = 0;
+
+  // Number options that need some action when changed
+  if (pp == &p_wh) {
+    if (!ONE_WINDOW && curwin->w_height < p_wh) {
+      win_setheight((int)p_wh);
     }
-    if (p_wmh > p_wh) {
-      errmsg = e_winheight;
-      p_wmh = p_wh;
+  } else if (pp == &p_hh) {
+    if (!ONE_WINDOW && curbuf->b_help && curwin->w_height < p_hh) {
+      win_setheight((int)p_hh);
     }
+  } else if (pp == &p_wmh) {
     win_setminheight();
   } else if (pp == &p_wiw) {
-    if (p_wiw < 1) {
-      errmsg = e_positive;
-      p_wiw = 1;
-    }
-    if (p_wmw > p_wiw) {
-      errmsg = e_winwidth;
-      p_wiw = p_wmw;
-    }
-
-    /* Change window width NOW */
-    if (!ONE_WINDOW && curwin->w_width < p_wiw)
+    if (!ONE_WINDOW && curwin->w_width < p_wiw) {
       win_setwidth((int)p_wiw);
-  }
-  /* 'winminwidth' */
-  else if (pp == &p_wmw) {
-    if (p_wmw < 0) {
-      errmsg = e_positive;
-      p_wmw = 0;
     }
-    if (p_wmw > p_wiw) {
-      errmsg = e_winwidth;
-      p_wmw = p_wiw;
-    }
-    win_setminheight();
   } else if (pp == &p_ls) {
-    /* (re)set last window status line */
-    last_status(false);
-  }
-  /* (re)set tab page line */
-  else if (pp == &p_stal) {
-    shell_new_rows();           /* recompute window positions and heights */
-  }
-  /* 'foldlevel' */
-  else if (pp == &curwin->w_p_fdl) {
-    if (curwin->w_p_fdl < 0)
-      curwin->w_p_fdl = 0;
+    last_status(false);  // (re)set last window status line.
+  } else if (pp == &p_stal) {
+    // (re)set tab page line
+    shell_new_rows();   // recompute window positions and heights
+  } else if (pp == &curwin->w_p_fdl) {
     newFoldLevel();
-  }
-  /* 'foldminlines' */
-  else if (pp == &curwin->w_p_fml) {
+  } else if (pp == &curwin->w_p_fml) {
     foldUpdateAll(curwin);
-  }
-  /* 'foldnestmax' */
-  else if (pp == &curwin->w_p_fdn) {
-    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin))
+  } else if (pp == &curwin->w_p_fdn) {
+    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
-  }
-  /* 'foldcolumn' */
-  else if (pp == &curwin->w_p_fdc) {
-    if (curwin->w_p_fdc < 0) {
-      errmsg = e_positive;
-      curwin->w_p_fdc = 0;
-    } else if (curwin->w_p_fdc > 12) {
-      errmsg = e_invarg;
-      curwin->w_p_fdc = 12;
     }
-  // 'shiftwidth' or 'tabstop'
-  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+  } else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
+    // 'shiftwidth' or 'tabstop'
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
@@ -4201,126 +4299,50 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
-  }
-  /* 'maxcombine' */
-  else if (pp == &p_mco) {
-    if (p_mco > MAX_MCO)
-      p_mco = MAX_MCO;
-    else if (p_mco < 0)
-      p_mco = 0;
-    screenclear();          /* will re-allocate the screen */
+  } else if (pp == &p_mco) {
+    screenclear();          // will re-allocate the screen
   } else if (pp == &curbuf->b_p_iminsert) {
-    if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
-      errmsg = e_invarg;
-      curbuf->b_p_iminsert = B_IMODE_NONE;
-    }
-    p_iminsert = curbuf->b_p_iminsert;
     showmode();
-    /* Show/unshow value of 'keymap' in status lines. */
+    // Show/unshow value of 'keymap' in status lines.
     status_redraw_curbuf();
-  } else if (pp == &p_window) {
-    if (p_window < 1)
-      p_window = 1;
-    else if (p_window >= Rows)
-      p_window = Rows - 1;
-  } else if (pp == &curbuf->b_p_imsearch) {
-    if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
-      errmsg = e_invarg;
-      curbuf->b_p_imsearch = B_IMODE_NONE;
+  } else if (pp == &p_titlelen) {
+    // if 'titlelen' has changed, redraw the title
+    if (starting != NO_SCREEN && old_value != p_titlelen) {
+      need_maketitle = true;
     }
-    p_imsearch = curbuf->b_p_imsearch;
-  } else if (pp == &p_channel || pp == &curbuf->b_p_channel) {
-    errmsg = e_invarg;
-    *pp = old_value;
-  }
-  /* if 'titlelen' has changed, redraw the title */
-  else if (pp == &p_titlelen) {
-    if (p_titlelen < 0) {
-      errmsg = e_positive;
-      p_titlelen = 85;
-    }
-    if (starting != NO_SCREEN && old_value != p_titlelen)
-      need_maketitle = TRUE;
-  }
-  /* if p_ch changed value, change the command line height */
-  else if (pp == &p_ch) {
-    if (p_ch < 1) {
-      errmsg = e_positive;
-      p_ch = 1;
-    }
-    if (p_ch > Rows - min_rows() + 1)
-      p_ch = Rows - min_rows() + 1;
-
-    /* Only compute the new window layout when startup has been
-     * completed. Otherwise the frame sizes may be wrong. */
-    if (p_ch != old_value && full_screen
-        )
+  } else if (pp == &p_ch) {
+    // if p_ch changed value, change the command line height
+    // Only compute the new window layout when startup has been
+    // completed. Otherwise the frame sizes may be wrong.
+    if (p_ch != old_value && full_screen) {
       command_height();
-  }
-  /* when 'updatecount' changes from zero to non-zero, open swap files */
-  else if (pp == &p_uc) {
-    if (p_uc < 0) {
-      errmsg = e_positive;
-      p_uc = 100;
     }
-    if (p_uc && !old_value)
+  } else if (pp == &p_uc) {
+    // when 'updatecount' changes from zero to non-zero, open swap files
+    if (p_uc && !old_value) {
       ml_open_files();
-  } else if (pp == &curwin->w_p_cole) {
-    if (curwin->w_p_cole < 0) {
-      errmsg = e_positive;
-      curwin->w_p_cole = 0;
-    } else if (curwin->w_p_cole > 3) {
-      errmsg = e_invarg;
-      curwin->w_p_cole = 3;
     }
-  }
-  /* sync undo before 'undolevels' changes */
-  else if (pp == &p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    p_ul = old_value;
-    u_sync(TRUE);
-    p_ul = value;
-  } else if (pp == &curbuf->b_p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    curbuf->b_p_ul = old_value;
-    u_sync(TRUE);
-    curbuf->b_p_ul = value;
-  }
-  /* 'numberwidth' must be positive */
-  else if (pp == &curwin->w_p_nuw) {
-    if (curwin->w_p_nuw < 1) {
-      errmsg = e_positive;
-      curwin->w_p_nuw = 1;
-    }
-    if (curwin->w_p_nuw > 10) {
-      errmsg = e_invarg;
-      curwin->w_p_nuw = 10;
-    }
-    curwin->w_nrwidth_line_count = 0;
+  } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
+    // sync undo before 'undolevels' changes
+    // use the old value, otherwise u_sync() may not work properly
+    *pp = old_value;
+    u_sync(true);
+    *pp = value;
   } else if (pp == &curbuf->b_p_tw) {
-    if (curbuf->b_p_tw < 0) {
-      errmsg = e_positive;
-      curbuf->b_p_tw = 0;
-    }
-
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    // 'scrollback'
-    if (*pp < -1 || *pp > SB_MAX
-        || (*pp != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
-      errmsg = e_invarg;
-      *pp = old_value;
-    } else if (curbuf->terminal) {
+    if (curbuf->terminal) {
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
+  } else if (pp == &curwin->w_p_nuw) {
+    curwin->w_nrwidth_line_count = 0;
   }
 
-  /*
-   * Check the bounds for numeric options here
-   */
+
+  // Check the (new) bounds for Rows and Columns here.
   if (Rows < min_rows() && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
@@ -4340,19 +4362,17 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   limit_screen_size();
 
 
-  /*
-   * If the screen (shell) height has been changed, assume it is the
-   * physical screenheight.
-   */
+  // If the screen (shell) height has been changed, assume it is the
+  // physical screenheight.
   if (old_Rows != Rows || old_Columns != Columns) {
-    /* Changing the screen size is not allowed while updating the screen. */
+    // Changing the screen size is not allowed while updating the screen.
     if (updating_screen) {
       *pp = old_value;
     } else if (full_screen) {
       screen_resize((int)Columns, (int)Rows);
     } else {
-      /* Postpone the resizing; check the size and cmdline position for
-       * messages. */
+      // Postpone the resizing; check the size and cmdline position for
+      // messages.
       check_shellsize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
@@ -4364,14 +4384,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   }
 
-  if (curbuf->b_p_ts <= 0) {
-    errmsg = e_positive;
-    curbuf->b_p_ts = 8;
-  }
-  if (p_tm < 0) {
-    errmsg = e_positive;
-    p_tm = 0;
-  }
   if ((curwin->w_p_scr <= 0
        || (curwin->w_p_scr > curwin->w_height
            && curwin->w_height > 0))
@@ -4388,21 +4400,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     else     /* curwin->w_p_scr > curwin->w_height */
       curwin->w_p_scr = curwin->w_height;
   }
-  if (p_hi < 0) {
-    errmsg = e_positive;
-    p_hi = 0;
-  } else if (p_hi > 10000) {
-    errmsg = e_invarg;
-    p_hi = 10000;
-  }
-  if (p_re < 0 || p_re > 2) {
-    errmsg = e_invarg;
-    p_re = 0;
-  }
-  if (p_report < 0) {
-    errmsg = e_positive;
-    p_report = 1;
-  }
   if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
     if (Rows != old_Rows)       /* Rows changed, just adjust p_sj */
       p_sj = Rows / 2;
@@ -4411,30 +4408,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       p_sj = 1;
     }
   }
-  if (p_so < 0 && full_screen) {
-    errmsg = e_scroll;
-    p_so = 0;
-  }
-  if (p_siso < 0 && full_screen) {
-    errmsg = e_positive;
-    p_siso = 0;
-  }
-  if (p_cwh < 1) {
-    errmsg = e_positive;
-    p_cwh = 1;
-  }
-  if (p_ut < 0) {
-    errmsg = e_positive;
-    p_ut = 2000;
-  }
-  if (p_ss < 0) {
-    errmsg = e_positive;
-    p_ss = 0;
-  }
 
-  /* May set global value for local option. */
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
+  // May set global value for local option.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+  }
 
   if (pp == &curbuf->b_p_scbk && !curbuf->terminal) {
     // Normal buffer: reset local 'scrollback' after updating the global value.

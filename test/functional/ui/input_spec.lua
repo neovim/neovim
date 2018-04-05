@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
+local command = helpers.command
 local expect = helpers.expect
 local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
@@ -137,6 +138,7 @@ describe('input non-printable chars', function()
       [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
     })
     screen:attach()
+    command("set display-=msgsep")
 
     feed_command("e Xtest-overwrite")
     screen:expect([[

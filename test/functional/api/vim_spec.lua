@@ -579,7 +579,8 @@ describe('api', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-        [2] = {bold = true, foreground = Screen.colors.SeaGreen}
+        [2] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [3] = {bold = true, reverse = true},
       })
     end)
 
@@ -600,11 +601,11 @@ describe('api', function()
     it('shows return prompt when more than &cmdheight lines', function()
       nvim_async('err_write', 'something happened\nvery bad\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:something happened}                      |
         {1:very bad}                                |
         {2:Press ENTER or type command to continue}^ |
@@ -614,9 +615,9 @@ describe('api', function()
     it('shows return prompt after all lines are shown', function()
       nvim_async('err_write', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:FAILURE}                                 |
         {1:ERROR}                                   |
         {1:EXCEPTION}                               |
@@ -644,11 +645,11 @@ describe('api', function()
       -- shows up to &cmdheight lines
       nvim_async('err_write', 'more fail\ntoo fail\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:more fail}                               |
         {1:too fail}                                |
         {2:Press ENTER or type command to continue}^ |

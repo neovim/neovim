@@ -642,7 +642,7 @@ return {
       vim=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true={vi="", vim="lastline"}}
+      defaults={if_true={vi="", vim="lastline,msgsep"}}
     },
     {
       full_name='eadirection', abbreviation='ead',

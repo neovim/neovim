@@ -16861,6 +16861,12 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
   int paused = (bool)tv_get_number(&argvars[1]);
   timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
   if (timer != NULL) {
+    if (!timer->paused && paused) {
+      time_watcher_stop(&timer->tw);
+    } else if (timer->paused && !paused) {
+      time_watcher_start(&timer->tw, timer_due_cb, timer->timeout,
+                         timer->timeout);
+    }
     timer->paused = paused;
   }
 }

@@ -359,6 +359,10 @@ endforeach()
 
 # Our dependencies come first.
 
+if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  list(APPEND NVIM_LINK_LIBRARIES pthread c++abi)
+endif()
+
 if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()

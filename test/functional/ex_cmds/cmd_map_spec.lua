@@ -27,6 +27,7 @@ describe('mappings with <Cmd>', function()
       [4] = {bold = true},
       [5] = {background = Screen.colors.LightGrey},
       [6] = {foreground = Screen.colors.Blue1},
+      [7] = {bold = true, reverse = true},
     })
     screen:attach()
 
@@ -342,11 +343,11 @@ describe('mappings with <Cmd>', function()
     -- error doesn't interrupt visual mode
     feed('ggvw<F6>')
     screen:expect([[
+      {5:some }short lines                                                 |
+      of test text                                                     |
       {1:~                                                                }|
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
@@ -425,11 +426,11 @@ describe('mappings with <Cmd>', function()
     -- error doesn't interrupt temporary visual mode
     feed('<esc>ggvw<c-g><F6>')
     screen:expect([[
+      {5:some }short lines                                                 |
+      of test text                                                     |
       {1:~                                                                }|
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
@@ -453,11 +454,11 @@ describe('mappings with <Cmd>', function()
     -- error doesn't interrupt select mode
     feed('<esc>ggvw<c-g><F1>')
     screen:expect([[
+      {5:some }short lines                                                 |
+      of test text                                                     |
       {1:~                                                                }|
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
@@ -527,11 +528,11 @@ describe('mappings with <Cmd>', function()
     -- error aborts operator-pending, operator not performed
     feed('d<F6>')
     screen:expect([[
+      some short lines                                                 |
+      of test text                                                     |
       {1:~                                                                }|
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
@@ -571,11 +572,11 @@ describe('mappings with <Cmd>', function()
 
     feed('<F6>')
     screen:expect([[
+      indeed some short little lines                                   |
+      of test text                                                     |
       {1:~                                                                }|
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
@@ -675,10 +676,10 @@ describe('mappings with <Cmd>', function()
 
     feed(':echo 2<F6>')
     screen:expect([[
+      some short lines                                                 |
+      of test text                                                     |
       {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {7:                                                                 }|
       :echo 2                                                          |
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -689,9 +690,9 @@ describe('mappings with <Cmd>', function()
     eq('c', eval('mode(1)'))
     feed('+2<cr>')
     screen:expect([[
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      some short lines                                                 |
+      of test text                                                     |
+      {7:                                                                 }|
       :echo 2                                                          |
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |

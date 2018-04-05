@@ -23,7 +23,7 @@ index 84299df..f9aabb3 100644
  
    // We'll have at most len codepoints
 -  uint32_t codepoints[len];
-+  uint32_t* codepoints = _alloca(len);
++  uint32_t* codepoints = _alloca(len * sizeof(uint32_t));
    int npoints = 0;
    size_t eaten = 0;
  
@@ -32,7 +32,7 @@ index 84299df..f9aabb3 100644
      int width = 0;
  
 -    uint32_t chars[glyph_ends - glyph_starts + 1];
-+    uint32_t* chars = _alloca(glyph_ends - glyph_starts + 1);
++    uint32_t* chars = _alloca((glyph_ends - glyph_starts + 1) * sizeof(uint32_t));
  
      for( ; i < glyph_ends; i++) {
        chars[i - glyph_starts] = codepoints[i];

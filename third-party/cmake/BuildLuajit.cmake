@@ -35,10 +35,16 @@ function(BuildLuajit)
     INSTALL_COMMAND "${_luajit_INSTALL_COMMAND}")
 endfunction()
 
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  set(AMD64_ABI "LDFLAGS=-lpthread -lc++abi")
+else()
+  set(AMD64_ABI "")
+endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
+                                ${AMD64_ABI}
                                 CCDEBUG+=-g
                                 Q=
                                 install)

@@ -136,13 +136,21 @@
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
 
-/// Calculate the length of a C array.
+/// Calculate the length of a C array
 ///
 /// This should be called with a real array. Calling this with a pointer is an
-/// error. A mechanism to detect many (though not all) of those errors at compile
-/// time is implemented. It works by the second division producing a division by
-/// zero in those cases (-Wdiv-by-zero in GCC).
-#define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
+/// error. A mechanism to detect many (though not all) of those errors at
+/// compile time is implemented. It works by the second division producing
+/// a division by zero in those cases (-Wdiv-by-zero in GCC).
+#define ARRAY_SIZE(arr) \
+    ((sizeof(arr)/sizeof((arr)[0])) \
+     / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
+
+/// Get last array entry
+///
+/// This should be called with a real array. Calling this with a pointer is an
+/// error.
+#define ARRAY_LAST_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
 
 // Duplicated in os/win_defs.h to avoid include-order sensitivity.
 #define RGB_(r, g, b) ((r << 16) | (g << 8) | b)

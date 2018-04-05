@@ -115,16 +115,12 @@ describe('tui', function()
     ]])
   end)
 
-  it('does not mangle unmapped ALT-key chord', function()
-    -- Vim represents ALT/META by setting the "high bit" of the modified key;
-    -- we do _not_. #3982
-    --
-    -- Example: for input ALT+j:
-    --    * Vim (Nvim prior to #3982) sets high-bit, inserts "ê".
-    --    * Nvim (after #3982) inserts "j".
-    feed_data('i\027j')
+  it('interprets ESC+key as ALT chord', function()
+    -- Vim represents ALT/META by setting the "high bit" of the modified key:
+    -- ALT+j inserts "ê". Nvim does not (#3982).
+    feed_data('i\022\027j')
     screen:expect([[
-      j{1: }                                                |
+      <M-j>{1: }                                            |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|

@@ -40,10 +40,11 @@ char		action	~
 						*i_CTRL-[* *i_<Esc>*
 <Esc> or CTRL-[	End insert or Replace mode, go back to Normal mode.  Finish
 		abbreviation.
-		Note: If your <Esc> key is hard to hit on your keyboard, train
-		yourself to use CTRL-[.
-		If Esc doesn't work and you are using a Mac, try CTRL-Esc.
-		Or disable Listening under Accessibility preferences.
+		Note: If your <Esc> key is hard to hit, try CTRL-[ instead.
+						*i_META* *i_ALT*
+                |ALT| (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have an
+                insert-mode mapping.
 						*i_CTRL-C*
 CTRL-C		Quit insert mode, go back to Normal mode.  Do not check for
 		abbreviations.  Does not trigger the |InsertLeave| autocommand

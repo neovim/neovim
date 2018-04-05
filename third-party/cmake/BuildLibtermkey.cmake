@@ -11,14 +11,22 @@ ExternalProject_Add(libtermkey
   -DTARGET=libtermkey
   -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
   -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libtermkey
-    -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
-    # Pass toolchain
-    -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    # Hack to avoid -rdynamic in Mingw
-    -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS=""
-    -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+  PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey init
+    COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libtermkey-Add-support-for-Windows.patch 
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libtermkeyCMakeLists.txt
+      ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
+    COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libtermkey
+      -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+      # Pass toolchain
+      -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      # Hack to avoid -rdynamic in Mingw
+      -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS=""
+      -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+      -DUNIBILIUM_INCLUDE_DIRS=${DEPS_INSTALL_DIR}/include
+      -DUNIBILIUM_LIBRARIES=${DEPS_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}unibilium${CMAKE_STATIC_LIBRARY_SUFFIX}
   BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
   INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 else()

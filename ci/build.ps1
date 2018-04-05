@@ -11,7 +11,11 @@ $depsCmakeVars = @{
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
-  GPERF_PRG = 'C:\msys64\usr\bin\gperf.exe';
+}
+
+# For pull requests, skip some build configurations to save time.
+if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
+  exit 0
 }
 
 function exitIfFailed() {
@@ -39,12 +43,10 @@ if ($compiler -eq 'MINGW') {
 
   # Add MinGW to the PATH
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
-  # Remove the Git sh.exe from the PATH
-  $env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
 
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-$arch-cmake mingw-w64-$arch-perl mingw-w64-$arch-diffutils mingw-w64-$arch-unibilium gperf" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-$arch-cmake mingw-w64-$arch-perl mingw-w64-$arch-diffutils mingw-w64-$arch-unibilium" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
@@ -55,6 +57,9 @@ elseif ($compiler -eq 'MSVC') {
     $cmakeGenerator = 'Visual Studio 15 2017 Win64'
   }
 }
+
+# Remove Git Unix utilities from the PATH
+$env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
 
 # Setup python (use AppVeyor system python)
 C:\Python27\python.exe -m pip install neovim ; exitIfFailed
@@ -91,7 +96,18 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 bin\nvim --version ; exitIfFailed
 
 # Functional tests
-cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs ; exitIfFailed
+# The $LastExitCode from MSBuild can't be trusted
+$failed = $false
+# Temporarily turn off tracing to reduce log file output
+Set-PSDebug -Off
+cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs |
+  foreach { $failed = $failed -or
+    $_ -match 'Running functional tests failed with error'; $_ }
+Set-PSDebug -Trace 1
+if ($failed) {
+  exit $LastExitCode
+}
+
 
 if ($uploadToCodecov) {
   C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
