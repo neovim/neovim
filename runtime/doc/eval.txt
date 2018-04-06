@@ -4208,8 +4208,7 @@ getftype({fname})					*getftype()*
 			getftype("/home")
 <		Note that a type such as "link" will only be returned on
 		systems that support it.  On some systems only "dir" and
-		"file" are returned.  On MS-Windows a symbolic link to a
-		directory returns "dir" instead of "link".
+		"file" are returned.
 
 							*getline()*
 getline({lnum} [, {end}])
