@@ -5937,9 +5937,7 @@ void not_exiting(void)
 }
 
 
-/*
- * Detach TUI and run running instance of neovim in headless mode. #6871
- */
+// Detach TUI and run running instance of neovim in headless mode. #6871
 static void ex_goheadless(void)
 {
   ui_builtin_stop();
