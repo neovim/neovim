@@ -1,9 +1,12 @@
 Tests
 =====
 
-Tests are run by `/cmake/RunTests.cmake` file, using `busted`.
+Tests are run by [`cmake/RunTests.cmake`](../cmake/RunTests.cmake).
 
-For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+They depend on [busted](https://github.com/Olivine-Labs/busted) as test runner and
+[lua-client](https://github.com/neovim/lua-client) for starting nvim processes.
+
+For some test failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 
 ---
 
@@ -11,6 +14,7 @@ For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 - [Unit tests](#unit-tests)
 - [Lint](#lint)
 - [Environment variables](#environment-variables)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -344,3 +348,18 @@ addition to regular error message.
 
 `NVIM_TEST_MAXTRACE` (U) (N): specifies maximum number of trace lines to keep. 
 Default is 1024.
+
+Troubleshooting
+---------------
+
+If `make test` fails early (e.g. because of `unknown target 'functionaltest'`),
+make sure the needed Lua rocks are installed. They are not automatically fetched
+and built on `make` when `-DUSE_BUNDLED_DEPS=OFF` or
+`-DUSE_BUNDLED_LUAROCKS=OFF` were given.
+
+Moreover, cmake cached its results in `build/CMakeCache.txt` by now, so remove
+the build directory as well:
+
+    luarocks install busted nvim-client
+    rm -r build
+    make test
