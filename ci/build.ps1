@@ -35,6 +35,9 @@ if ($compiler -eq 'MINGW') {
     $nvimCmakeVars['USE_GCOV'] = 'ON'
     $uploadToCodecov = $true
   }
+  if ($compileOption -eq 'static') {
+    $nvimCmakeVars['NVIM_BUILD_STATIC'] = 'ON'
+  }
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
   # in MSYS2, but we cannot build inside the MSYS2 shell.

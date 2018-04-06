@@ -8,6 +8,7 @@ configuration:
 - MINGW_64
 - MINGW_32
 - MINGW_64-gcov
+- MINGW_64-static
 matrix:
   allow_failures:
     - configuration: MINGW_64-gcov

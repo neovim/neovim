@@ -2,6 +2,13 @@
 #define NVIM_OS_PTY_PROCESS_WIN_H
 
 #include <uv.h>
+
+#if defined(NVIM_BUILD_STATIC)
+  // winpty only support dyamic build
+  // define COMPILING_WINPTY_DLL to avoid undefined reference to winpty APIs.
+# define COMPILING_WINPTY_DLL
+#endif
+
 #include <winpty.h>
 
 #include "nvim/event/process.h"

@@ -169,6 +169,11 @@ if(NOT MSVC)
   endif()
 endif()
 
+if(WIN32 AND NVIM_BUILD_STATIC)
+  set_source_files_properties(
+    os/pty_process_win.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -DNVIM_BUILD_STATIC")
+endif()
+
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
@@ -405,9 +410,17 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
+if(NVIM_BUILD_STATIC)
+  list(APPEND NVIM_EXEC_LINK_LIBRARIES  -Wl,-Bstatic -lgcc -lstdc++)
+  list(REMOVE_DUPLICATES NVIM_EXEC_LINK_LIBRARIES)
+endif()
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
+if(NVIM_BUILD_STATIC)
+  set_target_properties(nvim PROPERTIES LINK_DEPENDS_NO_SHARED ON)
+endif()
+
 install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
@@ -430,6 +443,19 @@ if(WIN32)
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
 
+  if(NVIM_BUILD_STATIC)
+    add_custom_target(winpty_blobs
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
+      COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    )
+  else()
+    add_custom_target(winpty_blobs
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps
+      COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+      COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    )
+  endif()
+
   add_custom_target(external_blobs
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
 
@@ -440,7 +466,6 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
@@ -454,11 +479,9 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
-  add_dependencies(nvim_runtime_deps external_blobs)
+  add_dependencies(nvim_runtime_deps external_blobs winpty_blobs)
 else()
   add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
@@ -493,8 +516,15 @@ if(LUAJIT_FOUND)
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
+  if(NVIM_BUILD_STATIC)
+    list(APPEND NVIM_TEST_LINK_LIBRARIES  -Wl,-Bstatic -lgcc -lstdc++)
+    list(REMOVE_DUPLICATES NVIM_TEST_LINK_LIBRARIES)
+  endif()
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
   target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
+  if(NVIM_BUILD_STATIC)
+    set_target_properties(nvim-test libnvim PROPERTIES LINK_DEPENDS_NO_SHARED ON)
+  endif()
   set_property(
     TARGET nvim-test
     APPEND PROPERTY INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS}

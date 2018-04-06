@@ -26,8 +26,14 @@ find_path(LibIntl_INCLUDE_DIR
     PATH_SUFFIXES gettext
 )
 
+if(NVIM_BUILD_STATIC)
+  list(APPEND INTL_NAMES
+    "${CMAKE_STATIC_LIBRARY_PREFIX}intl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif()
+list(APPEND INTL_NAMES intl libintl)
+
 find_library(LibIntl_LIBRARY
-    NAMES intl libintl
+    NAMES ${INTL_NAMES}
 )
 
 if (LibIntl_INCLUDE_DIR)
@@ -38,7 +44,11 @@ endif()
 # libintl--it is built into glibc.  So we only need to specify the library
 # if one was actually found.
 if (LibIntl_LIBRARY)
-  set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
+  if (NVIM_BUILD_STATIC)
+    set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}" "${ICONV_LIBRARY}")
+  else()
+    set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
+  endif()
 endif()
 
 check_c_source_compiles("
