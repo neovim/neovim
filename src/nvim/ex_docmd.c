@@ -5936,6 +5936,15 @@ void not_exiting(void)
   exiting = FALSE;
 }
 
+
+/*
+ * Detach TUI and run running instance of neovim in headless mode. #6871
+ */
+static void ex_goheadless(void)
+{
+  ui_builtin_stop();
+}
+
 /*
  * ":quit": quit current window, quit Vim if the last window is closed.
  */

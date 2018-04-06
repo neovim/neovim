@@ -1241,6 +1241,7 @@ tag	      command	      action ~
 |:function|	:fu[nction]	define a user function
 |:global|	:g[lobal]	execute commands for matching lines
 |:goto|		:go[to]		go to byte in the buffer
+|:goheadless|	:goh[eadless]	Detach UI and run in headless mode
 |:grep|		:gr[ep]		run 'grepprg' and jump to first match
 |:grepadd|	:grepa[dd]	like :grep, but append to current list
 |:gui|		:gu[i]		start the GUI
