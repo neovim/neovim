@@ -3235,37 +3235,43 @@ static int in_html_tag(int end_tag)
   if (enc_dbcs) {
     char_u  *lp = NULL;
 
-    /* We search forward until the cursor, because searching backwards is
-     * very slow for DBCS encodings. */
-    for (p = line; p < line + curwin->w_cursor.col; mb_ptr_adv(p))
+    // We search forward until the cursor, because searching backwards is
+    // very slow for DBCS encodings.
+    for (p = line; p < line + curwin->w_cursor.col; MB_PTR_ADV(p)) {
       if (*p == '>' || *p == '<') {
         lc = *p;
         lp = p;
       }
-    if (*p != '<') {        /* check for '<' under cursor */
-      if (lc != '<')
-        return FALSE;
+    }
+    if (*p != '<') {        // check for '<' under cursor
+      if (lc != '<') {
+        return false;
+      }
       p = lp;
     }
   } else {
     for (p = line + curwin->w_cursor.col; p > line; ) {
-      if (*p == '<')            /* find '<' under/before cursor */
+      if (*p == '<') {           // find '<' under/before cursor
         break;
-      mb_ptr_back(line, p);
-      if (*p == '>')            /* find '>' before cursor */
+      }
+      MB_PTR_BACK(line, p);
+      if (*p == '>') {           // find '>' before cursor
         break;
+      }
     }
-    if (*p != '<')
-      return FALSE;
+    if (*p != '<') {
+      return false;
+    }
   }
 
   pos.lnum = curwin->w_cursor.lnum;
   pos.col = (colnr_T)(p - line);
 
-  mb_ptr_adv(p);
-  if (end_tag)
-    /* check that there is a '/' after the '<' */
+  MB_PTR_ADV(p);
+  if (end_tag) {
+    // check that there is a '/' after the '<'
     return *p == '/';
+  }
 
   /* check that there is no '/' after the '<' */
   if (*p == '/')
@@ -3369,8 +3375,9 @@ again:
    */
   inc_cursor();
   p = get_cursor_pos_ptr();
-  for (cp = p; *cp != NUL && *cp != '>' && !ascii_iswhite(*cp); mb_ptr_adv(cp))
-    ;
+  for (cp = p; *cp != NUL && *cp != '>' && !ascii_iswhite(*cp);
+       MB_PTR_ADV(cp)) {
+  }
   len = (int)(cp - p);
   if (len == 0) {
     curwin->w_cursor = old_pos;

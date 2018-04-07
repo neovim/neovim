@@ -525,7 +525,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   if (*line != NUL) {
     for (;;) {
       int numchar = chartabsize(line, col);
-      mb_ptr_adv(line);
+      MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character
         break;
       }

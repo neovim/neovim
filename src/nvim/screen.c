@@ -2530,7 +2530,7 @@ win_line (
       c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
 
     // When:
@@ -3457,7 +3457,7 @@ win_line (
         }
 
         // Found last space before word: check for line break.
-        if (wp->w_p_lbr && c0 == c && vim_isbreak(c) && !vim_isbreak(*ptr)) {
+        if (wp->w_p_lbr && c0 == c && VIM_ISBREAK(c) && !VIM_ISBREAK(*ptr)) {
           int mb_off = has_mbyte ? (*mb_head_off)(line, ptr - 1) : 0;
           char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?
@@ -4715,7 +4715,7 @@ static int status_match_len(expand_T *xp, char_u *s)
   while (*s != NUL) {
     s += skip_status_match_char(xp, s);
     len += ptr2cells(s);
-    mb_ptr_adv(s);
+    MB_PTR_ADV(s);
   }
 
   return len;
@@ -7022,7 +7022,7 @@ static void draw_tabline(void)
         if (has_mbyte)
           while (len > room) {
             len -= ptr2cells(p);
-            mb_ptr_adv(p);
+            MB_PTR_ADV(p);
           }
         else if (len > room) {
           p += len - room;

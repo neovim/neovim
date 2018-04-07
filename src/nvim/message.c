@@ -2939,7 +2939,7 @@ static char_u * console_dialog_alloc(const char_u *message,
     }
 
     // Advance to the next character
-    mb_ptr_adv(r);
+    MB_PTR_ADV(r);
   }
 
   len += (int)(STRLEN(message)
@@ -3057,7 +3057,7 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
     }
 
     // advance to the next character
-    mb_ptr_adv(r);
+    MB_PTR_ADV(r);
   }
 
   *msgp++ = ':';

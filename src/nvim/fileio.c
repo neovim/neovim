@@ -4402,7 +4402,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   // Search backwards until we hit a '/', '\' or ':'.
   // Then truncate what is after the '/', '\' or ':' to BASENAMELEN characters.
   char *ptr = NULL;
-  for (ptr = retval + fnamelen; ptr > retval; mb_ptr_back(retval, ptr)) {
+  for (ptr = retval + fnamelen; ptr > retval; MB_PTR_BACK(retval, ptr)) {
     if (vim_ispathsep(*ptr)) {
       ptr++;
       break;

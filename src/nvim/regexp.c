@@ -1140,24 +1140,28 @@ static char_u *skip_anyof(char_u *p)
   if (*p == ']' || *p == '-')
     ++p;
   while (*p != NUL && *p != ']') {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
+    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       p += l;
-    else if (*p == '-')  {
-      ++p;
-      if (*p != ']' && *p != NUL)
-        mb_ptr_adv(p);
+    } else if (*p == '-')  {
+      p++;
+      if (*p != ']' && *p != NUL) {
+        MB_PTR_ADV(p);
+      }
     } else if (*p == '\\'
                && (vim_strchr(REGEXP_INRANGE, p[1]) != NULL
-                   || (!reg_cpo_lit && vim_strchr(REGEXP_ABBR, p[1]) != NULL)))
+                   || (!reg_cpo_lit && vim_strchr(REGEXP_ABBR,
+                                                  p[1]) != NULL))) {
       p += 2;
-    else if (*p == '[') {
+    } else if (*p == '[') {
       if (get_char_class(&p) == CLASS_NONE
           && get_equi_class(&p) == 0
           && get_coll_element(&p) == 0
-          && *p != NUL)
-        ++p;         /* It is not a class name and not NUL */
-    } else
-      ++p;
+          && *p != NUL) {
+        p++;         // It is not a class name and not NUL
+      }
+    } else {
+      p++;
+    }
   }
 
   return p;
@@ -1183,9 +1187,10 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
     mymagic = MAGIC_OFF;
   get_cpo_flags();
 
-  for (; p[0] != NUL; mb_ptr_adv(p)) {
-    if (p[0] == dirc)           /* found end of regexp */
+  for (; p[0] != NUL; MB_PTR_ADV(p)) {
+    if (p[0] == dirc) {          // found end of regexp
       break;
+    }
     if ((p[0] == '[' && mymagic >= MAGIC_ON)
         || (p[0] == '\\' && p[1] == '[' && mymagic <= MAGIC_OFF)) {
       p = skip_anyof(p + 1);
@@ -3471,14 +3476,14 @@ static long bt_regexec_both(char_u *line,
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
-        mb_ptr_adv(s);
+        MB_PTR_ADV(s);
       }
     } else {
       while ((s = cstrchr(s, c)) != NULL) {
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
-        mb_ptr_adv(s);
+        MB_PTR_ADV(s);
       }
     }
     if (s == NULL) {  // Not present.
@@ -3748,7 +3753,7 @@ static int reg_match_visual(void)
   return TRUE;
 }
 
-#define ADVANCE_REGINPUT() mb_ptr_adv(reginput)
+#define ADVANCE_REGINPUT() MB_PTR_ADV(reginput)
 
 /*
  * The arguments from BRACE_LIMITS are stored here.  They are actually local
@@ -4280,7 +4285,7 @@ regmatch (
           if (enc_utf8) {
             // Skip composing characters.
             while (utf_iscomposing(utf_ptr2char(reginput))) {
-              mb_cptr_adv(reginput);
+              MB_CPTR_ADV(reginput);
             }
           }
           break;
@@ -4952,13 +4957,14 @@ regmatch (
                 --rp->rs_un.regsave.rs_u.pos.col;
             }
           } else {
-            if (rp->rs_un.regsave.rs_u.ptr == regline)
+            if (rp->rs_un.regsave.rs_u.ptr == regline) {
               no = FAIL;
-            else {
-              mb_ptr_back(regline, rp->rs_un.regsave.rs_u.ptr);
+            } else {
+              MB_PTR_BACK(regline, rp->rs_un.regsave.rs_u.ptr);
               if (limit > 0 && (long)(behind_pos.rs_u.ptr
-                                      - rp->rs_un.regsave.rs_u.ptr) > limit)
+                                      - rp->rs_un.regsave.rs_u.ptr) > limit) {
                 no = FAIL;
+              }
             }
           }
           if (no == OK) {
@@ -5027,8 +5033,9 @@ regmatch (
                   break;
                 reginput = regline + STRLEN(regline);
                 fast_breakcheck();
-              } else
-                mb_ptr_back(regline, reginput);
+              } else {
+                MB_PTR_BACK(regline, reginput);
+              }
             } else {
               /* Range is backwards, use shortest match first.
                * Careful: maxval and minval are exchanged!
@@ -5158,8 +5165,8 @@ regrepeat (
       /* Matching anything means we continue until end-of-line (or
        * end-of-file for ANY + ADD_NL), only limited by maxcount. */
       while (*scan != NUL && count < maxcount) {
-        ++count;
-        mb_ptr_adv(scan);
+        count++;
+        MB_PTR_ADV(scan);
       }
       if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
           || rex.reg_line_lbr || count == maxcount) {
@@ -5181,7 +5188,7 @@ regrepeat (
   case SIDENT + ADD_NL:
     while (count < maxcount) {
       if (vim_isIDc(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5209,7 +5216,7 @@ regrepeat (
     while (count < maxcount) {
       if (vim_iswordp_buf(scan, rex.reg_buf)
           && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5237,7 +5244,7 @@ regrepeat (
   case SFNAME + ADD_NL:
     while (count < maxcount) {
       if (vim_isfilec(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5276,7 +5283,7 @@ regrepeat (
         }
       } else if (vim_isprintc(PTR2CHAR(scan)) == 1
                  && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
       } else {
@@ -6672,7 +6679,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
       if (eval_result != NULL) {
         int had_backslash = FALSE;
 
-        for (s = eval_result; *s != NUL; mb_ptr_adv(s)) {
+        for (s = eval_result; *s != NUL; MB_PTR_ADV(s)) {
           // Change NL to CR, so that it becomes a line break,
           // unless called from vim_regexec_nl().
           // Skip over a backslashed character.

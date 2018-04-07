@@ -744,7 +744,7 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 
   for (char_u *s = line;
        *s != NUL && (len == MAXCOL || s < line + len);
-       mb_ptr_adv(s)) {
+       MB_PTR_ADV(s)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
   }
 
@@ -911,7 +911,7 @@ int lbr_chartabsize_adv(char_u *line, char_u **s, colnr_T col)
   int retval;
 
   retval = lbr_chartabsize(line, *s, col);
-  mb_ptr_adv(*s);
+  MB_PTR_ADV(*s);
   return retval;
 }
 
@@ -957,8 +957,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here
   if (wp->w_p_lbr
-      && vim_isbreak(c)
-      && !vim_isbreak(s[1])
+      && VIM_ISBREAK(c)
+      && !VIM_ISBREAK(s[1])
       && wp->w_p_wrap
       && (wp->w_width != 0)) {
     // Count all characters from first non-blank after a blank up to next
@@ -978,11 +978,11 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
     for (;;) {
       ps = s;
-      mb_ptr_adv(s);
+      MB_PTR_ADV(s);
       c = *s;
 
       if (!(c != NUL
-            && (vim_isbreak(c) || col2 == col || !vim_isbreak(*ps)))) {
+            && (VIM_ISBREAK(c) || col2 == col || !VIM_ISBREAK(*ps)))) {
         break;
       }
 
@@ -1223,7 +1223,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   } else {
     for (;;) {
@@ -1244,7 +1244,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   }
 
