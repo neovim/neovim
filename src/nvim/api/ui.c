@@ -56,7 +56,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, "UI already attached for channel");
+    api_set_error(err, kErrorTypeException,
+                  "UI already attached to channel: %" PRId64, channel_id);
     return;
   }
 
@@ -130,7 +131,8 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
+    api_set_error(err, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
     return;
   }
   remote_ui_disconnect(channel_id);
@@ -142,7 +144,8 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
+    api_set_error(err, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
     return;
   }
 
@@ -163,7 +166,8 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException, "UI is not attached for channel");
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
     return;
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
@@ -209,7 +213,7 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
     return;
   }
 
-  api_set_error(error, kErrorTypeValidation, "No such ui option");
+  api_set_error(error, kErrorTypeValidation, "No such UI option");
 #undef UI_EXT_OPTION
 }
 
