@@ -830,7 +830,7 @@ static void tui_cursor_goto(UI *ui, Integer row, Integer col)
 
 CursorShape tui_cursor_decode_shape(const char *shape_str)
 {
-  CursorShape shape = 0;
+  CursorShape shape;
   if (strequal(shape_str, "block")) {
     shape = SHAPE_BLOCK;
   } else if (strequal(shape_str, "vertical")) {
@@ -838,7 +838,8 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
   } else if (strequal(shape_str, "horizontal")) {
     shape = SHAPE_HOR;
   } else {
-    EMSG2(_(e_invarg2), shape_str);
+    WLOG("Unknown shape value '%s'", shape_str);
+    shape = SHAPE_BLOCK;
   }
   return shape;
 }
@@ -939,7 +940,6 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     case SHAPE_BLOCK: shape = 1; break;
     case SHAPE_HOR:   shape = 3; break;
     case SHAPE_VER:   shape = 5; break;
-    default: WLOG("Unknown shape value %d", shape); break;
   }
   UNIBI_SET_NUM_VAR(data->params[0], shape + (int)(c.blinkon == 0));
   unibi_out_ext(ui, data->unibi_ext.set_cursor_style);
