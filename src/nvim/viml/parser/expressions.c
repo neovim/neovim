@@ -779,7 +779,8 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate,
             eltkn_opt_scope_tab[token.data.opt.scope],
             (int)token.data.opt.len, token.data.opt.name)
     TKNARGS(kExprLexPlainIdentifier, "(scope=%s,autoload=%i)",
-            intchar2str(token.data.var.scope), (int)token.data.var.autoload)
+            intchar2str((int)token.data.var.scope),
+            (int)token.data.var.autoload)
     TKNARGS(kExprLexNumber, "(is_float=%i,base=%i,val=%lg)",
             (int)token.data.num.is_float,
             (int)token.data.num.base,
