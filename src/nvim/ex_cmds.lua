@@ -1015,6 +1015,12 @@ return {
     func='ex_global',
   },
   {
+    command='goheadless',
+    flags=bit.bor(BANG),
+    addr_type=ADDR_LINES,
+    func='ex_goheadless',
+  },
+  {
     command='goto',
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
