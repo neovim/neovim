@@ -801,29 +801,21 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * their final destination at the new text position -- webb
    */
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  mark_adjust(line1, line2, last_line - line2, 0L);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines);
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
-    FOR_ALL_TAB_WINDOWS(tab, win) {
-      if (win->w_buffer == curbuf) {
-        foldMoveRange(&win->w_folds, line1, line2, dest);
-      }
-    }
+    mark_adjust(line2 + 1, dest, -num_lines, 0L);
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false);
-    FOR_ALL_TAB_WINDOWS(tab, win) {
-      if (win->w_buffer == curbuf) {
-        foldMoveRange(&win->w_folds, dest + 1, line1 - 1, line2);
-      }
-    }
+    mark_adjust(dest + 1, line1 - 1, num_lines, 0L);
     curbuf->b_op_start.lnum = dest + 1;
     curbuf->b_op_end.lnum = dest + num_lines;
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
-  mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, true);
+  mark_adjust(last_line - num_lines + 1, last_line,
+              -(last_line - dest - extra), 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra);
 
   /*
    * Now we delete the original text -- webb
