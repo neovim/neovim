@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/log.h"
 #include "nvim/ui.h"
+#include "nvim/highlight.h"
 #include "nvim/map.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"

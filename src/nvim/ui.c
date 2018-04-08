@@ -32,7 +32,7 @@
 #include "nvim/os/signal.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
-#include "nvim/syntax.h"
+#include "nvim/highlight.h"
 #include "nvim/window.h"
 #include "nvim/cursor_shape.h"
 #ifdef FEAT_TUI
@@ -171,66 +171,6 @@ void ui_event(char *name, Array args)
   }
 }
 
-
-/// Converts an HlAttrs into Dictionary
-///
-/// @param[in] aep data to convert
-/// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
-{
-  assert(aep);
-  Dictionary hl = ARRAY_DICT_INIT;
-  int mask  = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
-
-  if (mask & HL_BOLD) {
-    PUT(hl, "bold", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_STANDOUT) {
-    PUT(hl, "standout", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERLINE) {
-    PUT(hl, "underline", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_UNDERCURL) {
-    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_ITALIC) {
-    PUT(hl, "italic", BOOLEAN_OBJ(true));
-  }
-
-  if (mask & HL_INVERSE) {
-    PUT(hl, "reverse", BOOLEAN_OBJ(true));
-  }
-
-
-  if (use_rgb) {
-    if (aep->rgb_fg_color != -1) {
-      PUT(hl, "foreground", INTEGER_OBJ(aep->rgb_fg_color));
-    }
-
-    if (aep->rgb_bg_color != -1) {
-      PUT(hl, "background", INTEGER_OBJ(aep->rgb_bg_color));
-    }
-
-    if (aep->rgb_sp_color != -1) {
-      PUT(hl, "special", INTEGER_OBJ(aep->rgb_sp_color));
-    }
-  } else {
-    if (cterm_normal_fg_color != aep->cterm_fg_color) {
-      PUT(hl, "foreground", INTEGER_OBJ(aep->cterm_fg_color - 1));
-    }
-
-    if (cterm_normal_bg_color != aep->cterm_bg_color) {
-      PUT(hl, "background", INTEGER_OBJ(aep->cterm_bg_color - 1));
-    }
-  }
-
-  return hl;
-}
 
 void ui_refresh(void)
 {

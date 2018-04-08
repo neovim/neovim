@@ -16,6 +16,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/highlight.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"

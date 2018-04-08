@@ -34,6 +34,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight.h"
 #include "nvim/indent.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"

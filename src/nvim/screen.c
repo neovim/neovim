@@ -85,6 +85,7 @@
 #include "nvim/fold.h"
 #include "nvim/indent.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

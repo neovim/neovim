@@ -49,6 +49,7 @@
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/highlight.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/buffer.h"

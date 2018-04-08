@@ -10,6 +10,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/eval.h"
+#include "nvim/highlight.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
