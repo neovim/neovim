@@ -864,10 +864,6 @@ static void command_line_scan(mparm_T *parmp)
         case 'f':                 /* "-f"  GUI: run in foreground. */
           break;
 
-        case 'g':                 /* "-g" start GUI */
-          main_start_gui();
-          break;
-
         case 'F': {  // "-F" start in Farsi mode: rl + fkmap set.
           p_fkmap = true;
           set_option_value("rl", 1L, NULL, 0);
@@ -906,18 +902,8 @@ static void command_line_scan(mparm_T *parmp)
           parmp->no_swap_file = TRUE;
           break;
 
-        case 'p':                 /* "-p[N]" open N tab pages */
-#ifdef TARGET_API_MAC_OSX
-          /* For some reason on MacOS X, an argument like:
-             -psn_0_10223617 is passed in when invoke from Finder
-             or with the 'open' command */
-          if (argv[0][argv_idx] == 's') {
-            argv_idx = -1;           /* bypass full -psn */
-            main_start_gui();
-            break;
-          }
-#endif
-          /* default is 0: open window for each file */
+        case 'p':                 // "-p[N]" open N tab pages
+          // default is 0: open window for each file
           parmp->window_count = get_number_arg(argv[0], &argv_idx, 0);
           parmp->window_layout = WIN_TABS;
           break;
@@ -1833,17 +1819,6 @@ static void source_startup_scripts(const mparm_T *const parmp)
   did_source_startup_scripts = true;
   TIME_MSG("sourcing vimrc file(s)");
 }
-
-/*
- * Setup to start using the GUI.  Exit with an error when not available.
- */
-static void main_start_gui(void)
-{
-  mch_errmsg(_(e_nogvim));
-  mch_errmsg("\n");
-  mch_exit(2);
-}
-
 
 /// Get an environment variable, and execute it as Ex commands.
 ///
