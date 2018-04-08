@@ -1480,6 +1480,8 @@ static void win_update(win_T *wp)
   wp->w_empty_rows = 0;
   wp->w_filler_rows = 0;
   if (!eof && !didline) {
+    int at_attr = hl_combine_attr(wp->w_hl_attr_normal,
+                                  win_hl_attr(wp, HLF_AT));
     if (lnum == wp->w_topline) {
       /*
        * Single line that does not fit!
@@ -1494,12 +1496,11 @@ static void win_update(win_T *wp)
       int scr_row = wp->w_winrow + wp->w_height - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      screen_puts_len((char_u *)"@@", 2, scr_row, wp->w_wincol,
-                      win_hl_attr(wp, HLF_AT));
+      screen_puts_len((char_u *)"@@", 2, scr_row, wp->w_wincol, at_attr);
 
       screen_fill(scr_row, scr_row + 1,
                   (int)wp->w_wincol + 2, (int)W_ENDCOL(wp),
-                  '@', ' ', win_hl_attr(wp, HLF_AT));
+                  '@', ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
@@ -1507,7 +1508,7 @@ static void win_update(win_T *wp)
       screen_fill(wp->w_winrow + wp->w_height - 1,
                   wp->w_winrow + wp->w_height,
                   W_ENDCOL(wp) - 3, W_ENDCOL(wp),
-                  '@', '@', win_hl_attr(wp, HLF_AT));
+                  '@', '@', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -1605,7 +1606,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 # define FDC_OFF n
   int fdc = compute_foldcolumn(wp, 0);
 
-  int attr = win_hl_attr(wp, hl);
+  int attr = hl_combine_attr(wp->w_hl_attr_normal, win_hl_attr(wp, hl));
 
   if (wp->w_p_rl) {
     // No check for cmdline window: should never be right-left.
@@ -1992,7 +1993,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   }
 
   screen_line(row + wp->w_winrow, wp->w_wincol, wp->w_width,
-              wp->w_width, false, wp, 0);
+              wp->w_width, false, wp, wp->w_hl_attr_normal);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2408,7 +2409,7 @@ win_line (
   if (wp->w_p_cul && lnum == wp->w_cursor.lnum
       && !(wp == curwin && VIsual_active)) {
     int cul_attr = win_hl_attr(wp, HLF_CUL);
-    HlAttrs *aep = syn_cterm_attr2entry(cul_attr);
+    HlAttrs *aep = syn_attr2entry(cul_attr);
 
     // We make a compromise here (#7383):
     //  * low-priority CursorLine if fg is not set
@@ -5391,41 +5392,6 @@ static void end_search_hl(void)
     search_hl.rm.regprog = NULL;
   }
 }
-
-static void update_window_hl(win_T *wp, bool invalid)
-{
-  if (!wp->w_hl_needs_update && !invalid) {
-    return;
-  }
-  wp->w_hl_needs_update = false;
-
-  // determine window specific background set in 'winhighlight'
-  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
-    wp->w_hl_attr_normal = syn_id2attr(wp->w_hl_ids[HLF_INACTIVE]);
-  } else if (wp->w_hl_id_normal > 0) {
-    wp->w_hl_attr_normal = syn_id2attr(wp->w_hl_id_normal);
-  } else {
-    wp->w_hl_attr_normal = 0;
-  }
-  if (wp != curwin) {
-    wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
-                                           wp->w_hl_attr_normal);
-  }
-
-  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
-    int attr;
-    if (wp->w_hl_ids[hlf] > 0) {
-      attr = syn_id2attr(wp->w_hl_ids[hlf]);
-    } else {
-      attr = HL_ATTR(hlf);
-    }
-    if (wp->w_hl_attr_normal != 0) {
-      attr = hl_combine_attr(wp->w_hl_attr_normal, attr);
-    }
-    wp->w_hl_attrs[hlf] = attr;
-  }
-}
-
 
 
 /*

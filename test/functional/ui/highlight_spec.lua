@@ -834,7 +834,7 @@ describe("'winhighlight' highlight", function()
       {1:a^a                  }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name] [+]       }|
+      {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -846,7 +846,7 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -891,7 +891,7 @@ describe("'winhighlight' highlight", function()
       {1:a^a                  }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name] [+]       }|
+      {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -915,7 +915,7 @@ describe("'winhighlight' highlight", function()
       {1:^aa                  }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name] [+]       }|
+      {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -931,10 +931,10 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {12:[No Name]           }|
+      {4:[No Name]           }|
                           |
     ]])
 
@@ -943,10 +943,10 @@ describe("'winhighlight' highlight", function()
       {5:                    }|
       {6:~                   }|
       {6:~                   }|
-      {12:[No Name]           }|
+      {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
                           |
     ]])
 
@@ -955,10 +955,10 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {12:[No Name]           }|
+      {4:[No Name]           }|
                           |
     ]])
   end)
@@ -974,7 +974,7 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {7:                    }|
       {8:~                   }|
-      {13:[No Name]           }|
+      {4:[No Name]           }|
                           |
     ]])
 
@@ -983,7 +983,7 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {13:[No Name]           }|
+      {4:[No Name]           }|
       ^                    |
       {0:~                   }|
       {3:[No Name]           }|
@@ -997,10 +997,10 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {13:[No Name]           }|
+      {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
                           |
     ]])
 
@@ -1012,7 +1012,7 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {1:                    }|
       {2:~                   }|
-      {14:[No Name]           }|
+      {4:[No Name]           }|
                           |
     ]])
 
@@ -1022,10 +1022,10 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {13:[No Name]           }|
+      {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {11:[No Name]           }|
+      {3:[No Name]           }|
                           |
     ]])
 
@@ -1037,7 +1037,7 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {12:[No Name]           }|
+      {4:[No Name]           }|
                           |
     ]])
   end)

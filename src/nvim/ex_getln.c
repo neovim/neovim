@@ -2953,7 +2953,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
       Array item = ARRAY_DICT_INIT;
 
       if (chunk.attr) {
-        HlAttrs *aep = syn_cterm_attr2entry(chunk.attr);
+        HlAttrs *aep = syn_attr2entry(chunk.attr);
         // TODO(bfredl): this desicion could be delayed by making attr_code a
         // recognized type
         Dictionary rgb_attrs = hlattrs2dict(aep, true);

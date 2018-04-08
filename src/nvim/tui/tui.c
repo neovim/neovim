@@ -32,13 +32,13 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/syntax.h"
 #include "nvim/macros.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
@@ -933,7 +933,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   if (c.id != 0 && ui->rgb) {
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
-      HlAttrs *aep = syn_cterm_attr2entry(attr);
+      HlAttrs *aep = syn_attr2entry(attr);
       UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }

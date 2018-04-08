@@ -1,7 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// highlight.c: low level code for both UI, syntax and :terminal highlighting
+// highlight.c: low level code for UI and syntax highlighting
 
 #include "nvim/vim.h"
 #include "nvim/highlight.h"
@@ -9,6 +9,7 @@
 #include "nvim/map.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
+#include "nvim/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 
@@ -16,89 +17,180 @@
 # include "highlight.c.generated.h"
 #endif
 
-/// An attribute number is the index in attr_entries plus ATTR_OFF.
-#define ATTR_OFF 1
+static bool hlstate_active = false;
 
-/// Table with the specifications for an attribute number.
-/// Note that this table is used by ALL buffers.  This is required because the
-/// GUI can redraw at any time for any buffer.
-static garray_T attr_table = GA_EMPTY_INIT_VALUE;
+static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
 
-static inline HlAttrs * ATTR_ENTRY(int idx)
+static Map(HlEntry, int) *attr_entry_ids;
+static Map(int, int) *combine_attr_entries;
+
+void highlight_init(void)
 {
-  return &((HlAttrs *)attr_table.ga_data)[idx];
+  attr_entry_ids = map_new(HlEntry, int)();
+  combine_attr_entries = map_new(int, int)();
+
+  // index 0 is no attribute, add dummy entry:
+  kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
+                                    .id1 = 0, .id2 = 0 }));
 }
 
-
-/// Return the attr number for a set of colors and font.
-/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
-/// if the combination is new.
-/// @return 0 for error.
-int get_attr_entry(HlAttrs *aep)
+/// @return TRUE if hl table was reset
+bool highlight_use_hlstate(void)
 {
-  garray_T *table = &attr_table;
-  HlAttrs *taep;
-  static int recursive = false;
+  if (hlstate_active) {
+      return false;
+  }
+  hlstate_active = true;
+  // hl tables must now be rebuilt.
+  clear_hl_tables(true);
+  return true;
+}
 
-  /*
-   * Init the table, in case it wasn't done yet.
-   */
-  table->ga_itemsize = sizeof(HlAttrs);
-  ga_set_growsize(table, 7);
-
-  // Try to find an entry with the same specifications.
-  for (int i = 0; i < table->ga_len; i++) {
-    taep = &(((HlAttrs *)table->ga_data)[i]);
-    if (aep->cterm_ae_attr == taep->cterm_ae_attr
-        && aep->cterm_fg_color == taep->cterm_fg_color
-        && aep->cterm_bg_color == taep->cterm_bg_color
-        && aep->rgb_ae_attr == taep->rgb_ae_attr
-        && aep->rgb_fg_color == taep->rgb_fg_color
-        && aep->rgb_bg_color == taep->rgb_bg_color
-        && aep->rgb_sp_color == taep->rgb_sp_color) {
-      return i + ATTR_OFF;
-    }
+/// Return the attr number for a set of colors and font, and optionally
+/// a semantic description (see ext_hlstate documentation).
+/// Add a new entry to the attr_entries array if the combination is new.
+/// @return 0 for error.
+static int get_attr_entry(HlEntry entry)
+{
+  if (!hlstate_active) {
+    // This information will not be used, erase it and reduce the table size.
+    entry.kind = kHlUnknown;
+    entry.id1 = 0;
+    entry.id2 = 0;
   }
 
-  if (table->ga_len + ATTR_OFF > MAX_TYPENR) {
-    /*
-     * Running out of attribute entries!  remove all attributes, and
-     * compute new ones for all groups.
-     * When called recursively, we are really out of numbers.
-     */
+  int id = map_get(HlEntry, int)(attr_entry_ids, entry);
+  if (id > 0) {
+    return id;
+  }
+
+  static bool recursive = false;
+  if (kv_size(attr_entries) > MAX_TYPENR) {
+    // Running out of attribute entries!  remove all attributes, and
+    // compute new ones for all groups.
+    // When called recursively, we are really out of numbers.
     if (recursive) {
       EMSG(_("E424: Too many different highlighting attributes in use"));
       return 0;
     }
-    recursive = TRUE;
+    recursive = true;
 
-    clear_hl_tables();
+    clear_hl_tables(true);
 
-    must_redraw = CLEAR;
-
-    highlight_attr_set_all();
-
-    recursive = FALSE;
+    recursive = false;
+    if (entry.kind == kHlCombine) {
+      // This entry is now invalid, don't put it
+      return 0;
+    }
   }
 
-  // This is a new combination of colors and font, add an entry.
-  taep = GA_APPEND_VIA_PTR(HlAttrs, table);
-  memset(taep, 0, sizeof(*taep));
-  taep->cterm_ae_attr = aep->cterm_ae_attr;
-  taep->cterm_fg_color = aep->cterm_fg_color;
-  taep->cterm_bg_color = aep->cterm_bg_color;
-  taep->rgb_ae_attr = aep->rgb_ae_attr;
-  taep->rgb_fg_color = aep->rgb_fg_color;
-  taep->rgb_bg_color = aep->rgb_bg_color;
-  taep->rgb_sp_color = aep->rgb_sp_color;
+  id = (int)kv_size(attr_entries);
+  kv_push(attr_entries, entry);
 
-  return table->ga_len - 1 + ATTR_OFF;
+  map_put(HlEntry, int)(attr_entry_ids, entry, id);
+
+  return id;
 }
 
-// Clear all highlight tables.
-void clear_hl_tables(void)
+/// Get attribute code for a syntax group.
+int hl_get_syn_attr(int idx, HlAttrs at_en)
 {
-  ga_clear(&attr_table);
+  // TODO(bfredl): should we do this unconditionally
+  if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
+      || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
+      || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
+      || at_en.rgb_ae_attr != 0) {
+    return get_attr_entry((HlEntry){ .attr = at_en, .kind = kHlSyntax,
+                                     .id1 = idx, .id2 = 0 });
+  } else {
+    // If all the fields are cleared, clear the attr field back to default value
+    return 0;
+  }
+}
+
+/// Get attribute code for a builtin highlight group.
+///
+/// The final syntax group could be modified by hi-link or 'winhighlight'.
+int hl_get_ui_attr(int idx, int final_id, bool optional)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+  bool available = false;
+
+  int syn_attr = syn_id2attr(final_id);
+  if (syn_attr != 0) {
+    HlAttrs *aep = syn_attr2entry(syn_attr);
+    if (aep) {
+      attrs = *aep;
+      available = true;
+    }
+  }
+  if (optional && !available) {
+    return 0;
+  }
+  return get_attr_entry((HlEntry){ .attr = attrs, .kind = kHlUI,
+                                   .id1 = idx, .id2 = final_id });
+}
+
+void update_window_hl(win_T *wp, bool invalid)
+{
+  if (!wp->w_hl_needs_update && !invalid) {
+    return;
+  }
+  wp->w_hl_needs_update = false;
+
+  // determine window specific background set in 'winhighlight'
+  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
+    wp->w_hl_attr_normal = hl_get_ui_attr(HLF_INACTIVE,
+                                          wp->w_hl_ids[HLF_INACTIVE], true);
+  } else if (wp->w_hl_id_normal > 0) {
+    wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, true);
+  } else {
+    wp->w_hl_attr_normal = 0;
+  }
+  if (wp != curwin) {
+    wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
+                                           wp->w_hl_attr_normal);
+  }
+
+  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+    int attr;
+    if (wp->w_hl_ids[hlf] > 0) {
+      attr = hl_get_ui_attr(hlf, wp->w_hl_ids[hlf], false);
+    } else {
+      attr = HL_ATTR(hlf);
+    }
+    wp->w_hl_attrs[hlf] = attr;
+  }
+}
+
+/// Get attribute code for forwarded :terminal highlights.
+int get_term_attr_entry(HlAttrs *aep)
+{
+  return get_attr_entry((HlEntry){ .attr= *aep, .kind = kHlTerminal,
+                                   .id1 = 0, .id2 = 0 });
+}
+
+/// Clear all highlight tables.
+void clear_hl_tables(bool reinit)
+{
+  if (reinit) {
+    kv_size(attr_entries) = 1;
+    map_clear(HlEntry, int)(attr_entry_ids);
+    map_clear(int, int)(combine_attr_entries);
+    highlight_attr_set_all();
+    highlight_changed();
+    redraw_all_later(NOT_VALID);
+    if (ScreenAttrs) {
+      // the meaning of 0 doesn't change anyway
+      // but the rest must be retransmitted
+      memset(ScreenAttrs, 0,
+             sizeof(*ScreenAttrs) * (size_t)(screen_Rows * screen_Columns));
+    }
+  } else {
+    kv_destroy(attr_entries);
+    map_free(HlEntry, int)(attr_entry_ids);
+    map_free(int, int)(combine_attr_entries);
+  }
 }
 
 // Combine special attributes (e.g., for spelling) with other attributes
@@ -110,27 +202,32 @@ void clear_hl_tables(void)
 // Return the resulting attributes.
 int hl_combine_attr(int char_attr, int prim_attr)
 {
-  HlAttrs *char_aep = NULL;
-  HlAttrs *spell_aep;
-  HlAttrs new_en = HLATTRS_INIT;
-
   if (char_attr == 0) {
     return prim_attr;
-  }
-
-  if (prim_attr == 0) {
+  } else if (prim_attr == 0) {
     return char_attr;
   }
 
+  // TODO(bfredl): could use a struct for clearer intent.
+  int combine_tag = (char_attr << 16) + prim_attr;
+  int id = map_get(int, int)(combine_attr_entries, combine_tag);
+  if (id > 0) {
+    return id;
+  }
+
+  HlAttrs *char_aep, *spell_aep;
+  HlAttrs new_en = HLATTRS_INIT;
+
+
   // Find the entry for char_attr
-  char_aep = syn_cterm_attr2entry(char_attr);
+  char_aep = syn_attr2entry(char_attr);
 
   if (char_aep != NULL) {
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
   }
 
-  spell_aep = syn_cterm_attr2entry(prim_attr);
+  spell_aep = syn_attr2entry(prim_attr);
   if (spell_aep != NULL) {
     new_en.cterm_ae_attr |= spell_aep->cterm_ae_attr;
     new_en.rgb_ae_attr |= spell_aep->rgb_ae_attr;
@@ -155,20 +252,24 @@ int hl_combine_attr(int char_attr, int prim_attr)
       new_en.rgb_sp_color = spell_aep->rgb_sp_color;
     }
   }
-  return get_attr_entry(&new_en);
+
+  id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
+                                 .id1 = char_attr, .id2 = prim_attr });
+  if (id > 0) {
+    map_put(int, int)(combine_attr_entries, combine_tag, id);
+  }
+
+  return id;
 }
 
-/// \note this function does not apply exclusively to cterm attr contrary
-/// to what its name implies
-/// \warn don't call it with attr 0 (i.e., the null attribute)
-HlAttrs *syn_cterm_attr2entry(int attr)
+/// Get highlight attributes for a attribute code
+HlAttrs *syn_attr2entry(int attr)
 {
-  attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len) {
-    // did ":syntax clear"
+  if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
+    // invalid attribute code, or the tables were cleared
     return NULL;
   }
-  return ATTR_ENTRY(attr);
+  return &(kv_A(attr_entries, attr).attr);
 }
 
 /// Gets highlight description for id `attr_id` as a map.
@@ -181,7 +282,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
     return dic;
   }
 
-  aep = syn_cterm_attr2entry((int)attr_id);
+  aep = syn_attr2entry((int)attr_id);
   if (!aep) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
@@ -250,3 +351,51 @@ Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
   return hl;
 }
 
+Array hl_inspect(int attr)
+{
+  Array ret = ARRAY_DICT_INIT;
+  if (hlstate_active) {
+    hl_inspect_impl(&ret, attr);
+  }
+  return ret;
+}
+
+static void hl_inspect_impl(Array *arr, int attr)
+{
+  Dictionary item = ARRAY_DICT_INIT;
+  if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
+    return;
+  }
+
+  HlEntry e = kv_A(attr_entries, attr);
+  switch (e.kind) {
+    case kHlSyntax:
+      PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
+      PUT(item, "hi_name",
+          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
+      break;
+
+    case kHlUI:
+      PUT(item, "kind", STRING_OBJ(cstr_to_string("ui")));
+      const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
+      PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
+      PUT(item, "hi_name",
+          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
+      break;
+
+    case kHlTerminal:
+      PUT(item, "kind", STRING_OBJ(cstr_to_string("term")));
+      break;
+
+    case kHlCombine:
+      // attribute combination is associative, so flatten to an array
+      hl_inspect_impl(arr, e.id1);
+      hl_inspect_impl(arr, e.id2);
+      return;
+
+     case kHlUnknown:
+      return;
+  }
+  PUT(item, "id", INTEGER_OBJ(attr));
+  ADD(*arr, DICTIONARY_OBJ(item));
+}

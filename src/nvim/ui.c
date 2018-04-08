@@ -339,7 +339,7 @@ void ui_set_highlight(int attr_code)
   HlAttrs attrs = HLATTRS_INIT;
 
   if (attr_code != 0) {
-    HlAttrs *aep = syn_cterm_attr2entry(attr_code);
+    HlAttrs *aep = syn_attr2entry(attr_code);
     if (aep) {
       attrs = *aep;
     }

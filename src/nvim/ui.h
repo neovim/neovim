@@ -6,7 +6,6 @@
 #include <stdint.h>
 
 #include "api/private/defs.h"
-#include "nvim/buffer_defs.h"
 
 typedef enum {
   kUICmdline = 0,

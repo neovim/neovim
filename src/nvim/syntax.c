@@ -7249,15 +7249,7 @@ static void set_hl_attr(int idx)
   at_en.rgb_bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
   at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
 
-  if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
-      || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
-      || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
-      || at_en.rgb_ae_attr != 0) {
-    sgp->sg_attr = get_attr_entry(&at_en);
-  } else {
-    // If all the fields are cleared, clear the attr field back to default value
-    sgp->sg_attr = 0;
-  }
+  sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
 }
 
 /// Lookup a highlight group name and return its ID.
@@ -7392,7 +7384,7 @@ static void syn_unadd_group(void)
 
 
 /// Translate a group ID to highlight attributes.
-/// @see syn_cterm_attr2entry
+/// @see syn_attr2entry
 int syn_id2attr(int hl_id)
 {
   struct hl_group     *sgp;
@@ -7452,7 +7444,6 @@ void highlight_attr_set_all(void)
 /// screen redraw after any :highlight command.
 void highlight_changed(void)
 {
-  int attr;
   int id;
   char_u userhl[10];
   int id_SNC = -1;
@@ -7467,13 +7458,15 @@ void highlight_changed(void)
     if (id == 0) {
       abort();
     }
-    attr = syn_id2attr(id);
+    int final_id = syn_get_final_id(id);
     if (hlf == (int)HLF_SNC) {
-      id_SNC = syn_get_final_id(id);
+      id_SNC = final_id;
     } else if (hlf == (int)HLF_S) {
-      id_S = syn_get_final_id(id);
+      id_S = final_id;
     }
-    highlight_attr[hlf] = attr;
+
+    highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
+                                         hlf == (int)HLF_INACTIVE);
   }
 
   /* Setup the user highlights
