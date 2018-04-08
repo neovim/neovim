@@ -359,6 +359,15 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
     return;
   }
 
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer && wp->w_buffer->terminal == term) {
+      const uint16_t win_width =
+        (uint16_t)(MAX(0, wp->w_width - win_col_off(wp)));
+      width = MAX(width, win_width);
+      height = (uint16_t)MAX(height, wp->w_height);
+    }
+  }
+
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   term->pending_resize = true;
