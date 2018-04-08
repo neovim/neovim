@@ -3213,9 +3213,9 @@ win_line (
               || (mb_l > 1 && (!vim_isprintc(mb_c)))) {
             // Illegal UTF-8 byte: display as <xx>.
             // Non-BMP character : display as ? or fullwidth ?.
-            transchar_hex(extra, mb_c);
-            if (wp->w_p_rl) {                         // reverse
-                rl_mirror(extra);
+            transchar_hex((char *)extra, mb_c);
+            if (wp->w_p_rl) {  // reverse
+              rl_mirror(extra);
             }
 
             p_extra = extra;
@@ -5232,8 +5232,8 @@ win_redr_custom (
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
-  /* Make all characters printable. */
-  p = transstr(buf);
+  // Make all characters printable.
+  p = (char_u *)transstr((const char *)buf);
   len = STRLCPY(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);

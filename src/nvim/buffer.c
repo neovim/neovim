@@ -2886,15 +2886,13 @@ static char_u *lasticon = NULL;
 
 void maketitle(void)
 {
-  char_u      *p;
   char_u      *t_str = NULL;
   char_u      *i_name;
   char_u      *i_str = NULL;
   int maxlen = 0;
   int len;
   int mustset;
-  char_u buf[IOSIZE];
-  int off;
+  char buf[IOSIZE];
 
   if (!redrawing()) {
     /* Postpone updating the title when 'lazyredraw' is set. */
@@ -2921,10 +2919,10 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
         called_emsg = FALSE;
-        build_stl_str_hl(curwin, buf, sizeof(buf),
-            p_titlestring, use_sandbox,
-            0, maxlen, NULL, NULL);
-        t_str = buf;
+        build_stl_str_hl(curwin, (char_u *)buf, sizeof(buf),
+                         p_titlestring, use_sandbox,
+                         0, maxlen, NULL, NULL);
+        t_str = (char_u *)buf;
         if (called_emsg) {
           set_string_option_direct((char_u *)"titlestring", -1, (char_u *)"",
                                    OPT_FREE, SID_ERROR);
@@ -2934,76 +2932,77 @@ void maketitle(void)
         t_str = p_titlestring;
       }
     } else {
-      /* format: "fname + (path) (1 of 2) - VIM" */
+      // Format: "fname + (path) (1 of 2) - VIM".
 
 #define SPACE_FOR_FNAME (sizeof(buf) - 100)
 #define SPACE_FOR_DIR   (sizeof(buf) - 20)
-#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - VIM"
+#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - VIM".
       if (curbuf->b_fname == NULL) {
-        STRLCPY(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
+        xstrlcpy(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
       } else {
-        p = transstr(path_tail(curbuf->b_fname));
-        STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
-        xfree(p);
+        transstr_buf((const char *)path_tail(curbuf->b_fname),
+                     buf, SPACE_FOR_FNAME + 1);
       }
 
       switch (bufIsChanged(curbuf)
               | (curbuf->b_p_ro << 1)
               | (!MODIFIABLE(curbuf) << 2)) {
         case 0: break;
-        case 1: STRCAT(buf, " +"); break;
-        case 2: STRCAT(buf, " ="); break;
-        case 3: STRCAT(buf, " =+"); break;
+        case 1: strcat(buf, " +"); break;
+        case 2: strcat(buf, " ="); break;
+        case 3: strcat(buf, " =+"); break;
         case 4:
-        case 6: STRCAT(buf, " -"); break;
+        case 6: strcat(buf, " -"); break;
         case 5:
-        case 7: STRCAT(buf, " -+"); break;
+        case 7: strcat(buf, " -+"); break;
         default: assert(false);
       }
 
       if (curbuf->b_fname != NULL) {
         // Get path of file, replace home dir with ~.
-        off = (int)STRLEN(buf);
+        size_t off = strlen(buf);
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
+                     (char_u *)buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')
           off += 2;
 #endif
-        /* remove the file name */
-        p = path_tail_with_sep(buf + off);
-        if (p == buf + off)
-          /* must be a help buffer */
-          STRLCPY(buf + off, _("help"), SPACE_FOR_DIR - off);
-        else
+        // Remove the file name.
+        char *p = (char *)path_tail_with_sep((char_u *)buf + off);
+        if (p == buf + off) {
+          // Must be a help buffer.
+          xstrlcpy(buf + off, _("help"), SPACE_FOR_DIR - off);
+        } else {
           *p = NUL;
+        }
 
-        /* Translate unprintable chars and concatenate.  Keep some
-         * room for the server name.  When there is no room (very long
-         * file name) use (...). */
+        // Translate unprintable chars and concatenate.  Keep some
+        // room for the server name.  When there is no room (very long
+        // file name) use (...).
         if (off < SPACE_FOR_DIR) {
           p = transstr(buf + off);
-          STRLCPY(buf + off, p, SPACE_FOR_DIR - off + 1);
+          xstrlcpy(buf + off, p, SPACE_FOR_DIR - off + 1);
           xfree(p);
         } else {
-          STRLCPY(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
+          xstrlcpy(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
         }
-        STRCAT(buf, ")");
+        strcat(buf, ")");
       }
 
-      append_arg_number(curwin, buf, SPACE_FOR_ARGNR, FALSE);
+      append_arg_number(curwin, (char_u *)buf, SPACE_FOR_ARGNR, false);
 
-      STRCAT(buf, " - NVIM");
+      strcat(buf, " - NVIM");
 
       if (maxlen > 0) {
-        /* make it shorter by removing a bit in the middle */
-        if (vim_strsize(buf) > maxlen)
-          trunc_string(buf, buf, maxlen, IOSIZE);
+        // Make it shorter by removing a bit in the middle.
+        if (vim_strsize((char_u *)buf) > maxlen) {
+          trunc_string((char_u *)buf, (char_u *)buf, maxlen, sizeof(buf));
+        }
       }
-      t_str = buf;
+      t_str = (char_u *)buf;
 #undef SPACE_FOR_FNAME
 #undef SPACE_FOR_DIR
 #undef SPACE_FOR_ARGNR
@@ -3012,7 +3011,7 @@ void maketitle(void)
   mustset = ti_change(t_str, &lasttitle);
 
   if (p_icon) {
-    i_str = buf;
+    i_str = (char_u *)buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         int use_sandbox = FALSE;

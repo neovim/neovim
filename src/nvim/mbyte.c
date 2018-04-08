@@ -704,12 +704,14 @@ bool utf_composinglike(const char_u *p1, const char_u *p2)
   return arabic_combine(utf_ptr2char(p1), c2);
 }
 
-/*
- * Convert a UTF-8 byte string to a wide character. Also get up to MAX_MCO
- * composing characters.
- *
- * @param [out] pcc: composing chars, last one is 0
- */
+/// Convert a UTF-8 string to a wide character
+///
+/// Also gets up to #MAX_MCO composing characters.
+///
+/// @param[out]  pcc  Location where to store composing characters. Must have
+///                   space at least for #MAX_MCO + 1 elements.
+///
+/// @return leading character.
 int utfc_ptr2char(const char_u *p, int *pcc)
 {
   int len;

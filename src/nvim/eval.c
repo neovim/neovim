@@ -16090,7 +16090,7 @@ static void f_strridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_strtrans(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = transstr((char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_string = (char_u *)transstr(tv_get_string(&argvars[0]));
 }
 
 /*
