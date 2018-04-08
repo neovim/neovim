@@ -2936,45 +2936,48 @@ void maketitle(void)
 
 #define SPACE_FOR_FNAME (sizeof(buf) - 100)
 #define SPACE_FOR_DIR   (sizeof(buf) - 20)
-#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - VIM".
+#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - NVIM".
+      char *buf_p = buf;
       if (curbuf->b_fname == NULL) {
-        xstrlcpy(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
+        const size_t size = xstrlcpy(buf_p, _("[No Name]"),
+                                     SPACE_FOR_FNAME + 1);
+        buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
-        transstr_buf((const char *)path_tail(curbuf->b_fname),
-                     buf, SPACE_FOR_FNAME + 1);
+        buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
+                              buf_p, SPACE_FOR_FNAME + 1);
       }
 
       switch (bufIsChanged(curbuf)
               | (curbuf->b_p_ro << 1)
               | (!MODIFIABLE(curbuf) << 2)) {
         case 0: break;
-        case 1: strcat(buf, " +"); break;
-        case 2: strcat(buf, " ="); break;
-        case 3: strcat(buf, " =+"); break;
+        case 1: buf_p = strappend(buf_p, " +"); break;
+        case 2: buf_p = strappend(buf_p, " ="); break;
+        case 3: buf_p = strappend(buf_p, " =+"); break;
         case 4:
-        case 6: strcat(buf, " -"); break;
+        case 6: buf_p = strappend(buf_p, " -"); break;
         case 5:
-        case 7: strcat(buf, " -+"); break;
+        case 7: buf_p = strappend(buf_p, " -+"); break;
         default: assert(false);
       }
 
       if (curbuf->b_fname != NULL) {
         // Get path of file, replace home dir with ~.
-        size_t off = strlen(buf);
-        buf[off++] = ' ';
-        buf[off++] = '(';
-        home_replace(curbuf, curbuf->b_ffname,
-                     (char_u *)buf + off, (size_t)(SPACE_FOR_DIR - off), true);
+        *buf_p++ = ' ';
+        *buf_p++ = '(';
+        home_replace(curbuf, curbuf->b_ffname, (char_u *)buf_p,
+                     (SPACE_FOR_DIR - (size_t)(buf_p - buf)), true);
 #ifdef BACKSLASH_IN_FILENAME
-        /* avoid "c:/name" to be reduced to "c" */
-        if (isalpha(buf[off]) && buf[off + 1] == ':')
-          off += 2;
+        // Avoid "c:/name" to be reduced to "c".
+        if (isalpha((uint8_t)buf_p) && *(buf_p + 1) == ':') {
+          buf_p += 2;
+        }
 #endif
         // Remove the file name.
-        char *p = (char *)path_tail_with_sep((char_u *)buf + off);
-        if (p == buf + off) {
+        char *p = (char *)path_tail_with_sep((char_u *)buf_p);
+        if (p == buf_p) {
           // Must be a help buffer.
-          xstrlcpy(buf + off, _("help"), SPACE_FOR_DIR - off);
+          xstrlcpy(buf_p, _("help"), SPACE_FOR_DIR - (size_t)(buf_p - buf));
         } else {
           *p = NUL;
         }
@@ -2982,19 +2985,27 @@ void maketitle(void)
         // Translate unprintable chars and concatenate.  Keep some
         // room for the server name.  When there is no room (very long
         // file name) use (...).
-        if (off < SPACE_FOR_DIR) {
-          p = transstr(buf + off);
-          xstrlcpy(buf + off, p, SPACE_FOR_DIR - off + 1);
-          xfree(p);
+        if ((size_t)(buf_p - buf) < SPACE_FOR_DIR) {
+          char *const tbuf = transstr(buf_p);
+          const size_t free_space = SPACE_FOR_DIR - (size_t)(buf_p - buf) + 1;
+          const size_t dir_len = xstrlcpy(buf_p, tbuf, free_space);
+          buf_p += MIN(dir_len, free_space - 1);
+          xfree(tbuf);
         } else {
-          xstrlcpy(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
+          const size_t free_space = SPACE_FOR_ARGNR - (size_t)(buf_p - buf) + 1;
+          const size_t dots_len = xstrlcpy(buf_p, "...", free_space);
+          buf_p += MIN(dots_len, free_space - 1);
         }
-        strcat(buf, ")");
+        *buf_p++ = ')';
+        *buf_p = NUL;
+      } else {
+        *buf_p = NUL;
       }
 
-      append_arg_number(curwin, (char_u *)buf, SPACE_FOR_ARGNR, false);
+      append_arg_number(curwin, (char_u *)buf_p,
+                        (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)), false);
 
-      strcat(buf, " - NVIM");
+      strcat(buf_p, " - NVIM");
 
       if (maxlen > 0) {
         // Make it shorter by removing a bit in the middle.

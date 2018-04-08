@@ -359,9 +359,9 @@ size_t transstr_len(const char *const s)
 /// @param[in]  len  Buffer length. Resulting string may not occupy more then
 ///                  len - 1 bytes (one for trailing NUL byte).
 ///
-/// @return `buf` argument unchanged.
-char *transstr_buf(const char *const s, char *const buf, const size_t len)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
+/// @return length of the resulting string, without the NUL byte.
+size_t transstr_buf(const char *const s, char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
   char *buf_p = buf;
@@ -400,7 +400,7 @@ char *transstr_buf(const char *const s, char *const buf, const size_t len)
   }
   *buf_p = NUL;
   assert(buf_p <= buf_e);
-  return buf;
+  return (size_t)(buf_p - buf);
 }
 
 /// Copy string and replace special characters with printable characters
@@ -416,7 +416,9 @@ char *transstr(const char *const s)
   // Compute the length of the result, taking account of unprintable
   // multi-byte characters.
   const size_t len = transstr_len((const char *)s) + 1;
-  return transstr_buf(s, xmalloc(len), len);
+  char *const buf = xmalloc(len);
+  transstr_buf(s, buf, len);
+  return buf;
 }
 
 /// Convert the string "str[orglen]" to do ignore-case comparing.
