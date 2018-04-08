@@ -11,21 +11,21 @@ local function clear_serverlist()
     end
 end
 
-describe('serverstart(), serverstop()', function()
+describe('server', function()
   before_each(clear)
 
-  it('sets $NVIM_LISTEN_ADDRESS on first invocation', function()
+  it('serverstart() sets $NVIM_LISTEN_ADDRESS on first invocation', function()
     -- Unset $NVIM_LISTEN_ADDRESS
     command('let $NVIM_LISTEN_ADDRESS = ""')
 
     local s = eval('serverstart()')
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
     eq(s, eval('$NVIM_LISTEN_ADDRESS'))
-    command("call serverstop('"..s.."')")
+    eq(1, eval("serverstop('"..s.."')"))
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
-  it('sets v:servername _only_ on nvim startup unless all servers are stopped',
+  it('serverstart() sets v:servername at startup or if all servers were stopped',
   function()
     local initial_server = meths.get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0,
@@ -38,11 +38,11 @@ describe('serverstart(), serverstop()', function()
     neq(initial_server, s)
 
     -- serverstop() does _not_ modify v:servername...
-    funcs.serverstop(s)
+    eq(1, funcs.serverstop(s))
     eq(initial_server, meths.get_vvar('servername'))
 
     -- ...unless we stop _all_ servers.
-    funcs.serverstop(funcs.serverlist()[1])
+    eq(1, funcs.serverstop(funcs.serverlist()[1]))
     eq('', meths.get_vvar('servername'))
 
     -- v:servername will take the next available server.
@@ -53,9 +53,9 @@ describe('serverstart(), serverstop()', function()
     eq(servername, meths.get_vvar('servername'))
   end)
 
-  it('serverstop() ignores invalid input', function()
-    command("call serverstop('')")
-    command("call serverstop('bogus-socket-name')")
+  it('serverstop() returns false for invalid input', function()
+    eq(0, eval("serverstop('')"))
+    eq(0, eval("serverstop('bogus-socket-name')"))
   end)
 
   it('parses endpoints correctly', function()
@@ -120,7 +120,7 @@ describe('serverlist()', function()
     -- The new servers should be at the end of the list.
     for i = 1, #servs do
       eq(servs[i], new_servs[i + n])
-      command("call serverstop('"..servs[i].."')")
+      eq(1, eval("serverstop('"..servs[i].."')"))
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(n, eval('len(serverlist())'))

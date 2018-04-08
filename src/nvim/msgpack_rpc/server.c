@@ -177,7 +177,7 @@ int server_start(const char *endpoint)
 /// Stops listening on the address specified by `endpoint`.
 ///
 /// @param endpoint Address of the server.
-void server_stop(char *endpoint)
+bool server_stop(char *endpoint)
 {
   SocketWatcher *watcher;
   bool watcher_found = false;
@@ -196,8 +196,8 @@ void server_stop(char *endpoint)
   }
 
   if (!watcher_found) {
-    ELOG("Not listening on %s", addr);
-    return;
+    WLOG("Not listening on %s", addr);
+    return false;
   }
 
   // Unset $NVIM_LISTEN_ADDRESS if it is the stopped address.
@@ -219,6 +219,8 @@ void server_stop(char *endpoint)
   if (STRCMP(addr, get_vim_var_str(VV_SEND_SERVER)) == 0) {
     set_vservername(&watchers);
   }
+
+  return true;
 }
 
 /// Returns an allocated array of server addresses.
