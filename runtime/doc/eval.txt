@@ -1788,11 +1788,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
-					*$NVIM_LISTEN_ADDRESS*
-v:servername	Primary listen address of the current Nvim instance, the first
-		item returned by |serverlist()|.  Can be set by
-		|--listen| or |$NVIM_LISTEN_ADDRESS| on startup.
-		See also |serverstart()| and |serverstop()|.
+v:servername	Primary listen-address of the current Nvim instance, the first
+		item returned by |serverlist()|.  Can be set by |--listen| or
+		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
 		Read-only.
 
 

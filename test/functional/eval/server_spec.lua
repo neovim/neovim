@@ -1,14 +1,14 @@
-
 local helpers = require('test.functional.helpers')(after_each)
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 local command = helpers.command
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
+local ok = helpers.ok
 local os_name = helpers.os_name
 
 local function clear_serverlist()
-    for _, server in pairs(funcs.serverlist()) do
-      funcs.serverstop(server)
-    end
+  for _, server in pairs(funcs.serverlist()) do
+    funcs.serverstop(server)
+  end
 end
 
 describe('server', function()
@@ -96,16 +96,12 @@ describe('server', function()
     funcs.serverstart('127.0.0.1:65536')  -- invalid port
     eq({}, funcs.serverlist())
   end)
-end)
 
-describe('serverlist()', function()
-  before_each(clear)
-
-  it('returns the list of servers', function()
+  it('serverlist() returns the list of servers', function()
     -- There should already be at least one server.
     local n = eval('len(serverlist())')
 
-    -- Add a few
+    -- Add some servers.
     local servs = (os_name() == 'windows'
       and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
       or  { [[Xtest-pipe0934]], [[Xtest-pipe4324]] })
@@ -124,5 +120,27 @@ describe('serverlist()', function()
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(n, eval('len(serverlist())'))
+  end)
+end)
+
+describe('startup --listen', function()
+  it('validates', function()
+    clear()
+
+    local cmd = { unpack(helpers.nvim_argv) }
+    table.insert(cmd, '--listen')
+    eq('nvim: Argument missing after: "--listen"',
+       string.match(funcs.system(cmd), '.-n"'))
+
+    cmd = { unpack(helpers.nvim_argv) }
+    table.insert(cmd, '--listen2')
+    eq('nvim: Garbage after option argument: "--listen2"',
+       string.match(funcs.system(cmd), '.-2"'))
+  end)
+
+  it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
+    clear({ env={ NVIM_LISTEN_ADDRESS='Xtest-env-pipe' },
+            args={ '--listen', 'Xtest-listen-pipe' } })
+    eq('Xtest-listen-pipe', meths.get_vvar('servername'))
   end)
 end)

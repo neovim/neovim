@@ -32,24 +32,26 @@ static garray_T watchers = GA_EMPTY_INIT_VALUE;
 #endif
 
 /// Initializes the module
-bool server_init(void)
+bool server_init(const char *listen_address)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
   bool must_free = false;
-  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
   if (listen_address == NULL) {
-    must_free = true;
-    listen_address = server_address_new();
-  }
-
-  if (!listen_address) {
-    return false;
+    // Deprecated: $NVIM_LISTEN_ADDRESS
+    listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+    if (listen_address == NULL) {
+      must_free = true;
+      listen_address = server_address_new();
+      if (listen_address == NULL) {
+        return false;
+      }
+    }
   }
 
   bool ok = (server_start(listen_address) == 0);
   if (must_free) {
-    xfree((char *) listen_address);
+    xfree((char *)listen_address);
   }
   return ok;
 }

@@ -110,6 +110,8 @@ typedef struct {
   int literal;                          /* don't expand file names */
 #endif
   int diff_mode;                        /* start with 'diff' set */
+
+  char *listen_addr;                    // --listen {address}
 } mparm_T;
 
 /* Values for edit_type. */
@@ -150,7 +152,6 @@ void event_init(void)
   signal_init();
   // finish mspgack-rpc initialization
   channel_init();
-  server_init();
   terminal_init();
 }
 
@@ -241,9 +242,8 @@ int main(int argc, char **argv)
   char_u *cwd = NULL;     // current workding dir on startup
   time_init();
 
-  /* Many variables are in "params" so that we can pass them to invoked
-   * functions without a lot of arguments.  "argc" and "argv" are also
-   * copied, so that they can be changed. */
+  // Many variables are in `params` so that we can pass them around easily.
+  // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
 
   init_startuptime(&params);
@@ -254,11 +254,10 @@ int main(int argc, char **argv)
   check_and_set_isatty(&params);
 
   event_init();
-  /*
-   * Process the command line arguments.  File names are put in the global
-   * argument list "global_alist".
-   */
+  // Process the command line arguments.  File names are put in the global
+  // argument list "global_alist".
   command_line_scan(&params);
+  server_init(params.listen_addr);
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
@@ -819,6 +818,9 @@ static void command_line_scan(mparm_T *parmp)
             if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
               abort();
             }
+          } else if (STRNICMP(argv[0] + argv_idx, "listen", 6) == 0) {
+            want_argument = true;
+            argv_idx += 6;
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -1016,15 +1018,12 @@ static void command_line_scan(mparm_T *parmp)
           mainerr(err_opt_unknown, argv[0]);
       }
 
-      /*
-       * Handle option arguments with argument.
-       */
+      // Handle option arguments with argument.
       if (want_argument) {
-        /*
-         * Check for garbage immediately after the option letter.
-         */
-        if (argv[0][argv_idx] != NUL)
+        // Check for garbage immediately after the option letter.
+        if (argv[0][argv_idx] != NUL) {
           mainerr(err_opt_garbage, argv[0]);
+        }
 
         --argc;
         if (argc < 1 && c != 'S')          /* -S has an optional argument */
@@ -1063,13 +1062,17 @@ static void command_line_scan(mparm_T *parmp)
             break;
 
           case '-':
-            if (argv[-1][2] == 'c') {
-              /* "--cmd {command}" execute command */
-              if (parmp->n_pre_commands >= MAX_ARG_CMDS)
+            if (strequal(argv[-1], "--cmd")) {
+              // "--cmd {command}" execute command
+              if (parmp->n_pre_commands >= MAX_ARG_CMDS) {
                 mainerr(err_extra_cmd, NULL);
+              }
               parmp->pre_commands[parmp->n_pre_commands++] = argv[0];
+            } else if (strequal(argv[-1], "--listen")) {
+              // "--listen {address}"
+              parmp->listen_addr = argv[0];
             }
-            /* "--startuptime <file>" already handled */
+            // "--startuptime <file>" already handled
             break;
 
           case 'q':               /* "-q {errorfile}" QuickFix mode */
@@ -1210,11 +1213,10 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->want_full_screen = true;
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
+  paramp->listen_addr = NULL;
 }
 
-/*
- * Initialize global startuptime file if "--startuptime" passed as an argument.
- */
+/// Initialize global startuptime file if "--startuptime" passed as an argument.
 static void init_startuptime(mparm_T *paramp)
 {
   for (int i = 1; i < paramp->argc; i++) {
@@ -1943,6 +1945,7 @@ static void usage(void)
   mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
+  mch_msg(_("  --listen <address>    Start RPC server on this socket or TCP address\n"));
 #if !defined(UNIX)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
