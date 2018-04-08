@@ -517,14 +517,16 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 // Does NOT work for multi-byte characters, c must be <= 255.
 // Also doesn't work for the first byte of a multi-byte, "c" must be a
 // character!
-static char_u transchar_buf[7];
+static char_u transchar_buf[11];
 
-/// Translates a character
+/// Translate a character into a printable one, leaving printable ASCII intact
 ///
-/// @param c
+/// All unicode characters are considered non-printable in this function.
 ///
-/// @return translated character.
-char_u* transchar(int c)
+/// @param[in]  c  Character to translate.
+///
+/// @return translated character into a static buffer.
+char_u *transchar(int c)
 {
   int i = 0;
   if (IS_SPECIAL(c)) {
@@ -537,12 +539,14 @@ char_u* transchar(int c)
 
   if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))
                                 || (p_altkeymap && F_ischar(c))))
-      || ((c < 256) && vim_isprintc_strict(c))) {
+      || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = (char_u)c;
     transchar_buf[i + 1] = NUL;
-  } else {
+  } else if (c <= 0xFF){
     transchar_nonprint(transchar_buf + i, c);
+  } else {
+    transchar_hex((char *)transchar_buf + i, c);
   }
   return transchar_buf;
 }
