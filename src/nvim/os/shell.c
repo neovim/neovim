@@ -136,7 +136,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   xfree(input.data);
 
   if (output) {
-    (void)write_output(output, nread, true, true);
+    (void)write_output(output, nread, true);
     xfree(output);
   }
 
@@ -609,28 +609,20 @@ static void read_input(DynamicBuffer *buf)
   }
 }
 
-static size_t write_output(char *output, size_t remaining, bool to_buffer,
-                           bool eof)
+static size_t write_output(char *output, size_t remaining, bool eof)
 {
   if (!output) {
     return 0;
   }
-  char replacement_NUL = to_buffer ? NL : 1;
 
   char *start = output;
   size_t off = 0;
-  int lastrow = (int)Rows - 1;
   while (off < remaining) {
     if (output[off] == NL) {
       // Insert the line
-      if (to_buffer) {
-        output[off] = NUL;
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
-                  false);
-      } else {
-        screen_del_lines(0, 0, 1, (int)Rows, NULL);
-        screen_puts_len((char_u *)output, (int)off, lastrow, 0, 0);
-      }
+      output[off] = NUL;
+      ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
+                false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -640,24 +632,19 @@ static size_t write_output(char *output, size_t remaining, bool to_buffer,
 
     if (output[off] == NUL) {
       // Translate NUL to NL
-      output[off] = replacement_NUL;
+      output[off] = NL;
     }
     off++;
   }
 
   if (eof) {
     if (remaining) {
-      if (to_buffer) {
-        // append unfinished line
-        ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
-        // remember that the NL was missing
-        curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-      } else {
-        screen_del_lines(0, 0, 1, (int)Rows, NULL);
-        screen_puts_len((char_u *)output, (int)remaining, lastrow, 0, 0);
-      }
+      // append unfinished line
+      ml_append(curwin->w_cursor.lnum++, (char_u *)output, 0, false);
+      // remember that the NL was missing
+      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
-    } else if (to_buffer) {
+    } else {
       curbuf->b_no_eol_lnum = 0;
     }
   }
