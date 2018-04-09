@@ -388,10 +388,10 @@ static bool out_data_decide_throttle(size_t size)
   pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
   pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
   if (visit == 1) {
-    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    msg_putchar('\n');
   }
-  int lastrow = (int)Rows - 1;
-  screen_puts_len((char_u *)pulse_msg, ARRAY_SIZE(pulse_msg), lastrow, 0, 0);
+  msg_putchar('\r');  // put cursor at start of line
+  msg_puts(pulse_msg);
   ui_flush();
   return true;
 }
