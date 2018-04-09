@@ -923,7 +923,7 @@ bool vim_isprintc(int c)
   if (c >= 0x100) {
     return utf_printable(c);
   }
-  return c >= 0x100 || (c > 0 && (g_chartab[c] & CT_PRINT_CHAR));
+  return c > 0 && (g_chartab[c] & CT_PRINT_CHAR);
 }
 
 /// Strict version of vim_isprintc(c), don't return true if "c" is the head
