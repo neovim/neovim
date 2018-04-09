@@ -286,9 +286,8 @@ struct ufunc {
                                  ///< used for s: variables
   int          uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T   *uf_scoped;       ///< l: local variables for closure
-  char_u       uf_name[1];       ///< name of function (actually longer); can
-                                 ///< start with <SNR>123_ (<SNR> is K_SPECIAL
-                                 ///< KS_EXTRA KE_SNR)
+  char_u       uf_name[];        ///< Name of function; can start with <SNR>123_
+                                 ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
 /// Maximum number of function arguments

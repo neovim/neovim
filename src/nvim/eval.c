@@ -5807,8 +5807,8 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     lambda_no++;
     snprintf((char *)name, sizeof(name), "<lambda>%d", lambda_no);
 
-    fp = (ufunc_T *)xcalloc(1, sizeof(ufunc_T) + STRLEN(name));
-    pt = (partial_T *)xcalloc(1, sizeof(partial_T));
+    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
+    pt = xcalloc(1, sizeof(partial_T));
 
     ga_init(&newlines, (int)sizeof(char_u *), 1);
     ga_grow(&newlines, 1);
@@ -20059,7 +20059,7 @@ void ex_function(exarg_T *eap)
       }
     }
 
-    fp = xcalloc(1, sizeof(ufunc_T) + STRLEN(name));
+    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
 
     if (fudi.fd_dict != NULL) {
       if (fudi.fd_di == NULL) {
@@ -20814,8 +20814,9 @@ char_u *get_user_func_name(expand_T *xp, int idx)
       return (char_u *)"";       // don't show dict and lambda functions
     }
 
-    if (STRLEN(fp->uf_name) + 4 >= IOSIZE)
-      return fp->uf_name;       /* prevents overflow */
+    if (STRLEN(fp->uf_name) + 4 >= IOSIZE) {
+      return fp->uf_name;  // Prevent overflow.
+    }
 
     cat_func_name(IObuff, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
