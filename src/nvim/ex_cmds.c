@@ -143,17 +143,20 @@ void do_ascii(const exarg_T *const eap)
     char buf2[20];
     buf2[0] = NUL;
 
-	dig = get_digraph_for_char(cval);
-    if (dig != NULL)
+    dig = get_digraph_for_char(cval);
+    if (dig != NULL) {
         iobuff_len += (
-            vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
                          _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
                          transchar(c), buf1, buf2, cval, cval, cval, dig));
-    else
+    } else {
         iobuff_len += (
-            vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
                          _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
                          transchar(c), buf1, buf2, cval, cval, cval));
+    }
 
     c = cc[ci++];
   }
@@ -190,20 +193,24 @@ void do_ascii(const exarg_T *const eap)
     }
     iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
 
-	dig = get_digraph_for_char(c);
-	if (dig != NULL)
+    dig = get_digraph_for_char(c);
+    if (dig != NULL) {
         iobuff_len += (
-            vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
                          (c < 0x10000
                           ? _("> %d, Hex %04x, Oct %o, Digr %s")
-                          : _("> %d, Hex %08x, Oct %o, Digr %s")), c, c, c, dig));
-    else
-
+                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
+                         c, c, c, dig));
+    } else {
         iobuff_len += (
-            vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
                          (c < 0x10000
                           ? _("> %d, Hex %04x, Octal %o")
-                          : _("> %d, Hex %08x, Octal %o")), c, c, c));
+                          : _("> %d, Hex %08x, Octal %o")),
+                         c, c, c));
+    }
     if (ci == MAX_MCO) {
       break;
     }
@@ -6492,3 +6499,4 @@ void ex_oldfiles(exarg_T *eap)
     }
   }
 }
+
