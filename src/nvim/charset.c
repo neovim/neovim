@@ -1731,7 +1731,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
              && !STRING_ENDED(ptr + 1)
              && ptr[0] == '0' && ptr[1] != '8' && ptr[1] != '9') {
     pre = ptr[1];
-    // Detect hexadecimal: 0x or 0X follwed by hex digit
+    // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
         && !STRING_ENDED(ptr + 2)
         && (pre == 'X' || pre == 'x')
@@ -1739,7 +1739,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr += 2;
       goto vim_str2nr_hex;
     }
-    // Detect binary: 0b or 0B follwed by 0 or 1
+    // Detect binary: 0b or 0B followed by 0 or 1.
     if ((what & STR2NR_BIN)
         && !STRING_ENDED(ptr + 2)
         && (pre == 'B' || pre == 'b')
@@ -1747,7 +1747,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr += 2;
       goto vim_str2nr_bin;
     }
-    // Detect octal number: zero followed by octal digits without '8' or '9'
+    // Detect octal number: zero followed by octal digits without '8' or '9'.
     pre = 0;
     if (!(what & STR2NR_OCT)
         || !('0' <= ptr[1] && ptr[1] <= '7')) {
@@ -1778,32 +1778,21 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr++; \
     } \
   } while (0)
-  switch (pre) {
-    case 'b':
-    case 'B': {
 vim_str2nr_bin:
-      PARSE_NUMBER(2, (*ptr == '0' || *ptr == '1'), (*ptr - '0'));
-      break;
-    }
-    case '0': {
+  PARSE_NUMBER(2, (*ptr == '0' || *ptr == '1'), (*ptr - '0'));
+  goto vim_str2nr_proceed;
 vim_str2nr_oct:
-      PARSE_NUMBER(8, ('0' <= *ptr && *ptr <= '7'), (*ptr - '0'));
-      break;
-    }
-    case 0: {
+  PARSE_NUMBER(8, ('0' <= *ptr && *ptr <= '7'), (*ptr - '0'));
+  goto vim_str2nr_proceed;
 vim_str2nr_dec:
-      PARSE_NUMBER(10, (ascii_isdigit(*ptr)), (*ptr - '0'));
-      break;
-    }
-    case 'x':
-    case 'X': {
+  PARSE_NUMBER(10, (ascii_isdigit(*ptr)), (*ptr - '0'));
+  goto vim_str2nr_proceed;
 vim_str2nr_hex:
-      PARSE_NUMBER(16, (ascii_isxdigit(*ptr)), (hex2nr(*ptr)));
-      break;
-    }
-  }
+  PARSE_NUMBER(16, (ascii_isxdigit(*ptr)), (hex2nr(*ptr)));
+  goto vim_str2nr_proceed;
 #undef PARSE_NUMBER
 
+vim_str2nr_proceed:
   if (prep != NULL) {
     *prep = pre;
   }
