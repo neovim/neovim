@@ -3110,7 +3110,6 @@ void free_titles(void)
 /// be used when printing numbers in the status line.
 typedef enum {
   kNumBaseDecimal = 10,
-  kNumBaseOctal = 8,
   kNumBaseHexadecimal = 16
 } NumberBase;
 
@@ -3908,9 +3907,7 @@ int build_stl_str_hl(
 
       // Note: The `*` means we take the width as one of the arguments
       *t++ = '*';
-      *t++ = (char_u) (base == kNumBaseHexadecimal ? 'X'
-                        : (base == kNumBaseOctal ? 'o'
-                        : 'd'));
+      *t++ = (char_u)(base == kNumBaseHexadecimal ? 'X' : 'd');
       *t = 0;
       // }
 
