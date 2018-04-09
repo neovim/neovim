@@ -403,6 +403,32 @@ void ui_cursor_goto(int new_row, int new_col)
   pending_cursor_update = true;
 }
 
+void ui_add_linewrap(int row)
+{
+  // TODO(bfredl): check that this actually still works
+  // and move to TUI module in that case.
+#if 0
+  // First make sure we are at the end of the screen line,
+  // then output the same character again to let the
+  // terminal know about the wrap.  If the terminal doesn't
+  // auto-wrap, we overwrite the character.
+  if (ui_current_col() != Columns) {
+    screen_char(LineOffset[row] + (unsigned)Columns - 1, row,
+                (int)(Columns - 1));
+  }
+
+  // When there is a multi-byte character, just output a
+  // space to keep it simple. */
+  if (ScreenLines[LineOffset[row] + (Columns - 1)][1] != 0) {
+    ui_putc(' ');
+  } else {
+    ui_puts(ScreenLines[LineOffset[row] + (Columns - 1)]);
+  }
+  // force a redraw of the first char on the next line
+  ScreenAttrs[LineOffset[row+1]] = (sattr_T)-1;
+#endif
+}
+
 void ui_mode_info_set(void)
 {
   Array style = mode_style_array();

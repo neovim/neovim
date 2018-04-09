@@ -4226,25 +4226,7 @@ win_line (
                                         LineOffset[screen_row] + screen_Columns)
                      == 2))
             ) {
-          /* First make sure we are at the end of the screen line,
-           * then output the same character again to let the
-           * terminal know about the wrap.  If the terminal doesn't
-           * auto-wrap, we overwrite the character. */
-          if (ui_current_col() != wp->w_width)
-            screen_char(LineOffset[screen_row - 1]
-                + (unsigned)Columns - 1,
-                screen_row - 1, (int)(Columns - 1));
-
-          /* When there is a multi-byte character, just output a
-           * space to keep it simple. */
-          if (ScreenLines[LineOffset[screen_row - 1]
-                          + (Columns - 1)][1] != 0) {
-            ui_putc(' ');
-          } else {
-            ui_puts(ScreenLines[LineOffset[screen_row - 1] + (Columns - 1)]);
-          }
-          /* force a redraw of the first char on the next line */
-          ScreenAttrs[LineOffset[screen_row]] = (sattr_T)-1;
+          ui_add_linewrap(screen_row-1);
         }
       }
 
