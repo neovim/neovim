@@ -5362,7 +5362,7 @@ void bufhl_clear_line_range(buf_T *buf,
     if (line > line_end) {
       break;
     }
-    if (line_start <= line && line <= line_end) {
+    if (line_start <= line) {
       BufhlLineStatus status = bufhl_clear_line(l, src_id, line);
       if (status != kBLSUnchanged) {
         if (line > last_changed) {
