@@ -18728,7 +18728,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
   if (name_len == 0) {
     return NULL;
   }
-  if (name_len == 1 || (name_len >= 2 && name[1] != ':')) {
+  if (name_len == 1 || name[1] != ':') {
     // name has implicit scope
     if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
       // The name must not start with a colon or #.
