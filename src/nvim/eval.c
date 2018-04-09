@@ -15627,7 +15627,6 @@ f_spellsuggest_return:
 
 static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  regmatch_T regmatch;
   char_u      *save_cpo;
   int match;
   colnr_T col = 0;
@@ -15660,9 +15659,13 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  regmatch.regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING);
+  regmatch_T regmatch = {
+    .regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING),
+    .startp = { NULL },
+    .endp = { NULL },
+    .rm_ic = false,
+  };
   if (regmatch.regprog != NULL) {
-    regmatch.rm_ic = FALSE;
     while (*str != NUL || keepempty) {
       if (*str == NUL) {
         match = false;  // Empty item at the end.
@@ -15681,8 +15684,9 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                      && end < (const char *)regmatch.endp[0])) {
         tv_list_append_string(rettv->vval.v_list, str, end - str);
       }
-      if (!match)
+      if (!match) {
         break;
+      }
       // Advance to just after the match.
       if (regmatch.endp[0] > (char_u *)str) {
         col = 0;
