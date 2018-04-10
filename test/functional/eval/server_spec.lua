@@ -2,8 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 local command = helpers.command
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
+local iswin = helpers.iswin
 local ok = helpers.ok
-local os_name = helpers.os_name
+local matches = helpers.matches
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -25,7 +26,15 @@ describe('server', function()
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
-  it('serverstart() sets v:servername at startup or if all servers were stopped',
+  it('sets new v:servername if $NVIM_LISTEN_ADDRESS is invalid', function()
+    clear({env={NVIM_LISTEN_ADDRESS='.'}})
+    eq('.', eval('$NVIM_LISTEN_ADDRESS'))
+    local servers = funcs.serverlist()
+    eq(1, #servers)
+    ok(string.len(servers[1]) > 4)  -- Like /tmp/nvim…/… or \\.\pipe\…
+  end)
+
+  it('sets v:servername at startup or if all servers were stopped',
   function()
     local initial_server = meths.get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0,
@@ -46,9 +55,8 @@ describe('server', function()
     eq('', meths.get_vvar('servername'))
 
     -- v:servername will take the next available server.
-    local servername = (os_name() == 'windows'
-                        and [[\\.\pipe\Xtest-functional-server-pipe]]
-                        or 'Xtest-functional-server-socket')
+    local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
+                                or 'Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
   end)
@@ -102,7 +110,7 @@ describe('server', function()
     local n = eval('len(serverlist())')
 
     -- Add some servers.
-    local servs = (os_name() == 'windows'
+    local servs = (iswin()
       and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
       or  { [[Xtest-pipe0934]], [[Xtest-pipe4324]] })
     for _, s in ipairs(servs) do
@@ -129,18 +137,18 @@ describe('startup --listen', function()
 
     local cmd = { unpack(helpers.nvim_argv) }
     table.insert(cmd, '--listen')
-    eq('nvim: Argument missing after: "--listen"',
-       string.match(funcs.system(cmd), '.-n"'))
+    matches('nvim.*: Argument missing after: "%-%-listen"', funcs.system(cmd))
 
     cmd = { unpack(helpers.nvim_argv) }
     table.insert(cmd, '--listen2')
-    eq('nvim: Garbage after option argument: "--listen2"',
-       string.match(funcs.system(cmd), '.-2"'))
+    matches('nvim.*: Garbage after option argument: "%-%-listen2"', funcs.system(cmd))
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
+    local addr = (iswin() and [[\\.\pipe\Xtest-listen-pipe]]
+                          or 'Xtest-listen-pipe')
     clear({ env={ NVIM_LISTEN_ADDRESS='Xtest-env-pipe' },
-            args={ '--listen', 'Xtest-listen-pipe' } })
-    eq('Xtest-listen-pipe', meths.get_vvar('servername'))
+            args={ '--listen', addr } })
+    eq(addr, meths.get_vvar('servername'))
   end)
 end)

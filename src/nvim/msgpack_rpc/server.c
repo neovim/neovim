@@ -32,28 +32,27 @@ static garray_T watchers = GA_EMPTY_INIT_VALUE;
 #endif
 
 /// Initializes the module
-bool server_init(const char *listen_address)
+bool server_init(const char *listen_addr)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
-  bool must_free = false;
-  if (listen_address == NULL) {
-    // Deprecated: $NVIM_LISTEN_ADDRESS
-    listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-    if (listen_address == NULL) {
-      must_free = true;
-      listen_address = server_address_new();
-      if (listen_address == NULL) {
+  // $NVIM_LISTEN_ADDRESS
+  const char *env_addr = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  int rv = listen_addr == NULL ? 1 : server_start(listen_addr);
+
+  if (0 != rv) {
+    rv = env_addr == NULL ? 1 : server_start(env_addr);
+    if (0 != rv) {
+      listen_addr = server_address_new();
+      if (listen_addr == NULL) {
         return false;
       }
+      rv = server_start(listen_addr);
+      xfree((char *)listen_addr);
     }
   }
 
-  bool ok = (server_start(listen_address) == 0);
-  if (must_free) {
-    xfree((char *)listen_address);
-  }
-  return ok;
+  return rv == 0;
 }
 
 /// Teardown a single server
@@ -122,8 +121,8 @@ bool server_owns_pipe_address(const char *path)
 /// @param endpoint Address of the server. Either a 'ip:[port]' string or an
 ///                 arbitrary identifier (trimmed to 256 bytes) for the Unix
 ///                 socket or named pipe.
-/// @returns 0 on success, 1 on a regular error, and negative errno
-///          on failure to bind or listen.
+/// @returns 0: success, 1: validation error, 2: already listening,
+///          -errno: failed to bind or listen.
 int server_start(const char *endpoint)
 {
   if (endpoint == NULL || endpoint[0] == '\0') {
@@ -147,7 +146,7 @@ int server_start(const char *endpoint)
         uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
       }
       socket_watcher_close(watcher, free_server);
-      return 1;
+      return 2;
     }
   }
 
