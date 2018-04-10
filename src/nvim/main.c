@@ -72,30 +72,30 @@
 # include "nvim/os/pty_process_unix.h"
 #endif
 
-/* Maximum number of commands from + or -c arguments. */
+// Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
 
-/* values for "window_layout" */
-#define WIN_HOR     1       /* "-o" horizontally split windows */
-#define WIN_VER     2       /* "-O" vertically split windows */
-#define WIN_TABS    3       /* "-p" windows on tab pages */
+// values for "window_layout"
+#define WIN_HOR     1       // "-o" horizontally split windows
+#define WIN_VER     2       // "-O" vertically split windows
+#define WIN_TABS    3       // "-p" windows on tab pages
 
-/* Struct for various parameters passed between main() and other functions. */
+// Struct for various parameters passed between main() and other functions.
 typedef struct {
   int argc;
   char        **argv;
 
   char *use_vimrc;                           // vimrc from -u argument
 
-  int n_commands;                            /* no. of commands from + or -c */
+  int n_commands;                            // no. of commands from + or -c
   char *commands[MAX_ARG_CMDS];              // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];          /* commands that need free() */
-  int n_pre_commands;                        /* no. of commands from --cmd */
+  char_u cmds_tofree[MAX_ARG_CMDS];          // commands that need free()
+  int n_pre_commands;                        // no. of commands from --cmd
   char *pre_commands[MAX_ARG_CMDS];          // commands from --cmd argument
 
-  int edit_type;                        /* type of editing to do */
-  char_u      *tagname;                 /* tag from -t argument */
-  char_u      *use_ef;                  /* 'errorfile' from -q argument */
+  int edit_type;                        // type of editing to do
+  char_u      *tagname;                 // tag from -t argument
+  char_u      *use_ef;                  // 'errorfile' from -q argument
 
   int want_full_screen;
   bool input_isatty;                    // stdin is a terminal
@@ -103,13 +103,13 @@ typedef struct {
   bool err_isatty;                      // stderr is a terminal
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
-  int window_count;                     /* number of windows to use */
-  int window_layout;                    /* 0, WIN_HOR, WIN_VER or WIN_TABS */
+  int window_count;                     // number of windows to use
+  int window_layout;                    // 0, WIN_HOR, WIN_VER or WIN_TABS
 
 #if !defined(UNIX)
-  int literal;                          /* don't expand file names */
+  int literal;                          // don't expand file names
 #endif
-  int diff_mode;                        /* start with 'diff' set */
+  int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
 } mparm_T;
@@ -1945,7 +1945,7 @@ static void usage(void)
   mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  --listen <address>    Start RPC server on this socket or TCP address\n"));
+  mch_msg(_("  --listen <address>    Start RPC server at this address\n"));
 #if !defined(UNIX)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
