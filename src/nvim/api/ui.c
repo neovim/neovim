@@ -213,7 +213,7 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
     return;
   }
 
-  api_set_error(error, kErrorTypeValidation, "No such UI option");
+  api_set_error(error, kErrorTypeValidation, "No such UI option: %s", name);
 #undef UI_EXT_OPTION
 }
 
