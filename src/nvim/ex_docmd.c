@@ -603,6 +603,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
                               cmd_getline, cmd_cookie);
     recursive--;
 
+    // Ignore trailing '|'-separated commands in preview-mode ('inccommand').
+    if (State & CMDPREVIEW) {
+      next_cmdline = NULL;
+    }
+
     if (cmd_cookie == (void *)&cmd_loop_cookie)
       /* Use "current_line" from "cmd_loop_cookie", it may have been
        * incremented when defining a function. */
