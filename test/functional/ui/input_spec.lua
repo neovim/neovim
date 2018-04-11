@@ -128,6 +128,10 @@ describe('input utf sequences that contain CSI/K_SPECIAL', function()
 end)
 
 describe('input non-printable chars', function()
+  after_each(function()
+    os.remove('Xtest-overwrite')
+  end)
+
   it("doesn't crash when echoing them back", function()
     write_file("Xtest-overwrite", [[foobar]])
     clear()

@@ -22,6 +22,13 @@ local function matches(pat, actual)
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
+-- Expect an error matching pattern `pat`.
+local function expect_err(pat, ...)
+  local fn = select(1, ...)
+  local fn_args = {...}
+  table.remove(fn_args, 1)
+  assert.error_matches(function() return fn(unpack(fn_args)) end, pat)
+end
 
 -- initial_path:  directory to recurse into
 -- re:            include pattern (string)
@@ -569,6 +576,7 @@ return {
   deepcopy = deepcopy,
   dictdiff = dictdiff,
   eq = eq,
+  expect_err = expect_err,
   filter = filter,
   fixtbl = fixtbl,
   fixtbl_rec = fixtbl_rec,
