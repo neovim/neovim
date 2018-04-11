@@ -16,6 +16,12 @@ end
 local function ok(res)
   return assert.is_true(res)
 end
+local function matches(pat, actual)
+  if nil ~= string.match(actual, pat) then
+    return true
+  end
+  error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
+end
 
 -- initial_path:  directory to recurse into
 -- re:            include pattern (string)
@@ -572,6 +578,7 @@ return {
   hasenv = hasenv,
   intchar2lua = intchar2lua,
   map = map,
+  matches = matches,
   mergedicts_copy = mergedicts_copy,
   neq = neq,
   ok = ok,

@@ -6975,12 +6975,10 @@ do_exedit (
   ex_no_reprint = TRUE;
 }
 
-/*
- * ":gui" and ":gvim" when there is no GUI.
- */
+/// ":gui" and ":gvim" when there is no GUI.
 static void ex_nogui(exarg_T *eap)
 {
-  eap->errmsg = e_nogvim;
+  eap->errmsg = (char_u *)N_("E25: Nvim does not have a built-in GUI");
 }
 
 

@@ -14403,8 +14403,11 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
   if (argvars[0].vval.v_string) {
-    server_stop((char *) argvars[0].vval.v_string);
+    bool rv = server_stop((char *)argvars[0].vval.v_string);
+    rettv->vval.v_number = (rv ? 1 : 0);
   }
 }
 

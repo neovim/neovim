@@ -1788,9 +1788,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
-					*$NVIM_LISTEN_ADDRESS*
-v:servername	Default Nvim server address. Equivalent to
-		|$NVIM_LISTEN_ADDRESS| on startup. |serverstop()|
+v:servername	Primary listen-address of the current Nvim instance, the first
+		item returned by |serverlist()|.  Can be set by |--listen| or
+		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
 		Read-only.
 
 
@@ -6638,15 +6638,11 @@ server2client({clientid}, {string})			*server2client()*
 			:echo server2client(expand("<client>"), "HELLO")
 <
 serverlist()						*serverlist()*
-		Returns a list of available server names in a list.
-		When there are no servers an empty string is returned.
+		Returns a list of server addresses, or empty if all servers
+		were stopped. |serverstart()| |serverstop()|
 		Example: >
 			:echo serverlist()
-<						{Nvim} *--serverlist*
-		The Vim command-line option `--serverlist` was removed from
-		Nvim, but it can be imitated: >
-			nvim --cmd "echo serverlist()" --cmd "q"
-<
+
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
 		|RPC| messages. Clients can send |API| commands to the address
@@ -6674,13 +6670,9 @@ serverstart([{address}])				*serverstart()*
 
 < 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
 
-							*--servername*
-		The Vim command-line option `--servername` can be imitated: >
-			nvim --cmd "let g:server_addr = serverstart('foo')"
-<
 serverstop({address})					*serverstop()*
-		Closes the pipe or socket at {address}. Does nothing if
-		{address} is empty or invalid.
+		Closes the pipe or socket at {address}.
+		Returns TRUE if {address} is valid, else FALSE.
 		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
 		If |v:servername| is stopped it is set to the next available
 		address returned by |serverlist()|.
