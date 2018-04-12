@@ -73,6 +73,8 @@ describe('api', function()
     it('captures command output', function()
       eq('this is\nspinal tap',
          nvim('command_output', [[echo "this is\nspinal tap"]]))
+      eq('no line ending!',
+         nvim('command_output', [[echon "no line ending!"]]))
     end)
 
     it('captures empty command output', function()
