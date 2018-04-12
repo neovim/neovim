@@ -3,10 +3,10 @@
 --
 -- Note:
 -- Since this text input contains null characters (\x00) we can't pass the
--- full input to `insert`. We need instead to insert the input reading 
+-- full input to `insert`. We need instead to insert the input reading
 -- from 3 files and insert the null bytes manually between them.
 
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(after_each)
 local feed, write_file = helpers.feed, helpers.write_file
 local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
 
@@ -43,7 +43,7 @@ xx foobar xbar xx
 xx an file xx
 x= 9;
 hh= 77;
- aaa 
+ aaa
  xyz
  bcdbcdbcd]=]
 
@@ -151,7 +151,7 @@ describe('regexp with backslash, using also hex/octal numbered characters', func
       xx an A xx
       XX 9;
       YY 77;
-       xyz 
+       xyz
        bcd
        BB]=])
   end)
