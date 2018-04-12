@@ -349,6 +349,10 @@ argument.
 							*--api-info*
 --api-info 	Print msgpack-encoded |api-metadata| and exit.
 
+							*--embed*
+		Use standard input and standard output as |msgpack-rpc|
+		channels. Implies |--headless|.
+
 							*--headless*
 --headless 	Do not start the built-in UI.
                 See |channel-stdio| for how to use stdio for other purposes
