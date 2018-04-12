@@ -937,7 +937,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 
   int shape;
   switch (c.shape) {
-    default:
+    default:          abort(); break;
     case SHAPE_BLOCK: shape = 1; break;
     case SHAPE_HOR:   shape = 3; break;
     case SHAPE_VER:   shape = 5; break;
