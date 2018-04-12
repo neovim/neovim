@@ -8,7 +8,7 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# We don't support building in-tree.
+# We don't support building in-tree. foo
 include(PreventInTreeBuilds)
 
 # Prefer our bundled versions of dependencies.
