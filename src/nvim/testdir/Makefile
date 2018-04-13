@@ -20,13 +20,13 @@ SCRIPTS_DEFAULT = \
            test40.out             \
            test42.out             \
            test48.out             \
-           test49.out             \
            test52.out             \
            test64.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
            test17.out             \
+           test49.out             \
 
 endif
 
