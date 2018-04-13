@@ -228,13 +228,10 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   Loop *loop = proc->loop;
-  if (!loop->children_stop_requests++) {
-    // When there's at least one stop request pending, start a timer that
-    // will periodically check if a signal should be send to the job.
-    ILOG("starting job kill timer");
-    uv_timer_start(&loop->children_kill_timer, children_kill_cb,
-                   KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
-  }
+  // Start a timer to periodically check if a signal should be send to the job.
+  ILOG("starting job kill timer");
+  uv_timer_start(&loop->children_kill_timer, children_kill_cb,
+                 KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
 }
 
 /// Iterates the process list sending SIGTERM to stopped processes and SIGKILL
@@ -383,10 +380,8 @@ static void process_close_handles(void **argv)
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
-  if (proc->stopped_time && loop->children_stop_requests
-      && !--loop->children_stop_requests) {
-    // Stop the timer if no more stop requests are pending
-    DLOG("Stopping process kill timer");
+  if (proc->stopped_time) {
+    DLOG("stopping process kill timer");
     uv_timer_stop(&loop->children_kill_timer);
   }
 
