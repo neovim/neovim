@@ -6300,7 +6300,7 @@ static void ex_stop(exarg_T *eap)
     if (!eap->forceit) {
       autowrite_all();
     }
-    apply_autocmds(EVENT_VIMSUSPENDPRE, NULL, NULL, FALSE, NULL);
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, FALSE, NULL);
     ui_cursor_goto((int)Rows - 1, 0);
     ui_linefeed();
     ui_flush();
@@ -6311,7 +6311,7 @@ static void ex_stop(exarg_T *eap)
     resettitle();  // force updating the title
     redraw_later_clear();
     ui_refresh();  // may have resized window
-    apply_autocmds(EVENT_VIMRESUMED, NULL, NULL, FALSE, NULL);
+    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, FALSE, NULL);
   }
 }
 

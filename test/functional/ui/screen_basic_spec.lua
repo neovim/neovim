@@ -79,8 +79,8 @@ describe('Screen', function()
 
       -- when we use eval in the test, nvim instance is already foregrounded
       -- after being suspended, therefore both events are triggered here.
-      command('autocmd VimSuspendPre  * :let g:foo=42')
-      command('autocmd VimResumed  * :let g:bar=24')
+      command('autocmd VimSuspend  * :let g:foo=42')
+      command('autocmd VimResume  * :let g:bar=24')
 
       command('suspend')
       eq(42, eval('g:foo'))
