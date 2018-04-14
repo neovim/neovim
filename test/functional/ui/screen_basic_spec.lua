@@ -4,6 +4,7 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
+local eval = helpers.eval
 local iswin = helpers.iswin
 
 describe('screen', function()
@@ -75,9 +76,19 @@ describe('Screen', function()
       local function check()
         eq(true, screen.suspended)
       end
+
+      -- when we use eval in the test, nvim instance is already foregrounded
+      -- after being suspended, therefore both events are triggered here.
+      command('autocmd VimSuspendPre  * :let g:foo=42')
+      command('autocmd VimResumed  * :let g:bar=24')
+
       command('suspend')
+      eq(42, eval('g:foo'))
+      eq(24, eval('g:bar'))
+
       screen:expect(check)
       screen.suspended = false
+
       feed('<c-z>')
       screen:expect(check)
     end)

@@ -6305,6 +6305,7 @@ static void ex_stop(exarg_T *eap)
     ui_linefeed();
     ui_flush();
     ui_call_suspend();  // call machine specific function
+
     ui_flush();
     maketitle();
     resettitle();  // force updating the title
