@@ -272,10 +272,11 @@ Name			triggered by ~
 |GUIEnter|		after starting the GUI successfully
 |GUIFailed|		after starting the GUI failed
 |TermResponse|		after the terminal response to |t_RV| is received
-
 |QuitPre|		when using `:quit`, before deciding whether to quit
-|VimLeavePre|		before exiting Vim, before writing the shada file
-|VimLeave|		before exiting Vim, after writing the shada file
+|VimLeavePre|		before exiting Nvim, before writing the shada file
+|VimLeave|		before exiting Nvim, after writing the shada file
+|VimResume|		after Nvim is resumed
+|VimSuspend|		before Nvim is suspended
 
 	Various
 |DirChanged|		after the |current-directory| was changed
@@ -1009,6 +1010,10 @@ VimLeavePre			Before exiting Vim, just before writing the
 VimResized			After the Vim window was resized, thus 'lines'
 				and/or 'columns' changed.  Not when starting
 				up though.
+							*VimResume*
+VimResume			After Nvim resumes from |suspend| state.
+							*VimSuspend*
+VimSuspend			Before Nvim enters |suspend| state.
 							*WinEnter*
 WinEnter			After entering another window.  Not done for
 				the first window, when Vim has just started.
