@@ -188,8 +188,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   }
 
   if (proc->refcount == 1) {
-    // Job exited, collect status and manually invoke close_cb to free the job
-    // resources
+    // Job exited, free its resources.
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
@@ -205,7 +204,8 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
 /// Ask a process to terminate and eventually kill if it doesn't respond
 void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
-  if (proc->stopped_time) {
+  bool exited = (proc->status >= 0);
+  if (exited || proc->stopped_time) {
     return;
   }
 
@@ -228,14 +228,14 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   Loop *loop = proc->loop;
-  // Start a timer to periodically check if a signal should be send to the job.
+  // Start a timer to periodically check if a signal should be sent to the job.
   ILOG("starting job kill timer");
   uv_timer_start(&loop->children_kill_timer, children_kill_cb,
                  KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
 }
 
-/// Iterates the process list sending SIGTERM to stopped processes and SIGKILL
-/// to those that didn't die from SIGTERM after a while(exit_timeout is 0).
+/// Sends SIGKILL (or SIGTERM for PTY jobs) to processes that didn't terminate
+/// after process_stop() requested them.
 static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;
@@ -243,11 +243,11 @@ static void children_kill_cb(uv_timer_t *handle)
 
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (!proc->stopped_time) {
+    bool exited = (proc->status >= 0);
+    if (exited || !proc->stopped_time) {
       continue;
     }
     uint64_t elapsed = (now - proc->stopped_time) / 1000000 + 1;
-
     if (elapsed >= KILL_TIMEOUT_MS) {
       int sig = proc->type == kProcessTypePty && elapsed < KILL_TIMEOUT_MS * 2
                 ? SIGTERM
@@ -380,8 +380,10 @@ static void process_close_handles(void **argv)
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
+  ILOG("exited: pid=%d status=%d stoptime=%" PRId64, proc->pid,
+       proc->status, proc->stopped_time);
   if (proc->stopped_time) {
-    DLOG("stopping process kill timer");
+    ILOG("stopping process kill timer");
     uv_timer_stop(&loop->children_kill_timer);
   }
 

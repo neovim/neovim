@@ -5033,10 +5033,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  width    : (pty only) Width of the terminal screen
 		  height   : (pty only) Height of the terminal screen
 		  TERM     : (pty only) $TERM environment variable
-		  detach   : (non-pty only) Detach the job process from the
-			     nvim process. The process will not get killed
-			     when nvim exits. If the process dies before
-			     nvim exits, "on_exit" will still be invoked.
+		  detach   : (non-pty only) Detach the job process: it will
+			     not be killed when Nvim exits. If the process
+			     exits before Nvim, "on_exit" will be invoked.
 
 		{opts} is passed as |self| dictionary to the callback; the
 		caller may set other keys to pass application-specific data.

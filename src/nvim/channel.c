@@ -658,9 +658,9 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
     terminal_close(chan->term, msg);
   }
 
-  // if status is -1 the process did not really exit,
-  // we just closed the handle onto a detached process
-  if (status >= 0) {
+  // If process did not exit, we only closed the handle of a detached process.
+  bool exited = (status >= 0);
+  if (exited) {
     process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
   }
 
