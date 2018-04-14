@@ -77,20 +77,25 @@ describe('Screen', function()
         eq(true, screen.suspended)
       end
 
-      -- when we use eval in the test, nvim instance is already foregrounded
-      -- after being suspended, therefore both events are triggered here.
-      command('autocmd VimSuspend  * :let g:foo=42')
-      command('autocmd VimResume  * :let g:bar=24')
+      -- using eval after suspending, resumes nvim.
+      -- hence both events trigger one after another
+      command('autocmd VimSuspend  * :let g:suspend=1+get(g:, "suspend", 0)') -- increment by 1
+      command('autocmd VimResume  * :let g:suspend=get(g:, "suspend", 0)-2') -- decrement by 2
 
       command('suspend')
-      eq(42, eval('g:foo'))
-      eq(24, eval('g:bar'))
+      eq(-1, eval('g:suspend'))
 
       screen:expect(check)
       screen.suspended = false
 
       feed('<c-z>')
+      eq(-2, eval('g:suspend'))
+
       screen:expect(check)
+      screen.suspended = false
+
+      command('suspend')
+      eq(-3, eval('g:suspend'))
     end)
   end)
 
