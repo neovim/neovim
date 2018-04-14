@@ -295,7 +295,11 @@ struct padding {
   char padding[PADDING_SIZE];
 };
 
+#ifdef __GNUC__
 int mainCRTStartup(void);
+#else
+int wmainCRTStartup(void);
+#endif
 
 // This code is based on the following article of the cygwin mailing list.
 // https://cygwin.com/ml/cygwin/2011-02/msg00446.html
@@ -332,7 +336,11 @@ int __stdcall cygloadCRTStartup(void)
     _padding.delta = (_stackbase - _padding.end);
     memcpy(_padding.block, _padding.end, _padding.delta);
   }
+#ifdef __GNUC__
   result = mainCRTStartup();
+#else
+  result = wmainCRTStartup();
+#endif
   memcpy(_padding.end, _padding.block, _padding.delta);
   return result;
 }

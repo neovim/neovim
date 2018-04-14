@@ -408,24 +408,6 @@ if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 endif()
 
-if(WIN32)
-  if(MSVC)
-    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
-    if("${TARGET_ARCH}" STREQUAL "X86_64")
-      list(APPEND NVIM_EXEC_LINK_LIBRARIES /ENTRY:cygloadCRTStartup)
-    elseif("${TARGET_ARCH}" STREQUAL "X86")
-      list(APPEND NVIM_EXEC_LINK_LIBRARIES /ENTRY:_cygloadCRTStartup@0)
-    endif()
-  else()
-    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
-    if("${TARGET_ARCH}" STREQUAL "X86_64")
-      list(APPEND NVIM_EXEC_LINK_LIBRARIES -Wl,-entry -Wl,cygloadCRTStartup)
-    elseif("${TARGET_ARCH}" STREQUAL "X86")
-      list(APPEND NVIM_EXEC_LINK_LIBRARIES -Wl,-entry -Wl,_cygloadCRTStartup@0)
-    endif()
-  endif()
-endif()
-
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
@@ -433,6 +415,28 @@ install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+
+if(WIN32)
+  if(MSVC)
+    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
+    if("${TARGET_ARCH}" STREQUAL "X86_64")
+      set_property(TARGET nvim APPEND PROPERTY
+                   LINK_FLAGS /ENTRY:cygloadCRTStartup)
+    elseif("${TARGET_ARCH}" STREQUAL "X86")
+      set_property(TARGET nvim APPEND PROPERTY
+                   LINK_FLAGS /ENTRY:cygloadCRTStartup)
+    endif()
+  else()
+    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
+    if("${TARGET_ARCH}" STREQUAL "X86_64")
+      set_property(TARGET nvim APPEND_STRING PROPERTY
+                   LINK_FLAGS "-Wl,-entry -Wl,cygloadCRTStartup")
+    elseif("${TARGET_ARCH}" STREQUAL "X86")
+      set_property(TARGET nvim APPEND_STRING PROPERTY
+                   LINK_FLAGS "-Wl,-entry -Wl,_cygloadCRTStartup@0")
+    endif()
+  endif()
+endif()
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
