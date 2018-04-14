@@ -282,6 +282,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
   char *buf = ret_buf;
   size_t read_remaining = size;
   RBuffer *const rv = fp->rv;
+  bool called_read = false;
   while (read_remaining) {
     const size_t rv_size = rbuffer_size(rv);
     if (rv_size > 0) {
@@ -289,7 +290,9 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       buf += rsize;
       read_remaining -= rsize;
     }
-    if (fp->eof) {
+    if (fp->eof
+        // Allow only at most one os_read[v] call.
+        || (called_read && fp->non_blocking)) {
       break;
     }
     if (read_remaining) {
@@ -343,10 +346,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         }
       }
 #endif
-    }
-    if (fp->non_blocking) {
-      // Allow only at most one os_read[v] call.
-      break;
+      called_read = true;
     }
   }
   return (ptrdiff_t)(size - read_remaining);

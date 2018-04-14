@@ -1096,6 +1096,17 @@ scripterror:
             int error;
             if (STRCMP(argv[0], "-") == 0) {
               const int stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef WIN32
+              // On Windows, replace the original stdin with the
+              // console input handle.
+              close(STDIN_FILENO);
+              const HANDLE conin_handle =
+                CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                           FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                           OPEN_EXISTING, 0, (HANDLE)NULL);
+              const int conin_fd = _open_osfhandle(conin_handle, _O_RDONLY);
+              assert(conin_fd == STDIN_FILENO);
+#endif
               FileDescriptor *const stdin_dup = file_open_fd_new(
                   &error, stdin_dup_fd, kFileReadOnly|kFileNonBlocking);
               assert(stdin_dup != NULL);

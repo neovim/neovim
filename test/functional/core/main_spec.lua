@@ -36,7 +36,6 @@ describe('Command-line option', function()
       os.remove(dollar_fname)
     end)
     it('treats - as stdin', function()
-      if helpers.pending_win32(pending) then return end
       eq(nil, lfs.attributes(fname))
       funcs.system(
         {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
