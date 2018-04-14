@@ -1,0 +1,41 @@
+name: neovim
+version: git
+summary: Vim-fork focused on extensibility and agility.
+description: |
+ Neovim is a project that seeks to aggressively refactor Vim in order to:
+
+ Simplify maintenance and encourage contributions
+ Split the work between multiple developers
+ Enable the implementation of new/modern user interfaces without any modifications to the core source
+ Improve extensibility with a new plugin architecture
+ For lots more details, see the wiki!
+confinement: classic
+
+apps:
+    neovim:
+        command: usr/local/bin/nvim
+        plugs: [network, network-bind, x11]
+        environment:
+            HOME: /home/$USER
+            VIM: $SNAP/usr/local/share/nvim/runtime
+
+parts:
+    neovim:
+        source: .
+        plugin: make
+        make-parameters:
+            - CMAKE_BUILD_TYPE=Release
+        build-packages:
+            - ninja-build
+            - libtool
+            - libtool-bin
+            - autoconf
+            - automake
+            - cmake
+            - g++
+            - pkg-config
+            - unzip
+        snap:
+            - usr/local/bin
+            - usr/local/share/nvim
+            - -usr/local/share/man

@@ -137,6 +137,7 @@ function Screen.new(width, height)
     visual_bell = false,
     suspended = false,
     mode = 'normal',
+    options = {},
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
@@ -174,6 +175,10 @@ function Screen:try_resize(columns, rows)
   -- Give ourselves a chance to _handle_resize, which requires using
   -- self.sleep() (for the resize notification) rather than run()
   self:sleep(0.1)
+end
+
+function Screen:set_option(option, value)
+  uimeths.set_option(option, value)
 end
 
 -- Asserts that `expected` eventually matches the screen state.
@@ -450,6 +455,9 @@ function Screen:_handle_visual_bell()
   self.visual_bell = true
 end
 
+function Screen:_handle_default_colors_set()
+end
+
 function Screen:_handle_update_fg(fg)
   self._fg = fg
 end
@@ -476,6 +484,10 @@ end
 
 function Screen:_handle_set_icon(icon)
   self.icon = icon
+end
+
+function Screen:_handle_option_set(name, value)
+  self.options[name] = value
 end
 
 function Screen:_clear_block(top, bot, left, right)

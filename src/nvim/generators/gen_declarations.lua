@@ -164,9 +164,40 @@ local pattern = concat(
 )
 
 if fname == '--help' then
-  print'Usage:'
-  print()
-  print'  gendeclarations.lua definitions.c static.h non-static.h preprocessor.i'
+  print([[
+Usage:
+
+    gendeclarations.lua definitions.c static.h non-static.h definitions.i
+
+Generates declarations for a C file definitions.c, putting declarations for
+static functions into static.h and declarations for non-static functions into
+non-static.h. File `definitions.i' should contain an already preprocessed
+version of definitions.c and it is the only one which is actually parsed,
+definitions.c is needed only to determine functions from which file out of all
+functions found in definitions.i are needed.
+
+Additionally uses the following environment variables:
+
+    NVIM_GEN_DECLARATIONS_LINE_NUMBERS:
+        If set to 1 then all generated declarations receive a comment with file
+        name and line number after the declaration. This may be useful for
+        debugging gen_declarations script, but not much beyond that with
+        configured development environment (i.e. with ctags/cscope/finding
+        definitions with clang/etc).
+
+        WARNING: setting this to 1 will cause extensive rebuilds: declarations
+                 generator script will not regenerate non-static.h file if its
+                 contents did not change, but including line numbers will make
+                 contents actually change.
+
+                 With contents changed timestamp of the file is regenerated even
+                 when no real changes were made (e.g. a few lines were added to
+                 a function which is not at the bottom of the file).
+
+                 With changed timestamp build system will assume that header
+                 changed, triggering rebuilds of all C files which depend on the
+                 "changed" header.
+]])
   os.exit()
 end
 
@@ -193,23 +224,15 @@ local static = header
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
 local curfile
 
-local init = 0
+local init = 1
 local curfile = nil
 local neededfile = fname:match('[^/]+$')
 local declline = 0
 local declendpos = 0
 local curdir = nil
 local is_needed_file = false
+local init_is_nl = true
 while init ~= nil do
-  init = text:find('[\n;}]', init)
-  if init == nil then
-    break
-  end
-  local init_is_nl = text:sub(init, init) == '\n'
-  init = init + 1
-  if init_is_nl and is_needed_file then
-    declline = declline + 1
-  end
   if init_is_nl and text:sub(init, init) == '#' then
     local line, dir, file = text:match(filepattern, init)
     if file ~= nil then
@@ -249,8 +272,10 @@ while init ~= nil do
       declaration = declaration:gsub(' $', '')
       declaration = declaration:gsub('^ ', '')
       declaration = declaration .. ';'
-      declaration = declaration .. ('  // %s/%s:%u'):format(
-          curdir, curfile, declline)
+      if os.getenv('NVIM_GEN_DECLARATIONS_LINE_NUMBERS') == '1' then
+        declaration = declaration .. ('  // %s/%s:%u'):format(
+            curdir, curfile, declline)
+      end
       declaration = declaration .. '\n'
       if declaration:sub(1, 6) == 'static' then
         static = static .. declaration
@@ -259,6 +284,15 @@ while init ~= nil do
       end
       declendpos = e
     end
+  end
+  init = text:find('[\n;}]', init)
+  if init == nil then
+    break
+  end
+  init_is_nl = text:sub(init, init) == '\n'
+  init = init + 1
+  if init_is_nl and is_needed_file then
+    declline = declline + 1
   end
 end
 

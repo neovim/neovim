@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 2.8.7)
+project(gperf LANGUAGES C CXX)
+
+add_executable(gperf
+  lib/getline.cc
+  lib/hash.cc
+  lib/getopt.c
+  lib/getopt1.c
+  src/version.cc
+  src/positions.cc
+  src/options.cc
+  src/keyword.cc
+  src/keyword-list.cc
+  src/input.cc
+  src/bool-array.cc
+  src/hash-table.cc
+  src/search.cc
+  src/output.cc
+  src/main.cc)
+
+include_directories(lib)
+
+# Copy the config.h template without modifying it
+# because none of the definitions are necessary
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/config.h.in ${CMAKE_BINARY_DIR}/config/config.h)
+include_directories(${CMAKE_BINARY_DIR}/config)
+
+include(GNUInstallDirs)
+install(TARGETS gperf
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

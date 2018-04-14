@@ -317,15 +317,9 @@ EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
 /*
  * The exception currently being thrown.  Used to pass an exception to
  * a different cstack.  Also used for discarding an exception before it is
- * caught or made pending.  Only valid when did_throw is TRUE.
+ * caught or made pending.
  */
 EXTERN except_T *current_exception;
-
-/*
- * did_throw: An exception is being thrown.  Reset when the exception is caught
- * or as long as it is pending in a finally clause.
- */
-EXTERN int did_throw INIT(= FALSE);
 
 /*
  * need_rethrow: set to TRUE when a throw that cannot be handled in do_cmdline()
@@ -416,7 +410,7 @@ EXTERN struct caller_scope {
   scid_T SID;
   uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
   linenr_T sourcing_lnum;
-  int autocmd_fname_full, autocmd_bufnr;
+  int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
@@ -729,29 +723,6 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
 
-// To speed up BYTELEN(); keep a lookup table to quickly get the length in
-// bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
-// which are illegal when used as the first byte have a 1.  The NUL byte has
-// length 1.
-EXTERN char utf8len_tab[256] INIT(= {
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1,
-});
-
 # if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
 /* Pointers to functions and variables to be loaded at runtime */
 EXTERN size_t (*iconv)(iconv_t cd, const char **inbuf, size_t *inbytesleft,
@@ -892,7 +863,6 @@ EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
 EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
 EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline
 EXTERN char_u *autocmd_fname INIT(= NULL);     // fname for <afile> on cmdline
-EXTERN int autocmd_fname_full;                 // autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
@@ -957,7 +927,7 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
-/* Characters from 'listchars' option */
+// 'listchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int lcs_eol INIT(= '$');
 EXTERN int lcs_ext INIT(= NUL);
 EXTERN int lcs_prec INIT(= NUL);
@@ -968,12 +938,13 @@ EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= ' ');
 
-/* Characters from 'fillchars' option */
+// 'fillchars' characters. Defaults are overridden in set_chars_option().
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= ' ');
-EXTERN int fill_fold INIT(= '-');
+EXTERN int fill_vert INIT(= 9474);  // │
+EXTERN int fill_fold INIT(= 183);   // ·
 EXTERN int fill_diff INIT(= '-');
+EXTERN int fill_msgsep INIT(= ' ');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);
@@ -1063,6 +1034,7 @@ EXTERN char_u e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN char_u e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
+EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
 EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
@@ -1082,6 +1054,9 @@ EXTERN char_u e_stdiochan2[] INIT(= N_(
 EXTERN char_u e_invstream[] INIT(= N_("E906: invalid stream for channel"));
 EXTERN char_u e_invstreamrpc[] INIT(= N_(
     "E906: invalid stream for rpc channel, use 'rpc'"));
+EXTERN char_u e_streamkey[] INIT(= N_(
+    "E5210: dict key '%s' already set for buffered stream in channel %"
+    PRIu64));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
@@ -1092,7 +1067,6 @@ EXTERN char_u e_nesting[] INIT(= N_("E22: Scripts nested too deep"));
 EXTERN char_u e_noalt[] INIT(= N_("E23: No alternate file"));
 EXTERN char_u e_noabbr[] INIT(= N_("E24: No such abbreviation"));
 EXTERN char_u e_nobang[] INIT(= N_("E477: No ! allowed"));
-EXTERN char_u e_nogvim[] INIT(= N_("E25: Nvim does not have a built-in GUI"));
 EXTERN char_u e_nogroup[] INIT(= N_("E28: No such highlight group name: %s"));
 EXTERN char_u e_noinstext[] INIT(= N_("E29: No inserted text yet"));
 EXTERN char_u e_nolastcmd[] INIT(= N_("E30: No previous command line"));
@@ -1155,7 +1129,6 @@ EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
 EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
 EXTERN char_u e_usingsid[] INIT(= N_(
     "E81: Using <SID> not in a script context"));
-EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
@@ -1173,6 +1146,12 @@ EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 EXTERN char_u e_autocmd_err[] INIT(=N_(
     "E5500: autocmd has thrown an exception: %s"));
+EXTERN char_u e_cmdmap_err[] INIT(=N_(
+    "E5520: <Cmd> mapping must end with <CR>"));
+EXTERN char_u e_cmdmap_repeated[] INIT(=N_(
+    "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char_u e_cmdmap_key[] INIT(=N_(
+    "E5522: <Cmd> mapping must not include %s key"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));

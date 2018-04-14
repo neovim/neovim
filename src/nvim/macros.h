@@ -28,15 +28,11 @@
 /// @return `s, sizeof(s) - 1`
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
-/*
- * lineempty() - return TRUE if the line is empty
- */
-#define lineempty(p) (*ml_get(p) == NUL)
+/// LINEEMPTY() - return TRUE if the line is empty
+#define LINEEMPTY(p) (*ml_get(p) == NUL)
 
-/*
- * bufempty() - return TRUE if the current buffer is empty
- */
-#define bufempty() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
+/// BUFEMPTY() - return TRUE if the current buffer is empty
+#define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
                     NUL)
 
 /*
@@ -75,7 +71,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (p_lrm || KeyTyped) \
+        && (p_lrm || (vgetc_busy ? typebuf_maplen() == 0 : KeyTyped)) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \
@@ -140,15 +136,24 @@
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
 
-/// Calculate the length of a C array.
+/// Calculate the length of a C array
 ///
 /// This should be called with a real array. Calling this with a pointer is an
-/// error. A mechanism to detect many (though not all) of those errors at compile
-/// time is implemented. It works by the second division producing a division by
-/// zero in those cases (-Wdiv-by-zero in GCC).
-#define ARRAY_SIZE(arr) ((sizeof(arr)/sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
+/// error. A mechanism to detect many (though not all) of those errors at
+/// compile time is implemented. It works by the second division producing
+/// a division by zero in those cases (-Wdiv-by-zero in GCC).
+#define ARRAY_SIZE(arr) \
+    ((sizeof(arr)/sizeof((arr)[0])) \
+     / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
-#define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+/// Get last array entry
+///
+/// This should be called with a real array. Calling this with a pointer is an
+/// error.
+#define ARRAY_LAST_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
+
+// Duplicated in os/win_defs.h to avoid include-order sensitivity.
+#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
@@ -182,5 +187,20 @@
 ///
 /// @return ((Type *)obj).
 #define STRUCT_CAST(Type, obj) ((Type *)(obj))
+
+// Type of uv_buf_t.len is platform-dependent.
+// Related: https://github.com/libuv/libuv/pull/1236
+#if defined(WIN32)
+# define UV_BUF_LEN(x)  (ULONG)(x)
+#else
+# define UV_BUF_LEN(x)  (x)
+#endif
+
+// Type of read()/write() `count` param is platform-dependent.
+#if defined(WIN32)
+# define IO_COUNT(x)  (unsigned)(x)
+#else
+# define IO_COUNT(x)  (x)
+#endif
 
 #endif  // NVIM_MACROS_H

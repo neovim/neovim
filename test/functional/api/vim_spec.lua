@@ -1,5 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local global_helpers = require('test.helpers')
+
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
@@ -9,6 +11,11 @@ local funcs = helpers.funcs
 local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
+local iswin = helpers.iswin
+
+local intchar2lua = global_helpers.intchar2lua
+local format_string = global_helpers.format_string
+local mergedicts_copy = global_helpers.mergedicts_copy
 
 describe('api', function()
   before_each(clear)
@@ -31,13 +38,92 @@ describe('api', function()
       os.remove(fname)
     end)
 
-    it("VimL error: fails (VimL error), does NOT update v:errmsg", function()
+    it("parse error: fails (specific error), does NOT update v:errmsg", function()
       -- Most API methods return generic errors (or no error) if a VimL
       -- expression fails; nvim_command returns the VimL error details.
       local status, rv = pcall(nvim, "command", "bogus_command")
       eq(false, status)                       -- nvim_command() failed.
       eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
       eq("", nvim("eval", "v:errmsg"))        -- v:errmsg was not updated.
+    end)
+
+    it("runtime error: fails (specific error)", function()
+      local status, rv = pcall(nvim, "command_output", "buffer 23487")
+      eq(false, status)                 -- nvim_command() failed.
+      eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    end)
+  end)
+
+  describe('nvim_command_output', function()
+    it('does not induce hit-enter prompt', function()
+      -- Induce a hit-enter prompt use nvim_input (non-blocking).
+      nvim('command', 'set cmdheight=1')
+      nvim('input', [[:echo "hi\nhi2"<CR>]])
+
+      -- Verify hit-enter prompt.
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+      nvim('input', [[<C-c>]])
+
+      -- Verify NO hit-enter prompt.
+      nvim('command_output', [[echo "hi\nhi2"]])
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it('captures command output', function()
+      eq('this is\nspinal tap',
+         nvim('command_output', [[echo "this is\nspinal tap"]]))
+      eq('no line ending!',
+         nvim('command_output', [[echon "no line ending!"]]))
+    end)
+
+    it('captures empty command output', function()
+      eq('', nvim('command_output', 'echo'))
+    end)
+
+    it('captures single-char command output', function()
+      eq('x', nvim('command_output', 'echo "x"'))
+    end)
+
+    it('captures multiple commands', function()
+      eq('foo\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output', 'echo "foo" | ls'))
+    end)
+
+    it('captures nested execute()', function()
+      eq('\nnested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo execute('echo "nested1\nnested2"') | ls]]))
+    end)
+
+    it('captures nested nvim_command_output()', function()
+      eq('nested1\nnested2\n  1 %a   "[No Name]"                    line 1',
+        nvim('command_output',
+          [[echo nvim_command_output('echo "nested1\nnested2"') | ls]]))
+    end)
+
+    it('returns shell |:!| output', function()
+      local win_lf = iswin() and '\r' or ''
+      eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
+    end)
+
+    it("parse error: fails (specific error), does NOT update v:errmsg", function()
+      local status, rv = pcall(nvim, "command_output", "bogus commannnd")
+      eq(false, status)                 -- nvim_command_output() failed.
+      eq("E492: Not an editor command: bogus commannnd",
+         string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      -- Verify NO hit-enter prompt.
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("runtime error: fails (specific error)", function()
+      local status, rv = pcall(nvim, "command_output", "buffer 42")
+      eq(false, status)                 -- nvim_command_output() failed.
+      eq("E86: Buffer 42 does not exist", string.match(rv, "E%d*:.*"))
+      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      -- Verify NO hit-enter prompt.
+      eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
   end)
 
@@ -495,7 +581,8 @@ describe('api', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-        [2] = {bold = true, foreground = Screen.colors.SeaGreen}
+        [2] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [3] = {bold = true, reverse = true},
       })
     end)
 
@@ -516,11 +603,11 @@ describe('api', function()
     it('shows return prompt when more than &cmdheight lines', function()
       nvim_async('err_write', 'something happened\nvery bad\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:something happened}                      |
         {1:very bad}                                |
         {2:Press ENTER or type command to continue}^ |
@@ -530,9 +617,9 @@ describe('api', function()
     it('shows return prompt after all lines are shown', function()
       nvim_async('err_write', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:FAILURE}                                 |
         {1:ERROR}                                   |
         {1:EXCEPTION}                               |
@@ -560,11 +647,11 @@ describe('api', function()
       -- shows up to &cmdheight lines
       nvim_async('err_write', 'more fail\ntoo fail\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:more fail}                               |
         {1:too fail}                                |
         {2:Press ENTER or type command to continue}^ |
@@ -661,7 +748,7 @@ describe('api', function()
     end)
   end)
 
-  describe('list_runtime_paths', function()
+  describe('nvim_list_runtime_paths', function()
     it('returns nothing with empty &runtimepath', function()
       meths.set_option('runtimepath', '')
       eq({}, meths.list_runtime_paths())
@@ -708,6 +795,249 @@ describe('api', function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
     ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
+  end)
+
+  describe('nvim_parse_expression', function()
+    before_each(function()
+      meths.set_option('isident', '')
+    end)
+    local function simplify_east_api_node(line, east_api_node)
+      if east_api_node == NIL then
+        return nil
+      end
+      if east_api_node.children then
+        for k, v in pairs(east_api_node.children) do
+          east_api_node.children[k] = simplify_east_api_node(line, v)
+        end
+      end
+      local typ = east_api_node.type
+      if typ == 'Register' then
+        typ = typ .. ('(name=%s)'):format(
+          tostring(intchar2lua(east_api_node.name)))
+        east_api_node.name = nil
+      elseif typ == 'PlainIdentifier' then
+        typ = typ .. ('(scope=%s,ident=%s)'):format(
+          tostring(intchar2lua(east_api_node.scope)), east_api_node.ident)
+        east_api_node.scope = nil
+        east_api_node.ident = nil
+      elseif typ == 'PlainKey' then
+        typ = typ .. ('(key=%s)'):format(east_api_node.ident)
+        east_api_node.ident = nil
+      elseif typ == 'Comparison' then
+        typ = typ .. ('(type=%s,inv=%u,ccs=%s)'):format(
+          east_api_node.cmp_type, east_api_node.invert and 1 or 0,
+          east_api_node.ccs_strategy)
+        east_api_node.ccs_strategy = nil
+        east_api_node.cmp_type = nil
+        east_api_node.invert = nil
+      elseif typ == 'Integer' then
+        typ = typ .. ('(val=%u)'):format(east_api_node.ivalue)
+        east_api_node.ivalue = nil
+      elseif typ == 'Float' then
+        typ = typ .. format_string('(val=%e)', east_api_node.fvalue)
+        east_api_node.fvalue = nil
+      elseif typ == 'SingleQuotedString' or typ == 'DoubleQuotedString' then
+        typ = format_string('%s(val=%q)', typ, east_api_node.svalue)
+        east_api_node.svalue = nil
+      elseif typ == 'Option' then
+        typ = ('%s(scope=%s,ident=%s)'):format(
+          typ,
+          tostring(intchar2lua(east_api_node.scope)),
+          east_api_node.ident)
+        east_api_node.ident = nil
+        east_api_node.scope = nil
+      elseif typ == 'Environment' then
+        typ = ('%s(ident=%s)'):format(typ, east_api_node.ident)
+        east_api_node.ident = nil
+      elseif typ == 'Assignment' then
+        local aug = east_api_node.augmentation
+        if aug == '' then aug = 'Plain' end
+        typ = ('%s(%s)'):format(typ, aug)
+        east_api_node.augmentation = nil
+      end
+      typ = ('%s:%u:%u:%s'):format(
+        typ, east_api_node.start[1], east_api_node.start[2],
+        line:sub(east_api_node.start[2] + 1,
+                 east_api_node.start[2] + 1 + east_api_node.len - 1))
+      assert(east_api_node.start[2] + east_api_node.len - 1 <= #line)
+      for k, _ in pairs(east_api_node.start) do
+        assert(({true, true})[k])
+      end
+      east_api_node.start = nil
+      east_api_node.type = nil
+      east_api_node.len = nil
+      local can_simplify = true
+      for _, _ in pairs(east_api_node) do
+        if can_simplify then can_simplify = false end
+      end
+      if can_simplify then
+        return typ
+      else
+        east_api_node[1] = typ
+        return east_api_node
+      end
+    end
+    local function simplify_east_api(line, east_api)
+      if east_api.error then
+        east_api.err = east_api.error
+        east_api.error = nil
+        east_api.err.msg = east_api.err.message
+        east_api.err.message = nil
+      end
+      if east_api.ast then
+        east_api.ast = {simplify_east_api_node(line, east_api.ast)}
+        if #east_api.ast == 0 then
+          east_api.ast = nil
+        end
+      end
+      if east_api.len == #line then
+        east_api.len = nil
+      end
+      return east_api
+    end
+    local function simplify_east_hl(line, east_hl)
+      for i, v in ipairs(east_hl) do
+        east_hl[i] = ('%s:%u:%u:%s'):format(
+          v[4],
+          v[1],
+          v[2],
+          line:sub(v[2] + 1, v[3]))
+      end
+      return east_hl
+    end
+    local FLAGS_TO_STR = {
+      [0] = "",
+      [1] = "m",
+      [2] = "E",
+      [3] = "mE",
+      [4] = "l",
+      [5] = "lm",
+      [6] = "lE",
+      [7] = "lmE",
+    }
+    local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs,
+                                  nz_flags_exps)
+      if type(str) ~= 'string' then
+        return
+      end
+      local zflags = opts.flags[1]
+      nz_flags_exps = nz_flags_exps or {}
+      for _, flags in ipairs(opts.flags) do
+        local err, msg = pcall(function()
+          local east_api = meths.parse_expression(str, FLAGS_TO_STR[flags], true)
+          local east_hl = east_api.highlight
+          east_api.highlight = nil
+          local ast = simplify_east_api(str, east_api)
+          local hls = simplify_east_hl(str, east_hl)
+          local exps = {
+            ast = exp_ast,
+            hl_fs = exp_highlighting_fs,
+          }
+          local add_exps = nz_flags_exps[flags]
+          if not add_exps and flags == 3 + zflags then
+            add_exps = nz_flags_exps[1 + zflags] or nz_flags_exps[2 + zflags]
+          end
+          if add_exps then
+            if add_exps.ast then
+              exps.ast = mergedicts_copy(exps.ast, add_exps.ast)
+            end
+            if add_exps.hl_fs then
+              exps.hl_fs = mergedicts_copy(exps.hl_fs, add_exps.hl_fs)
+            end
+          end
+          eq(exps.ast, ast)
+          if exp_highlighting_fs then
+            local exp_highlighting = {}
+            local next_col = 0
+            for i, h in ipairs(exps.hl_fs) do
+              exp_highlighting[i], next_col = h(next_col)
+            end
+            eq(exp_highlighting, hls)
+          end
+        end)
+        if not err then
+          if type(msg) == 'table' then
+            local merr, new_msg = pcall(
+              format_string, 'table error:\n%s\n\n(%r)', msg.message, msg)
+            if merr then
+              msg = new_msg
+            else
+              msg = format_string('table error without .message:\n(%r)',
+                                  msg)
+            end
+          elseif type(msg) ~= 'string' then
+            msg = format_string('non-string non-table error:\n%r', msg)
+          end
+          error(format_string('Error while processing test (%r, %s):\n%s',
+                              str, FLAGS_TO_STR[flags], msg))
+        end
+      end
+    end
+    local function hl(group, str, shift)
+      return function(next_col)
+        local col = next_col + (shift or 0)
+        return (('%s:%u:%u:%s'):format(
+          'Nvim' .. group,
+          0,
+          col,
+          str)), (col + #str)
+      end
+    end
+    local function fmtn(typ, args, rest)
+      if (typ == 'UnknownFigure'
+          or typ == 'DictLiteral'
+          or typ == 'CurlyBracesIdentifier'
+          or typ == 'Lambda') then
+        return ('%s%s'):format(typ, rest)
+      elseif typ == 'DoubleQuotedString' or typ == 'SingleQuotedString' then
+        if args:sub(-4) == 'NULL' then
+          args = args:sub(1, -5) .. '""'
+        end
+        return ('%s(%s)%s'):format(typ, args, rest)
+      end
+    end
+    assert:set_parameter('TableFormatLevel', 1000000)
+    require('test.unit.viml.expressions.parser_tests')(
+        it, _check_parsing, hl, fmtn)
+  end)
+
+  describe('nvim_list_uis', function()
+    it('returns empty if --headless', function()
+      -- --embed implies --headless.
+      eq({}, nvim("list_uis"))
+    end)
+    it('returns attached UIs', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      local expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 4,
+          rgb = true,
+          width = 20,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+
+      screen:detach()
+      screen = Screen.new(44, 99)
+      screen:attach({ rgb = false })
+      expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 99,
+          rgb = false,
+          width = 44,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+    end)
   end)
 
 end)

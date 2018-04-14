@@ -260,16 +260,17 @@ static void add_buff(buffheader_T *const buf, const char *const s,
     return;
   }
 
-  if (buf->bh_first.b_next == NULL) {   /* first add to list */
+  if (buf->bh_first.b_next == NULL) {  // first add to list
     buf->bh_space = 0;
     buf->bh_curr = &(buf->bh_first);
-  } else if (buf->bh_curr == NULL) {  /* buffer has already been read */
-    EMSG(_("E222: Add to read buffer"));
+  } else if (buf->bh_curr == NULL) {  // buffer has already been read
+    IEMSG(_("E222: Add to read buffer"));
     return;
-  } else if (buf->bh_index != 0)
+  } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
-        buf->bh_first.b_next->b_str + buf->bh_index,
-        STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+            buf->bh_first.b_next->b_str + buf->bh_index,
+            STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+  }
   buf->bh_index = 0;
 
   size_t len;
@@ -1158,14 +1159,16 @@ void alloc_typebuf(void)
  */
 void free_typebuf(void)
 {
-  if (typebuf.tb_buf == typebuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 1");
-  else
+  if (typebuf.tb_buf == typebuf_init) {
+    internal_error("Free typebuf 1");
+  } else {
     xfree(typebuf.tb_buf);
-  if (typebuf.tb_noremap == noremapbuf_init)
-    EMSG2(_(e_intern2), "Free typebuf 2");
-  else
+  }
+  if (typebuf.tb_noremap == noremapbuf_init) {
+    internal_error("Free typebuf 2");
+  } else {
     xfree(typebuf.tb_noremap);
+  }
 }
 
 /*
@@ -1583,7 +1586,7 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
-/// get a character:
+/// Gets a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
 ///    Also used to redo a command for ".".
@@ -1601,7 +1604,7 @@ vungetc ( /* unget one character (can only be done once!) */
 /// if "advance" is FALSE (vpeekc()):
 ///    just look whether there is a character available.
 ///
-/// When "no_mapping" is zero, checks for mappings in the current mode.
+/// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
 static int vgetorpeek(int advance)
@@ -3361,6 +3364,10 @@ set_context_in_map_cmd (
         arg = skipwhite(arg + 8);
         continue;
       }
+      if (STRNCMP(arg, "<special>", 9) == 0) {
+        arg = skipwhite(arg + 9);
+        continue;
+      }
       if (STRNCMP(arg, "<script>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
@@ -3403,21 +3410,24 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   for (round = 1; round <= 2; ++round) {
     count = 0;
 
-    for (i = 0; i < 6; ++i) {
-      if (i == 0)
+    for (i = 0; i < 7; i++) {
+      if (i == 0) {
         p = (char_u *)"<silent>";
-      else if (i == 1)
+      } else if (i == 1) {
         p = (char_u *)"<unique>";
-      else if (i == 2)
+      } else if (i == 2) {
         p = (char_u *)"<script>";
-      else if (i == 3)
+      } else if (i == 3) {
         p = (char_u *)"<expr>";
-      else if (i == 4 && !expand_buffer)
+      } else if (i == 4 && !expand_buffer) {
         p = (char_u *)"<buffer>";
-      else if (i == 5)
+      } else if (i == 5) {
         p = (char_u *)"<nowait>";
-      else
+      } else if (i == 6) {
+        p = (char_u *)"<special>";
+      } else {
         continue;
+      }
 
       if (vim_regexec(regmatch, p, (colnr_T)0)) {
         if (round == 1)
@@ -3903,7 +3913,7 @@ makemap (
           c1 = 't';
           break;
         default:
-          EMSG(_("E228: makemap: Illegal mode"));
+          IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
         do {            /* do this twice if c2 is set, 3 times with c3 */
@@ -4234,4 +4244,71 @@ mapblock_T *get_maphash(int index, buf_T *buf)
   }
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
+}
+
+/// Get command argument for <Cmd> key
+char_u * getcmdkeycmd(int promptc, void *cookie, int indent)
+{
+  garray_T line_ga;
+  int c1 = -1, c2;
+  int cmod = 0;
+  bool aborted = false;
+
+  ga_init(&line_ga, 1, 32);
+
+  no_mapping++;
+
+  got_int = false;
+  while (c1 != NUL && !aborted) {
+    ga_grow(&line_ga, 32);
+
+    if (vgetorpeek(false) == NUL) {
+      // incomplete <Cmd> is an error, because there is not much the user
+      // could do in this state.
+      EMSG(e_cmdmap_err);
+      aborted = true;
+      break;
+    }
+
+    // Get one character at a time.
+    c1 = vgetorpeek(true);
+    // Get two extra bytes for special keys
+    if (c1 == K_SPECIAL) {
+      c1 = vgetorpeek(true);          // no mapping for these chars
+      c2 = vgetorpeek(true);
+      if (c1 == KS_MODIFIER) {
+        cmod = c2;
+        continue;
+      }
+      c1 = TO_SPECIAL(c1, c2);
+    }
+
+
+    if (got_int) {
+      aborted = true;
+    } else if (c1 == '\r' || c1 == '\n') {
+      c1 = NUL;  // end the line
+    } else if (c1 == ESC) {
+      aborted = true;
+    } else if (c1 == K_COMMAND) {
+      // special case to give nicer error message
+      EMSG(e_cmdmap_repeated);
+      aborted = true;
+    } else if (IS_SPECIAL(c1)) {
+      EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
+      aborted = true;
+    } else {
+      ga_append(&line_ga, (char)c1);
+    }
+
+    cmod = 0;
+  }
+
+  no_mapping--;
+
+  if (aborted) {
+    ga_clear(&line_ga);
+  }
+
+  return (char_u *)line_ga.ga_data;
 }

@@ -1,12 +1,13 @@
 local helpers = require('test.unit.helpers')(nil)
 
+local ptr2key = helpers.ptr2key
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
 local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
-                     './src/nvim/hashtab.h')
+                     './src/nvim/hashtab.h', './src/nvim/memory.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
@@ -23,10 +24,19 @@ local nil_value = {[true]='nil'}
 
 local lua2typvalt
 
+local function tv_list_item_alloc()
+  return ffi.cast('listitem_T*', eval.xmalloc(ffi.sizeof('listitem_T')))
+end
+
+local function tv_list_item_free(li)
+  eval.tv_clear(li.li_tv)
+  eval.xfree(li)
+end
+
 local function li_alloc(nogc)
-  local gcfunc = eval.tv_list_item_free
+  local gcfunc = tv_list_item_free
   if nogc then gcfunc = nil end
-  local li = ffi.gc(eval.tv_list_item_alloc(), gcfunc)
+  local li = ffi.gc(tv_list_item_alloc(), gcfunc)
   li.li_next = nil
   li.li_prev = nil
   li.li_tv = {v_type=eval.VAR_UNKNOWN, v_lock=eval.VAR_UNLOCKED}
@@ -40,7 +50,7 @@ local function populate_list(l, lua_l, processed)
   processed[lua_l] = l
   for i = 1, #lua_l do
     local item_tv = ffi.gc(lua2typvalt(lua_l[i], processed), nil)
-    local item_li = eval.tv_list_item_alloc()
+    local item_li = tv_list_item_alloc()
     item_li.li_tv = item_tv
     eval.tv_list_append(l, item_li)
   end
@@ -89,10 +99,6 @@ local function populate_partial(pt, lua_pt, processed)
   pt.pt_argv = argv
   pt.pt_dict = dict
   return pt
-end
-
-local ptr2key = function(ptr)
-  return tostring(ptr)
 end
 
 local lst2tbl
@@ -306,7 +312,7 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = populate_list(eval.tv_list_alloc(), l, processed)
+    local lst = populate_list(eval.tv_list_alloc(#l), l, processed)
     return typvalt(eval.VAR_LIST, {v_list=lst})
   end,
   [dict_type] = function(l, processed)
@@ -427,7 +433,8 @@ local function int(n)
 end
 
 local function list(...)
-  return populate_list(ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref),
+  return populate_list(ffi.gc(eval.tv_list_alloc(select('#', ...)),
+                              eval.tv_list_unref),
                        {...}, {})
 end
 
@@ -536,6 +543,7 @@ return {
   typvalt=typvalt,
 
   li_alloc=li_alloc,
+  tv_list_item_free=tv_list_item_free,
 
   dict_iter=dict_iter,
   list_iter=list_iter,

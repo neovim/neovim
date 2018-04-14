@@ -26,13 +26,6 @@
 /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
 enum { NUMBUFLEN = 65 };
 
-// flags for vim_str2nr()
-#define STR2NR_BIN 1
-#define STR2NR_OCT 2
-#define STR2NR_HEX 4
-#define STR2NR_ALL (STR2NR_BIN + STR2NR_OCT + STR2NR_HEX)
-#define STR2NR_FORCE 8  // only when ONE of the above is used
-
 #define MAX_TYPENR 65535
 
 #define ROOT_UID 0
@@ -162,6 +155,7 @@ enum {
   EXPAND_USER_ADDR_TYPE,
   EXPAND_PACKADD,
   EXPAND_MESSAGES,
+  EXPAND_CHECKHEALTH,
 };
 
 
@@ -318,5 +312,9 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #if (defined(BSD) || defined(__FreeBSD_kernel__)) && defined(S_ISCHR)
 # define OPEN_CHR_FILES
 #endif
+
+// Replacement for nchar used by nv_replace().
+#define REPLACE_CR_NCHAR    -1
+#define REPLACE_NL_NCHAR    -2
 
 #endif  // NVIM_VIM_H

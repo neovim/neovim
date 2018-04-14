@@ -222,7 +222,7 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute_path(name);
+  bool no_path = !use_path || path_is_absolute(name);
 #ifndef WIN32
   // If the filename is "qualified" (relative or absolute) do not check $PATH.
   no_path |= (name[0] == '.'
@@ -244,7 +244,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 #endif
     if (ok) {
       if (abspath != NULL) {
-        *abspath = save_absolute_path(name);
+        *abspath = save_abs_path(name);
       }
       return true;
     }
@@ -357,7 +357,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #endif
     if (ok) {
       if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_absolute_path((char_u *)buf);
+        *abspath = save_abs_path((char_u *)buf);
       }
 
       rv = true;
@@ -485,7 +485,7 @@ ptrdiff_t os_read(const int fd, bool *const ret_eof, char *const ret_buf,
   while (read_bytes != size) {
     assert(size >= read_bytes);
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
-                                          size - read_bytes);
+                                          IO_COUNT(size - read_bytes));
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
     }
@@ -598,7 +598,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
   while (written_bytes != size) {
     assert(size >= written_bytes);
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
-                                              size - written_bytes);
+                                              IO_COUNT(size - written_bytes));
     if (cur_written_bytes > 0) {
       written_bytes += (size_t)cur_written_bytes;
     }
@@ -1026,7 +1026,7 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
 char *os_resolve_shortcut(const char *fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;

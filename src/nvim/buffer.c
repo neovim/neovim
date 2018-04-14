@@ -129,7 +129,7 @@ read_buffer(
   if (read_stdin) {
     // Set or reset 'modified' before executing autocommands, so that
     // it can be changed there.
-    if (!readonlymode && !bufempty()) {
+    if (!readonlymode && !BUFEMPTY()) {
       changed();
     } else if (retval != FAIL) {
       unchanged(curbuf, false);
@@ -1387,31 +1387,40 @@ void set_curbuf(buf_T *buf, int action)
   /* Don't restart Select mode after switching to another buffer. */
   VIsual_reselect = FALSE;
 
-  /* close_windows() or apply_autocmds() may change curbuf */
+  // close_windows() or apply_autocmds() may change curbuf and wipe out "buf"
   prevbuf = curbuf;
-  bufref_T bufref;
-  set_bufref(&bufref, prevbuf);
+  bufref_T newbufref;
+  bufref_T prevbufref;
+  set_bufref(&prevbufref, prevbuf);
+  set_bufref(&newbufref, buf);
 
+  // Autocommands may delete the curren buffer and/or the buffer we wan to go
+  // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
-      || (bufref_valid(&bufref) && !aborting())) {
+      || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
+          && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
     if (unload) {
       close_windows(prevbuf, false);
     }
-    if (bufref_valid(&bufref) && !aborting()) {
+    if (bufref_valid(&prevbufref) && !aborting()) {
       win_T  *previouswin = curwin;
-      if (prevbuf == curbuf)
-        u_sync(FALSE);
-      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL, prevbuf,
-          unload ? action : (action == DOBUF_GOTO
-                             && !P_HID(prevbuf)
-                             && !bufIsChanged(
-                                 prevbuf)) ? DOBUF_UNLOAD : 0, FALSE);
-      if (curwin != previouswin && win_valid(previouswin))
-        /* autocommands changed curwin, Grr! */
+      if (prevbuf == curbuf) {
+        u_sync(false);
+      }
+      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL,
+                   prevbuf,
+                   unload
+                   ? action
+                   : (action == DOBUF_GOTO && !buf_hide(prevbuf)
+                      && !bufIsChanged(prevbuf)) ? DOBUF_UNLOAD : 0,
+                   false);
+      if (curwin != previouswin && win_valid(previouswin)) {
+        // autocommands changed curwin, Grr!
         curwin = previouswin;
+      }
     }
   }
   /* An autocommand may have deleted "buf", already entered it (e.g., when
@@ -1616,7 +1625,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       && curbuf != NULL
       && curbuf->b_ffname == NULL
       && curbuf->b_nwindows <= 1
-      && (curbuf->b_ml.ml_mfp == NULL || bufempty())) {
+      && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())) {
     buf = curbuf;
     /* It's like this buffer is deleted.  Watch out for autocommands that
      * change curbuf!  If that happens, allocate a new buffer anyway. */
@@ -1775,6 +1784,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
   clear_string_option(&buf->b_p_keymap);
+  keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);
   clear_string_option(&buf->b_p_com);
   clear_string_option(&buf->b_p_cms);
@@ -1808,6 +1818,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
   clear_string_option(&buf->b_p_lw);
   clear_string_option(&buf->b_p_bkc);
+  clear_string_option(&buf->b_p_menc);
 }
 
 
@@ -1870,7 +1881,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
     if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
-        && !bufempty()) {
+        && !BUFEMPTY()) {
       if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
       } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
@@ -2672,7 +2683,7 @@ void buflist_altfpos(win_T *win)
 }
 
 /// Check that "ffname" is not the same file as current file.
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  ffname  full path name to check
 bool otherfile(char_u *ffname)
@@ -2682,7 +2693,7 @@ bool otherfile(char_u *ffname)
 }
 
 /// Check that "ffname" is not the same file as the file loaded in "buf".
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  buf            buffer to check
 /// @param  ffname         full path name to check
@@ -4406,12 +4417,12 @@ do_arg_all (
       }
       wp->w_arg_idx = i;
 
-      if (i == opened_len && !keep_tabs) {    /* close this window */
-        if (P_HID(buf) || forceit || buf->b_nwindows > 1
+      if (i == opened_len && !keep_tabs) {    // close this window
+        if (buf_hide(buf) || forceit || buf->b_nwindows > 1
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
            * try autowriting. */
-          if (!P_HID(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
+          if (!buf_hide(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
             bufref_T bufref;
             set_bufref(&bufref, buf);
             (void)autowrite(buf, false);
@@ -4426,7 +4437,7 @@ do_arg_all (
               && (first_tabpage->tp_next == NULL || !had_tab)) {
             use_firstwin = true;
           } else {
-            win_close(wp, !P_HID(buf) && !bufIsChanged(buf));
+            win_close(wp, !buf_hide(buf) && !bufIsChanged(buf));
             // check if autocommands removed the next window
             if (!win_valid(wpnext)) {
               // start all over...
@@ -4460,11 +4471,12 @@ do_arg_all (
   last_curwin = curwin;
   last_curtab = curtab;
   win_enter(lastwin, false);
-  /* ":drop all" should re-use an empty window to avoid "--remote-tab"
-   * leaving an empty tab page when executed locally. */
-  if (keep_tabs && bufempty() && curbuf->b_nwindows == 1
-      && curbuf->b_ffname == NULL && !curbuf->b_changed)
-    use_firstwin = TRUE;
+  // ":drop all" should re-use an empty window to avoid "--remote-tab"
+  // leaving an empty tab page when executed locally.
+  if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
+      && curbuf->b_ffname == NULL && !curbuf->b_changed) {
+    use_firstwin = true;
+  }
 
   for (i = 0; i < count && i < opened_len && !got_int; ++i) {
     if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1)
@@ -4503,14 +4515,15 @@ do_arg_all (
         new_curwin = curwin;
         new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL,
-          ECMD_ONE,
-          ((P_HID(curwin->w_buffer)
-            || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
-          + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
-        ++autocmd_no_leave;
-      use_firstwin = FALSE;
+      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
+                    ((buf_hide(curwin->w_buffer)
+                      || bufIsChanged(curwin->w_buffer))
+                     ? ECMD_HIDE : 0) + ECMD_OLDBUF,
+                    curwin);
+      if (use_firstwin) {
+        autocmd_no_leave++;
+      }
+      use_firstwin = false;
     }
     os_breakcheck();
 
@@ -4697,14 +4710,14 @@ void ex_buffer_all(exarg_T *eap)
    * Close superfluous windows.
    */
   for (wp = lastwin; open_wins > count; ) {
-    r = (P_HID(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, FALSE) == OK);
+    r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
+         || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
     } else if (r) {
-      win_close(wp, !P_HID(wp->w_buffer));
-      --open_wins;
+      win_close(wp, !buf_hide(wp->w_buffer));
+      open_wins--;
       wp = lastwin;
     } else {
       wp = wp->w_prev;

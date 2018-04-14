@@ -855,12 +855,13 @@ void ex_diffpatch(exarg_T *eap)
 {
   char_u *buf = NULL;
   win_T *old_curwin = curwin;
-  char_u *newname = NULL; // name of patched file buffer
+  char_u *newname = NULL;  // name of patched file buffer
+  char_u *esc_name = NULL;
 
 #ifdef UNIX
   char_u dirbuf[MAXPATHL];
   char_u *fullname = NULL;
-#endif  // ifdef UNIX
+#endif
   // We need two temp file names.
   // Name of original temp file.
   char_u *tmp_orig = vim_tempname();
@@ -880,21 +881,21 @@ void ex_diffpatch(exarg_T *eap)
 
 #ifdef UNIX
   // Get the absolute path of the patchfile, changing directory below.
-  fullname = (char_u *)FullName_save((char *)eap->arg, FALSE);
-#endif  // ifdef UNIX
+  fullname = (char_u *)FullName_save((char *)eap->arg, false);
+#endif
 
+  esc_name = vim_strsave_shellescape(
 #ifdef UNIX
-  size_t buflen = STRLEN(tmp_orig)
-      + (fullname != NULL ? STRLEN(fullname) : STRLEN(eap->arg))
-      + STRLEN(tmp_new) + 16;
-#else
-  size_t buflen = STRLEN(tmp_orig) + (STRLEN(eap->arg)) + STRLEN(tmp_new) + 16;
-#endif  // ifdef UNIX
-
+                                     fullname != NULL ? fullname :
+#endif
+                                     eap->arg, true, true);
+  if (esc_name == NULL) {
+    goto theend;
+  }
+  size_t buflen = STRLEN(tmp_orig) + STRLEN(esc_name) + STRLEN(tmp_new) + 16;
   buf = xmalloc(buflen);
 
 #ifdef UNIX
-
   // Temporarily chdir to /tmp, to avoid patching files in the current
   // directory when the patch file contains more than one patch.  When we
   // have our own temp dir use that instead, it will be cleaned up when we
@@ -911,26 +912,21 @@ void ex_diffpatch(exarg_T *eap)
     os_chdir(tempdir);
     shorten_fnames(TRUE);
   }
-#endif  // ifdef UNIX
+#endif
 
   if (*p_pex != NUL) {
     // Use 'patchexpr' to generate the new file.
 #ifdef UNIX
-    eval_patch((char *) tmp_orig,
-               (char *) (fullname != NULL ? fullname : eap->arg),
-               (char *) tmp_new);
+    eval_patch((char *)tmp_orig,
+               (char *)(fullname != NULL ? fullname : eap->arg),
+               (char *)tmp_new);
 #else
-    eval_patch((char *) tmp_orig, (char *) eap->arg, (char *) tmp_new);
-#endif  // ifdef UNIX
+    eval_patch((char *)tmp_orig, (char *)eap->arg, (char *)tmp_new);
+#endif
   } else {
     // Build the patch command and execute it. Ignore errors.
-#ifdef UNIX
-    vim_snprintf((char *)buf, buflen, "patch -o %s %s < \"%s\"",
-                 tmp_new, tmp_orig, fullname != NULL ? fullname : eap->arg);
-#else
-    vim_snprintf((char *)buf, buflen, "patch -o %s %s < \"%s\"",
-                 tmp_new, tmp_orig, eap->arg);
-#endif  // ifdef UNIX
+    vim_snprintf((char *)buf, buflen, "patch -o %s %s < %s",
+                 tmp_new, tmp_orig, esc_name);
     block_autocmds();  // Avoid ShellCmdPost stuff
     (void)call_shell(buf, kShellOptFilter, NULL);
     unblock_autocmds();
@@ -943,10 +939,7 @@ void ex_diffpatch(exarg_T *eap)
     }
     shorten_fnames(TRUE);
   }
-#endif  // ifdef UNIX
-
-  // patch probably has written over the screen
-  redraw_later(CLEAR);
+#endif
 
   // Delete any .orig or .rej file created.
   STRCPY(buf, tmp_new);
@@ -1012,7 +1005,8 @@ theend:
   xfree(buf);
 #ifdef UNIX
   xfree(fullname);
-#endif  // ifdef UNIX
+#endif
+  xfree(esc_name);
 }
 
 /// Split the window and edit another file, setting options to show the diffs.
@@ -1063,6 +1057,20 @@ void ex_diffthis(exarg_T *eap)
   // Set 'diff', 'scrollbind' on and 'wrap' off.
   diff_win_options(curwin, TRUE);
 }
+
+static void set_diff_option(win_T *wp, int value)
+{
+    win_T *old_curwin = curwin;
+
+    curwin = wp;
+    curbuf = curwin->w_buffer;
+    curbuf_lock++;
+    set_option_value("diff", (long)value, NULL, OPT_LOCAL);
+    curbuf_lock--;
+    curwin = old_curwin;
+    curbuf = curwin->w_buffer;
+}
+
 
 /// Set options in window "wp" for diff mode.
 ///
@@ -1121,10 +1129,10 @@ void diff_win_options(win_T *wp, int addbuf)
     do_cmdline_cmd("set sbo+=hor");
   }
 
-  // Saved the current values, to be restored in ex_diffoff().
-  wp->w_p_diff_saved = TRUE;
+  // Save the current values, to be restored in ex_diffoff().
+  wp->w_p_diff_saved = true;
 
-  wp->w_p_diff = true;
+  set_diff_option(wp, true);
 
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
@@ -1145,7 +1153,7 @@ void ex_diffoff(exarg_T *eap)
       // Set 'diff' off. If option values were saved in
       // diff_win_options(), restore the ones whose settings seem to have
       // been left over from diff mode.
-      wp->w_p_diff = false;
+      set_diff_option(wp, false);
 
       if (wp->w_p_diff_saved) {
         if (wp->w_p_scb) {
@@ -1161,7 +1169,9 @@ void ex_diffoff(exarg_T *eap)
         }
 
         free_string_option(wp->w_p_fdm);
-        wp->w_p_fdm = vim_strsave(wp->w_p_fdm_save);
+        wp->w_p_fdm = vim_strsave(*wp->w_p_fdm_save
+                                  ? wp->w_p_fdm_save
+                                  : (char_u *)"manual");
         if (wp->w_p_fdc == diff_foldcolumn) {
           wp->w_p_fdc = wp->w_p_fdc_save;
         }
@@ -2271,7 +2281,7 @@ void ex_diffgetput(exarg_T *eap)
         }
       }
 
-      buf_empty = bufempty();
+      buf_empty = BUFEMPTY();
       added = 0;
 
       for (i = 0; i < count; ++i) {

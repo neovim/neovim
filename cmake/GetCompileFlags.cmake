@@ -38,6 +38,7 @@ function(get_compile_flags _compile_flags)
   get_directory_property(include_directories_list
     DIRECTORY "src/nvim"
     INCLUDE_DIRECTORIES)
+  list(REMOVE_DUPLICATES include_directories_list)
   foreach(include_directory ${include_directories_list})
     set(include_directories "${include_directories} -I${include_directory}")
   endforeach()

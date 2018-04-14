@@ -249,14 +249,14 @@ argument.
 		for reading or writing a ShaDa file.  Can be used to find
 		out what is happening upon startup and exit.
 		Example: >
-			vim -V8 foobar
+			nvim -V8
 
 -V[N]{filename}
-		Like -V and set 'verbosefile' to {filename}.  The result is
-		that messages are not displayed but written to the file
-		{filename}.  {filename} must not start with a digit.
+		Like -V and set 'verbosefile' to {filename}.  Messages are not
+		displayed; instead they are written to the file {filename}.
+		{filename} must not start with a digit.
 		Example: >
-			vim -V20vimlog foobar
+			nvim -V20vimlog
 <
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first
@@ -355,6 +355,10 @@ argument.
                 instead.
 		See also |silent-mode|, which does start a (limited) UI.
 
+--listen {addr}						*--listen*
+		Start |RPC| server on pipe or TCP address {addr}. Sets the
+		primary listen address |v:servername| to {addr}. |serverstart()|
+
 ==============================================================================
 2. Initialization				*initialization* *startup*
 
@@ -439,15 +443,14 @@ accordingly.  Vim proceeds in this order:
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
 		:runtime! indent.vim
-<	This step is skipped if ":filetype ..." was called before now or if
-	the "-u NONE" command line argument was given.
+<	Skipped if ":filetype … off" was called or if the "-u NONE" command
+	line argument was given.
 
 5. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
-<	Note: This enables filetype detection even if ":filetype off" was
-	called before now.
-	This step is skipped if the "-u NONE" command line argument was given.
+<	Skipped if ":syntax off" was called or if the "-u NONE" command
+	line argument was given.
 
 6. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
@@ -1392,4 +1395,4 @@ RPC clients for debugging. $NVIM_LOG_FILE contains the log file path: >
 Usually the file is ~/.local/share/nvim/log unless that path is inaccessible
 or if $NVIM_LOG_FILE was set before |startup|.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

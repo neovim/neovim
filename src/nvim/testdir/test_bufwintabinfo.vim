@@ -1,7 +1,6 @@
 " Tests for the getbufinfo(), getwininfo() and gettabinfo() functions
 
 function Test_getbufwintabinfo()
-    1,$bwipeout
     edit Xtestfile1
     edit Xtestfile2
     let buflist = getbufinfo()

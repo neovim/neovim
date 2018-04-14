@@ -33,6 +33,10 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/os/process.h"
+#include "nvim/viml/parser/expressions.h"
+#include "nvim/viml/parser/parser.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -41,14 +45,15 @@
 #endif
 
 /// Executes an ex-command.
-/// On VimL error: Returns the VimL error; v:errmsg is not updated.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
 ///
 /// @param command  Ex-command string
-/// @param[out] err Error details (including actual VimL error), if any
+/// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  // Run the command
   try_start();
   do_cmdline_cmd(command.data);
   update_screen(VALID);
@@ -205,18 +210,51 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-String nvim_command_output(String str, Error *err)
+/// Executes an ex-command and returns its (non-error) output.
+/// Shell |:!| output is not captured.
+///
+/// On parse error: forwards the Vim error; does not update v:errmsg.
+/// On runtime error: forwards the Vim error; does not update v:errmsg.
+///
+/// @param command  Ex-command string
+/// @param[out] err Error details (Vim error), if any
+String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  do_cmdline_cmd("redir => v:command_output");
-  nvim_command(str, err);
-  do_cmdline_cmd("redir END");
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  ga_init(&capture_local, 1, 80);
+
+  try_start();
+  msg_silent++;
+  capture_ga = &capture_local;
+  do_cmdline_cmd(command.data);
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
 
   if (ERROR_SET(err)) {
-    return (String)STRING_INIT;
+    goto theend;
   }
 
-  return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
+  if (capture_local.ga_len > 1) {
+    String s = (String){
+      .data = capture_local.ga_data,
+      .size = (size_t)capture_local.ga_len,
+    };
+    // redir usually (except :echon) prepends a newline.
+    if (s.data[0] == '\n') {
+      memmove(s.data, s.data + 1, s.size);
+      s.data[s.size - 1] = '\0';
+      s.size = s.size - 1;
+    }
+    return s;  // Caller will free the memory.
+  }
+
+theend:
+  ga_clear(&capture_local);
+  return (String)STRING_INIT;
 }
 
 /// Evaluates a VimL expression (:help expression).
@@ -787,6 +825,10 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
+/// Returns a 2-tuple (Array), where item 0 is the current channel id and item
+/// 1 is the |api-metadata| map (Dictionary).
+///
+/// @returns 2-tuple [{channel-id}, {api-metadata}]
 Array nvim_get_api_info(uint64_t channel_id)
   FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
 {
@@ -889,6 +931,460 @@ theend:
   return rv;
 }
 
+typedef struct {
+  ExprASTNode **node_p;
+  Object *ret_node_p;
+} ExprASTConvStackItem;
+
+/// @cond DOXYGEN_NOT_A_FUNCTION
+typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
+/// @endcond
+
+/// Parse a VimL expression
+///
+/// @param[in]  expr  Expression to parse. Is always treated as a single line.
+/// @param[in]  flags  Flags:
+///
+///                    - "m" if multiple expressions in a row are allowed (only
+///                      the first one will be parsed),
+///                    - "E" if EOC tokens are not allowed (determines whether
+///                      they will stop parsing process or be recognized as an
+///                      operator/space, though also yielding an error).
+///                    - "l" when needing to start parsing with lvalues for
+///                      ":let" or ":for".
+///
+///                    Common flag sets:
+///                    - "m" to parse like for ":echo".
+///                    - "E" to parse like for "<C-r>=".
+///                    - empty string for ":call".
+///                    - "lm" to parse for ":let".
+/// @param[in]  highlight  If true, return value will also include "highlight"
+///                        key containing array of 4-tuples (arrays) (Integer,
+///                        Integer, Integer, String), where first three numbers
+///                        define the highlighted region and represent line,
+///                        starting column and ending column (latter exclusive:
+///                        one should highlight region [start_col, end_col)).
+///
+/// @return AST: top-level dictionary with these keys:
+///
+///         "error": Dictionary with error, present only if parser saw some
+///                  error. Contains the following keys:
+///
+///           "message": String, error message in printf format, translated.
+///                      Must contain exactly one "%.*s".
+///           "arg": String, error message argument.
+///
+///         "len": Amount of bytes successfully parsed. With flags equal to ""
+///                that should be equal to the length of expr string.
+///
+///                @note: “Sucessfully parsed” here means “participated in AST
+///                       creation”, not “till the first error”.
+///
+///         "ast": AST, either nil or a dictionary with these keys:
+///
+///           "type": node type, one of the value names from ExprASTNodeType
+///                   stringified without "kExprNode" prefix.
+///           "start": a pair [line, column] describing where node is “started”
+///                    where "line" is always 0 (will not be 0 if you will be
+///                    using nvim_parse_viml() on e.g. ":let", but that is not
+///                    present yet). Both elements are Integers.
+///           "len": “length” of the node. This and "start" are there for
+///                  debugging purposes primary (debugging parser and providing
+///                  debug information).
+///           "children": a list of nodes described in top/"ast". There always
+///                       is zero, one or two children, key will not be present
+///                       if node has no children. Maximum number of children
+///                       may be found in node_maxchildren array.
+///
+///           Local values (present only for certain nodes):
+///
+///           "scope": a single Integer, specifies scope for "Option" and
+///                    "PlainIdentifier" nodes. For "Option" it is one of
+///                    ExprOptScope values, for "PlainIdentifier" it is one of
+///                    ExprVarScope values.
+///           "ident": identifier (without scope, if any), present for "Option",
+///                    "PlainIdentifier", "PlainKey" and "Environment" nodes.
+///           "name": Integer, register name (one character) or -1. Only present
+///                   for "Register" nodes.
+///           "cmp_type": String, comparison type, one of the value names from
+///                       ExprComparisonType, stringified without "kExprCmp"
+///                       prefix. Only present for "Comparison" nodes.
+///           "ccs_strategy": String, case comparison strategy, one of the
+///                           value names from ExprCaseCompareStrategy,
+///                           stringified without "kCCStrategy" prefix. Only
+///                           present for "Comparison" nodes.
+///           "augmentation": String, augmentation type for "Assignment" nodes.
+///                           Is either an empty string, "Add", "Subtract" or
+///                           "Concat" for "=", "+=", "-=" or ".=" respectively.
+///           "invert": Boolean, true if result of comparison needs to be
+///                     inverted. Only present for "Comparison" nodes.
+///           "ivalue": Integer, integer value for "Integer" nodes.
+///           "fvalue": Float, floating-point value for "Float" nodes.
+///           "svalue": String, value for "SingleQuotedString" and
+///                     "DoubleQuotedString" nodes.
+Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
+                                 Error *err)
+  FUNC_API_SINCE(4) FUNC_API_ASYNC
+{
+  int pflags = 0;
+  for (size_t i = 0 ; i < flags.size ; i++) {
+    switch (flags.data[i]) {
+      case 'm': { pflags |= kExprFlagsMulti; break; }
+      case 'E': { pflags |= kExprFlagsDisallowEOC; break; }
+      case 'l': { pflags |= kExprFlagsParseLet; break; }
+      case NUL: {
+        api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
+                      (unsigned)flags.data[i]);
+        return (Dictionary)ARRAY_DICT_INIT;
+      }
+      default: {
+        api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
+                      flags.data[i], (unsigned)flags.data[i]);
+        return (Dictionary)ARRAY_DICT_INIT;
+      }
+    }
+  }
+  ParserLine plines[] = {
+    {
+      .data = expr.data,
+      .size = expr.size,
+      .allocated = false,
+    },
+    { NULL, 0, false },
+  };
+  ParserLine *plines_p = plines;
+  ParserHighlight colors;
+  kvi_init(colors);
+  ParserHighlight *const colors_p = (highlight ? &colors : NULL);
+  ParserState pstate;
+  viml_parser_init(
+      &pstate, parser_simple_get_line, &plines_p, colors_p);
+  ExprAST east = viml_pexpr_parse(&pstate, pflags);
+
+  const size_t ret_size = (
+      2  // "ast", "len"
+      + (size_t)(east.err.msg != NULL)  // "error"
+      + (size_t)highlight  // "highlight"
+      + 0);
+  Dictionary ret = {
+    .items = xmalloc(ret_size * sizeof(ret.items[0])),
+    .size = 0,
+    .capacity = ret_size,
+  };
+  ret.items[ret.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("ast"),
+    .value = NIL,
+  };
+  ret.items[ret.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("len"),
+    .value = INTEGER_OBJ((Integer)(pstate.pos.line == 1
+                                   ? plines[0].size
+                                   : pstate.pos.col)),
+  };
+  if (east.err.msg != NULL) {
+    Dictionary err_dict = {
+      .items = xmalloc(2 * sizeof(err_dict.items[0])),
+      .size = 2,
+      .capacity = 2,
+    };
+    err_dict.items[0] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("message"),
+      .value = STRING_OBJ(cstr_to_string(east.err.msg)),
+    };
+    if (east.err.arg == NULL) {
+      err_dict.items[1] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("arg"),
+        .value = STRING_OBJ(STRING_INIT),
+      };
+    } else {
+      err_dict.items[1] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("arg"),
+        .value = STRING_OBJ(((String) {
+          .data = xmemdupz(east.err.arg, (size_t)east.err.arg_len),
+          .size = (size_t)east.err.arg_len,
+        })),
+      };
+    }
+    ret.items[ret.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("error"),
+      .value = DICTIONARY_OBJ(err_dict),
+    };
+  }
+  if (highlight) {
+    Array hl = (Array) {
+      .items = xmalloc(kv_size(colors) * sizeof(hl.items[0])),
+      .capacity = kv_size(colors),
+      .size = kv_size(colors),
+    };
+    for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+      const ParserHighlightChunk chunk = kv_A(colors, i);
+      Array chunk_arr = (Array) {
+        .items = xmalloc(4 * sizeof(chunk_arr.items[0])),
+        .capacity = 4,
+        .size = 4,
+      };
+      chunk_arr.items[0] = INTEGER_OBJ((Integer)chunk.start.line);
+      chunk_arr.items[1] = INTEGER_OBJ((Integer)chunk.start.col);
+      chunk_arr.items[2] = INTEGER_OBJ((Integer)chunk.end_col);
+      chunk_arr.items[3] = STRING_OBJ(cstr_to_string(chunk.group));
+      hl.items[i] = ARRAY_OBJ(chunk_arr);
+    }
+    ret.items[ret.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("highlight"),
+      .value = ARRAY_OBJ(hl),
+    };
+  }
+  kvi_destroy(colors);
+
+  // Walk over the AST, freeing nodes in process.
+  ExprASTConvStack ast_conv_stack;
+  kvi_init(ast_conv_stack);
+  kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+    .node_p = &east.root,
+    .ret_node_p = &ret.items[0].value,
+  }));
+  while (kv_size(ast_conv_stack)) {
+    ExprASTConvStackItem cur_item = kv_last(ast_conv_stack);
+    ExprASTNode *const node = *cur_item.node_p;
+    if (node == NULL) {
+      assert(kv_size(ast_conv_stack) == 1);
+      kv_drop(ast_conv_stack, 1);
+    } else {
+      if (cur_item.ret_node_p->type == kObjectTypeNil) {
+        const size_t ret_node_items_size = (size_t)(
+            3  // "type", "start" and "len"
+            + (node->children != NULL)  // "children"
+            + (node->type == kExprNodeOption
+               || node->type == kExprNodePlainIdentifier)  // "scope"
+            + (node->type == kExprNodeOption
+               || node->type == kExprNodePlainIdentifier
+               || node->type == kExprNodePlainKey
+               || node->type == kExprNodeEnvironment)  // "ident"
+            + (node->type == kExprNodeRegister)  // "name"
+            + (3  // "cmp_type", "ccs_strategy", "invert"
+               * (node->type == kExprNodeComparison))
+            + (node->type == kExprNodeInteger)  // "ivalue"
+            + (node->type == kExprNodeFloat)  // "fvalue"
+            + (node->type == kExprNodeDoubleQuotedString
+               || node->type == kExprNodeSingleQuotedString)  // "svalue"
+            + (node->type == kExprNodeAssignment)  // "augmentation"
+            + 0);
+        Dictionary ret_node = {
+          .items = xmalloc(ret_node_items_size * sizeof(ret_node.items[0])),
+          .capacity = ret_node_items_size,
+          .size = 0,
+        };
+        *cur_item.ret_node_p = DICTIONARY_OBJ(ret_node);
+      }
+      Dictionary *ret_node = &cur_item.ret_node_p->data.dictionary;
+      if (node->children != NULL) {
+        const size_t num_children = 1 + (node->children->next != NULL);
+        Array children_array = {
+          .items = xmalloc(num_children * sizeof(children_array.items[0])),
+          .capacity = num_children,
+          .size = num_children,
+        };
+        for (size_t i = 0; i < num_children; i++) {
+          children_array.items[i] = NIL;
+        }
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("children"),
+          .value = ARRAY_OBJ(children_array),
+        };
+        kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+          .node_p = &node->children,
+          .ret_node_p = &children_array.items[0],
+        }));
+      } else if (node->next != NULL) {
+        kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+          .node_p = &node->next,
+          .ret_node_p = cur_item.ret_node_p + 1,
+        }));
+      } else if (node != NULL) {
+        kv_drop(ast_conv_stack, 1);
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("type"),
+          .value = STRING_OBJ(cstr_to_string(east_node_type_tab[node->type])),
+        };
+        Array start_array = {
+          .items = xmalloc(2 * sizeof(start_array.items[0])),
+          .capacity = 2,
+          .size = 2,
+        };
+        start_array.items[0] = INTEGER_OBJ((Integer)node->start.line);
+        start_array.items[1] = INTEGER_OBJ((Integer)node->start.col);
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("start"),
+          .value = ARRAY_OBJ(start_array),
+        };
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("len"),
+          .value = INTEGER_OBJ((Integer)node->len),
+        };
+        switch (node->type) {
+          case kExprNodeDoubleQuotedString:
+          case kExprNodeSingleQuotedString: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("svalue"),
+              .value = STRING_OBJ(((String) {
+                .data = node->data.str.value,
+                .size = node->data.str.size,
+              })),
+            };
+            break;
+          }
+          case kExprNodeOption: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("scope"),
+              .value = INTEGER_OBJ(node->data.opt.scope),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.opt.ident,
+                                 node->data.opt.ident_len),
+                .size = node->data.opt.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodePlainIdentifier: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("scope"),
+              .value = INTEGER_OBJ(node->data.var.scope),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.var.ident,
+                                 node->data.var.ident_len),
+                .size = node->data.var.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodePlainKey: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.var.ident,
+                                 node->data.var.ident_len),
+                .size = node->data.var.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodeEnvironment: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.env.ident,
+                                 node->data.env.ident_len),
+                .size = node->data.env.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodeRegister: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("name"),
+              .value = INTEGER_OBJ(node->data.reg.name),
+            };
+            break;
+          }
+          case kExprNodeComparison: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("cmp_type"),
+              .value = STRING_OBJ(cstr_to_string(
+                  eltkn_cmp_type_tab[node->data.cmp.type])),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
+              .value = STRING_OBJ(cstr_to_string(
+                  ccs_tab[node->data.cmp.ccs])),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("invert"),
+              .value = BOOLEAN_OBJ(node->data.cmp.inv),
+            };
+            break;
+          }
+          case kExprNodeFloat: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("fvalue"),
+              .value = FLOAT_OBJ(node->data.flt.value),
+            };
+            break;
+          }
+          case kExprNodeInteger: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ivalue"),
+              .value = INTEGER_OBJ((Integer)(
+                  node->data.num.value > API_INTEGER_MAX
+                  ? API_INTEGER_MAX
+                  : (Integer)node->data.num.value)),
+            };
+            break;
+          }
+          case kExprNodeAssignment: {
+            const ExprAssignmentType asgn_type = node->data.ass.type;
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("augmentation"),
+              .value = STRING_OBJ(
+                  asgn_type == kExprAsgnPlain
+                  ? (String)STRING_INIT
+                  : cstr_to_string(expr_asgn_type_tab[asgn_type])),
+            };
+            break;
+          }
+          case kExprNodeMissing:
+          case kExprNodeOpMissing:
+          case kExprNodeTernary:
+          case kExprNodeTernaryValue:
+          case kExprNodeSubscript:
+          case kExprNodeListLiteral:
+          case kExprNodeUnaryPlus:
+          case kExprNodeBinaryPlus:
+          case kExprNodeNested:
+          case kExprNodeCall:
+          case kExprNodeComplexIdentifier:
+          case kExprNodeUnknownFigure:
+          case kExprNodeLambda:
+          case kExprNodeDictLiteral:
+          case kExprNodeCurlyBracesIdentifier:
+          case kExprNodeComma:
+          case kExprNodeColon:
+          case kExprNodeArrow:
+          case kExprNodeConcat:
+          case kExprNodeConcatOrSubscript:
+          case kExprNodeOr:
+          case kExprNodeAnd:
+          case kExprNodeUnaryMinus:
+          case kExprNodeBinaryMinus:
+          case kExprNodeNot:
+          case kExprNodeMultiplication:
+          case kExprNodeDivision:
+          case kExprNodeMod: {
+            break;
+          }
+        }
+        assert(cur_item.ret_node_p->data.dictionary.size
+               == cur_item.ret_node_p->data.dictionary.capacity);
+        xfree(*cur_item.node_p);
+        *cur_item.node_p = NULL;
+      }
+    }
+  }
+  kvi_destroy(ast_conv_stack);
+
+  assert(ret.size == ret.capacity);
+  // Should be a no-op actually, leaving it in case non-nodes will need to be
+  // freed later.
+  viml_pexpr_free_ast(east);
+  viml_parser_destroy(&pstate);
+  return ret;
+}
+
 
 /// Writes a message to vim output or error buffer. The string is split
 /// and flushed after each newline. Incomplete lines are kept for writing
@@ -975,4 +1471,96 @@ Dictionary nvim__id_dictionary(Dictionary dct)
 Float nvim__id_float(Float flt)
 {
   return flt;
+}
+
+/// Gets a list of dictionaries representing attached UIs.
+///
+/// @return Array of UI dictionaries
+Array nvim_list_uis(void)
+  FUNC_API_SINCE(4)
+{
+  return ui_array();
+}
+
+/// Gets the immediate children of process `pid`.
+///
+/// @return Array of child process ids, empty if process not found.
+Array nvim_get_proc_children(Integer pid, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Array rvobj = ARRAY_DICT_INIT;
+  int *proc_list = NULL;
+
+  if (pid <= 0 || pid > INT_MAX) {
+    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+    goto end;
+  }
+
+  size_t proc_count;
+  int rv = os_proc_children((int)pid, &proc_list, &proc_count);
+  if (rv != 0) {
+    // syscall failed (possibly because of kernel options), try shelling out.
+    DLOG("fallback to vim._os_proc_children()");
+    Array a = ARRAY_DICT_INIT;
+    ADD(a, INTEGER_OBJ(pid));
+    String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
+    Object o = nvim_execute_lua(s, a, err);
+    api_free_string(s);
+    api_free_array(a);
+    if (o.type == kObjectTypeArray) {
+      rvobj = o.data.array;
+    } else if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get process children. pid=%" PRId64 " error=%d",
+                    pid, rv);
+    }
+    goto end;
+  }
+
+  for (size_t i = 0; i < proc_count; i++) {
+    ADD(rvobj, INTEGER_OBJ(proc_list[i]));
+  }
+
+end:
+  xfree(proc_list);
+  return rvobj;
+}
+
+/// Gets info describing process `pid`.
+///
+/// @return Map of process properties, or NIL if process not found.
+Object nvim_get_proc(Integer pid, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Object rvobj = OBJECT_INIT;
+  rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
+  rvobj.type = kObjectTypeDictionary;
+
+  if (pid <= 0 || pid > INT_MAX) {
+    api_set_error(err, kErrorTypeException, "Invalid pid: %" PRId64, pid);
+    return NIL;
+  }
+#ifdef WIN32
+  rvobj.data.dictionary = os_proc_info((int)pid);
+  if (rvobj.data.dictionary.size == 0) {  // Process not found.
+    return NIL;
+  }
+#else
+  // Cross-platform process info APIs are miserable, so use `ps` instead.
+  Array a = ARRAY_DICT_INIT;
+  ADD(a, INTEGER_OBJ(pid));
+  String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
+  Object o = nvim_execute_lua(s, a, err);
+  api_free_string(s);
+  api_free_array(a);
+  if (o.type == kObjectTypeArray && o.data.array.size == 0) {
+    return NIL;  // Process not found.
+  } else if (o.type == kObjectTypeDictionary) {
+    rvobj.data.dictionary = o.data.dictionary;
+  } else if (!ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to get process info. pid=%" PRId64, pid);
+  }
+#endif
+  return rvobj;
 }

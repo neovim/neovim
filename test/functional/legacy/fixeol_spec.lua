@@ -4,15 +4,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
-if helpers.pending_win32(pending) then return end
-
 describe('fixeol', function()
   local function rmtestfiles()
-    os.remove('test.out')
-    os.remove('XXEol')
-    os.remove('XXNoEol')
-    os.remove('XXTestEol')
-    os.remove('XXTestNoEol')
+    feed_command('%bwipeout!')
+    feed_command('call delete("test.out")')
+    feed_command('call delete("XXEol")')
+    feed_command('call delete("XXNoEol")')
+    feed_command('call delete("XXTestEol")')
+    feed_command('call delete("XXTestNoEol")')
   end
   setup(function()
     clear()

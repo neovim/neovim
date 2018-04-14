@@ -43,7 +43,7 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
 
 if(UNIX)
   BuildLibuv(
-    CONFIGURE_COMMAND ${UNIX_CFGCMD}
+    CONFIGURE_COMMAND ${UNIX_CFGCMD} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
@@ -70,24 +70,19 @@ elseif(MINGW)
 
 elseif(WIN32 AND MSVC)
 
-  find_package(PythonInterp 2.6 REQUIRED)
-  if(NOT PYTHONINTERP_FOUND OR PYTHON_VERSION_MAJOR GREATER 2)
-    message(FATAL_ERROR "Python2 is required to build libuv on windows, use -DPYTHON_EXECUTABLE to set a python interpreter")
-  endif()
-
-  include(TargetArch)
-  if("${TARGET_ARCH}" STREQUAL "X86_64")
-    set(TARGET_ARCH x64)
-  elseif(TARGET_ARCH STREQUAL "X86")
-    set(TARGET_ARCH x86)
-  endif()
-  string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_BUILD_TYPE)
   set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
-  BuildLibUv(
-    BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat shared ${LOWERCASE_BUILD_TYPE} ${TARGET_ARCH}
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib
+  BuildLibUv(BUILD_IN_SOURCE
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibuvCMakeLists.txt
+        ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+      COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DBUILD_SHARED_LIBS=ON
+        -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
       # Some applications (lua-client/luarocks) look for uv.lib instead of libuv.lib
       COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib/uv.lib
       COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/

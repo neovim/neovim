@@ -570,4 +570,42 @@ func Test_completion_clear_candidate_list()
 endfunc
 
 
+func Test_popup_and_preview_autocommand()
+  " This used to crash Vim
+  if !has('python')
+    return
+  endif
+  let h = winheight(0)
+  if h < 15
+    return
+  endif
+  new
+  augroup MyBufAdd
+    au!
+    au BufAdd * nested tab sball
+  augroup END
+  set omnifunc=pythoncomplete#Complete
+  call setline(1, 'import os')
+  " make the line long
+  call setline(2, '                                 os.')
+  $
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<enter>\<esc>", 'tx')
+  call assert_equal("import os", getline(1))
+  call assert_match('                                 os.\(EX_IOERR\|O_CREAT\)$', getline(2))
+  call assert_equal(1, winnr('$'))
+  " previewwindow option is not set
+  call assert_equal(0, &previewwindow)
+  norm! gt
+  call assert_equal(0, &previewwindow)
+  norm! gT
+  call assert_equal(12, tabpagenr('$'))
+  tabonly
+  pclose
+  augroup MyBufAdd
+    au!
+  augroup END
+  augroup! MyBufAdd
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

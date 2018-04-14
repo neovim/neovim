@@ -95,7 +95,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
   buf->base = rbuffer_write_ptr(stream->buffer, &write_count);
-  buf->len = write_count;
+  buf->len = UV_BUF_LEN(write_count);
 }
 
 // Callback invoked by libuv after it copies the data into the buffer provided
@@ -146,7 +146,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
   stream->uvbuf.base = rbuffer_write_ptr(stream->buffer, &write_count);
-  stream->uvbuf.len = write_count;
+  stream->uvbuf.len = UV_BUF_LEN(write_count);
 
   // the offset argument to uv_fs_read is int64_t, could someone really try
   // to read more than 9 quintillion (9e18) bytes?

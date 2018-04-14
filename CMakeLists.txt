@@ -12,7 +12,11 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(PreventInTreeBuilds)
 
 # Prefer our bundled versions of dependencies.
+if(DEFINED ENV{DEPS_BUILD_DIR})
+set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+else()
 set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+endif()
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
   list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
@@ -63,14 +67,14 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 2)
-set(NVIM_VERSION_PATCH 3)
+set(NVIM_VERSION_MINOR 3)
+set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 3)         # Bump this after any API change.
+set(NVIM_API_LEVEL 4)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE false)
+set(NVIM_API_PRERELEASE true)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
@@ -204,6 +208,7 @@ int main(void)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
@@ -223,6 +228,9 @@ endif()
 if(MINGW)
   # Use POSIX compatible stdio in Mingw
   add_definitions(-D__USE_MINGW_ANSI_STDIO)
+endif()
+if(WIN32)
+  # Windows Vista is the minimum supported version
   add_definitions(-D_WIN32_WINNT=0x0600)
 endif()
 
@@ -250,13 +258,14 @@ if(HAS_DIAG_COLOR_FLAG)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.5")
-    # Array-bounds testing is broken in some GCC versions before 4.8.5.
-    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
-    check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
-    if(HAS_NO_ARRAY_BOUNDS_FLAG)
-      add_definitions(-Wno-array-bounds)
-    endif()
+  # 1. Array-bounds testing is broken in some GCC versions before 4.8.5.
+  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
+  # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
+  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66099
+  # So we must disable -Warray-bounds globally for GCC (for kbtree.h, #7083).
+  check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
+  if(HAS_NO_ARRAY_BOUNDS_FLAG)
+    add_definitions(-Wno-array-bounds)
   endif()
 endif()
 
@@ -276,6 +285,8 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 else()
   set(DEBUG 0)
 endif()
+
+option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
 
@@ -505,17 +516,6 @@ if(BUSTED_PRG)
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
 
-  # Set policy CMP0026 to OLD so we avoid CMake warnings on newer
-  # versions of cmake.
-  if(POLICY CMP0026)
-    cmake_policy(SET CMP0026 OLD)
-  endif()
-  if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
-  else()
-    get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
-  endif()
-
   # When running tests from 'ninja' we need to use the
   # console pool: to do so we need to use the USES_TERMINAL
   # option, but this is only available in CMake 3.2
@@ -523,10 +523,6 @@ if(BUSTED_PRG)
   if(NOT (${CMAKE_VERSION} VERSION_LESS 3.2.0))
     list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
   endif()
-
-  configure_file(
-    test/config/paths.lua.in
-    ${CMAKE_BINARY_DIR}/test/config/paths.lua)
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test)
@@ -562,6 +558,32 @@ if(BUSTED_PRG)
       ${TEST_TARGET_ARGS})
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
+  endif()
+
+  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
+    else()
+      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+    endif()
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  else()
+    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
+    # use configure_file() to add the generator expression and then generate
+    # the final file
+    if(LUA_HAS_FFI)
+      set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
+    else()
+      set(TEST_LIBNVIM_PATH "")
+    endif()
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+    file(GENERATE
+      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
+      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
   endif()
 
   add_custom_target(functionaltest

@@ -133,7 +133,6 @@ struct dbg_stuff {
   char_u      *vv_throwpoint;
   int did_emsg;
   int got_int;
-  int did_throw;
   int need_rethrow;
   int check_cstack;
   except_T    *current_exception;
@@ -165,12 +164,11 @@ static void save_dbg_stuff(struct dbg_stuff *dsp)
   dsp->vv_exception   = v_exception(NULL);
   dsp->vv_throwpoint  = v_throwpoint(NULL);
 
-  /* Necessary for debugging an inactive ":catch", ":finally", ":endtry" */
-  dsp->did_emsg       = did_emsg;             did_emsg     = FALSE;
-  dsp->got_int        = got_int;              got_int      = FALSE;
-  dsp->did_throw      = did_throw;            did_throw    = FALSE;
-  dsp->need_rethrow   = need_rethrow;         need_rethrow = FALSE;
-  dsp->check_cstack   = check_cstack;         check_cstack = FALSE;
+  // Necessary for debugging an inactive ":catch", ":finally", ":endtry".
+  dsp->did_emsg       = did_emsg;             did_emsg     = false;
+  dsp->got_int        = got_int;              got_int      = false;
+  dsp->need_rethrow   = need_rethrow;         need_rethrow = false;
+  dsp->check_cstack   = check_cstack;         check_cstack = false;
   dsp->current_exception = current_exception; current_exception = NULL;
 }
 
@@ -184,7 +182,6 @@ static void restore_dbg_stuff(struct dbg_stuff *dsp)
   (void)v_throwpoint(dsp->vv_throwpoint);
   did_emsg = dsp->did_emsg;
   got_int = dsp->got_int;
-  did_throw = dsp->did_throw;
   need_rethrow = dsp->need_rethrow;
   check_cstack = dsp->check_cstack;
   current_exception = dsp->current_exception;
@@ -400,16 +397,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 
   initial_trylevel = trylevel;
 
-  /*
-   * "did_throw" will be set to TRUE when an exception is being thrown.
-   */
-  did_throw = FALSE;
-  /*
-   * "did_emsg" will be set to TRUE when emsg() is used, in which case we
-   * cancel the whole command line, and any if/endif or loop.
-   * If force_abort is set, we cancel everything.
-   */
-  did_emsg = FALSE;
+  current_exception = NULL;
+  // "did_emsg" will be set to TRUE when emsg() is used, in which case we
+  // cancel the whole command line, and any if/endif or loop.
+  // If force_abort is set, we cancel everything.
+  did_emsg = false;
 
   /*
    * KeyTyped is only set when calling vgetc().  Reset it here when not
@@ -659,7 +651,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
          * not to use a cs_line[] from an entry that isn't a ":while"
          * or ":for": It would make "current_line" invalid and can
          * cause a crash. */
-        if (!did_emsg && !got_int && !did_throw
+        if (!did_emsg && !got_int && !current_exception
             && cstack.cs_idx >= 0
             && (cstack.cs_flags[cstack.cs_idx]
                 & (CSF_WHILE | CSF_FOR))
@@ -707,7 +699,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     }
 
     /*
-     * A ":finally" makes did_emsg, got_int, and did_throw pending for
+     * A ":finally" makes did_emsg, got_int and current_exception pending for
      * being restored at the ":endtry".  Reset them here and set the
      * ACTIVE and FINALLY flags, so that the finally clause gets executed.
      * This includes the case where a missing ":endif", ":endwhile" or
@@ -715,10 +707,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      */
     if (cstack.cs_lflags & CSL_HAD_FINA) {
       cstack.cs_lflags &= ~CSL_HAD_FINA;
-      report_make_pending(cstack.cs_pending[cstack.cs_idx]
-          & (CSTP_ERROR | CSTP_INTERRUPT | CSTP_THROW),
-          did_throw ? (void *)current_exception : NULL);
-      did_emsg = got_int = did_throw = FALSE;
+      report_make_pending((cstack.cs_pending[cstack.cs_idx]
+                           & (CSTP_ERROR | CSTP_INTERRUPT | CSTP_THROW)),
+                          current_exception);
+      did_emsg = got_int = false;
+      current_exception = NULL;
       cstack.cs_flags[cstack.cs_idx] |= CSF_ACTIVE | CSF_FINALLY;
     }
 
@@ -726,15 +719,14 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      * within this loop. */
     trylevel = initial_trylevel + cstack.cs_trylevel;
 
-    /*
-     * If the outermost try conditional (across function calls and sourced
-     * files) is aborted because of an error, an interrupt, or an uncaught
-     * exception, cancel everything.  If it is left normally, reset
-     * force_abort to get the non-EH compatible abortion behavior for
-     * the rest of the script.
-     */
-    if (trylevel == 0 && !did_emsg && !got_int && !did_throw)
-      force_abort = FALSE;
+    // If the outermost try conditional (across function calls and sourced
+    // files) is aborted because of an error, an interrupt, or an uncaught
+    // exception, cancel everything.  If it is left normally, reset
+    // force_abort to get the non-EH compatible abortion behavior for
+    // the rest of the script.
+    if (trylevel == 0 && !did_emsg && !got_int && !current_exception) {
+      force_abort = false;
+    }
 
     /* Convert an interrupt to an exception if appropriate. */
     (void)do_intthrow(&cstack);
@@ -749,11 +741,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
    * - there is a command after '|', inside a :if, :while, :for or :try, or
    *   looping for ":source" command or function call.
    */
-  while (!((got_int
-            || (did_emsg && force_abort) || did_throw
-            )
-           && cstack.cs_trylevel == 0
-           )
+  while (!((got_int || (did_emsg && force_abort) || current_exception)
+           && cstack.cs_trylevel == 0)
          && !(did_emsg
               /* Keep going when inside try/catch, so that the error can be
                * deal with, except when it is a syntax error, it may cause
@@ -775,7 +764,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
      * If a sourced file or executed function ran to its end, report the
      * unclosed conditional.
      */
-    if (!got_int && !did_throw
+    if (!got_int && !current_exception
         && ((getline_equal(fgetline, cookie, getsourceline)
              && !source_finished(fgetline, cookie))
             || (getline_equal(fgetline, cookie, get_func_line)
@@ -815,17 +804,16 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       ? (char_u *)"endfunction" : (char_u *)NULL);
 
   if (trylevel == 0) {
-    /*
-     * When an exception is being thrown out of the outermost try
-     * conditional, discard the uncaught exception, disable the conversion
-     * of interrupts or errors to exceptions, and ensure that no more
-     * commands are executed.
-     */
-    if (did_throw) {
-      void        *p = NULL;
-      char_u      *saved_sourcing_name;
+    // When an exception is being thrown out of the outermost try
+    // conditional, discard the uncaught exception, disable the conversion
+    // of interrupts or errors to exceptions, and ensure that no more
+    // commands are executed.
+    if (current_exception) {
+      void *p = NULL;
+      char_u *saved_sourcing_name;
       int saved_sourcing_lnum;
-      struct msglist      *messages = NULL, *next;
+      struct msglist *messages = NULL;
+      struct msglist *next;
 
       /*
        * If the uncaught exception is a user exception, report it as an
@@ -885,22 +873,22 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       suppress_errthrow = TRUE;
   }
 
-  /*
-   * The current cstack will be freed when do_cmdline() returns.  An uncaught
-   * exception will have to be rethrown in the previous cstack.  If a function
-   * has just returned or a script file was just finished and the previous
-   * cstack belongs to the same function or, respectively, script file, it
-   * will have to be checked for finally clauses to be executed due to the
-   * ":return" or ":finish".  This is done in do_one_cmd().
-   */
-  if (did_throw)
-    need_rethrow = TRUE;
+  // The current cstack will be freed when do_cmdline() returns.  An uncaught
+  // exception will have to be rethrown in the previous cstack.  If a function
+  // has just returned or a script file was just finished and the previous
+  // cstack belongs to the same function or, respectively, script file, it
+  // will have to be checked for finally clauses to be executed due to the
+  // ":return" or ":finish".  This is done in do_one_cmd().
+  if (current_exception) {
+    need_rethrow = true;
+  }
   if ((getline_equal(fgetline, cookie, getsourceline)
        && ex_nesting_level > source_level(real_cookie))
       || (getline_equal(fgetline, cookie, get_func_line)
           && ex_nesting_level > func_level(real_cookie) + 1)) {
-    if (!did_throw)
-      check_cstack = TRUE;
+    if (!current_exception) {
+      check_cstack = true;
+    }
   } else {
     /* When leaving a function, reduce nesting level. */
     if (getline_equal(fgetline, cookie, get_func_line))
@@ -1480,10 +1468,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
   char_u *after_modifier = ea.cmd;
 
-  ea.skip = did_emsg || got_int || did_throw || (cstack->cs_idx >= 0
-                                                 && !(cstack->cs_flags[cstack->
-                                                                       cs_idx]
-                                                      & CSF_ACTIVE));
+  ea.skip = (did_emsg
+             || got_int
+             || current_exception
+             || (cstack->cs_idx >= 0
+                 && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
 
   /* Count this line for profiling if ea.skip is FALSE. */
   if (do_profiling == PROF_YES && !ea.skip) {
@@ -1782,13 +1771,14 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ));
 
 
-  /* forced commands */
+  // Forced commands.
   if (*p == '!' && ea.cmdidx != CMD_substitute
       && ea.cmdidx != CMD_smagic && ea.cmdidx != CMD_snomagic) {
-    ++p;
-    ea.forceit = TRUE;
-  } else
-    ea.forceit = FALSE;
+    p++;
+    ea.forceit = true;
+  } else {
+    ea.forceit = false;
+  }
 
   /*
    * 6. Parse arguments.
@@ -3442,6 +3432,10 @@ const char * set_one_cmd_context(
   case CMD_profile:
     set_context_in_profile_cmd(xp, arg);
     break;
+  case CMD_checkhealth:
+    xp->xp_context = EXPAND_CHECKHEALTH;
+    xp->xp_pattern = (char_u *)arg;
+    break;
   case CMD_behave:
     xp->xp_context = EXPAND_BEHAVE;
     xp->xp_pattern = (char_u *)arg;
@@ -4871,6 +4865,7 @@ static struct {
   { EXPAND_AUGROUP, "augroup" },
   { EXPAND_BEHAVE, "behave" },
   { EXPAND_BUFFERS, "buffer" },
+  { EXPAND_CHECKHEALTH, "checkhealth" },
   { EXPAND_COLORS, "color" },
   { EXPAND_COMMANDS, "command" },
   { EXPAND_COMPILER, "compiler" },
@@ -5925,9 +5920,10 @@ static void ex_colorscheme(exarg_T *eap)
 
 static void ex_highlight(exarg_T *eap)
 {
-  if (*eap->arg == NUL && eap->cmd[2] == '!')
+  if (*eap->arg == NUL && eap->cmd[2] == '!') {
     MSG(_("Greetings, Vim user!"));
-  do_highlight(eap->arg, eap->forceit, FALSE);
+  }
+  do_highlight((const char *)eap->arg, eap->forceit, false);
 }
 
 
@@ -5968,22 +5964,24 @@ static void ex_quit(exarg_T *eap)
     wp = curwin;
   }
 
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked.
+  if (curbuf_locked()) {
+    return;
+  }
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
   // Refuse to quit when locked or when the buffer in the last window is
   // being closed (can only happen in autocommands).
-  if (curbuf_locked()
+  if (!win_valid(wp)
       || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
     return;
   }
 
-
-  /*
-   * If there are more files or windows we won't exit.
-   */
-  if (check_more(FALSE, eap->forceit) == OK && only_one_window())
-    exiting = TRUE;
-  if ((!P_HID(curbuf)
-       && check_changed(curbuf, (p_awa ? CCGD_AW : 0)
+  // If there are more files or windows we won't exit.
+  if (check_more(false, eap->forceit) == OK && only_one_window()) {
+    exiting = true;
+  }
+  if ((!buf_hide(wp->w_buffer)
+       && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD))
       || check_more(true, eap->forceit) == FAIL
@@ -5999,8 +5997,8 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
-    /* close window; may free buffer */
-    win_close(wp, !P_HID(wp->w_buffer) || eap->forceit);
+    // close window; may free buffer
+    win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
 }
 
@@ -6099,7 +6097,7 @@ ex_win_close (
   buf_T       *buf = win->w_buffer;
 
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
-  if (need_hide && !P_HID(buf) && !forceit) {
+  if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
@@ -6115,11 +6113,12 @@ ex_win_close (
   }
 
 
-  /* free buffer when not hiding it or when it's a scratch buffer */
-  if (tp == NULL)
-    win_close(win, !need_hide && !P_HID(buf));
-  else
-    win_close_othertab(win, !need_hide && !P_HID(buf), tp);
+  // free buffer when not hiding it or when it's a scratch buffer
+  if (tp == NULL) {
+    win_close(win, !need_hide && !buf_hide(buf));
+  } else {
+    win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
+  }
 }
 
 /*
@@ -6229,7 +6228,6 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp)
       break;
   }
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
 
   redraw_tabline = TRUE;
   if (h != tabline_height())
@@ -6351,7 +6349,7 @@ static void ex_exit(exarg_T *eap)
       getout(0);
     }
     // Quit current window, may free the buffer.
-    win_close(curwin, !P_HID(curwin->w_buffer));
+    win_close(curwin, !buf_hide(curwin->w_buffer));
   }
 }
 
@@ -6921,24 +6919,23 @@ do_exedit (
                                        empty buffer */
     setpcmark();
     if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
-            NULL, eap,
-            eap->do_ecmd_lnum,
-            (P_HID(curbuf) ? ECMD_HIDE : 0)
-            + (eap->forceit ? ECMD_FORCEIT : 0)
-            // After a split we can use an existing buffer.
-            + (old_curwin != NULL ? ECMD_OLDBUF : 0)
-            + (eap->cmdidx == CMD_badd ? ECMD_ADDBUF : 0 )
-            , old_curwin == NULL ? curwin : NULL) == FAIL) {
-      /* Editing the file failed.  If the window was split, close it. */
+                NULL, eap, eap->do_ecmd_lnum,
+                (buf_hide(curbuf) ? ECMD_HIDE : 0)
+                + (eap->forceit ? ECMD_FORCEIT : 0)
+                // After a split we can use an existing buffer.
+                + (old_curwin != NULL ? ECMD_OLDBUF : 0)
+                + (eap->cmdidx == CMD_badd ? ECMD_ADDBUF : 0)
+                , old_curwin == NULL ? curwin : NULL) == FAIL) {
+      // Editing the file failed.  If the window was split, close it.
       if (old_curwin != NULL) {
         need_hide = (curbufIsChanged() && curbuf->b_nwindows <= 1);
-        if (!need_hide || P_HID(curbuf)) {
+        if (!need_hide || buf_hide(curbuf)) {
           cleanup_T cs;
 
           /* Reset the error/interrupt/exception state here so that
            * aborting() returns FALSE when closing a window. */
           enter_cleanup(&cs);
-          win_close(curwin, !need_hide && !P_HID(curbuf));
+          win_close(curwin, !need_hide && !buf_hide(curbuf));
 
           /* Restore the error/interrupt/exception state if not
            * discarded by a new aborting error, interrupt, or
@@ -6978,12 +6975,10 @@ do_exedit (
   ex_no_reprint = TRUE;
 }
 
-/*
- * ":gui" and ":gvim" when there is no GUI.
- */
+/// ":gui" and ":gvim" when there is no GUI.
 static void ex_nogui(exarg_T *eap)
 {
-  eap->errmsg = e_nogvim;
+  eap->errmsg = (char_u *)N_("E25: Nvim does not have a built-in GUI");
 }
 
 
@@ -8149,6 +8144,10 @@ static void ex_startinsert(exarg_T *eap)
       restart_edit = 'i';
     curwin->w_curswant = 0;         /* avoid MAXCOL */
   }
+
+  if (VIsual_active) {
+    showmode();
+  }
 }
 
 /*
@@ -8539,22 +8538,22 @@ eval_vars (
       resultbuf = result;                   /* remember allocated string */
       break;
 
-    case SPEC_AFILE:            /* file name for autocommand */
-      result = autocmd_fname;
-      if (result != NULL && !autocmd_fname_full) {
-        /* Still need to turn the fname into a full path.  It is
-         * postponed to avoid a delay when <afile> is not used. */
-        autocmd_fname_full = TRUE;
-        result = (char_u *)FullName_save((char *)autocmd_fname, FALSE);
-        xfree(autocmd_fname);
-        autocmd_fname = result;
+    case SPEC_AFILE:  // file name for autocommand
+      if (autocmd_fname != NULL && !path_is_absolute(autocmd_fname)) {
+        // Still need to turn the fname into a full path.  It was
+        // postponed to avoid a delay when <afile> is not used.
+        result = (char_u *)FullName_save((char *)autocmd_fname, false);
+        // Copy into `autocmd_fname`, don't reassign it. #8165
+        xstrlcpy((char *)autocmd_fname, (char *)result, MAXPATHL);
+        xfree(result);
       }
+      result = autocmd_fname;
       if (result == NULL) {
         *errormsg = (char_u *)_(
             "E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
       }
-      result = path_shorten_fname_if_possible(result);
+      result = path_try_shorten_fname(result);
       break;
 
     case SPEC_ABUF:             /* buffer number for autocommand */
@@ -9718,29 +9717,37 @@ static void ex_filetype(exarg_T *eap)
     EMSG2(_(e_invarg2), arg);
 }
 
-/// Do ":filetype plugin indent on" if user did not already do some
-/// permutation thereof.
+/// Set all :filetype options ON if user did not explicitly set any to OFF.
 void filetype_maybe_enable(void)
 {
-  if (filetype_detect == kNone
-      && filetype_plugin == kNone
-      && filetype_indent == kNone) {
+  if (filetype_detect == kNone) {
     source_runtime((char_u *)FILETYPE_FILE, true);
     filetype_detect = kTrue;
+  }
+  if (filetype_plugin == kNone) {
     source_runtime((char_u *)FTPLUGIN_FILE, true);
     filetype_plugin = kTrue;
+  }
+  if (filetype_indent == kNone) {
     source_runtime((char_u *)INDENT_FILE, true);
     filetype_indent = kTrue;
   }
 }
 
-/*
- * ":setfiletype {name}"
- */
+/// ":setfiletype [FALLBACK] {name}"
 static void ex_setfiletype(exarg_T *eap)
 {
   if (!did_filetype) {
-    set_option_value("filetype", 0L, (char *)eap->arg, OPT_LOCAL);
+    char_u *arg = eap->arg;
+
+    if (STRNCMP(arg, "FALLBACK ", 9) == 0) {
+      arg += 9;
+    }
+
+    set_option_value("filetype", 0L, (char *)arg, OPT_LOCAL);
+    if (arg != eap->arg) {
+      did_filetype = false;
+    }
   }
 }
 

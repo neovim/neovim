@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -131,7 +134,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     }
     goto cleanup;
   }
-  proc->pid = GetProcessId(process_handle);
+  proc->pid = (int)GetProcessId(process_handle);
 
   if (!RegisterWaitForSingleObject(
       &ptyproc->finish_wait,
@@ -339,20 +342,20 @@ static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
   }
 
   // Expected input/output:
-  //   input : hello"world
-  //   output: "hello\"world"
-  //   input : hello""world
-  //   output: "hello\"\"world"
-  //   input : hello\world
-  //   output: hello\world
-  //   input : hello\\world
-  //   output: hello\\world
-  //   input : hello\"world
-  //   output: "hello\\\"world"
-  //   input : hello\\"world
-  //   output: "hello\\\\\"world"
-  //   input : hello world\
-  //   output: "hello world\\"
+  //   input : 'hello"world'
+  //   output: '"hello\"world"'
+  //   input : 'hello""world'
+  //   output: '"hello\"\"world"'
+  //   input : 'hello\world'
+  //   output: 'hello\world'
+  //   input : 'hello\\world'
+  //   output: 'hello\\world'
+  //   input : 'hello\"world'
+  //   output: '"hello\\\"world"'
+  //   input : 'hello\\"world'
+  //   output: '"hello\\\\\"world"'
+  //   input : 'hello world\'
+  //   output: '"hello world\\"'
 
   assert(dest_remaining--);
   *(dest++) = NUL;

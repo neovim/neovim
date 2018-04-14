@@ -13,29 +13,27 @@ typedef enum {
   kUIPopupmenu,
   kUITabline,
   kUIWildmenu,
-} UIWidget;
-#define UI_WIDGETS (kUIWildmenu + 1)
+  kUIExtCount,
+} UIExtension;
 
-typedef struct {
-  bool bold, underline, undercurl, italic, reverse;
-  int foreground, background, special;
-} HlAttrs;
+EXTERN const char *ui_ext_names[] INIT(= {
+  "ext_cmdline",
+  "ext_popupmenu",
+  "ext_tabline",
+  "ext_wildmenu"
+});
 
-#define HLATTRS_INIT \
-  ((HlAttrs){ false, false, false, false, false, -1, -1, -1 })
 
 typedef struct ui_t UI;
 
 struct ui_t {
   bool rgb;
-  bool ui_ext[UI_WIDGETS];  ///< Externalized widgets
+  bool ui_ext[kUIExtCount];  ///< Externalized widgets
   int width, height;
   void *data;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_events.generated.h"
 #endif
-
   void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
   void (*stop)(UI *ui);
 };

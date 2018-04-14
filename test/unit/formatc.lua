@@ -65,11 +65,12 @@ local tokens = P { "tokens";
   identifier = Ct(C(R("az","AZ","__") * R("09","az","AZ","__")^0) * Cc"identifier"),
 
   -- Single character in a string
-  string_char = R("az","AZ","09") + S"$%^&*()_-+={[}]:;@~#<,>.!?/ \t" + (P"\\" * S[[ntvbrfa\?'"0x]]),
+  sstring_char = R("\001&","([","]\255") + (P"\\" * S[[ntvbrfa\?'"0x]]),
+  dstring_char = R("\001!","#[","]\255") + (P"\\" * S[[ntvbrfa\?'"0x]]),
 
   -- String literal
-  string = Ct(C(P"'" * (V"string_char" + P'"')^0 * P"'" +
-                P'"' * (V"string_char" + P"'")^0 * P'"') * Cc"string"),
+  string = Ct(C(P"'" * (V"sstring_char" + P'"')^0 * P"'" +
+                P'"' * (V"dstring_char" + P"'")^0 * P'"') * Cc"string"),
 
   -- Operator
   operator = Ct(C(P">>=" + P"<<=" + P"..." +

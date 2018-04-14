@@ -655,7 +655,6 @@ Short explanation of each option:		*option-list*
 'cscoperelative'  'csre'    Use cscope.out path basename as prefix
 'cscopetag'       'cst'     use cscope for tag commands
 'cscopetagorder'  'csto'    determines ":cstag" search order
-'cscopeverbose'   'csverb'  give messages when adding a cscope database
 'cursorbind'	  'crb'     move cursor in window as it moves in other windows
 'cursorcolumn'	  'cuc'	    highlight the screen column of the cursor
 'cursorline'	  'cul'	    highlight the screen line of the cursor
@@ -762,6 +761,7 @@ Short explanation of each option:		*option-list*
 'loadplugins'	  'lpl'     load plugin scripts when starting up
 'magic'			    changes special characters in search patterns
 'makeef'	  'mef'     name of the errorfile for ":make"
+'makeencoding'	  'menc'    encoding of external make/grep commands
 'makeprg'	  'mp'	    program to use for the ":make" command
 'matchpairs'	  'mps'     pairs of characters that "%" can match
 'matchtime'	  'mat'     tenths of a second to show matching paren

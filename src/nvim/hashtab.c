@@ -208,7 +208,7 @@ int hash_add(hashtab_T *ht, char_u *key)
   hash_T hash = hash_hash(key);
   hashitem_T *hi = hash_lookup(ht, (const char *)key, STRLEN(key), hash);
   if (!HASHITEM_EMPTY(hi)) {
-    EMSG2(_(e_intern2), "hash_add()");
+    internal_error("hash_add()");
     return FAIL;
   }
   hash_add_item(ht, hi, key, hash);

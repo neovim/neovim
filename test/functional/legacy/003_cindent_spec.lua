@@ -1,4 +1,5 @@
 -- Test for 'cindent'.
+-- For new tests, consider putting them in test_cindent.vim.
 --
 -- There are 50+ test command blocks (the stuff between STARTTEST and ENDTEST)
 -- in the original test. These have been converted to "it" test cases here.
@@ -1956,7 +1957,8 @@ describe('cindent', function()
       }
       ]=])
 
-    feed_command('set tw=0 wm=60 columns=80 noai fo=croq')
+    feed_command('set tw=0 noai fo=croq')
+    feed_command('let &wm = &columns - 20')
     feed_command('/serious/e')
     feed('a about life, the universe, and the rest<esc>')
 

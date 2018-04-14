@@ -3,13 +3,59 @@ if exists('g:loaded_node_provider')
 endif
 let g:loaded_node_provider = 1
 
-let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
-
-function! provider#node#Detect() abort
-  return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
+function! s:is_minimum_version(version, min_major, min_minor) abort
+  if empty(a:version)
+    let nodejs_version = get(split(system(['node', '-v']), "\n"), 0, '')
+    if v:shell_error || nodejs_version[0] !=# 'v'
+      return 0
+    endif
+  else
+    let nodejs_version = a:version
+  endif
+  " Remove surrounding junk.  Example: 'v4.12.0' => '4.12.0'
+  let nodejs_version = matchstr(nodejs_version, '\(\d\.\?\)\+')
+  " [major, minor, patch]
+  let v_list = split(nodejs_version, '\.')
+  return len(v_list) == 3
+    \ && ((str2nr(v_list[0]) > str2nr(a:min_major))
+    \     || (str2nr(v_list[0]) == str2nr(a:min_major)
+    \         && str2nr(v_list[1]) >= str2nr(a:min_minor)))
 endfunction
 
-function! provider#node#Prog()
+" Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
+" Return 1 if it is supported
+" Return 0 otherwise
+function! provider#node#can_inspect() abort
+  if !executable('node')
+    return 0
+  endif
+  let ver = get(split(system(['node', '-v']), "\n"), 0, '')
+  if v:shell_error || ver[0] !=# 'v'
+    return 0
+  endif
+  return (ver[1] ==# '6' && s:is_minimum_version(ver, 6, 12))
+    \ || s:is_minimum_version(ver, 7, 6)
+endfunction
+
+function! provider#node#Detect() abort
+  if exists('g:node_host_prog')
+    return g:node_host_prog
+  endif
+  let global_modules = get(split(system('npm root -g'), "\n"), 0, '')
+  if v:shell_error || !isdirectory(global_modules)
+    return ''
+  endif
+  if !s:is_minimum_version(v:null, 6, 0)
+    return ''
+  endif
+  let entry_point = glob(global_modules . '/neovim/bin/cli.js')
+  if !filereadable(entry_point)
+    return ''
+  endif
+  return entry_point
+endfunction
+
+function! provider#node#Prog() abort
   return s:prog
 endfunction
 
@@ -19,37 +65,18 @@ function! provider#node#Require(host) abort
     return
   endif
 
-  if has('win32')
-    let args = provider#node#Prog()
-  else
-    let args = ['node']
+  let args = ['node']
 
-    if !empty($NVIM_NODE_HOST_DEBUG)
-      call add(args, '--inspect-brk')
-    endif
-
-    call add(args , provider#node#Prog())
+  if !empty($NVIM_NODE_HOST_DEBUG) && provider#node#can_inspect()
+    call add(args, '--inspect-brk')
   endif
 
-  try
-    let channel_id = jobstart(args, s:job_opts)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-    for row in provider#get_stderr(channel_id)
-      echomsg row
-    endfor
-  endtry
-  finally
-    call provider#clear_stderr(channel_id)
-  endtry
-  throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_NODE_LOG_FILE')
+  call add(args, provider#node#Prog())
+
+  return provider#Poll(args, a:host.orig_name, '$NVIM_NODE_LOG_FILE')
 endfunction
 
-function! provider#node#Call(method, args)
+function! provider#node#Call(method, args) abort
   if s:err != ''
     echoerr s:err
     return
@@ -74,7 +101,7 @@ let s:err = ''
 let s:prog = provider#node#Detect()
 
 if empty(s:prog)
-  let s:err = 'Cannot find the "neovim" node package. Try :CheckHealth'
+  let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
 endif
 
 call remote#host#RegisterPlugin('node-provider', 'node', [])

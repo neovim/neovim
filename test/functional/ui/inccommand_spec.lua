@@ -12,6 +12,7 @@ local insert = helpers.insert
 local meths = helpers.meths
 local neq = helpers.neq
 local ok = helpers.ok
+local retry = helpers.retry
 local source = helpers.source
 local wait = helpers.wait
 local nvim = helpers.nvim
@@ -62,6 +63,7 @@ local function common_setup(screen, inccommand, text)
     command("syntax on")
     command("set nohlsearch")
     command("hi Substitute guifg=red guibg=yellow")
+    command("set display-=msgsep")
     screen:attach()
     screen:set_default_attr_ids({
       [1]  = {foreground = Screen.colors.Fuchsia},
@@ -91,22 +93,30 @@ local function common_setup(screen, inccommand, text)
   end
 end
 
-describe(":substitute, inccommand=split does not trigger preview", function()
+describe(":substitute, inccommand=split", function()
   before_each(function()
     clear()
     common_setup(nil, "split", default_text)
   end)
 
-  it("if invoked by a script ", function()
+  -- Test the tests: verify that the `1==bufnr('$')` assertion
+  -- in the "no preview" tests (below) actually means something.
+  it("previews interactive cmdline", function()
+    feed(':%s/tw/MO/g')
+    retry(nil, 1000, function()
+      eq(2, eval("bufnr('$')"))
+    end)
+  end)
+
+  it("no preview if invoked by a script", function()
     source('%s/tw/MO/g')
     wait()
     eq(1, eval("bufnr('$')"))
-
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
   end)
 
-  it("if invoked by feedkeys()", function()
+  it("no preview if invoked by feedkeys()", function()
     -- in a script...
     source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
     wait()
@@ -114,15 +124,12 @@ describe(":substitute, inccommand=split does not trigger preview", function()
     feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
     wait()
     eq(1, eval("bufnr('$')"))
-
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
   end)
 end)
 
 describe(":substitute, 'inccommand' preserves", function()
-   if helpers.pending_win32(pending) then return end
-
   before_each(clear)
 
   it('listed buffers (:ls)', function()
@@ -285,8 +292,6 @@ describe(":substitute, 'inccommand' preserves", function()
 end)
 
 describe(":substitute, 'inccommand' preserves undo", function()
-   if helpers.pending_win32(pending) then return end
-
   local cases = { "", "split", "nosplit" }
 
   local substrings = {
@@ -700,8 +705,6 @@ describe(":substitute, 'inccommand' preserves undo", function()
 end)
 
 describe(":substitute, inccommand=split", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(30,15)
 
   before_each(function()
@@ -1169,8 +1172,6 @@ describe(":substitute, inccommand=split", function()
 end)
 
 describe("inccommand=nosplit", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(20,10)
 
   before_each(function()
@@ -1356,8 +1357,6 @@ describe("inccommand=nosplit", function()
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(20,10)
   local cases = { "", "split", "nosplit" }
 
@@ -1621,8 +1620,6 @@ describe("'inccommand' autocommands", function()
 end)
 
 describe("'inccommand' split windows", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen
   local function refresh()
     clear()
@@ -1642,26 +1639,26 @@ describe("'inccommand' split windows", function()
     feed_command("split")
     feed(":%s/tw")
     screen:expect([[
-      Inc substitution on {10:|}Inc substitution on|
-      {12:tw}o lines           {10:|}{12:tw}o lines          |
-                          {10:|}                   |
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {11:[No Name] [+]       }{10:|}{15:~                  }|
-      Inc substitution on {10:|}{15:~                  }|
-      {12:tw}o lines           {10:|}{15:~                  }|
-                          {10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
+      Inc substitution on {10:│}Inc substitution on|
+      {12:tw}o lines           {10:│}{12:tw}o lines          |
+                          {10:│}                   |
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {11:[No Name] [+]       }{10:│}{15:~                  }|
+      Inc substitution on {10:│}{15:~                  }|
+      {12:tw}o lines           {10:│}{15:~                  }|
+                          {10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
       {10:[No Name] [+]        [No Name] [+]      }|
       |2| {12:tw}o lines                           |
       {15:~                                       }|
@@ -1681,20 +1678,20 @@ describe("'inccommand' split windows", function()
 
     feed(":%s/tw")
     screen:expect([[
-      Inc substitution on {10:|}Inc substitution on|
-      {12:tw}o lines           {10:|}{12:tw}o lines          |
-                          {10:|}                   |
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
-      {15:~                   }{10:|}{15:~                  }|
+      Inc substitution on {10:│}Inc substitution on|
+      {12:tw}o lines           {10:│}{12:tw}o lines          |
+                          {10:│}                   |
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
+      {15:~                   }{10:│}{15:~                  }|
       {11:[No Name] [+]        }{10:[No Name] [+]      }|
       Inc substitution on                     |
       {12:tw}o lines                               |

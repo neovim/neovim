@@ -637,6 +637,7 @@ struct file_buffer {
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char_u *b_p_kp;               ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
+  char_u *b_p_menc;             ///< 'makeencoding'
   char_u *b_p_mps;              ///< 'matchpairs'
   int b_p_ml;                   ///< 'modeline'
   int b_p_ml_nobin;             ///< b_p_ml saved for binary mode
@@ -717,6 +718,7 @@ struct file_buffer {
   int b_ind_hash_comment;
   int b_ind_cpp_namespace;
   int b_ind_if_for_while;
+  int b_ind_cpp_extern_c;
 
   linenr_T b_no_eol_lnum;       /* non-zero lnum when last line of next binary
                                  * write should not have an end-of-line */

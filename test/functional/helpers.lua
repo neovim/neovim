@@ -14,10 +14,13 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local neq = global_helpers.neq
 local eq = global_helpers.eq
+local expect_err = global_helpers.expect_err
 local ok = global_helpers.ok
 local map = global_helpers.map
+local matches = global_helpers.matches
 local filter = global_helpers.filter
 local dedent = global_helpers.dedent
+local table_flatten = global_helpers.table_flatten
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
@@ -96,14 +99,14 @@ local function request(method, ...)
   return rv
 end
 
-local function next_message()
-  return session:next_message()
+local function next_msg(timeout)
+  return session:next_message(timeout and timeout or 10000)
 end
 
 local function expect_twostreams(msgs1, msgs2)
   local pos1, pos2 = 1, 1
   while pos1 <= #msgs1 or pos2 <= #msgs2 do
-    local msg = next_message()
+    local msg = next_msg()
     if pos1 <= #msgs1 and pcall(eq, msgs1[pos1], msg) then
       pos1 = pos1 + 1
     elseif pos2 <= #msgs2 then
@@ -114,6 +117,46 @@ local function expect_twostreams(msgs1, msgs2)
       eq(msgs1[pos1], msg)
     end
   end
+end
+
+-- Expects a sequence of next_msg() results. If multiple sequences are
+-- passed they are tried until one succeeds, in order of shortest to longest.
+local function expect_msg_seq(...)
+  if select('#', ...) < 1 then
+    error('need at least 1 argument')
+  end
+  local seqs = {...}
+  table.sort(seqs, function(a, b)  -- Sort ascending, by (shallow) length.
+    return #a < #b
+  end)
+
+  local actual_seq = {}
+  local final_error = ''
+  local function cat_err(err1, err2)
+    if err1 == nil then
+      return err2
+    end
+    return string.format('%s\n%s\n%s', err1, string.rep('=', 78), err2)
+  end
+  for anum = 1, #seqs do
+    local expected_seq = seqs[anum]
+    -- Collect enough messages to compare the next expected sequence.
+    while #actual_seq < #expected_seq do
+      local msg = next_msg(10000)  -- Big timeout for ASAN/valgrind.
+      if msg == nil then
+        error(cat_err(final_error,
+                      string.format('got %d messages, expected %d',
+                                    #actual_seq, #expected_seq)))
+      end
+      table.insert(actual_seq, msg)
+    end
+    local status, result = pcall(eq, expected_seq, actual_seq)
+    if status then
+      return result
+    end
+    final_error = cat_err(final_error, result)
+  end
+  error(final_error)
 end
 
 local function call_and_stop_on_error(...)
@@ -261,6 +304,7 @@ local function retry(max, max_ms, fn)
     if status then
       return result
     end
+    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
       if type(result) == "string" then
         result = "\nretry() attempts: "..tostring(tries).."\n"..result
@@ -333,8 +377,8 @@ local function feed_command(...)
 end
 
 -- Dedent the given text and write it to the file name.
-local function write_file(name, text, dont_dedent)
-  local file = io.open(name, 'w')
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -342,7 +386,7 @@ local function write_file(name, text, dont_dedent)
     for _, char in ipairs(bytes) do
       text = ('%s%c'):format(text, char)
     end
-  elseif not dont_dedent then
+  elseif not no_dedent then
     text = dedent(text)
   end
   file:write(text)
@@ -382,9 +426,8 @@ end
 
 local function set_shell_powershell()
   source([[
-    set shell=powershell shellquote=\" shellpipe=\| shellredir=>
-    set shellcmdflag=\ -NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-    let &shellxquote=' '
+    set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
+    set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
   ]])
 end
 
@@ -600,7 +643,12 @@ local function redir_exec(cmd)
 end
 
 local function get_pathsep()
-  return funcs.fnamemodify('.', ':p'):sub(-1)
+  return iswin() and '\\' or '/'
+end
+
+local function pathroot()
+  local pathsep = package.config:sub(1,1)
+  return iswin() and (nvim_dir:sub(1,2)..pathsep) or '/'
 end
 
 -- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
@@ -613,7 +661,7 @@ local function new_pipename()
 end
 
 local function missing_provider(provider)
-  if provider == 'ruby' then
+  if provider == 'ruby' or provider == 'node' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
@@ -644,7 +692,7 @@ local function alter_slashes(obj)
 end
 
 local function hexdump(str)
-  local len = string.len( str )
+  local len = string.len(str)
   local dump = ""
   local hex = ""
   local asc = ""
@@ -652,96 +700,99 @@ local function hexdump(str)
   for i = 1, len do
     if 1 == i % 8 then
       dump = dump .. hex .. asc .. "\n"
-      hex = string.format( "%04x: ", i - 1 )
+      hex = string.format("%04x: ", i - 1)
       asc = ""
     end
 
-    local ord = string.byte( str, i )
-    hex = hex .. string.format( "%02x ", ord )
+    local ord = string.byte(str, i)
+    hex = hex .. string.format("%02x ", ord)
     if ord >= 32 and ord <= 126 then
-      asc = asc .. string.char( ord )
+      asc = asc .. string.char(ord)
     else
       asc = asc .. "."
     end
   end
 
-  return dump .. hex
-  .. string.rep( "   ", 8 - len % 8 ) .. asc
-
+  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
 end
 
 local module = {
-  prepend_argv = prepend_argv,
-  clear = clear,
-  connect = connect,
-  retry = retry,
-  spawn = spawn,
-  dedent = dedent,
-  source = source,
-  rawfeed = rawfeed,
-  insert = insert,
-  iswin = iswin,
-  feed = feed,
-  feed_command = feed_command,
-  eval = nvim_eval,
+  NIL = mpack.NIL,
+  alter_slashes = alter_slashes,
+  buffer = buffer,
+  bufmeths = bufmeths,
   call = nvim_call,
+  clear = clear,
   command = nvim_command,
-  request = request,
-  next_message = next_message,
-  expect_twostreams = expect_twostreams,
-  run = run,
-  stop = stop,
+  connect = connect,
+  curbuf = curbuf,
+  curbuf_contents = curbuf_contents,
+  curbufmeths = curbufmeths,
+  curtab = curtab,
+  curtabmeths = curtabmeths,
+  curwin = curwin,
+  curwinmeths = curwinmeths,
+  dedent = dedent,
   eq = eq,
-  neq = neq,
+  eval = nvim_eval,
+  exc_exec = exc_exec,
   expect = expect,
   expect_any = expect_any,
-  ok = ok,
-  map = map,
+  expect_err = expect_err,
+  expect_msg_seq = expect_msg_seq,
+  expect_twostreams = expect_twostreams,
+  feed = feed,
+  feed_command = feed_command,
   filter = filter,
-  nvim = nvim,
-  nvim_async = nvim_async,
-  nvim_prog = nvim_prog,
-  nvim_argv = nvim_argv,
-  nvim_set = nvim_set,
-  nvim_dir = nvim_dir,
-  buffer = buffer,
-  window = window,
-  tabpage = tabpage,
-  curbuf = curbuf,
-  curwin = curwin,
-  curtab = curtab,
-  curbuf_contents = curbuf_contents,
-  wait = wait,
-  sleep = sleep,
-  set_session = set_session,
-  write_file = write_file,
-  read_file = read_file,
-  os_name = os_name,
-  rmdir = rmdir,
-  mkdir = lfs.mkdir,
-  exc_exec = exc_exec,
-  redir_exec = redir_exec,
-  merge_args = merge_args,
   funcs = funcs,
-  meths = meths,
-  bufmeths = bufmeths,
-  winmeths = winmeths,
-  tabmeths = tabmeths,
-  uimeths = uimeths,
-  curbufmeths = curbufmeths,
-  curwinmeths = curwinmeths,
-  curtabmeths = curtabmeths,
-  pending_win32 = pending_win32,
-  skip_fragile = skip_fragile,
-  set_shell_powershell = set_shell_powershell,
-  tmpname = tmpname,
-  meth_pcall = meth_pcall,
-  NIL = mpack.NIL,
   get_pathsep = get_pathsep,
-  missing_provider = missing_provider,
-  alter_slashes = alter_slashes,
   hexdump = hexdump,
+  insert = insert,
+  iswin = iswin,
+  map = map,
+  matches = matches,
+  merge_args = merge_args,
+  meth_pcall = meth_pcall,
+  meths = meths,
+  missing_provider = missing_provider,
+  mkdir = lfs.mkdir,
+  neq = neq,
   new_pipename = new_pipename,
+  next_msg = next_msg,
+  nvim = nvim,
+  nvim_argv = nvim_argv,
+  nvim_async = nvim_async,
+  nvim_dir = nvim_dir,
+  nvim_prog = nvim_prog,
+  nvim_set = nvim_set,
+  ok = ok,
+  os_name = os_name,
+  pathroot = pathroot,
+  pending_win32 = pending_win32,
+  prepend_argv = prepend_argv,
+  rawfeed = rawfeed,
+  read_file = read_file,
+  redir_exec = redir_exec,
+  request = request,
+  retry = retry,
+  rmdir = rmdir,
+  run = run,
+  set_session = set_session,
+  set_shell_powershell = set_shell_powershell,
+  skip_fragile = skip_fragile,
+  sleep = sleep,
+  source = source,
+  spawn = spawn,
+  stop = stop,
+  table_flatten = table_flatten,
+  tabmeths = tabmeths,
+  tabpage = tabpage,
+  tmpname = tmpname,
+  uimeths = uimeths,
+  wait = wait,
+  window = window,
+  winmeths = winmeths,
+  write_file = write_file,
 }
 
 return function(after_each)

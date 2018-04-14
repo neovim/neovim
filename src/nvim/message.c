@@ -487,9 +487,6 @@ int emsg(const char_u *s_)
   }
 
   called_emsg = true;
-  if (emsg_silent == 0) {
-    ex_exitval = 1;
-  }
 
   // If "emsg_severe" is TRUE: When an error exception is to be thrown,
   // prefer this message over previous messages for the same command.
@@ -540,6 +537,8 @@ int emsg(const char_u *s_)
       return true;
     }
 
+    ex_exitval = 1;
+
     // Reset msg_silent, an error causes messages to be switched back on.
     msg_silent = 0;
     cmd_silent = FALSE;
@@ -583,17 +582,58 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  bool ret;
+
+  va_list ap;
+  va_start(ap, fmt);
+  ret = emsgfv(fmt, ap);
+  va_end(ap);
+
+  return ret;
+}
+
+/// Print an error message with unknown number of arguments
+static bool emsgfv(const char *fmt, va_list ap)
+{
   static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
-  va_list ap;
-  va_start(ap, fmt);
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
-  va_end(ap);
 
   return emsg((const char_u *)errbuf);
+}
+
+/// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsg(const char *s)
+{
+    msg((char_u *)s);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Same as emsgf(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsgf(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    (void)emsgfv(s, ap);
+    va_end(ap);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Give an "Internal error" message.
+void internal_error(char *where)
+{
+    IEMSG2(_(e_intern2), where);
 }
 
 static void msg_emsgf_event(void **argv)
@@ -1237,31 +1277,30 @@ void msg_make(char_u *arg)
   }
 }
 
-/*
- * Output the string 'str' upto a NUL character.
- * Return the number of characters it takes on the screen.
- *
- * If K_SPECIAL is encountered, then it is taken in conjunction with the
- * following character and shown as <F1>, <S-Up> etc.  Any other character
- * which is not printable shown in <> form.
- * If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
- * If a character is displayed in one of these special ways, is also
- * highlighted (its highlight name is '8' in the p_hl variable).
- * Otherwise characters are not highlighted.
- * This function is used to show mappings, where we want to see how to type
- * the character/string -- webb
- */
-int
-msg_outtrans_special (
-    char_u *strstart,
-    int from               /* TRUE for lhs of a mapping */
+/// Output the string 'str' upto a NUL character.
+/// Return the number of characters it takes on the screen.
+///
+/// If K_SPECIAL is encountered, then it is taken in conjunction with the
+/// following character and shown as <F1>, <S-Up> etc.  Any other character
+/// which is not printable shown in <> form.
+/// If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
+/// If a character is displayed in one of these special ways, is also
+/// highlighted (its highlight name is '8' in the p_hl variable).
+/// Otherwise characters are not highlighted.
+/// This function is used to show mappings, where we want to see how to type
+/// the character/string -- webb
+int msg_outtrans_special(
+    const char_u *strstart,
+    int from               ///< true for LHS of a mapping
 )
 {
-  char_u      *str = strstart;
+  if (strstart == NULL) {
+    return 0;  // Do nothing.
+  }
+  const char_u *str = strstart;
   int retval = 0;
-  int attr;
+  int attr = hl_attr(HLF_8);
 
-  attr = hl_attr(HLF_8);
   while (*str != NUL) {
     const char *string;
     // Leading and trailing spaces need to be displayed in <> form.
@@ -1307,7 +1346,7 @@ char *str2special_save(const char *const str, const bool replace_spaces,
   return (char *)ga.ga_data;
 }
 
-/// Convert character, replacing key one key code with printable representation
+/// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
 /// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
@@ -1392,7 +1431,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   while (*sp) {
     const char *s = str2special(&sp, false, false);
     const size_t s_len = strlen(s);
-    if (s_len <= len) {
+    if (len <= s_len) {
       break;
     }
     memcpy(buf, s, s_len);
@@ -1785,17 +1824,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       } while (msg_col & 7);
     } else if (*s == BELL) {  // beep (from ":sh")
       vim_beep(BO_SH);
-    } else {
-      if (has_mbyte) {
-        cw = (*mb_ptr2cells)(s);
-        if (enc_utf8 && maxlen >= 0)
-          /* avoid including composing chars after the end */
-          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
-        else
-          l = (*mb_ptr2len)(s);
+    } else if (*s >= 0x20) {  // printable char
+      cw = mb_ptr2cells(s);
+      if (maxlen >= 0) {
+        // avoid including composing chars after the end
+        l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
       } else {
-        cw = 1;
-        l = 1;
+        l = utfc_ptr2len(s);
       }
       // When drawing from right to left or when a double-wide character
       // doesn't fit, draw a single character here.  Otherwise collect
@@ -1840,13 +1875,29 @@ bool message_filtered(char_u *msg)
   return cmdmod.filter_force ? match : !match;
 }
 
+/// including horizontal separator
+int msg_scrollsize(void)
+{
+  return msg_scrolled + p_ch + 1;
+}
+
 /*
  * Scroll the screen up one line for displaying the next message line.
  */
 static void msg_scroll_up(void)
 {
-  /* scrolling up always works */
-  screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  if (dy_flags & DY_MSGSEP) {
+    if (msg_scrolled == 0) {
+      screen_fill(Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,
+                  fill_msgsep, fill_msgsep, hl_attr(HLF_MSGSEP));
+    }
+    int nscroll = MIN(msg_scrollsize()+1, Rows);
+    ui_call_set_scroll_region(Rows-nscroll, Rows-1, 0, Columns-1);
+    screen_del_lines(Rows-nscroll, 0, 1, nscroll, NULL);
+    ui_reset_scroll_region();
+  } else {
+    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+  }
 }
 
 /*

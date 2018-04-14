@@ -10,6 +10,7 @@
 #endif
 
 #include "nvim/ascii.h"
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/globals.h"
 #include "nvim/memline.h"
@@ -162,7 +163,7 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
       }
       break;
     default:
-      fprintf(stderr, "Invalid signal %d", signum);
+      ELOG("invalid signal: %d", signum);
       break;
   }
 }

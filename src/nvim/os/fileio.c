@@ -4,7 +4,7 @@
 /// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
-/// Neovim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
+/// Nvim stuctures for buffer, with autocommands, etc: just fopen/fread/fwrite
 /// replacement.
 
 #include <assert.h>
@@ -39,11 +39,11 @@
 /// @param[in]  fname  File name to open.
 /// @param[in]  flags  Flags, @see FileOpenFlags. Currently reading from and
 ///                    writing to the file at once is not supported, so either
-///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
+///                    kFileWriteOnly or kFileReadOnly is required.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
+///                   does not have kFileCreate\*).
 ///
-/// @return Error code (@see os_strerror()) or 0.
+/// @return Error code, or 0 on success. @see os_strerror()
 int file_open(FileDescriptor *const ret_fp, const char *const fname,
               const int flags, const int mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
@@ -124,12 +124,11 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd,
 
 /// Like file_open(), but allocate and return ret_fp
 ///
-/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
-///                     success.
+/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
 /// @param[in]  fname  File name to open.
 /// @param[in]  flags  Flags, @see FileOpenFlags.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
+///                   does not have kFileCreate\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_new(int *const error, const char *const fname,
@@ -146,8 +145,7 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 
 /// Like file_open_fd(), but allocate and return ret_fp
 ///
-/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
-///                     success.
+/// @param[out]  error  Error code, or 0 on success. @see os_strerror()
 /// @param[in]  fd  File descriptor to wrap.
 /// @param[in]  flags  Flags, @see FileOpenFlags.
 /// @param[in]  mode  Permissions for the newly created file (ignored if flags

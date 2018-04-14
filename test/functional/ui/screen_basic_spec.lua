@@ -4,7 +4,6 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
-local eval = helpers.eval
 local iswin = helpers.iswin
 
 describe('screen', function()
@@ -189,12 +188,12 @@ describe('Screen', function()
         command('vsp')
         command('vsp')
         screen:expect([[
-          ^                    {3:|}                {3:|}               |
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          ^                    {3:│}                {3:│}               |
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
           {1:[No Name]            }{3:[No Name]        [No Name]      }|
                                                                |
           {0:~                                                    }|
@@ -206,12 +205,12 @@ describe('Screen', function()
         ]])
         insert('hello')
         screen:expect([[
-          hell^o               {3:|}hello           {3:|}hello          |
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-          {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+          hell^o               {3:│}hello           {3:│}hello          |
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+          {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
           {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
           hello                                                |
           {0:~                                                    }|
@@ -232,12 +231,12 @@ describe('Screen', function()
       command('vsp')
       insert('hello')
       screen:expect([[
-        hell^o               {3:|}hello           {3:|}hello          |
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        hell^o               {3:│}hello           {3:│}hello          |
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
         {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         hello                                                |
         {0:~                                                    }|
@@ -269,12 +268,12 @@ describe('Screen', function()
       command('tabprevious')
       screen:expect([[
         {2: }{6:4}{2:+ [No Name] }{4: + [No Name] }{3:                         }{4:X}|
-        hell^o               {3:|}hello           {3:|}hello          |
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
-        {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
+        hell^o               {3:│}hello           {3:│}hello          |
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
+        {0:~                   }{3:│}{0:~               }{3:│}{0:~              }|
         {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         hello                                                |
         {0:~                                                    }|
@@ -355,7 +354,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it('execute command with multi-line output', function()
+    it('execute command with multi-line output without msgsep', function()
+      command("set display-=msgsep")
       feed(':ls<cr>')
       screen:expect([[
         {0:~                                                    }|
@@ -369,6 +369,28 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
+        :ls                                                  |
+          1 %a   "[No Name]"                    line 1       |
+        {7:Press ENTER or type command to continue}^              |
+      ]])
+      feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
+    end)
+
+    it('execute command with multi-line output and with msgsep', function()
+      command("set display+=msgsep")
+      feed(':ls<cr>')
+      screen:expect([[
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:                                                     }|
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
         {7:Press ENTER or type command to continue}^              |
@@ -398,12 +420,12 @@ describe('Screen', function()
       command('vsp')
       command('vsp')
       screen:expect([[
-        and                 {3:|}and             {3:|}and            |
-        clearing            {3:|}clearing        {3:|}clearing       |
-        in                  {3:|}in              {3:|}in             |
-        split               {3:|}split           {3:|}split          |
-        windows             {3:|}windows         {3:|}windows        |
-        ^                    {3:|}                {3:|}               |
+        and                 {3:│}and             {3:│}and            |
+        clearing            {3:│}clearing        {3:│}clearing       |
+        in                  {3:│}in              {3:│}in             |
+        split               {3:│}split           {3:│}split          |
+        windows             {3:│}windows         {3:│}windows        |
+        ^                    {3:│}                {3:│}               |
         {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         clearing                                             |
         in                                                   |
@@ -418,12 +440,12 @@ describe('Screen', function()
     it('only affects the current scroll region', function()
       feed('6k')
       screen:expect([[
-        ^scrolling           {3:|}and             {3:|}and            |
-        and                 {3:|}clearing        {3:|}clearing       |
-        clearing            {3:|}in              {3:|}in             |
-        in                  {3:|}split           {3:|}split          |
-        split               {3:|}windows         {3:|}windows        |
-        windows             {3:|}                {3:|}               |
+        ^scrolling           {3:│}and             {3:│}and            |
+        and                 {3:│}clearing        {3:│}clearing       |
+        clearing            {3:│}in              {3:│}in             |
+        in                  {3:│}split           {3:│}split          |
+        split               {3:│}windows         {3:│}windows        |
+        windows             {3:│}                {3:│}               |
         {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
         clearing                                             |
         in                                                   |
@@ -435,12 +457,12 @@ describe('Screen', function()
       ]])
       feed('<c-w>l')
       screen:expect([[
-        scrolling           {3:|}and                 {3:|}and        |
-        and                 {3:|}clearing            {3:|}clearing   |
-        clearing            {3:|}in                  {3:|}in         |
-        in                  {3:|}split               {3:|}split      |
-        split               {3:|}windows             {3:|}windows    |
-        windows             {3:|}^                    {3:|}           |
+        scrolling           {3:│}and                 {3:│}and        |
+        and                 {3:│}clearing            {3:│}clearing   |
+        clearing            {3:│}in                  {3:│}in         |
+        in                  {3:│}split               {3:│}split      |
+        split               {3:│}windows             {3:│}windows    |
+        windows             {3:│}^                    {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -452,12 +474,12 @@ describe('Screen', function()
       ]])
       feed('gg')
       screen:expect([[
-        scrolling           {3:|}^Inserting           {3:|}and        |
-        and                 {3:|}text                {3:|}clearing   |
-        clearing            {3:|}with                {3:|}in         |
-        in                  {3:|}many                {3:|}split      |
-        split               {3:|}lines               {3:|}windows    |
-        windows             {3:|}to                  {3:|}           |
+        scrolling           {3:│}^Inserting           {3:│}and        |
+        and                 {3:│}text                {3:│}clearing   |
+        clearing            {3:│}with                {3:│}in         |
+        in                  {3:│}many                {3:│}split      |
+        split               {3:│}lines               {3:│}windows    |
+        windows             {3:│}to                  {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -469,12 +491,12 @@ describe('Screen', function()
       ]])
       feed('7j')
       screen:expect([[
-        scrolling           {3:|}with                {3:|}and        |
-        and                 {3:|}many                {3:|}clearing   |
-        clearing            {3:|}lines               {3:|}in         |
-        in                  {3:|}to                  {3:|}split      |
-        split               {3:|}test                {3:|}windows    |
-        windows             {3:|}^scrolling           {3:|}           |
+        scrolling           {3:│}with                {3:│}and        |
+        and                 {3:│}many                {3:│}clearing   |
+        clearing            {3:│}lines               {3:│}in         |
+        in                  {3:│}to                  {3:│}split      |
+        split               {3:│}test                {3:│}windows    |
+        windows             {3:│}^scrolling           {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -486,12 +508,12 @@ describe('Screen', function()
       ]])
       feed('2j')
       screen:expect([[
-        scrolling           {3:|}lines               {3:|}and        |
-        and                 {3:|}to                  {3:|}clearing   |
-        clearing            {3:|}test                {3:|}in         |
-        in                  {3:|}scrolling           {3:|}split      |
-        split               {3:|}and                 {3:|}windows    |
-        windows             {3:|}^clearing            {3:|}           |
+        scrolling           {3:│}lines               {3:│}and        |
+        and                 {3:│}to                  {3:│}clearing   |
+        clearing            {3:│}test                {3:│}in         |
+        in                  {3:│}scrolling           {3:│}split      |
+        split               {3:│}and                 {3:│}windows    |
+        windows             {3:│}^clearing            {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -503,12 +525,12 @@ describe('Screen', function()
       ]])
       feed('5k')
       screen:expect([[
-        scrolling           {3:|}^lines               {3:|}and        |
-        and                 {3:|}to                  {3:|}clearing   |
-        clearing            {3:|}test                {3:|}in         |
-        in                  {3:|}scrolling           {3:|}split      |
-        split               {3:|}and                 {3:|}windows    |
-        windows             {3:|}clearing            {3:|}           |
+        scrolling           {3:│}^lines               {3:│}and        |
+        and                 {3:│}to                  {3:│}clearing   |
+        clearing            {3:│}test                {3:│}in         |
+        in                  {3:│}scrolling           {3:│}split      |
+        split               {3:│}and                 {3:│}windows    |
+        windows             {3:│}clearing            {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -520,12 +542,12 @@ describe('Screen', function()
       ]])
       feed('k')
       screen:expect([[
-        scrolling           {3:|}^many                {3:|}and        |
-        and                 {3:|}lines               {3:|}clearing   |
-        clearing            {3:|}to                  {3:|}in         |
-        in                  {3:|}test                {3:|}split      |
-        split               {3:|}scrolling           {3:|}windows    |
-        windows             {3:|}and                 {3:|}           |
+        scrolling           {3:│}^many                {3:│}and        |
+        and                 {3:│}lines               {3:│}clearing   |
+        clearing            {3:│}to                  {3:│}in         |
+        in                  {3:│}test                {3:│}split      |
+        split               {3:│}scrolling           {3:│}windows    |
+        windows             {3:│}and                 {3:│}           |
         {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
@@ -573,6 +595,7 @@ describe('Screen', function()
       command('nnoremap <F1> :echo "TEST"<CR>')
       feed(':ls<CR>')
       screen:expect([[
+                                                             |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
@@ -582,8 +605,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {1:                                                     }|
         :ls                                                  |
           1 %a   "[No Name]"                    line 1       |
         {7:Press ENTER or type command to continue}^              |
@@ -606,23 +628,5 @@ describe('Screen', function()
         TEST                                                 |
       ]])
     end)
-  end)
-end)
-
-describe('nvim_ui_attach()', function()
-  before_each(function()
-    clear()
-  end)
-  it('handles very large width/height #2180', function()
-    local screen = Screen.new(999, 999)
-    screen:attach()
-    eq(999, eval('&lines'))
-    eq(999, eval('&columns'))
-  end)
-  it('invalid option returns error', function()
-    local screen = Screen.new()
-    local status, rv = pcall(function() screen:attach({foo={'foo'}}) end)
-    eq(false, status)
-    eq('No such ui option', rv:match("No such .*"))
   end)
 end)

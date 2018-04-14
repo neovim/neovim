@@ -12,6 +12,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
+#include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/globals.h"
 #include "nvim/macros.h"
@@ -151,7 +152,6 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool interrupted = false;
   if (!proc->refcount) {
     int status = proc->status;
     LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
@@ -173,7 +173,6 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
   if (got_int) {
-    interrupted = true;
     got_int = false;
     process_stop(proc);
     if (ms == -1) {
@@ -184,14 +183,13 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     } else {
       LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
+
+    proc->status = -2;
   }
 
   if (proc->refcount == 1) {
     // Job exited, collect status and manually invoke close_cb to free the job
     // resources
-    if (interrupted) {
-      proc->status = -2;
-    }
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
@@ -218,8 +216,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       // stdout/stderr, they will be closed when it exits(possibly due to being
       // terminated after a timeout)
       stream_may_close(&proc->in);
-      ILOG("Sending SIGTERM to pid %d", proc->pid);
-      uv_kill(proc->pid, SIGTERM);
+      os_proc_tree_kill(proc->pid, SIGTERM);
       break;
     case kProcessTypePty:
       // close all streams for pty processes to send SIGHUP to the process
@@ -234,7 +231,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   if (!loop->children_stop_requests++) {
     // When there's at least one stop request pending, start a timer that
     // will periodically check if a signal should be send to the job.
-    ILOG("Starting job kill timer");
+    ILOG("starting job kill timer");
     uv_timer_start(&loop->children_kill_timer, children_kill_cb,
                    KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
   }
@@ -256,11 +253,9 @@ static void children_kill_cb(uv_timer_t *handle)
 
     if (elapsed >= KILL_TIMEOUT_MS) {
       int sig = proc->type == kProcessTypePty && elapsed < KILL_TIMEOUT_MS * 2
-                    ? SIGTERM
-                    : SIGKILL;
-      ILOG("Sending %s to pid %d", sig == SIGTERM ? "SIGTERM" : "SIGKILL",
-           proc->pid);
-      uv_kill(proc->pid, sig);
+                ? SIGTERM
+                : SIGKILL;
+      os_proc_tree_kill(proc->pid, sig);
     }
   }
 }

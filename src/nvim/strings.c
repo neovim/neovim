@@ -50,6 +50,13 @@
 #include "nvim/os/shell.h"
 #include "nvim/eval/encode.h"
 
+#ifdef __MINGW32__
+# undef fpclassify
+# define fpclassify __fpclassify
+# undef isnan
+# define isnan _isnan
+#endif
+
 /*
  * Copy "string" into newly allocated memory.
  */

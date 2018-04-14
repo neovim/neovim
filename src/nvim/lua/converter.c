@@ -211,20 +211,28 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           size_t len;
           const char *s = lua_tolstring(lstate, -2, &len);
           if (cur.special) {
-            list_T *const kv_pair = tv_list_alloc();
-            tv_list_append_list(cur.tv->vval.v_list, kv_pair);
-            listitem_T *const key = tv_list_item_alloc();
-            key->li_tv = decode_string(s, len, kTrue, false, false);
-            tv_list_append(kv_pair, key);
-            if (key->li_tv.v_type == VAR_UNKNOWN) {
+            list_T *const kv_pair = tv_list_alloc(2);
+
+            typval_T s_tv = decode_string(s, len, kTrue, false, false);
+            if (s_tv.v_type == VAR_UNKNOWN) {
               ret = false;
               tv_list_unref(kv_pair);
               continue;
             }
-            listitem_T *const val = tv_list_item_alloc();
-            tv_list_append(kv_pair, val);
+            tv_list_append_owned_tv(kv_pair, s_tv);
+
+            // Value: not populated yet, need to create list item to push.
+            tv_list_append_owned_tv(kv_pair, (typval_T) {
+              .v_type = VAR_UNKNOWN,
+            });
             kv_push(stack, cur);
-            cur = (TVPopStackItem) { &val->li_tv, false, false, 0 };
+            tv_list_append_list(cur.tv->vval.v_list, kv_pair);
+            cur = (TVPopStackItem) {
+              .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)),
+              .container = false,
+              .special = false,
+              .idx = 0,
+            };
           } else {
             dictitem_T *const di = tv_dict_item_alloc_len(s, len);
             if (tv_dict_add(cur.tv->vval.v_dict, di) == FAIL) {
@@ -239,15 +247,23 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         }
       } else {
         assert(cur.tv->v_type == VAR_LIST);
-        lua_rawgeti(lstate, -1, cur.tv->vval.v_list->lv_len + 1);
+        lua_rawgeti(lstate, -1, tv_list_len(cur.tv->vval.v_list) + 1);
         if (lua_isnil(lstate, -1)) {
           lua_pop(lstate, 2);
           continue;
         }
-        listitem_T *const li = tv_list_item_alloc();
-        tv_list_append(cur.tv->vval.v_list, li);
+        // Not populated yet, need to create list item to push.
+        tv_list_append_owned_tv(cur.tv->vval.v_list, (typval_T) {
+          .v_type = VAR_UNKNOWN,
+        });
         kv_push(stack, cur);
-        cur = (TVPopStackItem) { &li->li_tv, false, false, 0 };
+        // TODO(ZyX-I): Use indexes, here list item *will* be reallocated.
+        cur = (TVPopStackItem) {
+          .tv = TV_LIST_ITEM_TV(tv_list_last(cur.tv->vval.v_list)),
+          .container = false,
+          .special = false,
+          .idx = 0,
+        };
       }
     }
     assert(!cur.container);
@@ -305,8 +321,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         switch (table_props.type) {
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
-            cur.tv->vval.v_list = tv_list_alloc();
-            cur.tv->vval.v_list->lv_refcount++;
+            cur.tv->vval.v_list = tv_list_alloc((ptrdiff_t)table_props.maxidx);
+            tv_list_ref(cur.tv->vval.v_list);
             if (table_props.maxidx != 0) {
               cur.container = true;
               cur.idx = lua_gettop(lstate);
@@ -322,7 +338,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             } else {
               cur.special = table_props.has_string_with_nul;
               if (table_props.has_string_with_nul) {
-                decode_create_map_special_dict(cur.tv);
+                decode_create_map_special_dict(
+                    cur.tv, (ptrdiff_t)table_props.string_keys_num);
                 assert(cur.tv->v_type == VAR_DICT);
                 dictitem_T *const val_di = tv_dict_find(cur.tv->vval.v_dict,
                                                         S_LEN("_VAL"));
@@ -406,7 +423,7 @@ nlua_pop_typval_table_processing_end:
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL()
+    TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \

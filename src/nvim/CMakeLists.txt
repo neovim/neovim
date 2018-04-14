@@ -13,6 +13,9 @@ endif()
 if(WIN32)
   # tell MinGW compiler to enable wmain
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreFoundation")
 endif()
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
@@ -86,6 +89,8 @@ foreach(subdir
         event
         eval
         lua
+        viml
+        viml/parser
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()
@@ -170,7 +175,7 @@ endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
-  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
@@ -182,6 +187,10 @@ get_directory_property(gen_includes INCLUDE_DIRECTORIES)
 foreach(gen_include ${gen_includes} ${LUA_PREFERRED_INCLUDE_DIRS})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_SYSROOT)
+  list(APPEND gen_cflags "-isysroot")
+  list(APPEND gen_cflags "${CMAKE_OSX_SYSROOT}")
+endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 separate_arguments(C_FLAGS_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS})
 separate_arguments(C_FLAGS_${build_type}_ARRAY UNIX_COMMAND ${CMAKE_C_FLAGS_${build_type}})
@@ -350,6 +359,10 @@ endforeach()
 
 # Our dependencies come first.
 
+if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  list(APPEND NVIM_LINK_LIBRARIES pthread c++abi)
+endif()
+
 if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
@@ -428,6 +441,7 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/xxd.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
@@ -446,6 +460,8 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)
+else()
+  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
 
 add_library(

@@ -68,7 +68,8 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
+
       varname='p_arshape',
       defaults={if_true={vi=true}}
     },
@@ -91,7 +92,7 @@ return {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -532,7 +533,7 @@ return {
       vi_def=true,
       vim=true,
       varname='p_csverbose',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='cursorbind', abbreviation='crb',
@@ -641,7 +642,7 @@ return {
       vim=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true={vi="", vim="lastline"}}
+      defaults={if_true={vi="", vim="lastline,msgsep"}}
     },
     {
       full_name='eadirection', abbreviation='ead',
@@ -661,7 +662,7 @@ return {
       full_name='emoji', abbreviation='emo',
       type='bool', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_emoji',
       defaults={if_true={vi=true}}
     },
@@ -811,7 +812,7 @@ return {
       vi_def=true,
       redraw={'all_windows'},
       varname='p_fcs',
-      defaults={if_true={vi="vert:|,fold:-"}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='fixendofline', abbreviation='fixeol',
@@ -1021,23 +1022,26 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifont',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontset', abbreviation='gfs',
       type='string', list='onecomma', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifontset',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontwide', abbreviation='gfw',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_guifontwide',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -1395,8 +1399,9 @@ return {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_linespace',
+      defaults={if_true={vi=0}}
     },
     {
       full_name='lisp',
@@ -1450,6 +1455,13 @@ return {
       vi_def=true,
       expand=true,
       varname='p_mef',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='makeencoding', abbreviation='menc',
+      type='string', scope={'global', 'buffer'},
+      vi_def=true,
+      varname='p_menc',
       defaults={if_true={vi=""}}
     },
     {
@@ -2036,7 +2048,7 @@ return {
       varname='p_shcf',
       defaults={
         condition='WIN32',
-        if_true={vi="/c"},
+        if_true={vi="/s /c"},
         if_false={vi="-c"}
       }
     },
@@ -2092,7 +2104,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxq',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="\""},
+        if_false={vi=""},
+      }
     },
     {
       full_name='shellxescape', abbreviation='sxe',
@@ -2164,7 +2180,7 @@ return {
       full_name='showtabline', abbreviation='stal',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'all_windows'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_stal',
       defaults={if_true={vi=1}}
     },
@@ -2173,7 +2189,7 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ss',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='sidescrolloff', abbreviation='siso',
@@ -2435,7 +2451,7 @@ return {
       full_name='termguicolors', abbreviation='tgc',
       type='bool', scope={'global'},
       vi_def=false,
-      redraw={'everything'},
+      redraw={'ui_option'},
       varname='p_tgc',
       defaults={if_true={vi=false}}
     },
@@ -2505,11 +2521,10 @@ return {
       full_name='titleold',
       type='string', scope={'global'},
       secure=true,
-      gettext=true,
       no_mkrc=true,
       vi_def=true,
       varname='p_titleold',
-      defaults={if_true={vi=N_("")}}
+      defaults={if_true={vi=""}}
     },
     {
       full_name='titlestring',

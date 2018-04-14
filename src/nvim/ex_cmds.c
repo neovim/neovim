@@ -1175,7 +1175,7 @@ static void do_filter(
   // to read the error messages. Otherwise errors are ignored, so you can see
   // the error messages from the command that appear on stdout; use 'u' to fix
   // the text.
-  // Pass on the kShellDoOut flag when the output is being redirected.
+  // Pass on the kShellOptDoOut flag when the output is being redirected.
   if (call_shell(
         cmd_buf,
         kShellOptFilter | shell_flags,
@@ -1417,7 +1417,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  xstrlcpy(buf, cmd, len);
+  xstrlcpy(buf, (char *)cmd, len);
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the
@@ -2013,9 +2013,10 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   } else
     other = (fnum != curbuf->b_fnum);
 
-  if (other)
-    ++no_wait_return;               /* don't wait for autowrite message */
-  if (other && !forceit && curbuf->b_nwindows == 1 && !P_HID(curbuf)
+  if (other) {
+    no_wait_return++;               // don't wait for autowrite message
+  }
+  if (other && !forceit && curbuf->b_nwindows == 1 && !buf_hide(curbuf)
       && curbufIsChanged() && autowrite(curbuf, forceit) == FAIL) {
     if (p_confirm && p_write)
       dialog_changed(curbuf, FALSE);
@@ -2032,17 +2033,19 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   if (setpm)
     setpcmark();
   if (!other) {
-    if (lnum != 0)
+    if (lnum != 0) {
       curwin->w_cursor.lnum = lnum;
+    }
     check_cursor_lnum();
     beginline(BL_SOL | BL_FIX);
-    retval = 0;         /* it's in the same file */
+    retval = 0;         // it's in the same file
   } else if (do_ecmd(fnum, ffname, sfname, NULL, lnum,
-                 (P_HID(curbuf) ? ECMD_HIDE : 0) + (forceit ? ECMD_FORCEIT : 0),
-                 curwin) == OK)
-    retval = -1;        /* opened another file */
-  else
-    retval = 1;         /* error encountered */
+                     (buf_hide(curbuf) ? ECMD_HIDE : 0)
+                     + (forceit ? ECMD_FORCEIT : 0), curwin) == OK) {
+    retval = -1;        // opened another file
+  } else {
+    retval = 1;         // error encountered
+  }
 
 theend:
   xfree(free_me);
@@ -3541,6 +3544,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
 
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
               curwin->w_cursor.col = regmatch.endpos[0].col - 1;
+              if (curwin->w_cursor.col < 0) {
+                curwin->w_cursor.col = 0;
+              }
               getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec);
               if (subflags.do_number || curwin->w_p_nu) {
                 int numw = number_width(curwin) + 1;
@@ -4617,18 +4623,20 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
                              "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-                             "[count]", "[quotex]", "[range]",
+                             "[count]", "[quotex]",
+                             "[range]", ":[range]",
                              "[pattern]", "\\|", "\\%$",
                              "s/\\~", "s/\\U", "s/\\L",
                              "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
   static char *(rtable[]) = {"star", "gstar", "[star", "]star",
                              "/star", "/\\\\star", "quotestar", "starstar",
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-                             "\\[count]", "\\[quotex]", "\\[range]",
+                             "\\[count]", "\\[quotex]",
+                             "\\[range]", ":\\[range]",
                              "\\[pattern]", "\\\\bar", "/\\\\%\\$",
                              "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
                              "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
@@ -4856,7 +4864,9 @@ void fix_help_buffer(void)
   char_u      *rt;
 
   // Set filetype to "help".
-  set_option_value("ft", 0L, "help", OPT_LOCAL);
+  if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+    set_option_value("ft", 0L, "help", OPT_LOCAL);
+  }
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
@@ -5818,7 +5828,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_line_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -5827,7 +5838,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_text_hl > 0) {
     msg_puts(" texthl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_text_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -6334,7 +6346,6 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 void ex_oldfiles(exarg_T *eap)
 {
   list_T      *l = get_vim_var_list(VV_OLDFILES);
-  listitem_T  *li;
   long nr = 0;
 
   if (l == NULL) {
@@ -6342,19 +6353,22 @@ void ex_oldfiles(exarg_T *eap)
   } else {
     msg_start();
     msg_scroll = true;
-    for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
+    TV_LIST_ITER(l, li, {
+      if (got_int) {
+        break;
+      }
       nr++;
-      const char *fname = tv_get_string(&li->li_tv);
+      const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
       if (!message_filtered((char_u *)fname)) {
         msg_outnum(nr);
         MSG_PUTS(": ");
-        msg_outtrans((char_u *)tv_get_string(&li->li_tv));
+        msg_outtrans((char_u *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');
         ui_flush();                  // output one line at a time
         os_breakcheck();
       }
-    }
+    });
 
     // Assume "got_int" was set to truncate the listing.
     got_int = false;
@@ -6364,7 +6378,7 @@ void ex_oldfiles(exarg_T *eap)
       quit_more = false;
       nr = prompt_for_number(false);
       msg_starthere();
-      if (nr > 0 && nr <= l->lv_len) {
+      if (nr > 0 && nr <= tv_list_len(l)) {
         const char *const p = tv_list_find_str(l, nr - 1);
         if (p == NULL) {
           return;

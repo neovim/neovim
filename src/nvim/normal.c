@@ -345,6 +345,7 @@ static const struct nv_cmd {
   { K_F8,      farsi_f8,       0,                      0 },
   { K_F9,      farsi_f9,       0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
+  { K_COMMAND, nv_colon,       0,                      0 },
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -1473,13 +1474,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           AppendToRedobuffLit(cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
-      } else if (cap->cmdchar == ':') {
-        /* do_cmdline() has stored the first typed line in
-         * "repeat_cmdline".  When several lines are typed repeating
-         * won't be possible. */
-        if (repeat_cmdline == NULL)
+      } else if (cap->cmdchar == ':' || cap->cmdchar == K_COMMAND) {
+        // do_cmdline() has stored the first typed line in
+        // "repeat_cmdline".  When several lines are typed repeating
+        // won't be possible.
+        if (repeat_cmdline == NULL) {
           ResetRedobuff();
-        else {
+        } else {
           AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
           xfree(repeat_cmdline);
@@ -1637,16 +1638,22 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         /* Prepare for redoing.  Only use the nchar field for "r",
          * otherwise it might be the second char of the operator. */
         if (cap->cmdchar == 'g' && (cap->nchar == 'n'
-                                    || cap->nchar == 'N'))
+                                    || cap->nchar == 'N')) {
           prep_redo(oap->regname, cap->count0,
-              get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
-              oap->motion_force, cap->cmdchar, cap->nchar);
-        else if (cap->cmdchar != ':')
-          prep_redo(oap->regname, 0L, NUL, 'v',
-              get_op_char(oap->op_type),
-              get_extra_op_char(oap->op_type),
-              oap->op_type == OP_REPLACE
-              ? cap->nchar : NUL);
+                    get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
+                    oap->motion_force, cap->cmdchar, cap->nchar);
+        } else if (cap->cmdchar != ':') {
+          int nchar = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
+
+          // reverse what nv_replace() did
+          if (nchar == REPLACE_CR_NCHAR) {
+            nchar = CAR;
+          } else if (nchar == REPLACE_NL_NCHAR) {
+            nchar = NL;
+          }
+          prep_redo(oap->regname, 0L, NUL, 'v', get_op_char(oap->op_type),
+                    get_extra_op_char(oap->op_type), nchar);
+        }
         if (!redo_VIsual_busy) {
           redo_VIsual_mode = resel_VIsual_mode;
           redo_VIsual_vcol = resel_VIsual_vcol;
@@ -4518,23 +4525,22 @@ static void nv_exmode(cmdarg_T *cap)
   }
 }
 
-/*
- * Handle a ":" command.
- */
+/// Handle a ":" command and <Cmd>.
 static void nv_colon(cmdarg_T *cap)
 {
   int old_p_im;
   bool cmd_result;
+  bool is_cmdkey = cap->cmdchar == K_COMMAND;
 
-  if (VIsual_active)
+  if (VIsual_active && !is_cmdkey) {
     nv_operator(cap);
-  else {
+  } else {
     if (cap->oap->op_type != OP_NOP) {
       // Using ":" as a movement is characterwise exclusive.
       cap->oap->motion_type = kMTCharWise;
       cap->oap->inclusive = false;
-    } else if (cap->count0) {
-      /* translate "count:" into ":.,.+(count - 1)" */
+    } else if (cap->count0 && !is_cmdkey) {
+      // translate "count:" into ":.,.+(count - 1)"
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
         stuffReadbuff(",.+");
@@ -4548,9 +4554,9 @@ static void nv_colon(cmdarg_T *cap)
 
     old_p_im = p_im;
 
-    /* get a command line and execute it */
-    cmd_result = do_cmdline(NULL, getexline, NULL,
-        cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+    // get a command line and execute it
+    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+                            cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
 
     /* If 'insertmode' changed, enter or exit Insert mode */
     if (p_im != old_p_im) {
@@ -5031,26 +5037,21 @@ static void nv_right(cmdarg_T *cap)
     if ((!PAST_LINE && oneright() == false)
         || (PAST_LINE && *get_cursor_pos_ptr() == NUL)
         ) {
-      /*
-       *	  <Space> wraps to next line if 'whichwrap' has 's'.
-       *	      'l' wraps to next line if 'whichwrap' has 'l'.
-       * CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
-       */
-      if (       ((cap->cmdchar == ' '
-                   && vim_strchr(p_ww, 's') != NULL)
-                  || (cap->cmdchar == 'l'
-                      && vim_strchr(p_ww, 'l') != NULL)
-                  || (cap->cmdchar == K_RIGHT
-                      && vim_strchr(p_ww, '>') != NULL))
-                 && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-        /* When deleting we also count the NL as a character.
-         * Set cap->oap->inclusive when last char in the line is
-         * included, move to next line after that */
-        if (       cap->oap->op_type != OP_NOP
-                   && !cap->oap->inclusive
-                   && !lineempty(curwin->w_cursor.lnum))
+      //          <Space> wraps to next line if 'whichwrap' has 's'.
+      //              'l' wraps to next line if 'whichwrap' has 'l'.
+      // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
+      if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
+           || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
+           || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
+          && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+        // When deleting we also count the NL as a character.
+        // Set cap->oap->inclusive when last char in the line is
+        // included, move to next line after that
+        if (cap->oap->op_type != OP_NOP
+            && !cap->oap->inclusive
+            && !LINEEMPTY(curwin->w_cursor.lnum)) {
           cap->oap->inclusive = true;
-        else {
+        } else {
           ++curwin->w_cursor.lnum;
           curwin->w_cursor.col = 0;
           curwin->w_cursor.coladd = 0;
@@ -5060,12 +5061,14 @@ static void nv_right(cmdarg_T *cap)
         continue;
       }
       if (cap->oap->op_type == OP_NOP) {
-        /* Only beep and flush if not moved at all */
-        if (n == cap->count1)
+        // Only beep and flush if not moved at all
+        if (n == cap->count1) {
           beep_flush();
+        }
       } else {
-        if (!lineempty(curwin->w_cursor.lnum))
+        if (!LINEEMPTY(curwin->w_cursor.lnum)) {
           cap->oap->inclusive = true;
+        }
       }
       break;
     } else if (PAST_LINE) {
@@ -5123,13 +5126,12 @@ static void nv_left(cmdarg_T *cap)
         coladvance((colnr_T)MAXCOL);
         curwin->w_set_curswant = true;
 
-        /* When the NL before the first char has to be deleted we
-         * put the cursor on the NUL after the previous line.
-         * This is a very special case, be careful!
-         * Don't adjust op_end now, otherwise it won't work. */
-        if (       (cap->oap->op_type == OP_DELETE
-                    || cap->oap->op_type == OP_CHANGE)
-                   && !lineempty(curwin->w_cursor.lnum)) {
+        // When the NL before the first char has to be deleted we
+        // put the cursor on the NUL after the previous line.
+        // This is a very special case, be careful!
+        // Don't adjust op_end now, otherwise it won't work.
+        if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
+            && !LINEEMPTY(curwin->w_cursor.lnum)) {
           char_u *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
@@ -5228,12 +5230,12 @@ static void nv_gotofile(cmdarg_T *cap)
 
   if (ptr != NULL) {
     // do autowrite if necessary
-    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf)) {
+    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !buf_hide(curbuf)) {
       (void)autowrite(curbuf, false);
     }
     setpcmark();
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
-        P_HID(curbuf) ? ECMD_HIDE : 0, curwin);
+                  buf_hide(curbuf) ? ECMD_HIDE : 0, curwin);
     if (cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;
       check_cursor_lnum();
@@ -5687,6 +5689,8 @@ static void nv_brackets(cmdarg_T *cap)
                         cap->nchar == 's', false, NULL) == 0) {
         clearopbeep(cap->oap);
         break;
+      } else {
+        curwin->w_set_curswant = true;
       }
     if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
       foldOpenCursor();
@@ -5856,10 +5860,13 @@ static void nv_replace(cmdarg_T *cap)
     if (got_int)
       reset_VIsual();
     if (had_ctrl_v) {
-      if (cap->nchar == '\r')
-        cap->nchar = -1;
-      else if (cap->nchar == '\n')
-        cap->nchar = -2;
+      // Use a special (negative) number to make a difference between a
+      // literal CR or NL and a line break.
+      if (cap->nchar == CAR) {
+        cap->nchar = REPLACE_CR_NCHAR;
+      } else if (cap->nchar == NL) {
+        cap->nchar = REPLACE_NL_NCHAR;
+      }
     }
     nv_operator(cap);
     return;
@@ -6096,10 +6103,11 @@ static void n_swapchar(cmdarg_T *cap)
   pos_T startpos;
   int did_change = 0;
 
-  if (checkclearopq(cap->oap))
+  if (checkclearopq(cap->oap)) {
     return;
+  }
 
-  if (lineempty(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
+  if (LINEEMPTY(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
     clearopbeep(cap->oap);
     return;
   }

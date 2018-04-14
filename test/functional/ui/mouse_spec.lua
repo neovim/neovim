@@ -3,8 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
-
-if helpers.pending_win32(pending) then return end
+local command = helpers.command
 
 describe('ui/mouse/input', function()
   local screen
@@ -27,6 +26,7 @@ describe('ui/mouse/input', function()
       [4] = {reverse = true},
       [5] = {bold = true, reverse = true},
     })
+    command("set display-=msgsep")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
     screen:expect([[
       testing                  |
@@ -639,12 +639,12 @@ describe('ui/mouse/input', function()
     screen:try_resize(53, 14)
     feed_command('sp', 'vsp')
     screen:expect([[
-      lines                     {4:|}lines                     |
-      to                        {4:|}to                        |
-      test                      {4:|}test                      |
-      mouse scrolling           {4:|}mouse scrolling           |
-      ^                          {4:|}                          |
-      {0:~                         }{4:|}{0:~                         }|
+      lines                     {4:│}lines                     |
+      to                        {4:│}to                        |
+      test                      {4:│}test                      |
+      mouse scrolling           {4:│}mouse scrolling           |
+      ^                          {4:│}                          |
+      {0:~                         }{4:│}{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -656,12 +656,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelDown><0,0>')
     screen:expect([[
-      mouse scrolling           {4:|}lines                     |
-      ^                          {4:|}to                        |
-      {0:~                         }{4:|}test                      |
-      {0:~                         }{4:|}mouse scrolling           |
-      {0:~                         }{4:|}                          |
-      {0:~                         }{4:|}{0:~                         }|
+      mouse scrolling           {4:│}lines                     |
+      ^                          {4:│}to                        |
+      {0:~                         }{4:│}test                      |
+      {0:~                         }{4:│}mouse scrolling           |
+      {0:~                         }{4:│}                          |
+      {0:~                         }{4:│}{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -673,12 +673,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelUp><27,0>')
     screen:expect([[
-      mouse scrolling           {4:|}text                      |
-      ^                          {4:|}with                      |
-      {0:~                         }{4:|}many                      |
-      {0:~                         }{4:|}lines                     |
-      {0:~                         }{4:|}to                        |
-      {0:~                         }{4:|}test                      |
+      mouse scrolling           {4:│}text                      |
+      ^                          {4:│}with                      |
+      {0:~                         }{4:│}many                      |
+      {0:~                         }{4:│}lines                     |
+      {0:~                         }{4:│}to                        |
+      {0:~                         }{4:│}test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -690,12 +690,12 @@ describe('ui/mouse/input', function()
     ]])
     feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     screen:expect([[
-      mouse scrolling           {4:|}text                      |
-      ^                          {4:|}with                      |
-      {0:~                         }{4:|}many                      |
-      {0:~                         }{4:|}lines                     |
-      {0:~                         }{4:|}to                        |
-      {0:~                         }{4:|}test                      |
+      mouse scrolling           {4:│}text                      |
+      ^                          {4:│}with                      |
+      {0:~                         }{4:│}many                      |
+      {0:~                         }{4:│}lines                     |
+      {0:~                         }{4:│}to                        |
+      {0:~                         }{4:│}test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
@@ -708,6 +708,7 @@ describe('ui/mouse/input', function()
   end)
 
   it('horizontal scrolling', function()
+    command('set sidescroll=0')
     feed("<esc>:set nowrap<cr>")
 
     feed("a <esc>20Ab<esc>")
@@ -752,17 +753,19 @@ describe('ui/mouse/input', function()
 
       feed_command('set concealcursor=n')
       feed_command('set nowrap')
-      feed_command('syntax match NonText "\\<amet\\>" conceal')
-      feed_command('syntax match NonText "\\cs\\|g." conceal cchar=X')
-      feed_command('syntax match NonText "\\%(lo\\|cl\\)." conceal')
-      feed_command('syntax match NonText "Lo" conceal cchar=Y')
+      feed_command('set shiftwidth=2 tabstop=4 list listchars=tab:>-')
+      feed_command('syntax match NonText "\\*" conceal')
+      feed_command('syntax match NonText "cats" conceal cchar=X')
+      feed_command('syntax match NonText "x" conceal cchar=>')
 
+      -- First column is there to retain the tabs.
       insert([[
-      Lorem ipsum dolor sit amet, consetetur sadipscing elitr.
-      Stet clita kasd gubergren, no sea takimata sanctus est.
+      |Section				*t1*
+      |			  *t2* *t3* *t4*
+      |x 私は猫が大好き	*cats* ✨🐈✨
       ]])
 
-      feed('gg')
+      feed('gg<c-v>Gxgg')
     end)
 
     it('(level 1) click on non-wrapped lines', function()
@@ -770,10 +773,10 @@ describe('ui/mouse/input', function()
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
-        {c:^Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
+        ^Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -781,82 +784,127 @@ describe('ui/mouse/input', function()
 
       feed('<esc><LeftMouse><1,0>')
       screen:expect([[
-        {c:Y}^rem ip{c:X}um do{c: } {c:X}it {c: }, con|
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
+        S^ection{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-                                 |
-      ]])
-
-      feed('<esc><LeftMouse><15,0>')
-      screen:expect([[
-        {c:Y}rem ip{c:X}um do{c: } {c:^X}it {c: }, con|
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en, no|
-                                 |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><21,0>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }, con|
-        {c:X}tet {c: }ta ka{c:X}d {c:X}^ber{c:X}en, no|
+        Section{0:>>--->--->---}{c: }^t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
+
+      feed('<esc><LeftMouse><21,1>')
+      screen:expect([[
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t^3{c: } {c: }|
+        {c:>} 私は猫が大好き{0:>---}{c: X } {0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><0,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:^>} 私は猫が大好き{0:>---}{c: X } {0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><7,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:>} 私は^猫が大好き{0:>---}{c: X } {0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><21,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        {c:>} 私は猫が大好き{0:>---}{c: ^X } {0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
     end) -- level 1 - non wrapped
 
     it('(level 1) click on wrapped lines', function()
       feed_command('let &conceallevel=1', 'let &wrap=1', 'echo')
 
-      feed('<esc><LeftMouse><0,0>')
+      feed('<esc><LeftMouse><24,1>')
       screen:expect([[
-        {c:^Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
-        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c:^ }|
+        t4{c: }                      |
+        {c:>} 私は猫が大好き{0:>---}{c: X}   |
+        {c: } ✨🐈✨                 |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><6,1>')
+      feed('<esc><LeftMouse><0,2>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
-        , con{c:X}^etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        ^t4{c: }                      |
+        {c:>} 私は猫が大好き{0:>---}{c: X}   |
+        {c: } ✨🐈✨                 |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><8,3>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
-        , con{c:X}etetur {c:X}a^dip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet {c: }ta ka{c:X}d {c:X}ber{c:X}en    |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        t4{c: }                      |
+        {c:>} 私は猫^が大好き{0:>---}{c: X}   |
+        {c: } ✨🐈✨                 |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,3>')
+      feed('<esc><LeftMouse><21,3>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do{c: } {c:X}it {c: }     |
-        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet {c: }ta ka{c:X}d {c:X}^ber{c:X}en    |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        t4{c: }                      |
+        {c:>} 私は猫が大好き{0:>---}{c: ^X}   |
+        {c: } ✨🐈✨                 |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><4,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}{c: }t1{c: } |
+        {0:>--->--->---}  {c: }t2{c: } {c: }t3{c: } {c: }|
+        t4{c: }                      |
+        {c:>} 私は猫が大好き{0:>---}{c: X}   |
+        {c: } ✨^🐈✨                 |
+                                 |
                                  |
       ]])
     end) -- level 1 - wrapped
@@ -865,45 +913,67 @@ describe('ui/mouse/input', function()
     it('(level 2) click on non-wrapped lines', function()
       feed_command('let &conceallevel=2', 'echo')
 
-      feed('<esc><LeftMouse><0,0>')
+      feed('<esc><LeftMouse><20,0>')
       screen:expect([[
-        {c:^Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+        Section{0:>>--->--->---}^t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><1,0>')
+      feed('<esc><LeftMouse><14,1>')
       screen:expect([[
-        {c:Y}^rem ip{c:X}um do {c:X}it , con{c:X}e|
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  ^t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,0>')
+      feed('<esc><LeftMouse><18,1>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do {c:X}^it , con{c:X}e|
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en, no |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t^3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><0,2>')  -- Weirdness
       screen:expect([[
-        {c:Y}rem ip{c:X}um do {c:X}it , con{c:X}e|
-        {c:X}tet ta ka{c:X}d {c:X}b^er{c:X}en, no |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:^>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
                                  |
         {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><8,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫^が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><20,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:^X} ✨{0:>}|
+                                 |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -913,47 +983,108 @@ describe('ui/mouse/input', function()
     it('(level 2) click on wrapped lines', function()
       feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
 
-      feed('<esc><LeftMouse><0,0>')
+      feed('<esc><LeftMouse><20,0>')
       screen:expect([[
-        {c:^Y}rem ip{c:X}um do {c:X}it        |
-        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}^t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><6,1>')
+      feed('<esc><LeftMouse><14,1>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do {c:X}it        |
-        , con{c:X}^etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  ^t2 t3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><18,1>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do {c:X}it        |
-        , con{c:X}etetur {c:X}a^dip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet ta ka{c:X}d {c:X}ber{c:X}en     |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t^3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,3>')
+      -- NOTE: The click would ideally be on the 't' in 't4', but wrapping
+      -- caused the invisible '*' right before 't4' to remain on the previous
+      -- screen line.  This is being treated as expected because fixing this is
+      -- out of scope for mouse clicks.  Should the wrapping behavior of
+      -- concealed characters change in the future, this case should be
+      -- reevaluated.
+      feed('<esc><LeftMouse><0,2>')
       screen:expect([[
-        {c:Y}rem ip{c:X}um do {c:X}it        |
-        , con{c:X}etetur {c:X}adip{c:X}cin{c:X}  |
-        elitr.                   |
-        {c:X}tet ta ka{c:X}d {c:X}b^er{c:X}en     |
-        , no {c:X}ea takimata {c:X}anctu{c:X}|
-         e{c:X}t.                    |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 ^     |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><1,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t^4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><0,3>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        {c:^>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><20,3>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:^X}    |
+         ✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><1,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ^✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><5,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        {c:>} 私は猫が大好き{0:>---}{c:X}    |
+         ✨🐈^✨                  |
+                                 |
                                  |
       ]])
     end) -- level 2 - wrapped
@@ -962,45 +1093,45 @@ describe('ui/mouse/input', function()
     it('(level 3) click on non-wrapped lines', function()
       feed_command('let &conceallevel=3', 'echo')
 
-      feed('<esc><LeftMouse><0,0>')
+      feed('<esc><LeftMouse><0,2>')
       screen:expect([[
-        ^rem ipum do it , conetetu|
-        tet ta kad beren, no ea t|
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        ^ 私は猫が大好き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><1,0>')
+      feed('<esc><LeftMouse><1,2>')
       screen:expect([[
-        r^em ipum do it , conetetu|
-        tet ta kad beren, no ea t|
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+         ^私は猫が大好き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,0>')
+      feed('<esc><LeftMouse><13,2>')
       screen:expect([[
-        rem ipum do it ^, conetetu|
-        tet ta kad beren, no ea t|
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+         私は猫が大好^き{0:>----} ✨🐈|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><20,2>')
       screen:expect([[
-        rem ipum do it , conetetu|
-        tet ta kad bere^n, no ea t|
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+         私は猫が大好き{0:>----}^ ✨🐈|
                                  |
-        {0:~                        }|
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -1010,49 +1141,94 @@ describe('ui/mouse/input', function()
     it('(level 3) click on wrapped lines', function()
       feed_command('let &conceallevel=3', 'let &wrap=1', 'echo')
 
-      feed('<esc><LeftMouse><0,0>')
+      feed('<esc><LeftMouse><14,1>')
       screen:expect([[
-        ^rem ipum do it           |
-        , conetetur adipcin      |
-        elitr.                   |
-        tet ta kad beren         |
-        , no ea takimata anctu   |
-         et.                     |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  ^t2 t3      |
+        t4                       |
+         私は猫が大好き{0:>----}     |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><6,1>')
+      feed('<esc><LeftMouse><18,1>')
       screen:expect([[
-        rem ipum do it           |
-        , cone^tetur adipcin      |
-        elitr.                   |
-        tet ta kad beren         |
-        , no ea takimata anctu   |
-         et.                     |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t^3      |
+        t4                       |
+         私は猫が大好き{0:>----}     |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,1>')
+      feed('<esc><LeftMouse><1,2>')
       screen:expect([[
-        rem ipum do it           |
-        , conetetur adi^pcin      |
-        elitr.                   |
-        tet ta kad beren         |
-        , no ea takimata anctu   |
-         et.                     |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t^4                       |
+         私は猫が大好き{0:>----}     |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
 
-      feed('<esc><LeftMouse><15,3>')
+      feed('<esc><LeftMouse><0,3>')
       screen:expect([[
-        rem ipum do it           |
-        , conetetur adipcin      |
-        elitr.                   |
-        tet ta kad bere^n         |
-        , no ea takimata anctu   |
-         et.                     |
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+        ^ 私は猫が大好き{0:>----}     |
+         ✨🐈✨                  |
+                                 |
                                  |
       ]])
+
+      feed('<esc><LeftMouse><20,3>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+         私は猫が大好き{0:>----}^     |
+         ✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><1,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+         私は猫が大好き{0:>----}     |
+         ^✨🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><3,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+         私は猫が大好き{0:>----}     |
+         ✨^🐈✨                  |
+                                 |
+                                 |
+      ]])
+
+      feed('<esc><LeftMouse><5,4>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3      |
+        t4                       |
+         私は猫が大好き{0:>----}     |
+         ✨🐈^✨                  |
+                                 |
+                                 |
+      ]])
+
     end) -- level 3 - wrapped
   end)
 end)

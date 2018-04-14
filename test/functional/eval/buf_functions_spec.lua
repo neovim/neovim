@@ -14,6 +14,7 @@ local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
 local curtabmeths = helpers.curtabmeths
 local get_pathsep = helpers.get_pathsep
+local rmdir = helpers.rmdir
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -61,7 +62,7 @@ describe('bufname() function', function()
     lfs.mkdir(dirname)
   end)
   after_each(function()
-    lfs.rmdir(dirname)
+    rmdir(dirname)
   end)
   it('returns expected buffer name', function()
     eq('', funcs.bufname('%'))  -- Buffer has no name yet
@@ -143,7 +144,7 @@ describe('bufwinnr() function', function()
     lfs.mkdir(dirname)
   end)
   after_each(function()
-    lfs.rmdir(dirname)
+    rmdir(dirname)
   end)
   it('returns expected window number', function()
     eq(1, funcs.bufwinnr('%'))

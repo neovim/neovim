@@ -1,5 +1,6 @@
 " Tests for editing the command line.
 
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")
@@ -25,8 +26,62 @@ func Test_complete_wildmenu()
   set nowildmenu
 endfunc
 
+func Test_map_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  call feedkeys(":map <unique> <si\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <unique> <silent>', getreg(':'))
+  call feedkeys(":map <script> <un\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <script> <unique>', getreg(':'))
+  call feedkeys(":map <expr> <sc\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <expr> <script>', getreg(':'))
+  call feedkeys(":map <buffer> <e\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <buffer> <expr>', getreg(':'))
+  call feedkeys(":map <nowait> <b\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <nowait> <buffer>', getreg(':'))
+  call feedkeys(":map <special> <no\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <special> <nowait>', getreg(':'))
+  call feedkeys(":map <silent> <sp\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <silent> <special>', getreg(':'))
+endfunc
+
+func Test_match_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  hi Aardig ctermfg=green
+  call feedkeys(":match \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"match Aardig', getreg(':'))
+  call feedkeys(":match \<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"match none', getreg(':'))
+endfunc
+
+func Test_highlight_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  hi Aardig ctermfg=green
+  call feedkeys(":hi \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi Aardig', getreg(':'))
+  call feedkeys(":hi li\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi link', getreg(':'))
+  call feedkeys(":hi d\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi default', getreg(':'))
+  call feedkeys(":hi c\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi clear', getreg(':'))
+
+  " A cleared group does not show up in completions.
+  hi Anders ctermfg=green
+  call assert_equal(['Aardig', 'Anders'], getcompletion('A', 'highlight'))
+  hi clear Aardig
+  call assert_equal(['Anders'], getcompletion('A', 'highlight'))
+  hi clear Anders
+  call assert_equal([], getcompletion('A', 'highlight'))
+endfunc
+
 func Test_expr_completion()
-  if !(has('cmdline_compl') && has('eval'))
+  if !has('cmdline_compl')
     return
   endif
   for cmd in [
@@ -265,17 +320,17 @@ func Test_paste_in_cmdline()
 endfunc
 
 func Test_remove_char_in_cmdline()
-    call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abc ef', @:)
+  call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abc ef', @:)
 
-    call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abcdef', @:)
+  call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abcdef', @:)
 
-    call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abc ghi', @:)
+  call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abc ghi', @:)
 
-    call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"def', @:)
+  call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"def', @:)
 endfunc
 
 func Test_illegal_address1()
@@ -328,6 +383,38 @@ func Test_cmdline_search_range()
   call assert_equal('B', getline(2))
 
   bwipe!
+endfunc
+
+" Tests for getcmdline(), getcmdpos() and getcmdtype()
+func Check_cmdline(cmdtype)
+  call assert_equal('MyCmd a', getcmdline())
+  call assert_equal(8, getcmdpos())
+  call assert_equal(a:cmdtype, getcmdtype())
+  return ''
+endfunc
+
+func Test_getcmdtype()
+  call feedkeys(":MyCmd a\<C-R>=Check_cmdline(':')\<CR>\<Esc>", "xt")
+
+  let cmdtype = ''
+  debuggreedy
+  call feedkeys(":debug echo 'test'\<CR>", "t")
+  call feedkeys("let cmdtype = \<C-R>=string(getcmdtype())\<CR>\<CR>", "t")
+  call feedkeys("cont\<CR>", "xt")
+  0debuggreedy
+  call assert_equal('>', cmdtype)
+
+  call feedkeys("/MyCmd a\<C-R>=Check_cmdline('/')\<CR>\<Esc>", "xt")
+  call feedkeys("?MyCmd a\<C-R>=Check_cmdline('?')\<CR>\<Esc>", "xt")
+
+  call feedkeys(":call input('Answer?')\<CR>", "t")
+  call feedkeys("MyCmd a\<C-R>=Check_cmdline('@')\<CR>\<C-C>", "xt")
+
+  call feedkeys(":insert\<CR>MyCmd a\<C-R>=Check_cmdline('-')\<CR>\<Esc>", "xt")
+
+  cnoremap <expr> <F6> Check_cmdline('=')
+  call feedkeys("a\<C-R>=MyCmd a\<F6>\<Esc>\<Esc>", "xt")
+  cunmap <F6>
 endfunc
 
 set cpo&

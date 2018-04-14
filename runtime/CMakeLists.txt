@@ -42,6 +42,7 @@ foreach(PACKAGE ${PACKAGES})
         nvim
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
+    add_dependencies(${PACKNAME}-tags nvim_runtime_deps)
 
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       DEPENDS
@@ -71,7 +72,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_target(helptags
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${GENERATED_RUNTIME_DIR}/doc
+  COMMAND ${CMAKE_COMMAND} -E remove ${GENERATED_RUNTIME_DIR}/doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
@@ -80,6 +81,7 @@ add_custom_target(helptags
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
+add_dependencies(helptags nvim_runtime_deps)
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   DEPENDS
@@ -138,7 +140,7 @@ endforeach()
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   rgb.txt
-  *.vim *.dict *.py *.rb *.ps *.tutor)
+  *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)

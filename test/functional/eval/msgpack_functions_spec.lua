@@ -463,7 +463,8 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd)  -- do it again (try to force segfault)
     local api_info = eval(cmd)  -- do it again
-    eq({'error_types', 'functions', 'types', 'ui_events', 'version'}, api_info)
+    eq({'error_types', 'functions', 'types',
+        'ui_events', 'ui_options', 'version'}, api_info)
   end)
 
   it('fails when called with no arguments', function()
@@ -628,7 +629,7 @@ describe('msgpackdump() function', function()
   it('fails to dump a recursive (key) map in a special dict', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('call add(todump._VAL, [todump, 0])')
-    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 1',
+    eq('Vim(call):E5005: Unable to dump msgpackdump() argument, index 0: container references itself in index 0',
        exc_exec('call msgpackdump([todump])'))
   end)
 

@@ -7,23 +7,13 @@ local command = helpers.command
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
+local insert = helpers.insert
 local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 
-local function init_session(...)
-  local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
-                 '--cmd', helpers.nvim_set }
-  for _, v in ipairs({...}) do
-    table.insert(args, v)
-  end
-  helpers.set_session(helpers.spawn(args))
-end
-
 describe('startup defaults', function()
   describe(':filetype', function()
-    if helpers.pending_win32(pending) then return end
-
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)
       screen:attach()
@@ -36,50 +26,70 @@ describe('startup defaults', function()
       )
     end
 
-    it('enabled by `-u NORC`', function()
-      init_session('-u', 'NORC')
+    it('all ON after `-u NORC`', function()
+      clear('-u', 'NORC')
       expect_filetype(
         'filetype detection:ON  plugin:ON  indent:ON       |')
     end)
 
-    it('disabled by `-u NONE`', function()
-      init_session('-u', 'NONE')
+    it('all ON after `:syntax …` #7765', function()
+      clear('-u', 'NORC', '--cmd', 'syntax on')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:ON       |')
+      clear('-u', 'NORC', '--cmd', 'syntax off')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:ON       |')
+    end)
+
+    it('all OFF after `-u NONE`', function()
+      clear('-u', 'NONE')
       expect_filetype(
         'filetype detection:OFF  plugin:OFF  indent:OFF    |')
     end)
 
-    it('overridden by early `filetype on`', function()
-      init_session('-u', 'NORC', '--cmd', 'filetype on')
+    it('explicit OFF stays OFF', function()
+      clear('-u', 'NORC', '--cmd',
+            'syntax off | filetype off | filetype plugin indent off')
+      expect_filetype(
+        'filetype detection:OFF  plugin:OFF  indent:OFF    |')
+      clear('-u', 'NORC', '--cmd', 'syntax off | filetype plugin indent off')
       expect_filetype(
         'filetype detection:ON  plugin:OFF  indent:OFF     |')
-    end)
-
-    it('overridden by early `filetype plugin on`', function()
-      init_session('-u', 'NORC', '--cmd', 'filetype plugin on')
+      clear('-u', 'NORC', '--cmd', 'filetype indent off')
       expect_filetype(
         'filetype detection:ON  plugin:ON  indent:OFF      |')
-    end)
-
-    it('overridden by early `filetype indent on`', function()
-      init_session('-u', 'NORC', '--cmd', 'filetype indent on')
+      clear('-u', 'NORC', '--cmd', 'syntax off | filetype off')
       expect_filetype(
-        'filetype detection:ON  plugin:OFF  indent:ON      |')
-    end)
-
-    it('adjusted by late `filetype off`', function()
-      init_session('-u', 'NORC', '-c', 'filetype off')
+        'filetype detection:OFF  plugin:(on)  indent:(on)  |')
+      -- Swap the order.
+      clear('-u', 'NORC', '--cmd', 'filetype off | syntax off')
       expect_filetype(
         'filetype detection:OFF  plugin:(on)  indent:(on)  |')
     end)
 
-    it('adjusted by late `filetype plugin off`', function()
-      init_session('-u', 'NORC', '-c', 'filetype plugin off')
+    it('all ON after early `:filetype … on`', function()
+      -- `:filetype … on` should not change the defaults. #7765
+      -- Only an explicit `:filetype … off` sets OFF.
+
+      clear('-u', 'NORC', '--cmd', 'filetype on')
       expect_filetype(
-        'filetype detection:ON  plugin:OFF  indent:ON      |')
+        'filetype detection:ON  plugin:ON  indent:ON       |')
+      clear('-u', 'NORC', '--cmd', 'filetype plugin on')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:ON       |')
+      clear('-u', 'NORC', '--cmd', 'filetype indent on')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:ON       |')
     end)
 
-    it('adjusted by late `filetype indent off`', function()
-      init_session('-u', 'NORC', '-c', 'filetype indent off')
+    it('late `:filetype … off` stays OFF', function()
+      clear('-u', 'NORC', '-c', 'filetype off')
+      expect_filetype(
+        'filetype detection:OFF  plugin:(on)  indent:(on)  |')
+      clear('-u', 'NORC', '-c', 'filetype plugin off')
+      expect_filetype(
+        'filetype detection:ON  plugin:OFF  indent:ON      |')
+      clear('-u', 'NORC', '-c', 'filetype indent off')
       expect_filetype(
         'filetype detection:ON  plugin:ON  indent:OFF      |')
     end)
@@ -87,27 +97,59 @@ describe('startup defaults', function()
 
   describe('syntax', function()
     it('enabled by `-u NORC`', function()
-      init_session('-u', 'NORC')
+      clear('-u', 'NORC')
       eq(1, eval('g:syntax_on'))
     end)
 
     it('disabled by `-u NONE`', function()
-      init_session('-u', 'NONE')
+      clear('-u', 'NONE')
       eq(0, eval('exists("g:syntax_on")'))
     end)
 
-    it('overridden by early `syntax off`', function()
-      init_session('-u', 'NORC', '--cmd', 'syntax off')
+    it('`:syntax off` stays off', function()
+      -- early
+      clear('-u', 'NORC', '--cmd', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
-    end)
-
-    it('adjusted by late `syntax off`', function()
-      init_session('-u', 'NORC', '-c', 'syntax off')
+      -- late
+      clear('-u', 'NORC', '-c', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
     end)
   end)
 
-  describe('packpath', function()
+  describe("'fillchars'", function()
+    it('vert/fold flags', function()
+      clear()
+      local screen = Screen.new(50, 5)
+      screen:attach()
+      command('set laststatus=0')
+      insert([[
+        1
+        2
+        3
+        4]])
+      command('normal! ggjzfj')
+      command('vsp')
+      screen:expect([[
+        1                        │1                       |
+        ^+--  2 lines: 2··········│+--  2 lines: 2·········|
+        4                        │4                       |
+        ~                        │~                       |
+                                                          |
+      ]])
+
+      -- ambiwidth=double defaults to single-byte fillchars.
+      command('set ambiwidth=double')
+      screen:expect([[
+        1                        |1                       |
+        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        4                        |4                       |
+        ~                        |~                       |
+                                                          |
+      ]])
+    end)
+  end)
+
+  describe("'packpath'", function()
     it('defaults to &runtimepath', function()
       eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
     end)

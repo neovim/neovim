@@ -1,10 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
-local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
+local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
+local command = helpers.command
 local expect = helpers.expect
+local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
-
-if helpers.pending_win32(pending) then return end
 
 describe('mappings', function()
   local cid
@@ -17,7 +17,7 @@ describe('mappings', function()
 
   local check_mapping = function(mapping, expected)
     feed(mapping)
-    eq({'notification', 'mapped', {expected}}, next_message())
+    eq({'notification', 'mapped', {expected}}, next_msg())
   end
 
   before_each(function()
@@ -124,5 +124,99 @@ describe('input utf sequences that contain CSI/K_SPECIAL', function()
   it('ok', function()
     feed('i…<esc>')
     expect('…')
+  end)
+end)
+
+describe('input non-printable chars', function()
+  after_each(function()
+    os.remove('Xtest-overwrite')
+  end)
+
+  it("doesn't crash when echoing them back", function()
+    write_file("Xtest-overwrite", [[foobar]])
+    clear()
+    local screen = Screen.new(60,8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
+    })
+    screen:attach()
+    command("set display-=msgsep")
+
+    feed_command("e Xtest-overwrite")
+    screen:expect([[
+      ^foobar                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      "Xtest-overwrite" [noeol] 1L, 6C                            |
+    ]])
+
+    -- The timestamp is in second resolution, wait two seconds to be sure.
+    screen:sleep(2000)
+    write_file("Xtest-overwrite", [[smurf]])
+    feed_command("w")
+    screen:expect([[
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      "Xtest-overwrite"                                           |
+      {2:WARNING: The file has been changed since reading it!!!}      |
+      {3:Do you really want to write to it (y/n)?}^                    |
+    ]])
+
+    feed("u")
+    screen:expect([[
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      "Xtest-overwrite"                                           |
+      {2:WARNING: The file has been changed since reading it!!!}      |
+      {3:Do you really want to write to it (y/n)?}u                   |
+      {3:Do you really want to write to it (y/n)?}^                    |
+    ]])
+
+    feed("\005")
+    screen:expect([[
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      "Xtest-overwrite"                                           |
+      {2:WARNING: The file has been changed since reading it!!!}      |
+      {3:Do you really want to write to it (y/n)?}u                   |
+      {3:Do you really want to write to it (y/n)?}                    |
+      {3:Do you really want to write to it (y/n)?}^                    |
+    ]])
+
+    feed("n")
+    screen:expect([[
+      {1:~                                                           }|
+      {1:~                                                           }|
+      "Xtest-overwrite"                                           |
+      {2:WARNING: The file has been changed since reading it!!!}      |
+      {3:Do you really want to write to it (y/n)?}u                   |
+      {3:Do you really want to write to it (y/n)?}                    |
+      {3:Do you really want to write to it (y/n)?}n                   |
+      {3:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed("<cr>")
+    screen:expect([[
+      ^foobar                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]])
   end)
 end)
