@@ -111,6 +111,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   proc->internal_close_cb = decref;
   proc->refcount++;
   kl_push(WatcherPtr, proc->loop->children, proc);
+  DLOG("new: pid=%d argv=[%s]", proc->pid, *proc->argv);
   return 0;
 }
 
@@ -227,11 +228,10 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       abort();
   }
 
-  Loop *loop = proc->loop;
-  // Start a timer to periodically check if a signal should be sent to the job.
+  // Start a timer to verify that the job process terminated.
   ILOG("starting job kill timer");
-  uv_timer_start(&loop->children_kill_timer, children_kill_cb,
-                 KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
+  uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
+                 KILL_TIMEOUT_MS, 0);
 }
 
 /// Sends SIGKILL (or SIGTERM for PTY jobs) to processes that didn't terminate
@@ -380,12 +380,8 @@ static void process_close_handles(void **argv)
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
-  ILOG("exited: pid=%d status=%d stoptime=%" PRId64, proc->pid,
-       proc->status, proc->stopped_time);
-  if (proc->stopped_time) {
-    ILOG("stopping process kill timer");
-    uv_timer_stop(&loop->children_kill_timer);
-  }
+  ILOG("exited: pid=%d status=%d stoptime=%" PRIu64, proc->pid, proc->status,
+       proc->stopped_time);
 
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
