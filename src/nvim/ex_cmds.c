@@ -169,12 +169,9 @@ void do_ascii(exarg_T *eap)
     if (len > 0)
       IObuff[len++] = ' ';
     IObuff[len++] = '<';
-    if (l_enc_utf8 && utf_iscomposing(c)
-# ifdef USE_GUI
-        && !gui.in_use
-# endif
-        )
-      IObuff[len++] = ' ';       /* draw composing char on top of a space */
+    if (l_enc_utf8 && utf_iscomposing(c)) {
+      IObuff[len++] = ' ';  // Draw composing char on top of a space.
+    }
     len += (*mb_char2bytes)(c, IObuff + len);
     vim_snprintf((char *)IObuff + len, IOSIZE - len,
         c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
