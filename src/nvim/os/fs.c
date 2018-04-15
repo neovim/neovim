@@ -512,7 +512,7 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
   }
   while (read_bytes < toread && iov_size && !*ret_eof) {
     ptrdiff_t cur_read_bytes = readv(fd, iov, (int)iov_size);
-    if (toread && cur_read_bytes == 0) {
+    if (cur_read_bytes == 0) {
       *ret_eof = true;
     }
     if (cur_read_bytes > 0) {
