@@ -3332,9 +3332,9 @@ restore_backup:
         *s++ = NL;
       }
     }
-    if (++len == bufsize && end) {
+    if (++len == bufsize) {
       if (buf_write_bytes(&write_info) == FAIL) {
-        end = 0;                        /* write error: break loop */
+        end = 0;  // Write error: break loop.
         break;
       }
       nchars += bufsize;
@@ -3343,7 +3343,7 @@ restore_backup:
 
       os_breakcheck();
       if (got_int) {
-        end = 0;                        /* Interrupted, break loop */
+        end = 0;  // Interrupted, break loop.
         break;
       }
     }
