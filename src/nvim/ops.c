@@ -3568,7 +3568,7 @@ int do_join(size_t count,
   int         *comments = NULL;
   int remove_comments = (use_formatoptions == TRUE)
                         && has_format_option(FO_REMOVE_COMS);
-  bool prev_was_comment;
+  bool prev_was_comment = false;
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
                           curwin->w_cursor.lnum + (linenr_T)count) == FAIL) {
@@ -3592,17 +3592,17 @@ int do_join(size_t count,
       curwin->w_buffer->b_op_start.col = (colnr_T)STRLEN(curr);
     }
     if (remove_comments) {
-      /* We don't want to remove the comment leader if the
-       * previous line is not a comment. */
+      // We don't want to remove the comment leader if the
+      // previous line is not a comment.
       if (t > 0 && prev_was_comment) {
 
-        char_u *new_curr = skip_comment(curr, TRUE, insert_space,
-            &prev_was_comment);
+        char_u *new_curr = skip_comment(curr, true, insert_space,
+                                        &prev_was_comment);
         comments[t] = (int)(new_curr - curr);
         curr = new_curr;
-      } else
-        curr = skip_comment(curr, FALSE, insert_space,
-            &prev_was_comment);
+      } else {
+        curr = skip_comment(curr, false, insert_space, &prev_was_comment);
+      }
     }
 
     if (insert_space && t > 0) {
