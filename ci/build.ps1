@@ -100,7 +100,7 @@ bin\nvim --version ; exitIfFailed
 $failed = $false
 # Temporarily turn off tracing to reduce log file output
 Set-PSDebug -Off
-cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs |
+cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
     $_ -match 'Running functional tests failed with error'; $_ }
 Set-PSDebug -Trace 1
@@ -114,7 +114,7 @@ if ($uploadToCodecov) {
 }
 
 # Old tests
-$env:PATH += ';C:\msys64\usr\bin'
+$env:PATH = "C:\msys64\usr\bin;$env:PATH"
 & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
