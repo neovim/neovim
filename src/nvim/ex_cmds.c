@@ -2022,13 +2022,13 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   }
   if (other && !forceit && curbuf->b_nwindows == 1 && !buf_hide(curbuf)
       && curbufIsChanged() && autowrite(curbuf, forceit) == FAIL) {
-    if (p_confirm && p_write)
-      dialog_changed(curbuf, FALSE);
+    if (p_confirm && p_write) {
+      dialog_changed(curbuf, false);
+    }
     if (curbufIsChanged()) {
-      if (other)
-        --no_wait_return;
+      no_wait_return--;
       EMSG(_(e_nowrtmsg));
-      retval = 2;       /* file has been changed */
+      retval = 2;  // File has been changed.
       goto theend;
     }
   }
