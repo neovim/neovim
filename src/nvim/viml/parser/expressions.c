@@ -2534,11 +2534,6 @@ viml_pexpr_parse_bracket_closing_error:
                   cur_token,
                   _("E15: Expected value, got closing figure brace: %.*s"));
             }
-          } else {
-            if (!kv_size(ast_stack)) {
-              new_top_node_p = top_node_p;
-              goto viml_pexpr_parse_figure_brace_closing_error;
-            }
           }
           do {
             new_top_node_p = kv_pop(ast_stack);
