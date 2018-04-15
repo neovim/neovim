@@ -843,8 +843,7 @@ void ml_recover(void)
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
-    if (fname_used != NULL)
-      EMSG2(_("E306: Cannot open %s"), fname_used);
+    EMSG2(_("E306: Cannot open %s"), fname_used);
     goto theend;
   }
   buf->b_ml.ml_mfp = mfp;
