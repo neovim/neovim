@@ -1016,8 +1016,8 @@ retry:
           size = size / ICONV_MULT;             /* worst case */
 
         if (conv_restlen > 0) {
-          /* Insert unconverted bytes from previous line. */
-          memmove(ptr, conv_rest, conv_restlen);
+          // Insert unconverted bytes from previous line.
+          memmove(ptr, conv_rest, conv_restlen);  // -V614
           ptr += conv_restlen;
           size -= conv_restlen;
         }
