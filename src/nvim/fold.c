@@ -1785,7 +1785,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     unsigned long count = (unsigned long)(lnume - lnum + 1);
 
     vim_snprintf((char *)buf, FOLD_TEXT_LEN,
-                 ngettext("+--%3ld line folded",
+                 NGETTEXT("+--%3ld line folded",
                           "+--%3ld lines folded ", count),
                  count);
     text = buf;

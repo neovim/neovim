@@ -8825,7 +8825,7 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
     unsigned long count = (unsigned long)(foldend - foldstart + 1);
-    txt = ngettext("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
+    txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
     r = xmalloc(STRLEN(txt)
                 + STRLEN(dashes) // for %s
                 + 20             // for %3ld
@@ -14401,7 +14401,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].vval.v_string) {
-    server_stop((char *) argvars[0].vval.v_string);
+    server_stop((char *)argvars[0].vval.v_string);
   }
 }
 
