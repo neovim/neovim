@@ -2682,7 +2682,7 @@ void ex_call(exarg_T *eap)
     return;
   }
 
-  tofree = trans_function_name(&arg, eap->skip, TFN_INT, &fudi, &partial);
+  tofree = trans_function_name(&arg, false, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
     // Still need to give an error message for missing key.
     EMSG2(_(e_dictkey), fudi.fd_newkey);
@@ -2725,13 +2725,13 @@ void ex_call(exarg_T *eap)
     arg = startarg;
     if (get_func_tv(name, (int)STRLEN(name), &rettv, &arg,
                     eap->line1, eap->line2, &doesrange,
-                    !eap->skip, partial, fudi.fd_dict) == FAIL) {
+                    true, partial, fudi.fd_dict) == FAIL) {
       failed = true;
       break;
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, !eap->skip, true)
+    if (handle_subscript((const char **)&arg, &rettv, true, true)
         == FAIL) {
       failed = true;
       break;
