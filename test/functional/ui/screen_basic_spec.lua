@@ -4,6 +4,7 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
+local eval = helpers.eval
 local iswin = helpers.iswin
 
 describe('screen', function()
@@ -75,11 +76,29 @@ describe('Screen', function()
       local function check()
         eq(true, screen.suspended)
       end
+
+      -- using eval after suspending, resumes nvim.
+      -- hence both events trigger one after another
+      command('autocmd VimSuspend  * :let g:suspend=1+get(g:, "suspend", 0)')
+      command('autocmd VimResume  * :let g:resume=1+get(g:, "resume", 0)')
+
       command('suspend')
+      eq(1, eval('g:suspend'))
+      eq(1, eval('g:resume'))
+
       screen:expect(check)
       screen.suspended = false
+
       feed('<c-z>')
+      eq(2, eval('g:suspend'))
+      eq(2, eval('g:resume'))
+
       screen:expect(check)
+      screen.suspended = false
+
+      command('suspend')
+      eq(3, eval('g:suspend'))
+      eq(3, eval('g:resume'))
     end)
   end)
 

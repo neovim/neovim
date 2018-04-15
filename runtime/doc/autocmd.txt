@@ -294,6 +294,8 @@ Name			triggered by ~
 |SourceCmd|		before sourcing a Vim script |Cmd-event|
 
 |VimResized|		after the Vim window size changed
+|VimResume|		after Nvim is resumed
+|VimSuspend|		before Nvim is suspended
 |FocusGained|		Vim got input focus
 |FocusLost|		Vim lost input focus
 |CursorHold|		the user doesn't press a key for a while
@@ -1009,6 +1011,10 @@ VimLeavePre			Before exiting Vim, just before writing the
 VimResized			After the Vim window was resized, thus 'lines'
 				and/or 'columns' changed.  Not when starting
 				up though.
+							*VimResume*
+VimResume			After Nvim is resumed from a suspended state
+							*VimSuspend*
+VimSuspend			Before Nvim is sent off to suspended state
 							*WinEnter*
 WinEnter			After entering another window.  Not done for
 				the first window, when Vim has just started.

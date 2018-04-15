@@ -92,6 +92,8 @@ return {
     'VimLeave',               -- before exiting Vim
     'VimLeavePre',            -- before exiting Vim and writing ShaDa file
     'VimResized',             -- after Vim window was resized
+    'VimResume',              -- after Nvim is resumed
+    'VimSuspend',             -- before Nvim is suspended
     'WinNew',                 -- when entering a new window
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
