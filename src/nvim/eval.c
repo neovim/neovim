@@ -2684,17 +2684,19 @@ void ex_call(exarg_T *eap)
 
   tofree = trans_function_name(&arg, eap->skip, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
-    /* Still need to give an error message for missing key. */
+    // Still need to give an error message for missing key.
     EMSG2(_(e_dictkey), fudi.fd_newkey);
     xfree(fudi.fd_newkey);
   }
-  if (tofree == NULL)
+  if (tofree == NULL) {
     return;
+  }
 
-  /* Increase refcount on dictionary, it could get deleted when evaluating
-   * the arguments. */
-  if (fudi.fd_dict != NULL)
-    ++fudi.fd_dict->dv_refcount;
+  // Increase refcount on dictionary, it could get deleted when evaluating
+  // the arguments.
+  if (fudi.fd_dict != NULL) {
+    fudi.fd_dict->dv_refcount++;
+  }
 
   // If it is the name of a variable of type VAR_FUNC or VAR_PARTIAL use its
   // contents. For VAR_PARTIAL get its partial, unless we already have one
@@ -2703,8 +2705,8 @@ void ex_call(exarg_T *eap)
   name = deref_func_name((const char *)tofree, &len,
                          partial != NULL ? NULL : &partial, false);
 
-  /* Skip white space to allow ":call func ()".  Not good, but required for
-   * backward compatibility. */
+  // Skip white space to allow ":call func ()".  Not good, but required for
+  // backward compatibility.
   startarg = skipwhite(arg);
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
@@ -2713,20 +2715,9 @@ void ex_call(exarg_T *eap)
     goto end;
   }
 
-  /*
-   * When skipping, evaluate the function once, to find the end of the
-   * arguments.
-   * When the function takes a range, this is discovered after the first
-   * call, and the loop is broken.
-   */
-  if (eap->skip) {
-    emsg_skip++;
-    lnum = eap->line2;  // Do it once, also with an invalid range.
-  } else {
-    lnum = eap->line1;
-  }
+  lnum = eap->line1;
   for (; lnum <= eap->line2; lnum++) {
-    if (!eap->skip && eap->addr_count > 0) {  // -V560
+    if (eap->addr_count > 0) {  // -V560
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
@@ -2747,27 +2738,27 @@ void ex_call(exarg_T *eap)
     }
 
     tv_clear(&rettv);
-    if (doesrange || eap->skip) {  // -V560
+    if (doesrange) {
       break;
     }
 
-    /* Stop when immediately aborting on error, or when an interrupt
-     * occurred or an exception was thrown but not caught.
-     * get_func_tv() returned OK, so that the check for trailing
-     * characters below is executed. */
-    if (aborting())
+    // Stop when immediately aborting on error, or when an interrupt
+    // occurred or an exception was thrown but not caught.
+    // get_func_tv() returned OK, so that the check for trailing
+    // characters below is executed.
+    if (aborting()) {
       break;
+    }
   }
-  if (eap->skip)
-    --emsg_skip;
 
   if (!failed) {
-    /* Check for trailing illegal characters and a following command. */
+    // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
       emsg_severe = TRUE;
       EMSG(_(e_trailing));
-    } else
+    } else {
       eap->nextcmd = check_nextcmd(arg);
+    }
   }
 
 end:
