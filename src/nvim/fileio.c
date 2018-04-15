@@ -287,7 +287,6 @@ readfile (
   int skip_read = false;
   context_sha256_T sha_ctx;
   int read_undo_file = FALSE;
-  int split = 0;                        /* number of split lines */
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
@@ -1820,10 +1819,6 @@ failed:
       }
       if (ff_error == EOL_DOS) {
         STRCAT(IObuff, _("[CR missing]"));
-        c = TRUE;
-      }
-      if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
         c = TRUE;
       }
       if (notconverted) {
