@@ -3891,9 +3891,6 @@ fex_format (
 
   // Make a copy, the option could be changed while calling it.
   fex = vim_strsave(curbuf->b_p_fex);
-  if (fex == NULL) {
-    return 0;
-  }
   // Evaluate the function.
   if (use_sandbox) {
     sandbox++;
@@ -4712,9 +4709,6 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     // When there are many leading zeros it could be very long.
     // Allocate a bit too much.
     buf1 = xmalloc((size_t)length + NUMBUFLEN);
-    if (buf1 == NULL) {
-      goto theend;
-    }
     ptr = buf1;
     if (negative && (!visual || was_positive)) {
       *ptr++ = '-';
