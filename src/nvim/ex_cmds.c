@@ -119,7 +119,7 @@ void do_ascii(const exarg_T *const eap)
     return;
   }
 
-  IObuff[0] = NUL;
+  size_t iobuff_len = 0;
 
   int ci = 0;
   if (c < 0x80) {
@@ -139,31 +139,56 @@ void do_ascii(const exarg_T *const eap)
     }
     char buf2[20];
     buf2[0] = NUL;
-    vim_snprintf((char *)IObuff, IOSIZE,
-                 _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-                 transchar(c), buf1, buf2, cval, cval, cval);
+    iobuff_len += (
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                     transchar(c), buf1, buf2, cval, cval, cval));
     c = cc[ci++];
   }
 
-  // Repeat for combining characters.
-  while (c >= 0x80) {
-    int len = (int)STRLEN(IObuff);
+#define SPACE_FOR_DESC (1 + 1 + 1 + MB_MAXBYTES + 16 + 4 + 3 + 3 + 1)
+  // Space for description:
+  // - 1 byte for separator (starting from second entry)
+  // - 1 byte for "<"
+  // - 1 byte for space to draw composing character on (optional, but really
+  //   mostly required)
+  // - up to MB_MAXBYTES bytes for character itself
+  // - 16 bytes for raw text ("> , Hex , Octal ").
+  // - at least 4 bytes for hexadecimal representation
+  // - at least 3 bytes for decimal representation
+  // - at least 3 bytes for octal representation
+  // - 1 byte for NUL
+  //
+  // Taking into account MAX_MCO and characters which need 8 bytes for
+  // hexadecimal representation, but not taking translation into account:
+  // resulting string will occupy less then 400 bytes (conservative estimate).
+  //
+  // Less then 1000 bytes if translation multiplies number of bytes needed for
+  // raw text by 6, so it should always fit into 1025 bytes reserved for IObuff.
+
+  // Repeat for combining characters, also handle multiby here.
+  while (c >= 0x80 && iobuff_len < sizeof(IObuff) - SPACE_FOR_DESC) {
     // This assumes every multi-byte char is printable...
-    if (len > 0) {
-      IObuff[len++] = ' ';
+    if (iobuff_len > 0) {
+      IObuff[iobuff_len++] = ' ';
     }
-    IObuff[len++] = '<';
+    IObuff[iobuff_len++] = '<';
     if (utf_iscomposing(c)) {
-      IObuff[len++] = ' ';  // Draw composing char on top of a space.
+      IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
     }
-    len += utf_char2bytes(c, IObuff + len);
-    vim_snprintf((char *)IObuff + len, IOSIZE - len,
-                 c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
-                 : _("> %d, Hex %08x, Octal %o"), c, c, c);
+    iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
+    iobuff_len += (
+      vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                   (c < 0x10000
+                    ? _("> %d, Hex %04x, Octal %o")
+                    : _("> %d, Hex %08x, Octal %o")), c, c, c));
     if (ci == MAX_MCO) {
       break;
     }
     c = cc[ci++];
+  }
+  if (ci != MAX_MCO && c != 0) {
+    xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
   msg(IObuff);
