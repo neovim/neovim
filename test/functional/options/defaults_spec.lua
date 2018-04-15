@@ -5,12 +5,15 @@ local Screen = require('test.functional.ui.screen')
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
+local exc_exec = helpers.exc_exec
 local eval = helpers.eval
 local eq = helpers.eq
+local funcs = helpers.funcs
 local insert = helpers.insert
 local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
+local alter_slashes = helpers.alter_slashes
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -419,6 +422,279 @@ describe('XDG-based defaults', function()
       eq('\\,=\\,=\\,/nvim/swap//', meths.get_option('directory'))
       eq('\\,=\\,=\\,/nvim/undo', meths.get_option('undodir'))
       eq('\\,=\\,=\\,/nvim/view', meths.get_option('viewdir'))
+    end)
+  end)
+end)
+
+
+describe('stdpath()', function()
+  context('returns a String', function()
+    describe('with "config"' , function ()
+      it('knows XDG_CONFIG_HOME', function()
+        clear({env={
+          XDG_CONFIG_HOME=alter_slashes('/home/docwhat/.config'),
+        }})
+        eq(alter_slashes('/home/docwhat/.config/nvim'), funcs.stdpath('config'))
+      end)
+
+      it('handles changes during runtime', function()
+        clear({env={
+          XDG_CONFIG_HOME=alter_slashes('/home/original'),
+        }})
+        eq(alter_slashes('/home/original/nvim'), funcs.stdpath('config'))
+        command("let $XDG_CONFIG_HOME='"..alter_slashes('/home/new').."'")
+        eq(alter_slashes('/home/new/nvim'), funcs.stdpath('config'))
+      end)
+
+      it("doesn't expand $VARIABLES", function()
+        clear({env={
+          XDG_CONFIG_HOME='$VARIABLES',
+          VARIABLES='this-should-not-happen',
+        }})
+        eq(alter_slashes('$VARIABLES/nvim'), funcs.stdpath('config'))
+      end)
+
+      it("doesn't expand ~/", function()
+        clear({env={
+          XDG_CONFIG_HOME=alter_slashes('~/frobnitz'),
+        }})
+        eq(alter_slashes('~/frobnitz/nvim'), funcs.stdpath('config'))
+      end)
+    end)
+
+    describe('with "data"' , function ()
+      local appended_dir
+      setup(function()
+        -- Windows appends 'nvim-data' instead of just 'nvim' to
+        -- prevent collisions due to XDG_CONFIG_HOME and XDG_DATA_HOME
+        -- being the same.
+        if helpers.iswin() then
+          appended_dir = '/nvim-data'
+        else
+          appended_dir = '/nvim'
+        end
+      end)
+
+      it('knows XDG_DATA_HOME', function()
+        clear({env={
+          XDG_DATA_HOME=alter_slashes('/home/docwhat/.local'),
+        }})
+        eq(alter_slashes('/home/docwhat/.local' .. appended_dir), funcs.stdpath('data'))
+      end)
+
+      it('handles changes during runtime', function()
+        clear({env={
+          XDG_DATA_HOME=alter_slashes('/home/original'),
+        }})
+        eq(alter_slashes('/home/original' .. appended_dir), funcs.stdpath('data'))
+        command("let $XDG_DATA_HOME='"..alter_slashes('/home/new').."'")
+        eq(alter_slashes('/home/new' .. appended_dir), funcs.stdpath('data'))
+      end)
+
+      it("doesn't expand $VARIABLES", function()
+        clear({env={
+          XDG_DATA_HOME='$VARIABLES',
+          VARIABLES='this-should-not-happen',
+        }})
+        eq(alter_slashes('$VARIABLES' .. appended_dir), funcs.stdpath('data'))
+      end)
+
+      it("doesn't expand ~/", function()
+        clear({env={
+          XDG_DATA_HOME=alter_slashes('~/frobnitz'),
+        }})
+        eq(alter_slashes('~/frobnitz' .. appended_dir), funcs.stdpath('data'))
+      end)
+    end)
+
+    describe('with "cache"' , function ()
+      it('knows XDG_CACHE_HOME', function()
+        clear({env={
+          XDG_CACHE_HOME=alter_slashes('/home/docwhat/.cache'),
+        }})
+        eq(alter_slashes('/home/docwhat/.cache/nvim'), funcs.stdpath('cache'))
+      end)
+
+      it('handles changes during runtime', function()
+        clear({env={
+          XDG_CACHE_HOME=alter_slashes('/home/original'),
+        }})
+        eq(alter_slashes('/home/original/nvim'), funcs.stdpath('cache'))
+        command("let $XDG_CACHE_HOME='"..alter_slashes('/home/new').."'")
+        eq(alter_slashes('/home/new/nvim'), funcs.stdpath('cache'))
+      end)
+
+      it("doesn't expand $VARIABLES", function()
+        clear({env={
+          XDG_CACHE_HOME='$VARIABLES',
+          VARIABLES='this-should-not-happen',
+        }})
+        eq(alter_slashes('$VARIABLES/nvim'), funcs.stdpath('cache'))
+      end)
+
+      it("doesn't expand ~/", function()
+        clear({env={
+          XDG_CACHE_HOME=alter_slashes('~/frobnitz'),
+        }})
+        eq(alter_slashes('~/frobnitz/nvim'), funcs.stdpath('cache'))
+      end)
+    end)
+  end)
+
+  context('returns a List', function()
+    -- Some OS specific variables the system would have set.
+    local function base_env()
+      if helpers.iswin() then
+        return {
+          HOME='C:\\Users\\docwhat', -- technically, is not a usual PATH
+          HOMEDRIVE='C:',
+          HOMEPATH='\\Users\\docwhat',
+          LOCALAPPDATA='C:\\Users\\docwhat\\AppData\\Local',
+          TEMP='C:\\Users\\docwhat\\AppData\\Local\\Temp',
+          TMPDIR='C:\\Users\\docwhat\\AppData\\Local\\Temp',
+          TMP='C:\\Users\\docwhat\\AppData\\Local\\Temp',
+        }
+      else
+        return {
+          HOME='/home/docwhat',
+          HOMEDRIVE='HOMEDRIVE-should-be-ignored',
+          HOMEPATH='HOMEPATH-should-be-ignored',
+          LOCALAPPDATA='LOCALAPPDATA-should-be-ignored',
+          TEMP='TEMP-should-be-ignored',
+          TMPDIR='TMPDIR-should-be-ignored',
+          TMP='TMP-should-be-ignored',
+        }
+      end
+    end
+
+    local function set_paths_via_system(var_name, paths)
+      local env = base_env()
+      env[var_name] = table.concat(paths, ':')
+      clear({env=env})
+    end
+
+    local function set_paths_at_runtime(var_name, paths)
+      clear({env=base_env()})
+      meths.set_var('env_val', table.concat(paths, ':'))
+      command(('let $%s=g:env_val'):format(var_name))
+    end
+
+    local function behaves_like_dir_list_env(msg, stdpath_arg, env_var_name, paths, expected_paths)
+      describe(msg, function()
+        it('set via system', function()
+          set_paths_via_system(env_var_name, paths)
+          eq(expected_paths, funcs.stdpath(stdpath_arg))
+        end)
+
+        it('set at runtime', function()
+          set_paths_at_runtime(env_var_name, paths)
+          eq(expected_paths, funcs.stdpath(stdpath_arg))
+        end)
+      end)
+    end
+
+    describe('with "config_dirs"' , function ()
+      behaves_like_dir_list_env(
+        'handles XDG_CONFIG_DIRS with one path',
+        'config_dirs', 'XDG_CONFIG_DIRS',
+        {
+          alter_slashes('/home/docwhat/.config')
+        },
+        {
+          alter_slashes('/home/docwhat/.config/nvim')
+        })
+
+      behaves_like_dir_list_env(
+        'handles XDG_CONFIG_DIRS with two paths',
+        'config_dirs', 'XDG_CONFIG_DIRS',
+        {
+          alter_slashes('/home/docwhat/.config'),
+          alter_slashes('/etc/config')
+        },
+        {
+          alter_slashes('/home/docwhat/.config/nvim'),
+          alter_slashes('/etc/config/nvim')
+        })
+
+      behaves_like_dir_list_env(
+        "doesn't expand $VAR and $IBLES",
+        'config_dirs', 'XDG_CONFIG_DIRS',
+        { '$HOME', '$TMP' },
+        {
+          alter_slashes('$HOME/nvim'),
+          alter_slashes('$TMP/nvim')
+        })
+
+
+      behaves_like_dir_list_env(
+        "doesn't expand ~/",
+        'config_dirs', 'XDG_CONFIG_DIRS',
+        {
+          alter_slashes('~/.oldconfig'),
+          alter_slashes('~/.olderconfig')
+        },
+        {
+          alter_slashes('~/.oldconfig/nvim'),
+          alter_slashes('~/.olderconfig/nvim')
+        })
+    end)
+
+    describe('with "data_dirs"' , function ()
+      behaves_like_dir_list_env(
+        'knows XDG_DATA_DIRS with one path',
+        'data_dirs', 'XDG_DATA_DIRS',
+        {
+          alter_slashes('/home/docwhat/.data')
+        },
+        {
+          alter_slashes('/home/docwhat/.data/nvim')
+        })
+
+      behaves_like_dir_list_env(
+        'knows XDG_DATA_DIRS with two paths',
+        'data_dirs', 'XDG_DATA_DIRS',
+        {
+          alter_slashes('/home/docwhat/.data'),
+          alter_slashes('/etc/local')
+        },
+        {
+          alter_slashes('/home/docwhat/.data/nvim'),
+          alter_slashes('/etc/local/nvim'),
+        })
+
+      behaves_like_dir_list_env(
+        "doesn't expand $VAR and $IBLES",
+        'data_dirs', 'XDG_DATA_DIRS',
+        { '$HOME', '$TMP' },
+        {
+          alter_slashes('$HOME/nvim'),
+          alter_slashes('$TMP/nvim')
+        })
+
+      behaves_like_dir_list_env(
+        "doesn't expand ~/",
+        'data_dirs', 'XDG_DATA_DIRS',
+        {
+          alter_slashes('~/.oldconfig'),
+          alter_slashes('~/.olderconfig')
+        },
+        {
+          alter_slashes('~/.oldconfig/nvim'),
+          alter_slashes('~/.olderconfig/nvim'),
+        })
+    end)
+  end)
+
+  describe('errors', function()
+    it('on unknown strings', function()
+      eq('Vim(call):E6100: "capybara" is not a valid stdpath', exc_exec('call stdpath("capybara")'))
+      eq('Vim(call):E6100: "" is not a valid stdpath', exc_exec('call stdpath("")'))
+      eq('Vim(call):E6100: "23" is not a valid stdpath', exc_exec('call stdpath(23)'))
+    end)
+
+    it('on non-strings', function()
+      eq('Vim(call):E731: using Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
+      eq('Vim(call):E730: using List as a String', exc_exec('call stdpath([23])'))
     end)
   end)
 end)
