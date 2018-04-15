@@ -1217,6 +1217,24 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
+  it("don't wrap the text in cmdline in inccommand", function()
+    feed([[ggdG]])
+    insert('hello\nhello')
+    feed(':%s/hello/hellooooooooooooooooooooooooooooooo')
+    screen:expect([[
+      {12:helloooooooooooooooo}|
+      {12:ooooooooooooooo}     |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%s/hello/helloooooo|
+      oooooooooooooooooooo|
+      ooooo^               |
+    ]])
+  end)
+
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')

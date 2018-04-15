@@ -568,14 +568,19 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
        * from a script or when being called recursive (e.g. for ":e
        * +command file").
        */
-      if (!(flags & DOCMD_NOWAIT) && !recursive) {
+      bool is_preview = !!(State & CMDPREVIEW);
+      if (!((flags & DOCMD_NOWAIT) || recursive) || is_preview) {
         msg_didout_before_start = msg_didout;
-        msg_didany = FALSE;         /* no output yet */
+        msg_didany = false;         // no output yet
         msg_start();
-        msg_scroll = TRUE;          /* put messages below each other */
-        ++no_wait_return;           /* don't wait for return until finished */
-        ++RedrawingDisabled;
-        did_inc = TRUE;
+        msg_scroll = true;          // put messages below each other
+        if (!is_preview) {
+          // For execution of a preview command we have to wait for a return
+          // key, but we don't want the message for it pop out
+          no_wait_return++;           // wait for return until finished
+        }
+        RedrawingDisabled++;
+        did_inc = true;
       }
     }
 
