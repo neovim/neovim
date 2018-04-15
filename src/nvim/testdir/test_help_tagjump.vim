@@ -30,7 +30,7 @@ func Test_help_tagjump()
 
   help sp?it
   call assert_equal("help", &filetype)
-  call assert_true(getline('.') =~ '\*:split\*')
+  call assert_true(getline('.') =~ '\*'.(has('win32') ? 'split()' : ':split').'\*')
   helpclose
 
   help :?

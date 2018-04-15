@@ -5,14 +5,12 @@ function! Test_System()
     return
   endif
   let out = system('echo 123')
-  " On Windows we may get a trailing space.
-  if out != "123 \n"
-    call assert_equal("123\n", out)
-  endif
+  call assert_equal("123\n", out)
 
   let out = systemlist('echo 123')
-  " On Windows we may get a trailing space and CR.
-  if out != ["123 \r"]
+  if &shell =~# 'cmd.exe$'
+    call assert_equal(["123\r"], out)
+  else
     call assert_equal(['123'], out)
   endif
 

@@ -850,17 +850,17 @@ func s:dir_stack_tests(cchar)
 
   let qf = g:Xgetlist()
 
-  call assert_equal('dir1/a/habits2.txt', bufname(qf[1].bufnr))
+  call assert_equal(expand('dir1/a/habits2.txt'), bufname(qf[1].bufnr))
   call assert_equal(1, qf[1].lnum)
-  call assert_equal('dir1/a/b/habits3.txt', bufname(qf[3].bufnr))
+  call assert_equal(expand('dir1/a/b/habits3.txt'), bufname(qf[3].bufnr))
   call assert_equal(2, qf[3].lnum)
-  call assert_equal('dir1/a/habits2.txt', bufname(qf[4].bufnr))
+  call assert_equal(expand('dir1/a/habits2.txt'), bufname(qf[4].bufnr))
   call assert_equal(7, qf[4].lnum)
-  call assert_equal('dir1/c/habits4.txt', bufname(qf[6].bufnr))
+  call assert_equal(expand('dir1/c/habits4.txt'), bufname(qf[6].bufnr))
   call assert_equal(3, qf[6].lnum)
   call assert_equal('habits1.txt', bufname(qf[9].bufnr))
   call assert_equal(4, qf[9].lnum)
-  call assert_equal('dir2/habits5.txt', bufname(qf[11].bufnr))
+  call assert_equal(expand('dir2/habits5.txt'), bufname(qf[11].bufnr))
   call assert_equal(5, qf[11].lnum)
 
   let &efm=save_efm
@@ -1065,7 +1065,7 @@ func Test_efm2()
   call assert_equal(8, len(l))
   call assert_equal(89, l[4].lnum)
   call assert_equal(1, l[4].valid)
-  call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
+  call assert_equal(expand('unittests/dbfacadeTest.py'), bufname(l[4].bufnr))
 
   " The following sequence of commands used to crash Vim
   set efm=%W%m
@@ -1609,11 +1609,11 @@ func Test_two_windows()
   laddexpr 'one.txt:3:one one one'
 
   let loc_one = getloclist(one_id)
-  call assert_equal('Xone/a/one.txt', bufname(loc_one[1].bufnr))
+  call assert_equal(expand('Xone/a/one.txt'), bufname(loc_one[1].bufnr))
   call assert_equal(3, loc_one[1].lnum)
 
   let loc_two = getloclist(two_id)
-  call assert_equal('Xtwo/a/two.txt', bufname(loc_two[1].bufnr))
+  call assert_equal(expand('Xtwo/a/two.txt'), bufname(loc_two[1].bufnr))
   call assert_equal(5, loc_two[1].lnum)
 
   call win_gotoid(one_id)

@@ -22,6 +22,10 @@ Commands ~
 *:wv*
 *:wviminfo*		Deprecated alias to |:wshada| command.
 
+Environment Variables ~
+*$NVIM_LISTEN_ADDRESS*	Deprecated in favor of |--listen|.  If both are given,
+			$NVIM_LISTEN_ADDRESS is ignored.
+
 Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.

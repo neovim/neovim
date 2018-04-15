@@ -25,7 +25,7 @@ To enter commands in
 type a colon
 .Pq Sq \&:
 which is also used in this manual to denote commands.
-For more information, consult the on-line help system with the
+For more information, consult the online help system with the
 .Ic :help
 command.
 .Bl -tag -width Fl
@@ -329,6 +329,8 @@ Implies
 .Fl -headless .
 .It Fl -headless
 Do not start a user interface.
+.It Fl -listen Ar address
+Start RPC server on this pipe or TCP socket.
 .It Fl h , -help
 Print usage information and exit.
 .It Fl v , -version
@@ -337,12 +339,12 @@ Print version information and exit.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev VIM
-Used to locate various user files, such as the user's init.vim.
+Used to locate various user files, such as init.vim.
 .It Ev VIMRUNTIME
-Used to locate run time files, such as on-line documentation and
+Used to locate runtime files, such as online documentation and
 syntax highlighting definitions.
 .It Ev XDG_CONFIG_HOME
-Path to use for the user-local configuration directory, see
+Path to the user-local configuration directory, see
 .Sx FILES .
 Defaults to
 .Pa ~/.config
@@ -356,7 +358,7 @@ Defaults to
 .Pa ~/.local/share
 if not set.
 .It Ev VIMINIT
-A string of Ex commands to be executed at startup.
+Ex commands to be executed at startup.
 For example, the command to quit is
 .Ic :q ,
 so to have
@@ -375,41 +377,32 @@ command.
 .Sh FILES
 .Bl -tag -width "~/.config/nvim/init.vim"
 .It Pa ~/.config/nvim/init.vim
-The user-local
+User-local
 .Nm
 configuration file.
-See
-.Ev XDG_CONFIG_HOME
-above.
 .It Pa ~/.config/nvim
-The user-local
+User-local
 .Nm
 configuration directory.
-See
-.Ev XDG_CONFIG_HOME
-above.
+See also
+.Ev XDG_CONFIG_HOME .
 .It Pa $VIM/sysinit.vim
-The system-global
+System-global
 .Nm
 configuration file.
 .It Pa /usr/local/share/nvim
-The system-global
+System-global
 .Nm
 runtime directory.
 .El
 .Sh AUTHORS
-.Nm
-was started by
-.An Thiago de Arruda ,
-with a lot of help from others.
-.Pp
+Nvim was started by
+.An Thiago de Arruda .
 Most of Vim was written by
 .An -nosplit
-.An Bram Moolenaar ,
-with a lot of help from others.
+.An Bram Moolenaar .
 See
 .Ic :help credits .
-.Pp
 Vim is based on Stevie, worked on by
 .An Tim Thompson ,
 .An Tony Andrews ,
