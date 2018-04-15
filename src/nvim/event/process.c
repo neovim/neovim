@@ -23,7 +23,7 @@
 #endif
 
 // Time for a process to exit cleanly before we send KILL.
-// For pty processes SIGTERM is sent first (in case SIGHUP was not enough).
+// For PTY processes SIGTERM is sent first (in case SIGHUP was not enough).
 #define KILL_TIMEOUT_MS 2000
 
 static bool process_is_tearing_down = false;
@@ -209,8 +209,8 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   if (exited || proc->stopped_time) {
     return;
   }
-
   proc->stopped_time = os_hrtime();
+
   switch (proc->type) {
     case kProcessTypeUv:
       // Close the process's stdin. If the process doesn't close its own
@@ -228,18 +228,16 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       abort();
   }
 
-  // Start a timer to verify that the job process terminated.
-  ILOG("starting job kill timer");
+  // (Re)start timer to verify that stopped process(es) died.
   uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
                  KILL_TIMEOUT_MS, 0);
 }
 
-/// Sends SIGKILL (or SIGTERM for PTY jobs) to processes that didn't terminate
-/// after process_stop() requested them.
+/// Sends SIGKILL (or SIGTERM..SIGKILL for PTY jobs) to processes that did
+/// not terminate after process_stop().
 static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;
-  uint64_t now = os_hrtime();
 
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
@@ -247,12 +245,15 @@ static void children_kill_cb(uv_timer_t *handle)
     if (exited || !proc->stopped_time) {
       continue;
     }
-    uint64_t elapsed = (now - proc->stopped_time) / 1000000 + 1;
-    if (elapsed >= KILL_TIMEOUT_MS) {
-      int sig = proc->type == kProcessTypePty && elapsed < KILL_TIMEOUT_MS * 2
-                ? SIGTERM
-                : SIGKILL;
-      os_proc_tree_kill(proc->pid, sig);
+    uint64_t term_sent = UINT64_MAX == proc->stopped_time;
+    if (kProcessTypePty != proc->type || term_sent) {
+      os_proc_tree_kill(proc->pid, SIGKILL);
+    } else {
+      os_proc_tree_kill(proc->pid, SIGTERM);
+      proc->stopped_time = UINT64_MAX;  // Flag: SIGTERM was sent.
+      // Restart timer.
+      uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
+                     KILL_TIMEOUT_MS, 0);
     }
   }
 }
