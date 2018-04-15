@@ -15453,7 +15453,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
            ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
-          if (info.item_compare_func_err) {
+          if (info.item_compare_func_err) {  // -V547
             EMSG(_("E882: Uniq compare function failed"));
             break;
           }
