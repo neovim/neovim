@@ -4856,23 +4856,27 @@ void ExpandGeneric(
 
   // copy the matching names into allocated memory
   count = 0;
-  for (i = 0;; ++i) {
+  for (i = 0;; i++) {
     str = (*func)(xp, i);
-    if (str == NULL) // end of list
+    if (str == NULL) { // end of list
       break;
-    if (*str == NUL) // skip empty strings
+    }
+    if (*str == NUL) {  // skip empty strings
       continue;
+    }
     if (vim_regexec(regmatch, str, (colnr_T)0)) {
-      if (escaped)
+      if (escaped) {
         str = vim_strsave_escaped(str, (char_u *)" \t\\.");
-      else
+      } else {
         str = vim_strsave(str);
+      }
       (*file)[count++] = str;
-      if (func == get_menu_names && str != NULL) {
-        /* test for separator added by get_menu_names() */
+      if (func == get_menu_names) {
+        // Test for separator added by get_menu_names().
         str += STRLEN(str) - 1;
-        if (*str == '\001')
+        if (*str == '\001') {
           *str = '.';
+        }
       }
     }
   }
