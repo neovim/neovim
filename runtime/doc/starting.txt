@@ -355,6 +355,10 @@ argument.
                 instead.
 		See also |silent-mode|, which does start a (limited) UI.
 
+--listen {addr}						*--listen*
+		Start |RPC| server on pipe or TCP address {addr}. Sets the
+		primary listen address |v:servername| to {addr}. |serverstart()|
+
 ==============================================================================
 2. Initialization				*initialization* *startup*
 
@@ -1391,4 +1395,4 @@ RPC clients for debugging. $NVIM_LOG_FILE contains the log file path: >
 Usually the file is ~/.local/share/nvim/log unless that path is inaccessible
 or if $NVIM_LOG_FILE was set before |startup|.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

@@ -70,9 +70,8 @@ An rpc socket is automatically created with each instance. The socket
  location is stored in |v:servername|. By default this is a named pipe
 with an automatically generated address. See |XXX|.
 
-To make Nvim listen on a TCP/IP socket instead, set the
-   |$NVIM_LISTEN_ADDRESS| environment variable before starting Nvim: >
-        NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim
+To make Nvim listen on a TCP/IP socket instead, specify |--listen|: >
+    nvim --listen 127.0.0.1:6666
 <Also, more sockets and named pipes can be listened on using |serverstart()|.
 
 Note that localhost TCP sockets are generally less secure than named pipes,

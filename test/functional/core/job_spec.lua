@@ -640,6 +640,21 @@ describe('jobs', function()
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
   end)
 
+  it('does not crash when repeatedly failing to start shell', function()
+    source([[
+      set shell=nosuchshell
+      func! DoIt()
+        call jobstart('true')
+        call jobstart('true')
+      endfunc
+    ]])
+    -- The crash only triggered if both jobs are cleaned up on the same event
+    -- loop tick. This is also prevented by try-block, so feed must be used.
+    feed_command("call DoIt()")
+    feed('<cr>') -- press RETURN
+    eq(2,eval('1+1'))
+  end)
+
   it('jobstop() kills entire process tree #6530', function()
     command('set shell& shellcmdflag& shellquote& shellpipe& shellredir& shellxquote&')
 

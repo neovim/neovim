@@ -6,11 +6,6 @@ func Test_recover_root_dir()
   set dir=/
   call assert_fails('recover', 'E305:')
   close!
-
-  if has('win32') || filewritable('/') == 2
-    " can write in / directory on MS-Windows
-    set dir=/notexist/
-  endif
   call assert_fails('split Xtest', 'E303:')
   set dir&
 endfunc

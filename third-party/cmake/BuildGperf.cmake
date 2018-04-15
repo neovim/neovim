@@ -40,7 +40,7 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 
   BuildGperf(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/gperf/configure
-      --prefix=${HOSTDEPS_INSTALL_DIR}
+      --prefix=${HOSTDEPS_INSTALL_DIR} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} install)
 
 elseif(MSVC OR MINGW)
@@ -61,4 +61,3 @@ elseif(MSVC OR MINGW)
 else()
   message(FATAL_ERROR "Trying to build gperf in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
-

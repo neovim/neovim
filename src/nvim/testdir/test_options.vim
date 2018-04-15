@@ -158,6 +158,8 @@ func Test_set_completion()
   call assert_equal('"set fileencodings:ucs-bom,utf-8,default,latin1', @:)
 
   " Expand directories.
+  let shellslash = &shellslash
+  set shellslash
   call feedkeys(":set cdpath=./\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('./samples/ ', @:)
   call assert_notmatch('./small.vim ', @:)
@@ -168,6 +170,7 @@ func Test_set_completion()
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
+  let &shellslash = shellslash
 endfunc
 
 func Test_set_errors()

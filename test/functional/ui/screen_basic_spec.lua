@@ -4,7 +4,6 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
-local eval = helpers.eval
 local iswin = helpers.iswin
 
 describe('screen', function()
@@ -629,23 +628,5 @@ describe('Screen', function()
         TEST                                                 |
       ]])
     end)
-  end)
-end)
-
-describe('nvim_ui_attach()', function()
-  before_each(function()
-    clear()
-  end)
-  it('handles very large width/height #2180', function()
-    local screen = Screen.new(999, 999)
-    screen:attach()
-    eq(999, eval('&lines'))
-    eq(999, eval('&columns'))
-  end)
-  it('invalid option returns error', function()
-    local screen = Screen.new()
-    local status, rv = pcall(function() screen:attach({foo={'foo'}}) end)
-    eq(false, status)
-    eq('No such ui option', rv:match("No such .*"))
   end)
 end)

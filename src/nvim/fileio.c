@@ -1737,9 +1737,17 @@ failed:
   xfree(buffer);
 
   if (read_stdin) {
-    /* Use stderr for stdin, makes shell commands work. */
     close(0);
+#ifndef WIN32
+    // On Unix, use stderr for stdin, makes shell commands work.
     ignored = dup(2);
+#else
+    // On Windows, use the console input handle for stdin.
+    HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                              OPEN_EXISTING, 0, (HANDLE)NULL);
+    ignored = _open_osfhandle(conin, _O_RDONLY);
+#endif
   }
 
   if (tmpname != NULL) {

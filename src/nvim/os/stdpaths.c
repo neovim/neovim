@@ -88,7 +88,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 ///
 /// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
 /// avoid storing configuration and data files in the same path.
-static char *get_xdg_home(const XDGVarType idx)
+char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);

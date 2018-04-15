@@ -14403,8 +14403,11 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
   if (argvars[0].vval.v_string) {
-    server_stop((char *) argvars[0].vval.v_string);
+    bool rv = server_stop((char *)argvars[0].vval.v_string);
+    rettv->vval.v_number = (rv ? 1 : 0);
   }
 }
 
@@ -15697,6 +15700,56 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   p_cpo = save_cpo;
+}
+
+/// "stdpath()" helper for list results
+static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const void *iter = NULL;
+  list_T *const list = tv_list_alloc(kListLenShouldKnow);
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = list;
+  tv_list_ref(list);
+  char *const dirs = stdpaths_get_xdg_var(xdg);
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = vim_env_iter(':', dirs, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      char *dir_with_nvim = xmemdupz(dir, dir_len);
+      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, "nvim", true);
+      tv_list_append_string(list, dir_with_nvim, strlen(dir_with_nvim));
+      xfree(dir_with_nvim);
+    }
+  } while (iter != NULL);
+  xfree(dirs);
+}
+
+/// "stdpath(type)" function
+static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  const char *const p = tv_get_string_chk(&argvars[0]);
+  if (p == NULL) {
+    return;  // Type error; errmsg already given.
+  }
+
+  if (strcmp(p, "config") == 0) {
+    rettv->vval.v_string = (char_u *)get_xdg_home(kXDGConfigHome);
+  } else if (strcmp(p, "data") == 0) {
+    rettv->vval.v_string = (char_u *)get_xdg_home(kXDGDataHome);
+  } else if (strcmp(p, "cache") == 0) {
+    rettv->vval.v_string = (char_u *)get_xdg_home(kXDGCacheHome);
+  } else if (strcmp(p, "config_dirs") == 0) {
+    get_xdg_var_list(kXDGConfigDirs, rettv);
+  } else if (strcmp(p, "data_dirs") == 0) {
+    get_xdg_var_list(kXDGDataDirs, rettv);
+  } else {
+    EMSG2(_("E6100: \"%s\" is not a valid stdpath"), p);
+  }
 }
 
 /*

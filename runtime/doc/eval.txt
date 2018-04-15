@@ -1788,9 +1788,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
-					*$NVIM_LISTEN_ADDRESS*
-v:servername	Default Nvim server address. Equivalent to
-		|$NVIM_LISTEN_ADDRESS| on startup. |serverstop()|
+v:servername	Primary listen-address of the current Nvim instance, the first
+		item returned by |serverlist()|.  Can be set by |--listen| or
+		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
 		Read-only.
 
 
@@ -2286,6 +2286,7 @@ split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
+stdpath({what})                 String/List  returns the standard path(s) for {what}
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
@@ -4208,8 +4209,7 @@ getftype({fname})					*getftype()*
 			getftype("/home")
 <		Note that a type such as "link" will only be returned on
 		systems that support it.  On some systems only "dir" and
-		"file" are returned.  On MS-Windows a symbolic link to a
-		directory returns "dir" instead of "link".
+		"file" are returned.
 
 							*getline()*
 getline({lnum} [, {end}])
@@ -6638,15 +6638,11 @@ server2client({clientid}, {string})			*server2client()*
 			:echo server2client(expand("<client>"), "HELLO")
 <
 serverlist()						*serverlist()*
-		Returns a list of available server names in a list.
-		When there are no servers an empty string is returned.
+		Returns a list of server addresses, or empty if all servers
+		were stopped. |serverstart()| |serverstop()|
 		Example: >
 			:echo serverlist()
-<						{Nvim} *--serverlist*
-		The Vim command-line option `--serverlist` was removed from
-		Nvim, but it can be imitated: >
-			nvim --cmd "echo serverlist()" --cmd "q"
-<
+
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
 		|RPC| messages. Clients can send |API| commands to the address
@@ -6674,13 +6670,9 @@ serverstart([{address}])				*serverstart()*
 
 < 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
 
-							*--servername*
-		The Vim command-line option `--servername` can be imitated: >
-			nvim --cmd "let g:server_addr = serverstart('foo')"
-<
 serverstop({address})					*serverstop()*
-		Closes the pipe or socket at {address}. Does nothing if
-		{address} is empty or invalid.
+		Closes the pipe or socket at {address}.
+		Returns TRUE if {address} is valid, else FALSE.
 		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
 		If |v:servername| is stopped it is set to the next available
 		address returned by |serverlist()|.
@@ -7269,6 +7261,23 @@ stdioopen({opts})			 *stdioopen()*
 		Returns:
 		  - The channel ID on success (this is always 1)
 		  - 0 on invalid arguments
+
+
+stdpath({what})					*stdpath()* *E6100*
+		Returns the standard path(s) for {what}.
+
+		These directories are the default locations for various files
+		used by Neovim.
+
+		{what}       Type    Description ~
+		cache        String  Cache directory. Useful for plugins
+		                     that need temporary files to work.
+		config       String  User configuration directory. The
+		                     |init.vim| is stored here.
+		config_dirs  List    Additional configuration directories.
+		data         String  User data directory. The |shada-file|
+		                     is stored here.
+		data_dirs    List    Additional data directories.
 
 
 str2float({expr})					*str2float()*
