@@ -2415,11 +2415,6 @@ viml_pexpr_parse_valid_colon:
                   cur_token,
                   _("E15: Expected value, got closing bracket: %.*s"));
             }
-          } else {
-            if (!kv_size(ast_stack)) {
-              new_top_node_p = top_node_p;
-              goto viml_pexpr_parse_bracket_closing_error;
-            }
           }
           do {
             new_top_node_p = kv_pop(ast_stack);
