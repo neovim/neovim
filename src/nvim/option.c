@@ -625,12 +625,12 @@ void set_init_1(void)
   opt_idx = findoption("maxmemtot");
   if (opt_idx >= 0) {
     {
-      /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in uintptr_t, get uintptr_t max */
+      // Use half of amount of memory available to Vim.
+      // If too much to fit in uintptr_t, get uintptr_t max.
       uint64_t available_kib = os_get_total_mem_kib();
-      uintptr_t n = available_kib / 2 > UINTPTR_MAX
-                    ? UINTPTR_MAX
-                    : (uintptr_t)(available_kib /2);
+      uintptr_t n = (available_kib / 2 > UINTPTR_MAX  // -V547
+                     ? UINTPTR_MAX
+                     : (uintptr_t)(available_kib /2));
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption("maxmem");
       if (opt_idx >= 0) {
