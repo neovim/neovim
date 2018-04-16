@@ -36,7 +36,6 @@
 # them.
 #
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_BUSTED=OFF
-# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_DEPS=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_JEMALLOC=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBTERMKEY=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBUV=OFF
@@ -45,6 +44,10 @@
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LUAROCKS=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_MSGPACK=OFF
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_UNIBILIUM=OFF
+#
+# Or disable all bundled dependencies at once.
+#
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED=OFF
 
 # By default, bundled libraries are statically linked to nvim.
 # This has no effect for non-bundled deps, which are always dynamically linked.
