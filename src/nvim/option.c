@@ -6075,7 +6075,7 @@ set_context_in_set_cmd (
     xp->xp_context = EXPAND_UNSUCCESSFUL;
     return;
   }
-  if (xp->xp_context != EXPAND_BOOL_SETTINGS && p[1] == NUL) {
+  if (p[1] == NUL) {
     xp->xp_context = EXPAND_OLD_SETTING;
     if (is_term_option)
       expand_option_idx = -1;
