@@ -101,7 +101,7 @@ describe('terminal mouse', function()
           line28                   │line28                  |
           line29                   │line29                  |
           line30                   │line30                  |
-          rows: 5, cols: 24        │rows: 5, cols: 24       |
+          rows: 5, cols: 25        │rows: 5, cols: 25       |
           {2:^ }                        │{2: }                       |
           ==========                ==========              |
           :vsp                                              |
@@ -111,7 +111,7 @@ describe('terminal mouse', function()
           {7:  1 }^                     │line28                  |
           {4:~                        }│line29                  |
           {4:~                        }│line30                  |
-          {4:~                        }│rows: 5, cols: 24       |
+          {4:~                        }│rows: 5, cols: 25       |
           {4:~                        }│{2: }                       |
           ==========                ==========              |
           :enew | set number                                |
@@ -121,7 +121,7 @@ describe('terminal mouse', function()
           {7: 27 }line                 │line28                  |
           {7: 28 }line                 │line29                  |
           {7: 29 }line                 │line30                  |
-          {7: 30 }line                 │rows: 5, cols: 24       |
+          {7: 30 }line                 │rows: 5, cols: 25       |
           {7: 31 }^                     │{2: }                       |
           ==========                ==========              |
                                                             |
@@ -131,7 +131,7 @@ describe('terminal mouse', function()
           {7: 27 }line                 │line28                  |
           {7: 28 }line                 │line29                  |
           {7: 29 }line                 │line30                  |
-          {7: 30 }line                 │rows: 5, cols: 24       |
+          {7: 30 }line                 │rows: 5, cols: 25       |
           {7: 31 }                     │{1: }                       |
           ==========                ==========              |
           {3:-- TERMINAL --}                                    |
@@ -142,7 +142,7 @@ describe('terminal mouse', function()
         screen:expect([[
           {7: 27 }line                 │line29                  |
           {7: 28 }line                 │line30                  |
-          {7: 29 }line                 │rows: 5, cols: 24       |
+          {7: 29 }line                 │rows: 5, cols: 25       |
           {7: 30 }line                 │mouse enabled           |
           {7: 31 }                     │{1: }                       |
           ==========                ==========              |
@@ -155,7 +155,7 @@ describe('terminal mouse', function()
         screen:expect([[
           {7: 21 }line                 │line29                  |
           {7: 22 }line                 │line30                  |
-          {7: 23 }line                 │rows: 5, cols: 24       |
+          {7: 23 }line                 │rows: 5, cols: 25       |
           {7: 24 }line                 │mouse enabled           |
           {7: 25 }line                 │{1: }                       |
           ==========                ==========              |
@@ -165,7 +165,7 @@ describe('terminal mouse', function()
         screen:expect([[
           {7: 26 }line                 │line29                  |
           {7: 27 }line                 │line30                  |
-          {7: 28 }line                 │rows: 5, cols: 24       |
+          {7: 28 }line                 │rows: 5, cols: 25       |
           {7: 29 }line                 │mouse enabled           |
           {7: 30 }line                 │{1: }                       |
           ==========                ==========              |
@@ -178,7 +178,7 @@ describe('terminal mouse', function()
         screen:expect([[
           {7: 27 }line                 │line29                  |
           {7: 28 }l^ine                 │line30                  |
-          {7: 29 }line                 │rows: 5, cols: 24       |
+          {7: 29 }line                 │rows: 5, cols: 25       |
           {7: 30 }line                 │mouse enabled           |
           {7: 31 }                     │{2: }                       |
           ==========                ==========              |
