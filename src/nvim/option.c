@@ -5793,25 +5793,28 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         switch (*p_ffs) {
-        case 'm':
-          buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
-          break;
-        case 'd':
-          buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
-          break;
-        case 'u':
-          buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
-          break;
-        default:
-          buf->b_p_ff = vim_strsave(p_ff);
-        }
-        if (buf->b_p_ff != NULL) {
-          buf->b_start_ffc = *buf->b_p_ff;
+          case 'm': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
+            break;
+          }
+          case 'd': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
+            break;
+          }
+          case 'u': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
+            break;
+          }
+          default: {
+            buf->b_p_ff = vim_strsave(p_ff);
+            break;
+          }
         }
         buf->b_p_bh = empty_option;
         buf->b_p_bt = empty_option;
-      } else
-        free_buf_options(buf, FALSE);
+      } else {
+        free_buf_options(buf, false);
+      }
 
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
