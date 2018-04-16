@@ -21,13 +21,14 @@ help() {
   echo 'Usage:'
   echo '  pvscheck.sh [--pvs URL] [--deps] [--environment-cc]'
   echo '              [target-directory [branch]]'
-  echo '  pvscheck.sh [--pvs URL] [--recheck] [--environment-cc]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck] [--environment-cc] [--update]'
   echo '              [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --only-analyse [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
   echo '    --pvs: Fetch pvs-studio from URL.'
+  echo
   echo '    --pvs detect: Auto-detect latest version (by scraping viva64.com).'
   echo
   echo '    --deps: (for regular run) Use top-level Makefile and build deps.'
@@ -46,6 +47,8 @@ help() {
   echo '             Does not run analysis.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
+  echo
+  echo '    --update: when rechecking first do a pull.'
   echo
   echo '    --only-analyse: run analysis on a prepared target directory '
   echo '                    without building Neovim.'
@@ -399,13 +402,24 @@ do_check() {
 
   install_pvs "$tgt" "$pvs_url"
 
-  do_recheck "$tgt" "$deps" "$environment_cc"
+  do_recheck "$tgt" "$deps" "$environment_cc" ""
 }
 
 do_recheck() {
   local tgt="$1" ; shift
   local deps="$1" ; shift
   local environment_cc="$1" ; shift
+  local update="$1" ; shift
+
+  if test -n "$update" ; then
+    (
+      cd "$tgt"
+      local branch="$(git rev-parse --abbrev-ref HEAD)"
+      git checkout --detach
+      git fetch -f origin "${branch}:${branch}"
+      git checkout -f "$branch"
+    )
+  fi
 
   create_compile_commands "$tgt" "$deps" "$environment_cc"
 
@@ -437,6 +451,7 @@ main() {
       pvs-install store_const \
       deps store_const \
       environment-cc store_const \
+      update store_const \
       -- \
       'modify realdir tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
@@ -455,7 +470,7 @@ main() {
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
-    do_recheck "$tgt" "$deps" "$environment_cc"
+    do_recheck "$tgt" "$deps" "$environment_cc" "$update"
   elif test -n "$only_analyse" ; then
     do_analysis "$tgt"
   else
