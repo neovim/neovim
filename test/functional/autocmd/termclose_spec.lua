@@ -32,7 +32,7 @@ describe('TermClose event', function()
   end)
 
   it('kills job trapping SIGTERM', function()
-    if helpers.pending_win32(pending) then return end
+    if iswin() then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
@@ -51,8 +51,8 @@ describe('TermClose event', function()
     ok(duration <= 4000)  -- Epsilon for slow CI
   end)
 
-  it('kills pty job trapping SIGHUP and SIGTERM', function()
-    if helpers.pending_win32(pending) then return end
+  it('kills PTY job trapping SIGHUP and SIGTERM', function()
+    if iswin() then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
     command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]

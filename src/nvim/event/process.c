@@ -23,7 +23,7 @@
 #endif
 
 // Time for a process to exit cleanly before we send KILL.
-// For pty processes SIGTERM is sent first (in case SIGHUP was not enough).
+// For PTY processes SIGTERM is sent first (in case SIGHUP was not enough).
 #define KILL_TIMEOUT_MS 2000
 
 static bool process_is_tearing_down = false;
@@ -111,6 +111,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   proc->internal_close_cb = decref;
   proc->refcount++;
   kl_push(WatcherPtr, proc->loop->children, proc);
+  DLOG("new: pid=%d argv=[%s]", proc->pid, *proc->argv);
   return 0;
 }
 
@@ -188,8 +189,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   }
 
   if (proc->refcount == 1) {
-    // Job exited, collect status and manually invoke close_cb to free the job
-    // resources
+    // Job exited, free its resources.
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
@@ -205,11 +205,12 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
 /// Ask a process to terminate and eventually kill if it doesn't respond
 void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
-  if (proc->stopped_time) {
+  bool exited = (proc->status >= 0);
+  if (exited || proc->stopped_time) {
     return;
   }
-
   proc->stopped_time = os_hrtime();
+
   switch (proc->type) {
     case kProcessTypeUv:
       // Close the process's stdin. If the process doesn't close its own
@@ -227,35 +228,32 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       abort();
   }
 
-  Loop *loop = proc->loop;
-  if (!loop->children_stop_requests++) {
-    // When there's at least one stop request pending, start a timer that
-    // will periodically check if a signal should be send to the job.
-    ILOG("starting job kill timer");
-    uv_timer_start(&loop->children_kill_timer, children_kill_cb,
-                   KILL_TIMEOUT_MS, KILL_TIMEOUT_MS);
-  }
+  // (Re)start timer to verify that stopped process(es) died.
+  uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
+                 KILL_TIMEOUT_MS, 0);
 }
 
-/// Iterates the process list sending SIGTERM to stopped processes and SIGKILL
-/// to those that didn't die from SIGTERM after a while(exit_timeout is 0).
+/// Sends SIGKILL (or SIGTERM..SIGKILL for PTY jobs) to processes that did
+/// not terminate after process_stop().
 static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;
-  uint64_t now = os_hrtime();
 
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (!proc->stopped_time) {
+    bool exited = (proc->status >= 0);
+    if (exited || !proc->stopped_time) {
       continue;
     }
-    uint64_t elapsed = (now - proc->stopped_time) / 1000000 + 1;
-
-    if (elapsed >= KILL_TIMEOUT_MS) {
-      int sig = proc->type == kProcessTypePty && elapsed < KILL_TIMEOUT_MS * 2
-                ? SIGTERM
-                : SIGKILL;
-      os_proc_tree_kill(proc->pid, sig);
+    uint64_t term_sent = UINT64_MAX == proc->stopped_time;
+    if (kProcessTypePty != proc->type || term_sent) {
+      os_proc_tree_kill(proc->pid, SIGKILL);
+    } else {
+      os_proc_tree_kill(proc->pid, SIGTERM);
+      proc->stopped_time = UINT64_MAX;  // Flag: SIGTERM was sent.
+      // Restart timer.
+      uv_timer_start(&proc->loop->children_kill_timer, children_kill_cb,
+                     KILL_TIMEOUT_MS, 0);
     }
   }
 }
@@ -383,12 +381,8 @@ static void process_close_handles(void **argv)
 static void on_process_exit(Process *proc)
 {
   Loop *loop = proc->loop;
-  if (proc->stopped_time && loop->children_stop_requests
-      && !--loop->children_stop_requests) {
-    // Stop the timer if no more stop requests are pending
-    DLOG("Stopping process kill timer");
-    uv_timer_stop(&loop->children_kill_timer);
-  }
+  ILOG("exited: pid=%d status=%d stoptime=%" PRIu64, proc->pid, proc->status,
+       proc->stopped_time);
 
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
