@@ -1,5 +1,5 @@
-#ifndef NVIM_SRC_NVIM_OS_CYGTERM_H
-#define NVIM_SRC_NVIM_OS_CYGTERM_H
+#ifndef NVIM_OS_CYGTERM_H
+#define NVIM_OS_CYGTERM_H
 
 typedef enum {
   kNoneMintty,
@@ -54,7 +54,8 @@ typedef int (*tcsetattr_fn) (int, int, const struct termios *);
 typedef int (*ioctl_fn) (int, int, ...);
 typedef int (*open_fn) (const char *, int);
 typedef int (*close_fn) (int);
-typedef int * (*errno_fn) (void);
+typedef int *(*errno_fn) (void);
+typedef char *(*strerror_fn) (int);
 
 typedef struct {
   HMODULE hmodule;
@@ -64,9 +65,12 @@ typedef struct {
   open_fn open;
   close_fn close;
   errno_fn __errno;
+  strerror_fn strerror;
+} CygwinDll;
+
+typedef struct {
+  CygwinDll *cygwindll;
   int fd;
-  char *tty;
-  bool is_started;
   struct termios restore_termios;
   bool restore_termios_valid;
 } CygTerm;
@@ -74,4 +78,4 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/cygterm.h.generated.h"
 #endif
-#endif  // NVIM_SRC_NVIM_OS_CYGTERM_H
+#endif  // NVIM_OS_CYGTERM_H

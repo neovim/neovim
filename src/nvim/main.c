@@ -333,7 +333,8 @@ int __stdcall cygloadCRTStartup(void)
 # endif  // __x86_64__
 
   if ((_stackbase - _padding.end) != 0) {
-    _padding.delta = (_stackbase - _padding.end);
+    assert(_stackbase >= _padding.end);
+    _padding.delta = (size_t)(_stackbase - _padding.end);
     memcpy(_padding.block, _padding.end, _padding.delta);
   }
 #ifdef __GNUC__
@@ -1604,14 +1605,15 @@ static void check_tty(mparm_T *parmp)
     if (!parmp->input_isatty) {
       silent_mode = true;
     }
-  } else if (parmp->want_full_screen && (!parmp->err_isatty
-        && (!parmp->output_isatty || !parmp->input_isatty))) {
-
+  } else if (parmp->want_full_screen
+             && (!parmp->err_isatty
+                 && (!parmp->output_isatty
+                     || !parmp->input_isatty))) {
 #ifdef WIN32
-    if (detect_mintty_type(fileno(stdin)) != kNoneMintty
-        || detect_mintty_type(fileno(stdout)) != kNoneMintty
-        || detect_mintty_type(fileno(stderr)) != kNoneMintty) {
-      if (!get_cygwin_dll_handle()) {
+    if (os_detect_mintty_type(fileno(stdin)) != kNoneMintty
+        || os_detect_mintty_type(fileno(stdout)) != kNoneMintty
+        || os_detect_mintty_type(fileno(stderr)) != kNoneMintty) {
+      if (!os_init_cygwin_dll()) {
         mch_errmsg(_("Vim: Error: Failed LoadLibrary Cygwin dll\n"));
         exit(1);
       }

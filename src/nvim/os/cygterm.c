@@ -1,10 +1,16 @@
 #include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "nvim/os/os.h"
 #include "nvim/os/cygterm.h"
 #include "nvim/memory.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+#include "os/cygterm.c.generated.h"
+#endif
 
 #define CYGWDLL "cygwin1.dll"
 #define MSYSDLL "msys-2.0.dll"
@@ -36,33 +42,190 @@ struct winsize
   uint16_t ws_xpixel, ws_ypixel;
 };
 
+/// Determine if nvim is running in mintty. When running in mintty, it also
+/// determines whether it is running with Cygwin or Msys.
+///
+/// @param  fd  File descriptor to determine.
+///
+/// @returns kNoneMintty if not running in minntty.
+///          kMinttyMsys if running on Msys.
+///          kMinttyCygwin if running on Cygwin.
+///
+MinttyType os_detect_mintty_type(int fd)
+{
+  int type = query_mintty(fd, kMinttyType);
+  switch (type) {
+    case (int)kMinttyMsys:  // NOLINT(whitespace/parens)
+      return kMinttyMsys;
+    case (int)kMinttyCygwin:  // NOLINT(whitespace/parens)
+      return kMinttyCygwin;
+    default:
+      return kNoneMintty;
+  }
+}
+
+bool os_init_cygwin_dll(void)
+{
+  return get_cygwin_dll() ? true : false;
+}
+
+/// Build the struct Cygterm.
+///
+/// @param  fd  File descriptor of a pipe passed from Cygwin's tty.
+///
+/// @return If construction succeeds, a pointer to a structure. Otherwise NULL.
+///
+CygTerm *os_cygterm_new(int fd)
+{
+  MinttyType mintty = os_detect_mintty_type(fd);
+  if (mintty == kNoneMintty) {
+    return NULL;
+  }
+
+  CygTerm *cygterm = (CygTerm *)xmalloc(sizeof(CygTerm));
+  if (!cygterm) {
+    return NULL;
+  }
+
+  CygwinDll *cygwindll = get_cygwin_dll();
+  cygterm->cygwindll = cygwindll;
+
+  if (!cygterm->cygwindll) {
+    goto abort;
+  }
+  int pty_no = get_cygterm_pty_no(fd);
+  if (pty_no == -1) {
+    goto abort;
+  }
+  char pty_dev[MAX_PATH];
+  snprintf(pty_dev, sizeof(pty_dev), "/dev/pty%d", pty_no);
+  cygterm->fd = cygwindll->open(pty_dev, O_RDWR | CYG_O_BINARY);
+  if (cygterm->fd == -1) {
+    ELOG("Failed to open %s: %s", pty_dev,
+         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+    goto abort;
+  }
+
+  struct termios termios;
+  if (cygwindll->tcgetattr(cygterm->fd, &termios) == 0) {
+    cygterm->restore_termios = termios;
+    cygterm->restore_termios_valid = true;
+
+    termios.c_iflag &= (uint16_t)~(IXON|INLCR|ICRNL);
+    termios.c_lflag &= (uint16_t)~(ICANON|ECHO|IEXTEN);
+    termios.c_cc[VMIN] = 1;
+    termios.c_cc[VTIME] = 0;
+    termios.c_lflag &= (uint16_t)~ISIG;
+
+    int ret = cygwindll->tcsetattr(cygterm->fd, TCSANOW, &termios);
+    if (ret == -1) {
+      ELOG("Failed to tcsetattr: %s",
+           cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+    }
+  } else {
+    ELOG("Failed to tcgetattr: %s",
+         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+  }
+
+  return cygterm;
+
+abort:
+  xfree(cygterm);
+  return NULL;
+}
+
+/// Discard the struct Cygterm.
+///
+/// @param  cygterm  Pointer to the structure returned by os_cygterm_new.
+///
+void os_cygterm_destroy(CygTerm *cygterm)
+{
+  if (!cygterm) {
+    return;
+  }
+
+  CygwinDll *cygwindll = cygterm->cygwindll;
+  // FIXME: Termination processing is disabled, Because calling functions in
+  //        Cygwindll here cause a segmentation fault in sigfe.s.
+  // if (cygterm->restore_termios_valid) {
+  //   int ret = cygwindll->tcsetattr(cygterm->fd,
+  //                                  TCSANOW,
+  //                                  &cygterm->restore_termios);
+  //   if (ret == -1) {
+  //     ELOG("Failed to tcsetattr: %s",
+  //          cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+  //   }
+  // }
+  //
+  // int ret = cygwindll->close(cygterm->fd);
+  // if (ret == -1) {
+  //   ELOG("Failed to close pty: %s",
+  //        cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+  // }
+  FreeLibrary(cygwindll->hmodule);
+  xfree(cygterm->cygwindll);
+  xfree(cygterm);
+}
+
+/// Get the window size of Cygwin's tty.
+///
+/// @param[in]  cygterm  Pointer to struct Cygterm.
+/// @param[out]  width  Window width.
+/// @param[out]  height  Window height.
+///
+/// @return If size acquisiton succeeded, true. Otherwise false.
+///
+bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
+{
+  struct winsize ws;
+  int err, err_no;
+  CygwinDll *cygwindll = cygterm->cygwindll;
+
+  do {
+    err = cygwindll->ioctl(cygterm->fd, TIOCGWINSZ, &ws);
+    err_no = cygwin_dll_errno(cygwindll);
+  } while (err == -1 && err_no == EINTR);
+
+  if (err == -1) {
+    return false;
+  }
+
+  *width = ws.ws_col;
+  *height = ws.ws_row;
+
+  return true;
+}
+
 // Hack to detect mintty, ported from vim
 // https://fossies.org/linux/vim/src/iscygpty.c
 // See https://github.com/BurntSushi/ripgrep/issues/94#issuecomment-261745480
 // for an explanation on why this works
-int query_mintty(int fd, MinttyQueryType query_type)
+static int query_mintty(int fd, MinttyQueryType query_type)
 {
   const size_t size = sizeof(FILE_NAME_INFO) + sizeof(WCHAR) * MAX_PATH;
+  if (size > UINT32_MAX) {
+    return -1;
+  }
   WCHAR *p = NULL;
   WCHAR *start_pty_no = NULL;
   WCHAR *end_pty_no = NULL;
 
   const HANDLE h = (HANDLE)_get_osfhandle(fd);
   if (h == INVALID_HANDLE_VALUE) {
-    return false;
+    return -1;
   }
   // Cygwin/msys's pty is a pipe.
   if (GetFileType(h) != FILE_TYPE_PIPE) {
-    return false;
+    return -1;
   }
   FILE_NAME_INFO *nameinfo = xmalloc(size);
   if (nameinfo == NULL) {
-    return false;
+    return -1;
   }
   // Check the name of the pipe:
   // '\{cygwin,msys}-XXXXXXXXXXXXXXXX-ptyN-{from,to}-master'
   int result = (int)kNoneMintty;
-  if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, size)) {
+  if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, (uint32_t)size)) {
     nameinfo->FileName[nameinfo->FileNameLength / sizeof(WCHAR)] = L'\0';
     p = nameinfo->FileName;
     if (wcsstr(p, L"\\cygwin-") == p) {
@@ -97,8 +260,10 @@ int query_mintty(int fd, MinttyQueryType query_type)
   }
   if (query_type == kPtyNo && start_pty_no && end_pty_no) {
     WCHAR *endptr = NULL;
-    result = wcstoul(start_pty_no, &endptr, 10);
-    if (end_pty_no != endptr) {
+    unsigned long pty_no = wcstoul(start_pty_no, &endptr, 10);
+    if (pty_no <=  INT_MAX && (end_pty_no == endptr)) {
+      result = (int)pty_no;
+    } else {
       result = -1;
     }
   } else if (query_type == kMinttyType) {
@@ -110,37 +275,33 @@ int query_mintty(int fd, MinttyQueryType query_type)
   return result;
 }
 
-MinttyType detect_mintty_type(int fd)
-{
-  int type = query_mintty(fd, kMinttyType);
-  switch (type) {
-    case (int)kMinttyMsys:  // NOLINT(whitespace/parens)
-      return kMinttyMsys;
-    case (int)kMinttyCygwin:  // NOLINT(whitespace/parens)
-
-      return kMinttyCygwin;
-    default:
-      return kNoneMintty;
-  }
-}
-
-int get_pty_no(int fd)
+static int get_cygterm_pty_no(int fd)
 {
   return query_mintty(fd, kPtyNo);
 }
 
-HMODULE get_cygwin_dll_handle(void)
+static CygwinDll *get_cygwin_dll(void)
 {
-  static HMODULE hmodule = NULL;
+  static CygwinDll *cygwindll = NULL;
+  static bool is_init = false;
+  const char *emsg = NULL;
+  if (is_init) {
+    return cygwindll;
+  }
+  is_init = true;
+  cygwindll = xcalloc(1, sizeof(CygwinDll));
+  if (!cygwindll) {
+    return cygwindll;
+  }
   void (*init)(void);
-  if (hmodule) {
-    return hmodule;
+  if (cygwindll->hmodule) {
+    return cygwindll;
   } else {
     MinttyType mintty;
     const char *dll = NULL;
     const char *init_func = NULL;
     for (int i = 0; i < 3; i++) {
-      mintty = detect_mintty_type(i);
+      mintty = os_detect_mintty_type(i);
       if (mintty == kMinttyCygwin) {
         dll = CYGWDLL;
         init_func = CYG_INIT_FUNC;
@@ -151,152 +312,80 @@ HMODULE get_cygwin_dll_handle(void)
         break;
       }
     }
-    if (dll) {
-      hmodule = LoadLibrary(dll);
-      if (!hmodule) {
-        return NULL;
-      }
-      init = (void (*)(void))GetProcAddress(hmodule, init_func);
-      if (init) {
-        init();
-      } else {
-        hmodule = NULL;
-      }
+    if (!dll) {
+      xfree(cygwindll);
+      return cygwindll = NULL;
     }
+    HMODULE hmodule = LoadLibrary(dll);
+    if (!hmodule) {
+      ELOG("Failed to LoadLibrary: %s", dll);
+      xfree(cygwindll);
+      return cygwindll = NULL;
+    }
+    cygwindll->hmodule = hmodule;
+    init = (void (*)(void))GetProcAddress(hmodule, init_func);
+    if (!init) {
+      emsg = init_func;
+      goto cleanup;
+    }
+    cygwindll->tcgetattr =
+      (tcgetattr_fn)GetProcAddress(hmodule, "tcgetattr");
+    if (!cygwindll->tcgetattr) {
+      emsg = "tcgetattr";
+      goto cleanup;
+    }
+    cygwindll->tcsetattr =
+      (tcsetattr_fn)GetProcAddress(hmodule, "tcsetattr");
+    if (!cygwindll->tcsetattr) {
+      emsg = "tcsetattr";
+      goto cleanup;
+    }
+    cygwindll->ioctl = (ioctl_fn)GetProcAddress(hmodule, "ioctl");
+    if (!cygwindll->ioctl) {
+      emsg = "ioctl";
+      goto cleanup;
+    }
+    cygwindll->open = (open_fn)GetProcAddress(hmodule, "open");
+    if (!cygwindll->open) {
+      emsg = "open";
+      goto cleanup;
+    }
+    cygwindll->close = (close_fn)GetProcAddress(hmodule, "close");
+    if (!cygwindll->close) {
+      emsg = "close";
+      goto cleanup;
+    }
+    cygwindll->__errno = (errno_fn)GetProcAddress(hmodule, "__errno");
+    if (!cygwindll->__errno) {
+      emsg = "__errno";
+      goto cleanup;
+    }
+    cygwindll->strerror = (strerror_fn)GetProcAddress(hmodule, "strerror");
+    if (!cygwindll->strerror) {
+      emsg = "strerror";
+      goto cleanup;
+    }
+    init();
+    return cygwindll;
   }
-  return hmodule;
+cleanup:
+  ELOG("Failed to GetProcAddress: %s", emsg);
+  FreeLibrary(cygwindll->hmodule);
+  xfree(cygwindll);
+  return cygwindll = NULL;
 }
 
-CygTerm *cygterm_new(int fd)
+static int cygwin_dll_errno(CygwinDll *cygwindll)
 {
-  MinttyType mintty = detect_mintty_type(fd);
-  if (mintty == kNoneMintty) {
-    return NULL;
-  }
-
-  CygTerm *cygterm = (CygTerm *)xmalloc(sizeof(CygTerm));
-  if (!cygterm) {
-    return NULL;
-  }
-
-  cygterm->hmodule = get_cygwin_dll_handle();
-  cygterm->tcgetattr =
-    (tcgetattr_fn)GetProcAddress(cygterm->hmodule, "tcgetattr");
-  cygterm->tcsetattr =
-    (tcsetattr_fn)GetProcAddress(cygterm->hmodule, "tcsetattr");
-  cygterm->ioctl = (ioctl_fn)GetProcAddress(cygterm->hmodule, "ioctl");
-  cygterm->open = (open_fn)GetProcAddress(cygterm->hmodule, "open");
-  cygterm->close = (close_fn)GetProcAddress(cygterm->hmodule, "close");
-  cygterm->__errno = (errno_fn)GetProcAddress(cygterm->hmodule, "__errno");
-
-  if (!cygterm->tcgetattr
-      || !cygterm->tcsetattr
-      || !cygterm->ioctl
-      || !cygterm->open
-      || !cygterm->close
-      || !cygterm->__errno) {
-    goto abort;
-  }
-  cygterm->is_started = false;
-  int pty_no = get_pty_no(fd);
-  if (pty_no == -1) {
-    goto abort;
-  }
-  char pty_dev[MAX_PATH];
-  snprintf(pty_dev, sizeof(pty_dev), "/dev/pty%d", pty_no);
-  size_t len = strlen(pty_dev) + 1;
-  cygterm->tty = xmalloc(len);
-  snprintf(cygterm->tty, len, "%s", pty_dev);
-  cygterm->fd = -1;
-  cygterm_start(cygterm);
-  return cygterm;
-
-abort:
-  xfree(cygterm);
-  return NULL;
+    int err_no = -1;
+    int *err = cygwindll->__errno();
+    if (err) {
+      err_no = *err;
+    }
+    return err_no;
 }
 
-void cygterm_start(CygTerm *cygterm)
+static char *cygwin_dll_strerror(CygwinDll *cygwindll, int err)
 {
-  if (cygterm->is_started) {
-    return;
-  }
-
-  if (cygterm->fd == -1) {
-    int fd = cygterm->open(cygterm->tty, O_RDWR | CYG_O_BINARY);
-    if (fd == -1) {
-      return;
-    }
-    cygterm->fd = fd;
-  }
-
-  struct termios termios;
-  if (cygterm->tcgetattr(cygterm->fd, &termios) == 0) {
-    cygterm->restore_termios = termios;
-    cygterm->restore_termios_valid = true;
-
-    termios.c_iflag &= ~(IXON|INLCR|ICRNL);
-    termios.c_lflag &= ~(ICANON|ECHO|IEXTEN);
-    termios.c_cc[VMIN] = 1;
-    termios.c_cc[VTIME] = 0;
-    termios.c_lflag &= ~ISIG;
-
-    cygterm->tcsetattr(cygterm->fd, TCSANOW, &termios);
-  }
-
-  cygterm->is_started = true;
-}
-
-void cygterm_stop(CygTerm *cygterm)
-{
-  if (!cygterm->is_started) {
-    return;
-  }
-
-  if (cygterm->fd == -1) {
-    int fd = cygterm->open(cygterm->tty, O_RDWR | CYG_O_BINARY);
-    if (fd == -1) {
-      return;
-    }
-    cygterm->fd = fd;
-  }
-  if (cygterm->restore_termios_valid) {
-    cygterm->tcsetattr(cygterm->fd, TCSANOW, &cygterm->restore_termios);
-  }
-
-  cygterm->is_started = false;
-  cygterm->close(cygterm->fd);
-}
-
-bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
-{
-  struct winsize ws;
-  int err, err_no;
-
-  if (cygterm->fd == -1) {
-    int fd = cygterm->open(cygterm->tty, O_RDWR | CYG_O_BINARY);
-    if (fd == -1) {
-      return false;
-    }
-    cygterm->fd = fd;
-  }
-
-  do {
-    err = cygterm->ioctl(cygterm->fd, TIOCGWINSZ, &ws);
-    int *e = cygterm->__errno();
-    if (e == NULL) {
-      err_no = -1;
-    } else {
-      err_no = *e;
-    }
-  } while (err == -1 && err_no == EINTR);
-
-  if (err == -1) {
-    return false;
-  }
-
-  *width = ws.ws_col;
-  *height = ws.ws_row;
-
-  return true;
+  return cygwindll->strerror(err);
 }

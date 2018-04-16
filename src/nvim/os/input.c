@@ -188,7 +188,7 @@ bool os_isatty(int fd)
         return true;
     }
 #ifdef WIN32
-    return detect_mintty_type(fd) != kNoneMintty;
+    return os_detect_mintty_type(fd) != kNoneMintty;
 #else
     return false;
 #endif

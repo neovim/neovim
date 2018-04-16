@@ -205,7 +205,7 @@ static void terminfo_start(UI *ui)
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
 #ifdef WIN32
-  data->cygterm = cygterm_new(fileno(stdin));
+  data->cygterm = os_cygterm_new(1);
 #endif
 
   // Set up unibilium/terminfo.
@@ -298,6 +298,9 @@ static void terminfo_stop(UI *ui)
     abort();
   }
   unibi_destroy(data->ut);
+#ifdef WIN32
+  os_cygterm_destroy(data->cygterm);
+#endif
 }
 
 static void tui_terminal_start(UI *ui)
@@ -1243,16 +1246,15 @@ static void update_size(UI *ui)
   }
 
   // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
-#ifdef WIN32
-  if (data->out_isatty && !data->cygterm
-#else
   if (data->out_isatty
+#ifdef WIN32
+      && !data->cygterm
 #endif
       && !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
 #ifdef WIN32
   } else if (data->cygterm
-            && cygterm_get_winsize(data->cygterm, &width, &height)) {
+             && os_cygterm_get_winsize(data->cygterm, &width, &height)) {
     goto end;
 #endif
   }
