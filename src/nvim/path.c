@@ -673,7 +673,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     // Find all matching entries.
     char_u *name;
     scandir_next_with_dots(NULL);  // initialize
-    while ((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
+    while ((name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
