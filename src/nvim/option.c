@@ -6219,14 +6219,15 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   }
 
   if (expand_option_idx >= 0) {
-    /* put string of option value in NameBuff */
+    // Put string of option value in NameBuff.
     option_value2string(&options[expand_option_idx], expand_option_flags);
     var = NameBuff;
-  } else if (var == NULL)
+  } else {
     var = (char_u *)"";
+  }
 
-  /* A backslash is required before some characters.  This is the reverse of
-   * what happens in do_set(). */
+  // A backslash is required before some characters.  This is the reverse of
+  // what happens in do_set().
   char_u *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
