@@ -4744,7 +4744,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIu64, (uint64_t)n);
     } else if (pre == '0') {
       vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIo64, (uint64_t)n);
-    } else if (pre && hexupper) {
+    } else if (hexupper) {
       vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIX64, (uint64_t)n);
     } else {
       vim_snprintf((char *)buf2, ARRAY_SIZE(buf2), "%" PRIx64, (uint64_t)n);
