@@ -725,9 +725,7 @@ static void init_locale(void)
 #endif
 
 
-/*
- * Scan the command line arguments.
- */
+/// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
 {
   int argc = parmp->argc;
@@ -896,8 +894,9 @@ static void command_line_scan(mparm_T *parmp)
           p_write = FALSE;
           break;
 
-        case 'N':                 /* "-N"  Nocompatible */
-          /* No-op */
+        case 'N':                 // "-N"  Nocompatible
+        case 'X':                 // "-X"  Do not connect to X server
+          // No-op
           break;
 
         case 'n':                 /* "-n" no swap file */
