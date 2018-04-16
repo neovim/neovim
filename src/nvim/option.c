@@ -4184,27 +4184,23 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdl
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdl)) {
+  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
     if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdc
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdc)) {
+  } else if (pp == &curwin->w_p_fdc || pp == &curwin->w_allbuf_opt.wo_fdc) {
     if (value < 0) {
       errmsg = e_positive;
     } else if (value > 12) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_cole
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_cole)) {
+  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
     if (value < 0) {
       errmsg = e_positive;
     } else if (value > 3) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_nuw
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_nuw)) {
+  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
     if (value < 1) {
       errmsg = e_positive;
     } else if (value > 10) {
