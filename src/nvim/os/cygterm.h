@@ -24,8 +24,7 @@ typedef unsigned int     speed_t;
 typedef uint16_t         otcflag_t;
 typedef unsigned char    ospeed_t;
 
-// struct __oldtermios
-struct termios
+struct __oldtermios
 {
   otcflag_t     c_iflag;
   otcflag_t     c_oflag;
@@ -37,17 +36,17 @@ struct termios
   ospeed_t      c_ospeed;
 };
 
-// struct termios
-// {
-//   tcflag_t      c_iflag;
-//   tcflag_t      c_oflag;
-//   tcflag_t      c_cflag;
-//   tcflag_t      c_lflag;
-//   char          c_line;
-//   cc_t          c_cc[NCCS];
-//   speed_t       c_ispeed;
-//   speed_t       c_ospeed;
-// };
+struct termios
+{
+  tcflag_t      c_iflag;
+  tcflag_t      c_oflag;
+  tcflag_t      c_cflag;
+  tcflag_t      c_lflag;
+  char          c_line;
+  cc_t          c_cc[NCCS];
+  speed_t       c_ispeed;
+  speed_t       c_ospeed;
+};
 
 typedef int (*tcgetattr_fn) (int, struct termios *);
 typedef int (*tcsetattr_fn) (int, int, const struct termios *);

@@ -111,11 +111,11 @@ CygTerm *os_cygterm_new(int fd)
     cygterm->restore_termios = termios;
     cygterm->restore_termios_valid = true;
 
-    termios.c_iflag &= (uint16_t)~(IXON|INLCR|ICRNL);
-    termios.c_lflag &= (uint16_t)~(ICANON|ECHO|IEXTEN);
-    termios.c_cc[VMIN] = 1;
-    termios.c_cc[VTIME] = 0;
-    termios.c_lflag &= (uint16_t)~ISIG;
+    ((struct __oldtermios *)(&termios))->c_iflag &= (uint16_t)~(IXON|INLCR|ICRNL);
+    ((struct __oldtermios *)(&termios))->c_lflag &= (uint16_t)~(ICANON|ECHO|IEXTEN);
+    ((struct __oldtermios *)(&termios))->c_cc[VMIN] = 1;
+    ((struct __oldtermios *)(&termios))->c_cc[VTIME] = 0;
+    ((struct __oldtermios *)(&termios))->c_lflag &= (uint16_t)~ISIG;
 
     int ret = cygwindll->tcsetattr(cygterm->fd, TCSANOW, &termios);
     if (ret == -1) {
