@@ -834,10 +834,7 @@ EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 EXTERN int need_highlight_changed INIT(= true);
 EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
-#define NSCRIPT 15
-EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
-EXTERN int curscript INIT(= 0);             /* index in scriptin[] */
-EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
+EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 
 // volatile because it is used in a signal handler.
 EXTERN volatile int got_int INIT(= false);  // set to true when interrupt
@@ -1085,6 +1082,7 @@ EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
 EXTERN char_u e_noroom[] INIT(= N_("E36: Not enough room"));
 EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
+EXTERN char_u e_notopen_2[] INIT(= N_("E484: Can't open file %s: %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
 EXTERN char_u e_nowrtmsg[] INIT(= N_(
         "E37: No write since last change (add ! to override)"));

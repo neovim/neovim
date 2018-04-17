@@ -2351,10 +2351,9 @@ static int do_more_prompt(int typed_char)
  * yet.  When stderr can't be used, collect error messages until the GUI has
  * started and they can be displayed in a message box.
  */
-void mch_errmsg(char *str)
+void mch_errmsg(const char *const str)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int len;
-
 #ifdef UNIX
   /* On Unix use stderr if it's a tty.
    * When not going to start the GUI also use stderr.
@@ -2368,14 +2367,13 @@ void mch_errmsg(char *str)
   /* avoid a delay for a message that isn't there */
   emsg_on_display = FALSE;
 
-  len = (int)STRLEN(str) + 1;
+  const size_t len = strlen(str) + 1;
   if (error_ga.ga_data == NULL) {
     ga_set_growsize(&error_ga, 80);
     error_ga.ga_itemsize = 1;
   }
   ga_grow(&error_ga, len);
-  memmove((char_u *)error_ga.ga_data + error_ga.ga_len,
-      (char_u *)str, len);
+  memmove(error_ga.ga_data + error_ga.ga_len, str, len);
 #ifdef UNIX
   /* remove CR characters, they are displayed */
   {

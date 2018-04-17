@@ -779,7 +779,7 @@ local function gen_itp(it)
 end
 
 local function cppimport(path)
-  return cimport(Paths.test_include_path .. '/' .. path)
+  return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
 cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')

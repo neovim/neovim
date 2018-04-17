@@ -83,7 +83,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   if (fd < 0) {
     return fd;
   }
-  return file_open_fd(ret_fp, fd, (wr == kTrue));
+  return file_open_fd(ret_fp, fd, flags);
 }
 
 /// Wrap file descriptor with FileDescriptor structure
@@ -94,14 +94,23 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 /// @param[out]  ret_fp  Address where information needed for reading from or
 ///                      writing to a file is saved
 /// @param[in]  fd  File descriptor to wrap.
-/// @param[in]  wr  True if fd is opened for writing only, false if it is read
-///                 only.
+/// @param[in]  flags  Flags, @see FileOpenFlags. Currently reading from and
+///                    writing to the file at once is not supported, so either
+///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
 ///
 /// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
-int file_open_fd(FileDescriptor *const ret_fp, const int fd, const bool wr)
+int file_open_fd(FileDescriptor *const ret_fp, const int fd,
+                 const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  ret_fp->wr = wr;
+  ret_fp->wr = !!(flags & (kFileCreate
+                           |kFileCreateOnly
+                           |kFileTruncate
+                           |kFileAppend
+                           |kFileWriteOnly));
+  ret_fp->non_blocking = !!(flags & kFileNonBlocking);
+  // Non-blocking writes not supported currently.
+  assert(!ret_fp->wr || !ret_fp->non_blocking);
   ret_fp->fd = fd;
   ret_fp->eof = false;
   ret_fp->rv = rbuffer_new(kRWBufferSize);
@@ -138,15 +147,17 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 ///
 /// @param[out]  error  Error code, or 0 on success. @see os_strerror()
 /// @param[in]  fd  File descriptor to wrap.
-/// @param[in]  wr  True if fd is opened for writing only, false if it is read
-///                 only.
+/// @param[in]  flags  Flags, @see FileOpenFlags.
+/// @param[in]  mode  Permissions for the newly created file (ignored if flags
+///                   does not have FILE_CREATE\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_fd_new(int *const error, const int fd, const bool wr)
+FileDescriptor *file_open_fd_new(int *const error, const int fd,
+                                 const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
-  if ((*error = file_open_fd(fp, fd, wr)) != 0) {
+  if ((*error = file_open_fd(fp, fd, flags)) != 0) {
     xfree(fp);
     return NULL;
   }
@@ -244,7 +255,8 @@ static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
     return;
   }
   const size_t read_bytes = rbuffer_read(rv, writebuf, kRWBufferSize);
-  const ptrdiff_t wres = os_write(fp->fd, writebuf, read_bytes);
+  const ptrdiff_t wres = os_write(fp->fd, writebuf, read_bytes,
+                                  fp->non_blocking);
   if (wres != (ptrdiff_t)read_bytes) {
     if (wres >= 0) {
       fp->_error = UV_EIO;
@@ -270,6 +282,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
   char *buf = ret_buf;
   size_t read_remaining = size;
   RBuffer *const rv = fp->rv;
+  bool called_read = false;
   while (read_remaining) {
     const size_t rv_size = rbuffer_size(rv);
     if (rv_size > 0) {
@@ -277,7 +290,9 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       buf += rsize;
       read_remaining -= rsize;
     }
-    if (fp->eof) {
+    if (fp->eof
+        // Allow only at most one os_read[v] call.
+        || (called_read && fp->non_blocking)) {
       break;
     }
     if (read_remaining) {
@@ -294,7 +309,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       };
       assert(write_count == kRWBufferSize);
       const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
-                                       ARRAY_SIZE(iov));
+                                       ARRAY_SIZE(iov), fp->non_blocking);
       if (r_ret > 0) {
         if (r_ret > (ptrdiff_t)read_remaining) {
           rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
@@ -310,7 +325,8 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       if (read_remaining >= kRWBufferSize) {
         // …otherwise leave RBuffer empty and populate only target buffer,
         // because filtering information through rbuffer will be more syscalls.
-        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof, buf, read_remaining);
+        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof, buf, read_remaining,
+                                        fp->non_blocking);
         if (r_ret >= 0) {
           read_remaining -= (size_t)r_ret;
           return (ptrdiff_t)(size - read_remaining);
@@ -321,7 +337,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         size_t write_count;
         const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof,
                                         rbuffer_write_ptr(rv, &write_count),
-                                        kRWBufferSize);
+                                        kRWBufferSize, fp->non_blocking);
         assert(write_count == kRWBufferSize);
         if (r_ret > 0) {
           rbuffer_produced(rv, (size_t)r_ret);
@@ -330,6 +346,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         }
       }
 #endif
+      called_read = true;
     }
   }
   return (ptrdiff_t)(size - read_remaining);

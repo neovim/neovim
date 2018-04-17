@@ -1,6 +1,38 @@
 local assert = require('luassert')
 local lfs = require('lfs')
 
+local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+local function shell_quote(str)
+  if string.find(str, quote_me) or str == '' then
+    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
+  else
+    return str
+  end
+end
+
+local function argss_to_cmd(...)
+  local cmd = ''
+  for i = 1, select('#', ...) do
+    local arg = select(i, ...)
+    if type(arg) == 'string' then
+      cmd = cmd .. ' ' ..shell_quote(arg)
+    else
+      for _, subarg in ipairs(arg) do
+        cmd = cmd .. ' ' .. shell_quote(subarg)
+      end
+    end
+  end
+  return cmd
+end
+
+local function popen_r(...)
+  return io.popen(argss_to_cmd(...), 'r')
+end
+
+local function popen_w(...)
+  return io.popen(argss_to_cmd(...), 'w')
+end
+
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
   ['could cause spurious value errors to appear']=2,
@@ -121,7 +153,7 @@ local uname = (function()
       return platform
     end
 
-    local status, f = pcall(io.popen, "uname -s")
+    local status, f = pcall(popen_r, 'uname', '-s')
     if status then
       platform = f:read("*l")
       f:close()
@@ -253,7 +285,7 @@ local function check_cores(app, force)
 end
 
 local function which(exe)
-  local pipe = io.popen('which ' .. exe, 'r')
+  local pipe = popen_r('which', exe)
   local ret = pipe:read('*a')
   pipe:close()
   if ret == '' then
@@ -261,6 +293,19 @@ local function which(exe)
   else
     return ret:sub(1, -2)
   end
+end
+
+local function repeated_read_cmd(...)
+  for _ = 1, 10 do
+    local stream = popen_r(...)
+    local ret = stream:read('*a')
+    stream:close()
+    if ret then
+      return ret
+    end
+  end
+  print('ERROR: Failed to execute ' .. argss_to_cmd(...) .. ': nil return after 10 attempts')
+  return nil
 end
 
 local function shallowcopy(orig)
@@ -569,6 +614,7 @@ end
 
 return {
   REMOVE_THIS = REMOVE_THIS,
+  argss_to_cmd = argss_to_cmd,
   check_cores = check_cores,
   check_logs = check_logs,
   concat_tables = concat_tables,
@@ -590,6 +636,9 @@ return {
   mergedicts_copy = mergedicts_copy,
   neq = neq,
   ok = ok,
+  popen_r = popen_r,
+  popen_w = popen_w,
+  repeated_read_cmd = repeated_read_cmd,
   shallowcopy = shallowcopy,
   table_flatten = table_flatten,
   tmpname = tmpname,

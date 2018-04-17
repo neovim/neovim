@@ -2,6 +2,10 @@
 -- windows, will probably need quite a bit of adjustment to run there.
 
 local ffi = require("ffi")
+local global_helpers = require('test.helpers')
+
+local argss_to_cmd = global_helpers.argss_to_cmd
+local repeated_read_cmd = global_helpers.repeated_read_cmd
 
 local ccs = {}
 
@@ -21,15 +25,6 @@ table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
 table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
-
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
-  else
-    return str
-  end
-end
 
 -- parse Makefile format dependencies into a Lua table
 local function parse_make_deps(deps)
@@ -149,16 +144,6 @@ function Gcc:add_to_include_path(...)
   end
 end
 
-local function argss_to_cmd(...)
-  local cmd = ''
-  for i = 1, select('#', ...) do
-    for _, arg in ipairs(select(i, ...)) do
-      cmd = cmd .. ' ' .. shell_quote(arg)
-    end
-  end
-  return cmd
-end
-
 -- returns a list of the headers files upon which this file relies
 function Gcc:dependencies(hdr)
   local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
@@ -172,29 +157,15 @@ function Gcc:dependencies(hdr)
   end
 end
 
-local function repeated_call(...)
-  local cmd = argss_to_cmd(...)
-  for _ = 1, 10 do
-    local stream = io.popen(cmd)
-    local ret = stream:read('*a')
-    stream:close()
-    if ret then
-      return ret
-    end
-  end
-  print('ERROR: preprocess.lua: Failed to execute ' .. cmd .. ': nil return after 10 attempts')
-  return nil
-end
-
 function Gcc:filter_standard_defines(defines)
   if not self.standard_defines then
     local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
     local pseudoheader_file = io.open(pseudoheader_fname, 'w')
     pseudoheader_file:close()
-    local standard_defines = repeated_call(self.path,
-                                           self.preprocessor_extra_flags,
-                                           self.get_defines_extra_flags,
-                                           {pseudoheader_fname})
+    local standard_defines = repeated_read_cmd(self.path,
+                                               self.preprocessor_extra_flags,
+                                               self.get_defines_extra_flags,
+                                               {pseudoheader_fname})
     os.remove(pseudoheader_fname)
     self.standard_defines = {}
     for line in standard_defines:gmatch('[^\n]+') do
@@ -223,9 +194,9 @@ function Gcc:preprocess(previous_defines, ...)
   pseudoheader_file:flush()
   pseudoheader_file:close()
 
-  local defines = repeated_call(self.path, self.preprocessor_extra_flags,
-                                self.get_defines_extra_flags,
-                                {pseudoheader_fname})
+  local defines = repeated_read_cmd(self.path, self.preprocessor_extra_flags,
+                                    self.get_defines_extra_flags,
+                                    {pseudoheader_fname})
   defines = self:filter_standard_defines(defines)
 
   -- lfs = require("lfs")
@@ -234,9 +205,10 @@ function Gcc:preprocess(previous_defines, ...)
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
 
-  local declarations = repeated_call(self.path, self.preprocessor_extra_flags,
-                                     self.get_declarations_extra_flags,
-                                     {pseudoheader_fname})
+  local declarations = repeated_read_cmd(self.path,
+                                         self.preprocessor_extra_flags,
+                                         self.get_declarations_extra_flags,
+                                         {pseudoheader_fname})
 
   os.remove(pseudoheader_fname)
 
