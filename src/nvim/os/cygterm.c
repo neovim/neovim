@@ -150,23 +150,21 @@ void os_cygterm_destroy(CygTerm *cygterm)
   }
 
   CygwinDll *cygwindll = cygterm->cygwindll;
-  // FIXME: Termination processing is disabled, Because calling functions in
-  //        Cygwindll here cause a segmentation fault in sigfe.s.
-  // if (cygterm->restore_termios_valid) {
-  //   int ret = cygwindll->tcsetattr(cygterm->fd,
-  //                                  TCSANOW,
-  //                                  &cygterm->restore_termios);
-  //   if (ret == -1) {
-  //     ELOG("Failed to tcsetattr: %s",
-  //          cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
-  //   }
-  // }
-  //
-  // int ret = cygwindll->close(cygterm->fd);
-  // if (ret == -1) {
-  //   ELOG("Failed to close pty: %s",
-  //        cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
-  // }
+  if (cygterm->restore_termios_valid) {
+    int ret = cygwindll->tcsetattr(cygterm->fd,
+                                   TCSANOW,
+                                   &cygterm->restore_termios);
+    if (ret == -1) {
+      ELOG("Failed to tcsetattr: %s",
+           cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+    }
+  }
+
+  int ret = cygwindll->close(cygterm->fd);
+  if (ret == -1) {
+    ELOG("Failed to close pty: %s",
+         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+  }
   FreeLibrary(cygwindll->hmodule);
   xfree(cygterm->cygwindll);
   xfree(cygterm);
