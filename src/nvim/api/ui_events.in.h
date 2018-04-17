@@ -10,7 +10,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/ui.h"
 
-void resize(Integer rows, Integer columns)
+void resize(Integer width, Integer height)
   FUNC_API_SINCE(3);
 void clear(void)
   FUNC_API_SINCE(3);
