@@ -69,6 +69,8 @@ typedef struct {
 
 typedef struct {
   CygwinDll *cygwindll;
+  int width;
+  int height;
   int fd;
   struct termios restore_termios;
   bool restore_termios_valid;

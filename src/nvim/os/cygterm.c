@@ -127,6 +127,11 @@ CygTerm *os_cygterm_new(int fd)
          cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
   }
 
+  int width, height;
+  if (os_cygterm_get_winsize(cygterm, &width, &height)) {
+    cygterm->width = width;
+    cygterm->height = height;
+  }
   return cygterm;
 
 abort:
@@ -177,6 +182,10 @@ void os_cygterm_destroy(CygTerm *cygterm)
 ///
 bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
 {
+  if (!cygterm) {
+    return false;
+  }
+
   struct winsize ws;
   int err, err_no;
   CygwinDll *cygwindll = cygterm->cygwindll;

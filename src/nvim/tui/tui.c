@@ -300,6 +300,7 @@ static void terminfo_stop(UI *ui)
   unibi_destroy(data->ut);
 #ifdef WIN32
   os_cygterm_destroy(data->cygterm);
+  data->cygterm = NULL;
 #endif
 }
 
@@ -1811,6 +1812,14 @@ static void flush_buf(UI *ui)
       uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
                &bufs[i], 1, NULL);
       uv_run(&data->write_loop, UV_RUN_DEFAULT);
+    }
+    int width = 0, height = 0;
+    CygTerm *cygterm = data->cygterm;
+    if (os_cygterm_get_winsize(cygterm, &width, &height)
+        && (cygterm->width != width || cygterm->height != height)) {
+      data->bridge->bridge.width = ui->width = cygterm->width = width;
+      data->bridge->bridge.height = ui->height = cygterm->height = height;
+      ui_schedule_refresh();
     }
   } else {
 #endif
