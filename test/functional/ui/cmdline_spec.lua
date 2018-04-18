@@ -190,11 +190,11 @@ describe('external cmdline', function()
   it("works with inputlist()", function()
     feed(':call inputlist(["input0", "input1"])<cr>')
     screen:expect([[
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+                               |
+      {3:                         }|
       input0                   |
-      input1^                   |
+      input1                   |
+            ^                   |
     ]], nil, nil, function()
       eq({{
         content = { { {}, "" } },
