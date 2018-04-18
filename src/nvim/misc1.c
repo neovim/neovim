@@ -2433,8 +2433,8 @@ int get_number(
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
-      ++typed;
-    } else if (mouse_used != NULL && *mouse_used == TRUE) {
+      typed++;
+    } else if (mouse_used != NULL && *mouse_used == true) {
       n = mouse_row + 1;
       break;
     } else {
@@ -2466,8 +2466,6 @@ int prompt_for_number(int *mouse_used)
     msg = "Type number and <Enter> (empty cancels): ";
   }
 
-  i = get_number(true, mouse_used, msg);
-
   /* Set the state such that text can be selected/copied/pasted and we still
    * get mouse events. */
   save_cmdline_row = cmdline_row;
@@ -2475,6 +2473,7 @@ int prompt_for_number(int *mouse_used)
   save_State = State;
   State = CMDLINE;
 
+  i = get_number(true, mouse_used, msg);
   if (KeyTyped) {
     /* don't call wait_return() now */
     /* msg_putchar('\n'); */

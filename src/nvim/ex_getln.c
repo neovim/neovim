@@ -208,7 +208,7 @@ static histentry_T *(history[HIST_COUNT])
 static int hisidx[HIST_COUNT] = { -1, -1, -1, -1, -1, -1 };  // lastused entry
 static int hisnum[HIST_COUNT] = { 0, 0, 0, 0, 0, 0 };
 // identifying (unique) number of newest history entry
-static int hislen = 0;                  /* actual length of history tables */
+static int hislen = 0;                  // actual length of history tables
 
 /// Flag for command_line_handle_key to ignore <C-c>
 ///
