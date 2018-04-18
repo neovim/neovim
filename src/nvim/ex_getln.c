@@ -215,6 +215,9 @@ static int hislen = 0;                  /* actual length of history tables */
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
+/// Pointer to flag which keeps track if mouse was used
+static int *mouse_used_p = NULL;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -1479,6 +1482,11 @@ static int command_line_handle_key(CommandLineState *s)
       return command_line_not_changed(s);                   // Ignore mouse
     }
 
+    if (s->firstc == '#' && mouse_row < cmdline_row && mouse_used_p != NULL) {
+      *mouse_used_p = TRUE;
+      return 0;                                     // Go back to cmd mode
+    }
+
     set_cmdspos();
     for (ccline.cmdpos = 0; ccline.cmdpos < ccline.cmdlen;
          ++ccline.cmdpos) {
@@ -2009,7 +2017,8 @@ getcmdline (
 char *getcmdline_prompt(const char firstc, const char *const prompt,
                         const int attr, const int xp_context,
                         const char *const xp_arg,
-                        const Callback highlight_callback)
+                        const Callback highlight_callback,
+                        int *mouse_used)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   const int msg_col_save = msg_col;
@@ -2027,6 +2036,7 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
 
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
+  mouse_used_p = mouse_used;
 
   char *const ret = (char *)getcmdline(firstc, 1L, 0);
 

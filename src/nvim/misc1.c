@@ -2416,7 +2416,7 @@ int get_number(
   cmdline_row = msg_row;
 
   select = getcmdline_prompt('#', prompt, 0, EXPAND_NOTHING, NULL,
-                             input_callback);
+                             input_callback, mouse_used);
   p = select;
 
   // Since the user typed this, no need to wait for return.
@@ -2434,8 +2434,7 @@ int get_number(
       n = n * 10 + c - '0';
       msg_putchar(c);
       ++typed;
-    } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = TRUE;
+    } else if (mouse_used != NULL && *mouse_used == TRUE) {
       n = mouse_row + 1;
       break;
     } else {
