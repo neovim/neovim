@@ -130,6 +130,7 @@ struct cmdline_info {
   char special_char;            ///< last putcmdline char (used for redraws)
   bool special_shift;           ///< shift of last putcmdline char
   CmdRedraw redraw_state;       ///< needed redraw for external cmdline
+  bool mouse_used;
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -214,9 +215,6 @@ static int hislen = 0;                  /* actual length of history tables */
 /// Used if it was received while processing highlight function in order for
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
-
-/// Pointer to flag which keeps track if mouse was used
-static int *mouse_used_p = NULL;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -1482,8 +1480,8 @@ static int command_line_handle_key(CommandLineState *s)
       return command_line_not_changed(s);                   // Ignore mouse
     }
 
-    if (s->firstc == '#' && mouse_row < cmdline_row && mouse_used_p != NULL) {
-      *mouse_used_p = TRUE;
+    if (s->firstc == '#' && mouse_row < cmdline_row) {
+      ccline.mouse_used = 1;
       return 0;                                     // Go back to cmd mode
     }
 
@@ -2033,12 +2031,15 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
   ccline.xp_arg = (char_u *)xp_arg;
   ccline.input_fn = (firstc == '@' || firstc == '#');
   ccline.highlight_callback = highlight_callback;
+  ccline.mouse_used = false;
 
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
-  mouse_used_p = mouse_used;
 
   char *const ret = (char *)getcmdline(firstc, 1L, 0);
+  if (mouse_used) {
+    *mouse_used = ccline.mouse_used;
+  }
 
   restore_cmdline(&save_ccline);
   msg_silent = msg_silent_saved;
