@@ -45,18 +45,18 @@ read over its stderr. Similarily, only bytes can be written to nvim's own stderr
 						    *channel-callback* *buffered*
 				*E5210* *on_stdout* *on_stderr* *on_stdin* *on_data*
 A callback function `on_{stream}` will be invoked with data read from the
-channel.  By default, the callback will be invoked immediately when data is
+channel. By default, the callback will be invoked immediately when data is
 available, to facilitate interactive communication. The same callback will
 then be invoked with empty data, to indicate that the stream reached EOF.
 Alternatively the `{stream}_buffered` option can be set to invoke the callback
-only when the underlying stream reaches EOF, and will then be passed in
-complete output.  This is helpful when only the complete output is useful, and
-not partial data. Futhermore if `{stream}_buffered` is set but not a callback,
-the data is saved in the options dict, with the stream name as key. For this
-to work a new options dict must be used for each opened channel. If a script
-uses a global `s:job_opts` dict, it can be copied with |copy()| before supplying
-it to |jobstart()|. If a dict is reused, so that the dict key already is
-occupied, error `E5210` will be raised.
+only when the underlying stream reaches EOF. The callback will then be passed
+complete output. This is helpful when only the complete output is useful, and
+not partial data. Futhermore if `{stream}_buffered` is set, but the callback
+`on_{stream}` is not set, the data is saved in the options dict, with the
+stream name as key. For this to work a new options dict must be used for each
+opened channel. If a script uses a global `s:job_opts` dict, it can be copied
+with |copy()| before supplying it to |jobstart()|. If a dict is reused, so
+that the dict key already is occupied, error `E5210` will be raised.
 
 - The arguments passed to the callback function are:
 
