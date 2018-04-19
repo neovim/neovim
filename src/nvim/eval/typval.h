@@ -197,15 +197,6 @@ typedef struct {
     }, \
   }
 
-// Structure to hold an item of a Dictionary.
-// Also used for a variable.
-// The key is copied into "di_key" to avoid an extra alloc/free for it.
-struct dictitem_S {
-  typval_T di_tv;               ///< type and value of the variable
-  char_u di_flags;              ///< flags (only used for variable)
-  char_u di_key[1];             ///< key (actually longer!)
-};
-
 #define TV_DICTITEM_STRUCT(...) \
     struct { \
       typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
