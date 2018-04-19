@@ -2400,7 +2400,6 @@ int get_number(
   int c;
   int typed = 0;
   char *select, *p;
-  Callback input_callback = { .type = kCallbackNone };
   int cmd_silent_save = cmd_silent;
   const int save_ex_normal_busy = ex_normal_busy;
 
@@ -2416,7 +2415,7 @@ int get_number(
   cmdline_row = msg_row;
 
   select = getcmdline_prompt('#', prompt, 0, EXPAND_NOTHING, NULL,
-                             input_callback, mouse_used);
+                             CALLBACK_NONE, mouse_used);
   p = select;
 
   // Since the user typed this, no need to wait for return.
@@ -2424,7 +2423,6 @@ int get_number(
   msg_didout = false;
   cmd_silent = cmd_silent_save;
   ex_normal_busy = save_ex_normal_busy;
-  callback_free(&input_callback);
 
   no_mapping++;
   while (select) {

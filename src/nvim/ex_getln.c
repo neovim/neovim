@@ -553,6 +553,7 @@ static int command_line_execute(VimState *state, int key)
   // Don't ignore it in :global, we really need to break then, e.g., for
   // ":g/pat/normal /pat" (without the <CR>).
   // Don't ignore it for the input() function.
+  // Don't ignore it for the inputlist() function (#)
   if ((s->c == Ctrl_C)
       && s->firstc != '@'
       && s->firstc != '#'
@@ -2029,7 +2030,7 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
   ccline.cmdattr = attr;
   ccline.xp_context = xp_context;
   ccline.xp_arg = (char_u *)xp_arg;
-  ccline.input_fn = (firstc == '@' || firstc == '#');
+  ccline.input_fn = (firstc == '@');
   ccline.highlight_callback = highlight_callback;
   ccline.mouse_used = false;
 

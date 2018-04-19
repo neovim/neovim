@@ -36,7 +36,7 @@ typedef enum {
   HIST_SEARCH,        ///< Search commands.
   HIST_EXPR,          ///< Expressions (e.g. from entering = register).
   HIST_INPUT,         ///< input() lines.
-  HIST_INPUT_NUM,     ///< input() numbers.
+  HIST_INPUT_NUM,     ///< inputlist() number.
   HIST_DEBUG,         ///< Debug commands.
 } HistoryType;
 
