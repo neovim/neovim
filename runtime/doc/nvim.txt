@@ -20,15 +20,24 @@ differences from Vim.
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*
 
-To start the transition, create ~/.config/nvim/init.vim with these contents:
+To start the transition, create init.vim in the correct directory for your
+platform.
+
+For Linux, macOS and other Unixes, create the file at ~/.config/nvim/init.vim.
+
+For Windows, create the file at %LOCALAPPDATA%\nvim\init.vim. `%LOCALAPPDATA%`
+usually expands to `C:\Users\<username>\AppData\Local`.
+
+Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`
+or `%LOCALAPPDATA%` in the paths above. Nvim follows the XDG |base-directories|
+convention.
+
+Next, add these contents to the file:
 >
     set runtimepath^=~/.vim runtimepath+=~/.vim/after
     let &packpath = &runtimepath
     source ~/.vimrc
 <
-Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`
-in the code above. Nvim follows the XDG |base-directories| convention.
-
 See |provider-python| and |provider-clipboard| for additional software you
 might need to use some features.
 
