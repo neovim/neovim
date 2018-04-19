@@ -5,7 +5,6 @@ local eq = helpers.eq
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
-local source = helpers.source
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 
