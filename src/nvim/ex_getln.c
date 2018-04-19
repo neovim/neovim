@@ -1481,8 +1481,7 @@ static int command_line_handle_key(CommandLineState *s)
       return command_line_not_changed(s);                   // Ignore mouse
     }
 
-    bool is_press = s->c == K_LEFTMOUSE || s->c == K_RIGHTMOUSE;
-    if (s->firstc == '#' && mouse_row < cmdline_row && is_press) {
+    if (s->firstc == '#' && (s->c == K_LEFTMOUSE || s->c == K_RIGHTMOUSE)) {
       ccline.mouse_used = 1;
       return 0;                                     // Go back to cmd mode
     }

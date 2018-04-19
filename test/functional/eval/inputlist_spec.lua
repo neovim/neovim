@@ -215,17 +215,11 @@ describe('inputlist()', function()
     feed('<LeftMouse><0,0>')
     eq(0, meths.get_var('var'))
   end)
-  it('does nothing on clicking prompt', function()
+  it('returns number of items + 1 on clicking prompt', function()
     command('set mouse=a')
-    feed(':call inputlist(["foo", "bar"])<CR>')
+    feed(':let var = inputlist(["foo", "bar"])<CR>')
     feed('<LeftMouse><0,3>')
-    screen:expect([[
-      foo                      |
-      bar                      |
-      Type number and <Enter> o|
-      r click with mouse (empty|
-       cancels): ^              |
-    ]])
+    eq(3, meths.get_var('var'))
     feed('<CR>')
   end)
   it('returns negative number on clicking above first option', function()
