@@ -6547,18 +6547,14 @@ void alist_slash_adjust(void)
 
 #endif
 
-/*
- * ":preserve".
- */
+/// ":preserve".
 static void ex_preserve(exarg_T *eap)
 {
   curbuf->b_flags |= BF_PRESERVED;
-  ml_preserve(curbuf, TRUE);
+  ml_preserve(curbuf, true, true);
 }
 
-/*
- * ":recover".
- */
+/// ":recover".
 static void ex_recover(exarg_T *eap)
 {
   /* Set recoverymode right away to avoid the ATTENTION prompt. */

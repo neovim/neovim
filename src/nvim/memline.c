@@ -1593,7 +1593,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
  * If 'check_char' is TRUE, stop syncing when character becomes available, but
  * always sync at least one block.
  */
-void ml_sync_all(int check_file, int check_char)
+void ml_sync_all(int check_file, int check_char, bool do_fsync)
 {
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
@@ -1612,14 +1612,14 @@ void ml_sync_all(int check_file, int check_char)
       if (!os_fileinfo((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
-        ml_preserve(buf, FALSE);
+        ml_preserve(buf, false, do_fsync);
         did_check_timestamps = FALSE;
         need_check_timestamps = TRUE;           /* give message later */
       }
     }
     if (buf->b_ml.ml_mfp->mf_dirty) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
-          | (bufIsChanged(buf) ? MFS_FLUSH : 0));
+                    | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
       if (check_char && os_char_avail())        /* character available now */
         break;
     }
@@ -1636,7 +1636,7 @@ void ml_sync_all(int check_file, int check_char)
  *
  * when message is TRUE the success of preserving is reported
  */
-void ml_preserve(buf_T *buf, int message)
+void ml_preserve(buf_T *buf, int message, bool do_fsync)
 {
   bhdr_T      *hp;
   linenr_T lnum;
@@ -1656,7 +1656,7 @@ void ml_preserve(buf_T *buf, int message)
 
   ml_flush_line(buf);                               /* flush buffered line */
   (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   /* flush locked block */
-  status = mf_sync(mfp, MFS_ALL | MFS_FLUSH);
+  status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   /* stack is invalid after mf_sync(.., MFS_ALL) */
   buf->b_ml.ml_stack_top = 0;
@@ -1686,7 +1686,7 @@ void ml_preserve(buf_T *buf, int message)
     }
     (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);     /* flush locked block */
     /* sync the updated pointer blocks */
-    if (mf_sync(mfp, MFS_ALL | MFS_FLUSH) == FAIL)
+    if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL)
       status = FAIL;
     buf->b_ml.ml_stack_top = 0;             /* stack is invalid now */
   }
