@@ -265,7 +265,7 @@ static void process_close_event(void **argv)
   if (proc->type == kProcessTypePty) {
     xfree(((PtyProcess *)proc)->term_name);
   }
-  if (proc->cb) {
+  if (proc->cb) {  // "on_exit" for jobstart(). See channel_job_start().
     proc->cb(proc, proc->status, proc->data);
   }
 }
