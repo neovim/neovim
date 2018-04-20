@@ -1613,15 +1613,16 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
         ml_preserve(buf, false, do_fsync);
-        did_check_timestamps = FALSE;
-        need_check_timestamps = TRUE;           /* give message later */
+        did_check_timestamps = false;
+        need_check_timestamps = true;           // give message later
       }
     }
     if (buf->b_ml.ml_mfp->mf_dirty) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
                     | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
-      if (check_char && os_char_avail())        /* character available now */
+      if (check_char && os_char_avail()) {      // character available now
         break;
+      }
     }
   }
 }
@@ -1654,8 +1655,8 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
    * before. */
   got_int = FALSE;
 
-  ml_flush_line(buf);                               /* flush buffered line */
-  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   /* flush locked block */
+  ml_flush_line(buf);                               // flush buffered line
+  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   // flush locked block
   status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   /* stack is invalid after mf_sync(.., MFS_ALL) */
@@ -1684,11 +1685,12 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
       CHECK(buf->b_ml.ml_locked_low != lnum, "low != lnum");
       lnum = buf->b_ml.ml_locked_high + 1;
     }
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);     /* flush locked block */
-    /* sync the updated pointer blocks */
-    if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL)
+    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush locked block
+    // sync the updated pointer blocks
+    if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL) {
       status = FAIL;
-    buf->b_ml.ml_stack_top = 0;             /* stack is invalid now */
+    }
+    buf->b_ml.ml_stack_top = 0;  // stack is invalid now
   }
 theend:
   got_int |= got_int_save;
