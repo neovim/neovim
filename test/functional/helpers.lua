@@ -309,6 +309,7 @@ local function retry(max, max_ms, fn)
       error("\nretry() attempts: "..tostring(tries).."\n"..tostring(result))
     end
     tries = tries + 1
+    luv.sleep(20)  -- Avoid hot loop...
   end
 end
 
@@ -467,14 +468,7 @@ end
 
 -- sleeps the test runner (_not_ the nvim instance)
 local function sleep(ms)
-  local function notification_cb(method, _)
-    if method == "redraw" then
-      error("Screen is attached; use screen:sleep() instead.")
-    end
-    return true
-  end
-
-  run(nil, notification_cb, nil, ms)
+  luv.sleep(ms)
 end
 
 local function curbuf_contents()
