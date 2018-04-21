@@ -5,6 +5,7 @@ local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
 local iswin = helpers.iswin
+local sleep = helpers.sleep
 
 describe('search highlighting', function()
   local screen
@@ -92,18 +93,13 @@ describe('search highlighting', function()
     ]])
   end)
 
-  it('#x is preserved during :terminal activity', function()
-    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
-    -- must wait the full timeout. So make it reasonable.
-    screen.timeout = 1000
-
+  it('is preserved during :terminal activity', function()
     if iswin() then
       feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
     else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; sleep 0.1; done<cr>]])
+      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
     end
 
-    feed([[<C-\><C-N>gg]])
     feed(':file term<CR>')
     feed(':vnew<CR>')
     insert([[
@@ -112,6 +108,7 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
+    sleep(50)  -- Allow some terminal activity.
     screen:expect([[
         {3:foo} bar baz       {3:│}xxx                |
         bar baz {2:foo}       {3:│}xxx                |
