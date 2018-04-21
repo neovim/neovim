@@ -1354,6 +1354,23 @@ describe("inccommand=nosplit", function()
       :echo 'foo'^         |
     ]])
   end)
+
+  it("only executes the first command in preview", function()
+    feed(':%s/two/three/g|q!')
+    screen:expect([[
+      Inc substitution on |
+      {12:three} lines         |
+      Inc substitution on |
+      {12:three} lines         |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%s/two/three/g|q!^  |
+    ]])
+    eq(eval('v:null'), eval('v:exiting')) 
+  end)
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
