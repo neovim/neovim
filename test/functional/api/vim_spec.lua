@@ -12,6 +12,7 @@ local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
 local iswin = helpers.iswin
+local eval = helpers.eval
 
 local intchar2lua = global_helpers.intchar2lua
 local format_string = global_helpers.format_string
@@ -658,6 +659,21 @@ describe('api', function()
       ]])
       feed('<cr>')  -- exit the press ENTER screen
     end)
+  end)
+
+  it('test testen', function()
+    eq(3, eval("jobstart(['cat'], {})"))
+    eq(4, eval("jobstart(['cat'], {})"))
+  end)
+
+  it('test igen', function()
+    eq(3, eval("jobstart(['cat'], {})"))
+    eq(4, eval("jobstart(['cat'], {})"))
+  end)
+
+  it('test again and again', function()
+    eq(3, eval("jobstart(['cat'], {})"))
+    eq(4, eval("jobstart(['cat'], {})"))
   end)
 
   describe('nvim_call_atomic', function()
