@@ -1097,7 +1097,6 @@ static void refresh_terminal(Terminal *term)
     refresh_size(term, buf);
     refresh_scrollback(term, buf);
     refresh_screen(term, buf);
-    redraw_buf_later(buf, NOT_VALID);
   });
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);

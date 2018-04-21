@@ -4,6 +4,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
+local iswin = helpers.iswin
 
 describe('search highlighting', function()
   local screen
@@ -89,6 +90,42 @@ describe('search highlighting', function()
       {1:~                                       }|
       :nohlsearch                             |
     ]])
+  end)
+
+  it('#x is preserved during :terminal activity', function()
+    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
+    -- must wait the full timeout. So make it reasonable.
+    screen.timeout = 1000
+
+    if iswin() then
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
+    else
+      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; sleep 0.1; done<cr>]])
+    end
+
+    feed([[<C-\><C-N>gg]])
+    feed(':file term<CR>')
+    feed(':vnew<CR>')
+    insert([[
+      foo bar baz
+      bar baz foo
+      bar foo baz
+    ]])
+    feed('/foo')
+    screen:expect([[
+        {3:foo} bar baz       {3:│}xxx                |
+        bar baz {2:foo}       {3:│}xxx                |
+        bar {2:foo} baz       {3:│}xxx                |
+                          {3:│}xxx                |
+      {1:~                   }{3:│}xxx                |
+      {5:[No Name] [+]        }{3:term               }|
+      /foo^                                    |
+    ]], { [1] = {bold = true, foreground = Screen.colors.Blue1},
+          [2] = {background = Screen.colors.Yellow},
+          [3] = {reverse = true},
+          [4] = {foreground = Screen.colors.Red},
+          [5] = {bold = true, reverse = true},
+    })
   end)
 
   it('works with incsearch', function()
