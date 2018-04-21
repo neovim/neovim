@@ -80,16 +80,16 @@ describe('Command-line option', function()
         [1] = {foreground = 4210943, special = Screen.colors.Grey0},
         [2] = {special = Screen.colors.Grey0, bold = true, reverse = true}
       })
-      feed('i:cq<CR><C-\\><C-n>')
+      feed('i:cq<CR>')
       screen:expect([[
-        ^                                        |
+                                                |
         [Process exited 1]                      |
                                                 |
                                                 |
                                                 |
                                                 |
                                                 |
-                                                |
+        -- TERMINAL --                          |
       ]])
       --[=[ Example of incorrect output:
       screen:expect([[
