@@ -4740,14 +4740,6 @@ void ex_helpgrep(exarg_T *eap)
   regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
-    vimconv_T vc;
-
-    /* Help files are in utf-8 or latin1, convert lines when 'encoding'
-     * differs. */
-    vc.vc_type = CONV_NONE;
-    if (!enc_utf8)
-      convert_setup(&vc, (char_u *)"utf-8", p_enc);
-
     /* create a new quickfix list */
     qf_new_list(qi, *eap->cmdlinep);
 
@@ -4780,15 +4772,6 @@ void ex_helpgrep(exarg_T *eap)
             lnum = 1;
             while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
               char_u    *line = IObuff;
-              /* Convert a line if 'encoding' is not utf-8 and
-               * the line contains a non-ASCII character. */
-              if (vc.vc_type != CONV_NONE
-                  && has_non_ascii(IObuff)) {
-                line = string_convert(&vc, IObuff, NULL);
-                if (line == NULL)
-                  line = IObuff;
-              }
-
               if (vim_regexec(&regmatch, line, (colnr_T)0)) {
                 int l = (int)STRLEN(line);
 
@@ -4831,8 +4814,6 @@ void ex_helpgrep(exarg_T *eap)
     }
 
     vim_regfree(regmatch.regprog);
-    if (vc.vc_type != CONV_NONE)
-      convert_setup(&vc, NULL, NULL);
 
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
     qi->qf_lists[qi->qf_curlist].qf_ptr =
