@@ -4466,8 +4466,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
       if (width <= room)
         break;
       if (run == 2 || curfrp->fr_height >= ROWS_AVAIL) {
-        if (width > room)
-          width = room;
+        width = room;
         break;
       }
       frame_setwidth(curfrp->fr_parent, width
