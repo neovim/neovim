@@ -247,8 +247,6 @@ void os_cygterm_destroy(CygTerm *cygterm)
   }
 
   CygwinDll *cygwindll = cygterm->cygwindll;
-  // FIXME: Termination processing is disabled, Because calling functions in
-  //        Cygwindll here cause a segmentation fault in sigfe.s.
   if (cygterm->restore_termios_valid) {
     int ret = cygwindll->tcsetattr(cygterm->fd,
                                    TCSANOW,
