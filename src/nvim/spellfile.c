@@ -2366,9 +2366,6 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // New item for an affix letter.
         aff_todo--;
         aff_entry = getroom(spin, sizeof(*aff_entry), true);
-        if (aff_entry == NULL) {
-          break;
-        }
 
         if (STRCMP(items[2], "0") != 0)
           aff_entry->ae_chop = getroom_save(spin, items[2]);
@@ -2843,9 +2840,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
         if (!HASHITEM_EMPTY(hi))
           id = HI2CI(hi)->ci_newID;
         else {
-          ci = (compitem_T *)getroom(spin, sizeof(compitem_T), true);
-          if (ci == NULL)
-            break;
+          ci = getroom(spin, sizeof(compitem_T), true);
           STRCPY(ci->ci_key, key);
           ci->ci_flag = flag;
           // Avoid using a flag ID that has a special meaning in a
@@ -4783,8 +4778,6 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 
   // We use si_foldroot for the soundfolded trie.
   spin->si_foldroot = wordtree_alloc(spin);
-  if (spin->si_foldroot == NULL)
-    return FAIL;
 
   // Let tree_add_word() know we're adding to the soundfolded tree
   spin->si_sugtree = true;
