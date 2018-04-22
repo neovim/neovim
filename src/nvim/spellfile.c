@@ -3761,6 +3761,7 @@ static void free_blocks(sblock_T *bl)
 // Allocate the root of a word tree.
 // Returns NULL when out of memory.
 static wordnode_T *wordtree_alloc(spellinfo_T *spin)
+  FUNC_ATTR_NONNULL_RET
 {
   return (wordnode_T *)getroom(spin, sizeof(wordnode_T), true);
 }
@@ -5183,12 +5184,6 @@ mkspell (
     spin.si_foldroot = wordtree_alloc(&spin);
     spin.si_keeproot = wordtree_alloc(&spin);
     spin.si_prefroot = wordtree_alloc(&spin);
-    if (spin.si_foldroot == NULL
-        || spin.si_keeproot == NULL
-        || spin.si_prefroot == NULL) {
-      free_blocks(spin.si_blocks);
-      goto theend;
-    }
 
     // When not producing a .add.spl file clear the character table when
     // we encounter one in the .aff file.  This means we dump the current
