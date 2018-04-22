@@ -2837,9 +2837,9 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
         // the existing ID.  Otherwise add a new entry.
         STRLCPY(key, prevp, p - prevp + 1);
         hi = hash_find(&aff->af_comp, key);
-        if (!HASHITEM_EMPTY(hi))
+        if (!HASHITEM_EMPTY(hi)) {
           id = HI2CI(hi)->ci_newID;
-        else {
+        } else {
           ci = getroom(spin, sizeof(compitem_T), true);
           STRCPY(ci->ci_key, key);
           ci->ci_flag = flag;
