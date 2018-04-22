@@ -1770,7 +1770,8 @@ static void flush_buf(UI *ui)
     bufp++;
   }
 
-  if (!data->busy && data->is_invisible) {
+  if (!data->busy) {
+    assert(data->is_invisible);
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
