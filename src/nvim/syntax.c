@@ -5732,7 +5732,7 @@ int syn_get_id(
   // line of the same buffer, need to restart parsing.
   if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
     syntax_start(wp, lnum);
-  } else if (lnum == current_lnum && col > current_col) {
+  } else if (col > current_col) {
       // next_match may not be correct when moving around, e.g. with the
       // "skip" expression in searchpair()
       next_match_idx = -1;
