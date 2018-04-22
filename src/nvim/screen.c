@@ -2140,7 +2140,6 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col = 0;                          // visual column on screen
   unsigned off;                         // offset in ScreenLines/ScreenAttrs
   int c = 0;                            // init for GCC
   long vcol = 0;                        // virtual column (for tabs)
@@ -2553,7 +2552,7 @@ win_line (
       ptr = prev_ptr;
       // If the character fits on the screen, don't need to skip it.
       // Except for a TAB.
-      if (((*mb_ptr2cells)(ptr) >= c || *ptr == TAB) && col == 0) {
+      if (utf_ptr2cells(ptr) >= c || *ptr == TAB) {
         n_skip = v - vcol;
       }
     }
@@ -2702,11 +2701,11 @@ win_line (
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
-  col = 0;
+  int col = 0;  // Visual column on screen.
   if (wp->w_p_rl) {
-    /* Rightleft window: process the text in the normal direction, but put
-     * it in current_ScreenLine[] from right to left.  Start at the
-     * rightmost column of the window. */
+    // Rightleft window: process the text in the normal direction, but put
+    // it in current_ScreenLine[] from right to left.  Start at the
+    // rightmost column of the window.
     col = wp->w_width - 1;
     off += col;
   }
