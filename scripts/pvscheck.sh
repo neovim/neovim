@@ -365,10 +365,11 @@ run_analysis() {(
       --sourcetree-root . || true
 
   rm -rf PVS-studio.{xml,err,tsk,html.d}
-  plog-converter -r . -t xml -o PVS-studio.xml PVS-studio.log
-  plog-converter -r . -t errorfile -o PVS-studio.err PVS-studio.log
-  plog-converter -r . -t tasklist -o PVS-studio.tsk PVS-studio.log
-  plog-converter -r . -t fullhtml -o PVS-studio.html.d PVS-studio.log
+  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011"
+  plog-converter $plog_args --renderTypes xml       --output PVS-studio.xml
+  plog-converter $plog_args --renderTypes errorfile --output PVS-studio.err
+  plog-converter $plog_args --renderTypes tasklist  --output PVS-studio.tsk
+  plog-converter $plog_args --renderTypes fullhtml  --output PVS-studio.html.d
 )}
 
 detect_url() {
