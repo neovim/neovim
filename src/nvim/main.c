@@ -1605,23 +1605,11 @@ static void check_tty(mparm_T *parmp)
     if (!parmp->input_isatty) {
       silent_mode = true;
     }
-  } else if (parmp->want_full_screen
-             && (!parmp->err_isatty
-                 && (!parmp->output_isatty
-                     || !parmp->input_isatty))) {
-#ifdef WIN32
-    if (os_detect_mintty_type(fileno(stdin)) != kNoneMintty
-        || os_detect_mintty_type(fileno(stdout)) != kNoneMintty
-        || os_detect_mintty_type(fileno(stderr)) != kNoneMintty) {
-      if (!os_init_cygwin_dll()) {
-        mch_errmsg(_("Vim: Error: Failed LoadLibrary Cygwin dll\n"));
-        exit(1);
-      }
-    }
+  } else if (parmp->want_full_screen && (!parmp->err_isatty
+             && (!parmp->output_isatty || !parmp->input_isatty))) {
     if (!parmp->output_isatty) {
       mch_errmsg(_("Vim: Warning: Output is not to a terminal\n"));
     }
-#endif
 
     if (!parmp->input_isatty) {
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
@@ -1634,7 +1622,18 @@ static void check_tty(mparm_T *parmp)
     }
 
     TIME_MSG("Warning delay");
+#ifdef WIN32
+  } else if (os_detect_mintty_type(fileno(stdin)) != kNoneMintty
+      || os_detect_mintty_type(fileno(stdout)) != kNoneMintty
+      || os_detect_mintty_type(fileno(stderr)) != kNoneMintty) {
+    if (!os_init_cygwin_dll()) {
+      mch_errmsg(_("Vim: Error: Failed LoadLibrary Cygwin dll\n"));
+      exit(1);
+    }
   }
+#else
+  }
+#endif
 }
 
 /*
