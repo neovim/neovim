@@ -3396,11 +3396,13 @@ again:
     goto again;
   }
 
-  if (do_include || r < 1) {
-    /* Include up to the '>'. */
-    while (*get_cursor_pos_ptr() != '>')
-      if (inc_cursor() < 0)
+  if (do_include) {
+    // Include up to the '>'.
+    while (*get_cursor_pos_ptr() != '>') {
+      if (inc_cursor() < 0) {
         break;
+      }
+    }
   } else {
     char_u *c = get_cursor_pos_ptr();
     // Exclude the '<' of the end tag.
