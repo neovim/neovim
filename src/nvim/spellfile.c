@@ -1949,7 +1949,6 @@ static void spell_print_tree(wordnode_T *root)
 static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 {
   FILE        *fd;
-  afffile_T   *aff;
   char_u rline[MAXLINELEN];
   char_u      *line;
   char_u      *pc = NULL;
@@ -2006,11 +2005,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   do_mapline = GA_EMPTY(&spin->si_map);
 
   // Allocate and init the afffile_T structure.
-  aff = (afffile_T *)getroom(spin, sizeof(afffile_T), true);
-  if (aff == NULL) {
-    fclose(fd);
-    return NULL;
-  }
+  afffile_T *aff = getroom(spin, sizeof(*aff), true);
   hash_init(&aff->af_pref);
   hash_init(&aff->af_suff);
   hash_init(&aff->af_comp);
@@ -2098,20 +2093,18 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_("FLAG after using flags in %s line %d: %s"),
                fname, lnum, items[1]);
       } else if (spell_info_item(items[0]) && itemcnt > 1)   {
-        p = (char_u *)getroom(spin,
-            (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
-            + STRLEN(items[0])
-            + STRLEN(items[1]) + 3, false);
-        if (p != NULL) {
-          if (spin->si_info != NULL) {
-            STRCPY(p, spin->si_info);
-            STRCAT(p, "\n");
-          }
-          STRCAT(p, items[0]);
-          STRCAT(p, " ");
-          STRCAT(p, items[1]);
-          spin->si_info = p;
+        p = getroom(spin,
+                    (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
+                    + STRLEN(items[0])
+                    + STRLEN(items[1]) + 3, false);
+        if (spin->si_info != NULL) {
+          STRCPY(p, spin->si_info);
+          STRCAT(p, "\n");
         }
+        STRCAT(p, items[0]);
+        STRCAT(p, " ");
+        STRCAT(p, items[1]);
+        spin->si_info = p;
       } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2)
                  && midword == NULL) {
         midword = getroom_save(spin, items[1]);
@@ -2291,14 +2284,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                  fname, lnum, items[1]);
         } else {
           // New affix letter.
-          cur_aff = (affheader_T *)getroom(spin,
-              sizeof(affheader_T), true);
-          if (cur_aff == NULL)
-            break;
+          cur_aff = getroom(spin, sizeof(*cur_aff), true);
           cur_aff->ah_flag = affitem2flag(aff->af_flagtype, items[1],
-              fname, lnum);
-          if (cur_aff->ah_flag == 0 || STRLEN(items[1]) >= AH_KEY_LEN)
+                                          fname, lnum);
+          if (cur_aff->ah_flag == 0 || STRLEN(items[1]) >= AH_KEY_LEN) {
             break;
+          }
           if (cur_aff->ah_flag == aff->af_bad
               || cur_aff->ah_flag == aff->af_rare
               || cur_aff->ah_flag == aff->af_keepcase
@@ -2306,11 +2297,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               || cur_aff->ah_flag == aff->af_circumfix
               || cur_aff->ah_flag == aff->af_nosuggest
               || cur_aff->ah_flag == aff->af_needcomp
-              || cur_aff->ah_flag == aff->af_comproot)
+              || cur_aff->ah_flag == aff->af_comproot) {
             smsg(_("Affix also used for "
                    "BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST"
                    "in %s line %d: %s"),
-                fname, lnum, items[1]);
+                 fname, lnum, items[1]);
+          }
           STRCPY(cur_aff->ah_key, items[1]);
           hash_add(tp, cur_aff->ah_key);
 
@@ -2372,11 +2364,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_(e_afftrailing), fname, lnum, items[lasti]);
 
         // New item for an affix letter.
-        --aff_todo;
-        aff_entry = (affentry_T *)getroom(spin,
-            sizeof(affentry_T), true);
-        if (aff_entry == NULL)
+        aff_todo--;
+        aff_entry = getroom(spin, sizeof(*aff_entry), true);
+        if (aff_entry == NULL) {
           break;
+        }
 
         if (STRCMP(items[2], "0") != 0)
           aff_entry->ae_chop = getroom_save(spin, items[2]);
@@ -3737,12 +3729,8 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
 // Returns NULL when out of memory.
 static char_u *getroom_save(spellinfo_T *spin, char_u *s)
 {
-  char_u      *sc;
-
-  sc = (char_u *)getroom(spin, STRLEN(s) + 1, false);
-  if (sc != NULL)
-    STRCPY(sc, s);
-  return sc;
+  const size_t s_size = STRLEN(s) + 1;
+  return memcpy(getroom(spin, s_size, false), s, s_size);
 }
 
 
