@@ -451,9 +451,10 @@ void syntax_start(win_T *wp, linenr_T lnum)
   if (INVALID_STATE(&current_state) && syn_block->b_sst_array != NULL) {
     /* Find last valid saved state before start_lnum. */
     for (p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
-      if (p->sst_lnum > lnum)
+      if (p->sst_lnum > lnum) {
         break;
-      if (p->sst_lnum <= lnum && p->sst_change_lnum == 0) {
+      }
+      if (p->sst_change_lnum == 0) {
         last_valid = p;
         if (p->sst_lnum >= lnum - syn_block->b_syn_sync_minlines)
           last_min_valid = p;
