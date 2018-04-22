@@ -1644,7 +1644,7 @@ spell_read_tree (
   if (len < 0) {
     return SP_TRUNCERROR;
   }
-  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+  if ((size_t)len >= SIZE_MAX / sizeof(int)) {  // -V547
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
   }
