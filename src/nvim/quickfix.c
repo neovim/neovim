@@ -3626,7 +3626,7 @@ void ex_vimgrep(exarg_T *eap)
        && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
       || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
-    qf_new_list(qi, title != NULL ? title : *eap->cmdlinep);
+    qf_new_list(qi, title);
   }
 
   /* parse the list of arguments */
@@ -4205,11 +4205,9 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
     if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
       di = tv_dict_item_alloc_len(S_LEN("context"));
-      if (di != NULL) {
-        tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-        if (tv_dict_add(retdict, di) == FAIL) {
-          tv_dict_item_free(di);
-        }
+      tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
+      if (tv_dict_add(retdict, di) == FAIL) {
+        tv_dict_item_free(di);
       }
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
