@@ -4549,20 +4549,21 @@ syn_cmd_region (
       ++key_end;
     xfree(key);
     key = vim_strnsave_up(rest, (int)(key_end - rest));
-    if (STRCMP(key, "MATCHGROUP") == 0)
+    if (STRCMP(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
-    else if (STRCMP(key, "START") == 0)
+    } else if (STRCMP(key, "START") == 0) {
       item = ITEM_START;
-    else if (STRCMP(key, "END") == 0)
+    } else if (STRCMP(key, "END") == 0) {
       item = ITEM_END;
-    else if (STRCMP(key, "SKIP") == 0) {
-      if (pat_ptrs[ITEM_SKIP] != NULL) {        /* one skip pattern allowed */
+    } else if (STRCMP(key, "SKIP") == 0) {
+      if (pat_ptrs[ITEM_SKIP] != NULL) {  // One skip pattern allowed.
         illegal = TRUE;
         break;
       }
       item = ITEM_SKIP;
-    } else
+    } else {
       break;
+    }
     rest = skipwhite(key_end);
     if (*rest != '=') {
       rest = NULL;
@@ -4598,21 +4599,23 @@ syn_cmd_region (
       pat_ptrs[item] = ppp;
       ppp->pp_synp = xcalloc(1, sizeof(synpat_T));
 
-      /*
-       * Get the syntax pattern and the following offset(s).
-       */
-      /* Enable the appropriate \z specials. */
-      if (item == ITEM_START)
+      // Get the syntax pattern and the following offset(s).
+
+      // Enable the appropriate \z specials.
+      if (item == ITEM_START) {
         reg_do_extmatch = REX_SET;
-      else if (item == ITEM_SKIP || item == ITEM_END)
+      } else {
+        assert(item == ITEM_SKIP || item == ITEM_END);
         reg_do_extmatch = REX_USE;
+      }
       rest = get_syn_pattern(rest, ppp->pp_synp);
       reg_do_extmatch = 0;
       if (item == ITEM_END && vim_regcomp_had_eol()
-          && !(syn_opt_arg.flags & HL_EXCLUDENL))
+          && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
         ppp->pp_synp->sp_flags |= HL_HAS_EOL;
+      }
       ppp->pp_matchgroup_id = matchgroup_id;
-      ++pat_count;
+      pat_count++;
     }
   }
   xfree(key);
