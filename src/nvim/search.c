@@ -3944,15 +3944,15 @@ current_search (
   if (VIsual_active) {
     orig_pos = pos = curwin->w_cursor;
 
-    /* make sure, searching further will extend the match */
-    if (VIsual_active) {
-      if (forward)
-        incl(&pos);
-      else
-        decl(&pos);
+    // Searching further will extend the match.
+    if (forward) {
+      incl(&pos);
+    } else {
+      decl(&pos);
     }
-  } else
+  } else {
     orig_pos = pos = curwin->w_cursor;
+  }
 
   /* Is the pattern is zero-width? */
   int one_char = is_one_char(spats[last_idx].pat, true);
