@@ -5321,18 +5321,19 @@ get_id_list (
           for (int i = highlight_ga.ga_len; --i >= 0; ) {
             if (vim_regexec(&regmatch, HL_TABLE()[i].sg_name, (colnr_T)0)) {
               if (round == 2) {
-                /* Got more items than expected; can happen
-                 * when adding items that match:
-                 * "contains=a.*b,axb".
-                 * Go back to first round */
+                // Got more items than expected; can happen
+                // when adding items that match:
+                // "contains=a.*b,axb".
+                // Go back to first round.
                 if (count >= total_count) {
                   xfree(retval);
                   round = 1;
-                } else
-                  retval[count] = i + 1;
+                } else {
+                  retval[count] = i + 1;  // -V522
+                }
               }
-              ++count;
-              id = -1;                      /* remember that we found one */
+              count++;
+              id = -1;  // Remember that we found one.
             }
           }
           vim_regfree(regmatch.regprog);
@@ -5346,12 +5347,13 @@ get_id_list (
       }
       if (id > 0) {
         if (round == 2) {
-          /* Got more items than expected, go back to first round */
+          // Got more items than expected, go back to first round.
           if (count >= total_count) {
             xfree(retval);
             round = 1;
-          } else
+          } else {
             retval[count] = id;
+          }
         }
         ++count;
       }
