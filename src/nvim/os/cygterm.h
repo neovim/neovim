@@ -12,6 +12,8 @@ typedef enum {
   kPtyNo
 } MinttyQueryType;
 
+struct Cygwindll;
+typedef struct Cygwindll CygwinDll;
 // These definetion came from header file of Cygwin
 #define VMIN           9
 #define VTIME          16
@@ -47,25 +49,6 @@ struct termios
   speed_t       c_ispeed;
   speed_t       c_ospeed;
 };
-
-typedef int (*tcgetattr_fn) (int, struct termios *);
-typedef int (*tcsetattr_fn) (int, int, const struct termios *);
-typedef int (*ioctl_fn) (int, int, ...);
-typedef int (*open_fn) (const char *, int);
-typedef int (*close_fn) (int);
-typedef int *(*errno_fn) (void);
-typedef char *(*strerror_fn) (int);
-
-typedef struct {
-  HMODULE hmodule;
-  tcgetattr_fn tcgetattr;
-  tcsetattr_fn tcsetattr;
-  ioctl_fn ioctl;
-  open_fn open;
-  close_fn close;
-  errno_fn __errno;
-  strerror_fn strerror;
-} CygwinDll;
 
 typedef struct {
   CygwinDll *cygwindll;

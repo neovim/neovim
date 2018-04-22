@@ -42,6 +42,28 @@ struct winsize
   uint16_t ws_xpixel, ws_ypixel;
 };
 
+typedef int (*tcgetattr_fn) (int, struct termios *);
+typedef int (*tcsetattr_fn) (int, int, const struct termios *);
+typedef void (*cfmakeraw_fn) (struct termios *);
+typedef int (*ioctl_fn) (int, int, ...);
+typedef int (*open_fn) (const char *, int);
+typedef int (*close_fn) (int);
+typedef int *(*errno_fn) (void);
+typedef char *(*strerror_fn) (int);
+typedef int (*uname_fn) (struct utsname *);
+
+struct Cygwindll {
+  HMODULE hmodule;
+  tcgetattr_fn tcgetattr;
+  tcsetattr_fn tcsetattr;
+  cfmakeraw_fn cfmakeraw;
+  ioctl_fn ioctl;
+  open_fn open;
+  close_fn close;
+  errno_fn __errno;
+  strerror_fn strerror;
+};
+
 /// Determine if nvim is running in mintty. When running in mintty, it also
 /// determines whether it is running with Cygwin or Msys.
 ///
