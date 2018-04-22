@@ -42,6 +42,86 @@ struct winsize
   uint16_t ws_xpixel, ws_ypixel;
 };
 
+struct per_process
+{
+  char *initial_sp;
+
+  /* The offset of these 3 values can never change. */
+  /* magic_biscuit is the size of this class and should never change. */
+  uint32_t magic_biscuit;
+  uint32_t dll_major;
+  uint32_t dll_minor;
+
+  struct _reent **impure_ptr_ptr;
+#ifdef __i386__
+  char ***envptr;
+#endif
+
+  /* Used to point to the memory machine we should use.  Usually these
+     point back into the dll, but they can be overridden by the user. */
+  void *(*malloc)(size_t);
+  void (*free)(void *);
+  void *(*realloc)(void *, size_t);
+
+  int *fmode_ptr;
+
+  int (*main)(int, char **, char **);
+  void (**ctors)(void);
+  void (**dtors)(void);
+
+  /* For fork */
+  void *data_start;
+  void *data_end;
+  void *bss_start;
+  void *bss_end;
+
+  void *(*calloc)(size_t, size_t);
+  /* For future expansion of values set by the app. */
+  void (*premain[4]) (int, char **, struct per_process *);
+
+  /* non-zero if ctors have been run.  Inherited from parent. */
+  int32_t run_ctors_p;
+
+  DWORD_PTR unused[7];
+
+  /* Pointers to real operator new/delete functions for forwarding.  */
+  struct per_process_cxx_malloc *cxx_malloc;
+
+  HMODULE hmodule;
+
+  DWORD api_major;		/* API version that this program was */
+  DWORD api_minor;		/*  linked with */
+  /* For future expansion, so apps won't have to be relinked if we
+     add an item. */
+#ifdef __x86_64__
+  DWORD_PTR unused2[4];
+#else
+  DWORD_PTR unused2[2];
+#endif
+
+  int (*posix_memalign)(void **, size_t, size_t);
+
+  void *pseudo_reloc_start;
+  void *pseudo_reloc_end;
+  void *image_base;
+
+#if defined (__INSIDE_CYGWIN__) && defined (__cplusplus)
+  MTinterface *threadinterface;
+#else
+  void *threadinterface;
+#endif
+  struct _reent *impure_ptr;
+};
+
+struct utsname
+{
+  char sysname[20];
+  char nodename[20];
+  char release[20];
+  char version[20];
+  char machine[20];
+};
+
 typedef int (*tcgetattr_fn) (int, struct termios *);
 typedef int (*tcsetattr_fn) (int, int, const struct termios *);
 typedef void (*cfmakeraw_fn) (struct termios *);
@@ -132,13 +212,7 @@ CygTerm *os_cygterm_new(int fd)
   if (cygwindll->tcgetattr(cygterm->fd, &termios) == 0) {
     cygterm->restore_termios = termios;
     cygterm->restore_termios_valid = true;
-
-    ((struct __oldtermios *)(&termios))->c_iflag &= (uint16_t)~(IXON|INLCR|ICRNL);
-    ((struct __oldtermios *)(&termios))->c_lflag &= (uint16_t)~(ICANON|ECHO|IEXTEN);
-    ((struct __oldtermios *)(&termios))->c_cc[VMIN] = 1;
-    ((struct __oldtermios *)(&termios))->c_cc[VTIME] = 0;
-    ((struct __oldtermios *)(&termios))->c_lflag &= (uint16_t)~ISIG;
-
+    cygwindll->cfmakeraw(&termios);
     int ret = cygwindll->tcsetattr(cygterm->fd, TCSANOW, &termios);
     if (ret == -1) {
       ELOG("Failed to tcsetattr: %s",
@@ -172,6 +246,8 @@ void os_cygterm_destroy(CygTerm *cygterm)
   }
 
   CygwinDll *cygwindll = cygterm->cygwindll;
+  // FIXME: Termination processing is disabled, Because calling functions in
+  //        Cygwindll here cause a segmentation fault in sigfe.s.
   if (cygterm->restore_termios_valid) {
     int ret = cygwindll->tcsetattr(cygterm->fd,
                                    TCSANOW,
@@ -360,45 +436,98 @@ static CygwinDll *get_cygwin_dll(void)
     cygwindll->tcgetattr =
       (tcgetattr_fn)GetProcAddress(hmodule, "tcgetattr");
     if (!cygwindll->tcgetattr) {
-      emsg = "tcgetattr";
+      emsg = "Failed to GetProcAddress tcgetattr";
       goto cleanup;
     }
     cygwindll->tcsetattr =
       (tcsetattr_fn)GetProcAddress(hmodule, "tcsetattr");
     if (!cygwindll->tcsetattr) {
-      emsg = "tcsetattr";
+      emsg = "Failed to GetProcAddress tcsetattr";
+      goto cleanup;
+    }
+    cygwindll->cfmakeraw =
+      (cfmakeraw_fn)GetProcAddress(hmodule, "cfmakeraw");
+    if (!cygwindll->cfmakeraw) {
+      emsg = "Faile to GetProcAddress cfmakeraw";
       goto cleanup;
     }
     cygwindll->ioctl = (ioctl_fn)GetProcAddress(hmodule, "ioctl");
     if (!cygwindll->ioctl) {
-      emsg = "ioctl";
+      emsg = "Failed to GetProcAddress ioctl";
       goto cleanup;
     }
     cygwindll->open = (open_fn)GetProcAddress(hmodule, "open");
     if (!cygwindll->open) {
-      emsg = "open";
+      emsg = "Failed to GetProcAddress open";
       goto cleanup;
     }
     cygwindll->close = (close_fn)GetProcAddress(hmodule, "close");
     if (!cygwindll->close) {
-      emsg = "close";
+      emsg = "Failed to GetProcAddress close";
       goto cleanup;
     }
     cygwindll->__errno = (errno_fn)GetProcAddress(hmodule, "__errno");
     if (!cygwindll->__errno) {
-      emsg = "__errno";
+      emsg = "Failed to GetProcAddress __errno";
       goto cleanup;
     }
     cygwindll->strerror = (strerror_fn)GetProcAddress(hmodule, "strerror");
     if (!cygwindll->strerror) {
-      emsg = "strerror";
+      emsg = "Failed to GetProcAddress strerror";
+      goto cleanup;
+    }
+    uname_fn uname = (uname_fn)GetProcAddress(hmodule, "uname");
+    if (!uname) {
+      emsg = "Failed to GetProcAddress uname";
+      goto cleanup;
+    }
+    struct per_process *user_data =
+      (struct per_process *)GetProcAddress(hmodule, "__cygwin_user_data");
+    if (!user_data) {
+      emsg = "Failed to GetProcAddress __cygwin_user_data";
       goto cleanup;
     }
     init();
+    struct utsname un;
+    if (uname(&un) == 0) {
+      const char *p;
+      p = un.release;
+      size_t len = strlen(un.release);
+      while (1) {
+        if (*p == '(') {
+          p++;
+          char *endptr;
+          unsigned long major = strtoul(p, &endptr, 10);
+          if (major > INT_MAX) {
+            emsg = "Major api version is to big";
+            goto cleanup;
+          }
+          p = endptr + 1;
+          unsigned long minor = strtoul(p, &endptr, 10);
+          if (minor > INT_MAX) {
+            emsg = "Minor api version is to big";
+            goto cleanup;
+          }
+          user_data->api_major = major;
+          user_data->api_minor = minor;
+          break;
+        } else {
+          len--;
+          p++;
+          if (len == 0) {
+            emsg = "Failed to get cygwin api version";
+            goto cleanup;
+          }
+        }
+      }
+    } else {
+      emsg = "Faled to get uname";
+      goto cleanup;
+    }
     return cygwindll;
   }
 cleanup:
-  ELOG("Failed to GetProcAddress: %s", emsg);
+  ELOG("%s", emsg);
   FreeLibrary(cygwindll->hmodule);
   xfree(cygwindll);
   return cygwindll = NULL;
