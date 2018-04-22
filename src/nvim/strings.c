@@ -1145,8 +1145,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                                               f, uarg);
                 break;
               }
-              assert(str_arg_l < sizeof(tmp));
             }
+            assert(str_arg_l < sizeof(tmp));
 
             // include the optional minus sign and possible "0x" in the region
             // before the zero padding insertion point
