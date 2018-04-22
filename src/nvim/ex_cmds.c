@@ -178,10 +178,10 @@ void do_ascii(const exarg_T *const eap)
     }
     iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
     iobuff_len += (
-      vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
-                   (c < 0x10000
-                    ? _("> %d, Hex %04x, Octal %o")
-                    : _("> %d, Hex %08x, Octal %o")), c, c, c));
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     (c < 0x10000
+                      ? _("> %d, Hex %04x, Octal %o")
+                      : _("> %d, Hex %08x, Octal %o")), c, c, c));
     if (ci == MAX_MCO) {
       break;
     }

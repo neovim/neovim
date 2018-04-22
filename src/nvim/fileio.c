@@ -286,7 +286,7 @@ readfile (
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
-  int read_undo_file = FALSE;
+  int read_undo_file = false;
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */

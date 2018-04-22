@@ -543,7 +543,7 @@ char_u *transchar(int c)
     // printable character
     transchar_buf[i] = (char_u)c;
     transchar_buf[i + 1] = NUL;
-  } else if (c <= 0xFF){
+  } else if (c <= 0xFF) {
     transchar_nonprint(transchar_buf + i, c);
   } else {
     transchar_hex((char *)transchar_buf + i, c);

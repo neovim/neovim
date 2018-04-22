@@ -3595,7 +3595,6 @@ int do_join(size_t count,
       // We don't want to remove the comment leader if the
       // previous line is not a comment.
       if (t > 0 && prev_was_comment) {
-
         char_u *new_curr = skip_comment(curr, true, insert_space,
                                         &prev_was_comment);
         comments[t] = (int)(new_curr - curr);

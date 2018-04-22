@@ -2918,7 +2918,7 @@ void maketitle(void)
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
-        called_emsg = FALSE;
+        called_emsg = false;
         build_stl_str_hl(curwin, (char_u *)buf, sizeof(buf),
                          p_titlestring, use_sandbox,
                          0, maxlen, NULL, NULL);
@@ -3005,7 +3005,7 @@ void maketitle(void)
       append_arg_number(curwin, (char_u *)buf_p,
                         (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)), false);
 
-      strcat(buf_p, " - NVIM");
+      xstrlcat(buf_p, " - NVIM", (sizeof(buf) - (size_t)(buf_p - buf)));
 
       if (maxlen > 0) {
         // Make it shorter by removing a bit in the middle.

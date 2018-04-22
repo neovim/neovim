@@ -6367,7 +6367,7 @@ static void linecopy(int to, int from, win_T *wp)
           wp->w_width * sizeof(ScreenLines[0]));
 
   memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
-      wp->w_width * sizeof(u8char_T));
+          wp->w_width * sizeof(ScreenLinesUC[0]));
   for (int i = 0; i < p_mco; i++) {
     memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
             wp->w_width * sizeof(ScreenLinesC[0]));

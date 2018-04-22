@@ -605,8 +605,7 @@ static void cursor_goto(UI *ui, int row, int col)
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2)
           && cheap_to_print(ui, grid->row, grid->col, n)) {
-        UGRID_FOREACH_CELL(grid, grid->row, grid->row,
-                           grid->col, col - 1, {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->row, grid->col, col - 1, {
           print_cell(ui, cell);
         });
       }

@@ -822,11 +822,11 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
 
     // if (!one) skip to separator: space or comma.
     while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0) {
-      *dst_p++ = (char)*src++;
+      *dst_p++ = (char)(*src++);
     }
     // Skip separator.
     while ((*src == ' ' || *src == ',') && --dstlen > 0) {
-      *dst_p++ = (char)*src++;
+      *dst_p++ = (char)(*src++);
     }
   }
   // If (dstlen == 0) out of space, what to do???

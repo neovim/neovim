@@ -4738,7 +4738,7 @@ void ex_helpgrep(exarg_T *eap)
   regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
-    /* create a new quickfix list */
+    // Create a new quickfix list.
     qf_new_list(qi, *eap->cmdlinep);
 
     /* Go through all directories in 'runtimepath' */

@@ -4851,10 +4851,10 @@ void ExpandGeneric(
   count = 0;
   for (i = 0;; i++) {
     str = (*func)(xp, i);
-    if (str == NULL) { // end of list
+    if (str == NULL) {  // End of list.
       break;
     }
-    if (*str == NUL) {  // skip empty strings
+    if (*str == NUL) {  // Skip empty strings.
       continue;
     }
     if (vim_regexec(regmatch, str, (colnr_T)0)) {

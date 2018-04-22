@@ -4561,7 +4561,7 @@ syn_cmd_region (
       item = ITEM_END;
     } else if (STRCMP(key, "SKIP") == 0) {
       if (pat_ptrs[ITEM_SKIP] != NULL) {  // One skip pattern allowed.
-        illegal = TRUE;
+        illegal = true;
         break;
       }
       item = ITEM_SKIP;
