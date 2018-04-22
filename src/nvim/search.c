@@ -4017,23 +4017,22 @@ current_search (
     VIsual = start_pos;
 
   curwin->w_cursor = pos;
-  VIsual_active = TRUE;
+  VIsual_active = true;
   VIsual_mode = 'v';
 
-  if (VIsual_active) {
-    redraw_curbuf_later(INVERTED);      /* update the inversion */
-    if (*p_sel == 'e') {
-      /* Correction for exclusive selection depends on the direction. */
-      if (forward && ltoreq(VIsual, curwin->w_cursor))
-        inc_cursor();
-      else if (!forward && ltoreq(curwin->w_cursor, VIsual))
-        inc(&VIsual);
+  redraw_curbuf_later(INVERTED);  // Update the inversion.
+  if (*p_sel == 'e') {
+    // Correction for exclusive selection depends on the direction.
+    if (forward && ltoreq(VIsual, curwin->w_cursor)) {
+      inc_cursor();
+    } else if (!forward && ltoreq(curwin->w_cursor, VIsual)) {
+      inc(&VIsual);
     }
-
   }
 
-  if (fdo_flags & FDO_SEARCH && KeyTyped)
+  if (fdo_flags & FDO_SEARCH && KeyTyped) {
     foldOpenCursor();
+  }
 
   may_start_select('c');
   setmouse();
