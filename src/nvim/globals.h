@@ -710,7 +710,7 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 // mbyte flags that used to depend on 'encoding'. These are now deprecated, as
 // 'encoding' is always "utf-8". Code that use them can be refactored to
 // remove dead code.
-#define enc_dbcs false
+#define enc_dbcs 0
 #define enc_utf8 true
 #define has_mbyte true
 
