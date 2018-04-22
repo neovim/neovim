@@ -2825,9 +2825,10 @@ syn_add_end_off (
     if (off > 0) {
       while (off-- > 0 && *p != NUL)
         mb_ptr_adv(p);
-    } else if (off < 0)   {
-      while (off++ < 0 && base < p)
+    } else {
+      while (off++ < 0 && base < p) {
         mb_ptr_back(base, p);
+      }
     }
     col = (int)(p - base);
   }
@@ -2870,11 +2871,13 @@ syn_add_start_off (
     base = ml_get_buf(syn_buf, result->lnum, FALSE);
     p = base + col;
     if (off > 0) {
-      while (off-- && *p != NUL)
+      while (off-- && *p != NUL) {
         mb_ptr_adv(p);
-    } else if (off < 0)   {
-      while (off++ && base < p)
+      }
+    } else {
+      while (off++ && base < p) {
         mb_ptr_back(base, p);
+      }
     }
     col = (int)(p - base);
   }
