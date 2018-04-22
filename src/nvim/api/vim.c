@@ -1198,7 +1198,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
           .node_p = &node->next,
           .ret_node_p = cur_item.ret_node_p + 1,
         }));
-      } else if (node != NULL) {
+      } else {
         kv_drop(ast_conv_stack, 1);
         ret_node->items[ret_node->size++] = (KeyValuePair) {
           .key = STATIC_CSTR_TO_STRING("type"),
