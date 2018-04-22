@@ -2761,7 +2761,6 @@ win_line (
               // Draw cells with the sign value or blank.
               c_extra = ' ';
               char_attr = win_hl_attr(wp, HLF_SC);
-              n_extra = 2;
               n_extra = win_signcol_width(wp);
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
