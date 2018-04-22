@@ -46,8 +46,8 @@ struct per_process
 {
   char *initial_sp;
 
-  /* The offset of these 3 values can never change. */
-  /* magic_biscuit is the size of this class and should never change. */
+  // The offset of these 3 values can never change.
+  // magic_biscuit is the size of this class and should never change.
   uint32_t magic_biscuit;
   uint32_t dll_major;
   uint32_t dll_minor;
@@ -57,8 +57,8 @@ struct per_process
   char ***envptr;
 #endif
 
-  /* Used to point to the memory machine we should use.  Usually these
-     point back into the dll, but they can be overridden by the user. */
+  // Used to point to the memory machine we should use.  Usually these
+  //    point back into the dll, but they can be overridden by the user.
   void *(*malloc)(size_t);
   void (*free)(void *);
   void *(*realloc)(void *, size_t);
@@ -69,30 +69,31 @@ struct per_process
   void (**ctors)(void);
   void (**dtors)(void);
 
-  /* For fork */
+  // For fork
   void *data_start;
   void *data_end;
   void *bss_start;
   void *bss_end;
 
   void *(*calloc)(size_t, size_t);
-  /* For future expansion of values set by the app. */
-  void (*premain[4]) (int, char **, struct per_process *);
+  // For future expansion of values set by the app.
+  void (*premain[4])  // NOLINT(whitespace/parens)
+    (int, char **, struct per_process *);
 
-  /* non-zero if ctors have been run.  Inherited from parent. */
+  // non-zero if ctors have been run.  Inherited from parent.
   int32_t run_ctors_p;
 
   DWORD_PTR unused[7];
 
-  /* Pointers to real operator new/delete functions for forwarding.  */
+  // Pointers to real operator new/delete functions for forwarding.
   struct per_process_cxx_malloc *cxx_malloc;
 
   HMODULE hmodule;
 
-  DWORD api_major;		/* API version that this program was */
-  DWORD api_minor;		/*  linked with */
-  /* For future expansion, so apps won't have to be relinked if we
-     add an item. */
+  DWORD api_major;  // API version that this program was
+  DWORD api_minor;  //  linked with
+  // For future expansion, so apps won't have to be relinked if we
+  // add an item.
 #ifdef __x86_64__
   DWORD_PTR unused2[4];
 #else
