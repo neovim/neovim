@@ -3542,8 +3542,7 @@ win_line (
               tab_len += vcol_off;
             }
             // boguscols before FIX_FOR_BOGUSCOLS macro from above.
-            if (wp->w_p_list && lcs_tab1 && old_boguscols > 0
-                && n_extra > tab_len) {
+            if (lcs_tab1 && old_boguscols > 0 && n_extra > tab_len) {
               tab_len += n_extra - tab_len;
             }
 
