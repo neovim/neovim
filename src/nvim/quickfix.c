@@ -2062,7 +2062,7 @@ win_found:
         EMSG(_("E924: Current window was closed"));
         is_abort = true;
         opened_window = false;
-      } else if (old_qf_curlist != qi->qf_curlist
+      } else if (old_qf_curlist != qi->qf_curlist  // -V560
                  || !is_qf_entry_present(qi, qf_ptr)) {
         if (qi == &ql_info) {
           EMSG(_("E925: Current quickfix was changed"));
