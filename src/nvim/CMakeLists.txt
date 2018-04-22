@@ -417,28 +417,6 @@ set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 
 if(WIN32)
-  if(MSVC)
-    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
-    if("${TARGET_ARCH}" STREQUAL "X86_64")
-      set_property(TARGET nvim APPEND PROPERTY
-                   LINK_FLAGS /ENTRY:cygloadCRTStartup)
-    elseif("${TARGET_ARCH}" STREQUAL "X86")
-      set_property(TARGET nvim APPEND PROPERTY
-                   LINK_FLAGS /ENTRY:cygloadCRTStartup)
-    endif()
-  else()
-    include(${PROJECT_SOURCE_DIR}/third-party/cmake/TargetArch.cmake)
-    if("${TARGET_ARCH}" STREQUAL "X86_64")
-      set_property(TARGET nvim APPEND_STRING PROPERTY
-                   LINK_FLAGS "-Wl,-entry -Wl,cygloadCRTStartup")
-    elseif("${TARGET_ARCH}" STREQUAL "X86")
-      set_property(TARGET nvim APPEND_STRING PROPERTY
-                   LINK_FLAGS "-Wl,-entry -Wl,_cygloadCRTStartup@0")
-    endif()
-  endif()
-endif()
-
-if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
   add_custom_target(nvim_runtime_deps ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/

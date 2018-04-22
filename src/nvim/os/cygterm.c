@@ -167,11 +167,6 @@ MinttyType os_detect_mintty_type(int fd)
   }
 }
 
-bool os_init_cygwin_dll(void)
-{
-  return get_cygwin_dll() ? true : false;
-}
-
 /// Build the struct Cygterm.
 ///
 /// @param  fd  File descriptor of a pipe passed from Cygwin's tty.

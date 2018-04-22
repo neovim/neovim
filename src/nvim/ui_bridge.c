@@ -17,6 +17,9 @@
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/api/private/helpers.h"
+#ifdef WIN32
+# include "nvim/os/cygterm.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -77,9 +80,19 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   uv_mutex_lock(&rv->mutex);
   rv->ready = false;
 
-  if (uv_thread_create(&rv->ui_thread, ui_thread_run, rv)) {
-    abort();
+#ifdef WIN32
+  if (os_detect_mintty_type(1) != kNoneMintty) {
+    if (uv_thread_create(&rv->ui_thread, ui_thread_cygterm_wrapper, rv)) {
+      abort();
+    }
+  } else {
+#endif
+    if (uv_thread_create(&rv->ui_thread, ui_thread_run, rv)) {
+      abort();
+    }
+#ifdef WIN32
   }
+#endif
 
   // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!rv->ready) {
@@ -103,6 +116,35 @@ static void ui_thread_run(void *data)
   UIBridgeData *bridge = data;
   bridge->ui_main(bridge, bridge->ui);
 }
+
+// Originally it ensure padding with the main thread and calls
+// cygwin_dll_init(). Then dll_entry() ensure padding in TLS on each thread,
+// and copies cygtls from the main thread. However, in fact, padding with
+// dll_entry() has not been ensured.
+// how-cygtls-work.txt says that storage never goes out of scope, because it
+// uses ExitThread(). But probably ExitThread() is deallocate the stack.
+// As there is no way to make it, we will make padding here for this thread and
+// calls cygwin_dll_init() on this thread.
+// Since there is no cygtls besides this thread, if calling a function in
+// cygwindll from a other thread, it abnormally terminate with SIGSEGV.
+// It is necessary to invalidate optimization to ensure padding.
+#ifdef WIN32
+# ifdef __GNUC__
+#  pragma GCC optimize ("O0")  // NOLINT(whitespace/parens)
+# else
+#  pragma optimize("", off)
+# endif
+static void ui_thread_cygterm_wrapper(void *data)
+{
+  char padding[32768];
+  ui_thread_run(data);
+}
+# ifdef __GNUC__
+#  pragma GCC reset_options
+# else
+#  pragma optimize("", on)
+# endif
+#endif  // WIN32
 
 static void ui_bridge_stop(UI *b)
 {
