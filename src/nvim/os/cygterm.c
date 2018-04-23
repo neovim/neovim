@@ -8,33 +8,37 @@
 #include "nvim/os/cygterm.h"
 #include "nvim/memory.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "os/cygterm.c.generated.h"
-#endif
-
 #define CYGWDLL "cygwin1.dll"
 #define MSYSDLL "msys-2.0.dll"
 #define CYG_INIT_FUNC "cygwin_dll_init"
 #define MSYS_INIT_FUNC "msys_dll_init"
 
 // These definition came from header file of Cygwin
-#define EINTR      4
-// iflag bits
-#define INLCR      0x00040
-#define ICRNL      0x00100
-#define IXON       0x00400
+#define EINTR          4
 
-// lflag bits
-#define ISIG       0x0001
-#define ICANON     0x0002
-#define ECHO       0x0004
-#define IEXTEN     0x0100
+#define TCSANOW        2
 
-#define TCSANOW    2
-
-#define TIOCGWINSZ (('T' << 8) | 1)
+#define TIOCGWINSZ     (('T' << 8) | 1)
 
 #define CYG_O_BINARY   0x10000
+
+#define NCCS           18
+
+typedef unsigned char    cc_t;
+typedef unsigned int     tcflag_t;
+typedef unsigned int     speed_t;
+
+struct termios
+{
+  tcflag_t      c_iflag;
+  tcflag_t      c_oflag;
+  tcflag_t      c_cflag;
+  tcflag_t      c_lflag;
+  char          c_line;
+  cc_t          c_cc[NCCS];
+  speed_t       c_ispeed;
+  speed_t       c_ospeed;
+};
 
 struct winsize
 {
@@ -133,7 +137,7 @@ typedef int *(*errno_fn) (void);
 typedef char *(*strerror_fn) (int);
 typedef int (*uname_fn) (struct utsname *);
 
-struct Cygwindll {
+typedef struct {
   HMODULE hmodule;
   tcgetattr_fn tcgetattr;
   tcsetattr_fn tcsetattr;
@@ -143,7 +147,21 @@ struct Cygwindll {
   close_fn close;
   errno_fn __errno;
   strerror_fn strerror;
+} CygwinDll;
+
+struct CygTerm {
+  CygwinDll *cygwindll;
+  int width;
+  int height;
+  int fd;
+  struct termios restore_termios;
+  bool restore_termios_valid;
 };
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+#include "os/cygterm.c.generated.h"
+#endif
+
 
 /// Determine if nvim is running in mintty. When running in mintty, it also
 /// determines whether it is running with Cygwin or Msys.
@@ -220,9 +238,11 @@ CygTerm *os_cygterm_new(int fd)
   }
 
   int width, height;
-  if (os_cygterm_get_winsize(cygterm, &width, &height)) {
+  if (cygterm_get_winsize(cygterm, &width, &height)) {
     cygterm->width = width;
     cygterm->height = height;
+  } else {
+    cygterm->width = cygterm->height = -1;
   }
   return cygterm;
 
@@ -272,6 +292,17 @@ void os_cygterm_destroy(CygTerm *cygterm)
 ///
 bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
 {
+  if (!cygterm || (cygterm->width == -1  && cygterm->height == -1)) {
+    return false;
+  }
+
+  *width = cygterm->width;
+  *height = cygterm->height;
+  return true;
+}
+
+static bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
+{
   if (!cygterm) {
     return false;
   }
@@ -293,6 +324,23 @@ bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
   *height = ws.ws_row;
 
   return true;
+}
+
+bool os_cygterm_is_size_update(CygTerm *cygterm)
+{
+  if (!cygterm) {
+    return false;
+  }
+
+  int width = 0, height = 0;
+  if (cygterm_get_winsize(cygterm, &width, &height)
+      && (cygterm->width != width || cygterm->height != height)) {
+    cygterm->width = width;
+    cygterm->height = height;
+    return true;
+  }
+
+  return false;
 }
 
 // Hack to detect mintty, ported from vim

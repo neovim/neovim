@@ -1814,11 +1814,11 @@ static void flush_buf(UI *ui)
       uv_run(&data->write_loop, UV_RUN_DEFAULT);
     }
     int width = 0, height = 0;
-    CygTerm *cygterm = data->cygterm;
-    if (os_cygterm_get_winsize(cygterm, &width, &height)
-        && (cygterm->width != width || cygterm->height != height)) {
-      data->bridge->bridge.width = ui->width = cygterm->width = width;
-      data->bridge->bridge.height = ui->height = cygterm->height = height;
+    if (os_cygterm_is_size_update(data->cygterm)
+        && os_cygterm_get_winsize(data->cygterm, &width, &height)) {
+      got_winch = true;
+      data->bridge->bridge.width = ui->width = width;
+      data->bridge->bridge.height = ui->height = height;
       ui_schedule_refresh();
     }
   } else {
