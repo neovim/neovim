@@ -1473,6 +1473,17 @@ Float nvim__id_float(Float flt)
   return flt;
 }
 
+/// Gets internal stats.
+///
+/// @return Map of various internal stats.
+Dictionary nvim__stats(void)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
+  PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  return rv;
+}
+
 /// Gets a list of dictionaries representing attached UIs.
 ///
 /// @return Array of UI dictionaries
