@@ -7,10 +7,6 @@
 
 #include <uv.h>
 
-#ifdef WIN32
-#include <Windows.h>
-#endif
-
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
