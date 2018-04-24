@@ -4023,7 +4023,7 @@ skip:
       int64_t num_added = last_line - first_line;
       int64_t num_removed = num_added - i;
       buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
-                                  do_buf_event);
+                               do_buf_event);
     }
   }
 

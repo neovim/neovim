@@ -123,10 +123,10 @@ void buf_updates_unregister_all(buf_T *buf)
 }
 
 void buf_updates_send_changes(buf_T *buf,
-                                 linenr_T firstline,
-                                 int64_t num_added,
-                                 int64_t num_removed,
-                                 bool send_tick)
+                              linenr_T firstline,
+                              int64_t num_added,
+                              int64_t num_removed,
+                              bool send_tick)
 {
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;

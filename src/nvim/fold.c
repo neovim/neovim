@@ -754,7 +754,7 @@ deleteFold (
       // notification that includes every line that was part of the fold
       int64_t num_changed = last_lnum - first_lnum;
       buf_updates_send_changes(curbuf, first_lnum, num_changed,
-                                  num_changed, true);
+                               num_changed, true);
     }
   }
 }
