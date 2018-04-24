@@ -336,7 +336,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 1, 2, {}})
     tick = tick + 1
-    expectn('nvim_buf_update_tick', {b, tick})
+    expectn('nvim_buf_changedtick', {b, tick})
     command('set autoindent')
     command('normal! >>')
     tick = tick + 1
@@ -354,7 +354,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 1, 2, {}})
     tick = tick + 1
-    expectn('nvim_buf_update_tick', {b, tick})
+    expectn('nvim_buf_changedtick', {b, tick})
     command('normal! ggOmmm')
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 0, 0, {"\t"}})
@@ -374,7 +374,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 0, 1, {'Line 1'}})
     tick = tick + 1
-    expectn('nvim_buf_update_tick', {b, tick})
+    expectn('nvim_buf_changedtick', {b, tick})
 
     -- change the file directly
     local f = io.open(filename, 'a')
@@ -410,7 +410,7 @@ describe('liveupdate', function()
     tick1 = tick1 + 1
     expectn('nvim_buf_update', {b1, tick1, 0, 1, {'A1'}})
     tick1 = tick1 + 1
-    expectn('nvim_buf_update_tick', {b1, tick1})
+    expectn('nvim_buf_changedtick', {b1, tick1})
 
     command('b'..b2nr)
     command('normal! x')
@@ -420,7 +420,7 @@ describe('liveupdate', function()
     tick2 = tick2 + 1
     expectn('nvim_buf_update', {b2, tick2, 0, 1, {'B1'}})
     tick2 = tick2 + 1
-    expectn('nvim_buf_update_tick', {b2, tick2})
+    expectn('nvim_buf_changedtick', {b2, tick2})
 
     command('b'..b3nr)
     command('normal! x')
@@ -430,7 +430,7 @@ describe('liveupdate', function()
     tick3 = tick3 + 1
     expectn('nvim_buf_update', {b3, tick3, 0, 1, {'C1'}})
     tick3 = tick3 + 1
-    expectn('nvim_buf_update_tick', {b3, tick3})
+    expectn('nvim_buf_changedtick', {b3, tick3})
   end)
 
   it('doesn\'t get confused when you turn watching on/off many times',
@@ -512,8 +512,8 @@ describe('liveupdate', function()
     wantn(2, 'nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     wantn(3, 'nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    wantn(2, 'nvim_buf_update_tick', {b, tick})
-    wantn(3, 'nvim_buf_update_tick', {b, tick})
+    wantn(2, 'nvim_buf_changedtick', {b, tick})
+    wantn(3, 'nvim_buf_changedtick', {b, tick})
 
     -- make sure there are no other pending nvim_buf_update messages going to
     -- channel 1
@@ -665,7 +665,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    expectn('nvim_buf_update_tick', {b, tick})
+    expectn('nvim_buf_changedtick', {b, tick})
 
     -- close our buffer by creating a new one
     command('enew')
@@ -692,7 +692,7 @@ describe('liveupdate', function()
     tick = tick + 1
     expectn('nvim_buf_update', {b, tick, 0, 1, {'AAA'}})
     tick = tick + 1
-    expectn('nvim_buf_update_tick', {b, tick})
+    expectn('nvim_buf_changedtick', {b, tick})
 
     -- close our buffer by creating a new one
     command('set hidden')

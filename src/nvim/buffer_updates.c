@@ -7,7 +7,7 @@
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool buffer_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
+bool buf_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
 {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
@@ -64,7 +64,7 @@ bool buffer_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
   return true;
 }
 
-void buffer_updates_send_end(buf_T *buf, uint64_t channelid)
+void buf_updates_send_end(buf_T *buf, uint64_t channelid)
 {
     Array args = ARRAY_DICT_INIT;
     args.size = 1;
@@ -73,7 +73,7 @@ void buffer_updates_send_end(buf_T *buf, uint64_t channelid)
     rpc_send_event(channelid, "nvim_buf_updates_end", args);
 }
 
-void buffer_updates_unregister(buf_T *buf, uint64_t channelid)
+void buf_updates_unregister(buf_T *buf, uint64_t channelid)
 {
   size_t size = kv_size(buf->update_channels);
   if (!size) {
@@ -101,7 +101,7 @@ void buffer_updates_unregister(buf_T *buf, uint64_t channelid)
     buf->update_channels.size -= found;
 
     // make a new copy of the active array without the channelid in it
-    buffer_updates_send_end(buf, channelid);
+    buf_updates_send_end(buf, channelid);
 
     if (found == size) {
       kv_destroy(buf->update_channels);
@@ -110,19 +110,19 @@ void buffer_updates_unregister(buf_T *buf, uint64_t channelid)
   }
 }
 
-void buffer_updates_unregister_all(buf_T *buf)
+void buf_updates_unregister_all(buf_T *buf)
 {
   size_t size = kv_size(buf->update_channels);
   if (size) {
     for (size_t i = 0; i < size; i++) {
-      buffer_updates_send_end(buf, kv_A(buf->update_channels, i));
+      buf_updates_send_end(buf, kv_A(buf->update_channels, i));
     }
     kv_destroy(buf->update_channels);
     kv_init(buf->update_channels);
   }
 }
 
-void buffer_updates_send_changes(buf_T *buf,
+void buf_updates_send_changes(buf_T *buf,
                                  linenr_T firstline,
                                  int64_t num_added,
                                  int64_t num_removed,
@@ -187,11 +187,11 @@ void buffer_updates_send_changes(buf_T *buf,
   // cleared up quickly.
   if (badchannelid != 0) {
     ELOG("Disabling live updates for dead channel %llu", badchannelid);
-    buffer_updates_unregister(buf, badchannelid);
+    buf_updates_unregister(buf, badchannelid);
   }
 }
 
-void buffer_updates_send_tick(buf_T *buf)
+void buf_updates_changedtick(buf_T *buf)
 {
   // notify each of the active channels
   for (size_t i = 0; i < kv_size(buf->update_channels); i++) {
@@ -209,6 +209,6 @@ void buffer_updates_send_tick(buf_T *buf)
     args.items[1] = INTEGER_OBJ(buf->b_changedtick);
 
     // don't try and clean up dead channels here
-    rpc_send_event(channelid, "nvim_buf_update_tick", args);
+    rpc_send_event(channelid, "nvim_buf_changedtick", args);
   }
 }

@@ -255,16 +255,16 @@ The co-process will start receiving the following notification events:
 
 nvim_buf_updates_start[{buf}, {changedtick}, {linedata}, {more}]	 *nvim_buf_updates_start*
 
-  Neovim will send at least one of these notifications to confirm that
-  buffer updates are registered for this plugin, and possibly send the buffer's
-  contents. If the buffer is very large, neovim might send the contents through
-  in multiple events to avoid loading the entire buffer's contents into
-  memory at once.
+  Nvim will send at least one of these notifications to confirm that buffer
+  updates are registered for this plugin, and possibly send the buffer's
+  contents. If the buffer is very large, nvim might send the contents
+  through in multiple events to avoid loading the entire buffer's contents
+  into memory at once.
 
 	{buf} is an API handle for the buffer.
 
 	{changedtick} is the value of |b:changedtick| for the buffer. If you
-	send an API command back to neovim you can check the value of
+	send an API command back to nvim you can check the value of
 	|b:changedtick| as part of your request to ensure that no other
 	changes have been made. 
 
@@ -279,9 +279,9 @@ nvim_buf_updates_start[{buf}, {changedtick}, {linedata}, {more}]	 *nvim_buf_upda
   will be empty.
 
   {linedata} will always have at least 1 item, but the maximum length is
-  determined by neovim and not guaranteed to be any particular size.  Also the
+  determined by nvim and not guaranteed to be any particular size.  Also the
   number of {linedata} items may vary between notifications, so your plugin
-  must be prepared to receive the line data in whatever size lists neovim
+  must be prepared to receive the line data in whatever size lists nvim
   decides to split it into.
 
   {more} is a boolean which tells you whether or not to expect more
@@ -298,7 +298,7 @@ nvim_buf_update[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}] *nvim
 	{buf} is an API handle for the buffer.
 
   {changedtick} is the value of |b:changedtick| for the buffer. If you send an
-  API command back to neovim you can check the value of |b:changedtick| as
+  API command back to nvim you can check the value of |b:changedtick| as
   part of your request to ensure that no other changes have been made.
 
   {firstline} is the integer line number of the first line that was replaced.
@@ -324,7 +324,7 @@ nvim_buf_update[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}] *nvim
   doesn't reflect the actual buffer contents. Currently this behaviour is
   only used for the 'inccommand' option.
 
-nvim_buf_update_tick[{buf}, {changedtick}]		                   *nvim_buf_update_tick*
+nvim_buf_changedtick[{buf}, {changedtick}]		                   *nvim_buf_changedtick*
 
   Indicates that |b:changedtick| was incremented for the buffer {buf}, but no
   text was changed. This is currently only used by undo/redo.
@@ -349,7 +349,7 @@ the buffer contents are unloaded from memory:
 
   - Closing all a buffer's windows (unless 'hidden' is enabled).
   - Using |:edit| to reload the buffer
-  - reloading the buffer after it is changed from outside neovim.
+  - reloading the buffer after it is changed from outside nvim.
 
                                                        *buffer-updates-examples*
 Examples~

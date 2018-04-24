@@ -753,7 +753,7 @@ deleteFold (
       // the modification of the *first* line of the fold, but we send through a
       // notification that includes every line that was part of the fold
       int64_t num_changed = last_lnum - first_lnum;
-      buffer_updates_send_changes(curbuf, first_lnum, num_changed,
+      buf_updates_send_changes(curbuf, first_lnum, num_changed,
                                   num_changed, true);
     }
   }
@@ -1610,7 +1610,7 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
     // u_save() is unable to save the buffer line, but we send the
     // nvim_buf_update anyway since it won't do any harm.
     int64_t num_changed = 1 + end - start;
-    buffer_updates_send_changes(curbuf, start, num_changed, num_changed, true);
+    buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
   }
 }
 

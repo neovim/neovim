@@ -1735,7 +1735,11 @@ bool u_undo_and_forget(int count)
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
-static void u_doit(int startcount, bool quiet, bool send_update)
+///
+/// @param startcount How often to undo or redo
+/// @param quiet If `true`, don't show messages
+/// @param do_buf_event If `true`, send the changedtick with the buffer updates
+static void u_doit(int startcount, bool quiet, bool do_buf_event)
 {
   int count = startcount;
 
@@ -1771,7 +1775,7 @@ static void u_doit(int startcount, bool quiet, bool send_update)
         break;
       }
 
-      u_undoredo(true, send_update);
+      u_undoredo(true, do_buf_event);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1782,7 +1786,7 @@ static void u_doit(int startcount, bool quiet, bool send_update)
         break;
       }
 
-      u_undoredo(false, send_update);
+      u_undoredo(false, do_buf_event);
 
       /* Advance for next redo.  Set "newhead" when at the end of the
        * redoable changes. */
@@ -2108,16 +2112,15 @@ void undo_time(long step, int sec, int file, int absolute)
   u_undo_end(did_undo, absolute, false);
 }
 
-/*
- * u_undoredo: common code for undo and redo
- *
- * The lines in the file are replaced by the lines in the entry list at
- * curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
- * list for the next undo/redo.
- *
- * When "undo" is TRUE we go up in the tree, when FALSE we go down.
- */
-static void u_undoredo(int undo, bool send_update)
+/// u_undoredo: common code for undo and redo
+///
+/// The lines in the file are replaced by the lines in the entry list at
+/// curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
+/// list for the next undo/redo.
+///
+/// @param undo If `true`, go up the tree. Down if `false`.
+/// @param do_buf_event If `true`, send buffer updates.
+static void u_undoredo(int undo, bool do_buf_event)
 {
   char_u      **newarray = NULL;
   linenr_T oldsize;
@@ -2245,7 +2248,7 @@ static void u_undoredo(int undo, bool send_update)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize, send_update);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, do_buf_event);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2283,8 +2286,8 @@ static void u_undoredo(int undo, bool send_update)
   // because the calls to changed()/unchanged() above will bump b_changedtick
   // again, we need to send a nvim_buf_update with just the new value of
   // b:changedtick
-  if (send_update && kv_size(curbuf->update_channels)) {
-    buffer_updates_send_tick(curbuf);
+  if (do_buf_event && kv_size(curbuf->update_channels)) {
+    buf_updates_changedtick(curbuf);
   }
 
   /*

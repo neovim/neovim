@@ -576,7 +576,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   do_autochdir();
 
   // disable live updates for the current buffer
-  buffer_updates_unregister_all(buf);
+  buf_updates_unregister_all(buf);
 
   /*
    * Remove the buffer from the list.
@@ -789,7 +789,7 @@ free_buffer_stuff (
   xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
 
-  buffer_updates_unregister_all(buf);
+  buf_updates_unregister_all(buf);
 }
 
 /*

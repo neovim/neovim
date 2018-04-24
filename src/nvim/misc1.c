@@ -1823,7 +1823,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   changed_common(lnum, col, lnum + 1, 0L);
   // notify any channels that are watching
   if (kv_size(curbuf->update_channels)) {
-    buffer_updates_send_changes(curbuf, lnum, 1, 1, true);
+    buf_updates_send_changes(curbuf, lnum, 1, 1, true);
   }
 
   /* Diff highlighting in other diff windows may need to be updated too. */
@@ -1920,7 +1920,7 @@ changed_lines(
     colnr_T col,          // column in first line with change
     linenr_T lnume,       // line below last changed line
     long xtra,            // number of extra lines (negative when deleting)
-    bool send_update  // some callers like undo/redo call changed_lines()
+    bool do_buf_event  // some callers like undo/redo call changed_lines()
                       // and then increment b_changedtick *again*. This flag
                       // allows these callers to send the nvim_buf_update events
                       // after they're done modifying b_changedtick.
@@ -1948,10 +1948,10 @@ changed_lines(
 
   changed_common(lnum, col, lnume, xtra);
 
-  if (send_update && kv_size(curbuf->update_channels)) {
+  if (do_buf_event && kv_size(curbuf->update_channels)) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
-    buffer_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
+    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
   }
 }
 

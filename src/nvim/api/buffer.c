@@ -96,7 +96,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
     return false;
   }
 
-  return buffer_updates_register(buf, channel_id, send_buffer);
+  return buf_updates_register(buf, channel_id, send_buffer);
 }
 //
 /// Deactivate updates from this buffer to the current channel.
@@ -116,7 +116,7 @@ Boolean nvim_buf_detach(uint64_t channel_id,
     return false;
   }
 
-  buffer_updates_unregister(buf, channel_id);
+  buf_updates_unregister(buf, channel_id);
   return true;
 }
 
