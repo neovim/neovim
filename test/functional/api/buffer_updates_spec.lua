@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, ok = helpers.eq, helpers.ok
-local buffer, command, eval, nvim, next_message = helpers.buffer,
+local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 
 local origlines = {"original line 1",
@@ -12,7 +12,7 @@ local origlines = {"original line 1",
 
 local function expectn(name, args)
   -- expect the next message to be the specified notification event
-  eq({'notification', name, args}, next_message())
+  eq({'notification', name, args}, next_msg())
 end
 
 local function sendkeys(keys)
@@ -88,8 +88,8 @@ local function reopenwithfolds(b)
   return tick
 end
 
-describe('liveupdate', function()
-  it('knows when you add line to a buffer', function()
+describe('buffer events', function()
+  it('when you add line to a buffer', function()
     local b, tick = editoriginal(true)
 
     -- add a new line at the start of the buffer
