@@ -32,7 +32,7 @@ build_deps() {
   # Use cached dependencies if $CACHE_MARKER exists.
   if test -f "${CACHE_MARKER}" && ! test "${CACHE_ENABLE}" = "false" ; then
     echo "Using third-party dependencies from Travis cache (last update: $(_stat "${CACHE_MARKER}"))."
-    cp -r "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
+    cp -r "${HOME}/.cache/nvim-deps"/. "${DEPS_BUILD_DIR}"
     cp -r "${HOME}/.cache/nvim-deps-downloads" "${DEPS_DOWNLOAD_DIR}"
   fi
 
