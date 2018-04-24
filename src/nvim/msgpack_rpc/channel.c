@@ -248,16 +248,30 @@ static void parse_msgpack(Channel *channel)
     log_client_msg(channel->id, !is_response, unpacked.data);
 
     if (is_response) {
-      if (is_valid_rpc_response(&unpacked.data, channel)) {
-        complete_call(&unpacked.data, channel);
-      } else {
+      uint64_t response_id = unpacked.data.via.array.ptr[1].via.u64;
+      if (kv_size(channel->rpc.call_stack) == 0) {
         char buf[256];
         snprintf(buf, sizeof(buf),
-                 "ch %" PRIu64 " returned a response with an unknown request "
-                 "id. Ensure the client is properly synchronized",
-                 channel->id);
+            "ch %" PRIu64 " returned a response with an empty call stack. "
+            "Ensure the client is properly synchronized.",
+            channel->id);
         call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      } else {
+          // Must be equal to the frame at the stack's bottom
+          ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
+          if (response_id == frame->request_id) {
+            complete_call(&unpacked.data, channel);
+          } else {
+            char buf[256];
+            snprintf(buf, sizeof(buf),
+                "ch %" PRIu64 " returned a response with an unknown request "
+                "id (%" PRIu64 ", expected %" PRIu64 "). "
+                "Ensure the client is properly synchronized.",
+                channel->id, frame->request_id, response_id);
+            call_set_error(channel, buf, ERROR_LOG_LEVEL);
+          }
       }
+
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
       return;
@@ -562,18 +576,6 @@ static bool is_rpc_response(msgpack_object *obj)
       && obj->via.array.ptr[0].type == MSGPACK_OBJECT_POSITIVE_INTEGER
       && obj->via.array.ptr[0].via.u64 == 1
       && obj->via.array.ptr[1].type == MSGPACK_OBJECT_POSITIVE_INTEGER;
-}
-
-static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
-{
-  uint64_t response_id = obj->via.array.ptr[1].via.u64;
-  if (kv_size(channel->rpc.call_stack) == 0) {
-    return false;
-  }
-
-  // Must be equal to the frame at the stack's bottom
-  ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
-  return response_id == frame->request_id;
 }
 
 static void complete_call(msgpack_object *obj, Channel *channel)
