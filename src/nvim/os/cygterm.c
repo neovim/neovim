@@ -118,13 +118,28 @@ struct per_process
   struct _reent *impure_ptr;
 };
 
-struct utsname
+struct cygwin_utsname
 {
   char sysname[20];
   char nodename[20];
   char release[20];
   char version[20];
   char machine[20];
+};
+
+struct msys_utsname
+{
+  char sysname[21];
+  char nodename[20];
+  char release[20];
+  char version[20];
+  char machine[20];
+};
+
+union utsname
+{
+  struct cygwin_utsname cygwin;
+  struct msys_utsname msys;
 };
 
 typedef int (*tcgetattr_fn) (int, struct termios *);
@@ -135,7 +150,7 @@ typedef int (*open_fn) (const char *, int);
 typedef int (*close_fn) (int);
 typedef int *(*errno_fn) (void);
 typedef char *(*strerror_fn) (int);
-typedef int (*uname_fn) (struct utsname *);
+typedef int (*uname_fn) (union utsname *);
 
 typedef struct {
   HMODULE hmodule;
@@ -530,11 +545,16 @@ static CygwinDll *get_cygwin_dll(void)
       goto cleanup;
     }
     init();
-    struct utsname un;
+    union utsname un;
     if (uname(&un) == 0) {
       const char *p;
-      p = un.release;
-      size_t len = strlen(un.release);
+      if (mintty  == kMinttyCygwin) {
+        p = un.cygwin.release;
+      } else {
+        p = un.msys.release;
+      }
+      size_t len = strlen(p);
+      len = len ? len : 20;
       while (1) {
         if (*p == '(') {
           p++;
