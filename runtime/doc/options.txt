@@ -2690,17 +2690,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'fsync'* *'fs'*
-'fsync' 'fs'		boolean	(default on)
+'fsync' 'fs'		boolean	(default off)
 			global
-	When on, the library function fsync() will be called after writing a
-	file.  This will flush a file to disk, ensuring that it is safely
-	written even on filesystems which do metadata-only journaling.  This
-	will force the harddrive to spin up on Linux systems running in laptop
-	mode, so it may be undesirable in some situations.  Be warned that
-	turning this off increases the chances of data loss after a crash.
+	When on, the OS function fsync() will be called after saving a file
+	(|:write|, |writefile()|, …), |swap-file| and |shada-file|. This
+	flushes the file to disk, ensuring that it is safely written.
+	Slow on some systems: writing buffers, quitting Nvim, and other
+	operations may sometimes take a few seconds.
 
-	Currently applies only to writing the buffer with e.g. |:w| and 
-	|writefile()|.
+	Files are ALWAYS flushed ('fsync' is ignored) when:
+	- |CursorHold| event is triggered
+	- |:preserve| is called
+	- system signals low battery life
+	- Nvim exits abnormally
 
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)

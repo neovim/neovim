@@ -1328,10 +1328,8 @@ int using_script(void)
   return scriptin[curscript] != NULL;
 }
 
-/*
- * This function is called just before doing a blocking wait.  Thus after
- * waiting 'updatetime' for a character to arrive.
- */
+/// This function is called just before doing a blocking wait.  Thus after
+/// waiting 'updatetime' for a character to arrive.
 void before_blocking(void)
 {
   updatescript(0);
@@ -1340,21 +1338,22 @@ void before_blocking(void)
   }
 }
 
-/*
- * updatescipt() is called when a character can be written into the script file
- * or when we have waited some time for a character (c == 0)
- *
- * All the changed memfiles are synced if c == 0 or when the number of typed
- * characters reaches 'updatecount' and 'updatecount' is non-zero.
- */
-void updatescript(int c)
+/// updatescript() is called when a character can be written to the script file
+/// or when we have waited some time for a character (c == 0).
+///
+/// All the changed memfiles are synced if c == 0 or when the number of typed
+/// characters reaches 'updatecount' and 'updatecount' is non-zero.
+static void updatescript(int c)
 {
   static int count = 0;
 
-  if (c && scriptout)
+  if (c && scriptout) {
     putc(c, scriptout);
-  if (c == 0 || (p_uc > 0 && ++count >= p_uc)) {
-    ml_sync_all(c == 0, TRUE);
+  }
+  bool idle = (c == 0);
+  if (idle || (p_uc > 0 && ++count >= p_uc)) {
+    ml_sync_all(idle, true,
+                (!!p_fs || idle));  // Always fsync at idle (CursorHold).
     count = 0;
   }
 }
