@@ -168,7 +168,7 @@ struct CygTerm {
 ///
 /// @param  fd  File descriptor to determine.
 ///
-/// @returns kNoneMintty if not running in minntty.
+/// @returns kMinttyNone if not running in minntty.
 ///          kMinttyMsys if running on Msys.
 ///          kMinttyCygwin if running on Cygwin.
 ///
@@ -181,7 +181,7 @@ MinttyType os_detect_mintty_type(int fd)
     case (int)kMinttyCygwin:  // NOLINT(whitespace/parens)
       return kMinttyCygwin;
     default:
-      return kNoneMintty;
+      return kMinttyNone;
   }
 }
 
@@ -194,7 +194,7 @@ MinttyType os_detect_mintty_type(int fd)
 CygTerm *os_cygterm_new(int fd)
 {
   MinttyType mintty = os_detect_mintty_type(fd);
-  if (mintty == kNoneMintty) {
+  if (mintty == kMinttyNone) {
     return NULL;
   }
 
@@ -371,7 +371,7 @@ static int query_mintty(int fd, MinttyQueryType query_type)
   }
   // Check the name of the pipe:
   // '\{cygwin,msys}-XXXXXXXXXXXXXXXX-ptyN-{from,to}-master'
-  int result = (int)kNoneMintty;
+  int result = (int)kMinttyNone;
   if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, (uint32_t)size)) {
     nameinfo->FileName[nameinfo->FileNameLength / sizeof(WCHAR)] = L'\0';
     p = nameinfo->FileName;
@@ -414,7 +414,7 @@ static int query_mintty(int fd, MinttyQueryType query_type)
       result = -1;
     }
   } else if (query_type == kMinttyType) {
-    result =  p != NULL ? result : (int)kNoneMintty;
+    result =  p != NULL ? result : (int)kMinttyNone;
   } else {
     result = -1;
   }

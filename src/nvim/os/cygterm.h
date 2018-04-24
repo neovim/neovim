@@ -2,7 +2,7 @@
 #define NVIM_OS_CYGTERM_H
 
 typedef enum {
-  kNoneMintty,
+  kMinttyNone,
   kMinttyCygwin,
   kMinttyMsys
 } MinttyType;

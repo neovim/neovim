@@ -81,7 +81,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->ready = false;
 
 #ifdef WIN32
-  if (os_detect_mintty_type(1) != kNoneMintty) {
+  if (os_detect_mintty_type(1) != kMinttyNone) {
     if (uv_thread_create(&rv->ui_thread, ui_thread_cygterm_wrapper, rv)) {
       abort();
     }
