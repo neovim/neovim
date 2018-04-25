@@ -121,8 +121,7 @@ static void ui_thread_run(void *data)
 // cygwin_dll_init(). Then dll_entry() ensure padding in TLS on each thread,
 // and copies cygtls from the main thread. However, in fact, padding with
 // dll_entry() has not been ensured.
-// how-cygtls-work.txt says that storage never goes out of scope, because it
-// uses ExitThread(). But probably ExitThread() is deallocate the stack.
+// In munge_threadfunc(), replacement to threadfunc_fe() is not working.
 // As there is no way to make it, we will make padding here for this thread and
 // calls cygwin_dll_init() on this thread.
 // Since there is no cygtls besides this thread, if calling a function in
