@@ -19,6 +19,13 @@
 #include "nvim/api/private/helpers.h"
 #ifdef WIN32
 # include "nvim/os/cygterm.h"
+
+# ifndef __GNUC__
+typedef struct {
+  void *data;
+  char *dummy;
+} Dummy;
+# endif  // __GNUC__
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -136,7 +143,14 @@ static void ui_thread_run(void *data)
 static void ui_thread_cygterm_wrapper(void *data)
 {
   char padding[32768];
+# ifdef __GNUC__
   ui_thread_run(data);
+#else
+  // FIXME Workaround for problems where MSVC does not reserve variables
+  // despite #pragma optimze("", off). Is there any better way?
+  Dummy dummy = { data, padding };
+  ui_thread_run((dummy.data));
+#endif
 }
 # ifdef __GNUC__
 #  pragma GCC reset_options
