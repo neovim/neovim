@@ -316,31 +316,6 @@ bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
   return true;
 }
 
-static bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
-{
-  if (!cygterm) {
-    return false;
-  }
-
-  struct winsize ws;
-  int err, err_no;
-  CygwinDll *cygwindll = cygterm->cygwindll;
-
-  do {
-    err = cygwindll->ioctl(cygterm->fd, TIOCGWINSZ, &ws);
-    err_no = cygwin_dll_errno(cygwindll);
-  } while (err == -1 && err_no == EINTR);
-
-  if (err == -1) {
-    return false;
-  }
-
-  *width = ws.ws_col;
-  *height = ws.ws_row;
-
-  return true;
-}
-
 bool os_cygterm_is_size_update(CygTerm *cygterm)
 {
   if (!cygterm) {
@@ -440,6 +415,31 @@ static int query_mintty(int fd, MinttyQueryType query_type)
 static int get_cygterm_pty_no(int fd)
 {
   return query_mintty(fd, kPtyNo);
+}
+
+static bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
+{
+  if (!cygterm) {
+    return false;
+  }
+
+  struct winsize ws;
+  int err, err_no;
+  CygwinDll *cygwindll = cygterm->cygwindll;
+
+  do {
+    err = cygwindll->ioctl(cygterm->fd, TIOCGWINSZ, &ws);
+    err_no = cygwin_dll_errno(cygwindll);
+  } while (err == -1 && err_no == EINTR);
+
+  if (err == -1) {
+    return false;
+  }
+
+  *width = ws.ws_col;
+  *height = ws.ws_row;
+
+  return true;
 }
 
 static CygwinDll *get_cygwin_dll(void)
