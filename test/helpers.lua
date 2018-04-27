@@ -1,4 +1,5 @@
 local assert = require('luassert')
+local luv = require('luv')
 local lfs = require('lfs')
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
@@ -31,6 +32,11 @@ end
 
 local function popen_w(...)
   return io.popen(argss_to_cmd(...), 'w')
+end
+
+-- sleeps the test runner (_not_ the nvim instance)
+local function sleep(ms)
+  luv.sleep(ms)
 end
 
 local check_logs_useless_lines = {
@@ -612,7 +618,60 @@ local function table_flatten(arr)
   return result
 end
 
-return {
+local function hexdump(str)
+  local len = string.len(str)
+  local dump = ""
+  local hex = ""
+  local asc = ""
+
+  for i = 1, len do
+    if 1 == i % 8 then
+      dump = dump .. hex .. asc .. "\n"
+      hex = string.format("%04x: ", i - 1)
+      asc = ""
+    end
+
+    local ord = string.byte(str, i)
+    hex = hex .. string.format("%02x ", ord)
+    if ord >= 32 and ord <= 126 then
+      asc = asc .. string.char(ord)
+    else
+      asc = asc .. "."
+    end
+  end
+
+  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
+end
+
+local function read_file(name)
+  local file = io.open(name, 'r')
+  if not file then
+    return nil
+  end
+  local ret = file:read('*a')
+  file:close()
+  return ret
+end
+
+-- Dedent the given text and write it to the file name.
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
+  if type(text) == 'table' then
+    -- Byte blob
+    local bytes = text
+    text = ''
+    for _, char in ipairs(bytes) do
+      text = ('%s%c'):format(text, char)
+    end
+  elseif not no_dedent then
+    text = dedent(text)
+  end
+  file:write(text)
+  file:flush()
+  file:close()
+end
+
+local module = {
   REMOVE_THIS = REMOVE_THIS,
   argss_to_cmd = argss_to_cmd,
   check_cores = check_cores,
@@ -630,6 +689,7 @@ return {
   format_string = format_string,
   glob = glob,
   hasenv = hasenv,
+  hexdump = hexdump,
   intchar2lua = intchar2lua,
   map = map,
   matches = matches,
@@ -638,11 +698,16 @@ return {
   ok = ok,
   popen_r = popen_r,
   popen_w = popen_w,
+  read_file = read_file,
   repeated_read_cmd = repeated_read_cmd,
+  sleep = sleep,
   shallowcopy = shallowcopy,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
   updated = updated,
   which = which,
+  write_file = write_file,
 }
+
+return module
