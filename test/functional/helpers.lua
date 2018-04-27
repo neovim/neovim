@@ -12,15 +12,18 @@ local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
-local neq = global_helpers.neq
+local dedent = global_helpers.dedent
 local eq = global_helpers.eq
 local expect_err = global_helpers.expect_err
-local ok = global_helpers.ok
+local filter = global_helpers.filter
 local map = global_helpers.map
 local matches = global_helpers.matches
-local filter = global_helpers.filter
-local dedent = global_helpers.dedent
+local neq = global_helpers.neq
+local ok = global_helpers.ok
+local read_file = global_helpers.read_file
+local sleep = global_helpers.sleep
 local table_flatten = global_helpers.table_flatten
+local write_file = global_helpers.write_file
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
@@ -374,34 +377,6 @@ local function feed_command(...)
   end
 end
 
--- Dedent the given text and write it to the file name.
-local function write_file(name, text, no_dedent, append)
-  local file = io.open(name, (append and 'a' or 'w'))
-  if type(text) == 'table' then
-    -- Byte blob
-    local bytes = text
-    text = ''
-    for _, char in ipairs(bytes) do
-      text = ('%s%c'):format(text, char)
-    end
-  elseif not no_dedent then
-    text = dedent(text)
-  end
-  file:write(text)
-  file:flush()
-  file:close()
-end
-
-local function read_file(name)
-  local file = io.open(name, 'r')
-  if not file then
-    return nil
-  end
-  local ret = file:read('*a')
-  file:close()
-  return ret
-end
-
 local sourced_fnames = {}
 local function source(code)
   local fname = tmpname()
@@ -464,11 +439,6 @@ local function wait()
   -- Execute 'nvim_eval' (a deferred function) to block
   -- until all pending input is processed.
   session:request('nvim_eval', '1')
-end
-
--- sleeps the test runner (_not_ the nvim instance)
-local function sleep(ms)
-  luv.sleep(ms)
 end
 
 local function curbuf_contents()
@@ -682,31 +652,6 @@ local function alter_slashes(obj)
   end
 end
 
-local function hexdump(str)
-  local len = string.len(str)
-  local dump = ""
-  local hex = ""
-  local asc = ""
-
-  for i = 1, len do
-    if 1 == i % 8 then
-      dump = dump .. hex .. asc .. "\n"
-      hex = string.format("%04x: ", i - 1)
-      asc = ""
-    end
-
-    local ord = string.byte(str, i)
-    hex = hex .. string.format("%02x ", ord)
-    if ord >= 32 and ord <= 126 then
-      asc = asc .. string.char(ord)
-    else
-      asc = asc .. "."
-    end
-  end
-
-  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
-end
-
 local module = {
   NIL = mpack.NIL,
   alter_slashes = alter_slashes,
@@ -737,7 +682,6 @@ local module = {
   filter = filter,
   funcs = funcs,
   get_pathsep = get_pathsep,
-  hexdump = hexdump,
   insert = insert,
   iswin = iswin,
   map = map,
