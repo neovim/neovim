@@ -186,12 +186,12 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   for (size_t i = 0; i < rv.size; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Line index is too high");
       goto end;
     }
 
-    const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
+    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
@@ -360,7 +360,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }
@@ -378,7 +378,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start + (int64_t)i - 1;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }

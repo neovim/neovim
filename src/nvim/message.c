@@ -1382,9 +1382,6 @@ const char *str2special(const char **const sp, const bool replace_spaces,
     if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
       c = TO_SPECIAL((uint8_t)str[1], (uint8_t)str[2]);
       str += 2;
-      if (c == KS_ZERO) {  // display <Nul> as ^@ or <Nul>
-        c = NUL;
-      }
     }
     if (IS_SPECIAL(c) || modifiers) {  // Special key.
       special = true;
@@ -1415,7 +1412,7 @@ const char *str2special(const char **const sp, const bool replace_spaces,
       || (replace_lt && c == '<')) {
     return (const char *)get_special_key_name(c, modifiers);
   }
-  buf[0] = c;
+  buf[0] = (char)c;
   buf[1] = NUL;
   return buf;
 }

@@ -23,6 +23,8 @@ struct ugrid {
   UCell **cells;
 };
 
+// -V:UGRID_FOREACH_CELL:625
+
 #define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
   do { \
     for (int row = top; row <= bot; row++) { \

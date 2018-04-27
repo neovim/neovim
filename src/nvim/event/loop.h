@@ -52,6 +52,8 @@ typedef struct loop {
     } \
   } while (0)
 
+// -V:LOOP_PROCESS_EVENTS_UNTIL:547
+
 // Poll for events until a condition or timeout
 #define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
   do { \

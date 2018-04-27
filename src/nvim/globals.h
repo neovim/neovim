@@ -16,8 +16,6 @@
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
-#define MAX_MCO        6                 // maximum value for 'maxcombine'
-
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
@@ -164,10 +162,6 @@ EXTERN u8char_T *ScreenLinesUC INIT(= NULL);    /* decoded UTF-8 characters */
 EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
 EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
                                                    allocating ScreenLinesC[] */
-
-/* Only used for euc-jp: Second byte of a character that starts with 0x8e.
- * These are single-width. */
-EXTERN schar_T  *ScreenLines2 INIT(= NULL);
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
@@ -721,7 +715,7 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 // mbyte flags that used to depend on 'encoding'. These are now deprecated, as
 // 'encoding' is always "utf-8". Code that use them can be refactored to
 // remove dead code.
-#define enc_dbcs false
+#define enc_dbcs 0
 #define enc_utf8 true
 #define has_mbyte true
 

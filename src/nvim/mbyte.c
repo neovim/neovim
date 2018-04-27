@@ -704,12 +704,14 @@ bool utf_composinglike(const char_u *p1, const char_u *p2)
   return arabic_combine(utf_ptr2char(p1), c2);
 }
 
-/*
- * Convert a UTF-8 byte string to a wide character. Also get up to MAX_MCO
- * composing characters.
- *
- * @param [out] pcc: composing chars, last one is 0
- */
+/// Convert a UTF-8 string to a wide character
+///
+/// Also gets up to #MAX_MCO composing characters.
+///
+/// @param[out]  pcc  Location where to store composing characters. Must have
+///                   space at least for #MAX_MCO + 1 elements.
+///
+/// @return leading character.
 int utfc_ptr2char(const char_u *p, int *pcc)
 {
   int len;
@@ -1977,37 +1979,39 @@ char_u * enc_locale(void)
     return NULL;
   }
 
-  /* The most generic locale format is:
-   * language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
-   * If there is a '.' remove the part before it.
-   * if there is something after the codeset, remove it.
-   * Make the name lowercase and replace '_' with '-'.
-   * Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
-   * "ko_KR.EUC" == "euc-kr"
-   */
+  // The most generic locale format is:
+  // language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
+  // If there is a '.' remove the part before it.
+  // if there is something after the codeset, remove it.
+  // Make the name lowercase and replace '_' with '-'.
+  // Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
+  // "ko_KR.EUC" == "euc-kr"
   const char *p = (char *)vim_strchr((char_u *)s, '.');
   if (p != NULL) {
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
         && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
-      /* copy "XY.EUC" to "euc-XY" to buf[10] */
-      strcpy(buf + 10, "euc-");
-      buf[14] = p[-2];
-      buf[15] = p[-1];
-      buf[16] = 0;
-      s = buf + 10;
-    } else
-      s = p + 1;
-  }
-  for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
-    if (s[i] == '_' || s[i] == '-') {
-      buf[i] = '-';
-    } else if (isalnum((int)s[i])) {
-      buf[i] = TOLOWER_ASC(s[i]);
+      // Copy "XY.EUC" to "euc-XY" to buf[10].
+      memmove(buf, "euc-", 4);
+      buf[4] = (ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
+      buf[5] = (ASCII_ISALNUM(p[-1]) ? TOLOWER_ASC(p[-1]) : 0);
+      buf[6] = NUL;
     } else {
-      break;
+      s = p + 1;
+      goto enc_locale_copy_enc;
     }
+  } else {
+enc_locale_copy_enc:
+    for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
+      if (s[i] == '_' || s[i] == '-') {
+        buf[i] = '-';
+      } else if (ASCII_ISALNUM((uint8_t)s[i])) {
+        buf[i] = TOLOWER_ASC(s[i]);
+      } else {
+        break;
+      }
+    }
+    buf[i] = NUL;
   }
-  buf[i] = NUL;
 
   return enc_canonize((char_u *)buf);
 }

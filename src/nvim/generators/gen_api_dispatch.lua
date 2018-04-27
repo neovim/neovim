@@ -324,6 +324,8 @@ end
 output = io.open(lua_c_bindings_outputf, 'wb')
 
 output:write([[
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>

@@ -21,13 +21,14 @@ help() {
   echo 'Usage:'
   echo '  pvscheck.sh [--pvs URL] [--deps] [--environment-cc]'
   echo '              [target-directory [branch]]'
-  echo '  pvscheck.sh [--pvs URL] [--recheck] [--environment-cc]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck] [--environment-cc] [--update]'
   echo '              [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --only-analyse [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
   echo '    --pvs: Fetch pvs-studio from URL.'
+  echo
   echo '    --pvs detect: Auto-detect latest version (by scraping viva64.com).'
   echo
   echo '    --deps: (for regular run) Use top-level Makefile and build deps.'
@@ -46,6 +47,8 @@ help() {
   echo '             Does not run analysis.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
+  echo
+  echo '    --update: when rechecking first do a pull.'
   echo
   echo '    --only-analyse: run analysis on a prepared target directory '
   echo '                    without building Neovim.'
@@ -302,8 +305,16 @@ create_compile_commands() {(
 # realpath is not available in Ubuntu trusty yet.
 realdir() {(
   local dir="$1"
-  cd "$dir"
-  printf '%s\n' "$PWD"
+  local add=""
+  while ! cd "$dir" 2>/dev/null ; do
+    add="${dir##*/}/$add"
+    local new_dir="${dir%/*}"
+    if test "$new_dir" = "$dir" ; then
+      return 1
+    fi
+    dir="$new_dir"
+  done
+  printf '%s\n' "$PWD/$add"
 )}
 
 patch_sources() {(
@@ -353,9 +364,12 @@ run_analysis() {(
       --file build/compile_commands.json \
       --sourcetree-root . || true
 
-  plog-converter -t xml -o PVS-studio.xml PVS-studio.log
-  plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
-  plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
+  rm -rf PVS-studio.{xml,err,tsk,html.d}
+  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011"
+  plog-converter $plog_args --renderTypes xml       --output PVS-studio.xml
+  plog-converter $plog_args --renderTypes errorfile --output PVS-studio.err
+  plog-converter $plog_args --renderTypes tasklist  --output PVS-studio.tsk
+  plog-converter $plog_args --renderTypes fullhtml  --output PVS-studio.html.d
 )}
 
 detect_url() {
@@ -389,13 +403,24 @@ do_check() {
 
   install_pvs "$tgt" "$pvs_url"
 
-  do_recheck "$tgt" "$deps" "$environment_cc"
+  do_recheck "$tgt" "$deps" "$environment_cc" ""
 }
 
 do_recheck() {
   local tgt="$1" ; shift
   local deps="$1" ; shift
   local environment_cc="$1" ; shift
+  local update="$1" ; shift
+
+  if test -n "$update" ; then
+    (
+      cd "$tgt"
+      local branch="$(git rev-parse --abbrev-ref HEAD)"
+      git checkout --detach
+      git fetch -f origin "${branch}:${branch}"
+      git checkout -f "$branch"
+    )
+  fi
 
   create_compile_commands "$tgt" "$deps" "$environment_cc"
 
@@ -427,6 +452,7 @@ main() {
       pvs-install store_const \
       deps store_const \
       environment-cc store_const \
+      update store_const \
       -- \
       'modify realdir tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
@@ -445,7 +471,7 @@ main() {
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
-    do_recheck "$tgt" "$deps" "$environment_cc"
+    do_recheck "$tgt" "$deps" "$environment_cc" "$update"
   elif test -n "$only_analyse" ; then
     do_analysis "$tgt"
   else

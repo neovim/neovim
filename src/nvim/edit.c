@@ -5265,7 +5265,7 @@ insertchar (
     // - need to check for abbreviation: A non-word char after a word-char
     while ((c = vpeekc()) != NUL
            && !ISSPECIAL(c)
-           && (!has_mbyte || MB_BYTE2LEN_CHECK(c) == 1)
+           && MB_BYTE2LEN(c) == 1
            && i < INPUT_BUFLEN
            && !(p_fkmap && KeyTyped)  // Farsi mode mapping moves cursor
            && (textwidth == 0

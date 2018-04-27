@@ -3590,39 +3590,32 @@ nextwild (
   xp->xp_pattern_len = ccline.cmdpos - i;
 
   if (type == WILD_NEXT || type == WILD_PREV) {
-    /*
-     * Get next/previous match for a previous expanded pattern.
-     */
+    // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
-    /*
-     * Translate string into pattern and expand it.
-     */
-    if ((p1 = addstar(xp->xp_pattern, xp->xp_pattern_len,
-             xp->xp_context)) == NULL)
-      p2 = NULL;
-    else {
-      int use_options = options |
-                        WILD_HOME_REPLACE|WILD_ADD_SLASH|WILD_SILENT;
-      if (escape)
-        use_options |= WILD_ESCAPE;
-
-      if (p_wic)
-        use_options += WILD_ICASE;
-      p2 = ExpandOne(xp, p1,
-          vim_strnsave(&ccline.cmdbuff[i], xp->xp_pattern_len),
-          use_options, type);
-      xfree(p1);
-      /* longest match: make sure it is not shorter, happens with :help */
-      if (p2 != NULL && type == WILD_LONGEST) {
-        for (j = 0; j < xp->xp_pattern_len; ++j)
-          if (ccline.cmdbuff[i + j] == '*'
-              || ccline.cmdbuff[i + j] == '?')
-            break;
-        if ((int)STRLEN(p2) < j) {
-          xfree(p2);
-          p2 = NULL;
+    // Translate string into pattern and expand it.
+    p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+    const int use_options = (
+        options
+        | WILD_HOME_REPLACE
+        | WILD_ADD_SLASH
+        | WILD_SILENT
+        | (escape ? WILD_ESCAPE : 0)
+        | (p_wic ? WILD_ICASE : 0));
+    p2 = ExpandOne(xp, p1, vim_strnsave(&ccline.cmdbuff[i], xp->xp_pattern_len),
+                   use_options, type);
+    xfree(p1);
+    // Longest match: make sure it is not shorter, happens with :help.
+    if (p2 != NULL && type == WILD_LONGEST) {
+      for (j = 0; j < xp->xp_pattern_len; j++) {
+        if (ccline.cmdbuff[i + j] == '*'
+            || ccline.cmdbuff[i + j] == '?') {
+          break;
         }
+      }
+      if ((int)STRLEN(p2) < j) {
+        xfree(p2);
+        p2 = NULL;
       }
     }
   }
@@ -4856,23 +4849,27 @@ void ExpandGeneric(
 
   // copy the matching names into allocated memory
   count = 0;
-  for (i = 0;; ++i) {
+  for (i = 0;; i++) {
     str = (*func)(xp, i);
-    if (str == NULL) // end of list
+    if (str == NULL) {  // End of list.
       break;
-    if (*str == NUL) // skip empty strings
+    }
+    if (*str == NUL) {  // Skip empty strings.
       continue;
+    }
     if (vim_regexec(regmatch, str, (colnr_T)0)) {
-      if (escaped)
+      if (escaped) {
         str = vim_strsave_escaped(str, (char_u *)" \t\\.");
-      else
+      } else {
         str = vim_strsave(str);
+      }
       (*file)[count++] = str;
-      if (func == get_menu_names && str != NULL) {
-        /* test for separator added by get_menu_names() */
+      if (func == get_menu_names) {
+        // Test for separator added by get_menu_names().
         str += STRLEN(str) - 1;
-        if (*str == '\001')
+        if (*str == '\001') {
           *str = '.';
+        }
       }
     }
   }

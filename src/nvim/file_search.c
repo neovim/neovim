@@ -1541,21 +1541,25 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
   char buf[8];
 
   switch (scope) {
-  case kCdScopeGlobal:
-    snprintf(buf, sizeof(buf), "global");
-    break;
-  case kCdScopeTab:
-    snprintf(buf, sizeof(buf), "tab");
-    break;
-  case kCdScopeWindow:
-    snprintf(buf, sizeof(buf), "window");
-    break;
-  case kCdScopeInvalid:
-    // Should never happen.
-    assert(false);
+    case kCdScopeGlobal: {
+      snprintf(buf, sizeof(buf), "global");
+      break;
+    }
+    case kCdScopeTab: {
+      snprintf(buf, sizeof(buf), "tab");
+      break;
+    }
+    case kCdScopeWindow: {
+      snprintf(buf, sizeof(buf), "window");
+      break;
+    }
+    case kCdScopeInvalid: {
+      // Should never happen.
+      assert(false);
+    }
   }
 
-  tv_dict_add_str(dict, S_LEN("scope"), buf);
+  tv_dict_add_str(dict, S_LEN("scope"), buf);  // -V614
   tv_dict_add_str(dict, S_LEN("cwd"),   new_dir);
   tv_dict_set_keys_readonly(dict);
 

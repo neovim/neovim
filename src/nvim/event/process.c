@@ -356,7 +356,7 @@ static void flush_stream(Process *proc, Stream *stream)
     }
 
     // Stream can be closed if it is empty.
-    if (num_bytes == stream->num_bytes) {
+    if (num_bytes == stream->num_bytes) {  // -V547
       if (stream->read_cb && !stream->did_eof) {
         // Stream callback could miss EOF handling if a child keeps the stream
         // open. But only send EOF if we haven't already.

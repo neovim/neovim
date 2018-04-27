@@ -625,12 +625,12 @@ void set_init_1(void)
   opt_idx = findoption("maxmemtot");
   if (opt_idx >= 0) {
     {
-      /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in uintptr_t, get uintptr_t max */
+      // Use half of amount of memory available to Vim.
+      // If too much to fit in uintptr_t, get uintptr_t max.
       uint64_t available_kib = os_get_total_mem_kib();
-      uintptr_t n = available_kib / 2 > UINTPTR_MAX
-                    ? UINTPTR_MAX
-                    : (uintptr_t)(available_kib /2);
+      uintptr_t n = (available_kib / 2 > UINTPTR_MAX  // -V547
+                     ? UINTPTR_MAX
+                     : (uintptr_t)(available_kib /2));
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption("maxmem");
       if (opt_idx >= 0) {
@@ -4160,10 +4160,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &p_titlelen) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
   } else if (pp == &p_so) {
     if (value < 0 && full_screen) {
       errmsg = e_scroll;
@@ -4184,27 +4180,23 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdl
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdl)) {
+  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
     if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdc
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdc)) {
+  } else if (pp == &curwin->w_p_fdc || pp == &curwin->w_allbuf_opt.wo_fdc) {
     if (value < 0) {
       errmsg = e_positive;
     } else if (value > 12) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_cole
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_cole)) {
+  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
     if (value < 0) {
       errmsg = e_positive;
     } else if (value > 3) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_nuw
-             || pp == (long *)GLOBAL_WO(&curwin->w_p_nuw)) {
+  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
     if (value < 1) {
       errmsg = e_positive;
     } else if (value > 10) {
@@ -5801,25 +5793,28 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         switch (*p_ffs) {
-        case 'm':
-          buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
-          break;
-        case 'd':
-          buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
-          break;
-        case 'u':
-          buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
-          break;
-        default:
-          buf->b_p_ff = vim_strsave(p_ff);
-        }
-        if (buf->b_p_ff != NULL) {
-          buf->b_start_ffc = *buf->b_p_ff;
+          case 'm': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
+            break;
+          }
+          case 'd': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
+            break;
+          }
+          case 'u': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
+            break;
+          }
+          default: {
+            buf->b_p_ff = vim_strsave(p_ff);
+            break;
+          }
         }
         buf->b_p_bh = empty_option;
         buf->b_p_bt = empty_option;
-      } else
-        free_buf_options(buf, FALSE);
+      } else {
+        free_buf_options(buf, false);
+      }
 
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
@@ -6080,7 +6075,7 @@ set_context_in_set_cmd (
     xp->xp_context = EXPAND_UNSUCCESSFUL;
     return;
   }
-  if (xp->xp_context != EXPAND_BOOL_SETTINGS && p[1] == NUL) {
+  if (p[1] == NUL) {
     xp->xp_context = EXPAND_OLD_SETTING;
     if (is_term_option)
       expand_option_idx = -1;
@@ -6224,14 +6219,15 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   }
 
   if (expand_option_idx >= 0) {
-    /* put string of option value in NameBuff */
+    // Put string of option value in NameBuff.
     option_value2string(&options[expand_option_idx], expand_option_flags);
     var = NameBuff;
-  } else if (var == NULL)
+  } else {
     var = (char_u *)"";
+  }
 
-  /* A backslash is required before some characters.  This is the reverse of
-   * what happens in do_set(). */
+  // A backslash is required before some characters.  This is the reverse of
+  // what happens in do_set().
   char_u *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME

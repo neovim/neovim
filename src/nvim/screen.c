@@ -24,8 +24,6 @@
  * cells the next byte in ScreenLines[] is 0.
  * ScreenLinesC[][] contain up to 'maxcombine' composing characters
  * (drawn on top of the first character).  There is 0 after the last one used.
- * ScreenLines2[] is only used for euc-jp to store the second byte if the
- * first byte is 0x8e (single-width character).
  *
  * The screen_*() functions write to the screen and handle updating
  * ScreenLines[].
@@ -1918,12 +1916,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         }
         if (cells > 1)
           ScreenLines[idx + 1] = 0;
-      } else if (enc_dbcs == DBCS_JPNU && *p == 0x8e)
-        /* double-byte single width character */
-        ScreenLines2[idx] = p[1];
-      else if (cells > 1)
-        /* double-width character */
+      } else if (cells > 1) {
+        // Double-width character.
         ScreenLines[idx + 1] = p[1];
+      }
       col += cells;
       idx += cells;
       p += c_len;
@@ -2144,7 +2140,6 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col = 0;                          // visual column on screen
   unsigned off;                         // offset in ScreenLines/ScreenAttrs
   int c = 0;                            // init for GCC
   long vcol = 0;                        // virtual column (for tabs)
@@ -2553,7 +2548,7 @@ win_line (
       ptr = prev_ptr;
       // If the character fits on the screen, don't need to skip it.
       // Except for a TAB.
-      if (((*mb_ptr2cells)(ptr) >= c || *ptr == TAB) && col == 0) {
+      if (utf_ptr2cells(ptr) >= c || *ptr == TAB) {
         n_skip = v - vcol;
       }
     }
@@ -2702,11 +2697,11 @@ win_line (
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
-  col = 0;
+  int col = 0;  // Visual column on screen.
   if (wp->w_p_rl) {
-    /* Rightleft window: process the text in the normal direction, but put
-     * it in current_ScreenLine[] from right to left.  Start at the
-     * rightmost column of the window. */
+    // Rightleft window: process the text in the normal direction, but put
+    // it in current_ScreenLine[] from right to left.  Start at the
+    // rightmost column of the window.
     col = wp->w_width - 1;
     off += col;
   }
@@ -2761,7 +2756,6 @@ win_line (
               // Draw cells with the sign value or blank.
               c_extra = ' ';
               char_attr = win_hl_attr(wp, HLF_SC);
-              n_extra = 2;
               n_extra = win_signcol_width(wp);
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
@@ -3210,9 +3204,9 @@ win_line (
               || (mb_l > 1 && (!vim_isprintc(mb_c)))) {
             // Illegal UTF-8 byte: display as <xx>.
             // Non-BMP character : display as ? or fullwidth ?.
-            transchar_hex(extra, mb_c);
-            if (wp->w_p_rl) {                         // reverse
-                rl_mirror(extra);
+            transchar_hex((char *)extra, mb_c);
+            if (wp->w_p_rl) {  // reverse
+              rl_mirror(extra);
             }
 
             p_extra = extra;
@@ -3543,8 +3537,7 @@ win_line (
               tab_len += vcol_off;
             }
             // boguscols before FIX_FOR_BOGUSCOLS macro from above.
-            if (wp->w_p_list && lcs_tab1 && old_boguscols > 0
-                && n_extra > tab_len) {
+            if (lcs_tab1 && old_boguscols > 0 && n_extra > tab_len) {
               tab_len += n_extra - tab_len;
             }
 
@@ -4090,24 +4083,19 @@ win_line (
         --col;
       }
       ScreenLines[off] = c;
-      if (enc_dbcs == DBCS_JPNU) {
-        if ((mb_c & 0xff00) == 0x8e00)
-          ScreenLines[off] = 0x8e;
-        ScreenLines2[off] = mb_c & 0xff;
-      } else if (enc_utf8) {
-        if (mb_utf8) {
-          int i;
-
-          ScreenLinesUC[off] = mb_c;
-          if ((c & 0xff) == 0)
-            ScreenLines[off] = 0x80;               /* avoid storing zero */
-          for (i = 0; i < Screen_mco; ++i) {
-            ScreenLinesC[i][off] = u8cc[i];
-            if (u8cc[i] == 0)
-              break;
+      if (mb_utf8) {
+        ScreenLinesUC[off] = mb_c;
+        if ((c & 0xff) == 0) {
+          ScreenLines[off] = 0x80;  // Avoid storing zero.
+        }
+        for (int i = 0; i < Screen_mco; i++) {
+          ScreenLinesC[i][off] = u8cc[i];
+          if (u8cc[i] == 0) {
+            break;
           }
-        } else
-          ScreenLinesUC[off] = 0;
+        }
+      } else {
+        ScreenLinesUC[off] = 0;
       }
       if (multi_attr) {
         ScreenAttrs[off] = multi_attr;
@@ -4379,23 +4367,14 @@ static int comp_char_differs(int off_from, int off_to)
 static int char_needs_redraw(int off_from, int off_to, int cols)
 {
   return (cols > 0
-      && ((ScreenLines[off_from] != ScreenLines[off_to]
-           || ScreenAttrs[off_from] != ScreenAttrs[off_to])
-
-          || (enc_dbcs != 0
-              && MB_BYTE2LEN(ScreenLines[off_from]) > 1
-              && (enc_dbcs == DBCS_JPNU && ScreenLines[off_from] == 0x8e
-                  ? ScreenLines2[off_from] != ScreenLines2[off_to]
-                  : (cols > 1 && ScreenLines[off_from + 1]
-                     != ScreenLines[off_to + 1])))
-          || (enc_utf8
-              && (ScreenLinesUC[off_from] != ScreenLinesUC[off_to]
-                  || (ScreenLinesUC[off_from] != 0
-                      && comp_char_differs(off_from, off_to))
-                  || ((*mb_off2cells)(off_from, off_from + cols) > 1
-                      && ScreenLines[off_from + 1]
-                      != ScreenLines[off_to + 1])))
-          || p_wd < 0));
+          && (ScreenLines[off_from] != ScreenLines[off_to]
+              || ScreenAttrs[off_from] != ScreenAttrs[off_to]
+              || ScreenLinesUC[off_from] != ScreenLinesUC[off_to]
+              || (ScreenLinesUC[off_from] != 0
+                  && comp_char_differs(off_from, off_to))
+              || (utf_off2cells(off_from, off_from + cols) > 1
+                  && ScreenLines[off_from + 1] != ScreenLines[off_to + 1])
+              || p_wd < 0));
 }
 
 /*
@@ -4503,9 +4482,6 @@ static void screen_line(int row, int coloff, int endcol,
           ScreenLines[off_to + 2] = 0;
           redraw_next = TRUE;
         }
-
-        if (enc_dbcs == DBCS_JPNU)
-          ScreenLines2[off_to] = ScreenLines2[off_from];
       }
       /* When writing a single-width character over a double-width
        * character and at the end of the redrawn text, need to clear out
@@ -5238,8 +5214,8 @@ win_redr_custom (
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
-  /* Make all characters printable. */
-  p = transstr(buf);
+  // Make all characters printable.
+  p = (char_u *)transstr((const char *)buf);
   len = STRLCPY(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
@@ -5331,16 +5307,7 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
     bytes[0] = ScreenLines[off];
     bytes[1] = NUL;
 
-    if (enc_utf8 && ScreenLinesUC[off] != 0)
-      bytes[utfc_char2bytes(off, bytes)] = NUL;
-    else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      bytes[0] = ScreenLines[off];
-      bytes[1] = ScreenLines2[off];
-      bytes[2] = NUL;
-    } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
-      bytes[1] = ScreenLines[off + 1];
-      bytes[2] = NUL;
-    }
+    bytes[utfc_char2bytes(off, bytes)] = NUL;
   }
 }
 
@@ -5530,11 +5497,9 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
         ScreenLines[off + 1] = ptr[1];
         ScreenAttrs[off + 1] = attr;
         screen_char_2(off, row, col);
-      } else if (l_enc_dbcs == DBCS_JPNU && c == 0x8e) {
-        ScreenLines2[off] = ptr[1];
+      } else {
         screen_char(off, row, col);
-      } else
-        screen_char(off, row, col);
+      }
     }
     if (l_has_mbyte) {
       off += mbyte_cells;
@@ -5907,7 +5872,7 @@ static void screen_char(unsigned off, int row, int col)
   ui_cursor_goto(row, col);
   ui_set_highlight(ScreenAttrs[off]);
 
-  if (enc_utf8 && ScreenLinesUC[off] != 0) {
+  if (ScreenLinesUC[off] != 0) {
     char_u buf[MB_MAXBYTES + 1];
 
     // Convert UTF-8 character to bytes and write it.
@@ -5915,10 +5880,6 @@ static void screen_char(unsigned off, int row, int col)
     ui_puts(buf);
   } else {
     ui_putc(ScreenLines[off]);
-    // double-byte character in single-width cell
-    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      ui_putc(ScreenLines2[off]);
-    }
   }
 }
 
@@ -6110,40 +6071,25 @@ int screen_valid(int doclear)
 void screenalloc(bool doclear)
 {
   int new_row, old_row;
-  int outofmem = FALSE;
   int len;
-  schar_T         *new_ScreenLines;
-  u8char_T        *new_ScreenLinesUC = NULL;
-  u8char_T        *new_ScreenLinesC[MAX_MCO];
-  schar_T         *new_ScreenLines2 = NULL;
-  int i;
-  sattr_T         *new_ScreenAttrs;
-  unsigned        *new_LineOffset;
-  char_u          *new_LineWraps;
-  StlClickDefinition *new_tab_page_click_defs;
   static bool entered = false;  // avoid recursiveness
   static bool done_outofmem_msg = false;
   int retry_count = 0;
-  const bool l_enc_utf8 = enc_utf8;
-  const int l_enc_dbcs = enc_dbcs;
 
 retry:
-  /*
-   * Allocation of the screen buffers is done only when the size changes and
-   * when Rows and Columns have been set and we have started doing full
-   * screen stuff.
-   */
+  // Allocation of the screen buffers is done only when the size changes and
+  // when Rows and Columns have been set and we have started doing full
+  // screen stuff.
   if ((ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
-       && l_enc_utf8 == (ScreenLinesUC != NULL)
-       && (l_enc_dbcs == DBCS_JPNU) == (ScreenLines2 != NULL)
-       && p_mco == Screen_mco
-       )
+       && ScreenLinesUC != NULL
+       && p_mco == Screen_mco)
       || Rows == 0
       || Columns == 0
-      || (!full_screen && ScreenLines == NULL))
+      || (!full_screen && ScreenLines == NULL)) {
     return;
+  }
 
   /*
    * It's possible that we produce an out-of-memory message below, which
@@ -6181,22 +6127,22 @@ retry:
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
-  new_ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
-  memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
-  if (l_enc_utf8) {
-    new_ScreenLinesUC = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
-    for (i = 0; i < p_mco; ++i)
-      new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
+  schar_T *new_ScreenLines = xmalloc(
+      (size_t)((Rows + 1) * Columns * sizeof(*new_ScreenLines)));
+  u8char_T *new_ScreenLinesC[MAX_MCO];
+  memset(new_ScreenLinesC, 0, sizeof(new_ScreenLinesC));
+  u8char_T *new_ScreenLinesUC = xmalloc(
+      (size_t)((Rows + 1) * Columns * sizeof(*new_ScreenLinesUC)));
+  for (int i = 0; i < p_mco; i++) {
+    new_ScreenLinesC[i] = xcalloc(
+        (size_t)((Rows + 1) * Columns), sizeof(new_ScreenLinesC[0][0]));
   }
-  if (l_enc_dbcs == DBCS_JPNU)
-    new_ScreenLines2 = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
-  new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
-  new_LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
-  new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
-  new_tab_page_click_defs = xcalloc(
-      (size_t) Columns, sizeof(*new_tab_page_click_defs));
+  sattr_T *new_ScreenAttrs = xmalloc(
+      (size_t)((Rows + 1) * Columns * sizeof(*new_ScreenAttrs)));
+  unsigned *new_LineOffset = xmalloc((size_t)(Rows * sizeof(*new_LineOffset)));
+  char_u *new_LineWraps = xmalloc((size_t)(Rows * sizeof(*new_LineWraps)));
+  StlClickDefinition *new_tab_page_click_defs = xcalloc(
+      (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_alloc_lines(wp);
@@ -6205,23 +6151,20 @@ retry:
     win_alloc_lines(aucmd_win);
   }
 
-  for (i = 0; i < p_mco; ++i)
-    if (new_ScreenLinesC[i] == NULL)
+  int i;
+  for (i = 0; i < p_mco; i++) {
+    if (new_ScreenLinesC[i] == NULL) {
       break;
-  if (new_ScreenLines == NULL
-      || (new_ScreenLinesUC == NULL || i != p_mco)
-      || new_ScreenAttrs == NULL
-      || new_LineOffset == NULL
-      || new_LineWraps == NULL
-      || new_tab_page_click_defs == NULL
-      || outofmem) {
+    }
+  }
+  if (i != p_mco) {
     if (ScreenLines != NULL || !done_outofmem_msg) {
-      /* guess the size */
+      // Guess the size.
       do_outofmem_msg((Rows + 1) * Columns);
 
-      /* Remember we did this to avoid getting outofmem messages over
-       * and over again. */
-      done_outofmem_msg = TRUE;
+      // Remember we did this to avoid getting outofmem messages over
+      // and over again.
+      done_outofmem_msg = true;
     }
     xfree(new_ScreenLines);
     new_ScreenLines = NULL;
@@ -6231,8 +6174,6 @@ retry:
       xfree(new_ScreenLinesC[i]);
       new_ScreenLinesC[i] = NULL;
     }
-    xfree(new_ScreenLines2);
-    new_ScreenLines2 = NULL;
     xfree(new_ScreenAttrs);
     new_ScreenAttrs = NULL;
     xfree(new_LineOffset);
@@ -6255,53 +6196,42 @@ retry:
        * executing an external command, for the GUI).
        */
       if (!doclear) {
-        (void)memset(new_ScreenLines + new_row * Columns,
-            ' ', (size_t)Columns * sizeof(schar_T));
-        if (l_enc_utf8) {
-          (void)memset(new_ScreenLinesUC + new_row * Columns,
-              0, (size_t)Columns * sizeof(u8char_T));
-          for (i = 0; i < p_mco; ++i)
-            (void)memset(new_ScreenLinesC[i]
-                + new_row * Columns,
-                0, (size_t)Columns * sizeof(u8char_T));
+        memset(new_ScreenLines + new_row * Columns,
+               ' ', (size_t)Columns * sizeof(new_ScreenLines[0]));
+        memset(new_ScreenLinesUC + new_row * Columns,
+               0, (size_t)Columns * sizeof(new_ScreenLinesUC[0]));
+        for (i = 0; i < p_mco; i++) {
+          memset(new_ScreenLinesC[i] + new_row * Columns,
+                 0, (size_t)Columns * sizeof(new_ScreenLinesC[0][0]));
         }
-        if (l_enc_dbcs == DBCS_JPNU)
-          (void)memset(new_ScreenLines2 + new_row * Columns,
-              0, (size_t)Columns * sizeof(schar_T));
-        (void)memset(new_ScreenAttrs + new_row * Columns,
-            0, (size_t)Columns * sizeof(sattr_T));
+        memset(new_ScreenAttrs + new_row * Columns,
+               0, (size_t)Columns * sizeof(new_ScreenAttrs[0]));
         old_row = new_row + (screen_Rows - Rows);
         if (old_row >= 0 && ScreenLines != NULL) {
           if (screen_Columns < Columns)
             len = screen_Columns;
           else
             len = Columns;
-          /* When switching to utf-8 don't copy characters, they
-           * may be invalid now.  Also when p_mco changes. */
-          if (!(l_enc_utf8 && ScreenLinesUC == NULL)
-              && p_mco == Screen_mco)
+          // When switching to utf-8 don't copy characters, they
+          // may be invalid now.  Also when p_mco changes.
+          if (ScreenLinesUC != NULL && p_mco == Screen_mco) {
             memmove(new_ScreenLines + new_LineOffset[new_row],
-                ScreenLines + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
-          if (l_enc_utf8 && ScreenLinesUC != NULL
-              && p_mco == Screen_mco) {
-            memmove(new_ScreenLinesUC + new_LineOffset[new_row],
-                ScreenLinesUC + LineOffset[old_row],
-                (size_t)len * sizeof(u8char_T));
-            for (i = 0; i < p_mco; ++i)
-              memmove(new_ScreenLinesC[i]
-                  + new_LineOffset[new_row],
-                  ScreenLinesC[i] + LineOffset[old_row],
-                  (size_t)len * sizeof(u8char_T));
+                    ScreenLines + LineOffset[old_row],
+                    (size_t)len * sizeof(new_ScreenLines[0]));
           }
-          if (ScreenLines2 != NULL) {
-            memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                    ScreenLines2 + LineOffset[old_row],
-                    (size_t)len * sizeof(schar_T));
+          if (ScreenLinesUC != NULL && p_mco == Screen_mco) {
+            memmove(new_ScreenLinesUC + new_LineOffset[new_row],
+                    ScreenLinesUC + LineOffset[old_row],
+                    (size_t)len * sizeof(new_ScreenLinesUC[0]));
+            for (i = 0; i < p_mco; i++) {
+              memmove(new_ScreenLinesC[i] + new_LineOffset[new_row],
+                      ScreenLinesC[i] + LineOffset[old_row],
+                      (size_t)len * sizeof(new_ScreenLinesC[0][0]));
+            }
           }
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
                   ScreenAttrs + LineOffset[old_row],
-                  (size_t)len * sizeof(sattr_T));
+                  (size_t)len * sizeof(new_ScreenAttrs[0]));
         }
       }
     }
@@ -6316,7 +6246,6 @@ retry:
   for (i = 0; i < p_mco; ++i)
     ScreenLinesC[i] = new_ScreenLinesC[i];
   Screen_mco = p_mco;
-  ScreenLines2 = new_ScreenLines2;
   ScreenAttrs = new_ScreenAttrs;
   LineOffset = new_LineOffset;
   LineWraps = new_LineWraps;
@@ -6350,12 +6279,10 @@ retry:
 
 void free_screenlines(void)
 {
-  int i;
-
   xfree(ScreenLinesUC);
-  for (i = 0; i < Screen_mco; ++i)
+  for (int i = 0; i < Screen_mco; i++) {
     xfree(ScreenLinesC[i]);
-  xfree(ScreenLines2);
+  }
   xfree(ScreenLines);
   xfree(ScreenAttrs);
   xfree(LineOffset);
@@ -6439,25 +6366,21 @@ static void lineclear(unsigned off, int width)
  */
 static void linecopy(int to, int from, win_T *wp)
 {
-  unsigned off_to = LineOffset[to] + wp->w_wincol;
-  unsigned off_from = LineOffset[from] + wp->w_wincol;
+  const unsigned off_to = LineOffset[to] + wp->w_wincol;
+  const unsigned off_from = LineOffset[from] + wp->w_wincol;
 
   memmove(ScreenLines + off_to, ScreenLines + off_from,
-      wp->w_width * sizeof(schar_T));
-  if (enc_utf8) {
-    int i;
+          wp->w_width * sizeof(ScreenLines[0]));
 
-    memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
-        wp->w_width * sizeof(u8char_T));
-    for (i = 0; i < p_mco; ++i)
-      memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
-          wp->w_width * sizeof(u8char_T));
+  memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
+          wp->w_width * sizeof(ScreenLinesUC[0]));
+  for (int i = 0; i < p_mco; i++) {
+    memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
+            wp->w_width * sizeof(ScreenLinesC[0]));
   }
-  if (enc_dbcs == DBCS_JPNU)
-    memmove(ScreenLines2 + off_to, ScreenLines2 + off_from,
-        wp->w_width * sizeof(schar_T));
+
   memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
-      wp->w_width * sizeof(sattr_T));
+          wp->w_width * sizeof(ScreenAttrs[0]));
 }
 
 /*
