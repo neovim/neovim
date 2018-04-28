@@ -4,7 +4,7 @@ local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_data = thelpers.feed_data
 
-describe('terminal mouse', function()
+describe(':terminal mouse', function()
   local screen
 
   before_each(function()

@@ -9,7 +9,7 @@ local eval = helpers.eval
 local iswin = helpers.iswin
 local retry = helpers.retry
 
-describe('terminal', function()
+describe(':terminal', function()
   local screen
 
   before_each(function()

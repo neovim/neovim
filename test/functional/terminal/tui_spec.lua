@@ -20,7 +20,7 @@ local read_file = helpers.read_file
 
 if helpers.pending_win32(pending) then return end
 
-describe('tui', function()
+describe('TUI', function()
   local screen
 
   before_each(function()

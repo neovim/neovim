@@ -1311,8 +1311,6 @@ static void redraw(bool restore_cursor)
 
 static void adjust_topline(Terminal *term, buf_T *buf, long added)
 {
-  int height, width;
-  vterm_get_size(term->vt, &height, &width);
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
@@ -1321,7 +1319,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
+        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
       } else {
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
