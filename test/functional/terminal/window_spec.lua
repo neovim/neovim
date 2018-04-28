@@ -3,13 +3,30 @@ local thelpers = require('test.functional.terminal.helpers')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
 local iswin = helpers.iswin
+local command = helpers.command
+local retry = helpers.retry
+local eq = helpers.eq
+local eval = helpers.eval
 
-describe('terminal window', function()
+describe(':terminal window', function()
   local screen
 
   before_each(function()
     clear()
     screen = thelpers.screen_setup()
+  end)
+
+  it('sets topline correctly #8556', function()
+    -- Test has hardcoded assumptions of dimensions.
+    eq(7, eval('&lines'))
+    command('set shell=sh')
+    command('terminal')
+    retry(nil, nil, function() assert(nil ~= eval('b:terminal_job_pid')) end)
+    -- Terminal/shell contents must exceed the height of this window.
+    command('topleft 1split')
+    feed([[i<cr>]])
+    -- Check topline _while_ in terminal-mode.
+    retry(nil, nil, function() eq(6, eval('winsaveview()["topline"]')) end)
   end)
 
   describe("with 'number'", function()
