@@ -112,6 +112,7 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  bool cs_remote;                       // --remote {file1} {file2}
 } mparm_T;
 
 /* Values for edit_type. */
@@ -258,6 +259,31 @@ int main(int argc, char **argv)
   // argument list "global_alist".
   command_line_scan(&params);
   server_init(params.listen_addr);
+
+  if (params.cs_remote) {
+    const char *env_addr = os_getenv("NVIM_LISTEN_ADDRESS");
+    CallbackReader on_data = CALLBACK_READER_INIT;
+    const char *error = NULL;
+    uint64_t rc_id = channel_connect(false, env_addr, true,
+                                     on_data, 50, &error);
+    if (!rc_id) {
+      exit(0);
+    }
+    size_t command_len = GARGCOUNT * global_alist.al_ga.ga_itemsize * 2;
+    char *command = xmalloc(command_len);
+    xstrlcpy((char*)command, "args ", command_len);
+    for (uint8_t i = 0; i < GARGCOUNT; i++) {
+      char *filename = ((aentry_T *)global_alist.al_ga.ga_data+i)->ae_fname;
+      xstrlcat(command, filename, command_len);
+      xstrlcat(command, " ", command_len);
+    }
+    Array args = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+    String s = { .data = command, .size = strlen((const char*)command) * sizeof(char) };
+    ADD(args, STRING_OBJ(s));
+    rpc_send_call(rc_id, "nvim_command", args, &err);
+    exit(0);
+  }
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
@@ -779,6 +805,7 @@ static void command_line_scan(mparm_T *parmp)
           /* "--literal" take files literally */
           /* "--noplugin[s]" skip plugins */
           /* "--cmd <cmd>" execute cmd before vimrc */
+          /* "--remote" open file on remote instance */
           if (STRICMP(argv[0] + argv_idx, "help") == 0) {
             usage();
             mch_exit(0);
@@ -824,9 +851,11 @@ static void command_line_scan(mparm_T *parmp)
 #if !defined(UNIX)
             parmp->literal = TRUE;
 #endif
-          } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
+          } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0){
             p_lpl = FALSE;
-          else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
+          } else if (STRNICMP(argv[0] + argv_idx, "remote", 6) == 0) {
+            parmp->cs_remote = true;
+          } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = TRUE;
             argv_idx += 3;
           } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0) {
@@ -1969,6 +1998,7 @@ static void usage(void)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
   mch_msg(_("  --noplugin            Don't load plugins\n"));
+  mch_msg(_("  --remote              Open file remotely\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
