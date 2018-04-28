@@ -4,7 +4,6 @@ local lfs = require('lfs')
 local child_call_once = helpers.child_call_once
 
 local global_helpers = require('test.helpers')
-local hexdump = global_helpers.hexdump
 local sleep = global_helpers.sleep
 
 local ffi = helpers.ffi
