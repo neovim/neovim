@@ -397,9 +397,13 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 #define SID_ENV         -4      /* for sourcing environment variable */
 #define SID_ERROR       -5      /* option was reset because of an error */
 #define SID_NONE        -6      /* don't set scriptID */
+#define SID_LUA         -7      /* for Lua scripts/chunks */
+#define SID_API_CLIENT  -8      /* for API clients */
 
 /* ID of script being sourced or was sourced to define the current function. */
 EXTERN scid_T current_SID INIT(= 0);
+/* ID of the current channel making a client API call */
+EXTERN uint64_t current_channel_id INIT(= 0);
 
 EXTERN bool did_source_packages INIT(= false);
 

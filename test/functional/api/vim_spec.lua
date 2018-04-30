@@ -291,6 +291,21 @@ describe('api', function()
       eq(false, status)
       ok(err:match('Invalid option name') ~= nil)
     end)
+
+    it('updates where the option was last set from', function()
+      nvim('set_option', 'equalalways', false)
+      local status, rv = pcall(nvim, 'command_output',
+        'verbose set equalalways?')
+      eq(true, status)
+      ok(nil ~= string.find(rv, 'noequalalways\n'..
+        '\tLast set from API client %(channel id %d+%)'))
+
+      nvim('execute_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
+      local status, rv = pcall(nvim, 'command_output',
+        'verbose set equalalways?')
+      eq(true, status)
+      eq('  equalalways\n\tLast set from Lua', rv)
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

@@ -549,10 +549,10 @@ Object nvim_get_option(String name, Error *err)
 /// @param name     Option name
 /// @param value    New option value
 /// @param[out] err Error details, if any
-void nvim_set_option(String name, Object value, Error *err)
+void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
-  set_option_to(NULL, SREQ_GLOBAL, name, value, err);
+  set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
 
 /// Writes a message to the Vim output buffer. Does not append "\n", the
