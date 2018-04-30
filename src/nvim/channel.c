@@ -409,31 +409,28 @@ uint64_t channel_connect(bool tcp, const char *address,
       // its own named pipe.
       channel = channel_alloc(kChannelStreamInternal);
       rpc_start(channel);
-      goto end;
+    }
+  } else {
+    channel = channel_alloc(kChannelStreamSocket);
+    if (!socket_connect(&main_loop, &channel->stream.socket,
+                        tcp, address, timeout, error)) {
+      channel_destroy_early(channel);
+      return 0;
+    }
+
+    channel->stream.socket.internal_close_cb = close_cb;
+    channel->stream.socket.internal_data = channel;
+    wstream_init(&channel->stream.socket, 0);
+    rstream_init(&channel->stream.socket, 0);
+
+    if (rpc) {
+      rpc_start(channel);
+    } else {
+      channel->on_stdout = on_output;
+      callback_reader_start(&channel->on_stdout);
+      rstream_start(&channel->stream.socket, on_socket_output, channel);
     }
   }
-
-  channel = channel_alloc(kChannelStreamSocket);
-  if (!socket_connect(&main_loop, &channel->stream.socket,
-                      tcp, address, timeout, error)) {
-    channel_destroy_early(channel);
-    return 0;
-  }
-
-  channel->stream.socket.internal_close_cb = close_cb;
-  channel->stream.socket.internal_data = channel;
-  wstream_init(&channel->stream.socket, 0);
-  rstream_init(&channel->stream.socket, 0);
-
-  if (rpc) {
-    rpc_start(channel);
-  } else {
-    channel->on_stdout = on_output;
-    callback_reader_start(&channel->on_stdout);
-    rstream_start(&channel->stream.socket, on_socket_output, channel);
-  }
-
-end:
   channel_create_event(channel, address);
   return channel->id;
 }
