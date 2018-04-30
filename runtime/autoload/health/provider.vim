@@ -70,7 +70,8 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    call health#report_error(printf('Command error (job=%d): %s', jobid, s:shellify(a:cmd)))
+    call health#report_error(printf('Command error (job=%d): `%s` (in %s)',
+          \ jobid, s:shellify(a:cmd), string(getcwd())))
     let s:shell_error = 1
     return opts.output
   endif
@@ -84,8 +85,8 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (job=%d): %s\nOutput: %s", jobid,
-          \ s:shellify(a:cmd), opts.output))
+    call health#report_error(printf("Command error (job=%d): `%s` (in %s)\nOutput: %s",
+          \ jobid, s:shellify(a:cmd), string(getcwd()), opts.output))
   endif
 
   return opts.output
