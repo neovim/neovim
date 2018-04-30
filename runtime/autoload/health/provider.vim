@@ -186,7 +186,9 @@ function! s:version_info(python) abort
   endif
 
   let nvim_path = s:trim(s:system([
-        \ a:python, '-c', 'import neovim; print(neovim.__file__)']))
+        \ a:python, '-c',
+        \ 'import sys; sys.path.remove(""); ' .
+        \ 'import neovim; print(neovim.__file__)']))
   if s:shell_error || empty(nvim_path)
     return [python_version, 'unable to load neovim Python module', pypi_version,
           \ nvim_path]
