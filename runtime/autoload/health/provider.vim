@@ -51,7 +51,7 @@ function! s:shellify(cmd) abort
     return a:cmd
   endif
   return join(map(copy(a:cmd),
-    \'v:val =~# ''\m[\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
+    \'v:val =~# ''\m[^\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
 endfunction
 
 " Run a system command and timeout after 30 seconds.
