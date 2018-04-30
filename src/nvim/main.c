@@ -68,6 +68,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/lua/executor.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -112,7 +113,7 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
-  bool cs_remote;                       // --remote {file1} {file2}
+  int cs_remote;                        // --remote {file1} {file2}
 } mparm_T;
 
 /* Values for edit_type. */
@@ -261,6 +262,7 @@ int main(int argc, char **argv)
   server_init(params.listen_addr);
 
   if (params.cs_remote) {
+
     const char *env_addr = os_getenv("NVIM_LISTEN_ADDRESS");
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
@@ -269,19 +271,23 @@ int main(int argc, char **argv)
     if (!rc_id) {
       exit(0);
     }
-    size_t command_len = GARGCOUNT * global_alist.al_ga.ga_itemsize * 2;
-    char *command = xmalloc(command_len);
-    xstrlcpy((char*)command, "args ", command_len);
-    for (uint8_t i = 0; i < GARGCOUNT; i++) {
-      char *filename = ((aentry_T *)global_alist.al_ga.ga_data+i)->ae_fname;
-      xstrlcat(command, filename, command_len);
-      xstrlcat(command, " ", command_len);
-    }
+
+    int t_argc = params.cs_remote;
     Array args = ARRAY_DICT_INIT;
-    Error err = ERROR_INIT;
-    String s = { .data = command, .size = strlen((const char*)command) * sizeof(char) };
-    ADD(args, STRING_OBJ(s));
-    rpc_send_call(rc_id, "nvim_command", args, &err);
+    String arg_s = cstr_to_string(argv[t_argc]);
+    do{
+      arg_s = cstr_to_string(argv[t_argc]);
+      ADD(args, STRING_OBJ(arg_s));
+    }while(++t_argc < argc);
+
+
+    Error err;
+    Array a = ARRAY_DICT_INIT;
+    ADD(a, INTEGER_OBJ(rc_id));
+    ADD(a, ARRAY_OBJ(args));
+    String s = cstr_to_string("return vim._cs_remote(select(1, ...))");
+    executor_exec_lua_api(s, a, &err);
+
     exit(0);
   }
 
@@ -854,7 +860,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0){
             p_lpl = FALSE;
           } else if (STRNICMP(argv[0] + argv_idx, "remote", 6) == 0) {
-            parmp->cs_remote = true;
+              parmp->cs_remote = parmp->argc - argc;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = TRUE;
             argv_idx += 3;

@@ -118,11 +118,53 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
+local function rpcrequest(...)
+  return vim.api.nvim_call_function("rpcrequest", {...})
+end
+
+local function _cs_remote(rcid, args)
+
+  f_tab = false
+  f_silent = false
+  f_wait = false
+
+  -- extract the subcommand
+  subcmd = string.sub(args[1],10):gsub('-',' ')
+
+  if subcmd == 'tab' then
+    f_tab = true
+  elseif subcmd == 'silent' then
+    f_silent = true
+  elseif string.find(subcmd,'wait') ~= nil then
+    f_wait = true
+    for i in subcmd:gmatch("%S+") do
+      if i == 'silent' then f_silent = true end
+      if i == 'tab' then f_tab = true end
+    end
+  elseif subcmd == 'send' then
+    keys = args[2]
+    rpcrequest(rcid, 'vim_input', keys)
+    return
+  elseif subcmd == 'expr' then
+    expr = args[2]
+    res = rpcrequest(rcid, 'vim_eval', expr)
+    return
+  end
+
+  table.remove(args,1)
+
+  command = 'args '..table.concat(args, " ")
+  rpcrequest(rcid, 'vim_command', command)
+
+  return
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
   _system = _system,
+  _cs_remote = _cs_remote,
 }
 
 return module
