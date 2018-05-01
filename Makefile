@@ -1,3 +1,4 @@
+THIS_DIR = $(shell pwd)
 filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
 filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
@@ -8,11 +9,14 @@ CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
-DOC_DOWNLOAD_URL_BASE := https://raw.githubusercontent.com/neovim/doc/gh-pages
-CLINT_ERRORS_FILE_PATH := /reports/clint/errors.json
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
+DEPS_BUILD_DIR ?= .deps
+
+ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
+  $(error DEPS_BUILD_DIR must not contain whitespace)
+endif
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(BUILD_TYPE))
@@ -48,7 +52,7 @@ endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
   BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
-  $(shell [ -x .deps/usr/bin/lua ] || rm build/.ran-*)
+  $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || rm build/.ran-*)
 endif
 
 # For use where we want to make sure only a single job is run.  This does issue 
@@ -68,20 +72,20 @@ cmake:
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	cd build && $(CMAKE_PRG) -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
+	cd build && $(CMAKE_PRG) -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(THIS_DIR)
 	touch $@
 
 deps: | build/.ran-third-party-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	+$(BUILD_CMD) -C .deps
+	+$(BUILD_CMD) -C $(DEPS_BUILD_DIR)
 endif
 
 build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
-	mkdir -p .deps
-	cd .deps && \
+	mkdir -p $(DEPS_BUILD_DIR)
+	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) ../third-party
+		$(DEPS_CMAKE_FLAGS) $(THIS_DIR)/third-party
 endif
 	mkdir -p build
 	touch $@
@@ -124,7 +128,7 @@ clean:
 	$(MAKE) -C runtime/doc clean
 
 distclean: clean
-	rm -rf .deps build
+	rm -rf $(DEPS_BUILD_DIR) build
 
 install: | nvim
 	+$(BUILD_CMD) -C build install
@@ -140,6 +144,11 @@ check-single-includes: build/.ran-cmake
 
 appimage:
 	bash scripts/genappimage.sh
+
+# Build an appimage with embedded update information appimage-nightly for
+# nightly builds or appimage-latest for a release
+appimage-%:
+	bash scripts/genappimage.sh $*
 
 lint: check-single-includes clint testlint lualint
 

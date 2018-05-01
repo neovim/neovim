@@ -1,5 +1,8 @@
 " Test for linebreak and list option (non-utf8)
 
+" Nvim does not allow setting 'encoding', so skip this test.
+finish
+
 set encoding=latin1
 scriptencoding latin1
 

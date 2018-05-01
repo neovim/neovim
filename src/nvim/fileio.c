@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * fileio.c: read from and write to a file
- */
+// fileio.c: read from and write to a file
 
 #include <assert.h>
 #include <errno.h>
@@ -65,57 +63,62 @@
 #define BUFSIZE         8192    /* size of normal write buffer */
 #define SMBUFSIZE       256     /* size of emergency write buffer */
 
-/*
- * The autocommands are stored in a list for each event.
- * Autocommands for the same pattern, that are consecutive, are joined
- * together, to avoid having to match the pattern too often.
- * The result is an array of Autopat lists, which point to AutoCmd lists:
- *
- * first_autopat[0] --> Autopat.next  -->  Autopat.next -->  NULL
- *                      Autopat.cmds       Autopat.cmds
- *                          |                    |
- *                          V                    V
- *                      AutoCmd.next       AutoCmd.next
- *                          |                    |
- *                          V                    V
- *                      AutoCmd.next            NULL
- *                          |
- *                          V
- *                         NULL
- *
- * first_autopat[1] --> Autopat.next  -->  NULL
- *                      Autopat.cmds
- *                          |
- *                          V
- *                      AutoCmd.next
- *                          |
- *                          V
- *                         NULL
- *   etc.
- *
- *   The order of AutoCmds is important, this is the order in which they were
- *   defined and will have to be executed.
- */
+//
+// The autocommands are stored in a list for each event.
+// Autocommands for the same pattern, that are consecutive, are joined
+// together, to avoid having to match the pattern too often.
+// The result is an array of Autopat lists, which point to AutoCmd lists:
+//
+// last_autopat[0]  -----------------------------+
+//                                               V
+// first_autopat[0] --> Autopat.next  -->  Autopat.next -->  NULL
+//                      Autopat.cmds       Autopat.cmds
+//                          |                    |
+//                          V                    V
+//                      AutoCmd.next       AutoCmd.next
+//                          |                    |
+//                          V                    V
+//                      AutoCmd.next            NULL
+//                          |
+//                          V
+//                         NULL
+//
+// last_autopat[1]  --------+
+//                          V
+// first_autopat[1] --> Autopat.next  -->  NULL
+//                      Autopat.cmds
+//                          |
+//                          V
+//                      AutoCmd.next
+//                          |
+//                          V
+//                         NULL
+//   etc.
+//
+//   The order of AutoCmds is important, this is the order in which they were
+//   defined and will have to be executed.
+//
 typedef struct AutoCmd {
-  char_u          *cmd;                 /* The command to be executed (NULL
-                                           when command has been removed) */
-  char nested;                          /* If autocommands nest here */
-  char last;                            /* last command in list */
-  scid_T scriptID;                      /* script ID where defined */
-  struct AutoCmd  *next;                /* Next AutoCmd in list */
+  char_u          *cmd;                 // The command to be executed (NULL
+                                        // when command has been removed)
+  char nested;                          // If autocommands nest here
+  char last;                            // last command in list
+  scid_T scriptID;                      // script ID where defined
+  struct AutoCmd  *next;                // Next AutoCmd in list
 } AutoCmd;
 
 typedef struct AutoPat {
-  char_u          *pat;                 /* pattern as typed (NULL when pattern
-                                           has been removed) */
-  regprog_T       *reg_prog;            /* compiled regprog for pattern */
-  AutoCmd         *cmds;                /* list of commands to do */
-  struct AutoPat  *next;                /* next AutoPat in AutoPat list */
-  int group;                            /* group ID */
-  int patlen;                           /* strlen() of pat */
-  int buflocal_nr;                      /* !=0 for buffer-local AutoPat */
-  char allow_dirs;                      /* Pattern may match whole path */
-  char last;                            /* last pattern for apply_autocmds() */
+  struct AutoPat  *next;                // next AutoPat in AutoPat list; MUST
+                                        // be the first entry
+  char_u          *pat;                 // pattern as typed (NULL when pattern
+                                        // has been removed)
+  regprog_T       *reg_prog;            // compiled regprog for pattern
+  AutoCmd         *cmds;                // list of commands to do
+  int group;                            // group ID
+  int patlen;                           // strlen() of pat
+  int buflocal_nr;                      // !=0 for buffer-local AutoPat
+  char allow_dirs;                      // Pattern may match whole path
+  char last;                            // last pattern for apply_autocmds()
 } AutoPat;
 
 /*
@@ -226,6 +229,15 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   msg_scrolled_ign = FALSE;
 }
 
+static AutoPat *last_autopat[NUM_EVENTS] = {
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
+
 /*
  * Read lines from file "fname" into the buffer after line "from".
  *
@@ -286,8 +298,7 @@ readfile (
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
-  int read_undo_file = FALSE;
-  int split = 0;                        /* number of split lines */
+  int read_undo_file = false;
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
@@ -1017,8 +1028,8 @@ retry:
           size = size / ICONV_MULT;             /* worst case */
 
         if (conv_restlen > 0) {
-          /* Insert unconverted bytes from previous line. */
-          memmove(ptr, conv_rest, conv_restlen);
+          // Insert unconverted bytes from previous line.
+          memmove(ptr, conv_rest, conv_restlen);  // -V614
           ptr += conv_restlen;
           size -= conv_restlen;
         }
@@ -1725,9 +1736,17 @@ failed:
   xfree(buffer);
 
   if (read_stdin) {
-    /* Use stderr for stdin, makes shell commands work. */
     close(0);
+#ifndef WIN32
+    // On Unix, use stderr for stdin, makes shell commands work.
     ignored = dup(2);
+#else
+    // On Windows, use the console input handle for stdin.
+    HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                              OPEN_EXISTING, 0, (HANDLE)NULL);
+    ignored = _open_osfhandle(conin, _O_RDONLY);
+#endif
   }
 
   if (tmpname != NULL) {
@@ -1820,10 +1839,6 @@ failed:
       }
       if (ff_error == EOL_DOS) {
         STRCAT(IObuff, _("[CR missing]"));
-        c = TRUE;
-      }
-      if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
         c = TRUE;
       }
       if (notconverted) {
@@ -3048,7 +3063,7 @@ nobackup:
    */
   if (reset_changed && !newfile && overwriting
       && !(exiting && backup != NULL)) {
-    ml_preserve(buf, FALSE);
+    ml_preserve(buf, false, !!p_fs);
     if (got_int) {
       SET_ERRMSG(_(e_interr));
       goto restore_backup;
@@ -3332,9 +3347,9 @@ restore_backup:
         *s++ = NL;
       }
     }
-    if (++len == bufsize && end) {
+    if (++len == bufsize) {
       if (buf_write_bytes(&write_info) == FAIL) {
-        end = 0;                        /* write error: break loop */
+        end = 0;  // Write error: break loop.
         break;
       }
       nchars += bufsize;
@@ -3343,7 +3358,7 @@ restore_backup:
 
       os_breakcheck();
       if (got_int) {
-        end = 0;                        /* Interrupted, break loop */
+        end = 0;  // Interrupted, break loop.
         break;
       }
     }
@@ -4318,7 +4333,7 @@ void shorten_fnames(int force)
         && !path_with_url((char *)buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || path_is_absolute_path(buf->b_sfname))) {
+            || path_is_absolute(buf->b_sfname))) {
       xfree(buf->b_sfname);
       buf->b_sfname = NULL;
       p = path_shorten_fname(buf->b_ffname, dirname);
@@ -4440,7 +4455,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @param size size of the buffer
 /// @param fp file to read from
 ///
-/// @return true for end-of-file.
+/// @return true for EOF or error
 bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 {
   char *retval;
@@ -4451,7 +4466,7 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
   do {
     errno = 0;
     retval = fgets((char *)buf, size, fp);
-  } while (retval == NULL && errno == EINTR);
+  } while (retval == NULL && errno == EINTR && ferror(fp));
 
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     char tbuf[200];
@@ -4463,12 +4478,12 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
       tbuf[sizeof(tbuf) - 2] = NUL;
       errno = 0;
       retval = fgets((char *)tbuf, sizeof(tbuf), fp);
-      if (retval == NULL && errno != EINTR) {
+      if (retval == NULL && (feof(fp) || errno != EINTR)) {
         break;
       }
     } while (tbuf[sizeof(tbuf) - 2] != NUL && tbuf[sizeof(tbuf) - 2] != '\n');
   }
-  return retval ? false : feof(fp);
+  return retval == NULL;
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
@@ -5088,14 +5103,12 @@ void buf_reload(buf_T *buf, int orig_mode)
     flags |= READ_KEEP_UNDO;
   }
 
-  /*
-   * To behave like when a new file is edited (matters for
-   * BufReadPost autocommands) we first need to delete the current
-   * buffer contents.  But if reading the file fails we should keep
-   * the old contents.  Can't use memory only, the file might be
-   * too big.  Use a hidden buffer to move the buffer contents to.
-   */
-  if (bufempty() || saved == FAIL) {
+  // To behave like when a new file is edited (matters for
+  // BufReadPost autocommands) we first need to delete the current
+  // buffer contents.  But if reading the file fails we should keep
+  // the old contents.  Can't use memory only, the file might be
+  // too big.  Use a hidden buffer to move the buffer contents to.
+  if (BUFEMPTY() || saved == FAIL) {
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
@@ -5128,7 +5141,7 @@ void buf_reload(buf_T *buf, int orig_mode)
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
         // Put the text back from the save buffer.  First
         // delete any lines that readfile() added.
-        while (!bufempty()) {
+        while (!BUFEMPTY()) {
           if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
           }
@@ -5530,6 +5543,15 @@ static void au_cleanup(void)
 
       /* remove the pattern if it has been marked for deletion */
       if (ap->pat == NULL) {
+        if (ap->next == NULL) {
+          if (prev_ap == &(first_autopat[(int)event])) {
+            last_autopat[(int)event] = NULL;
+          } else {
+            // this depends on the "next" field being the first in
+            // the struct
+            last_autopat[(int)event] = (AutoPat *)prev_ap;
+          }
+        }
         *prev_ap = ap->next;
         vim_regfree(ap->reg_prog);
         xfree(ap);
@@ -6122,10 +6144,13 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
       patlen = (int)STRLEN(buflocal_pat);       /*   but not endpat */
     }
 
-    /*
-     * Find AutoPat entries with this pattern.
-     */
-    prev_ap = &first_autopat[(int)event];
+    // Find AutoPat entries with this pattern.  When adding a command it
+    // always goes at or after the last one, so start at the end.
+    if (!forceit && *cmd != NUL && last_autopat[(int)event] != NULL) {
+      prev_ap = &last_autopat[(int)event];
+    } else {
+      prev_ap = &first_autopat[(int)event];
+    }
     while ((ap = *prev_ap) != NULL) {
       if (ap->pat != NULL) {
         /* Accept a pattern when:
@@ -6211,6 +6236,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         }
         ap->cmds = NULL;
         *prev_ap = ap;
+        last_autopat[(int)event] = ap;
         ap->next = NULL;
         if (group == AUGROUP_ALL)
           ap->group = current_augroup;
@@ -6276,13 +6302,13 @@ do_doautocmd (
 
   fname = skipwhite(fname);
 
-  /*
-   * Loop over the events.
-   */
-  while (*arg && !ascii_iswhite(*arg))
-    if (apply_autocmds_group(event_name2nr(arg, &arg),
-            fname, NULL, TRUE, group, curbuf, NULL))
-      nothing_done = FALSE;
+  // Loop over the events.
+  while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
+    if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true,
+                             group, curbuf, NULL)) {
+      nothing_done = false;
+    }
+  }
 
   if (nothing_done && do_msg) {
     MSG(_("No matching autocommands"));
@@ -6657,7 +6683,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
   char_u      *save_autocmd_fname;
-  int save_autocmd_fname_full;
   int save_autocmd_bufnr;
   char_u      *save_autocmd_match;
   int save_autocmd_busy;
@@ -6673,12 +6698,12 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   proftime_T wait_time;
   bool did_save_redobuff = false;
 
-  /*
-   * Quickly return if there are no autocommands for this event or
-   * autocommands are blocked.
-   */
-  if (first_autopat[(int)event] == NULL || autocmd_blocked > 0)
+  // Quickly return if there are no autocommands for this event or
+  // autocommands are blocked.
+  if (event == NUM_EVENTS || first_autopat[(int)event] == NULL
+      || autocmd_blocked > 0) {
     goto BYPASS_AU;
+  }
 
   /*
    * When autocommands are busy, new autocommands are only executed when
@@ -6730,7 +6755,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * Save the autocmd_* variables and info about the current buffer.
    */
   save_autocmd_fname = autocmd_fname;
-  save_autocmd_fname_full = autocmd_fname_full;
   save_autocmd_bufnr = autocmd_bufnr;
   save_autocmd_match = autocmd_match;
   save_autocmd_busy = autocmd_busy;
@@ -6744,19 +6768,22 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET)
+    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET) {
       autocmd_fname = NULL;
-    else if (fname != NULL && *fname != NUL)
+    } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
-    else if (buf != NULL)
+    } else if (buf != NULL) {
       autocmd_fname = buf->b_ffname;
-    else
+    } else {
       autocmd_fname = NULL;
-  } else
+    }
+  } else {
     autocmd_fname = fname_io;
-  if (autocmd_fname != NULL)
-    autocmd_fname = vim_strsave(autocmd_fname);
-  autocmd_fname_full = FALSE;   /* call FullName_save() later */
+  }
+  if (autocmd_fname != NULL) {
+    // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
+    autocmd_fname = vim_strnsave(autocmd_fname, MAXPATHL);
+  }
 
   /*
    * Set the buffer number to be used for <abuf>.
@@ -6923,7 +6950,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   sourcing_lnum = save_sourcing_lnum;
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
-  autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_SID = save_current_SID;

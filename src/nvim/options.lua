@@ -642,7 +642,7 @@ return {
       vim=true,
       redraw={'all_windows'},
       varname='p_dy',
-      defaults={if_true={vi="", vim="lastline"}}
+      defaults={if_true={vi="", vim="lastline,msgsep"}}
     },
     {
       full_name='eadirection', abbreviation='ead',
@@ -812,7 +812,7 @@ return {
       vi_def=true,
       redraw={'all_windows'},
       varname='p_fcs',
-      defaults={if_true={vi="vert:|,fold:-"}}
+      defaults={if_true={vi=''}}
     },
     {
       full_name='fixendofline', abbreviation='fixeol',
@@ -976,7 +976,7 @@ return {
       secure=true,
       vi_def=true,
       varname='p_fs',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='gdefault', abbreviation='gd',
@@ -2048,7 +2048,7 @@ return {
       varname='p_shcf',
       defaults={
         condition='WIN32',
-        if_true={vi="/c"},
+        if_true={vi="/s /c"},
         if_false={vi="-c"}
       }
     },
@@ -2104,7 +2104,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxq',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="\""},
+        if_false={vi=""},
+      }
     },
     {
       full_name='shellxescape', abbreviation='sxe',
@@ -2185,7 +2189,7 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ss',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=1}}
     },
     {
       full_name='sidescrolloff', abbreviation='siso',
@@ -2447,7 +2451,7 @@ return {
       full_name='termguicolors', abbreviation='tgc',
       type='bool', scope={'global'},
       vi_def=false,
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       varname='p_tgc',
       defaults={if_true={vi=false}}
     },

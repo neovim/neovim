@@ -222,7 +222,7 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute_path(name);
+  bool no_path = !use_path || path_is_absolute(name);
 #ifndef WIN32
   // If the filename is "qualified" (relative or absolute) do not check $PATH.
   no_path |= (name[0] == '.'
@@ -244,7 +244,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 #endif
     if (ok) {
       if (abspath != NULL) {
-        *abspath = save_absolute_path(name);
+        *abspath = save_abs_path(name);
       }
       return true;
     }
@@ -357,7 +357,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #endif
     if (ok) {
       if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_absolute_path((char_u *)buf);
+        *abspath = save_abs_path((char_u *)buf);
       }
 
       rv = true;
@@ -436,6 +436,29 @@ int os_close(const int fd)
   return r;
 }
 
+/// Duplicate file descriptor
+///
+/// @param[in]  fd  File descriptor to duplicate.
+///
+/// @return New file descriptor or libuv error code (< 0).
+int os_dup(const int fd)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int ret;
+os_dup_dup:
+  ret = dup(fd);
+  if (ret < 0) {
+    const int error = os_translate_sys_error(errno);
+    errno = 0;
+    if (error == UV_EINTR) {
+      goto os_dup_dup;
+    } else {
+      return error;
+    }
+  }
+  return ret;
+}
+
 /// Read from a file
 ///
 /// Handles EINTR and ENOMEM, but not other errors.
@@ -445,10 +468,11 @@ int os_close(const int fd)
 ///                       to false. Initial value is ignored.
 /// @param[out]  ret_buf  Buffer to write to. May be NULL if size is zero.
 /// @param[in]  size  Amount of bytes to read.
+/// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
 ///
 /// @return Number of bytes read or libuv error code (< 0).
-ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
-                  const size_t size)
+ptrdiff_t os_read(const int fd, bool *const ret_eof, char *const ret_buf,
+                  const size_t size, const bool non_blocking)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *ret_eof = false;
@@ -468,7 +492,9 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
     if (cur_read_bytes < 0) {
       const int error = os_translate_sys_error(errno);
       errno = 0;
-      if (error == UV_EINTR || error == UV_EAGAIN) {
+      if (non_blocking && error == UV_EAGAIN) {
+        break;
+      } else if (error == UV_EINTR || error == UV_EAGAIN) {
         continue;
       } else if (error == UV_ENOMEM && !did_try_to_free) {
         try_to_free_memory();
@@ -498,7 +524,11 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
 ///                   may change, it is incorrect to use data it points to after
 ///                   os_readv().
 /// @param[in]  iov_size  Number of buffers in iov.
-ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
+/// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
+///
+/// @return Number of bytes read or libuv error code (< 0).
+ptrdiff_t os_readv(const int fd, bool *const ret_eof, struct iovec *iov,
+                   size_t iov_size, const bool non_blocking)
   FUNC_ATTR_NONNULL_ALL
 {
   *ret_eof = false;
@@ -512,7 +542,7 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
   }
   while (read_bytes < toread && iov_size && !*ret_eof) {
     ptrdiff_t cur_read_bytes = readv(fd, iov, (int)iov_size);
-    if (toread && cur_read_bytes == 0) {
+    if (cur_read_bytes == 0) {
       *ret_eof = true;
     }
     if (cur_read_bytes > 0) {
@@ -531,7 +561,9 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
     } else if (cur_read_bytes < 0) {
       const int error = os_translate_sys_error(errno);
       errno = 0;
-      if (error == UV_EINTR || error == UV_EAGAIN) {
+      if (non_blocking && error == UV_EAGAIN) {
+        break;
+      } else if (error == UV_EINTR || error == UV_EAGAIN) {
         continue;
       } else if (error == UV_ENOMEM && !did_try_to_free) {
         try_to_free_memory();
@@ -551,9 +583,11 @@ ptrdiff_t os_readv(int fd, bool *ret_eof, struct iovec *iov, size_t iov_size)
 /// @param[in]  fd  File descriptor to write to.
 /// @param[in]  buf  Data to write. May be NULL if size is zero.
 /// @param[in]  size  Amount of bytes to write.
+/// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
 ///
 /// @return Number of bytes written or libuv error code (< 0).
-ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
+ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
+                   const bool non_blocking)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (buf == NULL) {
@@ -571,7 +605,9 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
     if (cur_written_bytes < 0) {
       const int error = os_translate_sys_error(errno);
       errno = 0;
-      if (error == UV_EINTR || error == UV_EAGAIN) {
+      if (non_blocking && error == UV_EAGAIN) {
+        break;
+      } else if (error == UV_EINTR || error == UV_EAGAIN) {
         continue;
       } else {
         return error;
@@ -593,6 +629,7 @@ int os_fsync(int fd)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
+  g_stats.fsync++;
   return r;
 }
 

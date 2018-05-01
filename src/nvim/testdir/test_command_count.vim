@@ -1,6 +1,7 @@
 " Test for user command counts.
 
 func Test_command_count_0()
+  let bufnr = bufnr('%')
   set hidden
   set noswapfile
 
@@ -15,17 +16,17 @@ func Test_command_count_0()
   command! -range=% -addr=buffers RangeBuffersAll :let lines = [<line1>, <line2>]
 
   .,$RangeLoadedBuffers
-  call assert_equal([1, 1], lines)
+  call assert_equal([bufnr, bufnr], lines)
   %RangeLoadedBuffers
-  call assert_equal([1, 1], lines)
+  call assert_equal([bufnr, bufnr], lines)
   RangeLoadedBuffersAll
-  call assert_equal([1, 1], lines)
+  call assert_equal([bufnr, bufnr], lines)
   .,$RangeBuffers
-  call assert_equal([1, lastbuf], lines)
+  call assert_equal([bufnr, lastbuf], lines)
   %RangeBuffers
-  call assert_equal([1, lastbuf], lines)
+  call assert_equal([bufnr, lastbuf], lines)
   RangeBuffersAll
-  call assert_equal([1, lastbuf], lines)
+  call assert_equal([bufnr, lastbuf], lines)
 
   delcommand RangeLoadedBuffers
   delcommand RangeLoadedBuffersAll
@@ -138,6 +139,7 @@ func Test_command_count_2()
 endfunc
 
 func Test_command_count_3()
+  let bufnr = bufnr('%')
   se nohidden
   e aaa
   let buf_aaa = bufnr('%')
@@ -145,7 +147,7 @@ func Test_command_count_3()
   let buf_bbb = bufnr('%')
   e ccc
   let buf_ccc = bufnr('%')
-  buf 1
+  exe bufnr . 'buf'
   call assert_equal([1, 1, 1], [buflisted(buf_aaa), buflisted(buf_bbb), buflisted(buf_ccc)])
   exe buf_bbb . "," . buf_ccc . "bdelete"
   call assert_equal([1, 0, 0], [buflisted(buf_aaa), buflisted(buf_bbb), buflisted(buf_ccc)])
@@ -155,7 +157,7 @@ endfunc
 
 func Test_command_count_4()
   %argd
-  let bufnr = bufnr('$') + 1
+  let bufnr = bufnr('$')
   arga aa bb cc dd ee ff
   3argu
   let args = []
@@ -171,6 +173,8 @@ func Test_command_count_4()
   only!
 
   exe bufnr . 'buf'
+  bnext
+  let bufnr = bufnr('%')
   let buffers = []
   .,$-bufdo call add(buffers, bufnr('%'))
   call assert_equal([bufnr, bufnr + 1, bufnr + 2, bufnr + 3, bufnr + 4], buffers)

@@ -21,11 +21,19 @@ describe("backtick expansion", function()
   end)
 
   it("with default 'shell'", function()
-    if helpers.pending_win32(pending) then return end  -- Need win32 shell fixes
-    command(":silent args `echo ***2`")
+    if helpers.iswin() then
+      command(":silent args `dir /b *2`")
+    else
+      command(":silent args `echo ***2`")
+    end
     eq({ "file2", }, eval("argv()"))
-    command(":silent args `echo */*4`")
-    eq({ "subdir/file4", }, eval("argv()"))
+    if helpers.iswin() then
+      command(":silent args `dir /s/b *4`")
+      eq({ "subdir\\file4", }, eval("map(argv(), 'fnamemodify(v:val, \":.\")')"))
+    else
+      command(":silent args `echo */*4`")
+      eq({ "subdir/file4", }, eval("argv()"))
+    end
   end)
 
   it("with shell=fish", function()

@@ -1,0 +1,83 @@
+cmake_minimum_required(VERSION 2.8.7)
+project(libintl C)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+
+file(READ config.h.in CONFIG_CONTENT)
+string(REPLACE "#undef HAVE_GETCWD" "#define HAVE_GETCWD 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef uintmax_t" "
+  #if _WIN64
+  # define intmax_t long long
+  # define uintmax_t unsigned long long
+  #elif _WIN32
+  # define intmax_t long
+  # define uintmax_t unsigned long
+  #endif"
+  CONFIG_CONTENT ${CONFIG_CONTENT})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/config.h ${CONFIG_CONTENT})
+
+set(HAVE_NEWLOCALE 0)
+set(HAVE_POSIX_PRINTF 0)
+set(HAVE_SNPRINTF 0)
+set(HAVE_ASPRINTF 0)
+set(HAVE_WPRINTF 0)
+configure_file(intl/libgnuintl.in.h libgnuintl.h)
+
+set(LOCALDIR "gettext")
+add_definitions(-DLOCALEDIR=\"${LOCALDIR}\"
+  -DLOCALE_ALIAS_PATH=\"${LOCALDIR}\"
+  -DLIBDIR=\"${LOCALDIR}\"
+  -DINSTALLDIR=\"${LOCALDIR}\")
+
+add_definitions(-DBUILDING_LIBINTL
+  -DIN_LIBINTL
+  -DENABLE_RELOCATABLE=1
+  -DIN_LIBRARY
+  -DNO_XMALLOC
+  -Dset_relocation_prefix=libintl_set_relocation_prefix
+  -Drelocate=libintl_relocate
+  -DHAVE_CONFIG_H
+  -D_CRT_SECURE_NO_WARNINGS)
+
+FILE(GLOB SOURCES
+  intl/bindtextdom.c
+  intl/dcgettext.c
+  intl/dcigettext.c
+  intl/dcngettext.c
+  intl/dgettext.c
+  intl/dngettext.c
+  intl/explodename.c
+  intl/finddomain.c
+  intl/gettext.c
+  intl/hash-string.c
+  intl/l10nflist.c
+  intl/langprefs.c
+  intl/loadmsgcat.c
+  intl/localcharset.c
+  intl/localealias.c
+  intl/localename.c
+  intl/lock.c
+  intl/log.c
+  intl/ngettext.c
+  intl/plural-exp.c
+  intl/plural.c
+  intl/printf.c
+  intl/relocatable.c
+  intl/setlocale.c
+  intl/textdomain.c
+  intl/threadlib.c
+  intl/version.c)
+
+add_library(libintl ${SOURCES})
+
+include(GNUInstallDirs)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/libgnuintl.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RENAME libintl.h)
+
+install(TARGETS libintl
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

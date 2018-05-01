@@ -239,20 +239,11 @@ typedef struct {
     .al_vec = KVI_INITIAL_VALUE(al->al_vec), \
   }
 
-// Structure to hold an item of a Dictionary.
-// Also used for a variable.
-// The key is copied into "di_key" to avoid an extra alloc/free for it.
-struct dictitem_S {
-  typval_T di_tv;               ///< type and value of the variable
-  char_u di_flags;              ///< flags (only used for variable)
-  char_u di_key[1];             ///< key (actually longer!)
-};
-
-#define TV_DICTITEM_STRUCT(KEY_LEN) \
+#define TV_DICTITEM_STRUCT(...) \
     struct { \
       typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
       uint8_t di_flags;  /* Flags. */ \
-      char_u di_key[KEY_LEN];  /* Key value. */ \
+      char_u di_key[__VA_ARGS__];  /* Key value. */ \
     }
 
 /// Structure to hold a scope dictionary
@@ -328,9 +319,8 @@ struct ufunc {
                                  ///< used for s: variables
   int          uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T   *uf_scoped;       ///< l: local variables for closure
-  char_u       uf_name[1];       ///< name of function (actually longer); can
-                                 ///< start with <SNR>123_ (<SNR> is K_SPECIAL
-                                 ///< KS_EXTRA KE_SNR)
+  char_u       uf_name[];        ///< Name of function; can start with <SNR>123_
+                                 ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
 struct partial_S {

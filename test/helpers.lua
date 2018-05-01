@@ -1,5 +1,43 @@
 local assert = require('luassert')
+local luv = require('luv')
 local lfs = require('lfs')
+
+local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+local function shell_quote(str)
+  if string.find(str, quote_me) or str == '' then
+    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
+  else
+    return str
+  end
+end
+
+local function argss_to_cmd(...)
+  local cmd = ''
+  for i = 1, select('#', ...) do
+    local arg = select(i, ...)
+    if type(arg) == 'string' then
+      cmd = cmd .. ' ' ..shell_quote(arg)
+    else
+      for _, subarg in ipairs(arg) do
+        cmd = cmd .. ' ' .. shell_quote(subarg)
+      end
+    end
+  end
+  return cmd
+end
+
+local function popen_r(...)
+  return io.popen(argss_to_cmd(...), 'r')
+end
+
+local function popen_w(...)
+  return io.popen(argss_to_cmd(...), 'w')
+end
+
+-- sleeps the test runner (_not_ the nvim instance)
+local function sleep(ms)
+  luv.sleep(ms)
+end
 
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
@@ -7,14 +45,27 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-local eq = function(exp, act)
-  return assert.are.same(exp, act)
+local function eq(expected, actual)
+  return assert.are.same(expected, actual)
 end
-local neq = function(exp, act)
-  return assert.are_not.same(exp, act)
+local function neq(expected, actual)
+  return assert.are_not.same(expected, actual)
 end
-local ok = function(res)
+local function ok(res)
   return assert.is_true(res)
+end
+local function matches(pat, actual)
+  if nil ~= string.match(actual, pat) then
+    return true
+  end
+  error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
+end
+-- Expect an error matching pattern `pat`.
+local function expect_err(pat, ...)
+  local fn = select(1, ...)
+  local fn_args = {...}
+  table.remove(fn_args, 1)
+  assert.error_matches(function() return fn(unpack(fn_args)) end, pat)
 end
 
 -- initial_path:  directory to recurse into
@@ -108,7 +159,7 @@ local uname = (function()
       return platform
     end
 
-    local status, f = pcall(io.popen, "uname -s")
+    local status, f = pcall(popen_r, 'uname', '-s')
     if status then
       platform = f:read("*l")
       f:close()
@@ -240,7 +291,7 @@ local function check_cores(app, force)
 end
 
 local function which(exe)
-  local pipe = io.popen('which ' .. exe, 'r')
+  local pipe = popen_r('which', exe)
   local ret = pipe:read('*a')
   pipe:close()
   if ret == '' then
@@ -248,6 +299,19 @@ local function which(exe)
   else
     return ret:sub(1, -2)
   end
+end
+
+local function repeated_read_cmd(...)
+  for _ = 1, 10 do
+    local stream = popen_r(...)
+    local ret = stream:read('*a')
+    stream:close()
+    if ret then
+      return ret
+    end
+  end
+  print('ERROR: Failed to execute ' .. argss_to_cmd(...) .. ': nil return after 10 attempts')
+  return nil
 end
 
 local function shallowcopy(orig)
@@ -423,11 +487,13 @@ format_luav = function(v, indent, opts)
     if opts.literal_strings then
       ret = v
     else
-      ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub(
-        '[%z\1-\31]', function(match)
-          return SUBTBL[match:byte() + 1]
-        end)
-      ret = '\'' .. ret .. '\''
+      local quote = opts.dquote_strings and '"' or '\''
+      ret = quote .. tostring(v):gsub(
+        opts.dquote_strings and '["\\]' or '[\'\\]',
+        '\\%0'):gsub(
+          '[%z\1-\31]', function(match)
+            return SUBTBL[match:byte() + 1]
+          end) .. quote
     end
   elseif type(v) == 'table' then
     if v == REMOVE_THIS then
@@ -467,6 +533,8 @@ format_luav = function(v, indent, opts)
     end
   elseif type(v) == 'nil' then
     ret = 'nil'
+  elseif type(v) == 'boolean' then
+    ret = (v and 'true' or 'false')
   else
     print(type(v))
     -- Not implemented yet
@@ -490,11 +558,14 @@ local function format_string(fmt, ...)
     if subfmt:sub(-1) ~= '%' then
       arg = getarg()
     end
-    if subfmt:sub(-1) == 'r' then
-      -- %r is like %q, but it is supposed to single-quote strings and not
-      -- double-quote them, and also work not only for strings.
+    if subfmt:sub(-1) == 'r' or subfmt:sub(-1) == 'q' then
+      -- %r is like built-in %q, but it is supposed to single-quote strings and
+      -- not double-quote them, and also work not only for strings.
+      -- Builtin %q is replaced here as it gives invalid and inconsistent with
+      -- luajit results for e.g. "\e" on lua: luajit transforms that into `\27`,
+      -- lua leaves as-is.
+      arg = format_luav(arg, nil, {dquote_strings = (subfmt:sub(-1) == 'q')})
       subfmt = subfmt:sub(1, -2) .. 's'
-      arg = format_luav(arg)
     end
     if subfmt == '%e' then
       return format_float(arg)
@@ -529,30 +600,114 @@ local function fixtbl_rec(tbl)
   return fixtbl(tbl)
 end
 
-return {
-  eq = eq,
-  neq = neq,
-  ok = ok,
-  check_logs = check_logs,
-  uname = uname,
-  tmpname = tmpname,
-  map = map,
-  filter = filter,
-  glob = glob,
-  check_cores = check_cores,
-  hasenv = hasenv,
-  which = which,
-  shallowcopy = shallowcopy,
-  deepcopy = deepcopy,
-  mergedicts_copy = mergedicts_copy,
-  dictdiff = dictdiff,
+-- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+local function table_flatten(arr)
+  local result = {}
+  local function _table_flatten(_arr)
+    local n = #_arr
+    for i = 1, n do
+      local v = _arr[i]
+      if type(v) == "table" then
+        _table_flatten(v)
+      elseif v then
+        table.insert(result, v)
+      end
+    end
+  end
+  _table_flatten(arr)
+  return result
+end
+
+local function hexdump(str)
+  local len = string.len(str)
+  local dump = ""
+  local hex = ""
+  local asc = ""
+
+  for i = 1, len do
+    if 1 == i % 8 then
+      dump = dump .. hex .. asc .. "\n"
+      hex = string.format("%04x: ", i - 1)
+      asc = ""
+    end
+
+    local ord = string.byte(str, i)
+    hex = hex .. string.format("%02x ", ord)
+    if ord >= 32 and ord <= 126 then
+      asc = asc .. string.char(ord)
+    else
+      asc = asc .. "."
+    end
+  end
+
+  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
+end
+
+local function read_file(name)
+  local file = io.open(name, 'r')
+  if not file then
+    return nil
+  end
+  local ret = file:read('*a')
+  file:close()
+  return ret
+end
+
+-- Dedent the given text and write it to the file name.
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
+  if type(text) == 'table' then
+    -- Byte blob
+    local bytes = text
+    text = ''
+    for _, char in ipairs(bytes) do
+      text = ('%s%c'):format(text, char)
+    end
+  elseif not no_dedent then
+    text = dedent(text)
+  end
+  file:write(text)
+  file:flush()
+  file:close()
+end
+
+local module = {
   REMOVE_THIS = REMOVE_THIS,
+  argss_to_cmd = argss_to_cmd,
+  check_cores = check_cores,
+  check_logs = check_logs,
   concat_tables = concat_tables,
   dedent = dedent,
-  format_luav = format_luav,
-  format_string = format_string,
-  intchar2lua = intchar2lua,
-  updated = updated,
+  deepcopy = deepcopy,
+  dictdiff = dictdiff,
+  eq = eq,
+  expect_err = expect_err,
+  filter = filter,
   fixtbl = fixtbl,
   fixtbl_rec = fixtbl_rec,
+  format_luav = format_luav,
+  format_string = format_string,
+  glob = glob,
+  hasenv = hasenv,
+  hexdump = hexdump,
+  intchar2lua = intchar2lua,
+  map = map,
+  matches = matches,
+  mergedicts_copy = mergedicts_copy,
+  neq = neq,
+  ok = ok,
+  popen_r = popen_r,
+  popen_w = popen_w,
+  read_file = read_file,
+  repeated_read_cmd = repeated_read_cmd,
+  sleep = sleep,
+  shallowcopy = shallowcopy,
+  table_flatten = table_flatten,
+  tmpname = tmpname,
+  uname = uname,
+  updated = updated,
+  which = which,
+  write_file = write_file,
 }
+
+return module

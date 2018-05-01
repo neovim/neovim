@@ -2036,6 +2036,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			column of the last screen line.  Overrules "lastline".
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
+	msgsep		When showing messages longer than 'cmdheight' lines,
+			only scroll the message lines and not the entire
+			screen. This also shows a separator line filled with
+			chars determined by 'fillchars' option, and
+			highlighted with the |MsgSeparator| group.
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
@@ -2377,7 +2382,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only normal file name characters can be used, "/\*?[|<>" are illegal.
 
 						*'fillchars'* *'fcs'*
-'fillchars' 'fcs'	string	(default "vert:|,fold:-")
+'fillchars' 'fcs'	string	(default "")
 			global
 			{not available when compiled without the |+windows|
 			and |+folding| features}
@@ -2387,16 +2392,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  vert:c	'|'		vertical separators |:vsplit|
-	  fold:c	'-'		filling 'foldtext'
+	  vert:c	'│' or '|'	vertical separators |:vsplit|
+	  fold:c	'·' or '-'	filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
+	  msgsep:c	' '		message separator 'display'
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
+	If 'ambiwidth' is "double" then "vert" and "fold" default to
+	single-byte alternatives.
+
 	Example: >
-	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-
 <	This is similar to the default, except that these characters will also
 	be used when there is highlighting.
 
@@ -2681,17 +2690,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'fsync'* *'fs'*
-'fsync' 'fs'		boolean	(default on)
+'fsync' 'fs'		boolean	(default off)
 			global
-	When on, the library function fsync() will be called after writing a
-	file.  This will flush a file to disk, ensuring that it is safely
-	written even on filesystems which do metadata-only journaling.  This
-	will force the harddrive to spin up on Linux systems running in laptop
-	mode, so it may be undesirable in some situations.  Be warned that
-	turning this off increases the chances of data loss after a crash.
+	When on, the OS function fsync() will be called after saving a file
+	(|:write|, |writefile()|, …), |swap-file| and |shada-file|. This
+	flushes the file to disk, ensuring that it is safely written.
+	Slow on some systems: writing buffers, quitting Nvim, and other
+	operations may sometimes take a few seconds.
 
-	Currently applies only to writing the buffer with e.g. |:w| and 
-	|writefile()|.
+	Files are ALWAYS flushed ('fsync' is ignored) when:
+	- |CursorHold| event is triggered
+	- |:preserve| is called
+	- system signals low battery life
+	- Nvim exits abnormally
 
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)
@@ -3299,7 +3310,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
 	The |hl-IncSearch| highlight group determines the highlighting.
-	See also: 'hlsearch'.
+	When 'hlsearch' is on, all matched strings are highlighted too while typing
+	a search command. See also: 'hlsearch'.
+	If you don't want turn 'hlsearch' on, but want to highlight all matches
+	while searching, you can turn on and off 'hlsearch' with autocmd.
+	Example: >
+		augroup vimrc-incsearch-highlight
+		  autocmd!
+		  autocmd CmdlineEnter /,\? :set hlsearch
+		  autocmd CmdlineLeave /,\? :set nohlsearch
+		augroup END
+<
 	CTRL-L can be used to add one character from after the current match
 	to the command line.  If 'ignorecase' and 'smartcase' are set and the
 	command line has no uppercase characters, the added character is
@@ -5147,10 +5168,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/c")
+'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
 	systems, the default is set according to the value of 'shell', to
 	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
@@ -5271,7 +5292,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default: "")
+'shellxquote' 'sxq'	string	(default: "", Windows: "\"")
 			global
 	Quoting character(s), put around the command passed to the shell, for
 	the "!" and ":!" commands.  Includes the redirection.  See
@@ -5435,14 +5456,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |tab-page| for more information about tab pages.
 
 						*'sidescroll'* *'ss'*
-'sidescroll' 'ss'	number	(default 0)
+'sidescroll' 'ss'	number	(default 1)
 			global
 	The minimal number of columns to scroll horizontally.  Used only when
 	the 'wrap' option is off and the cursor is moved off of the screen.
 	When it is zero the cursor will be put in the middle of the screen.
-	When using a slow terminal set it to a large number or 0.  When using
-	a fast terminal use a small number or 1.  Not used for "zh" and "zl"
-	commands.
+	When using a slow terminal set it to a large number or 0.  Not used
+	for "zh" and "zl" commands.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)
@@ -6272,15 +6292,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'timeoutlen'* *'tm'*
 'timeoutlen' 'tm'	number	(default 1000)
 			global
-	The time in milliseconds that is waited for a mapped sequence to
-	complete.
+	Time in milliseconds to wait for a mapped sequence to complete.
 
 						*'ttimeoutlen'* *'ttm'*
 'ttimeoutlen' 'ttm'	number	(default 50)
 			global
-	The time in milliseconds that is waited for a key code
-	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
-	when part of a command has been typed.
+	Time in milliseconds to wait for a key code sequence to complete. Also
+	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
+	been typed.
 
 						*'title'* *'notitle'*
 'title'			boolean	(default off)
@@ -6910,7 +6929,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'writedelay' 'wd'	number	(default 0)
 			global
 	The number of milliseconds to wait for each character sent to the
-	screen.  When non-zero, characters are sent to the terminal one by
-	one.  For debugging purposes.
+	screen.  When positive, characters are sent to the UI one by one.
+	When negative, all redrawn characters cause a delay, even if the
+	character already was displayed by the UI.  For debugging purposes.
 
  vim:tw=78:ts=8:ft=help:noet:norl:

@@ -1343,7 +1343,7 @@ void dialog_changed(buf_T *buf, int checkall)
 /// hidden, autowriting it or unloading it.
 bool can_abandon(buf_T *buf, int forceit)
 {
-  return P_HID(buf)
+  return buf_hide(buf)
          || !bufIsChanged(buf)
          || buf->b_nwindows > 1
          || autowrite(buf, forceit) == OK
@@ -1558,11 +1558,16 @@ static char_u *do_one_arg(char_u *str)
 
 /// Separate the arguments in "str" and return a list of pointers in the
 /// growarray "gap".
-void get_arglist(garray_T *gap, char_u *str)
+static void get_arglist(garray_T *gap, char_u *str, int escaped)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
     GA_APPEND(char_u *, gap, str);
+
+    // If str is escaped, don't handle backslashes or spaces
+    if (!escaped) {
+      return;
+    }
 
     // Isolate one argument, change it in-place, put a NUL after it.
     str = do_one_arg(str);
@@ -1578,7 +1583,7 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
   garray_T ga;
   int i;
 
-  get_arglist(&ga, str);
+  get_arglist(&ga, str, true);
 
   if (wig) {
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
@@ -1609,6 +1614,7 @@ static int do_arglist(char_u *str, int what, int after)
   char_u      **exp_files;
   char_u      *p;
   int match;
+  int arg_escaped = true;
 
   // Set default argument for ":argadd" command.
   if (what == AL_ADD && *str == NUL) {
@@ -1616,10 +1622,11 @@ static int do_arglist(char_u *str, int what, int after)
       return FAIL;
     }
     str = curbuf->b_fname;
+    arg_escaped = false;
   }
 
   // Collect all file name arguments in "new_ga".
-  get_arglist(&new_ga, str);
+  get_arglist(&new_ga, str, arg_escaped);
 
   if (what == AL_DEL) {
     regmatch_T regmatch;
@@ -1853,12 +1860,12 @@ void do_argfile(exarg_T *eap, int argn)
       // if 'hidden' set, only check for changed file when re-editing
       // the same buffer
       other = true;
-      if (P_HID(curbuf)) {
+      if (buf_hide(curbuf)) {
         p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
         other = otherfile(p);
         xfree(p);
       }
-      if ((!P_HID(curbuf) || !other)
+      if ((!buf_hide(curbuf) || !other)
           && check_changed(curbuf, CCGD_AW
                            | (other ? 0 : CCGD_MULTWIN)
                            | (eap->forceit ? CCGD_FORCEIT : 0)
@@ -1878,7 +1885,7 @@ void do_argfile(exarg_T *eap, int argn)
     // argument index.
     if (do_ecmd(0, alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
                 eap, ECMD_LAST,
-                (P_HID(curwin->w_buffer) ? ECMD_HIDE : 0)
+                (buf_hide(curwin->w_buffer) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0), curwin) == FAIL) {
       curwin->w_arg_idx = old_arg_idx;
     } else if (eap->cmdidx != CMD_argdo) {
@@ -1895,7 +1902,7 @@ void ex_next(exarg_T *eap)
 
   // check for changed buffer now, if this fails the argument list is not
   // redefined.
-  if (P_HID(curbuf)
+  if (buf_hide(curbuf)
       || eap->cmdidx == CMD_snext
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
@@ -1915,31 +1922,21 @@ void ex_next(exarg_T *eap)
 /// ":argedit"
 void ex_argedit(exarg_T *eap)
 {
-  int fnum;
-  int i;
-  char_u      *s;
+  int i = eap->addr_count ? (int)eap->line2 : curwin->w_arg_idx + 1;
 
-  // Add the argument to the buffer list and get the buffer number.
-  fnum = buflist_add(eap->arg, BLN_LISTED);
-
-  // Check if this argument is already in the argument list.
-  for (i = 0; i < ARGCOUNT; i++) {
-    if (ARGLIST[i].ae_fnum == fnum) {
-      break;
-    }
+  if (do_arglist(eap->arg, AL_ADD, i) == FAIL) {
+    return;
   }
-  if (i == ARGCOUNT) {
-    // Can't find it, add it to the argument list.
-    s = vim_strsave(eap->arg);
-    int after = eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1;
-    i = alist_add_list(1, &s, after);
-    curwin->w_arg_idx = i;
+  maketitle();
+
+  if (curwin->w_arg_idx == 0 && (curbuf->b_ml.ml_flags & ML_EMPTY)
+      && curbuf->b_ffname == NULL) {
+    i = 0;
   }
-
-  alist_check_arg_idx();
-
   // Edit the argument.
-  do_argfile(eap, i);
+  if (i < ARGCOUNT) {
+    do_argfile(eap, i);
+  }
 }
 
 /// ":argadd"
@@ -1959,8 +1956,14 @@ void ex_argdelete(exarg_T *eap)
       eap->line2 = ARGCOUNT;
     }
     linenr_T n = eap->line2 - eap->line1 + 1;
-    if (*eap->arg != NUL || n <= 0) {
+    if (*eap->arg != NUL) {
+      // Can't have both a range and an argument.
       EMSG(_(e_invarg));
+    } else if (n <= 0) {
+      // Don't give an error for ":%argdel" if the list is empty.
+      if (eap->line1 != 1 || eap->line2 != 0) {
+        EMSG(_(e_invrange));
+      }
     } else {
       for (linenr_T i = eap->line1; i <= eap->line2; i++) {
         xfree(ARGLIST[i - 1].ae_fname);
@@ -2005,7 +2008,7 @@ void ex_listdo(exarg_T *eap)
 
   if (eap->cmdidx == CMD_windo
       || eap->cmdidx == CMD_tabdo
-      || P_HID(curbuf)
+      || buf_hide(curbuf)
       || !check_changed(curbuf, CCGD_AW
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
@@ -3837,7 +3840,7 @@ void ex_drop(exarg_T   *eap)
     // to split the current window or data could be lost.
     // Skip the check if the 'hidden' option is set, as in this case the
     // buffer won't be lost.
-    if (!P_HID(curbuf)) {
+    if (!buf_hide(curbuf)) {
       emsg_off++;
       split = check_changed(curbuf, CCGD_AW | CCGD_EXCMD);
       emsg_off--;

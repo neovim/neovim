@@ -49,6 +49,7 @@ version.api_prerelease	Declares the current API level as unstable >
 			(version.api_prerelease && fn.since == version.api_level)
 functions		API function signatures
 ui_events		UI event signatures |ui|
+ui_options		Supported |ui-options|
 {fn}.since		API level where function {fn} was introduced
 {fn}.deprecated_since	API level where function {fn} was deprecated
 types			Custom handle types defined by Nvim

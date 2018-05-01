@@ -180,10 +180,12 @@ static Channel *channel_alloc(ChannelStreamType type)
 }
 
 /// Not implemented, only logging for now
-void channel_create_event(Channel *chan, char *ext_source)
+void channel_create_event(Channel *chan, const char *ext_source)
 {
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
-  char *stream_desc, *mode_desc, *source;
+  const char *stream_desc;
+  const char *mode_desc;
+  const char *source;
 
   switch (chan->streamtype) {
     case kChannelStreamProc:
@@ -223,8 +225,8 @@ void channel_create_event(Channel *chan, char *ext_source)
     // external events should be included.
     source = ext_source;
   } else {
-    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
-    source = (char *)IObuff;
+    eval_fmt_source_name_line((char *)IObuff, sizeof(IObuff));
+    source = (const char *)IObuff;
   }
 
   ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
@@ -235,15 +237,16 @@ void channel_create_event(Channel *chan, char *ext_source)
 #endif
 }
 
-void channel_incref(Channel *channel)
+void channel_incref(Channel *chan)
 {
-  channel->refcount++;
+  chan->refcount++;
 }
 
-void channel_decref(Channel *channel)
+void channel_decref(Channel *chan)
 {
-  if (!(--channel->refcount)) {
-    multiqueue_put(main_loop.fast_events, free_channel_event, 1, channel);
+  if (!(--chan->refcount)) {
+    // delay free, so that libuv is done with the handles
+    multiqueue_put(main_loop.events, free_channel_event, 1, chan);
   }
 }
 
@@ -265,18 +268,18 @@ void callback_reader_start(CallbackReader *reader)
 
 static void free_channel_event(void **argv)
 {
-  Channel *channel = argv[0];
-  if (channel->is_rpc) {
-    rpc_free(channel);
+  Channel *chan = argv[0];
+  if (chan->is_rpc) {
+    rpc_free(chan);
   }
 
-  callback_reader_free(&channel->on_stdout);
-  callback_reader_free(&channel->on_stderr);
-  callback_free(&channel->on_exit);
+  callback_reader_free(&chan->on_stdout);
+  callback_reader_free(&chan->on_stderr);
+  callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(channels, channel->id);
-  multiqueue_free(channel->events);
-  xfree(channel);
+  pmap_del(uint64_t)(channels, chan->id);
+  multiqueue_free(chan->events);
+  xfree(chan);
 }
 
 static void channel_destroy_early(Channel *chan)
@@ -284,12 +287,15 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
+  pmap_del(uint64_t)(channels, chan->id);
+  chan->id = 0;
 
   if ((--chan->refcount != 0)) {
     abort();
   }
 
-  free_channel_event((void **)&chan);
+  // uv will keep a reference to handles until next loop tick, so delay free
+  multiqueue_put(main_loop.events, free_channel_event, 1, chan);
 }
 
 
@@ -392,17 +398,22 @@ uint64_t channel_connect(bool tcp, const char *address,
                          bool rpc, CallbackReader on_output,
                          int timeout, const char **error)
 {
+  Channel *channel;
+
   if (!tcp && rpc) {
     char *path = fix_fname(address);
-    if (server_owns_pipe_address(path)) {
-      // avoid deadlock
-      xfree(path);
-      return channel_create_internal_rpc();
-    }
+    bool loopback = server_owns_pipe_address(path);
     xfree(path);
+    if (loopback) {
+      // Create a loopback channel. This avoids deadlock if nvim connects to
+      // its own named pipe.
+      channel = channel_alloc(kChannelStreamInternal);
+      rpc_start(channel);
+      goto end;
+    }
   }
 
-  Channel *channel = channel_alloc(kChannelStreamSocket);
+  channel = channel_alloc(kChannelStreamSocket);
   if (!socket_connect(&main_loop, &channel->stream.socket,
                       tcp, address, timeout, error)) {
     channel_destroy_early(channel);
@@ -422,7 +433,8 @@ uint64_t channel_connect(bool tcp, const char *address,
     rstream_start(&channel->stream.socket, on_socket_output, channel);
   }
 
-  channel_create_event(channel, NULL);
+end:
+  channel_create_event(channel, address);
   return channel->id;
 }
 
@@ -439,15 +451,6 @@ void channel_from_connection(SocketWatcher *watcher)
   rstream_init(&channel->stream.socket, 0);
   rpc_start(channel);
   channel_create_event(channel, watcher->addr);
-}
-
-/// Creates a loopback channel. This is used to avoid deadlock
-/// when an instance connects to its own named pipe.
-static uint64_t channel_create_internal_rpc(void)
-{
-  Channel *channel = channel_alloc(kChannelStreamInternal);
-  rpc_start(channel);
-  return channel->id;
 }
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
@@ -655,9 +658,9 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
     terminal_close(chan->term, msg);
   }
 
-  // if status is -1 the process did not really exit,
-  // we just closed the handle onto a detached process
-  if (status >= 0) {
+  // If process did not exit, we only closed the handle of a detached process.
+  bool exited = (status >= 0);
+  if (exited) {
     process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
   }
 

@@ -3,6 +3,7 @@ local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.eq, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
   helpers.funcs, helpers.feed, helpers.curbuf
 local neq = helpers.neq
+local read_file = helpers.read_file
 
 local mpack = require('mpack')
 
@@ -2152,9 +2153,7 @@ describe('plugin/shada.vim', function()
   end)
 
   local shada_eq = function(expected, fname_)
-    local fd = io.open(fname_)
-    local mpack_result = fd:read('*a')
-    fd:close()
+    local mpack_result = read_file(fname_)
     mpack_eq(expected, mpack_result)
   end
 
@@ -2278,7 +2277,7 @@ describe('plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2326,7 +2325,7 @@ describe('plugin/shada.vim', function()
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
         '  + n            name         \'A\'',
-      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,
@@ -2383,7 +2382,7 @@ describe('plugin/shada.vim', function()
         '  + f            file name    ["foo"]',
         '  + l            line number  2',
         '  + c            column       -200',
-      }, eol) .. eol, io.open(fname .. '.tst'):read('*a'))
+      }, eol) .. eol, read_file(fname .. '.tst'))
       shada_eq({{
         timestamp=0,
         type=8,

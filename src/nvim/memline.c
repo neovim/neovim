@@ -843,8 +843,7 @@ void ml_recover(void)
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
-    if (fname_used != NULL)
-      EMSG2(_("E306: Cannot open %s"), fname_used);
+    EMSG2(_("E306: Cannot open %s"), fname_used);
     goto theend;
   }
   buf->b_ml.ml_mfp = mfp;
@@ -1297,18 +1296,14 @@ recover_names (
     msg_putchar('\n');
   }
 
-  /*
-   * Do the loop for every directory in 'directory'.
-   * First allocate some memory to put the directory name in.
-   */
+  // Do the loop for every directory in 'directory'.
+  // First allocate some memory to put the directory name in.
   dir_name = xmalloc(STRLEN(p_dir) + 1);
   dirp = p_dir;
-  while (dir_name != NULL && *dirp) {
-    /*
-     * Isolate a directory name from *dirp and put it in dir_name (we know
-     * it is large enough, so use 31000 for length).
-     * Advance dirp to next directory name.
-     */
+  while (*dirp) {
+    // Isolate a directory name from *dirp and put it in dir_name (we know
+    // it is large enough, so use 31000 for length).
+    // Advance dirp to next directory name.
     (void)copy_option_part(&dirp, dir_name, 31000, ",");
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     /* check current dir */
@@ -1330,10 +1325,14 @@ recover_names (
         names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
         num_names = 3;
       } else {
-        p = dir_name + STRLEN(dir_name);
-        if (after_pathsep((char *)dir_name, (char *)p) && p[-1] == p[-2]) {
-          /* Ends with '//', Use Full path for swap name */
-          tail = (char_u *)make_percent_swname((char *)dir_name, (char *)fname_res);
+        int len = (int)STRLEN(dir_name);
+        p = dir_name + len;
+        if (after_pathsep((char *)dir_name, (char *)p)
+            && len > 1
+            && p[-1] == p[-2]) {
+          // Ends with '//', Use Full path for swap name
+          tail = (char_u *)make_percent_swname((char *)dir_name,
+                                               (char *)fname_res);
         } else {
           tail = path_tail(fname_res);
           tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, TRUE);
@@ -1589,7 +1588,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
  * If 'check_char' is TRUE, stop syncing when character becomes available, but
  * always sync at least one block.
  */
-void ml_sync_all(int check_file, int check_char)
+void ml_sync_all(int check_file, int check_char, bool do_fsync)
 {
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
@@ -1608,16 +1607,17 @@ void ml_sync_all(int check_file, int check_char)
       if (!os_fileinfo((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
-        ml_preserve(buf, FALSE);
-        did_check_timestamps = FALSE;
-        need_check_timestamps = TRUE;           /* give message later */
+        ml_preserve(buf, false, do_fsync);
+        did_check_timestamps = false;
+        need_check_timestamps = true;           // give message later
       }
     }
     if (buf->b_ml.ml_mfp->mf_dirty) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
-          | (bufIsChanged(buf) ? MFS_FLUSH : 0));
-      if (check_char && os_char_avail())        /* character available now */
+                    | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
+      if (check_char && os_char_avail()) {      // character available now
         break;
+      }
     }
   }
 }
@@ -1632,7 +1632,7 @@ void ml_sync_all(int check_file, int check_char)
  *
  * when message is TRUE the success of preserving is reported
  */
-void ml_preserve(buf_T *buf, int message)
+void ml_preserve(buf_T *buf, int message, bool do_fsync)
 {
   bhdr_T      *hp;
   linenr_T lnum;
@@ -1650,9 +1650,9 @@ void ml_preserve(buf_T *buf, int message)
    * before. */
   got_int = FALSE;
 
-  ml_flush_line(buf);                               /* flush buffered line */
-  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   /* flush locked block */
-  status = mf_sync(mfp, MFS_ALL | MFS_FLUSH);
+  ml_flush_line(buf);                               // flush buffered line
+  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   // flush locked block
+  status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   /* stack is invalid after mf_sync(.., MFS_ALL) */
   buf->b_ml.ml_stack_top = 0;
@@ -1680,11 +1680,12 @@ void ml_preserve(buf_T *buf, int message)
       CHECK(buf->b_ml.ml_locked_low != lnum, "low != lnum");
       lnum = buf->b_ml.ml_locked_high + 1;
     }
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);     /* flush locked block */
-    /* sync the updated pointer blocks */
-    if (mf_sync(mfp, MFS_ALL | MFS_FLUSH) == FAIL)
+    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush locked block
+    // sync the updated pointer blocks
+    if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL) {
       status = FAIL;
-    buf->b_ml.ml_stack_top = 0;             /* stack is invalid now */
+    }
+    buf->b_ml.ml_stack_top = 0;  // stack is invalid now
   }
 theend:
   got_int |= got_int_save;
@@ -3016,20 +3017,17 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     }
     buf[ret] = NUL;
 
-    /*
-     * Check whether the symlink is relative or absolute.
-     * If it's relative, build a new path based on the directory
-     * portion of the filename (if any) and the path the symlink
-     * points to.
-     */
-    if (path_is_absolute_path(buf))
+    // Check whether the symlink is relative or absolute.
+    // If it's relative, build a new path based on the directory
+    // portion of the filename (if any) and the path the symlink
+    // points to.
+    if (path_is_absolute(buf)) {
       STRCPY(tmp, buf);
-    else {
-      char_u *tail;
-
-      tail = path_tail(tmp);
-      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL)
+    } else {
+      char_u *tail = path_tail(tmp);
+      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
         return FAIL;
+      }
       STRCPY(tail, buf);
     }
   }
@@ -3054,9 +3052,12 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #ifdef HAVE_READLINK
   char_u fname_buf[MAXPATHL];
 #endif
+  int len = (int)STRLEN(dir_name);
 
-  s = dir_name + STRLEN(dir_name);
-  if (after_pathsep((char *)dir_name, (char *)s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
+  s = dir_name + len;
+  if (after_pathsep((char *)dir_name, (char *)s)
+      && len > 1
+      && s[-1] == s[-2]) {  // Ends with '//', Use Full path
     r = NULL;
     if ((s = (char_u *)make_percent_swname((char *)dir_name, (char *)fname)) != NULL) {
       r = (char_u *)modname((char *)s, ".swp", FALSE);

@@ -11,6 +11,7 @@ local funcs = helpers.funcs
 local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
+local iswin = helpers.iswin
 
 local intchar2lua = global_helpers.intchar2lua
 local format_string = global_helpers.format_string
@@ -72,6 +73,8 @@ describe('api', function()
     it('captures command output', function()
       eq('this is\nspinal tap',
          nvim('command_output', [[echo "this is\nspinal tap"]]))
+      eq('no line ending!',
+         nvim('command_output', [[echon "no line ending!"]]))
     end)
 
     it('captures empty command output', function()
@@ -99,8 +102,9 @@ describe('api', function()
           [[echo nvim_command_output('echo "nested1\nnested2"') | ls]]))
     end)
 
-    it('does not return shell |:!| output', function()
-      eq(':!echo "foo"\r\n', nvim('command_output', [[!echo "foo"]]))
+    it('returns shell |:!| output', function()
+      local win_lf = iswin() and '\r' or ''
+      eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
     it("parse error: fails (specific error), does NOT update v:errmsg", function()
@@ -577,7 +581,8 @@ describe('api', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-        [2] = {bold = true, foreground = Screen.colors.SeaGreen}
+        [2] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [3] = {bold = true, reverse = true},
       })
     end)
 
@@ -598,11 +603,11 @@ describe('api', function()
     it('shows return prompt when more than &cmdheight lines', function()
       nvim_async('err_write', 'something happened\nvery bad\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:something happened}                      |
         {1:very bad}                                |
         {2:Press ENTER or type command to continue}^ |
@@ -612,9 +617,9 @@ describe('api', function()
     it('shows return prompt after all lines are shown', function()
       nvim_async('err_write', 'FAILURE\nERROR\nEXCEPTION\nTRACEBACK\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:FAILURE}                                 |
         {1:ERROR}                                   |
         {1:EXCEPTION}                               |
@@ -642,11 +647,11 @@ describe('api', function()
       -- shows up to &cmdheight lines
       nvim_async('err_write', 'more fail\ntoo fail\n')
       screen:expect([[
+                                                |
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {3:                                        }|
         {1:more fail}                               |
         {1:too fail}                                |
         {2:Press ENTER or type command to continue}^ |
@@ -743,7 +748,7 @@ describe('api', function()
     end)
   end)
 
-  describe('list_runtime_paths', function()
+  describe('nvim_list_runtime_paths', function()
     it('returns nothing with empty &runtimepath', function()
       meths.set_option('runtimepath', '')
       eq({}, meths.list_runtime_paths())
@@ -951,9 +956,20 @@ describe('api', function()
           end
         end)
         if not err then
-          msg = format_string('Error while processing test (%r, %s):\n%s',
-                              str, FLAGS_TO_STR[flags], msg)
-          error(msg)
+          if type(msg) == 'table' then
+            local merr, new_msg = pcall(
+              format_string, 'table error:\n%s\n\n(%r)', msg.message, msg)
+            if merr then
+              msg = new_msg
+            else
+              msg = format_string('table error without .message:\n(%r)',
+                                  msg)
+            end
+          elseif type(msg) ~= 'string' then
+            msg = format_string('non-string non-table error:\n%r', msg)
+          end
+          error(format_string('Error while processing test (%r, %s):\n%s',
+                              str, FLAGS_TO_STR[flags], msg))
         end
       end
     end
@@ -983,6 +999,45 @@ describe('api', function()
     assert:set_parameter('TableFormatLevel', 1000000)
     require('test.unit.viml.expressions.parser_tests')(
         it, _check_parsing, hl, fmtn)
+  end)
+
+  describe('nvim_list_uis', function()
+    it('returns empty if --headless', function()
+      -- --embed implies --headless.
+      eq({}, nvim("list_uis"))
+    end)
+    it('returns attached UIs', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      local expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 4,
+          rgb = true,
+          width = 20,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+
+      screen:detach()
+      screen = Screen.new(44, 99)
+      screen:attach({ rgb = false })
+      expected = {
+        {
+          ext_cmdline = false,
+          ext_popupmenu = false,
+          ext_tabline = false,
+          ext_wildmenu = false,
+          height = 99,
+          rgb = false,
+          width = 44,
+        }
+      }
+      eq(expected, nvim("list_uis"))
+    end)
   end)
 
 end)

@@ -10,7 +10,6 @@ describe('ui receives option updates', function()
   before_each(function()
     clear()
     screen = Screen.new(20,5)
-    screen:attach()
   end)
 
   after_each(function()
@@ -27,15 +26,21 @@ describe('ui receives option updates', function()
     linespace=0,
     showtabline=1,
     termguicolors=false,
+    ext_cmdline=false,
+    ext_popupmenu=false,
+    ext_tabline=false,
+    ext_wildmenu=false,
   }
 
   it("for defaults", function()
+    screen:attach()
     screen:expect(function()
       eq(defaults, screen.options)
     end)
   end)
 
   it("when setting options", function()
+    screen:attach()
     local changed = {}
     for k,v in pairs(defaults) do
       changed[k] = v
@@ -74,6 +79,32 @@ describe('ui receives option updates', function()
     command("set all&")
     screen:expect(function()
       eq(defaults, screen.options)
+    end)
+  end)
+
+  it('with UI extensions', function()
+    local changed = {}
+    for k,v in pairs(defaults) do
+      changed[k] = v
+    end
+
+    screen:attach({ext_cmdline=true, ext_wildmenu=true})
+    changed.ext_cmdline = true
+    changed.ext_wildmenu = true
+    screen:expect(function()
+      eq(changed, screen.options)
+    end)
+
+    screen:set_option('ext_popupmenu', true)
+    changed.ext_popupmenu = true
+    screen:expect(function()
+      eq(changed, screen.options)
+    end)
+
+    screen:set_option('ext_wildmenu', false)
+    changed.ext_wildmenu = false
+    screen:expect(function()
+      eq(changed, screen.options)
     end)
   end)
 end)

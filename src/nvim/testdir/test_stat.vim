@@ -86,7 +86,7 @@ func Test_win32_symlink_dir()
     let res = system('dir C:\Users /a')
     if match(res, '\C<SYMLINKD> *All Users') >= 0
       " Get the filetype of the symlink.
-      call assert_equal('dir', getftype('C:\Users\All Users'))
+      call assert_equal('link', getftype('C:\Users\All Users'))
     endif
   endif
 endfunc

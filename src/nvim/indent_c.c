@@ -1314,6 +1314,43 @@ static int cin_starts_with(char_u *s, char *word)
   return STRNCMP(s, word, l) == 0 && !vim_isIDc(s[l]);
 }
 
+/// Recognize a `extern "C"` or `extern "C++"` linkage specifications.
+static int cin_is_cpp_extern_c(char_u *s)
+{
+  char_u  *p;
+  int     has_string_literal = false;
+
+  s = cin_skipcomment(s);
+  if (STRNCMP(s, "extern", 6) == 0 && (s[6] == NUL || !vim_iswordc(s[6]))) {
+    p = cin_skipcomment(skipwhite(s + 6));
+    while (*p != NUL) {
+      if (ascii_iswhite(*p)) {
+        p = cin_skipcomment(skipwhite(p));
+      } else if (*p == '{') {
+        break;
+      } else if (p[0] == '"' && p[1] == 'C' && p[2] == '"') {
+        if (has_string_literal) {
+          return false;
+        }
+        has_string_literal = true;
+        p += 3;
+      } else if (p[0] == '"' && p[1] == 'C' && p[2] == '+' && p[3] == '+'
+                 && p[4] == '"') {
+        if (has_string_literal) {
+          return false;
+        }
+        has_string_literal = true;
+        p += 5;
+      } else {
+        return false;
+      }
+    }
+    return has_string_literal ? true : false;
+  }
+  return false;
+}
+
+
 /*
  * Skip strings, chars and comments until at or past "trypos".
  * Return the column found.
@@ -1322,14 +1359,19 @@ static int cin_skip2pos(pos_T *trypos)
 {
   char_u      *line;
   char_u      *p;
+  char_u      *new_p;
 
   p = line = ml_get(trypos->lnum);
   while (*p && (colnr_T)(p - line) < trypos->col) {
-    if (cin_iscomment(p))
+    if (cin_iscomment(p)) {
       p = cin_skipcomment(p);
-    else {
-      p = skip_string(p);
-      ++p;
+    } else {
+      new_p = skip_string(p);
+      if (new_p == p) {
+        p++;
+      } else {
+        p = new_p;
+      }
     }
   }
   return (int)(p - line);
@@ -1622,6 +1664,9 @@ void parse_cino(buf_T *buf)
   // indentation for # comments
   buf->b_ind_hash_comment = 0;
 
+  // Handle C++ extern "C" or "C++"
+  buf->b_ind_cpp_extern_c = 0;
+
   for (p = buf->b_p_cino; *p; ) {
     l = p++;
     if (*p == '-')
@@ -1690,6 +1735,7 @@ void parse_cino(buf_T *buf)
     case '#': buf->b_ind_hash_comment = n; break;
     case 'N': buf->b_ind_cpp_namespace = n; break;
     case 'k': buf->b_ind_if_for_while = n; break;
+    case 'E': buf->b_ind_cpp_extern_c = n; break;
     }
     if (*p == ',')
       ++p;
@@ -2320,8 +2366,11 @@ int get_c_indent(void)
             amount += curbuf->b_ind_open_imag;
 
             l = skipwhite(get_cursor_line_ptr());
-            if (cin_is_cpp_namespace(l))
+            if (cin_is_cpp_namespace(l)) {
               amount += curbuf->b_ind_cpp_namespace;
+            } else if (cin_is_cpp_extern_c(l)) {
+              amount += curbuf->b_ind_cpp_extern_c;
+            }
           } else {
             /* Compensate for adding b_ind_open_extra later. */
             amount -= curbuf->b_ind_open_extra;
@@ -2519,6 +2568,9 @@ int get_c_indent(void)
                 if (cin_is_cpp_namespace(l)) {
                   amount += curbuf->b_ind_cpp_namespace
                             - added_to_amount;
+                  break;
+                } else if (cin_is_cpp_extern_c(l)) {
+                  amount += curbuf->b_ind_cpp_extern_c - added_to_amount;
                   break;
                 }
 

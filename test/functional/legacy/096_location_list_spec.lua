@@ -11,10 +11,10 @@ local source = helpers.source
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 
 describe('location list', function()
+  local test_file = 'Xtest-096_location_list.out'
   setup(clear)
-
   teardown(function()
-    os.remove('test.out')
+    os.remove(test_file)
   end)
 
   it('is working', function()
@@ -70,9 +70,9 @@ describe('location list', function()
       endfor
     ]])
 
-    -- Set up the result buffer "test.out".
+    -- Set up the result buffer.
     command('enew')
-    command('w! test.out')
+    command('w! '..test_file)
     command('b 1')
 
     -- Test A.
@@ -99,7 +99,7 @@ describe('location list', function()
     command([[let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')]])
     command('wincmd n')
     command('wincmd K')
-    command('b test.out')
+    command('b '..test_file)
 
     -- Prepare test output and write it to the result buffer.
     command([[let fileName = substitute(fileName, '\\', '/', 'g')]])
@@ -132,7 +132,7 @@ describe('location list', function()
     command('let numberOfWindowsOpen = winnr("$")')
     command('wincmd n')
     command('wincmd K')
-    command('b test.out')
+    command('b '..test_file)
 
     -- Prepare test output and write it to the result buffer.
     command('call append(line("$"), "Test B:")')
@@ -170,7 +170,7 @@ describe('location list', function()
     command('let bufferName = expand("%")')
     command('wincmd n')
     command('wincmd K')
-    command('b test.out')
+    command('b '..test_file)
 
     -- Prepare test output and write it to the result buffer.
     command([[let bufferName = substitute(bufferName, '\\', '/', 'g')]])

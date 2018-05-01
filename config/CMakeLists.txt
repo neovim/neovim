@@ -12,6 +12,11 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
+if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-Microsoft")
+  # Windows Subsystem for Linux
+  set(HAVE_WSL 1)
+endif()
+
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers

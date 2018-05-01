@@ -13,7 +13,8 @@
 //     add some code to didset_window_options().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
-// - If it's a numeric option, add any necessary bounds checks to do_set().
+// - If it's a numeric option, add any necessary bounds checks to
+//   set_num_option().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
 // - When adding an option with expansion (P_EXPAND), but with a different
 //   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
@@ -624,12 +625,12 @@ void set_init_1(void)
   opt_idx = findoption("maxmemtot");
   if (opt_idx >= 0) {
     {
-      /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in uintptr_t, get uintptr_t max */
+      // Use half of amount of memory available to Vim.
+      // If too much to fit in uintptr_t, get uintptr_t max.
       uint64_t available_kib = os_get_total_mem_kib();
-      uintptr_t n = available_kib / 2 > UINTPTR_MAX
-                    ? UINTPTR_MAX
-                    : (uintptr_t)(available_kib /2);
+      uintptr_t n = (available_kib / 2 > UINTPTR_MAX  // -V547
+                     ? UINTPTR_MAX
+                     : (uintptr_t)(available_kib /2));
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption("maxmem");
       if (opt_idx >= 0) {
@@ -1059,7 +1060,7 @@ void set_init_3(void)
     xfree(p);
   }
 
-  if (bufempty()) {
+  if (BUFEMPTY()) {
     int idx_ffs = findoption_len(S_LEN("ffs"));
 
     // Apply the first entry of 'fileformats' to the initial buffer.
@@ -1467,8 +1468,7 @@ do_set (
                 goto skip;
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
-              // Allow negative (for 'undolevels'), octal and
-              // hex numbers.
+              // Allow negative, octal and hex numbers.
               vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
@@ -1498,6 +1498,7 @@ do_set (
             char_u      *newval;
             char_u      *origval = NULL;
             char *saved_origval = NULL;
+            char *saved_newval = NULL;
             unsigned newlen;
             int comma;
             int bs;
@@ -1514,7 +1515,17 @@ do_set (
             /* The old value is kept until we are sure that the
              * new value is valid. */
             oldval = *(char_u **)varp;
-            if (nextchar == '&') {              /* set to default val */
+
+            // When setting the local value of a global
+            // option, the old value may be the global value.
+            if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags
+                                                            & OPT_LOCAL)) {
+              origval = *(char_u **)get_varp(&options[opt_idx]);
+            } else {
+              origval = oldval;
+            }
+
+            if (nextchar == '&') {              // set to default val
               newval = options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
                 ?  VI_DEFAULT : VIM_DEFAULT];
@@ -1573,6 +1584,9 @@ do_set (
                   break;
                 }
                 xfree(oldval);
+                if (origval == oldval) {
+                  origval = *(char_u **)varp;
+                }
                 oldval = *(char_u **)varp;
               }
               /*
@@ -1608,15 +1622,6 @@ do_set (
                              || varp == (char_u *)&p_bdir)) {
                 ++arg;
               }
-
-              /* When setting the local value of a global
-               * option, the old value may be the global value. */
-              if (((int)options[opt_idx].indir & PV_BOTH)
-                  && (opt_flags & OPT_LOCAL))
-                origval = *(char_u **)get_varp(
-                    &options[opt_idx]);
-              else
-                origval = oldval;
 
               /*
                * Copy the new string into allocated memory.
@@ -1787,43 +1792,37 @@ do_set (
               new_value_alloced = TRUE;
             }
 
-            /* Set the new value. */
+            // Set the new value.
             *(char_u **)(varp) = newval;
 
-            if (!starting && origval != NULL) {
+            if (!starting && origval != NULL && newval != NULL) {
               // origval may be freed by
               // did_set_string_option(), make a copy.
-              saved_origval = xstrdup((char *) origval);
+              saved_origval = xstrdup((char *)origval);
+              // newval (and varp) may become invalid if the
+              // buffer is closed by autocommands.
+              saved_newval = xstrdup((char *)newval);
             }
 
-            /* Handle side effects, and set the global value for
-             * ":set" on local options. */
+            // Handle side effects, and set the global value for
+            // ":set" on local options. Note: when setting 'syntax'
+            // or 'filetype' autocommands may be triggered that can
+            // cause havoc.
             errmsg = did_set_string_option(opt_idx, (char_u **)varp,
                 new_value_alloced, oldval, errbuf, opt_flags);
 
+            if (errmsg == NULL) {
+              trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
+                                        saved_newval);
+            }
+            xfree(saved_origval);
+            xfree(saved_newval);
+
             // If error detected, print the error message.
             if (errmsg != NULL) {
-              xfree(saved_origval);
               goto skip;
             }
 
-            if (saved_origval != NULL) {
-              char buf_type[7];
-              vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-                           (opt_flags & OPT_LOCAL) ? "local" : "global");
-              set_vim_var_string(VV_OPTION_NEW, *(char **) varp, -1);
-              set_vim_var_string(VV_OPTION_OLD, saved_origval, -1);
-              set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-              apply_autocmds(EVENT_OPTIONSET,
-                             (char_u *)options[opt_idx].fullname,
-                             NULL, false, NULL);
-              reset_v_option_vars();
-              xfree(saved_origval);
-              if (options[opt_idx].flags & P_UI_OPTION) {
-                ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                                   STRING_OBJ(cstr_as_string(*(char **)varp)));
-              }
-            }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
             // similar)
@@ -2406,6 +2405,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   *varp = s;
 
   char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
+  char *const saved_newval = (starting ? NULL : xstrdup(s));
 
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
@@ -2414,23 +2414,12 @@ static char *set_string_option(const int opt_idx, const char *const value,
   }
 
   // call autocommand after handling side effects
-  if (saved_oldval != NULL) {
-    char buf_type[7];
-    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-                 (opt_flags & OPT_LOCAL) ? "local" : "global");
-    set_vim_var_string(VV_OPTION_NEW, (char *)(*varp), -1);
-    set_vim_var_string(VV_OPTION_OLD, saved_oldval, -1);
-    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    apply_autocmds(EVENT_OPTIONSET,
-                   (char_u *)options[opt_idx].fullname,
-                   NULL, false, NULL);
-    reset_v_option_vars();
-    xfree(saved_oldval);
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         STRING_OBJ(cstr_as_string((char *)(*varp))));
-    }
+  if (r == NULL) {
+    trigger_optionsset_string(opt_idx, opt_flags,
+                              saved_oldval, saved_newval);
   }
+  xfree(saved_oldval);
+  xfree(saved_newval);
 
   return r;
 }
@@ -2447,6 +2436,11 @@ static bool valid_filetype(char_u *val)
   return true;
 }
 
+#ifdef _MSC_VER
+// MSVC optimizations are disabled for this function because it
+// incorrectly generates an empty string for SHM_ALL.
+#pragma optimize("", off)
+#endif
 /*
  * Handle string options that need some action to perform when changed.
  * Returns NULL for success, or an error message for an error.
@@ -2466,6 +2460,7 @@ did_set_string_option (
   int did_chartab = FALSE;
   char_u      **gvarp;
   bool free_oldval = (options[opt_idx].flags & P_ALLOCED);
+  int ft_changed = false;
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -3185,6 +3180,8 @@ did_set_string_option (
   } else if (gvarp == &p_ft) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
+    } else {
+      ft_changed = STRCMP(oldval, *varp) != 0;
     }
   } else if (gvarp == &p_syn) {
     if (!valid_filetype(*varp)) {
@@ -3267,10 +3264,12 @@ did_set_string_option (
       apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
           curbuf->b_fname, TRUE, curbuf);
     } else if (varp == &(curbuf->b_p_ft)) {
-      /* 'filetype' is set, trigger the FileType autocommand */
-      did_filetype = TRUE;
-      apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
-          curbuf->b_fname, TRUE, curbuf);
+      // 'filetype' is set, trigger the FileType autocommand
+      if (!(opt_flags & OPT_MODELINE) || ft_changed) {
+        did_filetype = true;
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
+                       curbuf->b_fname, true, curbuf);
+      }
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
       char_u fname[200];
@@ -3311,6 +3310,9 @@ did_set_string_option (
 
   return errmsg;
 }
+#ifdef _MSC_VER
+#pragma optimize("", on)
+#endif
 
 /*
  * Simple int comparison function for use with qsort()
@@ -3387,37 +3389,39 @@ skip:
   return NULL;    /* no error */
 }
 
-/*
- * Handle setting 'listchars' or 'fillchars'.
- * Returns error message, NULL if it's OK.
- */
+
+/// Handle setting 'listchars' or 'fillchars'.
+/// Assume monocell characters
+///
+/// @param varp either &p_lcs ('listchars') or &p_fcs ('fillchar')
+/// @return error message, NULL if it's OK.
 static char_u *set_chars_option(char_u **varp)
 {
   int round, i, len, entries;
   char_u      *p, *s;
   int c1, c2 = 0;
   struct charstab {
-    int     *cp;
-    char    *name;
+    int     *cp;    ///< char value
+    char    *name;  ///< char id
+    int     def;    ///< default value
   };
-  static struct charstab filltab[] =
-  {
-    {&fill_stl,     "stl"},
-    {&fill_stlnc,   "stlnc"},
-    {&fill_vert,    "vert"},
-    {&fill_fold,    "fold"},
-    {&fill_diff,    "diff"},
+  static struct charstab filltab[] = {
+    { &fill_stl,     "stl"  , ' '  },
+    { &fill_stlnc,   "stlnc", ' '  },
+    { &fill_vert,    "vert" , 9474 },  // │
+    { &fill_fold,    "fold" , 183  },  // ·
+    { &fill_diff,    "diff" , '-'  },
+    { &fill_msgsep,  "msgsep", ' ' },
   };
-  static struct charstab lcstab[] =
-  {
-    {&lcs_eol,      "eol"},
-    {&lcs_ext,      "extends"},
-    {&lcs_nbsp,     "nbsp"},
-    {&lcs_prec,     "precedes"},
-    {&lcs_space,    "space"},
-    {&lcs_tab2,     "tab"},
-    {&lcs_trail,    "trail"},
-    {&lcs_conceal,  "conceal"},
+  static struct charstab lcstab[] = {
+    { &lcs_eol,      "eol",      NUL },
+    { &lcs_ext,      "extends",  NUL },
+    { &lcs_nbsp,     "nbsp",     NUL },
+    { &lcs_prec,     "precedes", NUL },
+    { &lcs_space,    "space",    NUL },
+    { &lcs_tab2,     "tab",      NUL },
+    { &lcs_trail,    "trail",    NUL },
+    { &lcs_conceal,  "conceal",  NUL },
   };
   struct charstab *tab;
 
@@ -3427,20 +3431,29 @@ static char_u *set_chars_option(char_u **varp)
   } else {
     tab = filltab;
     entries = ARRAY_SIZE(filltab);
+    if (*p_ambw == 'd') {
+      // XXX: If ambiwidth=double then "|" and "·" take 2 columns, which is
+      // forbidden (TUI limitation?). Set old defaults.
+      filltab[2].def = '|';
+      filltab[3].def = '-';
+    } else {
+      filltab[2].def = 9474;  // │
+      filltab[3].def = 183;   // ·
+    }
   }
 
-  /* first round: check for valid value, second round: assign values */
-  for (round = 0; round <= 1; ++round) {
+  // first round: check for valid value, second round: assign values
+  for (round = 0; round <= 1; round++) {
     if (round > 0) {
-      /* After checking that the value is valid: set defaults: space for
-       * 'fillchars', NUL for 'listchars' */
-      for (i = 0; i < entries; ++i)
-        if (tab[i].cp != NULL)
-          *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
-      if (varp == &p_lcs)
+      // After checking that the value is valid: set defaults
+      for (i = 0; i < entries; i++) {
+        if (tab[i].cp != NULL) {
+          *(tab[i].cp) = tab[i].def;
+        }
+      }
+      if (varp == &p_lcs) {
         lcs_tab1 = NUL;
-      else
-        fill_diff = '-';
+      }
     }
     p = *varp;
     while (*p) {
@@ -4077,110 +4090,199 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     return (char *)e_secure;
   }
 
+  // Many number options assume their value is in the signed int range.
+  if (value < INT_MIN || value > INT_MAX) {
+      return (char *)e_invarg;
+  }
+
+  // Options that need some validation.
+  if (pp == &p_wh) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (p_wmh > value) {
+      errmsg = e_winheight;
+    }
+  } else if (pp == &p_hh) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_wmh) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > p_wh) {
+      errmsg = e_winheight;
+    }
+  } else if (pp == &p_wiw) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (p_wmw > value) {
+      errmsg = e_winwidth;
+    }
+  } else if (pp == &p_wmw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > p_wiw) {
+      errmsg = e_winwidth;
+    }
+  } else if (pp == &p_mco) {
+    if (value > MAX_MCO) {
+      errmsg = e_invarg;
+    } else if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_titlelen) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_uc) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ch) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_tm) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_hi) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 10000) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_re) {
+    if (value < 0 || value > 2) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_report) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_so) {
+    if (value < 0 && full_screen) {
+      errmsg = e_scroll;
+    }
+  } else if (pp == &p_siso) {
+    if (value < 0 && full_screen) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_cwh) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ut) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ss) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdc || pp == &curwin->w_allbuf_opt.wo_fdc) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 12) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
+    if (value < 0) {
+      errmsg = e_positive;
+    } else if (value > 3) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
+    if (value < 1) {
+      errmsg = e_positive;
+    } else if (value > 10) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
+    if (value < 0 || value > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
+    if (value < -1 || value > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
+    errmsg = e_invarg;
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    if (value < -1 || value > SB_MAX
+        || (value != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
+    if (value < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+    if (value < 0) {
+      errmsg = e_positive;
+    }
+  }
+
+  // Don't change the value and return early if validation failed.
+  if (errmsg != NULL) {
+    return (char *)errmsg;
+  }
+
   *pp = value;
-  /* Remember where the option was set. */
+  // Remember where the option was set.
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
-  if (curbuf->b_p_sw < 0) {
-    errmsg = e_positive;
-    curbuf->b_p_sw = curbuf->b_p_ts;
-  }
-
-  /*
-   * Number options that need some action when changed
-   */
-  if (pp == &p_wh || pp == &p_hh) {
-    if (p_wh < 1) {
-      errmsg = e_positive;
-      p_wh = 1;
+  // For these options we want to fix some invalid values.
+  if (pp == &p_window) {
+    if (p_window < 1) {
+      p_window = Rows - 1;
+    } else if (p_window >= Rows) {
+      p_window = Rows - 1;
     }
-    if (p_wmh > p_wh) {
-      errmsg = e_winheight;
-      p_wh = p_wmh;
-    }
-    if (p_hh < 0) {
-      errmsg = e_positive;
-      p_hh = 0;
-    }
-
-    /* Change window height NOW */
-    if (!ONE_WINDOW) {
-      if (pp == &p_wh && curwin->w_height < p_wh)
-        win_setheight((int)p_wh);
-      if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
-        win_setheight((int)p_hh);
+  } else if (pp == &p_ch) {
+    if (p_ch > Rows - min_rows() + 1) {
+      p_ch = Rows - min_rows() + 1;
     }
   }
-  /* 'winminheight' */
-  else if (pp == &p_wmh) {
-    if (p_wmh < 0) {
-      errmsg = e_positive;
-      p_wmh = 0;
+
+  // Number options that need some action when changed
+  if (pp == &p_wh) {
+    if (!ONE_WINDOW && curwin->w_height < p_wh) {
+      win_setheight((int)p_wh);
     }
-    if (p_wmh > p_wh) {
-      errmsg = e_winheight;
-      p_wmh = p_wh;
+  } else if (pp == &p_hh) {
+    if (!ONE_WINDOW && curbuf->b_help && curwin->w_height < p_hh) {
+      win_setheight((int)p_hh);
     }
+  } else if (pp == &p_wmh) {
     win_setminheight();
   } else if (pp == &p_wiw) {
-    if (p_wiw < 1) {
-      errmsg = e_positive;
-      p_wiw = 1;
-    }
-    if (p_wmw > p_wiw) {
-      errmsg = e_winwidth;
-      p_wiw = p_wmw;
-    }
-
-    /* Change window width NOW */
-    if (!ONE_WINDOW && curwin->w_width < p_wiw)
+    if (!ONE_WINDOW && curwin->w_width < p_wiw) {
       win_setwidth((int)p_wiw);
-  }
-  /* 'winminwidth' */
-  else if (pp == &p_wmw) {
-    if (p_wmw < 0) {
-      errmsg = e_positive;
-      p_wmw = 0;
     }
-    if (p_wmw > p_wiw) {
-      errmsg = e_winwidth;
-      p_wmw = p_wiw;
-    }
-    win_setminheight();
   } else if (pp == &p_ls) {
-    /* (re)set last window status line */
-    last_status(false);
-  }
-  /* (re)set tab page line */
-  else if (pp == &p_stal) {
-    shell_new_rows();           /* recompute window positions and heights */
-  }
-  /* 'foldlevel' */
-  else if (pp == &curwin->w_p_fdl) {
-    if (curwin->w_p_fdl < 0)
-      curwin->w_p_fdl = 0;
+    last_status(false);  // (re)set last window status line.
+  } else if (pp == &p_stal) {
+    // (re)set tab page line
+    shell_new_rows();   // recompute window positions and heights
+  } else if (pp == &curwin->w_p_fdl) {
     newFoldLevel();
-  }
-  /* 'foldminlines' */
-  else if (pp == &curwin->w_p_fml) {
+  } else if (pp == &curwin->w_p_fml) {
     foldUpdateAll(curwin);
-  }
-  /* 'foldnestmax' */
-  else if (pp == &curwin->w_p_fdn) {
-    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin))
+  } else if (pp == &curwin->w_p_fdn) {
+    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
-  }
-  /* 'foldcolumn' */
-  else if (pp == &curwin->w_p_fdc) {
-    if (curwin->w_p_fdc < 0) {
-      errmsg = e_positive;
-      curwin->w_p_fdc = 0;
-    } else if (curwin->w_p_fdc > 12) {
-      errmsg = e_invarg;
-      curwin->w_p_fdc = 12;
     }
-  // 'shiftwidth' or 'tabstop'
-  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+  } else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
+    // 'shiftwidth' or 'tabstop'
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
@@ -4189,126 +4291,50 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
-  }
-  /* 'maxcombine' */
-  else if (pp == &p_mco) {
-    if (p_mco > MAX_MCO)
-      p_mco = MAX_MCO;
-    else if (p_mco < 0)
-      p_mco = 0;
-    screenclear();          /* will re-allocate the screen */
+  } else if (pp == &p_mco) {
+    screenclear();          // will re-allocate the screen
   } else if (pp == &curbuf->b_p_iminsert) {
-    if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
-      errmsg = e_invarg;
-      curbuf->b_p_iminsert = B_IMODE_NONE;
-    }
-    p_iminsert = curbuf->b_p_iminsert;
     showmode();
-    /* Show/unshow value of 'keymap' in status lines. */
+    // Show/unshow value of 'keymap' in status lines.
     status_redraw_curbuf();
-  } else if (pp == &p_window) {
-    if (p_window < 1)
-      p_window = 1;
-    else if (p_window >= Rows)
-      p_window = Rows - 1;
-  } else if (pp == &curbuf->b_p_imsearch) {
-    if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
-      errmsg = e_invarg;
-      curbuf->b_p_imsearch = B_IMODE_NONE;
+  } else if (pp == &p_titlelen) {
+    // if 'titlelen' has changed, redraw the title
+    if (starting != NO_SCREEN && old_value != p_titlelen) {
+      need_maketitle = true;
     }
-    p_imsearch = curbuf->b_p_imsearch;
-  } else if (pp == &p_channel || pp == &curbuf->b_p_channel) {
-    errmsg = e_invarg;
-    *pp = old_value;
-  }
-  /* if 'titlelen' has changed, redraw the title */
-  else if (pp == &p_titlelen) {
-    if (p_titlelen < 0) {
-      errmsg = e_positive;
-      p_titlelen = 85;
-    }
-    if (starting != NO_SCREEN && old_value != p_titlelen)
-      need_maketitle = TRUE;
-  }
-  /* if p_ch changed value, change the command line height */
-  else if (pp == &p_ch) {
-    if (p_ch < 1) {
-      errmsg = e_positive;
-      p_ch = 1;
-    }
-    if (p_ch > Rows - min_rows() + 1)
-      p_ch = Rows - min_rows() + 1;
-
-    /* Only compute the new window layout when startup has been
-     * completed. Otherwise the frame sizes may be wrong. */
-    if (p_ch != old_value && full_screen
-        )
+  } else if (pp == &p_ch) {
+    // if p_ch changed value, change the command line height
+    // Only compute the new window layout when startup has been
+    // completed. Otherwise the frame sizes may be wrong.
+    if (p_ch != old_value && full_screen) {
       command_height();
-  }
-  /* when 'updatecount' changes from zero to non-zero, open swap files */
-  else if (pp == &p_uc) {
-    if (p_uc < 0) {
-      errmsg = e_positive;
-      p_uc = 100;
     }
-    if (p_uc && !old_value)
+  } else if (pp == &p_uc) {
+    // when 'updatecount' changes from zero to non-zero, open swap files
+    if (p_uc && !old_value) {
       ml_open_files();
-  } else if (pp == &curwin->w_p_cole) {
-    if (curwin->w_p_cole < 0) {
-      errmsg = e_positive;
-      curwin->w_p_cole = 0;
-    } else if (curwin->w_p_cole > 3) {
-      errmsg = e_invarg;
-      curwin->w_p_cole = 3;
     }
-  }
-  /* sync undo before 'undolevels' changes */
-  else if (pp == &p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    p_ul = old_value;
-    u_sync(TRUE);
-    p_ul = value;
-  } else if (pp == &curbuf->b_p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    curbuf->b_p_ul = old_value;
-    u_sync(TRUE);
-    curbuf->b_p_ul = value;
-  }
-  /* 'numberwidth' must be positive */
-  else if (pp == &curwin->w_p_nuw) {
-    if (curwin->w_p_nuw < 1) {
-      errmsg = e_positive;
-      curwin->w_p_nuw = 1;
-    }
-    if (curwin->w_p_nuw > 10) {
-      errmsg = e_invarg;
-      curwin->w_p_nuw = 10;
-    }
-    curwin->w_nrwidth_line_count = 0;
+  } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
+    // sync undo before 'undolevels' changes
+    // use the old value, otherwise u_sync() may not work properly
+    *pp = old_value;
+    u_sync(true);
+    *pp = value;
   } else if (pp == &curbuf->b_p_tw) {
-    if (curbuf->b_p_tw < 0) {
-      errmsg = e_positive;
-      curbuf->b_p_tw = 0;
-    }
-
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    // 'scrollback'
-    if (*pp < -1 || *pp > SB_MAX
-        || (*pp != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
-      errmsg = e_invarg;
-      *pp = old_value;
-    } else if (curbuf->terminal) {
+    if (curbuf->terminal) {
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
+  } else if (pp == &curwin->w_p_nuw) {
+    curwin->w_nrwidth_line_count = 0;
   }
 
-  /*
-   * Check the bounds for numeric options here
-   */
+
+  // Check the (new) bounds for Rows and Columns here.
   if (Rows < min_rows() && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
@@ -4328,19 +4354,17 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   limit_screen_size();
 
 
-  /*
-   * If the screen (shell) height has been changed, assume it is the
-   * physical screenheight.
-   */
+  // If the screen (shell) height has been changed, assume it is the
+  // physical screenheight.
   if (old_Rows != Rows || old_Columns != Columns) {
-    /* Changing the screen size is not allowed while updating the screen. */
+    // Changing the screen size is not allowed while updating the screen.
     if (updating_screen) {
       *pp = old_value;
     } else if (full_screen) {
       screen_resize((int)Columns, (int)Rows);
     } else {
-      /* Postpone the resizing; check the size and cmdline position for
-       * messages. */
+      // Postpone the resizing; check the size and cmdline position for
+      // messages.
       check_shellsize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
@@ -4352,14 +4376,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   }
 
-  if (curbuf->b_p_ts <= 0) {
-    errmsg = e_positive;
-    curbuf->b_p_ts = 8;
-  }
-  if (p_tm < 0) {
-    errmsg = e_positive;
-    p_tm = 0;
-  }
   if ((curwin->w_p_scr <= 0
        || (curwin->w_p_scr > curwin->w_height
            && curwin->w_height > 0))
@@ -4376,21 +4392,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     else     /* curwin->w_p_scr > curwin->w_height */
       curwin->w_p_scr = curwin->w_height;
   }
-  if (p_hi < 0) {
-    errmsg = e_positive;
-    p_hi = 0;
-  } else if (p_hi > 10000) {
-    errmsg = e_invarg;
-    p_hi = 10000;
-  }
-  if (p_re < 0 || p_re > 2) {
-    errmsg = e_invarg;
-    p_re = 0;
-  }
-  if (p_report < 0) {
-    errmsg = e_positive;
-    p_report = 1;
-  }
   if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
     if (Rows != old_Rows)       /* Rows changed, just adjust p_sj */
       p_sj = Rows / 2;
@@ -4399,30 +4400,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       p_sj = 1;
     }
   }
-  if (p_so < 0 && full_screen) {
-    errmsg = e_scroll;
-    p_so = 0;
-  }
-  if (p_siso < 0 && full_screen) {
-    errmsg = e_positive;
-    p_siso = 0;
-  }
-  if (p_cwh < 1) {
-    errmsg = e_positive;
-    p_cwh = 1;
-  }
-  if (p_ut < 0) {
-    errmsg = e_positive;
-    p_ut = 2000;
-  }
-  if (p_ss < 0) {
-    errmsg = e_positive;
-    p_ss = 0;
-  }
 
-  /* May set global value for local option. */
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
+  // May set global value for local option.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+  }
 
   if (pp == &curbuf->b_p_scbk && !curbuf->terminal) {
     // Normal buffer: reset local 'scrollback' after updating the global value.
@@ -4459,6 +4441,27 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   check_redraw(options[opt_idx].flags);
 
   return (char *)errmsg;
+}
+
+static void trigger_optionsset_string(int opt_idx, int opt_flags,
+                                      char *oldval, char *newval)
+{
+  if (oldval != NULL && newval != NULL) {
+    char buf_type[7];
+
+    vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
+                 (opt_flags & OPT_LOCAL) ? "local" : "global");
+    set_vim_var_string(VV_OPTION_OLD, oldval, -1);
+    set_vim_var_string(VV_OPTION_NEW, newval, -1);
+    set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
+    apply_autocmds(EVENT_OPTIONSET,
+                   (char_u *)options[opt_idx].fullname, NULL, false, NULL);
+    reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         STRING_OBJ(cstr_as_string(newval)));
+    }
+  }
 }
 
 /*
@@ -5790,25 +5793,28 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
         switch (*p_ffs) {
-        case 'm':
-          buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
-          break;
-        case 'd':
-          buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
-          break;
-        case 'u':
-          buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
-          break;
-        default:
-          buf->b_p_ff = vim_strsave(p_ff);
-        }
-        if (buf->b_p_ff != NULL) {
-          buf->b_start_ffc = *buf->b_p_ff;
+          case 'm': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
+            break;
+          }
+          case 'd': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
+            break;
+          }
+          case 'u': {
+            buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
+            break;
+          }
+          default: {
+            buf->b_p_ff = vim_strsave(p_ff);
+            break;
+          }
         }
         buf->b_p_bh = empty_option;
         buf->b_p_bt = empty_option;
-      } else
-        free_buf_options(buf, FALSE);
+      } else {
+        free_buf_options(buf, false);
+      }
 
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
@@ -6069,7 +6075,7 @@ set_context_in_set_cmd (
     xp->xp_context = EXPAND_UNSUCCESSFUL;
     return;
   }
-  if (xp->xp_context != EXPAND_BOOL_SETTINGS && p[1] == NUL) {
+  if (p[1] == NUL) {
     xp->xp_context = EXPAND_OLD_SETTING;
     if (is_term_option)
       expand_option_idx = -1;
@@ -6213,14 +6219,15 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   }
 
   if (expand_option_idx >= 0) {
-    /* put string of option value in NameBuff */
+    // Put string of option value in NameBuff.
     option_value2string(&options[expand_option_idx], expand_option_flags);
     var = NameBuff;
-  } else if (var == NULL)
+  } else {
     var = (char_u *)"";
+  }
 
-  /* A backslash is required before some characters.  This is the reverse of
-   * what happens in do_set(). */
+  // A backslash is required before some characters.  This is the reverse of
+  // what happens in do_set().
   char_u *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME

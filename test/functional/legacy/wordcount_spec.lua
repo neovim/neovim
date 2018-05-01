@@ -6,8 +6,6 @@ local clear, command = helpers.clear, helpers.command
 local eq, eval = helpers.eq, helpers.eval
 local wait = helpers.wait
 
-if helpers.pending_win32(pending) then return end
-
 describe('wordcount', function()
   before_each(clear)
 

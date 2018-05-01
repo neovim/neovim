@@ -60,8 +60,7 @@ describe("'wildmenu'", function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
     if iswin() then
-      if helpers.pending_win32(pending) then return end
-      -- feed([[:terminal 1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
     end

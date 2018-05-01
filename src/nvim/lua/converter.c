@@ -423,7 +423,7 @@ nlua_pop_typval_table_processing_end:
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL()
+    TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \

@@ -8,6 +8,11 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/bufhl_defs.h"
 
+#if defined(__NetBSD__)
+# undef uint64_t
+# define uint64_t uint64_t
+#endif
+
 #define MAP_DECLS(T, U) \
   KHASH_DECLARE(T##_##U##_map, T, U) \
   \

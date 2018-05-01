@@ -525,6 +525,85 @@ describe('ShaDa marks support code', function()
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
   end)
 
+  it('can merge with file with mark 9 as the only numeric mark', function()
+    wshada('\007\001\014\130\161f\196\006' .. mock_file_path .. '-\161n9')
+    eq(0, exc_exec(sdrcmd()))
+    nvim_command('normal! `9oabc')
+    eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local found = {}
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
+      end
+    end
+    eq({['0']=1, ['1']=1}, found)
+  end)
+
+  it('removes duplicates while merging', function()
+    wshada('\007\001\014\130\161f\196\006' .. mock_file_path .. '-\161n9'
+           .. '\007\001\014\130\161f\196\006' .. mock_file_path .. '-\161n9')
+    eq(0, exc_exec(sdrcmd()))
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
+        print(require('test.helpers').format_luav(v))
+        found = found + 1
+      end
+    end
+    eq(1, found)
+  end)
+
+  it('does not leak when no append is performed due to too many marks',
+  function()
+    wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'a\161n0'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'b\161n1'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161n2'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161n3'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'e\161n4'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'f\161n5'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'g\161n6'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'h\161n7'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'i\161n8'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'j\161n9'
+           .. '\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'k\161n9')
+    eq(0, exc_exec(sdrcmd()))
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local found = {}
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 7 and v.value.f:sub(1, #mock_file_path) == mock_file_path then
+        found[#found + 1] = v.value.f:sub(#v.value.f)
+      end
+    end
+    eq({'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'}, found)
+  end)
+
+  it('does not leak when last mark in file removes some of the earlier ones',
+  function()
+    wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'a\161n0'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'b\161n1'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161n2'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161n3'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'e\161n4'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'f\161n5'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'g\161n6'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'h\161n7'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'i\161n8'
+           .. '\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'j\161n9'
+           .. '\007\003\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'k\161n9')
+    eq(0, exc_exec(sdrcmd()))
+    eq(0, exc_exec('wshada ' .. shada_fname))
+    local found = {}
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 7 and v.value.f:sub(1, #mock_file_path) == mock_file_path then
+        found[#found + 1] = v.value.f:sub(#v.value.f)
+      end
+    end
+    eq({'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k'}, found)
+  end)
+
   it('uses last A mark with gt timestamp from file when reading with !',
   function()
     wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
@@ -563,13 +642,14 @@ describe('ShaDa marks support code', function()
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '' .. mock_file_path .. '-' then
-        found = found + 1
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
       end
     end
-    eq(1, found)
+    eq({['0']=1, A=1}, found)
   end)
 
   it('uses last A mark with eq timestamp from instance when writing',
@@ -580,30 +660,33 @@ describe('ShaDa marks support code', function()
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
       if v.type == 7 and v.value.f == mock_file_path .. '-' then
-        found = found + 1
+        local name = ('%c'):format(v.value.n)
+        found[name] = (found[name] or 0) + 1
       end
     end
-    eq(1, found)
+    eq({['0']=1, A=1}, found)
   end)
 
-  it('uses last A mark with gt timestamp from file when writing',
-  function()
+  it('uses last A mark with gt timestamp from file when writing', function()
     wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
     wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
-    local found = 0
+    local found = {}
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '' .. mock_file_path .. '?' then
-        found = found + 1
+      if v.type == 7 then
+        local name = ('%c'):format(v.value.n)
+        local t = found[name] or {}
+        t[v.value.f] = (t[v.value.f] or 0) + 1
+        found[name] = t
       end
     end
-    eq(1, found)
+    eq({['0']={[mock_file_path .. '-']=1}, A={[mock_file_path .. '?']=1}}, found)
   end)
 
   it('uses last a mark with gt timestamp from instance when reading',

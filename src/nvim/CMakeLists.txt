@@ -14,7 +14,6 @@ if(WIN32)
   # tell MinGW compiler to enable wmain
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -iframework CoreFoundation")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreFoundation")
 endif()
@@ -176,7 +175,7 @@ endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
-  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
@@ -360,6 +359,10 @@ endforeach()
 
 # Our dependencies come first.
 
+if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  list(APPEND NVIM_LINK_LIBRARIES pthread c++abi)
+endif()
+
 if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
@@ -438,6 +441,7 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/xxd.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
@@ -456,6 +460,8 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)
+else()
+  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
 
 add_library(

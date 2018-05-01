@@ -4473,7 +4473,7 @@ msgid "Can't rename ShaDa file from %s to %s!"
 msgstr "Не вдалося перейменувати файл ShaDa з %s у %s!"
 
 #, c-format
-msgid "Did not rename %s because %s does not looks like a ShaDa file"
+msgid "Did not rename %s because %s does not look like a ShaDa file"
 msgstr "Не перейменував %s, тому що %s не схожий на файл ShaDa"
 
 #, c-format

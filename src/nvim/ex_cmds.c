@@ -109,82 +109,86 @@ typedef struct {
 # include "ex_cmds.c.generated.h"
 #endif
 
-/*
- * ":ascii" and "ga".
- */
-void do_ascii(exarg_T *eap)
+/// ":ascii" and "ga" implementation
+void do_ascii(const exarg_T *const eap)
 {
-  int c;
-  int cval;
-  char buf1[20];
-  char buf2[20];
-  char_u buf3[7];
   int cc[MAX_MCO];
-  int ci = 0;
-  int len;
-  const bool l_enc_utf8 = enc_utf8;
-
-  if (l_enc_utf8)
-    c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
-  else
-    c = gchar_cursor();
+  int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
     MSG("NUL");
     return;
   }
 
-  IObuff[0] = NUL;
-  if (!has_mbyte || (enc_dbcs != 0 && c < 0x100) || c < 0x80) {
-    if (c == NL)            /* NUL is stored as NL */
+  size_t iobuff_len = 0;
+
+  int ci = 0;
+  if (c < 0x80) {
+    if (c == NL) {  // NUL is stored as NL.
       c = NUL;
-    if (c == CAR && get_fileformat(curbuf) == EOL_MAC)
-      cval = NL;            /* NL is stored as CR */
-    else
-      cval = c;
-    if (vim_isprintc_strict(c) && (c < ' '
-                                   || c > '~'
-                                   )) {
+    }
+    const int cval = (c == CAR && get_fileformat(curbuf) == EOL_MAC
+                      ? NL  // NL is stored as CR.
+                      : c);
+    char buf1[20];
+    if (vim_isprintc_strict(c) && (c < ' ' || c > '~')) {
+      char_u buf3[7];
       transchar_nonprint(buf3, c);
       vim_snprintf(buf1, sizeof(buf1), "  <%s>", (char *)buf3);
-    } else
+    } else {
       buf1[0] = NUL;
-    if (c >= 0x80)
-      vim_snprintf(buf2, sizeof(buf2), "  <M-%s>",
-          (char *)transchar(c & 0x7f));
-    else
-      buf2[0] = NUL;
-    vim_snprintf((char *)IObuff, IOSIZE,
-        _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-        transchar(c), buf1, buf2, cval, cval, cval);
-    if (l_enc_utf8)
-      c = cc[ci++];
-    else
-      c = 0;
+    }
+    char buf2[20];
+    buf2[0] = NUL;
+    iobuff_len += (
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                     transchar(c), buf1, buf2, cval, cval, cval));
+    c = cc[ci++];
   }
 
-  /* Repeat for combining characters. */
-  while (has_mbyte && (c >= 0x100 || (l_enc_utf8 && c >= 0x80))) {
-    len = (int)STRLEN(IObuff);
-    /* This assumes every multi-byte char is printable... */
-    if (len > 0)
-      IObuff[len++] = ' ';
-    IObuff[len++] = '<';
-    if (l_enc_utf8 && utf_iscomposing(c)
-# ifdef USE_GUI
-        && !gui.in_use
-# endif
-        )
-      IObuff[len++] = ' ';       /* draw composing char on top of a space */
-    len += (*mb_char2bytes)(c, IObuff + len);
-    vim_snprintf((char *)IObuff + len, IOSIZE - len,
-        c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
-        : _("> %d, Hex %08x, Octal %o"), c, c, c);
-    if (ci == MAX_MCO)
+#define SPACE_FOR_DESC (1 + 1 + 1 + MB_MAXBYTES + 16 + 4 + 3 + 3 + 1)
+  // Space for description:
+  // - 1 byte for separator (starting from second entry)
+  // - 1 byte for "<"
+  // - 1 byte for space to draw composing character on (optional, but really
+  //   mostly required)
+  // - up to MB_MAXBYTES bytes for character itself
+  // - 16 bytes for raw text ("> , Hex , Octal ").
+  // - at least 4 bytes for hexadecimal representation
+  // - at least 3 bytes for decimal representation
+  // - at least 3 bytes for octal representation
+  // - 1 byte for NUL
+  //
+  // Taking into account MAX_MCO and characters which need 8 bytes for
+  // hexadecimal representation, but not taking translation into account:
+  // resulting string will occupy less then 400 bytes (conservative estimate).
+  //
+  // Less then 1000 bytes if translation multiplies number of bytes needed for
+  // raw text by 6, so it should always fit into 1025 bytes reserved for IObuff.
+
+  // Repeat for combining characters, also handle multiby here.
+  while (c >= 0x80 && iobuff_len < sizeof(IObuff) - SPACE_FOR_DESC) {
+    // This assumes every multi-byte char is printable...
+    if (iobuff_len > 0) {
+      IObuff[iobuff_len++] = ' ';
+    }
+    IObuff[iobuff_len++] = '<';
+    if (utf_iscomposing(c)) {
+      IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
+    }
+    iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
+    iobuff_len += (
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     (c < 0x10000
+                      ? _("> %d, Hex %04x, Octal %o")
+                      : _("> %d, Hex %08x, Octal %o")), c, c, c));
+    if (ci == MAX_MCO) {
       break;
-    if (l_enc_utf8)
-      c = cc[ci++];
-    else
-      c = 0;
+    }
+    c = cc[ci++];
+  }
+  if (ci != MAX_MCO && c != 0) {
+    xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
   msg(IObuff);
@@ -1175,7 +1179,7 @@ static void do_filter(
   // to read the error messages. Otherwise errors are ignored, so you can see
   // the error messages from the command that appear on stdout; use 'u' to fix
   // the text.
-  // Pass on the kShellDoOut flag when the output is being redirected.
+  // Pass on the kShellOptDoOut flag when the output is being redirected.
   if (call_shell(
         cmd_buf,
         kShellOptFilter | shell_flags,
@@ -2013,17 +2017,18 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   } else
     other = (fnum != curbuf->b_fnum);
 
-  if (other)
-    ++no_wait_return;               /* don't wait for autowrite message */
-  if (other && !forceit && curbuf->b_nwindows == 1 && !P_HID(curbuf)
+  if (other) {
+    no_wait_return++;               // don't wait for autowrite message
+  }
+  if (other && !forceit && curbuf->b_nwindows == 1 && !buf_hide(curbuf)
       && curbufIsChanged() && autowrite(curbuf, forceit) == FAIL) {
-    if (p_confirm && p_write)
-      dialog_changed(curbuf, FALSE);
+    if (p_confirm && p_write) {
+      dialog_changed(curbuf, false);
+    }
     if (curbufIsChanged()) {
-      if (other)
-        --no_wait_return;
+      no_wait_return--;
       EMSG(_(e_nowrtmsg));
-      retval = 2;       /* file has been changed */
+      retval = 2;  // File has been changed.
       goto theend;
     }
   }
@@ -2032,17 +2037,19 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   if (setpm)
     setpcmark();
   if (!other) {
-    if (lnum != 0)
+    if (lnum != 0) {
       curwin->w_cursor.lnum = lnum;
+    }
     check_cursor_lnum();
     beginline(BL_SOL | BL_FIX);
-    retval = 0;         /* it's in the same file */
+    retval = 0;         // it's in the same file
   } else if (do_ecmd(fnum, ffname, sfname, NULL, lnum,
-                 (P_HID(curbuf) ? ECMD_HIDE : 0) + (forceit ? ECMD_FORCEIT : 0),
-                 curwin) == OK)
-    retval = -1;        /* opened another file */
-  else
-    retval = 1;         /* error encountered */
+                     (buf_hide(curbuf) ? ECMD_HIDE : 0)
+                     + (forceit ? ECMD_FORCEIT : 0), curwin) == OK) {
+    retval = -1;        // opened another file
+  } else {
+    retval = 1;         // error encountered
+  }
 
 theend:
   xfree(free_me);
@@ -4620,7 +4627,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
                              "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
                              "[count]", "[quotex]",
                              "[range]", ":[range]",
@@ -4630,7 +4637,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(rtable[]) = {"star", "gstar", "[star", "]star",
                              "/star", "/\\\\star", "quotestar", "starstar",
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
                              "\\[count]", "\\[quotex]",
                              "\\[range]", ":\\[range]",
@@ -4861,7 +4868,9 @@ void fix_help_buffer(void)
   char_u      *rt;
 
   // Set filetype to "help".
-  set_option_value("ft", 0L, "help", OPT_LOCAL);
+  if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+    set_option_value("ft", 0L, "help", OPT_LOCAL);
+  }
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
@@ -5823,7 +5832,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_line_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -5832,7 +5842,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_text_hl > 0) {
     msg_puts(" texthl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_text_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {

@@ -1469,7 +1469,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
   }
 
-  char_u *newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
 
   // Copy bytes before the cursor.
   if (col > 0) {
@@ -1478,7 +1478,10 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // Copy bytes after the changed character(s).
   char_u *p = newp + col;
-  memmove(p + newlen, oldp + col + oldlen, (size_t)(linelen - col - oldlen));
+  if (linelen > col + oldlen) {
+    memmove(p + newlen, oldp + col + oldlen,
+            (size_t)(linelen - col - oldlen));
+  }
 
   // Insert or overwrite the new character.
   memmove(p, buf, charlen);
@@ -2610,13 +2613,12 @@ int match_user(char_u *name)
   return result;
 }
 
-/*
- * Preserve files and exit.
- * When called IObuff must contain a message.
- * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
- * functions, such as allocating memory.
- */
+/// Preserve files and exit.
+/// @note IObuff must contain a message.
+/// @note This may be called from deadly_signal() in a signal handler, avoid
+///       unsafe functions, such as allocating memory.
 void preserve_exit(void)
+  FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
@@ -2641,7 +2643,7 @@ void preserve_exit(void)
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       mch_errmsg((uint8_t *)"Vim: preserving files...\n");
       ui_flush();
-      ml_sync_all(false, false);    // preserve all swap files
+      ml_sync_all(false, false, true);  // preserve all swap files
       break;
     }
   }

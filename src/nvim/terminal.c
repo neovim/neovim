@@ -61,7 +61,6 @@
 #include "nvim/edit.h"
 #include "nvim/mouse.h"
 #include "nvim/memline.h"
-#include "nvim/mark.h"
 #include "nvim/map.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
@@ -181,13 +180,14 @@ void terminal_init(void)
       vterm_state_get_palette_color(state, color_index, &color);
     }
     map_put(int, int)(color_indexes,
-        RGB(color.red, color.green, color.blue), color_index + 1);
+                      RGB_(color.red, color.green, color.blue),
+                      color_index + 1);
   }
 
   VTermColor fg, bg;
   vterm_state_get_default_colors(state, &fg, &bg);
-  default_vt_fg = RGB(fg.red, fg.green, fg.blue);
-  default_vt_bg = RGB(bg.red, bg.green, bg.blue);
+  default_vt_fg = RGB_(fg.red, fg.green, fg.blue);
+  default_vt_bg = RGB_(bg.red, bg.green, bg.blue);
   default_vt_bg_rgb = bg;
   vterm_free(vt);
 }
@@ -359,6 +359,15 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
     return;
   }
 
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer && wp->w_buffer->terminal == term) {
+      const uint16_t win_width =
+        (uint16_t)(MAX(0, wp->w_width - win_col_off(wp)));
+      width = MAX(width, win_width);
+      height = (uint16_t)MAX(height, wp->w_height);
+    }
+  }
+
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   term->pending_resize = true;
@@ -376,8 +385,6 @@ void terminal_enter(void)
   // Ensure the terminal is properly sized.
   terminal_resize(s->term, 0, 0);
 
-  checkpcmark();
-  setpcmark();
   int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = TERM_FOCUS;
@@ -461,6 +468,10 @@ static int terminal_execute(VimState *state, int key)
         s->close = true;
         return 0;
       }
+      break;
+
+    case K_COMMAND:
+      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
       break;
 
     case Ctrl_N:
@@ -568,8 +579,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
     // Get the rgb value set by libvterm.
-    int vt_fg = RGB(cell.fg.red, cell.fg.green, cell.fg.blue);
-    int vt_bg = RGB(cell.bg.red, cell.bg.green, cell.bg.blue);
+    int vt_fg = RGB_(cell.fg.red, cell.fg.green, cell.fg.blue);
+    int vt_bg = RGB_(cell.bg.red, cell.bg.green, cell.bg.blue);
     vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
     vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
     // Since libvterm does not expose the color index used by the program, we
@@ -588,7 +599,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int attr_id = 0;
 
     if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
-      attr_id = get_attr_entry(&(attrentry_T) {
+      attr_id = get_attr_entry(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
@@ -1086,7 +1097,6 @@ static void refresh_terminal(Terminal *term)
     refresh_size(term, buf);
     refresh_scrollback(term, buf);
     refresh_screen(term, buf);
-    redraw_buf_later(buf, NOT_VALID);
   });
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
@@ -1096,6 +1106,7 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
   refresh_pending = false;
   if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
+      || (State & CMDPREVIEW)
       // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
       // skip redraws to keep it visible.
       || wild_menu_showing == WM_LIST) {

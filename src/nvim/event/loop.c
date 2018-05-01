@@ -21,7 +21,6 @@ void loop_init(Loop *loop, void *data)
   loop->recursive = 0;
   loop->uv.data = loop;
   loop->children = kl_init(WatcherPtr);
-  loop->children_stop_requests = 0;
   loop->events = multiqueue_new_parent(loop_on_put, loop);
   loop->fast_events = multiqueue_new_child(loop->events);
   loop->thread_events = multiqueue_new_parent(NULL, NULL);
@@ -33,6 +32,9 @@ void loop_init(Loop *loop, void *data)
   loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
+/// Processes one `Loop.uv` event (at most).
+/// Processes all `Loop.fast_events` events.
+///
 /// @returns true if `ms` timeout was reached
 bool loop_poll_events(Loop *loop, int ms)
 {

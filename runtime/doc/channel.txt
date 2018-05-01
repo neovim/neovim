@@ -44,19 +44,23 @@ read over its stderr. Similarily, only bytes can be written to nvim's own stderr
 
 						    *channel-callback* *buffered*
 				*E5210* *on_stdout* *on_stderr* *on_stdin* *on_data*
-A callback function `on_{stream}` will be invoked with data read from the
-channel.  By default, the callback will be invoked immediately when data is
-available, to facilitate interactive communication. The same callback will
-then be invoked with empty data, to indicate that the stream reached EOF.
-Alternatively the `{stream}_buffered` option can be set to invoke the callback
-only when the underlying stream reaches EOF, and will then be passed in
-complete output.  This is helpful when only the complete output is useful, and
-not partial data. Futhermore if `{stream}_buffered` is set but not a callback,
-the data is saved in the options dict, with the stream name as key. For this
-to work a new options dict must be used for each opened channel. If a script
-uses a global `s:job_opts` dict, it can be copied with |copy()| before supplying
-it to |jobstart()|. If a dict is reused, so that the dict key already is
-occupied, error `E5210` will be raised.
+It is possible to register callback functions when a channel receives data by
+passing the `on_stdout`, `on_stderr`, `on_stdin` options on creation. Sockets
+may specify an `on_data` callback instead. Each callback function will be
+invoked with data read from the channel. By default, the callback will be
+invoked immediately when data is available, to facilitate interactive
+communication. The same callback will then be invoked with empty data, to
+indicate that the stream reached EOF. Alternatively the `stdout_buffered`,
+`stderr_buffered`, `stdin_buffered`, `data_buffered` options can be set to
+invoke the corresponding callback only when the underlying stream reaches EOF.
+The callback will then be passed complete output. This is helpful when only
+the complete output is useful, and not partial data. Futhermore if the stream
+is set to be buffered, but the callback is not set, the data is saved in the
+options dict, with the stream name as key. For this to work a new options dict
+must be used for each opened channel. If a script uses a global `s:job_opts`
+dict, it can be copied with |copy()| before supplying it to |jobstart()|. If a
+dict is reused, so that the dict key already is occupied, error `E5210` will
+be raised.
 
 - The arguments passed to the callback function are:
 
@@ -66,7 +70,7 @@ occupied, error `E5210` will be raised.
      Note that the items in this list do not directly correspond to actual
      lines in the output. See |channel-lines|
   2: Stream name as a string, like `"stdout"`. This is to allow multiple
-  on_{event} handlers to be implemented by the same function. The available
+  stream handlers to be implemented by the same function. The available
   events depend on how the channel was opened and in what mode/protocol.
 
 							      *channel-lines*

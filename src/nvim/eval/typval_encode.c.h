@@ -340,8 +340,9 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     case VAR_PARTIAL: {
       partial_T *const pt = tv->vval.v_partial;
       (void)pt;
-      TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));
-      _mp_push(*mpstack, ((MPConvStackVal) {
+      TYPVAL_ENCODE_CONV_FUNC_START(  // -V547
+          tv, (pt == NULL ? NULL : partial_name(pt)));
+      _mp_push(*mpstack, ((MPConvStackVal) {  // -V779
         .type = kMPConvPartial,
         .tv = tv,
         .saved_copyID = copyID - 1,
@@ -541,7 +542,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             }
             list_T *const val_list = val_di->di_tv.vval.v_list;
             if (val_list == NULL || tv_list_len(val_list) == 0) {
-              TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, TYPVAL_ENCODE_NODICT_VAR);
+              TYPVAL_ENCODE_CONV_EMPTY_DICT(  // -V501
+                  tv, TYPVAL_ENCODE_NODICT_VAR);
               break;
             }
             TV_LIST_ITER_CONST(val_list, li, {
