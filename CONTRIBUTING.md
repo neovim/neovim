@@ -157,7 +157,7 @@ shows each commit's diff. To show the whole surrounding function of a change
 as context, use the `-W` argument as well.
 
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
-[git-bisect]: http://git-scm.com/book/tr/v2/Git-Tools-Debugging-with-Git
+[git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
 [git-history-filtering]: https://www.atlassian.com/git/tutorials/git-log/filtering-the-commit-history
 [git-history-rewriting]: http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
