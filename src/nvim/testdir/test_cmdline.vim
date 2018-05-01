@@ -285,12 +285,15 @@ func Test_getcompletion()
 endfunc
 
 func Test_expand_star_star()
+  let path=&path
+  set path=.,,
   call mkdir('a/b', 'p')
   call writefile(['asdfasdf'], 'a/b/fileXname')
   call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
   call assert_equal('find '.expand('a/b/fileXname'), getreg(':'))
   bwipe!
   call delete('a', 'rf')
+  let &path=path
 endfunc
 
 func Test_paste_in_cmdline()
