@@ -147,9 +147,11 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) newtests report
+nongui: $(SCRIPTS) newtests
+	$(MAKE) report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
+gui: $(SCRIPTS) $(SCRIPTS_GUI) newtests
+	$(MAKE) report
 
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
@@ -166,9 +168,11 @@ report:
 	                 echo ALL DONE;        \
 	             fi"
 
-test1.out: $(NVIM_PRG)
+test1.out: nolog $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
+$(SCRIPTS) $(SCRIPTS_GUI): test1.out
+
+$(NEW_TESTS): test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
