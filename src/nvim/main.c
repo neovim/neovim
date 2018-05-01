@@ -262,7 +262,6 @@ int main(int argc, char **argv)
   server_init(params.listen_addr);
 
   if (params.cs_remote) {
-
     const char *env_addr = os_getenv("NVIM_LISTEN_ADDRESS");
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
@@ -275,7 +274,7 @@ int main(int argc, char **argv)
     int t_argc = params.cs_remote;
     Array args = ARRAY_DICT_INIT;
     String arg_s = cstr_to_string(argv[t_argc]);
-    do{
+    do {
       arg_s = cstr_to_string(argv[t_argc]);
       ADD(args, STRING_OBJ(arg_s));
     }while(++t_argc < argc);
@@ -283,7 +282,7 @@ int main(int argc, char **argv)
 
     Error err;
     Array a = ARRAY_DICT_INIT;
-    ADD(a, INTEGER_OBJ(rc_id));
+    ADD(a, INTEGER_OBJ((int)rc_id));
     ADD(a, ARRAY_OBJ(args));
     String s = cstr_to_string("return vim._cs_remote(select(1, ...))");
     executor_exec_lua_api(s, a, &err);
