@@ -287,28 +287,32 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function with the given arguments
+/// Execute lua code. Parameters (if any) are available as `...` inside the
+/// chunk. The chunk can return a value.
 ///
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
+/// Only statements are executed. To evaluate an expression, prefix it
+/// with `return`: return my_function(...)
 ///
-/// @param fname    Function to call
-/// @param args     Function arguments packed in an Array
-/// @param[out] err Error details, if any
-/// @return Result of the function call
-Object nvim_call_function(String fname, Array args, Error *err)
-  FUNC_API_SINCE(1)
+/// @param code       lua code to execute
+/// @param args       Arguments to the code
+/// @param[out] err   Details of an error encountered while parsing
+///                   or executing the lua code.
+///
+/// @return           Return value of lua code if present or NIL.
+Object nvim_execute_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
 {
-  return call_function(fname, args, NULL, err);
+  return executor_exec_lua_api(code, args, err);
 }
 
-/// Call an internal or user defined function.
+/// Calls a VimL function.
 ///
-/// @param fname Function name
+/// @param fn Function name
 /// @param args Function arguments
-/// @param self `self` dict (only required for dict functions)
-/// @param[out] err Details of an error that may have occurred
+/// @param self `self` dict, or NULL for non-dict functions
+/// @param[out] err Error details, if any
 /// @return Result of the function call
-static Object call_function(String fname, Array args, dict_T *self, Error *err)
+static Object _call_function(String fn, Array args, dict_T *self, Error *err)
 {
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
@@ -330,10 +334,9 @@ static Object call_function(String fname, Array args, dict_T *self, Error *err)
   // Call the function
   typval_T rettv;
   int dummy;
-  int r = call_func((char_u *)fname.data, (int)fname.size,
-                    &rettv, (int)args.size, vim_args, NULL,
-                    curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                    true, NULL, self);
+  int r = call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+                    vim_args, NULL, curwin->w_cursor.lnum,
+                    curwin->w_cursor.lnum, &dummy, true, NULL, self);
   if (r == FAIL) {
     api_set_error(err, kErrorTypeException, "Error calling function.");
   }
@@ -350,33 +353,29 @@ free_vim_args:
   return rv;
 }
 
-/// Execute lua code. Parameters (if any) are available as `...` inside the
-/// chunk. The chunk can return a value.
+/// Calls a VimL function with the given arguments.
 ///
-/// Only statements are executed. To evaluate an expression, prefix it
-/// with `return`: return my_function(...)
+/// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
-/// @param code       lua code to execute
-/// @param args       Arguments to the code
-/// @param[out] err   Details of an error encountered while parsing
-///                   or executing the lua code.
-///
-/// @return           Return value of lua code if present or NIL.
-Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+/// @param fn       Function to call
+/// @param args     Function arguments packed in an Array
+/// @param[out] err Error details, if any
+/// @return Result of the function call
+Object nvim_call_function(String fn, Array args, Error *err)
+  FUNC_API_SINCE(1)
 {
-  return executor_exec_lua_api(code, args, err);
+  return _call_function(fn, args, NULL, err);
 }
 
-/// Call the given dict function with the given arguments stored in an array.
+/// Calls a VimL |Dictionary-function| with the given arguments.
 ///
-/// @param self |self| dict or string expression evaluating to a dict
-/// @param internal true if the function is stored in the self-dict
-/// @param fnname Function to call
+/// @param dict Dictionary, or String evaluating to a VimL |self| dict
+/// @param fn Function to call
+/// @param internal true if the function is stored on the dict
 /// @param args Functions arguments packed in an Array
-/// @param[out] err Details of an error that may have occurred
+/// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_dict_function(Object self, Boolean internal, String fnname,
+Object nvim_call_dict_function(Object dict, String fn, Boolean internal,
                                Array args, Error *err)
   FUNC_API_SINCE(4)
 {
@@ -384,27 +383,27 @@ Object nvim_call_dict_function(Object self, Boolean internal, String fnname,
 
   typval_T rettv;
   bool mustfree = false;
-  switch (self.type) {
+  switch (dict.type) {
     case kObjectTypeString: {
       try_start();
-      if (eval0((char_u *)self.data.string.data, &rettv, NULL, true) == FAIL) {
+      if (eval0((char_u *)dict.data.string.data, &rettv, NULL, true) == FAIL) {
         api_set_error(err, kErrorTypeException,
-                      "Failed to evaluate self expression");
+                      "Failed to evaluate dict expression");
       }
       if (try_end(err)) {
         return rv;
       }
       // Evaluation of the string arg created a new dict or increased the
-      // refcount of a dict. Not necessary for a dict inside a RPC Object.
+      // refcount of a dict. Not necessary for a RPC dict.
       mustfree = true;
       break;
     }
     case kObjectTypeDictionary: {
       if (internal) {
         api_set_error(err, kErrorTypeValidation,
-                      "Funcrefs are not supported for RPC dicts");
+                      "Cannot invoke RPC dict as a VimL reference");
         return rv;
-      } else if (!object_to_vim(self, &rettv, err)) {
+      } else if (!object_to_vim(dict, &rettv, err)) {
         tv_clear(&rettv);
         return rv;
       }
@@ -412,46 +411,38 @@ Object nvim_call_dict_function(Object self, Boolean internal, String fnname,
     }
     default: {
       api_set_error(err, kErrorTypeValidation,
-                    "self argument must be String or Dictionary");
+                    "dict argument type must be String or Dictionary");
       return rv;
     }
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Referenced self-dict does not exist");
+    api_set_error(err, kErrorTypeValidation, "Referenced dict does not exist");
     goto end;
   }
 
-  // Set the function to call
-  String func = STRING_INIT;
-  if (internal /* && self.type == kObjectTypeString */) {
-    dictitem_T *const di = tv_dict_find(self_dict, fnname.data,
-                                        (ptrdiff_t)fnname.size);
+  if (internal) {
+    dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
     if (di == NULL) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Function not found in self-dict");
+      api_set_error(err, kErrorTypeValidation, "Function not found in dict");
       goto end;
     }
     if (di->di_tv.v_type != VAR_STRING) {
       api_set_error(err, kErrorTypeValidation,
-                    "Value inside self-dict is not a valid function name");
+                    "Value found in dict is not a valid function");
       goto end;
     }
-    func.data = (char *)di->di_tv.vval.v_string;
-    func.size = strlen(func.data);
-  } else {
-    func.data = fnname.data;
-    func.size = fnname.size;
+    fn = (String) {
+      .data = (char *)di->di_tv.vval.v_string,
+      .size = strlen((char *)di->di_tv.vval.v_string),
+    };
   }
-  if (!func.data || func.size < 1) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Invalid (empty) function name");
+  if (!fn.data || fn.size < 1) {
+    api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
     goto end;
   }
 
-  // Finally try to call the function
-  rv = call_function(func, args, self_dict, err);
+  rv = _call_function(fn, args, self_dict, err);
 end:
   if (mustfree) {
     tv_clear(&rettv);
