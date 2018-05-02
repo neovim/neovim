@@ -540,10 +540,6 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 #define FOR_ALL_BUFFERS_BACKWARDS(buf) \
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
-/* Flag that is set when switching off 'swapfile'.  It means that all blocks
- * are to be loaded into memory.  Shouldn't be global... */
-EXTERN int mf_dont_release INIT(= FALSE);       /* don't release blocks */
-
 /*
  * List of files being edited (global argument list).  curwin->w_alist points
  * to this when the window is using the global argument list.

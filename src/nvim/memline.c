@@ -1766,7 +1766,7 @@ errorret:
    * Don't use the last used line when 'swapfile' is reset, need to load all
    * blocks.
    */
-  if (buf->b_ml.ml_line_lnum != lnum || mf_dont_release) {
+  if (buf->b_ml.ml_line_lnum != lnum) {
     ml_flush_line(buf);
 
     /*
@@ -2767,9 +2767,8 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
   if (buf->b_ml.ml_locked) {
     if (ML_SIMPLE(action)
         && buf->b_ml.ml_locked_low <= lnum
-        && buf->b_ml.ml_locked_high >= lnum
-        && !mf_dont_release) {
-      /* remember to update pointer blocks and stack later */
+        && buf->b_ml.ml_locked_high >= lnum) {
+      // remember to update pointer blocks and stack later
       if (action == ML_INSERT) {
         ++(buf->b_ml.ml_locked_lineadd);
         ++(buf->b_ml.ml_locked_high);

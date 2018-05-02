@@ -1512,25 +1512,11 @@ return {
       defaults={if_true={vi=1000}}
     },
     {
-      full_name='maxmem', abbreviation='mm',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mm',
-      defaults={if_true={vi=macros('DFLT_MAXMEM')}}
-    },
-    {
       full_name='maxmempattern', abbreviation='mmp',
       type='number', scope={'global'},
       vi_def=true,
       varname='p_mmp',
       defaults={if_true={vi=1000}}
-    },
-    {
-      full_name='maxmemtot', abbreviation='mmt',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mmt',
-      defaults={if_true={vi=macros('DFLT_MAXMEMTOT')}}
     },
     {
       full_name='menuitems', abbreviation='mis',

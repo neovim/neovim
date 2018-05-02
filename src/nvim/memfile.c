@@ -61,8 +61,6 @@
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 
 
-static size_t total_mem_used = 0;    /// total memory used for memfiles
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memfile.c.generated.h"
 #endif
@@ -99,7 +97,6 @@ memfile_T *mf_open(char_u *fname, int flags)
   mfp->mf_used_first = NULL;         // used list is empty
   mfp->mf_used_last = NULL;
   mfp->mf_dirty = false;
-  mfp->mf_used_count = 0;
   mf_hash_init(&mfp->mf_hash);
   mf_hash_init(&mfp->mf_trans);
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
@@ -135,25 +132,6 @@ memfile_T *mf_open(char_u *fname, int flags)
   mfp->mf_blocknr_min = -1;
   mfp->mf_neg_count = 0;
   mfp->mf_infile_count = mfp->mf_blocknr_max;
-
-  // Compute maximum number of pages ('maxmem' is in Kbytes):
-  //         'mammem' * 1Kbyte / page-size-in-bytes.
-  // Avoid overflow by first reducing page size as much as possible.
-  {
-    int shift = 10;
-    unsigned page_size = mfp->mf_page_size;
-
-    while (shift > 0 && (page_size & 1) == 0) {
-      page_size /= 2;
-      --shift;
-    }
-
-    assert(p_mm <= LONG_MAX >> shift);  // check we don't overflow
-    assert((uintmax_t)(p_mm << shift) <= UINT_MAX);  // check we can cast safely
-    mfp->mf_used_count_max = (unsigned)(p_mm << shift) / page_size;
-    if (mfp->mf_used_count_max < 10)
-      mfp->mf_used_count_max = 10;
-  }
 
   return mfp;
 }
@@ -198,7 +176,6 @@ void mf_close(memfile_T *mfp, bool del_file)
 
   // free entries in used list
   for (bhdr_T *hp = mfp->mf_used_first, *nextp; hp != NULL; hp = nextp) {
-    total_mem_used -= hp->bh_page_count * mfp->mf_page_size;
     nextp = hp->bh_next;
     mf_free_bhdr(hp);
   }
@@ -223,12 +200,9 @@ void mf_close_file(buf_T *buf, bool getlines)
 
   if (getlines) {
     // get all blocks in memory by accessing all lines (clumsy!)
-    mf_dont_release = true;
-    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; ++lnum) {
+    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
       (void)ml_get_buf(buf, lnum, false);
     }
-    mf_dont_release = false;
-    // TODO(elmart): should check if all blocks are really in core
   }
 
   if (close(mfp->mf_fd) < 0) {           // close the file
@@ -246,13 +220,6 @@ void mf_close_file(buf_T *buf, bool getlines)
 /// and the size it indicates differs from what was guessed.
 void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 {
-  // Correct the memory used for block 0 to the new size, because it will be
-  // freed with that size later on.
-  if (new_size >= mfp->mf_page_size) {
-    total_mem_used += new_size - mfp->mf_page_size;
-  } else {
-    total_mem_used -= mfp->mf_page_size - new_size;
-  }
   mfp->mf_page_size = new_size;
 }
 
@@ -262,10 +229,7 @@ void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 /// @param page_count  Desired number of pages.
 bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 {
-  // If we reached the maximum size for the used memory blocks, release one.
-  // If a bhdr_T is returned, use it and adjust the page_count if necessary.
-  // If no bhdr_T is returned, a new one will be created.
-  bhdr_T *hp = mf_release(mfp, page_count);  // the block to be returned
+  bhdr_T *hp = NULL;
 
   // Decide on the number to use:
   // If there is a free block, use its number.
@@ -273,34 +237,22 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
   // a positive number.
   bhdr_T *freep = mfp->mf_free_first;        // first free block
   if (!negative && freep != NULL && freep->bh_page_count >= page_count) {
-    // If the block in the free list has more pages, take only the number
-    // of pages needed and allocate a new bhdr_T with data.
-    //
-    // If the number of pages matches and mf_release() did not return a
-    // bhdr_T, use the bhdr_T from the free list and allocate the data.
-    //
-    // If the number of pages matches and mf_release() returned a bhdr_T,
-    // just use the number and free the bhdr_T from the free list
     if (freep->bh_page_count > page_count) {
-      if (hp == NULL) {
-        hp = mf_alloc_bhdr(mfp, page_count);
-      }
+      // If the block in the free list has more pages, take only the number
+      // of pages needed and allocate a new bhdr_T with data.
+      hp = mf_alloc_bhdr(mfp, page_count);
       hp->bh_bnum = freep->bh_bnum;
       freep->bh_bnum += page_count;
       freep->bh_page_count -= page_count;
-    } else if (hp == NULL) {    // need to allocate memory for this block
+    } else {    // need to allocate memory for this block
+      // If the number of pages matches use the bhdr_T from the free list and
+      // allocate the data.
       void *p = xmalloc(mfp->mf_page_size * page_count);
       hp = mf_rem_free(mfp);
       hp->bh_data = p;
-    } else {                    // use the number, remove entry from free list
-      freep = mf_rem_free(mfp);
-      hp->bh_bnum = freep->bh_bnum;
-      xfree(freep);
     }
   } else {                      // get a new number
-    if (hp == NULL) {
-      hp = mf_alloc_bhdr(mfp, page_count);
-    }
+    hp = mf_alloc_bhdr(mfp, page_count);
     if (negative) {
       hp->bh_bnum = mfp->mf_blocknr_min--;
       mfp->mf_neg_count++;
@@ -341,13 +293,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 
     // could check here if the block is in the free list
 
-    // Check if we need to flush an existing block.
-    // If so, use that block.
-    // If not, allocate a new block.
-    hp = mf_release(mfp, page_count);
-    if (hp == NULL) {
-      hp = mf_alloc_bhdr(mfp, page_count);
-    }
+    hp = mf_alloc_bhdr(mfp, page_count);
 
     hp->bh_bnum = nr;
     hp->bh_flags = 0;
@@ -514,8 +460,6 @@ static void mf_ins_used(memfile_T *mfp, bhdr_T *hp)
   } else {
     hp->bh_next->bh_prev = hp;
   }
-  mfp->mf_used_count += hp->bh_page_count;
-  total_mem_used += hp->bh_page_count * mfp->mf_page_size;
 }
 
 /// Remove block from memfile's used list.
@@ -530,82 +474,6 @@ static void mf_rem_used(memfile_T *mfp, bhdr_T *hp)
     mfp->mf_used_first = hp->bh_next;
   else
     hp->bh_prev->bh_next = hp->bh_next;
-
-  mfp->mf_used_count -= hp->bh_page_count;
-  total_mem_used -= hp->bh_page_count * mfp->mf_page_size;
-}
-
-/// Try to release the least recently used block from the used list if the
-/// number of used memory blocks gets too big.
-///
-/// @return  The block header, when release needed and possible.
-///              Resulting block header includes memory block, so it can be
-///              reused.  Page count is checked to be right.
-///          NULL, when release not needed, or not possible.
-///              Not needed when number of blocks less than allowed maximum and
-///              total memory used below 'maxmemtot'.
-///              Not possible when:
-///              - Called while closing file.
-///              - Tried to create swap file but couldn't.
-///              - All blocks are locked.
-///              - Unlocked dirty block found, but flush failed.
-static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
-{
-  // don't release while in mf_close_file()
-  if (mf_dont_release)
-    return NULL;
-
-  /// Need to release a block if the number of blocks for this memfile is
-  /// higher than the maximum one or total memory used is over 'maxmemtot'.
-  bool need_release = (mfp->mf_used_count >= mfp->mf_used_count_max
-                       || (total_mem_used >> 10) >= (size_t)p_mmt);
-
-  /// Try to create swap file if the amount of memory used is getting too high.
-  if (mfp->mf_fd < 0 && need_release && p_uc) {
-    // find for which buffer this memfile is
-    buf_T *buf = NULL;
-    FOR_ALL_BUFFERS(bp) {
-      if (bp->b_ml.ml_mfp == mfp) {
-        buf = bp;
-        break;
-      }
-    }
-    if (buf != NULL && buf->b_may_swap) {
-      ml_open_file(buf);
-    }
-  }
-
-  /// Don't release a block if:
-  ///     there is no file for this memfile
-  ///     or
-  ///         the number of blocks for this memfile is lower than the maximum
-  ///         and
-  ///         total memory used is not up to 'maxmemtot'
-  if (mfp->mf_fd < 0 || !need_release)
-    return NULL;
-
-  bhdr_T *hp;
-  for (hp = mfp->mf_used_last; hp != NULL; hp = hp->bh_prev)
-    if (!(hp->bh_flags & BH_LOCKED))
-      break;
-  if (hp == NULL)       // not a single one that can be released
-    return NULL;
-
-  // If the block is dirty, write it.
-  // If the write fails we don't free it.
-  if ((hp->bh_flags & BH_DIRTY) && mf_write(mfp, hp) == FAIL)
-    return NULL;
-
-  mf_rem_used(mfp, hp);
-  mf_rem_hash(mfp, hp);
-
-  /// Make sure page_count of bh_data is right.
-  if (hp->bh_page_count != page_count) {
-    xfree(hp->bh_data);
-    hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
-    hp->bh_page_count = page_count;
-  }
-  return hp;
 }
 
 /// Release as many blocks as possible.

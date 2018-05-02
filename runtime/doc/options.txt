@@ -3924,16 +3924,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	because the 'w' is used before the next mapping is done.  See also
 	|key-mapping|.
 
-						*'maxmem'* *'mm'*
-'maxmem' 'mm'		number	(default between 256 to 5120 (system
-				 dependent) or half the amount of memory
-				 available)
-			global
-	Maximum amount of memory (in Kbyte) to use for one buffer.  When this
-	limit is reached allocating extra memory for a buffer will cause
-	other memory to be freed.  The maximum usable value is about 2000000.
-	Use this to work without a limit.  Also see 'maxmemtot'.
-
 						*'maxmempattern'* *'mmp'*
 'maxmempattern' 'mmp'	number	(default 1000)
 			global
@@ -3946,20 +3936,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	inefficient or too complex.  This may already happen with the pattern
 	"\(.\)*" on a very long line.  ".*" works much better.
 	Vim may run out of memory before hitting the 'maxmempattern' limit.
-
-						*'maxmemtot'* *'mmt'*
-'maxmemtot' 'mmt'	number	(default between 2048 and 10240 (system
-				 dependent) or half the amount of memory
-				 available)
-			global
-	Maximum amount of memory in Kbyte to use for all buffers together.
-	The maximum usable value is about 2000000 (2 Gbyte).  Use this to work
-	without a limit.
-	On 64 bit machines higher values might work.  But hey, do you really
-	need more than 2 Gbyte for text editing?  Keep in mind that text is
-	stored in the swap file, one can edit files > 2 Gbyte anyway.  We do
-	need the memory to store undo info.
-	Also see 'maxmem'.
 
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	number	(default 25)
