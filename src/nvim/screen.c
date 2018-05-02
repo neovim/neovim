@@ -4900,7 +4900,7 @@ win_redr_status_matches (
  *
  * If inversion is possible we use it. Else '=' characters are used.
  */
-void win_redr_status(win_T *wp)
+static void win_redr_status(win_T *wp)
 {
   int row;
   char_u      *p;
