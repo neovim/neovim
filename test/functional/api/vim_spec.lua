@@ -4,17 +4,19 @@ local global_helpers = require('test.helpers')
 
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
+local command = helpers.command
+local funcs = helpers.funcs
+local iswin = helpers.iswin
+local meth_pcall = helpers.meth_pcall
+local meths = helpers.meths
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
-local meths = helpers.meths
-local funcs = helpers.funcs
 local request = helpers.request
-local meth_pcall = helpers.meth_pcall
-local command = helpers.command
-local iswin = helpers.iswin
+local source = helpers.source
 
-local intchar2lua = global_helpers.intchar2lua
+local expect_err = global_helpers.expect_err
 local format_string = global_helpers.format_string
+local intchar2lua = global_helpers.intchar2lua
 local mergedicts_copy = global_helpers.mergedicts_copy
 
 describe('api', function()
@@ -174,6 +176,30 @@ describe('api', function()
       -- E740
       expect_err('Function called with too many arguments', request,
                  'nvim_call_function', 'Foo', too_many_args)
+    end)
+  end)
+
+  describe('nvim_call_dict_function', function()
+    it('invokes VimL dict', function()
+      source('function! F(name) dict\n  return self.greeting . ", " . a:name . "!"\nendfunction')
+      nvim('set_var', 'dict_function_dict', { greeting = 'Hello', F = 'function("F")' })
+      eq('Hello, World!', nvim('call_dict_function', 'g:dict_function_dict', false, 'F', {'World'}))
+      eq({ greeting = 'Hello', F = 'function("F")' }, nvim('get_var', 'dict_function_dict'))
+      nvim('set_var', 'dict_function_dict_i', { greeting = 'Hi', F = "F" })
+      eq('Hi, Moon!', nvim('call_dict_function', 'g:dict_function_dict_i', true, 'F', {'Moon'}))
+      eq({ greeting = 'Hi', F = "F" }, nvim('get_var', 'dict_function_dict_i'))
+    end)
+    it('invokes RPC dict', function()
+      source('function! G() dict\n  return self.result\nendfunction')
+      eq('self', nvim('call_dict_function', { result = 'self', G = 'G'}, false, 'G', {}))
+    end)
+    it('fails for a RPC dictionary and internal set to true', function()
+      expect_err('Funcrefs are not supported for RPC dicts', request,
+                 'nvim_call_dict_function', { f = '' }, true, 'f', {1,2})
+    end)
+    it('fails with empty function name', function()
+      expect_err('Invalid %(empty%) function name', request,
+                 'nvim_call_dict_function', "{ 'f': '' }", true, 'f', {1,2})
     end)
   end)
 

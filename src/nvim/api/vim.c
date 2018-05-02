@@ -298,6 +298,18 @@ Object nvim_eval(String expr, Error *err)
 Object nvim_call_function(String fname, Array args, Error *err)
   FUNC_API_SINCE(1)
 {
+  return call_function(fname, args, NULL, err);
+}
+
+/// Call an internal or user defined function.
+///
+/// @param fname Function name
+/// @param args Function arguments
+/// @param self `self` dict (only required for dict functions)
+/// @param[out] err Details of an error that may have occurred
+/// @return Result of the function call
+static Object call_function(String fname, Array args, dict_T *self, Error *err)
+{
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
     api_set_error(err, kErrorTypeValidation,
@@ -321,7 +333,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
   int r = call_func((char_u *)fname.data, (int)fname.size,
                     &rettv, (int)args.size, vim_args, NULL,
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                    true, NULL, NULL);
+                    true, NULL, self);
   if (r == FAIL) {
     api_set_error(err, kErrorTypeException, "Error calling function.");
   }
@@ -354,6 +366,98 @@ Object nvim_execute_lua(String code, Array args, Error *err)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
 {
   return executor_exec_lua_api(code, args, err);
+}
+
+/// Call the given dict function with the given arguments stored in an array.
+///
+/// @param self |self| dict or string expression evaluating to a dict
+/// @param internal true if the function is stored in the self-dict
+/// @param fnname Function to call
+/// @param args Functions arguments packed in an Array
+/// @param[out] err Details of an error that may have occurred
+/// @return Result of the function call
+Object nvim_call_dict_function(Object self, Boolean internal, String fnname,
+                               Array args, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Object rv = OBJECT_INIT;
+
+  typval_T rettv;
+  bool mustfree = false;
+  switch (self.type) {
+    case kObjectTypeString: {
+      try_start();
+      if (eval0((char_u *)self.data.string.data, &rettv, NULL, true) == FAIL) {
+        api_set_error(err, kErrorTypeException,
+                      "Failed to evaluate self expression");
+      }
+      if (try_end(err)) {
+        return rv;
+      }
+      // Evaluation of the string arg created a new dict or increased the
+      // refcount of a dict. Not necessary for a dict inside a RPC Object.
+      mustfree = true;
+      break;
+    }
+    case kObjectTypeDictionary: {
+      if (internal) {
+        api_set_error(err, kErrorTypeValidation,
+                      "Funcrefs are not supported for RPC dicts");
+        return rv;
+      } else if (!object_to_vim(self, &rettv, err)) {
+        tv_clear(&rettv);
+        return rv;
+      }
+      break;
+    }
+    default: {
+      api_set_error(err, kErrorTypeValidation,
+                    "self argument must be String or Dictionary");
+      return rv;
+    }
+  }
+  dict_T *self_dict = rettv.vval.v_dict;
+  if (rettv.v_type != VAR_DICT || !self_dict) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Referenced self-dict does not exist");
+    goto end;
+  }
+
+  // Set the function to call
+  String func = STRING_INIT;
+  if (internal /* && self.type == kObjectTypeString */) {
+    dictitem_T *const di = tv_dict_find(self_dict, fnname.data,
+                                        (ptrdiff_t)fnname.size);
+    if (di == NULL) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Function not found in self-dict");
+      goto end;
+    }
+    if (di->di_tv.v_type != VAR_STRING) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Value inside self-dict is not a valid function name");
+      goto end;
+    }
+    func.data = (char *)di->di_tv.vval.v_string;
+    func.size = strlen(func.data);
+  } else {
+    func.data = fnname.data;
+    func.size = fnname.size;
+  }
+  if (!func.data || func.size < 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Invalid (empty) function name");
+    goto end;
+  }
+
+  // Finally try to call the function
+  rv = call_function(func, args, self_dict, err);
+end:
+  if (mustfree) {
+    tv_clear(&rettv);
+  }
+
+  return rv;
 }
 
 /// Calculates the number of display cells occupied by `text`.
