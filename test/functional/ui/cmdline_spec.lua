@@ -157,6 +157,27 @@ describe('external cmdline', function()
     end)
   end)
 
+  it("redraws statusline on entering", function()
+    command('set laststatus=2')
+    command('set statusline=%{mode()}')
+    feed(':')
+    screen:expect([[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {3:c^                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "" } },
+        firstc = ":",
+        indent = 0,
+        pos = 0,
+        prompt = ""
+      }}, cmdline)
+    end)
+  end)
+
   it("works with input()", function()
     feed(':call input("input", "default")<cr>')
     screen:expect([[
