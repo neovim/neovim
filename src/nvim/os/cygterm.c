@@ -142,6 +142,7 @@ union utsname
   struct msys_utsname msys;
 };
 
+typedef void (*init_fn) (void);
 typedef int (*tcgetattr_fn) (int, struct termios *);
 typedef int (*tcsetattr_fn) (int, int, const struct termios *);
 typedef void (*cfmakeraw_fn) (struct termios *);
@@ -154,6 +155,9 @@ typedef int (*uname_fn) (union utsname *);
 
 typedef struct {
   HMODULE hmodule;
+  DWORD thread_id;
+  MinttyType type;
+  init_fn init;
   tcgetattr_fn tcgetattr;
   tcsetattr_fn tcsetattr;
   cfmakeraw_fn cfmakeraw;
@@ -162,6 +166,8 @@ typedef struct {
   close_fn close;
   errno_fn __errno;
   strerror_fn strerror;
+  uname_fn uname;
+  struct per_process *user_data;
 } CygwinDll;
 
 struct CygTerm {
@@ -217,53 +223,52 @@ CygTerm *os_cygterm_new(int fd)
   if (!cygterm) {
     return NULL;
   }
+  cygterm->cygwindll = NULL;
+  cygterm->width = cygterm->height = -1;
+  cygterm->restore_termios_valid = false;
 
-  CygwinDll *cygwindll = get_cygwin_dll();
+  CygwinDll *cygwindll = cygwin_get_dll();
   cygterm->cygwindll = cygwindll;
 
-  if (!cygterm->cygwindll) {
-    goto abort;
-  }
-  int pty_no = get_cygterm_pty_no(fd);
+  int pty_no = cygterm_get_pty_no(fd);
   if (pty_no == -1) {
     goto abort;
   }
   char pty_dev[MAX_PATH];
   snprintf(pty_dev, sizeof(pty_dev), "/dev/pty%d", pty_no);
-  cygterm->fd = cygwindll->open(pty_dev, O_RDWR | CYG_O_BINARY);
+  cygwin_init_dll(cygwindll);
+  cygterm->fd = cygwin_open(cygwindll, pty_dev, O_RDWR | CYG_O_BINARY);
   if (cygterm->fd == -1) {
     ELOG("Failed to open %s: %s", pty_dev,
-         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+         cygwin_strerror(cygwindll, cygwin_errno(cygwindll)));
     goto abort;
   }
 
   struct termios termios;
-  if (cygwindll->tcgetattr(cygterm->fd, &termios) == 0) {
+  if (cygwin_tcgetattr(cygwindll, cygterm->fd, &termios) == 0) {
     cygterm->restore_termios = termios;
     cygterm->restore_termios_valid = true;
-    cygwindll->cfmakeraw(&termios);
-    int ret = cygwindll->tcsetattr(cygterm->fd, TCSANOW, &termios);
+    cygwin_cfmakeraw(cygwindll, &termios);
+    int ret = cygwin_tcsetattr(cygwindll, cygterm->fd, TCSANOW, &termios);
     if (ret == -1) {
       ELOG("Failed to tcsetattr: %s",
-           cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+           cygwin_strerror(cygwindll, cygwin_errno(cygwindll)));
     }
   } else {
     ELOG("Failed to tcgetattr: %s",
-         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+         cygwin_strerror(cygwindll, cygwin_errno(cygwindll)));
   }
 
   int width, height;
   if (cygterm_get_winsize(cygterm, &width, &height)) {
     cygterm->width = width;
     cygterm->height = height;
-  } else {
-    cygterm->width = cygterm->height = -1;
   }
   return cygterm;
 
 abort:
-  xfree(cygterm);
-  return NULL;
+  cygterm->cygwindll = NULL;
+  return cygterm;
 }
 
 /// Discard the struct Cygterm.
@@ -272,28 +277,29 @@ abort:
 ///
 void os_cygterm_destroy(CygTerm *cygterm)
 {
-  if (!cygterm) {
+  if (!cygterm->cygwindll) {
+    xfree(cygterm);
     return;
   }
 
   CygwinDll *cygwindll = cygterm->cygwindll;
   if (cygterm->restore_termios_valid) {
-    int ret = cygwindll->tcsetattr(cygterm->fd,
-                                   TCSANOW,
-                                   &cygterm->restore_termios);
+    int ret = cygwin_tcsetattr(cygwindll,
+                               cygterm->fd,
+                               TCSANOW,
+                               &cygterm->restore_termios);
     if (ret == -1) {
       ELOG("Failed to tcsetattr: %s",
-           cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+           cygwin_strerror(cygwindll, cygwin_errno(cygwindll)));
     }
   }
 
-  int ret = cygwindll->close(cygterm->fd);
+  int ret = cygwin_close(cygwindll, cygterm->fd);
   if (ret == -1) {
     ELOG("Failed to close pty: %s",
-         cygwin_dll_strerror(cygwindll, cygwin_dll_errno(cygwindll)));
+         cygwin_strerror(cygwindll, cygwin_errno(cygwindll)));
   }
   FreeLibrary(cygwindll->hmodule);
-  xfree(cygterm->cygwindll);
   xfree(cygterm);
 }
 
@@ -307,7 +313,7 @@ void os_cygterm_destroy(CygTerm *cygterm)
 ///
 bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
 {
-  if (!cygterm || (cygterm->width == -1  && cygterm->height == -1)) {
+  if (!cygterm->cygwindll || (cygterm->width == -1  && cygterm->height == -1)) {
     return false;
   }
 
@@ -316,9 +322,15 @@ bool os_cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
   return true;
 }
 
+/// Query whether size of Cygwin's tty has been updated.
+///
+/// @param[in]  cygterm  Pointer to struct Cygterm.
+///
+/// @return If the size was updated, true. Otherwise false.
+///
 bool os_cygterm_is_size_update(CygTerm *cygterm)
 {
-  if (!cygterm) {
+  if (!cygterm->cygwindll) {
     return false;
   }
 
@@ -330,6 +342,113 @@ bool os_cygterm_is_size_update(CygTerm *cygterm)
     return true;
   }
 
+  return false;
+}
+
+/// Load the Cygwin DLL
+///
+/// @return If load succeeded, true. Otherwise false.
+///
+bool os_cygwin_load_dll(void)
+{
+  CygwinDll *cygwindll = cygwin_get_dll();
+  const char *emsg = NULL;
+  if (cygwindll->hmodule) {
+    ELOG("cygwin_load_dll() was called multiple times.");
+    return false;
+  } else {
+    MinttyType mintty;
+    const char *dll = NULL;
+    const char *init_func = NULL;
+    for (int i = 0; i < 3; i++) {
+      mintty = os_detect_mintty_type(i);
+      if (mintty == kMinttyCygwin) {
+        dll = CYGWDLL;
+        init_func = CYG_INIT_FUNC;
+        break;
+      } else if (mintty == kMinttyMsys) {
+        dll = MSYSDLL;
+        init_func = MSYS_INIT_FUNC;
+        break;
+      }
+    }
+    if (!dll) {
+      xfree(cygwindll);
+      ELOG("Failed to get DLL name.");
+      return false;
+    }
+    cygwindll->type = mintty;
+    HMODULE hmodule = LoadLibrary(dll);
+    if (!hmodule) {
+      ELOG("Failed to LoadLibrary: %s.", dll);
+      xfree(cygwindll);
+      return false;
+    }
+    cygwindll->hmodule = hmodule;
+    cygwindll->init = (init_fn)GetProcAddress(hmodule, init_func);
+    if (!cygwindll->init) {
+      emsg = init_func;
+      goto cleanup;
+    }
+    cygwindll->tcgetattr =
+      (tcgetattr_fn)GetProcAddress(hmodule, "tcgetattr");
+    if (!cygwindll->tcgetattr) {
+      emsg = "tcgetattr";
+      goto cleanup;
+    }
+    cygwindll->tcsetattr =
+      (tcsetattr_fn)GetProcAddress(hmodule, "tcsetattr");
+    if (!cygwindll->tcsetattr) {
+      emsg = "tcsetattr";
+      goto cleanup;
+    }
+    cygwindll->cfmakeraw =
+      (cfmakeraw_fn)GetProcAddress(hmodule, "cfmakeraw");
+    if (!cygwindll->cfmakeraw) {
+      emsg = "cfmakeraw";
+      goto cleanup;
+    }
+    cygwindll->ioctl = (ioctl_fn)GetProcAddress(hmodule, "ioctl");
+    if (!cygwindll->ioctl) {
+      emsg = "ioctl";
+      goto cleanup;
+    }
+    cygwindll->open = (open_fn)GetProcAddress(hmodule, "open");
+    if (!cygwindll->open) {
+      emsg = "open";
+      goto cleanup;
+    }
+    cygwindll->close = (close_fn)GetProcAddress(hmodule, "close");
+    if (!cygwindll->close) {
+      emsg = "close";
+      goto cleanup;
+    }
+    cygwindll->__errno = (errno_fn)GetProcAddress(hmodule, "__errno");
+    if (!cygwindll->__errno) {
+      emsg = "__errno";
+      goto cleanup;
+    }
+    cygwindll->strerror = (strerror_fn)GetProcAddress(hmodule, "strerror");
+    if (!cygwindll->strerror) {
+      emsg = "strerror";
+      goto cleanup;
+    }
+    cygwindll->uname = (uname_fn)GetProcAddress(hmodule, "uname");
+    if (!cygwindll->uname) {
+      emsg = "uname";
+      goto cleanup;
+    }
+    cygwindll->user_data =
+      (struct per_process *)GetProcAddress(hmodule, "__cygwin_user_data");
+    if (!cygwindll->user_data) {
+      emsg = "__cygwin_user_data";
+      goto cleanup;
+    }
+    return true;
+  }
+cleanup:
+  ELOG("Failed to GetProcAddress %s.", emsg);
+  FreeLibrary(cygwindll->hmodule);
   return false;
 }
 
@@ -412,24 +531,21 @@ static int query_mintty(int fd, MinttyQueryType query_type)
   return result;
 }
 
-static int get_cygterm_pty_no(int fd)
+static int cygterm_get_pty_no(int fd)
 {
   return query_mintty(fd, kPtyNo);
 }
 
 static bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
 {
-  if (!cygterm) {
-    return false;
-  }
-
+  assert(cygterm->cygwindll);
   struct winsize ws;
   int err, err_no;
   CygwinDll *cygwindll = cygterm->cygwindll;
 
   do {
-    err = cygwindll->ioctl(cygterm->fd, TIOCGWINSZ, &ws);
-    err_no = cygwin_dll_errno(cygwindll);
+    err = cygwin_ioctl(cygwindll, cygterm->fd, TIOCGWINSZ, (va_list)&ws);
+    err_no = cygwin_errno(cygwindll);
   } while (err == -1 && err_no == EINTR);
 
   if (err == -1) {
@@ -442,170 +558,168 @@ static bool cygterm_get_winsize(CygTerm *cygterm, int *width, int *height)
   return true;
 }
 
-static CygwinDll *get_cygwin_dll(void)
+static CygwinDll *cygwin_get_dll(void)
 {
-  static CygwinDll *cygwindll = NULL;
+  static CygwinDll cygwindll = {
+    NULL,  // hmodule
+    0,  // thread_id
+    kMinttyNone,  // type
+    NULL,  // init()
+    NULL,  // tcgetattr()
+    NULL,  // tcsetattr()
+    NULL,  // cfmakeraw()
+    NULL,  // ioctl()
+    NULL,  // open()
+    NULL,  // close()
+    NULL,  // __errno()
+    NULL,  // strerror()
+    NULL,  // uname()
+    NULL,  // user_data
+  };
+  return &cygwindll;
+}
+
+static void cygwin_init_dll(CygwinDll *cygwindll)
+{
   static bool is_init = false;
   const char *emsg = NULL;
   if (is_init) {
-    return cygwindll;
+    ELOG("cygwin_init_dll() called multiple times.");
+    return;
   }
   is_init = true;
-  cygwindll = xcalloc(1, sizeof(CygwinDll));
-  if (!cygwindll) {
-    return cygwindll;
-  }
-  void (*init)(void);
-  if (cygwindll->hmodule) {
-    return cygwindll;
-  } else {
-    MinttyType mintty;
-    const char *dll = NULL;
-    const char *init_func = NULL;
-    for (int i = 0; i < 3; i++) {
-      mintty = os_detect_mintty_type(i);
-      if (mintty == kMinttyCygwin) {
-        dll = CYGWDLL;
-        init_func = CYG_INIT_FUNC;
+  cygwindll->thread_id = GetCurrentThreadId();
+  cygwindll->init();
+  union utsname un;
+  if (cygwindll->uname(&un) == 0) {
+    const char *p;
+    if (cygwindll->type== kMinttyCygwin) {
+      p = un.cygwin.release;
+    } else {
+      p = un.msys.release;
+    }
+    size_t len = strlen(p);
+    len = len ? len : 20;
+    while (1) {
+      if (*p == '(') {
+        p++;
+        char *endptr;
+        unsigned long major = strtoul(p, &endptr, 10);
+        if (major > INT_MAX) {
+          emsg = "Major api version is to big.";
+          goto fallback;
+        }
+        p = endptr + 1;
+        unsigned long minor = strtoul(p, &endptr, 10);
+        if (minor > INT_MAX) {
+          emsg = "Minor api version is to big.";
+          goto fallback;
+        }
+        cygwindll->user_data->api_major = major;
+        cygwindll->user_data->api_minor = minor;
         break;
-      } else if (mintty == kMinttyMsys) {
-        dll = MSYSDLL;
-        init_func = MSYS_INIT_FUNC;
-        break;
-      }
-    }
-    if (!dll) {
-      xfree(cygwindll);
-      return cygwindll = NULL;
-    }
-    HMODULE hmodule = LoadLibrary(dll);
-    if (!hmodule) {
-      ELOG("Failed to LoadLibrary: %s", dll);
-      xfree(cygwindll);
-      return cygwindll = NULL;
-    }
-    cygwindll->hmodule = hmodule;
-    init = (void (*)(void))GetProcAddress(hmodule, init_func);
-    if (!init) {
-      emsg = init_func;
-      goto cleanup;
-    }
-    cygwindll->tcgetattr =
-      (tcgetattr_fn)GetProcAddress(hmodule, "tcgetattr");
-    if (!cygwindll->tcgetattr) {
-      emsg = "Failed to GetProcAddress tcgetattr";
-      goto cleanup;
-    }
-    cygwindll->tcsetattr =
-      (tcsetattr_fn)GetProcAddress(hmodule, "tcsetattr");
-    if (!cygwindll->tcsetattr) {
-      emsg = "Failed to GetProcAddress tcsetattr";
-      goto cleanup;
-    }
-    cygwindll->cfmakeraw =
-      (cfmakeraw_fn)GetProcAddress(hmodule, "cfmakeraw");
-    if (!cygwindll->cfmakeraw) {
-      emsg = "Faile to GetProcAddress cfmakeraw";
-      goto cleanup;
-    }
-    cygwindll->ioctl = (ioctl_fn)GetProcAddress(hmodule, "ioctl");
-    if (!cygwindll->ioctl) {
-      emsg = "Failed to GetProcAddress ioctl";
-      goto cleanup;
-    }
-    cygwindll->open = (open_fn)GetProcAddress(hmodule, "open");
-    if (!cygwindll->open) {
-      emsg = "Failed to GetProcAddress open";
-      goto cleanup;
-    }
-    cygwindll->close = (close_fn)GetProcAddress(hmodule, "close");
-    if (!cygwindll->close) {
-      emsg = "Failed to GetProcAddress close";
-      goto cleanup;
-    }
-    cygwindll->__errno = (errno_fn)GetProcAddress(hmodule, "__errno");
-    if (!cygwindll->__errno) {
-      emsg = "Failed to GetProcAddress __errno";
-      goto cleanup;
-    }
-    cygwindll->strerror = (strerror_fn)GetProcAddress(hmodule, "strerror");
-    if (!cygwindll->strerror) {
-      emsg = "Failed to GetProcAddress strerror";
-      goto cleanup;
-    }
-    uname_fn uname = (uname_fn)GetProcAddress(hmodule, "uname");
-    if (!uname) {
-      emsg = "Failed to GetProcAddress uname";
-      goto cleanup;
-    }
-    struct per_process *user_data =
-      (struct per_process *)GetProcAddress(hmodule, "__cygwin_user_data");
-    if (!user_data) {
-      emsg = "Failed to GetProcAddress __cygwin_user_data";
-      goto cleanup;
-    }
-    init();
-    union utsname un;
-    if (uname(&un) == 0) {
-      const char *p;
-      if (mintty  == kMinttyCygwin) {
-        p = un.cygwin.release;
       } else {
-        p = un.msys.release;
-      }
-      size_t len = strlen(p);
-      len = len ? len : 20;
-      while (1) {
-        if (*p == '(') {
-          p++;
-          char *endptr;
-          unsigned long major = strtoul(p, &endptr, 10);
-          if (major > INT_MAX) {
-            emsg = "Major api version is to big";
-            goto cleanup;
-          }
-          p = endptr + 1;
-          unsigned long minor = strtoul(p, &endptr, 10);
-          if (minor > INT_MAX) {
-            emsg = "Minor api version is to big";
-            goto cleanup;
-          }
-          user_data->api_major = major;
-          user_data->api_minor = minor;
-          break;
-        } else {
-          len--;
-          p++;
-          if (len == 0) {
-            emsg = "Failed to get cygwin api version";
-            goto cleanup;
-          }
+        len--;
+        p++;
+        if (len == 0) {
+          emsg = "Failed to get cygwin api version.";
+          goto fallback;
         }
       }
-    } else {
-      emsg = "Faled to get uname";
-      goto cleanup;
     }
-    return cygwindll;
+  } else {
+    emsg = "Faled to get uname().";
+    goto fallback;
   }
-cleanup:
-  ELOG("%s", emsg);
-  FreeLibrary(cygwindll->hmodule);
-  xfree(cygwindll);
-  return cygwindll = NULL;
+  return;
+fallback:
+  ELOG("%s Use the fallback API version.", emsg);
+  // The smallest API version in which the new termios are used.
+  cygwindll->user_data->api_major = 0;
+  cygwindll->user_data->api_minor = 6;
 }
 
-static int cygwin_dll_errno(CygwinDll *cygwindll)
+static int cygwin_tcgetattr(CygwinDll *cygwindll,
+                            int fd,
+                            struct termios *termios)
 {
-    int err_no = -1;
-    int *err = cygwindll->__errno();
-    if (err) {
-      err_no = *err;
-    }
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_tcgetattr() "
+         "was called from other thread that initialized DLL.");
+    return -1;
+  }
+  return cygwindll->tcgetattr(fd, termios);
+}
+
+static int cygwin_tcsetattr(CygwinDll *cygwindll,
+                            int fd, int option,
+                            struct termios *termios)
+{
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_tcsetattr() "
+         "was called from other thread that initialized DLL.");
+    return -1;
+  }
+  return cygwindll->tcsetattr(fd, option, termios);
+}
+
+static void cygwin_cfmakeraw(CygwinDll *cygwindll, struct termios *termios)
+{
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_cfmakeraw() "
+         "was called from other thread that initialized DLL.");
+    return;
+  }
+  cygwindll->cfmakeraw(termios);
+}
+
+static int cygwin_ioctl(CygwinDll *cygwindll, int fd, int request, va_list args)
+{
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_ioctl() was called from other thread that initialized DLL.");
+    return -1;
+  }
+  return cygwindll->ioctl(fd, request, args);
+}
+
+static int cygwin_open(CygwinDll *cygwindll, const char *pathname, int flags)
+{
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_open() was called from other thread that initialized DLL.");
+    return -1;
+  }
+  return cygwindll->open(pathname, flags);
+}
+
+static int cygwin_close(CygwinDll *cygwindll, int fd)
+{
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_close() was called from other thread that initialized DLL.");
+    return -1;
+  }
+  return cygwindll->close(fd);
+}
+
+static int cygwin_errno(CygwinDll *cygwindll)
+{
+  int err_no = -1;
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_errno() was called from other thread that initialized DLL.");
     return err_no;
+  }
+  int *err = cygwindll->__errno();
+  if (err) {
+    err_no = *err;
+  }
+  return err_no;
 }
 
-static char *cygwin_dll_strerror(CygwinDll *cygwindll, int err)
+static char *cygwin_strerror(CygwinDll *cygwindll, int err)
 {
+  if (cygwindll->thread_id != GetCurrentThreadId()) {
+    ELOG("cygwin_strerror() "
+         "was called from other thread that initialized DLL.");
+    return "";
+  }
   return cygwindll->strerror(err);
 }

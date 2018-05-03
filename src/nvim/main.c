@@ -70,6 +70,8 @@
 #include "nvim/api/private/dispatch.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
+#else
+# include "nvim/os/cygterm.h"
 #endif
 
 // Maximum number of commands from + or -c arguments.
@@ -1414,6 +1416,15 @@ static void check_tty(mparm_T *parmp)
 
     TIME_MSG("Warning delay");
   }
+#ifdef WIN32
+  if ((os_detect_mintty_type(0) != kMinttyNone
+       || os_detect_mintty_type(1) != kMinttyNone
+       || os_detect_mintty_type(2) != kMinttyNone)
+      && !os_cygwin_load_dll()) {
+    mch_errmsg(_("Vim: Error: Failed to load cygwin dll\n"));
+    exit(1);
+  }
+#endif
 }
 
 /*
