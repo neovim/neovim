@@ -143,7 +143,7 @@ local function _cs_remote(rcid, args)
     end
   elseif subcmd == 'send' then
     keys = args[2]
-    rpcrequest(rcid, 'vim_input', keys)
+    rpcrequest(rcid, 'nvim_input', keys)
     return
   elseif subcmd == 'expr' then
     expr = args[2]
@@ -154,7 +154,7 @@ local function _cs_remote(rcid, args)
   table.remove(args,1)
 
   command = 'args '..table.concat(args, " ")
-  rpcrequest(rcid, 'vim_command', command)
+  rpcrequest(rcid, 'nvim_command', command)
 
   return
 end

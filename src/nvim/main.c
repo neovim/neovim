@@ -113,7 +113,7 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
-  int cs_remote;                        // --remote {file1} {file2}
+  int remote;                           // --remote[-subcmd] {file1} {file2}
 } mparm_T;
 
 /* Values for edit_type. */
@@ -261,8 +261,8 @@ int main(int argc, char **argv)
   command_line_scan(&params);
   server_init(params.listen_addr);
 
-  if (params.cs_remote) {
-    const char *env_addr = os_getenv("NVIM_LISTEN_ADDRESS");
+  if (params.remote) {
+    //const char *env_addr = os_getenv("NVIM_LISTEN_ADDRESS");
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
     uint64_t rc_id = channel_connect(false, env_addr, true,
@@ -271,20 +271,19 @@ int main(int argc, char **argv)
       exit(0);
     }
 
-    int t_argc = params.cs_remote;
+    int t_argc = params.remote;
     Array args = ARRAY_DICT_INIT;
-    String arg_s = cstr_to_string(argv[t_argc]);
-    do {
+    String arg_s;
+    for (;t_argc < argc; t_argc++) {
       arg_s = cstr_to_string(argv[t_argc]);
       ADD(args, STRING_OBJ(arg_s));
-    }while(++t_argc < argc);
-
+    }
 
     Error err;
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ((int)rc_id));
     ADD(a, ARRAY_OBJ(args));
-    String s = cstr_to_string("return vim._cs_remote(select(1, ...))");
+    String s = cstr_to_string("return vim._cs_remote(...)");
     executor_exec_lua_api(s, a, &err);
 
     exit(0);
@@ -859,7 +858,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0){
             p_lpl = FALSE;
           } else if (STRNICMP(argv[0] + argv_idx, "remote", 6) == 0) {
-              parmp->cs_remote = parmp->argc - argc;
+              parmp->remote = parmp->argc - argc;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = TRUE;
             argv_idx += 3;
