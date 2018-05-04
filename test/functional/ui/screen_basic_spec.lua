@@ -645,4 +645,43 @@ describe('Screen', function()
       ]])
     end)
   end)
+
+  -- Regression test for #8357
+  it('does not have artifacts after temporary chars in insert mode', function()
+    command('inoremap jk <esc>')
+    feed('ifooj')
+    screen:expect([[
+      foo^j                                                 |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {2:-- INSERT --}                                         |
+    ]])
+    feed('k')
+    screen:expect([[
+      fo^o                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
+  end)
 end)
