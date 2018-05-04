@@ -41,6 +41,10 @@ env:
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
+    # Environment variables for ccache
+    - CCACHE_COMPRESS=1
+    - CCACHE_SLOPPINESS=time_macros,file_macro
+    - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
 
 jobs:
   include:
@@ -118,6 +122,7 @@ branches:
 
 cache:
   apt: true
+  ccache: true
   directories:
     - "$HOME/.cache/pip"
     - "$HOME/.cache/nvim-deps"
