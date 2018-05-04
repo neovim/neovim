@@ -5310,7 +5310,9 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
     bytes[0] = ScreenLines[off];
     bytes[1] = NUL;
 
-    bytes[utfc_char2bytes(off, bytes)] = NUL;
+    if (ScreenLinesUC[off] != 0) {
+      bytes[utfc_char2bytes(off, bytes)] = NUL;
+    }
   }
 }
 
