@@ -158,12 +158,22 @@ describe('api', function()
       eq(17, nvim('call_function', 'eval', {17}))
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
     end)
-
     it("VimL error: fails (generic error), does NOT update v:errmsg", function()
       local status, rv = pcall(nvim, "call_function", "bogus function", {"arg1"})
       eq(false, status)                 -- nvim_call_function() failed.
       ok(nil ~= string.find(rv, "Error calling function"))
       eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    end)
+    it('validates args', function()
+      local too_many_args = { 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x' }
+      source([[
+        function! Foo(...) abort
+          echo a:000
+        endfunction
+      ]])
+      -- E740
+      expect_err('Function called with too many arguments', request,
+                 'nvim_call_function', 'Foo', too_many_args)
     end)
   end)
 
