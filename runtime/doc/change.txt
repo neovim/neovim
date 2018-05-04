@@ -338,12 +338,12 @@ gu{motion}		Make {motion} text lowercase.
 gugu							*gugu* *guu*
 guu			Make current line lowercase.
 
-							*g?* *rot13*
-g?{motion}		Rot13 encode {motion} text.
+							*g?* *encode*
+g?{motion}		Encode with 'encodefunc' {motion} text.
 
 							*v_g?*
-{Visual}g?		Rot13 encode the highlighted text (for {Visual} see
-			|Visual-mode|).
+{Visual}g?		Encode the highlighted text with 'encodefunc'
+			(for {Visual} see |Visual-mode|).
 
 g?g?							*g?g?* *g??*
 g??			Rot13 encode current line.

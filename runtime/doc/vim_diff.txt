@@ -312,6 +312,9 @@ Highlight groups:
 VimL (Vim script) compatibility:
   `count` does not alias to |v:count|
 
+|g?| does not perform ROT13 encoding but rather calls 'encodefunc' which
+works like 'operatorfunc'.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 

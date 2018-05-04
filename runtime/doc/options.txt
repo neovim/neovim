@@ -2061,6 +2061,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 			feature}
 	When on all Unicode emoji characters are considered to be full width.
 
+						*'encodefunc'*
+'encodefunc' 'encfunc'	string	(default: empty)
+			global
+	This option specifies a function to be called by the |g?| operator.
+	See |:map-operator| for more info and an example.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'	Removed. |vim-differences| {Nvim}

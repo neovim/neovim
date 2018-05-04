@@ -667,6 +667,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='encodefunc',
+      type='string', scope={'global'},
+      secure=true,
+      vi_def=true,
+      varname='p_encfunc',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='encoding', abbreviation='enc',
       type='string', scope={'global'},
       deny_in_modelines=true,

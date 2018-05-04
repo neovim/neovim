@@ -1893,13 +1893,16 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_TILDE:
     case OP_UPPER:
     case OP_LOWER:
-    case OP_ROT13:
       if (empty_region_error) {
         vim_beep(BO_OPER);
         CancelRedo();
       } else
         op_tilde(oap);
       check_cursor_col();
+      break;
+    case OP_ENCODE:
+      curwin->w_p_lbr = lbr_saved;
+      enc_function(oap);                 // call 'encodefunc'
       break;
 
     case OP_FORMAT:
@@ -2086,15 +2089,13 @@ static void op_colon(oparg_T *oap)
    */
 }
 
-/*
- * Handle the "g@" operator: call 'operatorfunc'.
- */
-static void op_function(oparg_T *oap)
+// Implements functionality of 'operatorfunc' and 'encodefunc'.
+static void call_function(const char *option_name, char_u *func, oparg_T *oap)
 {
   int save_virtual_op = virtual_op;
 
-  if (*p_opfunc == NUL)
-    EMSG(_("E774: 'operatorfunc' is empty"));
+  if (*func == NUL)
+    emsgf(_("E774: '%s' is empty"), option_name);
   else {
     /* Set '[ and '] marks to text to be operated on. */
     curbuf->b_op_start = oap->start;
@@ -2116,10 +2117,22 @@ static void op_function(oparg_T *oap)
     // function.
     virtual_op = MAYBE;
 
-    (void)call_func_retnr(p_opfunc, 1, argv, false);
+    (void)call_func_retnr(func, 1, argv, false);
 
     virtual_op = save_virtual_op;
   }
+}
+
+// Handle the "g@" operator: call 'operatorfunc'.
+static void op_function(oparg_T *oap)
+{
+  call_function("operatorfunc", p_opfunc, oap);
+}
+
+// Handle the "g?" operator: call 'encodefunc'.
+static void enc_function(oparg_T *oap)
+{
+  call_function("encodefunc", p_encfunc, oap);
 }
 
 // Move the current tab to tab in same column as mouse or to end of the
@@ -5288,7 +5301,7 @@ static void nv_search(cmdarg_T *cap)
   oparg_T     *oap = cap->oap;
   pos_T save_cursor = curwin->w_cursor;
 
-  if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
+  if (cap->cmdchar == '?' && cap->oap->op_type == OP_ENCODE) {
     /* Translate "g??" to "g?g?" */
     cap->cmdchar = 'g';
     cap->nchar = '?';
@@ -6916,7 +6929,7 @@ static void nv_g_cmd(cmdarg_T *cap)
    *	 "g~"	    Toggle the case of the text.
    *	 "gu"	    Change text to lower case.
    *	 "gU"	    Change text to upper case.
-   *   "g?"	    rot13 encoding
+   *   "g?"	    call 'encodefunc'
    *   "g@"	    call 'operatorfunc'
    */
   case 'q':

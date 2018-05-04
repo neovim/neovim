@@ -108,7 +108,7 @@ static char opchars[][3] =
   { 'g',    'u', false },    // OP_LOWER
   { 'J',    NUL, true },     // DO_JOIN
   { 'g',    'J', true },     // DO_JOIN_NS
-  { 'g',    '?', false },    // OP_ROT13
+  { 'g',    '?', false },    // OP_ENCODE
   { 'r',    NUL, false },    // OP_REPLACE
   { 'I',    NUL, false },    // OP_INSERT
   { 'A',    NUL, false },    // OP_APPEND
@@ -1933,7 +1933,6 @@ static int swapchars(int op_type, pos_T *pos, int length)
 /*
  * If op_type == OP_UPPER: make uppercase,
  * if op_type == OP_LOWER: make lowercase,
- * if op_type == OP_ROT13: do rot13 encoding,
  * else swap case of character at 'pos'
  * returns TRUE when something actually changed.
  */
@@ -1943,10 +1942,6 @@ int swapchar(int op_type, pos_T *pos)
   int nc;
 
   c = gchar_pos(pos);
-
-  /* Only do rot13 encoding for ASCII characters. */
-  if (c >= 0x80 && op_type == OP_ROT13)
-    return FALSE;
 
   if (op_type == OP_UPPER && c == 0xdf) {
     pos_T sp = curwin->w_cursor;
@@ -1964,15 +1959,11 @@ int swapchar(int op_type, pos_T *pos)
     return FALSE;
   nc = c;
   if (mb_islower(c)) {
-    if (op_type == OP_ROT13) {
-      nc = ROT13(c, 'a');
-    } else if (op_type != OP_LOWER) {
+    if (op_type != OP_LOWER) {
       nc = mb_toupper(c);
     }
   } else if (mb_isupper(c)) {
-    if (op_type == OP_ROT13) {
-      nc = ROT13(c, 'A');
-    } else if (op_type != OP_UPPER) {
+    if (op_type != OP_UPPER) {
       nc = mb_tolower(c);
     }
   }

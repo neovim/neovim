@@ -53,7 +53,7 @@ typedef int (*Indenter)(void);
 #define OP_LOWER        12      // "gu" make lower case operator
 #define OP_JOIN         13      // "J"  join operator, only for Visual mode
 #define OP_JOIN_NS      14      // "gJ"  join operator, only for Visual mode
-#define OP_ROT13        15      // "g?" rot-13 encoding
+#define OP_ENCODE       15      // "g?" encoding operator
 #define OP_REPLACE      16      // "r"  replace chars, only for Visual mode
 #define OP_INSERT       17      // "I"  Insert column, only for Visual mode
 #define OP_APPEND       18      // "A"  Append column, only for Visual mode

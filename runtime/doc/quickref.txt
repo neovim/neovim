@@ -395,8 +395,8 @@ In Insert or Command-line mode:
 			   lowercase
 |gU|	     gU{motion} make the text that is moved over with {motion}
 			   uppercase
-|v_g?|	     {visual}g? perform rot13 encoding on highlighted text
-|g?|	     g?{motion} perform rot13 encoding on the text that is moved over
+|v_g?|	     {visual}g? call 'encodefunc' on highlighted text
+|g?|	     g?{motion} call 'encodefunc' on the text that is moved over
 			   with {motion}
 
 |CTRL-A|  N  CTRL-A	add N to the number at or after the cursor
@@ -669,6 +669,7 @@ Short explanation of each option:		*option-list*
 'directory'	  'dir'     list of directory names for the swap file
 'display'	  'dy'	    list of flags for how to display text
 'eadirection'	  'ead'     in which direction 'equalalways' works
+'encodefunc'	            function to be called for |g?| operator
 'encoding'	  'enc'     encoding used internally
 'endofline'	  'eol'     write <EOL> for last line in file
 'equalalways'	  'ea'	    windows are automatically made the same size
