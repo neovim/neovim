@@ -317,7 +317,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
     api_set_error(err, kErrorTypeValidation,
-                  "Function called with too many arguments.");
+                  "Function called with too many arguments");
     return rv;
   }
 
@@ -338,7 +338,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
                     vim_args, NULL, curwin->w_cursor.lnum,
                     curwin->w_cursor.lnum, &dummy, true, NULL, self);
   if (r == FAIL) {
-    api_set_error(err, kErrorTypeException, "Error calling function.");
+    api_set_error(err, kErrorTypeException, "Error calling function");
   }
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
@@ -371,12 +371,10 @@ Object nvim_call_function(String fn, Array args, Error *err)
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
 /// @param fn Function to call
-/// @param internal true if the function is stored on the dict
 /// @param args Functions arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_dict_function(Object dict, String fn, Boolean internal,
-                               Array args, Error *err)
+Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
   FUNC_API_SINCE(4)
 {
   Object rv = OBJECT_INIT;
@@ -399,13 +397,8 @@ Object nvim_call_dict_function(Object dict, String fn, Boolean internal,
       break;
     }
     case kObjectTypeDictionary: {
-      if (internal) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Cannot invoke RPC dict as a VimL reference");
-        return rv;
-      } else if (!object_to_vim(dict, &rettv, err)) {
-        tv_clear(&rettv);
-        return rv;
+      if (!object_to_vim(dict, &rettv, err)) {
+        goto end;
       }
       break;
     }
@@ -421,22 +414,25 @@ Object nvim_call_dict_function(Object dict, String fn, Boolean internal,
     goto end;
   }
 
-  if (internal) {
+  if (dict.type != kObjectTypeDictionary) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
-    if (di == NULL) {
-      api_set_error(err, kErrorTypeValidation, "Function not found in dict");
-      goto end;
+    if (di != NULL) {
+      if (di->di_tv.v_type != VAR_STRING) {
+        api_set_error(err, kErrorTypeValidation,
+                      "Value found in dict is not a valid function");
+        goto end;
+      }
+      // XXX: Hack to guess if function is "internal".
+      bool internal = (0 != STRNCMP(di->di_tv.vval.v_string, "function(", 9));
+      if (internal) {
+        fn = (String) {
+          .data = (char *)di->di_tv.vval.v_string,
+          .size = strlen((char *)di->di_tv.vval.v_string),
+        };
+      }
     }
-    if (di->di_tv.v_type != VAR_STRING) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Value found in dict is not a valid function");
-      goto end;
-    }
-    fn = (String) {
-      .data = (char *)di->di_tv.vval.v_string,
-      .size = strlen((char *)di->di_tv.vval.v_string),
-    };
   }
+
   if (!fn.data || fn.size < 1) {
     api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
     goto end;
