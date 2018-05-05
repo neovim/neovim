@@ -396,10 +396,8 @@ void terminal_enter(void)
   win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
-  int save_w_p_rnu = curwin->w_p_rnu;
   curwin->w_p_cul = false;
   curwin->w_p_cuc = false;
-  curwin->w_p_rnu = false;
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
@@ -417,7 +415,6 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;
-    curwin->w_p_rnu = save_w_p_rnu;
   }
 
   // draw the unfocused cursor
