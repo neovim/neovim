@@ -118,18 +118,21 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
-local function rpcrequest(...)
+local function __rpcrequest(...)
   return vim.api.nvim_call_function("rpcrequest", {...})
 end
 
 local function _cs_remote(rcid, args)
 
-  f_tab = false
-  f_silent = false
-  f_wait = false
+  -- issues with commands like --remote-somethingelse
+  -- still works, should fail^
+
+  local f_silent = false
+  local f_wait = false
+  local f_tab = false
 
   -- extract the subcommand
-  subcmd = string.sub(args[1],10):gsub('-',' ')
+  local subcmd = string.sub(args[1],10):gsub('-',' ')
 
   if subcmd == 'tab' then
     f_tab = true
@@ -147,15 +150,17 @@ local function _cs_remote(rcid, args)
     return
   elseif subcmd == 'expr' then
     expr = args[2]
-    res = rpcrequest(rcid, 'vim_eval', expr)
+    res = __rpcrequest(rcid, 'vim_eval', expr)
     return
   end
 
   table.remove(args,1)
 
-  command = 'args '..table.concat(args, " ")
-  rpcrequest(rcid, 'nvim_command', command)
+  -- use this for silent flag
+  if rcid ~= 0 then print('valid') else print('not valid') end
 
+  command = 'args '..table.concat(args, " ")
+  __rpcrequest(rcid, 'nvim_command', command)
   return
 end
 
