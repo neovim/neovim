@@ -157,16 +157,23 @@ client.request_async = function(self, method, params, cb)
     return nil
   end
 
+  local callback_list
   if cb == nil then
-    cb = get_callback_function(method)
+    callback_list = get_callback_function(method)
+  elseif type(cb) == 'table' then
+    callback_list = cb
+  elseif type(cb) == 'function' then
+    callback_list = { cb }
   elseif type(cb) == 'string' then
     -- When we pass a string, that's a VimL function that we want to call
     -- so we create a callback function to run it.
     --
     --      See: |lsp#request()|
-    cb = function(success, data)
-      return vim.api.nvim_call_function(cb, {success, data})
-    end
+    callback_list = {
+      function(success, data)
+        return vim.api.nvim_call_function(cb, {success, data})
+      end
+    }
   end
 
   -- After handling callback semantics, store it to call on reply.
@@ -326,14 +333,14 @@ client.on_message = function(self, json_message)
   elseif not json_message.method and json_message.id then
     local cb_object = self._callbacks[json_message.id]
 
-    if cb_object == nil then
+    if cb_object == nil or cb_object == {} then
       return
     end
 
-    local cb = cb_object.cb
+    local callback_list = cb_object.cb
 
     -- Nothing left to do if we don't have a valid callback
-    if (not cb) or (type(cb) ~= 'function') then
+    if (not callback_list) or (type(callback_list) ~= 'table') then
       return
     end
 
@@ -352,7 +359,7 @@ client.on_message = function(self, json_message)
         error_code = error_code .. ': ' .. error_message
       end
 
-      local err = cb(false, json_message.error)
+      local err = { callback_list[1](false, json_message.error) }
 
       self._results[json_message.id] = {
         complete = true,
@@ -360,8 +367,11 @@ client.on_message = function(self, json_message)
         result = err,
       }
     else
-      local result = cb(true, json_message.result)
-      log.trace('__langserver_cb_result', result)
+      local result = { }
+
+      for _, cb in pairs(callback_list) do
+        result.insert(cb(true, json_message.result))
+      end
 
       self._results[json_message.id] = {
         complete = true,

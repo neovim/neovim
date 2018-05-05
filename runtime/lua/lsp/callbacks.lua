@@ -38,7 +38,7 @@ local error_callback = require('lsp.config.callbacks').error_callback
 local cb = {}
 cb.textDocument = {}
 
-cb.textDocument.publishDiagnostics = function(success, data)
+cb.textDocument.publishDiagnostics = { function(success, data)
   if not success then
     error_callback('textDocument/publishDiagnostics', data)
     return nil
@@ -80,9 +80,9 @@ cb.textDocument.publishDiagnostics = function(success, data)
   end
 
   return result
-end
+end }
 
-cb.textDocument.completion = function(success, data)
+cb.textDocument.completion = { function(success, data)
   if not success then
     error_callback('textDocument/completion', data)
     return nil
@@ -93,9 +93,9 @@ cb.textDocument.completion = function(success, data)
   end
 
   return handle_completion.getLabels(data)
-end
+end }
 
-cb.textDocument.references = function(success, data)
+cb.textDocument.references = { function(success, data)
   if not success then
     error_callback('textDocument/references', data)
     return nil
@@ -130,9 +130,9 @@ cb.textDocument.references = function(success, data)
   end
 
   return result
-end
+end }
 
-cb.textDocument.hover = function(success, data)
+cb.textDocument.hover = { function(success, data)
   log.trace('textDocument/hover', data)
 
   if not success then
@@ -180,9 +180,9 @@ cb.textDocument.hover = function(success, data)
     return long_string
   end
 
-end
+end }
 
-cb.textDocument.definition = function(success, data)
+cb.textDocument.definition = { function(success, data)
   log.trace('callback:textDocument/definiton', data)
 
   if not success then
@@ -227,7 +227,7 @@ cb.textDocument.definition = function(success, data)
   )
 
   return true
-end
+end }
 
 local get_callback_function = function(method) -- {{{
   local method_table

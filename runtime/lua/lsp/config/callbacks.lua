@@ -17,4 +17,38 @@ configure.error_callback = function(name, error_message)
   return message
 end
 
+configure.add_callback = function(method, cb, override_default_callback)
+  local method_table
+  if type(method) == 'string' then
+    method_table = util.split(method, '/')
+  elseif type(method) == 'table' then
+    method_table = method
+  else
+    -- TODO: Error out here.
+    return nil
+  end
+
+  local default_callbacks = require('lsp.callbacks').callbacks
+
+  for _, key in ipairs(method_table) do
+    default_callbacks = default_callbacks[key]
+
+    if default_callbacks == nil then
+      break
+    end
+  end
+
+  if default_callbacks then
+    if override_default_callback then
+      default_callbacks[1] = cb
+    else
+      default_callbacks.insert(cb)
+    end
+  end
+end
+
+configure.disable_default_callback = function(method)
+  configure.add_callback(method, nil, true)
+end
+
 return configure
