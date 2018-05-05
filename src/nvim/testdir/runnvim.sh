@@ -15,7 +15,14 @@ prepare_tdir() {
   mkdir -p "$tdir/Xtest-tmpdir"
   export TMPDIR="$tdir/Xtest-tmpdir"
 
-  cp -a * "$tdir"
+  local filesystems="$(df -P -- . "$tdir" | tail -n+2 | cut -d" " -f1)"
+  if test "${filesystems%$NL*}" = "${filesystems#*$NL}" ; then
+    cp -a */ "$tdir"
+    # Will fail for directories, but still do its job.
+    ln -f * "$tdir" &>/dev/null || true
+  else
+    cp -a * "$tdir"
+  fi
   if test -e "$tdir/$test_name.ok" ; then
     cp "$tdir/$test_name.ok" "$tdir/test.ok"
   fi
