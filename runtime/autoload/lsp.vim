@@ -74,11 +74,16 @@ endfunction
 ""
 " Give access to the default client callbacks to perform
 " LSP type actions, without a server
-function! lsp#handle(request, data) abort abort
+function! lsp#handle(request, data, ...) abort abort
+  let file_type = get(a:000, 0, &filetype)
+  let default_only = get(a:000, 1, v:true)
+
   " Gets the default callback,
   " and then calls it with the provided data
-  return luaeval(s:client_string . '.get_callback(_A.name)(true, _A.data)', {
+  return luaeval(s:client_string . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
+        \ 'filetype': file_type,
         \ 'name': a:request,
         \ 'data': a:data,
+        \ 'default_only': default_only,
         \ })
 endfunction
