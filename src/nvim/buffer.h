@@ -72,6 +72,9 @@ static inline void switch_to_win_for_buf(buf_T *buf,
   }
 }
 
+// From passed tab page and window, attempt to restore a saved buffer.
+// If no saved buffer exists, set "curbuf" to "save_curwin"'s buffer.
+// If "save_curbuf" is valid, restore "curbuf" to the saved buffer.
 static inline void restore_win_for_buf(win_T *save_curwin,
                                        tabpage_T *save_curtab,
                                        bufref_T *save_curbuf)
