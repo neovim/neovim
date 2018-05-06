@@ -629,7 +629,6 @@ int os_fsync(int fd)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
-  g_stats.fsync++;
   return r;
 }
 

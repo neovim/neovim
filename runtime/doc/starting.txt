@@ -355,10 +355,6 @@ argument.
                 instead.
 		See also |silent-mode|, which does start a (limited) UI.
 
---listen {addr}						*--listen*
-		Start |RPC| server on pipe or TCP address {addr}. Sets the
-		primary listen address |v:servername| to {addr}. |serverstart()|
-
 ==============================================================================
 2. Initialization				*initialization* *startup*
 

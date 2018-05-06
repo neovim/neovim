@@ -22,6 +22,8 @@ local neq = global_helpers.neq
 local ok = global_helpers.ok
 local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
+local filter = global_helpers.filter
+local dedent = global_helpers.dedent
 local table_flatten = global_helpers.table_flatten
 local write_file = global_helpers.write_file
 
@@ -685,7 +687,6 @@ local module = {
   insert = insert,
   iswin = iswin,
   map = map,
-  matches = matches,
   merge_args = merge_args,
   meth_pcall = meth_pcall,
   meths = meths,

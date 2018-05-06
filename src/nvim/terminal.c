@@ -1103,7 +1103,6 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
   refresh_pending = false;
   if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
-      || (State & CMDPREVIEW)
       // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
       // skip redraws to keep it visible.
       || wild_menu_showing == WM_LIST) {

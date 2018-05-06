@@ -976,7 +976,7 @@ return {
       secure=true,
       vi_def=true,
       varname='p_fs',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='gdefault', abbreviation='gd',

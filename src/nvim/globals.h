@@ -78,11 +78,6 @@ typedef enum {
   kTrue  = 1,
 } TriState;
 
-EXTERN struct nvim_stats_s {
-  int64_t fsync;
-  int64_t redraw;
-} g_stats INIT(= { 0, 0 });
-
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */
@@ -1062,6 +1057,7 @@ EXTERN char_u e_nesting[] INIT(= N_("E22: Scripts nested too deep"));
 EXTERN char_u e_noalt[] INIT(= N_("E23: No alternate file"));
 EXTERN char_u e_noabbr[] INIT(= N_("E24: No such abbreviation"));
 EXTERN char_u e_nobang[] INIT(= N_("E477: No ! allowed"));
+EXTERN char_u e_nogvim[] INIT(= N_("E25: Nvim does not have a built-in GUI"));
 EXTERN char_u e_nogroup[] INIT(= N_("E28: No such highlight group name: %s"));
 EXTERN char_u e_noinstext[] INIT(= N_("E29: No inserted text yet"));
 EXTERN char_u e_nolastcmd[] INIT(= N_("E30: No previous command line"));

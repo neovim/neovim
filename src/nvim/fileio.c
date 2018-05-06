@@ -3063,7 +3063,7 @@ nobackup:
    */
   if (reset_changed && !newfile && overwriting
       && !(exiting && backup != NULL)) {
-    ml_preserve(buf, false, !!p_fs);
+    ml_preserve(buf, FALSE);
     if (got_int) {
       SET_ERRMSG(_(e_interr));
       goto restore_backup;
