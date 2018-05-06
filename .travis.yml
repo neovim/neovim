@@ -91,7 +91,6 @@ install:        ci/install.sh
 before_script:  ci/before_script.sh
 script:         ci/script.sh
 before_cache:   ci/before_cache.sh
-after_success:  ci/after_success.sh
 
 addons:
   apt:
