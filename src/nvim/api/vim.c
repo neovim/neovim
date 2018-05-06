@@ -934,27 +934,26 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
-/// Call many api methods atomically
+/// Calls many API methods atomically.
 ///
-/// This has two main usages: Firstly, to perform several requests from an
-/// async context atomically, i.e. without processing requests from other rpc
-/// clients or redrawing or allowing user interaction in between. Note that api
-/// methods that could fire autocommands or do event processing still might do
-/// so. For instance invoking the :sleep command might call timer callbacks.
-/// Secondly, it can be used to reduce rpc overhead (roundtrips) when doing
-/// many requests in sequence.
+/// This has two main usages:
+/// 1. To perform several requests from an async context atomically, i.e.
+///    without interleaving redraws, RPC requests from other clients, or user
+///    interactions (however API methods may trigger autocommands or event
+///    processing which have such side-effects, e.g. |:sleep| may wake timers).
+/// 2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
 ///
 /// @param calls an array of calls, where each call is described by an array
 /// with two elements: the request name, and an array of arguments.
 /// @param[out] err Details of a validation error of the nvim_multi_request call
-/// itself, i e malformatted `calls` parameter. Errors from called methods will
+/// itself, i.e. malformed `calls` parameter. Errors from called methods will
 /// be indicated in the return value, see below.
 ///
 /// @return an array with two elements. The first is an array of return
 /// values. The second is NIL if all calls succeeded. If a call resulted in
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
-/// error ocurred, the values from all preceding calls will still be returned.
+/// error occurred, the values from all preceding calls will still be returned.
 Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {

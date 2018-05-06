@@ -120,9 +120,7 @@ bool try_end(Error *err)
   // try_enter/try_leave.
   trylevel--;
 
-  // Without this it stops processing all subsequent VimL commands and
-  // generates strange error messages if I e.g. try calling Test() in a
-  // cycle
+  // Set by emsg(), affects aborting().  See also enter_cleanup().
   did_emsg = false;
 
   if (got_int) {
