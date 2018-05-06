@@ -10,7 +10,7 @@ function! s:initialize_autocmds() abort
 
   augroup LanguageServerProtocol
     autocmd!
-    call luaeval('require("lsp.autocmds").export_autocmds()')
+    lua require("lsp.autocmds").export_autocmds()
   augroup END
 
 endfunction
@@ -22,7 +22,7 @@ function! lsp#start(...) abort
   let force = get(a:000, 1, v:false)
 
   if force || !luaeval(s:client_string . '.has_started(_A)', start_filetype)
-    call luaeval(s:client_string . '.start(nil, nil, _A).name', start_filetype)
+    call luaeval(s:client_string . '.start(nil, _A).name', start_filetype)
 
     " Open the document in the lsp.
     " Only do this if we just started the server, to make sure that this

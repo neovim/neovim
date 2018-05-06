@@ -4,9 +4,8 @@ return {
     add = require('lsp.server').add,
   },
 
-  configure = {
-    callbacks = require('lsp.configure.callbacks'),
-    request = require('lsp.configure.request'),
+  config = {
+    callbacks = require('lsp.config.callbacks'),
+    request = require('lsp.config.request'),
   },
-
 }

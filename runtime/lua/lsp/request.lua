@@ -17,6 +17,8 @@
 --          @returns (table): The resulting params for the request
 
 local nvim_util = require('neovim.util')
+
+local server_config = require('lsp.server')
 local structures = require('lsp.structures')
 
 local requests = {
@@ -31,7 +33,7 @@ requests.initialize = function(client, params)
     processId = vim.api.nvim_call_function('getpid', {}),
 
     -- TODO(tjdevries): Give the user a way to specify this by filetype
-    rootUri = vim.api.nvim_call_function('lsp#server#get_root_uri', {client.ft}),
+    rootUri = server_config.get_callback(client.ft, 'root_uri'),
 
     capabilities = {
       textDocument = {
