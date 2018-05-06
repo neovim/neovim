@@ -287,57 +287,6 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function with the given arguments
-///
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
-///
-/// @param fname    Function to call
-/// @param args     Function arguments packed in an Array
-/// @param[out] err Error details, if any
-/// @return Result of the function call
-Object nvim_call_function(String fname, Array args, Error *err)
-  FUNC_API_SINCE(1)
-{
-  Object rv = OBJECT_INIT;
-  if (args.size > MAX_FUNC_ARGS) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Function called with too many arguments.");
-    return rv;
-  }
-
-  // Convert the arguments in args from Object to typval_T values
-  typval_T vim_args[MAX_FUNC_ARGS + 1];
-  size_t i = 0;  // also used for freeing the variables
-  for (; i < args.size; i++) {
-    if (!object_to_vim(args.items[i], &vim_args[i], err)) {
-      goto free_vim_args;
-    }
-  }
-
-  try_start();
-  // Call the function
-  typval_T rettv;
-  int dummy;
-  int r = call_func((char_u *)fname.data, (int)fname.size,
-                    &rettv, (int)args.size, vim_args, NULL,
-                    curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                    true, NULL, NULL);
-  if (r == FAIL) {
-    api_set_error(err, kErrorTypeException, "Error calling function.");
-  }
-  if (!try_end(err)) {
-    rv = vim_to_object(&rettv);
-  }
-  tv_clear(&rettv);
-
-free_vim_args:
-  while (i > 0) {
-    tv_clear(&vim_args[--i]);
-  }
-
-  return rv;
-}
-
 /// Execute lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -354,6 +303,150 @@ Object nvim_execute_lua(String code, Array args, Error *err)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
 {
   return executor_exec_lua_api(code, args, err);
+}
+
+/// Calls a VimL function.
+///
+/// @param fn Function name
+/// @param args Function arguments
+/// @param self `self` dict, or NULL for non-dict functions
+/// @param[out] err Error details, if any
+/// @return Result of the function call
+static Object _call_function(String fn, Array args, dict_T *self, Error *err)
+{
+  Object rv = OBJECT_INIT;
+  if (args.size > MAX_FUNC_ARGS) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Function called with too many arguments");
+    return rv;
+  }
+
+  // Convert the arguments in args from Object to typval_T values
+  typval_T vim_args[MAX_FUNC_ARGS + 1];
+  size_t i = 0;  // also used for freeing the variables
+  for (; i < args.size; i++) {
+    if (!object_to_vim(args.items[i], &vim_args[i], err)) {
+      goto free_vim_args;
+    }
+  }
+
+  try_start();
+  // Call the function
+  typval_T rettv;
+  int dummy;
+  int r = call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+                    vim_args, NULL, curwin->w_cursor.lnum,
+                    curwin->w_cursor.lnum, &dummy, true, NULL, self);
+  if (r == FAIL) {
+    api_set_error(err, kErrorTypeException, "Error calling function");
+  }
+  if (!try_end(err)) {
+    rv = vim_to_object(&rettv);
+  }
+  tv_clear(&rettv);
+
+free_vim_args:
+  while (i > 0) {
+    tv_clear(&vim_args[--i]);
+  }
+
+  return rv;
+}
+
+/// Calls a VimL function with the given arguments.
+///
+/// On VimL error: Returns a generic error; v:errmsg is not updated.
+///
+/// @param fn       Function to call
+/// @param args     Function arguments packed in an Array
+/// @param[out] err Error details, if any
+/// @return Result of the function call
+Object nvim_call_function(String fn, Array args, Error *err)
+  FUNC_API_SINCE(1)
+{
+  return _call_function(fn, args, NULL, err);
+}
+
+/// Calls a VimL |Dictionary-function| with the given arguments.
+///
+/// @param dict Dictionary, or String evaluating to a VimL |self| dict
+/// @param fn Name of the function defined on the VimL dict
+/// @param args Function arguments packed in an Array
+/// @param[out] err Error details, if any
+/// @return Result of the function call
+Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
+  FUNC_API_SINCE(4)
+{
+  Object rv = OBJECT_INIT;
+
+  typval_T rettv;
+  bool mustfree = false;
+  switch (dict.type) {
+    case kObjectTypeString: {
+      try_start();
+      if (eval0((char_u *)dict.data.string.data, &rettv, NULL, true) == FAIL) {
+        api_set_error(err, kErrorTypeException,
+                      "Failed to evaluate dict expression");
+      }
+      if (try_end(err)) {
+        return rv;
+      }
+      // Evaluation of the string arg created a new dict or increased the
+      // refcount of a dict. Not necessary for a RPC dict.
+      mustfree = true;
+      break;
+    }
+    case kObjectTypeDictionary: {
+      if (!object_to_vim(dict, &rettv, err)) {
+        goto end;
+      }
+      break;
+    }
+    default: {
+      api_set_error(err, kErrorTypeValidation,
+                    "dict argument type must be String or Dictionary");
+      return rv;
+    }
+  }
+  dict_T *self_dict = rettv.vval.v_dict;
+  if (rettv.v_type != VAR_DICT || !self_dict) {
+    api_set_error(err, kErrorTypeValidation, "dict not found");
+    goto end;
+  }
+
+  if (fn.data && fn.size > 0 && dict.type != kObjectTypeDictionary) {
+    dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
+    if (di == NULL) {
+      api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
+      goto end;
+    }
+    if (di->di_tv.v_type == VAR_PARTIAL) {
+      api_set_error(err, kErrorTypeValidation,
+                    "partial function not supported");
+      goto end;
+    }
+    if (di->di_tv.v_type != VAR_FUNC) {
+      api_set_error(err, kErrorTypeValidation, "Not a function: %s", fn.data);
+      goto end;
+    }
+    fn = (String) {
+      .data = (char *)di->di_tv.vval.v_string,
+      .size = strlen((char *)di->di_tv.vval.v_string),
+    };
+  }
+
+  if (!fn.data || fn.size < 1) {
+    api_set_error(err, kErrorTypeValidation, "Invalid (empty) function name");
+    goto end;
+  }
+
+  rv = _call_function(fn, args, self_dict, err);
+end:
+  if (mustfree) {
+    tv_clear(&rettv);
+  }
+
+  return rv;
 }
 
 /// Calculates the number of display cells occupied by `text`.
