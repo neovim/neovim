@@ -1,6 +1,7 @@
 -- luacheck: globals vim
 
 local ClientObject = require('lsp.client')
+local callbacks = require('lsp.callbacks')
 local server_config = require('lsp.server')
 
 local log = require('lsp.log')
@@ -100,22 +101,19 @@ plugin.client.wait_request = function(request_id, filetype)
   return plugin.client.get(filetype)._results[request_id]
 end
 
-plugin.client.get_callback = function(method, cb)
-  if cb then
-    return cb
-  end
-
-  return require('lsp.callbacks').get_list_of_callbacks(method)
-end
-
 plugin.client.has_started = function(filetype)
   return plugin.client.get(filetype) ~= nil
+end
+plugin.client.handle = function(filetype, method, data, default_only)
+  local callback_list = callbacks.get_list_of_callbacks(method, filetype, default_only)
+
+  return callbacks.call_callbacks(callback_list, true, data)
 end
 
 -- Non-client commands
 -- Determines if a request is supported or not
 plugin.is_supported_request = function(method)
-  return plugin.client.get_callback(method) ~= nil
+  return require('lsp.callbacks').get_list_of_callbacks(method) ~= nil
 end
 
 return plugin

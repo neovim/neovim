@@ -145,5 +145,21 @@ util.table.is_empty = function(table)
   return false
 end
 
+util.table.combine = function(t1, t2)
+  local t3 = {}
+
+  util.table.merge(t3, t1)
+  util.table.merge(t3, t2)
+
+  return t3
+end
+
+util.table.merge = function(t1, t2)
+  for k, v in pairs(t2) do
+    t1[k] = v
+  end
+
+  return t1
+end
 
 return util

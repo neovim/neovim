@@ -35,10 +35,88 @@ local handle_completion = require('lsp.handle.completion')
 
 local error_callback = require('lsp.config.callbacks').error_callback
 
-local cb = {}
-cb.textDocument = {}
 
-cb.textDocument.publishDiagnostics = { function(success, data)
+local CallbackMapping = {}
+
+local callback_default = function(f)
+  return {
+    default = { f },
+    generic = {},
+    filetype_specific = {},
+  }
+end
+
+local get_method_table = function(method)
+  local method_table = nil
+  if type(method) == 'string' then
+    method_table = util.split(method, '/')
+  elseif type(method) == 'table' then
+    method_table = method
+  end
+
+  return method_table
+end
+
+local method_to_callback_object = function(method, create_new)
+  local method_table = get_method_table(method)
+
+  if method_table == nil then
+    return nil
+  end
+
+  local callback_object = CallbackMapping
+  local previous_callback_object
+  for _, key in ipairs(method_table) do
+    previous_callback_object = callback_object
+    callback_object = callback_object[key]
+
+    if callback_object == nil then
+      if not create_new then
+        break
+      else
+        previous_callback_object[key] = {}
+      end
+    end
+  end
+
+  if type(callback_object) ~= 'table' then
+    return nil
+  end
+
+  return callback_object
+end
+
+local set_default_callback = function(method, new_default_callback)
+  local callback_object = method_to_callback_object(method)
+
+  if callback_object == nil then
+    return nil
+  end
+
+  callback_object.default = new_default_callback
+end
+
+local add_callback = function(method, new_callback, filetype)
+  local callback_object = method_to_callback_object(method, true)
+
+  local callback_list_location
+  if filetype == nil then
+    callback_list_location = callback_object.generic
+  else
+    if callback_object.filetype_specific[filetype] == nil then
+      callback_object.filetype_specific[filetype] = {}
+    end
+
+    callback_list_location = callback_object.filetype_specific[filetype]
+  end
+
+  callback_list_location.insert(new_callback)
+end
+
+
+CallbackMapping.textDocument = {}
+
+CallbackMapping.textDocument.publishDiagnostics = callback_default(function(success, data)
   if not success then
     error_callback('textDocument/publishDiagnostics', data)
     return nil
@@ -80,9 +158,9 @@ cb.textDocument.publishDiagnostics = { function(success, data)
   -- end
 
   return result
-end }
+end)
 
-cb.textDocument.completion = { function(success, data)
+CallbackMapping.textDocument.completion = callback_default(function(success, data)
   if not success then
     error_callback('textDocument/completion', data)
     return nil
@@ -93,9 +171,9 @@ cb.textDocument.completion = { function(success, data)
   end
 
   return handle_completion.getLabels(data)
-end }
+end)
 
-cb.textDocument.references = { function(success, data)
+CallbackMapping.textDocument.references = callback_default(function(success, data)
   if not success then
     error_callback('textDocument/references', data)
     return nil
@@ -130,9 +208,9 @@ cb.textDocument.references = { function(success, data)
   end
 
   return result
-end }
+end)
 
-cb.textDocument.hover = { function(success, data)
+CallbackMapping.textDocument.hover = callback_default(function(success, data)
   log.trace('textDocument/hover', data)
 
   if not success then
@@ -180,9 +258,9 @@ cb.textDocument.hover = { function(success, data)
     return long_string
   end
 
-end }
+end)
 
-cb.textDocument.definition = { function(success, data)
+CallbackMapping.textDocument.definition = callback_default(function(success, data)
   log.trace('callback:textDocument/definiton', data)
 
   if not success then
@@ -227,53 +305,58 @@ cb.textDocument.definition = { function(success, data)
   )
 
   return true
-end }
+end)
 
-local get_list_of_callbacks = function(method, callback_parameter) -- {{{
-  local method_table
-  if type(method) == 'string' then
-    method_table = util.split(method, '/')
-  elseif type(method) == 'table' then
-    method_table = method
-  else
-    return nil
-  end
-
-  -- If they haven't passed a callback parameter, then fiull with a default
+--- Get a list of callbacks for a particular circumstance
+-- @param method                (required) The name of the method to get the callbacks for
+-- @param callback_parameter    (optional) If passed, will only execute this callback
+-- @param filetype              (optional) If passed, will execute filetype specific callbacks as well
+-- @param default_only          (optional) If passed, will only execute the default. Overridden by callback_parameter
+local get_list_of_callbacks = function(method, callback_parameter, filetype, default_only)
+  -- If they haven't passed a callback parameter, then fill with a default
+  local callback_map
   if callback_parameter == nil then
-    local callback_func = cb
-
-    for _, key in ipairs(method_table) do
-      callback_func = callback_func[key]
-
-      if callback_func == nil then
-        break
-      end
-    end
-
-    if type(callback_func) ~= 'table' then
-      return nil
-    end
-
-    return callback_func
+    callback_map = method_to_callback_object(method)
   elseif type(callback_parameter) == 'table' then
-    return callback_parameter
+    default_only = true
+    callback_map = { default = callback_parameter }
   elseif type(callback_parameter) == 'function' then
-    return { callback_parameter }
+    default_only = true
+    callback_map =  { default = { callback_parameter } }
   elseif type(callback_parameter) == 'string' then
     -- When we pass a string, that's a VimL function that we want to call
     -- so we create a callback function to run it.
     --
     --      See: |lsp#request()|
-    return {
-      function(success, data)
-        return vim.api.nvim_call_function(callback_parameter, {success, data})
-      end
+    default_only = true
+    callback_map = {
+      default = {
+        function(success, data)
+          return vim.api.nvim_call_function(callback_parameter, {success, data})
+        end
+      }
     }
   end
 
-  return nil
-end -- }}}
+  local callback_resulting_list = {}
+  if default_only then
+    table.concat(callback_resulting_list, callback_map.default)
+
+    return callback_resulting_list
+  end
+
+  if filetype ~= nil
+      and type(callback_resulting_list.filetype) == 'table'
+      and callback_resulting_list.filetype[filetype] ~= nil then
+    table.concat(callback_resulting_list, callback_resulting_list.filetype[filetype])
+  end
+
+  if not util.table.is_empty(callback_map.generic) then
+    table.concat(callback_resulting_list, callback_map.generic)
+  end
+
+  return callback_resulting_list
+end
 
 local call_callbacks = function(callback_list, success, params)
   local results = {}
@@ -285,7 +368,9 @@ local call_callbacks = function(callback_list, success, params)
 end
 
 return {
-  callbacks = cb,
+  callbacks = CallbackMapping,
   get_list_of_callbacks = get_list_of_callbacks,
   call_callbacks = call_callbacks,
+  set_default_callback = set_default_callback,
+  add_callback = add_callback,
 }

@@ -94,7 +94,7 @@ server.get_callback = function(ftype, callback_name)
 
   if callback == nil then return nil end
 
-  return callback()
+  return callback
 end
 
 

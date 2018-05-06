@@ -1,4 +1,4 @@
-local util = require('neovim.util')
+local callbacks = require('lsp.callbacks')
 local errorCodes = require('lsp.protocol').errorCodes
 
 local configure = {}
@@ -18,33 +18,18 @@ configure.error_callback = function(name, error_message)
   return message
 end
 
-configure.add_callback = function(method, cb, override_default_callback)
-  local method_table
-  if type(method) == 'string' then
-    method_table = util.split(method, '/')
-  elseif type(method) == 'table' then
-    method_table = method
+--- Add a callback that will be called whenever method is handled
+-- @param method                    (required)  The name of the method to associate with the callback
+-- @param cb                        (required)  The callback to execute (or nil to disable -- probably)
+-- @param override_default_callback (optional)  Use this as the default callback for method, overrides filetype
+-- @param filetype_specific         (optional)  Use t his to only have a callback executed for certain filetypes
+--
+-- @returns another
+configure.add_callback = function(method, cb, override_default_callback, filetype_specific)
+  if override_default_callback then
+    callbacks.set_default_callback(method, cb)
   else
-    -- TODO: Error out here.
-    return nil
-  end
-
-  local default_callbacks = require('lsp.callbacks').callbacks
-
-  for _, key in ipairs(method_table) do
-    default_callbacks = default_callbacks[key]
-
-    if default_callbacks == nil then
-      break
-    end
-  end
-
-  if default_callbacks then
-    if override_default_callback then
-      default_callbacks[1] = cb
-    else
-      default_callbacks.insert(cb)
-    end
+    callbacks.add_callback(method, cb, filetype_specific)
   end
 end
 
