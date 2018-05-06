@@ -7,7 +7,7 @@ local neovim_log = require('neovim.log')
 
 local log = neovim_log:new('LSP')
 
-neovim_log.set_console_level(log, 'warn')
+neovim_log.set_console_level(log, 'info')
 neovim_log.set_file_level(log, 'trace')
 neovim_log.set_outfile(log, vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt')
 

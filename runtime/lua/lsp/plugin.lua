@@ -1,6 +1,7 @@
 -- luacheck: globals vim
 
-local ClientObject = require ('lsp.client')
+local ClientObject = require('lsp.client')
+local server_config = require('lsp.server')
 
 local log = require('lsp.log')
 local lsp_util = require('lsp.util')
@@ -9,48 +10,10 @@ local client_map = {}
 
 local plugin = {
   client = {},
-  server = {},
   helpers = {},
 }
 
---- Add a configuration for a language server
--- @param filetype (string): The filetype associated with the server
--- @param configuration (table): See |lsp#server#add()| for more information
-plugin.server.add = function(filetype, configuration)
-  vim.api.nvim_call_function('lsp#server#add', {filetype, configuration})
-end
 
---- Get the configuration for a language server
--- @param filetype (string): The filetype associated with the server
---
--- @returns: The configuration for a language server
-plugin.server.get_configuration = function(filetype)
-  return vim.api.nvim_call_function('lsp#server#get_configuration', {filetype})
-end
-
---- Get the command for starting a server associated with filetype
--- @param cmd [string]: Command to start the server
--- @param filetype [string]: The filetype associated with the server
-plugin.helpers.get_command = function(cmd, filetype)
-  if cmd ~= nil then
-    return cmd
-  end
-
-  filetype = lsp_util.get_filetype(filetype)
-  return plugin.server.get_configuration(filetype).command
-end
-
---- Get the arguments for starting a server associated with filetype
--- @param arguments [string]: Arguments to send to the server
--- @param filetype [string]: The filetype associated with the server
-plugin.helpers.get_arguments = function(arguments, filetype)
-  if arguments ~= nil then
-    return arguments
-  end
-
-  filetype = lsp_util.get_filetype(filetype)
-  return plugin.server.get_configuration(filetype).arguments
-end
 
 --- Get the client associated with a filetype
 -- @param filetype [string]: The filetype associated with the server
@@ -69,18 +32,18 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: A client object that has been initialized
-plugin.client.start = function(cmd, arguments, filetype)
+plugin.client.start = function(cmd, filetype)
   filetype = lsp_util.get_filetype(filetype)
-  cmd = plugin.helpers.get_command(cmd, filetype)
-  arguments = plugin.helpers.get_arguments(arguments, filetype)
+  cmd = server_config.get_command(cmd, filetype)
 
-  local name = plugin.server.get_configuration(filetype).name
+  local name = server_config.get_name(filetype)
 
   -- Start the client
-  log.debug('[LSP.plugin] Starting client...', name, filetype, cmd, arguments)
-  local client = ClientObject.new(name, filetype, cmd, arguments)
+  log.debug('[LSP.plugin] Starting client...', name, '/', filetype, '/', cmd)
+  local client = ClientObject.new(name, filetype, cmd)
+
   if client == nil then
-    log.error('client was nil with arguments: ', cmd, ' ', arguments)
+    log.error('client was nil with arguments: ', cmd)
     return nil
   end
   client:initialize()
@@ -113,12 +76,8 @@ end
 plugin.client.request_async = function(method, arguments, cb, filetype)
   local current_client = plugin.client.get(filetype)
 
-  if filetype == '' then
-    return
-  end
-
   if current_client == nil then
-    log.warn('async_request() failed', 'No client available for:', filetype, ' with method: ', method)
+    log.warn('async_request() failed', 'No client available for: ', filetype, ' with method: ', method)
     return
   end
 
@@ -146,7 +105,7 @@ plugin.client.get_callback = function(method, cb)
     return cb
   end
 
-  return require('lsp.callbacks').get_callback_function(method)
+  return require('lsp.callbacks').get_list_of_callbacks(method)
 end
 
 plugin.client.has_started = function(filetype)

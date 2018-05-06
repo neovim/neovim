@@ -15,17 +15,14 @@ endfunction
 
 ""
 " 
-function! lsp#job#start(cmd, args) abort
-  let cmd_list = [a:cmd]
-  call extend(cmd_list, a:args)
-
-  let job_id = jobstart(cmd_list, s:LspClient)
+function! lsp#job#start(cmd) abort
+  let job_id = jobstart(a:cmd, s:LspClient)
 
   if job_id == 0
     echoerr 'Invalid arguments for LSP'
     throw LSP/failed
   elseif job_id == -1
-    echoerr 'Not a valid executable: ' . a:cmd
+    echoerr 'Not a valid executable: ' . string(a:cmd)
     throw LSP/failed
   endif
 

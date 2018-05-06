@@ -3,10 +3,10 @@ local util = require('neovim.util')
 
 local Enum = require('neovim.meta').Enum
 
-local protocol = require('lsp.protocol')
 local message = require('lsp.message')
 local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
-local get_callback_function = require('lsp.callbacks').get_callback_function
+local get_list_of_callbacks = require('lsp.callbacks').get_list_of_callbacks
+local call_callbacks = require('lsp.callbacks').call_callbacks
 local should_send_message = require('lsp.checks').should_send
 
 local log = require('lsp.log')
@@ -45,12 +45,14 @@ client.job_stdout = function(id, data)
   active_jobs[id]:on_stdout(data)
 end
 
-client.new = function(name, ft, cmd, args)
-  log.debug('Starting new client: ', name, cmd, args)
+client.new = function(name, ft, cmd)
+  log.debug('Starting new client: ', name, cmd)
 
   -- TODO: I'm a little concerned about the milliseconds after starting up the job.
   -- Not sure if we'll register ourselves faster than we will get stdin or out that we want...
-  local job_id = vim.api.nvim_call_function('lsp#job#start', {cmd, args})
+
+  vim.api.nvim_set_var('test', cmd)
+  local job_id = vim.api.nvim_call_function('lsp#job#start', { cmd })
 
   assert(job_id)
   assert(job_id > 0)
@@ -63,7 +65,6 @@ client.new = function(name, ft, cmd, args)
     name = name,
     ft = ft,
     cmd = cmd,
-    args = args,
 
     -- State for handling messages
     _read_state = read_state.init,
@@ -90,7 +91,7 @@ client.new = function(name, ft, cmd, args)
 end
 
 client.initialize = function(self)
-  local result = self:request('initialize', nil, function(success, data) return data.capabilities end)
+  local result = self:request('initialize', nil, function(_, data) return data.capabilities end)
 
   self.capabilities = result
 
@@ -105,9 +106,6 @@ client.close = function(self)
   self._closed = true
   vim.api.nvim_call_function('jobclose', {self.job_id})
 end
-
-
-
 
 --- Make a request to the server
 -- @param method: Name of the LSP method
@@ -132,7 +130,7 @@ client.request = function(self, method, params, cb)
     return nil
   end
 
-  return self._results[request_id].result
+  return self._results[request_id].result[1]
 end
 
 --- Sends an async request to the client.
@@ -151,35 +149,23 @@ end
 --                                  If a string is passed, it will execute a VimL funciton of that name
 --                                  To disable handling the request, pass "false"
 client.request_async = function(self, method, params, cb)
+  if self.job_id == nil then
+    log.warn('Client does not have valid job_id: ', self.name)
+    return nil
+  end
+
   local req = message.RequestMessage:new(self, method, params)
 
   if req == nil then
     return nil
   end
 
-  local callback_list
-  if cb == nil then
-    callback_list = get_callback_function(method)
-  elseif type(cb) == 'table' then
-    callback_list = cb
-  elseif type(cb) == 'function' then
-    callback_list = { cb }
-  elseif type(cb) == 'string' then
-    -- When we pass a string, that's a VimL function that we want to call
-    -- so we create a callback function to run it.
-    --
-    --      See: |lsp#request()|
-    callback_list = {
-      function(success, data)
-        return vim.api.nvim_call_function(cb, {success, data})
-      end
-    }
-  end
+  local callback_list = get_list_of_callbacks(method, cb)
 
   -- After handling callback semantics, store it to call on reply.
-  if cb then
+  if not util.table.is_empty(callback_list) then
     self._callbacks[req.id] = {
-      cb = cb,
+      cb = callback_list,
       method = req.method,
     }
   end
@@ -187,11 +173,10 @@ client.request_async = function(self, method, params, cb)
 
   if should_send_message(self, req) then
     lsp_doautocmd(method, 'pre')
-    -- log.trace('Sending request: ',  req:data())
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
     lsp_doautocmd(method, 'post')
   else
-    log.debug(string.format('Request "%s" was cancelled with params %s', method, params))
+    log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
   end
 
   return req.id
@@ -319,23 +304,23 @@ client.on_message = function(self, json_message)
   if json_message.method and json_message.params then
     log.debug('notification: ', json_message.method)
 
-    local cb = get_callback_function(json_message.method)
+    local callback_list = get_list_of_callbacks(json_message.method)
 
-    if (not cb) or (type(cb) ~= 'function') then
+    if (not callback_list) or (type(callback_list) ~= 'table') then
       log.info('Unsupported notification: ', json_message.method)
       return
     end
 
-    cb(true, json_message.params)
+    call_callbacks(callback_list, true, json_message.params)
 
     return
   -- Handle responses
   elseif not json_message.method and json_message.id then
     local cb_object = self._callbacks[json_message.id]
 
-    if cb_object == nil or cb_object == {} then
-      return
-    end
+    log.warn(util.tostring(cb_object))
+
+    if util.table.is_empty(cb_object) then return end
 
     local callback_list = cb_object.cb
 
@@ -350,35 +335,19 @@ client.on_message = function(self, json_message)
     -- Clear the old callback
     self._callbacks[json_message.id] = nil
 
+    -- Store the results
+    local result_table = {}
+    result_table.complete = true
+
     if json_message.error then
-      local error_message = json_message.error.message
-      local error_code = protocol.errorCodes[json_message.error.code]
-        or util.tostring(json_message.error.code)
-
-      if error_message ~= nil then
-        error_code = error_code .. ': ' .. error_message
-      end
-
-      local err = { callback_list[1](false, json_message.error) }
-
-      self._results[json_message.id] = {
-        complete = true,
-        was_error = true,
-        result = err,
-      }
+      result_table.was_error = true
+      result_table.result = call_callbacks(callback_list, false, json_message.error)
     else
-      local result = { }
-
-      for _, cb in pairs(callback_list) do
-        result.insert(cb(true, json_message.result))
-      end
-
-      self._results[json_message.id] = {
-        complete = true,
-        was_error = false,
-        result = result
-      }
+      result_table.was_error = false
+      result_table.result = call_callbacks(callback_list, true, json_message.result)
     end
+
+    self._results[json_message.id] = result_table
   end
 end
 

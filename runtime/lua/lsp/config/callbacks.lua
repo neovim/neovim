@@ -1,3 +1,4 @@
+local util = require('neovim.util')
 local errorCodes = require('lsp.protocol').errorCodes
 
 local configure = {}

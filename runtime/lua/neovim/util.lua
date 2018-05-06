@@ -1,5 +1,7 @@
 
-local util = {}
+local util = {
+  table = {},
+}
 
 vim = vim or {}
 
@@ -28,6 +30,7 @@ util.split = function(s, sep, nMax, bRegexp)
 
   return aRecord
 end
+
 util.tostring = function(obj)
   local stringified = ''
   if type(obj) == 'table' then
@@ -42,9 +45,11 @@ util.tostring = function(obj)
 
   return stringified
 end
+
 util.trim = function(s)
   return s:gsub("^%s+", ""):gsub("%s+$", "")
 end
+
 util.handle_uri = function(uri)
   local file_prefix = 'file://'
   if string.sub(uri, 1, #file_prefix) == file_prefix then
@@ -53,7 +58,6 @@ util.handle_uri = function(uri)
 
   return uri
 end
-
 
 -- Determine whether a Lua table can be treated as an array.
 -- Returns:
@@ -81,6 +85,7 @@ util.is_array = function(table)
     return nil
   end
 end
+
 util.get_file_line = function(file_name, line_number)
   local f = assert(io.open(file_name, 'r'))
 
@@ -96,6 +101,7 @@ util.get_file_line = function(file_name, line_number)
 
   return ''
 end
+
 util.get_key = function(table, ...)
   if type(table) ~= 'table' then
     return nil
@@ -122,5 +128,22 @@ util.is_loclist_open = function()
 
   return false
 end
+
+util.table.is_empty = function(table)
+  if table == nil then
+    return true
+  end
+
+  if type(table) ~= type({}) then
+    return true
+  end
+
+  if table == {} then
+    return true
+  end
+
+  return false
+end
+
 
 return util

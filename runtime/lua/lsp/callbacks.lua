@@ -74,10 +74,10 @@ cb.textDocument.publishDiagnostics = { function(success, data)
 
   local result = vim.api.nvim_call_function('setloclist', {0, loclist})
 
-  if loclist ~= {} and not util.is_loclist_open() then
-    -- vim.api.nvim_command('lopen')
-    -- vim.api.nvim_command('wincmd p')
-  end
+  -- if loclist ~= {} and not util.is_loclist_open() then
+  --   vim.api.nvim_command('lopen')
+  --   vim.api.nvim_command('wincmd p')
+  -- end
 
   return result
 end }
@@ -124,7 +124,7 @@ cb.textDocument.references = { function(success, data)
   local result = vim.api.nvim_call_function('setloclist', {0, loclist})
 
   if loclist ~= {} and not util.is_loclist_open() then
-    -- vim.api.nvim_command('lopen')
+    vim.api.nvim_command('lopen')
   else
     vim.api.nvim_command('lclose')
   end
@@ -229,7 +229,7 @@ cb.textDocument.definition = { function(success, data)
   return true
 end }
 
-local get_callback_function = function(method) -- {{{
+local get_list_of_callbacks = function(method, callback_parameter) -- {{{
   local method_table
   if type(method) == 'string' then
     method_table = util.split(method, '/')
@@ -239,23 +239,53 @@ local get_callback_function = function(method) -- {{{
     return nil
   end
 
-  local callback_func = cb
-  for _, key in ipairs(method_table) do
-    callback_func = callback_func[key]
+  -- If they haven't passed a callback parameter, then fiull with a default
+  if callback_parameter == nil then
+    local callback_func = cb
 
-    if callback_func == nil then
-      break
+    for _, key in ipairs(method_table) do
+      callback_func = callback_func[key]
+
+      if callback_func == nil then
+        break
+      end
     end
+
+    if type(callback_func) ~= 'table' then
+      return nil
+    end
+
+    return callback_func
+  elseif type(callback_parameter) == 'table' then
+    return callback_parameter
+  elseif type(callback_parameter) == 'function' then
+    return { callback_parameter }
+  elseif type(callback_parameter) == 'string' then
+    -- When we pass a string, that's a VimL function that we want to call
+    -- so we create a callback function to run it.
+    --
+    --      See: |lsp#request()|
+    return {
+      function(success, data)
+        return vim.api.nvim_call_function(callback_parameter, {success, data})
+      end
+    }
   end
 
-  if type(callback_func) ~= 'function' then
-    return nil
-  end
-
-  return callback_func
+  return nil
 end -- }}}
+
+local call_callbacks = function(callback_list, success, params)
+  local results = {}
+  for key, callback in pairs(callback_list) do
+    results[key] = callback(success, params)
+  end
+
+  return results
+end
 
 return {
   callbacks = cb,
-  get_callback_function = get_callback_function,
+  get_list_of_callbacks = get_list_of_callbacks,
+  call_callbacks = call_callbacks,
 }
