@@ -32,27 +32,26 @@ static garray_T watchers = GA_EMPTY_INIT_VALUE;
 #endif
 
 /// Initializes the module
-bool server_init(const char *listen_addr)
+bool server_init(void)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
-  // $NVIM_LISTEN_ADDRESS
-  const char *env_addr = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  int rv = listen_addr == NULL ? 1 : server_start(listen_addr);
-
-  if (0 != rv) {
-    rv = env_addr == NULL ? 1 : server_start(env_addr);
-    if (0 != rv) {
-      listen_addr = server_address_new();
-      if (listen_addr == NULL) {
-        return false;
-      }
-      rv = server_start(listen_addr);
-      xfree((char *)listen_addr);
-    }
+  bool must_free = false;
+  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  if (listen_address == NULL) {
+    must_free = true;
+    listen_address = server_address_new();
   }
 
-  return rv == 0;
+  if (!listen_address) {
+    return false;
+  }
+
+  bool ok = (server_start(listen_address) == 0);
+  if (must_free) {
+    xfree((char *) listen_address);
+  }
+  return ok;
 }
 
 /// Teardown a single server
@@ -121,8 +120,8 @@ bool server_owns_pipe_address(const char *path)
 /// @param endpoint Address of the server. Either a 'ip:[port]' string or an
 ///                 arbitrary identifier (trimmed to 256 bytes) for the Unix
 ///                 socket or named pipe.
-/// @returns 0: success, 1: validation error, 2: already listening,
-///          -errno: failed to bind or listen.
+/// @returns 0 on success, 1 on a regular error, and negative errno
+///          on failure to bind or listen.
 int server_start(const char *endpoint)
 {
   if (endpoint == NULL || endpoint[0] == '\0') {
@@ -146,7 +145,7 @@ int server_start(const char *endpoint)
         uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
       }
       socket_watcher_close(watcher, free_server);
-      return 2;
+      return 1;
     }
   }
 
@@ -178,7 +177,7 @@ int server_start(const char *endpoint)
 /// Stops listening on the address specified by `endpoint`.
 ///
 /// @param endpoint Address of the server.
-bool server_stop(char *endpoint)
+void server_stop(char *endpoint)
 {
   SocketWatcher *watcher;
   bool watcher_found = false;
@@ -197,8 +196,8 @@ bool server_stop(char *endpoint)
   }
 
   if (!watcher_found) {
-    WLOG("Not listening on %s", addr);
-    return false;
+    ELOG("Not listening on %s", addr);
+    return;
   }
 
   // Unset $NVIM_LISTEN_ADDRESS if it is the stopped address.
@@ -220,8 +219,6 @@ bool server_stop(char *endpoint)
   if (STRCMP(addr, get_vim_var_str(VV_SEND_SERVER)) == 0) {
     set_vservername(&watchers);
   }
-
-  return true;
 }
 
 /// Returns an allocated array of server addresses.

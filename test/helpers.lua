@@ -692,7 +692,6 @@ local module = {
   hexdump = hexdump,
   intchar2lua = intchar2lua,
   map = map,
-  matches = matches,
   mergedicts_copy = mergedicts_copy,
   neq = neq,
   ok = ok,
