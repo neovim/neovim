@@ -53,8 +53,18 @@ void remote_ui_disconnect(uint64_t channel_id)
 
 void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
                     Dictionary options, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1)
 {
+  if (is_internal_call(channel_id)) {
+    if (!headless_mode) {
+      api_set_error(err, kErrorTypeException, "TUI already attached");
+    } else {
+      ui_builtin_start();
+      headless_mode = false;
+    }
+    return;
+  }
+
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
                   "UI already attached to channel: %" PRId64, channel_id);
@@ -128,8 +138,18 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
 }
 
 void nvim_ui_detach(uint64_t channel_id, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1)
 {
+  if (is_internal_call(channel_id)) {
+    if (headless_mode) {
+      api_set_error(err, kErrorTypeException, "TUI not attached");
+    } else {
+      ui_builtin_stop();
+      headless_mode = true;
+    }
+    return;
+  }
+
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(err, kErrorTypeException,
                   "UI not attached to channel: %" PRId64, channel_id);
