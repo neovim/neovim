@@ -183,42 +183,51 @@ describe('api', function()
     it('invokes VimL dict function', function()
       source([[
         function! F(name) dict
-          return self.greeting . ", " . a:name . "!"
+          return self.greeting.', '.a:name.'!'
+        endfunction
+        let g:test_dict_fn = { 'greeting':'Hello', 'F':function('F') }
+
+        let g:test_dict_fn2 = { 'greeting':'Hi' }
+        function g:test_dict_fn2.F2(name)
+          return self.greeting.', '.a:name.' ...'
         endfunction
       ]])
 
-      -- function() ("non-internal") function
-      nvim('set_var', 'dict_function_dict', { greeting = 'Hello', F = 'function("F")' })
-      eq('Hello, World!', nvim('call_dict_function', 'g:dict_function_dict', 'F', {'World'}))
-      eq({ greeting = 'Hello', F = 'function("F")' }, nvim('get_var', 'dict_function_dict'))
+      -- :help Dictionary-function
+      eq('Hello, World!', nvim('call_dict_function', 'g:test_dict_fn', 'F', {'World'}))
+      -- Funcref is sent as NIL over RPC.
+      eq({ greeting = 'Hello', F = NIL }, nvim('get_var', 'test_dict_fn'))
 
-      -- "internal" function
-      nvim('set_var', 'dict_function_dict_i', { greeting = 'Hi', F = "F" })
-      eq('Hi, Moon!', nvim('call_dict_function', 'g:dict_function_dict_i', 'F', {'Moon'}))
-      eq({ greeting = 'Hi', F = "F" }, nvim('get_var', 'dict_function_dict_i'))
+      -- :help numbered-function
+      eq('Hi, Moon ...', nvim('call_dict_function', 'g:test_dict_fn2', 'F2', {'Moon'}))
+      -- Funcref is sent as NIL over RPC.
+      eq({ greeting = 'Hi', F2 = NIL }, nvim('get_var', 'test_dict_fn2'))
+
+      -- Function specified via RPC dict.
+      source('function! G() dict\n  return "@".(self.result)."@"\nendfunction')
+      eq('@it works@', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
     end)
-    it('invokes RPC dict', function()
-      source('function! G() dict\n  return self.result\nendfunction')
-      eq('it works', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
-    end)
+
     it('validates args', function()
       command('let g:d={"baz":"zub","meep":[]}')
-      expect_err('Error calling function', request,
+      expect_err('Not found: bogus', request,
                  'nvim_call_dict_function', 'g:d', 'bogus', {1,2})
-      expect_err('Error calling function', request,
+      expect_err('Not a function: baz', request,
                  'nvim_call_dict_function', 'g:d', 'baz', {1,2})
-      expect_err('Value found in dict is not a valid function', request,
+      expect_err('Not a function: meep', request,
                  'nvim_call_dict_function', 'g:d', 'meep', {1,2})
       expect_err('Error calling function', request,
                  'nvim_call_dict_function', { f = '' }, 'f', {1,2})
-      expect_err('Invalid %(empty%) function name', request,
+      expect_err('Not a function: f', request,
                  'nvim_call_dict_function', "{ 'f': '' }", 'f', {1,2})
       expect_err('dict argument type must be String or Dictionary', request,
                  'nvim_call_dict_function', 42, 'f', {1,2})
       expect_err('Failed to evaluate dict expression', request,
                  'nvim_call_dict_function', 'foo', 'f', {1,2})
-      expect_err('Referenced dict does not exist', request,
+      expect_err('dict not found', request,
                  'nvim_call_dict_function', '42', 'f', {1,2})
+      expect_err('Invalid %(empty%) function name', request,
+                 'nvim_call_dict_function', "{ 'f': '' }", '', {1,2})
     end)
   end)
 

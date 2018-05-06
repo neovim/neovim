@@ -370,8 +370,8 @@ Object nvim_call_function(String fn, Array args, Error *err)
 /// Calls a VimL |Dictionary-function| with the given arguments.
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
-/// @param fn Function to call
-/// @param args Functions arguments packed in an Array
+/// @param fn Name of the function defined on the VimL dict
+/// @param args Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
 Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
@@ -410,27 +410,29 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
-    api_set_error(err, kErrorTypeValidation, "Referenced dict does not exist");
+    api_set_error(err, kErrorTypeValidation, "dict not found");
     goto end;
   }
 
-  if (dict.type != kObjectTypeDictionary) {
+  if (fn.data && fn.size > 0 && dict.type != kObjectTypeDictionary) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
-    if (di != NULL) {
-      if (di->di_tv.v_type != VAR_STRING) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Value found in dict is not a valid function");
-        goto end;
-      }
-      // XXX: Hack to guess if function is "internal".
-      bool internal = (0 != STRNCMP(di->di_tv.vval.v_string, "function(", 9));
-      if (internal) {
-        fn = (String) {
-          .data = (char *)di->di_tv.vval.v_string,
-          .size = strlen((char *)di->di_tv.vval.v_string),
-        };
-      }
+    if (di == NULL) {
+      api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
+      goto end;
     }
+    if (di->di_tv.v_type == VAR_PARTIAL) {
+      api_set_error(err, kErrorTypeValidation,
+                    "partial function not supported");
+      goto end;
+    }
+    if (di->di_tv.v_type != VAR_FUNC) {
+      api_set_error(err, kErrorTypeValidation, "Not a function: %s", fn.data);
+      goto end;
+    }
+    fn = (String) {
+      .data = (char *)di->di_tv.vval.v_string,
+      .size = strlen((char *)di->di_tv.vval.v_string),
+    };
   }
 
   if (!fn.data || fn.size < 1) {
