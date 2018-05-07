@@ -46,8 +46,7 @@
 
 /// Executes an ex-command.
 ///
-/// On parse error: forwards the Vim error; does not update v:errmsg.
-/// On runtime error: forwards the Vim error; does not update v:errmsg.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -103,7 +102,8 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 }
 
 /// Passes input keys to Nvim.
-/// On VimL error: Does not fail, but updates v:errmsg.
+///
+/// On execution error: does not fail, but updates v:errmsg.
 ///
 /// @param keys         to be typed
 /// @param mode         mapping options
@@ -169,7 +169,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 }
 
 /// Passes keys to Nvim as raw user-input.
-/// On VimL error: Does not fail, but updates v:errmsg.
+///
+/// On execution error: does not fail, but updates v:errmsg.
 ///
 /// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
 /// is not deferred. This is the most reliable way to send real user input.
@@ -213,8 +214,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 /// Executes an ex-command and returns its (non-error) output.
 /// Shell |:!| output is not captured.
 ///
-/// On parse error: forwards the Vim error; does not update v:errmsg.
-/// On runtime error: forwards the Vim error; does not update v:errmsg.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -259,7 +259,8 @@ theend:
 
 /// Evaluates a VimL expression (:help expression).
 /// Dictionaries and Lists are recursively expanded.
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
+///
+/// On execution error: fails with generic error; v:errmsg is not updated.
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -331,18 +332,23 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   }
 
   try_start();
-  // Call the function
+  msg_first_ignored_err = NULL;
+
   typval_T rettv;
   int dummy;
   int r = call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
                     vim_args, NULL, curwin->w_cursor.lnum,
                     curwin->w_cursor.lnum, &dummy, true, NULL, self);
-  if (r == FAIL) {
-    api_set_error(err, kErrorTypeException, "Error calling function");
+  // call_func() retval is deceptive; must also check did_emsg et al.
+  if (msg_first_ignored_err
+      && (r == FAIL || (did_emsg && force_abort && !current_exception))) {
+    api_set_error(err, kErrorTypeException, msg_first_ignored_err);
   }
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
+  xfree(msg_first_ignored_err);
+  msg_first_ignored_err = NULL;
   tv_clear(&rettv);
 
 free_vim_args:
@@ -355,7 +361,7 @@ free_vim_args:
 
 /// Calls a VimL function with the given arguments.
 ///
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param fn       Function to call
 /// @param args     Function arguments packed in an Array
@@ -368,6 +374,8 @@ Object nvim_call_function(String fn, Array args, Error *err)
 }
 
 /// Calls a VimL |Dictionary-function| with the given arguments.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
 /// @param fn Name of the function defined on the VimL dict

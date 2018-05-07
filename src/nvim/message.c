@@ -67,6 +67,7 @@ static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
 
 MessageHistoryEntry *first_msg_hist = NULL;
 MessageHistoryEntry *last_msg_hist = NULL;
+char *msg_first_ignored_err = NULL;
 static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;
@@ -504,6 +505,9 @@ int emsg(const char_u *s_)
     if (cause_errthrow((char_u *)s, severe, &ignore) == true) {
       if (!ignore) {
         did_emsg = true;
+        if (msg_first_ignored_err == NULL) {
+          msg_first_ignored_err = xstrdup(s);
+        }
       }
       return true;
     }

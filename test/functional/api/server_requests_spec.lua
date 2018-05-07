@@ -250,7 +250,7 @@ describe('server -> client', function()
     end)
 
     after_each(function()
-      funcs.jobstop(jobid)
+      pcall(funcs.jobstop, jobid)
     end)
 
     if helpers.pending_win32(pending) then return end
