@@ -213,14 +213,18 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    return s:system(['man', s:find_arg, a:name])
+    " Some man implementations (OpenBSD) return all available man paths
+    " from the search command, so we split here to make sure we only
+    " take the first one.  Discovered and reported in
+    " https://github.com/neovim/neovim/issues/8341
+    return get(split(s:system(['man', s:find_arg, a:name])), 0, '')
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])
+  return substitute(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name]), '\n\+$', '', '')
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -233,13 +237,6 @@ function! s:verify_exists(sect, name) abort
       let path = s:get_path('', a:name)
     endtry
   endtry
-  " We need to extract the section from the path because sometimes
-  " the actual section of the manpage is more specific than the section
-  " we provided to `man`. Try ':Man 3 App::CLI'.
-  " Also on linux, it seems that the name is case insensitive. So if one does
-  " ':Man PRIntf', we still want the name of the buffer to be 'printf' or
-  " whatever the correct capitilization is.
-  let path = path[:len(path)-2]
   return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
