@@ -268,11 +268,30 @@ theend:
 Object nvim_eval(String expr, Error *err)
   FUNC_API_SINCE(1)
 {
+  static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
+
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
+  struct msglist **saved_msg_list = msg_list;
+  struct msglist *private_msg_list;
+  msg_list = &private_msg_list;
+  private_msg_list = NULL;
+
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    current_exception = NULL;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
+  recursive++;
   try_start();
 
   typval_T rettv;
   if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
+    // This generic error should be overwritten by try_end() since #8371.
     api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
   }
 
@@ -281,6 +300,8 @@ Object nvim_eval(String expr, Error *err)
   }
 
   tv_clear(&rettv);
+  msg_list = saved_msg_list;  // Restore the exception context.
+  recursive--;
 
   return rv;
 }

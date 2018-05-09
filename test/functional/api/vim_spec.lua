@@ -146,10 +146,9 @@ describe('api', function()
       eq(2, request("vim_eval", "1+1"))
     end)
 
-    it("VimL error: fails (generic error), does NOT update v:errmsg", function()
-      local status, rv = pcall(nvim, "eval", "bogus expression")
-      eq(false, status)                 -- nvim_eval() failed.
-      ok(nil ~= string.find(rv, "Failed to evaluate expression"))
+    it("VimL error: returns error details, does NOT update v:errmsg", function()
+      expect_err('E121: Undefined variable: bogus', request,
+                 'nvim_eval', 'bogus expression')
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
   end)
