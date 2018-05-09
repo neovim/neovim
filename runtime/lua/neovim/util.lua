@@ -162,4 +162,23 @@ util.table.merge = function(t1, t2)
   return t1
 end
 
+util.table.chain = function(t1, t2)
+  local len_t1 = #t1
+
+  local t3 = {}
+  for i, v in ipairs(t1) do
+    t3[i] = v
+  end
+
+  if t2 == {} or t2 == nil then
+    return t3
+  end
+
+  for i, v in ipairs(t2) do
+    t3[len_t1 + i] = v
+  end
+
+  return t3
+end
+
 return util

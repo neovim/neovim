@@ -1,21 +1,12 @@
 local callbacks = require('lsp.callbacks')
-local errorCodes = require('lsp.protocol').errorCodes
 
 local configure = {}
 
-configure.error_callback = function(name, error_message)
-  local message = ''
-  if error_message.message ~= nil and type(error_message.message) == 'string' then
-    message = error_message.message
-  elseif rawget(errorCodes, error_message.code) ~= nil then
-    message = string.format('[%s] %s',
-      error_message.code, errorCodes[error_message.code]
-    )
-  end
+configure.error_callback = function(cb)
+  callbacks.set_default_callback
 
-  vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', name, message))
+  -- TODO: Pick up here
 
-  return message
 end
 
 --- Add a callback that will be called whenever method is handled

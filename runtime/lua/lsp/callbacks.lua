@@ -31,20 +31,63 @@ local util = require('neovim.util')
 local lsp_util = require('lsp.util')
 
 local protocol = require('lsp.protocol')
+local errorCodes = protocol.errorCodes
+
 local handle_completion = require('lsp.handle.completion')
 
-local error_callback = require('lsp.config.callbacks').error_callback
+local mt_callback_object = {
+  __call = function(self, ...)
+    if util.table.is_empty(self.default) then
+      return nil
+    end
 
+    return self.default[1](...)
+  end,
 
-local CallbackMapping = {}
+  __index = function(self, key)
+    if self[key] ~= nil then
+      return self[key]
+    end
+
+    if key == 'generic' or key == 'default' or key =='filetype_specif' then
+      return {}
+    end
+
+    return nil
+  end,
+}
 
 local callback_default = function(f)
-  return {
+  return setmetatable({
     default = { f },
     generic = {},
     filetype_specific = {},
-  }
+  }, mt_callback_object)
 end
+
+local CallbackMapping = setmetatable({
+  neovim = {
+    error_callback = callback_default(function(name, error_message)
+      local message = ''
+      if error_message.message ~= nil and type(error_message.message) == 'string' then
+        message = error_message.message
+      elseif rawget(errorCodes, error_message.code) ~= nil then
+        message = string.format('[%s] %s',
+          error_message.code, errorCodes[error_message.code]
+        )
+      end
+
+      vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', name, message))
+
+      return
+    end),
+  },
+
+  textDocument = {
+
+  }
+}, {
+})
 
 local get_method_table = function(method)
   local method_table = nil
@@ -113,12 +156,13 @@ local add_callback = function(method, new_callback, filetype)
   callback_list_location.insert(new_callback)
 end
 
-
-CallbackMapping.textDocument = {}
+--------------------------------------------------------------------------------
+-- Callback definition section
+--------------------------------------------------------------------------------
 
 CallbackMapping.textDocument.publishDiagnostics = callback_default(function(success, data)
   if not success then
-    error_callback('textDocument/publishDiagnostics', data)
+    CallbackMapping.neovim.error_callback('textDocument/publishDiagnostics', data)
     return nil
   end
 
@@ -162,7 +206,7 @@ end)
 
 CallbackMapping.textDocument.completion = callback_default(function(success, data)
   if not success then
-    error_callback('textDocument/completion', data)
+    CallbackMapping.neovim.error_callback('textDocument/completion', data)
     return nil
   end
 
@@ -175,7 +219,7 @@ end)
 
 CallbackMapping.textDocument.references = callback_default(function(success, data)
   if not success then
-    error_callback('textDocument/references', data)
+    CallbackMapping.neovim.error_callback('textDocument/references', data)
     return nil
   end
 
@@ -214,7 +258,7 @@ CallbackMapping.textDocument.hover = callback_default(function(success, data)
   log.trace('textDocument/hover', data)
 
   if not success then
-    error_callback('textDocument/hover', data)
+    CallbackMapping.neovim.error_callback('textDocument/hover', data)
     return nil
   end
 
@@ -264,7 +308,7 @@ CallbackMapping.textDocument.definition = callback_default(function(success, dat
   log.trace('callback:textDocument/definiton', data)
 
   if not success then
-    error_callback('textDocument/definition', data)
+    CallbackMapping.neovim.error_callback('textDocument/definition', data)
     return nil
   end
 
@@ -338,9 +382,12 @@ local get_list_of_callbacks = function(method, callback_parameter, filetype, def
     }
   end
 
+  if callback_map == nil then return {} end
+  log.warn(method, ' -> ', util.tostring(callback_map), ' <- param')
+
   local callback_resulting_list = {}
   if default_only then
-    table.concat(callback_resulting_list, callback_map.default)
+    util.table.chain(callback_resulting_list, callback_map.default)
 
     return callback_resulting_list
   end
@@ -348,11 +395,11 @@ local get_list_of_callbacks = function(method, callback_parameter, filetype, def
   if filetype ~= nil
       and type(callback_resulting_list.filetype) == 'table'
       and callback_resulting_list.filetype[filetype] ~= nil then
-    table.concat(callback_resulting_list, callback_resulting_list.filetype[filetype])
+    util.table.chain(callback_resulting_list, callback_resulting_list.filetype[filetype])
   end
 
   if not util.table.is_empty(callback_map.generic) then
-    table.concat(callback_resulting_list, callback_map.generic)
+    util.table.chain(callback_resulting_list, callback_map.generic)
   end
 
   return callback_resulting_list
