@@ -5,9 +5,6 @@
 "
 " @returns (bool): True if successful, else false
 function! lsp#server#add(ftype, command, ...) abort
-  echo a:ftype
-  echo a:command
-
   let config = get(a:, 1, {})
 
   call luaeval('require("lsp.server").add(_A.ftype, _A.command, _A.config)', {
