@@ -87,15 +87,15 @@ describe('server', function()
 
     local expected = {}
     local v4 = '127.0.0.1:12345'
-    s = funcs.serverstart(v4)
-    if #s > 0 then
+    local status, _ = pcall(funcs.serverstart, v4)
+    if status then
       table.insert(expected, v4)
       pcall(funcs.serverstart, v4)  -- exists already; ignore
     end
 
     local v6 = '::1:12345'
-    s = funcs.serverstart(v6)
-    if #s > 0 then
+    status, _ = pcall(funcs.serverstart, v6)
+    if status then
       table.insert(expected, v6)
       pcall(funcs.serverstart, v6)  -- exists already; ignore
     end
