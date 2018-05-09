@@ -260,7 +260,7 @@ theend:
 /// Evaluates a VimL expression (:help expression).
 /// Dictionaries and Lists are recursively expanded.
 ///
-/// On execution error: fails with generic error; v:errmsg is not updated.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -269,7 +269,6 @@ Object nvim_eval(String expr, Error *err)
   FUNC_API_SINCE(1)
 {
   Object rv = OBJECT_INIT;
-  // Evaluate the expression
   try_start();
 
   typval_T rettv;
@@ -278,11 +277,9 @@ Object nvim_eval(String expr, Error *err)
   }
 
   if (!try_end(err)) {
-    // No errors, convert the result
     rv = vim_to_object(&rettv);
   }
 
-  // Free the Vim object
   tv_clear(&rettv);
 
   return rv;
@@ -315,7 +312,9 @@ Object nvim_execute_lua(String code, Array args, Error *err)
 /// @return Result of the function call
 static Object _call_function(String fn, Array args, dict_T *self, Error *err)
 {
+  static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
+
   if (args.size > MAX_FUNC_ARGS) {
     api_set_error(err, kErrorTypeValidation,
                   "Function called with too many arguments");
@@ -331,25 +330,36 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     }
   }
 
-  try_start();
-  msg_first_ignored_err = NULL;
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
+  struct msglist **saved_msg_list = msg_list;
+  struct msglist *private_msg_list;
+  msg_list = &private_msg_list;
+  private_msg_list = NULL;
 
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    current_exception = NULL;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
+  recursive++;
+  try_start();
   typval_T rettv;
   int dummy;
-  int r = call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
-                    vim_args, NULL, curwin->w_cursor.lnum,
-                    curwin->w_cursor.lnum, &dummy, true, NULL, self);
-  // call_func() retval is deceptive; must also check did_emsg et al.
-  if (msg_first_ignored_err
-      && (r == FAIL || (did_emsg && force_abort && !current_exception))) {
-    api_set_error(err, kErrorTypeException, msg_first_ignored_err);
-  }
+  // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
+  // (see above) to capture abort-causing non-exception errors.
+  (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+                  vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                  &dummy, true, NULL, self);
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
-  xfree(msg_first_ignored_err);
-  msg_first_ignored_err = NULL;
   tv_clear(&rettv);
+  msg_list = saved_msg_list;  // Restore the exception context.
+  recursive--;
 
 free_vim_args:
   while (i > 0) {

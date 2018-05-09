@@ -85,10 +85,6 @@ extern MessageHistoryEntry *first_msg_hist;
 /// Last message
 extern MessageHistoryEntry *last_msg_hist;
 
-/// Abort-causing non-exception error ignored by emsg(), needed by callers
-/// (RPC API) of call_func() to get error details when messages are disabled.
-extern char *msg_first_ignored_err;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
 #endif

@@ -6242,8 +6242,8 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 ///   new_argcount = argv_func(current_argcount, argv, called_func_argcount)
 ///
 /// @return FAIL if function cannot be called, else OK (even if an error
-///         occurred while executing the function! Use `msg_first_ignored_err`
-///         to get the error)
+///         occurred while executing the function! Set `msg_list` to capture
+///         the error, see do_cmdline()).
 int
 call_func(
     const char_u *funcname,         // name of the function
