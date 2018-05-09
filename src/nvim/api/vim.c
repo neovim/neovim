@@ -290,13 +290,15 @@ Object nvim_eval(String expr, Error *err)
   try_start();
 
   typval_T rettv;
-  if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
-    // This generic error should be overwritten by try_end() since #8371.
-    api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
-  }
+  int ok = eval0((char_u *)expr.data, &rettv, NULL, true);
 
   if (!try_end(err)) {
-    rv = vim_to_object(&rettv);
+    if (ok == FAIL) {
+      // Should never happen, try_end() should get the error. #8371
+      api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
+    } else {
+      rv = vim_to_object(&rettv);
+    }
   }
 
   tv_clear(&rettv);
