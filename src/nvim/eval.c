@@ -6241,20 +6241,21 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 /// invoked function uses them. It is called like this:
 ///   new_argcount = argv_func(current_argcount, argv, called_func_argcount)
 ///
-/// Return FAIL when the function can't be called,  OK otherwise.
-/// Also returns OK when an error was encountered while executing the function.
+/// @return FAIL if function cannot be called, else OK (even if an error
+///         occurred while executing the function! Set `msg_list` to capture
+///         the error, see do_cmdline()).
 int
 call_func(
     const char_u *funcname,         // name of the function
     int len,                        // length of "name"
-    typval_T *rettv,                // return value goes here
+    typval_T *rettv,                // [out] value goes here
     int argcount_in,                // number of "argvars"
     typval_T *argvars_in,           // vars for arguments, must have "argcount"
                                     // PLUS ONE elements!
     ArgvFunc argv_func,             // function to fill in argvars
     linenr_T firstline,             // first line of range
     linenr_T lastline,              // last line of range
-    int *doesrange,                 // return: function handled range
+    int *doesrange,                 // [out] function handled range
     bool evaluate,
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
@@ -6428,21 +6429,25 @@ call_func(
   return ret;
 }
 
-/*
- * Give an error message with a function name.  Handle <SNR> things.
- * "ermsg" is to be passed without translation, use N_() instead of _().
- */
+/// Give an error message with a function name.  Handle <SNR> things.
+///
+/// @param ermsg must be passed without translation (use N_() instead of _()).
+/// @param name function name
 static void emsg_funcname(char *ermsg, char_u *name)
 {
-  char_u      *p;
+  char_u *p;
 
-  if (*name == K_SPECIAL)
+  if (*name == K_SPECIAL) {
     p = concat_str((char_u *)"<SNR>", name + 3);
-  else
+  } else {
     p = name;
+  }
+
   EMSG2(_(ermsg), p);
-  if (p != name)
+
+  if (p != name) {
     xfree(p);
+  }
 }
 
 /*

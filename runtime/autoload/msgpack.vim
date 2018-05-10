@@ -40,9 +40,10 @@ function s:msgpack_init_python() abort
     return s:msgpack_python_type
   endif
   let s:msgpack_python_initialized = 1
-  for suf in ['', '3']
+  for suf in (has('win32') ? ['3'] : ['', '3'])
     try
       execute 'python' . suf
+              \. "\n"
               \. "def shada_dict_strftime():\n"
               \. "  import datetime\n"
               \. "  import vim\n"
@@ -60,12 +61,15 @@ function s:msgpack_init_python() abort
               \. "  fmt = vim.eval('a:format')\n"
               \. "  timestr = vim.eval('a:string')\n"
               \. "  timestamp = datetime.datetime.strptime(timestr, fmt)\n"
-              \. "  timestamp = int(timestamp.timestamp())\n"
+              \. "  try:\n"
+              \. "    timestamp = int(timestamp.timestamp())\n"
+              \. "  except:\n"
+              \. "    timestamp = int(timestamp.strftime('%s'))\n"
               \. "  if timestamp > 2 ** 31:\n"
-              \. "    tsabs = abs(timestamp)"
+              \. "    tsabs = abs(timestamp)\n"
               \. "    return ('{\"_TYPE\": v:msgpack_types.integer,'\n"
               \. "            + '\"_VAL\": [{sign},{v1},{v2},{v3}]}').format(\n"
-              \. "              sign=1 if timestamp >= 0 else -1,\n"
+              \. "              sign=(1 if timestamp >= 0 else -1),\n"
               \. "              v1=((tsabs >> 62) & 0x3),\n"
               \. "              v2=((tsabs >> 31) & (2 ** 31 - 1)),\n"
               \. "              v3=(tsabs & (2 ** 31 - 1)))\n"

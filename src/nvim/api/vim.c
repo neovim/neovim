@@ -46,8 +46,7 @@
 
 /// Executes an ex-command.
 ///
-/// On parse error: forwards the Vim error; does not update v:errmsg.
-/// On runtime error: forwards the Vim error; does not update v:errmsg.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -103,7 +102,8 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 }
 
 /// Passes input keys to Nvim.
-/// On VimL error: Does not fail, but updates v:errmsg.
+///
+/// On execution error: does not fail, but updates v:errmsg.
 ///
 /// @param keys         to be typed
 /// @param mode         mapping options
@@ -169,7 +169,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 }
 
 /// Passes keys to Nvim as raw user-input.
-/// On VimL error: Does not fail, but updates v:errmsg.
+///
+/// On execution error: does not fail, but updates v:errmsg.
 ///
 /// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
 /// is not deferred. This is the most reliable way to send real user input.
@@ -213,8 +214,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 /// Executes an ex-command and returns its (non-error) output.
 /// Shell |:!| output is not captured.
 ///
-/// On parse error: forwards the Vim error; does not update v:errmsg.
-/// On runtime error: forwards the Vim error; does not update v:errmsg.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -259,7 +259,8 @@ theend:
 
 /// Evaluates a VimL expression (:help expression).
 /// Dictionaries and Lists are recursively expanded.
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -267,22 +268,42 @@ theend:
 Object nvim_eval(String expr, Error *err)
   FUNC_API_SINCE(1)
 {
+  static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
-  // Evaluate the expression
+
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
+  struct msglist **saved_msg_list = msg_list;
+  struct msglist *private_msg_list;
+  msg_list = &private_msg_list;
+  private_msg_list = NULL;
+
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    current_exception = NULL;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
+  recursive++;
   try_start();
 
   typval_T rettv;
-  if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
-  }
+  int ok = eval0((char_u *)expr.data, &rettv, NULL, true);
 
   if (!try_end(err)) {
-    // No errors, convert the result
-    rv = vim_to_object(&rettv);
+    if (ok == FAIL) {
+      // Should never happen, try_end() should get the error. #8371
+      api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
+    } else {
+      rv = vim_to_object(&rettv);
+    }
   }
 
-  // Free the Vim object
   tv_clear(&rettv);
+  msg_list = saved_msg_list;  // Restore the exception context.
+  recursive--;
 
   return rv;
 }
@@ -314,7 +335,9 @@ Object nvim_execute_lua(String code, Array args, Error *err)
 /// @return Result of the function call
 static Object _call_function(String fn, Array args, dict_T *self, Error *err)
 {
+  static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
+
   if (args.size > MAX_FUNC_ARGS) {
     api_set_error(err, kErrorTypeValidation,
                   "Function called with too many arguments");
@@ -330,20 +353,36 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     }
   }
 
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
+  struct msglist **saved_msg_list = msg_list;
+  struct msglist *private_msg_list;
+  msg_list = &private_msg_list;
+  private_msg_list = NULL;
+
+  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+  if (!recursive) {
+    force_abort = false;
+    suppress_errthrow = false;
+    current_exception = NULL;
+    // `did_emsg` is set by emsg(), which cancels execution.
+    did_emsg = false;
+  }
+  recursive++;
   try_start();
-  // Call the function
   typval_T rettv;
   int dummy;
-  int r = call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
-                    vim_args, NULL, curwin->w_cursor.lnum,
-                    curwin->w_cursor.lnum, &dummy, true, NULL, self);
-  if (r == FAIL) {
-    api_set_error(err, kErrorTypeException, "Error calling function");
-  }
+  // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
+  // (see above) to capture abort-causing non-exception errors.
+  (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+                  vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                  &dummy, true, NULL, self);
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
   tv_clear(&rettv);
+  msg_list = saved_msg_list;  // Restore the exception context.
+  recursive--;
 
 free_vim_args:
   while (i > 0) {
@@ -355,7 +394,7 @@ free_vim_args:
 
 /// Calls a VimL function with the given arguments.
 ///
-/// On VimL error: Returns a generic error; v:errmsg is not updated.
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param fn       Function to call
 /// @param args     Function arguments packed in an Array
@@ -368,6 +407,8 @@ Object nvim_call_function(String fn, Array args, Error *err)
 }
 
 /// Calls a VimL |Dictionary-function| with the given arguments.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
 /// @param fn Name of the function defined on the VimL dict
@@ -934,27 +975,26 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
-/// Call many api methods atomically
+/// Calls many API methods atomically.
 ///
-/// This has two main usages: Firstly, to perform several requests from an
-/// async context atomically, i.e. without processing requests from other rpc
-/// clients or redrawing or allowing user interaction in between. Note that api
-/// methods that could fire autocommands or do event processing still might do
-/// so. For instance invoking the :sleep command might call timer callbacks.
-/// Secondly, it can be used to reduce rpc overhead (roundtrips) when doing
-/// many requests in sequence.
+/// This has two main usages:
+/// 1. To perform several requests from an async context atomically, i.e.
+///    without interleaving redraws, RPC requests from other clients, or user
+///    interactions (however API methods may trigger autocommands or event
+///    processing which have such side-effects, e.g. |:sleep| may wake timers).
+/// 2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
 ///
 /// @param calls an array of calls, where each call is described by an array
 /// with two elements: the request name, and an array of arguments.
 /// @param[out] err Details of a validation error of the nvim_multi_request call
-/// itself, i e malformatted `calls` parameter. Errors from called methods will
+/// itself, i.e. malformed `calls` parameter. Errors from called methods will
 /// be indicated in the return value, see below.
 ///
 /// @return an array with two elements. The first is an array of return
 /// values. The second is NIL if all calls succeeded. If a call resulted in
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
-/// error ocurred, the values from all preceding calls will still be returned.
+/// error occurred, the values from all preceding calls will still be returned.
 Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
