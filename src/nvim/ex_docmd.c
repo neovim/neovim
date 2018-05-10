@@ -9972,28 +9972,26 @@ bool cmd_can_preview(char_u *cmd)
 /// Gets a list of maps describing user-commands defined for buffer `buf`
 /// or defined globally if `buf` is NULL.
 ///
-/// @param buf  Buffer to inspect, or NULL to get global commands.
+/// @param buf  Buffer to inspect, or NULL to get global user-commands.
 ///
 /// @return Array of dictionaries describing commands
 ArrayOf(Dictionary) commands_array(buf_T *buf)
 {
   Array rv = ARRAY_DICT_INIT;
-  garray_T *gap;
-  if (buf == NULL) {
-    gap = &ucmds;
-  } else {
-    gap = &buf->b_ucmds;
-  }
+  Object obj = NIL;
+  char str[10];
+  garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
+
   for (int i = 0; i < gap->ga_len; i++) {
     char arg[2] = { 0, 0 };
     Dictionary d = ARRAY_DICT_INIT;
-    char Range[10] = "";
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
-    // Name
     PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
+    PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
+    PUT(d, "script_id", INTEGER_OBJ(cmd->uc_scriptID));
 
-    // Argument
+    // "nargs" key
     switch (cmd->uc_argt & (EXTRA|NOSPC|NEEDARG)) {
     case 0:                    arg[0] = '0'; break;
     case(EXTRA):               arg[0] = '*'; break;
@@ -10001,52 +9999,47 @@ ArrayOf(Dictionary) commands_array(buf_T *buf)
     case(EXTRA|NEEDARG):       arg[0] = '+'; break;
     case(EXTRA|NOSPC|NEEDARG): arg[0] = '1'; break;
     }
-    PUT(d, "nargs", STRING_OBJ(cstr_to_string((char *)arg)));
+    PUT(d, "nargs", STRING_OBJ(cstr_to_string(arg)));
 
-    // Definition
-    PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
-
-    // Complete
     char *cmd_compl = get_command_complete(cmd->uc_compl);
-    if (cmd_compl != NULL) {
-      PUT(d, "complete", STRING_OBJ(cstr_to_string(cmd_compl)));
-    }
+    PUT(d, "complete", (cmd_compl == NULL
+                        ? NIL : STRING_OBJ(cstr_to_string(cmd_compl))));
+    PUT(d, "complete_arg", cmd->uc_compl_arg == NULL
+        ? NIL : STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
 
-    // Complete Arg
-    if (cmd->uc_compl_arg != NULL) {
-      PUT(d, "complete_arg",
-          STRING_OBJ(cstr_to_string((char *)cmd->uc_compl_arg)));
-    }
-
-    // Range
-    if (cmd->uc_argt & (RANGE|COUNT)) {
-      if (cmd->uc_argt & COUNT) {
-        // -count=N
-        snprintf((char *)Range, sizeof(Range), "%" PRId64 "c",
-                 (int64_t)cmd->uc_def);
-      } else if (cmd->uc_argt & DFLALL) {
-        Range[0] = '%';
-      } else if (cmd->uc_def >= 0) {
-        // -range=N
-        snprintf((char *)Range, sizeof(Range), "%" PRId64 "",
-                 (int64_t)cmd->uc_def);
+    obj = NIL;
+    if (cmd->uc_argt & COUNT) {
+      if (cmd->uc_def >= 0) {
+        snprintf(str, sizeof(str), "%" PRId64, (int64_t)cmd->uc_def);
+        obj = STRING_OBJ(cstr_to_string(str));    // -count=N
       } else {
-        Range[0] = '.';
+        obj = STRING_OBJ(cstr_to_string("0"));    // -count
       }
-      PUT(d, "range", STRING_OBJ(cstr_to_string((char *)Range)));
     }
+    PUT(d, "count", obj);
 
-    // Address
+    obj = NIL;
+    if (cmd->uc_argt & RANGE) {
+      if (cmd->uc_argt & DFLALL) {
+        obj = STRING_OBJ(cstr_to_string("%"));    // -range=%
+      } else if (cmd->uc_def >= 0) {
+        snprintf(str, sizeof(str), "%" PRId64, (int64_t)cmd->uc_def);
+        obj = STRING_OBJ(cstr_to_string(str));    // -range=N
+      } else {
+        obj = STRING_OBJ(cstr_to_string("."));    // -range
+      }
+    }
+    PUT(d, "range", obj);
+
+    obj = NIL;
     for (int j = 0; addr_type_complete[j].expand != -1; j++) {
       if (addr_type_complete[j].expand != ADDR_LINES
           && addr_type_complete[j].expand == cmd->uc_addr_type) {
-        PUT(d, "addr", STRING_OBJ(cstr_to_string(addr_type_complete[j].name)));
+        obj = STRING_OBJ(cstr_to_string(addr_type_complete[j].name));
         break;
       }
     }
-
-    // ScriptID
-    PUT(d, "script_id", INTEGER_OBJ(cmd->uc_scriptID));
+    PUT(d, "addr", obj);
 
     ADD(rv, DICTIONARY_OBJ(d));
   }

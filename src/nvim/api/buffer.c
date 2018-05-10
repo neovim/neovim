@@ -479,12 +479,11 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   return keymap_array(mode, buf);
 }
 
-/// Gets a list of dictionaries describing buffer-local commands.
-/// The "buffer" key in the returned dictionary reflects the buffer
-/// handle where the command is present.
+/// Gets a list of maps describing buffer-local |user-commands|.
 ///
-/// @param  buffer     Buffer handle.
-/// @param  opts       Optional parameters, currently always 
+/// @param  buffer  Buffer handle.
+/// @param  opts  Optional parameters. Currently only supports
+///               {"builtin":false}
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Array of dictionaries describing commands.
@@ -492,6 +491,25 @@ ArrayOf(Dictionary) nvim_buf_get_commands(Buffer buffer, Dictionary opts,
                                           Error *err)
     FUNC_API_SINCE(4)
 {
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+    if (!strequal("builtin", k.data)) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s",
+                    k.data);
+      return (Array)ARRAY_DICT_INIT;
+    }
+    if (v.type != kObjectTypeBoolean || v.data.boolean != false) {
+      api_set_error(err, kErrorTypeValidation,
+                    "builtin commands not supported yet");
+      return (Array)ARRAY_DICT_INIT;
+    }
+  }
+
+  if (buffer == -1) {
+    return commands_array(NULL);
+  }
+
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
     return (Array)ARRAY_DICT_INIT;

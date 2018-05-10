@@ -959,17 +959,17 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
-/// Gets a list of dictionaries describing global(non-buffer) commands.
+/// Gets a list of maps describing global |user-commands|.
 ///
-/// @param  opts       Holds the API Metadata describing what type of commands
-///                    are needed.
+/// @param  opts  Optional parameters. Currently only supports
+///               {"builtin":false}
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Array of dictionaries describing commands.
 ArrayOf(Dictionary) nvim_get_commands(Dictionary opts, Error *err)
     FUNC_API_SINCE(4)
 {
-  return commands_array(NULL);
+  return nvim_buf_get_commands(-1, opts, err);
 }
 
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
