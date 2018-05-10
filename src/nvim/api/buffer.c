@@ -80,7 +80,9 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///
 /// @param buffer The buffer handle
 /// @param send_buffer Set to true if the initial notification should contain
-///        the whole buffer
+///        the whole buffer. If so, the first notification will be a
+///        `nvim_buf_lines_event`. Otherwise, the first notification will be
+///        a `nvim_buf_changedtick_event`
 /// @param[out] err Details of an error that may have occurred
 /// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded; otherwise True.

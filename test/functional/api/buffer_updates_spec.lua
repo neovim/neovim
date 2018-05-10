@@ -338,7 +338,7 @@ describe('buffer events', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 1, 2, {}, false})
     tick = tick + 1
-    expectn('nvim_buf_changedtick', {b, tick})
+    expectn('nvim_buf_changedtick_event', {b, tick})
     command('set autoindent')
     command('normal! >>')
     tick = tick + 1
@@ -356,7 +356,7 @@ describe('buffer events', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 1, 2, {}, false})
     tick = tick + 1
-    expectn('nvim_buf_changedtick', {b, tick})
+    expectn('nvim_buf_changedtick_event', {b, tick})
     command('normal! ggOmmm')
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 0, 0, {"\t"}, false})
@@ -376,7 +376,7 @@ describe('buffer events', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'Line 1'}, false})
     tick = tick + 1
-    expectn('nvim_buf_changedtick', {b, tick})
+    expectn('nvim_buf_changedtick_event', {b, tick})
 
     -- change the file directly
     local f = io.open(filename, 'a')
@@ -412,7 +412,7 @@ describe('buffer events', function()
     tick1 = tick1 + 1
     expectn('nvim_buf_lines_event', {b1, tick1, 0, 1, {'A1'}, false})
     tick1 = tick1 + 1
-    expectn('nvim_buf_changedtick', {b1, tick1})
+    expectn('nvim_buf_changedtick_event', {b1, tick1})
 
     command('b'..b2nr)
     command('normal! x')
@@ -422,7 +422,7 @@ describe('buffer events', function()
     tick2 = tick2 + 1
     expectn('nvim_buf_lines_event', {b2, tick2, 0, 1, {'B1'}, false})
     tick2 = tick2 + 1
-    expectn('nvim_buf_changedtick', {b2, tick2})
+    expectn('nvim_buf_changedtick_event', {b2, tick2})
 
     command('b'..b3nr)
     command('normal! x')
@@ -432,7 +432,7 @@ describe('buffer events', function()
     tick3 = tick3 + 1
     expectn('nvim_buf_lines_event', {b3, tick3, 0, 1, {'C1'}, false})
     tick3 = tick3 + 1
-    expectn('nvim_buf_changedtick', {b3, tick3})
+    expectn('nvim_buf_changedtick_event', {b3, tick3})
   end)
 
   it('doesn\'t get confused when you turn watching on/off many times',
@@ -514,8 +514,8 @@ describe('buffer events', function()
     wantn(2, 'nvim_buf_lines_event', {b, tick, 0, 1, {'AAA'}, false})
     wantn(3, 'nvim_buf_lines_event', {b, tick, 0, 1, {'AAA'}, false})
     tick = tick + 1
-    wantn(2, 'nvim_buf_changedtick', {b, tick})
-    wantn(3, 'nvim_buf_changedtick', {b, tick})
+    wantn(2, 'nvim_buf_changedtick_event', {b, tick})
+    wantn(3, 'nvim_buf_changedtick_event', {b, tick})
 
     -- make sure there are no other pending nvim_buf_lines_event messages going to
     -- channel 1
@@ -667,7 +667,7 @@ describe('buffer events', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'AAA'}, false})
     tick = tick + 1
-    expectn('nvim_buf_changedtick', {b, tick})
+    expectn('nvim_buf_changedtick_event', {b, tick})
 
     -- close our buffer by creating a new one
     command('enew')
@@ -694,7 +694,7 @@ describe('buffer events', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'AAA'}, false})
     tick = tick + 1
-    expectn('nvim_buf_changedtick', {b, tick})
+    expectn('nvim_buf_changedtick_event', {b, tick})
 
     -- close our buffer by creating a new one
     command('set hidden')
@@ -733,7 +733,7 @@ describe('buffer events', function()
     helpers.clear()
     local b, tick = editoriginal(false)
     ok(buffer('attach', b, false))
-    expectn('nvim_buf_lines_event', {b, tick, -1, -1, {}, false})
+    expectn('nvim_buf_changedtick_event', {b, tick})
   end)
 
 end)
