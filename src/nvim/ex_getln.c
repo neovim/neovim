@@ -347,6 +347,13 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     redrawcmd();
   }
 
+  // redraw the statusline for statuslines that display the current mode
+  // using the mode() function.
+  if (KeyTyped) {
+    curwin->w_redr_status = true;
+    redraw_statuslines();
+  }
+
   did_emsg = false;
   got_int = false;
   s->state.check = command_line_check;
