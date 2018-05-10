@@ -215,7 +215,7 @@ function! s:get_path(sect, name) abort
   if empty(a:sect)
     " Some man implementations (OpenBSD) return all available paths from the
     " search command, so we get() the first one. #8341
-    return get(split(s:system(['man', s:find_arg, a:name])), 0, '')
+    return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
