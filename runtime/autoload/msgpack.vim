@@ -40,7 +40,7 @@ function s:msgpack_init_python() abort
     return s:msgpack_python_type
   endif
   let s:msgpack_python_initialized = 1
-  for suf in ['', '3']
+  for suf in (has('win32') ? ['3'] : ['', '3'])
     try
       execute 'python' . suf
               \. "\n"
