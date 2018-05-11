@@ -187,16 +187,16 @@ static long p_tw_nopaste;
 static long p_wm_nopaste;
 
 typedef struct vimoption {
-  char        *fullname;        /* full option name */
-  char        *shortname;       /* permissible abbreviation */
-  uint32_t flags;               /* see below */
-  char_u      *var;             /* global option: pointer to variable;
-                                * window-local option: VAR_WIN;
-                                * buffer-local option: global value */
-  idopt_T indir;                /* global option: PV_NONE;
-                                 * local option: indirect option index */
-  char_u      *def_val[2];      /* default values for variable (vi and vim) */
-  LastSet last_set;             /* script in which the option was last set */
+  char        *fullname;        // full option name
+  char        *shortname;       // permissible abbreviation
+  uint32_t flags;               // see below
+  char_u      *var;             // global option: pointer to variable;
+                                // window-local option: VAR_WIN;
+                                // buffer-local option: global value
+  idopt_T indir;                // global option: PV_NONE;
+                                // local option: indirect option index
+  char_u      *def_val[2];      // default values for variable (vi and vim)
+  LastSet last_set;             // script in which the option was last set
 # define SCRIPTID_INIT , 0
 } vimoption_T;
 
@@ -1366,15 +1366,16 @@ do_set (
         if (opt_idx >= 0) {
           showoneopt(&options[opt_idx], opt_flags);
           if (p_verbose > 0) {
-            /* Mention where the option was last set. */
-            if (varp == options[opt_idx].var)
+            // Mention where the option was last set.
+            if (varp == options[opt_idx].var) {
               option_last_set_msg(options[opt_idx].last_set);
-            else if ((int)options[opt_idx].indir & PV_WIN)
+            } else if ((int)options[opt_idx].indir & PV_WIN) {
               option_last_set_msg(curwin->w_p_scriptID[
-                    (int)options[opt_idx].indir & PV_MASK]);
-            else if ((int)options[opt_idx].indir & PV_BUF)
+                  (int)options[opt_idx].indir & PV_MASK]);
+            } else if ((int)options[opt_idx].indir & PV_BUF) {
               option_last_set_msg(curbuf->b_p_scriptID[
-                    (int)options[opt_idx].indir & PV_MASK]);
+                  (int)options[opt_idx].indir & PV_MASK]);
+            }
           }
         } else {
           errmsg = (char_u *)N_("E846: Key code not set");
@@ -3665,8 +3666,8 @@ static void set_option_scriptID_idx(int opt_idx, int opt_flags, int id)
   int indir = (int)options[opt_idx].indir;
   const LastSet last_set = { id, current_channel_id };
 
-  /* Remember where the option was set.  For local options need to do that
-   * in the buffer or window structure. */
+  // Remember where the option was set.  For local options need to do that
+  // in the buffer or window structure.
   if (both || (opt_flags & OPT_GLOBAL) || (indir & (PV_BUF|PV_WIN)) == 0) {
     options[opt_idx].last_set = last_set;
   }

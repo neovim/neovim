@@ -22061,8 +22061,10 @@ int store_session_globals(FILE *fd)
  */
 void last_set_msg(scid_T scriptID)
 {
-  LastSet last_set;
-  last_set.script_id = scriptID;
+  const LastSet last_set = (LastSet){
+    .script_id = scriptID,
+    .channel_id = 0,
+  };
   option_last_set_msg(last_set);
 }
 
