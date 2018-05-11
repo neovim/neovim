@@ -481,8 +481,7 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 /// Gets a list of buffer-local |user-commands|.
 ///
 /// @param  buffer  Buffer handle.
-/// @param  opts  Optional parameters. Currently only supports
-///               {"builtin":false}
+/// @param  opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Array of dictionaries describing commands.
@@ -490,27 +489,31 @@ ArrayOf(Dictionary) nvim_buf_get_commands(Buffer buffer, Dictionary opts,
                                           Error *err)
     FUNC_API_SINCE(4)
 {
+  bool global = (buffer == -1);
+  bool builtin = false;
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object v = opts.items[i].value;
     if (!strequal("builtin", k.data)) {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s",
-                    k.data);
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return (Array)ARRAY_DICT_INIT;
     }
-    if (v.type != kObjectTypeBoolean || v.data.boolean != false) {
-      api_set_error(err, kErrorTypeValidation,
-                    "builtin commands not supported yet");
-      return (Array)ARRAY_DICT_INIT;
+    if (strequal("builtin", k.data)) {
+      builtin = v.data.boolean;
     }
   }
 
-  if (buffer == -1) {
+  if (global) {
+    if (builtin) {
+      api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
+      return (Array)ARRAY_DICT_INIT;
+    }
     return commands_array(NULL);
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
+  if (builtin || !buf) {
     return (Array)ARRAY_DICT_INIT;
   }
   return commands_array(buf);

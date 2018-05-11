@@ -19,7 +19,7 @@ describe('nvim_get_commands', function()
   end)
 
   it('validates input', function()
-    expect_err('builtin commands not supported yet', meths.get_commands,
+    expect_err('builtin=true not implemented', meths.get_commands,
                {builtin=true})
     expect_err('unexpected key: foo', meths.get_commands,
                {foo='blah'})
@@ -47,6 +47,9 @@ describe('nvim_get_commands', function()
     -- Delete a command.
     command('delcommand Pwd')
     eq({cmd_dict}, curbufmeths.get_commands({builtin=false}))
+
+    -- {builtin=true} always returns empty for buffer-local case.
+    eq({}, curbufmeths.get_commands({builtin=true}))
   end)
 
   it('gets various command attributes', function()
