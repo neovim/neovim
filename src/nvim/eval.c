@@ -22066,12 +22066,27 @@ int store_session_globals(FILE *fd)
  */
 void last_set_msg(scid_T scriptID)
 {
-  if (scriptID != 0) {
-    char_u *p = home_replace_save(NULL, get_scriptname(scriptID));
+  const LastSet last_set = (LastSet){
+    .script_id = scriptID,
+    .channel_id = 0,
+  };
+  option_last_set_msg(last_set);
+}
+
+/// Displays where an option was last set.
+///
+/// Should only be invoked when 'verbose' is non-zero.
+void option_last_set_msg(LastSet last_set)
+{
+  if (last_set.script_id != 0) {
+    bool should_free;
+    char_u *p = get_scriptname(last_set, &should_free);
     verbose_enter();
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
-    xfree(p);
+    if (should_free) {
+      xfree(p);
+    }
     verbose_leave();
   }
 }
