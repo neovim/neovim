@@ -1042,7 +1042,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       c = *s;
 
       if (!(c != NUL
-            && (VIM_ISBREAK(c) || col2 == col || !VIM_ISBREAK((int)(*ps))))) {
+            && (VIM_ISBREAK(c) || col2 == col || !VIM_ISBREAK((int)*ps)))) {
         break;
       }
 
