@@ -3454,7 +3454,8 @@ win_line (
         }
 
         // Found last space before word: check for line break.
-        if (wp->w_p_lbr && c0 == c && VIM_ISBREAK(c) && !VIM_ISBREAK((int)*ptr)) {
+        if (wp->w_p_lbr && c0 == c && VIM_ISBREAK(c)
+            && !VIM_ISBREAK((int)(*ptr))) {
           int mb_off = has_mbyte ? (*mb_head_off)(line, ptr - 1) : 0;
           char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?

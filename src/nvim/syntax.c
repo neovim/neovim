@@ -2824,20 +2824,12 @@ syn_add_end_off (
     base = ml_get_buf(syn_buf, result->lnum, FALSE);
     p = base + col;
     if (off > 0) {
-<<<<<<< HEAD
       while (off-- > 0 && *p != NUL) {
         MB_PTR_ADV(p);
       }
-    } else if (off < 0)   {
-      while (off++ < 0 && base < p) {
-        MB_PTR_BACK(base, p);
-=======
-      while (off-- > 0 && *p != NUL)
-        mb_ptr_adv(p);
     } else {
       while (off++ < 0 && base < p) {
-        mb_ptr_back(base, p);
->>>>>>> upstream/master
+        MB_PTR_BACK(base, p);
       }
     }
     col = (int)(p - base);
