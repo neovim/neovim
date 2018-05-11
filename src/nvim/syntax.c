@@ -451,9 +451,10 @@ void syntax_start(win_T *wp, linenr_T lnum)
   if (INVALID_STATE(&current_state) && syn_block->b_sst_array != NULL) {
     /* Find last valid saved state before start_lnum. */
     for (p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
-      if (p->sst_lnum > lnum)
+      if (p->sst_lnum > lnum) {
         break;
-      if (p->sst_lnum <= lnum && p->sst_change_lnum == 0) {
+      }
+      if (p->sst_change_lnum == 0) {
         last_valid = p;
         if (p->sst_lnum >= lnum - syn_block->b_syn_sync_minlines)
           last_min_valid = p;
@@ -2825,9 +2826,10 @@ syn_add_end_off (
     if (off > 0) {
       while (off-- > 0 && *p != NUL)
         mb_ptr_adv(p);
-    } else if (off < 0)   {
-      while (off++ < 0 && base < p)
+    } else {
+      while (off++ < 0 && base < p) {
         mb_ptr_back(base, p);
+      }
     }
     col = (int)(p - base);
   }
@@ -2870,11 +2872,13 @@ syn_add_start_off (
     base = ml_get_buf(syn_buf, result->lnum, FALSE);
     p = base + col;
     if (off > 0) {
-      while (off-- && *p != NUL)
+      while (off-- && *p != NUL) {
         mb_ptr_adv(p);
-    } else if (off < 0)   {
-      while (off++ && base < p)
+      }
+    } else {
+      while (off++ && base < p) {
         mb_ptr_back(base, p);
+      }
     }
     col = (int)(p - base);
   }
@@ -4549,20 +4553,21 @@ syn_cmd_region (
       ++key_end;
     xfree(key);
     key = vim_strnsave_up(rest, (int)(key_end - rest));
-    if (STRCMP(key, "MATCHGROUP") == 0)
+    if (STRCMP(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
-    else if (STRCMP(key, "START") == 0)
+    } else if (STRCMP(key, "START") == 0) {
       item = ITEM_START;
-    else if (STRCMP(key, "END") == 0)
+    } else if (STRCMP(key, "END") == 0) {
       item = ITEM_END;
-    else if (STRCMP(key, "SKIP") == 0) {
-      if (pat_ptrs[ITEM_SKIP] != NULL) {        /* one skip pattern allowed */
-        illegal = TRUE;
+    } else if (STRCMP(key, "SKIP") == 0) {
+      if (pat_ptrs[ITEM_SKIP] != NULL) {  // One skip pattern allowed.
+        illegal = true;
         break;
       }
       item = ITEM_SKIP;
-    } else
+    } else {
       break;
+    }
     rest = skipwhite(key_end);
     if (*rest != '=') {
       rest = NULL;
@@ -4598,21 +4603,23 @@ syn_cmd_region (
       pat_ptrs[item] = ppp;
       ppp->pp_synp = xcalloc(1, sizeof(synpat_T));
 
-      /*
-       * Get the syntax pattern and the following offset(s).
-       */
-      /* Enable the appropriate \z specials. */
-      if (item == ITEM_START)
+      // Get the syntax pattern and the following offset(s).
+
+      // Enable the appropriate \z specials.
+      if (item == ITEM_START) {
         reg_do_extmatch = REX_SET;
-      else if (item == ITEM_SKIP || item == ITEM_END)
+      } else {
+        assert(item == ITEM_SKIP || item == ITEM_END);
         reg_do_extmatch = REX_USE;
+      }
       rest = get_syn_pattern(rest, ppp->pp_synp);
       reg_do_extmatch = 0;
       if (item == ITEM_END && vim_regcomp_had_eol()
-          && !(syn_opt_arg.flags & HL_EXCLUDENL))
+          && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
         ppp->pp_synp->sp_flags |= HL_HAS_EOL;
+      }
       ppp->pp_matchgroup_id = matchgroup_id;
-      ++pat_count;
+      pat_count++;
     }
   }
   xfree(key);
@@ -5321,18 +5328,19 @@ get_id_list (
           for (int i = highlight_ga.ga_len; --i >= 0; ) {
             if (vim_regexec(&regmatch, HL_TABLE()[i].sg_name, (colnr_T)0)) {
               if (round == 2) {
-                /* Got more items than expected; can happen
-                 * when adding items that match:
-                 * "contains=a.*b,axb".
-                 * Go back to first round */
+                // Got more items than expected; can happen
+                // when adding items that match:
+                // "contains=a.*b,axb".
+                // Go back to first round.
                 if (count >= total_count) {
                   xfree(retval);
                   round = 1;
-                } else
-                  retval[count] = i + 1;
+                } else {
+                  retval[count] = i + 1;  // -V522
+                }
               }
-              ++count;
-              id = -1;                      /* remember that we found one */
+              count++;
+              id = -1;  // Remember that we found one.
             }
           }
           vim_regfree(regmatch.regprog);
@@ -5346,12 +5354,13 @@ get_id_list (
       }
       if (id > 0) {
         if (round == 2) {
-          /* Got more items than expected, go back to first round */
+          // Got more items than expected, go back to first round.
           if (count >= total_count) {
             xfree(retval);
             round = 1;
-          } else
+          } else {
             retval[count] = id;
+          }
         }
         ++count;
       }
@@ -5721,13 +5730,9 @@ int syn_get_id(
 {
   // When the position is not after the current position and in the same
   // line of the same buffer, need to restart parsing.
-  if (wp->w_buffer != syn_buf
-      || lnum != current_lnum
-      || col < current_col) {
+  if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
     syntax_start(wp, lnum);
-  } else if (wp->w_buffer == syn_buf
-             && lnum == current_lnum
-             && col > current_col) {
+  } else if (col > current_col) {
       // next_match may not be correct when moving around, e.g. with the
       // "skip" expression in searchpair()
       next_match_idx = -1;

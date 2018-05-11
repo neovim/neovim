@@ -1,5 +1,43 @@
 local assert = require('luassert')
+local luv = require('luv')
 local lfs = require('lfs')
+
+local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+local function shell_quote(str)
+  if string.find(str, quote_me) or str == '' then
+    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
+  else
+    return str
+  end
+end
+
+local function argss_to_cmd(...)
+  local cmd = ''
+  for i = 1, select('#', ...) do
+    local arg = select(i, ...)
+    if type(arg) == 'string' then
+      cmd = cmd .. ' ' ..shell_quote(arg)
+    else
+      for _, subarg in ipairs(arg) do
+        cmd = cmd .. ' ' .. shell_quote(subarg)
+      end
+    end
+  end
+  return cmd
+end
+
+local function popen_r(...)
+  return io.popen(argss_to_cmd(...), 'r')
+end
+
+local function popen_w(...)
+  return io.popen(argss_to_cmd(...), 'w')
+end
+
+-- sleeps the test runner (_not_ the nvim instance)
+local function sleep(ms)
+  luv.sleep(ms)
+end
 
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
@@ -121,7 +159,7 @@ local uname = (function()
       return platform
     end
 
-    local status, f = pcall(io.popen, "uname -s")
+    local status, f = pcall(popen_r, 'uname', '-s')
     if status then
       platform = f:read("*l")
       f:close()
@@ -253,7 +291,7 @@ local function check_cores(app, force)
 end
 
 local function which(exe)
-  local pipe = io.popen('which ' .. exe, 'r')
+  local pipe = popen_r('which', exe)
   local ret = pipe:read('*a')
   pipe:close()
   if ret == '' then
@@ -261,6 +299,19 @@ local function which(exe)
   else
     return ret:sub(1, -2)
   end
+end
+
+local function repeated_read_cmd(...)
+  for _ = 1, 10 do
+    local stream = popen_r(...)
+    local ret = stream:read('*a')
+    stream:close()
+    if ret then
+      return ret
+    end
+  end
+  print('ERROR: Failed to execute ' .. argss_to_cmd(...) .. ': nil return after 10 attempts')
+  return nil
 end
 
 local function shallowcopy(orig)
@@ -567,8 +618,62 @@ local function table_flatten(arr)
   return result
 end
 
-return {
+local function hexdump(str)
+  local len = string.len(str)
+  local dump = ""
+  local hex = ""
+  local asc = ""
+
+  for i = 1, len do
+    if 1 == i % 8 then
+      dump = dump .. hex .. asc .. "\n"
+      hex = string.format("%04x: ", i - 1)
+      asc = ""
+    end
+
+    local ord = string.byte(str, i)
+    hex = hex .. string.format("%02x ", ord)
+    if ord >= 32 and ord <= 126 then
+      asc = asc .. string.char(ord)
+    else
+      asc = asc .. "."
+    end
+  end
+
+  return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
+end
+
+local function read_file(name)
+  local file = io.open(name, 'r')
+  if not file then
+    return nil
+  end
+  local ret = file:read('*a')
+  file:close()
+  return ret
+end
+
+-- Dedent the given text and write it to the file name.
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
+  if type(text) == 'table' then
+    -- Byte blob
+    local bytes = text
+    text = ''
+    for _, char in ipairs(bytes) do
+      text = ('%s%c'):format(text, char)
+    end
+  elseif not no_dedent then
+    text = dedent(text)
+  end
+  file:write(text)
+  file:flush()
+  file:close()
+end
+
+local module = {
   REMOVE_THIS = REMOVE_THIS,
+  argss_to_cmd = argss_to_cmd,
   check_cores = check_cores,
   check_logs = check_logs,
   concat_tables = concat_tables,
@@ -584,16 +689,25 @@ return {
   format_string = format_string,
   glob = glob,
   hasenv = hasenv,
+  hexdump = hexdump,
   intchar2lua = intchar2lua,
   map = map,
   matches = matches,
   mergedicts_copy = mergedicts_copy,
   neq = neq,
   ok = ok,
+  popen_r = popen_r,
+  popen_w = popen_w,
+  read_file = read_file,
+  repeated_read_cmd = repeated_read_cmd,
+  sleep = sleep,
   shallowcopy = shallowcopy,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
   updated = updated,
   which = which,
+  write_file = write_file,
 }
+
+return module

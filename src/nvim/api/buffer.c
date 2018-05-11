@@ -186,12 +186,12 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   for (size_t i = 0; i < rv.size; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Line index is too high");
       goto end;
     }
 
-    const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
+    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
@@ -360,7 +360,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }
@@ -378,7 +378,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start + (int64_t)i - 1;
 
-    if (lnum > LONG_MAX) {
+    if (lnum >= MAXLNUM) {
       api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }
@@ -581,7 +581,8 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 /// @param name       Option name
 /// @param value      Option value
 /// @param[out] err   Error details, if any
-void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
+void nvim_buf_set_option(uint64_t channel_id, Buffer buffer,
+                         String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -590,7 +591,7 @@ void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
-  set_option_to(buf, SREQ_BUF, name, value, err);
+  set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
 }
 
 /// Gets the buffer number

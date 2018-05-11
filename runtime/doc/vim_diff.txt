@@ -402,6 +402,8 @@ Other options:
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*
   *'macatsui'*
+  'maxmem' Nvim delegates memory-management to the OS.
+  'maxmemtot' Nvim delegates memory-management to the OS.
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*

@@ -603,6 +603,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
                               cmd_getline, cmd_cookie);
     recursive--;
 
+    // Ignore trailing '|'-separated commands in preview-mode ('inccommand').
+    if (State & CMDPREVIEW) {
+      next_cmdline = NULL;
+    }
+
     if (cmd_cookie == (void *)&cmd_loop_cookie)
       /* Use "current_line" from "cmd_loop_cookie", it may have been
        * incremented when defining a function. */
@@ -5181,11 +5186,13 @@ static void ex_command(exarg_T *eap)
     p = skipwhite(end);
   }
 
-  /* Get the name (if any) and skip to the following argument */
+  // Get the name (if any) and skip to the following argument.
   name = p;
-  if (ASCII_ISALPHA(*p))
-    while (ASCII_ISALNUM(*p))
-      ++p;
+  if (ASCII_ISALPHA(*p)) {
+    while (ASCII_ISALNUM(*p)) {
+      p++;
+    }
+  }
   if (!ends_excmd(*p) && !ascii_iswhite(*p)) {
     EMSG(_("E182: Invalid command name"));
     return;
@@ -5203,8 +5210,7 @@ static void ex_command(exarg_T *eap)
     EMSG(_("E183: User defined commands must start with an uppercase letter"));
     return;
   } else if ((name_len == 1 && *name == 'X')
-             || (name_len <= 4
-                 && STRNCMP(name, "Next", name_len > 4 ? 4 : name_len) == 0)) {
+             || (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0)) {
     EMSG(_("E841: Reserved name, cannot be used for user defined command"));
     return;
   } else
@@ -5668,22 +5674,21 @@ static void do_ucmd(exarg_T *eap)
       if (start != NULL)
         end = vim_strchr(start + 1, '>');
       if (buf != NULL) {
-        for (ksp = p; *ksp != NUL && *ksp != K_SPECIAL; ++ksp)
-          ;
+        for (ksp = p; *ksp != NUL && *ksp != K_SPECIAL; ksp++) {
+        }
         if (*ksp == K_SPECIAL
             && (start == NULL || ksp < start || end == NULL)
-            && ((ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)
-                )) {
-          /* K_SPECIAL has been put in the buffer as K_SPECIAL
-          * KS_SPECIAL KE_FILLER, like for mappings, but
-          * do_cmdline() doesn't handle that, so convert it back.
-          * Also change K_SPECIAL KS_EXTRA KE_CSI into CSI. */
+            && (ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)) {
+          // K_SPECIAL has been put in the buffer as K_SPECIAL
+          // KS_SPECIAL KE_FILLER, like for mappings, but
+          // do_cmdline() doesn't handle that, so convert it back.
+          // Also change K_SPECIAL KS_EXTRA KE_CSI into CSI.
           len = ksp - p;
           if (len > 0) {
             memmove(q, p, len);
             q += len;
           }
-          *q++ = ksp[1] == KS_SPECIAL ? K_SPECIAL : CSI;
+          *q++ = K_SPECIAL;
           p = ksp + 3;
           continue;
         }
@@ -6300,15 +6305,18 @@ static void ex_stop(exarg_T *eap)
     if (!eap->forceit) {
       autowrite_all();
     }
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
     ui_cursor_goto((int)Rows - 1, 0);
     ui_linefeed();
     ui_flush();
     ui_call_suspend();  // call machine specific function
+
     ui_flush();
     maketitle();
     resettitle();  // force updating the title
     redraw_later_clear();
     ui_refresh();  // may have resized window
+    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
   }
 }
 
@@ -6544,18 +6552,14 @@ void alist_slash_adjust(void)
 
 #endif
 
-/*
- * ":preserve".
- */
+/// ":preserve".
 static void ex_preserve(exarg_T *eap)
 {
   curbuf->b_flags |= BF_PRESERVED;
-  ml_preserve(curbuf, TRUE);
+  ml_preserve(curbuf, true, true);
 }
 
-/*
- * ":recover".
- */
+/// ":recover".
 static void ex_recover(exarg_T *eap)
 {
   /* Set recoverymode right away to avoid the ATTENTION prompt. */

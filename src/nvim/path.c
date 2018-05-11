@@ -673,11 +673,12 @@ static size_t do_path_expand(garray_T *gap, const char_u *path,
     // Find all matching entries.
     char_u *name;
     scandir_next_with_dots(NULL);  // initialize
-    while ((name = (char_u *) scandir_next_with_dots(&dir)) && name != NULL) {
+    while ((name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
-               && name[1] != NUL && (name[1] != '.' || name[2] != NUL)))
+               && name[1] != NUL
+               && (name[1] != '.' || name[2] != NUL)))  // -V557
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && fnamencmp(path + (s - buf), name, e - s) == 0))) {

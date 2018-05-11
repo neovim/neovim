@@ -2825,7 +2825,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
 {
   switch (tv->v_type) {
     case VAR_NUMBER: {
-      snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);
+      snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
       return buf;
     }
     case VAR_STRING: {

@@ -687,25 +687,17 @@ CTRL-Z			Suspend Vim, like ":stop".
 			Command-line mode, the CTRL-Z is inserted as a normal
 			character.  In Visual mode Vim goes back to Normal
 			mode.
-			Note: if CTRL-Z undoes a change see |mswin.vim|.
-
 
 :sus[pend][!]	or			*:sus* *:suspend* *:st* *:stop*
-:st[op][!]		Suspend Vim.
+:st[op][!]		Suspend Vim.  Vim will continue if you make it the
+			foreground job again.
 			If the '!' is not given and 'autowrite' is set, every
 			buffer with changes and a file name is written out.
 			If the '!' is given or 'autowrite' is not set, changed
 			buffers are not written, don't forget to bring Vim
 			back to the foreground later!
 
-In the GUI, suspending is implemented as iconising gvim.  In Windows 95/NT,
-gvim is minimized.
-
-On many Unix systems, it is possible to suspend Vim with CTRL-Z.  This is only
-possible in Normal and Visual mode (see next chapter, |vim-modes|).  Vim will
-continue if you make it the foreground job again.  On other systems, CTRL-Z
-will start a new shell.  This is the same as the ":sh" command.  Vim will
-continue if you exit from the shell.
+In the GUI, suspending is implementation-defined.
 
 In X-windows the selection is disowned when Vim suspends.  this means you
 can't paste it in another application (since Vim is going to sleep an attempt

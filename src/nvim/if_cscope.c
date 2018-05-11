@@ -1001,8 +1001,8 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
     return FALSE;
   }
 
-  if (qfpos != NULL && *qfpos != '0' && totmatches > 0) {
-    /* fill error list */
+  if (qfpos != NULL && *qfpos != '0') {
+    // Fill error list.
     FILE        *f;
     char_u      *tmp = vim_tempname();
     qf_info_T   *qi = NULL;

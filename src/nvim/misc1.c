@@ -2643,7 +2643,7 @@ void preserve_exit(void)
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       mch_errmsg((uint8_t *)"Vim: preserving files...\n");
       ui_flush();
-      ml_sync_all(false, false);    // preserve all swap files
+      ml_sync_all(false, false, true);  // preserve all swap files
       break;
     }
   }

@@ -11,6 +11,8 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   brew install ninja
   brew install gettext
   brew reinstall -s libtool
+  brew install ccache
+  export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 
 echo "Install neovim module for Python 3."

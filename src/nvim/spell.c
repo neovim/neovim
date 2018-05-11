@@ -7368,16 +7368,24 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
     if ((flags & (WF_BANNED | WF_RARE | WF_REGION)) || keepcap) {
       STRCPY(badword, p);
       STRCAT(badword, "/");
-      if (keepcap)
+      if (keepcap) {
         STRCAT(badword, "=");
-      if (flags & WF_BANNED)
+      }
+      if (flags & WF_BANNED) {
         STRCAT(badword, "!");
-      else if (flags & WF_RARE)
+      } else if (flags & WF_RARE) {
         STRCAT(badword, "?");
-      if (flags & WF_REGION)
-        for (i = 0; i < 7; ++i)
-          if (flags & (0x10000 << i))
-            sprintf((char *)badword + STRLEN(badword), "%d", i + 1);
+      }
+      if (flags & WF_REGION) {
+        for (i = 0; i < 7; i++) {
+          if (flags & (0x10000 << i)) {
+            const size_t badword_len = STRLEN(badword);
+            snprintf((char *)badword + badword_len,
+                     sizeof(badword) - badword_len,
+                     "%d", i + 1);
+          }
+        }
+      }
       p = badword;
     }
 
