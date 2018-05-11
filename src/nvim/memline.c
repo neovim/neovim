@@ -843,8 +843,7 @@ void ml_recover(void)
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
-    if (fname_used != NULL)
-      EMSG2(_("E306: Cannot open %s"), fname_used);
+    EMSG2(_("E306: Cannot open %s"), fname_used);
     goto theend;
   }
   buf->b_ml.ml_mfp = mfp;
@@ -1297,18 +1296,14 @@ recover_names (
     msg_putchar('\n');
   }
 
-  /*
-   * Do the loop for every directory in 'directory'.
-   * First allocate some memory to put the directory name in.
-   */
+  // Do the loop for every directory in 'directory'.
+  // First allocate some memory to put the directory name in.
   dir_name = xmalloc(STRLEN(p_dir) + 1);
   dirp = p_dir;
-  while (dir_name != NULL && *dirp) {
-    /*
-     * Isolate a directory name from *dirp and put it in dir_name (we know
-     * it is large enough, so use 31000 for length).
-     * Advance dirp to next directory name.
-     */
+  while (*dirp) {
+    // Isolate a directory name from *dirp and put it in dir_name (we know
+    // it is large enough, so use 31000 for length).
+    // Advance dirp to next directory name.
     (void)copy_option_part(&dirp, dir_name, 31000, ",");
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     /* check current dir */
@@ -1593,7 +1588,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
  * If 'check_char' is TRUE, stop syncing when character becomes available, but
  * always sync at least one block.
  */
-void ml_sync_all(int check_file, int check_char)
+void ml_sync_all(int check_file, int check_char, bool do_fsync)
 {
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
@@ -1612,16 +1607,17 @@ void ml_sync_all(int check_file, int check_char)
       if (!os_fileinfo((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
-        ml_preserve(buf, FALSE);
-        did_check_timestamps = FALSE;
-        need_check_timestamps = TRUE;           /* give message later */
+        ml_preserve(buf, false, do_fsync);
+        did_check_timestamps = false;
+        need_check_timestamps = true;           // give message later
       }
     }
     if (buf->b_ml.ml_mfp->mf_dirty) {
       (void)mf_sync(buf->b_ml.ml_mfp, (check_char ? MFS_STOP : 0)
-          | (bufIsChanged(buf) ? MFS_FLUSH : 0));
-      if (check_char && os_char_avail())        /* character available now */
+                    | (do_fsync && bufIsChanged(buf) ? MFS_FLUSH : 0));
+      if (check_char && os_char_avail()) {      // character available now
         break;
+      }
     }
   }
 }
@@ -1636,7 +1632,7 @@ void ml_sync_all(int check_file, int check_char)
  *
  * when message is TRUE the success of preserving is reported
  */
-void ml_preserve(buf_T *buf, int message)
+void ml_preserve(buf_T *buf, int message, bool do_fsync)
 {
   bhdr_T      *hp;
   linenr_T lnum;
@@ -1654,9 +1650,9 @@ void ml_preserve(buf_T *buf, int message)
    * before. */
   got_int = FALSE;
 
-  ml_flush_line(buf);                               /* flush buffered line */
-  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   /* flush locked block */
-  status = mf_sync(mfp, MFS_ALL | MFS_FLUSH);
+  ml_flush_line(buf);                               // flush buffered line
+  (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   // flush locked block
+  status = mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0));
 
   /* stack is invalid after mf_sync(.., MFS_ALL) */
   buf->b_ml.ml_stack_top = 0;
@@ -1684,11 +1680,12 @@ void ml_preserve(buf_T *buf, int message)
       CHECK(buf->b_ml.ml_locked_low != lnum, "low != lnum");
       lnum = buf->b_ml.ml_locked_high + 1;
     }
-    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);     /* flush locked block */
-    /* sync the updated pointer blocks */
-    if (mf_sync(mfp, MFS_ALL | MFS_FLUSH) == FAIL)
+    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush locked block
+    // sync the updated pointer blocks
+    if (mf_sync(mfp, MFS_ALL | (do_fsync ? MFS_FLUSH : 0)) == FAIL) {
       status = FAIL;
-    buf->b_ml.ml_stack_top = 0;             /* stack is invalid now */
+    }
+    buf->b_ml.ml_stack_top = 0;  // stack is invalid now
   }
 theend:
   got_int |= got_int_save;
@@ -1769,7 +1766,7 @@ errorret:
    * Don't use the last used line when 'swapfile' is reset, need to load all
    * blocks.
    */
-  if (buf->b_ml.ml_line_lnum != lnum || mf_dont_release) {
+  if (buf->b_ml.ml_line_lnum != lnum) {
     ml_flush_line(buf);
 
     /*
@@ -2770,9 +2767,8 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
   if (buf->b_ml.ml_locked) {
     if (ML_SIMPLE(action)
         && buf->b_ml.ml_locked_low <= lnum
-        && buf->b_ml.ml_locked_high >= lnum
-        && !mf_dont_release) {
-      /* remember to update pointer blocks and stack later */
+        && buf->b_ml.ml_locked_high >= lnum) {
+      // remember to update pointer blocks and stack later
       if (action == ML_INSERT) {
         ++(buf->b_ml.ml_locked_lineadd);
         ++(buf->b_ml.ml_locked_high);

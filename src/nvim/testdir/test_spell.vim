@@ -315,7 +315,7 @@ endfunc
 " Check using z= in new buffer (crash fixed by patch 7.4a.028).
 func Test_zeq_crash()
   new
-  set maxmem=512 spell
+  set spell
   call feedkeys('iasdz=:\"', 'tx')
 
   bwipe!

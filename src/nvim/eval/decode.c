@@ -985,7 +985,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       break;
     }
     case MSGPACK_OBJECT_NEGATIVE_INTEGER: {
-      if (mobj.via.i64 >= VARNUMBER_MIN) {
+      if (mobj.via.i64 >= VARNUMBER_MIN) {  // -V547
         *rettv = (typval_T) {
           .v_type = VAR_NUMBER,
           .v_lock = VAR_UNLOCKED,

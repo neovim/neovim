@@ -11,6 +11,7 @@ local ok = helpers.ok
 local meths = helpers.meths
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
+local expect_err = helpers.expect_err
 
 describe('server -> client', function()
   local cid
@@ -221,9 +222,8 @@ describe('server -> client', function()
     end)
 
     it('returns an error if the request failed', function()
-      local status, err = pcall(eval, "rpcrequest(vim, 'does-not-exist')")
-      eq(false, status)
-      ok(nil ~= string.match(err, 'Failed to evaluate expression'))
+      expect_err('Vim:Invalid method name',
+                 eval, "rpcrequest(vim, 'does-not-exist')")
     end)
   end)
 
@@ -250,7 +250,7 @@ describe('server -> client', function()
     end)
 
     after_each(function()
-      funcs.jobstop(jobid)
+      pcall(funcs.jobstop, jobid)
     end)
 
     if helpers.pending_win32(pending) then return end
@@ -261,7 +261,7 @@ describe('server -> client', function()
       eq({'notification', 'pong', {}}, next_msg())
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
       eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_msg())
-      funcs.rpcrequest(jobid, "exit")
+      pcall(funcs.rpcrequest, jobid, "exit")
       eq({'notification', 'stderr', {0, {''}}}, next_msg())
       eq({'notification', 'exit', {0, 0}}, next_msg())
     end)
@@ -308,8 +308,8 @@ describe('server -> client', function()
     it('via ipv4 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local address = funcs.serverstart("127.0.0.1:")
-      if #address == 0 then
+      local status, address = pcall(funcs.serverstart, "127.0.0.1:")
+      if not status then
         pending('no ipv4 stack', function() end)
         return
       end
@@ -320,8 +320,8 @@ describe('server -> client', function()
     it('via ipv6 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local address = funcs.serverstart('::1:')
-      if #address == 0 then
+      local status, address = pcall(funcs.serverstart, '::1:')
+      if not status then
         pending('no ipv6 stack', function() end)
         return
       end

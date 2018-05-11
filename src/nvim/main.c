@@ -725,9 +725,7 @@ static void init_locale(void)
 #endif
 
 
-/*
- * Scan the command line arguments.
- */
+/// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
 {
   int argc = parmp->argc;
@@ -789,7 +787,8 @@ static void command_line_scan(mparm_T *parmp)
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             FileDescriptor fp;
-            const int fof_ret = file_open_fd(&fp, STDOUT_FILENO, true);
+            const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
+                                             kFileWriteOnly);
             msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
 
             if (fof_ret != 0) {
@@ -896,8 +895,9 @@ static void command_line_scan(mparm_T *parmp)
           p_write = FALSE;
           break;
 
-        case 'N':                 /* "-N"  Nocompatible */
-          /* No-op */
+        case 'N':                 // "-N"  Nocompatible
+        case 'X':                 // "-X"  Do not connect to X server
+          // No-op
           break;
 
         case 'n':                 /* "-n" no swap file */
@@ -1086,17 +1086,36 @@ static void command_line_scan(mparm_T *parmp)
           case 's':               /* "-s {scriptin}" read from script file */
             if (scriptin[0] != NULL) {
 scripterror:
-              mch_errmsg(_("Attempt to open script file again: \""));
-              mch_errmsg(argv[-1]);
-              mch_errmsg(" ");
-              mch_errmsg(argv[0]);
-              mch_errmsg("\"\n");
+              vim_snprintf((char *)IObuff, IOSIZE,
+                           _("Attempt to open script file again: \"%s %s\"\n"),
+                           argv[-1], argv[0]);
+              mch_errmsg((const char *)IObuff);
               mch_exit(2);
             }
-            if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
-              mch_errmsg(_("Cannot open for reading: \""));
-              mch_errmsg(argv[0]);
-              mch_errmsg("\"\n");
+            int error;
+            if (STRCMP(argv[0], "-") == 0) {
+              const int stdin_dup_fd = os_dup(STDIN_FILENO);
+#ifdef WIN32
+              // On Windows, replace the original stdin with the
+              // console input handle.
+              close(STDIN_FILENO);
+              const HANDLE conin_handle =
+                CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                           FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                           OPEN_EXISTING, 0, (HANDLE)NULL);
+              const int conin_fd = _open_osfhandle(conin_handle, _O_RDONLY);
+              assert(conin_fd == STDIN_FILENO);
+#endif
+              FileDescriptor *const stdin_dup = file_open_fd_new(
+                  &error, stdin_dup_fd, kFileReadOnly|kFileNonBlocking);
+              assert(stdin_dup != NULL);
+              scriptin[0] = stdin_dup;
+            } else if ((scriptin[0] = file_open_new(
+                &error, argv[0], kFileReadOnly|kFileNonBlocking, 0)) == NULL) {
+              vim_snprintf((char *)IObuff, IOSIZE,
+                           _("Cannot open for reading: \"%s\": %s\n"),
+                           argv[0], os_strerror(error));
+              mch_errmsg((const char *)IObuff);
               mch_exit(2);
             }
             save_typebuf();

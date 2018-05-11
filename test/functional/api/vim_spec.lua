@@ -4,17 +4,20 @@ local global_helpers = require('test.helpers')
 
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
+local command = helpers.command
+local eval = helpers.eval
+local funcs = helpers.funcs
+local iswin = helpers.iswin
+local meth_pcall = helpers.meth_pcall
+local meths = helpers.meths
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
-local meths = helpers.meths
-local funcs = helpers.funcs
 local request = helpers.request
-local meth_pcall = helpers.meth_pcall
-local command = helpers.command
-local iswin = helpers.iswin
+local source = helpers.source
 
-local intchar2lua = global_helpers.intchar2lua
+local expect_err = global_helpers.expect_err
 local format_string = global_helpers.format_string
+local intchar2lua = global_helpers.intchar2lua
 local mergedicts_copy = global_helpers.mergedicts_copy
 
 describe('api', function()
@@ -38,20 +41,20 @@ describe('api', function()
       os.remove(fname)
     end)
 
-    it("parse error: fails (specific error), does NOT update v:errmsg", function()
-      -- Most API methods return generic errors (or no error) if a VimL
-      -- expression fails; nvim_command returns the VimL error details.
+    it('VimL validation error: fails with specific error', function()
       local status, rv = pcall(nvim, "command", "bogus_command")
       eq(false, status)                       -- nvim_command() failed.
       eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
-      eq("", nvim("eval", "v:errmsg"))        -- v:errmsg was not updated.
+      eq('', nvim('eval', 'v:errmsg'))        -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
     end)
 
-    it("runtime error: fails (specific error)", function()
+    it('VimL execution error: fails with specific error', function()
       local status, rv = pcall(nvim, "command_output", "buffer 23487")
       eq(false, status)                 -- nvim_command() failed.
       eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
-      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
     end)
   end)
 
@@ -107,21 +110,21 @@ describe('api', function()
       eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
-    it("parse error: fails (specific error), does NOT update v:errmsg", function()
+    it('VimL validation error: fails with specific error', function()
       local status, rv = pcall(nvim, "command_output", "bogus commannnd")
       eq(false, status)                 -- nvim_command_output() failed.
       eq("E492: Not an editor command: bogus commannnd",
          string.match(rv, "E%d*:.*"))
-      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       -- Verify NO hit-enter prompt.
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
 
-    it("runtime error: fails (specific error)", function()
+    it('VimL execution error: fails with specific error', function()
       local status, rv = pcall(nvim, "command_output", "buffer 42")
       eq(false, status)                 -- nvim_command_output() failed.
       eq("E86: Buffer 42 does not exist", string.match(rv, "E%d*:.*"))
-      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       -- Verify NO hit-enter prompt.
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
@@ -143,11 +146,10 @@ describe('api', function()
       eq(2, request("vim_eval", "1+1"))
     end)
 
-    it("VimL error: fails (generic error), does NOT update v:errmsg", function()
-      local status, rv = pcall(nvim, "eval", "bogus expression")
-      eq(false, status)                 -- nvim_eval() failed.
-      ok(nil ~= string.find(rv, "Failed to evaluate expression"))
-      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    it("VimL error: returns error details, does NOT update v:errmsg", function()
+      expect_err('E121: Undefined variable: bogus', request,
+                 'nvim_eval', 'bogus expression')
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
   end)
 
@@ -159,11 +161,100 @@ describe('api', function()
       eq('foo', nvim('call_function', 'simplify', {'this/./is//redundant/../../../foo'}))
     end)
 
-    it("VimL error: fails (generic error), does NOT update v:errmsg", function()
-      local status, rv = pcall(nvim, "call_function", "bogus function", {"arg1"})
-      eq(false, status)                 -- nvim_call_function() failed.
-      ok(nil ~= string.find(rv, "Error calling function"))
-      eq("", nvim("eval", "v:errmsg"))  -- v:errmsg was not updated.
+    it("VimL validation error: returns specific error, does NOT update v:errmsg", function()
+      expect_err('E117: Unknown function: bogus function', request,
+                 'nvim_call_function', 'bogus function', {'arg1'})
+      expect_err('E119: Not enough arguments for function: atan', request,
+                 'nvim_call_function', 'atan', {})
+      eq('', eval('v:exception'))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+    end)
+
+    it("VimL error: returns error details, does NOT update v:errmsg", function()
+      expect_err('E808: Number or Float required', request,
+                 'nvim_call_function', 'atan', {'foo'})
+      expect_err('Invalid channel stream "xxx"', request,
+                 'nvim_call_function', 'chanclose', {999, 'xxx'})
+      expect_err('E900: Invalid channel id', request,
+                 'nvim_call_function', 'chansend', {999, 'foo'})
+      eq('', eval('v:exception'))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+    end)
+
+    it("VimL exception: returns exception details, does NOT update v:errmsg", function()
+      source([[
+        function! Foo() abort
+          throw 'wtf'
+        endfunction
+      ]])
+      expect_err('wtf', request,
+                 'nvim_call_function', 'Foo', {})
+      eq('', eval('v:exception'))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+    end)
+
+    it('validates args', function()
+      local too_many_args = { 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x' }
+      source([[
+        function! Foo(...) abort
+          echo a:000
+        endfunction
+      ]])
+      -- E740
+      expect_err('Function called with too many arguments', request,
+                 'nvim_call_function', 'Foo', too_many_args)
+    end)
+  end)
+
+  describe('nvim_call_dict_function', function()
+    it('invokes VimL dict function', function()
+      source([[
+        function! F(name) dict
+          return self.greeting.', '.a:name.'!'
+        endfunction
+        let g:test_dict_fn = { 'greeting':'Hello', 'F':function('F') }
+
+        let g:test_dict_fn2 = { 'greeting':'Hi' }
+        function g:test_dict_fn2.F2(name)
+          return self.greeting.', '.a:name.' ...'
+        endfunction
+      ]])
+
+      -- :help Dictionary-function
+      eq('Hello, World!', nvim('call_dict_function', 'g:test_dict_fn', 'F', {'World'}))
+      -- Funcref is sent as NIL over RPC.
+      eq({ greeting = 'Hello', F = NIL }, nvim('get_var', 'test_dict_fn'))
+
+      -- :help numbered-function
+      eq('Hi, Moon ...', nvim('call_dict_function', 'g:test_dict_fn2', 'F2', {'Moon'}))
+      -- Funcref is sent as NIL over RPC.
+      eq({ greeting = 'Hi', F2 = NIL }, nvim('get_var', 'test_dict_fn2'))
+
+      -- Function specified via RPC dict.
+      source('function! G() dict\n  return "@".(self.result)."@"\nendfunction')
+      eq('@it works@', nvim('call_dict_function', { result = 'it works', G = 'G'}, 'G', {}))
+    end)
+
+    it('validates args', function()
+      command('let g:d={"baz":"zub","meep":[]}')
+      expect_err('Not found: bogus', request,
+                 'nvim_call_dict_function', 'g:d', 'bogus', {1,2})
+      expect_err('Not a function: baz', request,
+                 'nvim_call_dict_function', 'g:d', 'baz', {1,2})
+      expect_err('Not a function: meep', request,
+                 'nvim_call_dict_function', 'g:d', 'meep', {1,2})
+      expect_err('E117: Unknown function: f', request,
+                 'nvim_call_dict_function', { f = '' }, 'f', {1,2})
+      expect_err('Not a function: f', request,
+                 'nvim_call_dict_function', "{ 'f': '' }", 'f', {1,2})
+      expect_err('dict argument type must be String or Dictionary', request,
+                 'nvim_call_dict_function', 42, 'f', {1,2})
+      expect_err('Failed to evaluate dict expression', request,
+                 'nvim_call_dict_function', 'foo', 'f', {1,2})
+      expect_err('dict not found', request,
+                 'nvim_call_dict_function', '42', 'f', {1,2})
+      expect_err('Invalid %(empty%) function name', request,
+                 'nvim_call_dict_function', "{ 'f': '' }", '', {1,2})
     end)
   end)
 
@@ -290,6 +381,21 @@ describe('api', function()
       local status, err = pcall(nvim, 'get_option', 'foldcolumn')
       eq(false, status)
       ok(err:match('Invalid option name') ~= nil)
+    end)
+
+    it('updates where the option was last set from', function()
+      nvim('set_option', 'equalalways', false)
+      local status, rv = pcall(nvim, 'command_output',
+        'verbose set equalalways?')
+      eq(true, status)
+      ok(nil ~= string.find(rv, 'noequalalways\n'..
+        '\tLast set from API client %(channel id %d+%)'))
+
+      nvim('execute_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
+      status, rv = pcall(nvim, 'command_output',
+        'verbose set equalalways?')
+      eq(true, status)
+      eq('  equalalways\n\tLast set from Lua', rv)
     end)
   end)
 

@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "${PROJECT_SOURCE_DIR}/src/nvim/vim.h"
 char *default_vim_dir = "${CMAKE_INSTALL_FULL_DATAROOTDIR}/nvim";
 char *default_vimruntime_dir = "";

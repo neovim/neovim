@@ -14,6 +14,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/path.h"
+#include "nvim/macros.h"
 #include "nvim/strings.h"
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
@@ -176,7 +177,7 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - do os_dirname() to get the real name of that directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
-static char_u   *homedir = NULL;
+static char *homedir = NULL;
 
 void init_homedir(void)
 {
@@ -220,7 +221,7 @@ void init_homedir(void)
       }
     }
 #endif
-    homedir = vim_strsave((char_u *)var);
+    homedir = xstrdup(var);
   }
 }
 
@@ -357,7 +358,7 @@ void expand_env_esc(char_u *restrict srcp,
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
-        var = homedir;
+        var = (char_u *)homedir;
         tail = src + 1;
       } else {  // user directory
 #if defined(UNIX)
@@ -719,108 +720,123 @@ char *vim_getenv(const char *name)
 
 /// Replace home directory by "~" in each space or comma separated file name in
 /// 'src'.
+///
+/// Replace home directory with tilde in each file name
+///
 /// If anything fails (except when out of space) dst equals src.
-/// @param buf When not NULL, check for help files
-/// @param src Input file name
-/// @param dst Where to put the result
-/// @param dstlen Maximum length of the result
-/// @param one If true, only replace one file name, including spaces and commas
-///            in the file name
-void home_replace(const buf_T *const buf, const char_u *src,
-                  char_u *dst, size_t dstlen, bool one)
+///
+/// @param[in]  buf  When not NULL, uses this buffer to check whether it is
+///                  a help file. If it is then path to file is removed
+///                  completely, `one` is ignored and assumed to be true.
+/// @param[in]  src  Input file names. Assumed to be a space/comma separated
+///                  list unless `one` is true.
+/// @param[out]  dst  Where to put the result.
+/// @param[in]  dstlen  Destination length.
+/// @param[in]  one  If true, assumes source is a single file name and not
+///                  a list of them.
+///
+/// @return length of the string put into dst, does not include NUL byte.
+size_t home_replace(const buf_T *const buf, const char_u *src,
+                    char_u *const dst, size_t dstlen, const bool one)
+  FUNC_ATTR_NONNULL_ARG(3)
 {
-  size_t dirlen = 0, envlen = 0;
-  size_t len;
+  size_t dirlen = 0;
+  size_t envlen = 0;
 
   if (src == NULL) {
     *dst = NUL;
-    return;
+    return 0;
   }
 
-  /*
-   * If the file is a help file, remove the path completely.
-   */
   if (buf != NULL && buf->b_help) {
-    xstrlcpy((char *)dst, (char *)path_tail(src), dstlen);
-    return;
+    const size_t dlen = xstrlcpy((char *)dst, (char *)path_tail(src), dstlen);
+    return MIN(dlen, dstlen - 1);
   }
 
-  /*
-   * We check both the value of the $HOME environment variable and the
-   * "real" home directory.
-   */
-  if (homedir != NULL)
-    dirlen = STRLEN(homedir);
+  // We check both the value of the $HOME environment variable and the
+  // "real" home directory.
+  if (homedir != NULL) {
+    dirlen = strlen(homedir);
+  }
 
-  char_u *homedir_env = (char_u *)os_getenv("HOME");
+  const char *const homedir_env = os_getenv("HOME");
+  char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 
-  if (homedir_env != NULL && vim_strchr(homedir_env, '~') != NULL) {
+  if (homedir_env_mod != NULL && strchr(homedir_env_mod, '~') != NULL) {
     must_free = true;
     size_t usedlen = 0;
-    size_t flen = STRLEN(homedir_env);
+    size_t flen = strlen(homedir_env_mod);
     char_u *fbuf = NULL;
-    (void)modify_fname((char_u *)":p", &usedlen, &homedir_env, &fbuf, &flen);
-    flen = STRLEN(homedir_env);
-    if (flen > 0 && vim_ispathsep(homedir_env[flen - 1]))
-      /* Remove the trailing / that is added to a directory. */
-      homedir_env[flen - 1] = NUL;
+    (void)modify_fname((char_u *)":p", &usedlen, (char_u **)&homedir_env_mod,
+                       &fbuf, &flen);
+    flen = strlen(homedir_env_mod);
+    assert(homedir_env_mod != homedir_env);
+    if (vim_ispathsep(homedir_env_mod[flen - 1])) {
+      // Remove the trailing / that is added to a directory.
+      homedir_env_mod[flen - 1] = NUL;
+    }
   }
 
-  if (homedir_env != NULL)
-    envlen = STRLEN(homedir_env);
+  if (homedir_env_mod != NULL) {
+    envlen = strlen(homedir_env_mod);
+  }
 
-  if (!one)
+  if (!one) {
     src = skipwhite(src);
+  }
+  char *dst_p = (char *)dst;
   while (*src && dstlen > 0) {
-    /*
-     * Here we are at the beginning of a file name.
-     * First, check to see if the beginning of the file name matches
-     * $HOME or the "real" home directory. Check that there is a '/'
-     * after the match (so that if e.g. the file is "/home/pieter/bla",
-     * and the home directory is "/home/piet", the file does not end up
-     * as "~er/bla" (which would seem to indicate the file "bla" in user
-     * er's home directory)).
-     */
-    char_u *p = homedir;
-    len = dirlen;
-    for (;; ) {
-      if (   len
-             && fnamencmp(src, p, len) == 0
-             && (vim_ispathsep(src[len])
-                 || (!one && (src[len] == ',' || src[len] == ' '))
-                 || src[len] == NUL)) {
+    // Here we are at the beginning of a file name.
+    // First, check to see if the beginning of the file name matches
+    // $HOME or the "real" home directory. Check that there is a '/'
+    // after the match (so that if e.g. the file is "/home/pieter/bla",
+    // and the home directory is "/home/piet", the file does not end up
+    // as "~er/bla" (which would seem to indicate the file "bla" in user
+    // er's home directory)).
+    char *p = homedir;
+    size_t len = dirlen;
+    for (;;) {
+      if (len
+          && fnamencmp(src, (char_u *)p, len) == 0
+          && (vim_ispathsep(src[len])
+              || (!one && (src[len] == ',' || src[len] == ' '))
+              || src[len] == NUL)) {
         src += len;
-        if (--dstlen > 0)
-          *dst++ = '~';
+        if (--dstlen > 0) {
+          *dst_p++ = '~';
+        }
 
-        /*
-         * If it's just the home directory, add  "/".
-         */
-        if (!vim_ispathsep(src[0]) && --dstlen > 0)
-          *dst++ = '/';
+        // If it's just the home directory, add  "/".
+        if (!vim_ispathsep(src[0]) && --dstlen > 0) {
+          *dst_p++ = '/';
+        }
         break;
       }
-      if (p == homedir_env)
+      if (p == homedir_env_mod) {
         break;
-      p = homedir_env;
+      }
+      p = homedir_env_mod;
       len = envlen;
     }
 
-    /* if (!one) skip to separator: space or comma */
-    while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0)
-      *dst++ = *src++;
-    /* skip separator */
-    while ((*src == ' ' || *src == ',') && --dstlen > 0)
-      *dst++ = *src++;
+    // if (!one) skip to separator: space or comma.
+    while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0) {
+      *dst_p++ = (char)(*src++);
+    }
+    // Skip separator.
+    while ((*src == ' ' || *src == ',') && --dstlen > 0) {
+      *dst_p++ = (char)(*src++);
+    }
   }
-  /* if (dstlen == 0) out of space, what to do??? */
+  // If (dstlen == 0) out of space, what to do???
 
-  *dst = NUL;
+  *dst_p = NUL;
 
   if (must_free) {
-    xfree(homedir_env);
+    xfree(homedir_env_mod);
   }
+  return (size_t)(dst_p - (char *)dst);
 }
 
 /// Like home_replace, store the replaced string in allocated memory.

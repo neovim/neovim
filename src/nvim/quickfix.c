@@ -924,7 +924,7 @@ restofline:
         if (qfprev == NULL) {
           return QF_FAIL;
         }
-        if (*fields->errmsg && !qi->qf_multiignore) {
+        if (*fields->errmsg) {
           size_t len = STRLEN(qfprev->qf_text);
           qfprev->qf_text = xrealloc(qfprev->qf_text,
                                      len + STRLEN(fields->errmsg) + 2);
@@ -2062,7 +2062,7 @@ win_found:
         EMSG(_("E924: Current window was closed"));
         is_abort = true;
         opened_window = false;
-      } else if (old_qf_curlist != qi->qf_curlist
+      } else if (old_qf_curlist != qi->qf_curlist  // -V560
                  || !is_qf_entry_present(qi, qf_ptr)) {
         if (qi == &ql_info) {
           EMSG(_("E925: Current quickfix was changed"));
@@ -3626,7 +3626,7 @@ void ex_vimgrep(exarg_T *eap)
        && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
       || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
-    qf_new_list(qi, title != NULL ? title : *eap->cmdlinep);
+    qf_new_list(qi, title);
   }
 
   /* parse the list of arguments */
@@ -4205,11 +4205,9 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
     if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
       di = tv_dict_item_alloc_len(S_LEN("context"));
-      if (di != NULL) {
-        tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-        if (tv_dict_add(retdict, di) == FAIL) {
-          tv_dict_item_free(di);
-        }
+      tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
+      if (tv_dict_add(retdict, di) == FAIL) {
+        tv_dict_item_free(di);
       }
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
@@ -4740,15 +4738,7 @@ void ex_helpgrep(exarg_T *eap)
   regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
-    vimconv_T vc;
-
-    /* Help files are in utf-8 or latin1, convert lines when 'encoding'
-     * differs. */
-    vc.vc_type = CONV_NONE;
-    if (!enc_utf8)
-      convert_setup(&vc, (char_u *)"utf-8", p_enc);
-
-    /* create a new quickfix list */
+    // Create a new quickfix list.
     qf_new_list(qi, *eap->cmdlinep);
 
     /* Go through all directories in 'runtimepath' */
@@ -4780,15 +4770,6 @@ void ex_helpgrep(exarg_T *eap)
             lnum = 1;
             while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
               char_u    *line = IObuff;
-              /* Convert a line if 'encoding' is not utf-8 and
-               * the line contains a non-ASCII character. */
-              if (vc.vc_type != CONV_NONE
-                  && has_non_ascii(IObuff)) {
-                line = string_convert(&vc, IObuff, NULL);
-                if (line == NULL)
-                  line = IObuff;
-              }
-
               if (vim_regexec(&regmatch, line, (colnr_T)0)) {
                 int l = (int)STRLEN(line);
 
@@ -4831,8 +4812,6 @@ void ex_helpgrep(exarg_T *eap)
     }
 
     vim_regfree(regmatch.regprog);
-    if (vc.vc_type != CONV_NONE)
-      convert_setup(&vc, NULL, NULL);
 
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
     qi->qf_lists[qi->qf_curlist].qf_ptr =

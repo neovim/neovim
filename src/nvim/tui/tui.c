@@ -605,8 +605,7 @@ static void cursor_goto(UI *ui, int row, int col)
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2)
           && cheap_to_print(ui, grid->row, grid->col, n)) {
-        UGRID_FOREACH_CELL(grid, grid->row, grid->row,
-                           grid->col, col - 1, {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->row, grid->col, col - 1, {
           print_cell(ui, cell);
         });
       }
@@ -1771,7 +1770,8 @@ static void flush_buf(UI *ui)
     bufp++;
   }
 
-  if (!data->busy && data->is_invisible) {
+  if (!data->busy) {
+    assert(data->is_invisible);
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;

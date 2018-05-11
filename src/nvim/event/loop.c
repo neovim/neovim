@@ -21,7 +21,6 @@ void loop_init(Loop *loop, void *data)
   loop->recursive = 0;
   loop->uv.data = loop;
   loop->children = kl_init(WatcherPtr);
-  loop->children_stop_requests = 0;
   loop->events = multiqueue_new_parent(loop_on_put, loop);
   loop->fast_events = multiqueue_new_child(loop->events);
   loop->thread_events = multiqueue_new_parent(NULL, NULL);

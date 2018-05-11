@@ -4466,8 +4466,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
       if (width <= room)
         break;
       if (run == 2 || curfrp->fr_height >= ROWS_AVAIL) {
-        if (width > room)
-          width = room;
+        width = room;
         break;
       }
       frame_setwidth(curfrp->fr_parent, width
@@ -4807,7 +4806,7 @@ void win_new_height(win_T *wp, int height)
       // call win_new_height() recursively.
       validate_cursor();
     }
-    if (wp->w_height != prev_height) {
+    if (wp->w_height != prev_height) {  // -V547
       return;  // Recursive call already changed the size, bail out.
     }
     if (wp->w_wrow != wp->w_prev_fraction_row) {

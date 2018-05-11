@@ -96,7 +96,6 @@ global configuration.
 
 - 'list' is disabled
 - 'wrap' is disabled
-- 'relativenumber' is disabled in |Terminal-mode| (and cannot be enabled)
 
 You can change the defaults with a TermOpen autocommand: >
 	au TermOpen * setlocal list

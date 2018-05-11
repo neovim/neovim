@@ -4,6 +4,7 @@ local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.cl
 local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
+local eval = helpers.eval
 local iswin = helpers.iswin
 
 describe('screen', function()
@@ -75,11 +76,26 @@ describe('Screen', function()
       local function check()
         eq(true, screen.suspended)
       end
+
+      command('let g:ev = []')
+      command('autocmd VimResume  * :call add(g:ev, "r")')
+      command('autocmd VimSuspend * :call add(g:ev, "s")')
+
+      eq(false, screen.suspended)
       command('suspend')
+      eq({ 's', 'r' }, eval('g:ev'))
+
       screen:expect(check)
       screen.suspended = false
+
       feed('<c-z>')
+      eq({ 's', 'r', 's', 'r' }, eval('g:ev'))
+
       screen:expect(check)
+      screen.suspended = false
+
+      command('suspend')
+      eq({ 's', 'r', 's', 'r', 's', 'r' }, eval('g:ev'))
     end)
   end)
 
@@ -224,8 +240,8 @@ describe('Screen', function()
     end)
   end)
 
-  describe('tabnew', function()
-    it('creates a new buffer', function()
+  describe('tabs', function()
+    it('tabnew creates a new buffer', function()
       command('sp')
       command('vsp')
       command('vsp')
@@ -280,6 +296,62 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {3:[No Name] [+]                                        }|
+                                                             |
+      ]])
+    end)
+
+    it('tabline is redrawn after messages', function()
+      command('tabnew')
+      screen:expect([[
+        {4: [No Name] }{2: [No Name] }{3:                              }{4:X}|
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed(':echo "'..string.rep('x\\n', 11)..'"<cr>')
+      screen:expect([[
+        {1:                                                     }|
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+                                                             |
+        {7:Press ENTER or type command to continue}^              |
+      ]])
+
+      feed('<cr>')
+      screen:expect([[
+        {4: [No Name] }{2: [No Name] }{3:                              }{4:X}|
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
                                                              |
       ]])
     end)
@@ -628,5 +700,44 @@ describe('Screen', function()
         TEST                                                 |
       ]])
     end)
+  end)
+
+  -- Regression test for #8357
+  it('does not have artifacts after temporary chars in insert mode', function()
+    command('inoremap jk <esc>')
+    feed('ifooj')
+    screen:expect([[
+      foo^j                                                 |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {2:-- INSERT --}                                         |
+    ]])
+    feed('k')
+    screen:expect([[
+      fo^o                                                  |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]])
   end)
 end)

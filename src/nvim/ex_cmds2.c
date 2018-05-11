@@ -3055,24 +3055,32 @@ void scriptnames_slash_adjust(void)
 # endif
 
 /// Get a pointer to a script name.  Used for ":verbose set".
-char_u *get_scriptname(scid_T id)
+char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
-  if (id == SID_MODELINE) {
-    return (char_u *)_("modeline");
+  *should_free = false;
+
+  switch (last_set.script_id) {
+    case SID_MODELINE:
+      return (char_u *)_("modeline");
+    case SID_CMDARG:
+      return (char_u *)_("--cmd argument");
+    case SID_CARG:
+      return (char_u *)_("-c argument");
+    case SID_ENV:
+      return (char_u *)_("environment variable");
+    case SID_ERROR:
+      return (char_u *)_("error handler");
+    case SID_LUA:
+      return (char_u *)_("Lua");
+    case SID_API_CLIENT:
+      vim_snprintf((char *)IObuff, IOSIZE,
+                   _("API client (channel id %" PRIu64 ")"),
+                   last_set.channel_id);
+      return IObuff;
+    default:
+      *should_free = true;
+      return home_replace_save(NULL, SCRIPT_ITEM(last_set.script_id).sn_name);
   }
-  if (id == SID_CMDARG) {
-    return (char_u *)_("--cmd argument");
-  }
-  if (id == SID_CARG) {
-    return (char_u *)_("-c argument");
-  }
-  if (id == SID_ENV) {
-    return (char_u *)_("environment variable");
-  }
-  if (id == SID_ERROR) {
-    return (char_u *)_("error handler");
-  }
-  return SCRIPT_ITEM(id).sn_name;
 }
 
 # if defined(EXITFREE)

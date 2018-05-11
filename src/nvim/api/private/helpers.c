@@ -120,9 +120,7 @@ bool try_end(Error *err)
   // try_enter/try_leave.
   trylevel--;
 
-  // Without this it stops processing all subsequent VimL commands and
-  // generates strange error messages if I e.g. try calling Test() in a
-  // cycle
+  // Set by emsg(), affects aborting().  See also enter_cleanup().
   did_emsg = false;
 
   if (got_int) {
@@ -326,7 +324,8 @@ Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(void *to, int type, String name, Object value, Error *err)
+void set_option_to(uint64_t channel_id, void *to, int type,
+                   String name, Object value, Error *err)
 {
   if (name.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Empty option name");
@@ -363,7 +362,8 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     }
   }
 
-  int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  int numval = 0;
+  char *stringval = NULL;
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
@@ -374,8 +374,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
       return;
     }
 
-    bool val = value.data.boolean;
-    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
+    numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
       api_set_error(err,
@@ -393,8 +392,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
       return;
     }
 
-    int val = (int) value.data.integer;
-    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
+    numval = (int)value.data.integer;
   } else {
     if (value.type != kObjectTypeString) {
       api_set_error(err,
@@ -404,9 +402,18 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
       return;
     }
 
-    set_option_value_for(name.data, 0, value.data.string.data,
-            opt_flags, type, to, err);
+    stringval = (char *)value.data.string.data;
   }
+
+  const scid_T save_current_SID = current_SID;
+  current_SID = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  current_channel_id = channel_id;
+
+  const int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  set_option_value_for(name.data, numval, stringval,
+                       opt_flags, type, to, err);
+
+  current_SID = save_current_SID;
 }
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false

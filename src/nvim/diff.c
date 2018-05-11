@@ -859,9 +859,9 @@ void ex_diffpatch(exarg_T *eap)
   char_u *esc_name = NULL;
 
 #ifdef UNIX
-  char_u dirbuf[MAXPATHL];
-  char_u *fullname = NULL;
+  char *fullname = NULL;
 #endif
+
   // We need two temp file names.
   // Name of original temp file.
   char_u *tmp_orig = vim_tempname();
@@ -881,21 +881,17 @@ void ex_diffpatch(exarg_T *eap)
 
 #ifdef UNIX
   // Get the absolute path of the patchfile, changing directory below.
-  fullname = (char_u *)FullName_save((char *)eap->arg, false);
-#endif
-
+  fullname = FullName_save((char *)eap->arg, false);
   esc_name = vim_strsave_shellescape(
-#ifdef UNIX
-                                     fullname != NULL ? fullname :
+      (fullname != NULL ? (char_u *)fullname : eap->arg), true, true);
+#else
+  esc_name = vim_strsave_shellescape(eap->arg, true, true);
 #endif
-                                     eap->arg, true, true);
-  if (esc_name == NULL) {
-    goto theend;
-  }
   size_t buflen = STRLEN(tmp_orig) + STRLEN(esc_name) + STRLEN(tmp_new) + 16;
   buf = xmalloc(buflen);
 
 #ifdef UNIX
+  char_u dirbuf[MAXPATHL];
   // Temporarily chdir to /tmp, to avoid patching files in the current
   // directory when the patch file contains more than one patch.  When we
   // have our own temp dir use that instead, it will be cleaned up when we
@@ -918,7 +914,7 @@ void ex_diffpatch(exarg_T *eap)
     // Use 'patchexpr' to generate the new file.
 #ifdef UNIX
     eval_patch((char *)tmp_orig,
-               (char *)(fullname != NULL ? fullname : eap->arg),
+               (fullname != NULL ? fullname : (char *)eap->arg),
                (char *)tmp_new);
 #else
     eval_patch((char *)tmp_orig, (char *)eap->arg, (char *)tmp_new);

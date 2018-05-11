@@ -387,7 +387,7 @@ void pum_redraw(void)
             char_u saved = *p;
 
             *p = NUL;
-            st = transstr(s);
+            st = (char_u *)transstr((const char *)s);
             *p = saved;
 
             if (curwin->w_p_rl) {

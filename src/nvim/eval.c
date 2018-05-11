@@ -2683,19 +2683,21 @@ void ex_call(exarg_T *eap)
     return;
   }
 
-  tofree = trans_function_name(&arg, eap->skip, TFN_INT, &fudi, &partial);
+  tofree = trans_function_name(&arg, false, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
-    /* Still need to give an error message for missing key. */
+    // Still need to give an error message for missing key.
     EMSG2(_(e_dictkey), fudi.fd_newkey);
     xfree(fudi.fd_newkey);
   }
-  if (tofree == NULL)
+  if (tofree == NULL) {
     return;
+  }
 
-  /* Increase refcount on dictionary, it could get deleted when evaluating
-   * the arguments. */
-  if (fudi.fd_dict != NULL)
-    ++fudi.fd_dict->dv_refcount;
+  // Increase refcount on dictionary, it could get deleted when evaluating
+  // the arguments.
+  if (fudi.fd_dict != NULL) {
+    fudi.fd_dict->dv_refcount++;
+  }
 
   // If it is the name of a variable of type VAR_FUNC or VAR_PARTIAL use its
   // contents. For VAR_PARTIAL get its partial, unless we already have one
@@ -2704,8 +2706,8 @@ void ex_call(exarg_T *eap)
   name = deref_func_name((const char *)tofree, &len,
                          partial != NULL ? NULL : &partial, false);
 
-  /* Skip white space to allow ":call func ()".  Not good, but required for
-   * backward compatibility. */
+  // Skip white space to allow ":call func ()".  Not good, but required for
+  // backward compatibility.
   startarg = skipwhite(arg);
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
@@ -2714,20 +2716,9 @@ void ex_call(exarg_T *eap)
     goto end;
   }
 
-  /*
-   * When skipping, evaluate the function once, to find the end of the
-   * arguments.
-   * When the function takes a range, this is discovered after the first
-   * call, and the loop is broken.
-   */
-  if (eap->skip) {
-    emsg_skip++;
-    lnum = eap->line2;  // Do it once, also with an invalid range.
-  } else {
-    lnum = eap->line1;
-  }
+  lnum = eap->line1;
   for (; lnum <= eap->line2; lnum++) {
-    if (!eap->skip && eap->addr_count > 0) {  // -V560
+    if (eap->addr_count > 0) {  // -V560
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
@@ -2735,40 +2726,40 @@ void ex_call(exarg_T *eap)
     arg = startarg;
     if (get_func_tv(name, (int)STRLEN(name), &rettv, &arg,
                     eap->line1, eap->line2, &doesrange,
-                    !eap->skip, partial, fudi.fd_dict) == FAIL) {
+                    true, partial, fudi.fd_dict) == FAIL) {
       failed = true;
       break;
     }
 
     // Handle a function returning a Funcref, Dictionary or List.
-    if (handle_subscript((const char **)&arg, &rettv, !eap->skip, true)
+    if (handle_subscript((const char **)&arg, &rettv, true, true)
         == FAIL) {
       failed = true;
       break;
     }
 
     tv_clear(&rettv);
-    if (doesrange || eap->skip) {  // -V560
+    if (doesrange) {
       break;
     }
 
-    /* Stop when immediately aborting on error, or when an interrupt
-     * occurred or an exception was thrown but not caught.
-     * get_func_tv() returned OK, so that the check for trailing
-     * characters below is executed. */
-    if (aborting())
+    // Stop when immediately aborting on error, or when an interrupt
+    // occurred or an exception was thrown but not caught.
+    // get_func_tv() returned OK, so that the check for trailing
+    // characters below is executed.
+    if (aborting()) {
       break;
+    }
   }
-  if (eap->skip)
-    --emsg_skip;
 
   if (!failed) {
-    /* Check for trailing illegal characters and a following command. */
+    // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
       emsg_severe = TRUE;
       EMSG(_(e_trailing));
-    } else
+    } else {
       eap->nextcmd = check_nextcmd(arg);
+    }
   }
 
 end:
@@ -5804,8 +5795,8 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     lambda_no++;
     snprintf((char *)name, sizeof(name), "<lambda>%d", lambda_no);
 
-    fp = (ufunc_T *)xcalloc(1, sizeof(ufunc_T) + STRLEN(name));
-    pt = (partial_T *)xcalloc(1, sizeof(partial_T));
+    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
+    pt = xcalloc(1, sizeof(partial_T));
 
     ga_init(&newlines, (int)sizeof(char_u *), 1);
     ga_grow(&newlines, 1);
@@ -6247,20 +6238,21 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 /// invoked function uses them. It is called like this:
 ///   new_argcount = argv_func(current_argcount, argv, called_func_argcount)
 ///
-/// Return FAIL when the function can't be called,  OK otherwise.
-/// Also returns OK when an error was encountered while executing the function.
+/// @return FAIL if function cannot be called, else OK (even if an error
+///         occurred while executing the function! Set `msg_list` to capture
+///         the error, see do_cmdline()).
 int
 call_func(
     const char_u *funcname,         // name of the function
     int len,                        // length of "name"
-    typval_T *rettv,                // return value goes here
+    typval_T *rettv,                // [out] value goes here
     int argcount_in,                // number of "argvars"
     typval_T *argvars_in,           // vars for arguments, must have "argcount"
                                     // PLUS ONE elements!
     ArgvFunc argv_func,             // function to fill in argvars
     linenr_T firstline,             // first line of range
     linenr_T lastline,              // last line of range
-    int *doesrange,                 // return: function handled range
+    int *doesrange,                 // [out] function handled range
     bool evaluate,
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
@@ -6434,21 +6426,25 @@ call_func(
   return ret;
 }
 
-/*
- * Give an error message with a function name.  Handle <SNR> things.
- * "ermsg" is to be passed without translation, use N_() instead of _().
- */
+/// Give an error message with a function name.  Handle <SNR> things.
+///
+/// @param ermsg must be passed without translation (use N_() instead of _()).
+/// @param name function name
 static void emsg_funcname(char *ermsg, char_u *name)
 {
-  char_u      *p;
+  char_u *p;
 
-  if (*name == K_SPECIAL)
+  if (*name == K_SPECIAL) {
     p = concat_str((char_u *)"<SNR>", name + 3);
-  else
+  } else {
     p = name;
+  }
+
   EMSG2(_(ermsg), p);
-  if (p != name)
+
+  if (p != name) {
     xfree(p);
+  }
 }
 
 /*
@@ -15453,7 +15449,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
            ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
-          if (info.item_compare_func_err) {
+          if (info.item_compare_func_err) {  // -V547
             EMSG(_("E882: Uniq compare function failed"));
             break;
           }
@@ -15627,7 +15623,6 @@ f_spellsuggest_return:
 
 static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  regmatch_T regmatch;
   char_u      *save_cpo;
   int match;
   colnr_T col = 0;
@@ -15660,9 +15655,13 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  regmatch.regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING);
+  regmatch_T regmatch = {
+    .regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING),
+    .startp = { NULL },
+    .endp = { NULL },
+    .rm_ic = false,
+  };
   if (regmatch.regprog != NULL) {
-    regmatch.rm_ic = FALSE;
     while (*str != NUL || keepempty) {
       if (*str == NUL) {
         match = false;  // Empty item at the end.
@@ -15681,8 +15680,9 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                      && end < (const char *)regmatch.endp[0])) {
         tv_list_append_string(rettv->vval.v_list, str, end - str);
       }
-      if (!match)
+      if (!match) {
         break;
+      }
       // Advance to just after the match.
       if (regmatch.endp[0] > (char_u *)str) {
         col = 0;
@@ -16140,7 +16140,7 @@ static void f_strridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_strtrans(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = transstr((char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_string = (char_u *)transstr(tv_get_string(&argvars[0]));
 }
 
 /*
@@ -18779,7 +18779,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
   if (name_len == 0) {
     return NULL;
   }
-  if (name_len == 1 || (name_len >= 2 && name[1] != ':')) {
+  if (name_len == 1 || name[1] != ':') {
     // name has implicit scope
     if (name[0] == ':' || name[0] == AUTOLOAD_CHAR) {
       // The name must not start with a colon or #.
@@ -20110,7 +20110,7 @@ void ex_function(exarg_T *eap)
       }
     }
 
-    fp = xcalloc(1, sizeof(ufunc_T) + STRLEN(name));
+    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
 
     if (fudi.fd_dict != NULL) {
       if (fudi.fd_di == NULL) {
@@ -20865,8 +20865,9 @@ char_u *get_user_func_name(expand_T *xp, int idx)
       return (char_u *)"";       // don't show dict and lambda functions
     }
 
-    if (STRLEN(fp->uf_name) + 4 >= IOSIZE)
-      return fp->uf_name;       /* prevents overflow */
+    if (STRLEN(fp->uf_name) + 4 >= IOSIZE) {
+      return fp->uf_name;  // Prevent overflow.
+    }
 
     cat_func_name(IObuff, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
@@ -22063,12 +22064,27 @@ int store_session_globals(FILE *fd)
  */
 void last_set_msg(scid_T scriptID)
 {
-  if (scriptID != 0) {
-    char_u *p = home_replace_save(NULL, get_scriptname(scriptID));
+  const LastSet last_set = (LastSet){
+    .script_id = scriptID,
+    .channel_id = 0,
+  };
+  option_last_set_msg(last_set);
+}
+
+/// Displays where an option was last set.
+///
+/// Should only be invoked when 'verbose' is non-zero.
+void option_last_set_msg(LastSet last_set)
+{
+  if (last_set.script_id != 0) {
+    bool should_free;
+    char_u *p = get_scriptname(last_set, &should_free);
     verbose_enter();
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
-    xfree(p);
+    if (should_free) {
+      xfree(p);
+    }
     verbose_leave();
   }
 }
