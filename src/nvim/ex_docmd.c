@@ -9990,14 +9990,16 @@ ArrayOf(Dictionary) commands_array(buf_T *buf)
     PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
     PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
     PUT(d, "script_id", INTEGER_OBJ(cmd->uc_scriptID));
+    PUT(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & BANG)));
+    PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & TRLBAR)));
+    PUT(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & REGSTR)));
 
-    // "nargs" key
     switch (cmd->uc_argt & (EXTRA|NOSPC|NEEDARG)) {
-    case 0:                    arg[0] = '0'; break;
-    case(EXTRA):               arg[0] = '*'; break;
-    case(EXTRA|NOSPC):         arg[0] = '?'; break;
-    case(EXTRA|NEEDARG):       arg[0] = '+'; break;
-    case(EXTRA|NOSPC|NEEDARG): arg[0] = '1'; break;
+      case 0:                    arg[0] = '0'; break;
+      case(EXTRA):               arg[0] = '*'; break;
+      case(EXTRA|NOSPC):         arg[0] = '?'; break;
+      case(EXTRA|NEEDARG):       arg[0] = '+'; break;
+      case(EXTRA|NOSPC|NEEDARG): arg[0] = '1'; break;
     }
     PUT(d, "nargs", STRING_OBJ(cstr_to_string(arg)));
 

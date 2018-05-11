@@ -459,14 +459,13 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
-/// Gets a list of dictionaries describing buffer-local mappings.
-/// The "buffer" key in the returned dictionary reflects the buffer
-/// handle where the mapping is present.
+/// Gets a list of buffer-local |mapping| definitions.
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param  buffer     Buffer handle
 /// @param[out]  err   Error details, if any
-/// @returns Array of maparg()-like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings.
+///          The "buffer" key holds the associated buffer handle.
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
     FUNC_API_SINCE(3)
 {
@@ -479,7 +478,7 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   return keymap_array(mode, buf);
 }
 
-/// Gets a list of maps describing buffer-local |user-commands|.
+/// Gets a list of buffer-local |user-commands|.
 ///
 /// @param  buffer  Buffer handle.
 /// @param  opts  Optional parameters. Currently only supports

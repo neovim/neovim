@@ -948,18 +948,20 @@ Dictionary nvim_get_mode(void)
   return rv;
 }
 
-/// Gets a list of dictionaries describing global (non-buffer) mappings.
-/// The "buffer" key in the returned dictionary is always zero.
+/// Gets a list of global (non-buffer-local) |mapping| definitions.
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
-/// @returns Array of maparg()-like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings.
+///          The "buffer" key is always zero.
 ArrayOf(Dictionary) nvim_get_keymap(String mode)
     FUNC_API_SINCE(3)
 {
   return keymap_array(mode, NULL);
 }
 
-/// Gets a list of maps describing global |user-commands|.
+/// Gets a list of global (non-buffer-local) Ex commands.
+///
+/// Currently only |user-commands| are supported, not builtin Ex commands.
 ///
 /// @param  opts  Optional parameters. Currently only supports
 ///               {"builtin":false}
