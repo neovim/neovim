@@ -467,7 +467,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @returns Array of maparg()-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
-    FUNC_API_SINCE(3)
+  FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -478,16 +478,15 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   return keymap_array(mode, buf);
 }
 
-/// Gets a list of buffer-local |user-commands|.
+/// Gets a map of buffer-local |user-commands|.
 ///
 /// @param  buffer  Buffer handle.
 /// @param  opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any.
 ///
-/// @returns Array of dictionaries describing commands.
-ArrayOf(Dictionary) nvim_buf_get_commands(Buffer buffer, Dictionary opts,
-                                          Error *err)
-    FUNC_API_SINCE(4)
+/// @returns Map of maps describing commands.
+Dictionary nvim_buf_get_commands(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);
   bool builtin = false;
@@ -497,7 +496,7 @@ ArrayOf(Dictionary) nvim_buf_get_commands(Buffer buffer, Dictionary opts,
     Object v = opts.items[i].value;
     if (!strequal("builtin", k.data)) {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return (Array)ARRAY_DICT_INIT;
+      return (Dictionary)ARRAY_DICT_INIT;
     }
     if (strequal("builtin", k.data)) {
       builtin = v.data.boolean;
@@ -507,14 +506,14 @@ ArrayOf(Dictionary) nvim_buf_get_commands(Buffer buffer, Dictionary opts,
   if (global) {
     if (builtin) {
       api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
-      return (Array)ARRAY_DICT_INIT;
+      return (Dictionary)ARRAY_DICT_INIT;
     }
     return commands_array(NULL);
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (builtin || !buf) {
-    return (Array)ARRAY_DICT_INIT;
+    return (Dictionary)ARRAY_DICT_INIT;
   }
   return commands_array(buf);
 }

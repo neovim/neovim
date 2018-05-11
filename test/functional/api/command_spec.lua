@@ -28,25 +28,25 @@ describe('nvim_get_commands', function()
   it('gets global user-defined commands', function()
     -- Define a command.
     command('command -nargs=1 Hello echo "Hello World"')
-    eq({cmd_dict}, meths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict}, meths.get_commands({builtin=false}))
     -- Define another command.
     command('command -nargs=? Pwd pwd');
-    eq({cmd_dict, cmd_dict2}, meths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict, Pwd=cmd_dict2}, meths.get_commands({builtin=false}))
     -- Delete a command.
     command('delcommand Pwd')
-    eq({cmd_dict}, meths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict}, meths.get_commands({builtin=false}))
   end)
 
   it('gets buffer-local user-defined commands', function()
     -- Define a buffer-local command.
     command('command -buffer -nargs=1 Hello echo "Hello World"')
-    eq({cmd_dict}, curbufmeths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict}, curbufmeths.get_commands({builtin=false}))
     -- Define another buffer-local command.
     command('command -buffer -nargs=? Pwd pwd')
-    eq({cmd_dict, cmd_dict2}, curbufmeths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict, Pwd=cmd_dict2}, curbufmeths.get_commands({builtin=false}))
     -- Delete a command.
     command('delcommand Pwd')
-    eq({cmd_dict}, curbufmeths.get_commands({builtin=false}))
+    eq({Hello=cmd_dict}, curbufmeths.get_commands({builtin=false}))
 
     -- {builtin=true} always returns empty for buffer-local case.
     eq({}, curbufmeths.get_commands({builtin=true}))
@@ -61,9 +61,9 @@ describe('nvim_get_commands', function()
     source([[
       command -complete=custom,ListUsers -nargs=+ Finger !finger <args>
     ]])
-    eq({cmd1}, meths.get_commands({builtin=false}))
+    eq({Finger=cmd1}, meths.get_commands({builtin=false}))
     command('command -complete=dir -addr=arguments -count=10 TestCmd pwd <args>')
-    eq({cmd1, cmd0}, meths.get_commands({builtin=false}))
+    eq({Finger=cmd1, TestCmd=cmd0}, meths.get_commands({builtin=false}))
 
     source([[
       command -bang -nargs=* Cmd2 call <SID>foo(<q-args>)
@@ -75,6 +75,6 @@ describe('nvim_get_commands', function()
       command -register Cmd4 call <SID>just_great()
     ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
-    eq({cmd2, cmd3, cmd4, cmd1, cmd0}, meths.get_commands({builtin=false}))
+    eq({Cmd2=cmd2, Cmd3=cmd3, Cmd4=cmd4, Finger=cmd1, TestCmd=cmd0}, meths.get_commands({builtin=false}))
   end)
 end)

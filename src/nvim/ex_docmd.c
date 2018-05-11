@@ -9969,15 +9969,15 @@ bool cmd_can_preview(char_u *cmd)
   return false;
 }
 
-/// Gets a list of maps describing user-commands defined for buffer `buf`
-/// or defined globally if `buf` is NULL.
+/// Gets a map of maps describing user-commands defined for buffer `buf` or
+/// defined globally if `buf` is NULL.
 ///
-/// @param buf  Buffer to inspect, or NULL to get global user-commands.
+/// @param buf  Buffer to inspect, or NULL to get global commands.
 ///
-/// @return Array of dictionaries describing commands
-ArrayOf(Dictionary) commands_array(buf_T *buf)
+/// @return Map of maps describing commands
+Dictionary commands_array(buf_T *buf)
 {
-  Array rv = ARRAY_DICT_INIT;
+  Dictionary rv = ARRAY_DICT_INIT;
   Object obj = NIL;
   char str[10];
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
@@ -10043,7 +10043,7 @@ ArrayOf(Dictionary) commands_array(buf_T *buf)
     }
     PUT(d, "addr", obj);
 
-    ADD(rv, DICTIONARY_OBJ(d));
+    PUT(rv, (char *)cmd->uc_name, DICTIONARY_OBJ(d));
   }
   return rv;
 }
