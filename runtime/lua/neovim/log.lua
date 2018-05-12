@@ -55,7 +55,7 @@ for name in pairs(log.levels) do
     end
 
     local info = debug.getinfo(2, "Sl")
-    local log_message = string.format("[%-6s%s] %s:%-4s: %s %s",
+    local log_message = string.format("<< [%-6s%s] %s:%-4s >>\n      %s %s",
       name,
       os.date("%H:%M:%S"),
       info.short_src,

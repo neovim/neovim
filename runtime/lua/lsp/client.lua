@@ -318,14 +318,15 @@ client.on_message = function(self, json_message)
   elseif not json_message.method and json_message.id then
     local cb_object = self._callbacks[json_message.id]
 
-    log.warn(util.tostring(cb_object))
-
-    if util.table.is_empty(cb_object) then return end
+    if util.table.is_empty(cb_object) then
+      log.trace('Request: "', json_message.id, '" had no registered callbacks')
+      return
+    end
 
     local callback_list = cb_object.cb
 
-    -- Nothing left to do if we don't have a valid callback
-    if (not callback_list) or (type(callback_list) ~= 'table') then
+    -- Nothing left to do if we don't have any valid callback
+    if util.table.is_empty(callback_list) then
       return
     end
 
