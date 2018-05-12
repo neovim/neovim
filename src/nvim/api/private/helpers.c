@@ -685,7 +685,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 String cchar_to_string(char c)
 {
   char buf[] = { c, NUL };
-  return (String) {
+  return (String){
     .data = xmemdupz(buf, 1),
     .size = (c != NUL) ? 1 : 0
   };
@@ -701,13 +701,13 @@ String cchar_to_string(char c)
 String cstr_to_string(const char *str)
 {
     if (str == NULL) {
-        return (String) STRING_INIT;
+      return (String)STRING_INIT;
     }
 
     size_t len = strlen(str);
-    return (String) {
-        .data = xmemdupz(str, len),
-        .size = len
+    return (String){
+      .data = xmemdupz(str, len),
+      .size = len,
     };
 }
 
@@ -722,7 +722,7 @@ String cstr_to_string(const char *str)
 String cbuf_to_string(const char *buf, size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
-  return (String) {
+  return (String){
     .data = xmemdupz(buf, size),
     .size = size
   };
@@ -737,9 +737,9 @@ String cbuf_to_string(const char *buf, size_t size)
 String cstr_as_string(char *str) FUNC_ATTR_PURE
 {
   if (str == NULL) {
-    return (String) STRING_INIT;
+    return (String)STRING_INIT;
   }
-  return (String) { .data = str, .size = strlen(str) };
+  return (String){ .data = str, .size = strlen(str) };
 }
 
 /// Converts from type Object to a VimL value.
@@ -1149,7 +1149,7 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
-/// @returns An array of maparg() like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 {
   Array mappings = ARRAY_DICT_INIT;
