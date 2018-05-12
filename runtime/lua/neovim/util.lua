@@ -134,7 +134,11 @@ util.table.is_empty = function(table)
     return true
   end
 
-  if type(table) ~= type({}) then
+  if not table then
+    return true
+  end
+
+  if type(table) ~= type({}) and type(table) ~= 'userdata' then
     return true
   end
 
@@ -163,22 +167,24 @@ util.table.merge = function(t1, t2)
 end
 
 util.table.chain = function(t1, t2)
-  local len_t1 = #t1
-
   local t3 = {}
-  for i, v in ipairs(t1) do
-    t3[i] = v
-  end
 
-  if t2 == {} or t2 == nil then
-    return t3
-  end
-
-  for i, v in ipairs(t2) do
-    t3[len_t1 + i] = v
-  end
+  util.table.extend(t3, t1)
+  util.table.extend(t3, t2)
 
   return t3
+end
+
+util.table.extend = function(t1, t2)
+  if not util.table.is_empty(t2) then
+    local len_t1 = #t1
+
+    for i, v in ipairs(t2) do
+      t1[len_t1 + i] = v
+    end
+  end
+
+  return t1
 end
 
 return util

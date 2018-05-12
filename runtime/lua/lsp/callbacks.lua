@@ -45,8 +45,8 @@ local mt_callback_object = {
   end,
 
   __index = function(self, key)
-    if self[key] ~= nil then
-      return self[key]
+    if rawget(self, key) ~= nil then
+      return rawget(self, key)
     end
 
     if key == 'generic' or key == 'default' or key =='filetype_specif' then
@@ -366,7 +366,7 @@ local get_list_of_callbacks = function(method, callback_parameter, filetype, def
     callback_map = { default = callback_parameter }
   elseif type(callback_parameter) == 'function' then
     default_only = true
-    callback_map =  { default = { callback_parameter } }
+    callback_map = callback_default(callback_parameter)
   elseif type(callback_parameter) == 'string' then
     -- When we pass a string, that's a VimL function that we want to call
     -- so we create a callback function to run it.
@@ -383,31 +383,33 @@ local get_list_of_callbacks = function(method, callback_parameter, filetype, def
   end
 
   if callback_map == nil then return {} end
-  log.warn(method, ' -> ', util.tostring(callback_map), ' <- param')
 
   local callback_resulting_list = {}
-  if default_only then
-    util.table.chain(callback_resulting_list, callback_map.default)
 
-    return callback_resulting_list
+  -- Always add the default map, since that should always run.
+  util.table.extend(callback_resulting_list, callback_map.default)
+
+  -- When specified to run the default callback only, quit here
+  if not default_only then
+    if filetype ~= nil
+        and type(callback_resulting_list.filetype) == 'table'
+        and callback_resulting_list.filetype[filetype] ~= nil then
+      util.table.extend(callback_resulting_list, callback_resulting_list.filetype[filetype])
+    end
+
+    if not util.table.is_empty(callback_map.generic) then
+      util.table.extend(callback_resulting_list, callback_map.generic)
+    end
   end
 
-  if filetype ~= nil
-      and type(callback_resulting_list.filetype) == 'table'
-      and callback_resulting_list.filetype[filetype] ~= nil then
-    util.table.chain(callback_resulting_list, callback_resulting_list.filetype[filetype])
-  end
-
-  if not util.table.is_empty(callback_map.generic) then
-    util.table.chain(callback_resulting_list, callback_map.generic)
-  end
-
+  log.trace(method, ': callback_result_list -> ', util.tostring(callback_resulting_list))
   return callback_resulting_list
 end
 
 local call_callbacks = function(callback_list, success, params)
   local results = {}
-  for key, callback in pairs(callback_list) do
+
+  for key, callback in ipairs(callback_list) do
     results[key] = callback(success, params)
   end
 
