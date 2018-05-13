@@ -49,7 +49,7 @@ local mt_callback_object = {
       return rawget(self, key)
     end
 
-    if key == 'generic' or key == 'default' or key =='filetype_specif' then
+    if key == 'generic' or key == 'default' or key =='filetype' then
       return {}
     end
 
@@ -61,33 +61,18 @@ local callback_default = function(f)
   return setmetatable({
     default = { f },
     generic = {},
-    filetype_specific = {},
+    filetype = {},
   }, mt_callback_object)
 end
 
+-- TODO(tjdevries): Make this a smarter table.
+--  Make '/' auto translate to sub categories
+--  Make callables work well
 local CallbackMapping = setmetatable({
-  neovim = {
-    error_callback = callback_default(function(name, error_message)
-      local message = ''
-      if error_message.message ~= nil and type(error_message.message) == 'string' then
-        message = error_message.message
-      elseif rawget(errorCodes, error_message.code) ~= nil then
-        message = string.format('[%s] %s',
-          error_message.code, errorCodes[error_message.code]
-        )
-      end
+  neovim = {},
+  textDocument = {},
+}, {})
 
-      vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', name, message))
-
-      return
-    end),
-  },
-
-  textDocument = {
-
-  }
-}, {
-})
 
 local get_method_table = function(method)
   local method_table = nil
@@ -142,23 +127,40 @@ end
 local add_callback = function(method, new_callback, filetype)
   local callback_object = method_to_callback_object(method, true)
 
-  local callback_list_location
   if filetype == nil then
-    callback_list_location = callback_object.generic
+    table.insert(callback_object.generic, new_callback)
   else
-    if callback_object.filetype_specific[filetype] == nil then
-      callback_object.filetype_specific[filetype] = {}
+    if callback_object.filetype == nil then
+      callback_object.filetype = {}
     end
 
-    callback_list_location = callback_object.filetype_specific[filetype]
-  end
+    if callback_object.filetype[filetype] == nil then
+      callback_object.filetype[filetype] = {}
+    end
 
-  callback_list_location.insert(new_callback)
+    table.insert(callback_object.filetype[filetype], new_callback)
+  end
 end
 
 --------------------------------------------------------------------------------
 -- Callback definition section
 --------------------------------------------------------------------------------
+
+CallbackMapping.neovim.error_callback = callback_default(function(name, error_message)
+  local message = ''
+  if error_message.message ~= nil and type(error_message.message) == 'string' then
+    message = error_message.message
+  elseif rawget(errorCodes, error_message.code) ~= nil then
+    message = string.format('[%s] %s',
+    error_message.code, errorCodes[error_message.code]
+    )
+  end
+
+  vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', name, message))
+
+  return
+end)
+
 
 CallbackMapping.textDocument.publishDiagnostics = callback_default(function(success, data)
   if not success then
@@ -392,9 +394,9 @@ local get_list_of_callbacks = function(method, callback_parameter, filetype, def
   -- When specified to run the default callback only, quit here
   if not default_only then
     if filetype ~= nil
-        and type(callback_resulting_list.filetype) == 'table'
-        and callback_resulting_list.filetype[filetype] ~= nil then
-      util.table.extend(callback_resulting_list, callback_resulting_list.filetype[filetype])
+        and not util.table.is_empty(callback_map.filetype)
+        and not util.table.is_empty(callback_map.filetype[filetype]) then
+      util.table.extend(callback_resulting_list, callback_map.filetype[filetype])
     end
 
     if not util.table.is_empty(callback_map.generic) then

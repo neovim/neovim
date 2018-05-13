@@ -2,18 +2,17 @@ local callbacks = require('lsp.callbacks')
 
 local configure = {}
 
-configure.error_callback = function(cb)
-  callbacks.set_default_callback
-
-  -- TODO: Pick up here
-
+--- Configure the error callback used to print or display errors
+-- @param new_error_cb  (required)  The function reference to call instead of the default error_callback
+configure.error_callback = function(new_error_cb)
+  callbacks.set_default_callback('neovim/error_callback', new_error_cb)
 end
 
 --- Add a callback that will be called whenever method is handled
 -- @param method                    (required)  The name of the method to associate with the callback
 -- @param cb                        (required)  The callback to execute (or nil to disable -- probably)
 -- @param override_default_callback (optional)  Use this as the default callback for method, overrides filetype
--- @param filetype_specific         (optional)  Use t his to only have a callback executed for certain filetypes
+-- @param filetype_specific         (optional)  Use this to only have a callback executed for certain filetypes
 --
 -- @returns another
 configure.add_callback = function(method, cb, override_default_callback, filetype_specific)
