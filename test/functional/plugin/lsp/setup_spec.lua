@@ -11,16 +11,15 @@ before_each(clear)
 
 describe('Setup and Configuration', function()
   it('should allow you to add clients and commands', function()
-    local expected_command =  'cool vim server'
-    luaeval(
-      "require('lsp.plugin').client.add('vim',"
-      .. "{name = 'cool vim server', command = '"..expected_command.."',"
-      .. "arguments = 'args'})"
-    )
-
-    local result_configuration =
-      luaeval("require('lsp.plugin').client.get_configuration('vim')")
-
-    eq(expected_command, result_configuration.command)
+    luaeval([[require('lsp.server').add('vim', 'vim-lsp')]])
+    local result_name = luaeval("require('lsp.server').get_name('vim')")
+    eq('vim', result_name)
   end)
+
+  it('should allow some extra configuration if you want', function()
+    luaeval([[require('lsp.server').add('vim', 'vim-lsp', { name = 'test-server' })]])
+    local result_name = luaeval("require('lsp.server').get_name('vim')")
+    eq('test-server', result_name)
+  end)
+
 end)
