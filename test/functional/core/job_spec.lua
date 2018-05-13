@@ -433,9 +433,25 @@ describe('jobs', function()
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
       call jobwait([jobstart(cmd, d)])
-      call rpcnotify(g:channel, 'data', d.data)
     ]])
-    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}}}}, next_msg())
+
+    local expected = {'1', '2', '3', '4', '5', ''}
+    local chunks = eval('d.data')
+    local received = {''}
+    for i, chunk in ipairs(chunks) do
+      if i < #chunks then
+        -- if chunks got joined, a spurious [''] callback was not sent
+        neq({''}, chunk)
+      else
+        -- but EOF callback is still sent
+        eq({''}, chunk)
+      end
+      received[#received] = received[#received]..chunk[1]
+      for j = 2, #chunk do
+        received[#received+1] = chunk[j]
+      end
+    end
+    eq(expected, received)
   end)
 
   it('jobstart() works with partial functions', function()
