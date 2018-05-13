@@ -1759,12 +1759,11 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       }
 
       inc_msg_scrolled();
-      need_wait_return = TRUE;       /* may need wait_return in main() */
-      if (must_redraw < VALID)
-        must_redraw = VALID;
-      redraw_cmdline = TRUE;
-      if (cmdline_row > 0 && !exmode_active)
-        --cmdline_row;
+      need_wait_return = true;       // may need wait_return in main()
+      redraw_cmdline = true;
+      if (cmdline_row > 0 && !exmode_active) {
+        cmdline_row--;
+      }
 
       /*
        * If screen is completely filled and 'more' is set then wait
@@ -1921,12 +1920,23 @@ static void inc_msg_scrolled(void)
     xfree(tofree);
   }
   msg_scrolled++;
+  if (must_redraw < VALID) {
+    must_redraw = VALID;
+  }
 }
 
 static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
 
 
-static int do_clear_sb_text = FALSE;    /* clear text on next msg */
+typedef enum {
+    SB_CLEAR_NONE = 0,
+    SB_CLEAR_ALL,
+    SB_CLEAR_CMDLINE_BUSY,
+    SB_CLEAR_CMDLINE_DONE
+} sb_clear_T;
+
+// When to clear text on next msg.
+static sb_clear_T do_clear_sb_text = SB_CLEAR_NONE;
 
 /*
  * Store part of a printed message for displaying when scrolling back.
@@ -1942,9 +1952,10 @@ store_sb_text (
 {
   msgchunk_T  *mp;
 
-  if (do_clear_sb_text) {
-    clear_sb_text();
-    do_clear_sb_text = FALSE;
+  if (do_clear_sb_text == SB_CLEAR_ALL
+      || do_clear_sb_text == SB_CLEAR_CMDLINE_DONE) {
+    clear_sb_text(do_clear_sb_text == SB_CLEAR_ALL);
+    do_clear_sb_text = SB_CLEAR_NONE;
   }
 
   if (s > *sb_str) {
@@ -1971,26 +1982,46 @@ store_sb_text (
   *sb_col = 0;
 }
 
-/*
- * Finished showing messages, clear the scroll-back text on the next message.
- */
+// Finished showing messages, clear the scroll-back text on the next message.
 void may_clear_sb_text(void)
 {
-  do_clear_sb_text = TRUE;
+  do_clear_sb_text = SB_CLEAR_ALL;
 }
 
-/*
- * Clear any text remembered for scrolling back.
- * Called when redrawing the screen.
- */
-void clear_sb_text(void)
+// Starting to edit the command line, do not clear messages now.
+void sb_text_start_cmdline(void)
+{
+  do_clear_sb_text = SB_CLEAR_CMDLINE_BUSY;
+  msg_sb_eol();
+}
+
+// Ending to edit the command line.  Clear old lines but the last one later.
+void sb_text_end_cmdline(void)
+{
+  do_clear_sb_text = SB_CLEAR_CMDLINE_DONE;
+}
+
+// Clear any text remembered for scrolling back.
+// When "all" is FALSE keep the last line.
+// Called when redrawing the screen.
+void clear_sb_text(int all)
 {
   msgchunk_T  *mp;
+  msgchunk_T  **lastp;
 
-  while (last_msgchunk != NULL) {
-    mp = last_msgchunk->sb_prev;
-    xfree(last_msgchunk);
-    last_msgchunk = mp;
+  if (all) {
+    lastp = &last_msgchunk;
+  } else {
+    if (last_msgchunk == NULL) {
+      return;
+    }
+    lastp = &last_msgchunk->sb_prev;
+  }
+
+  while (*lastp != NULL) {
+    mp = (*lastp)->sb_prev;
+    vim_free(*lastp);
+    *lastp = mp;
   }
 }
 
