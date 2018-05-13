@@ -12,23 +12,7 @@ describe('LSP plugin', function()
       source(dedent([[
         lua << EOF
           local plugin = require('lsp.plugin')
-          local callbacks = require('lsp.callbacks').callbacks
-          assert(
-            callbacks.textDocument.references == plugin.client.get_callback('textDocument/references')
-            )
-        EOF
-      ]]))
-    end)
-
-    it('should return the callback passed if given', function()
-      source(dedent([[
-        lua << EOF
-          local plugin = require('lsp.plugin')
-          local callbacks = require('lsp.callbacks').callbacks
-          local testfunc = function() return 1 end
-          assert(
-            testfunc == plugin.client.get_callback('textDocument/references', testfunc)
-          )
+          assert(plugin.is_supported_request('textDocument/references'))
         EOF
       ]]))
     end)

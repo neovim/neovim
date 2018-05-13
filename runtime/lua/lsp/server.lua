@@ -33,7 +33,7 @@ server.add = function(ftype, command, additional_configuration)
       -- Add the configuration to our current servers
       server.configured_servers[cur_type] = {
         command = command,
-        configuration = additional_configuration
+        configuration = additional_configuration or {},
       }
     end
   end
@@ -50,7 +50,7 @@ server.get_name = function(filetype)
     return nil
   end
 
-  local name = ft_config.name
+  local name = ft_config.configuration.name
 
   if name == nil then
     return filetype
