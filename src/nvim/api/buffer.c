@@ -24,6 +24,7 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/undo.h"
+#include "nvim/ex_docmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -458,16 +459,15 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
-/// Gets a list of dictionaries describing buffer-local mappings.
-/// The "buffer" key in the returned dictionary reflects the buffer
-/// handle where the mapping is present.
+/// Gets a list of buffer-local |mapping| definitions.
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param  buffer     Buffer handle
 /// @param[out]  err   Error details, if any
-/// @returns Array of maparg()-like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings.
+///          The "buffer" key holds the associated buffer handle.
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
-    FUNC_API_SINCE(3)
+  FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -476,6 +476,46 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   }
 
   return keymap_array(mode, buf);
+}
+
+/// Gets a map of buffer-local |user-commands|.
+///
+/// @param  buffer  Buffer handle.
+/// @param  opts  Optional parameters. Currently not used.
+/// @param[out]  err   Error details, if any.
+///
+/// @returns Map of maps describing commands.
+Dictionary nvim_buf_get_commands(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(4)
+{
+  bool global = (buffer == -1);
+  bool builtin = false;
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+    if (!strequal("builtin", k.data)) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+    if (strequal("builtin", k.data)) {
+      builtin = v.data.boolean;
+    }
+  }
+
+  if (global) {
+    if (builtin) {
+      api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+    return commands_array(NULL);
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (builtin || !buf) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+  return commands_array(buf);
 }
 
 /// Sets a buffer-scoped (b:) variable
