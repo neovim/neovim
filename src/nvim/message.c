@@ -2020,7 +2020,7 @@ void clear_sb_text(int all)
 
   while (*lastp != NULL) {
     mp = (*lastp)->sb_prev;
-    vim_free(*lastp);
+    xfree(*lastp);
     *lastp = mp;
   }
 }
