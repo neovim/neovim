@@ -165,7 +165,7 @@ local function _cs_remote(rcid, args)
 
   table.remove(args,1)
 
-  if f_silent and rcid == 0 then
+  if not f_silent and rcid == 0 then
     print('Remote server does not exist.')
     return
   end
