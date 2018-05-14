@@ -746,10 +746,6 @@ static bool client_init(int remote, char *server_addr, int argc, char **argv){
       ADD(args, STRING_OBJ(arg_s));
     }
 
-    // ./nvim --remote poopfile --server /tmp/nvimeF9iZN/0 does not do what
-    // you'd expect
-    // easy fix just by sending in the args list
-
     Error err;
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ((int)rc_id));

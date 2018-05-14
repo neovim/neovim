@@ -124,43 +124,58 @@ end
 
 local function _cs_remote(rcid, args)
 
-  -- issues with commands like --remote-somethingelse
-  -- still works, should fail^
-
   local f_silent = false
   local f_wait = false
   local f_tab = false
+  local command = 'edit '
 
-  -- extract the subcommand
   local subcmd = string.sub(args[1],10):gsub('-',' ')
 
-  if subcmd == 'tab' then
+  if subcmd == '' then
+  elseif subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then
     f_silent = true
-  elseif string.find(subcmd,'wait') ~= nil then
+  elseif subcmd == 'wait-silent' then
     f_wait = true
-    for i in subcmd:gmatch("%S+") do
-      if i == 'silent' then f_silent = true end
-      if i == 'tab' then f_tab = true end
-    end
+    f_silent = true
+  elseif subcmd == 'tab-wait' then
+    f_tab = true
+    f_wait = true
+  elseif subcmd == 'tab-silent' then
+    f_tab = true
+    f_silent = true
+  elseif subcmd == 'tab-wait-silent' then
+    f_tab = true
+    f_wait = true
+    f_silent = true
   elseif subcmd == 'send' then
     keys = args[2]
-    rpcrequest(rcid, 'nvim_input', keys)
+    __rpcrequest(rcid, 'nvim_input', keys)
     return
   elseif subcmd == 'expr' then
     expr = args[2]
     res = __rpcrequest(rcid, 'vim_eval', expr)
+    print(res)
+    return
+  else
+    print('--remote subcommand not found')
     return
   end
 
   table.remove(args,1)
 
-  -- use this for silent flag
-  if rcid ~= 0 then print('valid') else print('not valid') end
+  if f_silent and rcid == 0 then
+    print('Remote server does not exist.')
+    return
+  end
 
-  command = 'args '..table.concat(args, " ")
-  __rpcrequest(rcid, 'nvim_command', command)
+  if f_tab then command = 'tabedit ' end
+
+  for _, key in ipairs(args) do
+    __rpcrequest(rcid, 'nvim_command', command .. key)
+  end
+
   return
 end
 
