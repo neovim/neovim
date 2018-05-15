@@ -15,4 +15,10 @@ typedef uint32_t u8char_T;
 
 typedef struct expand expand_T;
 
+typedef enum {
+  kNone  = -1,
+  kFalse = 0,
+  kTrue  = 1,
+} TriState;
+
 #endif  // NVIM_TYPES_H

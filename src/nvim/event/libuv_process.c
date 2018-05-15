@@ -32,12 +32,15 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   if (os_shell_is_cmdexe(proc->argv[0])) {
     uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
   }
-  if (proc->detach) {
+  if (proc->detach == kTrue) {
     uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
   }
 #else
-  // Always setsid() on unix-likes. #8107
-  uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
+  // Always setsid() on unix. #8107
+  // Except for system(), systemlist(), :!. #8217
+  if (proc->detach != kNone) {
+    uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
+  }
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;

@@ -72,12 +72,6 @@
 # define VIMRC_FILE     ".nvimrc"
 #endif
 
-typedef enum {
-  kNone  = -1,
-  kFalse = 0,
-  kTrue  = 1,
-} TriState;
-
 EXTERN struct nvim_stats_s {
   int64_t fsync;
   int64_t redraw;

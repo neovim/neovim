@@ -68,6 +68,7 @@ static bool os_proc_tree_kill_rec(HANDLE process, int sig)
   }
 
 theend:
+  // TODO(justinmk): WaitForSingleObject to avoid race.
   return (bool)TerminateProcess(process, (unsigned int)sig);
 }
 /// Kills process `pid` and its descendants recursively.
@@ -90,20 +91,22 @@ bool os_proc_tree_kill(int pid, int sig)
 {
   assert(sig == SIGTERM || sig == SIGKILL);
   int pgid = getpgid(pid);
-  if (pgid > 0) {  // Ignore error. Never kill self (pid=0).
-    if (pgid == pid) {
-      ILOG("sending %s to process group: -%d",
-           sig == SIGTERM ? "SIGTERM" : "SIGKILL", pgid);
-      int rv = uv_kill(-pgid, sig);
-      return rv == 0;
-    } else {
-      // Should never happen, because process_spawn() did setsid() in the child.
-      ELOG("pgid %d != pid %d", pgid, pid);
-    }
-  } else {
-    ELOG("getpgid(%d) returned %d", pid, pgid);
+  if (pgid < 0) {
+    ELOG("getpgid(%d) error: %d: %s", pid, errno, strerror(errno));
+    return false;
   }
-  return false;
+  if (pgid == 0) {  // Never kill self (pid=0).
+    ELOG("getpgid(%d) returned %d", pid, pgid);
+    return false;
+  }
+  if (pgid != pid) {
+    // Should never happen, because process_spawn() did setsid() in the child.
+    ELOG("pgid %d != pid %d", pgid, pid);
+    return false;
+  }
+  ILOG("sending %s to process group: -%d",
+       sig == SIGTERM ? "SIGTERM" : "SIGKILL", pgid);
+  return 0 == uv_kill(-pgid, sig);
 }
 #endif
 

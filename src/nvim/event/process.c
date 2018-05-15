@@ -120,7 +120,7 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   process_is_tearing_down = true;
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (proc->detach || proc->type == kProcessTypePty) {
+    if (proc->detach == kTrue || proc->type == kProcessTypePty) {
       // Close handles to process without killing it.
       CREATE_EVENT(loop->events, process_close_handles, 1, proc);
     } else {
@@ -144,9 +144,10 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 
 /// Synchronously wait for a process to finish
 ///
-/// @param process  Process instance
+/// @param proc     Process instance
 /// @param ms       Time in milliseconds to wait for the process.
 ///                 0 for no wait. -1 to wait until the process quits.
+/// @param events   Event-queue, or NULL to use `proc.events`.
 /// @return Exit code of the process. proc->status will have the same value.
 ///         -1 if the timeout expired while the process is still running.
 ///         -2 if the user interruped the wait.
@@ -212,20 +213,27 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   proc->stopped_time = os_hrtime();
 
   switch (proc->type) {
-    case kProcessTypeUv:
+    case kProcessTypeUv: {
       // Close the process's stdin. If the process doesn't close its own
       // stdout/stderr, they will be closed when it exits(possibly due to being
       // terminated after a timeout)
       stream_may_close(&proc->in);
-      os_proc_tree_kill(proc->pid, SIGTERM);
+      if (proc->detach != kNone) {
+        os_proc_tree_kill(proc->pid, SIGTERM);
+      } else {
+        uv_kill(proc->pid, SIGTERM);
+      }
       break;
-    case kProcessTypePty:
+    }
+    case kProcessTypePty: {
       // close all streams for pty processes to send SIGHUP to the process
       process_close_streams(proc);
       pty_process_close_master((PtyProcess *)proc);
       break;
-    default:
+    }
+    default: {
       abort();
+    }
   }
 
   // (Re)start timer to verify that stopped process(es) died.
@@ -292,16 +300,16 @@ static void decref(Process *proc)
 static void process_close(Process *proc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (process_is_tearing_down && (proc->detach || proc->type == kProcessTypePty)
+  if (process_is_tearing_down
+      && (proc->detach == kTrue || proc->type == kProcessTypePty)
       && proc->closed) {
-    // If a detached/pty process dies while tearing down it might get closed
-    // twice.
+    // If a detached/pty process dies during teardown it might get closed twice.
     return;
   }
   assert(!proc->closed);
   proc->closed = true;
 
-  if (proc->detach) {
+  if (proc->detach == kTrue) {
     if (proc->type == kProcessTypeUv) {
       uv_unref((uv_handle_t *)&(((LibuvProcess *)proc)->uv));
     }

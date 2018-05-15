@@ -317,7 +317,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->argv = argv;
   proc->cb = channel_process_exit_cb;
   proc->events = chan->events;
-  proc->detach = detach;
+  proc->detach = detach ? kTrue : kFalse;
   proc->cwd = cwd;
 
   char *cmd = xstrdup(proc->argv[0]);
