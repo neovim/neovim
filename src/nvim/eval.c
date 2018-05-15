@@ -17039,7 +17039,8 @@ static void timer_stop(timer_T *timer)
   time_watcher_close(&timer->tw, timer_close_cb);
 }
 
-// invoked on next event loop tick, so queue is empty
+// This will be run on the main loop after the last timer_due_cb, so at this
+// point it is safe to free the callback.
 static void timer_close_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
