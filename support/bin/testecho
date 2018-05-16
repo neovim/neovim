@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+while true; do
+  read string
+
+  if [ "$string" = "GOODBYE" ]; then
+    exit 0
+  elif [ "$string" = "FAIL" ]; then
+    echo "There was a faytal eyror" >&2
+    exit 1
+  fi
+
+  echo "Content-Type: Something"
+  echo "Content-Length: ${#string}"
+  echo ""
+  echo $string
+
+  string="Special message"
+  echo "Content-Type: Something-else"
+  echo "Content-Length: ${#string}"
+  echo ""
+  echo $string
+done
