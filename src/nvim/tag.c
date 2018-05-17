@@ -2407,8 +2407,8 @@ jumpto_tag (
   /* If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
    * open a new tab page. */
   if (postponed_split || cmdmod.tab != 0) {
-    win_split(postponed_split > 0 ? postponed_split : 0,
-        postponed_split_flags);
+    (void)win_split(postponed_split > 0 ? postponed_split : 0,
+                    postponed_split_flags);
     RESET_BINDING(curwin);
   }
 

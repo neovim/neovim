@@ -246,7 +246,6 @@ typedef enum {
  */
 int ml_open(buf_T *buf)
 {
-  memfile_T   *mfp;
   bhdr_T      *hp = NULL;
   ZERO_BL     *b0p;
   PTR_BL      *pp;
@@ -275,12 +274,8 @@ int ml_open(buf_T *buf)
     buf->b_may_swap = false;
   }
 
-  /*
-   * Open the memfile.  No swap file is created yet.
-   */
-  mfp = mf_open(NULL, 0);
-  if (mfp == NULL)
-    goto error;
+  // Open the memfile.  No swap file is created yet.
+  memfile_T *mfp = mf_open(NULL, 0);
 
   buf->b_ml.ml_mfp = mfp;
   buf->b_ml.ml_flags = ML_EMPTY;
@@ -364,11 +359,10 @@ int ml_open(buf_T *buf)
   return OK;
 
 error:
-  if (mfp != NULL) {
-    if (hp)
-      mf_put(mfp, hp, false, false);
-    mf_close(mfp, true);            /* will also xfree(mfp->mf_fname) */
+  if (hp) {
+    mf_put(mfp, hp, false, false);
   }
+  mf_close(mfp, true);  // will also xfree(mfp->mf_fname)
   buf->b_ml.ml_mfp = NULL;
   return FAIL;
 }
@@ -842,7 +836,7 @@ void ml_recover(void)
                                     mf_open() will consume "fname_used"! */
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
-  if (mfp == NULL || mfp->mf_fd < 0) {
+  if (mfp->mf_fd < 0) {
     EMSG2(_("E306: Cannot open %s"), fname_used);
     goto theend;
   }
