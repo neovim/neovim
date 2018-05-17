@@ -1812,7 +1812,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         (void)op_delete(oap);
         if (oap->motion_type == kMTLineWise && has_format_option(FO_AUTO)) {
-          u_save_cursor();  // cursor line wasn't saved yet
+          // cursor line wasn't saved yet
+          if (u_save_cursor() == FAIL) {
+            break;
+          }
         }
         auto_format(false, true);
       }
