@@ -147,7 +147,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_BIN_DIR}/luacheck
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-scm-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-dev-1.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${HOSTDEPS_BIN_DIR}/luacheck)
