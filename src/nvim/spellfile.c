@@ -5378,7 +5378,9 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          fseek(fd, fpos_next, SEEK_SET);
+          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+            ELOG("Error seeking to next position");
+          }
         }
       }
       if (fd != NULL)
