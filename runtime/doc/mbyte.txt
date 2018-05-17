@@ -834,7 +834,7 @@ keyboards and encodings.
 The actual mappings are in the lines below "loadkeymap".  In the example "a"
 is mapped to "A" and "b" to "B".  Thus the first item is mapped to the second
 item.  This is done for each line, until the end of the file.
-These items are exactly the same as what can be used in a |:lnoremap| command,
+These items are exactly the same as what can be used in a |:lmap| command,
 using "<buffer>" to make the mappings local to the buffer.
 You can check the result with this command: >
 	:lmap
@@ -849,8 +849,9 @@ Since Vim doesn't know if the next character after a quote is really an "a",
 it will wait for the next character.  To be able to insert a single quote,
 also add this line: >
 	''	'
-Since the mapping is defined with |:lnoremap| the resulting quote will not be
-used for the start of another character.
+Since the mapping is defined with |:lmap| the resulting quote will not be
+used for the start of another character defined in the 'keymap'.
+It can be used in a standard |:imap| mapping.
 The "accents" keymap uses this.				*keymap-accents*
 
 The first column can also be in |<>| form:
