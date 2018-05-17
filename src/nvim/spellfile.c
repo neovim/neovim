@@ -5368,8 +5368,9 @@ spell_add_word (
           // doesn't work for all systems, close the file first.
           fclose(fd);
           fd = mch_fopen((char *)fname, "r+");
-          if (fd == NULL)
+          if (fd == NULL) {
             break;
+          }
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
@@ -5378,7 +5379,9 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          fseek(fd, fpos_next, SEEK_SET);
+          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+            break;
+          }
         }
       }
       if (fd != NULL)
