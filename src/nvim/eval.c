@@ -15712,6 +15712,9 @@ static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
   rettv->vval.v_list = list;
   tv_list_ref(list);
   char *const dirs = stdpaths_get_xdg_var(xdg);
+  if (dirs == NULL) {
+    return;
+  }
   do {
     size_t dir_len;
     const char *dir;

@@ -6585,7 +6585,7 @@ void vimrc_found(char_u *fname, char_u *envname)
 {
   char_u      *p;
 
-  if (fname != NULL) {
+  if (fname != NULL && envname != NULL) {
     p = (char_u *)vim_getenv((char *)envname);
     if (p == NULL) {
       /* Set $MYVIMRC to the first vimrc file found. */
