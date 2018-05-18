@@ -849,7 +849,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
 {
-  cursorentry_T r;
+  cursorentry_T r = shape_table[0];
 
   for (size_t i = 0; i < args.size; i++) {
     char *key = args.items[i].key.data;
