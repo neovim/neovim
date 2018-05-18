@@ -1270,6 +1270,12 @@ static void redraw(bool restore_cursor)
     maketitle();
   }
 
+  // redraw status line so mode() reports terminal mode correctly.
+  // Some status lines display the current mode in the and they might skip a
+  // beat and report the wrong mode (namely normal mode instead of terminal mode).
+  curwin->w_redr_status = true;
+  redraw_statuslines();
+
   if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
   } else if (term) {
