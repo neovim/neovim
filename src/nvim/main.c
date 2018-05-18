@@ -1849,6 +1849,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 /// @return FAIL if the environment variable was not executed,
 ///         OK otherwise.
 static int process_env(char *env, bool is_viminit)
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *initstr = os_getenv(env);
   if (initstr != NULL) {

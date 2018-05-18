@@ -65,7 +65,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *env_val = os_getenv(env);
 
 #ifdef WIN32
-  if (env_val == NULL) {
+  if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #endif
@@ -74,7 +74,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val != NULL) {
     ret = xstrdup(env_val);
   } else if (fallback) {
-    ret = (char *) expand_env_save((char_u *)fallback);
+    ret = (char *)expand_env_save((char_u *)fallback);
   }
 
   return ret;
