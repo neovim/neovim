@@ -13,8 +13,10 @@ if(NOT WIN32)
       ncurses5-config  --terminfo-dirs 2>/dev/null || \
       echo '/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo:/usr/local/lib/terminfo'"
     OUTPUT_VARIABLE TERMINFO_DIRS)
+else()
+  set(TERMINFO_DIRS "\"\"")
 endif()
-target_compile_definitions(unibilium PUBLIC TERMINFO_DIRS ${TERMINFO_DIRS})
+target_compile_definitions(unibilium PUBLIC TERMINFO_DIRS=${TERMINFO_DIRS})
 
 if(MSVC)
   target_include_directories(unibilium PUBLIC ${PROJECT_SOURCE_DIR}/msvc-compat)
