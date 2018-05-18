@@ -54,7 +54,7 @@ end
 
 local function reopen(buf, expectedlines)
   ok(buffer('detach', buf))
-  expectn('nvim_buf_updates_end', {buf})
+  expectn('nvim_buf_detach_event', {buf})
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
@@ -157,7 +157,7 @@ describe('buffer events', function()
     -- create a new empty buffer and wipe out the old one ... this will
     -- turn off live updates
     command('enew!')
-    expectn('nvim_buf_updates_end', {b})
+    expectn('nvim_buf_detach_event', {b})
 
     -- add a line at the start of an empty file
     command('enew')
@@ -171,7 +171,7 @@ describe('buffer events', function()
 
     -- turn off live updates manually
     buffer('detach', b2)
-    expectn('nvim_buf_updates_end', {b2})
+    expectn('nvim_buf_detach_event', {b2})
 
     -- add multiple lines to a blank file
     command('enew!')
@@ -266,7 +266,7 @@ describe('buffer events', function()
     -- type text into the first line of a blank file, one character at a time
     command('enew!')
     tick = 2
-    expectn('nvim_buf_updates_end', {b})
+    expectn('nvim_buf_detach_event', {b})
     local bnew = nvim('get_current_buf')
     ok(buffer('attach', bnew, true))
     expectn('nvim_buf_lines_event', {bnew, tick, 0, -1, {''}, false})
@@ -386,7 +386,7 @@ describe('buffer events', function()
 
     -- reopen the file and watch live updates shut down
     command('edit')
-    expectn('nvim_buf_updates_end', {b})
+    expectn('nvim_buf_detach_event', {b})
   end)
 
   it('allows a channel to watch multiple buffers at once', function()
@@ -456,7 +456,7 @@ describe('buffer events', function()
     ok(buffer('detach', b))
     ok(buffer('detach', b))
     ok(buffer('detach', b))
-    expectn('nvim_buf_updates_end', {b})
+    expectn('nvim_buf_detach_event', {b})
     eval('rpcnotify('..channel..', "Hello Again")')
     expectn('Hello Again', {})
   end)
@@ -506,7 +506,7 @@ describe('buffer events', function()
 
     -- stop watching on channel 1
     ok(request(1, 'nvim_buf_detach', b))
-    wantn(1, 'nvim_buf_updates_end', {b})
+    wantn(1, 'nvim_buf_detach_event', {b})
 
     -- undo the change to buffer 1
     command('undo')
@@ -523,11 +523,11 @@ describe('buffer events', function()
     eval('rpcnotify('..channel1..', "Hello")')
     wantn(1, 'Hello', {})
 
-    -- close the buffer and channels 2 and 3 should get a nvim_buf_updates_end
+    -- close the buffer and channels 2 and 3 should get a nvim_buf_detach_event
     -- notification
     command('edit')
-    wantn(2, 'nvim_buf_updates_end', {b})
-    wantn(3, 'nvim_buf_updates_end', {b})
+    wantn(2, 'nvim_buf_detach_event', {b})
+    wantn(3, 'nvim_buf_detach_event', {b})
 
     -- make sure there are no other pending nvim_buf_lines_event messages going to
     -- channel 1
@@ -671,7 +671,7 @@ describe('buffer events', function()
 
     -- close our buffer by creating a new one
     command('enew')
-    expectn('nvim_buf_updates_end', {b})
+    expectn('nvim_buf_detach_event', {b})
 
     -- reopen the original buffer, make sure there are no Live Updates sent
     command('b1')
@@ -700,7 +700,7 @@ describe('buffer events', function()
     command('set hidden')
     command('enew')
 
-    -- note that no nvim_buf_updates_end is sent
+    -- note that no nvim_buf_detach_event is sent
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
 
@@ -723,9 +723,9 @@ describe('buffer events', function()
       local b = open(true, {'AAA'})
 
       -- call :bunload or whatever the command is, and then check that we
-      -- receive a nvim_buf_updates_end
+      -- receive a nvim_buf_detach_event
       command(cmd)
-      expectn('nvim_buf_updates_end', {b})
+      expectn('nvim_buf_detach_event', {b})
     end
   end)
 

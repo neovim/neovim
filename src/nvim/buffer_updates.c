@@ -82,7 +82,7 @@ void buf_updates_send_end(buf_T *buf, uint64_t channelid)
     args.size = 1;
     args.items = xcalloc(sizeof(Object), args.size);
     args.items[0] = BUFFER_OBJ(buf->handle);
-    rpc_send_event(channelid, "nvim_buf_updates_end", args);
+    rpc_send_event(channelid, "nvim_buf_detach_event", args);
 }
 
 void buf_updates_unregister(buf_T *buf, uint64_t channelid)

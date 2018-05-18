@@ -286,7 +286,7 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
     will be given as empty strings. 
 
     {more} is a boolean which tells you whether or not to expect more
-    |nvim_buf_updates| notifications for a single buffer change (i.e. Nvim has
+    |nvim_buf_lines_event| notifications for a single buffer change (i.e. Nvim has
     chunked up one event into several). Not yet used.
 
   Note: sometimes {changedtick} will be |v:null|, which means that the buffer
@@ -295,7 +295,7 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
   doesn't reflect the actual buffer contents. Currently this behaviour is
   only used for the |inccommand| option.
 
-nvim_buf_changedtick_event[{buf}, {changedtick}]	 *nvim_buf_changedtick*
+nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
 
   Indicates that |b:changedtick| was incremented for the buffer {buf}, but no
   text was changed. This is currently only used by undo/redo.
@@ -304,7 +304,7 @@ nvim_buf_changedtick_event[{buf}, {changedtick}]	 *nvim_buf_changedtick*
 
     {changedtick} is the new value of |b:changedtick| for that buffer.
 
-nvim_buf_updates_end[{buf}]                                    		*nvim_buf_updates_end*
+nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
 
   Indicates that buffer updates for the nominated buffer have been disabled,
   either by calling |nvim_buf_detach| or because the buffer was unloaded
@@ -326,39 +326,45 @@ the buffer contents are unloaded from memory:
                                                        *buffer-updates-examples*
 Examples~
 
-If buffer updates are activated a new empty buffer (and sending the buffer's
+If buffer updates are activated on an empty buffer (and sending the buffer's
 content on the initial notification has been requested), the following
-|nvim_buf_updates_start| event will be sent: >
+|nvim_buf_lines_event| event will be sent: >
 
-  nvim_buf_updates_start[{buf}, [""], v:false]
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
 
 If the user adds 2 new lines to the start of a buffer, the following event
 would be generated: >
 
-  nvim_buf_update[{buf}, 0, 0, ["line1", "line2"]]
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
 
 If the puts the cursor on a line containing the text `"Hello world"` and adds
 a `!` character to the end using insert mode, the following event would be
 generated: >
 
-  nvim_buf_update[{buf}, {linenr}, {linenr} + 1, ["Hello world!"]]
+  nvim_buf_lines_event[
+    {buf}, {changedtick}, {linenr}, {linenr} + 1,
+    ["Hello world!"], v:false
+  ]
 
 If the user moves their cursor to line 3 of a buffer and deletes 20 lines
 using `20dd`, the following event will be generated: >
 
-  nvim_buf_update[{buf}, 2, 20, []]
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 22, [], v:false]
 
 If the user selects lines 3-5 of a buffer using |linewise-visual| mode and
 then presses `p` to paste in a new block of 6 lines, then the following event
 would be sent to the co-process: >
 
-  nvim_buf_update[{buf}, 2, 5, ['pasted line 1', 'pasted
-  line 2', 'pasted line 3', 'pasted line 4', 'pasted line 5', 'pasted line
-  6']]
+  nvim_buf_lines_event[
+    {buf}, {changedtick}, 2, 5,
+    ['pasted line 1', 'pasted line 2', 'pasted line 3', 'pasted line 4',
+     'pasted line 5', 'pasted line 6'],
+    v:false
+  ]
 
 If the user uses :edit to reload a buffer then the following event would be
 generated: >
 
-  nvim_buf_updates_end[{buf}]
+  nvim_buf_detach_event[{buf}]
 
  vim:tw=78:ts=8:ft=help:norl:

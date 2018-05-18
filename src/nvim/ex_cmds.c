@@ -872,7 +872,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
   }
 
-  // send nvim_buf_update regarding lines that were deleted
+  // send nvim_buf_lines_event regarding lines that were deleted
   if (kv_size(curbuf->update_channels)) {
     buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
   }

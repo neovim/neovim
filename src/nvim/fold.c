@@ -746,7 +746,7 @@ deleteFold (
   if (last_lnum > 0) {
     changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L, false);
 
-    // send one nvim_buf_update at the end
+    // send one nvim_buf_lines_event at the end
     if (kv_size(curbuf->update_channels)) {
       // last_lnum is the line *after* the last line of the outermost fold
       // that was modified. Note also that deleting a fold might only require
@@ -1608,7 +1608,7 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
   if (kv_size(curbuf->update_channels)) {
     // Note: foldAddMarker() may not actually change start and/or end if
     // u_save() is unable to save the buffer line, but we send the
-    // nvim_buf_update anyway since it won't do any harm.
+    // nvim_buf_lines_event anyway since it won't do any harm.
     int64_t num_changed = 1 + end - start;
     buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
   }
