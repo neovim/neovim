@@ -1846,8 +1846,7 @@ describe("'inccommand' with 'gdefault'", function()
 end)
 
 describe(":substitute", function()
-  local screen =  Screen.new(30,15)
-
+  local screen = Screen.new(30,15)
   before_each(function()
     clear()
   end)
@@ -2471,8 +2470,13 @@ describe(":substitute", function()
       :%s/some\(thing\)\@!/every/^   |
     ]])
   end)
+end)
 
-  it('with inccommand during :terminal activity', function()
+it(':substitute with inccommand during :terminal activity', function()
+  retry(2, nil, function()
+    local screen = Screen.new(30,15)
+    clear()
+
     command("set cmdwinheight=3")
     if iswin() then
       feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
@@ -2484,7 +2488,7 @@ describe(":substitute", function()
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
     command('wincmd =')
 
-    -- Allow some terminal output.
+    -- Wait for terminal output.
     screen:expect([[
       bar baz fox                   |
       bar foo ba^z                   |
@@ -2505,7 +2509,7 @@ describe(":substitute", function()
 
     feed('gg')
     feed(':%s/foo/ZZZ')
-    sleep(50)  -- Allow some terminal activity.
+    sleep(20)  -- Allow some terminal activity.
     screen:expect([[
       {12:ZZZ} bar baz                   |
       bar baz fox                   |
@@ -2523,5 +2527,6 @@ describe(":substitute", function()
       {10:[Preview]                     }|
       :%s/foo/ZZZ^                   |
     ]])
+
   end)
 end)
