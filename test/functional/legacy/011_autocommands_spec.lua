@@ -17,9 +17,10 @@ local lfs = require('lfs')
 local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
+local iswin = helpers.iswin
 
 local function has_gzip()
-  local null = helpers.iswin() and 'nul' or '/dev/null'
+  local null = iswin() and 'nul' or '/dev/null'
   return os.execute('gzip --help >' .. null .. ' 2>&1') == 0
 end
 
@@ -59,7 +60,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     os.remove('test.out')
   end)
 
-  if not has_gzip() then
+  if iswin() or not has_gzip() then
     pending('skipped (missing `gzip` utility)', function() end)
   else
 
