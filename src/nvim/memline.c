@@ -1744,7 +1744,6 @@ ml_get_buf (
       IEMSGN(_("E315: ml_get: invalid lnum: %" PRId64), lnum);
       recursive--;
     }
-errorret:
     STRCPY(IObuff, "???");
     return IObuff;
   }
@@ -1769,14 +1768,15 @@ errorret:
      * block and releases any locked block.
      */
     if ((hp = ml_find_line(buf, lnum, ML_FIND)) == NULL) {
-      if (recursive == 0) {
-        // Avoid giving this message for a recursive call, may happen
-        // when the GUI redraws part of the text.
-        recursive++;
-        IEMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
-        recursive--;
-      }
-      goto errorret;
+      abort();
+      // if (recursive == 0) {
+      //   // Avoid giving this message for a recursive call, may happen
+      //   // when the GUI redraws part of the text.
+      //   recursive++;
+      //   IEMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
+      //   recursive--;
+      // }
+      // goto errorret;
     }
 
     dp = hp->bh_data;
