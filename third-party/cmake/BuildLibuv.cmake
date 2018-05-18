@@ -44,7 +44,7 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
 
 set(LIBUV_PATCH_COMMAND
 ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
-  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply
+  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
     ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-overlapped.patch)
 
 if(UNIX)
