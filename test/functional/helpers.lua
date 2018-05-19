@@ -265,6 +265,11 @@ function module.command(cmd)
   module.request('nvim_command', cmd)
 end
 
+-- Executes a lua string.
+local function nvim_execute_lua(lua_string, args)
+  request('nvim_execute_lua', lua_string, {args})
+end
+
 -- Evaluates a VimL expression.
 -- Fails on VimL error, but does not update v:errmsg.
 function module.eval(expr)
