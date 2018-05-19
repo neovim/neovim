@@ -913,27 +913,24 @@ void set_number_default(char *name, long val)
 }
 
 #if defined(EXITFREE)
-/*
- * Free all options.
- */
+/// Free all options.
 void free_all_options(void)
 {
-  int i;
-
-  for (i = 0; options[i].fullname; i++) {
+  for (int i = 0; options[i].fullname; i++) {
     if (options[i].indir == PV_NONE) {
-      /* global option: free value and default value. */
-      if (options[i].flags & P_ALLOCED && options[i].var != NULL)
+      // global option: free value and default value.
+      if ((options[i].flags & P_ALLOCED) && options[i].var != NULL) {
         free_string_option(*(char_u **)options[i].var);
-      if (options[i].flags & P_DEF_ALLOCED)
+      }
+      if (options[i].flags & P_DEF_ALLOCED) {
         free_string_option(options[i].def_val[VI_DEFAULT]);
-    } else if (options[i].var != VAR_WIN
-               && (options[i].flags & P_STRING))
-      /* buffer-local option: free global value */
+      }
+    } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
+      // buffer-local option: free global value
       free_string_option(*(char_u **)options[i].var);
+    }
   }
 }
-
 #endif
 
 
