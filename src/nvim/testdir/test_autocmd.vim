@@ -1167,8 +1167,9 @@ func Test_nocatch_wipe_dummy_buffer()
 endfunc
 
 " Test TextChangedI and TextChangedP
-func Test_ChangedP() abort
-  throw 'skipped: Nvim does not support test_override()'
+func Test_ChangedP()
+  " Nvim does not support test_override().
+  throw 'skipped: see test/functional/viml/completion_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
