@@ -45,24 +45,27 @@ local mt_callback_object = {
   end,
 
   __index = function(self, key)
-    if rawget(self, key) ~= nil then
-      return rawget(self, key)
+    -- Populate the "required" keys
+    if rawget(self, key) == nil and ( key == 'generic' or key == 'default' or key =='filetype' ) then
+      self[key] = {}
     end
 
-    if key == 'generic' or key == 'default' or key =='filetype' then
-      return {}
-    end
-
-    return nil
+    return rawget(self, key)
   end,
 }
 
-local callback_default = function(f)
-  return setmetatable({
-    default = { f },
-    generic = {},
-    filetype = {},
-  }, mt_callback_object)
+
+--- Private helper function to set the structure for default callbacks
+local __set_default_callback = function(obj, callback)
+  obj.default = { callback }
+end
+
+local default_callback_object = function(f)
+  local new_callback_object = {}
+
+  __set_default_callback(new_callback_object, f)
+
+  return setmetatable(new_callback_object, mt_callback_object)
 end
 
 -- TODO(tjdevries): Make this a smarter table.
@@ -115,13 +118,13 @@ local method_to_callback_object = function(method, create_new)
 end
 
 local set_default_callback = function(method, new_default_callback)
-  local callback_object = method_to_callback_object(method)
+  local callback_object = method_to_callback_object(method, true)
 
   if callback_object == nil then
     return nil
   end
 
-  callback_object.default = new_default_callback
+  __set_default_callback(callback_object, new_default_callback)
 end
 
 local add_callback = function(method, new_callback, filetype)
@@ -146,7 +149,7 @@ end
 -- Callback definition section
 --------------------------------------------------------------------------------
 
-CallbackMapping.neovim.error_callback = callback_default(function(name, error_message)
+CallbackMapping.neovim.error_callback = default_callback_object(function(name, error_message)
   local message = ''
   if error_message.message ~= nil and type(error_message.message) == 'string' then
     message = error_message.message
@@ -162,7 +165,7 @@ CallbackMapping.neovim.error_callback = callback_default(function(name, error_me
 end)
 
 
-CallbackMapping.textDocument.publishDiagnostics = callback_default(function(success, data)
+CallbackMapping.textDocument.publishDiagnostics = default_callback_object(function(success, data)
   if not success then
     CallbackMapping.neovim.error_callback('textDocument/publishDiagnostics', data)
     return nil
@@ -206,7 +209,7 @@ CallbackMapping.textDocument.publishDiagnostics = callback_default(function(succ
   return result
 end)
 
-CallbackMapping.textDocument.completion = callback_default(function(success, data)
+CallbackMapping.textDocument.completion = default_callback_object(function(success, data)
   if not success then
     CallbackMapping.neovim.error_callback('textDocument/completion', data)
     return nil
@@ -219,7 +222,7 @@ CallbackMapping.textDocument.completion = callback_default(function(success, dat
   return handle_completion.getLabels(data)
 end)
 
-CallbackMapping.textDocument.references = callback_default(function(success, data)
+CallbackMapping.textDocument.references = default_callback_object(function(success, data)
   if not success then
     CallbackMapping.neovim.error_callback('textDocument/references', data)
     return nil
@@ -256,7 +259,7 @@ CallbackMapping.textDocument.references = callback_default(function(success, dat
   return result
 end)
 
-CallbackMapping.textDocument.hover = callback_default(function(success, data)
+CallbackMapping.textDocument.hover = default_callback_object(function(success, data)
   log.trace('textDocument/hover', data)
 
   if not success then
@@ -306,7 +309,7 @@ CallbackMapping.textDocument.hover = callback_default(function(success, data)
 
 end)
 
-CallbackMapping.textDocument.definition = callback_default(function(success, data)
+CallbackMapping.textDocument.definition = default_callback_object(function(success, data)
   log.trace('callback:textDocument/definiton', data)
 
   if not success then
@@ -360,28 +363,24 @@ end)
 -- @param default_only          (optional) If passed, will only execute the default. Overridden by callback_parameter
 local get_list_of_callbacks = function(method, callback_parameter, filetype, default_only)
   -- If they haven't passed a callback parameter, then fill with a default
-  local callback_map
+  local callback_map = {}
   if callback_parameter == nil then
     callback_map = method_to_callback_object(method)
   elseif type(callback_parameter) == 'table' then
     default_only = true
-    callback_map = { default = callback_parameter }
+    __set_default_callback(callback_parameter)
   elseif type(callback_parameter) == 'function' then
     default_only = true
-    callback_map = callback_default(callback_parameter)
+    callback_map = default_callback_object(callback_parameter)
   elseif type(callback_parameter) == 'string' then
     -- When we pass a string, that's a VimL function that we want to call
     -- so we create a callback function to run it.
     --
     --      See: |lsp#request()|
     default_only = true
-    callback_map = {
-      default = {
-        function(success, data)
-          return vim.api.nvim_call_function(callback_parameter, {success, data})
-        end
-      }
-    }
+    __set_default_callback(callback_map, function(success, data)
+        return vim.api.nvim_call_function(callback_parameter, {success, data})
+      end)
   end
 
   if callback_map == nil then return {} end
