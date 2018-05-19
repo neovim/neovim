@@ -136,7 +136,7 @@ For the request 'textDocument/hover', the following autocmds will be fired:
                                                             *lsp-configuration*
 
                                                              *lsp#server#add()*
-lsp#server#add({ftype}, {configuration}):
+lsp#server#add({ftype}, {cmd}, {configuration}):
     Used to add a language server.
 
     This will add an autocmd that will start the server and handle any other
@@ -146,12 +146,11 @@ lsp#server#add({ftype}, {configuration}):
         {ftype}: A string or list of strings of filetypes to associate with
         this server.
 
-        {configuration} (dictionary): The command to be sent to start the server
-            `name`        (string):   The name of the server
-            `command`     (string):   The command to start the server
-            `arguments`   (list):     Any arguments to pass to the server
+        {cmd}: See |jobstart()| for information on cmd.
 
-            `callbacks` (dict):     A dictionary of callbacks to configure the
+        {configuration} (dictionary): Optional configuration for a server.
+            `name`        (string):   The name of the server
+            `callbacks`   (dict):     A dictionary of callbacks to configure the
                                     server.
 
               Available callbacks are:
@@ -161,6 +160,7 @@ lsp#server#add({ftype}, {configuration}):
                 parameter in the initialize request for a server.
 
                 Example:~
+                TODO:  Update this example
 >
   " Typescript configuration
   call lsp#server#add('typescript', {
@@ -206,7 +206,7 @@ require('lsp.checks').add_check({request}, {cb})
         `false` as the callback.
 
 >
-    call luaeval("require('lsp.checks').add_check('textDocument/hover', false)")
+    :lua require('lsp.checks').add_check('textDocument/hover', false)
 <
 
 
