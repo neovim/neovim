@@ -1167,7 +1167,7 @@ func Test_nocatch_wipe_dummy_buffer()
 endfunc
 
 " Test TextChangedI and TextChangedP
-func Test_ChangedP() abort
+func Test_ChangedP()
   " Nvim does not support test_override().
   throw 'skipped: see test/functional/viml/completion_spec.lua'
   new
