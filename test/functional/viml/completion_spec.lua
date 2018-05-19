@@ -3,7 +3,10 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local curbufmeths = helpers.curbufmeths
+local command = helpers.command
 local meths = helpers.meths
+local wait = helpers.wait
 
 describe('completion', function()
   local screen
@@ -970,5 +973,91 @@ describe('ui/ext_popupmenu', function()
     ]], nil, nil, function()
       eq(nil, items) -- popupmenu was hidden
     end)
+  end)
+
+  it('TextChangedP autocommand', function()
+    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar'})
+    source([[
+      set complete=. completeopt=menuone
+      let g:foo = []
+      autocmd! TextChanged * :call add(g:foo, "N")
+      autocmd! TextChangedI * :call add(g:foo, "I")
+      autocmd! TextChangedP * :call add(g:foo, "P")
+      call cursor(3, 1)
+    ]])
+
+    command('let g:foo = []')
+    feed('o')
+    wait()
+    feed('<esc>')
+    eq({'I'}, eval('g:foo'))
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    eq({'I', 'I'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    eq({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    eq({'foo', 'bar', 'foobar', 'foo'}, eval('getline(1, "$")'))
+
+    source([[
+      au! TextChanged
+      au! TextChangedI
+      au! TextChangedP
+      set complete&vim completeopt&vim
+    ]])
   end)
 end)

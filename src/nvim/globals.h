@@ -868,9 +868,6 @@ EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
 EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
 
-EXTERN varnumber_T last_changedtick INIT(= 0);  // for TextChanged event
-EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
-
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
 EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
 EXTERN int postponed_split_tab INIT(= 0);       /* cmdmod.tab */
