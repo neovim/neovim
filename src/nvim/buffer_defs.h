@@ -484,6 +484,11 @@ struct file_buffer {
 #define b_changedtick changedtick_di.di_tv.vval.v_number
   ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
 
+  varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or
+                                        // TextChangedI was last triggered.
+  varnumber_T b_last_changedtick_pum;   // b:changedtick when TextChangedP was
+                                        // last triggered.
+
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
 

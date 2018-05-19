@@ -1215,13 +1215,9 @@ static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if b_changedtick differs.
   if (!finish_op && has_event(EVENT_TEXTCHANGED)
-      && last_changedtick != curbuf->b_changedtick) {
-    if (last_changedtick_buf == curbuf) {
-      apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-    }
-
-    last_changedtick_buf = curbuf;
-    last_changedtick = curbuf->b_changedtick;
+      && curbuf->b_last_changedtick != curbuf->b_changedtick) {
+    apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
+    curbuf->b_last_changedtick = curbuf->b_changedtick;
   }
 }
 
