@@ -351,10 +351,10 @@ void pum_redraw(void)
     // prepend a space if there is room
     if (curwin->w_p_rl) {
       if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
-        screen_putchar(' ', row, pum_col + 1, attr);
+        grid_putchar(&default_grid, ' ', row, pum_col + 1, attr);
       }
     } else if (pum_col > 0) {
-      screen_putchar(' ', row, pum_col - 1, attr);
+      grid_putchar(&default_grid, ' ', row, pum_col - 1, attr);
     }
 
     // Display each entry, use two spaces for a Tab.
@@ -416,12 +416,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1, attr);
+              grid_puts_len(&default_grid, rt, (int)STRLEN(rt), row, col - size + 1,
+                              attr);
               xfree(rt_start);
               xfree(st);
               col -= width;
             } else {
-              screen_puts_len(st, (int)STRLEN(st), row, col, attr);
+              grid_puts_len(&default_grid, st, (int)STRLEN(st), row, col, attr);
               xfree(st);
               col += width;
             }
@@ -432,10 +433,10 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (curwin->w_p_rl) {
-              screen_puts_len((char_u *)"  ", 2, row, col - 1, attr);
+              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col - 1, attr);
               col -= 2;
             } else {
-              screen_puts_len((char_u *)"  ", 2, row, col, attr);
+              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
             totwidth += 2;
@@ -466,11 +467,11 @@ void pum_redraw(void)
       }
 
       if (curwin->w_p_rl) {
-        screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
+        grid_fill(&default_grid, row, row + 1, pum_col - pum_base_width - n + 1,
                     col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
       } else {
-        screen_fill(row, row + 1, col, pum_col + pum_base_width + n,
+        grid_fill(&default_grid, row, row + 1, col, pum_col + pum_base_width + n,
                     ' ', ' ', attr);
         col = pum_col + pum_base_width + n;
       }
@@ -478,24 +479,24 @@ void pum_redraw(void)
     }
 
     if (curwin->w_p_rl) {
-      screen_fill(row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
+      grid_fill(&default_grid, row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
                   attr);
     } else {
-      screen_fill(row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
+      grid_fill(&default_grid, row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
     }
 
     if (pum_scrollbar > 0) {
       if (curwin->w_p_rl) {
-        screen_putchar(' ', row, pum_col - pum_width,
+        grid_putchar(&default_grid, ' ', row, pum_col - pum_width,
                        i >= thumb_pos && i < thumb_pos + thumb_heigth
                        ? attr_thumb : attr_scroll);
       } else {
-        screen_putchar(' ', row, pum_col + pum_width,
+        grid_putchar(&default_grid, ' ', row, pum_col + pum_width,
                        i >= thumb_pos && i < thumb_pos + thumb_heigth
                        ? attr_thumb : attr_scroll);
       }
     }
-    screen_puts_line_flush(false);
+    grid_puts_line_flush(&default_grid, false);
     row++;
   }
 }

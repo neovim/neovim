@@ -57,6 +57,7 @@ static int busy = 0;
 static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
+static GridHandle cursor_grid_handle = 1;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -315,12 +316,18 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
   }
 }
 
-void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
-             bool wrap)
+void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
+             int clearattr, bool wrap)
 {
-  size_t off = LineOffset[row]+(size_t)startcol;
-  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr, wrap,
-          (const schar_T *)ScreenLines+off, (const sattr_T *)ScreenAttrs+off);
+  size_t off = grid->LineOffset[row] + (size_t)startcol;
+  int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow;
+  int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn;
+
+  UI_CALL(raw_line, grid->handle, row_off + row, col_off + startcol,
+          col_off + endcol, col_off + clearcol, clearattr, wrap,
+          (const schar_T *)grid->ScreenLines + off,
+          (const sattr_T *)grid->ScreenAttrs + off);
+
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = row, old_col = col;
     // If'writedelay is active, we set the cursor to highlight what was drawn
@@ -334,11 +341,20 @@ void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
 
 void ui_cursor_goto(int new_row, int new_col)
 {
-  if (new_row == row && new_col == col) {
+  ui_grid_cursor_goto(&default_grid, new_row, new_col);
+}
+
+void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
+{
+  int off_row = (ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow);
+  int off_col = (ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn);
+
+  if (new_row + off_row == row && new_col + off_col == col) {
     return;
   }
-  row = new_row;
-  col = new_col;
+  row = new_row + off_row;
+  col = new_col + off_col;
+  cursor_grid_handle = grid->handle;
   pending_cursor_update = true;
 }
 
@@ -361,7 +377,7 @@ void ui_flush(void)
 {
   cmdline_ui_flush();
   if (pending_cursor_update) {
-    ui_call_grid_cursor_goto(1, row, col);
+    ui_call_grid_cursor_goto(cursor_grid_handle, row, col);
     pending_cursor_update = false;
   }
   if (pending_mode_info_update) {

@@ -560,7 +560,7 @@ static int insert_check(VimState *state)
 
     if (curwin->w_wcol < s->mincol - curbuf->b_p_ts
         && curwin->w_wrow == curwin->w_winrow
-        + curwin->w_height - 1 - p_so
+        + curwin->w_grid.Rows - 1 - p_so
         && (curwin->w_cursor.lnum != curwin->w_topline
             || curwin->w_topfill > 0)) {
       if (curwin->w_topfill > 0) {
@@ -1502,17 +1502,17 @@ void edit_putchar(int c, int highlight)
     } else {
       attr = 0;
     }
-    pc_row = curwin->w_winrow + curwin->w_wrow;
-    pc_col = curwin->w_wincol;
+    pc_row = curwin->w_wrow;
+    pc_col = 0;
     pc_status = PC_STATUS_UNSET;
     if (curwin->w_p_rl) {
-      pc_col += curwin->w_width - 1 - curwin->w_wcol;
+      pc_col += curwin->w_grid.Columns - 1 - curwin->w_wcol;
       if (has_mbyte) {
         int fix_col = mb_fix_col(pc_col, pc_row);
 
         if (fix_col != pc_col) {
-          screen_putchar(' ', pc_row, fix_col, attr);
-          --curwin->w_wcol;
+          grid_putchar(&curwin->w_grid, ' ', pc_row, fix_col, attr);
+          curwin->w_wcol--;
           pc_status = PC_STATUS_RIGHT;
         }
       }
@@ -1524,10 +1524,10 @@ void edit_putchar(int c, int highlight)
 
     /* save the character to be able to put it back */
     if (pc_status == PC_STATUS_UNSET) {
-      screen_getbytes(pc_row, pc_col, pc_bytes, &pc_attr);
+      grid_getbytes(&curwin->w_grid, pc_row, pc_col, pc_bytes, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
-    screen_putchar(c, pc_row, pc_col, attr);
+    grid_putchar(&curwin->w_grid, c, pc_row, pc_col, attr);
   }
 }
 
@@ -1543,7 +1543,8 @@ void edit_unputchar(void)
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum, false);
     } else {
-      screen_puts(pc_bytes, pc_row - msg_scrolled, pc_col, pc_attr);
+      grid_puts(&curwin->w_grid, pc_bytes, pc_row - msg_scrolled, pc_col,
+                pc_attr);
     }
   }
 }
@@ -1566,7 +1567,7 @@ void display_dollar(colnr_T col)
   char_u *p = get_cursor_line_ptr();
   curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(false);              // Recompute w_wrow and w_wcol
-  if (curwin->w_wcol < curwin->w_width) {
+  if (curwin->w_wcol < curwin->w_grid.Columns) {
     edit_putchar('$', FALSE);
     dollar_vcol = curwin->w_virtcol;
   }
@@ -5825,7 +5826,7 @@ static void check_auto_format(
 /*
  * Find out textwidth to be used for formatting:
  *	if 'textwidth' option is set, use it
- *	else if 'wrapmargin' option is set, use curwin->w_width - 'wrapmargin'
+ *	else if 'wrapmargin' option is set, use curwin->w_grid.Columns-'wrapmargin'
  *	if invalid value, use 0.
  *	Set default to window width (maximum 79) for "gq" operator.
  */
@@ -5840,7 +5841,7 @@ comp_textwidth (
   if (textwidth == 0 && curbuf->b_p_wm) {
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
-    textwidth = curwin->w_width - curbuf->b_p_wm;
+    textwidth = curwin->w_grid.Columns - curbuf->b_p_wm;
     if (cmdwin_type != 0)
       textwidth -= 1;
     textwidth -= curwin->w_p_fdc;
@@ -5855,7 +5856,7 @@ comp_textwidth (
   if (textwidth < 0)
     textwidth = 0;
   if (ff && textwidth == 0) {
-    textwidth = curwin->w_width - 1;
+    textwidth = curwin->w_grid.Columns - 1;
     if (textwidth > 79)
       textwidth = 79;
   }

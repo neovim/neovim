@@ -23,14 +23,24 @@ typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
 typedef int16_t sattr_T;
 
 // TODO(bfredl): find me a good home
+typedef int GridHandle;
 typedef struct {
+  GridHandle handle;
+
   schar_T  *ScreenLines;
   sattr_T  *ScreenAttrs;
   unsigned *LineOffset;
   char_u   *LineWraps;
 
+  // the size of the allocated grid
   int Rows;
   int Columns;
+
+  // offsets for the grid relative to the screen
+  int OffsetRow;
+  int OffsetColumn;
+
+  int was_resized;
 } ScreenGrid;
 
 #endif  // NVIM_TYPES_H

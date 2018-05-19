@@ -3958,6 +3958,8 @@ win_free (
 
   xfree(wp->w_p_cc_cols);
 
+  win_free_grid(wp, false);
+
   if (wp != aucmd_win)
     win_remove(wp, tp);
   if (autocmd_busy) {
@@ -3968,6 +3970,20 @@ win_free (
   }
 
   unblock_autocmds();
+}
+
+void win_free_grid(win_T *wp, bool reinit)
+{
+  if (wp->w_grid.handle != 0 && ui_is_external(kUIMultigrid)) {
+    ui_call_grid_destroy(wp->w_grid.handle);
+    wp->w_grid.handle = 0;
+  }
+  free_screengrid(&wp->w_grid);
+  if (reinit) {
+    // if a float is turned into a split and back into a float, the grid
+    // data structure will be reused
+    memset(&wp->w_grid, 0, sizeof(wp->w_grid));
+  }
 }
 
 /*
@@ -4247,6 +4263,7 @@ void win_setheight_win(int height, win_T *win)
   }
 
   frame_setheight(win->w_frame, height + win->w_status_height);
+  win_grid_alloc(win, false);
 
   /* recompute the window positions */
   row = win_comp_pos();
@@ -4256,7 +4273,7 @@ void win_setheight_win(int height, win_T *win)
    * line, clear it.
    */
   if (full_screen && msg_scrolled == 0 && row < cmdline_row)
-    screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+    grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
   msg_row = row;
   msg_col = 0;
@@ -4443,6 +4460,7 @@ void win_setwidth_win(int width, win_T *wp)
   }
 
   frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
+  win_grid_alloc(wp, false);
 
   /* recompute the window positions */
   (void)win_comp_pos();
@@ -4706,7 +4724,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
       fr = fr->fr_next;
   }
   row = win_comp_pos();
-  screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
   p_ch = Rows - cmdline_row;
   if (p_ch < 1)
@@ -5054,7 +5072,7 @@ void command_height(void)
 
       /* clear the lines added to cmdline */
       if (full_screen)
-        screen_fill(cmdline_row, (int)Rows, 0,
+        grid_fill(&default_grid, cmdline_row, (int)Rows, 0,
             (int)Columns, ' ', ' ', 0);
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;

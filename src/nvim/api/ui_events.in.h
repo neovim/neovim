@@ -81,6 +81,8 @@ void grid_line(Integer grid, Integer row, Integer col_start, Array data)
 void grid_scroll(Integer grid, Integer top, Integer bot,
                  Integer left, Integer right, Integer rows, Integer cols)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+void grid_destroy(Integer grid)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
