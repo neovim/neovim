@@ -2383,69 +2383,79 @@ viml_pexpr_parse_valid_colon:
 #undef EXP_VAL_COLON
       case kExprLexBracket: {
         if (cur_token.data.brc.closing) {
-          ExprASTNode **new_top_node_p = NULL;
-          // Always drop the topmost value:
-          //
-          // 1. When want_node != kENodeValue topmost item on stack is
-          //    a *finished* left operand, which may as well be "{@a}" which
-          //    needs not be finished again.
-          // 2. Otherwise it is pointing to NULL what nobody wants.
-          kv_drop(ast_stack, 1);
-          if (!kv_size(ast_stack)) {
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
-            cur_node->len = 0;
-            if (want_node != kENodeValue) {
-              cur_node->children = *top_node_p;
-            }
-            *top_node_p = cur_node;
-            new_top_node_p = top_node_p;
-            goto viml_pexpr_parse_bracket_closing_error;
-          }
+#define OPENING_NODE(node) \
+          ((node) != NULL \
+           && ((node)->type == kExprNodeListLiteral \
+               || (node)->type == kExprNodeSubscript))
           if (want_node == kENodeValue) {
-            // It is OK to want value if
-            //
-            // 1. It is empty list literal, in which case top node will be
-            //    ListLiteral.
-            // 2. It is list literal with trailing comma, in which case top node
-            //    will be that comma.
-            // 3. It is subscript with colon, but without one of the values:
-            //    e.g. "a[:]", "a[1:]", top node will be colon in this case.
-            if ((*kv_last(ast_stack))->type != kExprNodeListLiteral
-                && (*kv_last(ast_stack))->type != kExprNodeComma
-                && (*kv_last(ast_stack))->type != kExprNodeColon) {
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token,
-                  _("E15: Expected value, got closing bracket: %.*s"));
-            }
-          }
-          do {
-            new_top_node_p = kv_pop(ast_stack);
-          } while (kv_size(ast_stack)
-                   && (new_top_node_p == NULL
-                       || ((*new_top_node_p)->type != kExprNodeListLiteral
-                           && (*new_top_node_p)->type != kExprNodeSubscript)));
-          ExprASTNode *new_top_node = *new_top_node_p;
-          switch (new_top_node->type) {
-            case kExprNodeListLiteral: {
-              if (pt_is_assignment(cur_pt) && new_top_node->children == NULL) {
-                ERROR_FROM_TOKEN_AND_MSG(
-                    cur_token, _("E475: Unable to assign to empty list: %.*s"));
+            if (kv_size(ast_stack) > 1) {
+              const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
+              if (prev_top_node->type == kExprNodeListLiteral
+                  || prev_top_node->type == kExprNodeComma
+                  || prev_top_node->type == kExprNodeColon) {
+                // Allowed:
+                // - Empty list literals.
+                // - Trailing commas inside a list.
+                // - Trailing colons inside a subscript.
+                kv_drop(ast_stack, 1);
+                goto viml_pexpr_parse_bracket_up;
               }
-              HL_CUR_TOKEN(List);
-              break;
             }
-            case kExprNodeSubscript: {
-              HL_CUR_TOKEN(SubscriptBracket);
-              break;
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Expected value, got closing bracket: %.*s"));
+          } else {
+            // Always drop the topmost value: when want_node != kENodeValue
+            // topmost item on stack is a *finished* left operand, which may as
+            // well be "[@a]" which needs not be finished again.
+            kv_drop(ast_stack, 1);
+          }
+viml_pexpr_parse_bracket_up: {}
+          ExprASTNode **new_top_node_p = NULL;
+          while (kv_size(ast_stack)
+                 && (new_top_node_p == NULL
+                     || !OPENING_NODE(*new_top_node_p))) {
+            new_top_node_p = kv_pop(ast_stack);
+          }
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
+            ExprASTNode *const new_top_node = *new_top_node_p;
+            switch (new_top_node->type) {
+              case kExprNodeListLiteral: {
+                if (pt_is_assignment(cur_pt)
+                    && new_top_node->children == NULL) {
+                  ERROR_FROM_TOKEN_AND_MSG(
+                      cur_token,
+                      _("E475: Unable to assign to empty list: %.*s"));
+                }
+                HL_CUR_TOKEN(List);
+                break;
+              }
+              case kExprNodeSubscript: {
+                HL_CUR_TOKEN(SubscriptBracket);
+                break;
+              }
+              default: {
+                assert(false);
+              }
             }
-            default: {
-viml_pexpr_parse_bracket_closing_error:
-              assert(!kv_size(ast_stack));
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token, _("E15: Unexpected closing bracket: %.*s"));
-              HL_CUR_TOKEN(List);
-              break;
+          } else {
+            // “Always drop the topmost value” branch has got rid of the single
+            // value stack had, so there is nothing known to enclose. Correct
+            // this.
+            if (new_top_node_p == NULL) {
+              new_top_node_p = top_node_p;
             }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Unexpected closing bracket: %.*s"));
+            HL_CUR_TOKEN(List);
+            cur_node = NEW_NODE(kExprNodeListLiteral);
+            cur_node->start = cur_token.start;
+            cur_node->len = 0;
+            // Unexpected closing parenthesis, assume that it was wanted to
+            // enclose everything in [].
+            cur_node->children = *new_top_node_p;
+            *new_top_node_p = cur_node;
+            assert(cur_node->next == NULL);
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
@@ -2463,6 +2473,7 @@ viml_pexpr_parse_bracket_closing_error:
           if (cur_pt == kEPTSingleAssignment && kv_size(ast_stack) == 1) {
             kv_drop(pt_stack, 1);
           }
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             // Value means list literal or list assignment.

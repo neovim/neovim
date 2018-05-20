@@ -4612,6 +4612,111 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('IdentifierName', 'f'),
       hl('SubscriptBracket', ']'),
     })
+
+    check_parsing('[:]', {
+      --           012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Colon:0:1::',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ':]',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('InvalidColon', ':'),
+      hl('List', ']'),
+    })
+
+    check_parsing('[,]', {
+      --           012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:1:,',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('InvalidComma', ','),
+      hl('List', ']'),
+    })
+
+    check_parsing('a[,]', {
+      --           0123
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:2:,',
+              children = {
+                'Missing:0:2:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('InvalidComma', ','),
+      hl('SubscriptBracket', ']'),
+    })
+
+    check_parsing('a[1,]', {
+      --           01234
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:3:,',
+              children = {
+                'Integer(val=1):0:2:1',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '1'),
+      hl('InvalidComma', ','),
+      hl('SubscriptBracket', ']'),
+    })
   end)
   itp('supports list literals', function()
     check_parsing('[]', {
@@ -4787,7 +4892,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']',
-        msg = 'E15: Unexpected closing bracket: %.*s',
+        msg = 'E15: Expected value, got closing bracket: %.*s',
       },
     }, {
       hl('InvalidList', ']'),
@@ -7579,6 +7684,59 @@ return function(itp, _check_parsing, hl, fmtn)
           ast = {
             {
               'UnknownFigure(---):0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_parsing('*]08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              'ListLiteral:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*]08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidList', ']'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'ListLiteral:0:1:',
               children = {
                 {
                   'Multiplication:0:0:*',
