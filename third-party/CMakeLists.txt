@@ -213,7 +213,8 @@ if(WIN32)
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
   GetBinaryDep(TARGET wingui
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin
+      COMMAND ${CMAKE_COMMAND} -E copy_directory share ${DEPS_INSTALL_DIR}/share)
 
   include(TargetArch)
   GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"
