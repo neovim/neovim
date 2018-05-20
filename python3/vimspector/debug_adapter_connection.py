@@ -119,7 +119,6 @@ class DebugAdapterConnection( object ):
         _logger.error( 'Request failed: {0}'.format( message[ 'message' ] ) )
         vim.command( "echom 'Request failed: {0}'".format(
           message[ 'message' ] ) )
-
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]
       if method in dir( self._handler ) and getattr( self._handler, method ):
