@@ -89,7 +89,7 @@ NEW_TESTS ?= \
 	    test_profile.res \
 	    test_put.res \
 	    test_quickfix.res \
-	    Test_quotestar.res \
+	    test_quotestar.res \
 	    test_recover.res \
 	    test_retab.res \
 	    test_scrollbind.res \
