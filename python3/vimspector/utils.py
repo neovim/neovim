@@ -58,3 +58,13 @@ def RestoreCursorPosition():
     yield
   finally:
     vim.current.window.cursor = current_pos
+
+
+@contextlib.contextmanager
+def TemporaryVimOption( opt, value ):
+  old_value = vim.options[ opt ]
+  vim.options[ opt ] = value
+  try:
+    yield
+  finally:
+    vim.options[ opt ] = old_value

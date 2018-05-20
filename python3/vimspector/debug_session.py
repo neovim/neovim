@@ -43,6 +43,8 @@ class DebugSession( object ):
 
 
   def _SetUpUI( self ):
+
+    # Code window
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
     self._codeWindow = vim.current.window
@@ -53,24 +55,31 @@ class DebugSession( object ):
     vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
     vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
 
+    # Threads
     vim.command( 'vspl' )
     vim.command( 'enew' )
-
     self._threadsBuffer = vim.current.buffer
-    vim.command( 'spl' )
-    vim.command( 'enew' )
-    self._callStackBuffer = vim.current.buffer
-    vim.command( 'spl' )
-    vim.command( 'enew' )
-    self._outputBuffer = vim.current.buffer
-    vim.command( 'spl' )
-    vim.command( 'enew' )
-    self._variablesView = variables.VariablesView( self._connection,
-                                                   vim.current.buffer )
-
     utils.SetUpScratchBuffer( self._threadsBuffer )
-    utils.SetUpScratchBuffer( self._callStackBuffer )
-    utils.SetUpScratchBuffer( self._outputBuffer )
+
+    with utils.TemporaryVimOption( 'equalalways', 1 ):
+      # Call stack
+      vim.command( 'spl' )
+      vim.command( 'enew' )
+      self._callStackBuffer = vim.current.buffer
+      utils.SetUpScratchBuffer( self._callStackBuffer )
+
+      # Output/logging
+      vim.command( 'spl' )
+      vim.command( 'enew' )
+      self._outputBuffer = vim.current.buffer
+      utils.SetUpScratchBuffer( self._outputBuffer )
+
+      # Variables
+      vim.command( 'spl' )
+      vim.command( 'enew' )
+      self._variablesView = variables.VariablesView( self._connection,
+                                                     vim.current.buffer )
+
 
   def _LoadFrame( self, frame ):
     vim.current.window = self._codeWindow
