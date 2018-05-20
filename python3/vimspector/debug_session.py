@@ -40,9 +40,7 @@ class DebugSession( object ):
 
     self._SetUpUI()
 
-
   def _SetUpUI( self ):
-
     # Code window
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
@@ -55,30 +53,31 @@ class DebugSession( object ):
     vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
 
     # Threads
-    vim.command( 'vspl' )
+    vim.command( '50vspl' )
     vim.command( 'enew' )
     self._threadsBuffer = vim.current.buffer
     utils.SetUpScratchBuffer( self._threadsBuffer )
 
-    with utils.TemporaryVimOption( 'equalalways', 1 ):
-      # Call stack
-      vim.command( 'spl' )
-      vim.command( 'enew' )
-      self._stackTraceView = stack_trace.StackTraceView( self,
-                                                         self._connection,
-                                                         vim.current.buffer )
+    with utils.TemporaryVimOption( 'eadirection', 'ver' ):
+      with utils.TemporaryVimOption( 'equalalways', 1 ):
+        # Call stack
+        vim.command( 'spl' )
+        vim.command( 'enew' )
+        self._stackTraceView = stack_trace.StackTraceView( self,
+                                                           self._connection,
+                                                           vim.current.buffer )
 
-      # Output/logging
-      vim.command( 'spl' )
-      vim.command( 'enew' )
-      self._outputBuffer = vim.current.buffer
-      utils.SetUpScratchBuffer( self._outputBuffer )
+        # Output/logging
+        vim.command( 'spl' )
+        vim.command( 'enew' )
+        self._outputBuffer = vim.current.buffer
+        utils.SetUpScratchBuffer( self._outputBuffer )
 
-      # Variables
-      vim.command( 'spl' )
-      vim.command( 'enew' )
-      self._variablesView = variables.VariablesView( self._connection,
-                                                     vim.current.buffer )
+        # Variables
+        vim.command( 'spl' )
+        vim.command( 'enew' )
+        self._variablesView = variables.VariablesView( self._connection,
+                                                       vim.current.buffer )
 
 
   def SetCurrentFrame( self, frame ):
@@ -199,13 +198,11 @@ class DebugSession( object ):
       'command': 'configurationDone',
     } )
 
-
   def OnEvent_output( self, message ):
     with utils.ModifiableScratchBuffer( self._outputBuffer ):
       t = [ message[ 'body' ][ 'category' ] + ':' + '-' * 20 ]
       t += message[ 'body' ][ 'output' ].splitlines()
       self._outputBuffer.append( t, 0 )
-
 
   def OnEvent_stopped( self, message ):
     self._currentThread = message[ 'body' ][ 'threadId' ]
