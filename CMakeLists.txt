@@ -509,6 +509,11 @@ add_subdirectory(test/includes)
 add_subdirectory(config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
+if(WIN32)
+  install_helper(
+    FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim-qt/runtime/plugin)
+endif()
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
