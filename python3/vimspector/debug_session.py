@@ -24,8 +24,6 @@ from vimspector import ( code,
 
 _logger = logging.getLogger( __name__ )
 
-SIGN_ID_OFFSET = 10000000
-
 
 class DebugSession( object ):
   def __init__( self, channel_send_func ):
