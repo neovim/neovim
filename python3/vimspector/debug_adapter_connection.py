@@ -85,6 +85,7 @@ class DebugSession( object ):
     vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
     vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
     vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
+    vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
 
     vim.command( 'vspl' )
     vim.command( 'enew' )
@@ -221,6 +222,14 @@ class DebugSession( object ):
   def Continue( self ):
     self._DoRequest( None, {
       'command': 'continue',
+      'arguments': {
+        'threadId': self._currentThread
+      },
+    } )
+
+  def Pause( self ):
+    self._DoRequest( None, {
+      'command': 'pause',
       'arguments': {
         'threadId': self._currentThread
       },

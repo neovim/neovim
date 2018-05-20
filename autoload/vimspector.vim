@@ -143,6 +143,10 @@ function! vimspector#Continue() abort
   py3 _session.Continue()
 endfunction
 
+function! vimspector#Pause() abort
+  py3 _session.Pause()
+endfunction
+
 " Boilerplate {{{ 
 let &cpo=s:save_cpo
 unlet s:save_cpo
