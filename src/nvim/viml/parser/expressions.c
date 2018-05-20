@@ -2442,7 +2442,7 @@ viml_pexpr_parse_valid_colon:
 viml_pexpr_parse_bracket_closing_error:
               assert(!kv_size(ast_stack));
               ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token, _("E15: Unexpected closing figure brace: %.*s"));
+                  cur_token, _("E15: Unexpected closing bracket: %.*s"));
               HL_CUR_TOKEN(List);
               break;
             }

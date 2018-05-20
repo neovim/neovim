@@ -4731,7 +4731,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Unexpected closing bracket: %.*s',
       },
     }, {
       hl('InvalidList', ']'),
@@ -4749,7 +4749,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Unexpected closing bracket: %.*s',
       },
     }, {
       hl('IdentifierName', 'a'),
@@ -7369,7 +7369,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']$',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Unexpected closing bracket: %.*s',
       },
     }, {
       hl('Number', '90'),
