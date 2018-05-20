@@ -23,8 +23,15 @@ class VariablesView( object ):
   def __init__( self, connection, buf ):
     self._buf = buf
     self._connection = connection
-    self._scopes = []
     self._line_to_variable = {}
+
+    # This is actually the tree (scopes are alwyas the root)
+    #  it's just a list of DAP scope dicts, with one magic key (_variables)
+    #  _variables is a list of DAP variable with the same magic key
+    #
+    # If _variables is present, then we have requested and should display the
+    # children. Otherwise, we haven't or shouldn't.
+    self._scopes = []
 
     vim.current.buffer = buf
     vim.command(

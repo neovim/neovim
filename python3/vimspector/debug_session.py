@@ -171,7 +171,7 @@ class DebugSession( object ):
       },
     } )
 
-  def _OnEvent_initialized( self, message ):
+  def OnEvent_initialized( self, message ):
     self._connection.DoRequest( None, {
       'command': 'setFunctionBreakpoints',
       'arguments': {
@@ -186,14 +186,14 @@ class DebugSession( object ):
     } )
 
 
-  def _OnEvent_output( self, message ):
+  def OnEvent_output( self, message ):
     with utils.ModifiableScratchBuffer( self._outputBuffer ):
       t = [ message[ 'body' ][ 'category' ] + ':' + '-' * 20 ]
       t += message[ 'body' ][ 'output' ].splitlines()
       self._outputBuffer.append( t, 0 )
 
 
-  def _OnEvent_stopped( self, message ):
+  def OnEvent_stopped( self, message ):
     self._currentThread = message[ 'body' ][ 'threadId' ]
 
     def threads_printer( message ):
