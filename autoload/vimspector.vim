@@ -150,6 +150,10 @@ function! vimspector#ExpandVariable() abort
   py3 _vimspector_session.ExpandVariable()
 endfunction
 
+function! vimspector#GoToFrame() abort
+  py3 _vimspector_session.GoToFrame()
+endfunction
+
 " Boilerplate {{{ 
 let &cpo=s:save_cpo
 unlet s:save_cpo

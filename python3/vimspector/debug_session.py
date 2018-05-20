@@ -16,7 +16,7 @@
 import logging
 import vim
 
-from vimspector import utils, variables, debug_adapter_connection
+from vimspector import debug_adapter_connection, stack_trace, utils, variables
 
 _logger = logging.getLogger( __name__ )
 
@@ -31,7 +31,6 @@ class DebugSession( object ):
 
     self._uiTab = None
     self._codeWindow = None
-    self._callStackBuffer = None
     self._threadsBuffer = None
     self._outputBuffer = None
 
@@ -65,8 +64,9 @@ class DebugSession( object ):
       # Call stack
       vim.command( 'spl' )
       vim.command( 'enew' )
-      self._callStackBuffer = vim.current.buffer
-      utils.SetUpScratchBuffer( self._callStackBuffer )
+      self._stackTraceView = stack_trace.StackTraceView( self,
+                                                         self._connection,
+                                                         vim.current.buffer )
 
       # Output/logging
       vim.command( 'spl' )
@@ -81,7 +81,8 @@ class DebugSession( object ):
                                                      vim.current.buffer )
 
 
-  def _LoadFrame( self, frame ):
+  def SetCurrentFrame( self, frame ):
+    self._currentFrame = frame
     vim.current.window = self._codeWindow
     buffer_number = vim.eval( 'bufnr( "{0}", 1 )'.format(
       frame[ 'source' ][ 'path' ]  ) )
@@ -94,6 +95,7 @@ class DebugSession( object ):
 
     self._codeWindow.cursor = ( frame[ 'line' ], frame[ 'column' ] )
     self._variablesView.LoadScopes( frame )
+
 
   def OnChannelData( self, data ):
     self._connection.OnData( data )
@@ -151,6 +153,9 @@ class DebugSession( object ):
 
   def ExpandVariable( self ):
     self._variablesView.ExpandVariable()
+
+  def GoToFrame( self ):
+    self._stackTraceView.GoToFrame()
 
   def _Initialise( self ):
     def handler( message ) :
@@ -218,33 +223,4 @@ class DebugSession( object ):
       'command': 'threads',
     } )
 
-    def stacktrace_printer( message ):
-      with utils.ModifiableScratchBuffer( self._callStackBuffer ):
-        self._callStackBuffer.options[ 'modifiable' ] = True
-        self._callStackBuffer.options[ 'readonly' ] = False
-
-        self._callStackBuffer[:] = None
-        self._callStackBuffer.append( 'Backtrace: ' )
-
-        stackFrames = message[ 'body' ][ 'stackFrames' ]
-
-        if stackFrames:
-          self._currentFrame = stackFrames[ 0 ]
-        else:
-          self._currentFrame = None
-
-        for frame in stackFrames:
-          self._callStackBuffer.append(
-            '{0}: {1}@{2}:{3}'.format( frame[ 'id' ],
-                                       frame[ 'name' ],
-                                       frame[ 'source' ][ 'name' ],
-                                       frame[ 'line' ] ) )
-
-      self._LoadFrame( self._currentFrame )
-
-    self._connection.DoRequest( stacktrace_printer, {
-      'command': 'stackTrace',
-      'arguments': {
-        'threadId': self._currentThread,
-      }
-    } )
+    self._stackTraceView.LoadStackTrace( self._currentThread )
