@@ -6,12 +6,6 @@ endif
 
 source shared.vim
 
-let s:where = 0
-func Abort(id)
-  call assert_report('Test timed out at ' . s:where)
-  call FinishTesting()
-endfunc
-
 func Do_test_quotestar_for_macunix()
   if empty(exepath('pbcopy')) || empty(exepath('pbpaste'))
     return 'Test requires pbcopy(1) and pbpaste(1)'
@@ -46,10 +40,6 @@ func Do_test_quotestar_for_x11()
     return 'GetVimCommand() failed'
   endif
 
-  " Some of these commands may hang when failing.
-  call timer_start(10000, 'Abort')
-
-  let s:where = 1
   let name = 'XVIMCLIPBOARD'
   let cmd .= ' --servername ' . name
   let g:job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
@@ -58,25 +48,19 @@ func Do_test_quotestar_for_x11()
     call assert_report('Cannot run the Vim server')
     return ''
   endif
-  let s:where = 2
 
   " Takes a short while for the server to be active.
   call WaitFor('serverlist() =~ "' . name . '"')
   call assert_match(name, serverlist())
-  let s:where = 3
 
   " Clear the *-register of this vim instance.
   let @* = ''
 
   " Try to change the *-register of the server.
   call remote_foreground(name)
-  let s:where = 4
   call remote_send(name, ":let @* = 'yes'\<CR>")
-  let s:where = 5
-  call WaitFor('remote_expr("' . name . '", "@*") == "yes"')
-  let s:where = 6
-  call assert_equal('yes', remote_expr(name, "@*"))
-  let s:where = 7
+  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "yes"')
+  call assert_equal('yes', remote_expr(name, "@*", "", 2))
 
   " Check that the *-register of this vim instance is changed as expected.
   call assert_equal('yes', @*)
@@ -94,22 +78,18 @@ func Do_test_quotestar_for_x11()
     else
       call remote_send(name, ":gui -f\<CR>")
     endif
-    let s:where = 8
-    sleep 500m
+    " Wait for the server to be up and answering requests.
+    call WaitFor('remote_expr("' . name . '", "v:version", "", 1) != ""')
+
     call remote_send(name, ":let @* = 'maybe'\<CR>")
-    let s:where = 9
-    call WaitFor('remote_expr("' . name . '", "@*") == "maybe"')
-    let s:where = 10
-    call assert_equal('maybe', remote_expr(name, "@*"))
-    let s:where = 11
+    call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "maybe"')
+    call assert_equal('maybe', remote_expr(name, "@*", "", 2))
 
     call assert_equal('maybe', @*)
   endif
 
   call remote_send(name, ":qa!\<CR>")
-  let s:where = 12
   call WaitFor('job_status(g:job) == "dead"')
-  let s:where = 13
   if job_status(g:job) != 'dead'
     call assert_report('Server did not exit')
     call job_stop(g:job, 'kill')
