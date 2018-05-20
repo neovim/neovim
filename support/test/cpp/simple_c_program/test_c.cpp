@@ -17,7 +17,7 @@ namespace Test
   void bar( TestStruct b )
   {
     std::string s;
-    s += b.isInt ? b.something.somethingInt : b.something.somethingChar;
+    s += b.isInt ? "An int" : "A char";
     std::cout << s << '\n';
   }
 

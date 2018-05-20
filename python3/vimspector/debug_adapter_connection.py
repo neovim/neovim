@@ -78,8 +78,10 @@ class DebugSession( object ):
     self._uiTab = vim.current.tabpage
     self._codeWindow = vim.current.window
 
+    vim.command( 'nnoremenu WinBar.Continute :call vimspector#Continue()<CR>' )
     vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
     vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
+    vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
 
     vim.command( 'vspl' )
     vim.command( 'enew' )
@@ -137,6 +139,22 @@ class DebugSession( object ):
   def StepInto( self ):
     self._DoRequest( None, {
       'command': 'stepIn',
+      'arguments': {
+        'threadId': self._currentThread
+      },
+    } )
+
+  def StepOut( self ):
+    self._DoRequest( None, {
+      'command': 'stepOut',
+      'arguments': {
+        'threadId': self._currentThread
+      },
+    } )
+
+  def Continue( self ):
+    self._DoRequest( None, {
+      'command': 'continue',
       'arguments': {
         'threadId': self._currentThread
       },

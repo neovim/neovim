@@ -103,7 +103,6 @@ function! s:_Send( msg ) abort
 
 endfunction
 
-
 function! vimspector#StopDebugSession() abort
   py3 _session.Stop()
 
@@ -134,6 +133,14 @@ endfunction
 
 function! vimspector#StepInto() abort
   py3 _session.StepInto()
+endfunction
+
+function! vimspector#StepOut() abort
+  py3 _session.StepOut()
+endfunction
+
+function! vimspector#Continue() abort
+  py3 _session.Continue()
 endfunction
 
 " Boilerplate {{{ 
