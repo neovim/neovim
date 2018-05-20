@@ -36,7 +36,7 @@ let s:command = [
 
 function! s:_OnServerData( channel, data ) abort
   py3 << EOF
-_session.OnChannelData( vim.eval( 'a:data' ) )
+_vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
 EOF
 endfunction
 
@@ -104,7 +104,7 @@ function! s:_Send( msg ) abort
 endfunction
 
 function! vimspector#StopDebugSession() abort
-  py3 _session.Stop()
+  py3 _vimspector_session.Stop()
 
   if job_status( s:job ) == 'run'
     job_stop( s:job, 'term' )
@@ -120,35 +120,34 @@ function! vimspector#Launch() abort
   let ch = job_getchannel( s:job )
 
   py3 << EOF
-from vimspector import debug_adapter_connection
-_session = debug_adapter_connection.DebugSession(
-        vim.Function( 's:_Send' ) )
-_session.Start()
+from vimspector import debug_session
+_vimspector_session = debug_session.DebugSession( vim.Function( 's:_Send' ) )
+_vimspector_session.Start()
 EOF
 endfunction
 
 function! vimspector#StepOver() abort
-  py3 _session.StepOver()
+  py3 _vimspector_session.StepOver()
 endfunction
 
 function! vimspector#StepInto() abort
-  py3 _session.StepInto()
+  py3 _vimspector_session.StepInto()
 endfunction
 
 function! vimspector#StepOut() abort
-  py3 _session.StepOut()
+  py3 _vimspector_session.StepOut()
 endfunction
 
 function! vimspector#Continue() abort
-  py3 _session.Continue()
+  py3 _vimspector_session.Continue()
 endfunction
 
 function! vimspector#Pause() abort
-  py3 _session.Pause()
+  py3 _vimspector_session.Pause()
 endfunction
 
 function! vimspector#ExpandVariable() abort
-  py3 _session.ExpandVariable()
+  py3 _vimspector_session.ExpandVariable()
 endfunction
 
 " Boilerplate {{{ 
