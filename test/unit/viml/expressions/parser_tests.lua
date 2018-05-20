@@ -1075,6 +1075,62 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
+    check_parsing('@a(@b,@c,)', {
+      --           0123456789
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Comma:0:5:,',
+              children = {
+                'Register(name=b):0:3:@b',
+                {
+                  'Comma:0:8:,',
+                  children = {
+                    'Register(name=c):0:6:@c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c'),
+      hl('Comma', ','),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('(@b,)', {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Comma:0:3:,',
+              children = {
+                'Register(name=b):0:1:@b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',)',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('InvalidComma', ','),
+      hl('NestingParenthesis', ')'),
+    })
   end)
   itp('works with variable names, including curly braces ones', function()
     check_parsing('var', {

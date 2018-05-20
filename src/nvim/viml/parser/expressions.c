@@ -2790,11 +2790,15 @@ viml_pexpr_parse_figure_brace_closing_error:
           if (want_node == kENodeValue) {
             if (kv_size(ast_stack) > 1) {
               const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
-              if (prev_top_node->type == kExprNodeCall) {
-                // Function call without arguments, this is not an error.
-                // But further code does not expect NULL nodes.
+              if (prev_top_node->type == kExprNodeCall
+                  || prev_top_node->type == kExprNodeComma) {
+                // These are not errors:
+                // - Function call without arguments.
+                // - Trailing comma in a function call.
+                // Still drop one stack entry as further code does not expect
+                // NULL nodes.
                 kv_drop(ast_stack, 1);
-                goto viml_pexpr_parse_no_paren_closing_error;
+                goto viml_pexpr_parse_paren_up;
               }
             }
             ERROR_FROM_TOKEN_AND_MSG(
@@ -2808,7 +2812,7 @@ viml_pexpr_parse_figure_brace_closing_error:
             // well be "(@a)" which needs not be finished again.
             kv_drop(ast_stack, 1);
           }
-viml_pexpr_parse_no_paren_closing_error: {}
+viml_pexpr_parse_paren_up: {}
           ExprASTNode **new_top_node_p = NULL;
           while (kv_size(ast_stack)
                  && (new_top_node_p == NULL
