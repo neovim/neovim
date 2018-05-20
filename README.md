@@ -34,7 +34,7 @@ None yet.
 None yet.
 
 OK, well there is [a proof of
-concept](https://files.gitter.im/Valloric/ycmd/BUVt/vimspector-first-demo.gif).
+concept](https://files.gitter.im/Valloric/ycmd/LTHy/vimspector-second-demo.gif).
 
 # FAQ
 
