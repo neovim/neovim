@@ -7432,7 +7432,7 @@ return function(itp, _check_parsing, hl, fmtn)
           'OpMissing:0:3:',
           children = {
             {
-              'UnknownFigure(---):0:2:',
+              fmtn('UnknownFigure', '---', ':0:2:'),
               children = {
                 'Integer(val=90):0:0:90',
               },
@@ -7454,7 +7454,7 @@ return function(itp, _check_parsing, hl, fmtn)
         ast = {
           ast = {
             {
-              'UnknownFigure(---):0:2:',
+              fmtn('UnknownFigure', '---', ':0:2:'),
               children = {
                 'Integer(val=90):0:0:90',
                 REMOVE_THIS,
@@ -7656,7 +7656,7 @@ return function(itp, _check_parsing, hl, fmtn)
           'OpMissing:0:2:',
           children = {
             {
-              'UnknownFigure(---):0:1:',
+              fmtn('UnknownFigure', '---', ':0:1:'),
               children = {
                 {
                   'Multiplication:0:0:*',
@@ -7683,7 +7683,7 @@ return function(itp, _check_parsing, hl, fmtn)
         ast = {
           ast = {
             {
-              'UnknownFigure(---):0:1:',
+              fmtn('UnknownFigure', '---', ':0:1:'),
               children = {
                 {
                   'Multiplication:0:0:*',
@@ -8861,7 +8861,7 @@ return function(itp, _check_parsing, hl, fmtn)
             {
               'OpMissing:0:9:',
               children = {
-                'SingleQuotedString(val=NULL):0:7:\'\'',
+                fmtn('SingleQuotedString', 'val=NULL', ':0:7:\'\''),
                 {
                   'Multiplication:0:11: *',
                   children = {
