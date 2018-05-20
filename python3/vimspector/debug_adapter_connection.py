@@ -18,6 +18,7 @@ import vim
 import json
 import os
 import contextlib
+from functools import partial
 
 _logger = logging.getLogger( __name__ )
 
@@ -51,7 +52,6 @@ def ModifiableScratchBuffer( buf ):
     buf.options[ 'readonly' ] = True
 
 
-
 class DebugSession( object ):
   def __init__( self, channel_send_func ):
     SetUpLogging()
@@ -65,13 +65,16 @@ class DebugSession( object ):
     self._codeWindow = None
     self._callStackBuffer = None
     self._threadsBuffer = None
+    self._localsBuffer = None
     self._outputBuffer = None
 
     # TODO: How to hold/model this data
     self._currentThread = None
     self._currentFrame = None
+    self._scopes = []
 
     self._SetUpUI()
+
 
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
@@ -93,10 +96,14 @@ class DebugSession( object ):
     vim.command( 'spl' )
     vim.command( 'enew' )
     self._outputBuffer = vim.current.buffer
+    vim.command( 'spl' )
+    vim.command( 'enew' )
+    self._localsBuffer = vim.current.buffer
 
     SetUpScratchBuffer( self._threadsBuffer )
     SetUpScratchBuffer( self._callStackBuffer )
     SetUpScratchBuffer( self._outputBuffer )
+    SetUpScratchBuffer( self._localsBuffer )
 
   def _LoadFrame( self, frame ):
     vim.current.window = self._codeWindow
@@ -110,6 +117,68 @@ class DebugSession( object ):
         raise
 
     self._codeWindow.cursor = ( frame[ 'line' ], frame[ 'column' ] )
+    self._LoadScopes( frame )
+
+
+  def _LoadScopes( self, frame ):
+    def draw_variables( variables, indent ):
+      for variable in variables:
+        self._localsBuffer.append( '{indent}{name} ({type_}): {value}'.format(
+          indent = ' ' * indent,
+          name = variable[ 'name' ],
+          type_ = variable.get( 'type', '<unknown type>' ),
+          value = variable[ 'value' ] ) )
+
+        if '_variables' in variable:
+          draw_variables( variable[ '_variables' ], indent + 2 )
+
+    def draw_scopes():
+      with ModifiableScratchBuffer( self._localsBuffer ):
+        self._localsBuffer[:] = None
+        for scope in self._scopes:
+          self._localsBuffer.append( scope[ 'name' ] )
+          if '_variables' in scope:
+            indent = 2
+            draw_variables( scope[ '_variables' ], indent )
+
+    def variables_consumer( parent, message ):
+      _logger.debug( 'consuming variables with parent {0}'.format( parent ) )
+      for variable in message[ 'body' ][ 'variables' ]:
+        if '_variables' not in parent:
+          parent[ '_variables' ] = []
+
+        parent[ '_variables' ].append( variable )
+        if variable[ 'variablesReference' ] > 0:
+          self._DoRequest( partial( variables_consumer, variable ), {
+            'command': 'variables',
+            'arguments': {
+              'variablesReference': variable[ 'variablesReference' ]
+            },
+          } )
+
+      draw_scopes()
+
+    def scopes_consumer( message ):
+      self._scopes = []
+      for scope in message[ 'body' ][ 'scopes' ]:
+        self._scopes.append( scope )
+        self._DoRequest( partial( variables_consumer, scope ), {
+          'command': 'variables',
+          'arguments': {
+            'variablesReference': scope[ 'variablesReference' ]
+          },
+        } )
+
+      draw_scopes()
+
+
+    self._DoRequest( scopes_consumer, {
+      'command': 'scopes',
+      'arguments': {
+        'frameId': frame[ 'id' ]
+      },
+    } )
+
 
   def OnChannelData( self, data ):
     self._connection.OnData( data )
