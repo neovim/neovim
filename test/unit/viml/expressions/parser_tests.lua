@@ -7394,6 +7394,43 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
+    -- FIXME: Make test actually fail before fixing
+    -- KLEE error:
+    --
+    -- Error: memory error: out of bound pointer
+    -- File: /image/./test/symbolic/klee/nvim/mbyte.c
+    -- Line: 233
+    -- assembly.ll line: 2741
+    -- Stack:
+    --         #000002741 in utfc_ptr2len (p) at /image/./test/symbolic/klee/nvim/mbyte.c:233
+    --         #100002826 in mb_copy_char (fp=1456753968, tp=708135712) at /image/./test/symbolic/klee/nvim/mbyte.c:261
+    --         #200039775 in parse_quoted_string (pstate=66541648, node=532330304, token=67024224, ast_stack=67022192, is_invalid=true) at /image/./src/nvim/viml/parser/expressions.c:1779
+    --         #300034903 in viml_pexpr_parse (agg.result=66344928, pstate=66541648, flags) at /image/./src/nvim/viml/parser/expressions.c:2921
+    --         #400043140 in __user_main (argc=1, argv=55308864, environ=55308880) at /image/./test/symbolic/klee/viml_expressions_parser.c:94
+    --         #500048330 in __uClibc_main (main=21926160, argc=1, argv=55308864, app_init=0, app_fini=0, rtld_fini=0, stack_end=0) at /home/klee/klee_build/klee-uclibc/libc/misc/internals/__uClibc_main.c:401
+    --         #600051592 in main (=1, =55308864)
+    -- Info:
+    --         address: (Add w64 66546723
+    --           (ZExt w64 (Read w8 0 shift)))
+    --         example: 66546770
+    --         range: [66546770, 66546770]
+    --         next: object at 66547328 of size 8
+    --                 MO5836[8] allocated at viml_pexpr_parse():  %7 = alloca %struct.ParserState*, align 8
+    --         prev: object at 66546720 of size 50
+    --                 MO3352[50] allocated at __user_main():  %input = alloca [50 x i8], align 16
+    check_parsing('"\\<', {
+      --           01 2
+      ast = {
+        'DoubleQuotedString(val="<"):0:0:"\\<',
+      },
+      err = {
+        arg = '"\\<',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+    })
   end)
   itp('works with assignments', function()
     check_asgn_parsing('a=b', {
