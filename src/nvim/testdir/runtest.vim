@@ -238,6 +238,7 @@ let s:flaky = [
       \ 'Test_out_cb()',
       \ 'Test_paused()',
       \ 'Test_quoteplus()',
+      \ 'Test_quotestar()',
       \ 'Test_reltime()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
