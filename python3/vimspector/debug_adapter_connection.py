@@ -121,5 +121,5 @@ class DebugAdapterConnection( object ):
           message[ 'message' ] ) )
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]
-      if method in dir( self._handler ) and getattr( self._handler, method ):
+      if method in dir( self._handler ):
         getattr( self._handler, method )( message )

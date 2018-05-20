@@ -16,7 +16,11 @@
 import logging
 import vim
 
-from vimspector import debug_adapter_connection, stack_trace, utils, variables
+from vimspector import ( code,
+                         debug_adapter_connection,
+                         stack_trace,
+                         utils,
+                         variables )
 
 _logger = logging.getLogger( __name__ )
 
@@ -32,7 +36,6 @@ class DebugSession( object ):
       channel_send_func )
 
     self._uiTab = None
-    self._codeWindow = None
     self._threadsBuffer = None
     self._outputBuffer = None
 
@@ -41,24 +44,12 @@ class DebugSession( object ):
 
     self._SetUpUI()
 
-    self._next_sign_id = SIGN_ID_OFFSET
-    self._signs = {
-      'vimspectorPC': None,
-    }
-
   def _SetUpUI( self ):
-    # Code window
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
-    self._codeWindow = vim.current.window
 
-    vim.command( 'nnoremenu WinBar.Continute :call vimspector#Continue()<CR>' )
-    vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
-    vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
-    vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
-    vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
-
-    vim.command( 'sign define vimspectorPC text=>> texthl=Search' )
+    # Code window
+    self._codeView = code.CodeView( vim.current.window )
 
     # Threads
     vim.command( '50vspl' )
@@ -90,32 +81,7 @@ class DebugSession( object ):
 
   def SetCurrentFrame( self, frame ):
     self._currentFrame = frame
-    vim.current.window = self._codeWindow
-
-    if self._signs[ 'vimspectorPC' ]:
-      vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
-      self._signs[ 'vimspectorPC' ] = None
-
-    buffer_number = vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ][ 'path' ]  ) )
-
-    try:
-      vim.command( 'bu {0}'.format( buffer_number ) )
-    except vim.error as e:
-      if 'E325' not in str( e ):
-        raise
-
-    self._codeWindow.cursor = ( frame[ 'line' ], frame[ 'column' ] )
-
-    self._signs[ 'vimspectorPC' ] = self._next_sign_id
-    self._next_sign_id += 1
-
-    vim.command( 'sign place {0} line={1} name=vimspectorPC file={2}'.format(
-      self._signs[ 'vimspectorPC' ],
-      frame[ 'line' ],
-      frame[ 'source' ][ 'path' ] ) )
-
-
+    self._codeView.SetCurrentFrame( frame )
     self._variablesView.LoadScopes( frame )
 
 
@@ -126,9 +92,7 @@ class DebugSession( object ):
     self._Initialise()
 
   def Stop( self ):
-    if self._signs[ 'vimspectorPC' ]:
-      vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
-      self._signs[ 'vimspectorPC' ] = None
+    self._codeView.Clear()
 
     self._connection.DoRequest( None, {
       'command': 'disconnect',
