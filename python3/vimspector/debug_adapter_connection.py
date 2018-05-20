@@ -52,6 +52,103 @@ def ModifiableScratchBuffer( buf ):
     buf.options[ 'readonly' ] = True
 
 
+@contextlib.contextmanager
+def RestoreCursorPosition():
+  current_pos = vim.current.window.cursor
+  try:
+    yield
+  finally:
+    vim.current.window.cursor = current_pos
+
+
+class VariablesView( object ):
+  def __init__( self, session, buf ):
+    self._buf = buf
+    self._session = session
+    self._scopes = []
+    self._line_to_variable = {}
+
+    vim.current.buffer = buf
+    vim.command(
+      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
+
+    SetUpScratchBuffer( self._buf )
+
+  def LoadScopes( self, frame ):
+    def scopes_consumer( message ):
+      self._scopes = []
+      for scope in message[ 'body' ][ 'scopes' ]:
+        self._scopes.append( scope )
+        self._session._DoRequest( partial( self._ConsumeVariables, scope ), {
+          'command': 'variables',
+          'arguments': {
+            'variablesReference': scope[ 'variablesReference' ]
+          },
+        } )
+
+      self._DrawScopes()
+
+    self._session._DoRequest( scopes_consumer, {
+      'command': 'scopes',
+      'arguments': {
+        'frameId': frame[ 'id' ]
+      },
+    } )
+
+  def ExpandVariable( self ):
+    current_line = vim.current.window.cursor[ 0 ]
+    if current_line not in self._line_to_variable:
+      vim.command( 'echo "No variable found on that line"' )
+      return
+
+    variable = self._line_to_variable[ current_line ]
+    if '_variables' in variable:
+      del variable[ '_variables' ]
+      self._DrawScopes()
+    else:
+      self._session._DoRequest( partial( self._ConsumeVariables, variable ), {
+        'command': 'variables',
+        'arguments': {
+          'variablesReference': variable[ 'variablesReference' ]
+        },
+      } )
+
+  def _DrawVariables( self, variables, indent ):
+    for variable in variables:
+      self._buf.append(
+        '{indent}{icon} {name} ({type_}): {value}'.format(
+          indent = ' ' * indent,
+          icon = '+' if ( variable[ 'variablesReference' ] > 0 and
+                          '_variables' not in variable ) else '-',
+          name = variable[ 'name' ],
+          type_ = variable.get( 'type', '<unknown type>' ),
+          value = variable[ 'value' ] ) )
+      self._line_to_variable[ len( self._buf ) ] = variable
+
+      if '_variables' in variable:
+        self._DrawVariables( variable[ '_variables' ], indent + 2 )
+
+  def _DrawScopes( self ):
+    with RestoreCursorPosition():
+      with ModifiableScratchBuffer( self._buf ):
+        self._buf[:] = None
+        for scope in self._scopes:
+          self._buf.append( 'Scope: ' + scope[ 'name' ] )
+          if '_variables' in scope:
+            indent = 2
+            self._DrawVariables( scope[ '_variables' ], indent )
+
+
+  def _ConsumeVariables( self, parent, message ):
+    for variable in message[ 'body' ][ 'variables' ]:
+      if '_variables' not in parent:
+        parent[ '_variables' ] = []
+
+      parent[ '_variables' ].append( variable )
+
+    self._DrawScopes()
+
+
 class DebugSession( object ):
   def __init__( self, channel_send_func ):
     SetUpLogging()
@@ -65,14 +162,11 @@ class DebugSession( object ):
     self._codeWindow = None
     self._callStackBuffer = None
     self._threadsBuffer = None
-    self._localsBuffer = None
     self._outputBuffer = None
 
     # TODO: How to hold/model this data
     self._currentThread = None
     self._currentFrame = None
-    self._scopes = []
-    self._line_to_variable = {}
 
     self._SetUpUI()
 
@@ -100,14 +194,11 @@ class DebugSession( object ):
     self._outputBuffer = vim.current.buffer
     vim.command( 'spl' )
     vim.command( 'enew' )
-    vim.command(
-      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
-    self._localsBuffer = vim.current.buffer
+    self._variablesView = VariablesView( self, vim.current.buffer )
 
     SetUpScratchBuffer( self._threadsBuffer )
     SetUpScratchBuffer( self._callStackBuffer )
     SetUpScratchBuffer( self._outputBuffer )
-    SetUpScratchBuffer( self._localsBuffer )
 
   def _LoadFrame( self, frame ):
     vim.current.window = self._codeWindow
@@ -121,66 +212,7 @@ class DebugSession( object ):
         raise
 
     self._codeWindow.cursor = ( frame[ 'line' ], frame[ 'column' ] )
-    self._LoadScopes( frame )
-
-  def _DrawVariables( self, variables, indent ):
-    for variable in variables:
-      self._localsBuffer.append(
-        '{indent}{icon} {name} ({type_}): {value}'.format(
-          indent = ' ' * indent,
-          icon = '+' if ( variable[ 'variablesReference' ] > 0 and
-                          '_variables' not in variable ) else '-',
-          name = variable[ 'name' ],
-          type_ = variable.get( 'type', '<unknown type>' ),
-          value = variable[ 'value' ] ) )
-      self._line_to_variable[ len( self._localsBuffer ) ] = variable
-
-      if '_variables' in variable:
-        self._DrawVariables( variable[ '_variables' ], indent + 2 )
-
-  def _DrawScopes( self ):
-    current_pos = vim.current.window.cursor
-    with ModifiableScratchBuffer( self._localsBuffer ):
-      self._localsBuffer[:] = None
-      for scope in self._scopes:
-        self._localsBuffer.append( 'Scope: ' + scope[ 'name' ] )
-        if '_variables' in scope:
-          indent = 2
-          self._DrawVariables( scope[ '_variables' ], indent )
-
-    vim.current.window.cursor = current_pos
-
-
-  def _ConsumeVariables( self, parent, message ):
-    for variable in message[ 'body' ][ 'variables' ]:
-      if '_variables' not in parent:
-        parent[ '_variables' ] = []
-
-      parent[ '_variables' ].append( variable )
-
-    self._DrawScopes()
-
-  def _LoadScopes( self, frame ):
-    def scopes_consumer( message ):
-      self._scopes = []
-      for scope in message[ 'body' ][ 'scopes' ]:
-        self._scopes.append( scope )
-        self._DoRequest( partial( self._ConsumeVariables, scope ), {
-          'command': 'variables',
-          'arguments': {
-            'variablesReference': scope[ 'variablesReference' ]
-          },
-        } )
-
-      self._DrawScopes()
-
-    self._DoRequest( scopes_consumer, {
-      'command': 'scopes',
-      'arguments': {
-        'frameId': frame[ 'id' ]
-      },
-    } )
-
+    self._variablesView.LoadScopes( frame )
 
   def OnChannelData( self, data ):
     self._connection.OnData( data )
@@ -237,27 +269,7 @@ class DebugSession( object ):
     } )
 
   def ExpandVariable( self ):
-    current_line = vim.current.window.cursor[ 0 ]
-    _logger.debug( 'ExpandVariable: {0} with {1}'.format(
-      current_line,
-      self._line_to_variable ) )
-    if current_line not in self._line_to_variable:
-      vim.command( 'echo "No variable found on that line"' )
-      return
-
-
-    variable = self._line_to_variable[ current_line ]
-    if '_variables' in variable:
-      del variable[ '_variables' ]
-      self._DrawScopes()
-    else:
-      self._DoRequest( partial( self._ConsumeVariables, variable ), {
-        'command': 'variables',
-        'arguments': {
-          'variablesReference': variable[ 'variablesReference' ]
-        },
-      } )
-
+    self._variablesView.ExpandVariable()
 
   def _DoRequest( self, handler, msg ):
     this_id = self._next_message_id
