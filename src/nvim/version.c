@@ -1139,7 +1139,7 @@ static const int included_patches[] = {
   // 503,
   502,
   // 501,
-  // 500,
+  500,
   499,
   498,
   // 497,

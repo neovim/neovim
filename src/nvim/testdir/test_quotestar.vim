@@ -53,6 +53,10 @@ func Do_test_quotestar_for_x11()
   call WaitFor('serverlist() =~ "' . name . '"')
   call assert_match(name, serverlist())
 
+  " Wait for the server to be up and answering requests.  One second is not
+  " always sufficient.
+  call WaitFor('remote_expr("' . name . '", "v:version", "", 2) != ""')
+
   " Clear the *-register of this vim instance.
   let @* = ''
 
@@ -78,8 +82,8 @@ func Do_test_quotestar_for_x11()
     else
       call remote_send(name, ":gui -f\<CR>")
     endif
-    " Wait for the server to be up and answering requests.
-    call WaitFor('remote_expr("' . name . '", "v:version", "", 1) != ""')
+    " Wait for the server in the GUI to be up and answering requests.
+    call WaitFor('remote_expr("' . name . '", "has(\"gui_running\")", "", 1) =~ "1"')
 
     call remote_send(name, ":let @* = 'maybe'\<CR>")
     call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "maybe"')
