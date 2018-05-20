@@ -7263,6 +7263,137 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
+    -- Just an addition, actually found by KLEE is 90]$
+    check_parsing('90}$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'UnknownFigure(---):0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = '}$',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidFigureBrace', '}'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'UnknownFigure(---):0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    -- Just an addition, actually found by KLEE is 90]$
+    check_parsing('90)$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'Nested:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = ')$',
+        msg = 'E15: Unexpected closing parenthesis: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidNestingParenthesis', ')'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'Nested:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_parsing('90]$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'ListLiteral:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = ']$',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidList', ']'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'ListLiteral:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
   end)
   itp('works with assignments', function()
     check_asgn_parsing('a=b', {
