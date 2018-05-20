@@ -1965,7 +1965,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '}',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
       },
     }, {
       hl('InvalidFigureBrace', '}'),
@@ -7261,7 +7261,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '}l',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
       },
     }, {
       hl('InvalidFigureBrace', '}'),
@@ -7486,6 +7486,116 @@ return function(itp, _check_parsing, hl, fmtn)
     }, {
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+    })
+    -- Just an addition, actually found by KLEE is *]08
+    check_parsing('*)08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              'Nested:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                    'Missing:0:1:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*)08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidNestingParenthesis', ')'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'Nested:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                    'Missing:0:1:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    -- Just an addition, actually found by KLEE is *]08
+    check_parsing('*}08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              'UnknownFigure(---):0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*}08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidFigureBrace', '}'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'UnknownFigure(---):0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
     })
   end)
   itp('works with assignments', function()

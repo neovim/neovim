@@ -2501,96 +2501,110 @@ viml_pexpr_parse_bracket_closing_error:
       }
       case kExprLexFigureBrace: {
         if (cur_token.data.brc.closing) {
+#define OPENING_NODE(node) \
+          ((node) != NULL \
+           && ((node)->type == kExprNodeUnknownFigure \
+               || (node)->type == kExprNodeDictLiteral \
+               || (node)->type == kExprNodeCurlyBracesIdentifier \
+               || (node)->type == kExprNodeLambda))
+          if (want_node == kENodeValue) {
+            if (kv_size(ast_stack) > 1) {
+              const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
+              if ((prev_top_node->type == kExprNodeUnknownFigure
+                   && prev_top_node->data.fig.type_guesses.allow_dict)
+                  || prev_top_node->type == kExprNodeDictLiteral
+                  || prev_top_node->type == kExprNodeComma) {
+                // Empty dictionary literals, as well as trailing commas are
+                // allowed.
+                kv_drop(ast_stack, 1);
+                goto viml_pexpr_parse_figure_up;
+              }
+            }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Expected value, got closing figure brace: %.*s"));
+          } else {
+            // Always drop the topmost value: when want_node != kENodeValue
+            // topmost item on stack is a *finished* left operand, which may as
+            // well be "{@a}" which needs not be finished again.
+            kv_drop(ast_stack, 1);
+          }
+viml_pexpr_parse_figure_up: {}
           ExprASTNode **new_top_node_p = NULL;
-          // Always drop the topmost value:
-          //
-          // 1. When want_node != kENodeValue topmost item on stack is
-          //    a *finished* left operand, which may as well be "{@a}" which
-          //    needs not be finished again.
-          // 2. Otherwise it is pointing to NULL what nobody wants.
-          kv_drop(ast_stack, 1);
-          if (!kv_size(ast_stack)) {
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnknownFigure);
+          while (kv_size(ast_stack)
+                 && (new_top_node_p == NULL
+                     || !OPENING_NODE(*new_top_node_p))) {
+            new_top_node_p = kv_pop(ast_stack);
+          }
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
+            ExprASTNode *const new_top_node = *new_top_node_p;
+            switch (new_top_node->type) {
+              case kExprNodeUnknownFigure: {
+                if (new_top_node->children == NULL) {
+                  // No children of curly braces node indicates empty
+                  // dictionary.
+                  assert(want_node == kENodeValue);
+                  assert(new_top_node->data.fig.type_guesses.allow_dict);
+                  SELECT_FIGURE_BRACE_TYPE(new_top_node, DictLiteral, Dict);
+                  HL_CUR_TOKEN(Dict);
+                } else if (new_top_node->data.fig.type_guesses.allow_ident) {
+                  SELECT_FIGURE_BRACE_TYPE(new_top_node, CurlyBracesIdentifier,
+                                           Curly);
+                  HL_CUR_TOKEN(Curly);
+                } else {
+                  // If by this time type of the node has not already been
+                  // guessed, but it definitely is not a curly braces name then
+                  // it is invalid for sure.
+                  ERROR_FROM_NODE_AND_MSG(
+                      new_top_node,
+                      _("E15: Don't know what figure brace means: %.*s"));
+                  if (pstate->colors) {
+                    // Will reset to NvimInvalidFigureBrace.
+                    kv_A(*pstate->colors,
+                         new_top_node->data.fig.opening_hl_idx).group = (
+                             HL(FigureBrace));
+                  }
+                  HL_CUR_TOKEN(FigureBrace);
+                }
+                break;
+              }
+              case kExprNodeDictLiteral: {
+                HL_CUR_TOKEN(Dict);
+                break;
+              }
+              case kExprNodeCurlyBracesIdentifier: {
+                HL_CUR_TOKEN(Curly);
+                break;
+              }
+              case kExprNodeLambda: {
+                HL_CUR_TOKEN(Lambda);
+                break;
+              }
+              default: {
+                assert(false);
+              }
+            }
+          } else {
+            // “Always drop the topmost value” branch has got rid of the single
+            // value stack had, so there is nothing known to enclose. Correct
+            // this.
+            if (new_top_node_p == NULL) {
+              new_top_node_p = top_node_p;
+            }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Unexpected closing figure brace: %.*s"));
+            HL_CUR_TOKEN(FigureBrace);
+            cur_node = NEW_NODE(kExprNodeUnknownFigure);
+            cur_node->start = cur_token.start;
+            cur_node->len = 0;
             cur_node->data.fig.type_guesses.allow_lambda = false;
             cur_node->data.fig.type_guesses.allow_dict = false;
             cur_node->data.fig.type_guesses.allow_ident = false;
-            cur_node->len = 0;
-            if (want_node != kENodeValue) {
-              cur_node->children = *top_node_p;
-            }
-            *top_node_p = cur_node;
-            new_top_node_p = top_node_p;
-            goto viml_pexpr_parse_figure_brace_closing_error;
-          }
-          if (want_node == kENodeValue) {
-            if ((*kv_last(ast_stack))->type != kExprNodeUnknownFigure
-                && (*kv_last(ast_stack))->type != kExprNodeComma) {
-              // kv_last being UnknownFigure may occur for empty dictionary
-              // literal, while Comma is expected in case of non-empty one.
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token,
-                  _("E15: Expected value, got closing figure brace: %.*s"));
-            }
-          }
-          do {
-            new_top_node_p = kv_pop(ast_stack);
-          } while (kv_size(ast_stack)
-                   && (new_top_node_p == NULL
-                       || ((*new_top_node_p)->type != kExprNodeUnknownFigure
-                           && (*new_top_node_p)->type != kExprNodeDictLiteral
-                           && ((*new_top_node_p)->type
-                               != kExprNodeCurlyBracesIdentifier)
-                           && (*new_top_node_p)->type != kExprNodeLambda)));
-          ExprASTNode *new_top_node = *new_top_node_p;
-          switch (new_top_node->type) {
-            case kExprNodeUnknownFigure: {
-              if (new_top_node->children == NULL) {
-                // No children of curly braces node indicates empty dictionary.
-                assert(want_node == kENodeValue);
-                assert(new_top_node->data.fig.type_guesses.allow_dict);
-                SELECT_FIGURE_BRACE_TYPE(new_top_node, DictLiteral, Dict);
-                HL_CUR_TOKEN(Dict);
-              } else if (new_top_node->data.fig.type_guesses.allow_ident) {
-                SELECT_FIGURE_BRACE_TYPE(new_top_node, CurlyBracesIdentifier,
-                                         Curly);
-                HL_CUR_TOKEN(Curly);
-              } else {
-                // If by this time type of the node has not already been
-                // guessed, but it definitely is not a curly braces name then
-                // it is invalid for sure.
-                ERROR_FROM_NODE_AND_MSG(
-                    new_top_node,
-                    _("E15: Don't know what figure brace means: %.*s"));
-                if (pstate->colors) {
-                  // Will reset to NvimInvalidFigureBrace.
-                  kv_A(*pstate->colors,
-                       new_top_node->data.fig.opening_hl_idx).group = (
-                           HL(FigureBrace));
-                }
-                HL_CUR_TOKEN(FigureBrace);
-              }
-              break;
-            }
-            case kExprNodeDictLiteral: {
-              HL_CUR_TOKEN(Dict);
-              break;
-            }
-            case kExprNodeCurlyBracesIdentifier: {
-              HL_CUR_TOKEN(Curly);
-              break;
-            }
-            case kExprNodeLambda: {
-              HL_CUR_TOKEN(Lambda);
-              break;
-            }
-            default: {
-viml_pexpr_parse_figure_brace_closing_error:
-              assert(!kv_size(ast_stack));
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token, _("E15: Unexpected closing figure brace: %.*s"));
-              HL_CUR_TOKEN(FigureBrace);
-              break;
-            }
+            // Unexpected closing parenthesis, assume that it was wanted to
+            // enclose everything in {}.
+            cur_node->children = *new_top_node_p;
+            *new_top_node_p = cur_node;
+            assert(cur_node->next == NULL);
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
@@ -2603,6 +2617,7 @@ viml_pexpr_parse_figure_brace_closing_error:
               asgn_level = 0;
             }
           }
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             HL_CUR_TOKEN(FigureBrace);
@@ -2787,6 +2802,8 @@ viml_pexpr_parse_figure_brace_closing_error:
       }
       case kExprLexParenthesis: {
         if (cur_token.data.brc.closing) {
+#define OPENING_NODE(node) \
+          ((node)->type == kExprNodeNested || (node)->type == kExprNodeCall)
           if (want_node == kENodeValue) {
             if (kv_size(ast_stack) > 1) {
               const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
@@ -2816,13 +2833,10 @@ viml_pexpr_parse_paren_up: {}
           ExprASTNode **new_top_node_p = NULL;
           while (kv_size(ast_stack)
                  && (new_top_node_p == NULL
-                     || ((*new_top_node_p)->type != kExprNodeNested
-                         && (*new_top_node_p)->type != kExprNodeCall))) {
+                     || !OPENING_NODE(*new_top_node_p))) {
             new_top_node_p = kv_pop(ast_stack);
           }
-          if (new_top_node_p != NULL
-              && ((*new_top_node_p)->type == kExprNodeNested
-                  || (*new_top_node_p)->type == kExprNodeCall)) {
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
             if ((*new_top_node_p)->type == kExprNodeNested) {
               HL_CUR_TOKEN(NestingParenthesis);
             } else {
@@ -2849,6 +2863,7 @@ viml_pexpr_parse_paren_up: {}
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeNested);
