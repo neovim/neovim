@@ -134,6 +134,6 @@ func Test_quotestar()
   let @* = quotestar_saved
 
   if !empty(skipped)
-    throw skipped
+    throw 'Skipped: ' . skipped
   endif
 endfunc
