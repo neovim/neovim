@@ -20,27 +20,39 @@ set cpo&vim
 " }}}
 
 let s:plugin_base = expand( '<sfile>:p:h' ) . '/../'
+let s:command = [
+      \   'node',
+      \   '/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js'
+      \ ]
 
-function! s:_OnServerData( channel, data )
-  echom 'Got data: ' . a:data
+" let s:command = [
+"       \ '/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/'
+"       \ 'debugAdapters/OpenDebugAD7'
+"       \ ]
+"
+"      \ 'node',
+"      \ '/Users/ben/Development/debugger/vscode-mock-debug/out/debugAdapter.js'
+"      \ ]
+
+function! s:_OnServerData( channel, data ) abort
   py3 << EOF
-_PyChannel.OnData( vim.eval( 'a:data' ) )
+_session.OnChannelData( vim.eval( 'a:data' ) )
 EOF
 endfunction
 
-function! s:_OnServerError( channel, data )
+function! s:_OnServerError( channel, data ) abort
   echom "Channel received error: " . a:data
 endfunction
 
-function! s:_OnExit( channel, status )
+function! s:_OnExit( channel, status ) abort
   echom "Channel exit with status " . a:status
 endfunction
 
-function! s:_OnClose( channel )
+function! s:_OnClose( channel ) abort
   echom "Channel closed"
 endfunction
 
-function! vimspector#StartDebugSession()
+function! vimspector#StartDebugSession() abort
   " TODO:
   "  - Work out the debug configuration (e.g. using RemoteDebug)
   "  - Start a job running the server in raw mode
@@ -57,14 +69,17 @@ function! vimspector#StartDebugSession()
     return
   endif
 
-  let s:job = job_start( s:plugin_base . 'support/bin/testecho', {
-        \ 'in_mode': 'raw',
-        \ 'out_mode': 'raw',
-        \ 'err_mode': 'raw',
-        \ 'exit_cb': function( 's:_OnExit' ),
-        \ 'close_cb': function( 's:_OnClose' ),
-        \ 'out_cb': function( 's:_OnServerData' ),
-        \ 'err_cb': function( 's:_OnServerError' ) } )
+  let s:job = job_start( s:command,
+        \                {
+        \                    'in_mode': 'raw',
+        \                    'out_mode': 'raw',
+        \                    'err_mode': 'raw',
+        \                    'exit_cb': function( 's:_OnExit' ),
+        \                    'close_cb': function( 's:_OnClose' ),
+        \                    'out_cb': function( 's:_OnServerData' ),
+        \                    'err_cb': function( 's:_OnServerError' )
+        \                }
+        \              )
 
   if job_status( s:job ) != 'run'
     echom 'Fail whale. Job is ' . job_status( s:job )
@@ -72,7 +87,7 @@ function! vimspector#StartDebugSession()
   endif
 endfunction
 
-function! s:_Send( msg )
+function! s:_Send( msg ) abort
   if job_status( s:job ) != 'run'
     echom "Server isnt running"
     return
@@ -84,12 +99,14 @@ function! s:_Send( msg )
     return
   endif
 
-  call ch_sendraw( ch, a:msg . "\n" )
+  call ch_sendraw( ch, a:msg )
 
 endfunction
 
 
-function! vimspector#StopDebugSession()
+function! vimspector#StopDebugSession() abort
+  py3 _session.Stop()
+
   if job_status( s:job ) == 'run'
     job_stop( s:job, 'term' )
   endif
@@ -97,20 +114,27 @@ function! vimspector#StopDebugSession()
   unlet s:job
 endfunction
 
-function! vimspector#Test()
+function! vimspector#Launch() abort
   call vimspector#StartDebugSession()
   " call vimspector#WriteMessageToServer( 'test' )
 
   let ch = job_getchannel( s:job )
 
   py3 << EOF
-from vimspector import channel
-_PyChannel = channel.Channel( vim.Function( 's:_Send' ) )
-_PyChannel.Write( 'Another Test' )
+from vimspector import debug_adapter_connection
+_session = debug_adapter_connection.DebugSession(
+        vim.Function( 's:_Send' ) )
+_session.Start()
 EOF
-
 endfunction
 
+function! vimspector#StepOver() abort
+  py3 _session.StepOver()
+endfunction
+
+function! vimspector#StepInto() abort
+  py3 _session.StepInto()
+endfunction
 
 " Boilerplate {{{ 
 let &cpo=s:save_cpo
