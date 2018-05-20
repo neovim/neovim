@@ -252,7 +252,7 @@ tcp_retry:
   }
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
-  if (status == 0) {
+  if (status == 0) {  // -V547
     stream_init(NULL, stream, -1, uv_stream);
     success = true;
   } else if (is_tcp && addrinfo->ai_next) {

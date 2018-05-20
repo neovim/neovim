@@ -1253,11 +1253,11 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               }
 
               // Cast to char to avoid a conversion warning on Ubuntu 12.04.
+              assert(l + 1 < sizeof(format));
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
               // Regular float number
-              assert(l + 1 < sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
 
