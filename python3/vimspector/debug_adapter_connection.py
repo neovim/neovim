@@ -65,7 +65,7 @@ class DebugSession( object ):
     self._codeWindow = None
     self._callStackBuffer = None
     self._threadsBuffer = None
-    self._consoleBuffer = None
+    self._outputBuffer = None
 
     # TODO: How to hold/model this data
     self._currentThread = None
@@ -92,16 +92,13 @@ class DebugSession( object ):
     self._callStackBuffer = vim.current.buffer
     vim.command( 'spl' )
     vim.command( 'enew' )
-    self._consoleBuffer = vim.current.buffer
+    self._outputBuffer = vim.current.buffer
 
     SetUpScratchBuffer( self._threadsBuffer )
     SetUpScratchBuffer( self._callStackBuffer )
-    SetUpScratchBuffer( self._consoleBuffer )
+    SetUpScratchBuffer( self._outputBuffer )
 
   def _LoadFrame( self, frame ):
-    with ModifiableScratchBuffer( self._consoleBuffer ):
-      self._consoleBuffer.append( json.dumps( frame, indent=2 ).splitlines() )
-
     vim.current.window = self._codeWindow
     buffer_number = vim.eval( 'bufnr( "{0}", 1 )'.format(
       frame[ 'source' ][ 'path' ]  ) )
@@ -200,7 +197,6 @@ class DebugSession( object ):
     } )
 
   def _OnEvent_initialized( self, message ):
-    vim.command( 'echom "Debug adapter ready, sending breakpoints..."' )
     self._DoRequest( None, {
       'command': 'setFunctionBreakpoints',
       'arguments': {
@@ -216,7 +212,10 @@ class DebugSession( object ):
 
 
   def _OnEvent_output( self, message ):
-    vim.command( 'echom "{0}"'.format( message[ 'body' ][ 'output' ] ) )
+    with ModifiableScratchBuffer( self._outputBuffer ):
+      t = [ message[ 'body' ][ 'category' ] + ':' + '-' * 20 ]
+      t += message[ 'body' ][ 'output' ].splitlines()
+      self._outputBuffer.append( t, 0 )
 
 
   def _OnEvent_stopped( self, message ):
