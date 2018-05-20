@@ -8806,4 +8806,84 @@ return function(itp, _check_parsing, hl, fmtn)
       },
     })
   end)
+  itp('correctly works with missing operator priority', function()
+    -- Regression test for #7889.
+    check_parsing('0 0 *', {
+      --           01234
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'Integer(val=0):0:0:0',
+            {
+              'Multiplication:0:3: *',
+              children = {
+                'Integer(val=0):0:1: 0',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '0 *',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Number', '0'),
+      hl('InvalidSpacing', ' '),
+      hl('Number', '0'),
+      hl('Multiplication', '*', 1),
+    }, {
+      [1] = {
+        ast = {
+          len = 2,
+          ast = {
+            'Integer(val=0):0:0:0',
+          },
+          err = REMOVE_THIS,
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+          [4] = REMOVE_THIS,
+        },
+      },
+    })
+
+    check_parsing('system(\'\'ls *', {
+      --           01234567 8 9012
+      --           0           1
+      ast = {
+        {
+          'Call:0:6:(',
+          children = {
+            'PlainIdentifier(scope=0,ident=system):0:0:system',
+            {
+              'OpMissing:0:9:',
+              children = {
+                'SingleQuotedString(val=NULL):0:7:\'\'',
+                {
+                  'Multiplication:0:11: *',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=ls):0:9:ls',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = 'ls *',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'system'),
+      hl('CallingParenthesis', '('),
+      hl('SingleQuote', '\''),
+      hl('SingleQuote', '\''),
+      hl('InvalidIdentifierName', 'ls'),
+      hl('Multiplication', '*', 1),
+    })
+  end)
 end

@@ -112,6 +112,7 @@ typedef enum {
   kEOpLvlColon,
   kEOpLvlTernaryValue,
   kEOpLvlTernary,
+  kEOpLvlOpMissing,  ///< Missing operator.
   kEOpLvlOr,
   kEOpLvlAnd,
   kEOpLvlComparison,
@@ -1101,7 +1102,7 @@ static struct {
   ExprOpAssociativity ass;
 } node_type_to_node_props[] = {
   [kExprNodeMissing] = { kEOpLvlInvalid, kEOpAssNo, },
-  [kExprNodeOpMissing] = { kEOpLvlMultiplication, kEOpAssNo },
+  [kExprNodeOpMissing] = { kEOpLvlOpMissing, kEOpAssNo },
 
   [kExprNodeNested] = { kEOpLvlParens, kEOpAssNo },
   // Note: below nodes are kEOpLvlSubscript for “binary operator” itself, but
