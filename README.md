@@ -31,10 +31,8 @@ None yet.
 
 # Demo
 
-None yet.
-
-OK, well there is [a proof of
-concept](https://files.gitter.im/Valloric/ycmd/LTHy/vimspector-second-demo.gif).
+Well there is [a proof of
+concept](https://files.gitter.im/Valloric/ycmd/ldcA/vimspector-third-demo.gif).
 
 # FAQ
 

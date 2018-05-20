@@ -177,7 +177,7 @@ class DebugSession( object ):
     self._connection.DoRequest( handler, {
       'command': 'initialize',
       'arguments': {
-        'adapterID': 'cppdbg',
+        'adapterID': 'cppdbg',  # Apparently only MS debugger cares
         'linesStartAt1': True,
         'columnsStartAt1': True,
         'pathFormat': 'path',

@@ -15,6 +15,7 @@
 
 import logging
 import json
+import vim
 
 _logger = logging.getLogger( __name__ )
 
@@ -115,7 +116,8 @@ class DebugAdapterConnection( object ):
         if handler:
           handler( message )
       else:
-        raise RuntimeError( 'Request failed: {0}'.format(
+        _logger.error( 'Request failed: {0}'.format( message[ 'message' ] ) )
+        vim.command( "echom 'Request failed: {0}'".format(
           message[ 'message' ] ) )
 
     elif message[ 'type' ] == 'event':
