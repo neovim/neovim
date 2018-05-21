@@ -13,12 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import vim
 
 from vimspector import utils
-
-_logger = logging.getLogger( __name__ )
 
 
 class StackTraceView( object ):
@@ -59,10 +56,11 @@ class StackTraceView( object ):
       stackFrames = message[ 'body' ][ 'stackFrames' ]
 
       for frame in stackFrames:
+        source = frame[ 'source' ] or { 'name': '<unknown>' }
         self._buf.append(
           '{0}: {1}@{2}:{3}'.format( frame[ 'id' ],
                                      frame[ 'name' ],
-                                     frame[ 'source' ][ 'name' ],
+                                     source[ 'name' ],
                                      frame[ 'line' ] ) )
         self._line_to_frame[ len( self._buf ) ] = frame
 

@@ -1,0 +1,35 @@
+{
+  "lldb-mi Launch": {
+    "adapter": {
+      "name": "lldb-mi",
+      "command": [
+        "node",
+        "/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
+      ]
+    },
+    "configuration": {
+      "request": "launch",
+      "target": "support/test/cpp/simple_c_program/test",
+      "args": [],
+      "cwd": ".",
+      "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/lldb/bin/lldb-mi"
+    }
+  },
+  "ms Launch": {
+    "adapter": {
+      "name": "cppdbg",
+      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/OpenDebugAD7" ]
+    },
+    "configuration": {
+      "name": "ms Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+      "args": [],
+      "cwd": "/Users/ben",
+      "environment": [],
+      "externalConsole": true,
+      "MIMode": "lldb"
+    }
+  }
+}

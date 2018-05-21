@@ -15,13 +15,15 @@
 
 import logging
 import json
-import vim
 
-_logger = logging.getLogger( __name__ )
+from vimspector import utils
 
 
 class DebugAdapterConnection( object ):
   def __init__( self, handler, send_func ):
+    self._logger = logging.getLogger( __name__ )
+    utils.SetUpLogging( self._logger )
+
     self._Write = send_func
     self._SetState( 'READ_HEADER' )
     self._buffer = bytes()
@@ -41,7 +43,7 @@ class DebugAdapterConnection( object ):
 
   def OnData( self, data ):
     data = bytes( data, 'utf-8' )
-    _logger.debug( 'Received ({0}/{1}): {2},'.format( type( data ),
+    self._logger.debug( 'Received ({0}/{1}): {2},'.format( type( data ),
                                                       len( data ),
                                                       data ) )
 
@@ -69,7 +71,7 @@ class DebugAdapterConnection( object ):
     msg = json.dumps( msg )
     data = 'Content-Length: {0}\r\n\r\n{1}'.format( len( msg ), msg )
 
-    _logger.debug( 'Sending: {0}'.format( data ) )
+    self._logger.debug( 'Sending: {0}'.format( data ) )
     self._Write( data )
 
   def _ReadHeaders( self ):
@@ -102,7 +104,7 @@ class DebugAdapterConnection( object ):
 
     message = json.loads( payload )
 
-    _logger.debug( 'Message received: {0}'.format( message ) )
+    self._logger.debug( 'Message received: {0}'.format( message ) )
 
     self._OnMessageReceived( message )
 
@@ -116,8 +118,9 @@ class DebugAdapterConnection( object ):
         if handler:
           handler( message )
       else:
-        _logger.error( 'Request failed: {0}'.format( message[ 'message' ] ) )
-        vim.command( "echom 'Request failed: {0}'".format(
+        self._logger.error(
+          'Request failed: {0}'.format( message[ 'message' ] ) )
+        utils.UserMessage( 'Request failed: {0}'.format(
           message[ 'message' ] ) )
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]

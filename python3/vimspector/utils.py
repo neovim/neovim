@@ -18,16 +18,15 @@ import logging
 import os
 import contextlib
 import vim
+import json
 
-_logger = logging.getLogger( __name__ )
 
-
-def SetUpLogging():
+def SetUpLogging( logger ):
   handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
-  _logger.setLevel( logging.DEBUG )
+  logger.setLevel( logging.DEBUG )
   handler.setFormatter(
     logging.Formatter( '%(asctime)s - %(levelname)s - %(message)s' ) )
-  _logger.addHandler( handler )
+  logger.addHandler( handler )
 
 
 def SetUpScratchBuffer( buf ):
@@ -68,3 +67,42 @@ def TemporaryVimOption( opt, value ):
     yield
   finally:
     vim.options[ opt ] = old_value
+
+
+def PathToConfigFile( file_name ):
+  p = os.getcwd()
+  while True:
+    candidate = os.path.join( p, file_name )
+    if os.path.exists( candidate ):
+      return candidate
+
+    parent = os.path.dirname( p )
+    if parent == p:
+      return None
+    p = parent
+
+
+def Escape( msg ):
+  return msg.replace( "'", "''" )
+
+
+def UserMessage( msg, persist=False ):
+  vim.command( 'redraw' )
+  cmd = 'echom' if persist else 'echo'
+  for line in msg.split( '\n' ):
+    vim.command( '{0} \'{1}\''.format( cmd, Escape( line ) ) )
+
+
+def SelectFromList( prompt, options ):
+  vim.eval( 'inputsave()' )
+  display_options = [ prompt ]
+  display_options.extend( [ '{0}: {1}'.format( i + 1, v )
+                            for i, v in enumerate( options ) ] )
+  try:
+    selection = int( vim.eval(
+      'inputlist( ' + json.dumps( display_options ) + ' )' ) ) - 1
+    if selection < 0 or selection >= len( options ):
+      return None
+    return options[ selection ]
+  finally:
+    vim.eval( 'inputrestore()' )

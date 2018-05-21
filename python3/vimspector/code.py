@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import vim
-
-_logger = logging.getLogger( __name__ )
 
 SIGN_ID_OFFSET = 10000000
 
@@ -38,6 +35,7 @@ class CodeView( object  ):
     vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
     vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
     vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
+    vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
 
     vim.command( 'sign define vimspectorPC text=>> texthl=Search' )
 
