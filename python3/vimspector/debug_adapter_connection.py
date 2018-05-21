@@ -120,8 +120,8 @@ class DebugAdapterConnection( object ):
       else:
         self._logger.error(
           'Request failed: {0}'.format( message[ 'message' ] ) )
-        utils.UserMessage( 'Request failed: {0}'.format(
-          message[ 'message' ] ) )
+        utils.UserMessage( 'Request failed: {0}'.format( message[ 'message' ],
+                                                         persist = True ) )
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]
       if method in dir( self._handler ):

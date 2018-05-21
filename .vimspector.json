@@ -1,5 +1,5 @@
 {
-  "lldb-mi Launch": {
+  "simple_c_program - lldb-mi Launch": {
     "adapter": {
       "name": "lldb-mi",
       "command": [
@@ -15,7 +15,7 @@
       "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/lldb/bin/lldb-mi"
     }
   },
-  "ms Launch": {
+  "simple_c_progra - ms Launch": {
     "adapter": {
       "name": "cppdbg",
       "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/OpenDebugAD7" ]
@@ -30,6 +30,25 @@
       "environment": [],
       "externalConsole": true,
       "MIMode": "lldb"
+    }
+  },
+  "simple_python - launch": {
+    "adapter": {
+      "name": "python",
+      "command": [
+        "node",
+        "/Users/ben/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
+      ]
+    },
+    "configuration": {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "cwd": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python",
+      "stopOnEntry": true,
+      "console": "externalTerminal",
+      "debugOptions": [],
+      "program": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python/main.py"
     }
   }
 }
