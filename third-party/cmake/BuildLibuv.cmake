@@ -66,10 +66,15 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
 elseif(MINGW)
 
+  if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(LIBUV_MAKE_PRG ${MAKE_PRG})
+  else()
+    set(LIBUV_MAKE_PRG ${CMAKE_MAKE_PROGRAM})
+  endif()
   # Native MinGW
   BuildLibUv(BUILD_IN_SOURCE
     PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Makefile.mingw
+    BUILD_COMMAND ${LIBUV_MAKE_PRG} -f Makefile.mingw
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
       COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/libuv/libuv.a ${DEPS_INSTALL_DIR}/lib
       COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
