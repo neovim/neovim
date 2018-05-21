@@ -12,6 +12,13 @@ return function(itp, _check_parsing, hl, fmtn)
       funcname='check_asgn_parsing',
     }, ...)
   end
+  local function check_pagealloc_parsing(...)
+    return _check_parsing({
+      flags={0, 1, 2, 3},
+      funcname='check_pagealloc_parsing',
+      pagealloc=true,
+    }, ...)
+  end
   itp('works with + and @a', function()
     check_parsing('@a', {
       ast = {
@@ -7579,8 +7586,8 @@ return function(itp, _check_parsing, hl, fmtn)
     --                 MO5836[8] allocated at viml_pexpr_parse():  %7 = alloca %struct.ParserState*, align 8
     --         prev: object at 66546720 of size 50
     --                 MO3352[50] allocated at __user_main():  %input = alloca [50 x i8], align 16
-    check_parsing('"\\<', {
-      --           01 2
+    check_pagealloc_parsing('"\\<', {
+      --                     01 2
       ast = {
         'DoubleQuotedString(val="<"):0:0:"\\<',
       },
