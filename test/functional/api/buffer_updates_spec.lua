@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq, ok = helpers.eq, helpers.ok
 local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
+local expect_err = helpers.expect_err
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -36,7 +37,7 @@ local function open(activate, lines)
   -- arrive as expectected
   if activate then
     local firstline = 0
-    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true, {}))
     expectn('nvim_buf_lines_event', {b, tick, firstline, -1, lines, false})
   end
 
@@ -58,7 +59,7 @@ local function reopen(buf, expectedlines)
   -- for some reason the :edit! increments tick by 2
   command('edit!')
   local tick = eval('b:changedtick')
-  ok(buffer('attach', buf, true))
+  ok(buffer('attach', buf, true, {}))
   local firstline = 0
   expectn('nvim_buf_lines_event', {buf, tick, firstline, -1, expectedlines, false})
   command('normal! gg')
@@ -163,7 +164,7 @@ describe('buffer events', function()
     command('enew')
     tick = eval('b:changedtick')
     local b2 = nvim('get_current_buf')
-    ok(buffer('attach', b2, true))
+    ok(buffer('attach', b2, true, {}))
     expectn('nvim_buf_lines_event', {b2, tick, 0, -1, {""}, false})
     eval('append(0, ["new line 1"])')
     tick = tick + 1
@@ -176,7 +177,7 @@ describe('buffer events', function()
     -- add multiple lines to a blank file
     command('enew!')
     local b3 = nvim('get_current_buf')
-    ok(buffer('attach', b3, true))
+    ok(buffer('attach', b3, true, {}))
     tick = eval('b:changedtick')
     expectn('nvim_buf_lines_event', {b3, tick, 0, -1, {""}, false})
     eval('append(0, ["new line 1", "new line 2", "new line 3"])')
@@ -268,7 +269,7 @@ describe('buffer events', function()
     tick = 2
     expectn('nvim_buf_detach_event', {b})
     local bnew = nvim('get_current_buf')
-    ok(buffer('attach', bnew, true))
+    ok(buffer('attach', bnew, true, {}))
     expectn('nvim_buf_lines_event', {bnew, tick, 0, -1, {''}, false})
     sendkeys('i')
     sendkeys('h')
@@ -441,11 +442,11 @@ describe('buffer events', function()
     local b, tick = editoriginal(false)
 
     -- turn on live updates many times
-    ok(buffer('attach', b, true))
-    ok(buffer('attach', b, true))
-    ok(buffer('attach', b, true))
-    ok(buffer('attach', b, true))
-    ok(buffer('attach', b, true))
+    ok(buffer('attach', b, true, {}))
+    ok(buffer('attach', b, true, {}))
+    ok(buffer('attach', b, true, {}))
+    ok(buffer('attach', b, true, {}))
+    ok(buffer('attach', b, true, {}))
     expectn('nvim_buf_lines_event', {b, tick, 0, -1, origlines, false})
     eval('rpcnotify('..channel..', "Hello There")')
     expectn('Hello There', {})
@@ -490,9 +491,9 @@ describe('buffer events', function()
     local b, tick = open(false, lines)
 
     -- turn on live updates for sessions 1, 2 and 3
-    ok(request(1, 'nvim_buf_attach', b, true))
-    ok(request(2, 'nvim_buf_attach', b, true))
-    ok(request(3, 'nvim_buf_attach', b, true))
+    ok(request(1, 'nvim_buf_attach', b, true, {}))
+    ok(request(2, 'nvim_buf_attach', b, true, {}))
+    ok(request(3, 'nvim_buf_attach', b, true, {}))
     wantn(1, 'nvim_buf_lines_event', {b, tick, 0, -1, lines, false})
     wantn(2, 'nvim_buf_lines_event', {b, tick, 0, -1, lines, false})
     wantn(3, 'nvim_buf_lines_event', {b, tick, 0, -1, lines, false})
@@ -732,8 +733,14 @@ describe('buffer events', function()
   it('doesn\'t send the buffer\'s content when not requested', function()
     helpers.clear()
     local b, tick = editoriginal(false)
-    ok(buffer('attach', b, false))
+    ok(buffer('attach', b, false, {}))
     expectn('nvim_buf_changedtick_event', {b, tick})
+  end)
+
+  it('returns a proper error on nonempty options dict', function()
+    helpers.clear()
+    local b = editoriginal(false)
+    expect_err("dict isn't empty", buffer, 'attach', b, false, {builtin="asfd"})
   end)
 
 end)

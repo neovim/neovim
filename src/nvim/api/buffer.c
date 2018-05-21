@@ -83,15 +83,22 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        the whole buffer. If so, the first notification will be a
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`
+/// @param  opts  Optional parameters. Currently not used.
 /// @param[out] err Details of an error that may have occurred
 /// @return False when updates couldn't be enabled because the buffer isn't
-///         loaded; otherwise True.
+///         loaded or `opts` contained an invalid key; otherwise True.
 Boolean nvim_buf_attach(uint64_t channel_id,
                         Buffer buffer,
                         Boolean send_buffer,
+                        Dictionary opts,
                         Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
+  if (opts.size > 0) {
+      api_set_error(err, kErrorTypeValidation, "dict isn't empty");
+      return false;
+  }
+
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
