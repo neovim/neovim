@@ -69,7 +69,7 @@ class DebugSession( object ):
   def Stop( self ):
     self._codeView.Clear()
 
-    self._connection.DoRequest( lambda msg: self._CleanUpUi(), {
+    self._connection.DoRequest( None, {
       'command': 'disconnect',
       'arguments': {
         'terminateDebugee': True
@@ -202,7 +202,7 @@ class DebugSession( object ):
       'command': 'setFunctionBreakpoints',
       'arguments': {
         'breakpoints': [
-          { 'name': 'main' }
+          { 'name': 'main' } # HAAACK: TODO: Support setting breakpoints
         ]
       },
     } )
