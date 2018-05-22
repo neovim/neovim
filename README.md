@@ -34,9 +34,7 @@ None yet.
 Well there is a proof of concept, showing some of the features and the use of
 different debug adapters and languages (c++ and Python):
 
-<blockquote class="imgur-embed-pub" lang="en" data-id="a/uy6sz5Z"><a
-href="//imgur.com/uy6sz5Z"></a></blockquote><script async
-src="//s.imgur.com/min/embed.js" charset="utf-8"></script>
+* [vimspector proof of concept](https://pasteboard.co/HmhkG6S.gif)
 
 Yes, it's buggy right now, and the UI is all placeholder, but it shows that
 there is some potential, I think.
