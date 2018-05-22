@@ -761,9 +761,8 @@ g'{mark}  g`{mark}
 			Jump to the {mark}, but don't change the jumplist when
 			jumping within the current buffer.  Example: >
 				g`"
-<			jumps to the last known position in a file.  See
-			$VIMRUNTIME/vimrc_example.vim.
-			Also see |:keepjumps|.
+<			jumps to the last known position in a file.
+			See also |:keepjumps|.
 
 						*:marks*
 :marks			List all the current marks (not a motion command).
