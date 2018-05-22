@@ -16,6 +16,9 @@
 import logging
 import vim
 import json
+from functools import partial
+
+from collections import defaultdict
 
 from vimspector import ( code,
                          debug_adapter_connection,
@@ -37,6 +40,22 @@ class DebugSession( object ):
 
     self._currentThread = None
     self._currentFrame = None
+
+    self._breakpoints = defaultdict( dict )
+
+  def ToggleBreakpoint( self ):
+    line, column = vim.current.window.cursor
+    file_name = vim.current.buffer.name
+
+    if line in self._breakpoints[ file_name ]:
+      del self._breakpoints[ file_name ][ line ]
+    else:
+      self._breakpoints[ file_name ][ line ] = {
+        'state': 'ENABLED',
+        # 'condition': ...,
+        # 'hitCondition': ...,
+        # 'logMessage': ...
+      }
 
   def Start( self, configuration = None ):
     launch_config_file = utils.PathToConfigFile( '.vimspector.json' )
@@ -197,15 +216,24 @@ class DebugSession( object ):
       'arguments': launch_config
     } )
 
+  def _UpdateBreakpoints( self, file_name, message ):
+    self._codeView.ShowBreakpoints( file_name,
+                                    message[ 'body' ][ 'breakpoints' ])
+
   def OnEvent_initialized( self, message ):
-    self._connection.DoRequest( None, {
-      'command': 'setFunctionBreakpoints',
-      'arguments': {
-        'breakpoints': [
-          { 'name': 'main' } # HAAACK: TODO: Support setting breakpoints
-        ]
-      },
-    } )
+    for file_name, line_breakpoints in self._breakpoints.items():
+      breakpoints = [ { 'line': line } for line in line_breakpoints.keys() ]
+      self._connection.DoRequest(
+        partial( self._UpdateBreakpoints, file_name ),
+        {
+          'command': 'setBreakpoints',
+          'arguments': {
+            'source': {
+              'file': file_name,
+            },
+            'breakpoints': breakpoints,
+        },
+      } )
 
     self._connection.DoRequest( None, {
       'command': 'configurationDone',

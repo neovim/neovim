@@ -14,6 +14,9 @@
 # limitations under the License.
 
 import vim
+import logging
+import json
+from vimspector import utils
 
 SIGN_ID_OFFSET = 10000000
 
@@ -22,9 +25,13 @@ class CodeView( object  ):
   def __init__( self, window ):
     self._window = window
 
+    self._logger = logging.getLogger( __name__ )
+    utils.SetUpLogging( self._logger )
+
     self._next_sign_id = SIGN_ID_OFFSET
     self._signs = {
       'vimspectorPC': None,
+      'breakpoints': [],
     }
 
 
@@ -38,6 +45,7 @@ class CodeView( object  ):
     vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
 
     vim.command( 'sign define vimspectorPC text=>> texthl=Search' )
+    vim.command( 'sign define vimspectorBP text=>> texthl=Error' )
 
 
   def SetCurrentFrame( self, frame ):
@@ -71,3 +79,19 @@ class CodeView( object  ):
     if self._signs[ 'vimspectorPC' ]:
       vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
+
+
+  def ShowBreakpoints( self, file_name, breakpoints ):
+    for sign_id in self._signs[ 'breakpoints' ]:
+      vim.command( 'sign unplace {0}'.format( sign_id ) )
+
+    for breakpoint in breakpoints:
+      sign_id = self._next_sign_id
+      self._next_sign_id += 1
+      self._signs[ 'breakpoints' ].append( sign_id )
+      self._logger.debug( 'breakpoint: {0}'.format( json.dumps( breakpoint,
+                                                                indent=2 ) ) )
+      vim.command( 'sign place {0} line={1} name=vimspectorBP file={2}'.format(
+        sign_id,
+        breakpoint[ 'line' ],
+        file_name ) )
