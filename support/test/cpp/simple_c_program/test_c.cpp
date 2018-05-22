@@ -23,7 +23,7 @@ namespace Test
 
   void foo( TestStruct m )
   {
-    TestStruct t{ true, 11 };
+    TestStruct t{ true, {11} };
     bar( t );
   }
 }
@@ -33,6 +33,6 @@ int main ( int argc, char ** argv )
 {
   int x{ 10 };
 
-  Test::TestStruct t{ true, 99 };
+  Test::TestStruct t{ true, {99} };
   foo( t );
 }
