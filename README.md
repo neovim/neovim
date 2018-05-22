@@ -31,8 +31,13 @@ None yet.
 
 # Demo
 
-Well there is [a proof of
-concept](https://files.gitter.im/Valloric/ycmd/ldcA/vimspector-third-demo.gif).
+Well there is a proof of concept, showing some of the features and the use of
+different debug adapters and languages (c++ and Python):
+
+![vimspector proof of concept](https://imgur.com/a/uy6sz5Z)
+
+Yes, it's buggy right now, and the UI is all placeholder, but it shows that
+there is some potential, I think.
 
 # FAQ
 
