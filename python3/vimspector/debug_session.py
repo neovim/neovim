@@ -16,7 +16,7 @@
 import logging
 import vim
 import json
-from functools import partial
+import os
 
 from collections import defaultdict
 
@@ -216,24 +216,40 @@ class DebugSession( object ):
       'arguments': launch_config
     } )
 
-  def _UpdateBreakpoints( self, file_name, message ):
-    self._codeView.ShowBreakpoints( file_name,
-                                    message[ 'body' ][ 'breakpoints' ])
+  def _UpdateBreakpoints( self, message ):
+    self._codeView.AddBreakpoints( message[ 'body' ][ 'breakpoints' ] )
+    self._codeView.ShowBreakpoints()
 
   def OnEvent_initialized( self, message ):
+    self._codeView.ClearBreakpoints()
+
     for file_name, line_breakpoints in self._breakpoints.items():
       breakpoints = [ { 'line': line } for line in line_breakpoints.keys() ]
       self._connection.DoRequest(
-        partial( self._UpdateBreakpoints, file_name ),
+        self._UpdateBreakpoints,
         {
           'command': 'setBreakpoints',
           'arguments': {
             'source': {
+              'name': os.path.basename( file_name ),
               'file': file_name,
             },
             'breakpoints': breakpoints,
+          },
+        }
+      )
+
+    self._connection.DoRequest(
+      self._UpdateBreakpoints,
+      {
+        'command': 'setFunctionBreakpoints',
+        'arguments': {
+          'breakpoints': [
+            { 'name': 'main' },
+          ],
         },
-      } )
+      }
+    )
 
     self._connection.DoRequest( None, {
       'command': 'configurationDone',

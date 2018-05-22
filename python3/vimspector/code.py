@@ -16,6 +16,8 @@
 import vim
 import logging
 import json
+from collections import defaultdict
+
 from vimspector import utils
 
 SIGN_ID_OFFSET = 10000000
@@ -29,9 +31,10 @@ class CodeView( object  ):
     utils.SetUpLogging( self._logger )
 
     self._next_sign_id = SIGN_ID_OFFSET
+    self._breakpoints = defaultdict( list )
     self._signs = {
       'vimspectorPC': None,
-      'breakpoints': [],
+      'breakpoints': []
     }
 
 
@@ -81,17 +84,43 @@ class CodeView( object  ):
       self._signs[ 'vimspectorPC' ] = None
 
 
-  def ShowBreakpoints( self, file_name, breakpoints ):
+  def AddBreakpoints( self, breakpoints ):
+    for breakpoint in breakpoints:
+      if not breakpoint.get( 'verified', False ):
+        continue
+
+      if 'source' not in breakpoint:
+        self._logger.warn( 'source not in breakpoint {0}'.format(
+          json.dumps( breakpoint ) ) )
+        continue
+
+      self._breakpoints[ breakpoint[ 'source' ][ 'file' ] ].append(
+        breakpoint[ 'line' ] )
+
+    self._logger.debug( 'Breakpoints at this point: {0}'.format(
+      json.dumps( self._breakpoints, indent = 2 ) ) )
+
+  def _UndisplaySigns( self ):
     for sign_id in self._signs[ 'breakpoints' ]:
       vim.command( 'sign unplace {0}'.format( sign_id ) )
 
-    for breakpoint in breakpoints:
-      sign_id = self._next_sign_id
-      self._next_sign_id += 1
-      self._signs[ 'breakpoints' ].append( sign_id )
-      self._logger.debug( 'breakpoint: {0}'.format( json.dumps( breakpoint,
-                                                                indent=2 ) ) )
-      vim.command( 'sign place {0} line={1} name=vimspectorBP file={2}'.format(
-        sign_id,
-        breakpoint[ 'line' ],
-        file_name ) )
+    self._signs[ 'breakpoints' ].clear()
+
+  def ClearBreakpoints( self ):
+    self._UndisplaySigns();
+    self._breakpoints = defaultdict( list )
+
+
+  def ShowBreakpoints( self ):
+    self._UndisplaySigns()
+
+    for file_name, lines in self._breakpoints.items():
+      for line in lines:
+        sign_id = self._next_sign_id
+        self._next_sign_id += 1
+        self._signs[ 'breakpoints' ].append( sign_id )
+        vim.command(
+          'sign place {0} line={1} name=vimspectorBP file={2}'.format(
+            sign_id,
+            line,
+            file_name ) )
