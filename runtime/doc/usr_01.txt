@@ -57,12 +57,11 @@ make them visible with: >
 ==============================================================================
 *01.2*	Vim installed					   *setup-vimrc_example*
 
-It's not required for this tutorial, but we provide an example vimrc you may
-use:
+To create an empty vimrc: >
 
-	:!cp -i $VIMRUNTIME/vimrc_example.vim ~/.config/nvim/init.vim
-
-If the file already exists you probably want to keep it.
+	:call mkdir(stdpath('config'),'p')
+	:exe 'edit' stdpath('config').'/init.vim'
+	:write
 
 For more info see |vimrc|.
 

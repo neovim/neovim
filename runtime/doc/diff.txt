@@ -165,7 +165,7 @@ loaded.  Since Vim doesn't allow having two buffers for the same file, you
 need another buffer.  This command is useful: >
 	 command DiffOrig vert new | set buftype=nofile | read ++edit # | 0d_
 		\ | diffthis | wincmd p | diffthis
-(this is in |vimrc_example.vim|).  Use ":DiffOrig" to see the differences
+Use ":DiffOrig" to see the differences
 between the current buffer and the file it was loaded from.
 
 A buffer that is unloaded cannot be used for the diff.  But it does work for
