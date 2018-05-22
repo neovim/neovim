@@ -6,11 +6,11 @@ file(GLOB UV_SOURCES_WIN src/win/*.c)
 
 if(MSVC)
   set(LIBUV libuv)
-  add_library(${LIBUV} ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
 else()
   set(LIBUV uv)
-  add_library(${LIBUV} STATIC ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
 endif()
+
+add_library(${LIBUV} ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
 target_compile_definitions(${LIBUV} PRIVATE WIN32_LEAN_AND_MEAN "_WIN32_WINNT=0x0600")
 target_link_libraries(${LIBUV} iphlpapi psapi shell32 userenv ws2_32)
 target_include_directories(${LIBUV} PUBLIC ./include PRIVATE ./src)
