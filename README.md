@@ -34,7 +34,7 @@ None yet.
 Well there is a proof of concept, showing some of the features and the use of
 different debug adapters and languages (c++ and Python):
 
-* [vimspector proof of concept](https://pasteboard.co/HmhkG6S.gif)
+![vimspector proof of concept](https://cdn.pbrd.co/images/HmhkG6S.gif)
 
 Yes, it's buggy right now, and the UI is all placeholder, but it shows that
 there is some potential, I think.
