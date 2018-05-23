@@ -723,6 +723,17 @@ static void init_locale(void)
 }
 #endif
 
+/// Decides whether text (as opposed to commands) will be read from stdin.
+/// @see EDIT_STDIN
+static bool edit_stdin(mparm_T *parmp)
+{
+  return !headless_mode
+    && !embedded_mode
+    && !exmode_active       // `-es` was not given.
+    && !parmp->input_isatty
+    && scriptin[0] == NULL;  // `-s -` was not given.
+}
+
 /// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
 {
@@ -1180,13 +1191,13 @@ scripterror:
       path_fix_case(p);
 #endif
 
-      alist_add(&global_alist, p,
+      int alist_fnum_flag = edit_stdin(parmp)
+                            ? 1   // add buffer nr after exp.
+                            : 2;  // add buffer number now and use curbuf
 #if !defined(UNIX)
-                parmp->literal ? 2 : 0  // add buffer nr after exp.
-#else
-                2                       // add buffer number now and use curbuf
+      alist_fnum_flag = parmp->literal ? alist_fnum_flag : 0;
 #endif
-                );
+      alist_add(&global_alist, p, alist_fnum_flag);
     }
 
     // If there are no more letters after the current "-", go to next argument.
@@ -1208,17 +1219,8 @@ scripterror:
   }
 
   // Handle "foo | nvim". #6299
-  if (!headless_mode
-      && !embedded_mode
-      && !parmp->input_isatty
-      && !exmode_active       // `-es` was not given.
-      && scriptin[0] == NULL  // `-s -` was not given.
-      ) {
-    if (parmp->edit_type == EDIT_NONE) {
-      parmp->edit_type = EDIT_STDIN;
-    } else if (parmp->edit_type != EDIT_STDIN) {
-      mainerr(err_too_many_args, "stdin");
-    }
+  if (edit_stdin(parmp)) {
+    parmp->edit_type = EDIT_STDIN;
   }
 
   TIME_MSG("parsing arguments");
