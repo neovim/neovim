@@ -68,14 +68,8 @@ elseif(WIN32)
 
   set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
   if(MSVC)
-    set(INSTALL_CMD ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
-      # Some applications (lua-client/luarocks) look for uv.lib instead of libuv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib/uv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/uv.dll)
     set(BUILD_SHARED ON)
   elseif(MINGW)
-    set(INSTALL_CMD ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
     set(BUILD_SHARED OFF)
   else()
     message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
@@ -92,7 +86,7 @@ elseif(WIN32)
         -DBUILD_SHARED_LIBS=${BUILD_SHARED}
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${INSTALL_CMD})
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 else()
   message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
