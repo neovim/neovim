@@ -658,7 +658,7 @@ static int insert_execute(VimState *state, int key)
         char_u *p;
 
         if (str != NULL) {
-          for (p = str; *p != NUL; mb_ptr_adv(p)) {
+          for (p = str; *p != NUL; MB_PTR_ADV(p)) {
             ins_compl_addleader(PTR2CHAR(p));
           }
           xfree(str);
@@ -1196,7 +1196,7 @@ normalchar:
       if (str != NULL) {
         if (*str != NUL && stop_arrow() != FAIL) {
           // Insert the new value of v:char literally.
-          for (p = str; *p != NUL; mb_ptr_adv(p)) {
+          for (p = str; *p != NUL; MB_PTR_ADV(p)) {
             s->c = PTR2CHAR(p);
             if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
               ins_eol(s->c);
@@ -2007,8 +2007,8 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
       const char_u *p = str;
       actual_len = 0;
       while (*p != NUL) {
-        mb_ptr_adv(p);
-        ++actual_len;
+        MB_PTR_ADV(p);
+        actual_len++;
       }
     } else
       actual_len = len;
@@ -2018,8 +2018,8 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
       const char_u *p = compl_orig_text;
       actual_compl_length = 0;
       while (*p != NUL) {
-        mb_ptr_adv(p);
-        ++actual_compl_length;
+        MB_PTR_ADV(p);
+        actual_compl_length++;
       }
     } else
       actual_compl_length = compl_length;
@@ -2321,8 +2321,8 @@ static void ins_compl_longest_match(compl_T *match)
         break;
       }
       if (has_mbyte) {
-        mb_ptr_adv(p);
-        mb_ptr_adv(s);
+        MB_PTR_ADV(p);
+        MB_PTR_ADV(s);
       } else {
         ++p;
         ++s;
@@ -2973,7 +2973,7 @@ static int ins_compl_bs(void)
 
   line = get_cursor_line_ptr();
   p = line + curwin->w_cursor.col;
-  mb_ptr_back(line, p);
+  MB_PTR_BACK(line, p);
 
   // Stop completion when the whole word was deleted.  For Omni completion
   // allow the word to be deleted, we won't match everything.
@@ -3435,12 +3435,14 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
   }
   if (compl_orig_text != NULL) {
     p = compl_orig_text;
-    for (len = 0; p[len] != NUL && p[len] == ptr[len]; ++len)
-      ;
-    if (len > 0)
+    for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {
+    }
+    if (len > 0) {
       len -= (*mb_head_off)(p, p + len);
-    for (p += len; *p != NUL; mb_ptr_adv(p))
+    }
+    for (p += len; *p != NUL; MB_PTR_ADV(p)) {
       AppendCharToRedobuff(K_BS);
+    }
   } else {
     len = 0;
   }
@@ -4595,13 +4597,15 @@ static int ins_complete(int c, bool enable_pum)
       if (startcol > 0) {
         char_u  *p = line + startcol;
 
-        mb_ptr_back(line, p);
-        while (p > line && vim_isfilec(PTR2CHAR(p)))
-          mb_ptr_back(line, p);
-        if (p == line && vim_isfilec(PTR2CHAR(p)))
+        MB_PTR_BACK(line, p);
+        while (p > line && vim_isfilec(PTR2CHAR(p))) {
+          MB_PTR_BACK(line, p);
+        }
+        if (p == line && vim_isfilec(PTR2CHAR(p))) {
           startcol = 0;
-        else
+        } else {
           startcol = (int)(p - line) + 1;
+        }
       }
 
       compl_col += startcol;

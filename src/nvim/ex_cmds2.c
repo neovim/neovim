@@ -2532,7 +2532,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
     // directory is not yet in 'runtimepath', add it
     p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
-    for (p = p1; *p; mb_ptr_adv(p)) {
+    for (p = p1; *p; MB_PTR_ADV(p)) {
       if (vim_ispathsep_nocolon(*p)) {
         p4 = p3; p3 = p2; p2 = p1; p1 = p;
       }

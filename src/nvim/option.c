@@ -2831,9 +2831,10 @@ did_set_string_option (
   /* 'showbreak' */
   else if (varp == &p_sbr) {
     for (s = p_sbr; *s; ) {
-      if (ptr2cells(s) != 1)
+      if (ptr2cells(s) != 1) {
         errmsg = (char_u *)N_("E595: contains unprintable or wide character");
-      mb_ptr_adv(s);
+      }
+      MB_PTR_ADV(s);
     }
   }
 
@@ -6211,15 +6212,17 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   char_u *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
-  /* For MS-Windows et al. we don't double backslashes at the start and
-   * before a file name character. */
-  for (var = buf; *var != NUL; mb_ptr_adv(var))
+  // For MS-Windows et al. we don't double backslashes at the start and
+  // before a file name character.
+  for (var = buf; *var != NUL; MB_PTR_ADV(var)) {
     if (var[0] == '\\' && var[1] == '\\'
         && expand_option_idx >= 0
         && (options[expand_option_idx].flags & P_EXPAND)
         && vim_isfilec(var[2])
-        && (var[2] != '\\' || (var == buf && var[4] != '\\')))
+        && (var[2] != '\\' || (var == buf && var[4] != '\\'))) {
       STRMOVE(var, var + 1);
+    }
+  }
 #endif
 
   *file[0] = buf;
@@ -6387,9 +6390,10 @@ static void langmap_set(void)
 
   for (p = p_langmap; p[0] != NUL; ) {
     for (p2 = p; p2[0] != NUL && p2[0] != ',' && p2[0] != ';';
-         mb_ptr_adv(p2)) {
-      if (p2[0] == '\\' && p2[1] != NUL)
-        ++p2;
+         MB_PTR_ADV(p2)) {
+      if (p2[0] == '\\' && p2[1] != NUL) {
+        p2++;
+      }
     }
     if (p2[0] == ';')
       ++p2;                 /* abcd;ABCD form, p2 points to A */
@@ -6405,10 +6409,11 @@ static void langmap_set(void)
       from = (*mb_ptr2char)(p);
       to = NUL;
       if (p2 == NULL) {
-        mb_ptr_adv(p);
+        MB_PTR_ADV(p);
         if (p[0] != ',') {
-          if (p[0] == '\\')
-            ++p;
+          if (p[0] == '\\') {
+            p++;
+          }
           to = (*mb_ptr2char)(p);
         }
       } else {
@@ -6431,10 +6436,10 @@ static void langmap_set(void)
         langmap_mapchar[from & 255] = (char_u)to;
       }
 
-      /* Advance to next pair */
-      mb_ptr_adv(p);
+      // Advance to next pair
+      MB_PTR_ADV(p);
       if (p2 != NULL) {
-        mb_ptr_adv(p2);
+        MB_PTR_ADV(p2);
         if (*p == ';') {
           p = p2;
           if (p[0] != NUL) {
@@ -6444,7 +6449,7 @@ static void langmap_set(void)
                   p);
               return;
             }
-            ++p;
+            p++;
           }
           break;
         }

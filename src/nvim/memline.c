@@ -1432,7 +1432,7 @@ static char *make_percent_swname(const char *dir, char *name)
   char *f = fix_fname(name != NULL ? name : "");
   if (f != NULL) {
     char *s = xstrdup(f);
-    for (d = s; *d != NUL; mb_ptr_adv(d)) {
+    for (d = s; *d != NUL; MB_PTR_ADV(d)) {
       if (vim_ispathsep(*d)) {
         *d = '%';
       }

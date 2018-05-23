@@ -403,11 +403,12 @@ static void shift_block(oparg_T *oap, int amount)
      * non-whitespace character.
      */
 
-    /* If "bd.startspaces" is set, "bd.textstart" points to the character,
-     * the part of which is displayed at the block's beginning. Let's start
-     * searching from the next character. */
-    if (bd.startspaces)
-      mb_ptr_adv(non_white);
+    // If "bd.startspaces" is set, "bd.textstart" points to the character,
+    // the part of which is displayed at the block's beginning. Let's start
+    // searching from the next character.
+    if (bd.startspaces) {
+      MB_PTR_ADV(non_white);
+    }
 
     /* The character's column is in "bd.start_vcol".  */
     non_white_col = bd.start_vcol;
@@ -443,7 +444,7 @@ static void shift_block(oparg_T *oap, int amount)
       if (verbatim_copy_width + incr > destination_col)
         break;
       verbatim_copy_width += incr;
-      mb_ptr_adv(verbatim_copy_end);
+      MB_PTR_ADV(verbatim_copy_end);
     }
 
     /* If "destination_col" is different from the width of the initial
@@ -2818,7 +2819,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
       char_u *p = get_cursor_pos_ptr();
       if (dir == FORWARD && *p != NUL) {
-        mb_ptr_adv(p);
+        MB_PTR_ADV(p);
       }
       ptr = vim_strsave(p);
       ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
@@ -2827,7 +2828,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       oldp = get_cursor_line_ptr();
       p = oldp + curwin->w_cursor.col;
       if (dir == FORWARD && *p != NUL) {
-        mb_ptr_adv(p);
+        MB_PTR_ADV(p);
       }
       ptr = vim_strnsave(oldp, (size_t)(p - oldp));
       ml_replace(curwin->w_cursor.lnum, ptr, false);
@@ -3630,10 +3631,10 @@ int do_join(size_t count,
     if (insert_space && currsize > 0) {
       if (has_mbyte) {
         cend = curr + currsize;
-        mb_ptr_back(curr, cend);
+        MB_PTR_BACK(curr, cend);
         endcurr1 = (*mb_ptr2char)(cend);
         if (cend > curr) {
-          mb_ptr_back(curr, cend);
+          MB_PTR_BACK(curr, cend);
           endcurr2 = (*mb_ptr2char)(cend);
         }
       } else {
@@ -4270,7 +4271,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
       bdp->pre_whitesp_c = 0;
     }
     prev_pstart = pstart;
-    mb_ptr_adv(pstart);
+    MB_PTR_ADV(pstart);
   }
   bdp->start_char_vcols = incr;
   if (bdp->start_vcol < oap->start_vcol) {      /* line too short */

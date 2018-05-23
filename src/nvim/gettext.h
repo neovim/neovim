@@ -13,7 +13,7 @@
 #else
 # define _(x) ((char *)(x))
 # define N_(x) x
-# define ngettext(x, xs, n) ((n) == 1 ? (x) : (xs))
+# define NGETTEXT(x, xs, n) ((n) == 1 ? (x) : (xs))
 # define bindtextdomain(x, y)  // empty
 # define bind_textdomain_codeset(x, y)  // empty
 # define textdomain(x)  // empty

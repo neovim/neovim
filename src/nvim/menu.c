@@ -95,9 +95,10 @@ ex_menu(exarg_T *eap)
   if (STRNCMP(arg, "icon=", 5) == 0) {
     arg += 5;
     while (*arg != NUL && *arg != ' ') {
-      if (*arg == '\\')
+      if (*arg == '\\') {
         STRMOVE(arg, arg + 1);
-      mb_ptr_adv(arg);
+      }
+      MB_PTR_ADV(arg);
     }
     if (*arg != NUL) {
       *arg++ = NUL;
@@ -1099,11 +1100,12 @@ char_u *menu_name_skip(char_u *const name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p)) {
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
     if (*p == '\\' || *p == Ctrl_V) {
       STRMOVE(p, p + 1);
-      if (*p == NUL)
+      if (*p == NUL) {
         break;
+      }
     }
   }
   if (*p)
@@ -1549,9 +1551,11 @@ static void menu_unescape_name(char_u *name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p))
-    if (*p == '\\')
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
       STRMOVE(p, p + 1);
+    }
+  }
 }
 
 /*

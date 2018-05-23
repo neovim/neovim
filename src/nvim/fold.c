@@ -1785,7 +1785,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     unsigned long count = (unsigned long)(lnume - lnum + 1);
 
     vim_snprintf((char *)buf, FOLD_TEXT_LEN,
-                 ngettext("+--%3ld line folded",
+                 NGETTEXT("+--%3ld line folded",
                           "+--%3ld lines folded ", count),
                  count);
     text = buf;
@@ -1862,7 +1862,7 @@ void foldtext_cleanup(char_u *str)
         ++len;
       STRMOVE(s, s + len);
     } else {
-      mb_ptr_adv(s);
+      MB_PTR_ADV(s);
     }
   }
 }
@@ -3033,10 +3033,12 @@ static void foldlevelMarker(fline_T *flp)
           if (flp->lvl_next > start_lvl)
             flp->lvl_next = start_lvl;
         }
-      } else
-        --flp->lvl_next;
-    } else
-      mb_ptr_adv(s);
+      } else {
+        flp->lvl_next--;
+      }
+    } else {
+      MB_PTR_ADV(s);
+    }
   }
 
   /* The level can't go negative, must be missing a start marker. */

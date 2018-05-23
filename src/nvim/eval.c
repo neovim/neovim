@@ -2581,9 +2581,10 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       /* ":let var1 var2 ...": find last space. */
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
-        mb_ptr_back(arg, p);
-        if (ascii_iswhite(*p))
+        MB_PTR_BACK(arg, p);
+        if (ascii_iswhite(*p)) {
           break;
+        }
       }
       return;
     }
@@ -4650,10 +4651,8 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   char_u      *name;
   unsigned int extra = 0;
 
-  /*
-   * Find the end of the string, skipping backslashed characters.
-   */
-  for (p = *arg + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+  // Find the end of the string, skipping backslashed characters.
+  for (p = *arg + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       ++p;
       /* A "\<x>" form occupies at least 4 characters, and produces up
@@ -4774,10 +4773,8 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   char_u      *str;
   int reduce = 0;
 
-  /*
-   * Find the end of the string, skipping ''.
-   */
-  for (p = *arg + 1; *p != NUL; mb_ptr_adv(p)) {
+  // Find the end of the string, skipping ''.
+  for (p = *arg + 1; *p != NUL; MB_PTR_ADV(p)) {
     if (*p == '\'') {
       if (p[1] != '\'')
         break;
@@ -8824,7 +8821,7 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
     unsigned long count = (unsigned long)(foldend - foldstart + 1);
-    txt = ngettext("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
+    txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
     r = xmalloc(STRLEN(txt)
                 + STRLEN(dashes) // for %s
                 + 20             // for %3ld
@@ -18065,16 +18062,17 @@ static const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
            || *p == '{'
            || ((flags & FNE_INCL_BR) && (*p == '[' || *p == '.'))
            || mb_nest != 0
-           || br_nest != 0); mb_ptr_adv(p)) {
+           || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {
-      /* skip over 'string' to avoid counting [ and ] inside it. */
-      for (p = p + 1; *p != NUL && *p != '\''; mb_ptr_adv(p))
-        ;
-      if (*p == NUL)
+      // skip over 'string' to avoid counting [ and ] inside it.
+      for (p = p + 1; *p != NUL && *p != '\''; MB_PTR_ADV(p)) {
+      }
+      if (*p == NUL) {
         break;
+      }
     } else if (*p == '"') {
       // skip over "str\"ing" to avoid counting [ and ] inside it.
-      for (p = p + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+      for (p = p + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
         if (*p == '\\' && p[1] != NUL) {
           ++p;
         }
@@ -22152,15 +22150,16 @@ repeat:
         return -1;
     }
 
-    /* When "/." or "/.." is used: force expansion to get rid of it. */
-    for (p = *fnamep; *p != NUL; mb_ptr_adv(p)) {
+    // When "/." or "/.." is used: force expansion to get rid of it.
+    for (p = *fnamep; *p != NUL; MB_PTR_ADV(p)) {
       if (vim_ispathsep(*p)
           && p[1] == '.'
           && (p[2] == NUL
               || vim_ispathsep(p[2])
               || (p[2] == '.'
-                  && (p[3] == NUL || vim_ispathsep(p[3])))))
+                  && (p[3] == NUL || vim_ispathsep(p[3]))))) {
         break;
+      }
     }
 
     /* FullName_save() is slow, don't use it when not needed. */
@@ -22240,8 +22239,9 @@ repeat:
     valid |= VALID_HEAD;
     *usedlen += 2;
     s = get_past_head(*fnamep);
-    while (tail > s && after_pathsep((char *)s, (char *)tail))
-      mb_ptr_back(*fnamep, tail);
+    while (tail > s && after_pathsep((char *)s, (char *)tail)) {
+      MB_PTR_BACK(*fnamep, tail);
+    }
     *fnamelen = (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
       /* Result is empty.  Turn it into "." to make ":cd %:h" work. */
@@ -22249,8 +22249,9 @@ repeat:
       *bufp = *fnamep = tail = vim_strsave((char_u *)".");
       *fnamelen = 1;
     } else {
-      while (tail > s && !after_pathsep((char *)s, (char *)tail))
-        mb_ptr_back(*fnamep, tail);
+      while (tail > s && !after_pathsep((char *)s, (char *)tail)) {
+        MB_PTR_BACK(*fnamep, tail);
+      }
     }
   }
 
