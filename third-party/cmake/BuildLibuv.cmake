@@ -72,9 +72,7 @@ elseif(WIN32)
       # Some applications (lua-client/luarocks) look for uv.lib instead of libuv.lib
       COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib/uv.lib
       COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/uv.dll
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include)
+      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/uv.dll)
     set(BUILD_SHARED ON)
   elseif(MINGW)
     set(INSTALL_CMD ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
