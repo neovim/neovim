@@ -58,10 +58,9 @@ to write a Vim script file: |usr_41.txt|.
 ==============================================================================
 *05.2*	The example vimrc file explained		*vimrc_example.vim*
 
-In the first chapter was explained how the example vimrc file can be used.
-The file can be found here:
+In the first chapter was explained how to create a vimrc file. >
 
-	$VIMRUNTIME/vimrc_example.vim ~
+	:exe 'edit' stdpath('config').'/init.vim'
 
 In this section we will explain the various commands used in this file.  This
 will give you hints about how to set up your own preferences.  Not everything

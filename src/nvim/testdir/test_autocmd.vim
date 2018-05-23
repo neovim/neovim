@@ -1165,3 +1165,60 @@ func Test_nocatch_wipe_dummy_buffer()
   call assert_fails('lv½ /x', 'E480')
   au!
 endfunc
+
+" Test TextChangedI and TextChangedP
+func Test_ChangedP()
+  " Nvim does not support test_override().
+  throw 'skipped: see test/functional/viml/completion_spec.lua'
+  new
+  call setline(1, ['foo', 'bar', 'foobar'])
+  call test_override("char_avail", 1)
+  set complete=. completeopt=menuone
+
+  func! TextChangedAutocmd(char)
+    let g:autocmd .= a:char
+  endfunc
+
+  au! TextChanged <buffer> :call TextChangedAutocmd('N')
+  au! TextChangedI <buffer> :call TextChangedAutocmd('I')
+  au! TextChangedP <buffer> :call TextChangedAutocmd('P')
+
+  call cursor(3, 1)
+  let g:autocmd = ''
+  call feedkeys("o\<esc>", 'tnix')
+  call assert_equal('I', g:autocmd)
+
+  let g:autocmd = ''
+  call feedkeys("Sf", 'tnix')
+  call assert_equal('II', g:autocmd)
+
+  let g:autocmd = ''
+  call feedkeys("Sf\<C-N>", 'tnix')
+  call assert_equal('IIP', g:autocmd)
+
+  let g:autocmd = ''
+  call feedkeys("Sf\<C-N>\<C-N>", 'tnix')
+  call assert_equal('IIPP', g:autocmd)
+
+  let g:autocmd = ''
+  call feedkeys("Sf\<C-N>\<C-N>\<C-N>", 'tnix')
+  call assert_equal('IIPPP', g:autocmd)
+
+  let g:autocmd = ''
+  call feedkeys("Sf\<C-N>\<C-N>\<C-N>\<C-N>", 'tnix')
+  call assert_equal('IIPPPP', g:autocmd)
+
+  call assert_equal(['foo', 'bar', 'foobar', 'foo'], getline(1, '$'))
+  " TODO: how should it handle completeopt=noinsert,noselect?
+
+  " CleanUp
+  call test_override("char_avail", 0)
+  au! TextChanged
+  au! TextChangedI
+  au! TextChangedP
+  delfu TextChangedAutocmd
+  unlet! g:autocmd
+  set complete&vim completeopt&vim
+
+  bw!
+endfunc

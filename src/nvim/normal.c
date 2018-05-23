@@ -1215,13 +1215,9 @@ static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if b_changedtick differs.
   if (!finish_op && has_event(EVENT_TEXTCHANGED)
-      && last_changedtick != curbuf->b_changedtick) {
-    if (last_changedtick_buf == curbuf) {
-      apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-    }
-
-    last_changedtick_buf = curbuf;
-    last_changedtick = curbuf->b_changedtick;
+      && curbuf->b_last_changedtick != curbuf->b_changedtick) {
+    apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
+    curbuf->b_last_changedtick = curbuf->b_changedtick;
   }
 }
 
@@ -1812,7 +1808,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         (void)op_delete(oap);
         if (oap->motion_type == kMTLineWise && has_format_option(FO_AUTO)) {
-          u_save_cursor();  // cursor line wasn't saved yet
+          // cursor line wasn't saved yet
+          if (u_save_cursor() == FAIL) {
+            break;
+          }
         }
         auto_format(false, true);
       }

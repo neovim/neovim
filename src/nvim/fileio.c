@@ -3571,9 +3571,8 @@ restore_backup:
     unchanged(buf, TRUE);
     /* buf->b_changedtick is always incremented in unchanged() but that
      * should not trigger a TextChanged event. */
-    if (last_changedtick + 1 == buf->b_changedtick
-        && last_changedtick_buf == buf) {
-      last_changedtick = buf->b_changedtick;
+    if (buf->b_last_changedtick + 1 == buf->b_changedtick) {
+      buf->b_last_changedtick = buf->b_changedtick;
     }
     u_unchanged(buf);
     u_update_save_nr(buf);

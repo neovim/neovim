@@ -312,6 +312,12 @@ Highlight groups:
 VimL (Vim script) compatibility:
   `count` does not alias to |v:count|
 
+|:lmap|s are applied to macro recordings, in Vim if a macro is recorded while
+using |:lmap|ped keys then the behaviour during record and replay differs.
+'keymap' is implemented via |:lmap| instead of |:lnoremap| in order to allow
+using macros and 'keymap' at the same time.
+This means that you can use |:imap| on the results of keys from 'keymap'.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 

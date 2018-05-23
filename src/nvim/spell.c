@@ -2487,7 +2487,9 @@ buf_T *open_spellbuf(void)
 
   buf->b_spell = true;
   buf->b_p_swf = true;        // may create a swap file
-  ml_open(buf);
+  if (ml_open(buf) == FAIL) {
+    abort();
+  }
   ml_open_file(buf);          // create swap file now
 
   return buf;

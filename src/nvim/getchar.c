@@ -1852,8 +1852,12 @@ static int vgetorpeek(int advance)
                       keylen = KEYLEN_PART_MAP;
                       break;
                     }
-                  } else if (keylen > mp_match_len) {
-                    /* found a longer match */
+                  } else if (keylen > mp_match_len
+                             || (keylen == mp_match_len
+                                 && mp_match != NULL
+                                 && (mp_match->m_mode & LANGMAP) == 0
+                                 && (mp->m_mode & LANGMAP) != 0)) {
+                    // found a longer match
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
@@ -1947,8 +1951,9 @@ static int vgetorpeek(int advance)
             char_u *save_m_keys;
             char_u *save_m_str;
 
-            // write chars to script file(s)
-            if (keylen > typebuf.tb_maplen) {
+            // Write chars to script file(s)
+            // Note: :lmap mappings are written *after* being applied. #5658
+            if (keylen > typebuf.tb_maplen && (mp->m_mode & LANGMAP) == 0) {
               gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
                        (size_t)(keylen - typebuf.tb_maplen));
             }
@@ -2022,6 +2027,12 @@ static int vgetorpeek(int advance)
               i = FAIL;
             else {
               int noremap;
+
+              // If this is a LANGMAP mapping, then we didn't record the keys
+              // at the start of the function and have to record them now.
+              if (keylen > typebuf.tb_maplen && (mp->m_mode & LANGMAP) != 0) {
+                gotchars(s, STRLEN(s));
+              }
 
               if (save_m_noremap != REMAP_YES)
                 noremap = save_m_noremap;

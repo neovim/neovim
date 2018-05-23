@@ -15712,6 +15712,9 @@ static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
   rettv->vval.v_list = list;
   tv_list_ref(list);
   char *const dirs = stdpaths_get_xdg_var(xdg);
+  if (dirs == NULL) {
+    return;
+  }
   do {
     size_t dir_len;
     const char *dir;
@@ -15737,15 +15740,15 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;  // Type error; errmsg already given.
   }
 
-  if (strcmp(p, "config") == 0) {
+  if (strequal(p, "config")) {
     rettv->vval.v_string = (char_u *)get_xdg_home(kXDGConfigHome);
-  } else if (strcmp(p, "data") == 0) {
+  } else if (strequal(p, "data")) {
     rettv->vval.v_string = (char_u *)get_xdg_home(kXDGDataHome);
-  } else if (strcmp(p, "cache") == 0) {
+  } else if (strequal(p, "cache")) {
     rettv->vval.v_string = (char_u *)get_xdg_home(kXDGCacheHome);
-  } else if (strcmp(p, "config_dirs") == 0) {
+  } else if (strequal(p, "config_dirs")) {
     get_xdg_var_list(kXDGConfigDirs, rettv);
-  } else if (strcmp(p, "data_dirs") == 0) {
+  } else if (strequal(p, "data_dirs")) {
     get_xdg_var_list(kXDGDataDirs, rettv);
   } else {
     EMSG2(_("E6100: \"%s\" is not a valid stdpath"), p);
@@ -17039,7 +17042,8 @@ static void timer_stop(timer_T *timer)
   time_watcher_close(&timer->tw, timer_close_cb);
 }
 
-// invoked on next event loop tick, so queue is empty
+// This will be run on the main loop after the last timer_due_cb, so at this
+// point it is safe to free the callback.
 static void timer_close_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;

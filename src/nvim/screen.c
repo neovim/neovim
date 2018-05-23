@@ -4898,12 +4898,10 @@ win_redr_status_matches (
   xfree(buf);
 }
 
-/*
- * Redraw the status line of window wp.
- *
- * If inversion is possible we use it. Else '=' characters are used.
- */
-void win_redr_status(win_T *wp)
+/// Redraw the status line of window `wp`.
+///
+/// If inversion is possible we use it. Else '=' characters are used.
+static void win_redr_status(win_T *wp)
 {
   int row;
   char_u      *p;

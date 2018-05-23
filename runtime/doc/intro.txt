@@ -655,9 +655,6 @@ Q			Switch to "Ex" mode.  This is a bit like typing ":"
 			Vim will enter this mode by default if it's invoked as
 			"ex" on the command-line.
 			Use the ":vi" command |:visual| to exit "Ex" mode.
-			Note: In older versions of Vim "Q" formatted text,
-			that is now done with |gq|.  But if you use the
-			|vimrc_example.vim| script "Q" works like "gq".
 
 					*gQ*
 gQ			Switch to "Ex" mode like with "Q", but really behave

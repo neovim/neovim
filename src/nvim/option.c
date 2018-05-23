@@ -913,27 +913,24 @@ void set_number_default(char *name, long val)
 }
 
 #if defined(EXITFREE)
-/*
- * Free all options.
- */
+/// Free all options.
 void free_all_options(void)
 {
-  int i;
-
-  for (i = 0; options[i].fullname; i++) {
+  for (int i = 0; options[i].fullname; i++) {
     if (options[i].indir == PV_NONE) {
-      /* global option: free value and default value. */
-      if (options[i].flags & P_ALLOCED && options[i].var != NULL)
+      // global option: free value and default value.
+      if ((options[i].flags & P_ALLOCED) && options[i].var != NULL) {
         free_string_option(*(char_u **)options[i].var);
-      if (options[i].flags & P_DEF_ALLOCED)
+      }
+      if (options[i].flags & P_DEF_ALLOCED) {
         free_string_option(options[i].def_val[VI_DEFAULT]);
-    } else if (options[i].var != VAR_WIN
-               && (options[i].flags & P_STRING))
-      /* buffer-local option: free global value */
+      }
+    } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
+      // buffer-local option: free global value
       free_string_option(*(char_u **)options[i].var);
+    }
   }
 }
-
 #endif
 
 
@@ -6583,15 +6580,13 @@ static void paste_option_changed(void)
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
 void vimrc_found(char_u *fname, char_u *envname)
 {
-  char_u      *p;
-
-  if (fname != NULL) {
-    p = (char_u *)vim_getenv((char *)envname);
+  if (fname != NULL && envname != NULL) {
+    char *p = vim_getenv((char *)envname);
     if (p == NULL) {
-      /* Set $MYVIMRC to the first vimrc file found. */
-      p = (char_u *)FullName_save((char *)fname, FALSE);
+      // Set $MYVIMRC to the first vimrc file found.
+      p = FullName_save((char *)fname, false);
       if (p != NULL) {
-        vim_setenv((char *)envname, (char *)p);
+        vim_setenv((char *)envname, p);
         xfree(p);
       }
     } else {
