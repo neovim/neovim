@@ -295,9 +295,17 @@ if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
 
-  # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
-  # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
-  add_definitions(-D_GNU_SOURCE)
+  # For libuv pthread support it is essential that pthread.h defines
+  # PTHREAD_BARRIER_SERIAL_THREAD which will happen only if __USE_XOPEN2K is
+  # defined which happens with _POSIX_C_SOURCE set to 200112 or greater.
+  # _ISOC99_SOURCE and _POSIX_SOURCE are just-in-case here.
+  #
+  # For strcasecmp __USE_MISC is needed which implies _DEFAULT_SOURCE. This also
+  # defines both _POSIX_SOURCE and _POSIX_C_SOURCE, so latter is just-in-case
+  # now too.
+  add_definitions(
+    -D_ISOC99_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112
+    -D_DEFAULT_SOURCE)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "SunOS")

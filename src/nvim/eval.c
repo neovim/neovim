@@ -270,8 +270,7 @@ struct funccall_S {
   ScopeDictDictItem l_vars_var;  ///< Variable for l: scope.
   dict_T l_avars;  ///< a: argument variables.
   ScopeDictDictItem l_avars_var;  ///< Variable for a: scope.
-  list_T l_varlist;  ///< List for a:000.
-  listitem_T l_listitems[MAX_FUNC_ARGS];  ///< List items for a:000.
+  TvStaticArgList l_varlist;  ///< List for a:000.
   typval_T *rettv;  ///< Return value.
   linenr_T breakpoint;  ///< Next line with breakpoint or zero.
   int dbg_tick;  ///< Debug_tick when breakpoint was set.
@@ -615,17 +614,8 @@ void eval_init(void)
 #if defined(EXITFREE)
 void eval_clear(void)
 {
-  struct vimvar   *p;
-
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
-    p = &vimvars[i];
-    if (p->vv_di.di_tv.v_type == VAR_STRING) {
-      xfree(p->vv_str);
-      p->vv_str = NULL;
-    } else if (p->vv_di.di_tv.v_type == VAR_LIST) {
-      tv_list_unref(p->vv_list);
-      p->vv_list = NULL;
-    }
+    tv_clear(&vimvars[i].vv_di.di_tv);
   }
   hash_clear(&vimvarht);
   hash_init(&vimvarht);    /* garbage_collect() will access it */
@@ -2520,7 +2510,7 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
          * list being used in "tv". */
         fi->fi_list = l;
         tv_list_watch_add(l, &fi->fi_lw);
-        fi->fi_lw.lw_item = tv_list_first(l);
+        fi->fi_lw.lw_idx = 0;
       }
     }
   }
@@ -2532,21 +2522,23 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
 
 // TODO(ZyX-I): move to eval/ex_cmds
 
-/*
- * Use the first item in a ":for" list.  Advance to the next.
- * Assign the values to the variable (list).  "arg" points to the first one.
- * Return TRUE when a valid item was found, FALSE when at end of list or
- * something wrong.
- */
-bool next_for_item(void *fi_void, char_u *arg)
+/// Assign current item in :for list to variables and advance to next one
+///
+/// @param[in,out]  fi_void  Information about the current `:for` loop.
+/// @param[in]  arg  Variables to assign to, points to `:for` argument.
+///
+/// @return true when a valid item was found, false in case of error or when
+///         there are no more items.
+bool next_for_item(void *const fi_void, char_u *const arg)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  forinfo_T *fi = (forinfo_T *)fi_void;
+  forinfo_T *const fi = (forinfo_T *)fi_void;
 
-  listitem_T *item = fi->fi_lw.lw_item;
+  listitem_T *const item = tv_list_find(fi->fi_list, fi->fi_lw.lw_idx);
   if (item == NULL) {
     return false;
   } else {
-    fi->fi_lw.lw_item = TV_LIST_ITEM_NEXT(fi->fi_list, item);
+    fi->fi_lw.lw_idx++;
     return (ex_let_vars(arg, TV_LIST_ITEM_TV(item), true,
                         fi->fi_semicolon, fi->fi_varcount, NULL) == OK);
   }
@@ -2888,7 +2880,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
       }
       lp->ll_li = li;
       lp->ll_n1++;
-      if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
+      if (li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
         break;
       } else {
         last_li = lp->ll_li;
@@ -5206,7 +5198,7 @@ bool garbage_collect(bool testing)
 /// @note This function may only be called from garbage_collect().
 ///
 /// @param copyID Free lists/dictionaries that don't have this ID.
-/// @return true, if something was freed.
+/// @return true if something was freed.
 static int free_unref_items(int copyID)
 {
   dict_T *dd, *dd_next;
@@ -8463,7 +8455,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 /*
  * Implementation of map() and filter().
  */
-static void filter_map(typval_T *argvars, typval_T *rettv, int map)
+static void filter_map(typval_T *argvars, typval_T *rettv, bool map)
 {
   typval_T    *expr;
   list_T      *l = NULL;
@@ -8473,14 +8465,13 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   dict_T      *d = NULL;
   typval_T save_val;
   typval_T save_key;
-  int rem = false;
+  bool rem = false;
   int todo;
   char_u *ermsg = (char_u *)(map ? "map()" : "filter()");
   const char *const arg_errmsg = (map
                                   ? N_("map() argument")
                                   : N_("filter() argument"));
   int save_did_emsg;
-  int idx = 0;
 
   if (argvars[0].v_type == VAR_LIST) {
     tv_copy(&argvars[0], rettv);
@@ -8549,23 +8540,33 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     } else {
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-      for (listitem_T *li = tv_list_first(l); li != NULL;) {
-        if (map
-            && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
-                             TV_TRANSLATE)) {
-          break;
+      if (map) {
+        TV_LIST_ITER(l, li, {
+          if (tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
+                            TV_TRANSLATE)) {
+            break;
+          }
+          vimvars[VV_KEY].vv_nr = (varnumber_T)TV_LIST_ITER_IDX(li);
+          if (filter_map_one(TV_LIST_ITEM_TV(li), expr, true, &rem) == FAIL
+              || did_emsg) {
+            break;
+          }
+        });
+      } else {
+        varnumber_T idx = 0;
+        for (listitem_T *li = tv_list_first(l); li != NULL;) {
+          vimvars[VV_KEY].vv_nr = idx;
+          if (filter_map_one(TV_LIST_ITEM_TV(li), expr, false, &rem) == FAIL
+              || did_emsg) {
+            break;
+          }
+          if (rem) {
+            li = tv_list_item_remove(l, li);
+          } else {
+            li = TV_LIST_ITEM_NEXT(l, li);
+          }
+          idx++;
         }
-        vimvars[VV_KEY].vv_nr = idx;
-        if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
-            || did_emsg) {
-          break;
-        }
-        if (!map && rem) {
-          li = tv_list_item_remove(l, li);
-        } else {
-          li = TV_LIST_ITEM_NEXT(l, li);
-        }
-        idx++;
       }
     }
 
@@ -8576,50 +8577,62 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   }
 }
 
-static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
+static inline int filter_map_one(typval_T *const tv, typval_T *const expr,
+                                 const bool map, bool *const remp)
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_ALWAYS_INLINE
 {
   typval_T rettv;
-  typval_T argv[3];
   int retval = FAIL;
-  int dummy;
 
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
-  argv[0] = vimvars[VV_KEY].vv_tv;
-  argv[1] = vimvars[VV_VAL].vv_tv;
-  if (expr->v_type == VAR_FUNC) {
-    const char_u *const s = expr->vval.v_string;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
-      goto theend;
+  switch (expr->v_type) {
+    case VAR_PARTIAL:
+    case VAR_FUNC: {
+      int dummy;
+      typval_T argv[2];
+      argv[0] = vimvars[VV_KEY].vv_tv;
+      argv[1] = vimvars[VV_VAL].vv_tv;
+      partial_T *const partial = (expr->v_type == VAR_PARTIAL
+                                  ? expr->vval.v_partial
+                                  : NULL);
+      const char_u *const s = (expr->v_type == VAR_PARTIAL
+                               ? partial_name(partial)
+                               : expr->vval.v_string);
+      if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
+                    0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+        goto theend;
+      }
+      break;
     }
-  } else if (expr->v_type == VAR_PARTIAL) {
-    partial_T *partial = expr->vval.v_partial;
+    case VAR_NUMBER:
+    case VAR_STRING:
+    case VAR_SPECIAL:
+    case VAR_LIST:
+    case VAR_DICT:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN: {
+      char buf[NUMBUFLEN];
+      const char *s = tv_get_string_buf_chk(expr, buf);
+      if (s == NULL) {
+        goto theend;
+      }
+      s = (const char *)skipwhite((const char_u *)s);
+      if (eval1((char_u **)&s, &rettv, true) == FAIL) {
+        goto theend;
+      }
 
-    const char_u *const s = partial_name(partial);
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
-      goto theend;
-    }
-  } else {
-    char buf[NUMBUFLEN];
-    const char *s = tv_get_string_buf_chk(expr, buf);
-    if (s == NULL) {
-      goto theend;
-    }
-    s = (const char *)skipwhite((const char_u *)s);
-    if (eval1((char_u **)&s, &rettv, true) == FAIL) {
-      goto theend;
-    }
-
-    if (*s != NUL) {  // check for trailing chars after expr
-      emsgf(_(e_invexpr2), s);
-      goto theend;
+      if (*s != NUL) {  // check for trailing chars after expr
+        emsgf(_(e_invexpr2), s);
+        goto theend;
+      }
+      break;
     }
   }
   if (map) {
     // map(): replace the list item value.
     tv_clear(tv);
-    rettv.v_lock = 0;
+    rettv.v_lock = VAR_UNLOCKED;
     *tv = rettv;
   } else {
     bool error = false;
@@ -12411,7 +12424,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   if (type == kSomeMatchStrPos && l == NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
-    tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
+    tv_list_item_remove(ret_l, tv_list_find(ret_l, 1));
   }
 
 theend:
@@ -13324,9 +13337,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
         // Remove one item, return its value.
-        tv_list_drop_items(l, item, item);
-        *rettv = *TV_LIST_ITEM_TV(item);
-        xfree(item);
+        *rettv = tv_list_pop_item(l, item);
       } else {
         // Remove range of items, return list with values.
         end = tv_get_number_chk(&argvars[2], &error);
@@ -21242,9 +21253,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   tv_dict_add(&fc->l_avars, v);
   v->di_tv.v_type = VAR_LIST;
   v->di_tv.v_lock = VAR_FIXED;
-  v->di_tv.vval.v_list = &fc->l_varlist;
-  tv_list_init_static(&fc->l_varlist);
-  tv_list_set_lock(&fc->l_varlist, VAR_FIXED);
+  v->di_tv.vval.v_list = (list_T *)&fc->l_varlist;
+  tv_list_init_static_arglist(&fc->l_varlist);
 
   // Set a:firstline to "firstline" and a:lastline to "lastline".
   // Set a:name to named arguments.
@@ -21292,9 +21302,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     }
 
     if (ai >= 0 && ai < MAX_FUNC_ARGS) {
-      tv_list_append(&fc->l_varlist, &fc->l_listitems[ai]);
-      *TV_LIST_ITEM_TV(&fc->l_listitems[ai]) = argvars[i];
-      TV_LIST_ITEM_TV(&fc->l_listitems[ai])->v_lock = VAR_FIXED;
+      typval_T tv = argvars[i];
+      tv.v_lock = VAR_FIXED;
+      tv_list_append_owned_tv((list_T *)&fc->l_varlist, tv);
     }
   }
 
@@ -21496,7 +21506,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     });
 
     // Make a copy of the a:000 items, since we didn't do that above.
-    TV_LIST_ITER(&fc->l_varlist, li, {
+    TV_LIST_ITER((list_T *)&fc->l_varlist, li, {
       tv_copy(TV_LIST_ITEM_TV(li), TV_LIST_ITEM_TV(li));
     });
   }
@@ -21583,7 +21593,7 @@ free_funccal (
 
   // Free the a:000 variables if they were allocated.
   if (free_val) {
-    TV_LIST_ITER(&fc->l_varlist, li, {
+    TV_LIST_ITER((list_T *)&fc->l_varlist, li, {
       tv_clear(TV_LIST_ITEM_TV(li));
     });
   }

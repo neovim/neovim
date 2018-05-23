@@ -7,11 +7,13 @@ ifeq ($(OS),Windows_NT)
 else
   NVIM_PRG ?= ../../../build/bin/nvim
 endif
-ROOT := ../../..
+ROOT := $(abspath ../../..)
+BUILD_DIR := $(abspath $(dir $(NVIM_PRG))/..)
+NVIM_PRG_ABS := $(abspath $(NVIM_PRG))
+CTDIR := $(BUILD_DIR)/oldtests
+CTLOG := $(CTDIR)/test.log
 
 export SHELL := sh
-export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
            test14.out             \
@@ -148,9 +150,11 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) newtests report
+nongui: $(SCRIPTS) newtests
+	$(MAKE) report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
+gui: $(SCRIPTS) $(SCRIPTS_GUI) newtests
+	$(MAKE) report
 
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
@@ -159,76 +163,47 @@ gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
 report:
 	@echo
 	@echo 'Test results:'
-	@/bin/sh -c "if test -f test.log; then \
-	                 cat test.log;         \
-	                 echo TEST FAILURE;    \
-	                 exit 1;               \
-	             else                      \
-	                 echo ALL DONE;        \
-	             fi"
+	@/bin/sh runnvim.sh --report $(ROOT) $(BUILD_DIR)
 
-test1.out: $(NVIM_PRG)
+test1.out: nolog $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
+$(SCRIPTS) $(SCRIPTS_GUI): test1.out
 
-RM_ON_RUN   := test.out X* viminfo
+$(NEW_TESTS): test1.out
+
 RM_ON_START := test.ok
-RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
+RUN_VIM     := $(TOOL) $(NVIM_PRG_ABS) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
 clean:
-	-rm -rf *.out          \
-	        *.failed       \
-	        *.res          \
-	        *.rej          \
-	        *.orig         \
-	        *.tlog         \
-	        test.log       \
-	        messages       \
-	        $(RM_ON_RUN)   \
-	        $(RM_ON_START) \
-	        valgrind.*     \
-	        .*.swp         \
-	        .*.swo         \
-	        .gdbinit       \
-	        $(TMPDIR)      \
-	        del
+	-rm -rf $(CTDIR)
 
 test1.out: .gdbinit test1.in
 	@echo "[OLDTEST-PREP] Running test1"
-	@rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
-	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
-	@rm -f wrongtermsize
-	@rm -rf X* viminfo
+	@/bin/sh runnvim.sh $(ROOT) $(BUILD_DIR) $(NVIM_PRG_ABS) $* \
+	  $(RUN_VIM) $*.in
+	@! test -e wrongtermsize
 
 %.out: %.in .gdbinit
 	@echo "[OLDESTTEST] Running" $*
-	@rm -rf $*.failed test.ok $(RM_ON_RUN)
-	@mkdir -p $(TMPDIR)
-	@cp $*.ok test.ok
-	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
-	@rm -rf X* test.ok viminfo
+	@/bin/sh runnvim.sh \
+	  --oldesttest $(ROOT) $(BUILD_DIR) $(NVIM_PRG_ABS) $* \
+	  $(RUN_VIM) $*.in
 
 test49.out: test49.vim
 
 nolog:
-	@echo "[OLDTEST-PREP] Removing test.log and messages"
-	@rm -f test.log messages
+	@echo "[OLDTEST-PREP] Removing test.log"
+	@rm -f $(CTLOG)
 
 
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG_ABS) -u unix.vim -U NONE --headless --noplugin
 
-newtests: newtestssilent
-	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
-	                 cat messages && cat test.log;                      \
-	             fi"
-
-newtestssilent: $(NEW_TESTS)
+newtests: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
-	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+	@/bin/sh runnvim.sh $(ROOT) $(BUILD_DIR) $(NVIM_PRG_ABS) $* \
+	  $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim

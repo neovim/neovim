@@ -55,10 +55,6 @@ ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
   $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || rm build/.ran-*)
 endif
 
-# For use where we want to make sure only a single job is run.  This does issue 
-# a warning, but we need to keep SCRIPTS argument.
-SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
-
 all: nvim
 
 nvim: build/.ran-cmake deps
@@ -92,11 +88,11 @@ endif
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim helptags
-	+$(SINGLE_MAKE) -C src/nvim/testdir clean
+	+$(MAKE) -C src/nvim/testdir clean
 ifeq ($(strip $(TEST_FILE)),)
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
+	+$(MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
 else
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
+	+$(MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
 endif
 
 helptags: | nvim

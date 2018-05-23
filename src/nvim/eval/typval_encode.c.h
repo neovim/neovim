@@ -672,7 +672,7 @@ typval_encode_stop_converting_one_item:
     switch (cur_mpsv->type) {
       case kMPConvDict: {
         if (!cur_mpsv->data.d.todo) {
-          (void)_mp_pop(mpstack);
+          _mp_drop(mpstack, 1);
           cur_mpsv->data.d.dict->dv_copyID = cur_mpsv->saved_copyID;
           TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, *cur_mpsv->data.d.dictp);
           continue;
@@ -696,7 +696,7 @@ typval_encode_stop_converting_one_item:
       }
       case kMPConvList: {
         if (cur_mpsv->data.l.li == NULL) {
-          (void)_mp_pop(mpstack);
+          _mp_drop(mpstack, 1);
           tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_LIST_END(cur_mpsv->tv);
           continue;
@@ -711,7 +711,7 @@ typval_encode_stop_converting_one_item:
       }
       case kMPConvPairs: {
         if (cur_mpsv->data.l.li == NULL) {
-          (void)_mp_pop(mpstack);
+          _mp_drop(mpstack, 1);
           tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, TYPVAL_ENCODE_NODICT_VAR);
           continue;
@@ -809,7 +809,7 @@ typval_encode_stop_converting_one_item:
           }
           case kMPConvPartialEnd: {
             TYPVAL_ENCODE_CONV_FUNC_END(tv);
-            (void)_mp_pop(mpstack);
+            _mp_drop(mpstack, 1);
             break;
           }
         }
@@ -817,7 +817,7 @@ typval_encode_stop_converting_one_item:
       }
       case kMPConvPartialList: {
         if (!cur_mpsv->data.a.todo) {
-          (void)_mp_pop(mpstack);
+          _mp_drop(mpstack, 1);
           TYPVAL_ENCODE_CONV_LIST_END(NULL);
           continue;
         } else if (cur_mpsv->data.a.argv != cur_mpsv->data.a.arg) {

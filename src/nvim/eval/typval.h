@@ -20,9 +20,13 @@
 #include "nvim/gettext.h"
 #include "nvim/message.h"
 #include "nvim/macros.h"
+#include "nvim/lib/kvec.h"
 #ifdef LOG_LIST_ACTIONS
 # include "nvim/memory.h"
 #endif
+
+/// Maximum number of function arguments
+enum { MAX_FUNC_ARGS = 20 };
 
 /// Type used for VimL VAR_NUMBER values
 typedef int64_t varnumber_T;
@@ -145,56 +149,94 @@ typedef enum {
 } ScopeType;
 
 /// Structure to hold an item of a list
-typedef struct listitem_S listitem_T;
-
-struct listitem_S {
-  listitem_T  *li_next;  ///< Next item in list.
-  listitem_T  *li_prev;  ///< Previous item in list.
-  typval_T li_tv;  ///< Item value.
-};
+typedef typval_T listitem_T;
 
 /// Structure used by those that are using an item in a list
 typedef struct listwatch_S listwatch_T;
 
 struct listwatch_S {
-  listitem_T *lw_item;  ///< Item being watched.
+  long lw_idx;  ///< Item being watched.
   listwatch_T *lw_next;  ///< Next watcher.
 };
 
+/// Structure holding actual list data
+typedef kvec_withinit_t(listitem_T, 4) TvListVector;
+
+///< Common list header, shared with various static lists
+#define _LIST_HEADER \
+  int lv_refcount;  /* Reference count. */ \
+  VarLockStatus lv_lock;  /* Zero, VAR_LOCKED, VAR_FIXED. */ \
+  int lv_copyID;  /* ID used by deepcopy(). */ \
+  listwatch_T *lv_watch;  /* First watcher, NULL if none. */ \
+  list_T *lv_copylist;  /* Copied list used by deepcopy(). */ \
+  list_T *lv_used_next;  /* Next list in used lists list. */ \
+  list_T *lv_used_prev  /* Previous list in used lists list. */
+
 /// Structure to hold info about a list
 struct listvar_S {
-  listitem_T *lv_first;  ///< First item, NULL if none.
-  listitem_T *lv_last;  ///< Last item, NULL if none.
-  int lv_refcount;  ///< Reference count.
-  int lv_len;  ///< Number of items.
-  listwatch_T *lv_watch;  ///< First watcher, NULL if none.
-  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
-  listitem_T *lv_idx_item;  ///< When not NULL item at index "lv_idx".
-  int lv_copyID;  ///< ID used by deepcopy().
-  list_T *lv_copylist;  ///< Copied list used by deepcopy().
-  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
-  list_T *lv_used_next;  ///< next list in used lists list.
-  list_T *lv_used_prev;  ///< Previous list in used lists list.
+  _LIST_HEADER;
+  TvListVector lv_vec;  ///< Actual list data.
 };
+
+/// Structure holding actual staticList10_T list data
+typedef kvec_withinit_t(listitem_T, 10) TvStatic10ListVector;
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.
 typedef struct {
-  list_T sl_list;  // must be first
-  listitem_T sl_items[10];
+  _LIST_HEADER;
+  TvStatic10ListVector sl_vec;
 } staticList10_T;
 
+/// Static initializer for staticList10_T
+///
+/// Does not initialize vector correctly though.
 #define TV_LIST_STATIC10_INIT { \
-    .sl_list = { \
-      .lv_first = NULL, \
-      .lv_last = NULL, \
-      .lv_refcount = 0, \
-      .lv_len = 0, \
-      .lv_watch = NULL, \
-      .lv_idx_item = NULL, \
-      .lv_lock = VAR_FIXED, \
-      .lv_used_next = NULL, \
-      .lv_used_prev = NULL, \
-    }, \
+    .lv_refcount = 0, \
+    .lv_lock = VAR_FIXED, \
+    .lv_copyID = 0, \
+    .lv_watch = NULL, \
+    .lv_used_next = NULL, \
+    .lv_used_prev = NULL, \
+    .sl_vec = KV_INITIAL_VALUE, \
+  }
+
+/// Initializer for staticList10_T
+///
+/// Initializes correctly everything, but cannot be used in some cases.
+///
+/// @param[in]  sl  Pointer to staticList10_T structure, used to determine
+///                 vector initial value.
+#define TV_LIST_STATIC10_FULL_INIT(sl) { \
+    .lv_refcount = 0, \
+    .lv_lock = VAR_FIXED, \
+    .lv_copyID = 0, \
+    .lv_watch = NULL, \
+    .lv_used_next = NULL, \
+    .lv_used_prev = NULL, \
+    .sl_vec = KVI_INITIAL_VALUE(sl->sl_vec), \
+  }
+
+/// Structure holding actual TvStaticArgList list data
+typedef kvec_withinit_t(listitem_T, MAX_FUNC_ARGS) TvStaticArgListVector;
+
+// Static list with  items. Use tv_list_init_static10() to initialize.
+typedef struct {
+  _LIST_HEADER;
+  TvStaticArgListVector al_vec;
+} TvStaticArgList;
+
+/// Initializer for TvStaticArgList
+///
+/// @param[in]  al  Pointer to TvStaticArgList structure, used to determine
+///                 vector initial value.
+#define TV_STATIC_ARG_LIST_FULL_INIT(al) { \
+    .lv_refcount = DO_NOT_FREE_CNT, \
+    .lv_lock = VAR_FIXED, \
+    .lv_copyID = 0, \
+    .lv_watch = NULL, \
+    .lv_used_next = NULL, \
+    .lv_used_prev = NULL, \
+    .al_vec = KVI_INITIAL_VALUE(al->al_vec), \
   }
 
 #define TV_DICTITEM_STRUCT(...) \
@@ -281,9 +323,6 @@ struct ufunc {
                                  ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
-/// Maximum number of function arguments
-#define MAX_FUNC_ARGS   20
-
 struct partial_S {
   int pt_refcount;  ///< Reference count.
   char_u *pt_name;  ///< Function name; when NULL use pt_func->name.
@@ -323,7 +362,8 @@ typedef struct {
   uintptr_t l;  ///< List log entry belongs to.
   uintptr_t li1;  ///< First list item log entry belongs to, if applicable.
   uintptr_t li2;  ///< Second list item log entry belongs to, if applicable.
-  int len;  ///< List length when log entry was created.
+  size_t len;  ///< List length when log entry was created.
+  size_t capacity;  ///< List vector capacity when log entry was created.
   const char *action;  ///< Logged action.
 } ListLogEntry;
 
@@ -396,7 +436,8 @@ static inline void list_log(const list_T *const l,
     .l = (uintptr_t)l,
     .li1 = (uintptr_t)li1,
     .li2 = (uintptr_t)li2,
-    .len = (l == NULL ? 0 : l->lv_len),
+    .len = (l == NULL ? 0 : kv_size(l->lv_vec)),
+    .capacity = kv_max(l->lv_vec),
     .action = action,
   };
 }
@@ -413,6 +454,9 @@ static inline void list_log(const list_T *const l,
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
+static inline void tv_list_ref(list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE;
+
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
@@ -427,7 +471,7 @@ static inline void tv_list_ref(list_T *const l)
 }
 
 static inline VarLockStatus tv_list_locked(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get list lock status
 ///
@@ -442,14 +486,16 @@ static inline VarLockStatus tv_list_locked(const list_T *const l)
   return l->lv_lock;
 }
 
+static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
+  REAL_FATTR_ALWAYS_INLINE;
+
 /// Set list lock status
 ///
 /// May only “set” VAR_FIXED for NULL lists.
 ///
 /// @param[out]  l  List to modify.
 /// @param[in]  lock  New lock status.
-static inline void tv_list_set_lock(list_T *const l,
-                                    const VarLockStatus lock)
+static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
 {
   if (l == NULL) {
     assert(lock == VAR_FIXED);
@@ -458,21 +504,22 @@ static inline void tv_list_set_lock(list_T *const l,
   l->lv_lock = lock;
 }
 
+static inline void tv_list_set_copyid(list_T *const l, const int copyid)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
+
 /// Set list copyID
 ///
 /// Does not expect NULL list, be careful.
 ///
 /// @param[out]  l  List to modify.
 /// @param[in]  copyid  New copyID.
-static inline void tv_list_set_copyid(list_T *const l,
-                                      const int copyid)
-  FUNC_ATTR_NONNULL_ALL
+static inline void tv_list_set_copyid(list_T *const l, const int copyid)
 {
   l->lv_copyID = copyid;
 }
 
 static inline int tv_list_len(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get the number of items in a list
 ///
@@ -483,11 +530,12 @@ static inline int tv_list_len(const list_T *const l)
   if (l == NULL) {
     return 0;
   }
-  return l->lv_len;
+  return (int)kv_size(l->lv_vec);
 }
 
 static inline int tv_list_copyid(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Get list copyID
 ///
@@ -500,7 +548,8 @@ static inline int tv_list_copyid(const list_T *const l)
 }
 
 static inline list_T *tv_list_latest_copy(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Get latest list copy
 ///
@@ -515,7 +564,7 @@ static inline list_T *tv_list_latest_copy(const list_T *const l)
 }
 
 static inline int tv_list_uidx(const list_T *const l, int n)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Normalize index: that is, return either -1 or non-negative index
 ///
@@ -538,7 +587,7 @@ static inline int tv_list_uidx(const list_T *const l, int n)
 }
 
 static inline bool tv_list_has_watchers(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Check whether list has watchers
 ///
@@ -553,7 +602,7 @@ static inline bool tv_list_has_watchers(const list_T *const l)
 }
 
 static inline listitem_T *tv_list_first(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get first list item
 ///
@@ -562,16 +611,16 @@ static inline listitem_T *tv_list_first(const list_T *const l)
 /// @return List item or NULL in case of an empty list.
 static inline listitem_T *tv_list_first(const list_T *const l)
 {
-  if (l == NULL) {
+  if (tv_list_len(l) == 0) {
     list_log(l, NULL, NULL, "first");
     return NULL;
   }
-  list_log(l, l->lv_first, NULL, "first");
-  return l->lv_first;
+  list_log(l, &kv_A(l->lv_vec, 0), NULL, "first");
+  return &kv_A(l->lv_vec, 0);
 }
 
 static inline listitem_T *tv_list_last(const list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get last list item
 ///
@@ -580,12 +629,57 @@ static inline listitem_T *tv_list_last(const list_T *const l)
 /// @return List item or NULL in case of an empty list.
 static inline listitem_T *tv_list_last(const list_T *const l)
 {
-  if (l == NULL) {
+  if (tv_list_len(l) == 0) {
     list_log(l, NULL, NULL, "last");
     return NULL;
   }
-  list_log(l, l->lv_last, NULL, "last");
-  return l->lv_last;
+  list_log(l, &kv_Z(l->lv_vec, 0), NULL, "last");
+  return &kv_Z(l->lv_vec, 0);
+}
+
+static inline long tv_list_idx_of_item(const list_T *const l,
+                                       const listitem_T *const item)
+  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_PURE;
+
+/// Locate item in a list and return its index
+///
+/// @param[in]  l  List to search.
+/// @param[in]  item  Item to search for.
+///
+/// @return Index of an item or -1 if item is not in the list.
+static inline long tv_list_idx_of_item(const list_T *const l,
+                                       const listitem_T *const item)
+{
+  if (l == NULL
+      || item < tv_list_first(l)
+      || item > tv_list_last(l)) {
+    return -1;
+  }
+  return (long)(item - tv_list_first(l));
+}
+
+static inline listitem_T *tv_list_find(const list_T *const l, int n)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
+
+/// Locate item with a given index in a list and return it
+///
+/// @param[in]  l  List to index.
+/// @param[in]  n  Index. Negative index is counted from the end, -1 is the last
+///                item.
+///
+/// @return Item at the given index or NULL if `n` is out of range.
+static inline listitem_T *tv_list_find(const list_T *const l, int n)
+{
+  if (l == NULL) {
+    return NULL;
+  }
+
+  n = tv_list_uidx(l, n);
+  if (n == -1) {
+    return NULL;
+  }
+
+  return &kv_A(l->lv_vec, n);
 }
 
 static inline long tv_dict_len(const dict_T *const d)
@@ -642,6 +736,28 @@ extern const char *const tv_empty_string;
 /// Specifies that free_unref_items() function has (not) been entered
 extern bool tv_in_free_unref_items;
 
+/// Index variable inside one of #TV_LIST_ITER* macros
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_IDX(li) li##_i_
+
+/// List variable inside one of #TV_LIST_ITER* macros
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_LIST(li) li##_l_
+
+/// Remove list element while iterating over a list
+///
+/// @warning Do not use other means to modify a list while iterating over it.
+///
+/// @param  li  Name of the variable with current listitem_T entry.
+#define TV_LIST_ITER_ITEM_REMOVE(li) \
+    do { \
+      tv_clear(TV_LIST_ITEM_TV(li)); \
+      tv_list_drop_items(TV_LIST_ITER_LIST(li), li, li); \
+      TV_LIST_ITER_IDX(li)--; \
+    } while (0)
+
 /// Iterate over a list
 ///
 /// @param  modifier  Modifier: expected to be const or nothing, volatile should
@@ -651,11 +767,14 @@ extern bool tv_in_free_unref_items;
 /// @param  code  Cycle body.
 #define _TV_LIST_ITER_MOD(modifier, l, li, code) \
     do { \
-      modifier list_T *const l_ = (l); \
-      list_log(l_, NULL, NULL, "iter" #modifier); \
-      if (l_ != NULL) { \
-        for (modifier listitem_T *li = l_->lv_first; \
-             li != NULL; li = li->li_next) { \
+      modifier list_T *const TV_LIST_ITER_LIST(li) = (l); \
+      list_log(TV_LIST_ITER_LIST(li), NULL, NULL, "iter" #modifier); \
+      if (TV_LIST_ITER_LIST(li) != NULL) { \
+        for (size_t TV_LIST_ITER_IDX(li) = 0; \
+             TV_LIST_ITER_IDX(li) < kv_size(TV_LIST_ITER_LIST(li)->lv_vec); \
+             TV_LIST_ITER_IDX(li)++) { \
+          modifier listitem_T *const li = &kv_A(TV_LIST_ITER_LIST(li)->lv_vec, \
+                                                TV_LIST_ITER_IDX(li)); \
           code \
         } \
       } \
@@ -691,7 +810,7 @@ extern bool tv_in_free_unref_items;
 /// @param[in]  li  List item to get typval_T from, must not be NULL.
 ///
 /// @return Pointer to typval_T.
-#define TV_LIST_ITEM_TV(li) (&(li)->li_tv)
+#define TV_LIST_ITEM_TV(li) ((typval_T *)li)
 
 /// Get next list item given the current one
 ///
@@ -699,7 +818,7 @@ extern bool tv_in_free_unref_items;
 /// @param[in]  li  List item to get typval_T from.
 ///
 /// @return Pointer to the next item or NULL.
-#define TV_LIST_ITEM_NEXT(l, li) ((li)->li_next)
+#define TV_LIST_ITEM_NEXT(l, li) (li == &kv_Z(l->lv_vec, 0) ? NULL : li + 1)
 
 /// Get previous list item given the current one
 ///
@@ -707,10 +826,7 @@ extern bool tv_in_free_unref_items;
 /// @param[in]  li  List item to get typval_T from.
 ///
 /// @return Pointer to the previous item or NULL.
-#define TV_LIST_ITEM_PREV(l, li) ((li)->li_prev)
-// List argument is not used currently, but it is a must for lists implemented
-// as a pair (size(in list), array) without terminator - basically for lists on
-// top of kvec.
+#define TV_LIST_ITEM_PREV(l, li) (li == &kv_A(l->lv_vec, 0) ? NULL : li - 1)
 
 /// Iterate over a dictionary
 ///

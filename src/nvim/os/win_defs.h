@@ -71,10 +71,6 @@ typedef int mode_t;
 # endif
 #endif
 
-#ifndef O_NOFOLLOW
-# define O_NOFOLLOW 0
-#endif
-
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 # define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif

@@ -72,19 +72,23 @@ typedef struct hashtable_S {
 
 /// Iterate over a hashtab
 ///
+/// May handle a case when hash items are removed while iterating over hashtab,
+/// but only in case hash was locked before that.
+///
 /// @param[in]  ht  Hashtab to iterate over.
 /// @param  hi  Name of the variable with current hashtab entry.
 /// @param  code  Cycle body.
 #define HASHTAB_ITER(ht, hi, code) \
     do { \
       hashtab_T *const hi##ht_ = (ht); \
-      size_t hi##todo_ = hi##ht_->ht_used; \
-      for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
+      size_t hi##done_ = 0; \
+      for (hashitem_T *hi = hi##ht_->ht_array; hi##done_ < hi##ht_->ht_used; \
+           hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
           { \
             code \
           } \
-          hi##todo_--; \
+          hi##done_++; \
         } \
       } \
     } while (0)

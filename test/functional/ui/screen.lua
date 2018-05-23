@@ -611,7 +611,7 @@ function Screen:print_snapshot(attrs, ignore)
     local dict = "{"..self:_pprint_attrs(a).."}"
     table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
-  local attrstr = "{"..table.concat(attrstrs, ", ").."}"
+  local attrstr = "{\n  "..table.concat(attrstrs, ",\n  ")..",\n}"
   print( "\nscreen:expect([[")
   print( table.concat(rv, '\n'))
   if alldefault then
@@ -625,11 +625,15 @@ end
 function Screen:_pprint_attrs(attrs)
     local items = {}
     for f, v in pairs(attrs) do
-      local desc = tostring(v)
+      local desc
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        else
+          desc = ('0x%06x'):format(v)
         end
+      else
+        desc = tostring(v)
       end
       table.insert(items, f.." = "..desc)
     end

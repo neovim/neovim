@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <fcntl.h>
 
 #include "auto/config.h"
 
@@ -20,6 +19,7 @@
 
 #include <uv.h>
 
+#include "nvim/os/fcntl.h"
 #include "nvim/os/fileio.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"

@@ -17,7 +17,9 @@ function Main()
   set columns=80
   enew
   let job = termopen(args, s:logger)
-  let results = jobwait([job], 5 * 60 * 1000)
+  let timeout = $NVIM_OLDTEST_TIMEOUT
+  let timeout = empty(timeout) ? 5 : str2float(timeout)
+  let results = jobwait([job], float2nr(timeout * 60 * 1000))
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')
   bwipeout!

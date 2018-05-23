@@ -68,7 +68,7 @@ typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 #define _mp_init kvi_init
 #define _mp_destroy kvi_destroy
 #define _mp_push kvi_push
-#define _mp_pop kv_pop
+#define _mp_drop kv_drop
 #define _mp_last kv_last
 
 static inline size_t tv_strlen(const typval_T *const tv)

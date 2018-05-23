@@ -9,8 +9,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <fcntl.h>
 
+#include "nvim/os/fcntl.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #ifdef HAVE_LOCALE_H
