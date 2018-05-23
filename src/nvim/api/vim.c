@@ -990,6 +990,118 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
+/// Identify the client for nvim. Can be called more than once, but subsequent
+/// calls will remove earlier info, which should be resent if it is still
+/// valid. (This could happen if a library first identifies the channel, and a
+/// plugin using that library later overrides that info)
+///
+/// @param name short name for the connected client
+/// @param version  Dictionary describing the version, with the following
+///                 possible keys (all optional)
+///     - "major" major version (defaults to 0 if not set, for no release yet)
+///     - "minor" minor version
+///     - "patch" patch number
+///     - "prerelease" string describing a prerelease, like "dev" or "beta1"
+///     - "commit" hash or similar identifier of commit
+/// @param type Must be one of the following values. A client library should
+///             use "remote" if the library user hasn't specified other value.
+///     - "remote" remote client that connected to nvim.
+///     - "ui" gui frontend
+///     - "embedder" application using nvim as a component, for instance
+///                  IDE/editor implementing a vim mode.
+///     - "host" plugin host, typically started by nvim
+///     - "plugin" single plugin, started by nvim
+/// @param methods Builtin methods in the client. For a host, this does not
+///                include plugin methods which will be discovered later.
+///                The key should be the method name, the values are dicts with
+///                the following (optional) keys:
+///     - "async"  if true, send as a notification. If false or unspecified,
+///                use a blocking request
+///     - "nargs" Number of arguments. Could be a single integer or an array
+///                two integers, minimum and maximum inclusive.
+///     Further keys might be added in later versions of nvim and unknown keys
+///     are thus ignored. Clients must only use keys defined in this or later
+///     versions of nvim!
+///
+/// @param attributes Informal attributes describing the client. Clients might
+///                   define their own keys, but the following are suggested:
+///     - "website" Website of client (for instance github repository)
+///     - "license" Informal descripton of the license, such as "Apache 2",
+///                 "GPLv3" or "MIT"
+///     - "logo"    URI or path to image, preferably small logo or icon.
+///                 .png or .svg format is preferred.
+///
+void nvim_set_client_info(uint64_t channel_id, String name,
+                          Dictionary version, String type,
+                          Dictionary methods, Dictionary attributes,
+                          Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  Dictionary info = ARRAY_DICT_INIT;
+  PUT(info, "name", copy_object(STRING_OBJ(name)));
+
+  version = copy_dictionary(version);
+  bool has_major = false;
+  for (size_t i = 0; i < version.size; i++) {
+    if (strequal(version.items[i].key.data, "major")) {
+      has_major = true;
+      break;
+    }
+  }
+  if (!has_major) {
+    PUT(version, "major", INTEGER_OBJ(0));
+  }
+  PUT(info, "version", DICTIONARY_OBJ(version));
+
+  PUT(info, "type", copy_object(STRING_OBJ(type)));
+  PUT(info, "methods", DICTIONARY_OBJ(copy_dictionary(methods)));
+  PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes)));
+
+  rpc_set_client_info(channel_id, info);
+}
+
+/// Get information about a channel.
+///
+/// @returns a Dictionary, describing a channel with the
+/// following keys:
+///     - "stream"  the stream underlying the channel
+///         - "stdio"      stdin and stdout of this Nvim instance
+///         - "stderr"     stderr of this Nvim instance
+///         - "socket"     TCP/IP socket or named pipe
+///         - "job"        job with communication over its stdio
+///    -  "mode"    how data received on the channel is interpreted
+///         - "bytes"      send and recieve raw bytes
+///         - "terminal"   a |terminal| instance interprets ASCII sequences
+///         - "rpc"        |RPC| communication on the channel is active
+///    -  "pty"     Name of pseudoterminal, if one is used (optional).
+///                 On a POSIX system, this will be a device path like
+///                 /dev/pts/1. Even if the name is unknown, the key will
+///                 still be present to indicate a pty is used. This is
+///                 currently the case when using winpty on windows.
+///    -  "buffer"  buffer with connected |terminal| instance (optional)
+///    -  "client"  information about the client on the other end of the
+///                 RPC channel, if it has added it using
+///                 |nvim_set_client_info|. (optional)
+///
+Dictionary nvim_get_chan_info(Integer chan, Error *err)
+  FUNC_API_SINCE(4)
+{
+  if (chan < 0) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+  return channel_info((uint64_t)chan);
+}
+
+/// Get information about all open channels.
+///
+/// @returns Array of Dictionaries, each describing a channel with
+///          the format specified at |nvim_get_chan_info|.
+Array nvim_list_chans(void)
+  FUNC_API_SINCE(4)
+{
+  return channel_all_info();
+}
+
 /// Calls many API methods atomically.
 ///
 /// This has two main usages:

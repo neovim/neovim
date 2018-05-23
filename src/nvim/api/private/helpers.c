@@ -1030,6 +1030,16 @@ Array copy_array(Array array)
   return rv;
 }
 
+Dictionary copy_dictionary(Dictionary dict)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < dict.size; i++) {
+    KeyValuePair item = dict.items[i];
+    PUT(rv, item.key.data, copy_object(item.value));
+  }
+  return rv;
+}
+
 /// Creates a deep clone of an object
 Object copy_object(Object obj)
 {
@@ -1047,12 +1057,7 @@ Object copy_object(Object obj)
       return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
-      Dictionary rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.dictionary.size; i++) {
-        KeyValuePair item = obj.data.dictionary.items[i];
-        PUT(rv, item.key.data, copy_object(item.value));
-      }
-      return DICTIONARY_OBJ(rv);
+      return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
     }
     default:
       abort();
