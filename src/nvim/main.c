@@ -729,7 +729,7 @@ static bool edit_stdin(mparm_T *parmp)
 {
   return !headless_mode
     && !embedded_mode
-    && !exmode_active       // `-es` was not given.
+    && exmode_active != EXMODE_NORMAL  // -E/-Es but not -e/-es.
     && !parmp->input_isatty
     && scriptin[0] == NULL;  // `-s -` was not given.
 }
