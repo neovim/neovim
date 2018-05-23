@@ -270,6 +270,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   alloc_cmdbuff(exmode_active ? 250 : s->indent + 1);
   ccline.cmdlen = ccline.cmdpos = 0;
   ccline.cmdbuff[0] = NUL;
+  sb_text_start_cmdline();
 
   ccline.last_colors = (ColoredCmdline){ .cmdbuff = NULL,
                                          .colors = KV_INITIAL_VALUE };
@@ -307,6 +308,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 #ifndef BACKSLASH_IN_FILENAME
   s->xpc.xp_shell = false;
 #endif
+    sb_text_end_cmdline();
 
   if (ccline.input_fn) {
     s->xpc.xp_context = ccline.xp_context;

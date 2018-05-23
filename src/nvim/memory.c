@@ -66,7 +66,7 @@ void try_to_free_memory(void)
   trying_to_free = true;
 
   // free any scrollback text
-  clear_sb_text();
+  clear_sb_text(true);
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
 
@@ -633,7 +633,7 @@ void free_all_mem(void)
   free_signs();
   set_expr_line(NULL);
   diff_clear(curtab);
-  clear_sb_text();            /* free any scrollback text */
+  clear_sb_text(true);            // free any scrollback text
 
   /* Free some global vars. */
   xfree(last_cmdline);
