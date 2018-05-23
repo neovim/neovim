@@ -14,7 +14,7 @@ add_library(${LIBUV} ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
 target_compile_definitions(${LIBUV} PRIVATE WIN32_LEAN_AND_MEAN "_WIN32_WINNT=0x0600")
 target_link_libraries(${LIBUV} iphlpapi psapi shell32 userenv ws2_32)
 target_include_directories(${LIBUV} PUBLIC ./include PRIVATE ./src)
-if(MSVC)
+if(BUILD_SHARED_LIBS)
   set_target_properties(${LIBUV} PROPERTIES DEFINE_SYMBOL BUILDING_UV_SHARED)
 endif()
 
