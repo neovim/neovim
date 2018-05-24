@@ -1018,7 +1018,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // needs a break here
   if (wp->w_p_lbr
       && vim_isbreak(c)
-      && !vim_isbreak(s[1])
+      && !vim_isbreak((int)s[1])
       && wp->w_p_wrap
       && (wp->w_width != 0)) {
     // Count all characters from first non-blank after a blank up to next
@@ -1042,7 +1042,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       c = *s;
 
       if (!(c != NUL
-            && (vim_isbreak(c) || col2 == col || !vim_isbreak(*ps)))) {
+            && (vim_isbreak(c) || col2 == col || !vim_isbreak((int)(*ps))))) {
         break;
       }
 
