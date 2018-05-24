@@ -50,7 +50,7 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-/// Gets the file from which input was gathered at startup.
+/// File (set at startup) used to read user-input (or commands for -e/-es).
 int input_global_fd(void)
 {
   return global_fd;
@@ -438,8 +438,9 @@ static bool input_ready(void)
 // Exit because of an input read error.
 static void read_error_exit(void)
 {
-  if (silent_mode)      /* Normal way to exit for "ex -s" */
+  if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);
+  }
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
   preserve_exit();
 }
