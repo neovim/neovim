@@ -2404,11 +2404,14 @@ jumpto_tag (
     }
   }
 
-  /* If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
-   * open a new tab page. */
+  // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
+  // open a new tab page.
   if (postponed_split || cmdmod.tab != 0) {
-    (void)win_split(postponed_split > 0 ? postponed_split : 0,
-                    postponed_split_flags);
+    if (win_split(postponed_split > 0 ? postponed_split : 0,
+                  postponed_split_flags) == FAIL) {
+      RedrawingDisabled--;
+      goto erret;
+    }
     RESET_BINDING(curwin);
   }
 
