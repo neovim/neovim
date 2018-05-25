@@ -4381,7 +4381,8 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   }
   if ((di = tv_dict_find(what, S_LEN("items"))) != NULL) {
     if (di->di_tv.v_type == VAR_LIST) {
-      char_u *title_save = vim_strsave(qi->qf_lists[qf_idx].qf_title);
+      char_u *title_save = qi->qf_lists[qf_idx].qf_title ?
+        vim_strsave(qi->qf_lists[qf_idx].qf_title) : NULL;
 
       retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
                               title_save, action == ' ' ? 'a' : action);
