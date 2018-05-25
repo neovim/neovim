@@ -19,6 +19,8 @@ return {
     'BufWriteCmd',            -- write buffer using command
     'BufWritePost',           -- after writing a buffer
     'BufWritePre',            -- before writing a buffer
+    'ChanOpen',               -- channel was opened
+    'ChanInfo',               -- info was received about channel
     'CmdLineEnter',           -- after entering cmdline mode
     'CmdLineLeave',           -- before leaving cmdline mode
     'CmdUndefined',           -- command undefined

@@ -2445,7 +2445,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
   if (lvl < level) {
     /* End of fold found, update the length when it got shorter. */
     if (fp->fd_len != flp->lnum - fp->fd_top) {
-      if (fp->fd_top + fp->fd_len > bot + 1) {
+      if (fp->fd_top + fp->fd_len - 1 > bot) {
         /* fold continued below bot */
         if (getlevel == foldlevelMarker
             || getlevel == foldlevelExpr

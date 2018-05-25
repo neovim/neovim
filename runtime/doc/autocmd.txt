@@ -261,6 +261,8 @@ Name			triggered by ~
 |SwapExists|		detected an existing swap file
 |TermOpen|		when a terminal job starts
 |TermClose|		when a terminal job ends
+|ChanOpen|		after a channel opened
+|ChanInfo|		after a channel has its state changed
 
 	Options
 |FileType|		when the 'filetype' option has been set
@@ -487,6 +489,19 @@ BufWriteCmd			Before writing the whole buffer to a file.
 							*BufWritePost*
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
+							*ChanInfo*
+ChanInfo			State of channel changed, for instance the
+				client of a RPC channel described itself.
+				Sets these |v:event| keys:
+				    info
+				See |nvim_get_chan_info| for the format of the
+				info Dictionary.
+							*ChanOpen*
+ChanOpen			Just after a channel was opened.
+				Sets these |v:event| keys:
+				    info
+				See |nvim_get_chan_info| for the format of the
+				info Dictionary.
 							*CmdUndefined*
 CmdUndefined			When a user command is used but it isn't
 				defined.  Useful for defining a command only

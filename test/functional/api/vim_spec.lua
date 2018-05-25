@@ -766,6 +766,115 @@ describe('api', function()
     end)
   end)
 
+  describe('nvim_list_chans and nvim_get_chan_info', function()
+    before_each(function()
+      command('autocmd ChanOpen * let g:opened_event = copy(v:event)')
+      command('autocmd ChanInfo * let g:info_event = copy(v:event)')
+    end)
+    local testinfo = {
+      stream = 'stdio',
+      id = 1,
+      mode = 'rpc',
+      client = {},
+    }
+    local stderr = {
+      stream = 'stderr',
+      id = 2,
+      mode = 'bytes',
+    }
+
+    it('returns {} for invalid channel', function()
+      eq({}, meths.get_chan_info(0))
+      eq({}, meths.get_chan_info(-1))
+      -- more preallocated numbers might be added, try something high
+      eq({}, meths.get_chan_info(10))
+    end)
+
+    it('works for stdio channel', function()
+      eq({[1]=testinfo,[2]=stderr}, meths.list_chans())
+      eq(testinfo, meths.get_chan_info(1))
+      eq(stderr, meths.get_chan_info(2))
+
+      meths.set_client_info("functionaltests",
+                            {major=0, minor=3, patch=17},
+                            'ui',
+                            {do_stuff={n_args={2,3}}},
+                            {license= 'Apache2'})
+      local info = {
+        stream = 'stdio',
+        id = 1,
+        mode = 'rpc',
+        client = {
+          name='functionaltests',
+          version={major=0, minor=3, patch=17},
+          type='ui',
+          methods={do_stuff={n_args={2,3}}},
+          attributes={license='Apache2'},
+        },
+      }
+      eq({info=info}, meths.get_var("info_event"))
+      eq({[1]=info, [2]=stderr}, meths.list_chans())
+      eq(info, meths.get_chan_info(1))
+    end)
+
+    it('works for job channel', function()
+      if iswin() and os.getenv('APPVEYOR') ~= nil then
+        pending("jobstart(['cat']) unreliable on appveyor")
+        return
+      end
+      eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
+      local info = {
+        stream='job',
+        id=3,
+        mode='rpc',
+        client={},
+      }
+      eq({info=info}, meths.get_var("opened_event"))
+      eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
+      eq(info, meths.get_chan_info(3))
+      eval('rpcrequest(3, "nvim_set_client_info", "cat", {}, "remote",'..
+                       '{"nvim_command":{"n_args":1}},'.. -- and so on
+                       '{"description":"The Amazing Cat"})')
+      info = {
+        stream='job',
+        id=3,
+        mode='rpc',
+        client = {
+          name='cat',
+          version={major=0},
+          type='remote',
+          methods={nvim_command={n_args=1}},
+          attributes={description="The Amazing Cat"},
+        },
+      }
+      eq({info=info}, meths.get_var("info_event"))
+      eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
+    end)
+
+    it('works for :terminal channel', function()
+      command(":terminal")
+      eq({id=1}, meths.get_current_buf())
+      eq(3, meths.buf_get_option(1, "channel"))
+
+      local info = {
+        stream='job',
+        id=3,
+        mode='terminal',
+        buffer = 1,
+        pty='?',
+      }
+      local event = meths.get_var("opened_event")
+      if not iswin() then
+        info.pty = event.info.pty
+        neq(nil, string.match(info.pty, "^/dev/"))
+      end
+      eq({info=info}, event)
+      info.buffer = {id=1}
+      eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
+      eq(info, meths.get_chan_info(3))
+    end)
+  end)
+
   describe('nvim_call_atomic', function()
     it('works', function()
       meths.buf_set_lines(0, 0, -1, true, {'first'})
