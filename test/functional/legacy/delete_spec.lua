@@ -4,6 +4,9 @@ local eq, eval, command = helpers.eq, helpers.eval, helpers.command
 
 describe('Test for delete()', function()
   before_each(clear)
+  after_each(function()
+    os.remove('Xfile')
+  end)
 
   it('file delete', function()
     command('split Xfile')
@@ -52,8 +55,7 @@ describe('Test for delete()', function()
         silent !ln -s Xfile Xlink
       endif
     ]])
-    if eval('v:shell_error') == 1 then
-      eq(0, eval("delete('Xfile')"))
+    if eval('v:shell_error') ~= 0 then
       pending('Cannot create symlink', function()end)
     end
     -- Delete the link, not the file

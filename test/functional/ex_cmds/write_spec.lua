@@ -40,7 +40,7 @@ describe(':write', function()
     else
       command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     end
-    if eval('v:shell_error') == 1 then
+    if eval('v:shell_error') ~= 0 then
       pending('Cannot create symlink', function()end)
     end
     source([[
@@ -60,7 +60,7 @@ describe(':write', function()
     else
       command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     end
-    if eval('v:shell_error') == 1 then
+    if eval('v:shell_error') ~= 0 then
       pending('Cannot create symlink', function()end)
     end
     source([[
