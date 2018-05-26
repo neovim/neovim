@@ -232,6 +232,8 @@ class DebugSession( object ):
               'path': file_name,
             },
             'breakpoints': breakpoints,
+            'lines': [ line for line in line_breakpoints.keys() ],
+            'sourceModified': False,
           },
         }
       )
