@@ -218,11 +218,8 @@ class DebugSession( object ):
     self._logger.info( 'Debug Adapter Started' )
 
 
-  def _ConfigurationDone( self ):
-    utils.UserMessage( "Debug adapter ready" )
-
   def _Initialise( self ):
-    self._connection.DoRequest( lambda msg: self._ConfigurationDone(), {
+    self._connection.DoRequest( None, {
       'command': 'initialize',
       'arguments': {
         'adapterID': self._configuration[ 'adapter' ].get( 'name', 'adapter' ),

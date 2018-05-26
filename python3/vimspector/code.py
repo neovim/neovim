@@ -110,7 +110,6 @@ class CodeView( object  ):
     self._UndisplaySigns()
     self._breakpoints = defaultdict( list )
 
-
   def ShowBreakpoints( self ):
     self._UndisplaySigns()
 
