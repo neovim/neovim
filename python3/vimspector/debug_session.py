@@ -42,6 +42,7 @@ class DebugSession( object ):
     self._currentFrame = None
 
     self._breakpoints = defaultdict( dict )
+    self._configuration = None
 
   def ToggleBreakpoint( self ):
     line, column = vim.current.window.cursor
@@ -75,11 +76,10 @@ class DebugSession( object ):
     if not configuration:
       return
 
-    configuration = launch_config[ configuration ]
+    self._configuration = launch_config[ configuration ]
 
-    self._StartDebugAdapter( configuration[ 'adapter' ] )
-    self._Initialise( configuration[ 'adapter' ],
-                      configuration[ 'configuration' ] )
+    self._StartDebugAdapter()
+    self._Initialise()
     self._SetUpUI()
 
   def OnChannelData( self, data ):
@@ -180,13 +180,13 @@ class DebugSession( object ):
     self._codeView.SetCurrentFrame( frame )
     self._variablesView.LoadScopes( frame )
 
-  def _StartDebugAdapter( self, adapter_config ):
+  def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
-      adapter_config ) ) )
+      self._configuration[ 'adapter' ] ) ) )
 
     channel_send_func = vim.bindeval(
       "vimspector#internal#job#StartDebugSession( {0} )".format(
-        json.dumps( adapter_config ) ) )
+        json.dumps( self._configuration[ 'adapter' ] ) ) )
 
     self._connection = debug_adapter_connection.DebugAdapterConnection(
       self,
@@ -202,18 +202,15 @@ class DebugSession( object ):
     self._connection.DoRequest( lambda msg: self._Launch( launch_config ), {
       'command': 'initialize',
       'arguments': {
-        'adapterID': adapter_config.get( 'name', 'adapter' ),
+        'adapterID': self._configuration[ 'adapter' ].get( 'name', 'adapter' ),
         'linesStartAt1': True,
         'columnsStartAt1': True,
         'pathFormat': 'path',
       },
     } )
-
-
-  def _Launch( self, launch_config ):
     self._connection.DoRequest( None, {
-      'command': launch_config[ 'request' ],
-      'arguments': launch_config
+      'command': self._configuration[ 'configuration' ][ 'request' ],
+      'arguments': self._configuration[ 'configuration' ]
     } )
 
   def _UpdateBreakpoints( self, message ):
