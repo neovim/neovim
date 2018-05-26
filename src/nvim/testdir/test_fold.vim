@@ -9,8 +9,8 @@ func! Test_address_fold()
   call setline(1, ['int FuncName() {/*{{{*/', 1, 2, 3, 4, 5, '}/*}}}*/',
 	      \ 'after fold 1', 'after fold 2', 'after fold 3'])
   setl fen fdm=marker
-  " The next ccommands should all copy the same part of the buffer,
-  " regardless of the adressing type, since the part to be copied
+  " The next commands should all copy the same part of the buffer,
+  " regardless of the addressing type, since the part to be copied
   " is folded away
   :1y
   call assert_equal(['int FuncName() {/*{{{*/', '1', '2', '3', '4', '5', '}/*}}}*/'], getreg(0,1,1))
@@ -380,4 +380,57 @@ func Test_foldopen_exception()
     let a = matchstr(v:exception,'^[^ ]*')
   endtry
   call assert_match('E492:', a)
+endfunc
+
+func Test_folddoopen_folddoclosed()
+  new
+  call setline(1, range(1, 9))
+  set foldmethod=manual
+  1,3 fold
+  6,8 fold
+
+  " Test without range.
+  folddoopen   s/$/o/
+  folddoclosed s/$/c/
+  call assert_equal(['1c', '2c', '3c',
+  \                  '4o', '5o',
+  \                  '6c', '7c', '8c',
+  \                  '9o'], getline(1, '$'))
+
+  " Test with range.
+  call setline(1, range(1, 9))
+  1,8 folddoopen   s/$/o/
+  4,$ folddoclosed s/$/c/
+  call assert_equal(['1',  '2', '3',
+  \                  '4o', '5o',
+  \                  '6c', '7c', '8c',
+  \                  '9'], getline(1, '$'))
+
+  set foldmethod&
+  bw!
+endfunc
+
+func Test_fold_error()
+  new
+  call setline(1, [1, 2])
+
+  for fm in ['indent', 'expr', 'syntax', 'diff']
+    exe 'set foldmethod=' . fm
+    call assert_fails('norm zf', 'E350:')
+    call assert_fails('norm zd', 'E351:')
+    call assert_fails('norm zE', 'E352:')
+  endfor
+
+  set foldmethod=manual
+  call assert_fails('norm zd', 'E490:')
+  call assert_fails('norm zo', 'E490:')
+  call assert_fails('3fold',   'E16:')
+
+  set foldmethod=marker
+  set nomodifiable
+  call assert_fails('1,2fold', 'E21:')
+
+  set modifiable&
+  set foldmethod&
+  bw!
 endfunc
