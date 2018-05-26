@@ -49,6 +49,7 @@ class CodeView( object  ):
 
     vim.command( 'sign define vimspectorPC text=>> texthl=Search' )
     vim.command( 'sign define vimspectorBP text=>> texthl=Error' )
+    vim.command( 'sign define vimspectorBPDead text=>> texthl=Warning' )
 
 
   def SetCurrentFrame( self, frame ):
@@ -95,7 +96,7 @@ class CodeView( object  ):
         continue
 
       self._breakpoints[ breakpoint[ 'source' ][ 'file' ] ].append(
-        breakpoint[ 'line' ] )
+        breakpoint )
 
     self._logger.debug( 'Breakpoints at this point: {0}'.format(
       json.dumps( self._breakpoints, indent = 2 ) ) )
@@ -107,20 +108,21 @@ class CodeView( object  ):
     self._signs[ 'breakpoints' ].clear()
 
   def ClearBreakpoints( self ):
-    self._UndisplaySigns();
+    self._UndisplaySigns()
     self._breakpoints = defaultdict( list )
 
 
   def ShowBreakpoints( self ):
     self._UndisplaySigns()
 
-    for file_name, lines in self._breakpoints.items():
-      for line in lines:
+    for file_name, breakpoints in self._breakpoints.items():
+      for breakpoint in breakpoints:
         sign_id = self._next_sign_id
         self._next_sign_id += 1
         self._signs[ 'breakpoints' ].append( sign_id )
         vim.command(
-          'sign place {0} line={1} name=vimspectorBP file={2}'.format(
+          'sign place {0} line={1} name={2} file={3}'.format(
             sign_id,
-            line,
+            breakpoint[ 'line' ],
+            'vimspectorBP' if breakpoint[ 'verified' ] else 'vimspectorBPDead',
             file_name ) )
