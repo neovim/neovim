@@ -97,7 +97,6 @@ typedef struct {
   char_u      *tagname;                 // tag from -t argument
   char_u      *use_ef;                  // 'errorfile' from -q argument
 
-  int want_full_screen;
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
@@ -271,15 +270,9 @@ int main(int argc, char **argv)
   /* Don't redraw until much later. */
   ++RedrawingDisabled;
 
-  /*
-   * When listing swap file names, don't do cursor positioning et. al.
-   */
-  if (recoverymode && fname == NULL)
-    params.want_full_screen = FALSE;
-
   setbuf(stdout, NULL);
 
-  full_screen = true;
+  full_screen = !silent_mode;
 
   // Set the default values for the options that use Rows and Columns.
   win_init_size();
@@ -1247,7 +1240,6 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   memset(paramp, 0, sizeof(*paramp));
   paramp->argc = argc;
   paramp->argv = argv;
-  paramp->want_full_screen = true;
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
   paramp->listen_addr = NULL;
