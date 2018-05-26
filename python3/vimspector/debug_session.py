@@ -242,6 +242,45 @@ class DebugSession( object ):
 
     self._SendBreakpoints()
 
+  def OnEvent_thread( self, message ):
+    # TODO: set self_currentThread ? Not really that useful I guess as the
+    # stopped event basically gives us this.
+    pass
+
+  def OnEvent_breakpoint( self, message ):
+    # Useful:
+    #
+    # /** The reason for the event.
+    #   Values: 'changed', 'new', 'removed', etc.
+    # */
+
+    reason = message[ 'body' ][ 'reason' ]
+    bp = message[ 'body' ][ 'breakpoint' ]
+    if reason == 'changed':
+      self._codeView.UpdateBreakpoint( bp )
+    elif reason == 'new':
+      self._codeView.AddBreakpoints( None, bp )
+    elif reason == 'removed':
+      # TODO
+      pass
+    else:
+      utils.UserMessage(
+        'Unrecognised breakpoint event (undocumented): {0}'.format( reason ),
+        persist = True )
+
+
+  def OnEvent_terminated( self, message ):
+    utils.UserMessage( "The program was terminated because: {0}".format(
+      message.get( 'body', {} ).get( 'reason', "No specific reason" ) ) )
+
+    self._codeView.Clear()
+    self._stackTraceView.Clear()
+    self._variablesView.Clear()
+
+    with utils.ModifiableScratchBuffer( self._threadsBuffer ):
+      self._threadsBuffer[:] = None
+
+
   def _SendBreakpoints( self ):
     for file_name, line_breakpoints in self._breakpoints.items():
       breakpoints = []
@@ -276,17 +315,17 @@ class DebugSession( object ):
       )
 
     # TODO: Remove this!
-    self._connection.DoRequest(
-      functools.partial( self._UpdateBreakpoints, None ),
-      {
-        'command': 'setFunctionBreakpoints',
-        'arguments': {
-          'breakpoints': [
-            { 'name': 'main' },
-          ],
-        },
-      }
-    )
+    # self._connection.DoRequest(
+    #   functools.partial( self._UpdateBreakpoints, None ),
+    #   {
+    #     'command': 'setFunctionBreakpoints',
+    #     'arguments': {
+    #       'breakpoints': [
+    #         { 'name': 'main' },
+    #       ],
+    #     },
+    #   }
+    # )
 
     self._connection.DoRequest( None, {
       'command': 'configurationDone',

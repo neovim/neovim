@@ -81,7 +81,6 @@ class CodeView( object  ):
       vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
 
-
   # TODO: You know what, move breakpoint handling out of here into its own
   # thing. It really doesn't directly relate to the code view.
   def AddBreakpoints( self, source, breakpoints ):
@@ -99,6 +98,31 @@ class CodeView( object  ):
 
     self._logger.debug( 'Breakpoints at this point: {0}'.format(
       json.dumps( self._breakpoints, indent = 2 ) ) )
+
+  def UpdateBreakpoint( self, bp ):
+    if 'id' not in bp:
+      self.AddBreakpoints( None, [ bp ] )
+
+    for _, breakpoint_list in self._breakpoints.items():
+      for index, breakpoint in enumerate( breakpoint_list ):
+        if 'id' in breakpoint and breakpoint[ 'id' ] == bp[ 'id' ]:
+          breakpoint_list[ index ] = bp
+          return
+
+    # Not found. Assume new
+    self.AddBreakpoints( None, [ bp ] )
+
+  def DeleteBreakpoint( self, bp ):
+    if 'id' not in bp:
+      return
+
+    for _, breakpoint_list in self._breakpoints.items():
+      for index, breakpoint in enumerate( breakpoint_list ):
+        if 'id' in breakpoint and breakpoint[ 'id' ] == bp[ 'id' ]:
+          del breakpoint_list[ index ]
+          return
+
+    # Not found. Shrug.
 
   def _UndisplaySigns( self ):
     for sign_id in self._signs[ 'breakpoints' ]:

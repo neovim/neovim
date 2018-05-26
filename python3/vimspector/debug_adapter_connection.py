@@ -126,3 +126,6 @@ class DebugAdapterConnection( object ):
       method = 'OnEvent_' + message[ 'event' ]
       if method in dir( self._handler ):
         getattr( self._handler, method )( message )
+      else:
+        utils.UserMessage( 'Unhandled event: {0}'.format( message[ 'event' ] ),
+                           persist = True )

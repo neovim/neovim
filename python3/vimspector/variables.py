@@ -39,6 +39,10 @@ class VariablesView( object ):
 
     utils.SetUpScratchBuffer( self._buf )
 
+  def Clear( self ):
+    with utils.ModifiableScratchBuffer( self._buf ):
+      self._buf[:] = None
+
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):
       self._scopes = []
