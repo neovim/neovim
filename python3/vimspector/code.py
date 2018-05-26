@@ -85,17 +85,17 @@ class CodeView( object  ):
       self._signs[ 'vimspectorPC' ] = None
 
 
-  def AddBreakpoints( self, breakpoints ):
+  def AddBreakpoints( self, source, breakpoints ):
     for breakpoint in breakpoints:
-      if not breakpoint.get( 'verified', False ):
-        continue
-
       if 'source' not in breakpoint:
-        self._logger.warn( 'source not in breakpoint {0}'.format(
-          json.dumps( breakpoint ) ) )
-        continue
+        if source:
+          breakpoint[ 'source' ] = source
+        else:
+          self._logger.warn( 'missing source in breakpoint {0}'.format(
+            json.dumps( breakpoint ) ) )
+          continue
 
-      self._breakpoints[ breakpoint[ 'source' ][ 'file' ] ].append(
+      self._breakpoints[ breakpoint[ 'source' ][ 'path' ] ].append(
         breakpoint )
 
     self._logger.debug( 'Breakpoints at this point: {0}'.format(
