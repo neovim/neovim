@@ -29,6 +29,10 @@ function! vimspector#Launch() abort
   py3 _vimspector_session.Start()
 endfunction
 
+function! vimspector#Restart() abort
+  py3 _vimspector_session.Restart()
+endfunction
+
 function! vimspector#ToggleBreakpoint() abort
   py3 _vimspector_session.ToggleBreakpoint()
 endfunction

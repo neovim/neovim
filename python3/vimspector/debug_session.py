@@ -50,14 +50,17 @@ class DebugSession( object ):
     self._breakpoints = defaultdict( dict )
     self._configuration = None
 
-    vim.command( 'sign define vimspectorBP text=o texthl=Error' )
-    vim.command( 'sign define vimspectorBPDisabled text=! texthl=Warning' )
+    vim.command( 'sign define vimspectorBP text==> texthl=Error' )
+    vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
 
   def ToggleBreakpoint( self ):
     # TODO: Move this to the code view. Problem is that CodeView doesn't exist
     # until we have initialised.
     line, column = vim.current.window.cursor
     file_name = vim.current.buffer.name
+
+    if not file_name:
+      return
 
     if line in self._breakpoints[ file_name ]:
       bp = self._breakpoints[ file_name ][ line ]
@@ -101,22 +104,32 @@ class DebugSession( object ):
 
     self._configuration = launch_config[ configuration ]
 
-    self._StartDebugAdapter()
-    self._Initialise()
-    self._SetUpUI()
+    def start():
+      self._StartDebugAdapter()
+      self._Initialise()
+
+      if not self._uiTab:
+        self._SetUpUI()
+      else:
+        vim.current.tabpage = self._uiTab
+        self._stackTraceView._connection = self._connection
+        self._variablesView._connection = self._connection
+
+    if self._connection:
+      self._StopDebugAdapter( start )
+      return
+
+    start()
+
+  def Restart( self ):
+    # TODO: There is a restart message but isn't always supported.
+    self.Start()
 
   def OnChannelData( self, data ):
     self._connection.OnData( data )
 
   def Stop( self ):
-    self._codeView.Clear()
-
-    self._connection.DoRequest( None, {
-      'command': 'disconnect',
-      'arguments': {
-        'terminateDebugee': True
-      },
-    } )
+    self._StopDebugAdapter()
 
   def StepOver( self ):
     self._connection.DoRequest( None, {
@@ -217,8 +230,25 @@ class DebugSession( object ):
 
     self._logger.info( 'Debug Adapter Started' )
 
+  def _StopDebugAdapter( self, callback = None ):
+    self._codeView.Clear()
+
+    def handler( message ):
+      vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+      self._connection = None
+      if callback:
+        callback()
+
+    self._connection.DoRequest( handler, {
+      'command': 'disconnect',
+      'arguments': {
+        'terminateDebugee': True
+      },
+    } )
+
 
   def _Initialise( self ):
+    # TODO: name is mandatory. forcefully add it
     self._connection.DoRequest( None, {
       'command': 'initialize',
       'arguments': {
@@ -228,6 +258,9 @@ class DebugSession( object ):
         'pathFormat': 'path',
       },
     } )
+    if 'name' not in self._configuration[ 'configuration' ]:
+      self._configuration[ 'configuration' ][ 'name' ] = 'test'
+
     self._connection.DoRequest( None, {
       'command': self._configuration[ 'configuration' ][ 'request' ],
       'arguments': self._configuration[ 'configuration' ]

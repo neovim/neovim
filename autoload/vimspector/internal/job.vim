@@ -95,10 +95,8 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
 endfunction
 
 function! vimspector#internal#job#StopDebugSession() abort
-  py3 _vimspector_session.Stop()
-
   if job_status( s:job ) == 'run'
-    job_stop( s:job, 'term' )
+    call job_stop( s:job, 'term' )
   endif
 
   unlet s:job
