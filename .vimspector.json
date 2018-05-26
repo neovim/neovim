@@ -12,13 +12,15 @@
       "target": "support/test/cpp/simple_c_program/test",
       "args": [],
       "cwd": ".",
-      "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/lldb/bin/lldb-mi"
+      "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/lldb/bin/lldb-mi",
+      "trace": true,
+      "logFilePath": "/Users/ben/.vimspector.protocol.log"
     }
   },
   "simple_c_progra - ms Launch": {
     "adapter": {
       "name": "cppdbg",
-      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/debugAdapters/OpenDebugAD7" ]
+      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ]
     },
     "configuration": {
       "name": "ms Launch",

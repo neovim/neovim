@@ -232,7 +232,7 @@ class DebugSession( object ):
           'arguments': {
             'source': {
               'name': os.path.basename( file_name ),
-              'file': file_name,
+              'path': file_name,
             },
             'breakpoints': breakpoints,
           },

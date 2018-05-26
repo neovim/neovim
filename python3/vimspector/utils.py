@@ -104,5 +104,7 @@ def SelectFromList( prompt, options ):
     if selection < 0 or selection >= len( options ):
       return None
     return options[ selection ]
+  except KeyboardInterrupt:
+    return None
   finally:
     vim.eval( 'inputrestore()' )
