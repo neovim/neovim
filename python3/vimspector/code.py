@@ -37,7 +37,6 @@ class CodeView( object  ):
       'breakpoints': []
     }
 
-
     vim.current.window = self._window
 
     vim.command( 'nnoremenu WinBar.Continute :call vimspector#Continue()<CR>' )
@@ -47,9 +46,7 @@ class CodeView( object  ):
     vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
     vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
 
-    vim.command( 'sign define vimspectorPC text=>> texthl=Search' )
-    vim.command( 'sign define vimspectorBP text=>> texthl=Error' )
-    vim.command( 'sign define vimspectorBPDead text=>> texthl=Warning' )
+    vim.command( 'sign define vimspectorPC text=> texthl=Search' )
 
 
   def SetCurrentFrame( self, frame ):
@@ -85,6 +82,8 @@ class CodeView( object  ):
       self._signs[ 'vimspectorPC' ] = None
 
 
+  # TODO: You know what, move breakpoint handling out of here into its own
+  # thing. It really doesn't directly relate to the code view.
   def AddBreakpoints( self, source, breakpoints ):
     for breakpoint in breakpoints:
       if 'source' not in breakpoint:
@@ -124,5 +123,6 @@ class CodeView( object  ):
           'sign place {0} line={1} name={2} file={3}'.format(
             sign_id,
             breakpoint[ 'line' ],
-            'vimspectorBP' if breakpoint[ 'verified' ] else 'vimspectorBPDead',
+            'vimspectorBP' if breakpoint[ 'verified' ]
+                           else 'vimspectorBPDisabled',
             file_name ) )

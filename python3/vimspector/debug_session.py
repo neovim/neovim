@@ -27,6 +27,8 @@ from vimspector import ( code,
                          utils,
                          variables )
 
+SIGN_ID_OFFSET = 10005000
+
 
 class DebugSession( object ):
   def __init__( self ):
@@ -41,16 +43,30 @@ class DebugSession( object ):
 
     self._currentThread = None
     self._currentFrame = None
+    self._next_sign_id = SIGN_ID_OFFSET
 
+    # TODO: Move to code view and consolidate into user-requested-breakpoints,
+    # and actual breakpoints ?
     self._breakpoints = defaultdict( dict )
     self._configuration = None
 
+    vim.command( 'sign define vimspectorBP text=o texthl=Error' )
+    vim.command( 'sign define vimspectorBPDisabled text=! texthl=Warning' )
+
   def ToggleBreakpoint( self ):
+    # TODO: Move this to the code view. Problem is that CodeView doesn't exist
+    # until we have initialised.
     line, column = vim.current.window.cursor
     file_name = vim.current.buffer.name
 
     if line in self._breakpoints[ file_name ]:
-      del self._breakpoints[ file_name ][ line ]
+      bp = self._breakpoints[ file_name ][ line ]
+      if bp[ 'state' ] == 'ENABLED':
+        bp[ 'state' ] = 'DISABLED'
+      else:
+        if 'sign_id' in bp:
+          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
+        del self._breakpoints[ file_name ][ line ]
     else:
       self._breakpoints[ file_name ][ line ] = {
         'state': 'ENABLED',
@@ -58,6 +74,12 @@ class DebugSession( object ):
         # 'hitCondition': ...,
         # 'logMessage': ...
       }
+
+    if self._connection:
+      self._SendBreakpoints()
+    else:
+      self._ShowBreakpoints()
+
 
   def Start( self, configuration = None ):
     launch_config_file = utils.PathToConfigFile( '.vimspector.json' )
@@ -221,25 +243,42 @@ class DebugSession( object ):
   def OnEvent_initialized( self, message ):
     self._codeView.ClearBreakpoints()
 
+    self._SendBreakpoints()
+
+  def _SendBreakpoints( self ):
     for file_name, line_breakpoints in self._breakpoints.items():
-      breakpoints = [ { 'line': line } for line in line_breakpoints.keys() ]
+      breakpoints = []
+      lines = []
+      for line, bp in line_breakpoints.items():
+        if bp[ 'state' ] != 'ENABLED':
+          continue
+
+        if 'sign_id' in bp:
+          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
+          del bp[ 'sign_id' ]
+
+        breakpoints.append( { 'line': line } )
+        lines.append( line )
+
       source = {
         'name': os.path.basename( file_name ),
         'path': file_name,
       }
+
       self._connection.DoRequest(
         functools.partial( self._UpdateBreakpoints, source ),
         {
           'command': 'setBreakpoints',
           'arguments': {
             'source': source,
-            'breakpoints': breakpoints,
-            'lines': [ line for line in line_breakpoints.keys() ],
-            'sourceModified': False,
+            'breakpoints': breakpoints
           },
+          'lines':  lines,
+          'sourceModified': False, # TODO: We can actually check this
         }
       )
 
+    # TODO: Remove this!
     self._connection.DoRequest(
       functools.partial( self._UpdateBreakpoints, None ),
       {
@@ -255,6 +294,23 @@ class DebugSession( object ):
     self._connection.DoRequest( None, {
       'command': 'configurationDone',
     } )
+
+  def _ShowBreakpoints( self ):
+    for file_name, line_breakpoints in self._breakpoints.items():
+      for line, bp in line_breakpoints.items():
+        if 'sign_id' in bp:
+          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
+        else:
+          bp[ 'sign_id' ] = self._next_sign_id
+          self._next_sign_id += 1
+
+        vim.command(
+          'sign place {0} line={1} name={2} file={3}'.format(
+            bp[ 'sign_id' ] ,
+            line,
+            'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
+                           else 'vimspectorBPDisabled',
+            file_name ) )
 
   def OnEvent_output( self, message ):
     with utils.ModifiableScratchBuffer( self._outputBuffer ):
