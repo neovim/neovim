@@ -1778,13 +1778,13 @@ static void parse_quoted_string(ParserState *const pstate,
               v_p += special_len;
             } else {
               is_unknown = true;
-              mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+              mb_copy_len(&p, &v_p, (size_t)(e - p));
             }
             break;
           }
           default: {
             is_unknown = true;
-            mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+            mb_copy_len(&p, &v_p, (size_t)(e - p));
             break;
           }
         }
