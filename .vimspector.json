@@ -52,5 +52,22 @@
       "debugOptions": [],
       "program": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python/main.py"
     }
+  },
+  "simple_c_program - MS Attach": {
+    "adapter": {
+      "name": "cppdbg",
+      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ],
+      "attach": {
+        "pidProperty": "processId",
+        "pidSelect": "ask"
+      }
+    },
+    "configuration": {
+      "name": "(lldb) Attach",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+      "MIMode": "lldb"
+    }
   }
 }

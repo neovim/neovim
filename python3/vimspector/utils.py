@@ -96,18 +96,30 @@ def UserMessage( msg, persist=False ):
     vim.command( "{0} '{1}'".format( cmd, Escape( line ) ) )
 
 
-def SelectFromList( prompt, options ):
+@contextlib.contextmanager
+def InputSave():
   vim.eval( 'inputsave()' )
-  display_options = [ prompt ]
-  display_options.extend( [ '{0}: {1}'.format( i + 1, v )
-                            for i, v in enumerate( options ) ] )
   try:
-    selection = int( vim.eval(
-      'inputlist( ' + json.dumps( display_options ) + ' )' ) ) - 1
-    if selection < 0 or selection >= len( options ):
-      return None
-    return options[ selection ]
-  except KeyboardInterrupt:
-    return None
-  finally:
+    yield
+  except:
     vim.eval( 'inputrestore()' )
+
+
+def SelectFromList( prompt, options ):
+  with InputSave():
+    display_options = [ prompt ]
+    display_options.extend( [ '{0}: {1}'.format( i + 1, v )
+                              for i, v in enumerate( options ) ] )
+    try:
+      selection = int( vim.eval(
+        'inputlist( ' + json.dumps( display_options ) + ' )' ) ) - 1
+      if selection < 0 or selection >= len( options ):
+        return None
+      return options[ selection ]
+    except KeyboardInterrupt:
+      return None
+
+
+def AskForInput( prompt ):
+  with InputSave():
+    return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )

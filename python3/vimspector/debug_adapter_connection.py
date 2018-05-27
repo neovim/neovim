@@ -41,6 +41,10 @@ class DebugAdapterConnection( object ):
     self._outstanding_requests[ this_id ] = handler
     self._SendMessage( msg )
 
+  def Reset( self ):
+    self._Write = None
+    self._handler = None
+
   def OnData( self, data ):
     data = bytes( data, 'utf-8' )
     self._logger.debug( 'Received ({0}/{1}): {2},'.format( type( data ),
@@ -111,6 +115,9 @@ class DebugAdapterConnection( object ):
     self._SetState( 'READ_HEADER' )
 
   def _OnMessageReceived( self, message ):
+    if not self._handler:
+      return
+
     if message[ 'type' ] == 'response':
       handler = self._outstanding_requests.pop( message[ 'request_seq' ] )
 

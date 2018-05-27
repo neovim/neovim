@@ -52,11 +52,14 @@ class CodeView( object  ):
 
 
   def SetCurrentFrame( self, frame ):
-    vim.current.window = self._window
-
     if self._signs[ 'vimspectorPC' ]:
       vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
+
+    if not frame or not frame[ 'source' ]:
+      return
+
+    vim.current.window = self._window
 
     buffer_number = vim.eval( 'bufnr( "{0}", 1 )'.format(
       frame[ 'source' ][ 'path' ]  ) )

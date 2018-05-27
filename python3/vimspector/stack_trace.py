@@ -67,8 +67,14 @@ class StackTraceView( object ):
 
       stackFrames = message[ 'body' ][ 'stackFrames' ]
 
+      current_frame = None
       for frame in stackFrames:
-        source = frame[ 'source' ] or { 'name': '<unknown>' }
+        if frame[ 'source' ]:
+          current_frame = current_frame or frame
+          source = frame[ 'source' ]
+        else:
+          source = { 'name': '<unknown>' }
+
         self._buf.append(
           '{0}: {1}@{2}:{3}'.format( frame[ 'id' ],
                                      frame[ 'name' ],
@@ -76,4 +82,4 @@ class StackTraceView( object ):
                                      frame[ 'line' ] ) )
         self._line_to_frame[ len( self._buf ) ] = frame
 
-    self._session.SetCurrentFrame( stackFrames[ 0 ] )
+    self._session.SetCurrentFrame( current_frame )

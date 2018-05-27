@@ -38,12 +38,13 @@ class DebugSession( object ):
     self._connection = None
 
     self._uiTab = None
-    self._threadsBuffer = None
+    self._threadsBuffer = None # TODO: Move to stack trace
     self._outputBuffer = None
     self._stackTraceView = None
     self._variablesView = None
 
     self._currentThread = None
+    self._threads = []
     self._currentFrame = None
     self._next_sign_id = SIGN_ID_OFFSET
 
@@ -158,6 +159,9 @@ class DebugSession( object ):
     vim.eval( 'vimspector#internal#state#Reset()' )
 
   def StepOver( self ):
+    if self._currentThread is None:
+      return
+
     self._connection.DoRequest( None, {
       'command': 'next',
       'arguments': {
@@ -166,6 +170,9 @@ class DebugSession( object ):
     } )
 
   def StepInto( self ):
+    if self._currentThread is None:
+      return
+
     self._connection.DoRequest( None, {
       'command': 'stepIn',
       'arguments': {
@@ -174,6 +181,9 @@ class DebugSession( object ):
     } )
 
   def StepOut( self ):
+    if self._currentThread is None:
+      return
+
     self._connection.DoRequest( None, {
       'command': 'stepOut',
       'arguments': {
@@ -182,6 +192,15 @@ class DebugSession( object ):
     } )
 
   def Continue( self ):
+    if self._currentThread is None:
+      for thread in self._threads:
+        self._connection.DoRequest( None, {
+          'command': 'continue',
+          'arguments': {
+            'threadId': thread[ 'id' ]
+          },
+        } )
+
     self._connection.DoRequest( None, {
       'command': 'continue',
       'arguments': {
@@ -189,7 +208,18 @@ class DebugSession( object ):
       },
     } )
 
+    self.ClearCurrentFrame()
+
   def Pause( self ):
+    if self._currentThread is None:
+      for thread in self._threads:
+        self._connection.DoRequest( None, {
+          'command': 'pause',
+          'arguments': {
+            'threadId': thread[ 'id' ],
+          },
+        } )
+
     self._connection.DoRequest( None, {
       'command': 'pause',
       'arguments': {
@@ -207,6 +237,9 @@ class DebugSession( object ):
     self._variablesView.DeleteWatch()
 
   def ShowBalloon( self, winnr, expression ):
+    if self._currentFrame is None:
+      return
+
     if winnr == int( self._codeView._window.number ):
       self._variablesView.ShowBalloon( self._currentFrame, expression )
     else:
@@ -251,11 +284,19 @@ class DebugSession( object ):
         self._variablesView = variables.VariablesView( self._connection,
                                                        vim.current.buffer )
 
+  def ClearCurrentFrame( self ):
+    self.SetCurrentFrame( None )
+
   def SetCurrentFrame( self, frame ):
     self._currentFrame = frame
     self._codeView.SetCurrentFrame( frame )
-    self._variablesView.LoadScopes( frame )
-    self._variablesView.EvaluateWatches()
+
+    if frame:
+      self._variablesView.LoadScopes( frame )
+      self._variablesView.EvaluateWatches()
+    else:
+      self._stackTraceView.Clear()
+      self._variablesView.Clear()
 
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
@@ -274,6 +315,7 @@ class DebugSession( object ):
   def _StopDebugAdapter( self, callback = None ):
     def handler( message ):
       vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+      self._connection.Reset()
       self._connection = None
       self._stackTraceView.ConnectionClosed()
       self._variablesView.ConnectionClosed()
@@ -288,24 +330,42 @@ class DebugSession( object ):
     } )
 
 
+  def _SelectProcess( self, adapter_config, launch_config ):
+    atttach_config = adapter_config[ 'attach' ]
+    if atttach_config[ 'pidSelect' ] == 'ask':
+      pid = utils.AskForInput( 'Enter PID to attach to: ' )
+      launch_config[ atttach_config[ 'pidProperty' ] ] = pid
+      return
+
+    raise ValueError( 'Unrecognised pidSelect {0}'.format(
+      atttach_config[ 'pidSelect' ] ) )
+
+
   def _Initialise( self ):
+    adapter_config = self._configuration[ 'adapter' ]
+    launch_config = self._configuration[ 'configuration' ]
+
+    if 'attach' in adapter_config:
+      self._SelectProcess( adapter_config, launch_config )
+
     self._connection.DoRequest( None, {
       'command': 'initialize',
       'arguments': {
-        'adapterID': self._configuration[ 'adapter' ].get( 'name', 'adapter' ),
+        'adapterID': adapter_config.get( 'name', 'adapter' ),
         'linesStartAt1': True,
         'columnsStartAt1': True,
         'pathFormat': 'path',
       },
     } )
+
     # FIXME: name is mandatory. Forcefully add it (we should really use the
     # _actual_ name, but that isn't actually remembered at this point)
-    if 'name' not in self._configuration[ 'configuration' ]:
-      self._configuration[ 'configuration' ][ 'name' ] = 'test'
+    if 'name' not in launch_config:
+      launch_config[ 'name' ] = 'test'
 
     self._connection.DoRequest( None, {
-      'command': self._configuration[ 'configuration' ][ 'request' ],
-      'arguments': self._configuration[ 'configuration' ]
+      'command': launch_config[ 'request' ],
+      'arguments': launch_config
     } )
 
   def _UpdateBreakpoints( self, source, message ):
@@ -314,13 +374,10 @@ class DebugSession( object ):
 
   def OnEvent_initialized( self, message ):
     self._codeView.ClearBreakpoints()
-
     self._SendBreakpoints()
 
   def OnEvent_thread( self, message ):
-    # TODO: set self_currentThread ? Not really that useful I guess as the
-    # stopped event basically gives us this.
-    pass
+    self._GetThreads()
 
   def OnEvent_breakpoint( self, message ):
     reason = message[ 'body' ][ 'reason' ]
@@ -338,6 +395,7 @@ class DebugSession( object ):
     self._codeView.Clear()
     self._stackTraceView.Clear()
     self._variablesView.Clear()
+    self._threads.clear()
     with utils.ModifiableScratchBuffer( self._threadsBuffer ):
       self._threadsBuffer[:] = None
 
@@ -415,19 +473,36 @@ class DebugSession( object ):
       self._outputBuffer.append( t, 0 )
 
   def OnEvent_stopped( self, message ):
-    self._currentThread = message[ 'body' ][ 'threadId' ]
+    event = message[ 'body' ]
+    utils.UserMessage( 'Paused in thread {0} due to {1}'.format(
+      event.get( 'threadId', '<unknown>' ),
+      event.get( 'description', event[ 'reason' ] ) ) )
 
+    if 'threadId' in event:
+      self._currentThread = event[ 'threadId' ]
+    elif event.get( 'allThreadsStopped', False ) and self._threads:
+      self._currentThread = self._threads[ 0 ][ 'id' ]
+
+    self._GetThreads()
+    self._stackTraceView.LoadStackTrace( self._currentThread )
+
+  def _GetThreads( self ):
+    # TODO: We need an expandable thing like variables for threads, and allow
+    # the user to select a thread
     def threads_printer( message ):
+      self._threads.clear()
       with utils.ModifiableScratchBuffer( self._threadsBuffer ):
         self._threadsBuffer[:] = None
         self._threadsBuffer.append( 'Threads: ' )
 
         for thread in message[ 'body' ][ 'threads' ]:
+          if self._currentThread is None:
+            self._currentThread = thread[ 'id' ]
+
+          self._threads.append( thread )
           self._threadsBuffer.append(
             'Thread {0}: {1}'.format( thread[ 'id' ], thread[ 'name' ] ) )
 
     self._connection.DoRequest( threads_printer, {
       'command': 'threads',
     } )
-
-    self._stackTraceView.LoadStackTrace( self._currentThread )
