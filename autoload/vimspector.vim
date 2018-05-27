@@ -65,6 +65,10 @@ function! vimspector#ExpandVariable() abort
   py3 _vimspector_session.ExpandVariable()
 endfunction
 
+function! vimspector#DeleteWatch() abort
+  py3 _vimspector_session.DeleteWatch()
+endfunction
+
 function! vimspector#GoToFrame() abort
   py3 _vimspector_session.GoToFrame()
 endfunction

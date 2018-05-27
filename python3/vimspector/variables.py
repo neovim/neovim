@@ -23,7 +23,11 @@ class VariablesView( object ):
   def __init__( self, connection, buf ):
     self._buf = buf
     self._connection = connection
+
+    # Allows us to hit <CR> to expand/collapse variables
     self._line_to_variable = {}
+    vim.command(
+      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
 
     # This is actually the tree (scopes are alwyas the root)
     #  it's just a list of DAP scope dicts, with one magic key (_variables)
@@ -33,12 +37,17 @@ class VariablesView( object ):
     # children. Otherwise, we haven't or shouldn't.
     self._scopes = []
 
-    # This is basically the same as scopes, but the top level is an "expression"
+    # This is similar to scopes, but the top level is an "expression" (request)
+    # containing a special '_result' key which is the response. The response
+    # structure con contain _variables and is handled identically to the scopes
+    # above. It also has a special _line key which is where we printed it (last)
     self._watches = []
 
-    vim.current.buffer = buf
+    # Allows us to delete manual watches
     vim.command(
-      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
+      'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
+
+    vim.current.buffer = buf
 
     utils.SetUpScratchBuffer( self._buf )
 
@@ -76,6 +85,18 @@ class VariablesView( object ):
     self._watches.append( watch )
     self.EvaluateWatches()
 
+  def DeleteWatch( self ):
+    if vim.current.window.buffer != self._buf:
+      return
+
+    current_line = vim.current.window.cursor[ 0 ]
+
+    for index, watch in enumerate( self._watches ):
+      if '_line' in watch and watch[ '_line' ] == current_line:
+        del self._watches[ index ]
+        self._DrawScopesAndWatches()
+        return
+
   def EvaluateWatches( self ):
     for watch in self._watches:
       self._connection.DoRequest( partial( self._UpdateWatchExpression,
@@ -85,16 +106,7 @@ class VariablesView( object ):
       } )
 
   def _UpdateWatchExpression( self, watch, message ):
-    watch[ 'result' ] = message[ 'body' ]
-    if 'variablesReference' in watch[ 'result' ]:
-      self._connection.DoRequest(
-        partial( self._ConsumeVariables, watch[ 'result' ] ), {
-          'command': 'variables',
-          'arguments': {
-            'variablesReference': watch[ 'result' ][ 'variablesReference' ]
-          },
-        } )
-
+    watch[ '_result' ] = message[ 'body' ]
     self._DrawScopesAndWatches()
 
   def ExpandVariable( self ):
@@ -119,6 +131,7 @@ class VariablesView( object ):
 
   def _DrawVariables( self, variables, indent ):
     for variable in variables:
+      self._line_to_variable[ len( self._buf ) + 1 ] = variable
       self._buf.append(
         '{indent}{icon} {name} ({type_}): {value}'.format(
           indent = ' ' * indent,
@@ -127,7 +140,6 @@ class VariablesView( object ):
           name = variable[ 'name' ],
           type_ = variable.get( 'type', '<unknown type>' ),
           value = variable[ 'value' ] ).split( '\n' ) )
-      self._line_to_variable[ len( self._buf ) ] = variable
 
       if '_variables' in variable:
         self._DrawVariables( variable[ '_variables' ], indent + 2 )
@@ -138,21 +150,45 @@ class VariablesView( object ):
       with utils.ModifiableScratchBuffer( self._buf ):
         self._buf[:] = None
         for scope in self._scopes:
-          self._buf.append( 'Scope: ' + scope[ 'name' ] )
-          if '_variables' in scope:
-            indent = 2
-            self._DrawVariables( scope[ '_variables' ], indent )
+          self._DrawScope( 0, scope )
 
         self._buf.append( 'Watches: ----' )
         for watch in self._watches:
           self._buf.append( 'Expression: ' + watch[ 'expression' ] )
-          if 'result' in watch:
-            result = watch[ 'result' ]
-            line =  '  Result: ' + result[ 'result' ]
-            self._buf.append( line.split( '\n' ) )
-            if '_variables' in result:
-              indent = 4
-              self._DrawVariables( result[ '_variables' ], indent )
+          watch[ '_line' ] = len( self._buf )
+          self._DrawWatchResult( 2, watch )
+
+  def _DrawScope( self, indent, scope ):
+    icon = '+' if ( scope[ 'variablesReference' ] > 0 and
+                    '_variables' not in scope ) else '-'
+
+    self._line_to_variable[ len( self._buf ) + 1 ] = scope
+    self._buf.append( '{0}{1} Scope: {2}'.format( ' ' * indent,
+                                                   icon,
+                                                   scope[ 'name' ] ) )
+
+    if '_variables' in scope:
+      indent += 2
+      self._DrawVariables( scope[ '_variables' ], indent )
+
+  def _DrawWatchResult( self, indent, watch ):
+    if '_result' not in watch:
+      return
+
+    result = watch[ '_result' ]
+    self._line_to_variable[ len( self._buf ) + 1 ] = result
+
+    icon = '+' if ( result[ 'variablesReference' ] > 0 and
+                    '_variables' not in result ) else '-'
+
+    line =  '{0}{1} Result: {2} '.format( ' ' * indent,
+                                          icon,
+                                          result[ 'result' ] )
+    self._buf.append( line.split( '\n' ) )
+
+    if '_variables' in result:
+      indent = 4
+      self._DrawVariables( result[ '_variables' ], indent )
 
   def _ConsumeVariables( self, parent, message ):
     for variable in message[ 'body' ][ 'variables' ]:

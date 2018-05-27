@@ -183,6 +183,9 @@ class DebugSession( object ):
   def AddWatch( self, expression ):
     self._variablesView.AddWatch( self._currentFrame, expression )
 
+  def DeleteWatch( self ):
+    self._variablesView.DeleteWatch()
+
   def GoToFrame( self ):
     self._stackTraceView.GoToFrame()
 

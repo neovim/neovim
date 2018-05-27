@@ -56,7 +56,9 @@ def RestoreCursorPosition():
   try:
     yield
   finally:
-    vim.current.window.cursor = current_pos
+    vim.current.window.cursor = (
+      min( current_pos[ 0 ], len( vim.current.buffer ) ),
+      current_pos[ 1 ] )
 
 
 @contextlib.contextmanager
