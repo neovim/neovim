@@ -180,6 +180,9 @@ class DebugSession( object ):
   def ExpandVariable( self ):
     self._variablesView.ExpandVariable()
 
+  def AddWatch( self, expression ):
+    self._variablesView.AddWatch( self._currentFrame, expression )
+
   def GoToFrame( self ):
     self._stackTraceView.GoToFrame()
 
@@ -221,6 +224,7 @@ class DebugSession( object ):
     self._currentFrame = frame
     self._codeView.SetCurrentFrame( frame )
     self._variablesView.LoadScopes( frame )
+    self._variablesView.EvaluateWatches()
 
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(

@@ -33,6 +33,9 @@ class VariablesView( object ):
     # children. Otherwise, we haven't or shouldn't.
     self._scopes = []
 
+    # This is basically the same as scopes, but the top level is an "expression"
+    self._watches = []
+
     vim.current.buffer = buf
     vim.command(
       'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
@@ -55,7 +58,7 @@ class VariablesView( object ):
           },
         } )
 
-      self._DrawScopes()
+      self._DrawScopesAndWatches()
 
     self._connection.DoRequest( scopes_consumer, {
       'command': 'scopes',
@@ -63,6 +66,36 @@ class VariablesView( object ):
         'frameId': frame[ 'id' ]
       },
     } )
+
+  def AddWatch( self, frame, expression ):
+    watch = {
+        'expression': expression,
+        'frameId': frame[ 'id' ],
+        'context': 'watch',
+    }
+    self._watches.append( watch )
+    self.EvaluateWatches()
+
+  def EvaluateWatches( self ):
+    for watch in self._watches:
+      self._connection.DoRequest( partial( self._UpdateWatchExpression,
+                                           watch ), {
+        'command': 'evaluate',
+        'arguments': watch,
+      } )
+
+  def _UpdateWatchExpression( self, watch, message ):
+    watch[ 'result' ] = message[ 'body' ]
+    if 'variablesReference' in watch[ 'result' ]:
+      self._connection.DoRequest(
+        partial( self._ConsumeVariables, watch[ 'result' ] ), {
+          'command': 'variables',
+          'arguments': {
+            'variablesReference': watch[ 'result' ][ 'variablesReference' ]
+          },
+        } )
+
+    self._DrawScopesAndWatches()
 
   def ExpandVariable( self ):
     if vim.current.window.buffer != self._buf:
@@ -75,7 +108,7 @@ class VariablesView( object ):
     variable = self._line_to_variable[ current_line ]
     if '_variables' in variable:
       del variable[ '_variables' ]
-      self._DrawScopes()
+      self._DrawScopesAndWatches()
     else:
       self._connection.DoRequest( partial( self._ConsumeVariables, variable ), {
         'command': 'variables',
@@ -93,13 +126,13 @@ class VariablesView( object ):
                           '_variables' not in variable ) else '-',
           name = variable[ 'name' ],
           type_ = variable.get( 'type', '<unknown type>' ),
-          value = variable[ 'value' ] ) )
+          value = variable[ 'value' ] ).split( '\n' ) )
       self._line_to_variable[ len( self._buf ) ] = variable
 
       if '_variables' in variable:
         self._DrawVariables( variable[ '_variables' ], indent + 2 )
 
-  def _DrawScopes( self ):
+  def _DrawScopesAndWatches( self ):
     self._line_to_variable = {}
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._buf ):
@@ -110,6 +143,16 @@ class VariablesView( object ):
             indent = 2
             self._DrawVariables( scope[ '_variables' ], indent )
 
+        self._buf.append( 'Watches: ----' )
+        for watch in self._watches:
+          self._buf.append( 'Expression: ' + watch[ 'expression' ] )
+          if 'result' in watch:
+            result = watch[ 'result' ]
+            line =  '  Result: ' + result[ 'result' ]
+            self._buf.append( line.split( '\n' ) )
+            if '_variables' in result:
+              indent = 4
+              self._DrawVariables( result[ '_variables' ], indent )
 
   def _ConsumeVariables( self, parent, message ):
     for variable in message[ 'body' ][ 'variables' ]:
@@ -118,4 +161,4 @@ class VariablesView( object ):
 
       parent[ '_variables' ].append( variable )
 
-    self._DrawScopes()
+    self._DrawScopesAndWatches()

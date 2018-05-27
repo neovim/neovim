@@ -69,6 +69,10 @@ function! vimspector#GoToFrame() abort
   py3 _vimspector_session.GoToFrame()
 endfunction
 
+function! vimspector#AddWatch( expr ) abort
+  py3 _vimspector_session.AddWatch( vim.eval( 'a:expr' ) )
+endfunction
+
 " Boilerplate {{{
 let &cpo=s:save_cpo
 unlet s:save_cpo
