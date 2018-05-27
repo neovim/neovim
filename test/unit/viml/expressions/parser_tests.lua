@@ -7920,6 +7920,24 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
       hl('InvalidDoubleQuotedBody', '-\001'),
     })
+    check_pagealloc_parsing('"\000\\\\\\n\\<\\\193\128', {
+      --                     01   2 3 4 56 78 9   0
+      --                     0                    1
+      ast = {
+        'DoubleQuotedString(val="\\000\\\\\\n<\193\128"):0:0:"',
+      },
+      err = {
+        arg = '"\000\\\\\\n\\<\\\193\128',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\\\', 1),
+      hl('InvalidDoubleQuotedEscape', '\\n'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\\193\128'),
+    })
   end)
   itp('works with assignments', function()
     check_asgn_parsing('a=b', {
