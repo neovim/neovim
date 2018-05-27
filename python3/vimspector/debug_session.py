@@ -96,8 +96,11 @@ class DebugSession( object ):
       launch_config = json.load( f )
 
     if not configuration:
-      configuration = utils.SelectFromList( 'Which launch configuration?',
-                                            list( launch_config.keys() ) )
+      if len( launch_config ) == 1:
+        configuration = next( iter( launch_config.keys() ) )
+      else:
+        configuration = utils.SelectFromList( 'Which launch configuration?',
+                                              list( launch_config.keys() ) )
 
     if not configuration:
       return
