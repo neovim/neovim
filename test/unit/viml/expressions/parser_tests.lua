@@ -7738,6 +7738,21 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
+    check_pagealloc_parsing('"\0\0\\Xa\\\248', {
+      --                     01 2 3 456 7
+      ast = {
+        'DoubleQuotedString(val="\\000\\000\\n\248"):0:0:"',
+      },
+      err = {
+        arg = '"\000\000\\Xa\\\248',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\Xa', 2),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\\248'),
+    })
   end)
   itp('works with assignments', function()
     check_asgn_parsing('a=b', {
