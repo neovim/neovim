@@ -39,7 +39,7 @@ class DebugSession( object ):
 
     self._uiTab = None
     self._threadsBuffer = None # TODO: Move to stack trace
-    self._outputBuffer = None
+    self._outputBuffer = None # TODO: Need something less terrible here
     self._stackTraceView = None
     self._variablesView = None
 

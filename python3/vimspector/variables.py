@@ -140,16 +140,25 @@ class VariablesView( object ):
       return
 
     variable = self._line_to_variable[ current_line ]
+
     if '_variables' in variable:
+      # Collapse
       del variable[ '_variables' ]
       self._DrawScopesAndWatches()
-    else:
-      self._connection.DoRequest( partial( self._ConsumeVariables, variable ), {
-        'command': 'variables',
-        'arguments': {
-          'variablesReference': variable[ 'variablesReference' ]
-        },
-      } )
+      return
+
+    # Expand. (only if there is anything to expand)
+    if 'variablesReference' not in variable:
+      return
+    if variable[ 'variablesReference' ] <= 0:
+      return
+
+    self._connection.DoRequest( partial( self._ConsumeVariables, variable ), {
+      'command': 'variables',
+      'arguments': {
+        'variablesReference': variable[ 'variablesReference' ]
+      },
+    } )
 
   def _DrawVariables( self, variables, indent ):
     for variable in variables:
