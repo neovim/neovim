@@ -29,7 +29,7 @@ def SetUpLogging( logger ):
   logger.addHandler( handler )
 
 
-def SetUpScratchBuffer( buf ):
+def SetUpScratchBuffer( buf, name ):
   buf.options[ 'buftype' ] = 'nofile'
   buf.options[ 'swapfile' ] = False
   buf.options[ 'modifiable' ] = False
@@ -37,6 +37,7 @@ def SetUpScratchBuffer( buf ):
   buf.options[ 'readonly' ] = True
   buf.options[ 'buflisted' ] = False
   buf.options[ 'bufhidden' ] = 'wipe'
+  buf.name = name
 
 
 @contextlib.contextmanager

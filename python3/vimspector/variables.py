@@ -21,6 +21,8 @@ from vimspector import utils
 
 class VariablesView( object ):
   def __init__( self, connection, buf ):
+    vim.current.buffer = buf
+
     self._buf = buf
     self._connection = connection
 
@@ -47,9 +49,7 @@ class VariablesView( object ):
     vim.command(
       'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
 
-    vim.current.buffer = buf
-
-    utils.SetUpScratchBuffer( self._buf )
+    utils.SetUpScratchBuffer( self._buf, 'vimspector.Variables' )
 
   def Clear( self ):
     with utils.ModifiableScratchBuffer( self._buf ):

@@ -200,7 +200,7 @@ class DebugSession( object ):
     vim.command( '50vspl' )
     vim.command( 'enew' )
     self._threadsBuffer = vim.current.buffer
-    utils.SetUpScratchBuffer( self._threadsBuffer )
+    utils.SetUpScratchBuffer( self._threadsBuffer, "vimspector.Threads" )
 
     with utils.TemporaryVimOption( 'eadirection', 'ver' ):
       with utils.TemporaryVimOption( 'equalalways', 1 ):
@@ -215,7 +215,7 @@ class DebugSession( object ):
         vim.command( 'spl' )
         vim.command( 'enew' )
         self._outputBuffer = vim.current.buffer
-        utils.SetUpScratchBuffer( self._outputBuffer )
+        utils.SetUpScratchBuffer( self._outputBuffer, 'vimspector.Console' )
 
         # Variables
         vim.command( 'spl' )

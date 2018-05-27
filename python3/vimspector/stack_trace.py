@@ -24,7 +24,7 @@ class StackTraceView( object ):
     self._session = session
     self._connection = connection
 
-    utils.SetUpScratchBuffer( self._buf )
+    utils.SetUpScratchBuffer( self._buf, 'vimspector.StackTrace' )
     vim.current.buffer = self._buf
     vim.command( 'nnoremap <buffer> <CR> :call vimspector#GoToFrame()<CR>' )
 
