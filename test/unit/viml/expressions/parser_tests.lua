@@ -5832,6 +5832,142 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuotedBody', 'C-u'),
       hl('DoubleQuote', '"'),
     })
+
+    check_parsing('"<>', {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="<>"):0:0:"<>',
+      },
+      err = {
+        arg = '"<>',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', '<>'),
+    })
+
+    check_parsing('"\\<>', {
+      --           01 23
+      ast = {
+        'DoubleQuotedString(val="<>"):0:0:"\\<>',
+      },
+      err = {
+        arg = '"\\<>',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '>'),
+    })
+
+    check_parsing('"\\<-', {
+      --           01 23
+      ast = {
+        'DoubleQuotedString(val="<-"):0:0:"\\<-',
+      },
+      err = {
+        arg = '"\\<-',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-'),
+    })
+
+    check_parsing('"\\<M-', {
+      --           01 234
+      ast = {
+        'DoubleQuotedString(val="<M-"):0:0:"\\<M-',
+      },
+      err = {
+        arg = '"\\<M-',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', 'M-'),
+    })
+
+    check_parsing('"\\<M-"', {
+      --           01 2345
+      ast = {
+        'DoubleQuotedString(val="<M-"):0:0:"\\<M-"',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedBody', 'M-'),
+      hl('DoubleQuote', '"'),
+    })
+
+    check_parsing('"\\<M-">"', {
+      --           01 234567
+      ast = {
+        {
+          'Comparison(type=Greater,inv=0,ccs=UseOption):0:6:>',
+          children = {
+            'DoubleQuotedString(val="<M-"):0:0:"\\<M-"',
+            'DoubleQuotedString(val=NULL):0:7:"',
+          },
+        },
+      },
+      err = {
+        arg = '"',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedBody', 'M-'),
+      hl('DoubleQuote', '"'),
+      hl('Comparison', '>'),
+      hl('InvalidDoubleQuote', '"'),
+    })
+
+    check_parsing('"\\<M-\\"', {
+      --           01 2345 6
+      ast = {
+        'DoubleQuotedString(val="<M-\\""):0:0:"\\<M-\\"',
+      },
+      err = {
+        arg = '"\\<M-\\"',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', 'M-'),
+      hl('InvalidDoubleQuotedEscape', '\\"'),
+    })
+
+    check_parsing('"\\<M-\\">', {
+      --           01 2345 67
+      ast = {
+        'DoubleQuotedString(val="\128\252\\008\\""):0:0:"\\<M-\\">',
+      },
+      err = {
+        arg = '"\\<M-\\">',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedEscape', '\\<M-\\">'),
+    })
+
+    check_parsing('"\\<M-\\">"', {
+      --           01 2345 678
+      ast = {
+        'DoubleQuotedString(val="\128\252\\008\\""):0:0:"\\<M-\\">"',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedEscape', '\\<M-\\">'),
+      hl('DoubleQuote', '"'),
+    })
   end)
   itp('works with multiplication-like operators', function()
     check_parsing('2+2*2', {
@@ -7752,6 +7888,37 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('InvalidDoubleQuotedBody', ''),
       hl('InvalidDoubleQuotedEscape', '\\Xa', 2),
       hl('InvalidDoubleQuotedUnknownEscape', '\\\248'),
+    })
+    check_pagealloc_parsing('"\\<\\<-\000', {
+      --                     01 23 456
+      ast = {
+        'DoubleQuotedString(val="<<-\\000"):0:0:"\\<\\<-',
+      },
+      err = {
+        arg = '"\\<\\<-\000',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-\0'),
+    })
+    check_pagealloc_parsing('"\000\\"\\<-\001', {
+      --                     01   2 34 567
+      ast = {
+        'DoubleQuotedString(val="\\000\\"<-\\001"):0:0:"',
+      },
+      err = {
+        arg = '"\000\\"\\<-\001',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\"', 1),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-\001'),
     })
   end)
   itp('works with assignments', function()
