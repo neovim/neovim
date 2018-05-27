@@ -12,7 +12,7 @@ local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
 local function new_pstate(strings, do_pagealloc, alloc_log)
   local strings_idx = 0
-  local allocs = {}
+  local frees = {}
   local function get_line(_, ret_pline)
     strings_idx = strings_idx + 1
     local str = strings[strings_idx]
@@ -20,8 +20,8 @@ local function new_pstate(strings, do_pagealloc, alloc_log)
     if type(str) == 'string' then
       size = #str
       if do_pagealloc then
-        local start, mem = pagealloc(size, alloc_log)
-        allocs[#allocs + 1] = mem
+        local start, free = pagealloc(size, alloc_log)
+        frees[#frees + 1] = free
         data = ffi.gc(start, nil)
         for i = 0, (size - 1) do
           start[i] = str:byte(i + 1)
@@ -62,8 +62,8 @@ local function new_pstate(strings, do_pagealloc, alloc_log)
   kvi_init(ret.stack)
   if do_pagealloc then
     ret = ffi.gc(ret, function(_)
-      for _, a in ipairs(allocs) do
-        lib.xfree(a)
+      for _, free in ipairs(frees) do
+        free()
       end
     end)
   end

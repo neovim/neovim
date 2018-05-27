@@ -7,6 +7,12 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
+#ifdef UNIT_TESTING
+# include <unistd.h>
+# include <sys/mman.h>
+# include <errno.h>
+# include <string.h>
+#endif
 
 #include "nvim/vim.h"
 #include "nvim/eval.h"
@@ -72,6 +78,79 @@ void try_to_free_memory(void)
 
   trying_to_free = false;
 }
+
+#ifdef UNIT_TESTING
+size_t mem_pagesize(void)
+  FUNC_ATTR_PURE
+{
+  static long pagesize = 0;
+  if (!pagesize) {
+    pagesize = sysconf(_SC_PAGESIZE);
+  }
+  return (size_t)pagesize;
+}
+
+/// Allocate memory surrounded by pages with protected access
+///
+/// Allocates given number of memory pages plus two pages with protected access.
+/// Used for testing out-of-bounds array access in unit tests.
+///
+/// @note It is not possible to protect anything less then one memory page, so
+///       unless allocated array is exactly N (≥1) pages wide function would be
+///       useful only for creating tests for access past array end or access
+///       before array start, but not both.
+///
+/// @param[in]  num_pages  Number of pages to allocate. May be zero.
+///
+/// @return [allocated] Start of the unprotected page. Actually allocated space
+///                     is from (ret - pagesize + 1) to (ret + (num_pages + 1)
+///                     * pagesize - 1), but regions [ret - pagesize + 1; ret
+///                     - 1] and [ret + num_pages * pagesize; ret + (num_pages
+///                     + 1) * pagesize - 1] cannot be accessed without causing
+///                     SEGV.
+///
+///                     @warning Returns NULL on error.
+void *mem_pagealloc(const size_t num_pages)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const size_t pagesize = mem_pagesize();
+  errno = 0;
+  void *const mem = mmap(NULL, pagesize * (num_pages + 2), PROT_NONE,
+                         MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  if (mem == MAP_FAILED) {
+    // Not translated: for internal use only.
+    emsgf("Allocating %zu pages failed: %s", num_pages + 2, strerror(errno));
+    return NULL;
+  }
+  void *const mem_start = (void *)((char *)mem + pagesize);
+  const int mp_ret = mprotect(mem_start, pagesize * num_pages,
+                              PROT_READ|PROT_WRITE);
+  if (mp_ret) {
+    // Not translated: for internal use only.
+    emsgf("Changing permission for %zu pages starting from %p failed: %s",
+          num_pages, mem_start, strerror(errno));
+    return NULL;
+  }
+  return mem_start;
+}
+
+/// Free pages previously allocated by mem_pagealloc
+///
+/// @param[in]  mem  Memory to free.
+/// @param[in]  num_pages  Number of pages supplied when running mem_pagealloc()
+///                        previously.
+void mem_pagefree(void *mem, const size_t num_pages)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const size_t pagesize = mem_pagesize();
+  const int mu_ret = munmap(mem, (num_pages + 2) * pagesize);
+  if (mu_ret) {
+    // Not translated: for internal use only.
+    emsgf("Unmapping %zu pages starting from %p failed: %s",
+          num_pages + 2, mem, strerror(errno));
+  }
+}
+#endif
 
 /// malloc() wrapper
 ///

@@ -23,16 +23,6 @@ local NULL = ffi.cast('void*', 0)
 local OK = 1
 local FAIL = 0
 
--- TODO(ZyX-I): Fetch actual page size?
---
--- Note: on my system actual page size is 4 096. But unless multiplied by 
--- anything less then 2 048 * 2 048 * 3 (last value obtained by a binary search:
---     2048 - 1024 - 512 - 256 - 128 - 64 - 32 - 16 - 8 - 4 - 2 + 1
--- you may guess which values were “good” (i.e. crashing) and which were “bad” 
--- based on the signs near numbers) it is not going to crash on out-of-bounds 
--- access.
-local pagesize = 4096 * 2048 * 2048 * 3
-
 local cimport
 
 -- add some standard header locations
@@ -277,25 +267,18 @@ else
 end
 
 local function pagealloc(size, alloc_log)
-  local malloc
-  local free
-  if alloc_log then
-    malloc = alloc_log.original_functions.malloc
-    free = alloc_log.original_functions.free
-  else
-    local lib = cimport('./src/nvim/memory.h')
-    malloc = lib.xmalloc
-    free = lib.xfree
+  local lib = cimport('./src/nvim/memory.h')
+  local pagesize = lib.mem_pagesize()
+  local num_pages = 1
+  while num_pages * pagesize < size do
+    num_pages = num_pages + 1
   end
-  local actual_size = pagesize
-  while actual_size < size do
-    actual_size = actual_size + pagesize
+  local mem = ffi.gc(lib.mem_pagealloc(num_pages), nil)
+  local start = ffi.cast('char*', mem) + ((num_pages * pagesize) - size)
+  local free = function(_)
+    lib.mem_pagefree(mem, num_pages)
   end
-  local mem = ffi.gc(malloc(actual_size), nil)
-  local start = ffi.cast('char*', mem) + (actual_size - size)
-  -- -- Below code is supposed to crash. Actually does not.
-  -- print('out of bounds:', start[size])
-  return ffi.gc(start, function(_) free(mem) end), mem
+  return ffi.gc(start, free), free
 end
 
 local function alloc_log_new()
