@@ -64,7 +64,7 @@ void input_start(int fd)
 
   global_fd = fd;
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
-  rstream_start(&read_stream, read_cb, NULL);
+  rstream_start(&read_stream, input_read_cb, NULL);
 }
 
 void input_stop(void)
@@ -108,6 +108,11 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     }
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
+      if (read_stream.closed && silent_mode) {
+        // Input drained and eventloop drained: exit silent/batch-mode (-es).
+        read_error_exit();
+      }
+
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
         create_cursorhold_event();
       } else {
@@ -376,11 +381,11 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
-    bool at_eof)
+static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+                          bool at_eof)
 {
   if (at_eof) {
-    input_eof = true;
+    input_done();
   }
 
   assert(rbuffer_space(input_buffer) >= rbuffer_size(buf));

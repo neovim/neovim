@@ -580,10 +580,6 @@ EXTERN int sandbox INIT(= 0);
 /// Batch-mode: "-es" or "-Es" commandline argument was given.
 EXTERN int silent_mode INIT(= false);
 
-/// Set to true when sourcing of startup scripts (init.vim) is done.
-/// Used for options that cannot be changed after startup scripts.
-EXTERN bool did_source_startup_scripts INIT(= false);
-
 /// Start position of active Visual selection.
 EXTERN pos_T VIsual;
 /// Whether Visual mode is active.

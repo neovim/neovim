@@ -109,13 +109,14 @@ describe('startup', function()
     ]])
   end)
   it('input from pipe (implicit) + file args #7679', function()
+    if helpers.pending_win32(pending) then return end
     local screen = Screen.new(25, 3)
     screen:attach()
     if iswin() then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     command([[exe "terminal echo ohyeah | "]]  -- Input from a pipe.
-            ..[[.shellescape(v:progpath)." -u NONE -i NONE --cmd \"]]
+            ..[[.shellescape(v:progpath)." -n -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
             ..[[ --cmd \"set shortmess+=I\"]]
             ..[[ -c \"echo has('ttyin') has('ttyout') 'bufs='.bufnr('$')\"]]
@@ -127,6 +128,34 @@ describe('startup', function()
       0 1 bufs=3               |
                                |
     ]])
+  end)
+
+  it('stdin with -es, -Es #7679', function()
+    local input = { 'append', 'line1', 'line2', '.', '%print', '' }
+    local inputstr = table.concat(input, '\n')
+
+    --
+    -- -Es: read stdin as text
+    --
+    if not iswin() then
+    eq('partylikeits1999\n',
+       funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-Es', '+.print', 'test/functional/fixtures/tty-test.c' },
+                    { 'partylikeits1999' }))
+    eq(inputstr,
+       funcs.system({nvim_prog, '-i', 'NONE', '-Es', '+%print', '-' },
+                    input))
+    end
+
+
+    --
+    -- -es: read stdin as ex-commands
+    --
+    eq('  encoding=utf-8\n',
+       funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-es', 'test/functional/fixtures/tty-test.c' },
+                    { 'set encoding', '' }))
+    eq('line1\nline2\n',
+       funcs.system({nvim_prog, '-i', 'NONE', '-es', '-' },
+                    input))
   end)
 end)
 

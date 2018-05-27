@@ -158,6 +158,7 @@ void event_init(void)
 bool event_teardown(void)
 {
   if (!main_loop.events) {
+    input_stop();
     return true;
   }
 
@@ -298,17 +299,18 @@ int main(int argc, char **argv)
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 
+  bool reading_excmds = exmode_active == EXMODE_NORMAL;
   bool reading_input = !headless_mode
                        && (params.input_isatty || params.output_isatty
                            || params.err_isatty);
 
-  if (reading_input) {
+  if (reading_input || reading_excmds) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
     // prompt the user, so start reading from a tty now.
     int fd = fileno(stdin);
-    if (!params.input_isatty || params.edit_type == EDIT_STDIN) {
-      // Use stderr or stdout since stdin is not a tty and/or could be used to
-      // read the "-" file (eg: cat file | nvim -)
+    if (!reading_excmds
+        && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
+      // Use stderr or stdout since stdin is being used to read commands.
       fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
     }
     input_start(fd);
@@ -332,7 +334,9 @@ int main(int argc, char **argv)
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")) {
+  if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")
+      // && !silent_mode  // XXX: avoid hang with "nvim -es -u NONE".
+      ) {
     p_lpl = false;
   }
 
@@ -369,17 +373,21 @@ int main(int argc, char **argv)
     mch_exit(0);
   }
 
-  // Set a few option defaults after reading vimrc files:
-  // 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
+  // Set a few option defaults after reading vimrc files: 'title', 'icon',
+  // 'shellpipe', 'shellredir'.
   set_init_3();
   TIME_MSG("inits 3");
 
-  /*
-   * "-n" argument: Disable swap file by setting 'updatecount' to 0.
-   * Note that this overrides anything from a vimrc file.
-   */
-  if (params.no_swap_file)
+  // "-n" argument: Disable swap file by setting 'updatecount' to 0.
+  // Note that this overrides anything from a vimrc file.
+  if (params.no_swap_file) {
     p_uc = 0;
+  }
+
+  // XXX: Minimize 'updatetime' for -es/-Es. #7679
+  if (silent_mode) {
+    p_ut = 1;
+  }
 
   if (curwin->w_p_rl && p_altkeymap) {
     p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
@@ -437,18 +445,17 @@ int main(int argc, char **argv)
     wait_return(true);
   }
 
-  if (!headless_mode) {
-    // Stop reading from input stream. UI (if any) will take over.
-    input_stop();
+  if (!headless_mode && !silent_mode) {
+    input_stop();  // Stop reading from input stream. UI will take over.
     ui_builtin_start();
   }
 
   setmouse();  // may start using the mouse
   ui_reset_scroll_region();  // In case Rows changed
 
-  if (exmode_active)
+  if (exmode_active) {
     must_redraw = CLEAR;  // Don't clear the screen when starting in Ex mode.
-  else {
+  } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");
   }
@@ -1769,7 +1776,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
         || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
-      if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK) {
+      if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
       }
     }
@@ -1810,7 +1817,6 @@ static void source_startup_scripts(const mparm_T *const parmp)
     }
     secure = 0;
   }
-  did_source_startup_scripts = true;
   TIME_MSG("sourcing vimrc file(s)");
 }
 
