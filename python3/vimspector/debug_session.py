@@ -186,6 +186,14 @@ class DebugSession( object ):
   def DeleteWatch( self ):
     self._variablesView.DeleteWatch()
 
+  def ShowBalloon( self, winnr, expression ):
+    if winnr == int( self._codeView._window.number ):
+      self._variablesView.ShowBalloon( self._currentFrame, expression )
+    else:
+      self._logger.debug( 'Winnr {0} is not the code window {1}'.format(
+        winnr,
+        self._codeView._window.number ) )
+
   def GoToFrame( self ):
     self._stackTraceView.GoToFrame()
 
@@ -244,11 +252,11 @@ class DebugSession( object ):
     self._logger.info( 'Debug Adapter Started' )
 
   def _StopDebugAdapter( self, callback = None ):
-    self._codeView.Clear()
-
     def handler( message ):
       vim.eval( 'vimspector#internal#job#StopDebugSession()' )
       self._connection = None
+      self._stackTraceView.ConnectionClosed()
+      self._variablesView.ConnectionClosed()
       if callback:
         callback()
 
@@ -261,7 +269,6 @@ class DebugSession( object ):
 
 
   def _Initialise( self ):
-    # TODO: name is mandatory. forcefully add it
     self._connection.DoRequest( None, {
       'command': 'initialize',
       'arguments': {
@@ -271,6 +278,8 @@ class DebugSession( object ):
         'pathFormat': 'path',
       },
     } )
+    # FIXME: name is mandatory. Forcefully add it (we should really use the
+    # _actual_ name, but that isn't actually remembered at this point)
     if 'name' not in self._configuration[ 'configuration' ]:
       self._configuration[ 'configuration' ][ 'name' ] = 'test'
 
@@ -294,26 +303,16 @@ class DebugSession( object ):
     pass
 
   def OnEvent_breakpoint( self, message ):
-    # Useful:
-    #
-    # /** The reason for the event.
-    #   Values: 'changed', 'new', 'removed', etc.
-    # */
-
     reason = message[ 'body' ][ 'reason' ]
     bp = message[ 'body' ][ 'breakpoint' ]
     if reason == 'changed':
       self._codeView.UpdateBreakpoint( bp )
     elif reason == 'new':
       self._codeView.AddBreakpoints( None, bp )
-    elif reason == 'removed':
-      # TODO
-      pass
     else:
       utils.UserMessage(
         'Unrecognised breakpoint event (undocumented): {0}'.format( reason ),
         persist = True )
-
 
   def OnEvent_terminated( self, message ):
     utils.UserMessage( "The program was terminated because: {0}".format(
@@ -325,7 +324,6 @@ class DebugSession( object ):
 
     with utils.ModifiableScratchBuffer( self._threadsBuffer ):
       self._threadsBuffer[:] = None
-
 
   def _SendBreakpoints( self ):
     for file_name, line_breakpoints in self._breakpoints.items():
@@ -359,19 +357,6 @@ class DebugSession( object ):
           'sourceModified': False, # TODO: We can actually check this
         }
       )
-
-    # TODO: Remove this!
-    # self._connection.DoRequest(
-    #   functools.partial( self._UpdateBreakpoints, None ),
-    #   {
-    #     'command': 'setFunctionBreakpoints',
-    #     'arguments': {
-    #       'breakpoints': [
-    #         { 'name': 'main' },
-    #       ],
-    #     },
-    #   }
-    # )
 
     self._connection.DoRequest( None, {
       'command': 'configurationDone',

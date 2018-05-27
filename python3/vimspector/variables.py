@@ -51,9 +51,18 @@ class VariablesView( object ):
 
     utils.SetUpScratchBuffer( self._buf, 'vimspector.Variables' )
 
+    vim.options[ 'balloonexpr' ] = 'vimspector#internal#balloon#BalloonExpr()'
+    vim.options[ 'ballooneval' ] = True
+    vim.options[ 'balloonevalterm' ] = True
+    vim.options[ 'balloondelay' ] = 250
+
   def Clear( self ):
     with utils.ModifiableScratchBuffer( self._buf ):
       self._buf[:] = None
+
+  def ConnectionClosed( self ):
+    self.Clear()
+    self._connection = None
 
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):
@@ -198,3 +207,20 @@ class VariablesView( object ):
       parent[ '_variables' ].append( variable )
 
     self._DrawScopesAndWatches()
+
+  def ShowBalloon( self, frame, expression ):
+    if not self._connection:
+      return
+
+    def handler( message ):
+      vim.eval( "balloon_show( '{0}' )".format(
+        message[ 'body' ][ 'result' ] ) )
+
+    self._connection.DoRequest( handler, {
+      'command': 'evaluate',
+      'arguments': {
+        'expression': expression,
+        'frameId': frame[ 'id' ],
+        'context': 'hover',
+      }
+    } )

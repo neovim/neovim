@@ -34,6 +34,10 @@ class StackTraceView( object ):
     with utils.ModifiableScratchBuffer( self._buf ):
       self._buf[:] = None
 
+  def ConnectionClosed( self ):
+    self.Clear()
+    self._connection = None
+
   def LoadStackTrace( self, thread_id ):
     self._connection.DoRequest( self._PrintStackTrace, {
       'command': 'stackTrace',
