@@ -51,7 +51,7 @@ endfunction
 
 function! s:_OnClose( channel ) abort
   echom "Channel closed"
-  _vimspector_session.OnChannelClosed()
+  " py3 _vimspector_session.OnChannelClosed()
 endfunction
 
 function! s:_Send( msg ) abort
