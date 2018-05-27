@@ -51,6 +51,13 @@ class VariablesView( object ):
 
     utils.SetUpScratchBuffer( self._buf, 'vimspector.Variables' )
 
+    self._oldoptions = {
+      'balloonexpr': vim.options[ 'balloonexpr' ],
+      'ballooneval': vim.options[ 'ballooneval' ],
+      'balloonevalterm': vim.options[ 'balloonevalterm' ],
+      'balloondelay': vim.options[ 'balloondelay' ],
+    }
+
     vim.options[ 'balloonexpr' ] = 'vimspector#internal#balloon#BalloonExpr()'
     vim.options[ 'ballooneval' ] = True
     vim.options[ 'balloonevalterm' ] = True
@@ -63,6 +70,12 @@ class VariablesView( object ):
   def ConnectionClosed( self ):
     self.Clear()
     self._connection = None
+
+  def Reset( self ):
+    for k, v in self._oldoptions.items():
+      vim.options[ k ] = v
+
+    # TODO: delete the buffer?
 
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):

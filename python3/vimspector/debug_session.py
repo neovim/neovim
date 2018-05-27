@@ -40,6 +40,8 @@ class DebugSession( object ):
     self._uiTab = None
     self._threadsBuffer = None
     self._outputBuffer = None
+    self._stackTraceView = None
+    self._variablesView = None
 
     self._currentThread = None
     self._currentFrame = None
@@ -136,6 +138,24 @@ class DebugSession( object ):
 
   def Stop( self ):
     self._StopDebugAdapter()
+
+  def Reset( self ):
+    if self._connection:
+      self._StopDebugAdapter( lambda: self._Reset() )
+    else:
+      self._Reset()
+
+  def _Reset( self ):
+    self._RemoveBreakpoints()
+
+    if self._uiTab:
+      self._stackTraceView.Reset()
+      self._variablesView.Reset()
+      vim.current.tabpage = self._uiTab
+      vim.command( 'tabclose' )
+
+    vim.eval( 'vimspector#internal#job#Reset()' )
+    vim.eval( 'vimspector#internal#state#Reset()' )
 
   def StepOver( self ):
     self._connection.DoRequest( None, {
@@ -314,16 +334,25 @@ class DebugSession( object ):
         'Unrecognised breakpoint event (undocumented): {0}'.format( reason ),
         persist = True )
 
+  def Clear( self ):
+    self._codeView.Clear()
+    self._stackTraceView.Clear()
+    self._variablesView.Clear()
+    with utils.ModifiableScratchBuffer( self._threadsBuffer ):
+      self._threadsBuffer[:] = None
+
   def OnEvent_terminated( self, message ):
     utils.UserMessage( "The program was terminated because: {0}".format(
       message.get( 'body', {} ).get( 'reason', "No specific reason" ) ) )
 
-    self._codeView.Clear()
-    self._stackTraceView.Clear()
-    self._variablesView.Clear()
+    self.Clear()
 
-    with utils.ModifiableScratchBuffer( self._threadsBuffer ):
-      self._threadsBuffer[:] = None
+  def _RemoveBreakpoints( self ):
+    for file_name, line_breakpoints in self._breakpoints.items():
+      for line, bp in line_breakpoints.items():
+        if 'sign_id' in bp:
+          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
+          del bp[ 'sign_id' ]
 
   def _SendBreakpoints( self ):
     for file_name, line_breakpoints in self._breakpoints.items():

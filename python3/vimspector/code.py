@@ -46,6 +46,7 @@ class CodeView( object  ):
     vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
     vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
     vim.command( 'nnoremenu WinBar.Restart :call vimspector#Restart()<CR>' )
+    vim.command( 'nnoremenu WinBar.Reset :call vimspector#Reset()<CR>' )
 
     vim.command( 'sign define vimspectorPC text=-> texthl=Search' )
 
@@ -81,6 +82,8 @@ class CodeView( object  ):
     if self._signs[ 'vimspectorPC' ]:
       vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
+
+    self._UndisplaySigns()
 
   # TODO: You know what, move breakpoint handling out of here into its own
   # thing. It really doesn't directly relate to the code view.

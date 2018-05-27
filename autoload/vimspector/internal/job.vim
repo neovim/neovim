@@ -103,6 +103,12 @@ function! vimspector#internal#job#StopDebugSession() abort
   unlet s:job
 endfunction
 
+function! vimspector#internal#job#Reset() abort
+  if exists( 's:job' )
+    call vimspector#internal#job#StopDebugSession()
+  endif
+endfunction
+
 " Boilerplate {{{
 let &cpo=s:save_cpo
 unlet s:save_cpo

@@ -19,14 +19,16 @@ let s:save_cpo = &cpo
 set cpo&vim
 " }}}
 
-  py3 << EOF
-from vimspector import debug_session
-_vimspector_session = debug_session.DebugSession()
-EOF
+
+call vimspector#internal#state#Reset()
 
 " TODO: Test function
 function! vimspector#Launch() abort
   py3 _vimspector_session.Start()
+endfunction
+
+function! vimspector#Reset() abort
+  py3 _vimspector_session.Reset()
 endfunction
 
 function! vimspector#Restart() abort

@@ -38,6 +38,10 @@ class StackTraceView( object ):
     self.Clear()
     self._connection = None
 
+  def Reset( self ):
+    self.Clear()
+    # TODO: delete the buffer ?
+
   def LoadStackTrace( self, thread_id ):
     self._connection.DoRequest( self._PrintStackTrace, {
       'command': 'stackTrace',
