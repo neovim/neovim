@@ -128,6 +128,9 @@ class DebugSession( object ):
   def OnChannelData( self, data ):
     self._connection.OnData( data )
 
+  def OnChannelClosed( self ):
+    self._connection = None
+
   def Stop( self ):
     self._StopDebugAdapter()
 
