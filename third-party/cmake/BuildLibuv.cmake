@@ -64,21 +64,16 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
-elseif(MINGW)
-
-  # Native MinGW
-  BuildLibUv(BUILD_IN_SOURCE
-    PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Makefile.mingw
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/libuv/libuv.a ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include
-    )
-
-elseif(WIN32 AND MSVC)
+elseif(WIN32)
 
   set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
+  if(MSVC)
+    set(BUILD_SHARED ON)
+  elseif(MINGW)
+    set(BUILD_SHARED OFF)
+  else()
+    message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
+  endif()
   BuildLibUv(BUILD_IN_SOURCE
     PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
@@ -88,16 +83,10 @@ elseif(WIN32 AND MSVC)
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_SHARED_LIBS=${BUILD_SHARED}
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
-      # Some applications (lua-client/luarocks) look for uv.lib instead of libuv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib/uv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/uv.dll
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include)
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 else()
   message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
