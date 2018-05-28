@@ -88,6 +88,8 @@ elseif(MINGW)
                                 CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
+                                CFLAGS-=-O2
+                                CFLAGS-=-O3
                                 CCDEBUG+=-g
                                 BUILDMODE=static
                       # Build a DLL too
