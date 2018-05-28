@@ -40,6 +40,17 @@ def SetUpScratchBuffer( buf, name ):
   buf.name = name
 
 
+def SetUpHiddenBuffer( buf, name ):
+  buf.options[ 'buftype' ] = 'nofile'
+  buf.options[ 'swapfile' ] = False
+  buf.options[ 'modifiable' ] = False
+  buf.options[ 'modified' ] = False
+  buf.options[ 'readonly' ] = True
+  buf.options[ 'buflisted' ] = False
+  buf.options[ 'bufhidden' ] = 'hide'
+  buf.name = name
+
+
 @contextlib.contextmanager
 def ModifiableScratchBuffer( buf ):
   buf.options[ 'modifiable' ] = True
@@ -60,6 +71,24 @@ def RestoreCursorPosition():
     vim.current.window.cursor = (
       min( current_pos[ 0 ], len( vim.current.buffer ) ),
       current_pos[ 1 ] )
+
+
+@contextlib.contextmanager
+def RestorCurrentWindow():
+  old_window = vim.current.window
+  try:
+    yield
+  finally:
+    vim.current.window = old_window
+
+
+@contextlib.contextmanager
+def RestoreCurrentBuffer( window ):
+  old_buffer_name = window.buffer.name
+  try:
+    yield
+  finally:
+    window.buffer.name = old_buffer_name
 
 
 @contextlib.contextmanager

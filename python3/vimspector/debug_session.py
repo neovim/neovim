@@ -23,6 +23,7 @@ from collections import defaultdict
 
 from vimspector import ( code,
                          debug_adapter_connection,
+                         output,
                          stack_trace,
                          utils,
                          variables )
@@ -38,7 +39,6 @@ class DebugSession( object ):
     self._connection = None
 
     self._uiTab = None
-    self._outputBuffer = None # TODO: Need something less terrible here
     self._stackTraceView = None
     self._variablesView = None
 
@@ -219,6 +219,9 @@ class DebugSession( object ):
   def ExpandFrameOrThread( self ):
     self._stackTraceView.ExpandFrameOrThread()
 
+  def ShowOutput( self, category ):
+    self._outputView.ShowOutput( category )
+
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
     self._uiTab = vim.current.tabpage
@@ -227,7 +230,7 @@ class DebugSession( object ):
     self._codeView = code.CodeView( vim.current.window )
 
     # Call stack
-    vim.command( '50vspl' )
+    vim.command( 'topleft 50vspl' )
     vim.command( 'enew' )
     self._stackTraceView = stack_trace.StackTraceView( self,
                                                        self._connection,
@@ -235,17 +238,20 @@ class DebugSession( object ):
 
     with utils.TemporaryVimOption( 'eadirection', 'ver' ):
       with utils.TemporaryVimOption( 'equalalways', 1 ):
-        # Output/logging
-        vim.command( 'spl' )
-        vim.command( 'enew' )
-        self._outputBuffer = vim.current.buffer
-        utils.SetUpScratchBuffer( self._outputBuffer, 'vimspector.Console' )
-
         # Variables
         vim.command( 'spl' )
         vim.command( 'enew' )
         self._variablesView = variables.VariablesView( self._connection,
                                                        vim.current.buffer )
+
+
+    with utils.TemporaryVimOption( 'splitbelow', True ):
+      vim.current.window = self._codeView._window
+
+      # Output/logging
+      vim.command( '10spl' )
+      vim.command( 'enew' )
+      self._outputView = output.OutputView( vim.current.window )
 
   def ClearCurrentFrame( self ):
     self.SetCurrentFrame( None )
@@ -279,7 +285,6 @@ class DebugSession( object ):
     vim.command(   'autocmd VimLeavePre * py3 _vimspector_session.CloseDown()' )
     vim.command( 'augroup END' )
 
-
   def CloseDown( self ):
     state = { 'done': False }
 
@@ -293,7 +298,9 @@ class DebugSession( object ):
       },
     } )
 
-    while not state[ 'done' ]:
+    tries = 0
+    while not state[ 'done' ] and tries < 10:
+      tries = tries + 1
       vim.eval( 'vimspector#internal#job#ForceRead()' )
 
     vim.eval( 'vimspector#internal#job#StopDebugSession()' )
@@ -457,10 +464,7 @@ class DebugSession( object ):
             file_name ) )
 
   def OnEvent_output( self, message ):
-    with utils.ModifiableScratchBuffer( self._outputBuffer ):
-      t = [ message[ 'body' ][ 'category' ] + ':' + '-' * 20 ]
-      t += message[ 'body' ][ 'output' ].splitlines()
-      self._outputBuffer.append( t, 0 )
+    self._outputView.OnOutput( message[ 'body' ] )
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]
