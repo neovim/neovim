@@ -227,7 +227,7 @@ class DebugSession( object ):
     self._codeView = code.CodeView( vim.current.window )
 
     # Call stack
-    vim.command( 'vspl' )
+    vim.command( '50vspl' )
     vim.command( 'enew' )
     self._stackTraceView = stack_trace.StackTraceView( self,
                                                        self._connection,
