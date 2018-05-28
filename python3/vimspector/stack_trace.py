@@ -136,11 +136,11 @@ class StackTraceView( object ):
     elif event.get( 'allThreadsStopped', False ) and self._threads:
       self._currentThread = self._threads[ 0 ][ 'id' ]
 
-    # if threadId:
-    #   for thread in self._threads:
-    #     if thread[ 'id' ] == self._currentThread:
-    #       self._LoadStackTrace( thread, True )
-    #       return
+    if self._currentThread:
+      for thread in self._threads:
+        if thread[ 'id' ] == self._currentThread:
+          self._LoadStackTrace( thread, True )
+          return
 
     self.LoadThreads( True )
 
