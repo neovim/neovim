@@ -122,7 +122,8 @@ class StackTraceView( object ):
       thread = self._line_to_thread[ current_line ]
       if '_frames' in thread:
         del thread[ '_frames' ]
-        self._DrawThreads()
+        with utils.RestoreCursorPosition():
+          self._DrawThreads()
       else:
         self._LoadStackTrace( thread, False )
 

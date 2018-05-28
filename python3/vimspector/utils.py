@@ -84,11 +84,13 @@ def RestorCurrentWindow():
 
 @contextlib.contextmanager
 def RestoreCurrentBuffer( window ):
-  old_buffer_name = window.buffer.name
+  old_buffer = window.buffer
   try:
     yield
   finally:
-    window.buffer.name = old_buffer_name
+    with RestorCurrentWindow():
+      vim.current.window = window
+      vim.current.buffer = old_buffer
 
 
 @contextlib.contextmanager

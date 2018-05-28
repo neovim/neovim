@@ -51,7 +51,7 @@ class DebugSession( object ):
     #    leading to them getting out of sync
     #  - the split of responsibility between this object and the CodeView is
     #    messy and ill-defined.
-    self._breakpoints = defaultdict( dict )
+    self._line_breakpoints = defaultdict( list )
     self._configuration = None
 
     vim.command( 'sign define vimspectorBP text==> texthl=Error' )
@@ -64,21 +64,28 @@ class DebugSession( object ):
     if not file_name:
       return
 
-    if line in self._breakpoints[ file_name ]:
-      bp = self._breakpoints[ file_name ][ line ]
-      if bp[ 'state' ] == 'ENABLED':
-        bp[ 'state' ] = 'DISABLED'
-      else:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-        del self._breakpoints[ file_name ][ line ]
-    else:
-      self._breakpoints[ file_name ][ line ] = {
+    found_bp = False
+    for index, bp in enumerate( self._line_breakpoints[ file_name]  ):
+      if bp[ 'line' ] == line:
+        found_bp = True
+        if bp[ 'state' ] == 'ENABLED':
+          bp[ 'state' ] = 'DISABLED'
+        else:
+          if 'sign_id' in bp:
+            vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
+          del self._line_breakpoints[ file_name ][ index ]
+
+    if not found_bp:
+      self._line_breakpoints[ file_name ].append( {
         'state': 'ENABLED',
+        'line': line,
+        # 'sign_id': <filled in when placed>,
+        #
+        # Used by other breakpoint types:
         # 'condition': ...,
         # 'hitCondition': ...,
         # 'logMessage': ...
-      }
+      } )
 
     if self._connection:
       self._SendBreakpoints()
@@ -389,6 +396,8 @@ class DebugSession( object ):
       'command': 'configurationDone',
     } )
 
+    self._stackTraceView.LoadThreads( True )
+
   def OnEvent_thread( self, message ):
     if message[ 'body' ][ 'reason' ] == 'started':
       pass
@@ -421,8 +430,8 @@ class DebugSession( object ):
     self.Clear()
 
   def _RemoveBreakpoints( self ):
-    for file_name, line_breakpoints in self._breakpoints.items():
-      for line, bp in line_breakpoints.items():
+    for breakpoints in self._line_breakpoints.values():
+      for bp in breakpoints:
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
           del bp[ 'sign_id' ]
@@ -430,10 +439,9 @@ class DebugSession( object ):
   def _SendBreakpoints( self ):
     self._codeView.ClearBreakpoints()
 
-    for file_name, line_breakpoints in self._breakpoints.items():
+    for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
-      lines = []
-      for line, bp in line_breakpoints.items():
+      for bp in line_breakpoints:
         if bp[ 'state' ] != 'ENABLED':
           continue
 
@@ -441,8 +449,7 @@ class DebugSession( object ):
           vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
           del bp[ 'sign_id' ]
 
-        breakpoints.append( { 'line': line } )
-        lines.append( line )
+        breakpoints.append( { 'line': bp[ 'line' ] } )
 
       source = {
         'name': os.path.basename( file_name ),
@@ -455,16 +462,15 @@ class DebugSession( object ):
           'command': 'setBreakpoints',
           'arguments': {
             'source': source,
-            'breakpoints': breakpoints
+            'breakpoints': breakpoints,
           },
-          'lines':  lines,
           'sourceModified': False, # TODO: We can actually check this
         }
       )
 
   def _ShowBreakpoints( self ):
-    for file_name, line_breakpoints in self._breakpoints.items():
-      for line, bp in line_breakpoints.items():
+    for file_name, line_breakpoints in self._line_breakpoints.items():
+      for bp in line_breakpoints:
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
         else:
@@ -474,7 +480,7 @@ class DebugSession( object ):
         vim.command(
           'sign place {0} line={1} name={2} file={3}'.format(
             bp[ 'sign_id' ] ,
-            line,
+            bp[ 'line' ],
             'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
                            else 'vimspectorBPDisabled',
             file_name ) )

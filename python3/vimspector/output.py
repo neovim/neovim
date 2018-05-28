@@ -51,15 +51,14 @@ class OutputView( object ):
     with utils.RestorCurrentWindow():
       vim.current.window = self._window
 
-      vim.command( 'enew' )
-      self._buffers[ category ] = vim.current.buffer
-      self._buffers[ category ].append( category + '-----' )
+      with utils.RestoreCurrentBuffer( self._window ):
+        vim.command( 'enew' )
+        self._buffers[ category ] = vim.current.buffer
+        self._buffers[ category ].append( category + '-----' )
 
-      utils.SetUpHiddenBuffer( self._buffers[ category ],
-                               'vimspector.Output:{0}'.format( category ) )
+        utils.SetUpHiddenBuffer( self._buffers[ category ],
+                                 'vimspector.Output:{0}'.format( category ) )
 
-      vim.command( "nnoremenu WinBar.{0} "
-                   ":call vimspector#ShowOutput( '{0}' )<CR>".format(
-                     utils.Escape( category ) ) )
-
-      vim.command( 'bu #' )
+        vim.command( "nnoremenu WinBar.{0} "
+                     ":call vimspector#ShowOutput( '{0}' )<CR>".format(
+                       utils.Escape( category ) ) )

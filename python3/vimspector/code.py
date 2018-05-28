@@ -104,6 +104,8 @@ class CodeView( object  ):
     self._logger.debug( 'Breakpoints at this point: {0}'.format(
       json.dumps( self._breakpoints, indent = 2 ) ) )
 
+    self.ShowBreakpoints()
+
   def UpdateBreakpoint( self, bp ):
     if 'id' not in bp:
       self.AddBreakpoints( None, [ bp ] )
@@ -112,6 +114,7 @@ class CodeView( object  ):
       for index, breakpoint in enumerate( breakpoint_list ):
         if 'id' in breakpoint and breakpoint[ 'id' ] == bp[ 'id' ]:
           breakpoint_list[ index ] = bp
+          self.ShowBreakpoints()
           return
 
     # Not found. Assume new
