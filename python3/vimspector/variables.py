@@ -51,17 +51,26 @@ class VariablesView( object ):
 
     utils.SetUpScratchBuffer( self._buf, 'vimspector.Variables' )
 
-    self._oldoptions = {
-      'balloonexpr': vim.options[ 'balloonexpr' ],
-      'ballooneval': vim.options[ 'ballooneval' ],
-      'balloonevalterm': vim.options[ 'balloonevalterm' ],
-      'balloondelay': vim.options[ 'balloondelay' ],
-    }
+    has_balloon      = int( vim.eval( "has( 'balloon_eval' )" ) )
+    has_balloon_term = int( vim.eval( "has( 'balloon_eval_term' )" ) )
 
-    vim.options[ 'balloonexpr' ] = 'vimspector#internal#balloon#BalloonExpr()'
-    vim.options[ 'ballooneval' ] = True
-    vim.options[ 'balloonevalterm' ] = True
-    vim.options[ 'balloondelay' ] = 250
+    self._oldoptions = {}
+    if has_balloon or has_balloon_term:
+      self._oldoptions = {
+        'balloonexpr': vim.options[ 'balloonexpr' ],
+        'balloondelay': vim.options[ 'balloondelay' ],
+      }
+      vim.options[ 'balloonexpr' ] = 'vimspector#internal#balloon#BalloonExpr()'
+      vim.options[ 'balloondelay' ] = 250
+
+    if has_balloon:
+      self._oldoptions[ 'ballooneval' ] = vim.options[ 'ballooneval' ]
+      vim.options[ 'ballooneval' ] = True
+
+    if has_balloon_term:
+      self._oldoptions[ 'balloonevalterm' ] = vim.options[ 'balloonevalterm' ]
+      vim.options[ 'balloonevalterm' ] = True
+
 
   def Clear( self ):
     with utils.ModifiableScratchBuffer( self._buf ):
