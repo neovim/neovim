@@ -35,6 +35,8 @@ baking it in to the debugging experience is a top bill goal for the project.
 
 # Demo
 
+Please note the entire UI is placeholder. These are just proofs-of-concept.
+
 ## C Debugging
 
 ![C demo](https://cdn.pbrd.co/images/Hnk0NfR.gif)
