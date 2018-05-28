@@ -47,9 +47,9 @@ class DebugAdapterConnection( object ):
 
   def OnData( self, data ):
     data = bytes( data, 'utf-8' )
-    self._logger.debug( 'Received ({0}/{1}): {2},'.format( type( data ),
-                                                      len( data ),
-                                                      data ) )
+    # self._logger.debug( 'Received ({0}/{1}): {2},'.format( type( data ),
+    #                                                   len( data ),
+    #                                                   data ) )
 
     self._buffer += data
 
@@ -73,9 +73,10 @@ class DebugAdapterConnection( object ):
 
   def _SendMessage( self, msg ):
     msg = json.dumps( msg )
-    data = 'Content-Length: {0}\r\n\r\n{1}'.format( len( msg ), msg )
+    self._logger.debug( 'Sending Message: {0}'.format( msg ) )
 
-    self._logger.debug( 'Sending: {0}'.format( data ) )
+    data = 'Content-Length: {0}\r\n\r\n{1}'.format( len( msg ), msg )
+    # self._logger.debug( 'Sending: {0}'.format( data ) )
     self._Write( data )
 
   def _ReadHeaders( self ):
@@ -110,9 +111,11 @@ class DebugAdapterConnection( object ):
 
     self._logger.debug( 'Message received: {0}'.format( message ) )
 
-    self._OnMessageReceived( message )
-
-    self._SetState( 'READ_HEADER' )
+    try:
+      self._OnMessageReceived( message )
+    finally:
+      # Don't allow exceptions to break message reading
+      self._SetState( 'READ_HEADER' )
 
   def _OnMessageReceived( self, message ):
     if not self._handler:
