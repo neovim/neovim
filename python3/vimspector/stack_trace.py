@@ -97,8 +97,7 @@ class StackTraceView( object ):
       thread[ '_frames' ] = message[ 'body' ][ 'stackFrames' ]
       if infer_current_frame:
         for frame in thread[ '_frames' ]:
-          if frame[ 'source' ]:
-            self._JumpToFrame( frame )
+          if self._JumpToFrame( frame ):
             break
 
       self._DrawThreads()
@@ -129,7 +128,7 @@ class StackTraceView( object ):
 
   def _JumpToFrame( self, frame ):
     self._currentFrame = frame
-    self._session.SetCurrentFrame( self._currentFrame )
+    return self._session.SetCurrentFrame( self._currentFrame )
 
   def OnStopped( self, event ):
     if 'threadId' in event:
