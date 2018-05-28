@@ -274,9 +274,36 @@ class DebugSession( object ):
 
     self._logger.info( 'Debug Adapter Started' )
 
+    vim.command( 'augroup vimspector_cleanup' )
+    vim.command(   'autocmd!' )
+    vim.command(   'autocmd VimLeavePre * py3 _vimspector_session.CloseDown()' )
+    vim.command( 'augroup END' )
+
+
+  def CloseDown( self ):
+    state = { 'done': False }
+
+    def handler( self ):
+      state[ 'done' ] = True
+
+    self._connection.DoRequest( handler, {
+      'command': 'disconnect',
+      'arguments': {
+        'terminateDebugee': True
+      },
+    } )
+
+    while not state[ 'done' ]:
+      vim.eval( 'vimspector#internal#job#ForceRead()' )
+
+    vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+
   def _StopDebugAdapter( self, callback = None ):
     def handler( message ):
       vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+
+      vim.command( 'au! vimspector_cleanup' )
+
       self._connection.Reset()
       self._connection = None
       self._stackTraceView.ConnectionClosed()

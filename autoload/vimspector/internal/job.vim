@@ -67,7 +67,8 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
         \                    'exit_cb': function( 's:_OnExit' ),
         \                    'close_cb': function( 's:_OnClose' ),
         \                    'out_cb': function( 's:_OnServerData' ),
-        \                    'err_cb': function( 's:_OnServerError' )
+        \                    'err_cb': function( 's:_OnServerError' ),
+        \                    'stoponexit': 'term',
         \                }
         \              )
 
@@ -90,6 +91,15 @@ endfunction
 function! vimspector#internal#job#Reset() abort
   if exists( 's:job' )
     call vimspector#internal#job#StopDebugSession()
+  endif
+endfunction
+
+function! vimspector#internal#job#ForceRead() abort
+  if exists( 's:job' )
+    let data = ch_readraw( job_getchannel( s:job ), { 'timeout': 1000 } )
+    if data != ''
+      call s:_OnServerData( job_getchannel( s:job ), data )
+    endif
   endif
 endfunction
 
