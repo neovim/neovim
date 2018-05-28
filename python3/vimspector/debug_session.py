@@ -41,11 +41,16 @@ class DebugSession( object ):
     self._uiTab = None
     self._stackTraceView = None
     self._variablesView = None
+    self._outputView = None
 
     self._next_sign_id = SIGN_ID_OFFSET
 
-    # TODO: Move to code view and consolidate into user-requested-breakpoints,
-    # and actual breakpoints ?
+    # FIXME: This needs redesigning. There are a number of problems:
+    #  - breakpoints don't have to be line-wisw (e.g. method/exception)
+    #  - when the server moves/changes a breakpoint, this is not updated,
+    #    leading to them getting out of sync
+    #  - the split of responsibility between this object and the CodeView is
+    #    messy and ill-defined.
     self._breakpoints = defaultdict( dict )
     self._configuration = None
 
@@ -53,8 +58,6 @@ class DebugSession( object ):
     vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
 
   def ToggleBreakpoint( self ):
-    # TODO: Move this to the code view. Problem is that CodeView doesn't exist
-    # until we have initialised.
     line, column = vim.current.window.cursor
     file_name = vim.current.buffer.name
 

@@ -88,8 +88,6 @@ class CodeView( object  ):
 
     self._UndisplaySigns()
 
-  # TODO: You know what, move breakpoint handling out of here into its own
-  # thing. It really doesn't directly relate to the code view.
   def AddBreakpoints( self, source, breakpoints ):
     for breakpoint in breakpoints:
       if 'source' not in breakpoint:
