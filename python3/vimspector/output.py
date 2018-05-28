@@ -34,9 +34,14 @@ class OutputView( object ):
     with utils.ModifiableScratchBuffer( self._buffers[ category ] ):
       self._buffers[ category ].append( event[ 'output' ].splitlines() )
 
+  def Reset( self ):
+    self.Clear()
+
   def Clear( self ):
     for buf in self._buffers:
-      self._buffers[ buf ] = None
+      vim.command( 'bwipeout! {0}'.format( self._buffers[ buf ].name ) )
+
+    self._buffers.clear()
 
   def ShowOutput( self, category ):
     vim.current.window = self._window
@@ -56,3 +61,5 @@ class OutputView( object ):
       vim.command( "nnoremenu WinBar.{0} "
                    ":call vimspector#ShowOutput( '{0}' )<CR>".format(
                      utils.Escape( category ) ) )
+
+      vim.command( 'bu #' )

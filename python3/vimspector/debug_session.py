@@ -149,6 +149,7 @@ class DebugSession( object ):
     if self._uiTab:
       self._stackTraceView.Reset()
       self._variablesView.Reset()
+      self._outputView.Reset()
       vim.current.tabpage = self._uiTab
       vim.command( 'tabclose' )
 
