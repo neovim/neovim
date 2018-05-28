@@ -400,6 +400,8 @@ class DebugSession( object ):
     } )
 
   def _UpdateBreakpoints( self, source, message ):
+    if 'body' not in message:
+      return
     self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
     self._codeView.ShowBreakpoints()
 
