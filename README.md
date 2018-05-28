@@ -66,6 +66,7 @@ breakpoint.
 * Current scope shows values of locals.
 * Use `<CR>` to expand/collapse (+, -).
 * When changing the stack frame the locals window updates.
+* While paused, hover to see values
 
 ## Watches
 
