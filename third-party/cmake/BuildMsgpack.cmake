@@ -70,6 +70,11 @@ elseif(MSVC)
     # Make sure we use the same generator, otherwise we may
     # accidentaly end up using different MSVC runtimes
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
+elseif(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+  set(MSGPACK_CONFIGURE_COMMAND
+    ${MSGPACK_CONFIGURE_COMMAND}
+    -DCMAKE_SH=CMAKE_SH-NOTFOUND
+    -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM})
 endif()
 
 BuildMsgpack(CONFIGURE_COMMAND ${MSGPACK_CONFIGURE_COMMAND}
