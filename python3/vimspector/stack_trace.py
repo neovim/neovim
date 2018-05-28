@@ -150,13 +150,7 @@ class StackTraceView( object ):
 
   def Continue( self ):
     if not self._currentThread:
-      for thread in self._threads:
-        self._session._connection.DoRequest( None, {
-          'command': 'continue',
-          'arguments': {
-            'threadId': thread[ 'id' ]
-          },
-        } )
+      utils.UserMessage( 'No current thread', persist = True )
       return
 
     self._session._connection.DoRequest( None, {
@@ -167,16 +161,11 @@ class StackTraceView( object ):
     } )
 
     self._session.ClearCurrentFrame()
+    self.LoadThreads( True )
 
   def Pause( self ):
     if not self._currentThread:
-      for thread in self._threads:
-        self._session._connection.DoRequest( None, {
-          'command': 'pause',
-          'arguments': {
-            'threadId': thread[ 'id' ],
-          },
-        } )
+      utils.UserMessage( 'No current thread', persist = True )
       return
 
     self._session._connection.DoRequest( None, {
