@@ -52,6 +52,7 @@ class DebugSession( object ):
     #  - the split of responsibility between this object and the CodeView is
     #    messy and ill-defined.
     self._line_breakpoints = defaultdict( list )
+    self._func_breakpoints = []
     self._configuration = None
 
     vim.command( 'sign define vimspectorBP text==> texthl=Error' )
@@ -87,11 +88,23 @@ class DebugSession( object ):
         # 'logMessage': ...
       } )
 
+    self._UpdateUIBreakpoints()
+
+  def _UpdateUIBreakpoints( self ):
     if self._connection:
       self._SendBreakpoints()
     else:
       self._ShowBreakpoints()
 
+  def AddFunctionBreakpoint( self, function ):
+    self._func_breakpoints.append( {
+        'state': 'ENABLED',
+        'function': function,
+    } )
+
+    # TODO: We don't really have aanything to update here, but if we're going to
+    # have a UI list of them we should update that at this point
+    self._UpdateUIBreakpoints()
 
   def Start( self, configuration = None ):
     self._configuration = None
@@ -467,6 +480,19 @@ class DebugSession( object ):
           'sourceModified': False, # TODO: We can actually check this
         }
       )
+
+    self._connection.DoRequest(
+      functools.partial( self._UpdateBreakpoints, None ),
+      {
+        'command': 'setFunctionBreakpoints',
+        'arguments': {
+          'breakpoints': [
+            { 'name': bp[ 'function' ] }
+            for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
+          ],
+        }
+      }
+    )
 
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._line_breakpoints.items():

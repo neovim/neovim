@@ -39,6 +39,10 @@ function! vimspector#ToggleBreakpoint() abort
   py3 _vimspector_session.ToggleBreakpoint()
 endfunction
 
+function! vimspector#AddFunctionBreakpoint( function ) abort
+  py3 _vimspector_session.AddFunctionBreakpoint( vim.eval( 'a:function' ) )
+endfunction
+
 function! vimspector#StepOver() abort
   py3 _vimspector_session.StepOver()
 endfunction
