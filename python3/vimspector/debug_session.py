@@ -38,14 +38,10 @@ class DebugSession( object ):
     self._connection = None
 
     self._uiTab = None
-    self._threadsBuffer = None # TODO: Move to stack trace
     self._outputBuffer = None # TODO: Need something less terrible here
     self._stackTraceView = None
     self._variablesView = None
 
-    self._currentThread = None
-    self._threads = []
-    self._currentFrame = None
     self._next_sign_id = SIGN_ID_OFFSET
 
     # TODO: Move to code view and consolidate into user-requested-breakpoints,
@@ -132,7 +128,8 @@ class DebugSession( object ):
     self.Start()
 
   def OnChannelData( self, data ):
-    self._connection.OnData( data )
+    if self._connection:
+      self._connection.OnData( data )
 
   def OnChannelClosed( self ):
     self._connection = None
@@ -159,96 +156,68 @@ class DebugSession( object ):
     vim.eval( 'vimspector#internal#state#Reset()' )
 
   def StepOver( self ):
-    if self._currentThread is None:
+    if self._stackTraceView.GetCurrentThreadId() is None:
       return
 
     self._connection.DoRequest( None, {
       'command': 'next',
       'arguments': {
-        'threadId': self._currentThread
+        'threadId': self._stackTraceView.GetCurrentThreadId()
       },
     } )
 
   def StepInto( self ):
-    if self._currentThread is None:
+    if self._stackTraceView.GetCurrentThreadId() is None:
       return
 
     self._connection.DoRequest( None, {
       'command': 'stepIn',
       'arguments': {
-        'threadId': self._currentThread
+        'threadId': self._stackTraceView.GetCurrentThreadId()
       },
     } )
 
   def StepOut( self ):
-    if self._currentThread is None:
+    if self._stackTraceView.GetCurrentThreadId() is None:
       return
 
     self._connection.DoRequest( None, {
       'command': 'stepOut',
       'arguments': {
-        'threadId': self._currentThread
+        'threadId': self._stackTraceView.GetCurrentThreadId()
       },
     } )
 
   def Continue( self ):
-    if self._currentThread is None:
-      for thread in self._threads:
-        self._connection.DoRequest( None, {
-          'command': 'continue',
-          'arguments': {
-            'threadId': thread[ 'id' ]
-          },
-        } )
-
-    self._connection.DoRequest( None, {
-      'command': 'continue',
-      'arguments': {
-        'threadId': self._currentThread
-      },
-    } )
-
-    self.ClearCurrentFrame()
+    self._stackTraceView.Continue()
 
   def Pause( self ):
-    if self._currentThread is None:
-      for thread in self._threads:
-        self._connection.DoRequest( None, {
-          'command': 'pause',
-          'arguments': {
-            'threadId': thread[ 'id' ],
-          },
-        } )
-
-    self._connection.DoRequest( None, {
-      'command': 'pause',
-      'arguments': {
-        'threadId': self._currentThread
-      },
-    } )
+    self._stackTraceView.Pause()
 
   def ExpandVariable( self ):
     self._variablesView.ExpandVariable()
 
   def AddWatch( self, expression ):
-    self._variablesView.AddWatch( self._currentFrame, expression )
+    self._variablesView.AddWatch( self._stackTraceView.GetCurrentFrame(),
+                                  expression )
 
   def DeleteWatch( self ):
     self._variablesView.DeleteWatch()
 
   def ShowBalloon( self, winnr, expression ):
-    if self._currentFrame is None:
+    if self._stackTraceView.GetCurrentFrame() is None:
       return
 
     if winnr == int( self._codeView._window.number ):
-      self._variablesView.ShowBalloon( self._currentFrame, expression )
+      self._variablesView.ShowBalloon( self._stackTraceView.GetCurrentFrame(),
+                                       expression )
     else:
       self._logger.debug( 'Winnr {0} is not the code window {1}'.format(
         winnr,
         self._codeView._window.number ) )
 
-  def GoToFrame( self ):
-    self._stackTraceView.GoToFrame()
+  def ExpandFrameOrThread( self ):
+    self._stackTraceView.ExpandFrameOrThread()
 
   def _SetUpUI( self ):
     vim.command( 'tabnew' )
@@ -257,21 +226,15 @@ class DebugSession( object ):
     # Code window
     self._codeView = code.CodeView( vim.current.window )
 
-    # Threads
-    vim.command( '50vspl' )
+    # Call stack
+    vim.command( 'vspl' )
     vim.command( 'enew' )
-    self._threadsBuffer = vim.current.buffer
-    utils.SetUpScratchBuffer( self._threadsBuffer, "vimspector.Threads" )
+    self._stackTraceView = stack_trace.StackTraceView( self,
+                                                       self._connection,
+                                                       vim.current.buffer )
 
     with utils.TemporaryVimOption( 'eadirection', 'ver' ):
       with utils.TemporaryVimOption( 'equalalways', 1 ):
-        # Call stack
-        vim.command( 'spl' )
-        vim.command( 'enew' )
-        self._stackTraceView = stack_trace.StackTraceView( self,
-                                                           self._connection,
-                                                           vim.current.buffer )
-
         # Output/logging
         vim.command( 'spl' )
         vim.command( 'enew' )
@@ -288,7 +251,6 @@ class DebugSession( object ):
     self.SetCurrentFrame( None )
 
   def SetCurrentFrame( self, frame ):
-    self._currentFrame = frame
     self._codeView.SetCurrentFrame( frame )
 
     if frame:
@@ -377,7 +339,12 @@ class DebugSession( object ):
     self._SendBreakpoints()
 
   def OnEvent_thread( self, message ):
-    self._GetThreads()
+    if message[ 'body' ][ 'reason' ] == 'started':
+      pass
+    elif message[ 'body' ][ 'reason' ] == 'exited':
+      pass
+
+    self._stackTraceView.OnThreadEvent( message[ 'body' ] )
 
   def OnEvent_breakpoint( self, message ):
     reason = message[ 'body' ][ 'reason' ]
@@ -395,9 +362,6 @@ class DebugSession( object ):
     self._codeView.Clear()
     self._stackTraceView.Clear()
     self._variablesView.Clear()
-    self._threads.clear()
-    with utils.ModifiableScratchBuffer( self._threadsBuffer ):
-      self._threadsBuffer[:] = None
 
   def OnEvent_terminated( self, message ):
     utils.UserMessage( "The program was terminated because: {0}".format(
@@ -474,35 +438,9 @@ class DebugSession( object ):
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]
+
     utils.UserMessage( 'Paused in thread {0} due to {1}'.format(
       event.get( 'threadId', '<unknown>' ),
       event.get( 'description', event[ 'reason' ] ) ) )
 
-    if 'threadId' in event:
-      self._currentThread = event[ 'threadId' ]
-    elif event.get( 'allThreadsStopped', False ) and self._threads:
-      self._currentThread = self._threads[ 0 ][ 'id' ]
-
-    self._GetThreads()
-    self._stackTraceView.LoadStackTrace( self._currentThread )
-
-  def _GetThreads( self ):
-    # TODO: We need an expandable thing like variables for threads, and allow
-    # the user to select a thread
-    def threads_printer( message ):
-      self._threads.clear()
-      with utils.ModifiableScratchBuffer( self._threadsBuffer ):
-        self._threadsBuffer[:] = None
-        self._threadsBuffer.append( 'Threads: ' )
-
-        for thread in message[ 'body' ][ 'threads' ]:
-          if self._currentThread is None:
-            self._currentThread = thread[ 'id' ]
-
-          self._threads.append( thread )
-          self._threadsBuffer.append(
-            'Thread {0}: {1}'.format( thread[ 'id' ], thread[ 'name' ] ) )
-
-    self._connection.DoRequest( threads_printer, {
-      'command': 'threads',
-    } )
+    self._stackTraceView.OnStopped( event )

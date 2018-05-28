@@ -72,7 +72,7 @@ function! vimspector#DeleteWatch() abort
 endfunction
 
 function! vimspector#GoToFrame() abort
-  py3 _vimspector_session.GoToFrame()
+  py3 _vimspector_session.ExpandFrameOrThread()
 endfunction
 
 function! vimspector#AddWatch( expr ) abort

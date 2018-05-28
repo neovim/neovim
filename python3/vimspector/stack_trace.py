@@ -24,13 +24,29 @@ class StackTraceView( object ):
     self._session = session
     self._connection = connection
 
+    self._currentThread = None
+    self._currentFrame = None
+
+    self._threads = []
+
     utils.SetUpScratchBuffer( self._buf, 'vimspector.StackTrace' )
     vim.current.buffer = self._buf
     vim.command( 'nnoremap <buffer> <CR> :call vimspector#GoToFrame()<CR>' )
 
     self._line_to_frame = {}
+    self._line_to_thread = {}
+
+
+  def GetCurrentThreadId( self ):
+    return self._currentThread
+
+  def GetCurrentFrame( self ):
+    return self._currentFrame
 
   def Clear( self ):
+    self._currentFrame = None
+    self._currentThread = None
+    self._threads = []
     with utils.ModifiableScratchBuffer( self._buf ):
       self._buf[:] = None
 
@@ -42,44 +58,149 @@ class StackTraceView( object ):
     self.Clear()
     # TODO: delete the buffer ?
 
-  def LoadStackTrace( self, thread_id ):
-    self._connection.DoRequest( self._PrintStackTrace, {
+  def LoadThreads( self, infer_current_frame ):
+    def consume_threads( message ):
+      self._threads.clear()
+
+      for thread in message[ 'body' ][ 'threads' ]:
+        self._threads.append( thread )
+
+        if infer_current_frame and thread[ 'id' ] == self._currentThread:
+          self._LoadStackTrace( thread, True )
+        elif infer_current_frame and not self._currentThread:
+          self._currentThread = thread[ 'id' ]
+          self._LoadStackTrace( thread, True )
+
+      self._DrawThreads()
+
+    self._connection.DoRequest( consume_threads, {
+      'command': 'threads',
+    } )
+
+  def _DrawThreads( self ):
+    self._line_to_frame.clear()
+    self._line_to_thread.clear()
+
+    with utils.ModifiableScratchBuffer( self._buf ):
+      self._buf[:] = None
+
+      for thread in self._threads:
+        icon = '+' if '_frames' not in thread else '-'
+
+        self._buf.append( '{0} Thread: {1}'.format( icon, thread[ 'name' ] ) )
+        self._line_to_thread[ len( self._buf ) ] = thread
+
+        self._DrawStackTrace( thread )
+
+  def _LoadStackTrace( self, thread, infer_current_frame ):
+    def consume_stacktrace( message ):
+      thread[ '_frames' ] = message[ 'body' ][ 'stackFrames' ]
+      if infer_current_frame:
+        for frame in thread[ '_frames' ]:
+          if frame[ 'source' ]:
+            self._JumpToFrame( frame )
+            break
+
+      self._DrawThreads()
+
+    self._connection.DoRequest( consume_stacktrace, {
       'command': 'stackTrace',
       'arguments': {
-        'threadId': thread_id,
+        'threadId': thread[ 'id' ],
       }
     } )
 
-  def GoToFrame( self ):
+  def ExpandFrameOrThread( self ):
     if vim.current.buffer != self._buf:
       return
 
     current_line = vim.current.window.cursor[ 0 ]
-    if current_line not in self._line_to_frame:
+
+    if current_line in self._line_to_frame:
+      self._JumpToFrame( self._line_to_frame[ current_line ] )
+    elif current_line in self._line_to_thread:
+      thread = self._line_to_thread[ current_line ]
+      if '_frames' in thread:
+        del thread[ '_frames' ]
+        self._DrawThreads()
+      else:
+        self._LoadStackTrace( thread, False )
+
+  def _JumpToFrame( self, frame ):
+    self._currentFrame = frame
+    self._session.SetCurrentFrame( self._currentFrame )
+
+  def OnStopped( self, event ):
+    if 'threadId' in event:
+      self._currentThread = event[ 'threadId' ]
+    elif event.get( 'allThreadsStopped', False ) and self._threads:
+      self._currentThread = self._threads[ 0 ][ 'id' ]
+
+    # if threadId:
+    #   for thread in self._threads:
+    #     if thread[ 'id' ] == self._currentThread:
+    #       self._LoadStackTrace( thread, True )
+    #       return
+
+    self.LoadThreads( True )
+
+  def OnThreadEvent( self, event ):
+    if event[ 'reason' ] == 'started' and self._currentThread is None:
+      self.LoadThreads( True )
+
+  def Continue( self ):
+    if not self._currentThread:
+      for thread in self._threads:
+        self._session._connection.DoRequest( None, {
+          'command': 'continue',
+          'arguments': {
+            'threadId': thread[ 'id' ]
+          },
+        } )
       return
 
-    self._session.SetCurrentFrame( self._line_to_frame[ current_line ] )
+    self._session._connection.DoRequest( None, {
+      'command': 'continue',
+      'arguments': {
+        'threadId': self._currentThread,
+      },
+    } )
 
-  def _PrintStackTrace( self, message ):
-    with utils.ModifiableScratchBuffer( self._buf ):
-      self._buf[:] = None
-      self._buf.append( 'Stack trace' )
+    self._session.ClearCurrentFrame()
 
-      stackFrames = message[ 'body' ][ 'stackFrames' ]
+  def Pause( self ):
+    if not self._currentThread:
+      for thread in self._threads:
+        self._session._connection.DoRequest( None, {
+          'command': 'pause',
+          'arguments': {
+            'threadId': thread[ 'id' ],
+          },
+        } )
+      return
 
-      current_frame = None
-      for frame in stackFrames:
-        if frame[ 'source' ]:
-          current_frame = current_frame or frame
-          source = frame[ 'source' ]
-        else:
-          source = { 'name': '<unknown>' }
+    self._session._connection.DoRequest( None, {
+      'command': 'pause',
+      'arguments': {
+        'threadId': self._currentThread,
+      },
+    } )
 
-        self._buf.append(
-          '{0}: {1}@{2}:{3}'.format( frame[ 'id' ],
+  def _DrawStackTrace( self, thread ):
+    if '_frames' not in thread:
+      return
+
+    stackFrames = thread[ '_frames' ]
+
+    for frame in stackFrames:
+      if frame[ 'source' ]:
+        source = frame[ 'source' ]
+      else:
+        source = { 'name': '<unknown>' }
+
+      self._buf.append(
+        '  {0}: {1}@{2}:{3}'.format( frame[ 'id' ],
                                      frame[ 'name' ],
                                      source[ 'name' ],
                                      frame[ 'line' ] ) )
-        self._line_to_frame[ len( self._buf ) ] = frame
-
-    self._session.SetCurrentFrame( current_frame )
+      self._line_to_frame[ len( self._buf ) ] = frame
