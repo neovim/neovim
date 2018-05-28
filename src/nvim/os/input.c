@@ -109,7 +109,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
-        // Input drained and eventloop drained: exit silent/batch-mode (-es).
+        // Drained input and eventloop: exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
 

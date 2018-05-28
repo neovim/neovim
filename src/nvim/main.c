@@ -722,13 +722,14 @@ static void init_locale(void)
 
 /// Decides whether text (as opposed to commands) will be read from stdin.
 /// @see EDIT_STDIN
-static bool edit_stdin(mparm_T *parmp)
+static bool edit_stdin(bool explicit, mparm_T *parmp)
 {
-  return !headless_mode
+  bool implicit = !headless_mode
     && !embedded_mode
     && exmode_active != EXMODE_NORMAL  // -E/-Es but not -e/-es.
     && !parmp->input_isatty
     && scriptin[0] == NULL;  // `-s -` was not given.
+  return explicit || implicit;
 }
 
 /// Scan the command line arguments.
@@ -737,7 +738,8 @@ static void command_line_scan(mparm_T *parmp)
   int argc = parmp->argc;
   char **argv = parmp->argv;
   int argv_idx;                         // index in argv[n][]
-  int had_minmin = false;               // found "--" argument
+  bool had_stdin_file = false;          // found explicit "-" argument
+  bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
   int c;
   char_u *p = NULL;
@@ -769,9 +771,12 @@ static void command_line_scan(mparm_T *parmp)
             // "nvim -e -" silent mode
             silent_mode = true;
           } else {
-            if (parmp->edit_type != EDIT_NONE) {
+            if (parmp->edit_type != EDIT_NONE
+                && parmp->edit_type != EDIT_FILE
+                && parmp->edit_type != EDIT_STDIN) {
               mainerr(err_too_many_args, argv[0]);
             }
+            had_stdin_file = true;
             parmp->edit_type = EDIT_STDIN;
           }
           argv_idx = -1;  // skip to next argument
@@ -1181,7 +1186,9 @@ scripterror:
       argv_idx = -1;  // skip to next argument
 
       // Check for only one type of editing.
-      if (parmp->edit_type != EDIT_NONE && parmp->edit_type != EDIT_FILE) {
+      if (parmp->edit_type != EDIT_NONE
+          && parmp->edit_type != EDIT_FILE
+          && parmp->edit_type != EDIT_STDIN) {
         mainerr(err_too_many_args, argv[0]);
       }
       parmp->edit_type = EDIT_FILE;
@@ -1203,7 +1210,7 @@ scripterror:
       path_fix_case(p);
 #endif
 
-      int alist_fnum_flag = edit_stdin(parmp)
+      int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
 #if !defined(UNIX)
@@ -1230,8 +1237,8 @@ scripterror:
     xfree(swcmd);
   }
 
-  // Handle "foo | nvim". #6299
-  if (edit_stdin(parmp)) {
+  // Handle "foo | nvim". EDIT_FILE may be overwritten now. #6299
+  if (edit_stdin(had_stdin_file, parmp)) {
     parmp->edit_type = EDIT_STDIN;
   }
 
