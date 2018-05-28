@@ -84,6 +84,9 @@ class DebugSession( object ):
 
 
   def Start( self, configuration = None ):
+    self._configuration = None
+    self._adapter = None
+
     launch_config_file = utils.PathToConfigFile( '.vimspector.json' )
 
     if not launch_config_file:
@@ -92,7 +95,10 @@ class DebugSession( object ):
       return
 
     with open( launch_config_file, 'r' ) as f:
-      launch_config = json.load( f )
+      database = json.load( f )
+
+    launch_config = database.get( 'configurations' )
+    adapters = database.get( 'adapters' )
 
     if not configuration:
       if len( launch_config ) == 1:
@@ -103,6 +109,12 @@ class DebugSession( object ):
 
     if not configuration:
       return
+
+    adapter = launch_config[ configuration ].get( 'adapter' )
+    if isinstance( adapter, str ):
+      self._adapter = adapters.get( adapter )
+    else:
+      self._adapter = adapter
 
     self._configuration = launch_config[ configuration ]
 
@@ -269,11 +281,11 @@ class DebugSession( object ):
 
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
-      self._configuration[ 'adapter' ] ) ) )
+      self._adapter ) ) )
 
     channel_send_func = vim.bindeval(
       "vimspector#internal#job#StartDebugSession( {0} )".format(
-        json.dumps( self._configuration[ 'adapter' ] ) ) )
+        json.dumps( self._adapter ) ) )
 
     self._connection = debug_adapter_connection.DebugAdapterConnection(
       self,
@@ -338,10 +350,10 @@ class DebugSession( object ):
 
 
   def _Initialise( self ):
-    adapter_config = self._configuration[ 'adapter' ]
+    adapter_config = self._adapter
     launch_config = self._configuration[ 'configuration' ]
 
-    if 'attach' in adapter_config:
+    if launch_config.get( 'request' ) == "attach":
       self._SelectProcess( adapter_config, launch_config )
 
     self._connection.DoRequest( None, {

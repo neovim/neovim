@@ -1,73 +1,77 @@
 {
-  "simple_c_program - lldb-mi Launch": {
-    "adapter": {
-      "name": "lldb-mi",
-      "command": [
-        "node",
-        "/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
-      ]
-    },
-    "configuration": {
-      "request": "launch",
-      "target": "support/test/cpp/simple_c_program/test",
-      "args": [],
-      "cwd": ".",
-      "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/lldb/bin/lldb-mi",
-      "trace": true,
-      "logFilePath": "/Users/ben/.vimspector.protocol.log"
-    }
+  "adapters": {
+      "lldb-mi": {
+        "name": "lldb-mi",
+        "command": [
+          "node",
+          "/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
+        ]
+      },
+      "cppdbg": {
+        "name": "cppdbg",
+        "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        }
+      },
+      "python": {
+        "name": "python",
+        "command": [
+          "node",
+          "/Users/ben/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
+        ]
+      }
   },
-  "simple_c_progra - ms Launch": {
-    "adapter": {
-      "name": "cppdbg",
-      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ]
-    },
-    "configuration": {
-      "name": "ms Launch",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
-      "args": [],
-      "cwd": "/Users/ben",
-      "environment": [],
-      "externalConsole": true,
-      "MIMode": "lldb"
-    }
-  },
-  "simple_python - launch": {
-    "adapter": {
-      "name": "python",
-      "command": [
-        "node",
-        "/Users/ben/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
-      ]
-    },
-    "configuration": {
-      "name": "Python: Current File",
-      "type": "python",
-      "request": "launch",
-      "cwd": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python",
-      "stopOnEntry": true,
-      "console": "externalTerminal",
-      "debugOptions": [],
-      "program": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python/main.py"
-    }
-  },
-  "simple_c_program - MS Attach": {
-    "adapter": {
-      "name": "cppdbg",
-      "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ],
-      "attach": {
-        "pidProperty": "processId",
-        "pidSelect": "ask"
+  "configurations": {
+    "simple_c_program - lldb-mi Launch": {
+      "adapter": "lldb-mi",
+      "configuration": {
+        "request": "launch",
+        "target": "support/test/cpp/simple_c_program/test",
+        "args": [],
+        "cwd": ".",
+        "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/lldb/bin/lldb-mi",
+        "trace": true,
+        "logFilePath": "/Users/ben/.vimspector.protocol.log"
       }
     },
-    "configuration": {
-      "name": "(lldb) Attach",
-      "type": "cppdbg",
-      "request": "attach",
-      "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
-      "MIMode": "lldb"
+    "simple_c_progra - ms Launch": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "ms Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+        "args": [],
+        "cwd": "/Users/ben",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "lldb"
+      }
+    },
+    "simple_python - launch": {
+      "adapter": "python",
+      "configuration": {
+        "name": "Python: Current File",
+        "type": "python",
+        "request": "launch",
+        "cwd": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python",
+        "stopOnEntry": true,
+        "console": "externalTerminal",
+        "debugOptions": [],
+        "program": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python/main.py"
+      }
+    },
+    "simple_c_program - MS Attach": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "(lldb) Attach",
+        "type": "cppdbg",
+        "request": "attach",
+        "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+        "MIMode": "lldb"
+      }
     }
   }
 }
