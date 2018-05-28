@@ -19,22 +19,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 " }}}
 
-let s:plugin_base = expand( '<sfile>:p:h' ) . '/../'
-let s:command = [
-      \   'node',
-      \   '/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js'
-      \ ]
-
-" let s:command = [
-"       \ '/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.1/'
-"       \ 'debugAdapters/OpenDebugAD7'
-"       \ ]
-"
-"      \ 'node',
-"      \ '/Users/ben/Development/debugger/vscode-mock-debug/out/debugAdapter.js'
-"      \ ]
-
-
 function! s:_OnServerData( channel, data ) abort
   py3 << EOF
 _vimspector_session.OnChannelData( vim.eval( 'a:data' ) )

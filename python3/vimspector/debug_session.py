@@ -291,7 +291,6 @@ class DebugSession( object ):
       },
     } )
 
-
   def _SelectProcess( self, adapter_config, launch_config ):
     atttach_config = adapter_config[ 'attach' ]
     if atttach_config[ 'pidSelect' ] == 'ask':
@@ -335,7 +334,6 @@ class DebugSession( object ):
     self._codeView.ShowBreakpoints()
 
   def OnEvent_initialized( self, message ):
-    self._codeView.ClearBreakpoints()
     self._SendBreakpoints()
     self._connection.DoRequest( None, {
       'command': 'configurationDone',
@@ -380,6 +378,8 @@ class DebugSession( object ):
           del bp[ 'sign_id' ]
 
   def _SendBreakpoints( self ):
+    self._codeView.ClearBreakpoints()
+
     for file_name, line_breakpoints in self._breakpoints.items():
       breakpoints = []
       lines = []
