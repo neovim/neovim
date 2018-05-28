@@ -237,6 +237,17 @@ Known not to work:
 * C-sharp. The license appears to require that it is only used with Visual
   Studio Code.
 
+# Supported Platforms
+
+Currently on the author's environment which is macOS.
+
+The plugin _might_ work on other unix-like environments but it hasn't been
+tested. It will almost cerainly not work on Windows.
+
+Requires:
+
+- Vim 8.1 compiled with python 3 support
+
 # FAQ
 
 1. Q: Does it work? A: Yeah, sort of. It's _incredibly_ buggy and unpolished.
