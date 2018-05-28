@@ -337,6 +337,9 @@ class DebugSession( object ):
   def OnEvent_initialized( self, message ):
     self._codeView.ClearBreakpoints()
     self._SendBreakpoints()
+    self._connection.DoRequest( None, {
+      'command': 'configurationDone',
+    } )
 
   def OnEvent_thread( self, message ):
     if message[ 'body' ][ 'reason' ] == 'started':
@@ -408,10 +411,6 @@ class DebugSession( object ):
           'sourceModified': False, # TODO: We can actually check this
         }
       )
-
-    self._connection.DoRequest( None, {
-      'command': 'configurationDone',
-    } )
 
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._breakpoints.items():
