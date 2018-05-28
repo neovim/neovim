@@ -21,6 +21,13 @@
           "node",
           "/Users/ben/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
         ]
+      },
+      "bashdb": {
+        "name": "bashdb",
+        "command": [
+          "node",
+          "/Users/ben/.vscode/extensions/rogalmic.bash-debug-0.2.0/out/bashDebug.js"
+        ]
       }
   },
   "configurations": {
@@ -71,6 +78,24 @@
         "request": "attach",
         "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
         "MIMode": "lldb"
+      }
+    },
+    "bashdb": {
+      "adapter": "bashdb",
+      "configuration": {
+        "type": "bashdb",
+        "request": "launch",
+        "name": "Bash-Debug (simplest configuration)",
+        "program": "/Users/ben/.vim/bundle/YouCompleteMe/install.sh",
+        "args": [],
+        "cwd": "/Users/ben/.vim/bundle/YouCompleteMe",
+        "pathBash": "bash",
+        "pathBashdb": "bashdb",
+        "pathCat": "cat",
+        "pathMkfifo": "mkfifo",
+        "pathPkill": "pkill",
+        "showDebugOutput": true,
+        "trace": true
       }
     }
   }

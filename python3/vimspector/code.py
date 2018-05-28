@@ -57,20 +57,21 @@ class CodeView( object  ):
       self._signs[ 'vimspectorPC' ] = None
 
     if not frame or not frame[ 'source' ]:
-      return
+      return False
 
     vim.current.window = self._window
 
-    buffer_number = vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ][ 'path' ]  ) )
+    buffer_number = int( vim.eval( 'bufnr( "{0}", 1 )'.format(
+      frame[ 'source' ][ 'path' ]  ) ) )
 
     try:
       vim.command( 'bu {0}'.format( buffer_number ) )
+      self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
     except vim.error as e:
       if 'E325' not in str( e ):
-        raise
-
-    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
+        self._logger.exception(
+          'Unexpected error from vim: {0}'.format( str( e ) ) )
+        return False
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1
@@ -80,6 +81,7 @@ class CodeView( object  ):
       frame[ 'line' ],
       frame[ 'source' ][ 'path' ] ) )
 
+    return True
 
   def Clear( self ):
     if self._signs[ 'vimspectorPC' ]:

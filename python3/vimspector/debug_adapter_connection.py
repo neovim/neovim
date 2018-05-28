@@ -80,24 +80,34 @@ class DebugAdapterConnection( object ):
     self._Write( data )
 
   def _ReadHeaders( self ):
-    headers = self._buffer.split( bytes( '\r\n\r\n', 'utf-8' ), 1 )
+    parts = self._buffer.split( bytes( '\r\n\r\n', 'utf-8' ), 1 )
 
-    if len( headers ) > 1:
-      for header_line in headers[ 0 ].split( bytes( '\r\n', 'utf-8' ) ):
+    if len( parts ) > 1:
+      headers = parts[ 0 ]
+      for header_line in headers.split( bytes( '\r\n', 'utf-8' ) ):
         if header_line.strip():
           key, value = str( header_line, 'utf-8' ).split( ':', 1 )
           self._headers[ key ] = value
 
       # Chomp (+4 for the 2 newlines which were the separator)
       # self._buffer = self._buffer[ len( headers[ 0 ] ) + 4 : ]
-      self._buffer = headers[ 1 ]
+      self._buffer = parts[ 1 ]
       self._SetState( 'READ_BODY' )
       return
 
     # otherwise waiting for more data
 
   def _ReadBody( self ):
-    content_length = int( self._headers[ 'Content-Length' ] )
+    try:
+      content_length = int( self._headers[ 'Content-Length' ] )
+    except KeyError:
+      # Ug oh. We seem to have all the headers, but no Content-Length
+      # Skip to reading headers. Because, what else can we do.
+      self._logger.error( 'Missing Content-Length header in: {0}'.format(
+        json.dumps( self._headers ) ) )
+      self._buffer = bytes( '', 'utf-8' )
+      self._SetState( 'READ_HEADER' )
+      return
 
     if len( self._buffer ) < content_length:
       # Need more data

@@ -293,7 +293,7 @@ class DebugSession( object ):
     self.SetCurrentFrame( None )
 
   def SetCurrentFrame( self, frame ):
-    self._codeView.SetCurrentFrame( frame )
+    ret = self._codeView.SetCurrentFrame( frame )
 
     if frame:
       self._variablesView.LoadScopes( frame )
@@ -301,6 +301,8 @@ class DebugSession( object ):
     else:
       self._stackTraceView.Clear()
       self._variablesView.Clear()
+
+    return ret
 
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
@@ -383,9 +385,15 @@ class DebugSession( object ):
       'command': 'initialize',
       'arguments': {
         'adapterID': adapter_config.get( 'name', 'adapter' ),
+        'clientID': 'vimspector',
+        'clientName': 'vimspector',
         'linesStartAt1': True,
         'columnsStartAt1': True,
+        'locale': 'en_GB',
         'pathFormat': 'path',
+        'supportsVariableType': True,
+        'supportsVariablePaging': False,
+        'supportsRunInTerminalRequest': True
       },
     } )
 
@@ -407,18 +415,14 @@ class DebugSession( object ):
 
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
-    self._connection.DoRequest( None, {
-      'command': 'configurationDone',
-    } )
-
-    self._stackTraceView.LoadThreads( True )
+    self._connection.DoRequest(
+      lambda msg: self._stackTraceView.LoadThreads( True ),
+      {
+        'command': 'configurationDone',
+      }
+    )
 
   def OnEvent_thread( self, message ):
-    if message[ 'body' ][ 'reason' ] == 'started':
-      pass
-    elif message[ 'body' ][ 'reason' ] == 'exited':
-      pass
-
     self._stackTraceView.OnThreadEvent( message[ 'body' ] )
 
   def OnEvent_breakpoint( self, message ):

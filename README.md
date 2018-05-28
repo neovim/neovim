@@ -77,7 +77,7 @@ breakpoint.
 * Expand result with `<CR>`.
 * Delete with `<DEL>`.
 
-## Stack Trraces
+## Stack Traces
 
 * In the threads window, use `<CR>` to expand/collapse.
 * Use `<CR>` on a stack frame to jump to it.
@@ -241,12 +241,12 @@ Known not to work:
 
 Currently on the author's environment which is macOS.
 
-The plugin _might_ work on other unix-like environments but it hasn't been
-tested. It will almost cerainly not work on Windows.
+The plugin _might_ work on other UNIX-like environments but it hasn't been
+tested. It will almost certainly not work on Windows.
 
 Requires:
 
-- Vim 8.1 compiled with python 3 support
+- Vim 8.1 compiled with python 3 support.
 
 # FAQ
 
