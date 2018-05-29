@@ -190,6 +190,40 @@ not always (or not completely).
 
 ```
 
+* C, C++, Rust, etc.: [CodeLLDB](https://github.com/vadimcn/vscode-lldb)
+
+```
+{
+  "adapters": {
+    "lldb": {
+      "name": "lldb",
+      "command": [
+        "lldb",
+        "-b",
+        "-O",
+        "command script import '<extension path>/adapter'",
+        "-O",
+        "script adapter.main.run_stdio_session()"
+      ]
+    }
+    ...
+  },
+  "configurations": {
+    "<name>: Launch": {
+      "adapter": "lldb",
+      "configuration": {
+        "type": "lldb",
+        "request": "launch",
+        "name": "<name>: Launch",
+        "program": "<path to binary>",
+        "args": [ .. ],
+        "cwd": "<working directory>"
+      }
+    }
+  }
+}
+```
+
 * Python: [vscode-python](https://github.com/Microsoft/vscode-python)
 
 ```
@@ -229,8 +263,6 @@ Also the mock debugger, but that isn't actually useful.
 
 Known not to work:
 
-* CodeLLDB. This doesn't work because it requires unique logic to launch the
-  server, and it uses TCP/IP rather than standard streams.
 * Java Debug Server. This doesn't work (yet) because it runs as a jdt.ls plugin.
   Support for this may be added in conjunction with [ycmd][], but this
   architecture is incredibly complex and vastly different from any other.

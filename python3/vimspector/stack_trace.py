@@ -182,7 +182,7 @@ class StackTraceView( object ):
     stackFrames = thread[ '_frames' ]
 
     for frame in stackFrames:
-      if frame[ 'source' ]:
+      if frame.get( 'source' ):
         source = frame[ 'source' ]
       else:
         source = { 'name': '<unknown>' }

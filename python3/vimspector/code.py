@@ -59,10 +59,13 @@ class CodeView( object  ):
     if not frame or not frame.get( 'source' ):
       return False
 
+    if 'path' not in frame[ 'source' ]:
+      return False
+
     vim.current.window = self._window
 
     buffer_number = int( vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ].get( 'path', '???' )  ) ) )
+      frame[ 'source' ][ 'path' ] ) ) )
 
     try:
       vim.command( 'bu {0}'.format( buffer_number ) )
@@ -149,6 +152,9 @@ class CodeView( object  ):
 
     for file_name, breakpoints in self._breakpoints.items():
       for breakpoint in breakpoints:
+        if 'line' not in breakpoint:
+          continue
+
         sign_id = self._next_sign_id
         self._next_sign_id += 1
         self._signs[ 'breakpoints' ].append( sign_id )

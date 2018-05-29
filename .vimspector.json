@@ -119,6 +119,21 @@
         "args": [],
         "cwd": "/Users/ben/Development/vim"
       }
+    },
+    "racerd": {
+      "adapter": "lldb",
+      "configuration": {
+        "type": "lldb",
+        "request": "launch",
+        "name": "LLDB: Launch",
+        "program": "/Users/ben/.vim/bundle/YouCompleteMe/third_party/ycmd/third_party/racerd/target/debug/racerd",
+        "args": [
+          "serve",
+          "--port=12345",
+          "--secret-file=secretfile"
+        ],
+        "cwd": "/Users/ben/.vim/bundle/YouCompleteMe/third_party/ycmd"
+      }
     }
   }
 }

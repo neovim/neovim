@@ -525,6 +525,6 @@ class DebugSession( object ):
 
     utils.UserMessage( 'Paused in thread {0} due to {1}'.format(
       event.get( 'threadId', '<unknown>' ),
-      event.get( 'description', event[ 'reason' ] ) ) )
+      event.get( 'description', event.get( 'reason', '' ) ) ) )
 
     self._stackTraceView.OnStopped( event )
