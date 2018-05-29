@@ -56,13 +56,13 @@ class CodeView( object  ):
       vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
 
-    if not frame or not frame[ 'source' ]:
+    if not frame or not frame.get( 'source' ):
       return False
 
     vim.current.window = self._window
 
     buffer_number = int( vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ][ 'path' ]  ) ) )
+      frame[ 'source' ].get( 'path', '???' )  ) ) )
 
     try:
       vim.command( 'bu {0}'.format( buffer_number ) )

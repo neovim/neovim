@@ -28,6 +28,17 @@
           "node",
           "/Users/ben/.vscode/extensions/rogalmic.bash-debug-0.2.0/out/bashDebug.js"
         ]
+      },
+      "lldb": {
+        "name": "lldb",
+        "command": [
+          "lldb",
+          "-b",
+          "-O",
+          "command script import '/Users/ben/.vscode/extensions/vadimcn.vscode-lldb-0.8.7/adapter'",
+          "-O",
+          "script adapter.main.run_stdio_session()"
+        ]
       }
   },
   "configurations": {
@@ -96,6 +107,17 @@
         "pathPkill": "pkill",
         "showDebugOutput": true,
         "trace": true
+      }
+    },
+    "lldb launch": {
+      "adapter": "lldb",
+      "configuration": {
+        "type": "lldb",
+        "request": "launch",
+        "name": "LLDB: Launch",
+        "program": "/Users/ben/Development/vim/src/vim",
+        "args": [],
+        "cwd": "/Users/ben/Development/vim"
       }
     }
   }

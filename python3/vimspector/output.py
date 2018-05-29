@@ -27,7 +27,7 @@ class OutputView( object ):
     self.ShowOutput( 'stdout' )
 
   def OnOutput( self, event ):
-    category = event[ 'category' ]
+    category = event.get( 'category' ) or 'output'
     if category not in self._buffers:
       self._CreateBuffer( category )
 
