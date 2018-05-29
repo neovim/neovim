@@ -73,19 +73,18 @@ See
 Interpret all further arguments as files.
 Can be used to edit files starting with a hyphen
 .Pq Sq - .
-.It Fl -literal
-Interpret filenames literally, that is, do not expand wildcards.
-Has no effect on Unix-like systems, where the shell expands wildcards.
 .It Fl e
-Ex mode.
+Ex mode.  Reads stdin as Ex commands.
 See
 .Ic :help Ex-mode .
 .It Fl E
-Ex mode, improved.
+Ex mode, improved.  Reads stdin as text.
 See
 .Ic :help gQ .
 .It Fl es
-Ex mode, silent.
+Silent (batch) mode.  Reads stdin as Ex commands.
+.It Fl Es
+Silent (batch) mode.  Reads stdin as text.
 .It Fl d
 Diff mode.
 Show the difference between two to four files, similar to

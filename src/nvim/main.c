@@ -105,9 +105,6 @@ typedef struct {
   int window_count;                     // number of windows to use
   int window_layout;                    // 0, WIN_HOR, WIN_VER or WIN_TABS
 
-#if !defined(UNIX)
-  int literal;                          // don't expand file names
-#endif
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
@@ -299,15 +296,18 @@ int main(int argc, char **argv)
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 
-  bool reading_excmds = exmode_active == EXMODE_NORMAL;
+  //
+  // Read user-input if any TTY is connected.
+  // Read ex-commands if invoked with "-es".
+  //
   bool reading_input = !headless_mode
                        && (params.input_isatty || params.output_isatty
                            || params.err_isatty);
-
+  bool reading_excmds = exmode_active == EXMODE_NORMAL;
   if (reading_input || reading_excmds) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
     // prompt the user, so start reading from a tty now.
-    int fd = fileno(stdin);
+    int fd = STDIN_FILENO;
     if (!reading_excmds
         && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
       // Use stderr or stdout since stdin is being used to read commands.
@@ -334,9 +334,7 @@ int main(int argc, char **argv)
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")
-      // && !silent_mode  // XXX: avoid hang with "nvim -es -u NONE".
-      ) {
+  if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")) {
     p_lpl = false;
   }
 
@@ -785,7 +783,6 @@ static void command_line_scan(mparm_T *parmp)
         case '-': {  // "--" don't take any more option arguments
           // "--help" give help message
           // "--version" give version message
-          // "--literal" take files literally
           // "--noplugin[s]" skip plugins
           // "--cmd <cmd>" execute cmd before vimrc
           if (STRICMP(argv[0] + argv_idx, "help") == 0) {
@@ -830,9 +827,7 @@ static void command_line_scan(mparm_T *parmp)
             want_argument = true;
             argv_idx += 6;
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
-#if !defined(UNIX)
-            parmp->literal = true;
-#endif
+            // Do nothing: file args are always literal. #7679
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0) {
             p_lpl = false;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
@@ -1213,9 +1208,6 @@ scripterror:
       int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
-#if !defined(UNIX)
-      alist_fnum_flag = parmp->literal ? alist_fnum_flag : 0;
-#endif
       alist_add(&global_alist, p, alist_fnum_flag);
     }
 
@@ -1276,10 +1268,10 @@ static void init_startuptime(mparm_T *paramp)
 static void check_and_set_isatty(mparm_T *paramp)
 {
   stdin_isatty
-    = paramp->input_isatty = os_isatty(fileno(stdin));
+    = paramp->input_isatty = os_isatty(STDIN_FILENO);
   stdout_isatty
-    = paramp->output_isatty = os_isatty(fileno(stdout));
-  paramp->err_isatty = os_isatty(fileno(stderr));
+    = paramp->output_isatty = os_isatty(STDOUT_FILENO);
+  paramp->err_isatty = os_isatty(STDERR_FILENO);
 #ifndef WIN32
   int tty_fd = paramp->input_isatty
     ? STDIN_FILENO
@@ -1315,26 +1307,6 @@ static void init_path(const char *exename)
 /// Get filename from command line, if any.
 static char_u *get_fname(mparm_T *parmp, char_u *cwd)
 {
-#if !defined(UNIX)
-  /*
-   * Expand wildcards in file names.
-   */
-  if (!parmp->literal) {
-    cwd = xmalloc(MAXPATHL);
-    if (cwd != NULL) {
-      os_dirname(cwd, MAXPATHL);
-    }
-    // Temporarily add '(' and ')' to 'isfname'.  These are valid
-    // filename characters but are excluded from 'isfname' to make
-    // "gf" work on a file name in parenthesis (e.g.: see vim.h).
-    do_cmdline_cmd(":set isf+=(,)");
-    alist_expand(NULL, 0);
-    do_cmdline_cmd(":set isf&");
-    if (cwd != NULL) {
-      os_chdir((char *)cwd);
-    }
-  }
-#endif
   return alist_name(&GARGLIST[0]);
 }
 
@@ -1947,9 +1919,6 @@ static void usage(void)
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
-#if !defined(UNIX)
-  mch_msg(_("  --literal             Don't expand wildcards\n"));
-#endif
   mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));

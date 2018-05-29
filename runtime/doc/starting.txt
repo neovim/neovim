@@ -22,8 +22,7 @@ More generally, Vim is started with:
 Option arguments and file name arguments can be mixed, and any number of them
 can be given.  However, watch out for options that take an argument.
 
-Exactly one out of the following five items may be used to choose how to
-start editing:
+The following items may be used to choose how to start editing:
 
 							*-file* *---*
 filename	One or more file names.  The first one will be the current
@@ -34,7 +33,6 @@ filename	One or more file names.  The first one will be the current
 			nvim -- -filename
 <		All arguments after the "--" will be interpreted as file names,
 		no other options or "+command" argument can follow.
-		For behavior of quotes on MS-Windows, see |win32-quotes|.
 
 							*--*
 -		This argument can mean two things, depending on whether Ex
@@ -103,13 +101,6 @@ argument.
 		When {fname} already exists new messages are appended.
 		(Only available when compiled with the |+startuptime|
 		feature).
-
-							*--literal*
---literal	Take file names literally, don't expand wildcards.  Not needed
-		for Unix, because Vim always takes file names literally (the
-		shell expands wildcards).
-		Applies to all the names, also the ones that come before this
-		argument.
 
 							*-+*
 +[num]		The cursor will be positioned on line "num" for the first

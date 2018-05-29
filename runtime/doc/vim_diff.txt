@@ -440,6 +440,10 @@ Other compile-time features:
   Emacs tags support
   X11 integration (see |x11-selection|)
 
+Startup:
+  --literal (file args are always literal; to expand wildcards on Windows, use
+    |:n| e.g. `nvim +"n *"`)
+
 Nvim does not have a built-in GUI and hence the following aliases have been
 removed: gvim, gex, gview, rgvim, rgview
 

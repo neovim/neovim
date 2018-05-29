@@ -108,7 +108,7 @@ describe('startup', function()
                                |
     ]])
   end)
-  it('input from pipe (implicit) + file args #7679', function()
+  it('input from pipe + file args #7679', function()
     eq('ohyeah\r\n0 0 bufs=3',
        funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '--headless',
                      '+.print',
@@ -121,7 +121,7 @@ describe('startup', function()
                     { 'ohyeah', '' }))
   end)
 
-  it('stdin with -es, -Es #7679', function()
+  it('stdin with -es/-Es #7679', function()
     local input = { 'append', 'line1', 'line2', '.', '%print', '' }
     local inputstr = table.concat(input, '\n')
 

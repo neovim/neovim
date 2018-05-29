@@ -50,7 +50,7 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-/// File (set at startup) used to read user-input (or commands for -e/-es).
+/// This is the global stream of user-input (or Ex-commands for "-es").
 int input_global_fd(void)
 {
   return global_fd;
