@@ -39,6 +39,15 @@ func Do_test_quotestar_for_x11()
   if cmd == ''
     return 'GetVimCommand() failed'
   endif
+  try
+    call remote_send('xxx', '')
+  catch
+    if v:exception =~ 'E240:'
+      " No connection to the X server, give up.
+      return
+    endif
+    " ignore other errors
+  endtry
 
   let name = 'XVIMCLIPBOARD'
   let cmd .= ' --servername ' . name
@@ -109,8 +118,12 @@ func Test_quotestar()
 
   if has('macunix')
     let skipped = Do_test_quotestar_for_macunix()
-  elseif !empty("$DISPLAY")
-    let skipped = Do_test_quotestar_for_x11()
+  elseif has('x11')
+    if empty($DISPLAY)
+      let skipped = "Test can only run when $DISPLAY is set."
+    else
+      let skipped = Do_test_quotestar_for_x11()
+    endif
   else
     let skipped = "Test is not implemented yet for this platform."
   endif
