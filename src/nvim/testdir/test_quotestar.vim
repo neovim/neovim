@@ -39,6 +39,15 @@ func Do_test_quotestar_for_x11()
   if cmd == ''
     return 'GetVimCommand() failed'
   endif
+  try
+    call remote_send('xxx', '')
+  catch
+    if v:exception =~ 'E240:'
+      " No connection to the X server, give up.
+      return
+    endif
+    " ignore other errors
+  endtry
 
   let name = 'XVIMCLIPBOARD'
   let cmd .= ' --servername ' . name
