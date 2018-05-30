@@ -132,11 +132,9 @@ void update_topline(void)
   bool check_botline = false;
   long save_so = p_so;
 
-  if (!screen_valid(true))
-    return;
-
-  // If the window height is zero, just use the cursor line.
-  if (curwin->w_height == 0) {
+  // If there is no valid screen and when the window height is zero just use
+  // the cursor line.
+  if (!screen_valid(true) || curwin->w_height == 0) {
     curwin->w_topline = curwin->w_cursor.lnum;
     curwin->w_botline = curwin->w_topline;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
@@ -1979,6 +1977,7 @@ void halfpage(bool flag, linenr_T Prenum)
   int n = curwin->w_p_scr <= curwin->w_height ? (int)curwin->w_p_scr
                                               : curwin->w_height;
 
+  update_topline();
   validate_botline();
   int room = curwin->w_empty_rows + curwin->w_filler_rows;
   if (flag) {
