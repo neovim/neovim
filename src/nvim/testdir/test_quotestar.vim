@@ -118,8 +118,12 @@ func Test_quotestar()
 
   if has('macunix')
     let skipped = Do_test_quotestar_for_macunix()
-  elseif !empty("$DISPLAY")
-    let skipped = Do_test_quotestar_for_x11()
+  elseif has('x11')
+    if empty($DISPLAY)
+      let skipped = "Test can only run when $DISPLAY is set."
+    else
+      let skipped = Do_test_quotestar_for_x11()
+    endif
   else
     let skipped = "Test is not implemented yet for this platform."
   endif
