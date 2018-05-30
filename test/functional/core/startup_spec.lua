@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local feed = helpers.feed
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
@@ -119,6 +120,18 @@ describe('startup', function()
                      'test/functional/fixtures/shell-test.c',
                     },
                     { 'ohyeah', '' }))
+  end)
+
+  it('-e/-E interactive #7679', function()
+    clear('-E')
+    local screen = Screen.new(25, 3)
+    screen:attach()
+    feed("put ='from -E'<CR>")
+    screen:expect([[
+                               |
+      from -E                  |
+      :^                        |
+    ]])
   end)
 
   it('stdin with -es/-Es #7679', function()

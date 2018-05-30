@@ -300,15 +300,16 @@ int main(int argc, char **argv)
   // Read user-input if any TTY is connected.
   // Read ex-commands if invoked with "-es".
   //
-  bool reading_input = !headless_mode
-                       && (params.input_isatty || params.output_isatty
-                           || params.err_isatty);
-  bool reading_excmds = exmode_active == EXMODE_NORMAL;
-  if (reading_input || reading_excmds) {
+  bool reading_tty = !headless_mode
+                     && (params.input_isatty || params.output_isatty
+                         || params.err_isatty);
+  bool reading_excmds = !params.input_isatty && silent_mode
+                        && exmode_active == EXMODE_NORMAL;
+  if (reading_tty || reading_excmds) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
     // prompt the user, so start reading from a tty now.
     int fd = STDIN_FILENO;
-    if (!reading_excmds
+    if (!silent_mode
         && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
       // Use stderr or stdout since stdin is being used to read commands.
       fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
@@ -435,7 +436,7 @@ int main(int argc, char **argv)
     read_stdin();
   }
 
-  if (reading_input && (need_wait_return || msg_didany)) {
+  if (reading_tty && (need_wait_return || msg_didany)) {
     // Because there's no UI yet, error messages would have been printed to
     // stdout.  Before starting we need confirmation that the user has seen the
     // messages and that is done with a call to wait_return.
@@ -444,7 +445,7 @@ int main(int argc, char **argv)
   }
 
   if (!headless_mode && !silent_mode) {
-    input_stop();  // Stop reading from input stream. UI will take over.
+    input_stop();  // Stop reading input, let the UI take over.
     ui_builtin_start();
   }
 

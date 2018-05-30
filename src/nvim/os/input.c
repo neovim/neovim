@@ -34,7 +34,7 @@ typedef enum {
   kInputEof
 } InbufPollResult;
 
-static Stream read_stream = {.closed = true};
+static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
@@ -50,7 +50,7 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-/// This is the global stream of user-input (or Ex-commands for "-es").
+/// Global TTY (or pipe for "-es") input stream, before UI starts.
 int input_global_fd(void)
 {
   return global_fd;
@@ -109,7 +109,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
-        // Drained input and eventloop: exit silent/batch-mode (-es/-Es).
+        // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
 
