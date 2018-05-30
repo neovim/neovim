@@ -4,11 +4,13 @@ project(libuv LANGUAGES C)
 file(GLOB UV_SOURCES_COMMON src/*.c)
 file(GLOB UV_SOURCES_WIN src/win/*.c)
 
-add_library(libuv ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
-target_compile_definitions(libuv PRIVATE WIN32_LEAN_AND_MEAN "_WIN32_WINNT=0x0600")
-target_link_libraries(libuv iphlpapi psapi shell32 userenv ws2_32)
-target_include_directories(libuv PUBLIC ./include PRIVATE ./src)
-set_target_properties(libuv PROPERTIES DEFINE_SYMBOL BUILDING_UV_SHARED)
+add_library(uv ${UV_SOURCES_COMMON} ${UV_SOURCES_WIN})
+target_compile_definitions(uv PRIVATE WIN32_LEAN_AND_MEAN "_WIN32_WINNT=0x0600")
+target_link_libraries(uv iphlpapi psapi shell32 userenv ws2_32)
+target_include_directories(uv PUBLIC ./include PRIVATE ./src)
+if(BUILD_SHARED_LIBS)
+  set_target_properties(uv PROPERTIES DEFINE_SYMBOL BUILDING_UV_SHARED)
+endif()
 
 install(FILES
   include/tree.h
@@ -20,8 +22,9 @@ install(FILES
   DESTINATION include)
 
 include(GNUInstallDirs)
-install(TARGETS libuv
+install(TARGETS uv
   PUBLIC_HEADER
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
