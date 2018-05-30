@@ -641,6 +641,7 @@ static int command_line_execute(VimState *state, int key)
         save_p_ls = -1;
       } else {
         win_redraw_last_status(topframe);
+        wild_menu_showing = 0;  // must be before redraw_statuslines #8385
         redraw_statuslines();
       }
       KeyTyped = skt;
