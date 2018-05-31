@@ -1,0 +1,19 @@
+diff --git a/src/win/tty.c b/src/win/tty.c
+index ecf7bc9b..939131bc 100644
+--- a/src/win/tty.c
++++ b/src/win/tty.c
+@@ -2265,6 +2265,14 @@ int uv_tty_reset_mode(void) {
+  * 10 version 1511, build number 10.0.10586.
+  */
+ static void uv__determine_vterm_state(HANDLE handle) {
++  char var[5];
++  size_t len = GetEnvironmentVariableA("ConEmuANSI", var, 5);
++  if (len == 2 &&
++      (var[0] == 'o' || var[0] == 'O') && (var[1] == 'n' || var[1] == 'N')) {
++    uv__vterm_state = UV_SUPPORTED;
++    return;
++  }
++
+   DWORD dwMode = 0;
+ 
+   if (!GetConsoleMode(handle, &dwMode)) {
