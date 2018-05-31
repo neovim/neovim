@@ -63,6 +63,10 @@
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
 #endif
 
+#if defined(WIN32) && !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+# define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 typedef struct {
   int top, bot, left, right;
 } Rect;
@@ -209,6 +213,56 @@ static void terminfo_start(UI *ui)
 
   // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
+  bool conemu_ansi = false;
+#ifdef WIN32
+  bool winpty = false;
+  bool vtp = false;
+  const char *env = os_getenv("VIM_TERMINAL");
+  if (env) {
+    winpty = true;
+  }
+  // If we change to set environment variable in terminal of nvim,
+  // add condition here
+
+  if (!winpty) {
+# ifdef NVIM_UV_HAS_SET_VTERM_STATE
+    env = os_getenv("ConEmuANSI");
+    if (env && !STRCMP(env, "ON")) {
+      conemu_ansi = true;
+    }
+# endif
+
+    HANDLE handle = (HANDLE)_get_osfhandle(data->out_fd);
+    DWORD dwMode;
+    if (handle != INVALID_HANDLE_VALUE && GetConsoleMode(handle, &dwMode)) {
+      dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+      if (SetConsoleMode(handle, dwMode)) {
+        vtp = true;
+      }
+    }
+  } else {
+    // If it is running under winpty ignore the TERM environment variable and
+    // force it to be cygwin.
+    term = "cygwin";
+  }
+
+  if (term == NULL) {
+    if (vtp || conemu_ansi) {
+      term = "xterm-256color";
+    } else {
+      term = "cygwin";
+    }
+  }
+
+  os_setenv("TERM", term, 1);
+# ifdef NVIM_UV_HAS_SET_VTERM_STATE
+  if (conemu_ansi) {
+    uv_set_vterm_state(UV_SUPPORTED);
+  } else if (winpty) {
+    uv_set_vterm_state(UV_UNSUPPORTED);
+  }
+# endif
+#endif
   data->ut = unibi_from_env();
   char *termname = NULL;
   if (!term || !data->ut) {
@@ -230,7 +284,8 @@ static void terminfo_start(UI *ui)
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
 
-  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);
+  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env,
+                      conemu_ansi);
   augment_terminfo(data, term, colorterm, vte_version, konsole, iterm_env);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
@@ -1449,7 +1504,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                bool konsole, bool iterm_env)
+                                bool konsole, bool iterm_env, bool conemu_ansi)
 {
   unibi_term *ut = data->ut;
   const char * xterm_version = os_getenv("XTERM_VERSION");
@@ -1480,6 +1535,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
+  bool cygwin = terminfo_is_term_family(term, "cygwin");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1548,6 +1604,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
       unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     }
+    if (conemu_ansi) {
+      unibi_set_num(ut, unibi_max_colors, 256);
+      unibi_set_str(ut, unibi_set_a_foreground, "\x1b[38;5;%p1%dm");
+      unibi_set_str(ut, unibi_set_a_background,  "\x1b[48;5;%p1%dm");
+    }
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
@@ -1590,7 +1651,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
   }
-
 // At this time (2017-07-12) it seems like all terminals that support 256
 // color codes can use semicolons in the terminal code and be fine.
 // However, this is not correct according to the spec. So to reward those
@@ -1667,6 +1727,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || iterm || iterm_pretending_xterm
             || teraterm    // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
+            || cygwin
+            || conemu_ansi
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt

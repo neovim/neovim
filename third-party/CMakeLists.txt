@@ -120,8 +120,13 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.23.2.tar.gz)
-set(LIBUV_SHA256 30af979c4f4b8d1b895ae6d115f7400c751542ccb9e656350fc89fda08d4eabd)
+if(WIN32)
+  set(LIBUV_URL https://github.com/neovim/libuv/archive/0ed7feb71ca949f7a96ccb102481d17ea1bb5933.tar.gz)
+  set(LIBUV_SHA256 813fe763022f19878557c6fde311b6394fb9180caaaab0dd98d8704732234508)
+else()
+  set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.23.2.tar.gz)
+  set(LIBUV_SHA256 30af979c4f4b8d1b895ae6d115f7400c751542ccb9e656350fc89fda08d4eabd)
+endif()
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)

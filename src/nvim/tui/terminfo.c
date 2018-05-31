@@ -86,6 +86,10 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
     *termname = xstrdup("builtin_vte");
     return unibi_from_mem((const char *)vte_256colour_terminfo,
                           sizeof vte_256colour_terminfo);
+  } else if (terminfo_is_term_family(term, "cygwin")) {
+    *termname = xstrdup("builtin_cygwin");
+    return unibi_from_mem((const char *)cygwin_terminfo,
+                          sizeof cygwin_terminfo);
   } else {
     *termname = xstrdup("builtin_ansi");
     return unibi_from_mem((const char *)ansi_terminfo,
