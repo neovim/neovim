@@ -349,7 +349,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   // redraw the statusline for statuslines that display the current mode
   // using the mode() function.
-  if (KeyTyped) {
+  if (KeyTyped && msg_scrolled == 0) {
     curwin->w_redr_status = true;
     redraw_statuslines();
   }
