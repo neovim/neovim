@@ -4358,7 +4358,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_CNTRL:
-    if (c >= 1 && c <= 255 && iscntrl(c))
+    if (c >= 1 && c <= 127 && iscntrl(c))
       return OK;
     break;
   case NFA_CLASS_DIGIT:
@@ -4366,7 +4366,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_GRAPH:
-    if (c >= 1 && c <= 255 && isgraph(c))
+    if (c >= 1 && c <= 127 && isgraph(c))
       return OK;
     break;
   case NFA_CLASS_LOWER:
