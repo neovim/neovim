@@ -2443,27 +2443,27 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
       flp->lnum - 1 - fp->fd_top);
 
   if (lvl < level) {
-    /* End of fold found, update the length when it got shorter. */
+    // End of fold found, update the length when it got shorter.
     if (fp->fd_len != flp->lnum - fp->fd_top) {
       if (fp->fd_top + fp->fd_len - 1 > bot) {
-        /* fold continued below bot */
+        // fold continued below bot
         if (getlevel == foldlevelMarker
             || getlevel == foldlevelExpr
             || getlevel == foldlevelSyntax) {
-          /* marker method: truncate the fold and make sure the
-           * previously included lines are processed again */
+          // marker method: truncate the fold and make sure the
+          // previously included lines are processed again
           bot = fp->fd_top + fp->fd_len - 1;
           fp->fd_len = flp->lnum - fp->fd_top;
         } else {
-          /* indent or expr method: split fold to create a new one
-           * below bot */
+          // indent or expr method: split fold to create a new one
+          // below bot
           i = (int)(fp - (fold_T *)gap->ga_data);
           foldSplit(gap, i, flp->lnum, bot);
           fp = (fold_T *)gap->ga_data + i;
         }
       } else
         fp->fd_len = flp->lnum - fp->fd_top;
-      fold_changed = TRUE;
+      fold_changed = true;
     }
   }
 
