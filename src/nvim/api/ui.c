@@ -97,6 +97,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->set_icon = remote_ui_set_icon;
   ui->option_set = remote_ui_option_set;
   ui->event = remote_ui_event;
+  ui->inspect = remote_ui_inspect;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
@@ -274,4 +275,10 @@ static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
     *args_consumed = true;
   }
   push_call(ui, name, my_args);
+}
+
+static void remote_ui_inspect(UI *ui, Dictionary *info)
+{
+  UIData *data = ui->data;
+  PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
 }

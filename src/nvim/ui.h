@@ -36,6 +36,7 @@ struct ui_t {
 #endif
   void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
   void (*stop)(UI *ui);
+  void (*inspect)(UI *ui, Dictionary *info);
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
