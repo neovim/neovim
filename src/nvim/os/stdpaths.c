@@ -65,7 +65,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *env_val = os_getenv(env);
 
 #ifdef WIN32
-  if (env_val == NULL) {
+  if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #endif
@@ -74,7 +74,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val != NULL) {
     ret = xstrdup(env_val);
   } else if (fallback) {
-    ret = (char *) expand_env_save((char_u *)fallback);
+    ret = (char *)expand_env_save((char_u *)fallback);
   }
 
   return ret;
@@ -88,7 +88,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 ///
 /// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
 /// avoid storing configuration and data files in the same path.
-static char *get_xdg_home(const XDGVarType idx)
+char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);

@@ -1145,8 +1145,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                                               f, uarg);
                 break;
               }
-              assert(str_arg_l < sizeof(tmp));
             }
+            assert(str_arg_l < sizeof(tmp));
 
             // include the optional minus sign and possible "0x" in the region
             // before the zero padding insertion point
@@ -1253,11 +1253,11 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               }
 
               // Cast to char to avoid a conversion warning on Ubuntu 12.04.
+              assert(l + 1 < sizeof(format));
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
               // Regular float number
-              assert(l + 1 < sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
 
@@ -1376,16 +1376,14 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         }
 
         // insert zero padding as requested by precision or min field width
-        if (number_of_zeros_to_pad > 0) {
-          size_t zn = number_of_zeros_to_pad;
-          if (str_avail) {
-            size_t avail = str_m - str_l;
-            memset(str + str_l, '0', MIN(zn, avail));
-            str_avail = zn < avail;
-          }
-          assert(zn <= SIZE_MAX - str_l);
-          str_l += zn;
+        size_t zn = number_of_zeros_to_pad;
+        if (str_avail) {
+          size_t avail = str_m - str_l;
+          memset(str + str_l, '0', MIN(zn, avail));
+          str_avail = zn < avail;
         }
+        assert(zn <= SIZE_MAX - str_l);
+        str_l += zn;
       }
 
       // insert formatted string

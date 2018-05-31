@@ -38,18 +38,6 @@ Information for undo and text in registers is kept in memory, thus when making
 undo levels and the text that can be kept in registers.  Other things are also
 kept in memory:  Command-line history, error messages for Quickfix mode, etc.
 
-Memory usage limits
--------------------
-
-The option 'maxmem' ('mm') is used to set the maximum memory used for one
-buffer (in kilobytes).  'maxmemtot' is used to set the maximum memory used for
-all buffers (in kilobytes).  The defaults depend on the system used.
-These are not hard limits, but tell Vim when to move text into a swap file.
-If you don't like Vim to swap to a file, set 'maxmem' and 'maxmemtot' to a
-very large value.  The swap file will then only be used for recovery.  If you
-don't want a swap file at all, set 'updatecount' to 0, or use the "-n"
-argument when starting Vim.
-
 ==============================================================================
 2. The most interesting additions			*vim-additions*
 

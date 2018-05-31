@@ -1700,6 +1700,9 @@ static void printdigraph(digr_T *dp)
     *p++ = dp->char1;
     *p++ = dp->char2;
     *p++ = ' ';
+    *p = NUL;
+    msg_outtrans(buf);
+    p = buf;
 
     // add a space to draw a composing char on
     if (utf_iscomposing(dp->result)) {
@@ -1707,6 +1710,9 @@ static void printdigraph(digr_T *dp)
     }
     p += (*mb_char2bytes)(dp->result, p);
 
+    *p = NUL;
+    msg_outtrans_attr(buf, hl_attr(HLF_8));
+    p = buf;
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
     }
@@ -1827,12 +1833,12 @@ void ex_loadkeymap(exarg_T *eap)
     xfree(line);
   }
 
-  // setup ":lnoremap" to map the keys
-  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
+  // setup ":lmap" to map the keys
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(2, buf, LANGMAP, FALSE);
+    (void)do_map(0, buf, LANGMAP, false);
   }
 
   p_cpo = save_cpo;

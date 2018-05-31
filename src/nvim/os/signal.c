@@ -145,7 +145,7 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     case SIGPWR:
       // Signal of a power failure(eg batteries low), flush the swap files to
       // be safe
-      ml_sync_all(false, false);
+      ml_sync_all(false, false, true);
       break;
 #endif
 #ifdef SIGPIPE

@@ -411,7 +411,8 @@ state for Insert mode is also used when typing a character as an argument to
 command like "f" or "t".
    Language mappings will never be applied to already mapped characters.  They
 are only used for typed characters.  This assumes that the language mapping
-was already done when typing the mapping.
+was already done when typing the mapping. Correspondingly, language mappings
+are applied when recording macros, rather than when applying them.
 
 
 1.4 LISTING MAPPINGS					*map-listing*

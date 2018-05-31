@@ -142,6 +142,8 @@ static inline void *_memcpy_free(void *const restrict dest,
   return dest;
 }
 
+// -V:kvi_push:512
+
 /// Resize vector with preallocated array
 ///
 /// @note May not resize to an array smaller then init_array: if requested,

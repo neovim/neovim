@@ -1493,38 +1493,34 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
  * Raw string start is found at linep[startpos.col - 1].
  * Return true if the matching end can be found between startpos and endpos.
  */
-static int find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
+static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 {
   char_u *p;
   char_u *delim_copy;
   size_t delim_len;
   linenr_T lnum;
-  int found = false;
 
-  for (p = linep + startpos->col + 1; *p && *p != '('; ++p) {}
+  for (p = linep + startpos->col + 1; *p && *p != '('; p++) {}
 
   delim_len = (p - linep) - startpos->col - 1;
   delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
-  if (delim_copy == NULL)
-    return false;
-  for (lnum = startpos->lnum; lnum <= endpos->lnum; ++lnum)
-  {
+  bool found = false;
+  for (lnum = startpos->lnum; lnum <= endpos->lnum; lnum++) {
     char_u *line = ml_get(lnum);
 
-    for (p = line + (lnum == startpos->lnum
-          ? startpos->col + 1 : 0); *p; ++p)
-    {
-      if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col)
+    for (p = line + (lnum == startpos->lnum ? startpos->col + 1 : 0); *p; p++) {
+      if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col) {
         break;
+      }
       if (*p == ')' && p[delim_len + 1] == '"'
-          && STRNCMP(delim_copy, p + 1, delim_len) == 0)
-      {
+          && STRNCMP(delim_copy, p + 1, delim_len) == 0) {
         found = true;
         break;
       }
     }
-    if (found)
+    if (found) {
       break;
+    }
   }
   xfree(delim_copy);
   return found;
@@ -3396,11 +3392,13 @@ again:
     goto again;
   }
 
-  if (do_include || r < 1) {
-    /* Include up to the '>'. */
-    while (*get_cursor_pos_ptr() != '>')
-      if (inc_cursor() < 0)
+  if (do_include) {
+    // Include up to the '>'.
+    while (*get_cursor_pos_ptr() != '>') {
+      if (inc_cursor() < 0) {
         break;
+      }
+    }
   } else {
     char_u *c = get_cursor_pos_ptr();
     // Exclude the '<' of the end tag.
@@ -3944,15 +3942,15 @@ current_search (
   if (VIsual_active) {
     orig_pos = pos = curwin->w_cursor;
 
-    /* make sure, searching further will extend the match */
-    if (VIsual_active) {
-      if (forward)
-        incl(&pos);
-      else
-        decl(&pos);
+    // Searching further will extend the match.
+    if (forward) {
+      incl(&pos);
+    } else {
+      decl(&pos);
     }
-  } else
+  } else {
     orig_pos = pos = curwin->w_cursor;
+  }
 
   /* Is the pattern is zero-width? */
   int one_char = is_one_char(spats[last_idx].pat, true);
@@ -4017,23 +4015,22 @@ current_search (
     VIsual = start_pos;
 
   curwin->w_cursor = pos;
-  VIsual_active = TRUE;
+  VIsual_active = true;
   VIsual_mode = 'v';
 
-  if (VIsual_active) {
-    redraw_curbuf_later(INVERTED);      /* update the inversion */
-    if (*p_sel == 'e') {
-      /* Correction for exclusive selection depends on the direction. */
-      if (forward && ltoreq(VIsual, curwin->w_cursor))
-        inc_cursor();
-      else if (!forward && ltoreq(curwin->w_cursor, VIsual))
-        inc(&VIsual);
+  redraw_curbuf_later(INVERTED);  // Update the inversion.
+  if (*p_sel == 'e') {
+    // Correction for exclusive selection depends on the direction.
+    if (forward && ltoreq(VIsual, curwin->w_cursor)) {
+      inc_cursor();
+    } else if (!forward && ltoreq(curwin->w_cursor, VIsual)) {
+      inc(&VIsual);
     }
-
   }
 
-  if (fdo_flags & FDO_SEARCH && KeyTyped)
+  if (fdo_flags & FDO_SEARCH && KeyTyped) {
     foldOpenCursor();
+  }
 
   may_start_select('c');
   setmouse();

@@ -4117,7 +4117,7 @@ skip_add:
     if (state->c == NFA_ZSTART) {
       subidx = 0;
       sub = &subs->norm;
-    } else if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9) {
+    } else if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9) {  // -V560
       subidx = state->c - NFA_ZOPEN;
       sub = &subs->synt;
     } else {
@@ -4169,11 +4169,12 @@ skip_add:
     }
 
     subs = addstate(l, state->out, subs, pim, off_arg);
-    /* "subs" may have changed, need to set "sub" again */
-    if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9)
+    // "subs" may have changed, need to set "sub" again.
+    if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9) {  // -V560
       sub = &subs->synt;
-    else
+    } else {
       sub = &subs->norm;
+    }
 
     if (save_in_use == -1) {
       if (REG_MULTI) {
@@ -4217,7 +4218,7 @@ skip_add:
     if (state->c == NFA_ZEND) {
       subidx = 0;
       sub = &subs->norm;
-    } else if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9) {
+    } else if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9) {  // -V560
       subidx = state->c - NFA_ZCLOSE;
       sub = &subs->synt;
     } else {
@@ -4250,11 +4251,12 @@ skip_add:
     }
 
     subs = addstate(l, state->out, subs, pim, off_arg);
-    /* "subs" may have changed, need to set "sub" again */
-    if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9)
+    // "subs" may have changed, need to set "sub" again.
+    if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9) {  // -V560
       sub = &subs->synt;
-    else
+    } else {
       sub = &subs->norm;
+    }
 
     if (REG_MULTI) {
       sub->list.multi[subidx] = save_multipos;

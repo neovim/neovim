@@ -20,13 +20,13 @@ SCRIPTS_DEFAULT = \
            test40.out             \
            test42.out             \
            test48.out             \
-           test49.out             \
            test52.out             \
            test64.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
            test17.out             \
+           test49.out             \
 
 endif
 
@@ -89,6 +89,7 @@ NEW_TESTS ?= \
 	    test_profile.res \
 	    test_put.res \
 	    test_quickfix.res \
+	    test_quotestar.res \
 	    test_recover.res \
 	    test_retab.res \
 	    test_scrollbind.res \

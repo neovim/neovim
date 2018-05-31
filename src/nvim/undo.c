@@ -972,7 +972,7 @@ static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error,
 
   char_u **array = NULL;
   if (uep->ue_size > 0) {
-    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {
+    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {  // -V547
       array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
       memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
     }
@@ -1404,7 +1404,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
   // sequence numbers of the headers.
   // When there are no headers uhp_table is NULL.
   if (num_head > 0) {
-    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {
+    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {  // -V547
       uhp_table = xmalloc((size_t)num_head * sizeof(*uhp_table));
     }
   }

@@ -811,7 +811,7 @@ static int open_shada_file_for_reading(const char *const fname,
 /// Wrapper for closing file descriptors
 static void close_file(void *cookie)
 {
-  const int error = file_free(cookie, true);
+  const int error = file_free(cookie, !!p_fs);
   if (error != 0) {
     emsgf(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));

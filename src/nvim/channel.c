@@ -1,11 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
+#include "nvim/fileio.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
@@ -25,7 +27,8 @@ typedef struct {
   Channel *chan;
   Callback *callback;
   const char *type;
-  list_T *received;
+  // if reader is set, status is ignored.
+  CallbackReader *reader;
   int status;
 } ChannelEvent;
 
@@ -144,6 +147,9 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
         return false;
       }
       break;
+
+    default:
+      abort();
   }
 
   return true;
@@ -179,46 +185,10 @@ static Channel *channel_alloc(ChannelStreamType type)
   return chan;
 }
 
-/// Not implemented, only logging for now
 void channel_create_event(Channel *chan, const char *ext_source)
 {
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
-  const char *stream_desc;
-  const char *mode_desc;
   const char *source;
-
-  switch (chan->streamtype) {
-    case kChannelStreamProc:
-      if (chan->stream.proc.type == kProcessTypePty) {
-          stream_desc = "pty job";
-      } else {
-          stream_desc = "job";
-      }
-      break;
-
-    case kChannelStreamStdio:
-       stream_desc = "stdio";
-       break;
-
-    case kChannelStreamSocket:
-      stream_desc = "socket";
-      break;
-
-    case kChannelStreamInternal:
-      stream_desc = "socket (internal)";
-      break;
-
-    default:
-      stream_desc = "?";
-  }
-
-  if (chan->is_rpc) {
-    mode_desc = ", rpc";
-  } else if (chan->term) {
-    mode_desc = ", terminal";
-  } else {
-    mode_desc = "";
-  }
 
   if (ext_source) {
     // TODO(bfredl): in a future improved traceback solution,
@@ -229,56 +199,61 @@ void channel_create_event(Channel *chan, const char *ext_source)
     source = (const char *)IObuff;
   }
 
-  ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
-       mode_desc, source);
+  Dictionary info = channel_info(chan->id);
+  typval_T tv = TV_INITIAL_VALUE;
+  // TODO(bfredl): do the conversion in one step. Also would be nice
+  // to pretty print top level dict in defined order
+  (void)object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
+  char *str = encode_tv2json(&tv, NULL);
+  ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
+  xfree(str);
+  api_free_dictionary(info);
+
 #else
-  (void)chan;
   (void)ext_source;
 #endif
+
+  channel_info_changed(chan, true);
 }
 
-void channel_incref(Channel *channel)
+void channel_incref(Channel *chan)
 {
-  channel->refcount++;
+  chan->refcount++;
 }
 
-void channel_decref(Channel *channel)
+void channel_decref(Channel *chan)
 {
-  if (!(--channel->refcount)) {
-    multiqueue_put(main_loop.fast_events, free_channel_event, 1, channel);
+  if (!(--chan->refcount)) {
+    // delay free, so that libuv is done with the handles
+    multiqueue_put(main_loop.events, free_channel_event, 1, chan);
   }
 }
 
 void callback_reader_free(CallbackReader *reader)
 {
   callback_free(&reader->cb);
-  if (reader->buffered) {
-    ga_clear(&reader->buffer);
-  }
+  ga_clear(&reader->buffer);
 }
 
 void callback_reader_start(CallbackReader *reader)
 {
-  if (reader->buffered) {
-    ga_init(&reader->buffer, sizeof(char *), 32);
-    ga_grow(&reader->buffer, 32);
-  }
+  ga_init(&reader->buffer, sizeof(char *), 32);
 }
 
 static void free_channel_event(void **argv)
 {
-  Channel *channel = argv[0];
-  if (channel->is_rpc) {
-    rpc_free(channel);
+  Channel *chan = argv[0];
+  if (chan->is_rpc) {
+    rpc_free(chan);
   }
 
-  callback_reader_free(&channel->on_stdout);
-  callback_reader_free(&channel->on_stderr);
-  callback_free(&channel->on_exit);
+  callback_reader_free(&chan->on_stdout);
+  callback_reader_free(&chan->on_stderr);
+  callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(channels, channel->id);
-  multiqueue_free(channel->events);
-  xfree(channel);
+  pmap_del(uint64_t)(channels, chan->id);
+  multiqueue_free(chan->events);
+  xfree(chan);
 }
 
 static void channel_destroy_early(Channel *chan)
@@ -286,12 +261,15 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
+  pmap_del(uint64_t)(channels, chan->id);
+  chan->id = 0;
 
   if ((--chan->refcount != 0)) {
     abort();
   }
 
-  free_channel_event((void **)&chan);
+  // uv will keep a reference to handles until next loop tick, so delay free
+  multiqueue_put(main_loop.events, free_channel_event, 1, chan);
 }
 
 
@@ -529,29 +507,27 @@ err:
 ///
 /// @return [allocated] Converted list.
 static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   list_T *const l = tv_list_alloc(kListLenMayKnow);
   // Empty buffer should be represented by [''], encode_list_write() thinks
   // empty list is fine for the case.
   tv_list_append_string(l, "", 0);
-  encode_list_write(l, buf, len);
+  if (len > 0) {
+    encode_list_write(l, buf, len);
+  }
   return l;
 }
 
 // vimscript job callbacks must be executed on Nvim main loop
 static inline void process_channel_event(Channel *chan, Callback *callback,
-                                         const char *type, char *buf,
-                                         size_t count, int status)
+                                         const char *type,
+                                         CallbackReader *reader, int status)
 {
   assert(callback);
   ChannelEvent *event_data = xmalloc(sizeof(*event_data));
-  event_data->received = NULL;
-  if (buf) {
-    event_data->received = buffer_to_tv_list(buf, count);
-  } else {
-    event_data->status = status;
-  }
+  event_data->reader = reader;
+  event_data->status = status;
   channel_incref(chan);  // Hold on ref to callback
   event_data->chan = chan;
   event_data->callback = callback;
@@ -601,8 +577,7 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   if (eof) {
     if (reader->buffered) {
       if (reader->cb.type != kCallbackNone) {
-        process_channel_event(chan, &reader->cb, type, reader->buffer.ga_data,
-                              (size_t)reader->buffer.ga_len, 0);
+        process_channel_event(chan, &reader->cb, type, reader, 0);
       } else if (reader->self) {
         if (tv_dict_find(reader->self, type, -1) == NULL) {
           list_T *data = buffer_to_tv_list(reader->buffer.ga_data,
@@ -613,12 +588,12 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
             channel_incref(chan);
             multiqueue_put(chan->events, on_buffered_error, 2, chan, type);
         }
+        ga_clear(&reader->buffer);
       } else {
         abort();
       }
-      ga_clear(&reader->buffer);
     } else if (reader->cb.type != kCallbackNone) {
-      process_channel_event(chan, &reader->cb, type, ptr, 0, 0);
+      process_channel_event(chan, &reader->cb, type, reader, 0);
     }
     return;
   }
@@ -630,10 +605,12 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   }
 
   rbuffer_consumed(buf, count);
-  if (reader->buffered) {
-    ga_concat_len(&reader->buffer, ptr, count);
-  } else if (callback_reader_set(*reader)) {
-    process_channel_event(chan, &reader->cb, type, ptr, count, 0);
+  // if buffer wasn't consumed, a pending callback is stalled. Aggregate the
+  // received data and avoid a "burst" of multiple callbacks.
+  bool buffer_set = reader->buffer.ga_len > 0;
+  ga_concat_len(&reader->buffer, ptr, count);
+  if (!reader->buffered && !buffer_set && callback_reader_set(*reader)) {
+    process_channel_event(chan, &reader->cb, type, reader, 0);
   }
 }
 
@@ -654,10 +631,10 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
     terminal_close(chan->term, msg);
   }
 
-  // if status is -1 the process did not really exit,
-  // we just closed the handle onto a detached process
-  if (status >= 0) {
-    process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
+  // If process did not exit, we only closed the handle of a detached process.
+  bool exited = (status >= 0);
+  if (exited) {
+    process_channel_event(chan, &chan->on_exit, "exit", NULL, status);
   }
 
   channel_decref(chan);
@@ -673,11 +650,13 @@ static void on_channel_event(void **args)
   argv[0].v_lock = VAR_UNLOCKED;
   argv[0].vval.v_number = (varnumber_T)ev->chan->id;
 
-  if (ev->received) {
+  if (ev->reader) {
     argv[1].v_type = VAR_LIST;
     argv[1].v_lock = VAR_UNLOCKED;
-    argv[1].vval.v_list = ev->received;
+    argv[1].vval.v_list = buffer_to_tv_list(ev->reader->buffer.ga_data,
+                                            (size_t)ev->reader->buffer.ga_len);
     tv_list_ref(argv[1].vval.v_list);
+    ga_clear(&ev->reader->buffer);
   } else {
     argv[1].v_type = VAR_NUMBER;
     argv[1].v_lock = VAR_UNLOCKED;
@@ -754,3 +733,95 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
+void channel_info_changed(Channel *chan, bool new)
+{
+  event_T event = new ? EVENT_CHANOPEN : EVENT_CHANINFO;
+  if (has_event(event)) {
+    channel_incref(chan);
+    multiqueue_put(main_loop.events, set_info_event,
+                   2, chan, event);
+  }
+}
+
+static void set_info_event(void **argv)
+{
+  Channel *chan = argv[0];
+  event_T event = (event_T)(ptrdiff_t)argv[1];
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  Dictionary info = channel_info(chan->id);
+  typval_T retval;
+  (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
+  tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
+
+  apply_autocmds(event, NULL, NULL, false, curbuf);
+
+  tv_dict_clear(dict);
+  api_free_dictionary(info);
+  channel_decref(chan);
+}
+
+Dictionary channel_info(uint64_t id)
+{
+  Channel *chan = find_channel(id);
+  if (!chan) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+
+  Dictionary info = ARRAY_DICT_INIT;
+  PUT(info, "id", INTEGER_OBJ((Integer)chan->id));
+
+  const char *stream_desc, *mode_desc;
+  switch (chan->streamtype) {
+    case kChannelStreamProc:
+      stream_desc = "job";
+      if (chan->stream.proc.type == kProcessTypePty) {
+        const char *name = pty_process_tty_name(&chan->stream.pty);
+        PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
+      }
+      break;
+
+    case kChannelStreamStdio:
+       stream_desc = "stdio";
+       break;
+
+    case kChannelStreamStderr:
+       stream_desc = "stderr";
+       break;
+
+    case kChannelStreamInternal:
+       PUT(info, "internal", BOOLEAN_OBJ(true));
+      // FALLTHROUGH
+
+    case kChannelStreamSocket:
+      stream_desc = "socket";
+      break;
+
+    default:
+      abort();
+  }
+  PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
+
+  if (chan->is_rpc) {
+    mode_desc = "rpc";
+    PUT(info, "client", DICTIONARY_OBJ(rpc_client_info(chan)));
+  } else if (chan->term) {
+    mode_desc = "terminal";
+    PUT(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+  } else {
+    mode_desc = "bytes";
+  }
+  PUT(info, "mode", STRING_OBJ(cstr_to_string(mode_desc)));
+
+  return info;
+}
+
+Array channel_all_info(void)
+{
+  Channel *channel;
+  Array ret = ARRAY_DICT_INIT;
+  map_foreach_value(channels, channel, {
+    ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
+  });
+  return ret;
+}

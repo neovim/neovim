@@ -237,7 +237,7 @@ typedef struct {
   char_u *wo_winhl;
 # define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
 
-  int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
+  LastSet wo_scriptID[WV_COUNT];        // SIDs for window-local options
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
 } winopt_T;
 
@@ -484,6 +484,11 @@ struct file_buffer {
 #define b_changedtick changedtick_di.di_tv.vval.v_number
   ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
 
+  varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or
+                                        // TextChangedI was last triggered.
+  varnumber_T b_last_changedtick_pum;   // b:changedtick when TextChangedP was
+                                        // last triggered.
+
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
 
@@ -590,7 +595,7 @@ struct file_buffer {
    */
   bool b_p_initialized;                 /* set when options initialized */
 
-  int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
+  LastSet b_p_scriptID[BV_COUNT];       // SIDs for buffer-local options
 
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode

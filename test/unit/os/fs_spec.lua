@@ -390,7 +390,7 @@ describe('fs.c', function()
         buf = ffi.new('char[?]', size + 1, ('\0'):rep(size))
       end
       local eof = ffi.new('bool[?]', 1, {true})
-      local ret2 = fs.os_read(fd, eof, buf, size)
+      local ret2 = fs.os_read(fd, eof, buf, size, false)
       local ret1 = eof[0]
       local ret3 = ''
       if buf ~= nil then
@@ -408,7 +408,7 @@ describe('fs.c', function()
       end
       local iov = ffi.new('struct iovec[?]', #sizes, bufs)
       local eof = ffi.new('bool[?]', 1, {true})
-      local ret2 = fs.os_readv(fd, eof, iov, #sizes)
+      local ret2 = fs.os_readv(fd, eof, iov, #sizes, false)
       local ret1 = eof[0]
       local ret3 = {}
       for i = 1,#sizes do
@@ -418,7 +418,7 @@ describe('fs.c', function()
       return ret1, ret2, ret3
     end
     local function os_write(fd, data)
-      return fs.os_write(fd, data, data and #data or 0)
+      return fs.os_write(fd, data, data and #data or 0, false)
     end
 
     describe('os_path_exists', function()
@@ -488,6 +488,22 @@ describe('fs.c', function()
         assert_file_exists(f)
         eq(0, (os_remove(f)))
         assert_file_does_not_exist(f)
+      end)
+    end)
+
+    describe('os_dup', function()
+      itp('returns new file descriptor', function()
+        local dup0 = fs.os_dup(0)
+        local dup1 = fs.os_dup(1)
+        local dup2 = fs.os_dup(2)
+        local tbl = {[0]=true, [1]=true, [2]=true,
+                     [tonumber(dup0)]=true, [tonumber(dup1)]=true,
+                     [tonumber(dup2)]=true}
+        local i = 0
+        for _, _ in pairs(tbl) do
+          i = i + 1
+        end
+        eq(i, 6)  -- All fds must be unique
       end)
     end)
 

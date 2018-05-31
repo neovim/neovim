@@ -298,8 +298,7 @@ readfile (
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
-  int read_undo_file = FALSE;
-  int split = 0;                        /* number of split lines */
+  int read_undo_file = false;
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
@@ -1029,8 +1028,8 @@ retry:
           size = size / ICONV_MULT;             /* worst case */
 
         if (conv_restlen > 0) {
-          /* Insert unconverted bytes from previous line. */
-          memmove(ptr, conv_rest, conv_restlen);
+          // Insert unconverted bytes from previous line.
+          memmove(ptr, conv_rest, conv_restlen);  // -V614
           ptr += conv_restlen;
           size -= conv_restlen;
         }
@@ -1737,9 +1736,17 @@ failed:
   xfree(buffer);
 
   if (read_stdin) {
-    /* Use stderr for stdin, makes shell commands work. */
     close(0);
+#ifndef WIN32
+    // On Unix, use stderr for stdin, makes shell commands work.
     ignored = dup(2);
+#else
+    // On Windows, use the console input handle for stdin.
+    HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                              OPEN_EXISTING, 0, (HANDLE)NULL);
+    ignored = _open_osfhandle(conin, _O_RDONLY);
+#endif
   }
 
   if (tmpname != NULL) {
@@ -1832,10 +1839,6 @@ failed:
       }
       if (ff_error == EOL_DOS) {
         STRCAT(IObuff, _("[CR missing]"));
-        c = TRUE;
-      }
-      if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
         c = TRUE;
       }
       if (notconverted) {
@@ -3060,7 +3063,7 @@ nobackup:
    */
   if (reset_changed && !newfile && overwriting
       && !(exiting && backup != NULL)) {
-    ml_preserve(buf, FALSE);
+    ml_preserve(buf, false, !!p_fs);
     if (got_int) {
       SET_ERRMSG(_(e_interr));
       goto restore_backup;
@@ -3344,9 +3347,9 @@ restore_backup:
         *s++ = NL;
       }
     }
-    if (++len == bufsize && end) {
+    if (++len == bufsize) {
       if (buf_write_bytes(&write_info) == FAIL) {
-        end = 0;                        /* write error: break loop */
+        end = 0;  // Write error: break loop.
         break;
       }
       nchars += bufsize;
@@ -3355,7 +3358,7 @@ restore_backup:
 
       os_breakcheck();
       if (got_int) {
-        end = 0;                        /* Interrupted, break loop */
+        end = 0;  // Interrupted, break loop.
         break;
       }
     }
@@ -3568,9 +3571,8 @@ restore_backup:
     unchanged(buf, TRUE);
     /* buf->b_changedtick is always incremented in unchanged() but that
      * should not trigger a TextChanged event. */
-    if (last_changedtick + 1 == buf->b_changedtick
-        && last_changedtick_buf == buf) {
-      last_changedtick = buf->b_changedtick;
+    if (buf->b_last_changedtick + 1 == buf->b_changedtick) {
+      buf->b_last_changedtick = buf->b_changedtick;
     }
     u_unchanged(buf);
     u_update_save_nr(buf);

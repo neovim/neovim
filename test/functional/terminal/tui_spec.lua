@@ -387,15 +387,7 @@ describe('tui FocusGained/FocusLost', function()
       -- Exit cmdline-mode. Redraws from timers/events are blocked during
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
-      screen:expect([[
-        {1: }                                                 |
-        lost                                              |
-        gained                                            |
-        {4:~                                                 }|
-        {5:[No Name] [+]                                     }|
-        :                                                 |
-        {3:-- TERMINAL --}                                    |
-      ]])
+      screen:expect('lost'..(' '):rep(46)..'\ngained', nil, nil, nil, true)
     end)
   end)
 

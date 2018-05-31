@@ -16,6 +16,8 @@ local retry = helpers.retry
 local source = helpers.source
 local wait = helpers.wait
 local nvim = helpers.nvim
+local iswin = helpers.iswin
+local sleep = helpers.sleep
 
 local default_text = [[
   Inc substitution on
@@ -1354,6 +1356,23 @@ describe("inccommand=nosplit", function()
       :echo 'foo'^         |
     ]])
   end)
+
+  it("does not execute trailing bar-separated commands #7494", function()
+    feed(':%s/two/three/g|q!')
+    screen:expect([[
+      Inc substitution on |
+      {12:three} lines         |
+      Inc substitution on |
+      {12:three} lines         |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%s/two/three/g|q!^  |
+    ]])
+    eq(eval('v:null'), eval('v:exiting'))
+  end)
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
@@ -1827,13 +1846,12 @@ describe("'inccommand' with 'gdefault'", function()
 end)
 
 describe(":substitute", function()
-  local screen =  Screen.new(30,15)
-
+  local screen = Screen.new(30,15)
   before_each(function()
     clear()
   end)
 
-  it(", inccommand=split, highlights multiline substitutions", function()
+  it("inccommand=split, highlights multiline substitutions", function()
     common_setup(screen, "split", multiline_text)
     feed("gg")
 
@@ -1895,7 +1913,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, highlights multiline substitutions", function()
+  it("inccommand=nosplit, highlights multiline substitutions", function()
     common_setup(screen, "nosplit", multiline_text)
     feed("gg")
 
@@ -1938,7 +1956,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, highlights multiple matches on a line", function()
+  it("inccommand=split, highlights multiple matches on a line", function()
     common_setup(screen, "split", multimatch_text)
     command("set gdefault")
     feed("gg")
@@ -1963,7 +1981,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, highlights multiple matches on a line", function()
+  it("inccommand=nosplit, highlights multiple matches on a line", function()
     common_setup(screen, "nosplit", multimatch_text)
     command("set gdefault")
     feed("gg")
@@ -1988,7 +2006,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, with \\zs", function()
+  it("inccommand=split, with \\zs", function()
     common_setup(screen, "split", multiline_text)
     feed("gg")
 
@@ -2012,7 +2030,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, with \\zs", function()
+  it("inccommand=nosplit, with \\zs", function()
     common_setup(screen, "nosplit", multiline_text)
     feed("gg")
 
@@ -2036,7 +2054,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, substitutions of different length",
+  it("inccommand=split, substitutions of different length",
     function()
     common_setup(screen, "split", "T T123 T2T TTT T090804\nx")
 
@@ -2060,7 +2078,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, substitutions of different length", function()
+  it("inccommand=nosplit, substitutions of different length", function()
     common_setup(screen, "nosplit", "T T123 T2T TTT T090804\nx")
 
     feed(":%s/T\\([0-9]\\+\\)/\\1\\1/g")
@@ -2083,7 +2101,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, contraction of lines", function()
+  it("inccommand=split, contraction of lines", function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x
@@ -2132,7 +2150,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, contraction of lines", function()
+  it("inccommand=nosplit, contraction of lines", function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x
@@ -2162,7 +2180,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, multibyte text", function()
+  it("inccommand=split, multibyte text", function()
     common_setup(screen, "split", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
     screen:expect([[
@@ -2203,7 +2221,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=nosplit, multibyte text", function()
+  it("inccommand=nosplit, multibyte text", function()
     common_setup(screen, "nosplit", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
     screen:expect([[
@@ -2244,7 +2262,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, small cmdwinheight", function()
+  it("inccommand=split, small cmdwinheight", function()
     common_setup(screen, "split", long_multiline_text)
     command("set cmdwinheight=2")
 
@@ -2306,7 +2324,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, large cmdwinheight", function()
+  it("inccommand=split, large cmdwinheight", function()
     common_setup(screen, "split", long_multiline_text)
     command("set cmdwinheight=11")
 
@@ -2368,7 +2386,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it(", inccommand=split, lookaround", function()
+  it("inccommand=split, lookaround", function()
     common_setup(screen, "split", "something\neverything\nsomeone")
     feed([[:%s/\(some\)\@<lt>=thing/one/]])
     screen:expect([[
@@ -2451,5 +2469,64 @@ describe(":substitute", function()
       {10:[Preview]                     }|
       :%s/some\(thing\)\@!/every/^   |
     ]])
+  end)
+end)
+
+it(':substitute with inccommand during :terminal activity', function()
+  retry(2, nil, function()
+    local screen = Screen.new(30,15)
+    clear()
+
+    command("set cmdwinheight=3")
+    if iswin() then
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
+    else
+      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
+    end
+    command('file term')
+    command('new')
+    common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
+    command('wincmd =')
+
+    -- Wait for terminal output.
+    screen:expect([[
+      bar baz fox                   |
+      bar foo ba^z                   |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {11:[No Name] [+]                 }|
+      xxx                           |
+      xxx                           |
+      xxx                           |
+      xxx                           |
+      xxx                           |
+      xxx                           |
+      {10:term                          }|
+                                    |
+    ]])
+
+    feed('gg')
+    feed(':%s/foo/ZZZ')
+    sleep(20)  -- Allow some terminal activity.
+    screen:expect([[
+      {12:ZZZ} bar baz                   |
+      bar baz fox                   |
+      bar {12:ZZZ} baz                   |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {11:[No Name] [+]                 }|
+      xxx                           |
+      xxx                           |
+      {10:term                          }|
+      |1| {12:ZZZ} bar baz               |
+      |3| bar {12:ZZZ} baz               |
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :%s/foo/ZZZ^                   |
+    ]])
+
   end)
 end)

@@ -16,8 +16,6 @@
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
-#define MAX_MCO        6                 // maximum value for 'maxcombine'
-
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
@@ -79,6 +77,11 @@ typedef enum {
   kFalse = 0,
   kTrue  = 1,
 } TriState;
+
+EXTERN struct nvim_stats_s {
+  int64_t fsync;
+  int64_t redraw;
+} g_stats INIT(= { 0, 0 });
 
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
@@ -159,10 +162,6 @@ EXTERN u8char_T *ScreenLinesUC INIT(= NULL);    /* decoded UTF-8 characters */
 EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
 EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
                                                    allocating ScreenLinesC[] */
-
-/* Only used for euc-jp: Second byte of a character that starts with 0x8e.
- * These are single-width. */
-EXTERN schar_T  *ScreenLines2 INIT(= NULL);
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
@@ -391,16 +390,20 @@ EXTERN int may_garbage_collect INIT(= FALSE);
 EXTERN int want_garbage_collect INIT(= FALSE);
 EXTERN int garbage_collect_at_exit INIT(= FALSE);
 
-/* Special values for current_SID. */
-#define SID_MODELINE    -1      /* when using a modeline */
-#define SID_CMDARG      -2      /* for "--cmd" argument */
-#define SID_CARG        -3      /* for "-c" argument */
-#define SID_ENV         -4      /* for sourcing environment variable */
-#define SID_ERROR       -5      /* option was reset because of an error */
-#define SID_NONE        -6      /* don't set scriptID */
+// Special values for current_SID.
+#define SID_MODELINE    -1      // when using a modeline
+#define SID_CMDARG      -2      // for "--cmd" argument
+#define SID_CARG        -3      // for "-c" argument
+#define SID_ENV         -4      // for sourcing environment variable
+#define SID_ERROR       -5      // option was reset because of an error
+#define SID_NONE        -6      // don't set scriptID
+#define SID_LUA         -7      // for Lua scripts/chunks
+#define SID_API_CLIENT  -8      // for API clients
 
-/* ID of script being sourced or was sourced to define the current function. */
+// ID of script being sourced or was sourced to define the current function.
 EXTERN scid_T current_SID INIT(= 0);
+// ID of the current channel making a client API call
+EXTERN uint64_t current_channel_id INIT(= 0);
 
 EXTERN bool did_source_packages INIT(= false);
 
@@ -540,10 +543,6 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
   for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next)
 #define FOR_ALL_BUFFERS_BACKWARDS(buf) \
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
-
-/* Flag that is set when switching off 'swapfile'.  It means that all blocks
- * are to be loaded into memory.  Shouldn't be global... */
-EXTERN int mf_dont_release INIT(= FALSE);       /* don't release blocks */
 
 /*
  * List of files being edited (global argument list).  curwin->w_alist points
@@ -716,7 +715,7 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 // mbyte flags that used to depend on 'encoding'. These are now deprecated, as
 // 'encoding' is always "utf-8". Code that use them can be refactored to
 // remove dead code.
-#define enc_dbcs false
+#define enc_dbcs 0
 #define enc_utf8 true
 #define has_mbyte true
 
@@ -834,10 +833,7 @@ EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 EXTERN int need_highlight_changed INIT(= true);
 EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
-#define NSCRIPT 15
-EXTERN FILE     *scriptin[NSCRIPT];         /* streams to read script from */
-EXTERN int curscript INIT(= 0);             /* index in scriptin[] */
-EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
+EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 
 // volatile because it is used in a signal handler.
 EXTERN volatile int got_int INIT(= false);  // set to true when interrupt
@@ -871,9 +867,6 @@ EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
 EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
-
-EXTERN varnumber_T last_changedtick INIT(= 0);  // for TextChanged event
-EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
 EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
@@ -1070,7 +1063,6 @@ EXTERN char_u e_nesting[] INIT(= N_("E22: Scripts nested too deep"));
 EXTERN char_u e_noalt[] INIT(= N_("E23: No alternate file"));
 EXTERN char_u e_noabbr[] INIT(= N_("E24: No such abbreviation"));
 EXTERN char_u e_nobang[] INIT(= N_("E477: No ! allowed"));
-EXTERN char_u e_nogvim[] INIT(= N_("E25: Nvim does not have a built-in GUI"));
 EXTERN char_u e_nogroup[] INIT(= N_("E28: No such highlight group name: %s"));
 EXTERN char_u e_noinstext[] INIT(= N_("E29: No inserted text yet"));
 EXTERN char_u e_nolastcmd[] INIT(= N_("E30: No previous command line"));
@@ -1086,6 +1078,7 @@ EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
 EXTERN char_u e_noroom[] INIT(= N_("E36: Not enough room"));
 EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
+EXTERN char_u e_notopen_2[] INIT(= N_("E484: Can't open file %s: %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
 EXTERN char_u e_nowrtmsg[] INIT(= N_(
         "E37: No write since last change (add ! to override)"));

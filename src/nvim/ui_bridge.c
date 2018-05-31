@@ -116,7 +116,7 @@ static void ui_bridge_stop(UI *b)
     uv_mutex_lock(&bridge->mutex);
     stopped = bridge->stopped;
     uv_mutex_unlock(&bridge->mutex);
-    if (stopped) {
+    if (stopped) {  // -V547
       break;
     }
     loop_poll_events(&main_loop, 10);  // Process one event.
