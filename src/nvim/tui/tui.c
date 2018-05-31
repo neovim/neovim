@@ -1437,6 +1437,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
+  bool cygwin = terminfo_is_term_family(term, "cygwin");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1625,6 +1626,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || teraterm    // per TeraTerm "Supported Control Functions" doco
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
+            || cygwin
             || (linuxvt
                 && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =

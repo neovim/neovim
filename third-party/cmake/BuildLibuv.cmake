@@ -46,6 +46,8 @@ set(LIBUV_PATCH_COMMAND
 ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
   COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
     ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-overlapped.patch)
+  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply
+    ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-set-cursor-style.patch)
 
 if(UNIX)
   BuildLibuv(
