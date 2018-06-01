@@ -31,6 +31,29 @@ describe("'wildmenu'", function()
     ]])
   end)
 
+  it(':sign <tab> <space> hides wildmenu #8453', function()
+    command('set wildmode=full')
+    -- only a regression if status-line open
+    command('set laststatus=2')
+    command('set wildmenu')
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<space>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      [No Name]                |
+      :sign define ^            |
+    ]])
+  end)
+
   it('does not crash after cycling back to original text', function()
     command('set wildmode=full')
     feed(':j<Tab><Tab><Tab>')
