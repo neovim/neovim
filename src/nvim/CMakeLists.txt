@@ -484,7 +484,9 @@ set_property(
   APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
 )
 
-if(LUAJIT_FOUND)
+if(NOT LUAJIT_FOUND)
+  message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
+else()
   set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
   add_library(
     nvim-test

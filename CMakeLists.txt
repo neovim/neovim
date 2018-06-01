@@ -13,9 +13,9 @@ include(PreventInTreeBuilds)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
-set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
 endif()
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
@@ -51,6 +51,14 @@ endif()
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # Enable fixing case-insensitive filenames for Windows and Mac.
   set(USE_FNAME_CASE TRUE)
+endif()
+
+option(ENABLE_LIBINTL "enable libintl" ON)
+if(MSVC)
+  # TODO(justinmk): need bundled iconv for MSVC.
+  option(ENABLE_LIBICONV "enable libiconv" OFF)
+else()
+  option(ENABLE_LIBICONV "enable libiconv" ON)
 endif()
 
 # Set default build type.
@@ -331,6 +339,7 @@ if(PREFER_LUA)
   find_package(Lua REQUIRED)
   set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
   set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
+  # Passive (not REQUIRED): if LUAJIT_FOUND is not set, nvim-test is skipped.
   find_package(LuaJit)
 else()
   find_package(LuaJit REQUIRED)
@@ -399,31 +408,30 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang.")
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD")
-  message(STATUS "detected OpenBSD/FreeBSD; disabled jemalloc. #5318")
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD|Windows")  # see #5318
+  message(STATUS "skipping jemalloc on this system: ${CMAKE_SYSTEM_NAME}")
   option(ENABLE_JEMALLOC "enable jemalloc" OFF)
 else()
   option(ENABLE_JEMALLOC "enable jemalloc" ON)
 endif()
 
-if (ENABLE_JEMALLOC)
+if(ENABLE_JEMALLOC)
   if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
     message(STATUS "Sanitizers have been enabled; don't use jemalloc.")
   else()
-    find_package(JeMalloc)
-    if(JEMALLOC_FOUND)
-      include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
-    endif()
+    find_package(JeMalloc REQUIRED)
+    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
   endif()
 endif()
 
-find_package(LibIntl)
-if(LibIntl_FOUND)
+if(ENABLE_LIBINTL)
+  # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
+  find_package(LibIntl REQUIRED)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
 endif()
 
-find_package(Iconv)
-if(Iconv_FOUND)
+if(ENABLE_LIBICONV)
+  find_package(Iconv REQUIRED)
   include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
 endif()
 
