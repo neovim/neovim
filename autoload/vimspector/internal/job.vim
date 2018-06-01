@@ -64,10 +64,10 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
         \                    'in_mode': 'raw',
         \                    'out_mode': 'raw',
         \                    'err_mode': 'raw',
-        \                    'exit_cb': function( 's:_OnExit' ),
-        \                    'close_cb': function( 's:_OnClose' ),
-        \                    'out_cb': function( 's:_OnServerData' ),
-        \                    'err_cb': function( 's:_OnServerError' ),
+        \                    'exit_cb': funcref( 's:_OnExit' ),
+        \                    'close_cb': funcref( 's:_OnClose' ),
+        \                    'out_cb': funcref( 's:_OnServerData' ),
+        \                    'err_cb': funcref( 's:_OnServerError' ),
         \                    'stoponexit': 'term',
         \                }
         \              )

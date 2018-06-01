@@ -20,13 +20,14 @@ import contextlib
 import vim
 import json
 
+_log_handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
+_log_handler.setFormatter(
+    logging.Formatter( '%(asctime)s - %(levelname)s - %(message)s' ) )
 
 def SetUpLogging( logger ):
-  handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
   logger.setLevel( logging.DEBUG )
-  handler.setFormatter(
-    logging.Formatter( '%(asctime)s - %(levelname)s - %(message)s' ) )
-  logger.addHandler( handler )
+  if _log_handler not in logger.handlers:
+      logger.addHandler( _log_handler )
 
 
 def SetUpScratchBuffer( buf, name ):
