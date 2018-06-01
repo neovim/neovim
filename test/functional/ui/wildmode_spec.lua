@@ -31,9 +31,9 @@ describe("'wildmenu'", function()
     ]])
   end)
 
-  it(':sign <tab> <space> hides wildmenu, selects design, when laststatus=2 #8453', function()
+  it(':sign <tab> <space> hides wildmenu #8453', function()
     command('set wildmode=full')
-    -- only a regression if laststatus=2
+    -- only a regression if status-line open
     command('set laststatus=2')
     command('set wildmenu')
     feed(':sign <tab> ')
