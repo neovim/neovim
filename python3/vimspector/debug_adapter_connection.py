@@ -138,14 +138,18 @@ class DebugAdapterConnection( object ):
         if handler:
           handler( message )
       else:
-        reason = (
-          message.get( 'body', {} ).get( 'error', {} ).get( 'format' ) or
-          message.get( 'message' ) or
-          'no reason' )
+        reason = message.get( 'message' )
+        if not message:
+          fmt = message.get( 'body', {} ).get( 'error', {} ).get( 'format' )
+          if fmt:
+            # TODO: Actually make this work
+            reason = fmt
+          else:
+            message = 'No reason'
 
         self._logger.error( 'Request failed: {0}'.format( reason ) )
-        utils.UserMessage( 'Request failed: {0}'.format( reason ),
-                           persist = True )
+        utils.UserMessage( 'Request failed: {0}'.format( reason ) )
+                           
 
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]
