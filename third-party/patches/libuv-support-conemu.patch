@@ -1,5 +1,5 @@
 diff --git a/src/win/tty.c b/src/win/tty.c
-index ecf7bc9b..939131bc 100644
+index ecf7bc9b..e7ff14e5 100644
 --- a/src/win/tty.c
 +++ b/src/win/tty.c
 @@ -2265,6 +2265,14 @@ int uv_tty_reset_mode(void) {
@@ -9,7 +9,7 @@ index ecf7bc9b..939131bc 100644
 +  char var[5];
 +  size_t len = GetEnvironmentVariableA("ConEmuANSI", var, 5);
 +  if (len == 2 &&
-+      (var[0] == 'o' || var[0] == 'O') && (var[1] == 'n' || var[1] == 'N')) {
++      !strncmp(var, "ON", 2)) {
 +    uv__vterm_state = UV_SUPPORTED;
 +    return;
 +  }
