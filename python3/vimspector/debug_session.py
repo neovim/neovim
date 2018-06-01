@@ -369,6 +369,8 @@ class DebugSession( object ):
       pid = utils.AskForInput( 'Enter PID to attach to: ' )
       launch_config[ atttach_config[ 'pidProperty' ] ] = pid
       return
+    elif atttach_config[ 'pidSelect' ] == 'none':
+      return
 
     raise ValueError( 'Unrecognised pidSelect {0}'.format(
       atttach_config[ 'pidSelect' ] ) )
