@@ -36,7 +36,15 @@ describe("'wildmenu'", function()
     -- only a regression if status-line open
     command('set laststatus=2')
     command('set wildmenu')
-    feed(':sign <tab> ')
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<space>')
     screen:expect([[
                                |
       ~                        |
