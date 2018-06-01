@@ -1438,6 +1438,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
+  const char *conemu_ansi_env = os_getenv("ConEmuANSI");
+  bool conemu_ansi = conemu_ansi_env ? !strncmp(conemu_ansi_env, "ON", 2) : 0;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1547,6 +1549,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_exit_standout_mode, "\x1b[27m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
+  } else if (conemu_ansi) {
+    unibi_set_num(ut, unibi_max_colors, 256);
+    unibi_set_str(ut, unibi_set_a_foreground, "\x1b[38;5;%p1%dm");
+    unibi_set_str(ut, unibi_set_a_background,  "\x1b[48;5;%p1%dm");
   }
 
 // At this time (2017-07-12) it seems like all terminals that support 256
@@ -1625,6 +1631,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || iterm || iterm_pretending_xterm
             || teraterm    // per TeraTerm "Supported Control Functions" doco
             || cygwin
+            || conemu_ansi
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt
