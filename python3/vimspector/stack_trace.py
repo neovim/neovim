@@ -62,6 +62,10 @@ class StackTraceView( object ):
     def consume_threads( message ):
       self._threads.clear()
 
+      if not message[ 'body' ][ 'threads' ]:
+        # This is a protocol error. It is required to return at least one!
+        raise ValueError( 'Server returned no threads. Is it running?' )
+
       for thread in message[ 'body' ][ 'threads' ]:
         self._threads.append( thread )
 

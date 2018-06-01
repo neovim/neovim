@@ -179,7 +179,7 @@ class VariablesView( object ):
                           '_variables' not in variable ) else '-',
           name = variable[ 'name' ],
           type_ = variable.get( 'type', '<unknown type>' ),
-          value = variable[ 'value' ] ).split( '\n' ) )
+          value = variable.get( 'value', '<unknown value>' ) ).split( '\n' ) )
 
       if '_variables' in variable:
         self._DrawVariables( variable[ '_variables' ], indent + 2 )
