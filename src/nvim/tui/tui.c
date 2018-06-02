@@ -1172,16 +1172,7 @@ static void tui_option_set(UI *ui, String name, Object value)
   if (strequal(name.data, "termguicolors")) {
     ui->rgb = value.data.boolean;
     invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
-    loop_schedule(&main_loop, event_create(termguicolors_set_event,
-                                           2, ui, (void *)ui->rgb));
   }
-}
-
-static void termguicolors_set_event(void **argv)
-{
-  UI *ui = argv[0];
-  TUIData *data = ui->data;
-  data->bridge->bridge.rgb = (Boolean)argv[1];
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)

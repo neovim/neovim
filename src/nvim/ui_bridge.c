@@ -163,3 +163,28 @@ static void ui_bridge_suspend_event(void **argv)
   UI *ui = UI(argv[0]);
   ui->suspend(ui);
 }
+
+static void ui_bridge_option_set(UI *ui, String name, Object value)
+{
+  String copy_name = copy_string(name);
+  Object *copy_value = xmalloc(sizeof(Object));
+  *copy_value = copy_object(value);
+  UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data,
+                 INT2PTR(copy_name.size), copy_value);
+  // TODO(bfredl): when/if TUI/bridge teardown is refactored to use events, the
+  // commit that introduced this special case can be reverted.
+  // For now this is needed for nvim_list_uis().
+  if (strequal(name.data, "termguicolors")) {
+    ui->rgb = value.data.boolean;
+  }
+}
+static void ui_bridge_option_set_event(void **argv)
+{
+  UI *ui = UI(argv[0]);
+  String name = (String){ .data = argv[1], .size = (size_t)argv[2] };
+  Object value = *(Object *)argv[3];
+  ui->option_set(ui, name, value);
+  api_free_string(name);
+  api_free_object(value);
+  xfree(argv[3]);
+}
