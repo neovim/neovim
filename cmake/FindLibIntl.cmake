@@ -34,9 +34,8 @@ if (LibIntl_INCLUDE_DIR)
   set(CMAKE_REQUIRED_INCLUDES "${LibIntl_INCLUDE_DIR}")
 endif()
 
-# This is required because some operating systems don't have a separate
-# libintl--it is built into glibc.  So we only need to specify the library
-# if one was actually found.
+# On some systems (linux+glibc) libintl is passively available.
+# So only specify the library if one was found.
 if (LibIntl_LIBRARY)
   set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
 endif()
@@ -53,6 +52,13 @@ int main(int argc, char** argv) {
 }" HAVE_WORKING_LIBINTL)
 
 if (HAVE_WORKING_LIBINTL)
+  # On some systems (linux+glibc) libintl is passively available.
+  # If HAVE_WORKING_LIBINTL then we consider the requirement satisfied.
+  # Unset REQUIRED so that libfind_process(LibIntl) can proceed.
+  if(LibIntl_FIND_REQUIRED)
+    unset(LibIntl_FIND_REQUIRED)
+  endif()
+
   check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
 endif()
 
