@@ -301,14 +301,20 @@ func Test_syntax_arg_skipped()
 
   syn clear
 endfunc
- 
-func Test_invalid_arg()
+
+func Test_syntax_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
   if has('conceal')
     call assert_fails('syntax conceal asdf', 'E390:')
   endif
   call assert_fails('syntax spell asdf', 'E390:')
-endfunc
+  call assert_fails('syntax clear @ABCD', 'E391:')
+  call assert_fails('syntax include @Xxx', 'E397:')
+  call assert_fails('syntax region X start="{"', 'E399:')
+  call assert_fails('syntax sync x', 'E404:')
+  call assert_fails('syntax keyword Abc a[', 'E789:')
+  call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
+ endfunc
 
 func Test_syn_sync()
   syntax region HereGroup start=/this/ end=/that/
@@ -413,3 +419,20 @@ func Test_ownsyntax_completion()
   call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"ownsyntax java javacc javascript', @:)
 endfunc
+
+func Test_highlight_invalid_arg()
+  if has('gui_running')
+    call assert_fails('hi XXX guifg=xxx', 'E254:')
+  endif
+  call assert_fails('hi DoesNotExist', 'E411:')
+  call assert_fails('hi link', 'E412:')
+  call assert_fails('hi link a', 'E412:')
+  call assert_fails('hi link a b c', 'E413:')
+  call assert_fails('hi XXX =', 'E415:')
+  call assert_fails('hi XXX cterm', 'E416:')
+  call assert_fails('hi XXX cterm=', 'E417:')
+  call assert_fails('hi XXX cterm=DoesNotExist', 'E418:')
+  call assert_fails('hi XXX ctermfg=DoesNotExist', 'E421:')
+  call assert_fails('hi XXX xxx=White', 'E423:')
+endfunc
+
