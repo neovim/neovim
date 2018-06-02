@@ -1,5 +1,78 @@
 " Tests for various functions.
 
+func Test_empty()
+  call assert_equal(1, empty(''))
+  call assert_equal(0, empty('a'))
+
+  call assert_equal(1, empty(0))
+  call assert_equal(1, empty(-0))
+  call assert_equal(0, empty(1))
+  call assert_equal(0, empty(-1))
+
+  call assert_equal(1, empty(0.0))
+  call assert_equal(1, empty(-0.0))
+  call assert_equal(0, empty(1.0))
+  call assert_equal(0, empty(-1.0))
+  call assert_equal(0, empty(1.0/0.0))
+  call assert_equal(0, empty(0.0/0.0))
+
+  call assert_equal(1, empty([]))
+  call assert_equal(0, empty(['a']))
+
+  call assert_equal(1, empty({}))
+  call assert_equal(0, empty({'a':1}))
+
+  call assert_equal(1, empty(v:null))
+  call assert_equal(1, empty(v:none))
+  call assert_equal(1, empty(v:false))
+  call assert_equal(0, empty(v:true))
+
+  call assert_equal(0, empty(function('Test_empty')))
+endfunc
+
+func Test_len()
+  call assert_equal(1, len(0))
+  call assert_equal(2, len(12))
+
+  call assert_equal(0, len(''))
+  call assert_equal(2, len('ab'))
+
+  call assert_equal(0, len([]))
+  call assert_equal(2, len([2, 1]))
+
+  call assert_equal(0, len({}))
+  call assert_equal(2, len({'a': 1, 'b': 2}))
+
+  call assert_fails('call len(v:none)', 'E701:')
+  call assert_fails('call len({-> 0})', 'E701:')
+endfunc
+
+func Test_max()
+  call assert_equal(0, max([]))
+  call assert_equal(2, max([2]))
+  call assert_equal(2, max([1, 2]))
+  call assert_equal(2, max([1, 2, v:null]))
+
+  call assert_equal(0, max({}))
+  call assert_equal(2, max({'a':1, 'b':2}))
+
+  call assert_fails('call max(1)', 'E712:')
+  call assert_fails('call max(v:none)', 'E712:')
+endfunc
+
+func Test_min()
+  call assert_equal(0, min([]))
+  call assert_equal(2, min([2]))
+  call assert_equal(1, min([1, 2]))
+  call assert_equal(0, min([1, 2, v:null]))
+
+  call assert_equal(0, min({}))
+  call assert_equal(1, min({'a':1, 'b':2}))
+
+  call assert_fails('call min(1)', 'E712:')
+  call assert_fails('call min(v:none)', 'E712:')
+endfunc
+
 func Test_str2nr()
   call assert_equal(0, str2nr(''))
   call assert_equal(1, str2nr('1'))
@@ -15,6 +88,77 @@ func Test_str2nr()
 
   call assert_equal(123456789, str2nr('123456789'))
   call assert_equal(-123456789, str2nr('-123456789'))
+
+  call assert_equal(5, str2nr('101', 2))
+  call assert_equal(5, str2nr('0b101', 2))
+  call assert_equal(5, str2nr('0B101', 2))
+  call assert_equal(-5, str2nr('-101', 2))
+  call assert_equal(-5, str2nr('-0b101', 2))
+  call assert_equal(-5, str2nr('-0B101', 2))
+
+  call assert_equal(65, str2nr('101', 8))
+  call assert_equal(65, str2nr('0101', 8))
+  call assert_equal(-65, str2nr('-101', 8))
+  call assert_equal(-65, str2nr('-0101', 8))
+
+  call assert_equal(11259375, str2nr('abcdef', 16))
+  call assert_equal(11259375, str2nr('ABCDEF', 16))
+  call assert_equal(-11259375, str2nr('-ABCDEF', 16))
+  call assert_equal(11259375, str2nr('0xabcdef', 16))
+  call assert_equal(11259375, str2nr('0Xabcdef', 16))
+  call assert_equal(11259375, str2nr('0XABCDEF', 16))
+  call assert_equal(-11259375, str2nr('-0xABCDEF', 16))
+
+  call assert_equal(0, str2nr('0x10'))
+  call assert_equal(0, str2nr('0b10'))
+  call assert_equal(1, str2nr('12', 2))
+  call assert_equal(1, str2nr('18', 8))
+  call assert_equal(1, str2nr('1g', 16))
+
+  call assert_equal(0, str2nr(v:null))
+  call assert_equal(0, str2nr(v:none))
+
+  call assert_fails('call str2nr([])', 'E730:')
+  call assert_fails('call str2nr({->2})', 'E729:')
+  call assert_fails('call str2nr(1.2)', 'E806:')
+  call assert_fails('call str2nr(10, [])', 'E474:')
+endfunc
+
+func Test_strftime()
+  if !exists('*strftime')
+    return
+  endif
+  " Format of strftime() depends on system. We assume
+  " that basic formats tested here are available and
+  " identical on all systems which support strftime().
+  "
+  " The 2nd parameter of strftime() is a local time, so the output day
+  " of strftime() can be 17 or 18, depending on timezone.
+  call assert_match('^2017-01-1[78]$', strftime('%Y-%m-%d', 1484695512))
+  "
+  call assert_match('^\d\d\d\d-\(0\d\|1[012]\)-\([012]\d\|3[01]\) \([01]\d\|2[0-3]\):[0-5]\d:\([0-5]\d\|60\)$', strftime('%Y-%m-%d %H:%M:%S'))
+
+  call assert_fails('call strftime([])', 'E730:')
+  call assert_fails('call strftime("%Y", [])', 'E745:')
+endfunc
+
+func Test_simplify()
+  call assert_equal('',            simplify(''))
+  call assert_equal('/',           simplify('/'))
+  call assert_equal('/',           simplify('/.'))
+  call assert_equal('/',           simplify('/..'))
+  call assert_equal('/...',        simplify('/...'))
+  call assert_equal('./dir/file',  simplify('./dir/file'))
+  call assert_equal('./dir/file',  simplify('.///dir//file'))
+  call assert_equal('./dir/file',  simplify('./dir/./file'))
+  call assert_equal('./file',      simplify('./dir/../file'))
+  call assert_equal('../dir/file', simplify('dir/../../dir/file'))
+  call assert_equal('./file',      simplify('dir/.././file'))
+
+  call assert_fails('call simplify({->0})', 'E729:')
+  call assert_fails('call simplify([])', 'E730:')
+  call assert_fails('call simplify({})', 'E731:')
+  call assert_fails('call simplify(1.2)', 'E806:')
 endfunc
 
 func Test_setbufvar_options()
@@ -188,7 +332,7 @@ func Test_toupper()
   call assert_equal("YÝŶŸẎỲỶỸ", toupper("YÝŶŸẎỲỶỸ"))
   call assert_equal("ZŹŻŽƵẐẔ", toupper("ZŹŻŽƵẐẔ"))
 
-  call assert_equal("ⱥ ⱦ", tolower("Ⱥ Ⱦ"))
+  call assert_equal("Ⱥ Ⱦ", toupper("ⱥ ⱦ"))
 endfunc
 
 " Tests for the mode() function
