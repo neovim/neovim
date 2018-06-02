@@ -76,6 +76,7 @@ def RestoreCursorPosition():
 
 @contextlib.contextmanager
 def RestorCurrentWindow():
+  # TODO: Don't trigger autoccommands when shifting windows
   old_window = vim.current.window
   try:
     yield
@@ -85,6 +86,7 @@ def RestorCurrentWindow():
 
 @contextlib.contextmanager
 def RestoreCurrentBuffer( window ):
+  # TODO: Don't trigger autoccommands when shifting buffers
   old_buffer = window.buffer
   try:
     yield

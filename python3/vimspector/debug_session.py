@@ -277,8 +277,16 @@ class DebugSession( object ):
         # Variables
         vim.command( 'spl' )
         vim.command( 'enew' )
+        vars_win = vim.current.window
+
+        # Watches
+        vim.command( 'spl' )
+        vim.command( 'enew' )
+        watch_win = vim.current.window
+
         self._variablesView = variables.VariablesView( self._connection,
-                                                       vim.current.buffer )
+                                                       vars_win,
+                                                       watch_win )
 
 
     with utils.TemporaryVimOption( 'splitbelow', True ):
@@ -520,7 +528,8 @@ class DebugSession( object ):
             file_name ) )
 
   def OnEvent_output( self, message ):
-    self._outputView.OnOutput( message[ 'body' ] )
+    if self._outputView:
+      self._outputView.OnOutput( message[ 'body' ] )
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]

@@ -64,7 +64,9 @@ class StackTraceView( object ):
 
       if not message[ 'body' ][ 'threads' ]:
         # This is a protocol error. It is required to return at least one!
-        raise ValueError( 'Server returned no threads. Is it running?' )
+        utils.UserMessage( 'Server returned no threads. Is it running?',
+                           persist = True )
+        return
 
       for thread in message[ 'body' ][ 'threads' ]:
         self._threads.append( thread )

@@ -14,20 +14,21 @@
 # limitations under the License.
 
 import vim
+from collections import namedtuple
 from functools import partial
 
 from vimspector import utils
 
+View = namedtuple( 'View', [ 'win', 'lines', 'draw' ] )
 
 class VariablesView( object ):
-  def __init__( self, connection, buf ):
-    vim.current.buffer = buf
-
-    self._buf = buf
+  def __init__( self, connection, variables_win, watches_win ):
+    self._vars = View( variables_win, {}, self._DrawScopes )
+    self._watch = View( watches_win, {}, self._DrawWatches )
     self._connection = connection
 
     # Allows us to hit <CR> to expand/collapse variables
-    self._line_to_variable = {}
+    vim.current.window = self._vars.win
     vim.command(
       'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
 
@@ -45,11 +46,15 @@ class VariablesView( object ):
     # above. It also has a special _line key which is where we printed it (last)
     self._watches = []
 
-    # Allows us to delete manual watches
+    # Allows us to hit <CR> to expand/collapse variables
+    vim.current.window = self._watch.win
+    vim.command(
+      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
     vim.command(
       'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
 
-    utils.SetUpScratchBuffer( self._buf, 'vimspector.Variables' )
+    utils.SetUpScratchBuffer( self._vars.win.buffer, 'vimspector.Variables' )
+    utils.SetUpScratchBuffer( self._watch.win.buffer, 'vimspector.Watches' )
 
     has_balloon      = int( vim.eval( "has( 'balloon_eval' )" ) )
     has_balloon_term = int( vim.eval( "has( 'balloon_eval_term' )" ) )
@@ -73,8 +78,10 @@ class VariablesView( object ):
 
 
   def Clear( self ):
-    with utils.ModifiableScratchBuffer( self._buf ):
-      self._buf[:] = None
+    with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
+      self._vars.win.buffer[:] = None
+    with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
+      self._watch.win.buffer[:] = None
 
   def ConnectionClosed( self ):
     self.Clear()
@@ -91,14 +98,16 @@ class VariablesView( object ):
       self._scopes = []
       for scope in message[ 'body' ][ 'scopes' ]:
         self._scopes.append( scope )
-        self._connection.DoRequest( partial( self._ConsumeVariables, scope ), {
+        self._connection.DoRequest( partial( self._ConsumeVariables,
+                                             self._DrawScopes,
+                                             scope ), {
           'command': 'variables',
           'arguments': {
             'variablesReference': scope[ 'variablesReference' ]
           },
         } )
 
-      self._DrawScopesAndWatches()
+      self._DrawScopes()
 
     self._connection.DoRequest( scopes_consumer, {
       'command': 'scopes',
@@ -117,7 +126,8 @@ class VariablesView( object ):
     self.EvaluateWatches()
 
   def DeleteWatch( self ):
-    if vim.current.window.buffer != self._buf:
+    if vim.current.window != self._watch.win:
+      utils.UserMessage( 'Not a watch window' )
       return
 
     current_line = vim.current.window.cursor[ 0 ]
@@ -125,8 +135,11 @@ class VariablesView( object ):
     for index, watch in enumerate( self._watches ):
       if '_line' in watch and watch[ '_line' ] == current_line:
         del self._watches[ index ]
-        self._DrawScopesAndWatches()
+        utils.UserMessage( 'Deleted' )
+        self._DrawWatches()
         return
+
+    utils.UserMessage( 'No watch found' )
 
   def EvaluateWatches( self ):
     for watch in self._watches:
@@ -138,22 +151,26 @@ class VariablesView( object ):
 
   def _UpdateWatchExpression( self, watch, message ):
     watch[ '_result' ] = message[ 'body' ]
-    self._DrawScopesAndWatches()
+    self._DrawWatches()
 
   def ExpandVariable( self ):
-    if vim.current.window.buffer != self._buf:
+    if vim.current.window == self._vars.win:
+      view = self._vars
+    elif vim.current.window == self._watch.win:
+      view = self._watch
+    else:
       return
 
     current_line = vim.current.window.cursor[ 0 ]
-    if current_line not in self._line_to_variable:
+    if current_line not in view.lines:
       return
 
-    variable = self._line_to_variable[ current_line ]
+    variable = view.lines[ current_line ]
 
     if '_variables' in variable:
       # Collapse
       del variable[ '_variables' ]
-      self._DrawScopesAndWatches()
+      view.draw()
       return
 
     # Expand. (only if there is anything to expand)
@@ -162,17 +179,19 @@ class VariablesView( object ):
     if variable[ 'variablesReference' ] <= 0:
       return
 
-    self._connection.DoRequest( partial( self._ConsumeVariables, variable ), {
+    self._connection.DoRequest( partial( self._ConsumeVariables,
+                                         view.draw,
+                                         variable ), {
       'command': 'variables',
       'arguments': {
         'variablesReference': variable[ 'variablesReference' ]
       },
     } )
 
-  def _DrawVariables( self, variables, indent ):
+  def _DrawVariables( self, view,  variables, indent ):
     for variable in variables:
-      self._line_to_variable[ len( self._buf ) + 1 ] = variable
-      self._buf.append(
+      view.lines[ len( view.win.buffer ) + 1 ] = variable
+      view.win.buffer.append(
         '{indent}{icon} {name} ({type_}): {value}'.format(
           indent = ' ' * indent,
           icon = '+' if ( variable[ 'variablesReference' ] > 0 and
@@ -182,41 +201,48 @@ class VariablesView( object ):
           value = variable.get( 'value', '<unknown value>' ) ).split( '\n' ) )
 
       if '_variables' in variable:
-        self._DrawVariables( variable[ '_variables' ], indent + 2 )
+        self._DrawVariables( view, variable[ '_variables' ], indent + 2 )
 
-  def _DrawScopesAndWatches( self ):
-    self._line_to_variable = {}
+  def _DrawScopes( self ):
+    self._vars.lines.clear()
     with utils.RestoreCursorPosition():
-      with utils.ModifiableScratchBuffer( self._buf ):
-        self._buf[:] = None
+      with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
+        self._vars.win.buffer[:] = None
         for scope in self._scopes:
           self._DrawScope( 0, scope )
 
-        self._buf.append( 'Watches: ----' )
+  def _DrawWatches( self ):
+    self._watch.lines.clear()
+    with utils.RestoreCursorPosition():
+      with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
+        self._watch.win.buffer[:] = None
+        self._watch.win.buffer.append( 'Watches: ----' )
         for watch in self._watches:
-          self._buf.append( 'Expression: ' + watch[ 'expression' ] )
-          watch[ '_line' ] = len( self._buf )
+          self._watch.win.buffer.append(
+            'Expression: ' + watch[ 'expression' ] )
+          watch[ '_line' ] = len( self._watch.win.buffer )
           self._DrawWatchResult( 2, watch )
 
   def _DrawScope( self, indent, scope ):
     icon = '+' if ( scope[ 'variablesReference' ] > 0 and
                     '_variables' not in scope ) else '-'
 
-    self._line_to_variable[ len( self._buf ) + 1 ] = scope
-    self._buf.append( '{0}{1} Scope: {2}'.format( ' ' * indent,
-                                                   icon,
-                                                   scope[ 'name' ] ) )
+    self._vars.lines[ len( self._vars.win.buffer ) + 1 ] = scope
+    self._vars.win.buffer.append( '{0}{1} Scope: {2}'.format(
+      ' ' * indent,
+      icon,
+      scope[ 'name' ] ) )
 
     if '_variables' in scope:
       indent += 2
-      self._DrawVariables( scope[ '_variables' ], indent )
+      self._DrawVariables( self._vars, scope[ '_variables' ], indent )
 
   def _DrawWatchResult( self, indent, watch ):
     if '_result' not in watch:
       return
 
     result = watch[ '_result' ]
-    self._line_to_variable[ len( self._buf ) + 1 ] = result
+    self._watch.lines[ len( self._watch.win.buffer ) + 1 ] = result
 
     icon = '+' if ( result[ 'variablesReference' ] > 0 and
                     '_variables' not in result ) else '-'
@@ -224,20 +250,20 @@ class VariablesView( object ):
     line =  '{0}{1} Result: {2} '.format( ' ' * indent,
                                           icon,
                                           result[ 'result' ] )
-    self._buf.append( line.split( '\n' ) )
+    self._watch.win.buffer.append( line.split( '\n' ) )
 
     if '_variables' in result:
       indent = 4
-      self._DrawVariables( result[ '_variables' ], indent )
+      self._DrawVariables( self._watch, result[ '_variables' ], indent )
 
-  def _ConsumeVariables( self, parent, message ):
+  def _ConsumeVariables( self, draw, parent, message ):
     for variable in message[ 'body' ][ 'variables' ]:
       if '_variables' not in parent:
         parent[ '_variables' ] = []
 
       parent[ '_variables' ].append( variable )
 
-    self._DrawScopesAndWatches()
+    draw()
 
   def ShowBalloon( self, frame, expression ):
     if not self._connection:
