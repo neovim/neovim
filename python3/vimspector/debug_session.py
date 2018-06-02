@@ -272,21 +272,22 @@ class DebugSession( object ):
                                                        self._connection,
                                                        vim.current.buffer )
 
-    with utils.TemporaryVimOption( 'eadirection', 'ver' ):
-      with utils.TemporaryVimOption( 'equalalways', 1 ):
-        # Variables
-        vim.command( 'spl' )
-        vim.command( 'enew' )
-        vars_win = vim.current.window
+    with utils.TemporaryVimOption( 'splitbelow', False ):
+      with utils.TemporaryVimOption( 'eadirection', 'ver' ):
+        with utils.TemporaryVimOption( 'equalalways', 1 ):
+          # Watches
+          vim.command( 'spl' )
+          vim.command( 'enew' )
+          watch_win = vim.current.window
 
-        # Watches
-        vim.command( 'spl' )
-        vim.command( 'enew' )
-        watch_win = vim.current.window
+          # Variables
+          vim.command( 'spl' )
+          vim.command( 'enew' )
+          vars_win = vim.current.window
 
-        self._variablesView = variables.VariablesView( self._connection,
-                                                       vars_win,
-                                                       watch_win )
+          self._variablesView = variables.VariablesView( self._connection,
+                                                         vars_win,
+                                                         watch_win )
 
 
     with utils.TemporaryVimOption( 'splitbelow', True ):
