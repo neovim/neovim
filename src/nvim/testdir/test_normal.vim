@@ -2314,28 +2314,36 @@ func! Test_normal53_digraph()
   bw!
 endfunc
 
-func! Test_normal54_Ctrl_bsl()
-	new
-	call setline(1, 'abcdefghijklmn')
-	exe "norm! df\<c-\>\<c-n>"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
-	exe "norm! df\<c-\>\<c-g>"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
-	exe "norm! df\<c-\>m"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+func Test_normal54_Ctrl_bsl()
+  new
+  call setline(1, 'abcdefghijklmn')
+  exe "norm! df\<c-\>\<c-n>"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+  exe "norm! df\<c-\>\<c-g>"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+  exe "norm! df\<c-\>m"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
   if !has("multi_byte")
     return
   endif
-	call setline(2, 'abcdefghijklmnāf')
-	norm! 2gg0
-	exe "norm! df\<Char-0x101>"
-	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
-	norm! 1gg0
-	exe "norm! df\<esc>"
-	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+  call setline(2, 'abcdefghijklmnāf')
+  norm! 2gg0
+  exe "norm! df\<Char-0x101>"
+  call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+  norm! 1gg0
+  exe "norm! df\<esc>"
+  call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
 
-	" clean up
-	bw!
+  " clean up
+  bw!
+endfunc
+
+func Test_normal_large_count()
+  " This may fail with 32bit long, how do we detect that?
+  new
+  normal o
+  normal 6666666666dL
+  bwipe!
 endfunc
 
 " Test for the gr (virtual replace) command

@@ -2328,21 +2328,21 @@ collection:
               regc('\t');
               break;
             case CLASS_CNTRL:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (iscntrl(cu)) {
                   regmbc(cu);
                 }
               }
               break;
             case CLASS_DIGIT:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (ascii_isdigit(cu)) {
                   regmbc(cu);
                 }
               }
               break;
             case CLASS_GRAPH:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (isgraph(cu)) {
                   regmbc(cu);
                 }
