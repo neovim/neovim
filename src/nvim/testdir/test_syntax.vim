@@ -304,7 +304,9 @@ endfunc
  
 func Test_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
-  call assert_fails('syntax conceal asdf', 'E390:')
+  if has('conceal')
+    call assert_fails('syntax conceal asdf', 'E390:')
+  endif
   call assert_fails('syntax spell asdf', 'E390:')
 endfunc
 
