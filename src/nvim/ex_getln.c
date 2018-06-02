@@ -295,10 +295,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   redir_off = true;             // don't redirect the typed command
   if (!cmd_silent) {
-    s->i = msg_scrolled;
-    msg_scrolled = 0;           // avoid wait_return message
     gotocmdline(true);
-    msg_scrolled += s->i;
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
   }
