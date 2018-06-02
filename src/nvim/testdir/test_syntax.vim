@@ -382,3 +382,32 @@ func Test_conceal()
   set conceallevel&
   bw!
 endfunc
+
+func Test_ownsyntax()
+  new Xfoo
+  call setline(1, '#define FOO')
+  syntax on
+  set filetype=c
+  ownsyntax perl
+  call assert_equal('perlComment', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c',    b:current_syntax)
+  call assert_equal('perl', w:current_syntax)
+
+  " A new split window should have the original syntax.
+  split
+  call assert_equal('cDefine', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c', b:current_syntax)
+  call assert_equal(0, exists('w:current_syntax'))
+
+  wincmd x
+  call assert_equal('perlComment', synIDattr(synID(line("."), col("."), 1), "name"))
+
+  syntax off
+  set filetype&
+  %bw!
+endfunc
+
+func Test_ownsyntax_completion()
+  call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"ownsyntax java javacc javascript', @:)
+endfunc
