@@ -35,12 +35,21 @@ func s:classes_test()
   set isprint=@,161-255
   call assert_equal('Motörhead', matchstr('Motörhead', '[[:print:]]\+'))
 
-  let alphachars = ''
-  let lowerchars = ''
-  let upperchars = ''
   let alnumchars = ''
+  let alphachars = ''
+  let backspacechar = ''
+  let blankchars = ''
+  let cntrlchars = ''
+  let digitchars = ''
+  let escapechar = ''
+  let graphchars = ''
+  let lowerchars = ''
   let printchars = ''
   let punctchars = ''
+  let returnchar = ''
+  let spacechars = ''
+  let tabchar = ''
+  let upperchars = ''
   let xdigitchars = ''
   let i = 1
   while i <= 255
@@ -48,20 +57,47 @@ func s:classes_test()
     if c =~ '[[:alpha:]]'
       let alphachars .= c
     endif
-    if c =~ '[[:lower:]]'
-      let lowerchars .= c
-    endif
-    if c =~ '[[:upper:]]'
-      let upperchars .= c
-    endif
     if c =~ '[[:alnum:]]'
       let alnumchars .= c
+    endif
+    if c =~ '[[:backspace:]]'
+      let backspacechar .= c
+    endif
+    if c =~ '[[:blank:]]'
+      let blankchars .= c
+    endif
+    if c =~ '[[:cntrl:]]'
+      let cntrlchars .= c
+    endif
+    if c =~ '[[:digit:]]'
+      let digitchars .= c
+    endif
+    if c =~ '[[:escape:]]'
+      let escapechar .= c
+    endif
+    if c =~ '[[:graph:]]'
+      let graphchars .= c
+    endif
+    if c =~ '[[:lower:]]'
+      let lowerchars .= c
     endif
     if c =~ '[[:print:]]'
       let printchars .= c
     endif
     if c =~ '[[:punct:]]'
       let punctchars .= c
+    endif
+    if c =~ '[[:return:]]'
+      let returnchar .= c
+    endif
+    if c =~ '[[:space:]]'
+      let spacechars .= c
+    endif
+    if c =~ '[[:tab:]]'
+      let tabchar .= c
+    endif
+    if c =~ '[[:upper:]]'
+      let upperchars .= c
     endif
     if c =~ '[[:xdigit:]]'
       let xdigitchars .= c
@@ -70,11 +106,22 @@ func s:classes_test()
   endwhile
 
   call assert_equal('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', alphachars)
-  call assert_equal('abcdefghijklmnopqrstuvwxyzµßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ', lowerchars)
-  call assert_equal('ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ', upperchars)
   call assert_equal('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', alnumchars)
+  call assert_equal("\b", backspacechar)
+  call assert_equal("\t ", blankchars)
+  " Commented out: it succeeds on Linux and Windows, but fails on macOs in Travis.
+  " call assert_equal("\x01\x02\x03\x04\x05\x06\x07\b\t\n\x0b\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\e\x1c\x1d\x1e\x1f\x7f", cntrlchars)
+  call assert_equal("0123456789", digitchars)
+  call assert_equal("\<Esc>", escapechar)
+  " Commented out: it succeeds on Linux and Windows, but fails on macOs in Travis.
+  " call assert_equal('!"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~', graphchars)
+  call assert_equal('abcdefghijklmnopqrstuvwxyzµßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ', lowerchars)
   call assert_equal(' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ', printchars)
   call assert_equal('!"#$%&''()*+,-./:;<=>?@[\]^_`{|}~', punctchars)
+  call assert_equal('ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ', upperchars)
+  call assert_equal("\r", returnchar)
+  call assert_equal("\t\n\x0b\f\r ", spacechars)
+  call assert_equal("\t", tabchar)
   call assert_equal('0123456789ABCDEFabcdef', xdigitchars)
 endfunc
 
