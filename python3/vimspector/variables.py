@@ -271,7 +271,7 @@ class VariablesView( object ):
 
     def handler( message ):
       vim.eval( "balloon_show( '{0}' )".format(
-        message[ 'body' ][ 'result' ] ) )
+        utils.Escape( message[ 'body' ][ 'result' ] ) ) )
 
     self._connection.DoRequest( handler, {
       'command': 'evaluate',
