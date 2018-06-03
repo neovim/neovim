@@ -12,7 +12,7 @@ function(BuildLuarocks)
   cmake_parse_arguments(_luarocks
     ""
     ""
-    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
+    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
     ${ARGN})
 
   if(NOT _luarocks_CONFIGURE_COMMAND AND NOT _luarocks_BUILD_COMMAND
@@ -32,7 +32,6 @@ function(BuildLuarocks)
       -DTARGET=luarocks
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    PATCH_COMMAND "${_luarocks_PATCH_COMMAND}"
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND "${_luarocks_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_luarocks_BUILD_COMMAND}"
@@ -51,11 +50,6 @@ if(NOT MSVC)
   # version already knows, and passing them here breaks the build
   set(LUAROCKS_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
 endif()
-if(WIN32)
-  # Use our bundled curl.exe for downloading packages
-  set(LUAROCKS_BUILDARGS ${LUAROCKS_BUILDARGS} CURL=${DEPS_BIN_DIR}/curl.exe)
-endif()
-
 
 if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 
@@ -82,12 +76,7 @@ elseif(MSVC OR MINGW)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
-  BuildLuarocks(
-    PATCH_COMMAND
-      ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luarocks apply --ignore-whitespace
-        ${CMAKE_CURRENT_SOURCE_DIR}/patches/luarocks-Change-default-downloader-to-curl.patch
-    INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
+  BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
@@ -99,8 +88,6 @@ elseif(MSVC OR MINGW)
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION}/luarocks.bat)
-  add_dependencies(luarocks wintools)
-
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
