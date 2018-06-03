@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import vim
+import json
 from collections import namedtuple
 from functools import partial
 
@@ -91,8 +92,6 @@ class VariablesView( object ):
   def Reset( self ):
     for k, v in self._oldoptions.items():
       vim.options[ k ] = v
-
-    # TODO: delete the buffer?
 
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):
@@ -273,8 +272,23 @@ class VariablesView( object ):
       return
 
     def handler( message ):
-      vim.eval( "balloon_show( '{0}' )".format(
-        utils.Escape( message[ 'body' ][ 'result' ] ) ) )
+      # TODO: this result count be expandable, but we have no way to allow the
+      # user to interact with the balloon to expand it.
+      body = message[ 'body' ]
+      ref = body.get( 'variablesReference', 0 )
+      icon = '+ ' if ref > 0 else ''
+      display = [
+        'Type: ' + body.get( 'type', '<unknown>' ),
+        icon + 'Value: ' + body[ 'result' ]
+      ]
+      vim.eval( "balloon_show( {0} )".format(
+        json.dumps( display ) ) )
+
+    def failure_handler( reason, message ):
+      display = [ reason ]
+      vim.eval( "balloon_show( {0} )".format(
+        json.dumps( display ) ) )
+
 
     self._connection.DoRequest( handler, {
       'command': 'evaluate',
@@ -283,4 +297,4 @@ class VariablesView( object ):
         'frameId': frame[ 'id' ],
         'context': 'hover',
       }
-    } )
+    }, failure_handler )

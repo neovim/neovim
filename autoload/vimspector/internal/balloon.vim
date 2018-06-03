@@ -25,7 +25,7 @@ function vimspector#internal#balloon#BalloonExpr()
   " int() because for *no good reason* winnr is a string.
   py3 _vimspector_session.ShowBalloon( int( vim.eval( 'v:beval_winnr' ) ) + 1,
         \ vim.eval( 'v:beval_text' ) )
-  return ''
+  return '...'
 endfunction
 
 " Boilerplate {{{

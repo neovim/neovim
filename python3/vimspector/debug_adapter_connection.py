@@ -16,7 +16,12 @@
 import logging
 import json
 
+from collections import namedtuple
+
 from vimspector import utils
+
+PendingRequest = namedtuple( 'PendingRequest',
+                             [ 'msg', 'handler', 'failure_handler' ] )
 
 
 class DebugAdapterConnection( object ):
@@ -29,16 +34,18 @@ class DebugAdapterConnection( object ):
     self._buffer = bytes()
     self._handler = handler
     self._next_message_id = 0
-    self._outstanding_requests = dict()
+    self._outstanding_requests = {}
 
-  def DoRequest( self, handler, msg ):
+  def DoRequest( self, handler, msg, failure_handler=None ):
     this_id = self._next_message_id
     self._next_message_id += 1
 
     msg[ 'seq' ] = this_id
     msg[ 'type' ] = 'request'
 
-    self._outstanding_requests[ this_id ] = handler
+    self._outstanding_requests[ this_id ] = PendingRequest( msg,
+                                                            handler,
+                                                            failure_handler )
     self._SendMessage( msg )
 
   def Reset( self ):
@@ -132,11 +139,11 @@ class DebugAdapterConnection( object ):
       return
 
     if message[ 'type' ] == 'response':
-      handler = self._outstanding_requests.pop( message[ 'request_seq' ] )
+      request = self._outstanding_requests.pop( message[ 'request_seq' ] )
 
       if message[ 'success' ]:
-        if handler:
-          handler( message )
+        if request.handler:
+          request.handler( message )
       else:
         reason = message.get( 'message' )
         if not message:
@@ -148,9 +155,10 @@ class DebugAdapterConnection( object ):
             message = 'No reason'
 
         self._logger.error( 'Request failed: {0}'.format( reason ) )
-        utils.UserMessage( 'Request failed: {0}'.format( reason ) )
-                           
-
+        if request.failure_handler:
+          request.failure_handler( reason, message )
+        else:
+          utils.UserMessage( 'Request failed: {0}'.format( reason ) )
     elif message[ 'type' ] == 'event':
       method = 'OnEvent_' + message[ 'event' ]
       if method in dir( self._handler ):
