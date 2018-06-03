@@ -97,6 +97,20 @@ def RestoreCurrentBuffer( window ):
 
 
 @contextlib.contextmanager
+def TemporaryVimOptions( opts ):
+  old_value = {}
+  try:
+    for option, value in opts.items():
+      old_value[ option ] = vim.options[ option ]
+      vim.options[ option ] = value
+
+    yield
+  finally:
+    for option, value in old_value.items():
+      vim.options[ option ] = value
+
+
+@contextlib.contextmanager
 def TemporaryVimOption( opt, value ):
   old_value = vim.options[ opt ]
   vim.options[ opt ] = value
