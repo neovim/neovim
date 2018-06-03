@@ -24,6 +24,7 @@ _log_handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
 _log_handler.setFormatter(
     logging.Formatter( '%(asctime)s - %(levelname)s - %(message)s' ) )
 
+
 def SetUpLogging( logger ):
   logger.setLevel( logging.DEBUG )
   if _log_handler not in logger.handlers:
@@ -171,3 +172,20 @@ def SelectFromList( prompt, options ):
 def AskForInput( prompt ):
   with InputSave():
     return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
+
+
+def AppendToBuffer( buf, line_or_lines ):
+  # After clearing the buffer (using buf[:] = None) there is always a single
+  # empty line in the buffer object and no "is empty" method.
+  if len( buf ) > 1 or buf[ 0 ]:
+    line = len( buf ) + 1
+    buf.append( line_or_lines )
+  elif isinstance( line_or_lines, str ):
+    line = 1
+    buf[-1] = line_or_lines
+  else:
+    line = 1
+    buf[:] = line_or_lines
+
+  # Return the first Vim line number (1-based) that we just set.
+  return line

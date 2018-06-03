@@ -93,8 +93,11 @@ class StackTraceView( object ):
       for thread in self._threads:
         icon = '+' if '_frames' not in thread else '-'
 
-        self._buf.append( '{0} Thread: {1}'.format( icon, thread[ 'name' ] ) )
-        self._line_to_thread[ len( self._buf ) ] = thread
+        line = utils.AppendToBuffer(
+          self._buf,
+          '{0} Thread: {1}'.format( icon, thread[ 'name' ] ) )
+
+        self._line_to_thread[ line ] = thread
 
         self._DrawStackTrace( thread )
 
@@ -193,9 +196,10 @@ class StackTraceView( object ):
       else:
         source = { 'name': '<unknown>' }
 
-      self._buf.append(
+      line = utils.AppendToBuffer(
+        self._buf,
         '  {0}: {1}@{2}:{3}'.format( frame[ 'id' ],
                                      frame[ 'name' ],
                                      source[ 'name' ],
                                      frame[ 'line' ] ) )
-      self._line_to_frame[ len( self._buf ) ] = frame
+      self._line_to_frame[ line ] = frame

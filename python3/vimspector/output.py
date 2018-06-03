@@ -32,7 +32,8 @@ class OutputView( object ):
       self._CreateBuffer( category )
 
     with utils.ModifiableScratchBuffer( self._buffers[ category ] ):
-      self._buffers[ category ].append( event[ 'output' ].splitlines() )
+      utils.AppendToBuffer( self._buffers[ category ],
+                            event[ 'output' ].splitlines() )
 
   def Reset( self ):
     self.Clear()
@@ -54,7 +55,8 @@ class OutputView( object ):
       with utils.RestoreCurrentBuffer( self._window ):
         vim.command( 'enew' )
         self._buffers[ category ] = vim.current.buffer
-        self._buffers[ category ].append( category + '-----' )
+        utils.AppendToBuffer( self._buffers[ category ],
+                              category + '-----' )
 
         utils.SetUpHiddenBuffer( self._buffers[ category ],
                                  'vimspector.Output:{0}'.format( category ) )

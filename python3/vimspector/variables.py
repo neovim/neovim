@@ -21,6 +21,7 @@ from vimspector import utils
 
 View = namedtuple( 'View', [ 'win', 'lines', 'draw' ] )
 
+
 class VariablesView( object ):
   def __init__( self, connection, variables_win, watches_win ):
     self._vars = View( variables_win, {}, self._DrawScopes )
@@ -190,8 +191,8 @@ class VariablesView( object ):
 
   def _DrawVariables( self, view,  variables, indent ):
     for variable in variables:
-      view.lines[ len( view.win.buffer ) + 1 ] = variable
-      view.win.buffer.append(
+      line = utils.AppendToBuffer(
+        view.win.buffer,
         '{indent}{icon} {name} ({type_}): {value}'.format(
           indent = ' ' * indent,
           icon = '+' if ( variable[ 'variablesReference' ] > 0 and
@@ -199,6 +200,7 @@ class VariablesView( object ):
           name = variable[ 'name' ],
           type_ = variable.get( 'type', '<unknown type>' ),
           value = variable.get( 'value', '<unknown value>' ) ).split( '\n' ) )
+      view.lines[ line ] = variable
 
       if '_variables' in variable:
         self._DrawVariables( view, variable[ '_variables' ], indent + 2 )
@@ -216,22 +218,22 @@ class VariablesView( object ):
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
         self._watch.win.buffer[:] = None
-        self._watch.win.buffer.append( 'Watches: ----' )
+        utils.AppendToBuffer( self._watch.win.buffer, 'Watches: ----' )
         for watch in self._watches:
-          self._watch.win.buffer.append(
-            'Expression: ' + watch[ 'expression' ] )
-          watch[ '_line' ] = len( self._watch.win.buffer )
+          line = utils.AppendToBuffer( self._watch.win.buffer,
+                                       'Expression: ' + watch[ 'expression' ] )
+          watch[ '_line' ] = line
           self._DrawWatchResult( 2, watch )
 
   def _DrawScope( self, indent, scope ):
     icon = '+' if ( scope[ 'variablesReference' ] > 0 and
                     '_variables' not in scope ) else '-'
 
-    self._vars.lines[ len( self._vars.win.buffer ) + 1 ] = scope
-    self._vars.win.buffer.append( '{0}{1} Scope: {2}'.format(
-      ' ' * indent,
-      icon,
-      scope[ 'name' ] ) )
+    line = utils.AppendToBuffer( self._vars.win.buffer,
+                                 '{0}{1} Scope: {2}'.format( ' ' * indent,
+                                                             icon,
+                                                             scope[ 'name' ] ) )
+    self._vars.lines[ line ] = scope
 
     if '_variables' in scope:
       indent += 2
@@ -242,7 +244,6 @@ class VariablesView( object ):
       return
 
     result = watch[ '_result' ]
-    self._watch.lines[ len( self._watch.win.buffer ) + 1 ] = result
 
     icon = '+' if ( result[ 'variablesReference' ] > 0 and
                     '_variables' not in result ) else '-'
@@ -250,7 +251,9 @@ class VariablesView( object ):
     line =  '{0}{1} Result: {2} '.format( ' ' * indent,
                                           icon,
                                           result[ 'result' ] )
-    self._watch.win.buffer.append( line.split( '\n' ) )
+    line = utils.AppendToBuffer( self._watch.win.buffer,
+                                 line.split( '\n' ) )
+    self._watch.lines[ line ] = result
 
     if '_variables' in result:
       indent = 4
