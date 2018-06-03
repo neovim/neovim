@@ -535,14 +535,18 @@ Array ui_array(void)
 {
   Array all_uis = ARRAY_DICT_INIT;
   for (size_t i = 0; i < ui_count; i++) {
-    Dictionary dic = ARRAY_DICT_INIT;
-    PUT(dic, "width", INTEGER_OBJ(uis[i]->width));
-    PUT(dic, "height", INTEGER_OBJ(uis[i]->height));
-    PUT(dic, "rgb", BOOLEAN_OBJ(uis[i]->rgb));
+    UI *ui = uis[i];
+    Dictionary info = ARRAY_DICT_INIT;
+    PUT(info, "width", INTEGER_OBJ(ui->width));
+    PUT(info, "height", INTEGER_OBJ(ui->height));
+    PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
     for (UIExtension j = 0; j < kUIExtCount; j++) {
-      PUT(dic, ui_ext_names[j], BOOLEAN_OBJ(uis[i]->ui_ext[j]));
+      PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
     }
-    ADD(all_uis, DICTIONARY_OBJ(dic));
+    if (ui->inspect) {
+      ui->inspect(ui, &info);
+    }
+    ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;
 }

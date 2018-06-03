@@ -1226,6 +1226,7 @@ describe('api', function()
       screen:attach()
       local expected = {
         {
+          chan = 1,
           ext_cmdline = false,
           ext_popupmenu = false,
           ext_tabline = false,
@@ -1242,6 +1243,7 @@ describe('api', function()
       screen:attach({ rgb = false })
       expected = {
         {
+          chan = 1,
           ext_cmdline = false,
           ext_popupmenu = false,
           ext_tabline = false,

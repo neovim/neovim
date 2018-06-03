@@ -1747,6 +1747,14 @@ Dictionary nvim__stats(void)
 /// Gets a list of dictionaries representing attached UIs.
 ///
 /// @return Array of UI dictionaries
+///
+/// Each dictionary has the following keys:
+///     - "height"  requested height of the UI
+///     - "width"   requested width of the UI
+///     - "rgb"     whether the UI uses rgb colors (false implies cterm colors)
+///     - "ext_..." Requested UI extensions, see |ui-options|
+///     - "chan"    Channel id of remote UI (not present for TUI)
+///
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {

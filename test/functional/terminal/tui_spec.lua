@@ -253,6 +253,19 @@ describe('tui', function()
       {4:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('shows up in nvim_list_uis', function()
+    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(v))})\013')
+    screen:expect([=[
+      {5:                                                  }|
+      [[['ext_cmdline', v:false], ['ext_popupmenu', v:fa|
+      lse], ['ext_tabline', v:false], ['ext_wildmenu', v|
+      :false], ['height', 6], ['rgb', v:false], ['width'|
+      , 50]]]                                           |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]=])
+  end)
 end)
 
 describe('tui with non-tty file descriptors', function()
