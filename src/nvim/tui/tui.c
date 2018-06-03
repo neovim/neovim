@@ -405,6 +405,10 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
   got_winch = true;
   UI *ui = data;
+  if (tui_is_stopped(ui)) {
+    return;
+  }
+
   update_size(ui);
   ui_schedule_refresh();
 }
