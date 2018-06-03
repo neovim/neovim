@@ -32,6 +32,7 @@ main() {(
   if ! "$nvim_prg" \
     -u NONE -i NONE \
     --headless \
+    --cmd 'syntax off' \
     --cmd 'set shortmess+=I noswapfile noundofile nomore' \
     -S runnvim.vim \
     "$tlog" > "out-$tlog" 2> "err-$tlog"
