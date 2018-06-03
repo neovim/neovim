@@ -276,10 +276,9 @@ class VariablesView( object ):
       # user to interact with the balloon to expand it.
       body = message[ 'body' ]
       ref = body.get( 'variablesReference', 0 )
-      icon = '+ ' if ref > 0 else ''
       display = [
         'Type: ' + body.get( 'type', '<unknown>' ),
-        icon + 'Value: ' + body[ 'result' ]
+        'Value: ' + body[ 'result' ]
       ]
       vim.eval( "balloon_show( {0} )".format(
         json.dumps( display ) ) )
