@@ -759,3 +759,10 @@ func Test_col()
   call assert_equal(0, col([1]))
   bw!
 endfunc
+
+func Test_balloon_show()
+  if has('balloon_eval')
+    " This won't do anything but must not crash either.
+    call balloon_show('hi!')
+  endif
+endfunc
