@@ -1,6 +1,9 @@
 " Tests for bracketed paste.
 
-" Bracketed paste only works with "xterm".
+" Bracketed paste only works with "xterm".  Not in GUI.
+if has('gui_running')
+  finish
+endif
 set term=xterm
 
 func Test_paste_normal_mode()
