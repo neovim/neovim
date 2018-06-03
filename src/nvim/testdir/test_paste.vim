@@ -4,7 +4,6 @@
 if has('gui_running')
   finish
 endif
-set term=xterm
 
 func Test_paste_normal_mode()
   new
