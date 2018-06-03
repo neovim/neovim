@@ -939,10 +939,8 @@ void set_init_2(bool headless)
 {
   int idx;
 
-  /*
-   * 'scroll' defaults to half the window height. The stored default is zero,
-   * which results in the actual value computed from the window height.
-   */
+  // 'scroll' defaults to half the window height. The stored default is zero,
+  // which results in the actual value computed from the window height.
   idx = findoption("scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     set_option_default(idx, OPT_LOCAL, p_cp);
