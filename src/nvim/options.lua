@@ -1922,7 +1922,7 @@ return {
       no_mkrc=true,
       vi_def=true,
       pv_name='p_scroll',
-      defaults={if_true={vi=12}}
+      defaults={if_true={vi=0}}
     },
     {
       full_name='scrollback', abbreviation='scbk',
