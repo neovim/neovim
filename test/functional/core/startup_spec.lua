@@ -123,8 +123,18 @@ describe('startup', function()
   end)
 
   it('-e/-E interactive #7679', function()
-    clear('-E')
+    clear('-e')
     local screen = Screen.new(25, 3)
+    screen:attach()
+    feed("put ='from -e'<CR>")
+    screen:expect([[
+      :put ='from -e'          |
+      from -e                  |
+      :^                        |
+    ]])
+
+    clear('-E')
+    screen = Screen.new(25, 3)
     screen:attach()
     feed("put ='from -E'<CR>")
     screen:expect([[

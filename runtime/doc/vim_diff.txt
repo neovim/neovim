@@ -315,10 +315,15 @@ Macro/|recording| behavior
   macros and 'keymap' at the same time. This also means you can use |:imap| on
   the results of keys from 'keymap'.
 
+Normal commands:
+  |Q| is the same as |gQ|
+
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
 
 Startup:
+  |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.
+  |-E| and |-Es| reads stdin as text (into buffer 1).
   |-s| reads Normal commands from stdin if the script name is "-".
   Reading text (instead of commands) from stdin |--|:
     - works by default: "-" file is optional
@@ -465,4 +470,4 @@ TUI:
   always uses 7-bit control sequences.
 
 ==============================================================================
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:sw=2:noet:ft=help:norl:

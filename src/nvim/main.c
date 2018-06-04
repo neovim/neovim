@@ -872,7 +872,7 @@ static void command_line_scan(mparm_T *parmp)
           exmode_active = EXMODE_NORMAL;
           break;
         }
-        case 'E': {  // "-E" Improved Ex mode
+        case 'E': {  // "-E" Ex mode
           exmode_active = EXMODE_VIM;
           break;
         }
@@ -1896,8 +1896,8 @@ static void usage(void)
   mch_msg("\n");
   mch_msg(_("  -b                    Binary mode\n"));
   mch_msg(_("  -d                    Diff mode\n"));
-  mch_msg(_("  -e, -E                Ex mode, Improved Ex mode\n"));
-  mch_msg(_("  -es                   Silent (batch) mode\n"));
+  mch_msg(_("  -e, -E                Ex mode\n"));
+  mch_msg(_("  -es, -Es              Silent (batch) mode\n"));
   mch_msg(_("  -h, --help            Print this help message\n"));
   mch_msg(_("  -i <shada>            Use this shada file\n"));
   mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
