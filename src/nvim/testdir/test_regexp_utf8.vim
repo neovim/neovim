@@ -166,3 +166,20 @@ func Test_eow_with_optional()
     call assert_equal(expected, actual)
   endfor
 endfunc
+
+func Test_reversed_range()
+  for re in range(0, 2)
+    exe 'set re=' . re
+    call assert_fails('call match("abc def", "[c-a]")', 'E944:')
+  endfor
+  set re=0
+endfunc
+
+func Test_large_class()
+  set re=1
+  call assert_fails('call match("abc def", "[\u3000-\u4000]")', 'E945:')
+  set re=2
+  call assert_equal(0, 'abc def' =~# '[\u3000-\u4000]')
+  call assert_equal(1, "\u3042" =~# '[\u3000-\u4000]')
+  set re=0
+endfunc
