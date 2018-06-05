@@ -135,11 +135,14 @@ class DebugSession( object ):
 
     adapter = launch_config[ configuration ].get( 'adapter' )
     if isinstance( adapter, str ):
-      self._adapter = adapters.get( adapter )
-    else:
-      self._adapter = adapter
+      adapter = adapters.get( adapter )
 
-    self._configuration = launch_config[ configuration ]
+    self._StartWithConfiguration( launch_config[ configuration ],
+                                  adapter )
+
+  def _StartWithConfiguration( self, configuration, adapter ):
+    self._configuration = configuration
+    self._adapter = adapter
 
     def start():
       self._StartDebugAdapter()
@@ -160,7 +163,10 @@ class DebugSession( object ):
 
   def Restart( self ):
     # TODO: There is a restart message but isn't always supported.
-    self.Start()
+    # FIXME: For some reason this doesn't work when run from the WinBar. It just
+    # beeps and doesn't display the config selector. One option is to just not
+    # display the selector and restart with the same opitons.
+    self._StartWithConfiguration( self._configuration, self._adapter )
 
   def OnChannelData( self, data ):
     if self._connection:
