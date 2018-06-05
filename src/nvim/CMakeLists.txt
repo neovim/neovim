@@ -457,6 +457,8 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
+    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libiconv-2.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
+
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)
@@ -484,7 +486,9 @@ set_property(
   APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
 )
 
-if(LUAJIT_FOUND)
+if(NOT LUAJIT_FOUND)
+  message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
+else()
   set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
   add_library(
     nvim-test
