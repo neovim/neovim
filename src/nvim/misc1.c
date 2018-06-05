@@ -106,7 +106,8 @@ open_line (
   char_u *p;
   char_u saved_char = NUL;        // init for GCC
   pos_T *pos;
-  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin);
+  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin
+                && *curbuf->b_p_inde == NUL);
   bool no_si = false;             // reset did_si afterwards
   int first_char = NUL;           // init for GCC
   int vreplace_mode;
