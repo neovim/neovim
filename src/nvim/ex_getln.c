@@ -626,6 +626,7 @@ static int command_line_execute(VimState *state, int key)
         // Entered command line, move it up
         cmdline_row--;
         redrawcmd();
+        wild_menu_showing = 0;
       } else if (save_p_ls != -1) {
         // restore 'laststatus' and 'winminheight'
         p_ls = save_p_ls;
@@ -636,13 +637,13 @@ static int command_line_execute(VimState *state, int key)
         restore_cmdline(&s->save_ccline);
         redrawcmd();
         save_p_ls = -1;
+        wild_menu_showing = 0;
       } else {
         win_redraw_last_status(topframe);
         wild_menu_showing = 0;  // must be before redraw_statuslines #8385
         redraw_statuslines();
       }
       KeyTyped = skt;
-      wild_menu_showing = 0;
       if (ccline.input_fn) {
         RedrawingDisabled = old_RedrawingDisabled;
       }
