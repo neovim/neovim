@@ -55,7 +55,7 @@ endif()
 
 option(ENABLE_LIBINTL "enable libintl" ON)
 if(MSVC)
-  # TODO(justinmk): need bundled iconv for MSVC.
+  add_definitions(-DDYNAMIC_ICONV)
   option(ENABLE_LIBICONV "enable libiconv" OFF)
 else()
   option(ENABLE_LIBICONV "enable libiconv" ON)
