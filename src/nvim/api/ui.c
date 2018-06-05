@@ -126,7 +126,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
     }
   }
 
-  if (ui->ui_ext[kUIHlState]) {
+  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {
     ui->ui_ext[kUILinegrid] = true;
   }
 
@@ -243,6 +243,23 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
 
   api_set_error(error, kErrorTypeValidation, "No such UI option: %s",
                 name.data);
+}
+
+/// Sets the inner "width" and "height" of the window grid identified by
+/// "grid" handle. If the grid does not exist, set error.
+void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
+                          Integer height, Error *error)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  // TODO(utkarshme): Check if grid exists
+
+  ui_grid_resize((GridHandle)grid, (int)width, (int)height);
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().

@@ -40,7 +40,9 @@ typedef struct {
   int OffsetRow;
   int OffsetColumn;
 
-  int was_resized;
+  // the size expected to be allocated to the internal grid
+  int internal_rows;
+  int internal_columns;
 } ScreenGrid;
 
 #endif  // NVIM_TYPES_H

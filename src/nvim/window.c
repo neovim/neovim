@@ -3860,6 +3860,8 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
+  grid_assign_handle(&new_wp->w_grid);
+
   // Init w: variables.
   new_wp->w_vars = tv_dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
@@ -4087,8 +4089,8 @@ static void frame_remove(frame_T *frp)
 void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
-  assert(Rows >= 0);
-  wp->w_lines = xcalloc(Rows, sizeof(wline_T));
+  assert(wp->w_grid.Rows >= 0);
+  wp->w_lines = xcalloc(wp->w_grid.Rows + 1, sizeof(wline_T));
 }
 
 /*

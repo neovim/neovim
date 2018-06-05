@@ -57,7 +57,7 @@ static int busy = 0;
 static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
-static GridHandle cursor_grid_handle = 1;
+static GridHandle cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -197,13 +197,6 @@ void ui_refresh(void)
   row = col = 0;
   pending_cursor_update = true;
 
-  ui_default_colors_set();
-
-  int save_p_lz = p_lz;
-  p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
-  p_lz = save_p_lz;
-
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
@@ -211,6 +204,14 @@ void ui_refresh(void)
                          BOOLEAN_OBJ(ext_widgets[i]));
     }
   }
+
+  ui_default_colors_set();
+
+  int save_p_lz = p_lz;
+  p_lz = false;  // convince redrawing() to return true ...
+  screen_resize(width, height);
+  p_lz = save_p_lz;
+
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
@@ -436,4 +437,19 @@ Array ui_array(void)
     ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;
+}
+
+void ui_grid_resize(GridHandle grid_handle, int width, int height)
+{
+  win_T *wp = get_win_by_grid_handle(grid_handle);
+
+  if (wp == NULL) {
+    //TODO(utkarshme): error out
+    abort();
+    return;
+  }
+
+  wp->w_grid.internal_rows = (int)height;
+  wp->w_grid.internal_columns = (int)width;
+  redraw_win_later(wp, SOME_VALID);
 }

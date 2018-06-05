@@ -3906,14 +3906,14 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
 
   col_off1 = curwin_col_off();
   col_off2 = col_off1 - curwin_col_off2();
-  width1 = curwin->w_width - col_off1;
-  width2 = curwin->w_width - col_off2;
+  width1 = curwin->w_grid.Columns - col_off1;
+  width2 = curwin->w_grid.Columns - col_off2;
 
   if (width2 == 0) {
     width2 = 1;  // Avoid divide by zero.
   }
 
-  if (curwin->w_width != 0) {
+  if (curwin->w_grid.Columns != 0) {
     /*
      * Instead of sticking at the last character of the buffer line we
      * try to stick in the last column of the screen.
@@ -4256,7 +4256,7 @@ dozet:
 
   /* "zH" - scroll screen right half-page */
   case 'H':
-    cap->count1 *= curwin->w_width / 2;
+    cap->count1 *= curwin->w_grid.Columns / 2;
     FALLTHROUGH;
 
   /* "zh" - scroll screen to the right */
@@ -4272,7 +4272,7 @@ dozet:
     break;
 
   /* "zL" - scroll screen left half-page */
-  case 'L':   cap->count1 *= curwin->w_width / 2;
+  case 'L':   cap->count1 *= curwin->w_grid.Columns / 2;
     FALLTHROUGH;
 
   /* "zl" - scroll screen to the left */
@@ -4308,7 +4308,7 @@ dozet:
         col = 0;                        /* like the cursor is in col 0 */
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
-      n = curwin->w_width - curwin_col_off();
+      n = curwin->w_grid.Columns - curwin_col_off();
       if (col + l_p_siso < n)
         col = 0;
       else
@@ -5018,7 +5018,7 @@ static void nv_scroll(cmdarg_T *cap)
       used -= diff_check_fill(curwin, curwin->w_topline)
               - curwin->w_topfill;
       validate_botline();           /* make sure w_empty_rows is valid */
-      half = (curwin->w_height - curwin->w_empty_rows + 1) / 2;
+      half = (curwin->w_grid.Rows - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; ++n) {
         /* Count half he number of filler lines to be "below this
          * line" and half to be "above the next line". */
@@ -5033,7 +5033,7 @@ static void nv_scroll(cmdarg_T *cap)
         if (hasFolding(curwin->w_topline + n, NULL, &lnum))
           n = lnum - curwin->w_topline;
       }
-      if (n > 0 && used > curwin->w_height)
+      if (n > 0 && used > curwin->w_grid.Rows)
         --n;
     } else { /* (cap->cmdchar == 'H') */
       n = cap->count1 - 1;
@@ -6748,9 +6748,9 @@ static void nv_g_cmd(cmdarg_T *cap)
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
     if (curwin->w_p_wrap
-        && curwin->w_width != 0
+        && curwin->w_grid.Columns != 0
         ) {
-      int width1 = curwin->w_width - curwin_col_off();
+      int width1 = curwin->w_grid.Columns - curwin_col_off();
       int width2 = width1 + curwin_col_off2();
 
       validate_virtcol();
@@ -6763,7 +6763,7 @@ static void nv_g_cmd(cmdarg_T *cap)
      * 'relativenumber' is on and lines are wrapping the middle can be more
      * to the left. */
     if (cap->nchar == 'm')
-      i += (curwin->w_width - curwin_col_off()
+      i += (curwin->w_grid.Columns - curwin_col_off()
             + ((curwin->w_p_wrap && i > 0)
                ? curwin_col_off2() : 0)) / 2;
     coladvance((colnr_T)i);
@@ -6809,11 +6809,11 @@ static void nv_g_cmd(cmdarg_T *cap)
     oap->motion_type = kMTCharWise;
     oap->inclusive = true;
     if (curwin->w_p_wrap
-        && curwin->w_width != 0
+        && curwin->w_grid.Columns != 0
         ) {
       curwin->w_curswant = MAXCOL;              /* so we stay at the end */
       if (cap->count1 == 1) {
-        int width1 = curwin->w_width - col_off;
+        int width1 = curwin->w_grid.Columns - col_off;
         int width2 = width1 + curwin_col_off2();
 
         validate_virtcol();
@@ -6839,7 +6839,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false)
         clearopbeep(oap);
     } else {
-      i = curwin->w_leftcol + curwin->w_width - col_off - 1;
+      i = curwin->w_leftcol + curwin->w_grid.Columns - col_off - 1;
       coladvance((colnr_T)i);
 
       /* Make sure we stick in this column. */
@@ -7954,7 +7954,7 @@ static void get_op_vcol(
   colnr_T end;
 
   if (VIsual_mode != Ctrl_V
-      || (!initial && oap->end.col < curwin->w_width)) {
+      || (!initial && oap->end.col < curwin->w_grid.Columns)) {
     return;
   }
 
