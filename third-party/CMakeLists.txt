@@ -157,15 +157,21 @@ set(WINGUI_SHA256 260efc686423e2529360b6a45c8e241fbbf276c8de6b04d44f45ab5b6fe8df
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
-
 set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
 set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
 set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msvc2015.zip)
 set(WINPTY_SHA256 35a48ece2ff4acdcbc8299d4920de53eb86b1fb41e64d2fe5ae7898931bcee89)
 
+# gettext source (for building/linking, does NOT provide tools like msgmerge.exe)
 set(GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.8.1.tar.gz)
 set(GETTEXT_SHA256 ff942af0e438ced4a8b0ea4b0b6e0d6d657157c5e2364de57baa279c1c125c43)
+
+# gettext binary (for tools like msgmerge.exe)
+set(GETTEXT_X86_URL https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.19.8.1-v1.15/gettext0.19.8.1-iconv1.15-shared-32.zip)
+set(GETTEXT_X86_SHA256 b7d8fe2d038950bc0447d664db614ebfc3100a1ba962a959d78e41bc708a2140)
+set(GETTEXT_X86_64_URL https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.19.8.1-v1.15/gettext0.19.8.1-iconv1.15-shared-64.zip)
+set(GETTEXT_X86_64_SHA256 c8ed2897438efc0a511892c2b38b623ef0c9092aced2acbd3f3daf2f12ba70b4)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
@@ -228,6 +234,9 @@ if(WIN32)
   include(TargetArch)
   GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+
+  GetBinaryDep(TARGET "gettext_${TARGET_ARCH}"
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
 
   if("${TARGET_ARCH}" STREQUAL "X86_64")
     set(TARGET_ARCH x64)
