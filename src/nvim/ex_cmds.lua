@@ -698,7 +698,7 @@ return {
   },
   {
     command='delfunction',
-    flags=bit.bor(NEEDARG, WORD1, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delfunction',
   },
