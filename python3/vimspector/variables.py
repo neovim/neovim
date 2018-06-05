@@ -15,6 +15,7 @@
 
 import vim
 import json
+import logging
 from collections import namedtuple
 from functools import partial
 
@@ -25,6 +26,9 @@ View = namedtuple( 'View', [ 'win', 'lines', 'draw' ] )
 
 class VariablesView( object ):
   def __init__( self, connection, variables_win, watches_win ):
+    self._logger = logging.getLogger( __name__ )
+    utils.SetUpLogging( self._logger )
+
     self._vars = View( variables_win, {}, self._DrawScopes )
     self._watch = View( watches_win, {}, self._DrawWatches )
     self._connection = connection
@@ -95,17 +99,28 @@ class VariablesView( object ):
 
   def LoadScopes( self, frame ):
     def scopes_consumer( message ):
+      old_scopes = self._scopes
       self._scopes = []
-      for scope in message[ 'body' ][ 'scopes' ]:
+
+      for i, scope in enumerate( message[ 'body' ][ 'scopes' ] ):
+        if ( i < len( old_scopes ) and
+             old_scopes[ i ][ 'name' ] == scope[ 'name' ] ):
+          scope[ '_expanded' ] = old_scopes[ i ].get( '_expanded', False )
+          scope[ '_old_variables' ] = old_scopes[ i ].get( '_variables', [] )
+        elif not scope[ 'expensive' ]:
+          # Expand any non-expensive scope unless manually collapsed
+          scope[ '_expanded' ] = True
+
         self._scopes.append( scope )
-        self._connection.DoRequest( partial( self._ConsumeVariables,
-                                             self._DrawScopes,
-                                             scope ), {
-          'command': 'variables',
-          'arguments': {
-            'variablesReference': scope[ 'variablesReference' ]
-          },
-        } )
+        if scope[ '_expanded' ]:
+          self._connection.DoRequest( partial( self._ConsumeVariables,
+                                               self._DrawScopes,
+                                               scope ), {
+            'command': 'variables',
+            'arguments': {
+              'variablesReference': scope[ 'variablesReference' ]
+            },
+          } )
 
       self._DrawScopes()
 
@@ -150,7 +165,29 @@ class VariablesView( object ):
       } )
 
   def _UpdateWatchExpression( self, watch, message ):
-    watch[ '_result' ] = message[ 'body' ]
+    old_result = None
+    if '_result' in watch:
+      old_result = watch[ '_result' ]
+
+    result = message[ 'body' ]
+    watch[ '_result' ] = result
+
+    if old_result:
+      if '_expanded' in old_result:
+        result[ '_expanded' ] = old_result[ '_expanded' ]
+      result[ '_old_variables' ] = old_result.get( '_variables', [] )
+
+    if ( result.get( 'variablesReference', 0 ) > 0 and
+         result.get( '_expanded', False ) ):
+      self._connection.DoRequest( partial( self._ConsumeVariables,
+                                           self._watch.draw,
+                                           result ), {
+        'command': 'variables',
+        'arguments': {
+          'variablesReference': result[ 'variablesReference' ]
+        },
+      } )
+
     self._DrawWatches()
 
   def ExpandVariable( self ):
@@ -170,6 +207,7 @@ class VariablesView( object ):
     if '_variables' in variable:
       # Collapse
       del variable[ '_variables' ]
+      variable[ '_expanded' ] = False
       view.draw()
       return
 
@@ -179,6 +217,7 @@ class VariablesView( object ):
     if variable[ 'variablesReference' ] <= 0:
       return
 
+    variable[ '_expanded' ] = True
     self._connection.DoRequest( partial( self._ConsumeVariables,
                                          view.draw,
                                          variable ), {
@@ -205,6 +244,10 @@ class VariablesView( object ):
         self._DrawVariables( view, variable[ '_variables' ], indent + 2 )
 
   def _DrawScopes( self ):
+    # FIXME: The drawing is dumb and draws from scratch every time. This is
+    # simple and works and makes sure the line-map is always correct.
+    # However it is really inefficient, and makes it so that expanded results
+    # are collapsed on every step.
     self._vars.lines.clear()
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
@@ -213,6 +256,10 @@ class VariablesView( object ):
           self._DrawScope( 0, scope )
 
   def _DrawWatches( self ):
+    # FIXME: The drawing is dumb and draws from scratch every time. This is
+    # simple and works and makes sure the line-map is always correct.
+    # However it is really inefficient, and makes it so that expanded results
+    # are collapsed on every step.
     self._watch.lines.clear()
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
@@ -264,6 +311,29 @@ class VariablesView( object ):
         parent[ '_variables' ] = []
 
       parent[ '_variables' ].append( variable )
+
+      # If the variable was previously expanded, expand it again
+      for index, v in enumerate( parent.get( '_old_variables', [] ) ):
+        if v[ 'name' ] == variable[ 'name' ]:
+          if ( v.get( '_expanded', False ) and
+               variable.get( 'variablesReference', 0 ) > 0 ):
+
+            variable[ '_expanded' ] = True
+            variable[ '_old_variables' ] = v.get( '_variables', [] )
+
+            self._connection.DoRequest( partial( self._ConsumeVariables,
+                                                 draw,
+                                                 variable ), {
+              'command': 'variables',
+              'arguments': {
+                'variablesReference': variable[ 'variablesReference' ]
+              },
+            } )
+
+          break
+
+    if '_old_variables' in parent:
+      del parent[ '_old_variables' ]
 
     draw()
 

@@ -304,7 +304,8 @@ class DebugSession( object ):
     self.SetCurrentFrame( None )
 
   def SetCurrentFrame( self, frame ):
-    ret = self._codeView.SetCurrentFrame( frame )
+    if not self._codeView.SetCurrentFrame( frame ):
+      return False
 
     if frame:
       self._variablesView.LoadScopes( frame )
@@ -313,7 +314,7 @@ class DebugSession( object ):
       self._stackTraceView.Clear()
       self._variablesView.Clear()
 
-    return ret
+    return True
 
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
