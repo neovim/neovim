@@ -14806,18 +14806,14 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         pos.col = 0;
       }
       if (name[0] == '.' && name[1] == NUL) {
-        // set cursor
-        if (fnum == curbuf->b_fnum) {
-          curwin->w_cursor = pos;
-          if (curswant >= 0) {
-            curwin->w_curswant = curswant - 1;
-            curwin->w_set_curswant = false;
-          }
-          check_cursor();
-          rettv->vval.v_number = 0;
-        } else {
-          EMSG(_(e_invarg));
+        // set cursor; "fnum" is ignored
+        curwin->w_cursor = pos;
+        if (curswant >= 0) {
+          curwin->w_curswant = curswant - 1;
+          curwin->w_set_curswant = false;
         }
+        check_cursor();
+        rettv->vval.v_number = 0;
       } else if (name[0] == '\'' && name[1] != NUL && name[2] == NUL)   {
         // set mark
         if (setmark_pos((uint8_t)name[1], &pos, fnum) == OK) {
