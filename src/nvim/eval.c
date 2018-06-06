@@ -6742,36 +6742,39 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
   char_u *tofree;
 
   if (opt_msg_tv->v_type != VAR_UNKNOWN) {
-    tofree = (char_u *) encode_tv2string(opt_msg_tv, NULL);
+    tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
     ga_concat(gap, tofree);
     xfree(tofree);
+    ga_concat(gap, (char_u *)": ");
+  }
+
+  if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
+    ga_concat(gap, (char_u *)"Pattern ");
+  } else if (atype == ASSERT_NOTEQUAL) {
+    ga_concat(gap, (char_u *)"Expected not equal to ");
   } else {
-    if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
-      ga_concat(gap, (char_u *)"Pattern ");
-    } else if (atype == ASSERT_NOTEQUAL) {
-      ga_concat(gap, (char_u *)"Expected not equal to ");
+    ga_concat(gap, (char_u *)"Expected ");
+  }
+
+  if (exp_str == NULL) {
+    tofree = (char_u *)encode_tv2string(exp_tv, NULL);
+    ga_concat_esc(gap, tofree);
+    xfree(tofree);
+  } else {
+    ga_concat_esc(gap, exp_str);
+  }
+
+  if (atype != ASSERT_NOTEQUAL) {
+    if (atype == ASSERT_MATCH) {
+      ga_concat(gap, (char_u *)" does not match ");
+    } else if (atype == ASSERT_NOTMATCH) {
+      ga_concat(gap, (char_u *)" does match ");
     } else {
-      ga_concat(gap, (char_u *)"Expected ");
+      ga_concat(gap, (char_u *)" but got ");
     }
-    if (exp_str == NULL) {
-      tofree = (char_u *)encode_tv2string(exp_tv, NULL);
-      ga_concat_esc(gap, tofree);
-      xfree(tofree);
-    } else {
-      ga_concat_esc(gap, exp_str);
-    }
-    if (atype != ASSERT_NOTEQUAL) {
-      if (atype == ASSERT_MATCH) {
-        ga_concat(gap, (char_u *)" does not match ");
-      } else if (atype == ASSERT_NOTMATCH) {
-        ga_concat(gap, (char_u *)" does match ");
-      } else {
-        ga_concat(gap, (char_u *)" but got ");
-      }
-      tofree = (char_u *)encode_tv2string(got_tv, NULL);
-      ga_concat_esc(gap, tofree);
-      xfree(tofree);
-    }
+    tofree = (char_u *)encode_tv2string(got_tv, NULL);
+    ga_concat_esc(gap, tofree);
+    xfree(tofree);
   }
 }
 

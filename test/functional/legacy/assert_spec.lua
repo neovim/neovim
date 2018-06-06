@@ -77,6 +77,11 @@ describe('assert function:', function()
       eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
          exc_exec('call CheckAssert()'))
     end)
+
+    it('can specify a message and get a message about what failed', function()
+      call('assert_equal', 'foo', 'bar', 'testing')
+      expected_errors({"testing: Expected 'foo' but got 'bar'"})
+    end)
   end)
 
   -- assert_notequal({expected}, {actual}[, {msg}])
