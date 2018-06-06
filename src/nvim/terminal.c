@@ -528,6 +528,13 @@ void terminal_send(Terminal *term, char *data, size_t size)
   term->opts.write_cb(data, size, term->opts.data);
 }
 
+void terminal_flush_output(Terminal *term)
+{
+  size_t len = vterm_output_read(term->vt, term->textbuf,
+                                 sizeof(term->textbuf));
+  terminal_send(term, term->textbuf, len);
+}
+
 void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
@@ -545,9 +552,7 @@ void terminal_send_key(Terminal *term, int c)
     vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
   }
 
-  size_t len = vterm_output_read(term->vt, term->textbuf,
-      sizeof(term->textbuf));
-  terminal_send(term, term->textbuf, (size_t)len);
+  terminal_flush_output(term);
 }
 
 void terminal_receive(Terminal *term, char *data, size_t len)
@@ -982,7 +987,7 @@ static bool send_mouse_event(Terminal *term, int c)
 
     mouse_action(term, button, row, col, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
-        sizeof(term->textbuf));
+                                   sizeof(term->textbuf));
     terminal_send(term, term->textbuf, (size_t)len);
     return false;
   }
