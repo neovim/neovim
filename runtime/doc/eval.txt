@@ -6789,10 +6789,12 @@ setpos({expr}, {list})
 		    [bufnum, lnum, col, off, curswant]
 
 		"bufnum" is the buffer number.	Zero can be used for the
-		current buffer.  Setting the cursor is only possible for
-		the current buffer.  To set a mark in another buffer you can
-		use the |bufnr()| function to turn a file name into a buffer
-		number.
+		current buffer.  When setting an uppercase mark "bufnum" is
+		used for the mark position.  For other marks it specifies the
+		buffer to set the mark in.  You can use the |bufnr()| function
+		to turn a file name into a buffer number.
+		For setting the cursor and the ' mark "bufnum" is ignored,
+		since these are associated with a window, not a buffer.
 		Does not change the jumplist.
 
 		"lnum" and "col" are the position in the buffer.  The first

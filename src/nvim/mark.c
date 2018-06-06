@@ -106,37 +106,39 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
+  // Can't set a mark in a non-existant buffer.
+  buf_T *buf = buflist_findnr(fnum);
+  if (buf == NULL) {
+    return FAIL;
+  }
+
   if (c == '"') {
-    RESET_FMARK(&curbuf->b_last_cursor, *pos, curbuf->b_fnum);
+    RESET_FMARK(&buf->b_last_cursor, *pos, buf->b_fnum);
     return OK;
   }
 
   /* Allow setting '[ and '] for an autocommand that simulates reading a
    * file. */
   if (c == '[') {
-    curbuf->b_op_start = *pos;
+    buf->b_op_start = *pos;
     return OK;
   }
   if (c == ']') {
-    curbuf->b_op_end = *pos;
+    buf->b_op_end = *pos;
     return OK;
   }
 
   if (c == '<' || c == '>') {
-    if (c == '<')
-      curbuf->b_visual.vi_start = *pos;
-    else
-      curbuf->b_visual.vi_end = *pos;
-    if (curbuf->b_visual.vi_mode == NUL)
-      /* Visual_mode has not yet been set, use a sane default. */
-      curbuf->b_visual.vi_mode = 'v';
+    if (c == '<') {
+      buf->b_visual.vi_start = *pos;
+    } else {
+      buf->b_visual.vi_end = *pos;
+    }
+    if (buf->b_visual.vi_mode == NUL) {
+      // Visual_mode has not yet been set, use a sane default.
+      buf->b_visual.vi_mode = 'v';
+    }
     return OK;
-  }
-
-  buf_T *buf = buflist_findnr(fnum);
-  // Can't set a mark in a non-existant buffer.
-  if (buf == NULL) {
-    return FAIL;
   }
 
   if (ASCII_ISLOWER(c)) {
@@ -358,13 +360,14 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
   } else if (c == '<' || c == '>') {  /* start/end of visual area */
     startp = &buf->b_visual.vi_start;
     endp = &buf->b_visual.vi_end;
-    if ((c == '<') == lt(*startp, *endp))
+    if (((c == '<') == lt(*startp, *endp) || endp->lnum == 0)
+        && startp->lnum != 0) {
       posp = startp;
-    else
+    } else {
       posp = endp;
-    /*
-     * For Visual line mode, set mark at begin or end of line
-     */
+    }
+
+    // For Visual line mode, set mark at begin or end of line
     if (buf->b_visual.vi_mode == 'V') {
       pos_copy = *posp;
       posp = &pos_copy;
@@ -647,8 +650,8 @@ void do_marks(exarg_T *eap)
   show_one_mark(-1, arg, NULL, NULL, false);
 }
 
-static void 
-show_one_mark (
+static void
+show_one_mark(
     int c,
     char_u *arg,
     pos_T *p,
