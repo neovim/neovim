@@ -196,15 +196,18 @@ void init_homedir(void)
     const char *homedrive = os_getenv("HOMEDRIVE");
     const char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
-        homepath = "\\";
+      homepath = "\\";
     }
-    if (homedrive != NULL && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
+    if (homedrive != NULL
+        && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
       snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
         var = os_buf;
-        vim_setenv("HOME", os_buf);
       }
     }
+  }
+  if (var == NULL) {
+    var = os_getenv("USERPROFILE");
   }
 #endif
 
@@ -608,6 +611,12 @@ char *vim_getenv(const char *name)
     return xstrdup(kos_env_path);
   }
 
+#ifdef WIN32
+  if (strcmp(name, "HOME") == 0) {
+    return xstrdup(homedir);
+  }
+#endif
+
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
   if (!vimruntime && strcmp(name, "VIM") != 0) {
     return NULL;
@@ -758,7 +767,12 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
     dirlen = strlen(homedir);
   }
 
-  const char *const homedir_env = os_getenv("HOME");
+  const char *homedir_env = os_getenv("HOME");
+#ifdef WIN32
+  if (homedir_env == NULL) {
+    homedir_env = os_getenv("USERPROFILE");
+  }
+#endif
   char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 
