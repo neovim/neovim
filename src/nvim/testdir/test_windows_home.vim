@@ -38,76 +38,73 @@ func CheckHomeIsInSubprocessEnvironment(exp)
 endfunc
 
 func CheckHome(exp, ...)
-  "call assert_equal(a:exp, $HOME)
-  "call assert_equal(a:exp, expand('~', ':p'))
+  call assert_equal(a:exp, $HOME)
+  call assert_equal(a:exp, expand('~', ':p'))
   if !a:0
     call CheckHomeIsMissingFromSubprocessEnvironment()
   else
-    call CheckHomeIsInSubprocessEnvironment(a:exp)
+    call CheckHomeIsInSubprocessEnvironment(a:1)
   endif
 endfunc
 
-func TestWindowsHome()
+func Test_WindowsHome()
   command! -nargs=* SaveEnv call <SID>save_env(<f-args>)
   command! -nargs=* RestoreEnv call <SID>restore_env()
   command! -nargs=* UnletEnv call <SID>unlet_env(<f-args>)
+  set noshellslash
 
-  SaveEnv $HOME $USERPROFILE $HOMEDRIVE $HOMEPATH
+  let save_home = $HOME
+  SaveEnv $USERPROFILE $HOMEDRIVE $HOMEPATH
   try
-    RestoreEnv
-    UnletEnv $HOME $USERPROFILE $HOMEPATH
-    let $HOMEDRIVE = 'C:'
-    call CheckHome('C:\')
-
-    RestoreEnv
-    UnletEnv $HOME $USERPROFILE
+    " Normal behavior: use $HOMEDRIVE and $HOMEPATH, ignore $USERPROFILE
+    let $USERPROFILE = 'unused'
     let $HOMEDRIVE = 'C:'
     let $HOMEPATH = '\foobar'
+    let $HOME = ''  " Force recomputing "homedir"
     call CheckHome('C:\foobar')
 
-    RestoreEnv
-    UnletEnv $HOME $HOMEDRIVE $HOMEPATH
+    " Same, but with $HOMEPATH not set
+    UnletEnv $HOMEPATH
+    let $HOME = ''  " Force recomputing "homedir"
+    call CheckHome('C:\')
+
+    " Use $USERPROFILE if $HOMEPATH and $HOMEDRIVE are empty
+    UnletEnv $HOMEDRIVE $HOMEPATH
     let $USERPROFILE = 'C:\foo'
+    let $HOME = ''  " Force recomputing "homedir"
     call CheckHome('C:\foo')
 
-    RestoreEnv
-    UnletEnv $HOME
-    let $USERPROFILE = 'C:\foo'
-    let $HOMEDRIVE = 'C:'
-    let $HOMEPATH = '\baz'
-    call CheckHome('C:\foo')
-
-    RestoreEnv
+    " If $HOME is set the others don't matter
     let $HOME = 'C:\bar'
-    let $USERPROFILE = 'C:\foo'
-    let $HOMEDRIVE = 'C:'
-    let $HOMEPATH = '\baz'
-    call CheckHome('C:\bar', 1)
+    let $USERPROFILE = 'unused'
+    let $HOMEDRIVE = 'unused'
+    let $HOMEPATH = 'unused'
+    call CheckHome('C:\bar', 'C:\bar')
 
-    RestoreEnv
+    " If $HOME contains %USERPROFILE% it is expanded
+    let $USERPROFILE = 'C:\foo'
     let $HOME = '%USERPROFILE%\bar'
-    let $USERPROFILE = 'C:\foo'
-    let $HOMEDRIVE = 'C:'
-    let $HOMEPATH = '\baz'
-    call CheckHome('%USERPROFILE%\bar', 1)
+    let $HOMEDRIVE = 'unused'
+    let $HOMEPATH = 'unused'
+    " call CheckHome('C:\foo\bar', '%USERPROFILE%\bar')
 
-    RestoreEnv
+    " Invalid $HOME is kept
+    let $USERPROFILE = 'C:\foo'
     let $HOME = '%USERPROFILE'
-    let $USERPROFILE = 'C:\foo'
-    let $HOMEDRIVE = 'C:'
-    let $HOMEPATH = '\baz'
-    call CheckHome('%USERPROFILE', 1)
+    let $HOMEDRIVE = 'unused'
+    let $HOMEPATH = 'unused'
+    call CheckHome('%USERPROFILE', '%USERPROFILE')
 
-    RestoreEnv
+    " %USERPROFILE% not at start of $HOME is not expanded
+    let $USERPROFILE = 'unused'
     let $HOME = 'C:\%USERPROFILE%'
-    let $USERPROFILE = 'C:\foo'
-    let $HOMEDRIVE = 'C:'
-    let $HOMEPATH = '\baz'
-    call CheckHome('C:\%USERPROFILE%', 1)
+    let $HOMEDRIVE = 'unused'
+    let $HOMEPATH = 'unused'
+    call CheckHome('C:\%USERPROFILE%', 'C:\%USERPROFILE%')
 
     if has('channel')
       RestoreEnv
-      UnletEnv $HOME
+      let $HOME = save_home
       let env = ''
       let job = job_start('cmd /c set', {'out_cb': {ch,x->[env,execute('let env=x')]}})
       sleep 1
