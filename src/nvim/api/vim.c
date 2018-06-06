@@ -16,6 +16,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -1163,6 +1164,11 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
 
     MsgpackRpcRequestHandler handler = msgpack_rpc_get_handler_for(name.data,
                                                                    name.size);
+    if (handler.fn == msgpack_rpc_handle_missing_method) {
+      api_set_error(&nested_error, kErrorTypeException, "Invalid method: %s",
+                    name.size > 0 ? name.data : "<empty>");
+      break;
+    }
     Object result = handler.fn(channel_id, args, &nested_error);
     if (ERROR_SET(&nested_error)) {
       // error handled after loop

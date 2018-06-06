@@ -312,21 +312,27 @@ static void handle_request(Channel *channel, msgpack_object *request)
     api_clear_error(&error);
     return;
   }
+
   // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
+  Array args = ARRAY_DICT_INIT;
   msgpack_object *method = msgpack_rpc_method(request);
 
   if (method) {
     handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
                                           method->via.bin.size);
+    if (handler.fn == msgpack_rpc_handle_missing_method) {
+      String m = method->via.bin.size > 0
+        ? cbuf_to_string(method->via.bin.ptr, method->via.bin.size)
+        : cstr_to_string("<empty>");
+      ADD(args, STRING_OBJ(m));
+      handler.async = true;
+    } else if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+      handler.fn = msgpack_rpc_handle_invalid_arguments;
+      handler.async = true;
+    }
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-    handler.fn = msgpack_rpc_handle_invalid_arguments;
     handler.async = true;
   }
 

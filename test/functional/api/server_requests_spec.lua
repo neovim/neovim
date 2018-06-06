@@ -222,7 +222,7 @@ describe('server -> client', function()
     end)
 
     it('returns an error if the request failed', function()
-      expect_err('Vim:Invalid method name',
+      expect_err('Vim:Invalid method: does%-not%-exist',
                  eval, "rpcrequest(vim, 'does-not-exist')")
     end)
   end)
