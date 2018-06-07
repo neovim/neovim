@@ -686,13 +686,21 @@ char_u *vim_findfile(void *search_ctx_arg)
         /* if we have a start dir copy it in */
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
-          STRCPY(file_path, search_ctx->ffsc_start_dir);
-          add_pathsep((char *)file_path);
+          if (STRLEN(search_ctx->ffsc_start_dir) + 1 < MAXPATHL) {
+            STRCPY(file_path, search_ctx->ffsc_start_dir);
+            add_pathsep((char *)file_path);
+          } else {
+            goto fail;
+          }
         }
 
-        /* append the fix part of the search path */
-        STRCAT(file_path, stackp->ffs_fix_path);
-        add_pathsep((char *)file_path);
+        // append the fix part of the search path
+        if (STRLEN(file_path) + STRLEN(stackp->ffs_fix_path) + 1 < MAXPATHL) {
+          STRCAT(file_path, stackp->ffs_fix_path);
+          add_pathsep((char *)file_path);
+        } else {
+          goto fail;
+        }
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
@@ -705,7 +713,11 @@ char_u *vim_findfile(void *search_ctx_arg)
 
             if (*p > 0) {
               (*p)--;
-              file_path[len++] = '*';
+              if (len + 1 < MAXPATHL) {
+                file_path[len++] = '*';
+              } else {
+                goto fail;
+              }
             }
 
             if (*p == 0) {
@@ -729,8 +741,13 @@ char_u *vim_findfile(void *search_ctx_arg)
            * on the stack again for further search.
            */
           while (*rest_of_wildcards
-                 && !vim_ispathsep(*rest_of_wildcards))
-            file_path[len++] = *rest_of_wildcards++;
+                 && !vim_ispathsep(*rest_of_wildcards)) {
+            if (len + 1 < MAXPATHL) {
+              file_path[len++] = *rest_of_wildcards++;
+            } else {
+              goto fail;
+            }
+          }
 
           file_path[len] = NUL;
           if (vim_ispathsep(*rest_of_wildcards))
@@ -775,9 +792,14 @@ char_u *vim_findfile(void *search_ctx_arg)
 
             /* prepare the filename to be checked for existence
              * below */
-            STRCPY(file_path, stackp->ffs_filearray[i]);
-            add_pathsep((char *)file_path);
-            STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            if (STRLEN(stackp->ffs_filearray[i]) + 1
+                + STRLEN(search_ctx->ffsc_file_to_search) < MAXPATHL) {
+              STRCPY(file_path, stackp->ffs_filearray[i]);
+              add_pathsep((char *)file_path);
+              STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            } else {
+              goto fail;
+            }
 
             /*
              * Try without extra suffix and then with suffixes
@@ -924,9 +946,14 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (*search_ctx->ffsc_start_dir == 0)
         break;
 
-      STRCPY(file_path, search_ctx->ffsc_start_dir);
-      add_pathsep((char *)file_path);
-      STRCAT(file_path, search_ctx->ffsc_fix_path);
+      if (STRLEN(search_ctx->ffsc_start_dir) + 1
+          + STRLEN(search_ctx->ffsc_fix_path) < MAXPATHL) {
+        STRCPY(file_path, search_ctx->ffsc_start_dir);
+        add_pathsep((char *)file_path);
+        STRCAT(file_path, search_ctx->ffsc_fix_path);
+      } else {
+        goto fail;
+      }
 
       /* create a new stack entry */
       sptr = ff_create_stack_element(file_path,
@@ -936,6 +963,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       break;
   }
 
+fail:
   xfree(file_path);
   return NULL;
 }
