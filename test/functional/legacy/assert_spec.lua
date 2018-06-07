@@ -169,10 +169,10 @@ describe('assert function:', function()
         call assert_true('', 'file two')
       ]])
       expected_errors({
-        tmpname_one .. " line 1: 'equal assertion failed'",
-        tmpname_one .. " line 2: 'true  assertion failed'",
-        tmpname_one .. " line 3: 'false assertion failed'",
-        tmpname_two .. " line 1: 'file two'",
+        tmpname_one .. " line 1: equal assertion failed: Expected 1 but got 100",
+        tmpname_one .. " line 2: true  assertion failed: Expected False but got 'true'",
+        tmpname_one .. " line 3: false assertion failed: Expected True but got 'false'",
+        tmpname_two .. " line 1: file two: Expected True but got ''",
       })
     end)
 
@@ -203,7 +203,7 @@ describe('assert function:', function()
 
     it('should set v:errors to msg when given and match fails', function()
       call('assert_match', 'bar.*foo', 'foobar', 'wrong')
-      expected_errors({"'wrong'"})
+      expected_errors({"wrong: Pattern 'bar.*foo' does not match 'foobar'"})
     end)
   end)
 
