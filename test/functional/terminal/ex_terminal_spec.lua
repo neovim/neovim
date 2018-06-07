@@ -47,6 +47,16 @@ describe(':terminal', function()
     ]])
   end)
 
+  it("should read output buffer on terminal reporting", function()
+    if iswin() then
+      feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])
+    else
+      feed_command([[terminal printf '\e[6n'; sleep 0.5 ]])
+    end
+    wait()
+    screen:expect('%^%[%[1;1R', nil, nil, nil, true)
+  end)
+
   it("in normal-mode :split does not move cursor", function()
     if iswin() then
       feed_command([[terminal for /L \\%I in (1,0,2) do ( echo foo & ping -w 100 -n 1 127.0.0.1 > nul )]])

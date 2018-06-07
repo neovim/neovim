@@ -602,6 +602,7 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   // process_channel_event will modify the read buffer(convert NULs into NLs)
   if (chan->term) {
     terminal_receive(chan->term, ptr, count);
+    terminal_flush_output(chan->term);
   }
 
   rbuffer_consumed(buf, count);
