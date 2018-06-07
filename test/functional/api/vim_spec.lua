@@ -20,8 +20,19 @@ local format_string = global_helpers.format_string
 local intchar2lua = global_helpers.intchar2lua
 local mergedicts_copy = global_helpers.mergedicts_copy
 
-describe('api', function()
+describe('API', function()
   before_each(clear)
+
+  it('validates requests', function()
+    expect_err('Invalid method: bogus',
+               request, 'bogus')
+    expect_err('Invalid method: … の り 。…',
+               request, '… の り 。…')
+    expect_err('Invalid method: <empty>',
+               request, '')
+    expect_err("can't serialize object",
+               request, nil)
+  end)
 
   describe('nvim_command', function()
     it('works', function()
@@ -924,7 +935,7 @@ describe('api', function()
         {'i_am_not_a_method', {'xx'}},
         {'nvim_set_var', {'avar', 10}},
       }
-      eq({{}, {0, error_types.Exception.id, 'Invalid method name'}},
+      eq({{}, {0, error_types.Exception.id, 'Invalid method: i_am_not_a_method'}},
          meths.call_atomic(req))
       eq(5, meths.get_var('avar'))
     end)
