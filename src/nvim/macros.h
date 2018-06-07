@@ -86,7 +86,12 @@
  * vim_isbreak() is used very often if 'linebreak' is set, use a macro to make
  * it work fast.
  */
-#define vim_isbreak(c) (breakat_flags[(char_u)(c)])
+static inline char vim_isbreak(int c)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE
+{
+  return breakat_flags[(char_u) c];
+}
+
 
 #define WRITEBIN   "wb"        /* no CR-LF translation */
 #define READBIN    "rb"
@@ -120,11 +125,25 @@
 // Get the length of the character p points to
 # define MB_PTR2LEN(p)          mb_ptr2len(p)
 // Advance multi-byte pointer, skip over composing chars.
-# define mb_ptr_adv(p)      (p += mb_ptr2len((char_u *)p))
+static inline void mb_ptr_adv(char_u *p)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE
+{
+  p += mb_ptr2len(p);
+}
 // Advance multi-byte pointer, do not skip over composing chars.
-# define mb_cptr_adv(p)     (p += utf_ptr2len(p))
+static inline void mb_cptr_adv(char_u *p)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE
+{
+  p += utf_ptr2len(p);
+}
+
 // Backup multi-byte pointer. Only use with "p" > "s" !
-# define mb_ptr_back(s, p)  (p -= mb_head_off((char_u *)s, (char_u *)p - 1) + 1)
+static inline void mb_ptr_back(char_u *s, char_u *p)
+  REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE
+{
+  p -= mb_head_off(s, p - 1) + 1;
+}
+
 // get length of multi-byte char, not including composing chars
 # define MB_CPTR2LEN(p)     utf_ptr2len(p)
 
