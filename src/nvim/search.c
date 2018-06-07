@@ -130,7 +130,7 @@ typedef struct SearchedFile {
  *
  * returns FAIL if failed, OK otherwise.
  */
-int 
+int
 search_regcomp (
     char_u *pat,
     int pat_save,
@@ -2121,7 +2121,7 @@ static int check_linecomment(char_u *line)
  * Show the match only if it is visible on the screen.
  * If there isn't a match, then beep.
  */
-void 
+void
 showmatch (
     int c                      /* char to show match for */
 )
@@ -2377,8 +2377,14 @@ findpar (
     ++curr;
   curwin->w_cursor.lnum = curr;
   if (curr == curbuf->b_ml.ml_line_count && what != '}') {
-    if ((curwin->w_cursor.col = (colnr_T)STRLEN(ml_get(curr))) != 0) {
+    char_u *line = ml_get(curr);
+
+    // Put the cursor on the last character in the last line and make the
+    // motion inclusive.
+    if ((curwin->w_cursor.col = (colnr_T)STRLEN(line)) != 0) {
       --curwin->w_cursor.col;
+      curwin->w_cursor.col -=
+        (*mb_head_off)(line, line + curwin->w_cursor.col);
       *pincl = true;
     }
   } else
@@ -2483,7 +2489,7 @@ static int cls(void)
  * Returns FAIL if the cursor was already at the end of the file.
  * If eol is TRUE, last word stops at end of line (for operators).
  */
-int 
+int
 fwd_word (
     long count,
     int bigword,                /* "W", "E" or "B" */
@@ -2666,7 +2672,7 @@ finished:
  *
  * Returns FAIL if start of the file was reached.
  */
-int 
+int
 bckend_word (
     long count,
     int bigword,                /* TRUE for "B" */
@@ -2756,7 +2762,7 @@ static void find_first_blank(pos_T *posp)
 /*
  * Skip count/2 sentences and count/2 separating white spaces.
  */
-static void 
+static void
 findsent_forward (
     long count,
     int at_start_sent              /* cursor is at start of sentence */
@@ -2776,7 +2782,7 @@ findsent_forward (
  * Find word under cursor, cursor at end.
  * Used while an operator is pending, and in Visual mode.
  */
-int 
+int
 current_word (
     oparg_T *oap,
     long count,
@@ -3084,7 +3090,7 @@ extend:
  * Find block under the cursor, cursor at end.
  * "what" and "other" are two matching parenthesis/brace/etc.
  */
-int 
+int
 current_block (
     oparg_T *oap,
     long count,
@@ -3282,7 +3288,7 @@ static int in_html_tag(int end_tag)
 /*
  * Find tag block under the cursor, cursor at end.
  */
-int 
+int
 current_tagblock (
     oparg_T *oap,
     long count_arg,
@@ -3465,7 +3471,7 @@ theend:
   return retval;
 }
 
-int 
+int
 current_par (
     oparg_T *oap,
     long count,
@@ -3632,7 +3638,7 @@ extend:
  * as a quote.
  * Returns column number of "quotechar" or -1 when not found.
  */
-static int 
+static int
 find_next_quote (
     char_u *line,
     int col,
@@ -3664,7 +3670,7 @@ find_next_quote (
  * as a quote.
  * Return the found column or zero.
  */
-static int 
+static int
 find_prev_quote (
     char_u *line,
     int col_start,
@@ -3694,7 +3700,7 @@ find_prev_quote (
  * Find quote under the cursor, cursor at end.
  * Returns TRUE if found, else FALSE.
  */
-int 
+int
 current_quote (
     oparg_T *oap,
     long count,
@@ -3920,7 +3926,7 @@ current_quote (
  * Find next search match under cursor, cursor at end.
  * Used while an operator is pending, and in Visual mode.
  */
-int 
+int
 current_search (
     long count,
     int forward                    /* move forward or backwards */
@@ -4116,7 +4122,7 @@ int linewhite(linenr_T lnum)
  * Find identifiers or defines in included files.
  * If p_ic && (compl_cont_status & CONT_SOL) then ptr must be in lowercase.
  */
-void 
+void
 find_pattern_in_path (
     char_u *ptr,               /* pointer to search pattern */
     int dir,                 /* direction of expansion */
