@@ -45,8 +45,10 @@ option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
 else()
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
@@ -173,6 +175,9 @@ set(GETTEXT_X86_SHA256 b7d8fe2d038950bc0447d664db614ebfc3100a1ba962a959d78e41bc7
 set(GETTEXT_X86_64_URL https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.19.8.1-v1.15/gettext0.19.8.1-iconv1.15-shared-64.zip)
 set(GETTEXT_X86_64_SHA256 c8ed2897438efc0a511892c2b38b623ef0c9092aced2acbd3f3daf2f12ba70b4)
 
+set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
+set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
@@ -219,6 +224,10 @@ endif()
 
 if(USE_BUNDLED_GETTEXT)
   include(BuildGettext)
+endif()
+
+if(USE_BUNDLED_LIBICONV)
+  include(BuildLibiconv)
 endif()
 
 include(GetBinaryDeps)
