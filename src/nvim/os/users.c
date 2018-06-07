@@ -76,7 +76,7 @@ char *os_get_user_directory(const char *name)
 {
 #if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
   struct passwd *pw;
-  if (name == NULL) {
+  if (name == NULL || *name == NUL) {
     return NULL;
   }
   pw = getpwnam(name);  // NOLINT(runtime/threadsafe_fn)

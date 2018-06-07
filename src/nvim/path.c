@@ -1097,17 +1097,18 @@ static bool has_env_var(char_u *p)
 }
 
 #ifdef SPECIAL_WILDCHAR
-/*
- * Return TRUE if "p" contains a special wildcard character.
- * Allowing for escaping.
- */
+
+// Return TRUE if "p" contains a special wildcard character, one that Vim
+// cannot expand, requires using a shell.
 static bool has_special_wildchar(char_u *p)
 {
   for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)SPECIAL_WILDCHAR, *p) != NULL)
+    // Allow for escaping
+    if (*p == '\\' && p[1] != NUL) {
+      p++;
+    } else if (vim_strchr((char_u *)SPECIAL_WILDCHAR, *p) != NULL) {
       return true;
+    }
   }
   return false;
 }
@@ -2033,7 +2034,7 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
         break;
       }
       if (match_file_list(p_wig, (*files)[i], ffname)) {
-        // remove this matching files from the list
+        // remove this matching file from the list
         xfree((*files)[i]);
         for (j = i; j + 1 < *num_files; j++) {
           (*files)[j] = (*files)[j + 1];
