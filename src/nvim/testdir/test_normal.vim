@@ -847,7 +847,7 @@ func! Test_normal18_z_fold()
   norm! j
   call assert_equal('52', getline('.'))
 
-  " zA on a opened fold when foldenale is not set
+  " zA on a opened fold when foldenable is not set
   50
   set nofoldenable
   norm! zA
@@ -909,7 +909,7 @@ func! Test_normal18_z_fold()
   norm! j
   call assert_equal('55', getline('.'))
 
-  " 2) do not close fold under curser
+  " 2) do not close fold under cursor
   51
   set nofoldenable
   norm! zx
@@ -1829,15 +1829,57 @@ fun! Test_normal34_g_cmd3()
   if !has("multi_byte")
     return
   endif
+
   " Test for g8
   new
-  call append(0, 'abcdefghijklmnopqrstuvwxyzäüö')
-  let a=execute(':norm! 1gg$g8')
-  call assert_equal('c3 b6 ', a[1:])
+  let a=execute(':norm! 1G0g8')
+  call assert_equal("\nNUL", a)
 
-  " Test for gp gP
-  call append(1, range(1,10))
+  call setline(1, 'abcdefghijklmnopqrstuvwxyzäüö')
+  let a=execute(':norm! 1G$g8')
+  call assert_equal("\nc3 b6 ", a)
+
+  call setline(1, "a\u0302")
+  let a=execute(':norm! 1G0g8')
+  call assert_equal("\n61 + cc 82 ", a)
+
   " clean up
+  bw!
+endfunc
+
+func Test_normal_8g8()
+  if !has("multi_byte")
+    return
+  endif
+  new
+
+  " Test 8g8 which finds invalid utf8 at or after the cursor.
+
+  " With invalid byte.
+  call setline(1, "___\xff___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With invalid byte before the cursor.
+  call setline(1, "___\xff___")
+  norm! 1G$h8g8g
+  call assert_equal([0, 1, 6, 0, 9], getcurpos())
+
+  " With truncated sequence.
+  call setline(1, "___\xE2\x82___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With overlong sequence.
+  call setline(1, "___\xF0\x82\x82\xAC___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With valid utf8.
+  call setline(1, "café")
+  norm! 1G08g8
+  call assert_equal([0, 1, 1, 0, 1], getcurpos())
+
   bw!
 endfunc
 
