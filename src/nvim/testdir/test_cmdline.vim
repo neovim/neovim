@@ -366,6 +366,15 @@ func Test_cmdline_complete_wildoptions()
   bw!
 endfunc
 
+func Test_cmdline_complete_user_cmd()
+  command! -complete=color -nargs=1 Foo :
+  call feedkeys(":Foo \<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  call feedkeys(":Foo b\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  delcommand Foo
+endfunc
+
 " using a leading backslash here
 set cpo+=C
 
