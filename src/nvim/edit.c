@@ -7554,7 +7554,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         return false;
       }
       Insstart.lnum--;
-      Insstart.col = STRLEN(ml_get(Insstart.lnum));
+      Insstart.col = (colnr_T)STRLEN(ml_get(Insstart.lnum));
     }
     /*
      * In replace mode:
