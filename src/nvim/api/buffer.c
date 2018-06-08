@@ -25,6 +25,7 @@
 #include "nvim/window.h"
 #include "nvim/undo.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/buffer_updates.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -73,6 +74,59 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   xfree(slice.items);
 
   return rv;
+}
+
+/// Activate updates from this buffer to the current channel.
+///
+/// @param buffer The buffer handle
+/// @param send_buffer Set to true if the initial notification should contain
+///        the whole buffer. If so, the first notification will be a
+///        `nvim_buf_lines_event`. Otherwise, the first notification will be
+///        a `nvim_buf_changedtick_event`
+/// @param  opts  Optional parameters. Currently not used.
+/// @param[out] err Details of an error that may have occurred
+/// @return False when updates couldn't be enabled because the buffer isn't
+///         loaded or `opts` contained an invalid key; otherwise True.
+Boolean nvim_buf_attach(uint64_t channel_id,
+                        Buffer buffer,
+                        Boolean send_buffer,
+                        Dictionary opts,
+                        Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  if (opts.size > 0) {
+      api_set_error(err, kErrorTypeValidation, "dict isn't empty");
+      return false;
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+
+  return buf_updates_register(buf, channel_id, send_buffer);
+}
+//
+/// Deactivate updates from this buffer to the current channel.
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return False when updates couldn't be disabled because the buffer
+///         isn't loaded; otherwise True.
+Boolean nvim_buf_detach(uint64_t channel_id,
+                        Buffer buffer,
+                        Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+
+  buf_updates_unregister(buf, channel_id);
+  return true;
 }
 
 /// Sets a buffer line
@@ -407,7 +461,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
                 false);
   }
 
-  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
 
   if (save_curbuf.br_buf == NULL) {
     fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);

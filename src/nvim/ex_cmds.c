@@ -35,6 +35,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -279,7 +280,7 @@ void ex_align(exarg_T *eap)
       new_indent = 0;
     (void)set_indent(new_indent, 0);                    /* set indent */
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, 0L);
+  changed_lines(eap->line1, 0, eap->line2 + 1, 0L, true);
   curwin->w_cursor = save_curpos;
   beginline(BL_WHITE | BL_FIX);
 }
@@ -612,7 +613,7 @@ void ex_sort(exarg_T *eap)
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted);
+  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
 
   curwin->w_cursor.lnum = eap->line1;
   beginline(BL_WHITE | BL_FIX);
@@ -744,8 +745,9 @@ void ex_retab(exarg_T *eap)
 
   if (curbuf->b_p_ts != new_ts)
     redraw_curbuf_later(NOT_VALID);
-  if (first_line != 0)
-    changed_lines(first_line, 0, last_line + 1, 0L);
+  if (first_line != 0) {
+    changed_lines(first_line, 0, last_line + 1, 0L, true);
+  }
 
   curwin->w_p_list = save_list;         /* restore 'list' */
 
@@ -806,6 +808,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    */
   last_line = curbuf->b_ml.ml_line_count;
   mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
     mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
     FOR_ALL_TAB_WINDOWS(tab, win) {
@@ -828,6 +831,12 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
                      -(last_line - dest - extra), 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
+
+  // send update regarding the new lines that were added
+  if (kv_size(curbuf->update_channels)) {
+    buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  }
 
   /*
    * Now we delete the original text -- webb
@@ -858,9 +867,14 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     last_line = curbuf->b_ml.ml_line_count;
     if (dest > last_line + 1)
       dest = last_line + 1;
-    changed_lines(line1, 0, dest, 0L);
+    changed_lines(line1, 0, dest, 0L, false);
   } else {
-    changed_lines(dest + 1, 0, line1 + num_lines, 0L);
+    changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
+  }
+
+  // send nvim_buf_lines_event regarding lines that were deleted
+  if (kv_size(curbuf->update_channels)) {
+    buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
   }
 
   return OK;
@@ -2428,6 +2442,7 @@ int do_ecmd(
         goto theend;
       }
       u_unchanged(curbuf);
+      buf_updates_unregister_all(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
@@ -3153,8 +3168,10 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
+/// @param do_buf_event If `true`, send buffer updates.
 /// @return buffer used for 'inccommand' preview
-static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
+static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
+                     bool do_buf_event)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -4000,7 +4017,14 @@ skip:
      * the line number before the change (same as adding the number of
      * deleted lines). */
     i = curbuf->b_ml.ml_line_count - old_line_count;
-    changed_lines(first_line, 0, last_line - i, i);
+    changed_lines(first_line, 0, last_line - i, i, false);
+
+    if (kv_size(curbuf->update_channels)) {
+      int64_t num_added = last_line - first_line;
+      int64_t num_removed = num_added - i;
+      buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
+                               do_buf_event);
+    }
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
@@ -6246,7 +6270,7 @@ void ex_substitute(exarg_T *eap)
 {
   bool preview = (State & CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    (void)do_sub(eap, profile_zero());
+    (void)do_sub(eap, profile_zero(), true);
     return;
   }
 
@@ -6270,7 +6294,7 @@ void ex_substitute(exarg_T *eap)
   // Don't show search highlighting during live substitution
   bool save_hls = p_hls;
   p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt));
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
   p_hls = save_hls;
 
   if (save_changedtick != curbuf->b_changedtick) {

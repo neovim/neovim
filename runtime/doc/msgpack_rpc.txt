@@ -241,4 +241,130 @@ Even for statically compiled clients it is good practice to avoid hardcoding
 the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
 
+==============================================================================
+6. Buffer Updates				   *buffer-updates* *rpc-buffer-updates*
+
+A dedicated API has been created to allow co-processes to be notified  when a
+buffer is changed in any way. It is difficult and error-prone to try and do
+this with autocommands such as |TextChanged|.
+
+                                                           *buffer-updates-events*
+BufferUpdates Events~
+
+The co-process will start receiving the following notification events:
+
+                                                                   *nvim_buf_lines_event*
+nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, {more}]
+
+  Indicates that the lines between {firstline} and {lastline} (end-exclusive,
+  zero-indexed) have been replaced with the new line data contained in the
+  {linedata} list.  All buffer changes (even adding single characters) will be
+  transmitted as whole-line changes.
+
+    {buf} is an API handle for the buffer.
+
+    {changedtick} is the value of |b:changedtick| for the buffer. If you send an
+    API command back to nvim you can check the value of |b:changedtick| as
+    part of your request to ensure that no other changes have been made.
+
+    {firstline} is the integer line number of the first line that was replaced.
+    Note that {firstline} is zero-indexed, so if line `1` was replaced then
+    {firstline} will be `0` instead of `1`. {firstline} is guaranteed to always
+    be less than or equal to the number of lines that were in the buffer before
+    the lines were replaced.
+
+    {lastline} is the integer line number of the first line that was not replaced
+    (i.e. the range {firstline}, {lastline} is end-exclusive). Note that
+    {lastline} is zero-indexed, so if line numbers 2 to 5 were replaced, this
+    will be `5` instead of `6`. {lastline} is guaranteed to always be less than
+    or equal to the number of lines that were in the buffer before the lines were
+    replaced. {lastline} will be `-1` if the event is part of the initial
+    sending of the buffer.
+
+    {linedata} is a list of strings containing the contents of the new buffer
+    lines. Newline characters are not included in the strings, so empty lines
+    will be given as empty strings. 
+
+    {more} is a boolean which tells you whether or not to expect more
+    |nvim_buf_lines_event| notifications for a single buffer change (i.e. Nvim has
+    chunked up one event into several). Not yet used.
+
+  Note: sometimes {changedtick} will be |v:null|, which means that the buffer
+  text *looks* like it has changed, but actually hasn't. In this case the lines
+  in {linedata} contain the modified text that is shown to the user, but
+  doesn't reflect the actual buffer contents. Currently this behaviour is
+  only used for the |inccommand| option.
+
+nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
+
+  Indicates that |b:changedtick| was incremented for the buffer {buf}, but no
+  text was changed. This is currently only used by undo/redo.
+
+    {buf} is an API handle for the buffer.
+
+    {changedtick} is the new value of |b:changedtick| for that buffer.
+
+nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
+
+  Indicates that buffer updates for the nominated buffer have been disabled,
+  either by calling |nvim_buf_detach| or because the buffer was unloaded
+  (see |buffer-updates-limitations| for more information).
+
+    {buf} is an API handle for the buffer.
+
+
+                                                      *buffer-updates-limitations*
+Limitations~
+
+Note that any of the following actions will also turn off buffer updates because
+the buffer contents are unloaded from memory:
+
+  - Closing all a buffer's windows (unless 'hidden' is enabled).
+  - Using |:edit| to reload the buffer
+  - reloading the buffer after it is changed from outside nvim.
+
+                                                       *buffer-updates-examples*
+Examples~
+
+If buffer updates are activated on an empty buffer (and sending the buffer's
+content on the initial notification has been requested), the following
+|nvim_buf_lines_event| event will be sent: >
+
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
+
+If the user adds 2 new lines to the start of a buffer, the following event
+would be generated: >
+
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
+
+If the puts the cursor on a line containing the text `"Hello world"` and adds
+a `!` character to the end using insert mode, the following event would be
+generated: >
+
+  nvim_buf_lines_event[
+    {buf}, {changedtick}, {linenr}, {linenr} + 1,
+    ["Hello world!"], v:false
+  ]
+
+If the user moves their cursor to line 3 of a buffer and deletes 20 lines
+using `20dd`, the following event will be generated: >
+
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 22, [], v:false]
+
+If the user selects lines 3-5 of a buffer using |linewise-visual| mode and
+then presses `p` to paste in a new block of 6 lines, then the following event
+would be sent to the co-process: >
+
+  nvim_buf_lines_event[
+    {buf}, {changedtick}, 2, 5,
+    ['pasted line 1', 'pasted line 2', 'pasted line 3', 'pasted line 4',
+     'pasted line 5', 'pasted line 6'],
+    v:false
+  ]
+
+If the user uses :edit to reload a buffer then the following event would be
+generated: >
+
+  nvim_buf_detach_event[{buf}]
+
  vim:tw=78:ts=8:ft=help:norl:

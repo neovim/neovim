@@ -20,6 +20,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -742,8 +743,20 @@ deleteFold (
     /* Deleting markers may make cursor column invalid. */
     check_cursor_col();
 
-  if (last_lnum > 0)
-    changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L);
+  if (last_lnum > 0) {
+    changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L, false);
+
+    // send one nvim_buf_lines_event at the end
+    if (kv_size(curbuf->update_channels)) {
+      // last_lnum is the line *after* the last line of the outermost fold
+      // that was modified. Note also that deleting a fold might only require
+      // the modification of the *first* line of the fold, but we send through a
+      // notification that includes every line that was part of the fold
+      int64_t num_changed = last_lnum - first_lnum;
+      buf_updates_send_changes(curbuf, first_lnum, num_changed,
+                               num_changed, true);
+    }
+  }
 }
 
 /* clearFolding() {{{2 */
@@ -1590,7 +1603,15 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
 
   /* Update both changes here, to avoid all folds after the start are
    * changed when the start marker is inserted and the end isn't. */
-  changed_lines(start, (colnr_T)0, end, 0L);
+  changed_lines(start, (colnr_T)0, end, 0L, false);
+
+  if (kv_size(curbuf->update_channels)) {
+    // Note: foldAddMarker() may not actually change start and/or end if
+    // u_save() is unable to save the buffer line, but we send the
+    // nvim_buf_lines_event anyway since it won't do any harm.
+    int64_t num_changed = 1 + end - start;
+    buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
+  }
 }
 
 /* foldAddMarker() {{{2 */

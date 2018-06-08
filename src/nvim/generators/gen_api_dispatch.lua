@@ -223,6 +223,11 @@ for i = 1, #functions do
           output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
+        -- accept empty lua tables as empty dictionarys
+        if rt:match('^Dictionary') then
+          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {')
+          output:write('\n    '..converted..' = (Dictionary)ARRAY_DICT_INIT;')
+        end
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
