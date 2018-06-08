@@ -3769,14 +3769,17 @@ find_decl (
       t = false;         /* match after start is failure too */
 
     if (thisblock && t != false) {
-      pos_T       *pos;
+      const int64_t maxtravel = old_pos.lnum - curwin->w_cursor.lnum + 1;
+      const pos_T *pos = findmatchlimit(NULL, '}', FM_FORWARD, maxtravel);
 
-      /* Check that the block the match is in doesn't end before the
-       * position where we started the search from. */
-      if ((pos = findmatchlimit(NULL, '}', FM_FORWARD,
-               (int)(old_pos.lnum - curwin->w_cursor.lnum + 1))) != NULL
-          && pos->lnum < old_pos.lnum)
+      // Check that the block the match is in doesn't end before the
+      // position where we started the search from.
+      if (pos != NULL && pos->lnum < old_pos.lnum) {
+        // There can't be a useful match before the end of this block.
+        // Skip to the end
+        curwin->w_cursor = *pos;
         continue;
+      }
     }
 
     if (t == false) {
@@ -6895,7 +6898,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     else
       show_utf8();
     break;
-
+  // "g<": show scrollback text
   case '<':
     show_sb_text();
     break;
