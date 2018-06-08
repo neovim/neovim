@@ -3082,7 +3082,7 @@ return {
   },
   {
     command='windo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
     addr_type=ADDR_WINDOWS,
     func='ex_listdo',
   },
