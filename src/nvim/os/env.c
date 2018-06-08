@@ -373,11 +373,10 @@ void expand_env_esc(char_u *restrict srcp,
           *var++ = *tail++;
         }
         *var = NUL;
-        // Use os_get_user_directory() to get the user directory.
-        // If this function fails, the shell is used to
-        // expand ~user. This is slower and may fail if the shell
-        // does not support ~user (old versions of /bin/sh).
-        var = (char_u *)os_get_user_directory((char *)dst + 1);
+        // Get the user directory. If this fails the shell is used to expand
+        // ~user, which is slower and may fail on old versions of /bin/sh.
+        var = (*dst == NUL) ? NULL
+                            : (char_u *)os_get_user_directory((char *)dst + 1);
         mustfree = true;
         if (var == NULL) {
           expand_T xpc;
