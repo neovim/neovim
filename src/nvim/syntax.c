@@ -491,7 +491,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   while (current_lnum < lnum) {
     syn_start_line();
     (void)syn_finish_line(FALSE);
-    ++current_lnum;
+    current_lnum++;
 
     /* If we parsed at least "minlines" lines or started at a valid
      * state, the current state is considered valid. */
@@ -723,10 +723,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
         syn_start_line();
         for (;; ) {
           had_sync_point = syn_finish_line(TRUE);
-          /*
-           * When a sync point has been found, remember where, and
-           * continue to look for another one, further on in the line.
-           */
+          // When a sync point has been found, remember where, and
+          // continue to look for another one, further on in the line.
           if (had_sync_point && current_state.ga_len) {
             cur_si = &CUR_STATE(current_state.ga_len - 1);
             if (cur_si->si_m_endpos.lnum > start_lnum) {
@@ -805,9 +803,10 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
           current_col = found_m_endpos.col;
           current_lnum = found_m_endpos.lnum;
           (void)syn_finish_line(FALSE);
-          ++current_lnum;
-        } else
+          current_lnum++;
+        } else {
           current_lnum = start_lnum;
+        }
 
         break;
       }
@@ -1529,9 +1528,9 @@ int syntax_check_changed(linenr_T lnum)
  * the line.  It can start anywhere in the line, as long as the current state
  * is valid.
  */
-static int 
-syn_finish_line (
-    int syncing                    /* called for syncing */
+static int
+syn_finish_line(
+    int syncing                    // called for syncing
 )
 {
   stateitem_T *cur_si;
@@ -1549,19 +1548,21 @@ syn_finish_line (
       cur_si = &CUR_STATE(current_state.ga_len - 1);
       if (cur_si->si_idx >= 0
           && (SYN_ITEMS(syn_block)[cur_si->si_idx].sp_flags
-              & (HL_SYNC_HERE|HL_SYNC_THERE)))
+              & (HL_SYNC_HERE|HL_SYNC_THERE))) {
         return TRUE;
+      }
 
       /* syn_current_attr() will have skipped the check for an item
        * that ends here, need to do that now.  Be careful not to go
        * past the NUL. */
       prev_current_col = current_col;
-      if (syn_getcurline()[current_col] != NUL)
-        ++current_col;
+      if (syn_getcurline()[current_col] != NUL) {
+        current_col++;
+      }
       check_state_ends();
       current_col = prev_current_col;
     }
-    ++current_col;
+    current_col++;
   }
   return FALSE;
 }
@@ -1575,8 +1576,8 @@ syn_finish_line (
  * When "can_spell" is not NULL set it to TRUE when spell-checking should be
  * done.
  */
-int 
-get_syntax_attr (
+int
+get_syntax_attr(
     colnr_T col,
     bool *can_spell,
     int keep_state                 /* keep state of char at "col" */
@@ -1624,12 +1625,12 @@ get_syntax_attr (
 /*
  * Get syntax attributes for current_lnum, current_col.
  */
-static int 
-syn_current_attr (
-    int syncing,                           /* When 1: called for syncing */
-    int displaying,                        /* result will be displayed */
-    bool *can_spell,                       /* return: do spell checking */
-    int keep_state                         /* keep syntax stack afterwards */
+static int
+syn_current_attr(
+    int syncing,                           // When 1: called for syncing
+    int displaying,                        // result will be displayed
+    bool *can_spell,                       // return: do spell checking
+    int keep_state                         // keep syntax stack afterwards
 )
 {
   int syn_id;
@@ -2458,8 +2459,8 @@ static void check_keepend(void)
  *
  * Return the flags for the matched END.
  */
-static void 
-update_si_end (
+static void
+update_si_end(
     stateitem_T *sip,
     int startcol,               /* where to start searching for the end */
     int force                  /* when TRUE overrule a previous end */
@@ -2551,16 +2552,16 @@ static void pop_current_state(void)
  * If found, the end of the region and the end of the highlighting is
  * computed.
  */
-static void 
-find_endpos (
-    int idx,                        /* index of the pattern */
-    lpos_T *startpos,          /* where to start looking for an END match */
-    lpos_T *m_endpos,          /* return: end of match */
-    lpos_T *hl_endpos,         /* return: end of highlighting */
-    long *flagsp,            /* return: flags of matching END */
-    lpos_T *end_endpos,        /* return: end of end pattern match */
-    int *end_idx,           /* return: group ID for end pat. match, or 0 */
-    reg_extmatch_T *start_ext      /* submatches from the start pattern */
+static void
+find_endpos(
+    int idx,                    // index of the pattern
+    lpos_T *startpos,           // where to start looking for an END match
+    lpos_T *m_endpos,           // return: end of match
+    lpos_T *hl_endpos,          // return: end of highlighting
+    long *flagsp,               // return: flags of matching END
+    lpos_T *end_endpos,         // return: end of end pattern match
+    int *end_idx,               // return: group ID for end pat. match, or 0
+    reg_extmatch_T *start_ext   // submatches from the start pattern
 )
 {
   colnr_T matchcol;
@@ -2793,13 +2794,13 @@ static void limit_pos_zero(lpos_T *pos, lpos_T *limit)
 /*
  * Add offset to matched text for end of match or highlight.
  */
-static void 
-syn_add_end_off (
-    lpos_T *result,            /* returned position */
-    regmmatch_T *regmatch,          /* start/end of match */
-    synpat_T *spp,               /* matched pattern */
-    int idx,                        /* index of offset */
-    int extra                      /* extra chars for offset to start */
+static void
+syn_add_end_off(
+    lpos_T *result,           // returned position
+    regmmatch_T *regmatch,    // start/end of match
+    synpat_T *spp,            // matched pattern
+    int idx,                  // index of offset
+    int extra                 // extra chars for offset to start
 )
 {
   int col;
@@ -2841,13 +2842,13 @@ syn_add_end_off (
  * Add offset to matched text for start of match or highlight.
  * Avoid resulting column to become negative.
  */
-static void 
-syn_add_start_off (
-    lpos_T *result,            /* returned position */
-    regmmatch_T *regmatch,          /* start/end of match */
+static void
+syn_add_start_off(
+    lpos_T *result,           // returned position
+    regmmatch_T *regmatch,    // start/end of match
     synpat_T *spp,
     int idx,
-    int extra                  /* extra chars for offset to end */
+    int extra                 // extra chars for offset to end
 )
 {
   int col;
@@ -2933,10 +2934,10 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
 /*
  * Check one position in a line for a matching keyword.
  * The caller must check if a keyword can start at startcol.
- * Return it's ID if found, 0 otherwise.
+ * Return its ID if found, 0 otherwise.
  */
-static int 
-check_keyword_id (
+static int
+check_keyword_id(
     char_u *line,
     int startcol,                   /* position in line to check for keyword */
     int *endcolp,           /* return: character after found keyword */
@@ -3446,8 +3447,8 @@ void syn_maybe_on(void)
 /*
  * Handle ":syntax [list]" command: list current syntax words.
  */
-static void 
-syn_cmd_list (
+static void
+syn_cmd_list(
     exarg_T *eap,
     int syncing                        /* when TRUE: list syncing items */
 )
@@ -3560,8 +3561,8 @@ static int last_matchgroup;
 /*
  * List one syntax item, for ":syntax" or "syntax list syntax_name".
  */
-static void 
-syn_list_one (
+static void
+syn_list_one(
     int id,
     int syncing,                        /* when TRUE: list syncing items */
     int link_only                      /* when TRUE; list link-only too */
@@ -3796,8 +3797,8 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
  * List or clear the keywords for one syntax group.
  * Return TRUE if the header has been printed.
  */
-static int 
-syn_list_keywords (
+static int
+syn_list_keywords(
     int id,
     hashtab_T *ht,
     int did_header,                         /* header has already been printed */
@@ -4391,8 +4392,8 @@ error:
  *
  * Also ":syntax sync match {name} [[grouphere | groupthere] {group-name}] .."
  */
-static void 
-syn_cmd_match (
+static void
+syn_cmd_match(
     exarg_T *eap,
     int syncing                        /* TRUE for ":syntax sync match .. " */
 )
@@ -4489,8 +4490,8 @@ syn_cmd_match (
  * Handle ":syntax region {group-name} [matchgroup={group-name}]
  *		start {start} .. [skip {skip}] end {end} .. [{options}]".
  */
-static void 
-syn_cmd_region (
+static void
+syn_cmd_region(
     exarg_T *eap,
     int syncing                        /* TRUE for ":syntax sync region .." */
 )
@@ -4838,10 +4839,8 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
   *clstr1 = clstr;
 }
 
-/*
- * Lookup a syntax cluster name and return it's ID.
- * If it is not found, 0 is returned.
- */
+// Lookup a syntax cluster name and return its ID.
+// If it is not found, 0 is returned.
 static int syn_scl_name2id(char_u *name)
 {
   // Avoid using stricmp() too much, it's slow on some systems
@@ -4869,12 +4868,10 @@ static int syn_scl_namen2id(char_u *linep, int len)
   return id;
 }
 
-/*
- * Find syntax cluster name in the table and return it's ID.
- * The argument is a pointer to the name and the length of the name.
- * If it doesn't exist yet, a new entry is created.
- * Return 0 for failure.
- */
+// Find syntax cluster name in the table and return its ID.
+// The argument is a pointer to the name and the length of the name.
+// If it doesn't exist yet, a new entry is created.
+// Return 0 for failure.
 static int syn_check_cluster(char_u *pp, int len)
 {
   int id;
@@ -4890,11 +4887,9 @@ static int syn_check_cluster(char_u *pp, int len)
   return id;
 }
 
-/*
- * Add new syntax cluster and return it's ID.
- * "name" must be an allocated string, it will be consumed.
- * Return 0 for failure.
- */
+// Add new syntax cluster and return its ID.
+// "name" must be an allocated string, it will be consumed.
+// Return 0 for failure.
 static int syn_add_cluster(char_u *name)
 {
   /*
@@ -5226,8 +5221,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
  * Careful: the argument is modified (NULs added).
  * returns FAIL for some error, OK for success.
  */
-static int 
-get_id_list (
+static int
+get_id_list(
     char_u **arg,
     int keylen,         // length of keyword
     int16_t **list,     // where to store the resulting list, if not
@@ -5421,18 +5416,18 @@ static short *copy_id_list(short *list)
  * the current item.
  * This function is called very often, keep it fast!!
  */
-static int 
-in_id_list (
-    stateitem_T *cur_si,            /* current item or NULL */
-    short *list,              /* id list */
-    struct sp_syn *ssp,             /* group id and ":syn include" tag of group */
-    int contained                  /* group id is contained */
+static int
+in_id_list(
+    stateitem_T *cur_si,    // current item or NULL
+    int16_t *list,          // id list
+    struct sp_syn *ssp,     // group id and ":syn include" tag of group
+    int contained           // group id is contained
 )
 {
   int retval;
-  short       *scl_list;
-  short item;
-  short id = ssp->id;
+  int16_t *scl_list;
+  int16_t item;
+  int16_t id = ssp->id;
   static int depth = 0;
   int r;
 
@@ -6774,7 +6769,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               break;
             }
 
-            // Use the _16 table to check if its a valid color name.
+            // Use the _16 table to check if it's a valid color name.
             color = color_numbers_16[i];
             if (color >= 0) {
               if (t_colors == 8) {
@@ -7063,7 +7058,7 @@ int get_attr_entry(HlAttrs *aep)
     recursive = FALSE;
   }
 
-  
+
   // This is a new combination of colors and font, add an entry.
   taep = GA_APPEND_VIA_PTR(HlAttrs, table);
   memset(taep, 0, sizeof(*taep));
@@ -7490,7 +7485,7 @@ int syn_check_group(const char_u *pp, int len)
   return id;
 }
 
-/// Add new highlight group and return it's ID.
+/// Add new highlight group and return its ID.
 ///
 /// @param name must be an allocated string, it will be consumed.
 /// @return 0 for failure, else the allocated group id
