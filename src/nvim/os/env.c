@@ -377,7 +377,9 @@ void expand_env_esc(char_u *restrict srcp,
         // If this function fails, the shell is used to
         // expand ~user. This is slower and may fail if the shell
         // does not support ~user (old versions of /bin/sh).
-        var = (char_u *)os_get_user_directory((char *)dst + 1);
+        if (*dst != NUL) {
+          var = (char_u *)os_get_user_directory((char *)dst + 1);
+        }
         mustfree = true;
         if (var == NULL) {
           expand_T xpc;
