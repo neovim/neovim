@@ -160,3 +160,30 @@ func Test_map_meta_quotes()
   set nomodified
   iunmap <M-">
 endfunc
+
+func Test_map_timeout()
+  nnoremap aaaa :let got_aaaa = 1<CR>
+  nnoremap bb :let got_bb = 1<CR>
+  nmap b aaa
+  new
+  func ExitInsert(timer)
+    let g:line = getline(1)
+    call feedkeys("\<Esc>", "t")
+  endfunc
+  set timeout timeoutlen=200
+  call timer_start(300, 'ExitInsert')
+  " After the 'b' Vim waits for another character to see if it matches 'bb'.
+  " When it times out it is expanded to "aaa", but there is no wait for
+  " "aaaa".  Can't check that reliably though.
+  call feedkeys("b", "xt!")
+  call assert_equal("aa", g:line)
+  call assert_false(exists('got_aaa'))
+  call assert_false(exists('got_bb'))
+
+  bwipe!
+  nunmap aaaa
+  nunmap bb
+  nunmap b
+  set timeoutlen&
+  delfunc ExitInsert
+endfunc
