@@ -52,9 +52,34 @@ def SetUpHiddenBuffer( buf, name ):
   buf.options[ 'bufhidden' ] = 'hide'
   buf.name = name
 
+def SetUpPromptBuffer( buf, name, prompt, callback ):
+  # This feature is _super_ new, so only enable when available
+  if not int( vim.eval( "exists( '*prompt_setprompt' )" ) ):
+    return SetUpScratchBuffer( buf, name )
+
+  buf.options[ 'buftype' ] = 'prompt'
+  buf.options[ 'swapfile' ] = False
+  buf.options[ 'modifiable' ] = True
+  buf.options[ 'modified' ] = False
+  buf.options[ 'readonly' ] = False
+  buf.options[ 'buflisted' ] = False
+  buf.options[ 'bufhidden' ] = 'wipe'
+  buf.name = name
+
+  vim.eval( "prompt_setprompt( {0}, '{1}' )".format( buf.number,
+                                                     Escape( prompt ) ) )
+  vim.eval( "prompt_setcallback( {0}, function( '{1}' ) )".format(
+    buf.number,
+    Escape( callback ) ) )
+
+
 
 @contextlib.contextmanager
 def ModifiableScratchBuffer( buf ):
+  if buf.options[ 'modifiable' ]:
+    yield
+    return
+
   buf.options[ 'modifiable' ] = True
   buf.options[ 'readonly' ] = False
   try:
@@ -189,3 +214,7 @@ def AppendToBuffer( buf, line_or_lines ):
 
   # Return the first Vim line number (1-based) that we just set.
   return line
+
+
+def ClearBuffer( buf ):
+  buf[:] = None

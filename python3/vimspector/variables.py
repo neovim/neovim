@@ -60,7 +60,10 @@ class VariablesView( object ):
       'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
 
     utils.SetUpScratchBuffer( self._vars.win.buffer, 'vimspector.Variables' )
-    utils.SetUpScratchBuffer( self._watch.win.buffer, 'vimspector.Watches' )
+    utils.SetUpPromptBuffer( self._watch.win.buffer,
+                             'vimspector.Watches',
+                             'Watch: ',
+                             'vimspector#AddWatchPrompt' )
 
     has_balloon      = int( vim.eval( "has( 'balloon_eval' )" ) )
     has_balloon_term = int( vim.eval( "has( 'balloon_eval_term' )" ) )
@@ -85,9 +88,9 @@ class VariablesView( object ):
 
   def Clear( self ):
     with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
-      self._vars.win.buffer[:] = None
+      utils.ClearBuffer( self._vars.win.buffer )
     with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
-      self._watch.win.buffer[:] = None
+      utils.ClearBuffer( self._watch.win.buffer )
 
   def ConnectionClosed( self ):
     self.Clear()
@@ -251,7 +254,7 @@ class VariablesView( object ):
     self._vars.lines.clear()
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
-        self._vars.win.buffer[:] = None
+        utils.ClearBuffer( self._vars.win.buffer )
         for scope in self._scopes:
           self._DrawScope( 0, scope )
 
@@ -263,7 +266,7 @@ class VariablesView( object ):
     self._watch.lines.clear()
     with utils.RestoreCursorPosition():
       with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
-        self._watch.win.buffer[:] = None
+        utils.ClearBuffer( self._watch.win.buffer )
         utils.AppendToBuffer( self._watch.win.buffer, 'Watches: ----' )
         for watch in self._watches:
           line = utils.AppendToBuffer( self._watch.win.buffer,
@@ -297,8 +300,7 @@ class VariablesView( object ):
     line =  '{0}{1} Result: {2} '.format( ' ' * indent,
                                           icon,
                                           result[ 'result' ] )
-    line = utils.AppendToBuffer( self._watch.win.buffer,
-                                 line.split( '\n' ) )
+    line = utils.AppendToBuffer( self._watch.win.buffer, line.split( '\n' ) )
     self._watch.lines[ line ] = result
 
     if '_variables' in result:

@@ -48,7 +48,7 @@ class StackTraceView( object ):
     self._currentThread = None
     self._threads = []
     with utils.ModifiableScratchBuffer( self._buf ):
-      self._buf[:] = None
+      utils.ClearBuffer( self._buf )
 
   def ConnectionClosed( self ):
     self.Clear()
@@ -88,7 +88,7 @@ class StackTraceView( object ):
     self._line_to_thread.clear()
 
     with utils.ModifiableScratchBuffer( self._buf ):
-      self._buf[:] = None
+      utils.ClearBuffer( self._buf )
 
       for thread in self._threads:
         icon = '+' if '_frames' not in thread else '-'
