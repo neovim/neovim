@@ -1,6 +1,0 @@
-[submodule "support/vscode-debugadapter-node"]
-	path = support/vscode-debugadapter-node
-	url = https://github.com/Microsoft/vscode-debugadapter-node
-[submodule "support/python-jsonschema-objects"]
-	path = support/python-jsonschema-objects
-	url = https://github.com/cwacek/python-jsonschema-objects
