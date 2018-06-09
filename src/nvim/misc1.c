@@ -2219,8 +2219,8 @@ change_warning (
     msg_start();
     if (msg_row == Rows - 1)
       msg_col = col;
-    msg_source(hl_attr(HLF_W));
-    MSG_PUTS_ATTR(_(w_readonly), hl_attr(HLF_W) | MSG_HIST);
+    msg_source(HL_ATTR(HLF_W));
+    MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
@@ -2260,7 +2260,7 @@ int ask_yesno(const char *const str, const bool direct)
   int r = ' ';
   while (r != 'y' && r != 'n') {
     // Same highlighting as for wait_return.
-    smsg_attr(hl_attr(HLF_R), "%s (y/n)?", str);
+    smsg_attr(HL_ATTR(HLF_R), "%s (y/n)?", str);
     if (direct) {
       r = get_keystroke();
     } else {
@@ -2566,8 +2566,8 @@ void vim_beep(unsigned val)
     /* When 'verbose' is set and we are sourcing a script or executing a
      * function give the user a hint where the beep comes from. */
     if (vim_strchr(p_debug, 'e') != NULL) {
-      msg_source(hl_attr(HLF_W));
-      msg_attr(_("Beep!"), hl_attr(HLF_W));
+      msg_source(HL_ATTR(HLF_W));
+      msg_attr(_("Beep!"), HL_ATTR(HLF_W));
     }
   }
 }

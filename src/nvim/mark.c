@@ -690,9 +690,10 @@ show_one_mark(
         mustfree = TRUE;
       }
       if (name != NULL) {
-        msg_outtrans_attr(name, current ? hl_attr(HLF_D) : 0);
-        if (mustfree)
+        msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
+        if (mustfree) {
           xfree(name);
+        }
       }
     }
     ui_flush();                    /* show one line at a time */
@@ -803,8 +804,8 @@ void ex_jumps(exarg_T *eap)
           curwin->w_jumplist[i].fmark.mark.col);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name,
-          curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
-          ? hl_attr(HLF_D) : 0);
+                        curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
+                        ? HL_ATTR(HLF_D) : 0);
       xfree(name);
       os_breakcheck();
     }
@@ -829,7 +830,7 @@ void ex_changes(exarg_T *eap)
   int i;
   char_u      *name;
 
-  /* Highlight title */
+  // Highlight title
   MSG_PUTS_TITLE(_("\nchange line  col text"));
 
   for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
@@ -845,7 +846,7 @@ void ex_changes(exarg_T *eap)
           curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff);
       name = mark_line(&curbuf->b_changelist[i].mark, 17);
-      msg_outtrans_attr(name, hl_attr(HLF_D));
+      msg_outtrans_attr(name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();
     }

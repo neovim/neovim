@@ -1500,7 +1500,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
   if (curwin->w_p_nu || use_number) {
     vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
                  number_width(curwin), lnum);
-    msg_puts_attr(numbuf, hl_attr(HLF_N));  // Highlight line nrs.
+    msg_puts_attr(numbuf, HL_ATTR(HLF_N));  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -3635,7 +3635,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               msg_no_more = TRUE;
               /* write message same highlighting as for
                * wait_return */
-              smsg_attr(hl_attr(HLF_R),
+              smsg_attr(HL_ATTR(HLF_R),
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;

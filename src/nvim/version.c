@@ -1983,7 +1983,8 @@ static void do_intro_line(long row, char_u *mesg, int attr)
       }
     }
     assert(row <= INT_MAX && col <= INT_MAX);
-    screen_puts_len(p, l, (int)row, (int)col, *p == '<' ? hl_attr(HLF_8) : attr);
+    screen_puts_len(p, l, (int)row, (int)col,
+                    *p == '<' ? HL_ATTR(HLF_8) : attr);
     col += clen;
   }
 }

@@ -3334,7 +3334,7 @@ void ex_display(exarg_T *eap)
 
   if (arg != NULL && *arg == NUL)
     arg = NULL;
-  int attr = hl_attr(HLF_8);
+  int attr = HL_ATTR(HLF_8);
 
   /* Highlight title */
   MSG_PUTS_TITLE(_("\n--- Registers ---"));

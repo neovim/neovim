@@ -512,10 +512,10 @@ do_tag (
         if (msg_col == 0)
           msg_didout = FALSE;           /* overwrite previous message */
         msg_start();
-        MSG_PUTS_ATTR(_("  # pri kind tag"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("  # pri kind tag"), HL_ATTR(HLF_T));
         msg_clr_eos();
         taglen_advance(taglen);
-        MSG_PUTS_ATTR(_("file\n"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("file\n"), HL_ATTR(HLF_T));
 
         for (i = 0; i < num_matches && !got_int; i++) {
           parse_match(matches[i], &tagp);
@@ -535,15 +535,15 @@ do_tag (
           }
           msg_advance(13);
           msg_outtrans_len_attr(tagp.tagname,
-              (int)(tagp.tagname_end - tagp.tagname),
-              hl_attr(HLF_T));
+                                (int)(tagp.tagname_end - tagp.tagname),
+                                HL_ATTR(HLF_T));
           msg_putchar(' ');
           taglen_advance(taglen);
 
           /* Find out the actual file name. If it is long, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
-          msg_puts_long_attr(p, hl_attr(HLF_D));
+          msg_puts_long_attr(p, HL_ATTR(HLF_D));
           xfree(p);
 
           if (msg_col > 0)
@@ -573,8 +573,8 @@ do_tag (
                 p = tagp.tagkind_end;
                 continue;
               }
-              /* print all other extra fields */
-              attr = hl_attr(HLF_CM);
+              // print all other extra fields
+              attr = HL_ATTR(HLF_CM);
               while (*p && *p != '\r' && *p != '\n') {
                 if (msg_col + ptr2cells(p) >= Columns) {
                   msg_putchar('\n');
@@ -849,7 +849,7 @@ do_tag (
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
           if (ic) {
-            msg_attr((const char *)IObuff, hl_attr(HLF_W));
+            msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
           } else {
             msg(IObuff);
           }
@@ -960,7 +960,7 @@ void do_tags(exarg_T *eap)
           tagstack[i].fmark.mark.lnum);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
-          ? hl_attr(HLF_D) : 0);
+                        ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
     ui_flush();                    /* show one line at a time */
