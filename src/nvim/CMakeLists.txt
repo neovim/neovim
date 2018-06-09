@@ -10,7 +10,7 @@ if(USE_GCOV)
 endif()
 endif()
 
-if(WIN32)
+if(MINGW)
   # tell MinGW compiler to enable wmain
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
