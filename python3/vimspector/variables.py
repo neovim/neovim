@@ -62,7 +62,7 @@ class VariablesView( object ):
     utils.SetUpScratchBuffer( self._vars.win.buffer, 'vimspector.Variables' )
     utils.SetUpPromptBuffer( self._watch.win.buffer,
                              'vimspector.Watches',
-                             'Watch: ',
+                             'Expression: ',
                              'vimspector#AddWatchPrompt' )
 
     has_balloon      = int( vim.eval( "has( 'balloon_eval' )" ) )
