@@ -1438,8 +1438,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
-  const char *conemu_ansi_env = os_getenv("ConEmuANSI");
-  bool conemu_ansi = conemu_ansi_env ? !strncmp(conemu_ansi_env, "ON", 2) : 0;
+  bool conemu_ansi = uv_guess_tty(data->out_fd) & UV_TTY_CONEMU;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {

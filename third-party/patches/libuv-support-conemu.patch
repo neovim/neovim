@@ -1,19 +1,311 @@
+diff --git a/include/uv-win.h b/include/uv-win.h
+index 5e74c520..8ab74939 100644
+--- a/include/uv-win.h
++++ b/include/uv-win.h
+@@ -675,3 +675,10 @@ RB_HEAD(uv_timer_tree_s, uv_timer_s);
+ #define UV_FS_O_NONBLOCK     0
+ #define UV_FS_O_SYMLINK      0
+ #define UV_FS_O_SYNC         0x08000000 /* FILE_FLAG_WRITE_THROUGH */
++
++#define UV_TTY_NONE          0
++#define UV_TTY_VTP           0x02
++#define UV_TTY_LEGACY        0x04
++#define UV_TTY_CONEMU        0x08
++
++UV_EXTERN int uv_guess_tty(uv_file fd);
 diff --git a/src/win/tty.c b/src/win/tty.c
-index ecf7bc9b..e7ff14e5 100644
+index 4a5270de..4675867b 100644
 --- a/src/win/tty.c
 +++ b/src/win/tty.c
-@@ -2265,6 +2265,14 @@ int uv_tty_reset_mode(void) {
-  * 10 version 1511, build number 10.0.10586.
-  */
- static void uv__determine_vterm_state(HANDLE handle) {
-+  char var[5];
-+  size_t len = GetEnvironmentVariableA("ConEmuANSI", var, 5);
-+  if (len == 2 &&
-+      !strncmp(var, "ON", 2)) {
-+    uv__vterm_state = UV_SUPPORTED;
-+    return;
+@@ -23,6 +23,7 @@
+ #include <io.h>
+ #include <string.h>
+ #include <stdlib.h>
++#include <wchar.h>
+ 
+ #if defined(_MSC_VER) && _MSC_VER < 1600
+ # include "stdint-msvc2008.h"
+@@ -40,6 +41,8 @@
+ #include "stream-inl.h"
+ #include "req-inl.h"
+ 
++#include <psapi.h>
++
+ #ifndef InterlockedOr
+ # define InterlockedOr _InterlockedOr
+ #endif
+@@ -2259,25 +2262,95 @@ int uv_tty_reset_mode(void) {
+   return 0;
+ }
+ 
+-/* Determine whether or not this version of windows supports
+- * proper ANSI color codes. Should be supported as of windows
+- * 10 version 1511, build number 10.0.10586.
+- */
+-static void uv__determine_vterm_state(HANDLE handle) {
++static int uv__guess_tty(HANDLE handle)
++{
++  char env_var[5];
+   DWORD dwMode = 0;
++  DWORD env_length;
++  int result = UV_TTY_NONE;
++
++  if (handle == INVALID_HANDLE_VALUE || !GetConsoleMode(handle, &dwMode)) {
++    return result;
 +  }
 +
-   DWORD dwMode = 0;
++  env_length = GetEnvironmentVariableA("ConEmuANSI", env_var, sizeof(env_var));
++  if (env_length == 2 && !strncmp(env_var, "ON", 2)) {
++    HANDLE process_handle = GetCurrentProcess();
++
++    while(1) {
++      NTSTATUS status;
++      PROCESS_BASIC_INFORMATION pbi;
++      ULONG return_length;
++      WCHAR parent_file_name[MAX_PATH];
++      DWORD parent_file_name_length;
++      WCHAR* conemu_file_names[] = { L"\\ConEmu.exe", L"\\ConEmu64.exe" };
++      unsigned int i;
++
++      status = pNtQueryInformationProcess(process_handle,
++                                          ProcessBasicInformation,
++                                          &pbi,
++                                          sizeof(pbi),
++                                          &return_length);
++      CloseHandle(process_handle);
++      if (!NT_SUCCESS(status)) {
++        break;
++      }
  
-   if (!GetConsoleMode(handle, &dwMode)) {
+-  if (!GetConsoleMode(handle, &dwMode)) {
+-    uv__vterm_state = UV_UNSUPPORTED;
+-    return;
++      process_handle = OpenProcess(PROCESS_QUERY_INFORMATION,
++                                   FALSE,
++                                   pbi.InheritedFromUniqueProcessId);
++      if (!process_handle) {
++        break;
++      }
++
++      parent_file_name_length =
++        GetProcessImageFileNameW(process_handle,
++                                 parent_file_name,
++                                 sizeof(parent_file_name));
++      if (!parent_file_name_length) {
++        break;
++      }
++
++      for (i = 0; i < sizeof(conemu_file_names) / sizeof(WCHAR*); i++) {
++        size_t conemu_file_name_length = wcslen(conemu_file_names[i]);
++        WCHAR* comp_position;
++        if (parent_file_name_length < conemu_file_name_length) {
++          continue;
++        }
++        comp_position = parent_file_name + parent_file_name_length
++          - conemu_file_name_length;
++        if (!wcsncmp(comp_position,
++                     conemu_file_names[i],
++                     conemu_file_name_length)) {
++          result |= UV_TTY_CONEMU;
++          break;
++        }
++      }
++      if (result & UV_TTY_CONEMU) {
++        break;
++      }
++    }
+   }
+ 
+   dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+   if (!SetConsoleMode(handle, dwMode)) {
+-    uv__vterm_state = UV_UNSUPPORTED;
+-    return;
++    return result |= UV_TTY_LEGACY;
+   }
+ 
+-  uv__vterm_state = UV_SUPPORTED;
++  return result |= UV_TTY_VTP;
++}
++
++/* Determine whether or not this version of windows supports
++ * proper ANSI color codes. Should be supported as of windows
++ * 10 version 1511, build number 10.0.10586.
++ */
++static void uv__determine_vterm_state(HANDLE handle) {
++  int tty_type = uv__guess_tty(handle);
++  if (tty_type & UV_TTY_VTP || tty_type & UV_TTY_CONEMU) {
++    uv__vterm_state = UV_SUPPORTED;
++  } else {
++    uv__vterm_state = UV_UNSUPPORTED;
++  }
+ }
+ 
+ static DWORD WINAPI uv__tty_console_resize_message_loop_thread(void* param) {
+@@ -2331,3 +2404,12 @@ static void CALLBACK uv__tty_console_resize_event(HWINEVENTHOOK hWinEventHook,
+     uv__signal_dispatch(SIGWINCH);
+   }
+ }
++
++int uv_guess_tty(uv_file fd) {
++  HANDLE handle = _get_osfhandle(fd);
++  uv__once_init();
++  if (uv_guess_handle(fd) != UV_TTY) {
++    return UV_TTY_NONE;
++  }
++  return uv__guess_tty(handle);
++}
+diff --git a/src/win/winapi.c b/src/win/winapi.c
+index 0fd598ea..ab8dada7 100644
+--- a/src/win/winapi.c
++++ b/src/win/winapi.c
+@@ -33,6 +33,7 @@ sNtSetInformationFile pNtSetInformationFile;
+ sNtQueryVolumeInformationFile pNtQueryVolumeInformationFile;
+ sNtQueryDirectoryFile pNtQueryDirectoryFile;
+ sNtQuerySystemInformation pNtQuerySystemInformation;
++sNtQueryInformationProcess pNtQueryInformationProcess;
+ 
+ /* Powrprof.dll function pointer */
+ sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
+@@ -98,6 +99,13 @@ void uv_winapi_init(void) {
+     uv_fatal_error(GetLastError(), "GetProcAddress");
+   }
+ 
++  pNtQueryInformationProcess = (sNtQueryInformationProcess) GetProcAddress(
++      ntdll_module,
++      "NtQueryInformationProcess");
++  if (pNtQueryInformationProcess == NULL) {
++    uv_fatal_error(GetLastError(), "GetProcAddress");
++  }
++
+   powrprof_module = LoadLibraryA("powrprof.dll");
+   if (powrprof_module != NULL) {
+     pPowerRegisterSuspendResumeNotification = (sPowerRegisterSuspendResumeNotification)
+diff --git a/src/win/winapi.h b/src/win/winapi.h
+index d0fcfd8e..c3663fc4 100644
+--- a/src/win/winapi.h
++++ b/src/win/winapi.h
+@@ -4117,6 +4117,102 @@ typedef struct _UNICODE_STRING {
+ 
+ typedef const UNICODE_STRING *PCUNICODE_STRING;
+ 
++typedef struct _PEB_LDR_DATA {
++  BYTE Reserved1[8];
++  PVOID Reserved2[3];
++  LIST_ENTRY InMemoryOrderModuleList;
++} PEB_LDR_DATA,*PPEB_LDR_DATA;
++
++typedef struct _RTL_USER_PROCESS_PARAMETERS {
++  BYTE Reserved1[16];
++  PVOID Reserved2[10];
++  UNICODE_STRING ImagePathName;
++  UNICODE_STRING CommandLine;
++} RTL_USER_PROCESS_PARAMETERS,*PRTL_USER_PROCESS_PARAMETERS;
++
++typedef VOID (NTAPI *PPS_POST_PROCESS_INIT_ROUTINE)(VOID);
++
++typedef struct _PEB {
++  BYTE Reserved1[2];
++  BYTE BeingDebugged;
++  BYTE Reserved2[1];
++  PVOID Reserved3[2];
++  PPEB_LDR_DATA Ldr;
++  PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
++  BYTE Reserved4[104];
++  PVOID Reserved5[52];
++  PPS_POST_PROCESS_INIT_ROUTINE PostProcessInitRoutine;
++  BYTE Reserved6[128];
++  PVOID Reserved7[1];
++  ULONG SessionId;
++} PEB,*PPEB;
++
++typedef LONG KPRIORITY;
++
++typedef struct _PROCESS_BASIC_INFORMATION {
++  NTSTATUS ExitStatus;
++  PPEB PebBaseAddress;
++  KAFFINITY AffinityMask;
++  KPRIORITY BasePriority;
++  ULONG_PTR UniqueProcessId;
++  ULONG_PTR InheritedFromUniqueProcessId;
++} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
++
++typedef enum _PROCESSINFOCLASS {
++  ProcessBasicInformation,
++  ProcessQuotaLimits,
++  ProcessIoCounters,
++  ProcessVmCounters,
++  ProcessTimes,
++  ProcessBasePriority,
++  ProcessRaisePriority,
++  ProcessDebugPort,
++  ProcessExceptionPort,
++  ProcessAccessToken,
++  ProcessLdtInformation,
++  ProcessLdtSize,
++  ProcessDefaultHardErrorMode,
++  ProcessIoPortHandlers,
++  ProcessPooledUsageAndLimits,
++  ProcessWorkingSetWatch,
++  ProcessUserModeIOPL,
++  ProcessEnableAlignmentFaultFixup,
++  ProcessPriorityClass,
++  ProcessWx86Information,
++  ProcessHandleCount,
++  ProcessAffinityMask,
++  ProcessPriorityBoost,
++  ProcessDeviceMap,
++  ProcessSessionInformation,
++  ProcessForegroundInformation,
++  ProcessWow64Information,
++  ProcessImageFileName,
++  ProcessLUIDDeviceMapsEnabled,
++  ProcessBreakOnTermination,
++  ProcessDebugObjectHandle,
++  ProcessDebugFlags,
++  ProcessHandleTracing,
++  ProcessIoPriority,
++  ProcessExecuteFlags,
++  ProcessTlsInformation,
++  ProcessCookie,
++  ProcessImageInformation,
++  ProcessCycleTime,
++  ProcessPagePriority,
++  ProcessInstrumentationCallback,
++  ProcessThreadStackAllocation,
++  ProcessWorkingSetWatchEx,
++  ProcessImageFileNameWin32,
++  ProcessImageFileMapping,
++  ProcessAffinityUpdateMode,
++  ProcessMemoryAllocationMode,
++  ProcessGroupInformation,
++  ProcessTokenVirtualizationEnabled,
++  ProcessConsoleHostProcess,
++  ProcessWindowInformation,
++  MaxProcessInfoClass
++} PROCESSINFOCLASS;
++
+ /* from ntifs.h */
+ #ifndef DEVICE_TYPE
+ # define DEVICE_TYPE DWORD
+@@ -4572,6 +4668,13 @@ typedef NTSTATUS (NTAPI *sNtQueryDirectoryFile)
+                   BOOLEAN RestartScan
+                 );
+ 
++typedef NTSTATUS (NTAPI *sNtQueryInformationProcess)
++                 (HANDLE PorcessHandle,
++                  PROCESSINFOCLASS ProcessInformationClass,
++                  PVOID ProcessInformation,
++                  ULONG ProcessInformationLength,
++                  PULONG ReturnLength);
++
+ /*
+  * Kernel32 headers
+  */
+@@ -4703,6 +4806,7 @@ extern sNtSetInformationFile pNtSetInformationFile;
+ extern sNtQueryVolumeInformationFile pNtQueryVolumeInformationFile;
+ extern sNtQueryDirectoryFile pNtQueryDirectoryFile;
+ extern sNtQuerySystemInformation pNtQuerySystemInformation;
++extern sNtQueryInformationProcess pNtQueryInformationProcess;
+ 
+ /* Powrprof.dll function pointer */
+ extern sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
