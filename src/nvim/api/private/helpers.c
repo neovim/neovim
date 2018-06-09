@@ -16,6 +16,7 @@
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -740,6 +741,43 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
     return (String)STRING_INIT;
   }
   return (String){ .data = str, .size = strlen(str) };
+}
+
+/// Collects `n` buffer lines into array `l`, optionally replacing newlines
+/// with NUL.
+///
+/// @param buf Buffer to get lines from
+/// @param n Number of lines to collect
+/// @param replace_nl Replace newlines ("\n") with NUL
+/// @param start Line number to start from
+/// @param[out] l Lines are copied here
+/// @param err[out] Error, if any
+/// @return true unless `err` was set
+bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl,
+                       Array *l, Error *err)
+{
+  for (size_t i = 0; i < n; i++) {
+    int64_t lnum = start + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      if (err != NULL) {
+        api_set_error(err, kErrorTypeValidation, "Line index is too high");
+      }
+      return false;
+    }
+
+    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    if (replace_nl) {
+      // Vim represents NULs as NLs, but this may confuse clients.
+      strchrsub(str.data.string.data, '\n', '\0');
+    }
+
+    l->items[i] = str;
+  }
+
+  return true;
 }
 
 /// Converts from type Object to a VimL value.

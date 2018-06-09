@@ -238,23 +238,9 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   rv.size = (size_t)(end - start);
   rv.items = xcalloc(sizeof(Object), rv.size);
 
-  for (size_t i = 0; i < rv.size; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    if (lnum >= MAXLNUM) {
-      api_set_error(err, kErrorTypeValidation, "Line index is too high");
-      goto end;
-    }
-
-    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
-    Object str = STRING_OBJ(cstr_to_string(bufstr));
-
-    // Vim represents NULs as NLs, but this may confuse clients.
-    if (channel_id != VIML_INTERNAL_CALL) {
-      strchrsub(str.data.string.data, '\n', '\0');
-    }
-
-    rv.items[i] = str;
+  if (!buf_collect_lines(buf, rv.size, start,
+                         (channel_id != VIML_INTERNAL_CALL), &rv, err)) {
+    goto end;
   }
 
 end:
