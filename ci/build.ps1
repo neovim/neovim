@@ -23,9 +23,9 @@ $nvimCmakeVars = @{
 }
 
 # For pull requests, skip some build configurations to save time.
-if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
-  exit 0
-}
+# if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
+#   exit 0
+# }
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
