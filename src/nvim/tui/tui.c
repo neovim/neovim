@@ -405,6 +405,10 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
   got_winch = true;
   UI *ui = data;
+  if (tui_is_stopped(ui)) {
+    return;
+  }
+
   update_size(ui);
   ui_schedule_refresh();
 }
@@ -845,7 +849,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
 {
-  cursorentry_T r;
+  cursorentry_T r = shape_table[0];
 
   for (size_t i = 0; i < args.size; i++) {
     char *key = args.items[i].key.data;

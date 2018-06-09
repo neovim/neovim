@@ -22,6 +22,13 @@ function! Test_whichwrap()
   set whichwrap&
 endfunction
 
+function! Test_isfname()
+  " This used to cause Vim to access uninitialized memory.
+  set isfname=
+  call assert_equal("~X", expand("~X"))
+  set isfname&
+endfunction
+
 function! Test_options()
   let caught = 'ok'
   try

@@ -92,6 +92,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -1672,7 +1673,7 @@ void u_undo(int count)
     undo_undoes = TRUE;
   else
     undo_undoes = !undo_undoes;
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /*
@@ -1685,7 +1686,7 @@ void u_redo(int count)
     undo_undoes = false;
   }
 
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /// Undo and remove the branch from the undo tree.
@@ -1697,7 +1698,9 @@ bool u_undo_and_forget(int count)
     count = 1;
   }
   undo_undoes = true;
-  u_doit(count, true);
+  u_doit(count, true,
+         // Don't send nvim_buf_lines_event for u_undo_and_forget().
+         false);
 
   if (curbuf->b_u_curhead == NULL) {
     // nothing was undone.
@@ -1732,7 +1735,11 @@ bool u_undo_and_forget(int count)
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
-static void u_doit(int startcount, bool quiet)
+///
+/// @param startcount How often to undo or redo
+/// @param quiet If `true`, don't show messages
+/// @param do_buf_event If `true`, send the changedtick with the buffer updates
+static void u_doit(int startcount, bool quiet, bool do_buf_event)
 {
   int count = startcount;
 
@@ -1768,7 +1775,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(true);
+      u_undoredo(true, do_buf_event);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1779,7 +1786,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, do_buf_event);
 
       /* Advance for next redo.  Set "newhead" when at the end of the
        * redoable changes. */
@@ -2026,8 +2033,8 @@ void undo_time(long step, int sec, int file, int absolute)
           || (uhp->uh_seq == target && !above))
         break;
       curbuf->b_u_curhead = uhp;
-      u_undoredo(TRUE);
-      uhp->uh_walk = nomark;            /* don't go back down here */
+      u_undoredo(true, true);
+      uhp->uh_walk = nomark;            // don't go back down here
     }
 
     /*
@@ -2082,7 +2089,7 @@ void undo_time(long step, int sec, int file, int absolute)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, true);
 
       /* Advance "curhead" to below the header we last used.  If it
       * becomes NULL then we need to set "newhead" to this leaf. */
@@ -2105,16 +2112,15 @@ void undo_time(long step, int sec, int file, int absolute)
   u_undo_end(did_undo, absolute, false);
 }
 
-/*
- * u_undoredo: common code for undo and redo
- *
- * The lines in the file are replaced by the lines in the entry list at
- * curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
- * list for the next undo/redo.
- *
- * When "undo" is TRUE we go up in the tree, when FALSE we go down.
- */
-static void u_undoredo(int undo)
+/// u_undoredo: common code for undo and redo
+///
+/// The lines in the file are replaced by the lines in the entry list at
+/// curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
+/// list for the next undo/redo.
+///
+/// @param undo If `true`, go up the tree. Down if `false`.
+/// @param do_buf_event If `true`, send buffer updates.
+static void u_undoredo(int undo, bool do_buf_event)
 {
   char_u      **newarray = NULL;
   linenr_T oldsize;
@@ -2242,7 +2248,7 @@ static void u_undoredo(int undo)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, do_buf_event);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2275,6 +2281,13 @@ static void u_undoredo(int undo)
     changed();
   } else {
     unchanged(curbuf, FALSE);
+  }
+
+  // because the calls to changed()/unchanged() above will bump b_changedtick
+  // again, we need to send a nvim_buf_lines_event with just the new value of
+  // b:changedtick
+  if (do_buf_event && kv_size(curbuf->update_channels)) {
+    buf_updates_changedtick(curbuf);
   }
 
   /*

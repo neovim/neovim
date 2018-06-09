@@ -31,7 +31,7 @@ end
 
 local function on_notification(event, args)
   if event == 'ping' and #args == 0 then
-    session:notify("vim_eval", "rpcnotify(g:channel, 'pong')")
+    session:notify("nvim_eval", "rpcnotify(g:channel, 'pong')")
   end
 end
 

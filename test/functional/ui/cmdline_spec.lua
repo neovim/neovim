@@ -22,6 +22,8 @@ describe('external cmdline', function()
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {reverse = true},
       [3] = {bold = true, reverse = true},
+      [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     screen:set_on_event_handler(function(name, data)
       if name == "cmdline_show" then
@@ -157,24 +159,87 @@ describe('external cmdline', function()
     end)
   end)
 
-  it("redraws statusline on entering", function()
-    command('set laststatus=2')
-    command('set statusline=%{mode()}')
-    feed(':')
-    screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {3:c^                        }|
-                               |
-    ]], nil, nil, function()
-      eq({{
-        content = { { {}, "" } },
-        firstc = ":",
-        indent = 0,
-        pos = 0,
-        prompt = ""
-      }}, cmdline)
+  describe("redraws statusline on entering", function()
+    before_each(function()
+      command('set laststatus=2')
+      command('set statusline=%{mode()}')
+    end)
+
+    it('from normal mode', function()
+      feed(':')
+      screen:expect([[
+                                 |
+        {1:~                        }|
+        {1:~                        }|
+        {3:c^                        }|
+                                 |
+      ]], nil, nil, function()
+        eq({{
+          content = { { {}, "" } },
+          firstc = ":",
+          indent = 0,
+          pos = 0,
+          prompt = ""
+        }}, cmdline)
+      end)
+    end)
+
+    it('but not with scrolled messages', function()
+      screen:try_resize(50,10)
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect([[
+                                                          |
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {3:                                                  }|
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {5:Press ENTER or type command to continue}^           |
+      ]])
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect([[
+                                                          |
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {3:                                                  }|
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {5:Press ENTER or type command to continue}^           |
+      ]])
+
+      feed(':echoerr doesnotexist<cr>')
+      screen:expect([[
+                                                          |
+        {1:~                                                 }|
+        {3:                                                  }|
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {4:E121: Undefined variable: doesnotexist}            |
+        {4:E15: Invalid expression: doesnotexist}             |
+        {5:Press ENTER or type command to continue}^           |
+      ]])
+
+      feed('<cr>')
+      screen:expect([[
+        ^                                                  |
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {3:n                                                 }|
+                                                          |
+      ]])
     end)
   end)
 

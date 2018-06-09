@@ -33,3 +33,4 @@ fi
 
 echo "Install neovim npm package"
 npm install -g neovim
+npm link neovim

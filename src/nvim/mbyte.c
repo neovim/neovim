@@ -37,6 +37,8 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+#include "nvim/eval.h"
+#include "nvim/path.h"
 #include "nvim/iconv.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
@@ -71,6 +73,9 @@ struct interval {
 # include "mbyte.c.generated.h"
 # include "unicode_tables.generated.h"
 #endif
+
+char_u e_loadlib[] = "E370: Could not load library %s";
+char_u e_loadfunc[] = "E448: Could not load library function %s";
 
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in
 // bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
@@ -2038,9 +2043,10 @@ void * my_iconv_open(char_u *to, char_u *from)
     return (void *)-1;          /* detected a broken iconv() previously */
 
 #ifdef DYNAMIC_ICONV
-  /* Check if the iconv.dll can be found. */
-  if (!iconv_enabled(true))
+  // Check if the iconv.dll can be found.
+  if (!iconv_enabled(true)) {
     return (void *)-1;
+  }
 #endif
 
   fd = iconv_open((char *)enc_skip(to), (char *)enc_skip(from));
@@ -2162,7 +2168,7 @@ static HINSTANCE hMsvcrtDLL = 0;
 
 #  ifndef DYNAMIC_ICONV_DLL
 #   define DYNAMIC_ICONV_DLL "iconv.dll"
-#   define DYNAMIC_ICONV_DLL_ALT "libiconv.dll"
+#   define DYNAMIC_ICONV_DLL_ALT "libiconv-2.dll"
 #  endif
 #  ifndef DYNAMIC_MSVCRT_DLL
 #   define DYNAMIC_MSVCRT_DLL "msvcrt.dll"
@@ -2207,6 +2213,35 @@ static void * get_iconv_import_func(HINSTANCE hInst,
   }
   return NULL;
 }
+
+// Load library "name".
+HINSTANCE vimLoadLib(char *name)
+{
+  HINSTANCE dll = NULL;
+
+  // NOTE: Do not use mch_dirname() and mch_chdir() here, they may call
+  //       vimLoadLib() recursively, which causes a stack overflow.
+  WCHAR old_dirw[MAXPATHL];
+
+  // Path to exe dir.
+  char *buf = xstrdup((char *)get_vim_var_str(VV_PROGPATH));
+  // ptrdiff_t len = ;
+  // assert(len > 0);
+  buf[path_tail_with_sep(buf) - buf] = '\0';
+
+  if (GetCurrentDirectoryW(MAXPATHL, old_dirw) != 0) {
+    // Change directory to where the executable is, both to make
+    // sure we find a .dll there and to avoid looking for a .dll
+    // in the current directory.
+    SetCurrentDirectory((LPCSTR)buf);
+    // TODO(justinmk): use uv_dlopen instead. see os_libcall
+    dll = LoadLibrary(name);
+    SetCurrentDirectoryW(old_dirw);
+  }
+
+  return dll;
+}
+
 
 /*
  * Try opening the iconv.dll and return TRUE if iconv() can be used.
@@ -2255,10 +2290,13 @@ bool iconv_enabled(bool verbose)
 
 void iconv_end(void)
 {
-  if (hIconvDLL != 0)
+  if (hIconvDLL != 0) {
+    // TODO(justinmk): use uv_dlclose instead.
     FreeLibrary(hIconvDLL);
-  if (hMsvcrtDLL != 0)
+  }
+  if (hMsvcrtDLL != 0) {
     FreeLibrary(hMsvcrtDLL);
+  }
   hIconvDLL = 0;
   hMsvcrtDLL = 0;
 }

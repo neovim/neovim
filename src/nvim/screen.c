@@ -4061,7 +4061,8 @@ win_line (
      * Also highlight the 'colorcolumn' if it is different than
      * 'cursorcolumn' */
     vcol_save_attr = -1;
-    if (draw_state == WL_LINE && !lnum_in_visual_area) {
+    if (draw_state == WL_LINE && !lnum_in_visual_area
+        && search_attr == 0 && area_attr == 0) {
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;

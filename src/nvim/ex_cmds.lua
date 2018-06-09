@@ -698,7 +698,7 @@ return {
   },
   {
     command='delfunction',
-    flags=bit.bor(NEEDARG, WORD1, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delfunction',
   },
@@ -3082,7 +3082,7 @@ return {
   },
   {
     command='windo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
     addr_type=ADDR_WINDOWS,
     func='ex_listdo',
   },

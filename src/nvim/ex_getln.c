@@ -295,10 +295,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   redir_off = true;             // don't redirect the typed command
   if (!cmd_silent) {
-    s->i = msg_scrolled;
-    msg_scrolled = 0;           // avoid wait_return message
     gotocmdline(true);
-    msg_scrolled += s->i;
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
   }
@@ -349,7 +346,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   // redraw the statusline for statuslines that display the current mode
   // using the mode() function.
-  if (KeyTyped) {
+  if (KeyTyped && msg_scrolled == 0) {
     curwin->w_redr_status = true;
     redraw_statuslines();
   }
@@ -629,6 +626,7 @@ static int command_line_execute(VimState *state, int key)
         // Entered command line, move it up
         cmdline_row--;
         redrawcmd();
+        wild_menu_showing = 0;
       } else if (save_p_ls != -1) {
         // restore 'laststatus' and 'winminheight'
         p_ls = save_p_ls;
@@ -639,13 +637,13 @@ static int command_line_execute(VimState *state, int key)
         restore_cmdline(&s->save_ccline);
         redrawcmd();
         save_p_ls = -1;
+        wild_menu_showing = 0;
       } else {
         win_redraw_last_status(topframe);
         wild_menu_showing = 0;  // must be before redraw_statuslines #8385
         redraw_statuslines();
       }
       KeyTyped = skt;
-      wild_menu_showing = 0;
       if (ccline.input_fn) {
         RedrawingDisabled = old_RedrawingDisabled;
       }

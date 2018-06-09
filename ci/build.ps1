@@ -77,6 +77,7 @@ where.exe neovim-ruby-host.bat ; exitIfFailed
 
 cmd /c npm.cmd install -g neovim ; exitIfFailed
 where.exe neovim-node-host.cmd ; exitIfFailed
+cmd /c npm link neovim
 
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }

@@ -1,4 +1,4 @@
-find_package(Gettext)
+find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
 

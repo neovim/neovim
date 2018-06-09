@@ -64,6 +64,10 @@ func Test_highlight_completion()
   hi Aardig ctermfg=green
   call feedkeys(":hi \<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"hi Aardig', getreg(':'))
+  call feedkeys(":hi default \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi default Aardig', getreg(':'))
+  call feedkeys(":hi clear Aa\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi clear Aardig', getreg(':'))
   call feedkeys(":hi li\<S-Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"hi link', getreg(':'))
   call feedkeys(":hi d\<S-Tab>\<Home>\"\<CR>", 'xt')
@@ -360,6 +364,15 @@ func Test_cmdline_complete_wildoptions()
   let b = join(sort(split(@:)),' ')
   call assert_equal(a, b)
   bw!
+endfunc
+
+func Test_cmdline_complete_user_cmd()
+  command! -complete=color -nargs=1 Foo :
+  call feedkeys(":Foo \<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  call feedkeys(":Foo b\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  delcommand Foo
 endfunc
 
 " using a leading backslash here

@@ -79,6 +79,101 @@ As Nvim develops, its API may change only according the following "contract":
 - Deprecated functions will not be removed until Nvim version 2.0
 
 ==============================================================================
+Buffer update events					*api-buffer-updates*
+
+API clients can "attach" to Nvim buffers to subscribe to buffer update events.
+This is similar to |TextChanged| but more powerful and granular.
+
+Call |nvim_buf_attach| to receive these events on the channel:
+
+                                                        *nvim_buf_lines_event*
+nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, {more}]
+
+  When the buffer text between {firstline} and {lastline} (end-exclusive,
+  zero-indexed) were changed to the new text in the {linedata} list. The
+  granularity is a line, i.e. if a single character is changed in the editor,
+  the entire line is sent.
+
+  When {changedtick} is |v:null| this means the screen lines (display) changed
+  but not the buffer contents. {linedata} contains the changed screen lines.
+  This happens when |inccommand| shows a buffer preview.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+
+    {changedtick} value of |b:changedtick| for the buffer. If you send an API
+    command back to nvim you can check the value of |b:changedtick| as part of
+    your request to ensure that no other changes have been made.
+
+    {firstline} integer line number of the first line that was replaced.
+    Zero-indexed: if line 1 was replaced then {firstline} will be 0, not 1.
+    {firstline} is always less than or equal to the number of lines that were
+    in the buffer before the lines were replaced.
+
+    {lastline} integer line number of the first line that was not replaced
+    (i.e. the range {firstline}, {lastline} is end-exclusive).
+    Zero-indexed: if line numbers 2 to 5 were replaced, this will be 5 instead
+    of 6. {lastline} is always be less than or equal to the number of lines
+    that were in the buffer before the lines were replaced. {lastline} will be
+    -1 if the event is part of the initial update after attaching.
+
+    {linedata} list of strings containing the contents of the new buffer
+    lines. Newline characters are omitted; empty lines are sent as empty
+    strings.
+
+    {more} boolean, true for a "multipart" change notification: the current
+    change was chunked into multiple |nvim_buf_lines_event| notifications
+    (e.g. because it was too big).
+
+nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
+
+  When |b:changedtick| was incremented but no text was changed. Relevant for
+  undo/redo.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+    {changedtick} new value of |b:changedtick| for the buffer
+
+nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
+
+  When buffer is detached (i.e. updates are disabled). Triggered explicitly by
+  |nvim_buf_detach| or implicitly in these cases:
+  - Buffer was |abandon|ed and 'hidden' is not set.
+  - Buffer was reloaded, e.g. with |:edit| or an external change triggered
+    |:checktime| or 'autoread'.
+  - Generally: whenever the buffer contents are unloaded from memory.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+
+
+EXAMPLE ~
+
+Calling |nvim_buf_attach| with send_buffer=true on an empty buffer, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
+
+User adds two lines to the buffer, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
+
+User moves to a line containing the text "Hello world" and inserts "!", emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, {linenr}, {linenr} + 1,
+                       ["Hello world!"], v:false]
+
+User moves to line 3 and deletes 20 lines using "20dd", emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 22, [], v:false]
+
+User selects lines 3-5 using |linewise-visual| mode and then types "p" to
+paste a block of 6 lines, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 5,
+    ['pasted line 1', 'pasted line 2', 'pasted line 3', 'pasted line 4',
+     'pasted line 5', 'pasted line 6'],
+    v:false
+  ]
+
+User reloads the buffer with ":edit", emits: >
+  nvim_buf_detach_event[{buf}]
+
+==============================================================================
 Buffer highlighting					       *api-highlights*
 
 Nvim allows plugins to add position-based highlights to buffers. This is

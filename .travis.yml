@@ -53,6 +53,7 @@ jobs:
       compiler: clang
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
+        # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
       sudo: true
     - os: linux

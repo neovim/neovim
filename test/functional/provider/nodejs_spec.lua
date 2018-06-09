@@ -16,7 +16,6 @@ end
 
 before_each(function()
   clear()
-  command([[let $NODE_PATH = get(split(system('npm root -g'), "\n"), 0, '')]])
 end)
 
 describe('nodejs host', function()
@@ -28,21 +27,18 @@ describe('nodejs host', function()
   it('works', function()
     local fname = 'Xtest-nodejs-hello.js'
     write_file(fname, [[
-      const socket = process.env.NVIM_LISTEN_ADDRESS;
       const neovim = require('neovim');
-      const nvim = neovim.attach({socket: socket});
+      const nvim = neovim.attach({socket: process.env.NVIM_LISTEN_ADDRESS});
       nvim.command('let g:job_out = "hello"');
-      nvim.command('call jobstop(g:job_id)');
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    retry(nil, 2000, function() eq('hello', eval('g:job_out')) end)
+    retry(nil, 3000, function() eq('hello', eval('g:job_out')) end)
   end)
   it('plugin works', function()
     local fname = 'Xtest-nodejs-hello-plugin.js'
     write_file(fname, [[
-      const socket = process.env.NVIM_LISTEN_ADDRESS;
       const neovim = require('neovim');
-      const nvim = neovim.attach({socket: socket});
+      const nvim = neovim.attach({socket: process.env.NVIM_LISTEN_ADDRESS});
 
       class TestPlugin {
         hello() {
@@ -54,6 +50,6 @@ describe('nodejs host', function()
       plugin.instance.hello();
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    retry(nil, 2000, function() eq('hello-plugin', eval('g:job_out')) end)
+    retry(nil, 3000, function() eq('hello-plugin', eval('g:job_out')) end)
   end)
 end)

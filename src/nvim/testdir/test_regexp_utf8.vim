@@ -109,12 +109,10 @@ func s:classes_test()
   call assert_equal('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', alnumchars)
   call assert_equal("\b", backspacechar)
   call assert_equal("\t ", blankchars)
-  " Commented out: it succeeds on Linux and Windows, but fails on macOs in Travis.
-  " call assert_equal("\x01\x02\x03\x04\x05\x06\x07\b\t\n\x0b\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\e\x1c\x1d\x1e\x1f\x7f", cntrlchars)
+  call assert_equal("\x01\x02\x03\x04\x05\x06\x07\b\t\n\x0b\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\e\x1c\x1d\x1e\x1f\x7f", cntrlchars)
   call assert_equal("0123456789", digitchars)
   call assert_equal("\<Esc>", escapechar)
-  " Commented out: it succeeds on Linux and Windows, but fails on macOs in Travis.
-  " call assert_equal('!"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~', graphchars)
+  call assert_equal('!"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~', graphchars)
   call assert_equal('abcdefghijklmnopqrstuvwxyzµßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ', lowerchars)
   call assert_equal(' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ', printchars)
   call assert_equal('!"#$%&''()*+,-./:;<=>?@[\]^_`{|}~', punctchars)
@@ -167,4 +165,21 @@ func Test_eow_with_optional()
     let actual = matchlist('abc def', '\(abc\>\)\?\s*\(def\)')
     call assert_equal(expected, actual)
   endfor
+endfunc
+
+func Test_reversed_range()
+  for re in range(0, 2)
+    exe 'set re=' . re
+    call assert_fails('call match("abc def", "[c-a]")', 'E944:')
+  endfor
+  set re=0
+endfunc
+
+func Test_large_class()
+  set re=1
+  call assert_fails('call match("abc def", "[\u3000-\u4000]")', 'E945:')
+  set re=2
+  call assert_equal(0, 'abc def' =~# '[\u3000-\u4000]')
+  call assert_equal(1, "\u3042" =~# '[\u3000-\u4000]')
+  set re=0
 endfunc

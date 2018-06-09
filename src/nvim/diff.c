@@ -2344,7 +2344,7 @@ void ex_diffgetput(exarg_T *eap)
           }
         }
       }
-      changed_lines(lnum, 0, lnum + count, (long)added);
+      changed_lines(lnum, 0, lnum + count, (long)added, true);
 
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
