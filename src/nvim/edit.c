@@ -7547,9 +7547,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     curwin->w_cursor.coladd = 0;
   }
 
-  /*
-   * delete newline!
-   */
+  // Delete newline!
   if (curwin->w_cursor.col == 0) {
     lnum = Insstart.lnum;
     if (curwin->w_cursor.lnum == lnum || revins_on) {
@@ -7558,7 +7556,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         return false;
       }
       Insstart.lnum--;
-      Insstart.col = MAXCOL;
+      Insstart.col = (colnr_T)STRLEN(ml_get(Insstart.lnum));
     }
     /*
      * In replace mode:
