@@ -3732,7 +3732,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   if (restart_edit)
     redraw_later(VALID);        /* causes status line redraw */
 
-  if (hl_attr(HLF_INACTIVE)
+  if (HL_ATTR(HLF_INACTIVE)
       || (prevwin && prevwin->w_hl_ids[HLF_INACTIVE])
       || curwin->w_hl_ids[HLF_INACTIVE]) {
     redraw_all_later(NOT_VALID);

@@ -1512,7 +1512,7 @@ int buf_write_all(buf_T *buf, int forceit)
                       (linenr_T)1, buf->b_ml.ml_line_count, NULL,
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
-    msg_source(hl_attr(HLF_W));
+    msg_source(HL_ATTR(HLF_W));
     MSG(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
   }
   return retval;
@@ -3258,7 +3258,7 @@ retry:
           ga.ga_len--;
         } else {          // lines like ":map xx yy^M" will have failed
           if (!sp->error) {
-            msg_source(hl_attr(HLF_W));
+            msg_source(HL_ATTR(HLF_W));
             EMSG(_("W15: Warning: Wrong line separator, ^M may be missing"));
           }
           sp->error = true;

@@ -496,9 +496,9 @@ staterr:
 
     if (p_csverbose) {
       msg_clr_eos();
-      (void)smsg_attr(hl_attr(HLF_R),
-            _("Added cscope database %s"),
-            csinfo[i].fname);
+      (void)smsg_attr(HL_ATTR(HLF_R),
+                      _("Added cscope database %s"),
+                      csinfo[i].fname);
     }
   }
 
@@ -1258,8 +1258,8 @@ static void cs_kill_execute(
 {
   if (p_csverbose) {
     msg_clr_eos();
-    (void)smsg_attr(hl_attr(HLF_R) | MSG_HIST,
-          _("cscope connection %s closed"), cname);
+    (void)smsg_attr(HL_ATTR(HLF_R) | MSG_HIST,
+                    _("cscope connection %s closed"), cname);
   }
   cs_release_csp(i, TRUE);
 }
@@ -1590,16 +1590,16 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
   (void)snprintf(buf, bufsize, cstag_msg, ptag);
-  MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
+  MSG_PUTS_ATTR(buf, HL_ATTR(HLF_T));
   msg_clr_eos();
 
   // restore matches[0]
   *ptag_end = '\t';
 
   // Column headers for match number, line number and filename.
-  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));
+  MSG_PUTS_ATTR(_("\n   #   line"), HL_ATTR(HLF_T));
   msg_advance(msg_col + 2);
-  MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
+  MSG_PUTS_ATTR(_("filename / context / line\n"), HL_ATTR(HLF_T));
 
   for (size_t i = 0; i < num_matches; i++) {
     assert(strcnt(matches[i], '\t') >= 2);
@@ -1626,8 +1626,8 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       bufsize = newsize;
     }
     (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
-    MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
-    MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
+    MSG_PUTS_ATTR(buf, HL_ATTR(HLF_CM));
+    MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), HL_ATTR(HLF_CM));
 
     // compute the required space for the context
     char *context = cntxts[i] ? cntxts[i] : globalcntx;
@@ -1915,7 +1915,7 @@ static int cs_reset(exarg_T *eap)
          * "Added cscope database..."
          */
         snprintf(buf, ARRAY_SIZE(buf), " (#%zu)", i);
-        MSG_PUTS_ATTR(buf, hl_attr(HLF_R));
+        MSG_PUTS_ATTR(buf, HL_ATTR(HLF_R));
       }
     }
     xfree(dblist[i]);
@@ -1927,7 +1927,7 @@ static int cs_reset(exarg_T *eap)
   xfree(fllist);
 
   if (p_csverbose) {
-    msg_attr(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+    msg_attr(_("All cscope databases reset"), HL_ATTR(HLF_R) | MSG_HIST);
   }
   return CSCOPE_SUCCESS;
 } /* cs_reset */
@@ -1993,7 +1993,7 @@ static int cs_show(exarg_T *eap)
   else {
     MSG_PUTS_ATTR(
         _(" # pid    database name                       prepend path\n"),
-        hl_attr(HLF_T));
+        HL_ATTR(HLF_T));
     for (size_t i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname == NULL)
         continue;

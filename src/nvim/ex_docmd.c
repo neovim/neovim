@@ -4949,7 +4949,7 @@ static void uc_list(char_u *name, size_t name_len)
       msg_putchar(gap != &ucmds ? 'b' : ' ');
       msg_putchar(' ');
 
-      msg_outtrans_attr(cmd->uc_name, hl_attr(HLF_D));
+      msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
       len = (int)STRLEN(cmd->uc_name) + 4;
 
       do {
@@ -6767,8 +6767,8 @@ static void ex_tabs(exarg_T *eap)
 
     msg_putchar('\n');
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
-    msg_outtrans_attr(IObuff, hl_attr(HLF_T));
-    ui_flush();            /* output one line at a time */
+    msg_outtrans_attr(IObuff, HL_ATTR(HLF_T));
+    ui_flush();            // output one line at a time
     os_breakcheck();
 
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
