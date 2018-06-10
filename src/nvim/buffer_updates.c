@@ -47,25 +47,14 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
 
     // collect buffer contents
 
-    // True now, but a compile time reminder for future systems we support
-    STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t to small to hold the number of"
-                  " lines in a buffer");
+    STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
     size_t line_count = (size_t)buf->b_ml.ml_line_count;
 
     if (line_count >= 1) {
       linedata.size = line_count;
       linedata.items = xcalloc(sizeof(Object), line_count);
-      for (size_t i = 0; i < line_count; i++) {
-        linenr_T lnum = 1 + (linenr_T)i;
 
-        const char *bufstr = (char *)ml_get_buf(buf, lnum, false);
-        Object str = STRING_OBJ(cstr_to_string(bufstr));
-
-        // Vim represents NULs as NLs, but this may confuse clients.
-        strchrsub(str.data.string.data, '\n', '\0');
-
-        linedata.items[i] = str;
-      }
+      buf_collect_lines(buf, line_count, 1, true, &linedata, NULL);
     }
 
     args.items[4] = ARRAY_OBJ(linedata);
@@ -170,23 +159,11 @@ void buf_updates_send_changes(buf_T *buf,
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;
     if (num_added > 0) {
-        // True now, but a compile time reminder for future systems we support
-        // Note that `num_added` is a `int64_t`, but still must be lower than
-        // `MAX_LNUM`
-        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t to small to hold the number "
-                      "of lines in a buffer");
+        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
         linedata.size = (size_t)num_added;
         linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
-        for (int64_t i = 0; i < num_added; i++) {
-          int64_t lnum = firstline + i;
-          const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
-          Object str = STRING_OBJ(cstr_to_string(bufstr));
-
-          // Vim represents NULs as NLs, but this may confuse clients.
-          strchrsub(str.data.string.data, '\n', '\0');
-
-          linedata.items[i] = str;
-        }
+        buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
+                          NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);
     args.items[5] = BOOLEAN_OBJ(false);
