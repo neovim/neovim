@@ -133,9 +133,17 @@ class DebugSession( object ):
     if not configuration:
       return
 
+    utils.ExpandReferencesInDict( launch_config[ configuration ], {
+      'workspaceRoot': os.path.dirname( launch_config_file )
+    } )
+
     adapter = launch_config[ configuration ].get( 'adapter' )
     if isinstance( adapter, str ):
       adapter = adapters.get( adapter )
+      utils.ExpandReferencesInDict( adapter, {
+        'workspaceRoot': os.path.dirname( launch_config_file )
+      } )
+
 
     self._StartWithConfiguration( launch_config[ configuration ],
                                   adapter )
@@ -143,6 +151,11 @@ class DebugSession( object ):
   def _StartWithConfiguration( self, configuration, adapter ):
     self._configuration = configuration
     self._adapter = adapter
+
+    self._logger.info( 'Configuration: {0}'.format( json.dumps(
+      self._configuration ) ) )
+    self._logger.info( 'Adapter: {0}'.format( json.dumps(
+      self._adapter ) ) )
 
     def start():
       self._StartDebugAdapter()

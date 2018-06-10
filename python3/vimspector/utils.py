@@ -19,6 +19,7 @@ import os
 import contextlib
 import vim
 import json
+import string
 
 _log_handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
 _log_handler.setFormatter(
@@ -222,3 +223,21 @@ def ClearBuffer( buf ):
 
 def IsCurrent( window, buf ):
   return vim.current.window == window and vim.current.window.buffer == buf
+
+
+def ExpandReferencesInDict( obj, mapping, **kwargs ):
+  def expand_refs( s ):
+    UserMessage( type( s ), persist=True )
+    s = string.Template( s ).safe_substitute( mapping, **kwargs )
+    s = os.path.expanduser( s )
+    s = os.path.expandvars( s )
+    return s
+
+  for k in obj.keys():
+    if isinstance( obj[ k ], dict ):
+      ExpandReferencesInDict( obj[ k ], mapping, **kwargs )
+    elif isinstance( obj[ k ], list ):
+      for i, _ in enumerate( obj[ k ] ):
+        obj[ k ][ i ] = expand_refs( obj[ k ][ i ] )
+    elif isinstance( obj[ k ], str ):
+      obj[ k ] = expand_refs( obj[ k ] )
