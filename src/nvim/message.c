@@ -2076,8 +2076,9 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   }
 }
 
-// Returns TRUE when messages should be printed to stdout/stderr, which
-// happens when no UIs are attached and nvim is not being embedded
+// Returns TRUE when messages should be printed to stdout/stderr:
+//    - "batch mode" ("silent mode", -es/-Es)
+//    - no UI and not embedded
 int msg_use_printf(void)
 {
   return !embedded_mode && !ui_active();

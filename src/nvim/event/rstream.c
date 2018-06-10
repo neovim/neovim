@@ -115,7 +115,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
     if (cnt == UV_ENOBUFS || cnt == 0) {
       return;
     } else if (cnt == UV_EOF && uvstream->type == UV_TTY) {
-      // The TTY driver might signal TTY without closing the stream
+      // The TTY driver might signal EOF without closing the stream
       invoke_read_cb(stream, 0, true);
     } else {
       DLOG("Closing Stream (%p): %s (%s)", stream,
