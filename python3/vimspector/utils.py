@@ -52,7 +52,7 @@ def SetUpHiddenBuffer( buf, name ):
   buf.options[ 'bufhidden' ] = 'hide'
   buf.name = name
 
-def SetUpPromptBuffer( buf, name, prompt, callback ):
+def SetUpPromptBuffer( buf, name, prompt, callback, hidden=False ):
   # This feature is _super_ new, so only enable when available
   if not int( vim.eval( "exists( '*prompt_setprompt' )" ) ):
     return SetUpScratchBuffer( buf, name )
@@ -63,7 +63,7 @@ def SetUpPromptBuffer( buf, name, prompt, callback ):
   buf.options[ 'modified' ] = False
   buf.options[ 'readonly' ] = False
   buf.options[ 'buflisted' ] = False
-  buf.options[ 'bufhidden' ] = 'wipe'
+  buf.options[ 'bufhidden' ] = 'wipe' if not hidden else 'hide'
   buf.name = name
 
   vim.eval( "prompt_setprompt( {0}, '{1}' )".format( buf.number,
@@ -101,7 +101,7 @@ def RestoreCursorPosition():
 
 
 @contextlib.contextmanager
-def RestorCurrentWindow():
+def RestoreCurrentWindow():
   # TODO: Don't trigger autoccommands when shifting windows
   old_window = vim.current.window
   try:
@@ -117,7 +117,7 @@ def RestoreCurrentBuffer( window ):
   try:
     yield
   finally:
-    with RestorCurrentWindow():
+    with RestoreCurrentWindow():
       vim.current.window = window
       vim.current.buffer = old_buffer
 
@@ -218,3 +218,7 @@ def AppendToBuffer( buf, line_or_lines ):
 
 def ClearBuffer( buf ):
   buf[:] = None
+
+
+def IsCurrent( window, buf ):
+  return vim.current.window == window and vim.current.window.buffer == buf

@@ -243,6 +243,10 @@ class DebugSession( object ):
     self._variablesView.AddWatch( self._stackTraceView.GetCurrentFrame(),
                                   expression )
 
+  def EvaluateConsole( self, expression ):
+    self._outputView.Evaluate( self._stackTraceView.GetCurrentFrame(),
+                               expression )
+
   def DeleteWatch( self ):
     self._variablesView.DeleteWatch()
 
@@ -304,7 +308,8 @@ class DebugSession( object ):
       # Output/logging
       vim.command( '10spl' )
       vim.command( 'enew' )
-      self._outputView = output.OutputView( vim.current.window )
+      self._outputView = output.OutputView( self._connection,
+                                            vim.current.window )
 
   def ClearCurrentFrame( self ):
     self.SetCurrentFrame( None )
@@ -371,6 +376,7 @@ class DebugSession( object ):
       self._connection = None
       self._stackTraceView.ConnectionClosed()
       self._variablesView.ConnectionClosed()
+      self._outputView.ConnectionClosed()
       if callback:
         callback()
 

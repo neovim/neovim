@@ -89,6 +89,12 @@ function! vimspector#AddWatchPrompt( expr ) abort
   call vimspector#AddWatch( a:expr )
 endfunction
 
+function! vimspector#EvaluateConsole( expr ) abort
+  stopinsert
+  setlocal nomodified
+  py3 _vimspector_session.EvaluateConsole( vim.eval( 'a:expr' ) )
+endfunction
+
 function! vimspector#ShowOutput( category ) abort
   py3 _vimspector_session.ShowOutput( vim.eval( 'a:category' ) )
 endfunction

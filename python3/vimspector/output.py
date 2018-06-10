@@ -18,22 +18,44 @@ from vimspector import utils
 import vim
 
 
+BUFFER_MAP = {
+  'console': 'Console',
+  'stdout': 'Console'
+}
+
+
+def CategoryToBuffer( category ):
+  return BUFFER_MAP.get( category, category )
+
+
 class OutputView( object ):
-  def __init__( self, window ):
+  def __init__( self, connection, window ):
     self._window = window
+    self._connection = connection
     self._buffers = {}
 
-    self._CreateBuffer( 'stdout' )
-    self.ShowOutput( 'stdout' )
+    for b in set( BUFFER_MAP.values() ):
+      self._CreateBuffer( b )
+
+    self.ShowOutput( 'Console' )
 
   def OnOutput( self, event ):
-    category = event.get( 'category' ) or 'output'
+    category = CategoryToBuffer( event.get( 'category' ) or 'output' )
     if category not in self._buffers:
       self._CreateBuffer( category )
 
-    with utils.ModifiableScratchBuffer( self._buffers[ category ] ):
-      utils.AppendToBuffer( self._buffers[ category ],
-                            event[ 'output' ].splitlines() )
+    buf = self._buffers[ category ]
+    with utils.ModifiableScratchBuffer( buf ):
+      utils.AppendToBuffer( buf, event[ 'output' ].splitlines() )
+
+    # Scroll the buffer
+    with utils.RestoreCurrentWindow():
+      with utils.RestoreCurrentBuffer( self._window ):
+        self.ShowOutput( category )
+        vim.command( 'normal G' )
+
+  def ConnectionClosed( self ):
+    self._connection = None
 
   def Reset( self ):
     self.Clear()
@@ -48,18 +70,42 @@ class OutputView( object ):
     vim.current.window = self._window
     vim.command( 'bu {0}'.format( self._buffers[ category ].name ) )
 
+  def Evaluate( self, frame, expression ):
+    if not frame:
+      return
+
+    console = self._buffers[ 'Console' ]
+    utils.AppendToBuffer( console, expression )
+
+    def print_result( message ):
+      utils.AppendToBuffer( console, message[ 'body' ][ 'result' ] )
+
+    self._connection.DoRequest( print_result, {
+      'command': 'evaluate',
+      'arguments': {
+        'expression': expression,
+        'context': 'repl',
+        'frameId': frame[ 'id' ],
+      }
+    } )
+
   def _CreateBuffer( self, category ):
-    with utils.RestorCurrentWindow():
+    with utils.RestoreCurrentWindow():
       vim.current.window = self._window
 
       with utils.RestoreCurrentBuffer( self._window ):
         vim.command( 'enew' )
         self._buffers[ category ] = vim.current.buffer
-        utils.AppendToBuffer( self._buffers[ category ],
-                              category + '-----' )
 
-        utils.SetUpHiddenBuffer( self._buffers[ category ],
-                                 'vimspector.Output:{0}'.format( category ) )
+        if category == 'Console':
+          utils.SetUpPromptBuffer( self._buffers[ category ],
+                                   'vimspector.Console',
+                                   '> ',
+                                   'vimspector#EvaluateConsole',
+                                   hidden = True )
+        else:
+          utils.SetUpHiddenBuffer( self._buffers[ category ],
+                                   'vimspector.Output:{0}'.format( category ) )
 
         vim.command( "nnoremenu WinBar.{0} "
                      ":call vimspector#ShowOutput( '{0}' )<CR>".format(
