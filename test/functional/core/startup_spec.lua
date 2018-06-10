@@ -128,7 +128,7 @@ describe('startup', function()
     screen:attach()
     feed("put ='from -E'<CR>")
     screen:expect([[
-                               |
+      :put ='from -E'          |
       from -E                  |
       :^                        |
     ]])
