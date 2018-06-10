@@ -54,12 +54,7 @@ if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 option(ENABLE_LIBINTL "enable libintl" ON)
-if(MSVC)
-  add_definitions(-DDYNAMIC_ICONV)
-  option(ENABLE_LIBICONV "enable libiconv" OFF)
-else()
-  option(ENABLE_LIBICONV "enable libiconv" ON)
-endif()
+option(ENABLE_LIBICONV "enable libiconv" ON)
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
