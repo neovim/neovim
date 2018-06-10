@@ -227,7 +227,6 @@ def IsCurrent( window, buf ):
 
 def ExpandReferencesInDict( obj, mapping, **kwargs ):
   def expand_refs( s ):
-    UserMessage( type( s ), persist=True )
     s = string.Template( s ).safe_substitute( mapping, **kwargs )
     s = os.path.expanduser( s )
     s = os.path.expandvars( s )
