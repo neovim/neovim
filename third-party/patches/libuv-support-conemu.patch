@@ -1,11 +1,11 @@
 diff --git a/include/uv-win.h b/include/uv-win.h
-index 5e74c520..8ab74939 100644
+index 9677ff16..8eea2022 100644
 --- a/include/uv-win.h
 +++ b/include/uv-win.h
-@@ -675,3 +675,10 @@ RB_HEAD(uv_timer_tree_s, uv_timer_s);
- #define UV_FS_O_NONBLOCK     0
- #define UV_FS_O_SYMLINK      0
- #define UV_FS_O_SYNC         0x08000000 /* FILE_FLAG_WRITE_THROUGH */
+@@ -648,3 +648,10 @@ RB_HEAD(uv_timer_tree_s, uv_timer_s);
+ #ifndef X_OK
+ #define X_OK 1
+ #endif
 +
 +#define UV_TTY_NONE          0
 +#define UV_TTY_VTP           0x02
@@ -14,7 +14,7 @@ index 5e74c520..8ab74939 100644
 +
 +UV_EXTERN int uv_guess_tty(uv_file fd);
 diff --git a/src/win/tty.c b/src/win/tty.c
-index 4a5270de..4675867b 100644
+index a6f58395..b1224a14 100644
 --- a/src/win/tty.c
 +++ b/src/win/tty.c
 @@ -23,6 +23,7 @@
@@ -34,7 +34,7 @@ index 4a5270de..4675867b 100644
  #ifndef InterlockedOr
  # define InterlockedOr _InterlockedOr
  #endif
-@@ -2259,25 +2262,95 @@ int uv_tty_reset_mode(void) {
+@@ -2259,23 +2262,102 @@ int uv_tty_reset_mode(void) {
    return 0;
  }
  
@@ -118,12 +118,9 @@ index 4a5270de..4675867b 100644
  
    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
    if (!SetConsoleMode(handle, dwMode)) {
--    uv__vterm_state = UV_UNSUPPORTED;
--    return;
 +    return result |= UV_TTY_LEGACY;
-   }
- 
--  uv__vterm_state = UV_SUPPORTED;
++  }
++
 +  return result |= UV_TTY_VTP;
 +}
 +
@@ -136,16 +133,12 @@ index 4a5270de..4675867b 100644
 +  if (tty_type & UV_TTY_VTP || tty_type & UV_TTY_CONEMU) {
 +    uv__vterm_state = UV_SUPPORTED;
 +  } else {
-+    uv__vterm_state = UV_UNSUPPORTED;
-+  }
- }
- 
- static DWORD WINAPI uv__tty_console_resize_message_loop_thread(void* param) {
-@@ -2331,3 +2404,12 @@ static void CALLBACK uv__tty_console_resize_event(HWINEVENTHOOK hWinEventHook,
-     uv__signal_dispatch(SIGWINCH);
+     uv__vterm_state = UV_UNSUPPORTED;
+-    return;
    }
- }
-+
++}
+ 
+-  uv__vterm_state = UV_SUPPORTED;
 +int uv_guess_tty(uv_file fd) {
 +  HANDLE handle = _get_osfhandle(fd);
 +  uv__once_init();
@@ -153,9 +146,9 @@ index 4a5270de..4675867b 100644
 +    return UV_TTY_NONE;
 +  }
 +  return uv__guess_tty(handle);
-+}
+ }
 diff --git a/src/win/winapi.c b/src/win/winapi.c
-index 0fd598ea..ab8dada7 100644
+index aa5d719f..a593e242 100644
 --- a/src/win/winapi.c
 +++ b/src/win/winapi.c
 @@ -33,6 +33,7 @@ sNtSetInformationFile pNtSetInformationFile;
@@ -164,11 +157,11 @@ index 0fd598ea..ab8dada7 100644
  sNtQuerySystemInformation pNtQuerySystemInformation;
 +sNtQueryInformationProcess pNtQueryInformationProcess;
  
- /* Powrprof.dll function pointer */
- sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
-@@ -98,6 +99,13 @@ void uv_winapi_init(void) {
-     uv_fatal_error(GetLastError(), "GetProcAddress");
-   }
+ 
+ /* Kernel32 function pointers */
+@@ -150,6 +151,13 @@ void uv_winapi_init(void) {
+     GetProcAddress(kernel32_module, "GetFinalPathNameByHandleW");
+ 
  
 +  pNtQueryInformationProcess = (sNtQueryInformationProcess) GetProcAddress(
 +      ntdll_module,
@@ -181,10 +174,10 @@ index 0fd598ea..ab8dada7 100644
    if (powrprof_module != NULL) {
      pPowerRegisterSuspendResumeNotification = (sPowerRegisterSuspendResumeNotification)
 diff --git a/src/win/winapi.h b/src/win/winapi.h
-index d0fcfd8e..c3663fc4 100644
+index 9401676f..563b0ab4 100644
 --- a/src/win/winapi.h
 +++ b/src/win/winapi.h
-@@ -4117,6 +4117,102 @@ typedef struct _UNICODE_STRING {
+@@ -4113,6 +4113,102 @@ typedef struct _UNICODE_STRING {
  
  typedef const UNICODE_STRING *PCUNICODE_STRING;
  
@@ -287,7 +280,7 @@ index d0fcfd8e..c3663fc4 100644
  /* from ntifs.h */
  #ifndef DEVICE_TYPE
  # define DEVICE_TYPE DWORD
-@@ -4572,6 +4668,13 @@ typedef NTSTATUS (NTAPI *sNtQueryDirectoryFile)
+@@ -4568,6 +4664,13 @@ typedef NTSTATUS (NTAPI *sNtQueryDirectoryFile)
                    BOOLEAN RestartScan
                  );
  
@@ -301,11 +294,11 @@ index d0fcfd8e..c3663fc4 100644
  /*
   * Kernel32 headers
   */
-@@ -4703,6 +4806,7 @@ extern sNtSetInformationFile pNtSetInformationFile;
+@@ -4730,6 +4833,7 @@ extern sNtSetInformationFile pNtSetInformationFile;
  extern sNtQueryVolumeInformationFile pNtQueryVolumeInformationFile;
  extern sNtQueryDirectoryFile pNtQueryDirectoryFile;
  extern sNtQuerySystemInformation pNtQuerySystemInformation;
 +extern sNtQueryInformationProcess pNtQueryInformationProcess;
  
- /* Powrprof.dll function pointer */
- extern sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
+ 
+ /* Kernel32 function pointers */
