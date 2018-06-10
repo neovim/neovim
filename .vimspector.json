@@ -4,12 +4,12 @@
         "name": "lldb-mi",
         "command": [
           "node",
-          "/Users/ben/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
+          "$HOME/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
         ]
       },
       "cppdbg": {
         "name": "cppdbg",
-        "command": [ "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/OpenDebugAD7" ],
+        "command": [ "$HOME/.vscode/extensions/ms-vscode.cpptools-0.17.4/debugAdapters/OpenDebugAD7" ],
         "attach": {
           "pidProperty": "processId",
           "pidSelect": "ask"
@@ -19,14 +19,14 @@
         "name": "python",
         "command": [
           "node",
-          "/Users/ben/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
+          "$HOME/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
         ]
       },
       "bashdb": {
         "name": "bashdb",
         "command": [
           "node",
-          "/Users/ben/.vscode/extensions/rogalmic.bash-debug-0.2.0/out/bashDebug.js"
+          "$HOME/.vscode/extensions/rogalmic.bash-debug-0.2.0/out/bashDebug.js"
         ]
       },
       "lldb": {
@@ -35,7 +35,7 @@
           "lldb",
           "-b",
           "-O",
-          "command script import '/Users/ben/.vscode/extensions/vadimcn.vscode-lldb-0.8.7/adapter'",
+          "command script import '$HOME/.vscode/extensions/vadimcn.vscode-lldb-0.8.7/adapter'",
           "-O",
           "script adapter.main.run_stdio_session()"
         ]
@@ -49,9 +49,9 @@
         "target": "support/test/cpp/simple_c_program/test",
         "args": [],
         "cwd": ".",
-        "lldbmipath": "/Users/ben/.vscode/extensions/ms-vscode.cpptools-0.17.3/debugAdapters/lldb/bin/lldb-mi",
+        "lldbmipath": "$HOME/.vscode/extensions/ms-vscode.cpptools-0.17.4/debugAdapters/lldb/bin/lldb-mi",
         "trace": true,
-        "logFilePath": "/Users/ben/.vimspector.protocol.log"
+        "logFilePath": "$HOME/.vimspector.protocol.log"
       }
     },
     "simple_c_progra - ms Launch": {
@@ -60,9 +60,9 @@
         "name": "ms Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+        "program": "${workspaceRoot}/support/test/cpp/simple_c_program/test",
         "args": [],
-        "cwd": "/Users/ben",
+        "cwd": "$HOME",
         "environment": [],
         "externalConsole": true,
         "MIMode": "lldb"
@@ -74,11 +74,11 @@
         "name": "Python: Current File",
         "type": "python",
         "request": "launch",
-        "cwd": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python",
+        "cwd": "${workspaceRoot}/support/test/python/simple_python",
         "stopOnEntry": true,
         "console": "externalTerminal",
         "debugOptions": [],
-        "program": "/Users/ben/.vim/bundle/vimspector/support/test/python/simple_python/main.py"
+        "program": "${workspaceRoot}/support/test/python/simple_python/main.py"
       }
     },
     "simple_c_program - MS Attach": {
@@ -87,7 +87,7 @@
         "name": "(lldb) Attach",
         "type": "cppdbg",
         "request": "attach",
-        "program": "/Users/ben/.vim/bundle/vimspector/support/test/cpp/simple_c_program/test",
+        "program": "${workspaceRoot}/support/test/cpp/simple_c_program/test",
         "MIMode": "lldb"
       }
     },
@@ -97,9 +97,9 @@
         "type": "bashdb",
         "request": "launch",
         "name": "Bash-Debug (simplest configuration)",
-        "program": "/Users/ben/.vim/bundle/YouCompleteMe/install.sh",
+        "program": "$HOME/.vim/bundle/YouCompleteMe/install.sh",
         "args": [],
-        "cwd": "/Users/ben/.vim/bundle/YouCompleteMe",
+        "cwd": "$HOME/.vim/bundle/YouCompleteMe",
         "pathBash": "bash",
         "pathBashdb": "bashdb",
         "pathCat": "cat",
@@ -115,9 +115,9 @@
         "type": "lldb",
         "request": "launch",
         "name": "LLDB: Launch",
-        "program": "/Users/ben/Development/vim/src/vim",
+        "program": "$HOME/Development/vim/src/vim",
         "args": [],
-        "cwd": "/Users/ben/Development/vim"
+        "cwd": "$HOME/Development/vim"
       }
     },
     "racerd": {
@@ -126,13 +126,13 @@
         "type": "lldb",
         "request": "launch",
         "name": "LLDB: Launch",
-        "program": "/Users/ben/.vim/bundle/YouCompleteMe/third_party/ycmd/third_party/racerd/target/debug/racerd",
+        "program": "$HOME/.vim/bundle/YouCompleteMe/third_party/ycmd/third_party/racerd/target/debug/racerd",
         "args": [
           "serve",
           "--port=12345",
           "--secret-file=secretfile"
         ],
-        "cwd": "/Users/ben/.vim/bundle/YouCompleteMe/third_party/ycmd"
+        "cwd": "$HOME/.vim/bundle/YouCompleteMe/third_party/ycmd"
       }
     }
   }

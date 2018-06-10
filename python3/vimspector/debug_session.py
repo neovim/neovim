@@ -165,6 +165,7 @@ class DebugSession( object ):
         self._SetUpUI()
       else:
         vim.current.tabpage = self._uiTab
+        # FIXME: Encapsulation
         self._stackTraceView._connection = self._connection
         self._variablesView._connection = self._connection
 
@@ -361,6 +362,9 @@ class DebugSession( object ):
     vim.command( 'augroup END' )
 
   def CloseDown( self ):
+    # We have to use a dict because of python's scoping/assignment rules (state
+    # = False would touch a state variable in handler, not in the enclosing
+    # scope)
     state = { 'done': False }
 
     def handler( self ):
