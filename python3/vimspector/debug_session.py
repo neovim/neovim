@@ -185,8 +185,6 @@ class DebugSession( object ):
       self._Reset()
 
   def _Reset( self ):
-    self._RemoveBreakpoints()
-
     if self._uiTab:
       self._stackTraceView.Reset()
       self._variablesView.Reset()
@@ -196,6 +194,9 @@ class DebugSession( object ):
 
     vim.eval( 'vimspector#internal#job#Reset()' )
     vim.eval( 'vimspector#internal#state#Reset()' )
+
+    # make sure that we're displaying signs in any still-open buffers
+    self._UpdateUIBreakpoints()
 
   def StepOver( self ):
     if self._stackTraceView.GetCurrentThreadId() is None:
