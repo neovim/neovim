@@ -6,6 +6,7 @@
 #   Create the "release" commit:
 #     - CMakeLists.txt: Unset NVIM_VERSION_PRERELEASE
 #     - CMakeLists.txt: Unset NVIM_API_PRERELEASE
+#     - Create test/functional/fixtures/api_level_N.mpack
 #     - Tag the commit.
 #   Create the "version bump" commit:
 #     - CMakeLists.txt: Set NVIM_VERSION_PRERELEASE to "-dev"
