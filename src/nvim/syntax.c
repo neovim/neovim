@@ -428,7 +428,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   if (VALID_STATE(&current_state)
       && current_lnum < lnum
       && current_lnum < syn_buf->b_ml.ml_line_count) {
-    (void)syn_finish_line(FALSE);
+    (void)syn_finish_line(false);
     if (!current_state_stored) {
       ++current_lnum;
       (void)store_current_state();
@@ -490,7 +490,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
     dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - Rows) + 1;
   while (current_lnum < lnum) {
     syn_start_line();
-    (void)syn_finish_line(FALSE);
+    (void)syn_finish_line(false);
     current_lnum++;
 
     /* If we parsed at least "minlines" lines or started at a valid
@@ -588,7 +588,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
   linenr_T lnum;
   linenr_T end_lnum;
   linenr_T break_lnum;
-  int had_sync_point;
+  bool had_sync_point;
   stateitem_T *cur_si;
   synpat_T    *spp;
   char_u      *line;
@@ -722,7 +722,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
       for (current_lnum = lnum; current_lnum < end_lnum; ++current_lnum) {
         syn_start_line();
         for (;; ) {
-          had_sync_point = syn_finish_line(TRUE);
+          had_sync_point = syn_finish_line(true);
           // When a sync point has been found, remember where, and
           // continue to look for another one, further on in the line.
           if (had_sync_point && current_state.ga_len) {
@@ -802,7 +802,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
           }
           current_col = found_m_endpos.col;
           current_lnum = found_m_endpos.lnum;
-          (void)syn_finish_line(FALSE);
+          (void)syn_finish_line(false);
           current_lnum++;
         } else {
           current_lnum = start_lnum;
@@ -1502,7 +1502,7 @@ int syntax_check_changed(linenr_T lnum)
        * finish the previous line (needed when not all of the line was
        * drawn)
        */
-      (void)syn_finish_line(FALSE);
+      (void)syn_finish_line(false);
 
       /*
        * Compare the current state with the previously saved state of
@@ -1528,9 +1528,9 @@ int syntax_check_changed(linenr_T lnum)
  * the line.  It can start anywhere in the line, as long as the current state
  * is valid.
  */
-static int
+static bool
 syn_finish_line(
-    int syncing                    // called for syncing
+    bool syncing                  // called for syncing
 )
 {
   stateitem_T *cur_si;
@@ -1549,7 +1549,7 @@ syn_finish_line(
       if (cur_si->si_idx >= 0
           && (SYN_ITEMS(syn_block)[cur_si->si_idx].sp_flags
               & (HL_SYNC_HERE|HL_SYNC_THERE))) {
-        return TRUE;
+        return true;
       }
 
       /* syn_current_attr() will have skipped the check for an item
@@ -1564,7 +1564,7 @@ syn_finish_line(
     }
     current_col++;
   }
-  return FALSE;
+  return false;
 }
 
 /*
