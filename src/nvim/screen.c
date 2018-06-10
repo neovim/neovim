@@ -3106,9 +3106,9 @@ win_line (
     if (n_extra > 0) {
       if (c_extra != NUL) {
         c = c_extra;
-        mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+        mb_c = c;               // doesn't handle non-utf-8 multi-byte!
+        if (enc_utf8 && utf_char2len(c) > 1) {
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
@@ -3118,15 +3118,15 @@ win_line (
         if (has_mbyte) {
           mb_c = c;
           if (enc_utf8) {
-            /* If the UTF-8 character is more than one byte:
-             * Decode it into "mb_c". */
-            mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = FALSE;
-            if (mb_l > n_extra)
+            // If the UTF-8 character is more than one byte:
+            // Decode it into "mb_c".
+            mb_l = utfc_ptr2len(p_extra);
+            mb_utf8 = false;
+            if (mb_l > n_extra) {
               mb_l = 1;
-            else if (mb_l > 1) {
+            } else if (mb_l > 1) {
               mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = TRUE;
+              mb_utf8 = true;
               c = 0xc0;
             }
           } else {
@@ -3177,10 +3177,10 @@ win_line (
       if (has_mbyte) {
         mb_c = c;
         if (enc_utf8) {
-          /* If the UTF-8 character is more than one byte: Decode it
-           * into "mb_c". */
-          mb_l = (*mb_ptr2len)(ptr);
-          mb_utf8 = FALSE;
+          // If the UTF-8 character is more than one byte: Decode it
+          // into "mb_c".
+          mb_l = utfc_ptr2len(ptr);
+          mb_utf8 = false;
           if (mb_l > 1) {
             mb_c = utfc_ptr2char(ptr, u8cc);
             // Overlong encoded ASCII or ASCII with composing char
@@ -3486,7 +3486,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
+          if (enc_utf8 && utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
@@ -3501,12 +3501,13 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+          if (enc_utf8 && utf_char2len(c) > 1) {
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
-          } else
-            mb_utf8 = FALSE;
+          } else {
+            mb_utf8 = false;
+          }
         }
       }
 
@@ -3602,8 +3603,8 @@ win_line (
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
-            if (enc_utf8 && (*mb_char2len)(c) > 1) {
-              mb_utf8 = TRUE;
+            if (enc_utf8 && utf_char2len(c) > 1) {
+              mb_utf8 = true;
               u8cc[0] = 0;
               c = 0xc0;
             }
@@ -3647,8 +3648,8 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+          if (enc_utf8 && utf_char2len(c) > 1) {
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
           } else
@@ -3762,8 +3763,8 @@ win_line (
           n_skip = 1;
         }
         mb_c = c;
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+        if (enc_utf8 && utf_char2len(c) > 1) {
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
@@ -3816,8 +3817,8 @@ win_line (
         extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+      if (enc_utf8 && utf_char2len(c) > 1) {
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else {
@@ -4044,8 +4045,8 @@ win_line (
       c = lcs_ext;
       char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+      if (enc_utf8 && utf_char2len(c) > 1) {
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else

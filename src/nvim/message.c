@@ -286,7 +286,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   half = i = (int)STRLEN(s);
   for (;;) {
     do {
-      half = half - (*mb_head_off)(s, s + half - 1) - 1;
+      half = half - utf_head_off(s, s + half - 1) - 1;
     } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
     n = ptr2cells(s + half);
     if (len + n > room || half == 0) {
