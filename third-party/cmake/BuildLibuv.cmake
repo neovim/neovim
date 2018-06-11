@@ -7,29 +7,30 @@ function(BuildLibuv)
   cmake_parse_arguments(_libuv
     "BUILD_IN_SOURCE"
     "TARGET"
-    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
+    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND;DOWNLOAD_COMMAND;GIT_REPOSITORY;GIT_TAG"
     ${ARGN})
 
   if(NOT _libuv_CONFIGURE_COMMAND AND NOT _libuv_BUILD_COMMAND
         AND NOT _libuv_INSTALL_COMMAND)
     message(FATAL_ERROR "Must pass at least one of CONFIGURE_COMMAND, BUILD_COMMAND, INSTALL_COMMAND")
   endif()
+  if(NOT _libuv_DOWNLOAD_COMMAND AND (NOT _libuv_GIT_REPOSITORY AND NOT _libuv_GIT_TAG))
+    message(FATAL_ERROR "Must pass either DOWNLOAD_COMMAND or GIT_REPOSITORY, GIT_TAG")
+  endif()
   if(NOT _libuv_TARGET)
     set(_libuv_TARGET "libuv")
+  endif()
+  if(_libuv_DOWNLOAD_COMMAND)
+    list(INSERT _libuv_DOWNLOAD_COMMAND 5 -DTARGET=${_libuv_TARGET})
   endif()
 
   ExternalProject_Add(${_libuv_TARGET}
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LIBUV_URL}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
-      -DURL=${LIBUV_URL}
-      -DEXPECTED_SHA256=${LIBUV_SHA256}
-      -DTARGET=${_libuv_TARGET}
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    DOWNLOAD_COMMAND ${_libuv_DOWNLOAD_COMMAND}
+    GIT_REPOSITORY ${_libuv_GIT_REPOSITORY}
+    GIT_TAG ${_libuv_GIT_TAG}
     BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
     PATCH_COMMAND "${_libuv_PATCH_COMMAND}"
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
@@ -46,15 +47,21 @@ set(LIBUV_PATCH_COMMAND
 ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
   COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
     ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-overlapped.patch)
-  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply
-    ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-set-cursor-style.patch
-  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply
-    ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-support-conemu.patch)
+
+set(LIBUV_DOWNLOAD_COMMAND
+  ${CMAKE_COMMAND}
+  -DPREFIX=${DEPS_BUILD_DIR}
+  -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
+  -DURL=${LIBUV_URL}
+  -DEXPECTED_SHA256=${LIBUV_SHA256}
+  -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake)
 
 if(UNIX)
   BuildLibuv(
     CONFIGURE_COMMAND ${UNIX_CFGCMD} MAKE=${MAKE_PRG}
-    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
+    INSTALL_COMMAND ${MAKE_PRG} V=1 install
+    DOWNLOAD_COMMAND ${LIBUV_DOWNLOAD_COMMAND})
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
   # Build libuv for the host
@@ -66,7 +73,9 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
   BuildLibuv(
     PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
-    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
+    INSTALL_COMMAND ${MAKE_PRG} V=1 install
+    GIT_REPOSITORY ${LIBUV_URL}
+    GIT_TAG ${LIBUV_TAG})
 
 elseif(WIN32)
 
@@ -90,7 +99,9 @@ elseif(WIN32)
         -DBUILD_SHARED_LIBS=${BUILD_SHARED}
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
+    GIT_REPOSITORY ${LIBUV_URL}
+    GIT_TAG ${LIBUV_TAG})
 
 else()
   message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
