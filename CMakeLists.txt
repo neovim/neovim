@@ -75,8 +75,8 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 3)
-set(NVIM_VERSION_PATCH 0)
-set(NVIM_VERSION_PRERELEASE "") # for package maintainers
+set(NVIM_VERSION_PATCH 1)
+set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 4)         # Bump this after any API change.

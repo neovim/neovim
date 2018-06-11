@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Usage:
+#   ./scripts/release.sh
+#   ./scripts/release.sh --use-current-commit
+#   ./scripts/release.sh --only-bump
+#
 # Performs steps to tag a release.
 #
 # Steps:
@@ -19,7 +24,7 @@ set -e
 set -u
 set -o pipefail
 
-USE_CURRENT_COMMIT=${1:-no}
+ARG1=${1:-no}
 
 __sed=$( [ "$(uname)" = Darwin ] && echo 'sed -E' || echo 'sed -r' )
 
@@ -51,33 +56,42 @@ __BUMP_MSG="version bump"
 
 echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
-$__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
-if grep '(NVIM_API_PRERELEASE true)' CMakeLists.txt > /dev/null; then
-  $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
-  build/bin/nvim --api-info > test/functional/fixtures/api_level_$__API_LEVEL.mpack
-  git add test/functional/fixtures/api_level_$__API_LEVEL.mpack
-fi
 
-if ! test "$USE_CURRENT_COMMIT" = 'use-current-commit' ; then
-  echo "Building changelog since ${__LAST_TAG}..."
-  __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
+_do_release_commit() {
+  $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
+  if grep '(NVIM_API_PRERELEASE true)' CMakeLists.txt > /dev/null; then
+    $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
+    build/bin/nvim --api-info > test/functional/fixtures/api_level_$__API_LEVEL.mpack
+    git add test/functional/fixtures/api_level_$__API_LEVEL.mpack
+  fi
+
+  if ! test "$ARG1" = '--use-current-commit' ; then
+    echo "Building changelog since ${__LAST_TAG}..."
+    __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
+
+    git add CMakeLists.txt
+    git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+  fi
+
+  git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"
+}
+
+_do_bump_commit() {
+  $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
+  $__sed -i.bk 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
+  nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
+    +'norm! 10.' CMakeLists.txt
 
   git add CMakeLists.txt
-  git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+  git commit -m "$__BUMP_MSG"
+
+  rm CMakeLists.txt.bk || true
+}
+
+if ! test "$ARG1" = '--only-bump' ; then
+  _do_release_commit
 fi
-
-git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"
-
-$__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
-$__sed -i.bk 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
-nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
-  +'norm! 10.' CMakeLists.txt
-
-git add CMakeLists.txt
-git commit -m "$__BUMP_MSG"
-
-rm CMakeLists.txt.bk || true
-
+_do_bump_commit
 echo "
 Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt
