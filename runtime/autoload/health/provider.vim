@@ -502,10 +502,10 @@ function! s:check_node() abort
     return
   endif
 
-  if !executable('node') || !executable('npm')
+  if !executable('node') || (!executable('npm') && !executable('yarn'))
     call health#report_warn(
-          \ '`node` and `npm` must be in $PATH.',
-          \ ['Install Node.js and verify that `node` and `npm` commands work.'])
+          \ '`node` and `npm` or `yarn` must be in $PATH.',
+          \ ['Install Node.js and verify that `node` and `npm` or `yarn` commands work.'])
     return
   endif
   let node_v = get(split(s:system('node -v'), "\n"), 0, '')
@@ -523,7 +523,7 @@ function! s:check_node() abort
   if empty(host)
     call health#report_warn('Missing "neovim" npm package.',
           \ ['Run in shell: npm install -g neovim',
-          \  'Is the npm bin directory in $PATH?'])
+          \  'Run in shell (if you use yarn): yarn global add neovim'])
     return
   endif
   call health#report_info('Neovim node.js host: '. host)
