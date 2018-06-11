@@ -4287,11 +4287,11 @@ ins_compl_next (
       // We need the tail that fits.  With double-byte encoding going
       // back from the end is very slow, thus go from the start and keep
       // the text that fits in "space" between "s" and "e".
-      for (s = e = compl_shown_match->cp_fname; *e != NUL; MB_PTR_ADV(e)) {
+      for (s = e = compl_shown_match->cp_fname; *e != NUL; mb_ptr_adv(e)) {
         space -= ptr2cells(e);
         while (space < 0) {
             space += ptr2cells(s);
-            MB_PTR_ADV(s);
+            mb_ptr_adv(s);
         }
       }
       vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
