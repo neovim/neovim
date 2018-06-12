@@ -314,9 +314,10 @@ static char *(p_bkc_values[]) =
 # define BKC_NO                 0x004
 # define BKC_BREAKSYMLINK       0x008
 # define BKC_BREAKHARDLINK      0x010
-EXTERN char_u   *p_bdir;        /* 'backupdir' */
-EXTERN char_u   *p_bex;         /* 'backupext' */
-EXTERN char_u   *p_bo;          // 'belloff'
+EXTERN char_u *p_bdir;            // 'backupdir'
+EXTERN char_u *p_bex;             // 'backupext'
+EXTERN char_u *p_bo;              // 'belloff'
+EXTERN char breakat_flags[256];   // which characters are in 'breakat'
 EXTERN unsigned bo_flags;
 # ifdef IN_OPTION_C
 static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
