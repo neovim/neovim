@@ -70,6 +70,7 @@ Job control			|job-control|
 Remote plugins			|remote-plugin|
 Providers
   Clipboard			|provider-clipboard|
+  Node.js plugins		|provider-nodejs|
   Python plugins		|provider-python|
   Ruby plugins			|provider-ruby|
 Shared data			|shada|

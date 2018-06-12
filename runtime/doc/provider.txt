@@ -13,35 +13,33 @@ Nvim delegates some features to dynamic "providers".
 ==============================================================================
 Python integration		    	      *provider-python*
 
-Nvim supports the Vim legacy |python-vim| and |python3| interfaces via
-external Python interpreters connected via |RPC|.
+Nvim supports Python |remote-plugin|s and the Vim legacy |python-vim| and
+|python3| interfaces (which are implemented as remote-plugins).
 Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 
 PYTHON QUICKSTART ~
 
 If you used a package manager to install Nvim, you might already have the
-required `neovim` Python package. Run |:checkhealth| to verify.
+required "neovim" Python package. Run |:checkhealth| to verify.
 
-Following are steps to install the package with Python `pip`.
+To install the package with "pip":
 
-
-
-- For Python 2 plugins, make sure Python 2.7 is available in your `$PATH`,
-  then install the `neovim` Python package systemwide: >
+- For Python 2 plugins, make sure Python 2.7 is available in your $PATH, then
+  install the "neovim" Python package systemwide: >
     sudo pip2 install --upgrade neovim
 <
   or for the current user: >
     pip2 install --user --upgrade neovim
 <
-- For Python 3 plugins, make sure Python 3.4+ is available in your `$PATH`,
-  then install the `neovim` Python package systemwide: >
+- For Python 3 plugins, make sure Python 3.4+ is available in your $PATH, then
+  install the "neovim" Python package systemwide: >
     sudo pip3 install --upgrade neovim
 <
   or for the current user: >
     pip3 install --user --upgrade neovim
 <
-Note: `pip` may refer to Python 2 or Python 3, so the instructions mention
-`pip2` or `pip3` explicitly. If one is missing, try `pip`.
+Note: "pip" may refer to Python 2 or Python 3, so the steps above mention
+"pip2" and "pip3" explicitly. If one is missing, try "pip".
 
 Note: The `--upgrade` flag ensures you have the latest version even if
 a previous version was already installed.
@@ -83,14 +81,14 @@ https://github.com/zchee/deoplete-jedi/wiki/Setting-up-Python-for-Neovim
 ==============================================================================
 Ruby integration		    	      *provider-ruby*
 
-Nvim supports the Vim legacy |ruby-vim| interface via external Ruby
-interpreters connected via |RPC|.
+Nvim supports Ruby |remote-plugin|s and the Vim legacy |ruby-vim| interface
+(which is itself implemented as a Nvim remote-plugin).
 
 Run |:checkhealth| to see if your system is up-to-date.
 
 RUBY QUICKSTART ~
 
-To use Vim Ruby plugins with Nvim, just install the latest `neovim` RubyGem: >
+To use Ruby plugins with Nvim, install the latest "neovim" RubyGem: >
     gem install neovim
 
 RUBY PROVIDER CONFIGURATION ~
@@ -99,9 +97,9 @@ To disable Ruby support: >
     let g:loaded_ruby_provider = 1
 <
 						*g:ruby_host_prog*
-Command to start the Ruby host. By default this is `neovim-ruby-host`. For users
-who use per-project Ruby versions with tools like RVM or rbenv, setting this can
-prevent the need to install the `neovim` gem in every project.
+Command to start the Ruby host. By default this is "neovim-ruby-host". With
+project-local Ruby versions (via tools like RVM or rbenv) setting this can
+avoid the need to install the "neovim" gem in every project.
 
 To use an absolute path (e.g. to an rbenv installation): >
     let g:ruby_host_prog = '~/.rbenv/versions/2.4.1/bin/neovim-ruby-host'
@@ -115,22 +113,23 @@ Node.js integration				*provider-nodejs*
 
 Nvim supports Node.js |remote-plugin|s.
 https://github.com/neovim/node-client/
-https://nodejs.org/
 
 NODEJS QUICKSTART~
 
-To use javascript remote-plugins with Nvim, install the `neovim` npm package: >
+To use javascript remote-plugins with Nvim, install the "neovim" npm package: >
     npm install -g neovim
-<
+
+Run |:checkhealth| to see if your system is up-to-date.
+
 NODEJS PROVIDER CONFIGURATION~
 						*g:loaded_node_provider*
-To disable Node support: >
+To disable Node.js support: >
     :let g:loaded_node_provider = 1
 <
 						*g:node_host_prog*
-Command to start the Node host. Setting this makes startup faster.
+Command to start the Node.js host. Setting this makes startup faster.
 
-By default, Nvim searches for `neovim-node-host` using "npm root -g", which
+By default, Nvim searches for "neovim-node-host" using "npm root -g", which
 can be slow. To avoid this, set g:node_host_prog to an absolute path: >
     let g:node_host_prog = '/usr/local/bin/neovim-node-host'
 <
@@ -143,9 +142,8 @@ system clipboard or any other clipboard "backend".
 
 To ALWAYS use the clipboard for ALL operations (instead of interacting with
 the '+' and/or '*' registers explicitly): >
-
     set clipboard+=unnamedplus
-<
+
 See 'clipboard' for details and options.
 
 							      *clipboard-tool*
