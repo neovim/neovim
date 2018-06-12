@@ -346,7 +346,10 @@ Shell:
 
 Startup:
   |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.
-  |-E| and |-Es| reads stdin as text (into buffer 1).
+  |-E| and |-Es| read stdin as text (into buffer 1).
+  |-es| and |-Es| have improved behavior:
+    - Quits automatically, don't need "-c qa!".
+    - Skips swap-file dialog.
   |-s| reads Normal commands from stdin if the script name is "-".
   Reading text (instead of commands) from stdin |--|:
     - works by default: "-" file is optional

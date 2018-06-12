@@ -203,6 +203,20 @@ describe('startup', function()
                     { 'set encoding', '' }))
   end)
 
+  it('-es/-Es disables swapfile, user config #8540', function()
+    for _,arg in ipairs({'-es', '-Es'}) do
+      local out = funcs.system({nvim_prog, arg,
+                                '+set swapfile? updatecount? shada?',
+                                "+put =execute('scriptnames')", '+%print'})
+      local line1 = string.match(out, '^.-\n')
+      -- updatecount=0 means swapfile was disabled.
+      eq("  swapfile  updatecount=0  shada=!,'100,<50,s10,h\n", line1)
+      -- Standard plugins were loaded, but not user config.
+      eq('health.vim', string.match(out, 'health.vim'))
+      eq(nil, string.match(out, 'init.vim'))
+    end
+  end)
+
   it('does not crash if --embed is given twice', function()
     clear{args={'--embed'}}
     eq(2, eval('1+1'))
