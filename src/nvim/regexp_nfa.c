@@ -1323,7 +1323,7 @@ static int nfa_regatom(void)
       EMSG(_(e_nopresub));
       return FAIL;
     }
-    for (lp = reg_prev_sub; *lp != NUL; mb_cptr_adv(lp)) {
+    for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
       EMIT(PTR2CHAR(lp));
       if (lp != reg_prev_sub)
         EMIT(NFA_CONCAT);
@@ -1557,7 +1557,7 @@ collection:
         } else
           EMIT(result);
         regparse = endp;
-        mb_ptr_adv(regparse);
+        MB_PTR_ADV(regparse);
         return OK;
       }
       /*
@@ -1565,10 +1565,10 @@ collection:
        * version that turns [abc] into 'a' OR 'b' OR 'c'
        */
       startc = endc = oldstartc = -1;
-      negated = FALSE;
-      if (*regparse == '^') {                           /* negated range */
-        negated = TRUE;
-        mb_ptr_adv(regparse);
+      negated = false;
+      if (*regparse == '^') {                           // negated range
+        negated = true;
+        MB_PTR_ADV(regparse);
         EMIT(NFA_START_NEG_COLL);
       } else
         EMIT(NFA_START_COLL);
@@ -1576,7 +1576,7 @@ collection:
         startc = '-';
         EMIT(startc);
         EMIT(NFA_CONCAT);
-        mb_ptr_adv(regparse);
+        MB_PTR_ADV(regparse);
       }
       /* Emit the OR branches for each character in the [] */
       emit_range = FALSE;
@@ -1666,8 +1666,8 @@ collection:
         if (*regparse == '-' && oldstartc != -1) {
           emit_range = TRUE;
           startc = oldstartc;
-          mb_ptr_adv(regparse);
-          continue;                         /* reading the end of the range */
+          MB_PTR_ADV(regparse);
+          continue;                         // reading the end of the range
         }
 
         /* Now handle simple and escaped characters.
@@ -1683,7 +1683,7 @@ collection:
                     != NULL)
                 )
             ) {
-          mb_ptr_adv(regparse);
+          MB_PTR_ADV(regparse);
 
           if (*regparse == 'n')
             startc = reg_string ? NL : NFA_NEWL;
@@ -1695,8 +1695,8 @@ collection:
                     ) {
             /* TODO(RE) This needs more testing */
             startc = coll_get_char();
-            got_coll_char = TRUE;
-            mb_ptr_back(old_regparse, regparse);
+            got_coll_char = true;
+            MB_PTR_BACK(old_regparse, regparse);
           } else {
             /* \r,\t,\e,\b */
             startc = backslash_trans(*regparse);
@@ -1768,18 +1768,18 @@ collection:
           }
         }
 
-        mb_ptr_adv(regparse);
-      }           /* while (p < endp) */
+        MB_PTR_ADV(regparse);
+      }           // while (p < endp)
 
-      mb_ptr_back(old_regparse, regparse);
-      if (*regparse == '-') {               /* if last, '-' is just a char */
+      MB_PTR_BACK(old_regparse, regparse);
+      if (*regparse == '-') {               // if last, '-' is just a char
         EMIT('-');
         EMIT(NFA_CONCAT);
       }
 
       /* skip the trailing ] */
       regparse = endp;
-      mb_ptr_adv(regparse);
+      MB_PTR_ADV(regparse);
 
       /* Mark end of the collection. */
       if (negated == TRUE)

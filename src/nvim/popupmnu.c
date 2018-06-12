@@ -374,7 +374,7 @@ void pum_redraw(void)
       }
 
       if (p != NULL) {
-        for (;; mb_ptr_adv(p)) {
+        for (;; MB_PTR_ADV(p)) {
           if (s == NULL) {
             s = p;
           }
@@ -398,7 +398,7 @@ void pum_redraw(void)
               if (size > pum_width) {
                 do {
                   size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
-                  mb_ptr_adv(rt);
+                  MB_PTR_ADV(rt);
                 } while (size > pum_width);
 
                 if (size < pum_width) {

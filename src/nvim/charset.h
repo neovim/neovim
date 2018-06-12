@@ -34,4 +34,15 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.h.generated.h"
 #endif
+
+static inline bool vim_isbreak(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+/// Check if `c` is one of the characters in 'breakat'.
+/// Used very often if 'linebreak' is set
+static inline bool vim_isbreak(int c)
+{
+  return breakat_flags[(char_u)c];
+}
 #endif  // NVIM_CHARSET_H
