@@ -3269,9 +3269,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         *cmd++ = NUL;                           /* replace it with a NUL */
         break;
       }
-      if (cmd[0] == '\\' && cmd[1] != 0)        /* skip escaped characters */
-        ++cmd;
-      mb_ptr_adv(cmd);
+      if (cmd[0] == '\\' && cmd[1] != 0) {      // skip escaped characters
+        cmd++;
+      }
+      MB_PTR_ADV(cmd);
     }
 
     if (!eap->skip && !preview) {

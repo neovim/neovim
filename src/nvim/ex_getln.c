@@ -2934,7 +2934,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   Array content = ARRAY_DICT_INIT;
   if (cmdline_star) {
     size_t len = 0;
-    for (char_u *p = ccline.cmdbuff; *p; mb_ptr_adv(p)) {
+    for (char_u *p = ccline.cmdbuff; *p; MB_PTR_ADV(p)) {
       len++;
     }
     char *buf = xmallocz(len);
@@ -4254,7 +4254,7 @@ char_u *sm_gettail(char_u *s)
       t = p;
       had_sep = FALSE;
     }
-    mb_ptr_adv(p);
+    MB_PTR_ADV(p);
   }
   return t;
 }
@@ -5179,7 +5179,7 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
     char_u *e = s + STRLEN(s);
     if (e - s > 4 && STRNICMP(e - 4, ".vim", 4) == 0) {
       e -= 4;
-      for (s = e; s > match; mb_ptr_back(match, s)) {
+      for (s = e; s > match; MB_PTR_BACK(match, s)) {
         if (vim_ispathsep(*s)) {
           break;
         }

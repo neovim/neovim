@@ -207,7 +207,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
 
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
-  for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
+  for (const char_u *p = string; *p != NUL; MB_PTR_ADV(p)) {
 #ifdef WIN32
     if (!p_ssl) {
       if (*p == '"') {
@@ -469,7 +469,7 @@ char_u *vim_strrchr(const char_u *string, int c)
   while (*p) {
     if (*p == c)
       retval = p;
-    mb_ptr_adv(p);
+    MB_PTR_ADV(p);
   }
   return (char_u *) retval;
 }

@@ -144,7 +144,7 @@ static int coladvance2(
     while (col <= wcol && *ptr != NUL) {
       /* Count a tab for what it's worth (if list mode not on) */
       csize = win_lbr_chartabsize(curwin, line, ptr, col, &head);
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
       col += csize;
     }
     idx = (int)(ptr - line);
