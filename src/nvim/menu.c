@@ -825,8 +825,8 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
       msg_outnum((long)menu->priority);
       MSG_PUTS(" ");
     }
-    /* Same highlighting as for directories!? */
-    msg_outtrans_attr(menu->name, hl_attr(HLF_D));
+    // Same highlighting as for directories!?
+    msg_outtrans_attr(menu->name, HL_ATTR(HLF_D));
   }
 
   if (menu != NULL && menu->children == NULL) {
@@ -854,7 +854,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
           msg_putchar(' ');
         MSG_PUTS(" ");
         if (*menu->strings[bit] == NUL) {
-          msg_puts_attr("<Nop>", hl_attr(HLF_8));
+          msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
         } else {
           msg_outtrans_special(menu->strings[bit], false);
         }

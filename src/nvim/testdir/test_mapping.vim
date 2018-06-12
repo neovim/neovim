@@ -104,7 +104,7 @@ func Test_map_langmap()
   imap a c
   call feedkeys("Go\<C-R>a\<Esc>", "xt")
   call assert_equal('bbbb', getline('$'))
- 
+
   " langmap should not apply in Command-line mode
   set langmap=+{ nolangremap
   call feedkeys(":call append(line('$'), '+')\<CR>", "xt")
@@ -159,6 +159,17 @@ func Test_map_meta_quotes()
   call assert_equal("-foo-", getline('$'))
   set nomodified
   iunmap <M-">
+endfunc
+
+func Test_abbr_after_line_join()
+  new
+  abbr foo bar
+  set backspace=indent,eol,start
+  exe "normal o\<BS>foo "
+  call assert_equal("bar ", getline(1))
+  bwipe!
+  unabbr foo
+  set backspace&
 endfunc
 
 func Test_map_timeout()

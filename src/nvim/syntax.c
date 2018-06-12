@@ -3591,7 +3591,7 @@ syn_list_one (
     {0, NULL}
   };
 
-  attr = hl_attr(HLF_D);                /* highlight like directories */
+  attr = HL_ATTR(HLF_D);                // highlight like directories
 
   /* list the keywords for "id" */
   if (!syncing) {
@@ -3691,9 +3691,9 @@ static void syn_list_cluster(int id)
 
   msg_advance(endcol);
   if (SYN_CLSTR(curwin->w_s)[id].scl_list != NULL) {
-    put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, hl_attr(HLF_D));
+    put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, HL_ATTR(HLF_D));
   } else {
-    msg_puts_attr("cluster", hl_attr(HLF_D));
+    msg_puts_attr("cluster", HL_ATTR(HLF_D));
     msg_puts("=NONE");
   }
 }
@@ -7186,7 +7186,7 @@ static void highlight_list_one(int id)
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 9999, id);
     didh = true;
-    msg_puts_attr("links to", hl_attr(HLF_D));
+    msg_puts_attr("links to", HL_ATTR(HLF_D));
     msg_putchar(' ');
     msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
   }
@@ -7234,8 +7234,8 @@ static int highlight_list_arg(int id, int didh, int type, int iarg,
     didh = TRUE;
     if (!got_int) {
       if (*name != NUL) {
-        MSG_PUTS_ATTR(name, hl_attr(HLF_D));
-        MSG_PUTS_ATTR("=", hl_attr(HLF_D));
+        MSG_PUTS_ATTR(name, HL_ATTR(HLF_D));
+        MSG_PUTS_ATTR("=", HL_ATTR(HLF_D));
       }
       msg_outtrans(ts);
     }
@@ -7507,7 +7507,7 @@ static int syn_add_group(char_u *name)
     } else if (!ASCII_ISALNUM(*p) && *p != '_')   {
       /* This is an error, but since there previously was no check only
        * give a warning. */
-      msg_source(hl_attr(HLF_W));
+      msg_source(HL_ATTR(HLF_W));
       MSG(_("W18: Invalid character in group name"));
       break;
     }
@@ -7749,10 +7749,12 @@ static void highlight_list(void)
 {
   int i;
 
-  for (i = 10; --i >= 0; )
-    highlight_list_two(i, hl_attr(HLF_D));
-  for (i = 40; --i >= 0; )
+  for (i = 10; --i >= 0; ) {
+    highlight_list_two(i, HL_ATTR(HLF_D));
+  }
+  for (i = 40; --i >= 0; ) {
     highlight_list_two(99, 0);
+  }
 }
 
 static void highlight_list_two(int cnt, int attr)

@@ -1031,8 +1031,9 @@ static bool can_compound(slang_T *slang, char_u *word, char_u *flags)
   if (enc_utf8) {
     // Need to convert the single byte flags to utf8 characters.
     p = uflags;
-    for (i = 0; flags[i] != NUL; ++i)
-      p += mb_char2bytes(flags[i], p);
+    for (i = 0; flags[i] != NUL; i++) {
+      p += utf_char2bytes(flags[i], p);
+    }
     *p = NUL;
     p = uflags;
   } else
@@ -4269,28 +4270,23 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 // the score from SCORE_SUBST to
                 // SCORE_SUBCOMP.
                 if (enc_utf8
-                    && utf_iscomposing(
-                        mb_ptr2char(tword
-                            + sp->ts_twordlen
-                            - sp->ts_tcharlen))
-                    && utf_iscomposing(
-                        mb_ptr2char(fword
-                            + sp->ts_fcharstart)))
-                  sp->ts_score -=
-                    SCORE_SUBST - SCORE_SUBCOMP;
-
-                // For a similar character adjust score from
-                // SCORE_SUBST to SCORE_SIMILAR.
-                else if (!soundfold
-                         && slang->sl_has_map
-                         && similar_chars(slang,
-                             mb_ptr2char(tword
-                                 + sp->ts_twordlen
-                                 - sp->ts_tcharlen),
-                             mb_ptr2char(fword
-                                 + sp->ts_fcharstart)))
-                  sp->ts_score -=
-                    SCORE_SUBST - SCORE_SIMILAR;
+                    && utf_iscomposing(utf_ptr2char(tword + sp->ts_twordlen
+                                                    - sp->ts_tcharlen))
+                    && utf_iscomposing(utf_ptr2char(fword
+                                                    + sp->ts_fcharstart))) {
+                  sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
+                } else if (!soundfold
+                           && slang->sl_has_map
+                           && similar_chars(slang,
+                                            mb_ptr2char(tword
+                                                        + sp->ts_twordlen
+                                                        - sp->ts_tcharlen),
+                                            mb_ptr2char(fword
+                                                        + sp->ts_fcharstart))) {
+                  // For a similar character adjust score from
+                  // SCORE_SUBST to SCORE_SIMILAR.
+                  sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
+                }
               } else if (sp->ts_isdiff == DIFF_INSERT
                          && sp->ts_twordlen > sp->ts_tcharlen) {
                 p = tword + sp->ts_twordlen - sp->ts_tcharlen;

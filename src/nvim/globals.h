@@ -290,13 +290,11 @@ EXTERN int vgetc_busy INIT(= 0);            /* when inside vgetc() then > 0 */
 EXTERN int didset_vim INIT(= FALSE);        /* did set $VIM ourselves */
 EXTERN int didset_vimruntime INIT(= FALSE);        /* idem for $VIMRUNTIME */
 
-/*
- * Lines left before a "more" message.	Ex mode needs to be able to reset this
- * after you type something.
- */
-EXTERN int lines_left INIT(= -1);           /* lines left for listing */
-EXTERN int msg_no_more INIT(= FALSE);       /* don't use more prompt, truncate
-                                               messages */
+/// Lines left before a "more" message.  Ex mode needs to be able to reset this
+/// after you type something.
+EXTERN int lines_left INIT(= -1);           // lines left for listing
+EXTERN int msg_no_more INIT(= false);       // don't use more prompt, truncate
+                                            // messages
 
 EXTERN char_u   *sourcing_name INIT( = NULL); /* name of error message source */
 EXTERN linenr_T sourcing_lnum INIT(= 0);    /* line number of the source file */
@@ -307,88 +305,71 @@ EXTERN int debug_did_msg INIT(= false);         // did "debug mode" message
 EXTERN int debug_tick INIT(= 0);                // breakpoint change count
 EXTERN int debug_backtrace_level INIT(= 0);     // breakpoint backtrace level
 
-/* Values for "do_profiling". */
-#define PROF_NONE       0       /* profiling not started */
-#define PROF_YES        1       /* profiling busy */
-#define PROF_PAUSED     2       /* profiling paused */
-EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
+// Values for "do_profiling".
+#define PROF_NONE       0       ///< profiling not started
+#define PROF_YES        1       ///< profiling busy
+#define PROF_PAUSED     2       ///< profiling paused
+EXTERN int do_profiling INIT(= PROF_NONE);      ///< PROF_ values
 
-/*
- * The exception currently being thrown.  Used to pass an exception to
- * a different cstack.  Also used for discarding an exception before it is
- * caught or made pending.
- */
+/// Exception currently being thrown.  Used to pass an exception to a different
+/// cstack.  Also used for discarding an exception before it is caught or made
+/// pending.
 EXTERN except_T *current_exception;
 
-/*
- * need_rethrow: set to TRUE when a throw that cannot be handled in do_cmdline()
- * must be propagated to the cstack of the previously called do_cmdline().
- */
-EXTERN int need_rethrow INIT(= FALSE);
+/// Set when a throw that cannot be handled in do_cmdline() must be propagated
+/// to the cstack of the previously called do_cmdline().
+EXTERN int need_rethrow INIT(= false);
 
-/*
- * check_cstack: set to TRUE when a ":finish" or ":return" that cannot be
- * handled in do_cmdline() must be propagated to the cstack of the previously
- * called do_cmdline().
- */
-EXTERN int check_cstack INIT(= FALSE);
+/// Set when a ":finish" or ":return" that cannot be handled in do_cmdline()
+/// must be propagated to the cstack of the previously called do_cmdline().
+EXTERN int check_cstack INIT(= false);
 
-/*
- * Number of nested try conditionals (across function calls and ":source"
- * commands).
- */
+/// Number of nested try conditionals (across function calls and ":source"
+/// commands).
 EXTERN int trylevel INIT(= 0);
 
-/*
- * When "force_abort" is TRUE, always skip commands after an error message,
- * even after the outermost ":endif", ":endwhile" or ":endfor" or for a
- * function without the "abort" flag.  It is set to TRUE when "trylevel" is
- * non-zero (and ":silent!" was not used) or an exception is being thrown at
- * the time an error is detected.  It is set to FALSE when "trylevel" gets
- * zero again and there was no error or interrupt or throw.
- */
-EXTERN int force_abort INIT(= FALSE);
+/// When "force_abort" is TRUE, always skip commands after an error message,
+/// even after the outermost ":endif", ":endwhile" or ":endfor" or for a
+/// function without the "abort" flag.  It is set to TRUE when "trylevel" is
+/// non-zero (and ":silent!" was not used) or an exception is being thrown at
+/// the time an error is detected.  It is set to FALSE when "trylevel" gets
+/// zero again and there was no error or interrupt or throw.
+EXTERN int force_abort INIT(= false);
 
-/*
- * "msg_list" points to a variable in the stack of do_cmdline() which keeps
- * the list of arguments of several emsg() calls, one of which is to be
- * converted to an error exception immediately after the failing command
- * returns.  The message to be used for the exception value is pointed to by
- * the "throw_msg" field of the first element in the list.  It is usually the
- * same as the "msg" field of that element, but can be identical to the "msg"
- * field of a later list element, when the "emsg_severe" flag was set when the
- * emsg() call was made.
- */
+/// "msg_list" points to a variable in the stack of do_cmdline() which keeps
+/// the list of arguments of several emsg() calls, one of which is to be
+/// converted to an error exception immediately after the failing command
+/// returns.  The message to be used for the exception value is pointed to by
+/// the "throw_msg" field of the first element in the list.  It is usually the
+/// same as the "msg" field of that element, but can be identical to the "msg"
+/// field of a later list element, when the "emsg_severe" flag was set when the
+/// emsg() call was made.
 EXTERN struct msglist **msg_list INIT(= NULL);
 
-/*
- * suppress_errthrow: When TRUE, don't convert an error to an exception.  Used
- * when displaying the interrupt message or reporting an exception that is still
- * uncaught at the top level (which has already been discarded then).  Also used
- * for the error message when no exception can be thrown.
- */
-EXTERN int suppress_errthrow INIT(= FALSE);
+/// When set, don't convert an error to an exception.  Used when displaying the
+/// interrupt message or reporting an exception that is still uncaught at the
+/// top level (which has already been discarded then).  Also used for the error
+/// message when no exception can be thrown.
+EXTERN int suppress_errthrow INIT(= false);
 
-/*
- * The stack of all caught and not finished exceptions.  The exception on the
- * top of the stack is the one got by evaluation of v:exception.  The complete
- * stack of all caught and pending exceptions is embedded in the various
- * cstacks; the pending exceptions, however, are not on the caught stack.
- */
+/// The stack of all caught and not finished exceptions.  The exception on the
+/// top of the stack is the one got by evaluation of v:exception.  The complete
+/// stack of all caught and pending exceptions is embedded in the various
+/// cstacks; the pending exceptions, however, are not on the caught stack.
 EXTERN except_T *caught_stack INIT(= NULL);
 
 
-/*
- * Garbage collection can only take place when we are sure there are no Lists
- * or Dictionaries being used internally.  This is flagged with
- * "may_garbage_collect" when we are at the toplevel.
- * "want_garbage_collect" is set by the garbagecollect() function, which means
- * we do garbage collection before waiting for a char at the toplevel.
- * "garbage_collect_at_exit" indicates garbagecollect(1) was called.
- */
-EXTERN int may_garbage_collect INIT(= FALSE);
-EXTERN int want_garbage_collect INIT(= FALSE);
-EXTERN int garbage_collect_at_exit INIT(= FALSE);
+///
+/// Garbage collection can only take place when we are sure there are no Lists
+/// or Dictionaries being used internally.  This is flagged with
+/// "may_garbage_collect" when we are at the toplevel.
+/// "want_garbage_collect" is set by the garbagecollect() function, which means
+/// we do garbage collection before waiting for a char at the toplevel.
+/// "garbage_collect_at_exit" indicates garbagecollect(1) was called.
+///
+EXTERN int may_garbage_collect INIT(= false);
+EXTERN int want_garbage_collect INIT(= false);
+EXTERN int garbage_collect_at_exit INIT(= false);
 
 // Special values for current_SID.
 #define SID_MODELINE    -1      // when using a modeline
@@ -574,57 +555,46 @@ EXTERN int stdout_isatty INIT(= true);
 // volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
 
-EXTERN int restricted INIT(= FALSE);
-// TRUE when started in restricted mode (-Z)
-EXTERN int secure INIT(= FALSE);
-/* non-zero when only "safe" commands are
- * allowed, e.g. when sourcing .exrc or .vimrc
- * in current directory */
+// When started in restricted mode (-Z).
+EXTERN int restricted INIT(= false);
 
+/// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
+/// .vimrc in current directory.
+EXTERN int secure INIT(= false);
+
+/// Non-zero when changing text and jumping to another window/buffer is not
+/// allowed.
 EXTERN int textlock INIT(= 0);
-/* non-zero when changing text and jumping to
- * another window or buffer is not allowed */
 
+/// Non-zero when the current buffer can't be changed.  Used for FileChangedRO.
 EXTERN int curbuf_lock INIT(= 0);
-/* non-zero when the current buffer can't be
- * changed.  Used for FileChangedRO. */
+
+/// Non-zero when no buffer name can be changed, no buffer can be deleted and
+/// current directory can't be changed. Used for SwapExists et al.
 EXTERN int allbuf_lock INIT(= 0);
-/* non-zero when no buffer name can be
- * changed, no buffer can be deleted and
- * current directory can't be changed.
- * Used for SwapExists et al. */
+
+/// Non-zero when evaluating an expression in a "sandbox".  Several things are
+/// not allowed then.
 EXTERN int sandbox INIT(= 0);
-/* Non-zero when evaluating an expression in a
- * "sandbox".  Several things are not allowed
- * then. */
 
-EXTERN int silent_mode INIT(= FALSE);
-/* set to TRUE when "-s" commandline argument
- * used for ex */
+/// Batch-mode: "-es" or "-Es" commandline argument was given.
+EXTERN int silent_mode INIT(= false);
 
-// Set to true when sourcing of startup scripts (init.vim) is done.
-// Used for options that cannot be changed after startup scripts.
-EXTERN bool did_source_startup_scripts INIT(= false);
-
-EXTERN pos_T VIsual;            /* start position of active Visual selection */
-EXTERN int VIsual_active INIT(= FALSE);
-/* whether Visual mode is active */
-EXTERN int VIsual_select INIT(= FALSE);
-/* whether Select mode is active */
+/// Start position of active Visual selection.
+EXTERN pos_T VIsual;
+/// Whether Visual mode is active.
+EXTERN int VIsual_active INIT(= false);
+/// Whether Select mode is active.
+EXTERN int VIsual_select INIT(= false);
+/// Whether to restart the selection after a Select-mode mapping or menu.
 EXTERN int VIsual_reselect;
-/* whether to restart the selection after a
- * Select mode mapping or menu */
-
+/// Type of Visual mode.
 EXTERN int VIsual_mode INIT(= 'v');
-/* type of Visual mode */
+/// TRUE when redoing Visual.
+EXTERN int redo_VIsual_busy INIT(= false);
 
-EXTERN int redo_VIsual_busy INIT(= FALSE);
-/* TRUE when redoing Visual */
-
-/*
- * When pasting text with the middle mouse button in visual mode with
- * restart_edit set, remember where it started so we can set Insstart.
- */
+/// When pasting text with the middle mouse button in visual mode with
+/// restart_edit set, remember where it started so we can set Insstart.
 EXTERN pos_T where_paste_started;
 
 /*
@@ -732,25 +702,23 @@ EXTERN int (*iconvctl)(iconv_t cd, int request, void *argument);
 EXTERN int* (*iconv_errno)(void);
 # endif
 
-/*
- * "State" is the main state of Vim.
- * There are other variables that modify the state:
- * "Visual_mode"    When State is NORMAL or INSERT.
- * "finish_op"	    When State is NORMAL, after typing the operator and before
- *		    typing the motion command.
- */
-EXTERN int State INIT(= NORMAL);        /* This is the current state of the
-                                         * command interpreter. */
+/// "State" is the main state of Vim.
+/// There are other variables that modify the state:
+///    Visual_mode:    When State is NORMAL or INSERT.
+///    finish_op  :    When State is NORMAL, after typing the operator and
+///                    before typing the motion command.
+EXTERN int State INIT(= NORMAL);        // This is the current state of the
+                                        // command interpreter.
 
 EXTERN bool finish_op INIT(= false);    // true while an operator is pending
 EXTERN long opcount INIT(= 0);          // count for pending operator
 
 // Ex Mode (Q) state
-EXTERN int exmode_active INIT(= 0);     // zero, EXMODE_NORMAL or EXMODE_VIM
-EXTERN int ex_no_reprint INIT(= false);  // no need to print after z or p
+EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
+EXTERN int ex_no_reprint INIT(=false);  // No need to print after z or p.
 
-EXTERN int Recording INIT(= FALSE);     /* TRUE when recording into a reg. */
-EXTERN int Exec_reg INIT(= FALSE);      /* TRUE when executing a register */
+EXTERN int Recording INIT(= false);     // TRUE when recording into a reg.
+EXTERN int Exec_reg INIT(= false);      // TRUE when executing a register.
 
 EXTERN int no_mapping INIT(= false);    // currently no mapping allowed
 EXTERN int no_zero_mapping INIT(= 0);   // mapping zero not allowed
@@ -1164,10 +1132,9 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 EXTERN int ignored;
 EXTERN char *ignoredp;
 
-// If a msgpack-rpc channel should be started over stdin/stdout
+// Start a msgpack-rpc channel over stdin/stdout.
 EXTERN bool embedded_mode INIT(= false);
-// Dont try to start an user interface
-// or read/write to stdio (unless embedding)
+// Do not start a UI nor read/write to stdio (unless embedding).
 EXTERN bool headless_mode INIT(= false);
 
 /// Used to track the status of external functions.

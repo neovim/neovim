@@ -17,11 +17,6 @@ For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 Running tests
 -------------
 
-Neovim uses third-party tooling to execute tests. So be sure, from the
-repository directory, to build the tools before testing:
-
-    make cmake
-
 ## Executing Tests
 
 To run all _non-legacy_ (unit + functional) tests:
@@ -89,6 +84,7 @@ To run only the tagged tests:
     TEST_TAG=foo make functionaltest
 
 **NOTES**:
+
 * Tags are mainly used for testing issues (ex: `#1234`), so use the following
   method.
 * `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The

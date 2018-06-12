@@ -3694,7 +3694,7 @@ nofail:
 
     retval = FAIL;
     if (end == 0) {
-      const int attr = hl_attr(HLF_E);  // Set highlight for error messages.
+      const int attr = HL_ATTR(HLF_E);  // Set highlight for error messages.
       MSG_PUTS_ATTR(_("\nWARNING: Original file may be lost or damaged\n"),
                     attr | MSG_HIST);
       MSG_PUTS_ATTR(_(
@@ -3901,7 +3901,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
     msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-             hl_attr(HLF_E));
+             HL_ATTR(HLF_E));
     if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
     }
@@ -5020,9 +5020,9 @@ buf_check_timestamp (
     } else {
       if (!autocmd_busy) {
         msg_start();
-        msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
+        msg_puts_attr(tbuf, HL_ATTR(HLF_E) + MSG_HIST);
         if (*mesg2 != NUL) {
-          msg_puts_attr(mesg2, hl_attr(HLF_W) + MSG_HIST);
+          msg_puts_attr(mesg2, HL_ATTR(HLF_W) + MSG_HIST);
         }
         msg_clr_eos();
         (void)msg_end();
@@ -5445,13 +5445,13 @@ static void show_autocmd(AutoPat *ap, event_T event)
   if (event != last_event || ap->group != last_group) {
     if (ap->group != AUGROUP_DEFAULT) {
       if (AUGROUP_NAME(ap->group) == NULL) {
-        msg_puts_attr(get_deleted_augroup(), hl_attr(HLF_E));
+        msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
       } else {
-        msg_puts_attr(AUGROUP_NAME(ap->group), hl_attr(HLF_T));
+        msg_puts_attr(AUGROUP_NAME(ap->group), HL_ATTR(HLF_T));
       }
       msg_puts("  ");
     }
-    msg_puts_attr(event_nr2name(event), hl_attr(HLF_T));
+    msg_puts_attr(event_nr2name(event), HL_ATTR(HLF_T));
     last_event = event;
     last_group = ap->group;
     msg_putchar('\n');

@@ -4288,7 +4288,7 @@ find_pattern_in_path(
           if (new_fname != NULL) {
             /* using "new_fname" is more reliable, e.g., when
              * 'includeexpr' is set. */
-            msg_outtrans_attr(new_fname, hl_attr(HLF_D));
+            msg_outtrans_attr(new_fname, HL_ATTR(HLF_D));
           } else {
             /*
              * Isolate the file name.
@@ -4326,7 +4326,7 @@ find_pattern_in_path(
             }
             save_char = p[i];
             p[i] = NUL;
-            msg_outtrans_attr(p, hl_attr(HLF_D));
+            msg_outtrans_attr(p, HL_ATTR(HLF_D));
             p[i] = save_char;
           }
 
@@ -4373,11 +4373,11 @@ find_pattern_in_path(
           files[depth].lnum = 0;
           files[depth].matched = FALSE;
           if (action == ACTION_EXPAND) {
-            msg_hist_off = TRUE;                /* reset in msg_trunc_attr() */
-            vim_snprintf((char*)IObuff, IOSIZE,
-                _("Scanning included file: %s"),
-                (char *)new_fname);
-            msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
+            msg_hist_off = true;                // reset in msg_trunc_attr()
+            vim_snprintf((char *)IObuff, IOSIZE,
+                         _("Scanning included file: %s"),
+                         (char *)new_fname);
+            msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(_("Searching included file %s"),
@@ -4730,7 +4730,7 @@ static void show_pat_in_path(char_u *line, int type, int did_show, int action, F
       msg_puts((const char *)IObuff);
       snprintf((char *)IObuff, IOSIZE, "%4ld", *lnum);  // Show line nr.
       // Highlight line numbers.
-      msg_puts_attr((const char *)IObuff, hl_attr(HLF_N));
+      msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");
     }
     msg_prt_line(line, FALSE);

@@ -102,12 +102,13 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
   return hl_get_attr_by_id(attrcode, rgb, err);
 }
 
-/// Passes input keys to Nvim.
+/// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
+/// flags. This is a blocking call, unlike |nvim_input()|.
 ///
 /// On execution error: does not fail, but updates v:errmsg.
 ///
 /// @param keys         to be typed
-/// @param mode         mapping options
+/// @param mode         behavior flags, see |feedkeys()|
 /// @param escape_csi   If true, escape K_SPECIAL/CSI bytes in `keys`
 /// @see feedkeys()
 /// @see vim_strsave_escape_csi
@@ -169,12 +170,11 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   }
 }
 
-/// Passes keys to Nvim as raw user-input.
+/// Queues raw user-input. Unlike |nvim_feedkeys()|, this uses a low-level
+/// input buffer and the call is non-blocking (input is processed
+/// asynchronously by the eventloop).
 ///
 /// On execution error: does not fail, but updates v:errmsg.
-///
-/// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
-/// is not deferred. This is the most reliable way to send real user input.
 ///
 /// @note |keycodes| like <CR> are translated, so "<" is special.
 ///       To input a literal "<", send <LT>.

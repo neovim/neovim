@@ -457,8 +457,6 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
 
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libiconv-2.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
     COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
     )
   add_dependencies(nvim_runtime_deps external_blobs)

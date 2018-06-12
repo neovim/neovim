@@ -13,6 +13,7 @@
 [![Clang Scan Build](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
 [![PVS-studio Check](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
 
+[![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
 [![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
 
@@ -43,6 +44,8 @@ To list all targets:
 
     cmake --build build --target help
 
+To skip "bundled" dependencies define `USE_BUNDLED_DEPS=NO` (CMake option: `USE_BUNDLED=NO`).
+
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
 Install from package
@@ -72,9 +75,6 @@ Project layout
     │  └─ tui/          built-in UI
     ├─ third-party/     cmake subproject to build dependencies
     └─ test/            tests (see test/README.md)
-
-- To disable `third-party/` specify `USE_BUNDLED_DEPS=NO` or `USE_BUNDLED=NO`
-  (CMake option).
 
 Features
 --------

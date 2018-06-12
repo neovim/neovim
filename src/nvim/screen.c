@@ -3106,9 +3106,9 @@ win_line (
     if (n_extra > 0) {
       if (c_extra != NUL) {
         c = c_extra;
-        mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+        mb_c = c;               // doesn't handle non-utf-8 multi-byte!
+        if (enc_utf8 && utf_char2len(c) > 1) {
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
@@ -3118,15 +3118,15 @@ win_line (
         if (has_mbyte) {
           mb_c = c;
           if (enc_utf8) {
-            /* If the UTF-8 character is more than one byte:
-             * Decode it into "mb_c". */
-            mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = FALSE;
-            if (mb_l > n_extra)
+            // If the UTF-8 character is more than one byte:
+            // Decode it into "mb_c".
+            mb_l = utfc_ptr2len(p_extra);
+            mb_utf8 = false;
+            if (mb_l > n_extra) {
               mb_l = 1;
-            else if (mb_l > 1) {
+            } else if (mb_l > 1) {
               mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = TRUE;
+              mb_utf8 = true;
               c = 0xc0;
             }
           } else {
@@ -3177,10 +3177,10 @@ win_line (
       if (has_mbyte) {
         mb_c = c;
         if (enc_utf8) {
-          /* If the UTF-8 character is more than one byte: Decode it
-           * into "mb_c". */
-          mb_l = (*mb_ptr2len)(ptr);
-          mb_utf8 = FALSE;
+          // If the UTF-8 character is more than one byte: Decode it
+          // into "mb_c".
+          mb_l = utfc_ptr2len(ptr);
+          mb_utf8 = false;
           if (mb_l > 1) {
             mb_c = utfc_ptr2char(ptr, u8cc);
             // Overlong encoded ASCII or ASCII with composing char
@@ -3486,7 +3486,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
+          if (enc_utf8 && utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
@@ -3501,12 +3501,13 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+          if (enc_utf8 && utf_char2len(c) > 1) {
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
-          } else
-            mb_utf8 = FALSE;
+          } else {
+            mb_utf8 = false;
+          }
         }
       }
 
@@ -3602,8 +3603,8 @@ win_line (
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
-            if (enc_utf8 && (*mb_char2len)(c) > 1) {
-              mb_utf8 = TRUE;
+            if (enc_utf8 && utf_char2len(c) > 1) {
+              mb_utf8 = true;
               u8cc[0] = 0;
               c = 0xc0;
             }
@@ -3647,8 +3648,8 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+          if (enc_utf8 && utf_char2len(c) > 1) {
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
           } else
@@ -3762,8 +3763,8 @@ win_line (
           n_skip = 1;
         }
         mb_c = c;
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+        if (enc_utf8 && utf_char2len(c) > 1) {
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
@@ -3816,8 +3817,8 @@ win_line (
         extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+      if (enc_utf8 && utf_char2len(c) > 1) {
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else {
@@ -4044,8 +4045,8 @@ win_line (
       c = lcs_ext;
       char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+      if (enc_utf8 && utf_char2len(c) > 1) {
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else
@@ -4890,7 +4891,7 @@ win_redr_status_matches (
     screen_puts(buf, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      screen_puts(selstart, row, selstart_col, hl_attr(HLF_WM));
+      screen_puts(selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
     screen_fill(row, row + 1, clen, (int)Columns, fillchar, fillchar, attr);
@@ -5155,7 +5156,7 @@ win_redr_custom (
     stl = p_tal;
     row = 0;
     fillchar = ' ';
-    attr = hl_attr(HLF_TPF);
+    attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
@@ -5568,7 +5569,7 @@ static void update_window_hl(win_T *wp, bool invalid)
     wp->w_hl_attr_normal = 0;
   }
   if (wp != curwin) {
-    wp->w_hl_attr_normal = hl_combine_attr(hl_attr(HLF_INACTIVE),
+    wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
                                            wp->w_hl_attr_normal);
   }
 
@@ -5577,7 +5578,7 @@ static void update_window_hl(win_T *wp, bool invalid)
     if (wp->w_hl_ids[hlf] > 0) {
       attr = syn_id2attr(wp->w_hl_ids[hlf]);
     } else {
-      attr = hl_attr(hlf);
+      attr = HL_ATTR(hlf);
     }
     if (wp->w_hl_attr_normal != 0) {
       attr = hl_combine_attr(wp->w_hl_attr_normal, attr);
@@ -6654,7 +6655,7 @@ int showmode(void)
 
     /* Position on the last line in the window, column 0 */
     msg_pos_mode();
-    attr = hl_attr(HLF_CM);                     /* Highlight mode */
+    attr = HL_ATTR(HLF_CM);                     // Highlight mode
     if (do_mode) {
       MSG_PUTS_ATTR("--", attr);
       // CTRL-X in Insert mode
@@ -6802,7 +6803,7 @@ void clearmode(void)
 {
     msg_pos_mode();
     if (Recording) {
-      recording_mode(hl_attr(HLF_CM));
+      recording_mode(HL_ATTR(HLF_CM));
     }
     msg_clr_eos();
 }
@@ -6833,8 +6834,8 @@ static void draw_tabline(void)
   int modified;
   int c;
   int len;
-  int attr_nosel = hl_attr(HLF_TP);
-  int attr_fill = hl_attr(HLF_TPF);
+  int attr_nosel = HL_ATTR(HLF_TP);
+  int attr_fill = HL_ATTR(HLF_TPF);
   char_u      *p;
   int room;
   int use_sep_chars = (t_colors < 8

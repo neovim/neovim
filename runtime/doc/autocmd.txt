@@ -904,14 +904,11 @@ SpellFileMissing		When trying to load a spell checking file and
 				language, 'encoding' also matters.  See
 				|spell-SpellFileMissing|.
 							*StdinReadPost*
-StdinReadPost			After reading from the stdin into the buffer,
-				before executing the modelines.  Only used
-				when the "-" argument was used when Vim was
-				started |--|.
+StdinReadPost			During startup, after reading from stdin into
+				the buffer, before executing modelines. |--|
 							*StdinReadPre*
-StdinReadPre			Before reading from stdin into the buffer.
-				Only used when the "-" argument was used when
-				Vim was started |--|.
+StdinReadPre			During startup, before reading from stdin into
+				the buffer. |--|
 							*SwapExists*
 SwapExists			Detected an existing swap file when starting
 				to edit a file.  Only when it is possible to

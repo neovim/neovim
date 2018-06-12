@@ -1711,7 +1711,7 @@ static void printdigraph(digr_T *dp)
     p += (*mb_char2bytes)(dp->result, p);
 
     *p = NUL;
-    msg_outtrans_attr(buf, hl_attr(HLF_8));
+    msg_outtrans_attr(buf, HL_ATTR(HLF_8));
     p = buf;
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';

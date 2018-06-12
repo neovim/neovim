@@ -1473,10 +1473,11 @@ void edit_putchar(int c, int highlight)
   if (ScreenLines != NULL) {
     update_topline();           /* just in case w_topline isn't valid */
     validate_cursor();
-    if (highlight)
-      attr = hl_attr(HLF_8);
-    else
+    if (highlight) {
+      attr = HL_ATTR(HLF_8);
+    } else {
       attr = 0;
+    }
     pc_row = curwin->w_winrow + curwin->w_wrow;
     pc_col = curwin->w_wincol;
     pc_status = PC_STATUS_UNSET;
@@ -1879,7 +1880,7 @@ static bool check_compl_option(bool dict_opt)
     edit_submode = NULL;
     msg_attr((dict_opt
               ? _("'dictionary' option is empty")
-              : _("'thesaurus' option is empty")), hl_attr(HLF_E));
+              : _("'thesaurus' option is empty")), HL_ATTR(HLF_E));
     if (emsg_silent == 0) {
       vim_beep(BO_COMPL);
       setcursor();
@@ -2772,8 +2773,8 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
     fp = mch_fopen((char *)files[i], "r");      /* open dictionary file */
     if (flags != DICT_EXACT) {
       vim_snprintf((char *)IObuff, IOSIZE,
-          _("Scanning dictionary: %s"), (char *)files[i]);
-      (void)msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
+                   _("Scanning dictionary: %s"), (char *)files[i]);
+      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
     }
 
     if (fp == NULL) {
@@ -3733,15 +3734,15 @@ static int ins_compl_get_exp(pos_T *ini)
           dict_f = DICT_EXACT;
         }
         vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
-            ins_buf->b_fname == NULL
-            ? buf_spname(ins_buf)
-            : ins_buf->b_sfname == NULL
-            ? ins_buf->b_fname
-            : ins_buf->b_sfname);
-        (void)msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
-      } else if (*e_cpt == NUL)
+                     ins_buf->b_fname == NULL
+                     ? buf_spname(ins_buf)
+                     : ins_buf->b_sfname == NULL
+                     ? ins_buf->b_fname
+                     : ins_buf->b_sfname);
+        (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+      } else if (*e_cpt == NUL) {
         break;
-      else {
+      } else {
         if (CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode)) {
           type = -1;
         } else if (*e_cpt == 'k' || *e_cpt == 's') {
@@ -3760,9 +3761,10 @@ static int ins_compl_get_exp(pos_T *ini)
         else if (*e_cpt == ']' || *e_cpt == 't') {
           type = CTRL_X_TAGS;
           vim_snprintf((char *)IObuff, IOSIZE, _("Scanning tags."));
-          (void)msg_trunc_attr(IObuff, TRUE, hl_attr(HLF_R));
-        } else
+          (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+        } else {
           type = -1;
+        }
 
         /* in any case e_cpt is advanced to the next entry */
         (void)copy_option_part(&e_cpt, IObuff, IOSIZE, ",");
@@ -4899,7 +4901,7 @@ static int ins_complete(int c, bool enable_pum)
       if (!p_smd) {
         msg_attr((const char *)edit_submode_extra,
                  (edit_submode_highl < HLF_COUNT
-                  ? hl_attr(edit_submode_highl) : 0));
+                  ? HL_ATTR(edit_submode_highl) : 0));
       }
     } else {
       msg_clr_cmdline();  // necessary for "noshowmode"
@@ -7545,9 +7547,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     curwin->w_cursor.coladd = 0;
   }
 
-  /*
-   * delete newline!
-   */
+  // Delete newline!
   if (curwin->w_cursor.col == 0) {
     lnum = Insstart.lnum;
     if (curwin->w_cursor.lnum == lnum || revins_on) {
@@ -7556,7 +7556,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         return false;
       }
       Insstart.lnum--;
-      Insstart.col = MAXCOL;
+      Insstart.col = (colnr_T)STRLEN(ml_get(Insstart.lnum));
     }
     /*
      * In replace mode:

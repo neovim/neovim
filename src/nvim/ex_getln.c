@@ -379,7 +379,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     tl_ret = try_leave(&tstate, &err);
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
-      msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -462,7 +462,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (!tl_ret && ERROR_SET(&err)) {
     msg_putchar('\n');
-    msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+    msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
     api_clear_error(&err);
   }
 
@@ -2586,7 +2586,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
 #define PRINT_ERRMSG(...) \
   do { \
     msg_putchar('\n'); \
-    msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, __VA_ARGS__); \
+    msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, __VA_ARGS__); \
     printed_errmsg = true; \
   } while (0)
   bool ret = true;
@@ -4152,13 +4152,13 @@ static int showmatches(expand_T *xp, int wildmenu)
       lines = (num_files + columns - 1) / columns;
     }
 
-    attr = hl_attr(HLF_D);      /* find out highlighting for directories */
+    attr = HL_ATTR(HLF_D);      // find out highlighting for directories
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      MSG_PUTS_ATTR(_("tagname"), hl_attr(HLF_T));
+      MSG_PUTS_ATTR(_("tagname"), HL_ATTR(HLF_T));
       msg_clr_eos();
       msg_advance(maxlen - 3);
-      MSG_PUTS_ATTR(_(" kind file\n"), hl_attr(HLF_T));
+      MSG_PUTS_ATTR(_(" kind file\n"), HL_ATTR(HLF_T));
     }
 
     /* list the files line by line */
@@ -4166,12 +4166,12 @@ static int showmatches(expand_T *xp, int wildmenu)
       lastlen = 999;
       for (k = i; k < num_files; k += lines) {
         if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-          msg_outtrans_attr(files_found[k], hl_attr(HLF_D));
+          msg_outtrans_attr(files_found[k], HL_ATTR(HLF_D));
           p = files_found[k] + STRLEN(files_found[k]) + 1;
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
           msg_advance(maxlen + 3);
-          msg_puts_long_attr(p + 2, hl_attr(HLF_D));
+          msg_puts_long_attr(p + 2, HL_ATTR(HLF_D));
           break;
         }
         for (j = maxlen - lastlen; --j >= 0; )

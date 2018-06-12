@@ -234,8 +234,7 @@ For this reason the following is blocked:
 - Moving the cursor is allowed, but it is restored afterwards.
 - If the cmdline is changed, the old text and cursor position are restored.
 If you want the mapping to do any of these let the returned characters do
-that. Alternatively use a |<Cmd>| mapping which doesn't have these
-restrictions.
+that. Or use a |<Cmd>| mapping (which doesn't have these restrictions).
 
 You can use getchar(), it consumes typeahead if there is any. E.g., if you
 have these mappings: >
@@ -274,29 +273,30 @@ again for using <expr>.  This does work: >
 Using 0x80 as a single byte before other text does not work, it will be seen
 as a special key.
 
-						*<Cmd>* *:map-command*
-A command mapping is a mapping that directly executes a command. Command
-mappings are written by placing a command in between <Cmd> and <CR> in the
-rhs of a mapping (in any mode): >
-	noremap <f3> <Cmd>echo mode(1)<cr>
+						*<Cmd>* *:map-cmd*
+The <Cmd> pseudokey may be used to define a "command mapping", which executes
+the command directly (without changing modes, etc.).  Where you might use
+":...<CR>" in the {lhs} of a mapping, you can instead use "<Cmd>...<CR>".
+Example: >
+	noremap x <Cmd>echo mode(1)<cr>
 <
+This is more flexible than `:<C-U>` in visual and operator-pending mode, or
+`<C-O>:` in insert-mode, because the commands are executed directly in the
+current mode (instead of always going to normal-mode).  Visual-mode is
+preserved, so tricks with |gv| are not needed.  Commands can be invoked
+directly in cmdline-mode (which otherwise would require timer hacks).
+
+Unlike <expr> mappings, there are no special restrictions on the <Cmd>
+command: it is executed as if an (unrestricted) |autocmd| was invoked or an
+async event event was processed.
+
+In select-mode, |:map| and |:vmap| command mappings are executed in
+visual-mode.  Use |:smap| to handle select-mode.
+
 							*E5520*
-The command must be complete and ended with a <CR>. If the command is
-incomplete, an error is raised. |Command-line| mode is never entered.
+<Cmd> commands must terminate, that is, they must be followed by <CR> in the
+{lhs} of the mapping definition.  |Command-line| mode is never entered.
 
-This is more flexible than using `:<c-u>` in visual and operator pending
-mode, or `<c-o>:` in insert mode, as the commands are exectued directly in the
-mode, and not normal mode. Also visual mode is not aborted. Commands can be
-invoked directly in cmdline mode, which is not simple otherwise (a timer has
-to be used). Unlike <expr> mappings, there are not any specific restrictions
-what the command can do, except for what is normally possible to do in every
-specific mode. The command should be executed the same way as if an
-(unrestricted) |autocmd| was invoked or an async event event was processed.
-
-Note: In select mode, |:map| or |:vmap| command mappings will be executed in
-visual mode. If a mapping is intended to work in select mode, it is
-recomendend to map it using |:smap|, possibly in addition to the same mapping
-with |:map| or |:xmap|.
 
 1.3 MAPPING AND MODES					*:map-modes*
 		*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o* *mapmode-t*
