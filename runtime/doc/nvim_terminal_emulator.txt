@@ -118,8 +118,6 @@ variables:
   running in the terminal can set this title via an escape sequence.
 - |'channel'| The nvim channel ID for the underlying PTY.
   |chansend()| can be used to send input to the terminal.
-- *b:terminal_job_pid* The PID of the top-level process running in the
-  terminal.
 
 These variables are initialized before TermOpen, so you can use them in
 a local 'statusline'. Example: >

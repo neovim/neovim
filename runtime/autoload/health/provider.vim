@@ -557,7 +557,7 @@ function! s:check_node() abort
     call health#report_warn(
           \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_npm, latest_npm),
-          \ ['Run in shell: npm update neovim'])
+          \ ['Run in shell: npm install -g neovim'])
   else
     call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
   endif

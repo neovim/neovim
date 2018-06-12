@@ -190,10 +190,10 @@ prefix is stripped off.
 5. Types							    *rpc-types*
 
 The Nvim C API uses custom types for all functions. |api-types|
-At the RPC layer, the types can be split into two groups:
+At the RPC layer, types form two groups:
 
-  - Basic types that map natively to msgpack (and probably have a default
-    representation in msgpack-supported programming languages)
+  - Basic types that map natively to msgpack (and have a default
+    representation in most msgpack-supported programming languages)
   - Special Nvim types that map to msgpack EXT with custom type codes.
 
 Basic types ~
@@ -205,6 +205,8 @@ Basic types ~
   String                            -> msgpack string
   Array                             -> msgpack array
   Dictionary                        -> msgpack map
+
+  Note: in function calls, empty Array is accepted for Dictionary parameter.
 
 Special types (msgpack EXT) ~
 

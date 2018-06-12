@@ -1,3 +1,7 @@
+# CMAKE REFERENCE
+#   intro: https://codingnest.com/basic-cmake/
+#   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
+
 cmake_minimum_required(VERSION 2.8.7)
 project(nvim)
 
@@ -54,12 +58,7 @@ if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 option(ENABLE_LIBINTL "enable libintl" ON)
-if(MSVC)
-  add_definitions(-DDYNAMIC_ICONV)
-  option(ENABLE_LIBICONV "enable libiconv" OFF)
-else()
-  option(ENABLE_LIBICONV "enable libiconv" ON)
-endif()
+option(ENABLE_LIBICONV "enable libiconv" ON)
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
@@ -76,13 +75,13 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 3)
-set(NVIM_VERSION_PATCH 0)
+set(NVIM_VERSION_PATCH 1)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 4)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)

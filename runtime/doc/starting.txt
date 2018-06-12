@@ -22,8 +22,7 @@ More generally, Vim is started with:
 Option arguments and file name arguments can be mixed, and any number of them
 can be given.  However, watch out for options that take an argument.
 
-Exactly one out of the following five items may be used to choose how to
-start editing:
+The following items may be used to choose how to start editing:
 
 							*-file* *---*
 filename	One or more file names.  The first one will be the current
@@ -34,26 +33,25 @@ filename	One or more file names.  The first one will be the current
 			nvim -- -filename
 <		All arguments after the "--" will be interpreted as file names,
 		no other options or "+command" argument can follow.
-		For behavior of quotes on MS-Windows, see |win32-quotes|.
 
 							*--*
--		This argument can mean two things, depending on whether Ex
-		mode is to be used.
-
-		Starting in Normal mode: >
-			nvim -
-<		Start editing a new buffer, which is filled with text
-		that is read from stdin.  The commands that would normally be
-		read from stdin will now be read from stderr.  Example: >
-			find . -name "*.c" -print | nvim -
+-		Alias for stdin (standard input).
+		Example: >
+			echo text | nvim - file
+<		"text" is read into buffer 1, "file" is opened as buffer 2.
+		In most cases (except -s, -es, |--embed|, --headless) if stdin
+		is not a TTY then it is read as text, so "-" is implied: >
+			echo text | nvim file
 <		The buffer will be marked modified, because it contains text
-		that needs to be saved.  Except when in readonly mode, then
-		the buffer is not marked modified.  Example: >
-			ls | nvim -R -
-<		Starting in Ex mode: >
-			nvim -e -
-			nvim -E
-<		Start editing in |silent-mode|.
+		that needs to be saved (except for readonly |-R| mode).
+
+		To read stdin as Normal commands use |-s| with "-": >
+			echo "ifoo" | nvim -s -
+<		To read stdin as Ex commands use |-es| or |-e|: >
+			echo "echo getpid()" | nvim -e - -V1
+<		To open a file literally named "-", put it after "--": >
+			echo foo | nvim -- -
+<		To read stdin as text with |--headless| use "-".
 
 							*-t* *-tag*
 -t {tag}	A tag.  "tag" is looked up in the tags file, the associated
@@ -103,13 +101,6 @@ argument.
 		When {fname} already exists new messages are appended.
 		(Only available when compiled with the |+startuptime|
 		feature).
-
-							*--literal*
---literal	Take file names literally, don't expand wildcards.  Not needed
-		for Unix, because Vim always takes file names literally (the
-		shell expands wildcards).
-		Applies to all the names, also the ones that come before this
-		argument.
 
 							*-+*
 +[num]		The cursor will be positioned on line "num" for the first
@@ -200,28 +191,24 @@ argument.
 							*-E*
 -E		Start Vim in improved Ex mode |gQ|.
 
-							*-s-ex* *silent-mode*
--s		Silent or batch mode.  Only when "-s" is preceded by the "-e"
-		argument.  Otherwise see |-s|, which does take an argument
-		while this use of "-s" doesn't.  To be used when Vim is used
-		to execute Ex commands from a file instead of a terminal.
-		Switches off most prompts and informative messages.  Also
-		warnings and error messages.  The output of these commands is
-		displayed (to stdout):
+							*-es* *-Es*
+-es							*-s-ex* *silent-mode*
+-Es		Silent or batch mode: execute Ex commands from a file instead
+		of a terminal.  Special case of |-s| (which takes an argument
+		while "-es" doesn't).  Disables most prompts, messages,
+		warnings and errors.
+		Output of these commands is displayed (to stdout):
 			:print
 			:list
 			:number
 			:set      to display option values.
-		When 'verbose' is non-zero messages are printed (for
-		debugging, to stderr).
+		When 'verbose' is set messages are printed to stderr, e.g.: >
+			echo foo | nvim -V1 -es
+<
+		User |init.vim| is skipped (unless given with |-u|).
 		|$TERM| is not used.
-		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
-		get a prompt thus you can't see Vim is waiting for you to type
-		something.
-		Initializations are skipped (except the ones given with the
-		"-u" argument).
 		Example: >
-			vim -es < thefilter  thefile
+			printf "put ='foo'\n%%print\n" | nvim -es
 <
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
@@ -324,12 +311,15 @@ argument.
 		":rsh" or ":wsh" are used.  See also |shada-file|.
 
 							*-s*
--s {scriptin}	The script file "scriptin" is read.  The characters in the
-		file are interpreted as if you had typed them.  The same can
-		be done with the command ":source! {scriptin}".  If the end
-		of the file is reached before the editor exits, further
-		characters are read from the keyboard.  Only works when not
-		started in Ex mode, see |-s-ex|.  See also |complex-repeat|.
+-s {scriptin}	Read script file {scriptin}, interpreting characters as
+		Normal-mode input.  The same can be done with ":source!": >
+			:source! {scriptin}
+<		Reads from stdin if {scriptin} is "-": >
+			echo "ifoo" | nvim -s -
+<		If the end of the file is reached before Nvim exits, further
+		characters are read from the keyboard.
+
+		Does not work with |-es|.  See also |complex-repeat|.
 
 							*-w_nr*
 -w {number}
@@ -349,11 +339,30 @@ argument.
 							*--api-info*
 --api-info 	Print msgpack-encoded |api-metadata| and exit.
 
+							*--embed*
+--embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
+		embed and control Nvim via the |rpc-api|.  Implies |--headless|.
+		Equivalent to: >
+			nvim --headless --cmd "call stdioopen({'rpc': v:true})"
+<
+		See also |channel-stdio|.
+
 							*--headless*
---headless 	Do not start the built-in UI.
-                See |channel-stdio| for how to use stdio for other purposes
-                instead.
-		See also |silent-mode|, which does start a (limited) UI.
+--headless 	Do not start the default UI, so stdio can be used as an
+		arbitrary communication channel. |channel-stdio|
+
+		Also useful for scripting (tests) to see messages that would
+		not be printed by |-es|.
+
+		To detect if a UI is available, check if |nvim_list_uis()| is
+		empty after |VimEnter|.
+
+		To read stdin as text, "-" must be given explicitly:
+		--headless cannot assume that stdin is just text. >
+			echo foo | nvim --headless +"%print" +"q!" -
+<
+		See also |--embed|.
+		See also |-es|, which also disables most messages.
 
 --listen {addr}						*--listen*
 		Start |RPC| server on pipe or TCP address {addr}. Sets the
@@ -613,27 +622,15 @@ there is not enough room, you will see only part of it).
    To avoid the intro message on startup, add the 'I' flag to 'shortmess'.
 
 							*info-message*
-The |--help| and |--version| arguments cause Vim to print a message and then
+The |--help| and |--version| arguments cause Nvim to print a message and then
 exit.  Normally the message is sent to stdout, thus can be redirected to a
 file with: >
 
-	vim --help >file
+	nvim --help >file
 
-From inside Vim: >
+From inside Nvim: >
 
-	:read !vim --help
-
-When using gvim, it detects that it might have been started from the desktop,
-without a terminal to show messages on.  This is detected when both stdout and
-stderr are not a tty.  This breaks the ":read" command, as used in the example
-above.  To make it work again, set 'shellredir' to ">" instead of the default
-">&": >
-
-	:set shellredir=>
-	:read !gvim --help
-
-This still won't work for systems where gvim does not use stdout at all
-though.
+	:read !nvim --help
 
 ==============================================================================
 3. $VIM and $VIMRUNTIME
@@ -1353,12 +1350,12 @@ file when reading and include:
   complete MessagePack object.
 
 ==============================================================================
-9. Standard Paths
+9. Standard Paths				*standard-path*
 
 Nvim stores configuration and data in standard locations. Plugins are strongly
 encouraged to follow this pattern also.
 
-						      *base-directories* *xdg*
+						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
 https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 The $XDG_CONFIG_HOME and $XDG_DATA_HOME environment variables are used if they
@@ -1367,22 +1364,19 @@ exist, otherwise default values (listed below) are used.
 Note: Throughout the user manual these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
-CONFIG DIRECTORY					*$XDG_CONFIG_HOME*
+CONFIG DIRECTORY				*$XDG_CONFIG_HOME*
           Base                Nvim ~
 Unix:     ~/.config           ~/.config/nvim
 Windows:  ~/AppData/Local     ~/AppData/Local/nvim
 
-DATA DIRECTORY						*$XDG_DATA_HOME*
+DATA DIRECTORY					*$XDG_DATA_HOME*
           Base                Nvim ~
 Unix:     ~/.local/share      ~/.local/share/nvim
 Windows:  ~/AppData/Local     ~/AppData/Local/nvim-data
 
-STANDARD PATHS						*standard-path*
-
-							      *$NVIM_LOG_FILE*
-Besides 'debug' and 'verbose', Nvim has a low-level "log of last resort" that
-is written directly to the filesystem. This log may also be used by plugins or
-RPC clients for debugging. $NVIM_LOG_FILE contains the log file path: >
+LOG FILE					*$NVIM_LOG_FILE*
+Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
+debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE
 Usually the file is ~/.local/share/nvim/log unless that path is inaccessible
 or if $NVIM_LOG_FILE was set before |startup|.

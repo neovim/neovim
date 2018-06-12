@@ -5193,7 +5193,7 @@ void sign_list_placed(buf_T *rbuf)
     while (buf != NULL && !got_int) {
         if (buf->b_signlist != NULL) {
             vim_snprintf(lbuf, BUFSIZ, _("Signs for %s:"), buf->b_fname);
-            MSG_PUTS_ATTR(lbuf, hl_attr(HLF_D));
+            MSG_PUTS_ATTR(lbuf, HL_ATTR(HLF_D));
             msg_putchar('\n');
         }
         for (p = buf->b_signlist; p != NULL && !got_int; p = p->next) {

@@ -316,6 +316,14 @@ local function retry(max, max_ms, fn)
   end
 end
 
+-- Starts a new global Nvim session.
+-- Parameters are interpreted as startup args, OR a map with these keys:
+--    args: Merged with the default `nvim_argv` set.
+--    env : Defines the environment of the new session.
+--
+-- Example:
+--    clear('-e')
+--    clear({args={'-e'}, env={TERM=term}})
 local function clear(...)
   local args = {unpack(nvim_argv)}
   local new_args

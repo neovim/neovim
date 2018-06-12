@@ -2024,7 +2024,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'display'* *'dy'*
-'display' 'dy'		string	(default "lastline", Vi default: "")
+'display' 'dy'		string	(default "lastline,msgsep", Vi default: "")
 			global
 	Change the way text is displayed.  This is comma separated list of
 	flags:
@@ -2036,11 +2036,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			column of the last screen line.  Overrules "lastline".
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
-	msgsep		When showing messages longer than 'cmdheight' lines,
-			only scroll the message lines and not the entire
-			screen. This also shows a separator line filled with
-			chars determined by 'fillchars' option, and
-			highlighted with the |MsgSeparator| group.
+	msgsep		When showing messages longer than 'cmdheight', only
+			scroll the message lines, not the entire screen. The
+			separator line is decorated by |MsgSeparator| and the
+			"msgsep" flag of 'fillchars'.
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
@@ -2063,13 +2062,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 					*'encoding'* *'enc'* *E543*
-'encoding' 'enc'	Removed. |vim-differences| {Nvim}
-	Nvim always uses UTF-8 internally. RPC communication
-	(remote plugins/GUIs) must use UTF-8 strings.
+'encoding' 'enc'
+	String-encoding used internally and for |RPC| communication.
+	Always UTF-8.
 
-	The character encoding of files can be different than UTF-8.
-	This is specified with 'fileencoding'.  The conversion is done with
-	iconv() or as specified with 'charconvert'.
+	See 'fileencoding' to control file-content encoding.
 
 			*'endofline'* *'eol'* *'noendofline'* *'noeol'*
 'endofline' 'eol'	boolean	(default on)
@@ -2185,16 +2182,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")
 			local to buffer
-			{only available when compiled with the |+multi_byte|
-			feature}
-	Sets the character encoding for the file of this buffer.
+	File-content encoding for the current buffer. Conversion is done with
+	iconv() or as specified with 'charconvert'.
 
-	When 'fileencoding' is different from "utf-8", conversion will be
-	done when writing the file.  For reading see below.
-	When 'fileencoding' is empty, the file will be saved with utf-8
-	encoding.  (no conversion when reading or writing a file).
-		WARNING: Conversion to a non-Unicode encoding can cause loss of
-		information! 
+	When 'fileencoding' is not UTF-8, conversion will be done when
+	writing the file.  For reading see below.
+	When 'fileencoding' is empty, the file will be saved with UTF-8
+	encoding (no conversion when reading or writing a file).
+
+	WARNING: Conversion to a non-Unicode encoding can cause loss of
+	information!
 
 	See |encoding-names| for the possible values.  Additionally, values may be
 	specified that can be handled by the converter, see
@@ -2221,7 +2218,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	written.  If you do set 'fenc' in a modeline, you might want to set
 	'nomodified' to avoid not being able to ":q".
 
-	This option can not be changed when 'modifiable' is off.
+	This option cannot be changed when 'modifiable' is off.
 
 					*'fileencodings'* *'fencs'*
 'fileencodings' 'fencs'	string (default: "ucs-bom,utf-8,default,latin1")
@@ -2294,7 +2291,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'fileformats' is not empty and 'binary' is off.
 	When this option is set, after starting to edit a file, the 'modified'
 	option is set, because the file would be different when written.
-	This option can not be changed when 'modifiable' is off.
+	This option cannot be changed when 'modifiable' is off.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
@@ -5139,8 +5136,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   to escape quote: 'a\"b"' is the same as "a\b".
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
+							*shell-powershell*
+	To use powershell (on Windows): >
+		set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
+		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
 
-	This option cannot be set from a |modeline| or in the |sandbox|, for
+<	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*

@@ -34,7 +34,7 @@ typedef enum {
   kInputEof
 } InbufPollResult;
 
-static Stream read_stream = {.closed = true};
+static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
@@ -50,7 +50,7 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
-/// Gets the file from which input was gathered at startup.
+/// Global TTY (or pipe for "-es") input stream, before UI starts.
 int input_global_fd(void)
 {
   return global_fd;
@@ -64,7 +64,7 @@ void input_start(int fd)
 
   global_fd = fd;
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
-  rstream_start(&read_stream, read_cb, NULL);
+  rstream_start(&read_stream, input_read_cb, NULL);
 }
 
 void input_stop(void)
@@ -108,6 +108,11 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     }
   } else {
     if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
+      if (read_stream.closed && silent_mode) {
+        // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
+        read_error_exit();
+      }
+
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
         create_cursorhold_event();
       } else {
@@ -376,11 +381,11 @@ static InbufPollResult inbuf_poll(int ms)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
-    bool at_eof)
+static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
+                          bool at_eof)
 {
   if (at_eof) {
-    input_eof = true;
+    input_done();
   }
 
   assert(rbuffer_space(input_buffer) >= rbuffer_size(buf));
@@ -438,8 +443,9 @@ static bool input_ready(void)
 // Exit because of an input read error.
 static void read_error_exit(void)
 {
-  if (silent_mode)      /* Normal way to exit for "ex -s" */
+  if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);
+  }
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
   preserve_exit();
 }

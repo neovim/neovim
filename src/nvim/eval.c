@@ -20438,7 +20438,7 @@ static void list_func_head(ufunc_T *fp, int indent)
     MSG_PUTS("   ");
   MSG_PUTS("function ");
   if (fp->uf_name[0] == K_SPECIAL) {
-    MSG_PUTS_ATTR("<SNR>", hl_attr(HLF_8));
+    MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
   } else {
     msg_puts((const char *)fp->uf_name);
