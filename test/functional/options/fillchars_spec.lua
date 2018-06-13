@@ -1,6 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, execute = helpers.clear, helpers.execute
+local clear, command = helpers.clear, helpers.command
+local eval = helpers.eval
+local eq = helpers.eq
+local exc_exec = helpers.exc_exec
 
 describe("'fillchars'", function()
   local screen
@@ -15,8 +18,15 @@ describe("'fillchars'", function()
     screen:detach()
   end)
 
+  local function shouldfail(val,errval)
+    errval = errval or val
+    eq('Vim(set):E474: Invalid argument: fillchars='..errval,
+       exc_exec('set fillchars='..val))
+  end
+
   describe('"eob" flag', function()
-    it('renders empty lines at the end of the buffer with eob', function()
+    it("uses '~' by default", function()
+      eq('', eval('&fillchars'))
       screen:expect([[
         ^                         |
         ~                        |
@@ -24,22 +34,33 @@ describe("'fillchars'", function()
         ~                        |
                                  |
       ]])
-      execute('set fillchars+=eob:\\ ')
+    end)
+    it('supports whitespace', function()
+      command('set fillchars=eob:\\ ')
       screen:expect([[
         ^                         |
                                  |
                                  |
                                  |
-        :set fillchars+=eob:\    |
+                                 |
       ]])
-      execute('set fillchars+=eob:ñ')
+    end)
+    it('supports multibyte char', function()
+      command('set fillchars=eob:ñ')
       screen:expect([[
         ^                         |
         ñ                        |
         ñ                        |
         ñ                        |
-        :set fillchars+=eob:ñ    |
+                                 |
       ]])
+    end)
+    it('handles invalid values', function()
+      shouldfail('eob:') -- empty string
+      shouldfail('eob:馬') -- doublewidth char
+      shouldfail('eob:å̲') -- composing chars
+      shouldfail('eob:xy') -- two ascii chars
+      shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
   end)
 end)

@@ -180,7 +180,8 @@ Options:
   'cpoptions' flags: |cpo-_|
   'display' flag `msgsep` to minimize scrolling when showing messages
   'guicursor' works in the terminal
-  'fillchars' flag `msgsep` (see 'display' above)
+  'fillchars' flags: `msgsep` (see 'display' above)
+	      and `eob` for |EndOfBuffer| marker
   'inccommand' shows interactive results for |:substitute|-like commands
   'scrollback'
   'statusline' supports unlimited alignment sections
