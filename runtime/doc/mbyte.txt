@@ -1059,8 +1059,7 @@ widespread as file format.
 A composing or combining character is used to change the meaning of the
 character before it.  The combining characters are drawn on top of the
 preceding character.
-Up to two combining characters can be used by default.  This can be changed
-with the 'maxcombine' option.
+Up to six combining characters can be displayed.
 When editing text a composing character is mostly considered part of the
 preceding character.  For example "x" will delete a character and its
 following composing characters by default.

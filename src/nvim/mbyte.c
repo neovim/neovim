@@ -560,7 +560,7 @@ size_t mb_string2cells(const char_u *str)
 /// We make sure that the offset used is less than "max_off".
 int utf_off2cells(unsigned off, unsigned max_off)
 {
-  return (off + 1 < max_off && ScreenLines[off + 1] == 0) ? 2 : 1;
+  return (off + 1 < max_off && ScreenLines[off + 1][0] == 0) ? 2 : 1;
 }
 
 /// Convert a UTF-8 byte sequence to a wide character
@@ -788,27 +788,6 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 
   return c;
 #undef ISCOMPOSING
-}
-
-/*
- * Convert the character at screen position "off" to a sequence of bytes.
- * Includes the composing characters.
- * "buf" must at least have the length MB_MAXBYTES + 1.
- * Only to be used when ScreenLinesUC[off] != 0.
- * Returns the produced number of bytes.
- */
-int utfc_char2bytes(int off, char_u *buf)
-{
-  int len;
-  int i;
-
-  len = utf_char2bytes(ScreenLinesUC[off], buf);
-  for (i = 0; i < Screen_mco; ++i) {
-    if (ScreenLinesC[i][off] == 0)
-      break;
-    len += utf_char2bytes(ScreenLinesC[i][off], buf + len);
-  }
-  return len;
 }
 
 /// Get the length of a UTF-8 byte sequence representing a single codepoint
@@ -1853,7 +1832,7 @@ int mb_fix_col(int col, int row)
   col = check_col(col);
   row = check_row(row);
   if (ScreenLines != NULL && col > 0
-      && ScreenLines[LineOffset[row] + col] == 0) {
+      && ScreenLines[LineOffset[row] + col][0] == 0) {
     return col - 1;
   }
   return col;
