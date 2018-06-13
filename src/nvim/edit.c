@@ -138,6 +138,7 @@ struct compl_S {
 static compl_T    *compl_first_match = NULL;
 static compl_T    *compl_curr_match = NULL;
 static compl_T    *compl_shown_match = NULL;
+static compl_T    *compl_old_match = NULL;
 
 /* After using a cursor key <Enter> selects a match in the popup menu,
  * otherwise it inserts a line break. */
@@ -2935,6 +2936,7 @@ static void ins_compl_free(void)
   } while (compl_curr_match != NULL && compl_curr_match != compl_first_match);
   compl_first_match = compl_curr_match = NULL;
   compl_shown_match = NULL;
+  compl_old_match = NULL;
 }
 
 static void ins_compl_clear(void)
@@ -3671,7 +3673,6 @@ static int ins_compl_get_exp(pos_T *ini)
   char_u      *ptr;
   char_u      *dict = NULL;
   int dict_f = 0;
-  compl_T     *old_match;
   int set_match_pos;
   int l_ctrl_x_mode = ctrl_x_mode;
 
@@ -3686,7 +3687,7 @@ static int ins_compl_get_exp(pos_T *ini)
     last_match_pos = first_match_pos = *ini;
   }
 
-  old_match = compl_curr_match;         /* remember the last current match */
+  compl_old_match = compl_curr_match;   // remember the last current match
   pos = (compl_direction == FORWARD) ? &last_match_pos : &first_match_pos;
   /* For ^N/^P loop over all the flags/windows/buffers in 'complete' */
   for (;; ) {
@@ -3773,6 +3774,12 @@ static int ins_compl_get_exp(pos_T *ini)
         if (type == -1)
           continue;
       }
+    }
+
+    // If complete() was called then compl_pattern has been reset.
+    // The following won't work then, bail out.
+    if (compl_pattern == NULL) {
+      break;
     }
 
     switch (type) {
@@ -3983,7 +3990,7 @@ static int ins_compl_get_exp(pos_T *ini)
 
     /* check if compl_curr_match has changed, (e.g. other type of
      * expansion added something) */
-    if (type != 0 && compl_curr_match != old_match)
+    if (type != 0 && compl_curr_match != compl_old_match)
       found_new_match = OK;
 
     /* break the loop for specialized modes (use 'complete' just for the
@@ -4024,13 +4031,17 @@ static int ins_compl_get_exp(pos_T *ini)
     i = ins_compl_make_cyclic();
   }
 
-  /* If several matches were added (FORWARD) or the search failed and has
-   * just been made cyclic then we have to move compl_curr_match to the next
-   * or previous entry (if any) -- Acevedo */
-  compl_curr_match = compl_direction == FORWARD ? old_match->cp_next
-                     : old_match->cp_prev;
-  if (compl_curr_match == NULL)
-    compl_curr_match = old_match;
+  if (compl_old_match != NULL) {
+    // If several matches were added (FORWARD) or the search failed and has
+    // just been made cyclic then we have to move compl_curr_match to the
+    // next or previous entry (if any) -- Acevedo
+    compl_curr_match = compl_direction == FORWARD
+                        ? compl_old_match->cp_next
+                        : compl_old_match->cp_prev;
+    if (compl_curr_match == NULL) {
+      compl_curr_match = compl_old_match;
+    }
+  }
   return i;
 }
 

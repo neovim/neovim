@@ -608,4 +608,47 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
+fun MessCompleteMonths()
+  for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep")
+    call complete_add(m)
+    if complete_check()
+      break
+    endif
+  endfor
+  return []
+endfun
+
+fun MessCompleteMore()
+  call complete(1, split("Oct Nov Dec"))
+  return []
+endfun
+
+fun MessComplete(findstart, base)
+  if a:findstart
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && line[start - 1] =~ '\a'
+      let start -= 1
+    endwhile
+    return start
+  else
+    call MessCompleteMonths()
+    call MessCompleteMore()
+    return []
+  endif
+endf
+
+func Test_complete_func_mess()
+  " Calling complete() after complete_add() in 'completefunc' is wrong, but it
+  " should not crash.
+  set completefunc=MessComplete
+  new
+  call setline(1, 'Ju')
+  call feedkeys("A\<c-x>\<c-u>/\<esc>", 'tx')
+  call assert_equal('Oct/Oct', getline(1))
+  bwipe!
+  set completefunc=
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
