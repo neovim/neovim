@@ -3988,10 +3988,11 @@ static int ins_compl_get_exp(pos_T *ini)
       p_ws = save_p_ws;
     }
 
-    /* check if compl_curr_match has changed, (e.g. other type of
-     * expansion added something) */
-    if (type != 0 && compl_curr_match != compl_old_match)
+    // check if compl_curr_match has changed, (e.g. other type of
+    // expansion added something)
+    if (type != 0 && compl_curr_match != compl_old_match) {
       found_new_match = OK;
+    }
 
     /* break the loop for specialized modes (use 'complete' just for the
      * generic l_ctrl_x_mode == 0) or when we've found a new match */
