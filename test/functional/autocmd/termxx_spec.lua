@@ -9,8 +9,7 @@ local ok = helpers.ok
 local feed = helpers.feed
 local iswin = helpers.iswin
 
-
-describe('TermClose event', function()
+describe('autocmd TermClose', function()
   before_each(function()
     clear()
     nvim('set_option', 'shell', nvim_dir .. '/shell-test')
@@ -91,4 +90,38 @@ describe('TermClose event', function()
     retry(nil, nil, function() eq('3', eval('g:abuf')) end)
     feed('<c-c>:qa!<cr>')
   end)
+end)
+
+it('autocmd TermEnter, TermLeave', function()
+  clear()
+  command('let g:evs = []')
+  command('autocmd TermOpen  * call add(g:evs, ["TermOpen", mode()])')
+  command('autocmd TermClose * call add(g:evs, ["TermClose", mode()])')
+  command('autocmd TermEnter * call add(g:evs, ["TermEnter", mode()])')
+  command('autocmd TermLeave * call add(g:evs, ["TermLeave", mode()])')
+  command('terminal')
+
+  feed('i')
+  eq({ {'TermOpen', 'n'}, {'TermEnter', 't'}, }, eval('g:evs'))
+  feed([[<C-\><C-n>]])
+  feed('A')
+  eq({ {'TermOpen', 'n'}, {'TermEnter', 't'}, {'TermLeave', 'n'}, {'TermEnter', 't'}, }, eval('g:evs'))
+
+  -- TermLeave is also triggered by :quit.
+  command('split foo')
+  command('wincmd w')
+  feed('i')
+  command('q!')
+  eq(
+    {
+     {'TermOpen',  'n'},
+     {'TermEnter', 't'},
+     {'TermLeave', 'n'},
+     {'TermEnter', 't'},
+     {'TermLeave', 'n'},
+     {'TermEnter', 't'},
+     {'TermClose', 't'},
+     {'TermLeave', 'n'},
+    },
+    eval('g:evs'))
 end)

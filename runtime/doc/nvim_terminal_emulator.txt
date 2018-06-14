@@ -88,7 +88,7 @@ Mouse input has the following behavior:
 Configuration					*terminal-configuration*
 
 Options:		'modified', 'scrollback'
-Events:			|TermOpen|, |TermClose|
+Events:			|TermOpen|, |TermEnter|, |TermLeave|, |TermClose|
 Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
 
 Terminal sets local defaults for some options, which may differ from your
