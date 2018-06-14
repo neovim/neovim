@@ -1184,6 +1184,7 @@ struct window_S {
   int w_tagstacklen;                    /* number of tags on stack */
 
   ScreenGrid w_grid;                    // the grid specific to the window
+  bool w_pos_changed;                   // true if window position changed
 
   /*
    * w_fraction is the fractional row of the cursor within the window, from

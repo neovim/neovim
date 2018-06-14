@@ -377,6 +377,7 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
+  win_ui_flush();
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, row, col);
     pending_cursor_update = false;

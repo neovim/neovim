@@ -997,6 +997,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     p_wh = i;
   }
 
+  // Send the window positions to the UI
+  oldwin->w_pos_changed = true;
+
   return OK;
 }
 
@@ -1341,6 +1344,9 @@ static void win_rotate(int upwards, int count)
     (void)win_comp_pos();
   }
 
+  wp1->w_pos_changed = true;
+  wp2->w_pos_changed = true;
+
   redraw_all_later(NOT_VALID);
 }
 
@@ -1423,6 +1429,9 @@ void win_move_after(win_T *win1, win_T *win2)
     redraw_later(NOT_VALID);
   }
   win_enter(win1, false);
+
+  win1->w_pos_changed = true;
+  win2->w_pos_changed = true;
 }
 
 /*
@@ -2059,6 +2068,7 @@ int win_close(win_T *win, bool free_buf)
   if (help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
 
+  curwin->w_pos_changed = true;
   redraw_all_later(NOT_VALID);
   return OK;
 }
@@ -4221,6 +4231,7 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       wp->w_wincol = *col;
       redraw_win_later(wp, NOT_VALID);
       wp->w_redr_status = TRUE;
+      wp->w_pos_changed = true;
     }
     *row += wp->w_height + wp->w_status_height;
     *col += wp->w_width + wp->w_vsep_width;
@@ -4886,6 +4897,8 @@ void win_new_height(win_T *wp, int height)
   if (!exiting) {
     scroll_to_fraction(wp, prev_height);
   }
+
+  wp->w_pos_changed = true;
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -5016,6 +5029,7 @@ void win_new_width(win_T *wp, int width)
                       0);
     }
   }
+  wp->w_pos_changed = true;
 }
 
 void win_comp_scroll(win_T *wp)
@@ -6050,4 +6064,20 @@ void win_findbuf(typval_T *argvars, list_T *list)
       tv_list_append_number(list, wp->handle);
     }
   }
+}
+
+void win_ui_flush(void)
+{
+  if (!ui_is_external(kUIMultigrid)) {
+    return;
+  }
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if(wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
+      ui_call_win_position(wp->handle, wp->w_grid.handle, wp->w_winrow,
+                           wp->w_wincol, wp->w_width, wp->w_height);
+      wp->w_pos_changed = false;
+    }
+  }
+
 }
