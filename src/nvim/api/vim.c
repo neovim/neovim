@@ -31,6 +31,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
+#include "nvim/mark_extended.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -881,6 +882,24 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
                   "Failed to switch to tabpage %d",
                   tabpage);
   }
+}
+
+Integer nvim_create_namespace(String name)
+  FUNC_API_SINCE(4)
+{
+  uint64_t id = current_namespace_id++;
+  kv_push(namespaces, copy_string(name));
+  return (Integer)id;
+}
+
+Array nvim_get_namespaces(void)
+  FUNC_API_SINCE(4)
+{
+  Array retval = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < kv_size(namespaces); i++) {
+    ADD(retval, STRING_OBJ(copy_string(kv_A(namespaces, i))));
+  }
+  return retval;
 }
 
 /// Subscribes to event broadcasts

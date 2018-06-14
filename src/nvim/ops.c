@@ -48,6 +48,7 @@
 #include "nvim/undo.h"
 #include "nvim/macros.h"
 #include "nvim/window.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
@@ -302,6 +303,20 @@ void shift_line(
     change_indent(INDENT_SET, count, FALSE, NUL, call_changed_bytes);
   else
     (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+
+  colnr_T col_amount;
+  colnr_T mincol = (curwin->w_cursor.col + 1) -p_sw;
+  if (left) {
+    col_amount = -p_sw;
+  } else {
+    col_amount = p_sw;
+  }
+  extmark_col_adjust(curbuf,
+                     curwin->w_cursor.lnum,
+                     mincol,
+                     0,
+                     col_amount,
+                     kExtmarkUndo);
 }
 
 /*
@@ -471,6 +486,13 @@ static void shift_block(oparg_T *oap, int amount)
   State = oldstate;
   curwin->w_cursor.col = oldcol;
   p_ri = old_p_ri;
+
+  colnr_T col_amount = p_sw;
+  if (left) {
+    col_amount = -col_amount;
+  }
+  extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
+                     curwin->w_cursor.col, 0, col_amount, kExtmarkUndo);
 }
 
 /*
@@ -615,10 +637,19 @@ void op_reindent(oparg_T *oap, Indenter how)
         amount = how();                     /* get the indent for this line */
 
       if (amount >= 0 && set_indent(amount, SIN_UNDO)) {
-        /* did change the indent, call changed_lines() later */
-        if (first_changed == 0)
+        // did change the indent, call changed_lines() later
+        if (first_changed == 0) {
           first_changed = curwin->w_cursor.lnum;
+        }
         last_changed = curwin->w_cursor.lnum;
+
+        // Adjust extmarks
+        extmark_col_adjust(curbuf,
+                           curwin->w_cursor.lnum,
+                           0,             // mincol
+                           0,             // lnum_amount
+                           amount,        // col_amount
+                           kExtmarkUndo);
       }
     }
     ++curwin->w_cursor.lnum;
@@ -1571,13 +1602,15 @@ int op_delete(oparg_T *oap)
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
-      del_lines(oap->line_count - 2, false);
+      del_lines(oap->line_count - 2, true);
 
       // delete from start of line until op_end
       n = (oap->end.col + 1 - !oap->inclusive);
       curwin->w_cursor.col = 0;
       (void)del_bytes((colnr_T)n, !virtual_op,
                       oap->op_type == OP_DELETE && !oap->is_VIsual);
+      mark_col_adjust(curwin->w_cursor.lnum,
+                      (colnr_T)0, 0L, (long)-n, kExtmarkUndo);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
     }
@@ -1589,10 +1622,40 @@ setmarks:
   if (oap->motion_type == kMTBlockWise) {
     curbuf->b_op_end.lnum = oap->end.lnum;
     curbuf->b_op_end.col = oap->start.col;
-  } else
+  } else {
     curbuf->b_op_end = oap->start;
+  }
   curbuf->b_op_start = oap->start;
 
+  // TODO(timeyyy): refactor
+  // Move extended marks
+  // + 1 to change to buhttps://www.youtube.com/watch?v=kdEftS89rLYf mode, then plus 1 because we only move marks after
+  // the deleted col
+  colnr_T mincol = oap->start.col + 1 + 1;
+  colnr_T endcol = oap->end.col + 1 + 1;
+  if (oap->motion_type == kMTBlockWise) {
+    // TODO(timeyyy): refactor extmark_col_adjust to take lnumstart, lnum_end ?
+    for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; lnum++) {
+      extmark_col_adjust_delete(curbuf, lnum, mincol, bd.end_vcol + 1,
+                                kExtmarkUndo);
+    }
+  } else if (oap->motion_type == kMTCharWise) {
+    // Delete characters within one line,
+    // The case with multiple lines is handled by do_join
+    if (oap->line_count == 1) {
+      lnum = curwin->w_cursor.lnum;
+      if (oap->is_VIsual) {
+        // + 1 to change to buf mode, then plus 1 because we copy one more than
+        // what    } we modify
+        endcol = oap->end.col + 1 + 1;
+      } else {
+        // for some reason the end.col in normal modde is + 1 as when
+        // in visual mode
+        endcol = oap->end.col + 1;
+      }
+      extmark_col_adjust_delete(curbuf, lnum, mincol, endcol, kExtmarkUndo);
+    }
+  }
   return OK;
 }
 
@@ -1955,7 +2018,7 @@ int swapchar(int op_type, pos_T *pos)
 
     /* Special handling of German sharp s: change to "SS". */
     curwin->w_cursor = *pos;
-    del_char(FALSE);
+    del_char(false);
     ins_char('S');
     ins_char('S');
     curwin->w_cursor = sp;
@@ -1983,8 +2046,8 @@ int swapchar(int op_type, pos_T *pos)
       pos_T sp = curwin->w_cursor;
 
       curwin->w_cursor = *pos;
-      /* don't use del_char(), it also removes composing chars */
-      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), FALSE, FALSE);
+      // don't use del_char(), it also removes composing chars
+      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), false, false);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else
@@ -2051,8 +2114,9 @@ void op_insert(oparg_T *oap, long count1)
          * values in "bd". */
         if (u_save_cursor() == FAIL)
           return;
-        for (i = 0; i < bd.endspaces; i++)
+        for (i = 0; i < bd.endspaces; i++) {
           ins_char(' ');
+        }
         bd.textlen += bd.endspaces;
       }
     } else {
@@ -2149,6 +2213,10 @@ void op_insert(oparg_T *oap, long count1)
       xfree(ins_text);
     }
   }
+  colnr_T col = oap->start.col;
+  for (linenr_T lnum = oap->start.lnum; lnum <= oap->end.lnum; lnum++) {
+    extmark_col_adjust(curbuf, lnum, col, 0, 1, kExtmarkUndo);
+    }
 }
 
 /*
@@ -3202,11 +3270,11 @@ error:
           curbuf->b_op_start.lnum++;
       }
       // Skip mark_adjust when adding lines after the last one, there
-      // can't be marks there. But still needed in diff mode.
+      // can't be marks there.
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
-          < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
+          < curbuf->b_ml.ml_line_count) {
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                    (linenr_T)MAXLNUM, nr_lines, 0L, false);
+                    (linenr_T)MAXLNUM, nr_lines, 0L, false, kExtmarkUndo);
       }
 
       // note changed text for displaying and folding
@@ -3268,6 +3336,26 @@ end:
 
   /* If the cursor is past the end of the line put it at the end. */
   adjust_cursor_eol();
+
+  // adjust extmarks
+  colnr_T col_amount;
+  if (dir == FORWARD) {
+    col_amount = (colnr_T)(totlen-1);
+  } else {
+    col_amount = (colnr_T)totlen;
+  }
+
+  // Move extmark with char put
+  if (y_type == kMTCharWise) {
+    extmark_col_adjust(curbuf, lnum, col, 0, col_amount, kExtmarkUndo);
+  // Move extmark with blockwise put
+  } else if (y_type == kMTBlockWise) {
+    for (lnum = curbuf->b_op_start.lnum;
+         lnum <= curbuf->b_op_end.lnum;
+         lnum++) {
+      extmark_col_adjust(curbuf, lnum, col, 0, col_amount, kExtmarkUndo);
+    }
+  }
 }
 
 /*
@@ -3666,6 +3754,12 @@ int do_join(size_t count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
+
+  linenr_T lnum;
+  colnr_T mincol;
+  long lnum_amount;
+  long col_amount;
+
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
@@ -3673,10 +3767,17 @@ int do_join(size_t count,
       cend -= spaces[t];
       memset(cend, ' ', (size_t)(spaces[t]));
     }
-    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
-        (long)(cend - newp + spaces[t] - (curr - curr_start)));
-    if (t == 0)
+    lnum = curwin->w_cursor.lnum + t;
+    mincol = (colnr_T)0;
+    lnum_amount = (linenr_T)-t;
+    col_amount = (long)(cend - newp + spaces[t] - (curr - curr_start));
+
+    mark_col_adjust(lnum, mincol, lnum_amount, col_amount, kExtmarkUndo);
+
+    if (t == 0) {
       break;
+    }
+
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
     if (remove_comments)
       curr += comments[t - 1];
@@ -3684,7 +3785,8 @@ int do_join(size_t count,
       curr = skipwhite(curr);
     currsize = (int)STRLEN(curr);
   }
-  ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+
+  ml_replace(curwin->w_cursor.lnum, newp, false);
 
   if (setmark) {
     // Set the '] mark.
@@ -4104,15 +4206,15 @@ format_lines (
         if (next_leader_len > 0) {
           (void)del_bytes(next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-              (long)-next_leader_len);
-        } else if (second_indent > 0) {  /* the "leader" for FO_Q_SECOND */
+                          (long)-next_leader_len, kExtmarkUndo);
+        } else if (second_indent > 0) {  // the "leader" for FO_Q_SECOND
           char_u *p = get_cursor_line_ptr();
           int indent = (int)(skipwhite(p) - p);
 
           if (indent > 0) {
             (void)del_bytes(indent, FALSE, FALSE);
             mark_col_adjust(curwin->w_cursor.lnum,
-                (colnr_T)0, 0L, (long)-indent);
+                            (colnr_T)0, 0L, (long)-indent, kExtmarkUndo);
           }
         }
         curwin->w_cursor.lnum--;
@@ -4778,6 +4880,22 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (curbuf->b_op_end.col > 0) {
     curbuf->b_op_end.col--;
   }
+
+  long col_amount;
+  colnr_T mincol;
+
+  mincol = curwin->w_cursor.col + 1;
+  if (op_type == OP_NR_ADD) {
+    col_amount = (long)Prenum1;
+  } else {
+    col_amount = (long)-length;
+  }
+
+  // Adjust extmarks
+  extmark_col_adjust(curbuf, pos->lnum, mincol,
+                     0,            // lnum_amount
+                     col_amount,
+                     kExtmarkUndo);
 
 theend:
   if (visual) {

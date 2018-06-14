@@ -57,6 +57,8 @@
       type *items; \
     }
 
+#define KVEC_INIT { .size = 0, .capacity = 0, .items = NULL }
+
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
 #define kv_destroy(v) xfree((v).items)
 #define kv_A(v, i) ((v).items[(i)])

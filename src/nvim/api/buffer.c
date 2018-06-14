@@ -18,7 +18,10 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/fileio.h"
 #include "nvim/move.h"
 #include "nvim/syntax.h"
@@ -444,7 +447,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
                 (linenr_T)(end - 1),
                 MAXLNUM,
                 (long)extra,
-                false);
+                false,
+                kExtmarkUndo);
   }
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
@@ -823,6 +827,212 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+/// Returns namespace mark info for a given mark identifier
+///
+/// @param buffer The buffer handle
+/// @param namespace a identifier returned previously with nvim_create_namespace
+/// @param id any nsmark id that selects only one nsmark (no positions)
+/// @param[out] err Details of an error that may have occurred
+/// @return [nsmark_id, row, col]
+ArrayOf(Object) nvim_buf_lookup_mark(Buffer buffer,
+                                     Integer namespace,
+                                     Integer id,
+                                     Error *err)
+  FUNC_API_SINCE(4)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  if (!ns_initialized((uint64_t)namespace)) {
+    api_set_error(err, kErrorTypeValidation, _("Invalid mark namespace"));
+    return rv;
+  }
+
+  ExtendedMark *extmark = extmark_from_id(buf,
+                                          (uint64_t)namespace,
+                                          (uint64_t)id);
+  if (!extmark) {
+    return rv;
+  }
+  ADD(rv, INTEGER_OBJ((Integer)extmark->mark_id));
+  ADD(rv, INTEGER_OBJ((Integer)extmark->line->lnum));
+  ADD(rv, INTEGER_OBJ((Integer)extmark->col));
+  return rv;
+}
+
+/// Returns a namespaced mark info in a range (inclusive)
+///
+/// @param buffer The buffer handle
+/// @param namespace An id returned previously from nvim_create_namespace
+/// @param lower One of:  nsmark id, (row, col) or -1 for start of buffer
+/// @param upper One of: nsmark id, (row, col) or -1 for end of buffer
+/// @param amount Maximum number of marks to return or -1 for all marks found
+/// @param reverse Boolean to switch the search direction.
+/// /// @param[out] err Details of an error that may have occurred
+/// @return [[nsmark_id, row, col], ...]
+ArrayOf(Object) nvim_buf_get_marks(Buffer buffer,
+                                   Integer namespace,
+                                   Object lower,
+                                   Object upper,
+                                   Integer amount,
+                                   Boolean reverse,
+                                   Error *err)
+  FUNC_API_SINCE(4)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  if (!ns_initialized((uint64_t)namespace)) {
+    api_set_error(err, kErrorTypeValidation, _("Invalid mark namespace"));
+    return rv;
+  }
+
+  if (amount == 0) {
+    return rv;
+  }
+
+  linenr_T l_lnum;
+  colnr_T l_col;
+  if (!set_extmark_index_from_obj(buffer, namespace, lower, &l_lnum, &l_col,
+                                  err)) {
+    return rv;
+  }
+
+  linenr_T u_lnum;
+  colnr_T u_col;
+  if (!set_extmark_index_from_obj(buffer, namespace, upper, &u_lnum, &u_col,
+                                  err)) {
+    return rv;
+  }
+
+  // TODO(timeyyy): assert lower <= upper
+
+  ExtendedMark *extmark;
+  Array mark = ARRAY_DICT_INIT;
+
+  // Range Query
+  ExtmarkArray extmarks_in_range;
+
+  extmarks_in_range = extmark_get(buf,
+                                  (uint64_t)namespace,
+                                  l_lnum,
+                                  l_col,
+                                  u_lnum,
+                                  u_col,
+                                  (int64_t)amount,
+                                  reverse ? BACKWARD: FORWARD);
+
+  size_t n = kv_size(extmarks_in_range);
+  for (size_t i = 0; i < n; i++) {
+    mark.size = 0;
+    mark.capacity = 0;
+    mark.items = 0;
+    extmark = kv_A(extmarks_in_range, i);
+    ADD(mark, INTEGER_OBJ((Integer)extmark->mark_id));
+    ADD(mark, INTEGER_OBJ(extmark->line->lnum));
+    ADD(mark, INTEGER_OBJ(extmark->col));
+    ADD(rv, ARRAY_OBJ(mark));
+  }
+  kv_destroy(extmarks_in_range);
+  return rv;
+}
+
+/// Create or update a namespaced mark at a position
+///
+/// If an invalid namespace is given, an error will be raised.
+///
+/// @param buffer The buffer handle
+/// @param namespace a identifier returned previously with nvim_create_namespace
+/// @param id The nsmark's id or 0 for a randomly generated id
+/// @param row The row to set the nsmark to.
+/// @param col The column to set the nsmark to.
+/// @param[out] err Details of an error that may have occurred
+/// @return 1 on new, 2 on update; or a nsmark_id if id was 0
+Integer nvim_buf_set_mark(Buffer buffer,
+                          Integer namespace,
+                          Integer id,
+                          Integer row,
+                          Integer col,
+                          Error *err)
+  FUNC_API_SINCE(4)
+{
+  Integer rv = 0;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+  if (!ns_initialized((uint64_t)namespace)) {
+    api_set_error(err, kErrorTypeValidation, _("Invalid mark namespace"));
+    return rv;
+  }
+  if (row < 1 || col < 1) {
+    api_set_error(err,
+                  kErrorTypeValidation,
+                  _("Row and column must be greater than 0"));
+    return rv;
+  }
+
+  bool return_id = false;
+  uint64_t id_num;
+  if (id == 0) {
+    id_num = extmark_free_id_get(buf, (uint64_t)namespace);
+    return_id = true;
+  } else if (id > 0) {
+    id_num = (uint64_t)id;
+  } else {
+    api_set_error(err, kErrorTypeValidation, _("Invalid mark id"));
+    return rv;
+  }
+
+  rv = (Integer)extmark_set(buf, (uint64_t)namespace, id_num,
+                            (linenr_T)row, (colnr_T)col, kExtmarkUndo);
+  if (return_id) {
+    return (Integer)id_num;
+  } else {
+    return rv;
+  }
+}
+
+/// Remove a namespaced mark
+///
+/// @param buffer The buffer handle
+/// @param namespace a identifier returned previously with nvim_create_namespace
+/// @param id The nsmark's id
+/// @param[out] err Details of an error that may have occurred
+/// @return 1 on success, 0 on no nsmark found
+Integer nvim_buf_del_mark(Buffer buffer,
+                          Integer namespace,
+                          Integer id,
+                          Error *err)
+  FUNC_API_SINCE(4)
+{
+  Integer rv = 0;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+  if (!ns_initialized((uint64_t)namespace)) {
+    api_set_error(err, kErrorTypeValidation, _("Invalid mark namespace"));
+    return rv;
+  }
+
+  rv = (Integer)extmark_del(buf, (uint64_t)namespace, (uint64_t)id,
+                            kExtmarkUndo);
+  return rv;
+}
+
 /// Adds a highlight to buffer.
 ///
 /// Useful for plugins that dynamically generate highlights to a buffer
@@ -831,8 +1041,9 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// line numbering (as lines are inserted/removed above the highlighted line),
 /// like signs and marks do.
 ///
-/// `src_id` is useful for batch deletion/updating of a set of highlights. When
-/// called with `src_id = 0`, an unique source id is generated and returned.
+/// `ns_id` is useful for batch deletion/updating of a set of highlights. When
+/// called with `ns_id = 0`, an unique source id is generated and returned.
+/// To create a namespace, use |nvim_create_namespace|.
 /// Successive calls can pass that `src_id` to associate new highlights with
 /// the same source group. All highlights in the same group can be cleared
 /// with `nvim_buf_clear_highlight`. If the highlight never will be manually
@@ -844,17 +1055,16 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// and clear highlights in response to buffer changes.
 ///
 /// @param buffer     Buffer handle
-/// @param src_id     Source group to use or 0 to use a new group,
-///                   or -1 for ungrouped highlight
+/// @param ns_id      namespace to use or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
 /// @param col_start  Start of (byte-indexed) column range to highlight
 /// @param col_end    End of (byte-indexed) column range to highlight,
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
-/// @return The src_id that was used
+/// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer src_id,
+                               Integer ns_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -884,9 +1094,9 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
   }
 
-  src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
-                        (colnr_T)col_start+1, (colnr_T)col_end);
-  return src_id;
+  ns_id = bufhl_add_hl(buf, (int)ns_id, hlg_id, (linenr_T)line+1,
+                       (colnr_T)col_start+1, (colnr_T)col_end);
+  return ns_id;
 }
 
 /// Clears highlights from a given source group and a range of lines
