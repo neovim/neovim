@@ -111,10 +111,10 @@ describe("shell command :!", function()
     feed([[<CR>]])
     -- Print BELL control code. #4338
     screen.bell = false
-    feed([[:!printf '\x07\x07\x07\x07text'<CR>]])
+    feed([[:!printf '\007\007\007\007text'<CR>]])
     screen:expect([[
       ~                                                 |
-      :!printf '\x07\x07\x07\x07text'                   |
+      :!printf '\007\007\007\007text'                   |
       text                                              |
       Press ENTER or type command to continue^           |
     ]], nil, nil, function()
@@ -122,7 +122,7 @@ describe("shell command :!", function()
     end)
     feed([[<CR>]])
     -- Print BS control code.
-    feed([[:echo system('printf ''\x08\n''')<CR>]])
+    feed([[:echo system('printf ''\010\n''')<CR>]])
     screen:expect([[
       ~                                                 |
       ^H                                                |
