@@ -3386,6 +3386,7 @@ static char_u *set_chars_option(char_u **varp)
     { &fill_fold,    "fold" , 183  },  // ·
     { &fill_diff,    "diff" , '-'  },
     { &fill_msgsep,  "msgsep", ' ' },
+    { &fill_eob,     "eob",   '~' },
   };
   static struct charstab lcstab[] = {
     { &lcs_eol,      "eol",      NUL },
@@ -3437,16 +3438,20 @@ static char_u *set_chars_option(char_u **varp)
             && p[len] == ':'
             && p[len + 1] != NUL) {
           s = p + len + 1;
-          c1 = mb_ptr2char_adv((const char_u **)&s);
-          if (mb_char2cells(c1) > 1) {
+
+          // TODO(bfredl): use schar_T representation and utfc_ptr2len
+          int c1len = utf_ptr2len(s);
+          c1 = mb_cptr2char_adv((const char_u **)&s);
+          if (mb_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
             continue;
           }
           if (tab[i].cp == &lcs_tab2) {
             if (*s == NUL) {
               continue;
             }
-            c2 = mb_ptr2char_adv((const char_u **)&s);
-            if (mb_char2cells(c2) > 1) {
+            int c2len = utf_ptr2len(s);
+            c2 = mb_cptr2char_adv((const char_u **)&s);
+            if (mb_char2cells(c2) > 1 || (c2len == 1 && c2 > 127)) {
               continue;
             }
           }
