@@ -4249,7 +4249,7 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
 mapblock_T *get_maphash(int index, buf_T *buf)
     FUNC_ATTR_PURE
 {
-  if (index > MAX_MAPHASH) {
+  if (index >= MAX_MAPHASH) {
     return NULL;
   }
 
