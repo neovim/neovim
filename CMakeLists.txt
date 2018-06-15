@@ -3,7 +3,7 @@
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
 cmake_minimum_required(VERSION 2.8.7)
-project(nvim)
+project(nvim C)
 
 if(POLICY CMP0059)
   cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
@@ -46,9 +46,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # now.
   if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-  endif()
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
   endif()
 endif()
 
@@ -181,7 +178,6 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
 # Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
@@ -264,7 +260,7 @@ if(HAS_DIAG_COLOR_FLAG)
   add_definitions(-fdiagnostics-color=auto)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   # 1. Array-bounds testing is broken in some GCC versions before 4.8.5.
   #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
   # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
@@ -297,7 +293,7 @@ option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
@@ -308,7 +304,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-D_GNU_SOURCE)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined -lsocket")
 endif()
 
