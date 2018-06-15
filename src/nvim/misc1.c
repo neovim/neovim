@@ -31,6 +31,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -83,9 +84,9 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  *
  * Return TRUE for success, FALSE for failure
  */
-int 
-open_line (
-    int dir,                        /* FORWARD or BACKWARD */
+int
+open_line(
+    int dir,                        // FORWARD or BACKWARD
     int flags,
     int second_line_indent
 )
@@ -114,6 +115,9 @@ open_line (
   int vreplace_mode;
   bool did_append;                // appended a new line
   int saved_pi = curbuf->b_p_pi;  // copy of preserveindent setting
+
+  linenr_T lnum = curwin->w_cursor.lnum;
+  colnr_T mincol = curwin->w_cursor.col + 1;
 
   // make a copy of the current line so we can mess with it
   char_u *saved_line = vim_strsave(get_cursor_line_ptr());
@@ -754,7 +758,8 @@ open_line (
     // be marks there. But still needed in diff mode.
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
         || curwin->w_p_diff) {
-      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
+                  kExtmarkUndo);
     }
     did_append = true;
   } else {
@@ -840,13 +845,20 @@ open_line (
                       curwin->w_cursor.lnum + 1, 1L, true);
         did_append = false;
 
-        /* Move marks after the line break to the new line. */
-        if (flags & OPENLINE_MARKFIX)
+        // Move marks after the line break to the new line (but not extmarks)
+        if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
-              curwin->w_cursor.col + less_cols_off,
-              1L, (long)-less_cols);
-      } else
+                          curwin->w_cursor.col + less_cols_off,
+                          1L, (long)-less_cols, kExtmarkNOOP);
+        }
+        // Always move extmarks - Here we move the only lnum where the cursor is
+        // The previous mark_adjust takes care of the lines after
+        extmark_col_adjust(curbuf, lnum, mincol, 1L, (long)-less_cols,
+                           kExtmarkUndo);
+
+      } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      }
     }
 
     /*
@@ -926,6 +938,7 @@ theend:
   xfree(saved_line);
   xfree(next_line);
   xfree(allocated);
+
   return retval;
 }
 
@@ -1666,7 +1679,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   if (!was_alloced)
     ml_replace(lnum, newp, FALSE);
 
-  /* mark the buffer as changed and prepare for displaying */
+  // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, curwin->w_cursor.col);
 
   return OK;
@@ -1706,10 +1719,10 @@ truncate_line (
  * Delete "nlines" lines at the cursor.
  * Saves the lines for undo first if "undo" is TRUE.
  */
-void 
-del_lines (
-    long nlines,                    /* number of lines to delete */
-    int undo                       /* if TRUE, prepare for undo */
+void
+del_lines(
+    long nlines,                    // number of lines to delete
+    int undo                        // if TRUE, prepare for undo
 )
 {
   long n;
@@ -1877,7 +1890,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there. But it's still needed in diff mode.
   if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false, kExtmarkUndo);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
@@ -1899,7 +1912,8 @@ void deleted_lines(linenr_T lnum, long count)
  */
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false,
+              kExtmarkUndo);
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
 

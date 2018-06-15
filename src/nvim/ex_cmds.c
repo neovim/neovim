@@ -38,6 +38,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -609,9 +610,9 @@ void ex_sort(exarg_T *eap)
   deleted = (long)(count - (lnum - eap->line2));
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
-                false);
+                false, kExtmarkUndo);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false, kExtmarkUndo);
   }
   changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
 
@@ -807,10 +808,10 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * their final destination at the new text position -- webb
    */
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  mark_adjust_nofold(line1, line2, last_line - line2, 0L, true, kExtmarkNoUndo);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
+    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false, kExtmarkNoUndo);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, line1, line2, dest);
@@ -819,7 +820,8 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     curbuf->b_op_start.lnum = dest - num_lines + 1;
     curbuf->b_op_end.lnum = dest;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false);
+    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, false,
+                       kExtmarkNoUndo);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(&win->w_folds, dest + 1, line1 - 1, line2);
@@ -830,8 +832,10 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, true);
+                     -(last_line - dest - extra), 0L, true, kExtmarkNoUndo);
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
+
+  u_extmark_move(curbuf, line1, line2, last_line, dest, num_lines, extra);
 
   // send update regarding the new lines that were added
   if (kv_size(curbuf->update_channels)) {
@@ -1239,12 +1243,14 @@ static void do_filter(
       if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
         if (read_linecount >= linecount) {
           // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0L, false);
+          mark_adjust(line1, line2, linecount, 0L, false, kExtmarkUndo);
         } else {
           // move marks from old lines to new lines, delete marks
           // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false);
+          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L, false,
+                      kExtmarkUndo);
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L, false,
+                      kExtmarkUndo);
         }
       }
 
@@ -3208,6 +3214,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int save_b_changed = curbuf->b_changed;
   bool preview = (State & CMDPREVIEW);
 
+  // inccomand tests fail without this check
+  if (!preview) {
+    // Requried for Undo to work for nsmarks,
+    u_save_cursor();
+  }
+
   if (!global_busy) {
     sub_nsubs = 0;
     sub_nlines = 0;
@@ -3823,6 +3835,20 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
 
           ADJUST_SUB_FIRSTLNUM();
 
+          // TODO(timeyyy): should we be moving when preview?
+          if (!preview) {
+            // Adjust extmarks, by delete and then insert
+            colnr_T  mincol = regmatch.startpos[0].col + 1;
+            colnr_T endcol = regmatch.endpos[0].col + 1;
+            // Delete, + 1 because we only move marks after the deleted col
+            extmark_col_adjust_delete(curbuf, lnum, mincol + 1, endcol,
+                                      kExtmarkUndo);
+            // Insert, sublen seems to be the value we need but + 1...
+            colnr_T col_amount = sublen - 1;
+            extmark_col_adjust(curbuf, lnum, mincol, 0, col_amount,
+                               kExtmarkUndo);
+          }
+
           // Now the trick is to replace CTRL-M chars with a real line
           // break.  This would make it impossible to insert a CTRL-M in
           // the text.  The line break can be avoided by preceding the
@@ -3837,7 +3863,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
-                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
+                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
+                            kExtmarkUndo);
+
                 if (subflags.do_ask) {
                   appended_lines(lnum - 1, 1L);
                 } else {
@@ -3928,7 +3956,7 @@ skip:
               for (i = 0; i < nmatch_tl; ++i)
                 ml_delete(lnum, (int)FALSE);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                          (long)MAXLNUM, -nmatch_tl, false);
+                          (long)MAXLNUM, -nmatch_tl, false, kExtmarkUndo);
               if (subflags.do_ask) {
                 deleted_lines(lnum, nmatch_tl);
               }

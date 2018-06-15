@@ -68,6 +68,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/api/vim.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif

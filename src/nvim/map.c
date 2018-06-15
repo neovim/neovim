@@ -148,4 +148,4 @@ MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(handle_T, ptr_t, DEFAULT_INITIALIZER)
 #define MSGPACK_HANDLER_INITIALIZER { .fn = NULL, .async = false }
 MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
-#define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
+MAP_IMPL(uint64_t, cstr_t, DEFAULT_INITIALIZER)

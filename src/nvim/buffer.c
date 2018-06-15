@@ -26,6 +26,7 @@
 
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -49,6 +50,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -783,7 +785,8 @@ free_buffer_stuff (
   buf_init_changedtick(buf);
   uc_clear(&buf->b_ucmds);              // clear local user commands
   buf_delete_signs(buf);                // delete any signs
-  bufhl_clear_all(buf);                // delete any highligts
+  extmark_free_all(buf);                // delete any extmarks
+  bufhl_clear_all(buf);                 // delete any highligts
   map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   xfree(buf->b_start_fenc);
@@ -5283,10 +5286,11 @@ int bufhl_add_hl(buf_T *buf,
                  int hl_id,
                  linenr_T lnum,
                  colnr_T col_start,
-                 colnr_T col_end) {
-  static int next_src_id = 1;
+                 colnr_T col_end)
+{
   if (src_id == 0) {
-    src_id = next_src_id++;
+    // Deprecated: create anonymous namespace
+    src_id = (int)nvim_create_namespace((String)STRING_INIT);
   }
   if (hl_id <= 0) {
       // no highlight group or invalid line, just return src_id
