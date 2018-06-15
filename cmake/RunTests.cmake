@@ -24,12 +24,12 @@ if(BUSTED_OUTPUT_TYPE STREQUAL junit)
   set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
 endif()
 
-if(DEFINED ENV{TEST_TAG})
+if(DEFINED ENV{TEST_TAG} AND NOT "$ENV{TEST_TAG}" STREQUAL "")
   set(TEST_TAG "--tags=$ENV{TEST_TAG}")
 endif()
 
-if(DEFINED ENV{TEST_FILTER})
-  set(TEST_TAG "--filter=$ENV{TEST_FILTER}")
+if(DEFINED ENV{TEST_FILTER} AND NOT "$ENV{TEST_FILTER}" STREQUAL "")
+  set(TEST_FILTER "--filter=$ENV{TEST_FILTER}")
 endif()
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${WORKING_DIR}/Xtest-tmpdir)
