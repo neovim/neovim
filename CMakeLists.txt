@@ -294,18 +294,18 @@ option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
+  if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+    set(NO_UNDEFINED "-Wl,--no-undefined -lsocket")
+  elseif(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(NO_UNDEFINED "-Wl,--no-undefined")
+  endif()
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${NO_UNDEFINED}")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${NO_UNDEFINED}")
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
   # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
   # For ptsname(). #6743
   add_definitions(-D_GNU_SOURCE)
-endif()
-
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined -lsocket")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
