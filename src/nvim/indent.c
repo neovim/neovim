@@ -520,7 +520,7 @@ int inindent(int extra)
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int indent;
+  int indent = -1;
   pos_T save_pos;
   colnr_T save_curswant;
   int save_set_curswant;
@@ -538,7 +538,14 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
-  indent = (int)eval_to_number(curbuf->b_p_inde);
+
+  // Need to make a copy, the 'indentexpr' option could be changed while
+  // evaluating it.
+  char_u *inde_copy = vim_strsave(curbuf->b_p_inde);
+  if (inde_copy != NULL) {
+    indent = (int)eval_to_number(inde_copy);
+    xfree(inde_copy);
+  }
 
   if (use_sandbox) {
     sandbox--;

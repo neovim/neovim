@@ -275,3 +275,15 @@ func Test_complete()
   set complete&
 endfun
 
+func ResetIndentexpr()
+  set indentexpr=
+endfunc
+
+func Test_set_indentexpr()
+  " this was causing usage of freed memory
+  set indentexpr=ResetIndentexpr()
+  new
+  call feedkeys("i\<c-f>", 'x')
+  call assert_equal('', &indentexpr)
+  bwipe!
+endfunc
