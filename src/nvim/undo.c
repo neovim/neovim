@@ -703,7 +703,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       if (has_directory) {
         if (munged_name == NULL) {
           munged_name = xstrdup(ffname);
-          for (char *p = munged_name; *p != NUL; mb_ptr_adv(p)) {
+          for (char *p = munged_name; *p != NUL; MB_PTR_ADV(p)) {
             if (vim_ispathsep(*p)) {
               *p = '%';
             }

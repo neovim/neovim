@@ -531,7 +531,7 @@ open_line (
             int l;
 
             while (old_size < repl_size && p > leader) {
-              mb_ptr_back(leader, p);
+              MB_PTR_BACK(leader, p);
               old_size += ptr2cells(p);
             }
             l = lead_repl_len - (int)(endp - p);
@@ -1311,7 +1311,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   colnr_T col = 0;
   while (*s != NUL && --column >= 0) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
-    mb_ptr_adv(s);
+    MB_PTR_ADV(s);
   }
 
   // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in

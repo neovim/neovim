@@ -603,7 +603,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 
   /* Truncate the line to fit it in the window */
   len = 0;
-  for (p = s; *p != NUL; mb_ptr_adv(p)) {
+  for (p = s; *p != NUL; MB_PTR_ADV(p)) {
     len += ptr2cells(p);
     if (len >= Columns - lead_len)
       break;

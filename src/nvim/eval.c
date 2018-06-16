@@ -110,8 +110,8 @@
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
-#define AUTOLOAD_CHAR '#'       /* Character used as separator in autoload 
-                                   function/variable names. */
+// Character used as separator in autoload function/variable names.
+#define AUTOLOAD_CHAR '#'
 
 /*
  * Structure returned by get_lval() and used by set_var_lval().
@@ -728,8 +728,8 @@ static char_u   *redir_varname = NULL;
  * Start recording command output to a variable
  * Returns OK if successfully completed the setup.  FAIL otherwise.
  */
-int 
-var_redir_start (
+int
+var_redir_start(
     char_u *name,
     int append                     /* append to an existing variable */
 )
@@ -926,8 +926,8 @@ void eval_patch(const char *const origfile, const char *const difffile,
  * Sets "error" to TRUE if there was an error.
  * Return TRUE or FALSE.
  */
-int 
-eval_to_bool (
+int
+eval_to_bool(
     char_u *arg,
     bool *error,
     char_u **nextcmd,
@@ -1503,8 +1503,8 @@ void ex_let(exarg_T *eap)
  * or concatenate.
  * Returns OK or FAIL;
  */
-static int 
-ex_let_vars (
+static int
+ex_let_vars(
     char_u *arg_start,
     typval_T *tv,
     int copy,                       /* copy values from "tv", don't move */
@@ -2581,9 +2581,10 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       /* ":let var1 var2 ...": find last space. */
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
-        mb_ptr_back(arg, p);
-        if (ascii_iswhite(*p))
+        MB_PTR_BACK(arg, p);
+        if (ascii_iswhite(*p)) {
           break;
+        }
       }
       return;
     }
@@ -4307,8 +4308,8 @@ static int eval7(
  * "*arg" points to the '[' or '.'.
  * Returns FAIL or OK. "*arg" is advanced to after the ']'.
  */
-static int 
-eval_index (
+static int
+eval_index(
     char_u **arg,
     typval_T *rettv,
     int evaluate,
@@ -4653,7 +4654,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Find the end of the string, skipping backslashed characters.
    */
-  for (p = *arg + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+  for (p = *arg + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       ++p;
       /* A "\<x>" form occupies at least 4 characters, and produces up
@@ -4777,7 +4778,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Find the end of the string, skipping ''.
    */
-  for (p = *arg + 1; *p != NUL; mb_ptr_adv(p)) {
+  for (p = *arg + 1; *p != NUL; MB_PTR_ADV(p)) {
     if (*p == '\'') {
       if (p[1] != '\'')
         break;
@@ -6061,15 +6062,15 @@ static char_u *deref_func_name(const char *name, int *lenp,
  * Allocate a variable for the result of a function.
  * Return OK or FAIL.
  */
-static int 
-get_func_tv (
-    char_u *name,              /* name of the function */
-    int len,                        /* length of "name" */
+static int
+get_func_tv(
+    char_u *name,           // name of the function
+    int len,                // length of "name"
     typval_T *rettv,
-    char_u **arg,              /* argument, pointing to the '(' */
-    linenr_T firstline,             /* first line of range */
-    linenr_T lastline,              /* last line of range */
-    int *doesrange,         /* return: function handled range */
+    char_u **arg,           // argument, pointing to the '('
+    linenr_T firstline,     // first line of range
+    linenr_T lastline,      // last line of range
+    int *doesrange,         // return: function handled range
     int evaluate,
     partial_T *partial,     // for extra arguments
     dict_T *selfdict        // Dictionary for "self"
@@ -9961,8 +9962,8 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   while (cur != NULL) {
     dict_T *dict = tv_dict_alloc();
     if (cur->match.regprog == NULL) {
-      // match added with matchaddpos() 
-      for (i = 0; i < MAXPOSMATCH; ++i) {
+      // match added with matchaddpos()
+      for (i = 0; i < MAXPOSMATCH; i++) {
         llpos_T   *llpos;
         char buf[6];
 
@@ -10380,8 +10381,8 @@ static void f_getwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * getwinvar() and gettabwinvar()
  */
-static void 
-getwinvar (
+static void
+getwinvar(
     typval_T *argvars,
     typval_T *rettv,
     int off                    /* 1 for gettabwinvar() */
@@ -14160,17 +14161,17 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  * Used by searchpair(), see its documentation for the details.
  * Returns 0 or -1 for no match,
  */
-long 
-do_searchpair (
-    char_u *spat,          /* start pattern */
-    char_u *mpat,          /* middle pattern */
-    char_u *epat,          /* end pattern */
-    int dir,                    /* BACKWARD or FORWARD */
-    char_u *skip,          /* skip expression */
-    int flags,                  /* SP_SETPCMARK and other SP_ values */
+long
+do_searchpair(
+    char_u *spat,          // start pattern
+    char_u *mpat,          // middle pattern
+    char_u *epat,          // end pattern
+    int dir,               // BACKWARD or FORWARD
+    char_u *skip,          // skip expression
+    int flags,             // SP_SETPCMARK and other SP_ values
     pos_T *match_pos,
-    linenr_T lnum_stop,         /* stop at this line if not zero */
-    long time_limit            /* stop after this many msec */
+    linenr_T lnum_stop,    // stop at this line if not zero
+    long time_limit        // stop after this many msec
 )
 {
   char_u      *save_cpo;
@@ -16398,7 +16399,7 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
   return list;
 }
 
-static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
+static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
                                        bool retlist)
 {
   rettv->v_type = VAR_STRING;
@@ -18061,16 +18062,17 @@ static const char_u *find_name_end(const char_u *arg, const char_u **expr_start,
            || *p == '{'
            || ((flags & FNE_INCL_BR) && (*p == '[' || *p == '.'))
            || mb_nest != 0
-           || br_nest != 0); mb_ptr_adv(p)) {
+           || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {
-      /* skip over 'string' to avoid counting [ and ] inside it. */
-      for (p = p + 1; *p != NUL && *p != '\''; mb_ptr_adv(p))
-        ;
-      if (*p == NUL)
+      // skip over 'string' to avoid counting [ and ] inside it.
+      for (p = p + 1; *p != NUL && *p != '\''; MB_PTR_ADV(p)) {
+      }
+      if (*p == NUL) {
         break;
+      }
     } else if (*p == '"') {
       // skip over "str\"ing" to avoid counting [ and ] inside it.
-      for (p = p + 1; *p != NUL && *p != '"'; mb_ptr_adv(p)) {
+      for (p = p + 1; *p != NUL && *p != '"'; MB_PTR_ADV(p)) {
         if (*p == '\\' && p[1] != NUL) {
           ++p;
         }
@@ -20693,8 +20695,8 @@ void func_dump_profile(FILE *fd)
   xfree(sorttab);
 }
 
-static void 
-prof_sort_list (
+static void
+prof_sort_list(
     FILE *fd,
     ufunc_T **sorttab,
     int st_len,
@@ -21551,8 +21553,8 @@ static int can_free_funccal(funccall_T *fc, int copyID)
 /*
  * Free "fc" and what it contains.
  */
-static void 
-free_funccal (
+static void
+free_funccal(
     funccall_T *fc,
     int free_val              /* a: vars were allocated */
 )
@@ -22106,13 +22108,13 @@ void reset_v_option_vars(void)
  * Returns VALID_ flags or -1 for failure.
  * When there is an error, *fnamep is set to NULL.
  */
-int 
-modify_fname (
-    char_u *src,               /* string with modifiers */
-    size_t *usedlen,           /* characters after src that are used */
-    char_u **fnamep,           /* file name so far */
-    char_u **bufp,             /* buffer for allocated file name or NULL */
-    size_t *fnamelen           /* length of fnamep */
+int
+modify_fname(
+    char_u *src,              // string with modifiers
+    size_t *usedlen,          // characters after src that are used
+    char_u **fnamep,          // file name so far
+    char_u **bufp,            // buffer for allocated file name or NULL
+    size_t *fnamelen          // length of fnamep
 )
 {
   int valid = 0;
@@ -22148,15 +22150,16 @@ repeat:
         return -1;
     }
 
-    /* When "/." or "/.." is used: force expansion to get rid of it. */
-    for (p = *fnamep; *p != NUL; mb_ptr_adv(p)) {
+    // When "/." or "/.." is used: force expansion to get rid of it.
+    for (p = *fnamep; *p != NUL; MB_PTR_ADV(p)) {
       if (vim_ispathsep(*p)
           && p[1] == '.'
           && (p[2] == NUL
               || vim_ispathsep(p[2])
               || (p[2] == '.'
-                  && (p[3] == NUL || vim_ispathsep(p[3])))))
+                  && (p[3] == NUL || vim_ispathsep(p[3]))))) {
         break;
+      }
     }
 
     /* FullName_save() is slow, don't use it when not needed. */
@@ -22236,8 +22239,9 @@ repeat:
     valid |= VALID_HEAD;
     *usedlen += 2;
     s = get_past_head(*fnamep);
-    while (tail > s && after_pathsep((char *)s, (char *)tail))
-      mb_ptr_back(*fnamep, tail);
+    while (tail > s && after_pathsep((char *)s, (char *)tail)) {
+      MB_PTR_BACK(*fnamep, tail);
+    }
     *fnamelen = (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
       /* Result is empty.  Turn it into "." to make ":cd %:h" work. */
@@ -22245,8 +22249,9 @@ repeat:
       *bufp = *fnamep = tail = vim_strsave((char_u *)".");
       *fnamelen = 1;
     } else {
-      while (tail > s && !after_pathsep((char *)s, (char *)tail))
-        mb_ptr_back(*fnamep, tail);
+      while (tail > s && !after_pathsep((char *)s, (char *)tail)) {
+        MB_PTR_BACK(*fnamep, tail);
+      }
     }
   }
 

@@ -1722,8 +1722,9 @@ char_u * mb_prevptr(
     char_u *p
     )
 {
-  if (p > line)
-    mb_ptr_back(line, p);
+  if (p > line) {
+    MB_PTR_BACK(line, p);
+  }
   return p;
 }
 

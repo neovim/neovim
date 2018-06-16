@@ -1507,9 +1507,10 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // sl_sal_first[] for this.
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
       c = mb_cptr2char_adv((const char_u **)&p);
-      mb_cptr_adv(s);
-      if (c >= 256)
-        ++lp->sl_sal_first[c & 0xff];
+      MB_CPTR_ADV(s);
+      if (c >= 256) {
+        lp->sl_sal_first[c & 0xff]++;
+      }
     }
     if (*p != NUL || *s != NUL)             // lengths differ
       return SP_FORMERROR;
@@ -2427,7 +2428,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                       || PTR2CHAR(aff_entry->ae_cond) == c)) {
                 p = aff_entry->ae_add
                     + STRLEN(aff_entry->ae_add);
-                mb_ptr_back(aff_entry->ae_add, p);
+                MB_PTR_BACK(aff_entry->ae_add, p);
                 if (PTR2CHAR(p) == c_up) {
                   upper = true;
                   aff_entry->ae_chop = NULL;
@@ -2528,12 +2529,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         if (items[0][3] == 'S' ? do_repsal : do_rep) {
           // Replace underscore with space (can't include a space
           // directly).
-          for (p = items[1]; *p != NUL; mb_ptr_adv(p))
-            if (*p == '_')
+          for (p = items[1]; *p != NUL; MB_PTR_ADV(p)) {
+            if (*p == '_') {
               *p = ' ';
-          for (p = items[2]; *p != NUL; mb_ptr_adv(p))
-            if (*p == '_')
+            }
+          }
+          for (p = items[2]; *p != NUL; MB_PTR_ADV(p)) {
+            if (*p == '_') {
               *p = ' ';
+            }
+          }
           add_fromto(spin, items[0][3] == 'S'
               ? &spin->si_repsal
               : &spin->si_rep, items[1], items[2]);
@@ -3070,10 +3075,10 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     // Truncate the word at the "/", set "afflist" to what follows.
     // Replace "\/" by "/" and "\\" by "\".
     afflist = NULL;
-    for (p = w; *p != NUL; mb_ptr_adv(p)) {
-      if (*p == '\\' && (p[1] == '\\' || p[1] == '/'))
+    for (p = w; *p != NUL; MB_PTR_ADV(p)) {
+      if (*p == '\\' && (p[1] == '\\' || p[1] == '/')) {
         STRMOVE(p, p + 1);
-      else if (*p == '/') {
+      } else if (*p == '/') {
         *p = NUL;
         afflist = p + 1;
         break;
@@ -3343,19 +3348,22 @@ store_aff_word (
             // Match.  Remove the chop and add the affix.
             if (xht == NULL) {
               // prefix: chop/add at the start of the word
-              if (ae->ae_add == NULL)
+              if (ae->ae_add == NULL) {
                 *newword = NUL;
-              else
+              } else {
                 STRLCPY(newword, ae->ae_add, MAXWLEN);
+              }
               p = word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
                 if (has_mbyte) {
                   i = mb_charlen(ae->ae_chop);
-                  for (; i > 0; --i)
-                    mb_ptr_adv(p);
-                } else
+                  for (; i > 0; i--) {
+                    MB_PTR_ADV(p);
+                  }
+                } else {
                   p += STRLEN(ae->ae_chop);
+                }
               }
               STRCAT(newword, p);
             } else {
@@ -3365,8 +3373,9 @@ store_aff_word (
                 // Remove chop string.
                 p = newword + STRLEN(newword);
                 i = (int)MB_CHARLEN(ae->ae_chop);
-                for (; i > 0; --i)
-                  mb_ptr_back(newword, p);
+                for (; i > 0; i--) {
+                  MB_PTR_BACK(newword, p);
+                }
                 *p = NUL;
               }
               if (ae->ae_add != NULL)

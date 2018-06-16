@@ -5101,11 +5101,13 @@ file_name_in_line (
    * search forward for what could be the start of a file name
    */
   ptr = line + col;
-  while (*ptr != NUL && !vim_isfilec(*ptr))
-    mb_ptr_adv(ptr);
-  if (*ptr == NUL) {            /* nothing found */
-    if (options & FNAME_MESS)
+  while (*ptr != NUL && !vim_isfilec(*ptr)) {
+    MB_PTR_ADV(ptr);
+  }
+  if (*ptr == NUL) {            // nothing found
+    if (options & FNAME_MESS) {
       EMSG(_("E446: No file name under cursor"));
+    }
     return NULL;
   }
 

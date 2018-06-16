@@ -2474,7 +2474,7 @@ win_line (
       c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
 
     // When:
@@ -4549,7 +4549,7 @@ static int status_match_len(expand_T *xp, char_u *s)
   while (*s != NUL) {
     s += skip_status_match_char(xp, s);
     len += ptr2cells(s);
-    mb_ptr_adv(s);
+    MB_PTR_ADV(s);
   }
 
   return len;
@@ -6671,7 +6671,7 @@ static void draw_tabline(void)
         if (has_mbyte)
           while (len > room) {
             len -= ptr2cells(p);
-            mb_ptr_adv(p);
+            MB_PTR_ADV(p);
           }
         else if (len > room) {
           p += len - room;

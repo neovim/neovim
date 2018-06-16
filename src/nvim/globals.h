@@ -872,8 +872,6 @@ enum {
 };
 
 
-EXTERN char breakat_flags[256];         /* which characters are in 'breakat' */
-
 /*
  * Some file names are stored in pathdef.c, which is generated from the
  * Makefile to make their value depend on the Makefile.
