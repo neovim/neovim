@@ -38,7 +38,7 @@ func Test_gF()
   w! Xfile
   close
   new
-  call setline(1, ['one', 'Xfile:3', 'three'])
+  call setline(1, ['one', 'Xfile@3', 'three'])
   2
   call assert_fails('normal gF', 'E37:')
   call assert_equal(2, getcurpos()[1])
