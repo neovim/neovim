@@ -38,7 +38,8 @@ func Test_gF()
   w! Xfile
   close
   new
-  call setline(1, ['one', 'Xfile@3', 'three'])
+  set isfname-=:
+  call setline(1, ['one', 'Xfile:3', 'three'])
   2
   call assert_fails('normal gF', 'E37:')
   call assert_equal(2, getcurpos()[1])
@@ -47,6 +48,7 @@ func Test_gF()
   call assert_equal('Xfile', bufname('%'))
   call assert_equal(3, getcurpos()[1])
 
+  set isfname&
   call delete('Xfile')
   call delete('Xfile2')
   bwipe Xfile
