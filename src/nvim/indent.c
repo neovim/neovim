@@ -520,7 +520,7 @@ int inindent(int extra)
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int indent;
+  int indent = -1;
   pos_T save_pos;
   colnr_T save_curswant;
   int save_set_curswant;
