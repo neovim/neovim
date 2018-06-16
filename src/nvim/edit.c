@@ -4305,12 +4305,12 @@ ins_compl_next (
       for (s = e = compl_shown_match->cp_fname; *e != NUL; MB_PTR_ADV(e)) {
         space -= ptr2cells(e);
         while (space < 0) {
-            space += ptr2cells(s);
-            MB_PTR_ADV(s);
+          space += ptr2cells(s);
+          MB_PTR_ADV(s);
         }
       }
       vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
-              s > compl_shown_match->cp_fname ? "<" : "", s);
+                   s > compl_shown_match->cp_fname ? "<" : "", s);
       msg(IObuff);
       redraw_cmdline = false;     // don't overwrite!
     }
