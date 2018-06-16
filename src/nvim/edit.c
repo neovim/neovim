@@ -4132,7 +4132,6 @@ ins_compl_next (
 )
 {
   int num_matches = -1;
-  int i;
   int todo = count;
   compl_T *found_compl = NULL;
   int found_end = FALSE;
@@ -4294,15 +4293,27 @@ ins_compl_next (
    * Truncate the file name to avoid a wait for return.
    */
   if (compl_shown_match->cp_fname != NULL) {
-    STRCPY(IObuff, "match in file ");
-    i = (vim_strsize(compl_shown_match->cp_fname) + 16) - sc_col;
-    if (i <= 0)
-      i = 0;
-    else
-      STRCAT(IObuff, "<");
-    STRCAT(IObuff, compl_shown_match->cp_fname + i);
-    msg(IObuff);
-    redraw_cmdline = FALSE;         /* don't overwrite! */
+    char *lead = _("match in file");
+    int space = sc_col - vim_strsize((char_u *)lead) - 2;
+    char_u  *s;
+    char_u  *e;
+
+    if (space > 0) {
+      // We need the tail that fits.  With double-byte encoding going
+      // back from the end is very slow, thus go from the start and keep
+      // the text that fits in "space" between "s" and "e".
+      for (s = e = compl_shown_match->cp_fname; *e != NUL; mb_ptr_adv(e)) {
+        space -= ptr2cells(e);
+        while (space < 0) {
+          space += ptr2cells(s);
+          mb_ptr_adv(s);
+        }
+      }
+      vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
+                   s > compl_shown_match->cp_fname ? "<" : "", s);
+      msg(IObuff);
+      redraw_cmdline = false;     // don't overwrite!
+    }
   }
 
   return num_matches;
