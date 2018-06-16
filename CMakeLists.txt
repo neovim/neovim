@@ -2,7 +2,7 @@
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
 if(POLICY CMP0059)
@@ -569,31 +569,17 @@ if(BUSTED_PRG)
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
 
-  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
-    if(CMAKE_GENERATOR MATCHES "Visual Studio")
-      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
-    else()
-      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
-    endif()
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  if(LUA_HAS_FFI)
+    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
   else()
-    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
-    # use configure_file() to add the generator expression and then generate
-    # the final file
-    if(LUA_HAS_FFI)
-      set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
-    else()
-      set(TEST_LIBNVIM_PATH "")
-    endif()
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
-    file(GENERATE
-      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
-      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+    set(TEST_LIBNVIM_PATH "")
   endif()
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+    ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+  file(GENERATE
+    OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
+    INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}

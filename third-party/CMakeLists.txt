@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required (VERSION 2.8.7)
+cmake_minimum_required (VERSION 2.8.12)
 project(NVIM_DEPS)
 
 # Needed for: check_c_compiler_flag()
