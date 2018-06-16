@@ -1324,6 +1324,10 @@ func Test_edit_quit()
 endfunc
 
 func Test_edit_complete_very_long_name()
+  if !has('unix')
+    " Long directory names only work on Unix.
+    return
+  endif
   let save_columns = &columns
   set columns=5000
   call assert_equal(5000, &columns)
