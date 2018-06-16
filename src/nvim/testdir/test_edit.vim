@@ -1324,7 +1324,7 @@ func Test_edit_quit()
 endfunc
 
 func Test_edit_complete_very_long_name()
-  if !has('unix')
+  if !has('unix') || has('mac')
     " Long directory names only work on Unix.
     return
   endif
