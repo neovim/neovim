@@ -2789,17 +2789,27 @@ A jump table for the options with a short description can be found at |Q_op|.
 			of the numbers is zero, there is no blinking. E.g.: >
 				:set guicursor=n:blinkon0
 <		{group-name}
-			a highlight group name, that sets the color and font
-			for the cursor
+			Highlight group name that sets the color and font for
+			the cursor. |inverse|/reverse and no group-name are
+			interpreted as "the host terminal default cursor
+			colors" which usually invert bg and fg colors.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
 			are. |language-mapping|
 
 	Examples of parts:
-	   n-c-v:block-nCursor	in Normal, Command-line and Visual mode, use a
+	   n-c-v:block-nCursor	In Normal, Command-line and Visual mode, use a
 				block cursor with colors from the "nCursor"
 				highlight group
+	   n-v-c-sm:block,i-ci-ve:ver25-Cursor,r-cr-o:hor20
+				In Normal et al. modes, use a block cursor
+				with the default colors defined by the host
+				terminal.  In Insert-likes modes, use
+				a vertical bar cursor with colors from
+				"Cursor" highlight group.  In Replace-likes
+				modes, use a underline cursor with
+				default colors.
 	   i-ci:ver30-iCursor-blinkwait300-blinkon200-blinkoff150
 				In Insert and Command-line Insert mode, use a
 				30% vertical bar cursor with colors from the

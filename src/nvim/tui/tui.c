@@ -100,6 +100,7 @@ typedef struct {
   bool mouse_enabled;
   bool busy, is_invisible;
   bool cork, overflow;
+  bool cursor_color_changed;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
@@ -112,6 +113,7 @@ typedef struct {
     int enable_lr_margin, disable_lr_margin;
     int set_rgb_foreground, set_rgb_background;
     int set_cursor_color;
+    int reset_cursor_color;
     int enable_focus_reporting, disable_focus_reporting;
     int resize_screen;
     int reset_scroll_region;
@@ -186,10 +188,12 @@ static void terminfo_start(UI *ui)
   data->busy = false;
   data->cork = false;
   data->overflow = false;
+  data->cursor_color_changed = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.set_cursor_color = -1;
+  data->unibi_ext.reset_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
   data->unibi_ext.enable_lr_margin = -1;
@@ -278,6 +282,9 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
+  if (data->cursor_color_changed) {
+    unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
+  }
   // Disable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
@@ -965,9 +972,19 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   cursorentry_T c = data->cursor_shapes[mode];
 
   if (c.id != 0 && c.id < (int)kv_size(data->attrs) && ui->rgb) {
-    int color = kv_A(data->attrs, c.id).rgb_bg_color;
-    UNIBI_SET_NUM_VAR(data->params[0], color);
-    unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
+    HlAttrs aep = kv_A(data->attrs, c.id);
+    if (aep.rgb_ae_attr & HL_INVERSE) {
+      // We interpret "inverse" as "default" (no termcode for "inverse"...).
+      // Hopefully the user's default cursor color is inverse.
+      unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
+    } else {
+      UNIBI_SET_NUM_VAR(data->params[0], aep.rgb_bg_color);
+      unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
+      data->cursor_color_changed = true;
+    }
+  } else if (c.id == 0) {
+    // No cursor color for this mode; reset to default.
+    unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
   }
 
   int shape;
@@ -1774,8 +1791,10 @@ static void augment_terminfo(TUIData *data, const char *term,
     // This seems to be supported for a long time in VTE
     // urxvt also supports this
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, "\033]12;#%p1%06x\007");
+        ut, "ext.set_cursor_color", "\033]12;#%p1%06x\007");
   }
+  data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(
+      ut, "ext.reset_cursor_color", "\x1b]112\x07");
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
