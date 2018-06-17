@@ -7465,7 +7465,8 @@ static void nv_esc(cmdarg_T *cap)
         && cmdwin_type == 0
         && !VIsual_active
         && no_reason) {
-      MSG(_("Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"));  // NOLINT(whitespace/line_length)
+      MSG(_("Type  :qa!  and press <Enter> to abandon all changes"
+            " and exit Nvim"));
     }
 
     /* Don't reset "restart_edit" when 'insertmode' is set, it won't be
