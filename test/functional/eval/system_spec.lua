@@ -241,7 +241,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Nvim                     |
+        Type  :qa!  and press <E...all changes and exit Nvim |
       ]])
     end)
   end)
@@ -448,7 +448,7 @@ describe('systemlist()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        Type  :quit<Enter>  to exit Nvim                     |
+        Type  :qa!  and press <E...all changes and exit Nvim |
       ]])
     end)
   end)
