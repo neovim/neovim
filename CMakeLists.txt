@@ -15,6 +15,8 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # We don't support building in-tree.
 include(PreventInTreeBuilds)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
   set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
@@ -574,6 +576,7 @@ if(BUSTED_PRG)
   # Useful for automated build systems, if they want to manually run the tests.
   add_custom_target(unittest-prereqs
     DEPENDS ${UNITTEST_PREREQS})
+  set_target_properties(unittest-prereqs PROPERTIES FOLDER test)
 
   add_custom_target(functionaltest-prereqs
     DEPENDS ${FUNCTIONALTEST_PREREQS})
@@ -596,6 +599,7 @@ if(BUSTED_PRG)
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
+    set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
@@ -640,6 +644,8 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(functionaltest functionaltest-prereqs
+    PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -655,6 +661,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
 endif()
 
 if(BUSTED_LUA_PRG)
@@ -672,6 +679,7 @@ if(BUSTED_LUA_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
 if(LUACHECK_PRG)

@@ -55,6 +55,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     DEPENDS ${NVIM_SOURCES})
 
   add_custom_target(potfile DEPENDS ${NVIM_POT})
+  set_target_properties(potfile PROPERTIES FOLDER po)
 
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
@@ -91,6 +92,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       COMMENT "Checking ${name}.po"
       VERBATIM
       DEPENDS ${poFile})
+    set_target_properties(check-po-${name} PROPERTIES FOLDER po/check)
   endmacro()
 
   macro(BuildPoIconvGenericWithCharset
@@ -182,7 +184,9 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     BuildMo(${LANGUAGE})
   endforeach()
+  set_target_properties(${UPDATE_PO_TARGETS} PROPERTIES FOLDER po/update)
 
   add_custom_target(translations ALL DEPENDS ${LANGUAGE_MO_FILES})
   add_custom_target(update-po DEPENDS ${UPDATE_PO_TARGETS})
+  set_target_properties(translations update-po PROPERTIES FOLDER po)
 endif()

@@ -470,10 +470,12 @@ if(WIN32)
   file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
+  set_target_properties(external_blobs PROPERTIES FOLDER deps)
   add_dependencies(nvim_runtime_deps external_blobs)
 else()
   add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
+set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
 add_library(
   libnvim
@@ -585,6 +587,7 @@ foreach(hfile ${NVIM_HEADERS})
       TARGET ${texe}
       APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
     )
+    set_target_properties(${texe} PROPERTIES FOLDER test)
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
