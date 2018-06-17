@@ -5234,9 +5234,9 @@ static void nv_gotofile(cmdarg_T *cap)
       (void)autowrite(curbuf, false);
     }
     setpcmark();
-    (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
-                  buf_hide(curbuf) ? ECMD_HIDE : 0, curwin);
-    if (cap->nchar == 'F' && lnum >= 0) {
+    if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
+                buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
+        && cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;
       check_cursor_lnum();
       beginline(BL_SOL | BL_FIX);
@@ -7151,7 +7151,7 @@ static void set_op_var(int optype)
     assert(opchar0 >= 0 && opchar0 <= UCHAR_MAX);
     opchars[0] = (char) opchar0;
 
-    int opchar1 = get_extra_op_char(optype); 
+    int opchar1 = get_extra_op_char(optype);
     assert(opchar1 >= 0 && opchar1 <= UCHAR_MAX);
     opchars[1] = (char) opchar1;
 
@@ -7464,8 +7464,10 @@ static void nv_esc(cmdarg_T *cap)
     if (restart_edit == 0
         && cmdwin_type == 0
         && !VIsual_active
-        && no_reason)
-      MSG(_("Type  :quit<Enter>  to exit Nvim"));
+        && no_reason) {
+      MSG(_("Type  :qa!  and press <Enter> to abandon all changes"
+            " and exit Nvim"));
+    }
 
     /* Don't reset "restart_edit" when 'insertmode' is set, it won't be
      * set again below when halfway through a mapping. */

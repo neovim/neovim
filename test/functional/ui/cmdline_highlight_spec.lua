@@ -494,7 +494,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      Type  :quit<Enter>  to exit Nvim        |
+      Type  :qa!  and pr...nges and exit Nvim |
     ]])
   end)
   it('works fine with NUL, NL, CR', function()
