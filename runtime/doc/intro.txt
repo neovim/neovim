@@ -642,25 +642,12 @@ The command CTRL-\ CTRL-G or <C-\><C-G> can be used to go to Insert mode when
 make sure Vim is in the mode indicated by 'insertmode', without knowing in
 what mode Vim currently is.
 
-				    *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
-Q			Switch to "Ex" mode.  This is a bit like typing ":"
-			commands one after another, except:
+				*gQ* *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+Q or gQ			Switch to Ex mode.  This is like typing ":" commands
+			one after another, except:
 			- You don't have to keep pressing ":".
 			- The screen doesn't get updated after each command.
-			- There is no normal command-line editing.
-			- Mappings and abbreviations are not used.
-			In fact, you are editing the lines with the "standard"
-			line-input editing commands (<Del> or <BS> to erase,
-			CTRL-U to kill the whole line).
-			Vim will enter this mode by default if it's invoked as
-			"ex" on the command-line.
-			Use the ":vi" command |:visual| to exit "Ex" mode.
-
-					*gQ*
-gQ			Switch to "Ex" mode like with "Q", but really behave
-			like typing ":" commands after another.  All command
-			line editing, completion etc. is available.
-			Use the ":vi" command |:visual| to exit "Ex" mode.
+			Use the ":vi" command |:visual| to exit this mode.
 
 ==============================================================================
 7. The window contents					*window-contents*

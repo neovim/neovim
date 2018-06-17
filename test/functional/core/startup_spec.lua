@@ -123,8 +123,18 @@ describe('startup', function()
   end)
 
   it('-e/-E interactive #7679', function()
-    clear('-E')
+    clear('-e')
     local screen = Screen.new(25, 3)
+    screen:attach()
+    feed("put ='from -e'<CR>")
+    screen:expect([[
+      :put ='from -e'          |
+      from -e                  |
+      :^                        |
+    ]])
+
+    clear('-E')
+    screen = Screen.new(25, 3)
     screen:attach()
     feed("put ='from -E'<CR>")
     screen:expect([[
@@ -147,6 +157,14 @@ describe('startup', function()
     eq(inputstr,
        funcs.system({nvim_prog, '-i', 'NONE', '-Es', '+%print', '-' },
                     input))
+    -- with `-u NORC`
+    eq('thepartycontinues\n',
+       funcs.system({nvim_prog, '-n', '-u', 'NORC', '-Es', '+.print' },
+                    { 'thepartycontinues', '' }))
+    -- without `-u`
+    eq('thepartycontinues\n',
+       funcs.system({nvim_prog, '-n', '-Es', '+.print' },
+                    { 'thepartycontinues', '' }))
 
     --
     -- -es: read stdin as ex-commands
@@ -157,6 +175,14 @@ describe('startup', function()
     eq('line1\nline2\n',
        funcs.system({nvim_prog, '-i', 'NONE', '-es', '-' },
                     input))
+    -- with `-u NORC`
+    eq('  encoding=utf-8\n',
+       funcs.system({nvim_prog, '-n', '-u', 'NORC', '-es' },
+                    { 'set encoding', '' }))
+    -- without `-u`
+    eq('  encoding=utf-8\n',
+       funcs.system({nvim_prog, '-n', '-es' },
+                    { 'set encoding', '' }))
   end)
 end)
 
