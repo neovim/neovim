@@ -301,9 +301,11 @@ int main(int argc, char **argv)
   // Read ex-commands if invoked with "-es".
   //
   bool reading_tty = !headless_mode
+                     && !silent_mode
                      && (params.input_isatty || params.output_isatty
                          || params.err_isatty);
-  bool reading_excmds = !params.input_isatty && silent_mode
+  bool reading_excmds = !params.input_isatty
+                        && silent_mode
                         && exmode_active == EXMODE_NORMAL;
   if (reading_tty || reading_excmds) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
