@@ -2790,7 +2790,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 				:set guicursor=n:blinkon0
 <		{group-name}
 			a highlight group name, that sets the color and font
-			for the cursor
+			for the cursor. When reverse in gui or no group-name
+			is specified, neovim will use your terminal's default
+			cursor colors, which usually swaps the bg and fg colors
+			of the underlying character.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
@@ -2800,6 +2803,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   n-c-v:block-nCursor	in Normal, Command-line and Visual mode, use a
 				block cursor with colors from the "nCursor"
 				highlight group
+	   n-v-c-sm:block,i-ci-ve:ver25-Cursor,r-cr-o:hor20
+				In Normal-like mode, use block cursor with the
+				default colors of the terminal.  In
+				Insert-like mode, uses a vertical bar cursor
+				with colors from "Cursor" highlight group.  In
+				Replace-like mode, use a underline cursor with
+				default colors.
 	   i-ci:ver30-iCursor-blinkwait300-blinkon200-blinkoff150
 				In Insert and Command-line Insert mode, use a
 				30% vertical bar cursor with colors from the
