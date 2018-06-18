@@ -430,4 +430,14 @@ func Test_getcmdtype()
   cunmap <F6>
 endfunc
 
+func Test_verbosefile()
+  set verbosefile=Xlog
+  echomsg 'foo'
+  echomsg 'bar'
+  set verbosefile=
+  let log = readfile('Xlog')
+  call assert_match("foo\nbar", join(log, "\n"))
+  call delete('Xlog')
+endfunc
+
 set cpo&

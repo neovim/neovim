@@ -19533,7 +19533,6 @@ void ex_execute(exarg_T *eap)
       // follows is displayed on a new line when scrolling back at the
       // more prompt.
       msg_sb_eol();
-      msg_start();
     }
 
     if (eap->cmdidx == CMD_echomsg) {
