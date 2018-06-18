@@ -295,6 +295,13 @@ open_buffer (
   }
   save_file_ff(curbuf);                 // keep this fileformat
 
+  /* Set last_changedtick to avoid triggering a TextChanged autocommand right
+   * after it was added. */
+  curbuf->b_last_changedtick = CHANGEDTICK(curbuf);
+#ifdef FEAT_INS_EXPAND
+  curbuf->b_last_changedtick_pum = CHANGEDTICK(curbuf);
+#endif
+
   /* require "!" to overwrite the file, because it wasn't read completely */
   if (aborting())
     curbuf->b_flags |= BF_READERR;
