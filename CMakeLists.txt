@@ -353,7 +353,7 @@ main(void)
 }
 " MSGPACK_HAS_FLOAT32)
 if(MSGPACK_HAS_FLOAT32)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
+  add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
 
 option(FEAT_TUI "Enable the Terminal UI" ON)
@@ -374,7 +374,7 @@ if(FEAT_TUI)
   }
   " UNIBI_HAS_VAR_FROM)
   if(UNIBI_HAS_VAR_FROM)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_UNIBI_HAS_VAR_FROM")
+    add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
   find_package(LibTermkey REQUIRED)
