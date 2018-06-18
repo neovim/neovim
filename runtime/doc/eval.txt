@@ -1508,7 +1508,6 @@ v:errmsg	Last given error message.  It's allowed to set this variable.
 	:silent! next
 	:if v:errmsg != ""
 	:  ... handle error
-<		"errmsg" also works, for backwards compatibility.
 
 					*v:errors* *errors-variable*
 v:errors	Errors found by assert functions, such as |assert_true()|.
@@ -1813,8 +1812,7 @@ v:shell_error	Result of the last shell command.  When non-zero, the last
 	:if v:shell_error
 	:  echo 'could not rename "foo" to "bar"!'
 	:endif
-<		"shell_error" also works, for backwards compatibility.
-
+<
 					*v:statusmsg* *statusmsg-variable*
 v:statusmsg	Last given status message.  It's allowed to set this variable.
 
@@ -1888,7 +1886,6 @@ v:testing	Must be set before using `test_garbagecollect_now()`.
 v:this_session	Full filename of the last loaded or saved session file.  See
 		|:mksession|.  It is allowed to set this variable.  When no
 		session file has been saved, this variable is empty.
-		"this_session" also works, for backwards compatibility.
 
 					*v:throwpoint* *throwpoint-variable*
 v:throwpoint	The point where the exception most recently caught and not
