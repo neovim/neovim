@@ -394,12 +394,6 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-if(CMAKE_VERSION VERSION_LESS "2.8.8")
-  # Use include_directories() because INCLUDE_DIRECTORIES target property
-  # is not supported
-  include_directories(${LUA_PREFERRED_INCLUDE_DIRS})
-endif()
-
 # Don't use jemalloc in the unit test library.
 if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})

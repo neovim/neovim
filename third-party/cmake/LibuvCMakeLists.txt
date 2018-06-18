@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.12)
 project(libuv LANGUAGES C)
 
 file(GLOB UV_SOURCES_COMMON src/*.c)

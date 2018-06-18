@@ -21,17 +21,13 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${FUNCS_DATA}
 )
 
-if(POLICY CMP0054)
-  cmake_policy(SET CMP0054 OLD)
-endif()
-
 file(GLOB PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
 
 set(GENERATED_PACKAGE_TAGS)
 foreach(PACKAGE ${PACKAGES})
   get_filename_component(PACKNAME ${PACKAGE} NAME)
   file(GLOB "${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
-  if("${PACKNAME}_DOC_FILES")
+  if(${PACKNAME}_DOC_FILES)
     file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
     add_custom_target("${PACKNAME}-tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
