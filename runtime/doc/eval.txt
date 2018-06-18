@@ -5182,8 +5182,10 @@ line({expr})	The result is a Number, which is the line number of the file
 		    $	    the last line in the current buffer
 		    'x	    position of mark x (if the mark is not set, 0 is
 			    returned)
-		    w0	    first line visible in current window
-		    w$	    last line visible in current window
+		    w0	    first line visible in current window (one if the
+			    display isn't updated, e.g. in silent Ex mode)
+		    w$	    last line visible in current window (this is one
+			    less than "w0" if no lines are visible)
 		    v	    In Visual mode: the start of the Visual area (the
 			    cursor is the end).  When not in Visual mode
 			    returns the cursor position.  Differs from |'<| in
