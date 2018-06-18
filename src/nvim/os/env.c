@@ -56,7 +56,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
   char *envbuf = xmalloc(envbuflen);
   snprintf(envbuf, envbuflen, "%s=%s", name, value);
 
-  WCHAR *p;
+  wchar_t *p;
   utf8_to_utf16(envbuf, &p);
   xfree(envbuf);
   if (p == NULL) {
@@ -146,7 +146,7 @@ void os_get_hostname(char *hostname, size_t size)
     xstrlcpy(hostname, vutsname.nodename, size);
   }
 #elif defined(WIN32)
-  WCHAR host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
+  wchar_t host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
   DWORD host_wsize = sizeof(host_utf16) / sizeof(host_utf16[0]);
   if (GetComputerNameW(host_utf16, &host_wsize) == 0) {
     *hostname = '\0';
