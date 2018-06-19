@@ -122,6 +122,18 @@ describe('startup', function()
                     { 'ohyeah', '' }))
   end)
 
+  it('if stdin is empty: selects buffer 2, deletes buffer 1 #8561', function()
+    eq('\r\n  2 %a   "file1"                        line 0\r\n  3      "file2"                        line 0',
+       funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '--headless',
+                     '+ls!',
+                     '+qall!',
+                     '-',
+                     'file1',
+                     'file2',
+                    },
+                    { '' }))
+  end)
+
   it('-e/-E interactive #7679', function()
     clear('-e')
     local screen = Screen.new(25, 3)

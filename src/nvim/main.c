@@ -1410,6 +1410,12 @@ static void read_stdin(void)
   int save_msg_didany = msg_didany;
   set_buflisted(true);
   (void)open_buffer(true, NULL, 0);  // create memfile and read file
+  if (BUFEMPTY() && curbuf->b_next != NULL) {
+    // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
+    do_cmdline_cmd("silent! bnext");
+    // Delete the empty stdin buffer.
+    do_cmdline_cmd("bwipeout 1");
+  }
   no_wait_return = false;
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
