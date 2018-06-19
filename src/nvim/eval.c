@@ -20498,7 +20498,7 @@ void free_all_functions(void)
 
   // Clean up the call stack.
   while (current_funccal != NULL) {
-    clear_tv(current_funccal->rettv);
+    tv_clear(current_funccal->rettv);
     cleanup_function_call(current_funccal);
   }
 
