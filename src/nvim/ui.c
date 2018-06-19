@@ -440,13 +440,16 @@ Array ui_array(void)
   return all_uis;
 }
 
-void ui_grid_resize(GridHandle grid_handle, int width, int height)
+void ui_grid_resize(GridHandle grid_handle, int width, int height, Error *error)
 {
-  win_T *wp = get_win_by_grid_handle(grid_handle);
+  if (grid_handle == DEFAULT_GRID_HANDLE) {
+    screen_resize(width, height);
+    return;
+  }
 
+  win_T *wp = get_win_by_grid_handle(grid_handle);
   if (wp == NULL) {
-    //TODO(utkarshme): error out
-    abort();
+    api_set_error(error, kErrorTypeValidation, "No window with the given handle");
     return;
   }
 

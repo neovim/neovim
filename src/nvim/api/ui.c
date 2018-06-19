@@ -257,9 +257,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
     return;
   }
 
-  // TODO(utkarshme): Check if grid exists
-
-  ui_grid_resize((GridHandle)grid, (int)width, (int)height);
+  ui_grid_resize((GridHandle)grid, (int)width, (int)height, error);
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().
