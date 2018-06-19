@@ -6811,18 +6811,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               cterm_normal_bg_color = color + 1;
               if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
-                if (color >= 0) {
-                  if (t_colors < 16) {
-                    i = (color == 0 || color == 4);
-                  } else {
-                    i = (color < 7 || color == 8);
-                  }
-                  // Set the 'background' option if the value is
-                  // wrong.
-                  if (i != (*p_bg == 'd')) {
-                    set_option_value("bg", 0L, (i ? "dark" : "light"), 0);
-                  }
-                }
               }
             }
           }
