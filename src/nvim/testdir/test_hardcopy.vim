@@ -63,10 +63,12 @@ func Test_with_syntax()
 endfunc
 
 func Test_fname_with_spaces()
-  split t\ e\ s\ t.txt
-  call setline(1, ['just', 'some', 'text'])
-  hardcopy > %.ps
-  call assert_true(filereadable('t e s t.txt.ps'))
-  call delete('t e s t.txt.ps')
-  bwipe!
+  if has('postscript')
+    split t\ e\ s\ t.txt
+    call setline(1, ['just', 'some', 'text'])
+    hardcopy > %.ps
+    call assert_true(filereadable('t e s t.txt.ps'))
+    call delete('t e s t.txt.ps')
+    bwipe!
+  endif
 endfunc
