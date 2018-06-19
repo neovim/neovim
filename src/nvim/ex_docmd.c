@@ -8611,7 +8611,8 @@ eval_vars (
     default:
       // should not happen
       *errormsg = (char_u *)"";
-      return NULL;
+      result = (char_u *)"";    // avoid gcc warning
+      break;
     }
 
     resultlen = STRLEN(result);         /* length of new string */
