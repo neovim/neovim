@@ -2317,9 +2317,9 @@ doend:
  */
 int
 checkforcmd(
-    char_u **pp,               /* start of command */
-    char *cmd,               /* name of command */
-    int len                        /* required length */
+    char_u **pp,              // start of command
+    char *cmd,                // name of command
+    int len                   // required length
 )
 {
   int i;
@@ -4705,7 +4705,7 @@ char_u *check_nextcmd(char_u *p)
  */
 static int
 check_more(
-    int message,                /* when FALSE check only, no messages */
+    int message,                // when FALSE check only, no messages
     int forceit
 )
 {
