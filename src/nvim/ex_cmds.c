@@ -1309,7 +1309,7 @@ filterend:
 void
 do_shell(
     char_u *cmd,
-    int flags              /* may be SHELL_DOOUT when output is redirected */
+    int flags             // may be SHELL_DOOUT when output is redirected
 )
 {
   int save_nwr;
@@ -1793,10 +1793,10 @@ int
 check_overwrite(
     exarg_T *eap,
     buf_T *buf,
-    char_u *fname,         /* file name to be used (can differ from
-                               buf->ffname) */
-    char_u *ffname,        /* full path version of fname */
-    int other                  /* writing under other name */
+    char_u *fname,         // file name to be used (can differ from
+                           //   buf->ffname)
+    char_u *ffname,        // full path version of fname
+    int other              // writing under other name
 )
 {
   /*
@@ -4597,8 +4597,8 @@ char_u *check_help_lang(char_u *arg)
 int
 help_heuristic(
     char_u *matched_string,
-    int offset,                             /* offset for match */
-    int wrong_case                         /* no matching case */
+    int offset,                             // offset for match
+    int wrong_case                          // no matching case
 )
 {
   int num_letters;
