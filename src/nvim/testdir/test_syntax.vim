@@ -435,3 +435,26 @@ func Test_conceal()
   bw!
 endfunc
 
+func Test_bg_detection()
+  if has('gui_running')
+    return
+  endif
+  " auto-detection of &bg, make sure sure it isn't set anywhere before
+  " this test
+  hi Normal ctermbg=0
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=4
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=12
+  call assert_equal('light', &bg)
+  hi Normal ctermbg=15
+  call assert_equal('light', &bg)
+
+  " manually-set &bg takes precendence over auto-detection
+  set bg=light
+  hi Normal ctermbg=4
+  call assert_equal('light', &bg)
+  set bg=dark
+  hi Normal ctermbg=12
+  call assert_equal('dark', &bg)
+endfunc
