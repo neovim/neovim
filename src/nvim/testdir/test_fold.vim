@@ -1,10 +1,10 @@
 " Test for folding
 
-func! PrepIndent(arg)
+func PrepIndent(arg)
   return [a:arg] + repeat(["\t".a:arg], 5)
 endfu
 
-func! Test_address_fold()
+func Test_address_fold()
   new
   call setline(1, ['int FuncName() {/*{{{*/', 1, 2, 3, 4, 5, '}/*}}}*/',
 	      \ 'after fold 1', 'after fold 2', 'after fold 3'])
@@ -68,17 +68,7 @@ func! Test_address_fold()
   quit!
 endfunc
 
-func! Test_indent_fold()
-    new
-    call setline(1, ['', 'a', '    b', '    c'])
-    setl fen fdm=indent
-    2
-    norm! >>
-    let a=map(range(1,4), 'foldclosed(v:val)')
-    call assert_equal([-1,-1,-1,-1], a)
-endfunc
-
-func! Test_indent_fold()
+func Test_indent_fold()
     new
     call setline(1, ['', 'a', '    b', '    c'])
     setl fen fdm=indent
@@ -89,7 +79,7 @@ func! Test_indent_fold()
     bw!
 endfunc
 
-func! Test_indent_fold2()
+func Test_indent_fold2()
     new
     call setline(1, ['', '{{{', '}}}', '{{{', '}}}'])
     setl fen fdm=marker
@@ -122,7 +112,7 @@ func Test_manual_fold_with_filter()
   endfor
 endfunc
 
-func! Test_indent_fold_with_read()
+func Test_indent_fold_with_read()
   new
   set foldmethod=indent
   call setline(1, repeat(["\<Tab>a"], 4))
@@ -224,7 +214,11 @@ func Test_update_folds_expr_read()
   set foldmethod& foldexpr&
 endfunc
 
-func! Test_move_folds_around_manual()
+func Check_foldlevels(expected)
+  call assert_equal(a:expected, map(range(1, line('$')), 'foldlevel(v:val)'))
+endfunc
+
+func Test_move_folds_around_manual()
   new
   let input = PrepIndent("a") + PrepIndent("b") + PrepIndent("c")
   call setline(1, PrepIndent("a") + PrepIndent("b") + PrepIndent("c"))
@@ -293,11 +287,50 @@ func! Test_move_folds_around_manual()
   6m$
   " The first fold has been truncated to the 5'th line.
   " Second fold has been moved up because the moved line is now below it.
-  call assert_equal([0, 1, 1, 1, 1, 0, 0, 0, 1, 0], map(range(1, line('$')), 'foldlevel(v:val)'))
+  call Check_foldlevels([0, 1, 1, 1, 1, 0, 0, 0, 1, 0])
+
+  %delete
+  set fdm=indent foldlevel=0
+  call setline(1, [
+	\ "a",
+	\ "\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "a",
+	\ "a"])
+  set fdm=manual
+  %foldopen!
+  4,5m6
+  call Check_foldlevels([0, 1, 2, 0, 0, 0, 0])
+
+  %delete
+  set fdm=indent
+  call setline(1, [
+	\ "\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\t\ta",
+	\ "\ta",
+	\ "a"])
+  set fdm=manual
+  %foldopen!
+  13m7
+  call Check_foldlevels([1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 0])
+  
   bw!
 endfunc
 
-func! Test_move_folds_around_indent()
+func Test_move_folds_around_indent()
   new
   let input = PrepIndent("a") + PrepIndent("b") + PrepIndent("c")
   call setline(1, PrepIndent("a") + PrepIndent("b") + PrepIndent("c"))
@@ -357,7 +390,7 @@ func! Test_move_folds_around_indent()
   6m$
   " The first fold has been truncated to the 5'th line.
   " Second fold has been moved up because the moved line is now below it.
-  call assert_equal([0, 1, 1, 1, 1, 0, 0, 0, 1, 1], map(range(1, line('$')), 'foldlevel(v:val)'))
+  call Check_foldlevels([0, 1, 1, 1, 1, 0, 0, 0, 1, 1])
   bw!
 endfunc
 
