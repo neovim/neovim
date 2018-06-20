@@ -650,5 +650,19 @@ func Test_complete_func_mess()
   set completefunc=
 endfunc
 
+func Test_complete_CTRLN_startofbuffer()
+  new
+  call setline(1, [ 'organize(cupboard, 3, 2);',
+        \ 'prioritize(bureau, 8, 7);',
+        \ 'realize(bannister, 4, 4);',
+        \ 'moralize(railing, 3,9);'])
+  let expected=['cupboard.organize(3, 2);',
+        \ 'bureau.prioritize(8, 7);',
+        \ 'bannister.realize(4, 4);',
+        \ 'railing.moralize(3,9);']
+  call feedkeys("qai\<c-n>\<c-n>.\<esc>3wdW\<cr>q3@a", 'tx')
+  call assert_equal(expected, getline(1,'$'))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
