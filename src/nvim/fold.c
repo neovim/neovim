@@ -2655,8 +2655,11 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
   }
 }
 
-// foldMoveRange() {{{2
-static void reverse_fold_order(garray_T *gap, size_t start, size_t end)
+// foldReverseOrder() {{{2
+static void foldReverseOrder(
+    garray_T *gap,
+    linenr_T start,
+    linenr_T end)
 {
   for (; start < end; start++, end--) {
     fold_T *left = (fold_T *)gap->ga_data + start;
@@ -2798,9 +2801,11 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
     // There are no folds after those moved, so none were moved out of order.
     return;
   }
-  reverse_fold_order(gap, move_start, dest_index - 1);
-  reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
-  reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);
+  foldReverseOrder(gap, (linenr_T)move_start, (linenr_T)(dest_index - 1));
+  foldReverseOrder(gap, (linenr_T)move_start,
+                   (linenr_T)(move_start + dest_index - move_end - 1));
+  foldReverseOrder(gap, (linenr_T)(move_start + dest_index - move_end),
+                   (linenr_T)(dest_index - 1));
 }
 #undef FOLD_END
 #undef VALID_FOLD
