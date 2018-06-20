@@ -479,6 +479,8 @@ static char_u   *regprop(char_u *);
 #endif
 
 static char_u e_missingbracket[] = N_("E769: Missing ] after %s[");
+static char_u e_reverse_range[] = N_("E944: Reverse range in character class");
+static char_u e_large_class[] = N_("E945: Range too large in character class");
 static char_u e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
 static char_u e_unmatchedp[] = N_("E54: Unmatched %s(");
 static char_u e_unmatchedpar[] = N_("E55: Unmatched %s)");
@@ -1140,24 +1142,28 @@ static char_u *skip_anyof(char_u *p)
   if (*p == ']' || *p == '-')
     ++p;
   while (*p != NUL && *p != ']') {
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
+    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       p += l;
-    else if (*p == '-')  {
-      ++p;
-      if (*p != ']' && *p != NUL)
-        mb_ptr_adv(p);
+    } else if (*p == '-')  {
+      p++;
+      if (*p != ']' && *p != NUL) {
+        MB_PTR_ADV(p);
+      }
     } else if (*p == '\\'
                && (vim_strchr(REGEXP_INRANGE, p[1]) != NULL
-                   || (!reg_cpo_lit && vim_strchr(REGEXP_ABBR, p[1]) != NULL)))
+                   || (!reg_cpo_lit
+                       && vim_strchr(REGEXP_ABBR, p[1]) != NULL))) {
       p += 2;
-    else if (*p == '[') {
+    } else if (*p == '[') {
       if (get_char_class(&p) == CLASS_NONE
           && get_equi_class(&p) == 0
           && get_coll_element(&p) == 0
-          && *p != NUL)
-        ++p;         /* It is not a class name and not NUL */
-    } else
-      ++p;
+          && *p != NUL) {
+        p++;          // It is not a class name and not NUL
+      }
+    } else {
+      p++;
+    }
   }
 
   return p;
@@ -1183,9 +1189,10 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
     mymagic = MAGIC_OFF;
   get_cpo_flags();
 
-  for (; p[0] != NUL; mb_ptr_adv(p)) {
-    if (p[0] == dirc)           /* found end of regexp */
+  for (; p[0] != NUL; MB_PTR_ADV(p)) {
+    if (p[0] == dirc) {         // found end of regexp
       break;
+    }
     if ((p[0] == '[' && mymagic >= MAGIC_ON)
         || (p[0] == '\\' && p[1] == '[' && mymagic <= MAGIC_OFF)) {
       p = skip_anyof(p + 1);
@@ -2232,15 +2239,18 @@ collection:
               if (endc == '\\' && !reg_cpo_lit)
                 endc = coll_get_char();
 
-              if (startc > endc)
-                EMSG_RET_NULL(_(e_invrange));
+              if (startc > endc) {
+                EMSG_RET_NULL(_(e_reverse_range));
+              }
               if (has_mbyte && ((*mb_char2len)(startc) > 1
                                 || (*mb_char2len)(endc) > 1)) {
-                /* Limit to a range of 256 chars */
-                if (endc > startc + 256)
-                  EMSG_RET_NULL(_(e_invrange));
-                while (++startc <= endc)
+                // Limit to a range of 256 chars
+                if (endc > startc + 256) {
+                  EMSG_RET_NULL(_(e_large_class));
+                }
+                while (++startc <= endc) {
                   regmbc(startc);
+                }
               } else {
                 while (++startc <= endc)
                   regc(startc);
@@ -2328,21 +2338,21 @@ collection:
               regc('\t');
               break;
             case CLASS_CNTRL:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (iscntrl(cu)) {
                   regmbc(cu);
                 }
               }
               break;
             case CLASS_DIGIT:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (ascii_isdigit(cu)) {
                   regmbc(cu);
                 }
               }
               break;
             case CLASS_GRAPH:
-              for (cu = 1; cu <= 255; cu++) {
+              for (cu = 1; cu <= 127; cu++) {
                 if (isgraph(cu)) {
                   regmbc(cu);
                 }
@@ -3471,14 +3481,14 @@ static long bt_regexec_both(char_u *line,
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
-        mb_ptr_adv(s);
+        MB_PTR_ADV(s);
       }
     } else {
       while ((s = cstrchr(s, c)) != NULL) {
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
-        mb_ptr_adv(s);
+        MB_PTR_ADV(s);
       }
     }
     if (s == NULL) {  // Not present.
@@ -3748,7 +3758,7 @@ static int reg_match_visual(void)
   return TRUE;
 }
 
-#define ADVANCE_REGINPUT() mb_ptr_adv(reginput)
+#define ADVANCE_REGINPUT() MB_PTR_ADV(reginput)
 
 /*
  * The arguments from BRACE_LIMITS are stored here.  They are actually local
@@ -4241,26 +4251,28 @@ regmatch (
             int opndc = 0, inpc;
 
             opnd = OPERAND(scan);
-            /* Safety check (just in case 'encoding' was changed since
-             * compiling the program). */
+            // Safety check (just in case 'encoding' was changed since
+            // compiling the program).
             if ((len = (*mb_ptr2len)(opnd)) < 2) {
               status = RA_NOMATCH;
               break;
             }
-            if (enc_utf8)
-              opndc = mb_ptr2char(opnd);
+            if (enc_utf8) {
+              opndc = utf_ptr2char(opnd);
+            }
             if (enc_utf8 && utf_iscomposing(opndc)) {
               /* When only a composing char is given match at any
                * position where that composing char appears. */
               status = RA_NOMATCH;
               for (i = 0; reginput[i] != NUL; i += utf_ptr2len(reginput + i)) {
-                inpc = mb_ptr2char(reginput + i);
+                inpc = utf_ptr2char(reginput + i);
                 if (!utf_iscomposing(inpc)) {
-                  if (i > 0)
+                  if (i > 0) {
                     break;
+                  }
                 } else if (opndc == inpc) {
-                  /* Include all following composing chars. */
-                  len = i + mb_ptr2len(reginput + i);
+                  // Include all following composing chars.
+                  len = i + utfc_ptr2len(reginput + i);
                   status = RA_MATCH;
                   break;
                 }
@@ -4280,7 +4292,7 @@ regmatch (
           if (enc_utf8) {
             // Skip composing characters.
             while (utf_iscomposing(utf_ptr2char(reginput))) {
-              mb_cptr_adv(reginput);
+              MB_CPTR_ADV(reginput);
             }
           }
           break;
@@ -4944,21 +4956,24 @@ regmatch (
                   (colnr_T)STRLEN(regline);
               }
             } else {
-              if (has_mbyte)
+              if (has_mbyte) {
                 rp->rs_un.regsave.rs_u.pos.col -=
                   (*mb_head_off)(regline, regline
                                  + rp->rs_un.regsave.rs_u.pos.col - 1) + 1;
-              else
-                --rp->rs_un.regsave.rs_u.pos.col;
+              } else {
+                rp->rs_un.regsave.rs_u.pos.col--;
+              }
             }
           } else {
-            if (rp->rs_un.regsave.rs_u.ptr == regline)
+            if (rp->rs_un.regsave.rs_u.ptr == regline) {
               no = FAIL;
-            else {
-              mb_ptr_back(regline, rp->rs_un.regsave.rs_u.ptr);
-              if (limit > 0 && (long)(behind_pos.rs_u.ptr
-                                      - rp->rs_un.regsave.rs_u.ptr) > limit)
+            } else {
+              MB_PTR_BACK(regline, rp->rs_un.regsave.rs_u.ptr);
+              if (limit > 0
+                  && (long)(behind_pos.rs_u.ptr
+                            - rp->rs_un.regsave.rs_u.ptr) > limit) {
                 no = FAIL;
+              }
             }
           }
           if (no == OK) {
@@ -5018,17 +5033,18 @@ regmatch (
               if (--rst->count < rst->minval)
                 break;
               if (reginput == regline) {
-                /* backup to last char of previous line */
-                --reglnum;
+                // backup to last char of previous line
+                reglnum--;
                 regline = reg_getline(reglnum);
-                /* Just in case regrepeat() didn't count
-                 * right. */
-                if (regline == NULL)
+                // Just in case regrepeat() didn't count right.
+                if (regline == NULL) {
                   break;
+                }
                 reginput = regline + STRLEN(regline);
                 fast_breakcheck();
-              } else
-                mb_ptr_back(regline, reginput);
+              } else {
+                MB_PTR_BACK(regline, reginput);
+              }
             } else {
               /* Range is backwards, use shortest match first.
                * Careful: maxval and minval are exchanged!
@@ -5158,8 +5174,8 @@ regrepeat (
       /* Matching anything means we continue until end-of-line (or
        * end-of-file for ANY + ADD_NL), only limited by maxcount. */
       while (*scan != NUL && count < maxcount) {
-        ++count;
-        mb_ptr_adv(scan);
+        count++;
+        MB_PTR_ADV(scan);
       }
       if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
           || rex.reg_line_lbr || count == maxcount) {
@@ -5181,7 +5197,7 @@ regrepeat (
   case SIDENT + ADD_NL:
     while (count < maxcount) {
       if (vim_isIDc(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5209,7 +5225,7 @@ regrepeat (
     while (count < maxcount) {
       if (vim_iswordp_buf(scan, rex.reg_buf)
           && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5237,7 +5253,7 @@ regrepeat (
   case SFNAME + ADD_NL:
     while (count < maxcount) {
       if (vim_isfilec(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > rex.reg_maxline
             || rex.reg_line_lbr) {
@@ -5276,7 +5292,7 @@ regrepeat (
         }
       } else if (vim_isprintc(PTR2CHAR(scan)) == 1
                  && (testval || !ascii_isdigit(*scan))) {
-        mb_ptr_adv(scan);
+        MB_PTR_ADV(scan);
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
       } else {
@@ -6672,7 +6688,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
       if (eval_result != NULL) {
         int had_backslash = FALSE;
 
-        for (s = eval_result; *s != NUL; mb_ptr_adv(s)) {
+        for (s = eval_result; *s != NUL; MB_PTR_ADV(s)) {
           // Change NL to CR, so that it becomes a line break,
           // unless called from vim_regexec_nl().
           // Skip over a backslashed character.

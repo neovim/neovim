@@ -106,37 +106,39 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
+  // Can't set a mark in a non-existant buffer.
+  buf_T *buf = buflist_findnr(fnum);
+  if (buf == NULL) {
+    return FAIL;
+  }
+
   if (c == '"') {
-    RESET_FMARK(&curbuf->b_last_cursor, *pos, curbuf->b_fnum);
+    RESET_FMARK(&buf->b_last_cursor, *pos, buf->b_fnum);
     return OK;
   }
 
   /* Allow setting '[ and '] for an autocommand that simulates reading a
    * file. */
   if (c == '[') {
-    curbuf->b_op_start = *pos;
+    buf->b_op_start = *pos;
     return OK;
   }
   if (c == ']') {
-    curbuf->b_op_end = *pos;
+    buf->b_op_end = *pos;
     return OK;
   }
 
   if (c == '<' || c == '>') {
-    if (c == '<')
-      curbuf->b_visual.vi_start = *pos;
-    else
-      curbuf->b_visual.vi_end = *pos;
-    if (curbuf->b_visual.vi_mode == NUL)
-      /* Visual_mode has not yet been set, use a sane default. */
-      curbuf->b_visual.vi_mode = 'v';
+    if (c == '<') {
+      buf->b_visual.vi_start = *pos;
+    } else {
+      buf->b_visual.vi_end = *pos;
+    }
+    if (buf->b_visual.vi_mode == NUL) {
+      // Visual_mode has not yet been set, use a sane default.
+      buf->b_visual.vi_mode = 'v';
+    }
     return OK;
-  }
-
-  buf_T *buf = buflist_findnr(fnum);
-  // Can't set a mark in a non-existant buffer.
-  if (buf == NULL) {
-    return FAIL;
   }
 
   if (ASCII_ISLOWER(c)) {
@@ -358,13 +360,14 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
   } else if (c == '<' || c == '>') {  /* start/end of visual area */
     startp = &buf->b_visual.vi_start;
     endp = &buf->b_visual.vi_end;
-    if ((c == '<') == lt(*startp, *endp))
+    if (((c == '<') == lt(*startp, *endp) || endp->lnum == 0)
+        && startp->lnum != 0) {
       posp = startp;
-    else
+    } else {
       posp = endp;
-    /*
-     * For Visual line mode, set mark at begin or end of line
-     */
+    }
+
+    // For Visual line mode, set mark at begin or end of line
     if (buf->b_visual.vi_mode == 'V') {
       pos_copy = *posp;
       posp = &pos_copy;
@@ -600,7 +603,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 
   /* Truncate the line to fit it in the window */
   len = 0;
-  for (p = s; *p != NUL; mb_ptr_adv(p)) {
+  for (p = s; *p != NUL; MB_PTR_ADV(p)) {
     len += ptr2cells(p);
     if (len >= Columns - lead_len)
       break;
@@ -647,8 +650,8 @@ void do_marks(exarg_T *eap)
   show_one_mark(-1, arg, NULL, NULL, false);
 }
 
-static void 
-show_one_mark (
+static void
+show_one_mark(
     int c,
     char_u *arg,
     pos_T *p,
@@ -687,9 +690,10 @@ show_one_mark (
         mustfree = TRUE;
       }
       if (name != NULL) {
-        msg_outtrans_attr(name, current ? hl_attr(HLF_D) : 0);
-        if (mustfree)
+        msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
+        if (mustfree) {
           xfree(name);
+        }
       }
     }
     ui_flush();                    /* show one line at a time */
@@ -800,8 +804,8 @@ void ex_jumps(exarg_T *eap)
           curwin->w_jumplist[i].fmark.mark.col);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name,
-          curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
-          ? hl_attr(HLF_D) : 0);
+                        curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
+                        ? HL_ATTR(HLF_D) : 0);
       xfree(name);
       os_breakcheck();
     }
@@ -826,7 +830,7 @@ void ex_changes(exarg_T *eap)
   int i;
   char_u      *name;
 
-  /* Highlight title */
+  // Highlight title
   MSG_PUTS_TITLE(_("\nchange line  col text"));
 
   for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
@@ -842,7 +846,7 @@ void ex_changes(exarg_T *eap)
           curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff);
       name = mark_line(&curbuf->b_changelist[i].mark, 17);
-      msg_outtrans_attr(name, hl_attr(HLF_D));
+      msg_outtrans_attr(name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();
     }

@@ -5,8 +5,6 @@ endif
 
 let s:loaded_pythonx_provider = 1
 
-let s:job_opts = {'rpc': v:true, 'stderr_buffered': v:true}
-
 function! provider#pythonx#Require(host) abort
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
@@ -20,21 +18,7 @@ function! provider#pythonx#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  try
-    let job = copy(s:job_opts)
-    let channel_id = jobstart(args, job)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-    for row in job.stderr
-      echomsg row
-    endfor
-  endtry
-  throw remote#host#LoadErrorForHost(a:host.orig_name,
-        \ '$NVIM_PYTHON_LOG_FILE')
+  return provider#Poll(args, a:host.orig_name, '$NVIM_PYTHON_LOG_FILE')
 endfunction
 
 function! provider#pythonx#Detect(major_ver) abort

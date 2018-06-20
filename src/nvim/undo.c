@@ -92,6 +92,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -702,7 +703,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       if (has_directory) {
         if (munged_name == NULL) {
           munged_name = xstrdup(ffname);
-          for (char *p = munged_name; *p != NUL; mb_ptr_adv(p)) {
+          for (char *p = munged_name; *p != NUL; MB_PTR_ADV(p)) {
             if (vim_ispathsep(*p)) {
               *p = '%';
             }
@@ -972,7 +973,7 @@ static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error,
 
   char_u **array = NULL;
   if (uep->ue_size > 0) {
-    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {
+    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {  // -V547
       array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
       memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
     }
@@ -1404,7 +1405,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
   // sequence numbers of the headers.
   // When there are no headers uhp_table is NULL.
   if (num_head > 0) {
-    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {
+    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {  // -V547
       uhp_table = xmalloc((size_t)num_head * sizeof(*uhp_table));
     }
   }
@@ -1634,7 +1635,13 @@ static time_t undo_read_time(bufinfo_T *bi)
 static bool undo_read(bufinfo_T *bi, uint8_t *buffer, size_t size)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  return fread(buffer, size, 1, bi->bi_fp) == 1;
+  const bool retval = fread(buffer, size, 1, bi->bi_fp) == 1;
+  if (!retval) {
+    // Error may be checked for only later.  Fill with zeros,
+    // so that the reader won't use garbage.
+    memset(buffer, 0, size);
+  }
+  return retval;
 }
 
 /// Reads a string of length "len" from "bi->bi_fd" and appends a zero to it.
@@ -1672,7 +1679,7 @@ void u_undo(int count)
     undo_undoes = TRUE;
   else
     undo_undoes = !undo_undoes;
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /*
@@ -1685,7 +1692,7 @@ void u_redo(int count)
     undo_undoes = false;
   }
 
-  u_doit(count, false);
+  u_doit(count, false, true);
 }
 
 /// Undo and remove the branch from the undo tree.
@@ -1697,7 +1704,9 @@ bool u_undo_and_forget(int count)
     count = 1;
   }
   undo_undoes = true;
-  u_doit(count, true);
+  u_doit(count, true,
+         // Don't send nvim_buf_lines_event for u_undo_and_forget().
+         false);
 
   if (curbuf->b_u_curhead == NULL) {
     // nothing was undone.
@@ -1732,7 +1741,11 @@ bool u_undo_and_forget(int count)
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
-static void u_doit(int startcount, bool quiet)
+///
+/// @param startcount How often to undo or redo
+/// @param quiet If `true`, don't show messages
+/// @param do_buf_event If `true`, send the changedtick with the buffer updates
+static void u_doit(int startcount, bool quiet, bool do_buf_event)
 {
   int count = startcount;
 
@@ -1768,7 +1781,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(true);
+      u_undoredo(true, do_buf_event);
     } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
@@ -1779,7 +1792,7 @@ static void u_doit(int startcount, bool quiet)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, do_buf_event);
 
       /* Advance for next redo.  Set "newhead" when at the end of the
        * redoable changes. */
@@ -2026,8 +2039,8 @@ void undo_time(long step, int sec, int file, int absolute)
           || (uhp->uh_seq == target && !above))
         break;
       curbuf->b_u_curhead = uhp;
-      u_undoredo(TRUE);
-      uhp->uh_walk = nomark;            /* don't go back down here */
+      u_undoredo(true, true);
+      uhp->uh_walk = nomark;            // don't go back down here
     }
 
     /*
@@ -2082,7 +2095,7 @@ void undo_time(long step, int sec, int file, int absolute)
         break;
       }
 
-      u_undoredo(FALSE);
+      u_undoredo(false, true);
 
       /* Advance "curhead" to below the header we last used.  If it
       * becomes NULL then we need to set "newhead" to this leaf. */
@@ -2105,16 +2118,15 @@ void undo_time(long step, int sec, int file, int absolute)
   u_undo_end(did_undo, absolute, false);
 }
 
-/*
- * u_undoredo: common code for undo and redo
- *
- * The lines in the file are replaced by the lines in the entry list at
- * curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
- * list for the next undo/redo.
- *
- * When "undo" is TRUE we go up in the tree, when FALSE we go down.
- */
-static void u_undoredo(int undo)
+/// u_undoredo: common code for undo and redo
+///
+/// The lines in the file are replaced by the lines in the entry list at
+/// curbuf->b_u_curhead. The replaced lines in the file are saved in the entry
+/// list for the next undo/redo.
+///
+/// @param undo If `true`, go up the tree. Down if `false`.
+/// @param do_buf_event If `true`, send buffer updates.
+static void u_undoredo(int undo, bool do_buf_event)
 {
   char_u      **newarray = NULL;
   linenr_T oldsize;
@@ -2242,7 +2254,7 @@ static void u_undoredo(int undo)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize);
+    changed_lines(top + 1, 0, bot, newsize - oldsize, do_buf_event);
 
     /* set '[ and '] mark */
     if (top + 1 < curbuf->b_op_start.lnum)
@@ -2275,6 +2287,13 @@ static void u_undoredo(int undo)
     changed();
   } else {
     unchanged(curbuf, FALSE);
+  }
+
+  // because the calls to changed()/unchanged() above will bump b_changedtick
+  // again, we need to send a nvim_buf_lines_event with just the new value of
+  // b:changedtick
+  if (do_buf_event && kv_size(curbuf->update_channels)) {
+    buf_updates_changedtick(curbuf);
   }
 
   /*
@@ -2428,9 +2447,9 @@ static void u_undo_end(
 /*
  * u_sync: stop adding to the current entry list
  */
-void 
-u_sync (
-    int force              /* Also sync when no_u_sync is set. */
+void
+u_sync(
+    int force               // Also sync when no_u_sync is set.
 )
 {
   /* Skip it when already synced or syncing is disabled. */
@@ -2521,7 +2540,7 @@ void ex_undolist(exarg_T *eap)
 
     msg_start();
     msg_puts_attr(_("number changes  when               saved"),
-                  hl_attr(HLF_T));
+                  HL_ATTR(HLF_T));
     for (int i = 0; i < ga.ga_len && !got_int; i++) {
       msg_putchar('\n');
       if (got_int) {
@@ -2702,11 +2721,11 @@ static void u_getbot(void)
 /*
  * Free one header "uhp" and its entry list and adjust the pointers.
  */
-static void 
-u_freeheader (
+static void
+u_freeheader(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_header_T      *uhap;
@@ -2738,11 +2757,11 @@ u_freeheader (
 /*
  * Free an alternate branch and any following alternate branches.
  */
-static void 
-u_freebranch (
+static void
+u_freebranch(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_header_T      *tofree, *next;
@@ -2772,11 +2791,11 @@ u_freebranch (
  * Free all the undo entries for one header and the header itself.
  * This means that "uhp" is invalid when returning.
  */
-static void 
-u_freeentries (
+static void
+u_freeentries(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_entry_T       *uep, *nuep;

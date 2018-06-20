@@ -19,7 +19,7 @@ function! s:init() abort
       let s:find_arg = '-l'
     endif
     " Check for -l support.
-    call s:get_page(s:get_path('', 'man')[0:-2])
+    call s:get_page(s:get_path('', 'man'))
   catch /E145:/
     " Ignore the error in restricted mode
   catch /command error .*/
@@ -213,14 +213,16 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    return s:system(['man', s:find_arg, a:name])
+    " Some man implementations (OpenBSD) return all available paths from the
+    " search command, so we get() the first one. #8341
+    return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])
+  return substitute(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name]), '\n\+$', '', '')
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -233,13 +235,10 @@ function! s:verify_exists(sect, name) abort
       let path = s:get_path('', a:name)
     endtry
   endtry
-  " We need to extract the section from the path because sometimes
-  " the actual section of the manpage is more specific than the section
-  " we provided to `man`. Try ':Man 3 App::CLI'.
-  " Also on linux, it seems that the name is case insensitive. So if one does
-  " ':Man PRIntf', we still want the name of the buffer to be 'printf' or
-  " whatever the correct capitilization is.
-  let path = path[:len(path)-2]
+  " Extract the section from the path, because sometimes the actual section is
+  " more specific than what we provided to `man` (try `:Man 3 App::CLI`).
+  " Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
+  " still want the name of the buffer to be 'printf'.
   return s:extract_sect_and_name_path(path) + [path]
 endfunction
 

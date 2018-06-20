@@ -10,6 +10,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/channel.h"
+#include "nvim/os/stdpaths_defs.h"
 
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)

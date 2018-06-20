@@ -5025,7 +5025,7 @@ return function(itp, _check_parsing, hl, fmtn)
       --           0123456789012345
       --           0         1
       ast = {
-        [[DoubleQuotedString(val="\8\27\12\13\9\\"):0:0:"\b\e\f\r\t\\"]],
+        [[DoubleQuotedString(val="\008\027\012\r\t\\"):0:0:"\b\e\f\r\t\\"]],
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5040,7 +5040,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\n\n"', {
       --           01234
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\\n\\\n"', ':0:0:"\\n\n"'),
+        fmtn('DoubleQuotedString', 'val="\\n\\n"', ':0:0:"\\n\n"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5051,7 +5051,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\x00"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0"', ':0:0:"\\x00"'),
+        fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\x00"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5071,7 +5071,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\xF"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\15"', ':0:0:"\\xF"'),
+        fmtn('DoubleQuotedString', 'val="\\015"', ':0:0:"\\xF"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5126,7 +5126,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\xF', {
       --           0123
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\15"', ':0:0:"\\xF'),
+        fmtn('DoubleQuotedString', 'val="\\015"', ':0:0:"\\xF'),
       },
       err = {
         arg = '"\\xF',
@@ -5190,7 +5190,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\xFX"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\15X"', ':0:0:"\\xFX"'),
+        fmtn('DoubleQuotedString', 'val="\\015X"', ':0:0:"\\xFX"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5202,7 +5202,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\XFX"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\15X"', ':0:0:"\\XFX"'),
+        fmtn('DoubleQuotedString', 'val="\\015X"', ':0:0:"\\XFX"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5262,7 +5262,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\x0X"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\x0X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\x0X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5274,7 +5274,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\X0X"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\X0X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\X0X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5286,7 +5286,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\u0X"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\u0X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u0X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5298,7 +5298,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U0X"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U0X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5310,7 +5310,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\x00X"', {
       --           0123456
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\x00X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\x00X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5322,7 +5322,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\X00X"', {
       --           0123456
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\X00X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\X00X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5334,7 +5334,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\u00X"', {
       --           0123456
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\u00X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u00X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5346,7 +5346,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U00X"', {
       --           0123456
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U00X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5358,7 +5358,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\u000X"', {
       --           01234567
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\u000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5370,7 +5370,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U000X"', {
       --           01234567
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5382,7 +5382,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\u0000X"', {
       --           012345678
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\u0000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u0000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5394,7 +5394,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U0000X"', {
       --           012345678
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U0000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5406,7 +5406,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U00000X"', {
       --           0123456789
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U00000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5419,7 +5419,7 @@ return function(itp, _check_parsing, hl, fmtn)
       --           01234567890
       --           0         1
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U000000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U000000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5432,7 +5432,7 @@ return function(itp, _check_parsing, hl, fmtn)
       --           012345678901
       --           0         1
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U0000000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0000000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5445,7 +5445,7 @@ return function(itp, _check_parsing, hl, fmtn)
       --           0123456789012
       --           0         1
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0X"', ':0:0:"\\U00000000X"'),
+        fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00000000X"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5506,7 +5506,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\0"', {
       --           0123
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0"', ':0:0:"\\0"'),
+        fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\0"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5517,7 +5517,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\00"', {
       --           01234
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0"', ':0:0:"\\00"'),
+        fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\00"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5528,7 +5528,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\000"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\0"', ':0:0:"\\000"'),
+        fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\000"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5620,7 +5620,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\<C-u>"', {
       --           012345
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\21"', ':0:0:"\\<C-u>"'),
+        fmtn('DoubleQuotedString', 'val="\\021"', ':0:0:"\\<C-u>"'),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -7119,7 +7119,7 @@ return function(itp, _check_parsing, hl, fmtn)
               'Or:0:0:|',
               children = {
                 'Missing:0:0:',
-                fmtn('DoubleQuotedString', 'val="\\27"', ':0:1:"\\e"'),
+                fmtn('DoubleQuotedString', 'val="\\027"', ':0:1:"\\e"'),
               },
             },
           },
@@ -7180,9 +7180,9 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
     })
     check_parsing('"\\1', {
-      --           012
+      --           01 2
       ast = {
-        fmtn('DoubleQuotedString', 'val="\\1"', ':0:0:"\\1'),
+        fmtn('DoubleQuotedString', 'val="\\001"', ':0:0:"\\1'),
       },
       err = {
         arg = '"\\1',

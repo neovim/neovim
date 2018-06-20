@@ -48,7 +48,13 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/fileio.h"
 #include "nvim/api/private/handle.h"
+
+
+/// Index in scriptin
+static int curscript = 0;
+FileDescriptor *scriptin[NSCRIPT] = { NULL };
 
 /*
  * These buffers are used for storing:
@@ -829,7 +835,7 @@ static void init_typebuf(void)
     typebuf.tb_noremap = noremapbuf_init;
     typebuf.tb_buflen = TYPELEN_INIT;
     typebuf.tb_len = 0;
-    typebuf.tb_off = 0;
+    typebuf.tb_off = MAXMAPLEN + 4;
     typebuf.tb_change_cnt = 1;
   }
 }
@@ -873,9 +879,15 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
     // Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
     typebuf.tb_off -= addlen;
     memmove(typebuf.tb_buf + typebuf.tb_off, str, (size_t)addlen);
+  } else if (typebuf.tb_len == 0
+             && typebuf.tb_buflen >= addlen + 3 * (MAXMAPLEN + 4)) {
+    // Buffer is empty and string fits in the existing buffer.
+    // Leave some space before and after, if possible.
+    typebuf.tb_off = (typebuf.tb_buflen - addlen - 3 * (MAXMAPLEN + 4)) / 2;
+    memmove(typebuf.tb_buf + typebuf.tb_off, str, (size_t)addlen);
   } else {
     // Need to allocate a new buffer.
-    // In typebuf.tb_buf there must always be room for 3 * MAXMAPLEN + 4
+    // In typebuf.tb_buf there must always be room for 3 * (MAXMAPLEN + 4)
     // characters.  We add some extra room to avoid having to allocate too
     // often.
     newoff = MAXMAPLEN + 4;
@@ -1139,7 +1151,7 @@ void alloc_typebuf(void)
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
   typebuf.tb_buflen = TYPELEN_INIT;
-  typebuf.tb_off = 0;
+  typebuf.tb_off = MAXMAPLEN + 4;     // can insert without realloc
   typebuf.tb_len = 0;
   typebuf.tb_maplen = 0;
   typebuf.tb_silent = 0;
@@ -1243,10 +1255,13 @@ openscript (
     ++curscript;
   /* use NameBuff for expanded name */
   expand_env(name, NameBuff, MAXPATHL);
-  if ((scriptin[curscript] = mch_fopen((char *)NameBuff, READBIN)) == NULL) {
-    EMSG2(_(e_notopen), name);
-    if (curscript)
-      --curscript;
+  int error;
+  if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
+                                           kFileReadOnly, 0)) == NULL) {
+    emsgf(_(e_notopen_2), name, os_strerror(error));
+    if (curscript) {
+      curscript--;
+    }
     return;
   }
   save_typebuf();
@@ -1296,7 +1311,7 @@ static void closescript(void)
   free_typebuf();
   typebuf = saved_typebuf[curscript];
 
-  fclose(scriptin[curscript]);
+  file_free(scriptin[curscript], false);
   scriptin[curscript] = NULL;
   if (curscript > 0)
     --curscript;
@@ -1319,10 +1334,8 @@ int using_script(void)
   return scriptin[curscript] != NULL;
 }
 
-/*
- * This function is called just before doing a blocking wait.  Thus after
- * waiting 'updatetime' for a character to arrive.
- */
+/// This function is called just before doing a blocking wait.  Thus after
+/// waiting 'updatetime' for a character to arrive.
 void before_blocking(void)
 {
   updatescript(0);
@@ -1331,21 +1344,22 @@ void before_blocking(void)
   }
 }
 
-/*
- * updatescipt() is called when a character can be written into the script file
- * or when we have waited some time for a character (c == 0)
- *
- * All the changed memfiles are synced if c == 0 or when the number of typed
- * characters reaches 'updatecount' and 'updatecount' is non-zero.
- */
-void updatescript(int c)
+/// updatescript() is called when a character can be written to the script file
+/// or when we have waited some time for a character (c == 0).
+///
+/// All the changed memfiles are synced if c == 0 or when the number of typed
+/// characters reaches 'updatecount' and 'updatecount' is non-zero.
+static void updatescript(int c)
 {
   static int count = 0;
 
-  if (c && scriptout)
+  if (c && scriptout) {
     putc(c, scriptout);
-  if (c == 0 || (p_uc > 0 && ++count >= p_uc)) {
-    ml_sync_all(c == 0, TRUE);
+  }
+  bool idle = (c == 0);
+  if (idle || (p_uc > 0 && ++count >= p_uc)) {
+    ml_sync_all(idle, true,
+                (!!p_fs || idle));  // Always fsync at idle (CursorHold).
     count = 0;
   }
 }
@@ -1577,7 +1591,7 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
-/// get a character:
+/// Gets a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
 ///    Also used to redo a command for ".".
@@ -1595,7 +1609,7 @@ vungetc ( /* unget one character (can only be done once!) */
 /// if "advance" is FALSE (vpeekc()):
 ///    just look whether there is a character available.
 ///
-/// When "no_mapping" is zero, checks for mappings in the current mode.
+/// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
 static int vgetorpeek(int advance)
@@ -1844,8 +1858,12 @@ static int vgetorpeek(int advance)
                       keylen = KEYLEN_PART_MAP;
                       break;
                     }
-                  } else if (keylen > mp_match_len) {
-                    /* found a longer match */
+                  } else if (keylen > mp_match_len
+                             || (keylen == mp_match_len
+                                 && mp_match != NULL
+                                 && (mp_match->m_mode & LANGMAP) == 0
+                                 && (mp->m_mode & LANGMAP) != 0)) {
+                    // found a longer match
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
@@ -1939,8 +1957,9 @@ static int vgetorpeek(int advance)
             char_u *save_m_keys;
             char_u *save_m_str;
 
-            // write chars to script file(s)
-            if (keylen > typebuf.tb_maplen) {
+            // Write chars to script file(s)
+            // Note: :lmap mappings are written *after* being applied. #5658
+            if (keylen > typebuf.tb_maplen && (mp->m_mode & LANGMAP) == 0) {
               gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
                        (size_t)(keylen - typebuf.tb_maplen));
             }
@@ -2014,6 +2033,12 @@ static int vgetorpeek(int advance)
               i = FAIL;
             else {
               int noremap;
+
+              // If this is a LANGMAP mapping, then we didn't record the keys
+              // at the start of the function and have to record them now.
+              if (keylen > typebuf.tb_maplen && (mp->m_mode & LANGMAP) != 0) {
+                gotchars(s, STRLEN(s));
+              }
 
               if (save_m_noremap != REMAP_YES)
                 noremap = save_m_noremap;
@@ -2336,9 +2361,8 @@ inchar (
     int tb_change_cnt
 )
 {
-  int len = 0;                      /* init for GCC */
-  int retesc = FALSE;               /* return ESC with gotint */
-  int script_char;
+  int len = 0;  // Init for GCC.
+  int retesc = false;  // Return ESC with gotint.
 
   if (wait_time == -1L || wait_time > 100L) {
     // flush output before waiting
@@ -2356,45 +2380,38 @@ inchar (
   }
   undo_off = FALSE;                 /* restart undo now */
 
-  /*
-   * Get a character from a script file if there is one.
-   * If interrupted: Stop reading script files, close them all.
-   */
-  script_char = -1;
-  while (scriptin[curscript] != NULL && script_char < 0
-         && !ignore_script
-         ) {
-
-
-    if (got_int || (script_char = getc(scriptin[curscript])) < 0) {
-      /* Reached EOF.
-       * Careful: closescript() frees typebuf.tb_buf[] and buf[] may
-       * point inside typebuf.tb_buf[].  Don't use buf[] after this! */
+  // Get a character from a script file if there is one.
+  // If interrupted: Stop reading script files, close them all.
+  ptrdiff_t read_size = -1;
+  while (scriptin[curscript] != NULL && read_size <= 0 && !ignore_script) {
+    char script_char;
+    if (got_int
+        || (read_size = file_read(scriptin[curscript], &script_char, 1)) != 1) {
+      // Reached EOF or some error occurred.
+      // Careful: closescript() frees typebuf.tb_buf[] and buf[] may
+      // point inside typebuf.tb_buf[].  Don't use buf[] after this!
       closescript();
-      /*
-       * When reading script file is interrupted, return an ESC to get
-       * back to normal mode.
-       * Otherwise return -1, because typebuf.tb_buf[] has changed.
-       */
-      if (got_int)
-        retesc = TRUE;
-      else
+      // When reading script file is interrupted, return an ESC to get
+      // back to normal mode.
+      // Otherwise return -1, because typebuf.tb_buf[] has changed.
+      if (got_int) {
+        retesc = true;
+      } else {
         return -1;
+      }
     } else {
       buf[0] = (char_u)script_char;
       len = 1;
     }
   }
 
-  if (script_char < 0) {        /* did not get a character from script */
-    /*
-     * If we got an interrupt, skip all previously typed characters and
-     * return TRUE if quit reading script file.
-     * Stop reading typeahead when a single CTRL-C was read,
-     * fill_input_buf() returns this when not able to read from stdin.
-     * Don't use buf[] here, closescript() may have freed typebuf.tb_buf[]
-     * and buf may be pointing inside typebuf.tb_buf[].
-     */
+  if (read_size <= 0) {  // Did not get a character from script.
+    // If we got an interrupt, skip all previously typed characters and
+    // return TRUE if quit reading script file.
+    // Stop reading typeahead when a single CTRL-C was read,
+    // fill_input_buf() returns this when not able to read from stdin.
+    // Don't use buf[] here, closescript() may have freed typebuf.tb_buf[]
+    // and buf may be pointing inside typebuf.tb_buf[].
     if (got_int) {
 #define DUM_LEN MAXMAPLEN * 3 + 3
       char_u dum[DUM_LEN + 1];
@@ -2407,21 +2424,18 @@ inchar (
       return retesc;
     }
 
-    /*
-     * Always flush the output characters when getting input characters
-     * from the user.
-     */
+    // Always flush the output characters when getting input characters
+    // from the user.
     ui_flush();
 
-    /*
-     * Fill up to a third of the buffer, because each character may be
-     * tripled below.
-     */
+    // Fill up to a third of the buffer, because each character may be
+    // tripled below.
     len = os_inchar(buf, maxlen / 3, (int)wait_time, tb_change_cnt);
   }
 
-  if (typebuf_changed(tb_change_cnt))
+  if (typebuf_changed(tb_change_cnt)) {
     return 0;
+  }
 
   return fix_input_buffer(buf, len);
 }
@@ -3189,9 +3203,9 @@ showmap (
   } while (len < 12);
 
   if (mp->m_noremap == REMAP_NONE) {
-    msg_puts_attr("*", hl_attr(HLF_8));
+    msg_puts_attr("*", HL_ATTR(HLF_8));
   } else if (mp->m_noremap == REMAP_SCRIPT) {
-    msg_puts_attr("&", hl_attr(HLF_8));
+    msg_puts_attr("&", HL_ATTR(HLF_8));
   } else {
     msg_putchar(' ');
   }
@@ -3204,7 +3218,7 @@ showmap (
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
   if (*mp->m_str == NUL) {
-    msg_puts_attr("<Nop>", hl_attr(HLF_8));
+    msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
     // Remove escaping of CSI, because "m_str" is in a format to be used
     // as typeahead.
@@ -4241,9 +4255,76 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
 mapblock_T *get_maphash(int index, buf_T *buf)
     FUNC_ATTR_PURE
 {
-  if (index > MAX_MAPHASH) {
+  if (index >= MAX_MAPHASH) {
     return NULL;
   }
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
+}
+
+/// Get command argument for <Cmd> key
+char_u * getcmdkeycmd(int promptc, void *cookie, int indent)
+{
+  garray_T line_ga;
+  int c1 = -1, c2;
+  int cmod = 0;
+  bool aborted = false;
+
+  ga_init(&line_ga, 1, 32);
+
+  no_mapping++;
+
+  got_int = false;
+  while (c1 != NUL && !aborted) {
+    ga_grow(&line_ga, 32);
+
+    if (vgetorpeek(false) == NUL) {
+      // incomplete <Cmd> is an error, because there is not much the user
+      // could do in this state.
+      EMSG(e_cmdmap_err);
+      aborted = true;
+      break;
+    }
+
+    // Get one character at a time.
+    c1 = vgetorpeek(true);
+    // Get two extra bytes for special keys
+    if (c1 == K_SPECIAL) {
+      c1 = vgetorpeek(true);          // no mapping for these chars
+      c2 = vgetorpeek(true);
+      if (c1 == KS_MODIFIER) {
+        cmod = c2;
+        continue;
+      }
+      c1 = TO_SPECIAL(c1, c2);
+    }
+
+
+    if (got_int) {
+      aborted = true;
+    } else if (c1 == '\r' || c1 == '\n') {
+      c1 = NUL;  // end the line
+    } else if (c1 == ESC) {
+      aborted = true;
+    } else if (c1 == K_COMMAND) {
+      // special case to give nicer error message
+      EMSG(e_cmdmap_repeated);
+      aborted = true;
+    } else if (IS_SPECIAL(c1)) {
+      EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
+      aborted = true;
+    } else {
+      ga_append(&line_ga, (char)c1);
+    }
+
+    cmod = 0;
+  }
+
+  no_mapping--;
+
+  if (aborted) {
+    ga_clear(&line_ga);
+  }
+
+  return (char_u *)line_ga.ga_data;
 }

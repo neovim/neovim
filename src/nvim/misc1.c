@@ -28,6 +28,7 @@
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -106,7 +107,8 @@ open_line (
   char_u *p;
   char_u saved_char = NUL;        // init for GCC
   pos_T *pos;
-  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin);
+  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin
+                && *curbuf->b_p_inde == NUL);
   bool no_si = false;             // reset did_si afterwards
   int first_char = NUL;           // init for GCC
   int vreplace_mode;
@@ -529,7 +531,7 @@ open_line (
             int l;
 
             while (old_size < repl_size && p > leader) {
-              mb_ptr_back(leader, p);
+              MB_PTR_BACK(leader, p);
               old_size += ptr2cells(p);
             }
             l = lead_repl_len - (int)(endp - p);
@@ -835,8 +837,8 @@ open_line (
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
-            curwin->w_cursor.lnum + 1, 1L);
-        did_append = FALSE;
+                      curwin->w_cursor.lnum + 1, 1L, true);
+        did_append = false;
 
         /* Move marks after the line break to the new line. */
         if (flags & OPENLINE_MARKFIX)
@@ -853,8 +855,9 @@ open_line (
      */
     curwin->w_cursor.lnum = old_cursor.lnum + 1;
   }
-  if (did_append)
-    changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L);
+  if (did_append) {
+    changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
+  }
 
   curwin->w_cursor.col = newcol;
   curwin->w_cursor.coladd = 0;
@@ -1308,7 +1311,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   colnr_T col = 0;
   while (*s != NUL && --column >= 0) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
-    mb_ptr_adv(s);
+    MB_PTR_ADV(s);
   }
 
   // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
@@ -1469,7 +1472,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
   }
 
-  char_u *newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
 
   // Copy bytes before the cursor.
   if (col > 0) {
@@ -1478,7 +1481,10 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // Copy bytes after the changed character(s).
   char_u *p = newp + col;
-  memmove(p + newlen, oldp + col + oldlen, (size_t)(linelen - col - oldlen));
+  if (linelen > col + oldlen) {
+    memmove(p + newlen, oldp + col + oldlen,
+            (size_t)(linelen - col - oldlen));
+  }
 
   // Insert or overwrite the new character.
   memmove(p, buf, charlen);
@@ -1816,6 +1822,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0L);
+  // notify any channels that are watching
+  if (kv_size(curbuf->update_channels)) {
+    buf_updates_send_changes(curbuf, lnum, 1, 1, true);
+  }
 
   /* Diff highlighting in other diff windows may need to be updated too. */
   if (curwin->w_p_diff) {
@@ -1856,7 +1866,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
  */
 void appended_lines(linenr_T lnum, long count)
 {
-  changed_lines(lnum + 1, 0, lnum + 1, count);
+  changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
 /*
@@ -1869,7 +1879,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
     mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
-  changed_lines(lnum + 1, 0, lnum + 1, count);
+  changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
 /*
@@ -1879,7 +1889,7 @@ void appended_lines_mark(linenr_T lnum, long count)
  */
 void deleted_lines(linenr_T lnum, long count)
 {
-  changed_lines(lnum, 0, lnum + count, -count);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
 /*
@@ -1890,7 +1900,7 @@ void deleted_lines(linenr_T lnum, long count)
 void deleted_lines_mark(linenr_T lnum, long count)
 {
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
-  changed_lines(lnum, 0, lnum + count, -count);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
 /*
@@ -1905,12 +1915,16 @@ void deleted_lines_mark(linenr_T lnum, long count)
  * Takes care of calling changed() and updating b_mod_*.
  * Careful: may trigger autocommands that reload the buffer.
  */
-void 
-changed_lines (
-    linenr_T lnum,              /* first line with change */
-    colnr_T col,                /* column in first line with change */
-    linenr_T lnume,             /* line below last changed line */
-    long xtra                  /* number of extra lines (negative when deleting) */
+void
+changed_lines(
+    linenr_T lnum,        // first line with change
+    colnr_T col,          // column in first line with change
+    linenr_T lnume,       // line below last changed line
+    long xtra,            // number of extra lines (negative when deleting)
+    bool do_buf_event  // some callers like undo/redo call changed_lines()
+                       // and then increment b_changedtick *again*. This flag
+                       // allows these callers to send the nvim_buf_lines_event
+                       // events after they're done modifying b_changedtick.
 )
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
@@ -1934,6 +1948,12 @@ changed_lines (
   }
 
   changed_common(lnum, col, lnume, xtra);
+
+  if (do_buf_event && kv_size(curbuf->update_channels)) {
+    int64_t num_added = (int64_t)(lnume + xtra - lnum);
+    int64_t num_removed = lnume - lnum;
+    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
+  }
 }
 
 /// Mark line range in buffer as changed.
@@ -2199,8 +2219,8 @@ change_warning (
     msg_start();
     if (msg_row == Rows - 1)
       msg_col = col;
-    msg_source(hl_attr(HLF_W));
-    MSG_PUTS_ATTR(_(w_readonly), hl_attr(HLF_W) | MSG_HIST);
+    msg_source(HL_ATTR(HLF_W));
+    MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
@@ -2240,7 +2260,7 @@ int ask_yesno(const char *const str, const bool direct)
   int r = ' ';
   while (r != 'y' && r != 'n') {
     // Same highlighting as for wait_return.
-    smsg_attr(hl_attr(HLF_R), "%s (y/n)?", str);
+    smsg_attr(HL_ATTR(HLF_R), "%s (y/n)?", str);
     if (direct) {
       r = get_keystroke();
     } else {
@@ -2546,8 +2566,8 @@ void vim_beep(unsigned val)
     /* When 'verbose' is set and we are sourcing a script or executing a
      * function give the user a hint where the beep comes from. */
     if (vim_strchr(p_debug, 'e') != NULL) {
-      msg_source(hl_attr(HLF_W));
-      msg_attr(_("Beep!"), hl_attr(HLF_W));
+      msg_source(HL_ATTR(HLF_W));
+      msg_attr(_("Beep!"), HL_ATTR(HLF_W));
     }
   }
 }
@@ -2610,13 +2630,12 @@ int match_user(char_u *name)
   return result;
 }
 
-/*
- * Preserve files and exit.
- * When called IObuff must contain a message.
- * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
- * functions, such as allocating memory.
- */
+/// Preserve files and exit.
+/// @note IObuff must contain a message.
+/// @note This may be called from deadly_signal() in a signal handler, avoid
+///       unsafe functions, such as allocating memory.
 void preserve_exit(void)
+  FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
@@ -2641,7 +2660,7 @@ void preserve_exit(void)
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       mch_errmsg((uint8_t *)"Vim: preserving files...\n");
       ui_flush();
-      ml_sync_all(false, false);    // preserve all swap files
+      ml_sync_all(false, false, true);  // preserve all swap files
       break;
     }
   }

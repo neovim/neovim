@@ -390,34 +390,14 @@
 #define KBTREE_INIT(name, key_t, __cmp, T) \
   KBTREE_INIT_IMPL(name, key_t, kbnode_##name##_t, __cmp, T, (sizeof(kbnode_##name##_t)+(2*T)*sizeof(void *)))
 
-#if (!defined(__clang__) && !defined(__INTEL_COMPILER)) &&  (__GNUC__ > 4 )
-
-// The index trickery shouldn't be UB anymore,
-// still it is to much for gcc:s -Werror=array-bounds
-# define __KB_PRAGMA_START \
-    _Pragma("GCC diagnostic push") \
-    _Pragma("GCC diagnostic ignored \"-Warray-bounds\"")
-
-# define __KB_PRAGMA_END \
-    _Pragma("GCC diagnostic pop") \
-
-#else
-
-# define __KB_PRAGMA_START
-# define __KB_PRAGMA_END
-
-#endif
-
 #define KBTREE_INIT_IMPL(name, key_t, kbnode_t, __cmp, T, ILEN)			\
-	__KB_PRAGMA_START \
 	__KB_TREE_T(name, key_t, T)							\
 	__KB_GET_AUX1(name, key_t, kbnode_t, __cmp)			\
 	__KB_GET(name, key_t, kbnode_t)						\
 	__KB_INTERVAL(name, key_t, kbnode_t)					\
 	__KB_PUT(name, key_t, kbnode_t, __cmp, T, ILEN)				\
 	__KB_DEL(name, key_t, kbnode_t, T) \
-	__KB_ITR(name, key_t, kbnode_t) \
-	__KB_PRAGMA_END
+	__KB_ITR(name, key_t, kbnode_t)
 
 #define KB_DEFAULT_SIZE 512
 

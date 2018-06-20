@@ -1071,25 +1071,27 @@ x	A single character, with no special meaning, matches itself
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:
-			  Name		Contents ~
-*[:alnum:]*		  [:alnum:]     ASCII letters and digits
-*[:alpha:]*		  [:alpha:]     ASCII letters
-*[:blank:]*		  [:blank:]     space and tab characters
-*[:cntrl:]*		  [:cntrl:]     control characters
-*[:digit:]*		  [:digit:]     decimal digits
-*[:graph:]*		  [:graph:]     printable characters excluding space
-*[:lower:]*		  [:lower:]     lowercase letters (all letters when
+		  Name	      Func	Contents ~
+*[:alnum:]*	  [:alnum:]   isalnum	ASCII letters and digits
+*[:alpha:]*	  [:alpha:]   isalpha  	ASCII letters
+*[:blank:]*	  [:blank:]     	space and tab
+*[:cntrl:]*	  [:cntrl:]   iscntrl 	ASCII control characters
+*[:digit:]*	  [:digit:]     	decimal digits '0' to '9'
+*[:graph:]*	  [:graph:]   isgraph	ASCII printable characters excluding
+					space
+*[:lower:]*	  [:lower:]   (1)	lowercase letters (all letters when
 					'ignorecase' is used)
-*[:print:]*		  [:print:]     printable characters including space
-*[:punct:]*		  [:punct:]     ASCII punctuation characters
-*[:space:]*		  [:space:]     whitespace characters
-*[:upper:]*		  [:upper:]     uppercase letters (all letters when
+*[:print:]*	  [:print:]   (2) 	printable characters including space
+*[:punct:]*	  [:punct:]   ispunct	ASCII punctuation characters
+*[:space:]*	  [:space:]     	whitespace characters: space, tab, CR,
+					NL, vertical tab, form feed
+*[:upper:]*	  [:upper:]   (3)	uppercase letters (all letters when
 					'ignorecase' is used)
-*[:xdigit:]*		  [:xdigit:]    hexadecimal digits
-*[:return:]*		  [:return:]	the <CR> character
-*[:tab:]*		  [:tab:]	the <Tab> character
-*[:escape:]*		  [:escape:]	the <Esc> character
-*[:backspace:]*		  [:backspace:]	the <BS> character
+*[:xdigit:]*	  [:xdigit:]    	hexadecimal digits: 0-9, a-f, A-F
+*[:return:]*	  [:return:]		the <CR> character
+*[:tab:]*	  [:tab:]		the <Tab> character
+*[:escape:]*	  [:escape:]		the <Esc> character
+*[:backspace:]*	  [:backspace:]		the <BS> character
 	  The brackets in character class expressions are additional to the
 	  brackets delimiting a collection.  For example, the following is a
 	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
@@ -1100,6 +1102,13 @@ x	A single character, with no special meaning, matches itself
 	  regexp engine.  See |two-engines|.  In the future these items may
 	  work for multi-byte characters.  For now, to get all "alpha"
 	  characters you can use: [[:lower:][:upper:]].
+
+	  The "Func" column shows what library function is used.  The
+	  implementation depends on the system.  Otherwise:
+	  (1) Uses islower() for ASCII and Vim builtin rules for other
+	  characters when built with the |+multi_byte| feature.
+	  (2) Uses Vim builtin rules
+	  (3) As with (1) but using isupper()
 							*/[[=* *[==]*
 	- An equivalence class.  This means that characters are matched that
 	  have almost the same meaning, e.g., when ignoring accents.  This

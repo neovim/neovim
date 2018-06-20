@@ -8,8 +8,6 @@ local clear = helpers.clear
 local insert = helpers.insert
 local command = helpers.command
 
-if helpers.pending_win32(pending) then return end
-
 describe('107', function()
   setup(clear)
 

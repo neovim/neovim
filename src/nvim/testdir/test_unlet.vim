@@ -24,3 +24,7 @@ func Test_not_existing()
     call assert_true(v:exception =~ ':E108:')
   endtry
 endfunc
+
+func Test_unlet_fails()
+  call assert_fails('unlet v:["count"]', 'E46:')
+endfunc

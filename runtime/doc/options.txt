@@ -2024,7 +2024,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'display'* *'dy'*
-'display' 'dy'		string	(default "lastline", Vi default: "")
+'display' 'dy'		string	(default "lastline,msgsep", Vi default: "")
 			global
 	Change the way text is displayed.  This is comma separated list of
 	flags:
@@ -2036,6 +2036,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			column of the last screen line.  Overrules "lastline".
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
+	msgsep		When showing messages longer than 'cmdheight', only
+			scroll the message lines, not the entire screen. The
+			separator line is decorated by |MsgSeparator| and the
+			"msgsep" flag of 'fillchars'.
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
@@ -2058,13 +2062,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 					*'encoding'* *'enc'* *E543*
-'encoding' 'enc'	Removed. |vim-differences| {Nvim}
-	Nvim always uses UTF-8 internally. RPC communication
-	(remote plugins/GUIs) must use UTF-8 strings.
+'encoding' 'enc'
+	String-encoding used internally and for |RPC| communication.
+	Always UTF-8.
 
-	The character encoding of files can be different than UTF-8.
-	This is specified with 'fileencoding'.  The conversion is done with
-	iconv() or as specified with 'charconvert'.
+	See 'fileencoding' to control file-content encoding.
 
 			*'endofline'* *'eol'* *'noendofline'* *'noeol'*
 'endofline' 'eol'	boolean	(default on)
@@ -2180,16 +2182,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'fileencoding'* *'fenc'* *E213*
 'fileencoding' 'fenc'	string (default: "")
 			local to buffer
-			{only available when compiled with the |+multi_byte|
-			feature}
-	Sets the character encoding for the file of this buffer.
+	File-content encoding for the current buffer. Conversion is done with
+	iconv() or as specified with 'charconvert'.
 
-	When 'fileencoding' is different from "utf-8", conversion will be
-	done when writing the file.  For reading see below.
-	When 'fileencoding' is empty, the file will be saved with utf-8
-	encoding.  (no conversion when reading or writing a file).
-		WARNING: Conversion to a non-Unicode encoding can cause loss of
-		information! 
+	When 'fileencoding' is not UTF-8, conversion will be done when
+	writing the file.  For reading see below.
+	When 'fileencoding' is empty, the file will be saved with UTF-8
+	encoding (no conversion when reading or writing a file).
+
+	WARNING: Conversion to a non-Unicode encoding can cause loss of
+	information!
 
 	See |encoding-names| for the possible values.  Additionally, values may be
 	specified that can be handled by the converter, see
@@ -2216,7 +2218,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	written.  If you do set 'fenc' in a modeline, you might want to set
 	'nomodified' to avoid not being able to ":q".
 
-	This option can not be changed when 'modifiable' is off.
+	This option cannot be changed when 'modifiable' is off.
 
 					*'fileencodings'* *'fencs'*
 'fileencodings' 'fencs'	string (default: "ucs-bom,utf-8,default,latin1")
@@ -2289,7 +2291,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'fileformats' is not empty and 'binary' is off.
 	When this option is set, after starting to edit a file, the 'modified'
 	option is set, because the file would be different when written.
-	This option can not be changed when 'modifiable' is off.
+	This option cannot be changed when 'modifiable' is off.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
@@ -2377,7 +2379,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only normal file name characters can be used, "/\*?[|<>" are illegal.
 
 						*'fillchars'* *'fcs'*
-'fillchars' 'fcs'	string	(default "vert:|,fold:-")
+'fillchars' 'fcs'	string	(default "")
 			global
 			{not available when compiled without the |+windows|
 			and |+folding| features}
@@ -2387,16 +2389,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  vert:c	'|'		vertical separators |:vsplit|
-	  fold:c	'-'		filling 'foldtext'
+	  vert:c	'│' or '|'	vertical separators |:vsplit|
+	  fold:c	'·' or '-'	filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
+	  msgsep:c	' '		message separator 'display'
+	  eob:c		'~'		empty lines at the end of a buffer
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
+	If 'ambiwidth' is "double" then "vert" and "fold" default to
+	single-byte alternatives.
+
 	Example: >
-	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-
 <	This is similar to the default, except that these characters will also
 	be used when there is highlighting.
 
@@ -2409,6 +2416,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  vert:c	VertSplit		|hl-VertSplit|
 	  fold:c	Folded			|hl-Folded|
 	  diff:c	DiffDelete		|hl-DiffDelete|
+	  eob:c		EndOfBuffer		|hl-EndOfBuffer|
 
 		*'fixendofline'* *'fixeol'* *'nofixendofline'* *'nofixeol'*
 'fixendofline' 'fixeol'	boolean	(default on)
@@ -2681,17 +2689,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'fsync'* *'fs'*
-'fsync' 'fs'		boolean	(default on)
+'fsync' 'fs'		boolean	(default off)
 			global
-	When on, the library function fsync() will be called after writing a
-	file.  This will flush a file to disk, ensuring that it is safely
-	written even on filesystems which do metadata-only journaling.  This
-	will force the harddrive to spin up on Linux systems running in laptop
-	mode, so it may be undesirable in some situations.  Be warned that
-	turning this off increases the chances of data loss after a crash.
+	When on, the OS function fsync() will be called after saving a file
+	(|:write|, |writefile()|, …), |swap-file| and |shada-file|. This
+	flushes the file to disk, ensuring that it is safely written.
+	Slow on some systems: writing buffers, quitting Nvim, and other
+	operations may sometimes take a few seconds.
 
-	Currently applies only to writing the buffer with e.g. |:w| and 
-	|writefile()|.
+	Files are ALWAYS flushed ('fsync' is ignored) when:
+	- |CursorHold| event is triggered
+	- |:preserve| is called
+	- system signals low battery life
+	- Nvim exits abnormally
 
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)
@@ -3299,7 +3309,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
 	The |hl-IncSearch| highlight group determines the highlighting.
-	See also: 'hlsearch'.
+	When 'hlsearch' is on, all matched strings are highlighted too while typing
+	a search command. See also: 'hlsearch'.
+	If you don't want turn 'hlsearch' on, but want to highlight all matches
+	while searching, you can turn on and off 'hlsearch' with autocmd.
+	Example: >
+		augroup vimrc-incsearch-highlight
+		  autocmd!
+		  autocmd CmdlineEnter /,\? :set hlsearch
+		  autocmd CmdlineLeave /,\? :set nohlsearch
+		augroup END
+<
 	CTRL-L can be used to add one character from after the current match
 	to the command line.  If 'ignorecase' and 'smartcase' are set and the
 	command line has no uppercase characters, the added character is
@@ -3870,16 +3890,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set a time.  This is to be compatible with Nvi.
 
 						*'maxcombine'* *'mco'*
-'maxcombine' 'mco'	number (default 2)
-			global
-			{only available when compiled with the |+multi_byte|
-			feature}
-	The maximum number of combining characters supported for displaying.
-	The default is OK for most languages.  Hebrew may require 4.
-	Maximum value is 6.
-	Even when this option is set to 2 you can still edit text with more
-	combining characters, you just can't see them.  Use |g8| or |ga|.
-	See |mbyte-combining|.
+'maxcombine' 'mco'	Removed. |vim-differences| {Nvim}
+	Nvim always displays up to 6 combining characters.  You can still edit
+    text with more than 6 combining characters, you just can't see them.
+    Use |g8| or |ga|.  See |mbyte-combining|.
 
 						*'maxfuncdepth'* *'mfd'*
 'maxfuncdepth' 'mfd'	number	(default 100)
@@ -3903,16 +3917,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	because the 'w' is used before the next mapping is done.  See also
 	|key-mapping|.
 
-						*'maxmem'* *'mm'*
-'maxmem' 'mm'		number	(default between 256 to 5120 (system
-				 dependent) or half the amount of memory
-				 available)
-			global
-	Maximum amount of memory (in Kbyte) to use for one buffer.  When this
-	limit is reached allocating extra memory for a buffer will cause
-	other memory to be freed.  The maximum usable value is about 2000000.
-	Use this to work without a limit.  Also see 'maxmemtot'.
-
 						*'maxmempattern'* *'mmp'*
 'maxmempattern' 'mmp'	number	(default 1000)
 			global
@@ -3925,20 +3929,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	inefficient or too complex.  This may already happen with the pattern
 	"\(.\)*" on a very long line.  ".*" works much better.
 	Vim may run out of memory before hitting the 'maxmempattern' limit.
-
-						*'maxmemtot'* *'mmt'*
-'maxmemtot' 'mmt'	number	(default between 2048 and 10240 (system
-				 dependent) or half the amount of memory
-				 available)
-			global
-	Maximum amount of memory in Kbyte to use for all buffers together.
-	The maximum usable value is about 2000000 (2 Gbyte).  Use this to work
-	without a limit.
-	On 64 bit machines higher values might work.  But hey, do you really
-	need more than 2 Gbyte for text editing?  Keep in mind that text is
-	stored in the swap file, one can edit files > 2 Gbyte anyway.  We do
-	need the memory to store undo info.
-	Also see 'maxmem'.
 
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	number	(default 25)
@@ -5142,15 +5132,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   to escape quote: 'a\"b"' is the same as "a\b".
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
+							*shell-powershell*
+	To use powershell (on Windows): >
+		set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
+		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
 
-	This option cannot be set from a |modeline| or in the |sandbox|, for
+<	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/c")
+'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
 	systems, the default is set according to the value of 'shell', to
 	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
@@ -5271,7 +5265,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default: "")
+'shellxquote' 'sxq'	string	(default: "", Windows: "\"")
 			global
 	Quoting character(s), put around the command passed to the shell, for
 	the "!" and ":!" commands.  Includes the redirection.  See
@@ -5435,14 +5429,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |tab-page| for more information about tab pages.
 
 						*'sidescroll'* *'ss'*
-'sidescroll' 'ss'	number	(default 0)
+'sidescroll' 'ss'	number	(default 1)
 			global
 	The minimal number of columns to scroll horizontally.  Used only when
 	the 'wrap' option is off and the cursor is moved off of the screen.
 	When it is zero the cursor will be put in the middle of the screen.
-	When using a slow terminal set it to a large number or 0.  When using
-	a fast terminal use a small number or 1.  Not used for "zh" and "zl"
-	commands.
+	When using a slow terminal set it to a large number or 0.  Not used
+	for "zh" and "zl" commands.
 
 						*'sidescrolloff'* *'siso'*
 'sidescrolloff' 'siso'	number (default 0)
@@ -6272,15 +6265,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'timeoutlen'* *'tm'*
 'timeoutlen' 'tm'	number	(default 1000)
 			global
-	The time in milliseconds that is waited for a mapped sequence to
-	complete.
+	Time in milliseconds to wait for a mapped sequence to complete.
 
 						*'ttimeoutlen'* *'ttm'*
 'ttimeoutlen' 'ttm'	number	(default 50)
 			global
-	The time in milliseconds that is waited for a key code
-	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
-	when part of a command has been typed.
+	Time in milliseconds to wait for a key code sequence to complete. Also
+	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
+	been typed.
 
 						*'title'* *'notitle'*
 'title'			boolean	(default off)
@@ -6910,7 +6902,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'writedelay' 'wd'	number	(default 0)
 			global
 	The number of milliseconds to wait for each character sent to the
-	screen.  When non-zero, characters are sent to the terminal one by
-	one.  For debugging purposes.
+	screen.  When positive, characters are sent to the UI one by one.
+	When negative, all redrawn characters cause a delay, even if the
+	character already was displayed by the UI.  For debugging purposes.
 
  vim:tw=78:ts=8:ft=help:noet:norl:

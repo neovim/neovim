@@ -1,0 +1,53 @@
+diff --git a/src/keyboard.c b/src/keyboard.c
+index bc1299b..5f368f4 100644
+--- a/src/keyboard.c
++++ b/src/keyboard.c
+@@ -48,7 +48,7 @@ void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod)
+   if(mod & VTERM_MOD_CTRL)
+     c &= 0x1f;
+ 
+-  vterm_push_output_sprintf(vt, "%s%c", mod & VTERM_MOD_ALT ? "\e" : "", c);
++  vterm_push_output_sprintf(vt, "%s%c", mod & VTERM_MOD_ALT ? "\x1b" : "", c);
+ }
+ 
+ typedef struct {
+@@ -73,7 +73,7 @@ static keycodes_s keycodes[] = {
+   { KEYCODE_ENTER,   '\r'   }, // ENTER
+   { KEYCODE_TAB,     '\t'   }, // TAB
+   { KEYCODE_LITERAL, '\x7f' }, // BACKSPACE == ASCII DEL
+-  { KEYCODE_LITERAL, '\e'   }, // ESCAPE
++  { KEYCODE_LITERAL, '\x1b' }, // ESCAPE
+ 
+   { KEYCODE_CSI_CURSOR, 'A' }, // UP
+   { KEYCODE_CSI_CURSOR, 'B' }, // DOWN
+@@ -173,7 +173,7 @@ void vterm_keyboard_key(VTerm *vt, VTermKey key, VTermModifier mod)
+     if(mod & (VTERM_MOD_SHIFT|VTERM_MOD_CTRL))
+       vterm_push_output_sprintf_ctrl(vt, C1_CSI, "%d;%du", k.literal, mod+1);
+     else
+-      vterm_push_output_sprintf(vt, mod & VTERM_MOD_ALT ? "\e%c" : "%c", k.literal);
++      vterm_push_output_sprintf(vt, mod & VTERM_MOD_ALT ? "\x1b%c" : "%c", k.literal);
+     break;
+ 
+   case KEYCODE_SS3: case_SS3:
+diff --git a/src/vterm.c b/src/vterm.c
+index 826df93..262b3fc 100644
+--- a/src/vterm.c
++++ b/src/vterm.c
+@@ -158,7 +158,7 @@ INTERNAL void vterm_push_output_sprintf_ctrl(VTerm *vt, unsigned char ctrl, cons
+   size_t orig_cur = vt->outbuffer_cur;
+ 
+   if(ctrl >= 0x80 && !vt->mode.ctrl8bit)
+-    vterm_push_output_sprintf(vt, "\e%c", ctrl - 0x40);
++    vterm_push_output_sprintf(vt, "\x1b%c", ctrl - 0x40);
+   else
+     vterm_push_output_sprintf(vt, "%c", ctrl);
+ 
+@@ -176,7 +176,7 @@ INTERNAL void vterm_push_output_sprintf_dcs(VTerm *vt, const char *fmt, ...)
+   size_t orig_cur = vt->outbuffer_cur;
+ 
+   if(!vt->mode.ctrl8bit)
+-    vterm_push_output_sprintf(vt, "\e%c", C1_DCS - 0x40);
++    vterm_push_output_sprintf(vt, "\x1b%c", C1_DCS - 0x40);
+   else
+     vterm_push_output_sprintf(vt, "%c", C1_DCS);
+ 

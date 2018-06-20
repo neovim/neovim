@@ -146,7 +146,7 @@ static inline bool ascii_isxdigit(int c)
 /// Checks if `c` is an “identifier” character
 ///
 /// That is, whether it is alphanumeric character or underscore.
-static inline bool ascii_isident(const int c)
+static inline bool ascii_isident(int c)
 {
   return ASCII_ISALNUM(c) || c == '_';
 }

@@ -5,9 +5,10 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, source = helpers.feed, helpers.source
 local clear, feed_command, expect, eq, eval = helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
 local write_file, wait, dedent = helpers.write_file, helpers.wait, helpers.dedent
-local io = require('io')
+local read_file = helpers.read_file
 
 describe('autocommands that delete and unload buffers:', function()
+  local test_file = 'Xtest-008_autocommands.out'
   local text1 = dedent([[
     start of Xxx1
       test
@@ -18,7 +19,7 @@ describe('autocommands that delete and unload buffers:', function()
     write_file('Xxx2', text2..'\n')
   end)
   teardown(function()
-    os.remove('test.out')
+    os.remove(test_file)
     os.remove('Xxx1')
     os.remove('Xxx2')
   end)
@@ -65,7 +66,8 @@ describe('autocommands that delete and unload buffers:', function()
 	endwhile
       endfunc
       func WriteToOut()
-	edit! test.out
+	edit! ]]..test_file..[[
+
 	$put ='VimLeave done'
 	write
       endfunc
@@ -86,6 +88,6 @@ describe('autocommands that delete and unload buffers:', function()
     feed_command('q')
     wait()
     eq('VimLeave done',
-       string.match(io.open('test.out', 'r'):read('*all'), "^%s*(.-)%s*$"))
+       string.match(read_file(test_file), "^%s*(.-)%s*$"))
   end)
 end)

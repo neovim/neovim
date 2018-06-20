@@ -61,6 +61,7 @@ void rpc_start(Channel *channel)
   rpc->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rpc->subscribed_events = pmap_new(cstr_t)();
   rpc->next_request_id = 1;
+  rpc->info = (Dictionary)ARRAY_DICT_INIT;
   kv_init(rpc->call_stack);
 
   if (channel->streamtype != kChannelStreamInternal) {
@@ -311,21 +312,27 @@ static void handle_request(Channel *channel, msgpack_object *request)
     api_clear_error(&error);
     return;
   }
+
   // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
+  Array args = ARRAY_DICT_INIT;
   msgpack_object *method = msgpack_rpc_method(request);
 
   if (method) {
     handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
                                           method->via.bin.size);
+    if (handler.fn == msgpack_rpc_handle_missing_method) {
+      String m = method->via.bin.size > 0
+        ? cbuf_to_string(method->via.bin.ptr, method->via.bin.size)
+        : cstr_to_string("<empty>");
+      ADD(args, STRING_OBJ(m));
+      handler.async = true;
+    } else if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+      handler.fn = msgpack_rpc_handle_invalid_arguments;
+      handler.async = true;
+    }
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-    handler.fn = msgpack_rpc_handle_invalid_arguments;
     handler.async = true;
   }
 
@@ -553,6 +560,7 @@ void rpc_free(Channel *channel)
 
   pmap_free(cstr_t)(channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
+  api_free_dictionary(channel->rpc.info);
 }
 
 static bool is_rpc_response(msgpack_object *obj)
@@ -640,6 +648,23 @@ static WBuffer *serialize_response(uint64_t channel_id,
   msgpack_sbuffer_clear(sbuffer);
   api_free_object(arg);
   return rv;
+}
+
+void rpc_set_client_info(uint64_t id, Dictionary info)
+{
+  Channel *chan = find_rpc_channel(id);
+  if (!chan) {
+    abort();
+  }
+
+  api_free_dictionary(chan->rpc.info);
+  chan->rpc.info = info;
+  channel_info_changed(chan, false);
+}
+
+Dictionary rpc_client_info(Channel *chan)
+{
+  return copy_dictionary(chan->rpc.info);
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL

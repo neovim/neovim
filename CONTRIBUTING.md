@@ -14,8 +14,15 @@ low-risk/isolated tasks:
 Developer guidelines
 --------------------
 
-- Nvim developers should read `:help dev`.
+- Nvim contributors should read `:help dev` (especially `:help dev-api`).
 - External UI developers should read `:help dev-ui`.
+- API client developers should read `:help dev-api-client`.
+- Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
+  ```
+  sudo apt-get install ninja-build
+  make distclean
+  make  # Nvim build system uses ninja automatically, if available.
+  ```
 
 Reporting problems
 ------------------
@@ -157,7 +164,7 @@ shows each commit's diff. To show the whole surrounding function of a change
 as context, use the `-W` argument as well.
 
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
-[git-bisect]: http://git-scm.com/book/tr/v2/Git-Tools-Debugging-with-Git
+[git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
 [git-history-filtering]: https://www.atlassian.com/git/tutorials/git-log/filtering-the-commit-history
 [git-history-rewriting]: http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History

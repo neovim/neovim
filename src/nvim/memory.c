@@ -369,10 +369,12 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 /// string that fits in the buffer (unless, of course, the buffer size is
 /// zero). It does not pad out the result like strncpy() does.
 ///
-/// @param dst    Buffer to store the result
-/// @param src    String to be copied
-/// @param dsize  Size of `dst`
-/// @return       strlen(src). If retval >= dstsize, truncation occurs.
+/// @param[out]  dst  Buffer to store the result.
+/// @param[in]  src  String to be copied.
+/// @param[in]  dsize  Size of `dst`.
+///
+/// @return Length of `src`. May be greater than `dsize - 1`, which would mean
+///         that string was truncated.
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -394,11 +396,13 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
 /// @see vim_strcat from Vim.
 /// @see strlcat from OpenBSD.
 ///
-/// @param dst      Buffer to be appended-to. Must have a NUL byte.
-/// @param src      String to put at the end of `dst`
-/// @param dsize    Size of `dst` including NUL byte. Must be greater than 0.
-/// @return         strlen(src) + strlen(initial dst)
-///                 If retval >= dsize, truncation occurs.
+/// @param[in,out]  dst  Buffer to be appended-to. Must have a NUL byte.
+/// @param[in]  src  String to put at the end of `dst`.
+/// @param[in]  dsize  Size of `dst` including NUL byte. Must be greater than 0.
+///
+/// @return Length of the resulting string as if destination size was #SIZE_MAX.
+///         May be greater than `dsize - 1`, which would mean that string was
+///         truncated.
 size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {

@@ -31,6 +31,7 @@ typedef struct {
   msgpack_unpacker *unpacker;
   uint64_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
+  Dictionary info;
 } RpcState;
 
 #endif  // NVIM_MSGPACK_RPC_CHANNEL_DEFS_H

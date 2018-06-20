@@ -1,7 +1,7 @@
 
 " This is a test if a URL is recognized by "gf", with the cursor before and
 " after the "://".  Also test ":\\".
-function! Test_gf_url()
+func Test_gf_url()
   enew!
   call append(0, [
       \ "first test for URL://machine.name/tmp/vimtest2a and other text",
@@ -30,4 +30,27 @@ function! Test_gf_url()
 
   set isf&vim
   enew!
-endfunction
+endfunc
+
+func Test_gF()
+  new
+  call setline(1, ['111', '222', '333', '444'])
+  w! Xfile
+  close
+  new
+  set isfname-=:
+  call setline(1, ['one', 'Xfile:3', 'three'])
+  2
+  call assert_fails('normal gF', 'E37:')
+  call assert_equal(2, getcurpos()[1])
+  w! Xfile2
+  normal gF
+  call assert_equal('Xfile', bufname('%'))
+  call assert_equal(3, getcurpos()[1])
+
+  set isfname&
+  call delete('Xfile')
+  call delete('Xfile2')
+  bwipe Xfile
+  bwipe Xfile2
+endfunc

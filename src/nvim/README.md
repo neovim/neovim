@@ -90,6 +90,12 @@ Record a Nvim terminal session and format it with `vterm-dump`:
 
 Then you can compare `bar` with another session, to debug TUI behavior.
 
+### TUI redraw
+
+Set the 'writedelay' option to see where and when the UI is painted.
+
+    :set writedelay=1
+
 ### Terminal reference
 
 - `man terminfo`

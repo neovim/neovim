@@ -5,8 +5,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect = helpers.feed_command, helpers.expect
 
-if helpers.pending_win32(pending) then return end
-
 describe('jump to a tag with hidden set', function()
   setup(clear)
 
@@ -25,12 +23,17 @@ describe('jump to a tag with hidden set', function()
     feed_command('set hidden')
 
     -- Create a link from test25.dir to the current directory.
-    feed_command('!rm -f test25.dir')
-    feed_command('!ln -s . test25.dir')
+    if helpers.iswin() then
+      feed_command('!rd /q/s test25.dir')
+      feed_command('!mklink /j test25.dir .')
+    else
+      feed_command('!rm -f test25.dir')
+      feed_command('!ln -s . test25.dir')
+    end
 
     -- Create tags.text, with the current directory name inserted.
     feed_command('/tags line')
-    feed_command('r !pwd')
+    feed_command('r !' .. (helpers.iswin() and 'cd' or 'pwd'))
     feed('d$/test<cr>')
     feed('hP:.w! tags.test<cr>')
 
@@ -39,7 +42,13 @@ describe('jump to a tag with hidden set', function()
     -- space will then be eaten by hit-return, instead of moving the cursor to 'd'.
     feed_command('set tags=tags.test')
     feed('G<C-]> x:yank a<cr>')
-    feed_command('!rm -f Xxx test25.dir tags.test')
+    feed_command("call delete('tags.test')")
+    feed_command("call delete('Xxx')")
+    if helpers.iswin() then
+      feed_command('!rd /q test25.dir')
+    else
+      feed_command('!rm -f test25.dir')
+    end
 
     -- Put @a and remove empty line
     feed_command('%d')

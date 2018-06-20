@@ -13,6 +13,12 @@ function! s:normalize_path(s) abort
   return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
 endfunction
 
+" Returns TRUE if `cmd` exits with success, else FALSE.
+function! s:cmd_ok(cmd) abort
+  call system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.', 0)
@@ -45,7 +51,7 @@ function! s:shellify(cmd) abort
     return a:cmd
   endif
   return join(map(copy(a:cmd),
-    \'v:val =~# ''\m[\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
+    \'v:val =~# ''\m[^\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
 endfunction
 
 " Run a system command and timeout after 30 seconds.
@@ -64,7 +70,8 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    call health#report_error(printf('Command error (job=%d): %s', jobid, s:shellify(a:cmd)))
+    call health#report_error(printf('Command error (job=%d): `%s` (in %s)',
+          \ jobid, s:shellify(a:cmd), string(getcwd())))
     let s:shell_error = 1
     return opts.output
   endif
@@ -78,8 +85,8 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (job=%d): %s\nOutput: %s", jobid,
-          \ s:shellify(a:cmd), opts.output))
+    call health#report_error(printf("Command error (job=%d): `%s` (in %s)\nOutput: %s",
+          \ jobid, s:shellify(a:cmd), string(getcwd()), opts.output))
   endif
 
   return opts.output
@@ -119,6 +126,13 @@ endfunction
 " Check for clipboard tools.
 function! s:check_clipboard() abort
   call health#report_start('Clipboard (optional)')
+
+  if !empty($TMUX) && executable('tmux') && executable('pbpaste') && !s:cmd_ok('pbpaste')
+    let tmux_version = matchstr(system('tmux -V'), '\d\+\.\d\+')
+    call health#report_error('pbcopy does not work with tmux version: '.tmux_version,
+          \ ['Install tmux 2.6+.  https://superuser.com/q/231130',
+          \  'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233'])
+  endif
 
   let clipboard_tool = provider#clipboard#Executable()
   if exists('g:clipboard') && empty(clipboard_tool)
@@ -172,7 +186,9 @@ function! s:version_info(python) abort
   endif
 
   let nvim_path = s:trim(s:system([
-        \ a:python, '-c', 'import neovim; print(neovim.__file__)']))
+        \ a:python, '-c',
+        \ 'import sys; sys.path.remove(""); ' .
+        \ 'import neovim; print(neovim.__file__)']))
   if s:shell_error || empty(nvim_path)
     return [python_version, 'unable to load neovim Python module', pypi_version,
           \ nvim_path]
@@ -247,8 +263,7 @@ function! s:check_python(version) abort
   let python_multiple = []
 
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
-    return
+    call health#report_info('Disabled ('.loaded_var.'='.eval(loaded_var).').  This might be due to some previous error.')
   endif
 
   if !empty(pyenv)
@@ -276,9 +291,6 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-    if !empty(pythonx_errs)
-      call health#report_warn(pythonx_errs)
-    endif
   endif
 
   if !empty(pyname)
@@ -336,8 +348,8 @@ function! s:check_python(version) abort
     endif
   endif
 
-  if !empty(python_bin)
-    if empty(venv) && !empty(pyenv) && !exists('g:'.host_prog_var)
+  if !empty(python_bin) && !exists('g:'.host_prog_var)
+    if empty(venv) && !empty(pyenv)
           \ && !empty(pyenv_root) && resolve(python_bin) !~# '^'.pyenv_root.'/'
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
@@ -345,7 +357,7 @@ function! s:check_python(version) abort
             \ . 'the need to install the Neovim Python module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
-    elseif !empty(venv) && exists('g:'.host_prog_var)
+    elseif !empty(venv)
       if !empty(pyenv_root)
         let venv_root = pyenv_root
       else
@@ -444,7 +456,7 @@ function! s:check_ruby() abort
 
   let host = provider#ruby#Detect()
   if empty(host)
-    call health#report_warn("`neovim-ruby-host` not found.",
+    call health#report_warn('`neovim-ruby-host` not found.',
           \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
           \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
           \  'If you are using rvm/rbenv/chruby, try "rehashing".',
@@ -490,10 +502,10 @@ function! s:check_node() abort
     return
   endif
 
-  if !executable('node') || !executable('npm')
+  if !executable('node') || (!executable('npm') && !executable('yarn'))
     call health#report_warn(
-          \ '`node` and `npm` must be in $PATH.',
-          \ ['Install Node.js and verify that `node` and `npm` commands work.'])
+          \ '`node` and `npm` (or `yarn`) must be in $PATH.',
+          \ ['Install Node.js and verify that `node` and `npm` (or `yarn`) commands work.'])
     return
   endif
   let node_v = get(split(s:system('node -v'), "\n"), 0, '')
@@ -509,9 +521,9 @@ function! s:check_node() abort
 
   let host = provider#node#Detect()
   if empty(host)
-    call health#report_warn('Missing "neovim" npm package.',
+    call health#report_warn('Missing "neovim" npm (or yarn) package.',
           \ ['Run in shell: npm install -g neovim',
-          \  'Is the npm bin directory in $PATH?'])
+          \  'Run in shell (if you use yarn): yarn global add neovim'])
     return
   endif
   call health#report_info('Neovim node.js host: '. host)
@@ -545,9 +557,9 @@ function! s:check_node() abort
     call health#report_warn(
           \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
           \ current_npm, latest_npm),
-          \ ['Run in shell: npm update neovim'])
+          \ ['Run in shell: npm install -g neovim'])
   else
-    call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
+    call health#report_ok('Latest "neovim" npm/yarn package is installed: '. current_npm)
   endif
 endfunction
 

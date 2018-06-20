@@ -2,7 +2,6 @@
 
 source shared.vim
 
-set belloff=all
 func! Setup_NewWindow()
   10new
   call setline(1, range(1,100))
@@ -848,7 +847,7 @@ func! Test_normal18_z_fold()
   norm! j
   call assert_equal('52', getline('.'))
 
-  " zA on a opened fold when foldenale is not set
+  " zA on a opened fold when foldenable is not set
   50
   set nofoldenable
   norm! zA
@@ -910,7 +909,7 @@ func! Test_normal18_z_fold()
   norm! j
   call assert_equal('55', getline('.'))
 
-  " 2) do not close fold under curser
+  " 2) do not close fold under cursor
   51
   set nofoldenable
   norm! zx
@@ -1830,15 +1829,57 @@ fun! Test_normal34_g_cmd3()
   if !has("multi_byte")
     return
   endif
+
   " Test for g8
   new
-  call append(0, 'abcdefghijklmnopqrstuvwxyzäüö')
-  let a=execute(':norm! 1gg$g8')
-  call assert_equal('c3 b6 ', a[1:])
+  let a=execute(':norm! 1G0g8')
+  call assert_equal("\nNUL", a)
 
-  " Test for gp gP
-  call append(1, range(1,10))
+  call setline(1, 'abcdefghijklmnopqrstuvwxyzäüö')
+  let a=execute(':norm! 1G$g8')
+  call assert_equal("\nc3 b6 ", a)
+
+  call setline(1, "a\u0302")
+  let a=execute(':norm! 1G0g8')
+  call assert_equal("\n61 + cc 82 ", a)
+
   " clean up
+  bw!
+endfunc
+
+func Test_normal_8g8()
+  if !has("multi_byte")
+    return
+  endif
+  new
+
+  " Test 8g8 which finds invalid utf8 at or after the cursor.
+
+  " With invalid byte.
+  call setline(1, "___\xff___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With invalid byte before the cursor.
+  call setline(1, "___\xff___")
+  norm! 1G$h8g8g
+  call assert_equal([0, 1, 6, 0, 9], getcurpos())
+
+  " With truncated sequence.
+  call setline(1, "___\xE2\x82___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With overlong sequence.
+  call setline(1, "___\xF0\x82\x82\xAC___")
+  norm! 1G08g8g
+  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+
+  " With valid utf8.
+  call setline(1, "café")
+  norm! 1G08g8
+  call assert_equal([0, 1, 1, 0, 1], getcurpos())
+
   bw!
 endfunc
 
@@ -2315,26 +2356,88 @@ func! Test_normal53_digraph()
   bw!
 endfunc
 
-func! Test_normal54_Ctrl_bsl()
-	new
-	call setline(1, 'abcdefghijklmn')
-	exe "norm! df\<c-\>\<c-n>"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
-	exe "norm! df\<c-\>\<c-g>"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
-	exe "norm! df\<c-\>m"
-	call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+func Test_normal54_Ctrl_bsl()
+  new
+  call setline(1, 'abcdefghijklmn')
+  exe "norm! df\<c-\>\<c-n>"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+  exe "norm! df\<c-\>\<c-g>"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
+  exe "norm! df\<c-\>m"
+  call assert_equal(['abcdefghijklmn'], getline(1,'$'))
   if !has("multi_byte")
     return
   endif
-	call setline(2, 'abcdefghijklmnāf')
-	norm! 2gg0
-	exe "norm! df\<Char-0x101>"
-	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
-	norm! 1gg0
-	exe "norm! df\<esc>"
-	call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+  call setline(2, 'abcdefghijklmnāf')
+  norm! 2gg0
+  exe "norm! df\<Char-0x101>"
+  call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
+  norm! 1gg0
+  exe "norm! df\<esc>"
+  call assert_equal(['abcdefghijklmn', 'f'], getline(1,'$'))
 
-	" clean up
-	bw!
+  " clean up
+  bw!
+endfunc
+
+func Test_normal_large_count()
+  " This may fail with 32bit long, how do we detect that?
+  new
+  normal o
+  normal 6666666666dL
+  bwipe!
+endfunc
+
+" Test for the gr (virtual replace) command
+" Test for the bug fixed by 7.4.387
+func Test_gr_command()
+  enew!
+  let save_cpo = &cpo
+  call append(0, ['First line', 'Second line', 'Third line'])
+  exe "normal i\<C-G>u"
+  call cursor(2, 1)
+  set cpo-=X
+  normal 4gro
+  call assert_equal('oooond line', getline(2))
+  undo
+  set cpo+=X
+  normal 4gro
+  call assert_equal('ooooecond line', getline(2))
+  let &cpo = save_cpo
+  enew!
+endfunc
+
+" When splitting a window the changelist position is wrong.
+" Test the changelist position after splitting a window.
+" Test for the bug fixed by 7.4.386
+func Test_changelist()
+  let save_ul = &ul
+  enew!
+  call append('$', ['1', '2'])
+  exe "normal i\<C-G>u"
+  exe "normal Gkylpa\<C-G>u"
+  set ul=100
+  exe "normal Gylpa\<C-G>u"
+  set ul=100
+  normal gg
+  vsplit
+  normal g;
+  call assert_equal([3, 2], [line('.'), col('.')])
+  normal g;
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call assert_fails('normal g;', 'E662:')
+  %bwipe!
+  let &ul = save_ul
+endfunc
+
+func Test_delete_until_paragraph()
+  if !has('multi_byte')
+    return
+  endif
+  new
+  normal grádv}
+  call assert_equal('á', getline(1))
+  normal grád}
+  call assert_equal('', getline(1))
+  bwipe!
 endfunc

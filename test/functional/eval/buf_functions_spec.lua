@@ -14,6 +14,8 @@ local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
 local curtabmeths = helpers.curtabmeths
 local get_pathsep = helpers.get_pathsep
+local rmdir = helpers.rmdir
+local expect_err = helpers.expect_err
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -61,7 +63,7 @@ describe('bufname() function', function()
     lfs.mkdir(dirname)
   end)
   after_each(function()
-    lfs.rmdir(dirname)
+    rmdir(dirname)
   end)
   it('returns expected buffer name', function()
     eq('', funcs.bufname('%'))  -- Buffer has no name yet
@@ -143,7 +145,7 @@ describe('bufwinnr() function', function()
     lfs.mkdir(dirname)
   end)
   after_each(function()
-    lfs.rmdir(dirname)
+    rmdir(dirname)
   end)
   it('returns expected window number', function()
     eq(1, funcs.bufwinnr('%'))
@@ -295,8 +297,8 @@ describe('setbufvar() function', function()
     eq('Vim(call):E461: Illegal variable name: b:',
        exc_exec('call setbufvar(1, "", 0)'))
     eq(true, bufmeths.get_var(buf1, 'number'))
-    funcs.setbufvar(1, 'changedtick', true)
-    -- eq(true, bufmeths.get_var(buf1, 'changedtick'))
+    expect_err('Vim:E46: Cannot change read%-only variable "b:changedtick"',
+               funcs.setbufvar, 1, 'changedtick', true)
     eq(2, funcs.getbufvar(1, 'changedtick'))
   end)
 end)

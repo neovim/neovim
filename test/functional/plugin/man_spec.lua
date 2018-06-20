@@ -66,13 +66,13 @@ describe(':Man', function()
         ithis <C-v><ESC>[1mis <C-v><ESC>[3ma <C-v><ESC>[4mtest<C-v><ESC>[0m
         <C-v><ESC>[4mwith<C-v><ESC>[24m <C-v><ESC>[4mescaped<C-v><ESC>[24m <C-v><ESC>[4mtext<C-v><ESC>[24m<ESC>]])
 
-      screen:expect([[
+      screen:expect([=[
       this ^[[1mis ^[[3ma ^[[4mtest^[[0m                  |
       ^[[4mwith^[[24m ^[[4mescaped^[[24m ^[[4mtext^[[24^m  |
       ~                                                   |
       ~                                                   |
                                                           |
-      ]])
+      ]=])
 
       eval('man#init_pager()')
 

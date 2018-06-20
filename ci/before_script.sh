@@ -20,6 +20,9 @@ if [[ -n "${LLVM_SYMBOLIZER}" ]] && [[ ! $(type -P "${LLVM_SYMBOLIZER}") ]]; the
   exit 1
 fi
 
+# Show ccache stats so we can compare in before_cache
+ccache -s 2>/dev/null || true
+
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   # Adds user to a dummy group.
   # That allows to test changing the group of the file by `os_fchown`.

@@ -306,20 +306,14 @@ func Test_window_width()
   set winfixwidth
   vsplit Xc
   let [ww1, ww2, ww3] = [winwidth(1), winwidth(2), winwidth(3)]
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2, winwidth(2))
+  call assert_equal(2, winwidth(2))
   call assert_inrange(ww3, ww3 + 1, ww1)
   3wincmd >
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2,       winwidth(2))
+  call assert_equal(2,       winwidth(2))
   call assert_equal(ww1 + 3, winwidth(1))
   call assert_equal(ww3 - 3, winwidth(3))
   wincmd =
-  " FIXME: commented out: I would expect the width of 2nd window to 
-  " remain 2 but it's actually 1?!
-  "call assert_equal(2,   winwidth(2))
+  call assert_equal(2,   winwidth(2))
   call assert_equal(ww1, winwidth(1))
   call assert_equal(ww3, winwidth(3))
 

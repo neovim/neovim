@@ -9,6 +9,7 @@ local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
 local feed = helpers.feed
+local iswin = helpers.iswin
 
 describe('execute()', function()
   before_each(clear)
@@ -105,22 +106,30 @@ describe('execute()', function()
   end)
 
   it('does not corrupt the command display #5422', function()
-    local screen = Screen.new(70, 5)
+    local screen = Screen.new(70, 7)
     screen:attach()
     feed(':echo execute("hi ErrorMsg")<CR>')
     screen:expect([[
-      ~                                                                     |
-      ~                                                                     |
+                                                                            |
+      {1:~                                                                     }|
+      {1:~                                                                     }|
+      {2:                                                                      }|
       :echo execute("hi ErrorMsg")                                          |
       ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
-      Press ENTER or type command to continue^                               |
-    ]])
+      {3:Press ENTER or type command to continue}^                               |
+    ]], {
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
     feed('<CR>')
   end)
 
-  -- This matches Vim behavior.
-  it('does not capture shell-command output', function()
-    eq('\n:!echo "foo"\13\n', funcs.execute('!echo "foo"'))
+  -- This deviates from vim behavior, but is consistent
+  -- with how nvim currently displays the output.
+  it('does capture shell-command output', function()
+    local win_lf = iswin() and '\13' or ''
+    eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
   end)
 
   describe('{silent} argument', function()

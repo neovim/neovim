@@ -63,10 +63,8 @@ following ones in your vimrc:
 This is also very handy when editing files on floppy.  Of course you will have
 to create that "tmp" directory for this to work!
 
-For read-only files, a swap file is not used.  Unless the file is big, causing
-the amount of memory used to be higher than given with 'maxmem' or
-'maxmemtot'.  And when making a change to a read-only file, the swap file is
-created anyway.
+For read-only files, a swap file is not used right away. The swap file is
+created only when making changes.
 
 The 'swapfile' option can be reset to avoid creating a swapfile.  And the
 |:noswapfile| modifier can be used to not create a swapfile for a new buffer.

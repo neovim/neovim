@@ -35,6 +35,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -109,82 +110,86 @@ typedef struct {
 # include "ex_cmds.c.generated.h"
 #endif
 
-/*
- * ":ascii" and "ga".
- */
-void do_ascii(exarg_T *eap)
+/// ":ascii" and "ga" implementation
+void do_ascii(const exarg_T *const eap)
 {
-  int c;
-  int cval;
-  char buf1[20];
-  char buf2[20];
-  char_u buf3[7];
   int cc[MAX_MCO];
-  int ci = 0;
-  int len;
-  const bool l_enc_utf8 = enc_utf8;
-
-  if (l_enc_utf8)
-    c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
-  else
-    c = gchar_cursor();
+  int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
     MSG("NUL");
     return;
   }
 
-  IObuff[0] = NUL;
-  if (!has_mbyte || (enc_dbcs != 0 && c < 0x100) || c < 0x80) {
-    if (c == NL)            /* NUL is stored as NL */
+  size_t iobuff_len = 0;
+
+  int ci = 0;
+  if (c < 0x80) {
+    if (c == NL) {  // NUL is stored as NL.
       c = NUL;
-    if (c == CAR && get_fileformat(curbuf) == EOL_MAC)
-      cval = NL;            /* NL is stored as CR */
-    else
-      cval = c;
-    if (vim_isprintc_strict(c) && (c < ' '
-                                   || c > '~'
-                                   )) {
+    }
+    const int cval = (c == CAR && get_fileformat(curbuf) == EOL_MAC
+                      ? NL  // NL is stored as CR.
+                      : c);
+    char buf1[20];
+    if (vim_isprintc_strict(c) && (c < ' ' || c > '~')) {
+      char_u buf3[7];
       transchar_nonprint(buf3, c);
       vim_snprintf(buf1, sizeof(buf1), "  <%s>", (char *)buf3);
-    } else
+    } else {
       buf1[0] = NUL;
-    if (c >= 0x80)
-      vim_snprintf(buf2, sizeof(buf2), "  <M-%s>",
-          (char *)transchar(c & 0x7f));
-    else
-      buf2[0] = NUL;
-    vim_snprintf((char *)IObuff, IOSIZE,
-        _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-        transchar(c), buf1, buf2, cval, cval, cval);
-    if (l_enc_utf8)
-      c = cc[ci++];
-    else
-      c = 0;
+    }
+    char buf2[20];
+    buf2[0] = NUL;
+    iobuff_len += (
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                     transchar(c), buf1, buf2, cval, cval, cval));
+    c = cc[ci++];
   }
 
-  /* Repeat for combining characters. */
-  while (has_mbyte && (c >= 0x100 || (l_enc_utf8 && c >= 0x80))) {
-    len = (int)STRLEN(IObuff);
-    /* This assumes every multi-byte char is printable... */
-    if (len > 0)
-      IObuff[len++] = ' ';
-    IObuff[len++] = '<';
-    if (l_enc_utf8 && utf_iscomposing(c)
-# ifdef USE_GUI
-        && !gui.in_use
-# endif
-        )
-      IObuff[len++] = ' ';       /* draw composing char on top of a space */
-    len += (*mb_char2bytes)(c, IObuff + len);
-    vim_snprintf((char *)IObuff + len, IOSIZE - len,
-        c < 0x10000 ? _("> %d, Hex %04x, Octal %o")
-        : _("> %d, Hex %08x, Octal %o"), c, c, c);
-    if (ci == MAX_MCO)
+#define SPACE_FOR_DESC (1 + 1 + 1 + MB_MAXBYTES + 16 + 4 + 3 + 3 + 1)
+  // Space for description:
+  // - 1 byte for separator (starting from second entry)
+  // - 1 byte for "<"
+  // - 1 byte for space to draw composing character on (optional, but really
+  //   mostly required)
+  // - up to MB_MAXBYTES bytes for character itself
+  // - 16 bytes for raw text ("> , Hex , Octal ").
+  // - at least 4 bytes for hexadecimal representation
+  // - at least 3 bytes for decimal representation
+  // - at least 3 bytes for octal representation
+  // - 1 byte for NUL
+  //
+  // Taking into account MAX_MCO and characters which need 8 bytes for
+  // hexadecimal representation, but not taking translation into account:
+  // resulting string will occupy less then 400 bytes (conservative estimate).
+  //
+  // Less then 1000 bytes if translation multiplies number of bytes needed for
+  // raw text by 6, so it should always fit into 1025 bytes reserved for IObuff.
+
+  // Repeat for combining characters, also handle multiby here.
+  while (c >= 0x80 && iobuff_len < sizeof(IObuff) - SPACE_FOR_DESC) {
+    // This assumes every multi-byte char is printable...
+    if (iobuff_len > 0) {
+      IObuff[iobuff_len++] = ' ';
+    }
+    IObuff[iobuff_len++] = '<';
+    if (utf_iscomposing(c)) {
+      IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
+    }
+    iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
+    iobuff_len += (
+        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                     (c < 0x10000
+                      ? _("> %d, Hex %04x, Octal %o")
+                      : _("> %d, Hex %08x, Octal %o")), c, c, c));
+    if (ci == MAX_MCO) {
       break;
-    if (l_enc_utf8)
-      c = cc[ci++];
-    else
-      c = 0;
+    }
+    c = cc[ci++];
+  }
+  if (ci != MAX_MCO && c != 0) {
+    xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
   msg(IObuff);
@@ -275,7 +280,7 @@ void ex_align(exarg_T *eap)
       new_indent = 0;
     (void)set_indent(new_indent, 0);                    /* set indent */
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, 0L);
+  changed_lines(eap->line1, 0, eap->line2 + 1, 0L, true);
   curwin->w_cursor = save_curpos;
   beginline(BL_WHITE | BL_FIX);
 }
@@ -608,7 +613,7 @@ void ex_sort(exarg_T *eap)
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted);
+  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
 
   curwin->w_cursor.lnum = eap->line1;
   beginline(BL_WHITE | BL_FIX);
@@ -740,8 +745,9 @@ void ex_retab(exarg_T *eap)
 
   if (curbuf->b_p_ts != new_ts)
     redraw_curbuf_later(NOT_VALID);
-  if (first_line != 0)
-    changed_lines(first_line, 0, last_line + 1, 0L);
+  if (first_line != 0) {
+    changed_lines(first_line, 0, last_line + 1, 0L, true);
+  }
 
   curwin->w_p_list = save_list;         /* restore 'list' */
 
@@ -802,6 +808,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    */
   last_line = curbuf->b_ml.ml_line_count;
   mark_adjust_nofold(line1, line2, last_line - line2, 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   if (dest >= line2) {
     mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, false);
     FOR_ALL_TAB_WINDOWS(tab, win) {
@@ -824,6 +831,12 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
                      -(last_line - dest - extra), 0L, true);
+  changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
+
+  // send update regarding the new lines that were added
+  if (kv_size(curbuf->update_channels)) {
+    buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  }
 
   /*
    * Now we delete the original text -- webb
@@ -854,9 +867,14 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     last_line = curbuf->b_ml.ml_line_count;
     if (dest > last_line + 1)
       dest = last_line + 1;
-    changed_lines(line1, 0, dest, 0L);
+    changed_lines(line1, 0, dest, 0L, false);
   } else {
-    changed_lines(dest + 1, 0, line1 + num_lines, 0L);
+    changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
+  }
+
+  // send nvim_buf_lines_event regarding lines that were deleted
+  if (kv_size(curbuf->update_channels)) {
+    buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
   }
 
   return OK;
@@ -1175,7 +1193,7 @@ static void do_filter(
   // to read the error messages. Otherwise errors are ignored, so you can see
   // the error messages from the command that appear on stdout; use 'u' to fix
   // the text.
-  // Pass on the kShellDoOut flag when the output is being redirected.
+  // Pass on the kShellOptDoOut flag when the output is being redirected.
   if (call_shell(
         cmd_buf,
         kShellOptFilter | shell_flags,
@@ -1288,10 +1306,10 @@ filterend:
  * Call a shell to execute a command.
  * When "cmd" is NULL start an interactive shell.
  */
-void 
-do_shell (
+void
+do_shell(
     char_u *cmd,
-    int flags              /* may be SHELL_DOOUT when output is redirected */
+    int flags             // may be SHELL_DOOUT when output is redirected
 )
 {
   int save_nwr;
@@ -1482,7 +1500,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
   if (curwin->w_p_nu || use_number) {
     vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
                  number_width(curwin), lnum);
-    msg_puts_attr(numbuf, hl_attr(HLF_N));  // Highlight line nrs.
+    msg_puts_attr(numbuf, HL_ATTR(HLF_N));  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -1771,14 +1789,14 @@ theend:
  * May set eap->forceit if a dialog says it's OK to overwrite.
  * Return OK if it's OK, FAIL if it is not.
  */
-int 
-check_overwrite (
+int
+check_overwrite(
     exarg_T *eap,
     buf_T *buf,
-    char_u *fname,         /* file name to be used (can differ from
-                               buf->ffname) */
-    char_u *ffname,        /* full path version of fname */
-    int other                  /* writing under other name */
+    char_u *fname,         // file name to be used (can differ from
+                           //   buf->ffname)
+    char_u *ffname,        // full path version of fname
+    int other              // writing under other name
 )
 {
   /*
@@ -2013,17 +2031,18 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   } else
     other = (fnum != curbuf->b_fnum);
 
-  if (other)
-    ++no_wait_return;               /* don't wait for autowrite message */
-  if (other && !forceit && curbuf->b_nwindows == 1 && !P_HID(curbuf)
+  if (other) {
+    no_wait_return++;               // don't wait for autowrite message
+  }
+  if (other && !forceit && curbuf->b_nwindows == 1 && !buf_hide(curbuf)
       && curbufIsChanged() && autowrite(curbuf, forceit) == FAIL) {
-    if (p_confirm && p_write)
-      dialog_changed(curbuf, FALSE);
+    if (p_confirm && p_write) {
+      dialog_changed(curbuf, false);
+    }
     if (curbufIsChanged()) {
-      if (other)
-        --no_wait_return;
+      no_wait_return--;
       EMSG(_(e_nowrtmsg));
-      retval = 2;       /* file has been changed */
+      retval = 2;  // File has been changed.
       goto theend;
     }
   }
@@ -2032,17 +2051,19 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   if (setpm)
     setpcmark();
   if (!other) {
-    if (lnum != 0)
+    if (lnum != 0) {
       curwin->w_cursor.lnum = lnum;
+    }
     check_cursor_lnum();
     beginline(BL_SOL | BL_FIX);
-    retval = 0;         /* it's in the same file */
+    retval = 0;         // it's in the same file
   } else if (do_ecmd(fnum, ffname, sfname, NULL, lnum,
-                 (P_HID(curbuf) ? ECMD_HIDE : 0) + (forceit ? ECMD_FORCEIT : 0),
-                 curwin) == OK)
-    retval = -1;        /* opened another file */
-  else
-    retval = 1;         /* error encountered */
+                     (buf_hide(curbuf) ? ECMD_HIDE : 0)
+                     + (forceit ? ECMD_FORCEIT : 0), curwin) == OK) {
+    retval = -1;        // opened another file
+  } else {
+    retval = 1;         // error encountered
+  }
 
 theend:
   xfree(free_me);
@@ -2421,6 +2442,7 @@ int do_ecmd(
         goto theend;
       }
       u_unchanged(curbuf);
+      buf_updates_unregister_all(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
@@ -2801,7 +2823,7 @@ void ex_change(exarg_T *eap)
 void ex_z(exarg_T *eap)
 {
   char_u      *x;
-  int bigness;
+  int64_t     bigness;
   char_u      *kind;
   int minus = 0;
   linenr_T start, end, curs, i;
@@ -2834,10 +2856,17 @@ void ex_z(exarg_T *eap)
       EMSG(_("E144: non-numeric argument to :z"));
       return;
     }
-    bigness = atoi((char *)x);
+    bigness = atol((char *)x);
+
+    // bigness could be < 0 if atol(x) overflows.
+    if (bigness > 2 * curbuf->b_ml.ml_line_count || bigness < 0) {
+      bigness = 2 * curbuf->b_ml.ml_line_count;
+    }
+
     p_window = bigness;
-    if (*kind == '=')
+    if (*kind == '=') {
       bigness += 2;
+    }
   }
 
   /* the number of '-' and '+' multiplies the distance */
@@ -3146,8 +3175,10 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
+/// @param do_buf_event If `true`, send buffer updates.
 /// @return buffer used for 'inccommand' preview
-static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
+static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
+                     bool do_buf_event)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3245,9 +3276,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
         *cmd++ = NUL;                           /* replace it with a NUL */
         break;
       }
-      if (cmd[0] == '\\' && cmd[1] != 0)        /* skip escaped characters */
-        ++cmd;
-      mb_ptr_adv(cmd);
+      if (cmd[0] == '\\' && cmd[1] != 0) {      // skip escaped characters
+        cmd++;
+      }
+      MB_PTR_ADV(cmd);
     }
 
     if (!eap->skip && !preview) {
@@ -3611,7 +3643,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
               msg_no_more = TRUE;
               /* write message same highlighting as for
                * wait_return */
-              smsg_attr(hl_attr(HLF_R),
+              smsg_attr(HL_ATTR(HLF_R),
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;
@@ -3993,7 +4025,14 @@ skip:
      * the line number before the change (same as adding the number of
      * deleted lines). */
     i = curbuf->b_ml.ml_line_count - old_line_count;
-    changed_lines(first_line, 0, last_line - i, i);
+    changed_lines(first_line, 0, last_line - i, i, false);
+
+    if (kv_size(curbuf->update_channels)) {
+      int64_t num_added = last_line - first_line;
+      int64_t num_removed = num_added - i;
+      buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
+                               do_buf_event);
+    }
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */
@@ -4555,11 +4594,11 @@ char_u *check_help_lang(char_u *arg)
  * Assumption is made that the matched_string passed has already been found to
  * match some string for which help is requested.  webb.
  */
-int 
-help_heuristic (
+int
+help_heuristic(
     char_u *matched_string,
-    int offset,                             /* offset for match */
-    int wrong_case                         /* no matching case */
+    int offset,                             // offset for match
+    int wrong_case                          // no matching case
 )
 {
   int num_letters;
@@ -4620,7 +4659,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
                              "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
                              "[count]", "[quotex]",
                              "[range]", ":[range]",
@@ -4630,7 +4669,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
   static char *(rtable[]) = {"star", "gstar", "[star", "]star",
                              "/star", "/\\\\star", "quotestar", "starstar",
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
+                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
                              "\\[count]", "\\[quotex]",
                              "\\[range]", ":\\[range]",
@@ -4861,7 +4900,9 @@ void fix_help_buffer(void)
   char_u      *rt;
 
   // Set filetype to "help".
-  set_option_value("ft", 0L, "help", OPT_LOCAL);
+  if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+    set_option_value("ft", 0L, "help", OPT_LOCAL);
+  }
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
@@ -5823,7 +5864,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_line_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -5832,7 +5874,8 @@ static void sign_list_defined(sign_T *sp)
   }
   if (sp->sn_text_hl > 0) {
     msg_puts(" texthl=");
-    const char *const p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_text_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -6235,7 +6278,7 @@ void ex_substitute(exarg_T *eap)
 {
   bool preview = (State & CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    (void)do_sub(eap, profile_zero());
+    (void)do_sub(eap, profile_zero(), true);
     return;
   }
 
@@ -6259,7 +6302,7 @@ void ex_substitute(exarg_T *eap)
   // Don't show search highlighting during live substitution
   bool save_hls = p_hls;
   p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt));
+  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
   p_hls = save_hls;
 
   if (save_changedtick != curbuf->b_changedtick) {

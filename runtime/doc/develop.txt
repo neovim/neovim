@@ -203,7 +203,7 @@ DOCUMENTATION						*dev-doc*
 
 API							*dev-api*
 
-Use this pattern to name new API functions:
+Use this template to name new API functions:
     nvim_{thing}_{action}_{arbitrary-qualifiers}
 
 If the function acts on an object then {thing} is the name of that object
@@ -230,6 +230,11 @@ parameter) and uses the common {action} "add".
 Example: `nvim_list_bufs` operates in a global context (first parameter is
 _not_ a Buffer). The common {action} "list" indicates that it lists all
 bufs (plural) in the global context.
+
+Use this template to name new API events:
+    nvim_{thing}_{event}_event
+
+Example: `nvim_buf_changedtick_event`.
 
 
 API-CLIENT						*dev-api-client*
@@ -267,7 +272,11 @@ Common Features ~
 External UIs are expected to implement these common features:
 - Cursor style (shape, color) should respond to the 'guicursor' properties
   delivered with the mode_info_set UI event.
+- Send the ALT/META ("Option" on macOS) key as a |<M-| chord.
 - Send the "super" key (Windows key, Apple key) as a |<D-| chord.
+- Avoid mappings that conflict with Nvim defaults. GUIs have many new chords
+  like <C-,> <C-Enter> <C-S-x> <D-x> and patterns like "shift shift", which
+  don't conflict with typical Nvim mappings.
 
 Implementation ~
 - UI-related options ('guifont', 'ambiwidth', …) are published in the

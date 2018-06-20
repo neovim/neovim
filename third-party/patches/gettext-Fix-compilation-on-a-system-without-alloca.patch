@@ -1,0 +1,28 @@
+From 1d12aeb7334104f77070361492ff7cc8225503f5 Mon Sep 17 00:00:00 2001
+From: Daiki Ueno <ueno@gnu.org>
+Date: Mon, 14 Nov 2016 13:27:58 +0100
+Subject: [PATCH] intl: Fix compilation on a system without alloca
+
+* gettext-runtime/intl/dcigettext.c (DCIGETTEXT): Fix typo 'tmp_dirname'
+-> 'resolved_dirname'.  Reported by Egor Pugin in:
+http://lists.gnu.org/archive/html/bug-gettext/2016-09/msg00008.html
+---
+ gettext-runtime/intl/dcigettext.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gettext-runtime/intl/dcigettext.c b/gettext-runtime/intl/dcigettext.c
+index 83bd77574..92f6fd685 100644
+--- a/gettext-runtime/intl/dcigettext.c
++++ b/gettext-runtime/intl/dcigettext.c
+@@ -634,7 +634,7 @@ DCIGETTEXT (const char *domainname, const char *msgid1, const char *msgid2,
+ 	  for (;;)
+ 	    {
+ 	      resolved_dirname = (char *) alloca (path_max + dirname_len);
+-	      ADD_BLOCK (block_list, tmp_dirname);
++	      ADD_BLOCK (block_list, resolved_dirname);
+ 
+ 	      __set_errno (0);
+ 	      ret = getcwd (resolved_dirname, path_max);
+-- 
+2.16.1.windows.4
+

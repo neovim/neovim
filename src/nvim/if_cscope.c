@@ -496,9 +496,9 @@ staterr:
 
     if (p_csverbose) {
       msg_clr_eos();
-      (void)smsg_attr(hl_attr(HLF_R),
-            _("Added cscope database %s"),
-            csinfo[i].fname);
+      (void)smsg_attr(HL_ATTR(HLF_R),
+                      _("Added cscope database %s"),
+                      csinfo[i].fname);
     }
   }
 
@@ -549,7 +549,7 @@ static void cs_reading_emsg(
 static int cs_cnt_matches(size_t idx)
 {
   char *stok;
-  int nlines;
+  int nlines = 0;
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
   for (;; ) {
@@ -569,16 +569,20 @@ static int cs_cnt_matches(size_t idx)
       return CSCOPE_FAILURE;
     }
 
-    /*
-     * If the database is out of date, or there's some other problem,
-     * cscope will output error messages before the number-of-lines output.
-     * Display/discard any output that doesn't match what we want.
-     * Accept "\S*cscope: X lines", also matches "mlcscope".
-     */
-    if ((stok = strtok(buf, (const char *)" ")) == NULL)
+    // If the database is out of date, or there's some other problem,
+    // cscope will output error messages before the number-of-lines output.
+    // Display/discard any output that doesn't match what we want.
+    // Accept "\S*cscope: X lines", also matches "mlcscope".
+    // Bail out for the "Unable to search" error.
+    if (strstr((const char *)buf, "Unable to search database") != NULL) {
+        break;
+    }
+    if ((stok = strtok(buf, (const char *)" ")) == NULL) {
       continue;
-    if (strstr((const char *)stok, "cscope:") == NULL)
+    }
+    if (strstr((const char *)stok, "cscope:") == NULL) {
       continue;
+    }
 
     if ((stok = strtok(NULL, (const char *)" ")) == NULL)
       continue;
@@ -997,8 +1001,8 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
     return FALSE;
   }
 
-  if (qfpos != NULL && *qfpos != '0' && totmatches > 0) {
-    /* fill error list */
+  if (qfpos != NULL && *qfpos != '0') {
+    // Fill error list.
     FILE        *f;
     char_u      *tmp = vim_tempname();
     qf_info_T   *qi = NULL;
@@ -1254,8 +1258,8 @@ static void cs_kill_execute(
 {
   if (p_csverbose) {
     msg_clr_eos();
-    (void)smsg_attr(hl_attr(HLF_R) | MSG_HIST,
-          _("cscope connection %s closed"), cname);
+    (void)smsg_attr(HL_ATTR(HLF_R) | MSG_HIST,
+                    _("cscope connection %s closed"), cname);
   }
   cs_release_csp(i, TRUE);
 }
@@ -1586,16 +1590,16 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
   (void)snprintf(buf, bufsize, cstag_msg, ptag);
-  MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
+  MSG_PUTS_ATTR(buf, HL_ATTR(HLF_T));
   msg_clr_eos();
 
   // restore matches[0]
   *ptag_end = '\t';
 
   // Column headers for match number, line number and filename.
-  MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));
+  MSG_PUTS_ATTR(_("\n   #   line"), HL_ATTR(HLF_T));
   msg_advance(msg_col + 2);
-  MSG_PUTS_ATTR(_("filename / context / line\n"), hl_attr(HLF_T));
+  MSG_PUTS_ATTR(_("filename / context / line\n"), HL_ATTR(HLF_T));
 
   for (size_t i = 0; i < num_matches; i++) {
     assert(strcnt(matches[i], '\t') >= 2);
@@ -1622,8 +1626,8 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       bufsize = newsize;
     }
     (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
-    MSG_PUTS_ATTR(buf, hl_attr(HLF_CM));
-    MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), hl_attr(HLF_CM));
+    MSG_PUTS_ATTR(buf, HL_ATTR(HLF_CM));
+    MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), HL_ATTR(HLF_CM));
 
     // compute the required space for the context
     char *context = cntxts[i] ? cntxts[i] : globalcntx;
@@ -1685,8 +1689,15 @@ static int cs_read_prompt(size_t i)
   assert(IOSIZE >= cs_emsg_len);
   size_t maxlen = IOSIZE - cs_emsg_len;
 
-  for (;; ) {
-    while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0]) {
+  while (1) {
+    while (1) {
+      do {
+        errno = 0;
+        ch = fgetc(csinfo[i].fr_fp);
+      } while (ch == EOF && errno == EINTR && ferror(csinfo[i].fr_fp));
+      if (ch == EOF || ch == CSCOPE_PROMPT[0]) {
+        break;
+      }
       // if there is room and char is printable
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
         // lazy buffer allocation
@@ -1715,9 +1726,13 @@ static int cs_read_prompt(size_t i)
       }
     }
 
-    for (size_t n = 0; n < strlen(CSCOPE_PROMPT); ++n) {
-      if (n > 0)
-        ch = (char)getc(csinfo[i].fr_fp);
+    for (size_t n = 0; n < strlen(CSCOPE_PROMPT); n++) {
+      if (n > 0) {
+        do {
+          errno = 0;
+          ch = fgetc(csinfo[i].fr_fp);
+        } while (ch == EOF && errno == EINTR && ferror(csinfo[i].fr_fp));
+      }
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
         if (buf != NULL && buf[0] != NUL)
@@ -1900,7 +1915,7 @@ static int cs_reset(exarg_T *eap)
          * "Added cscope database..."
          */
         snprintf(buf, ARRAY_SIZE(buf), " (#%zu)", i);
-        MSG_PUTS_ATTR(buf, hl_attr(HLF_R));
+        MSG_PUTS_ATTR(buf, HL_ATTR(HLF_R));
       }
     }
     xfree(dblist[i]);
@@ -1912,7 +1927,7 @@ static int cs_reset(exarg_T *eap)
   xfree(fllist);
 
   if (p_csverbose) {
-    msg_attr(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+    msg_attr(_("All cscope databases reset"), HL_ATTR(HLF_R) | MSG_HIST);
   }
   return CSCOPE_SUCCESS;
 } /* cs_reset */
@@ -1978,7 +1993,7 @@ static int cs_show(exarg_T *eap)
   else {
     MSG_PUTS_ATTR(
         _(" # pid    database name                       prepend path\n"),
-        hl_attr(HLF_T));
+        HL_ATTR(HLF_T));
     for (size_t i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname == NULL)
         continue;

@@ -1,4 +1,6 @@
 " Simplistic testing of Arabic mode.
+" NOTE: This just checks if the code works. If you know Arabic please add
+" functional tests that check the shaping works with real text.
 
 if !has('arabic') || !has('multi_byte')
   finish
@@ -417,7 +419,7 @@ func Test_shape_isolated()
   bwipe!
 endfunc
 
-func Test_shape_medial()
+func Test_shape_iso_to_medial()
   new
   set arabicshape
 
@@ -470,3 +472,142 @@ func Test_shape_medial()
   bwipe!
 endfunc
 
+func Test_shape_final()
+  new
+  set arabicshape
+
+  " Shaping arabic {testchar} arabic   Tests chg_c_a2f().
+  " pair[0] = testchar,  pair[1] = current-result, pair[2] = previous-result
+  for pair in [[s:a_HAMZA, s:a_s_HAMZA, s:a_s_BEH],
+	\[s:a_ALEF_MADDA, s:a_f_ALEF_MADDA, s:a_i_BEH],
+	\[s:a_ALEF_HAMZA_ABOVE, s:a_f_ALEF_HAMZA_ABOVE, s:a_i_BEH],
+	\[s:a_WAW_HAMZA, s:a_f_WAW_HAMZA, s:a_i_BEH],
+	\[s:a_ALEF_HAMZA_BELOW, s:a_f_ALEF_HAMZA_BELOW, s:a_i_BEH],
+	\[s:a_YEH_HAMZA, s:a_f_YEH_HAMZA, s:a_i_BEH],
+	\[s:a_ALEF, s:a_f_ALEF, s:a_i_BEH],
+	\[s:a_BEH, s:a_f_BEH, s:a_i_BEH],
+	\[s:a_TEH_MARBUTA, s:a_f_TEH_MARBUTA, s:a_i_BEH],
+	\[s:a_TEH, s:a_f_TEH, s:a_i_BEH],
+	\[s:a_THEH, s:a_f_THEH, s:a_i_BEH],
+	\[s:a_JEEM, s:a_f_JEEM, s:a_i_BEH],
+	\[s:a_HAH, s:a_f_HAH, s:a_i_BEH],
+	\[s:a_KHAH, s:a_f_KHAH, s:a_i_BEH],
+	\[s:a_DAL, s:a_f_DAL, s:a_i_BEH],
+	\[s:a_THAL, s:a_f_THAL, s:a_i_BEH],
+	\[s:a_REH, s:a_f_REH, s:a_i_BEH],
+	\[s:a_ZAIN, s:a_f_ZAIN, s:a_i_BEH],
+	\[s:a_SEEN, s:a_f_SEEN, s:a_i_BEH],
+	\[s:a_SHEEN, s:a_f_SHEEN, s:a_i_BEH],
+	\[s:a_SAD, s:a_f_SAD, s:a_i_BEH],
+	\[s:a_DAD, s:a_f_DAD, s:a_i_BEH],
+	\[s:a_TAH, s:a_f_TAH, s:a_i_BEH],
+	\[s:a_ZAH, s:a_f_ZAH, s:a_i_BEH],
+	\[s:a_AIN, s:a_f_AIN, s:a_i_BEH],
+	\[s:a_GHAIN, s:a_f_GHAIN, s:a_i_BEH],
+	\[s:a_TATWEEL, s:a_TATWEEL, s:a_i_BEH],
+	\[s:a_FEH, s:a_f_FEH, s:a_i_BEH],
+	\[s:a_QAF, s:a_f_QAF, s:a_i_BEH],
+	\[s:a_KAF, s:a_f_KAF, s:a_i_BEH],
+	\[s:a_LAM, s:a_f_LAM, s:a_i_BEH],
+	\[s:a_MEEM, s:a_f_MEEM, s:a_i_BEH],
+	\[s:a_NOON, s:a_f_NOON, s:a_i_BEH],
+	\[s:a_HEH, s:a_f_HEH, s:a_i_BEH],
+	\[s:a_WAW, s:a_f_WAW, s:a_i_BEH],
+	\[s:a_ALEF_MAKSURA, s:a_f_ALEF_MAKSURA, s:a_i_BEH],
+	\[s:a_YEH, s:a_f_YEH, s:a_i_BEH],
+	\ ]
+    call setline(1, ' ' . pair[0] . s:a_BEH)
+    call assert_equal([' ' . pair[1] . pair[2]], ScreenLines(1, 3))
+  endfor
+
+  set arabicshape&
+  bwipe!
+endfunc
+
+func Test_shape_final_to_medial()
+  new
+  set arabicshape
+
+  " Shaping arabic {testchar} arabic   Tests chg_c_f2m().
+  " This does not test much...
+  " pair[0] = testchar,  pair[1] = current-result
+  for pair in [[s:a_f_YEH_HAMZA, s:a_f_BEH],
+	\[s:a_f_WAW_HAMZA, s:a_s_BEH],
+	\[s:a_f_ALEF, s:a_s_BEH],
+	\[s:a_f_TEH_MARBUTA, s:a_s_BEH],
+	\[s:a_f_DAL, s:a_s_BEH],
+	\[s:a_f_THAL, s:a_s_BEH],
+	\[s:a_f_REH, s:a_s_BEH],
+	\[s:a_f_ZAIN, s:a_s_BEH],
+	\[s:a_f_WAW, s:a_s_BEH],
+	\[s:a_f_ALEF_MAKSURA, s:a_s_BEH],
+	\[s:a_f_BEH, s:a_f_BEH],
+	\[s:a_f_TEH, s:a_f_BEH],
+	\[s:a_f_THEH, s:a_f_BEH],
+	\[s:a_f_JEEM, s:a_f_BEH],
+	\[s:a_f_HAH, s:a_f_BEH],
+	\[s:a_f_KHAH, s:a_f_BEH],
+	\[s:a_f_SEEN, s:a_f_BEH],
+	\[s:a_f_SHEEN, s:a_f_BEH],
+	\[s:a_f_SAD, s:a_f_BEH],
+	\[s:a_f_DAD, s:a_f_BEH],
+	\[s:a_f_TAH, s:a_f_BEH],
+	\[s:a_f_ZAH, s:a_f_BEH],
+	\[s:a_f_AIN, s:a_f_BEH],
+	\[s:a_f_GHAIN, s:a_f_BEH],
+	\[s:a_f_FEH, s:a_f_BEH],
+	\[s:a_f_QAF, s:a_f_BEH],
+	\[s:a_f_KAF, s:a_f_BEH],
+	\[s:a_f_LAM, s:a_f_BEH],
+	\[s:a_f_MEEM, s:a_f_BEH],
+	\[s:a_f_NOON, s:a_f_BEH],
+	\[s:a_f_HEH, s:a_f_BEH],
+	\[s:a_f_YEH, s:a_f_BEH],
+	\ ]
+    call setline(1, ' ' . s:a_BEH . pair[0])
+    call assert_equal([' ' . pair[1] . pair[0]], ScreenLines(1, 3))
+  endfor
+
+  set arabicshape&
+  bwipe!
+endfunc
+
+func Test_shape_combination_final()
+  new
+  set arabicshape
+
+  " Shaping arabic {testchar} arabic   Tests chg_c_laa2f().
+  " pair[0] = testchar,  pair[1] = current-result
+  for pair in [[s:a_ALEF_MADDA, s:a_f_LAM_ALEF_MADDA_ABOVE],
+	\ [s:a_ALEF_HAMZA_ABOVE, s:a_f_LAM_ALEF_HAMZA_ABOVE],
+	\ [s:a_ALEF_HAMZA_BELOW, s:a_f_LAM_ALEF_HAMZA_BELOW],
+	\ [s:a_ALEF, s:a_f_LAM_ALEF],
+	\ ]
+    " The test char is a composing char, put on s:a_LAM.
+    call setline(1, ' ' . s:a_LAM . pair[0] . s:a_BEH)
+    call assert_equal([' ' . pair[1] . s:a_i_BEH], ScreenLines(1, 3))
+  endfor
+
+  set arabicshape&
+  bwipe!
+endfunc
+
+func Test_shape_combination_isolated()
+  new
+  set arabicshape
+
+  " Shaping arabic {testchar} arabic   Tests chg_c_laa2i().
+  " pair[0] = testchar,  pair[1] = current-result
+  for pair in [[s:a_ALEF_MADDA, s:a_s_LAM_ALEF_MADDA_ABOVE],
+	\ [s:a_ALEF_HAMZA_ABOVE, s:a_s_LAM_ALEF_HAMZA_ABOVE],
+	\ [s:a_ALEF_HAMZA_BELOW, s:a_s_LAM_ALEF_HAMZA_BELOW],
+	\ [s:a_ALEF, s:a_s_LAM_ALEF],
+	\ ]
+    " The test char is a composing char, put on s:a_LAM.
+    call setline(1, ' ' . s:a_LAM . pair[0] . ' ')
+    call assert_equal([' ' . pair[1] . ' '], ScreenLines(1, 3))
+  endfor
+
+  set arabicshape&
+  bwipe!
+endfunc

@@ -17,7 +17,7 @@
 void ugrid_init(UGrid *grid)
 {
   grid->attrs = HLATTRS_INIT;
-  grid->fg = grid->bg = -1;
+  grid->clear_attrs = HLATTRS_INIT;
   grid->cells = NULL;
 }
 
@@ -107,6 +107,7 @@ UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
   UCell *cell = grid->cells[grid->row] + grid->col;
   cell->data[size] = 0;
   cell->attrs = grid->attrs;
+  assert(size <= CELLBYTES);
 
   if (text) {
     memcpy(cell->data, text, size);
@@ -118,9 +119,7 @@ UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
 
 static void clear_region(UGrid *grid, int top, int bot, int left, int right)
 {
-  HlAttrs clear_attrs = HLATTRS_INIT;
-  clear_attrs.foreground = grid->fg;
-  clear_attrs.background = grid->bg;
+  HlAttrs clear_attrs = grid->clear_attrs;
   UGRID_FOREACH_CELL(grid, top, bot, left, right, {
     cell->data[0] = ' ';
     cell->data[1] = 0;

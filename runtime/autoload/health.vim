@@ -93,26 +93,26 @@ function! s:help_to_link(s) abort
   return substitute(a:s, '\v:h%[elp] ([^|][^"\r\n ]+)', ':help |\1|', 'g')
 endfunction
 
-" Format a message for a specific report item
+" Format a message for a specific report item.
+" a:1: Optional advice (string or list)
 function! s:format_report_message(status, msg, ...) abort " {{{
   let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
-  let advice = []
 
   " Optional parameters
   if a:0 > 0
-    let advice = type(a:1) == type("") ? [a:1] : a:1
+    let advice = type(a:1) == type('') ? [a:1] : a:1
     if type(advice) != type([])
-      throw "Expected String or List"
+      throw 'a:1: expected String or List'
+    endif
+
+    " Report each suggestion
+    if !empty(advice)
+      let output .= "\n    - ADVICE:"
+      for suggestion in advice
+        let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
+      endfor
     endif
   endif
-
-  " Report each suggestion
-  if len(advice) > 0
-    let output .= "\n    - ADVICE:"
-  endif
-  for suggestion in advice
-    let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
-  endfor
 
   return s:help_to_link(output)
 endfunction " }}}
@@ -128,6 +128,7 @@ function! health#report_ok(msg) abort " {{{
 endfunction " }}}
 
 " Reports a health warning.
+" a:1: Optional advice (string or list)
 function! health#report_warn(msg, ...) abort " {{{
   if a:0 > 0
     echo s:format_report_message('WARNING', a:msg, a:1)
@@ -137,6 +138,7 @@ function! health#report_warn(msg, ...) abort " {{{
 endfunction " }}}
 
 " Reports a failed healthcheck.
+" a:1: Optional advice (string or list)
 function! health#report_error(msg, ...) abort " {{{
   if a:0 > 0
     echo s:format_report_message('ERROR', a:msg, a:1)

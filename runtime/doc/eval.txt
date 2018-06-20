@@ -1788,9 +1788,9 @@ v:scrollstart	String describing the script or function that caused the
 		hit-enter prompt.
 
 					*v:servername* *servername-variable*
-					*$NVIM_LISTEN_ADDRESS*
-v:servername	Default Nvim server address. Equivalent to
-		|$NVIM_LISTEN_ADDRESS| on startup. |serverstop()|
+v:servername	Primary listen-address of the current Nvim instance, the first
+		item returned by |serverlist()|.  Can be set by |--listen| or
+		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
 		Read-only.
 
 
@@ -2286,6 +2286,7 @@ split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
+stdpath({what})                 String/List  returns the standard path(s) for {what}
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
@@ -4208,8 +4209,7 @@ getftype({fname})					*getftype()*
 			getftype("/home")
 <		Note that a type such as "link" will only be returned on
 		systems that support it.  On some systems only "dir" and
-		"file" are returned.  On MS-Windows a symbolic link to a
-		directory returns "dir" instead of "link".
+		"file" are returned.
 
 							*getline()*
 getline({lnum} [, {end}])
@@ -5033,10 +5033,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  width    : (pty only) Width of the terminal screen
 		  height   : (pty only) Height of the terminal screen
 		  TERM     : (pty only) $TERM environment variable
-		  detach   : (non-pty only) Detach the job process from the
-			     nvim process. The process will not get killed
-			     when nvim exits. If the process dies before
-			     nvim exits, "on_exit" will still be invoked.
+		  detach   : (non-pty only) Detach the job process: it will
+			     not be killed when Nvim exits. If the process
+			     exits before Nvim, "on_exit" will be invoked.
 
 		{opts} is passed as |self| dictionary to the callback; the
 		caller may set other keys to pass application-specific data.
@@ -5183,8 +5182,10 @@ line({expr})	The result is a Number, which is the line number of the file
 		    $	    the last line in the current buffer
 		    'x	    position of mark x (if the mark is not set, 0 is
 			    returned)
-		    w0	    first line visible in current window
-		    w$	    last line visible in current window
+		    w0	    first line visible in current window (one if the
+			    display isn't updated, e.g. in silent Ex mode)
+		    w$	    last line visible in current window (this is one
+			    less than "w0" if no lines are visible)
 		    v	    In Visual mode: the start of the Visual area (the
 			    cursor is the end).  When not in Visual mode
 			    returns the cursor position.  Differs from |'<| in
@@ -6638,15 +6639,11 @@ server2client({clientid}, {string})			*server2client()*
 			:echo server2client(expand("<client>"), "HELLO")
 <
 serverlist()						*serverlist()*
-		Returns a list of available server names in a list.
-		When there are no servers an empty string is returned.
+		Returns a list of server addresses, or empty if all servers
+		were stopped. |serverstart()| |serverstop()|
 		Example: >
 			:echo serverlist()
-<						{Nvim} *--serverlist*
-		The Vim command-line option `--serverlist` was removed from
-		Nvim, but it can be imitated: >
-			nvim --cmd "echo serverlist()" --cmd "q"
-<
+
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
 		|RPC| messages. Clients can send |API| commands to the address
@@ -6674,13 +6671,9 @@ serverstart([{address}])				*serverstart()*
 
 < 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
 
-							*--servername*
-		The Vim command-line option `--servername` can be imitated: >
-			nvim --cmd "let g:server_addr = serverstart('foo')"
-<
 serverstop({address})					*serverstop()*
-		Closes the pipe or socket at {address}. Does nothing if
-		{address} is empty or invalid.
+		Closes the pipe or socket at {address}.
+		Returns TRUE if {address} is valid, else FALSE.
 		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
 		If |v:servername| is stopped it is set to the next available
 		address returned by |serverlist()|.
@@ -6798,10 +6791,12 @@ setpos({expr}, {list})
 		    [bufnum, lnum, col, off, curswant]
 
 		"bufnum" is the buffer number.	Zero can be used for the
-		current buffer.  Setting the cursor is only possible for
-		the current buffer.  To set a mark in another buffer you can
-		use the |bufnr()| function to turn a file name into a buffer
-		number.
+		current buffer.  When setting an uppercase mark "bufnum" is
+		used for the mark position.  For other marks it specifies the
+		buffer to set the mark in.  You can use the |bufnr()| function
+		to turn a file name into a buffer number.
+		For setting the cursor and the ' mark "bufnum" is ignored,
+		since these are associated with a window, not a buffer.
 		Does not change the jumplist.
 
 		"lnum" and "col" are the position in the buffer.  The first
@@ -7271,6 +7266,21 @@ stdioopen({opts})			 *stdioopen()*
 		  - 0 on invalid arguments
 
 
+stdpath({what})					*stdpath()* *E6100*
+		Returns |standard-path| locations of various default files and
+		directories.
+
+		{what}       Type    Description ~
+		cache        String  Cache directory. Useful for plugins
+		                     that need temporary files to work.
+		config       String  User configuration directory. The
+		                     |init.vim| is stored here.
+		config_dirs  List    Additional configuration directories.
+		data         String  User data directory. The |shada-file|
+		                     is stored here.
+		data_dirs    List    Additional data directories.
+
+
 str2float({expr})					*str2float()*
 		Convert String {expr} to a Float.  This mostly works the same
 		as when using a floating point number in an expression, see
@@ -7610,12 +7620,21 @@ synconcealed({lnum}, {col})				*synconcealed()*
 		   is 1, the second item contains the text which will be
 		   displayed in place of the concealed text, depending on the
 		   current setting of 'conceallevel' and 'listchars'.
-		3. The third and final item in the list is a unique number
-		   representing the specific syntax region matched. This
-		   allows detection of the beginning of a new concealable
-		   region if there are two consecutive regions with the same
-		   replacement character.  For an example use see
-		   $VIMRUNTIME/syntax/2html.vim .
+		3. The third and final item in the list is a number
+		   representing the specific syntax region matched in the
+		   line. When the character is not concealed the value is
+		   zero. This allows detection of the beginning of a new
+		   concealable region if there are two consecutive regions
+		   with the same replacement character.  For an example, if
+		   the text is "123456" and both "23" and "45" are concealed
+		   and replace by the character "X", then:
+			call			returns ~
+		   	synconcealed(lnum, 1)   [0, '', 0]
+		   	synconcealed(lnum, 2)   [1, 'X', 1]
+		   	synconcealed(lnum, 3)   [1, 'X', 1]
+		   	synconcealed(lnum, 4)   [1, 'X', 2]
+		   	synconcealed(lnum, 5)   [1, 'X', 2]
+		   	synconcealed(lnum, 6)   [0, '', 0]
 
 
 synstack({lnum}, {col})					*synstack()*
@@ -8590,18 +8609,36 @@ See |:verbose-cmd| for more information.
 			implies that the effect of |:nohlsearch| is undone
 			when the function returns.
 
-					*:endf* *:endfunction* *E126* *E193*
-:endf[unction]		The end of a function definition.  Must be on a line
-			by its own, without other commands.
+				*:endf* *:endfunction* *E126* *E193* *W22*
+:endf[unction] [argument]
+			The end of a function definition.  Best is to put it
+			on a line by its own, without [argument].
 
-				    *:delf* *:delfunction* *E130* *E131* *E933*
-:delf[unction] {name}	Delete function {name}.
+			[argument] can be:
+				| command	command to execute next
+				\n command	command to execute next
+				" comment	always ignored
+				anything else	ignored, warning given when
+						'verbose' is non-zero
+			The support for a following command was added in Vim
+			8.0.0654, before that any argument was silently
+			ignored.
+
+			To be able to define a function inside an `:execute`
+			command, use line breaks instead of |:bar|: >
+				:exe "func Foo()\necho 'foo'\nendfunc"
+<
+				*:delf* *:delfunction* *E130* *E131* *E933*
+:delf[unction][!] {name}
+			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
 			|Funcref|: >
 				:delfunc dict.init
-<			This will remove the "init" entry from "dict".	The
+<			This will remove the "init" entry from "dict".  The
 			function is deleted if there are no more references to
 			it.
+			With the ! there is no error if the function does not
+			exist.
 							*:retu* *:return* *E133*
 :retu[rn] [expr]	Return from a function.  When "[expr]" is given, it is
 			evaluated and returned as the result of the function.

@@ -36,16 +36,28 @@ function(BuildGperf)
     INSTALL_COMMAND "${_gperf_INSTALL_COMMAND}")
 endfunction()
 
-set(GPERF_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
-
 if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 
   BuildGperf(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/gperf/configure
-      --prefix=${HOSTDEPS_INSTALL_DIR}
+      --prefix=${HOSTDEPS_INSTALL_DIR} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} install)
+
+elseif(MSVC OR MINGW)
+
+  BuildGperf(
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/GperfCMakeLists.txt
+        ${DEPS_BUILD_DIR}/src/gperf/CMakeLists.txt
+      COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/gperf/CMakeLists.txt
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 else()
   message(FATAL_ERROR "Trying to build gperf in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
-

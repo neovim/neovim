@@ -4,17 +4,6 @@ if exists('g:loaded_ruby_provider')
 endif
 let g:loaded_ruby_provider = 1
 
-let s:stderr = {}
-let s:job_opts = {'rpc': v:true}
-
-function! s:job_opts.on_stderr(chan_id, data, event) abort
-  let stderr = get(s:stderr, a:chan_id, [''])
-  let last = remove(stderr, -1)
-  let a:data[0] = last.a:data[0]
-  call extend(stderr, a:data)
-  let s:stderr[a:chan_id] = stderr
-endfunction
-
 function! provider#ruby#Detect() abort
   if exists("g:ruby_host_prog")
     return g:ruby_host_prog
@@ -35,19 +24,7 @@ function! provider#ruby#Require(host) abort
     let prog .= " " . shellescape(plugin.path)
   endfor
 
-  try
-    let channel_id = jobstart(prog, s:job_opts)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-    for row in get(s:stderr, channel_id, [])
-      echomsg row
-    endfor
-  endtry
-  throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_RUBY_LOG_FILE')
+  return provider#Poll(prog, a:host.orig_name, '$NVIM_RUBY_LOG_FILE')
 endfunction
 
 function! provider#ruby#Call(method, args) abort

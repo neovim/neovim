@@ -11,6 +11,8 @@ if [ -z "$ARCH" ]; then
   export ARCH="$(arch)"
 fi
 
+TAG=$1
+
 # App name, used by generate_appimage.
 APP=nvim
 
@@ -35,7 +37,7 @@ VERSION=$("$ROOT_DIR"/build/bin/nvim --version | head -n 1 | grep -o 'v.*')
 
 cd "$APP_BUILD_DIR"
 
-curl -Lo "$APP_BUILD_DIR"/appimage_functions.sh https://github.com/probonopd/AppImages/raw/master/functions.sh
+curl -Lo "$APP_BUILD_DIR"/appimage_functions.sh https://github.com/AppImage/AppImages/raw/master/functions.sh
 . ./appimage_functions.sh
 
 # Copy desktop and icon file to AppDir for AppRun to pick them up.
@@ -53,7 +55,7 @@ move_lib
 
 # Delete stuff that should not go into the AppImage.
 # Delete dangerous libraries; see
-# https://github.com/probonopd/AppImages/blob/master/excludelist
+# https://github.com/AppImage/AppImages/blob/master/excludelist
 delete_blacklisted
 
 ########################################################################
@@ -69,14 +71,16 @@ cd "$APP_BUILD_DIR" # Get out of AppImage directory.
 #   - Expects: $ARCH, $APP, $VERSION env vars
 #   - Expects: ./$APP.AppDir/ directory
 #   - Produces: ../out/$APP-$VERSION.glibc$GLIBC_NEEDED-$ARCH.AppImage
-generate_appimage
+if [ -n "$TAG" ]; then
+  generate_type2_appimage -u "gh-releases-zsync|neovim|neovim|$TAG|nvim.appimage.zsync"
+else
+  generate_type2_appimage
+fi
 
-# NOTE: There is currently a bug in the `generate_appimage` function (see
-# https://github.com/probonopd/AppImages/issues/228) that causes repeated builds
-# that result in the same name to fail.
-# Moving the final executable to a different folder gets around this issue.
+# Moving the final executable to a different folder so it isn't in the
+# way for a subsequent build.
 
-mv "$ROOT_DIR"/out/*.AppImage "$ROOT_DIR"/build/bin
+mv "$ROOT_DIR"/out/*.AppImage* "$ROOT_DIR"/build/bin
 # Remove the (now empty) folder the AppImage was built in
 rmdir "$ROOT_DIR"/out
 

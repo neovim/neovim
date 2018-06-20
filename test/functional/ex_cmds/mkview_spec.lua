@@ -24,7 +24,7 @@ describe(':mkview', function()
   after_each(function()
     -- Remove any views created in the view directory
     rmdir(view_dir)
-    lfs.rmdir(local_dir)
+    rmdir(local_dir)
   end)
 
   it('viewoption curdir restores local current directory', function()

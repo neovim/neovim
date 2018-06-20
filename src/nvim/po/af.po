@@ -4654,7 +4654,7 @@ msgstr " GEFAAL"
 #~ msgstr ""
 
 #, fuzzy, c-format
-#~ msgid "Did not rename %s because %s does not looks like a ShaDa file"
+#~ msgid "Did not rename %s because %s does not look like a ShaDa file"
 #~ msgstr "         [lyk nie soos 'n Vim ruillêer nie]"
 
 #, c-format

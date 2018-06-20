@@ -1,6 +1,5 @@
 " Tests for editing the command line.
 
-set belloff=all
 
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
@@ -47,8 +46,46 @@ func Test_map_completion()
   call assert_equal('"map <silent> <special>', getreg(':'))
 endfunc
 
+func Test_match_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  hi Aardig ctermfg=green
+  call feedkeys(":match \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"match Aardig', getreg(':'))
+  call feedkeys(":match \<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"match none', getreg(':'))
+endfunc
+
+func Test_highlight_completion()
+  if !has('cmdline_compl')
+    return
+  endif
+  hi Aardig ctermfg=green
+  call feedkeys(":hi \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi Aardig', getreg(':'))
+  call feedkeys(":hi default \<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi default Aardig', getreg(':'))
+  call feedkeys(":hi clear Aa\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi clear Aardig', getreg(':'))
+  call feedkeys(":hi li\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi link', getreg(':'))
+  call feedkeys(":hi d\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi default', getreg(':'))
+  call feedkeys(":hi c\<S-Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"hi clear', getreg(':'))
+
+  " A cleared group does not show up in completions.
+  hi Anders ctermfg=green
+  call assert_equal(['Aardig', 'Anders'], getcompletion('A', 'highlight'))
+  hi clear Aardig
+  call assert_equal(['Anders'], getcompletion('A', 'highlight'))
+  hi clear Anders
+  call assert_equal([], getcompletion('A', 'highlight'))
+endfunc
+
 func Test_expr_completion()
-  if !(has('cmdline_compl') && has('eval'))
+  if !has('cmdline_compl')
     return
   endif
   for cmd in [
@@ -121,7 +158,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   let l = getcompletion('', 'dir')
-  call assert_true(index(l, 'sautest/') >= 0)
+  call assert_true(index(l, expand('sautest/')) >= 0)
   let l = getcompletion('NoMatch', 'dir')
   call assert_equal([], l)
 
@@ -213,7 +250,7 @@ func Test_getcompletion()
 
   " Command line completion tests
   let l = getcompletion('cd ', 'cmdline')
-  call assert_true(index(l, 'sautest/') >= 0)
+  call assert_true(index(l, expand('sautest/')) >= 0)
   let l = getcompletion('cd NoMatch', 'cmdline')
   call assert_equal([], l)
   let l = getcompletion('let v:n', 'cmdline')
@@ -255,7 +292,7 @@ func Test_expand_star_star()
   call mkdir('a/b', 'p')
   call writefile(['asdfasdf'], 'a/b/fileXname')
   call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
-  call assert_equal('find a/b/fileXname', getreg(':'))
+  call assert_equal('find '.expand('a/b/fileXname'), getreg(':'))
   bwipe!
   call delete('a', 'rf')
 endfunc
@@ -287,17 +324,17 @@ func Test_paste_in_cmdline()
 endfunc
 
 func Test_remove_char_in_cmdline()
-    call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abc ef', @:)
+  call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abc ef', @:)
 
-    call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abcdef', @:)
+  call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abcdef', @:)
 
-    call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"abc ghi', @:)
+  call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abc ghi', @:)
 
-    call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
-    call assert_equal('"def', @:)
+  call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"def', @:)
 endfunc
 
 func Test_illegal_address1()
@@ -327,6 +364,15 @@ func Test_cmdline_complete_wildoptions()
   let b = join(sort(split(@:)),' ')
   call assert_equal(a, b)
   bw!
+endfunc
+
+func Test_cmdline_complete_user_cmd()
+  command! -complete=color -nargs=1 Foo :
+  call feedkeys(":Foo \<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  call feedkeys(":Foo b\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_equal('"Foo blue', @:)
+  delcommand Foo
 endfunc
 
 " using a leading backslash here
@@ -375,13 +421,23 @@ func Test_getcmdtype()
   call feedkeys("?MyCmd a\<C-R>=Check_cmdline('?')\<CR>\<Esc>", "xt")
 
   call feedkeys(":call input('Answer?')\<CR>", "t")
-  call feedkeys("MyCmd a\<C-R>=Check_cmdline('@')\<CR>\<Esc>", "xt")
+  call feedkeys("MyCmd a\<C-R>=Check_cmdline('@')\<CR>\<C-C>", "xt")
 
   call feedkeys(":insert\<CR>MyCmd a\<C-R>=Check_cmdline('-')\<CR>\<Esc>", "xt")
 
   cnoremap <expr> <F6> Check_cmdline('=')
   call feedkeys("a\<C-R>=MyCmd a\<F6>\<Esc>\<Esc>", "xt")
   cunmap <F6>
+endfunc
+
+func Test_verbosefile()
+  set verbosefile=Xlog
+  echomsg 'foo'
+  echomsg 'bar'
+  set verbosefile=
+  let log = readfile('Xlog')
+  call assert_match("foo\nbar", join(log, "\n"))
+  call delete('Xlog')
 endfunc
 
 set cpo&

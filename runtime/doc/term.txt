@@ -232,11 +232,6 @@ correct values. See |:mode|.
 Slow and fast terminals				*slow-fast-terminal*
 						*slow-terminal*
 
-If you have a fast terminal you may like to set the 'ruler' option.  The
-cursor position is shown in the status line.  If you are using horizontal
-scrolling ('wrap' option off) consider setting 'sidescroll' to a small
-number.
-
 If you have a slow terminal you may want to reset the 'showcmd' and 'ruler'
 options.  The command characters and cursor positions will not be shown in the
 status line (which involves a lot of cursor motions and attribute changes for

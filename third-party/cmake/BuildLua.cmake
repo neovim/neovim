@@ -71,6 +71,7 @@ set(LUA_CONFIGURE_COMMAND
       -e "s@-lncurses@@g"
       -i ${DEPS_BUILD_DIR}/src/lua/src/Makefile &&
   sed -e "/#define LUA_USE_READLINE/d"
+      -e "s@\\(#define LUA_ROOT[ 	]*\"\\)/usr/local@\\1${DEPS_INSTALL_DIR}@"
       -i ${DEPS_BUILD_DIR}/src/lua/src/luaconf.h)
 set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 set(LUA_BUILD_COMMAND
@@ -84,14 +85,13 @@ BuildLua(CONFIGURE_COMMAND ${LUA_CONFIGURE_COMMAND}
   BUILD_COMMAND ${LUA_BUILD_COMMAND}
   INSTALL_COMMAND ${LUA_INSTALL_COMMAND})
 list(APPEND THIRD_PARTY_DEPS lua)
-add_dependencies(lua busted)
 
 set(BUSTED ${DEPS_INSTALL_DIR}/bin/busted)
 set(BUSTED_LUA ${BUSTED}-lua)
 
 add_custom_command(OUTPUT ${BUSTED_LUA}
   COMMAND sed -e 's/^exec/exec $$LUA_DEBUGGER/' -e 's/jit//g' < ${BUSTED} > ${BUSTED_LUA} && chmod +x ${BUSTED_LUA}
-  DEPENDS lua)
+  DEPENDS lua busted)
 add_custom_target(busted-lua
   DEPENDS ${DEPS_INSTALL_DIR}/bin/busted-lua)
 

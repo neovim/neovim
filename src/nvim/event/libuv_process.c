@@ -26,15 +26,18 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvopts.file = proc->argv[0];
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
-  if (proc->detach) {
-      uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
-  }
 #ifdef WIN32
   // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
   // expects a different syntax (must be prepared by the caller before now).
   if (os_shell_is_cmdexe(proc->argv[0])) {
     uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
   }
+  if (proc->detach) {
+    uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
+  }
+#else
+  // Always setsid() on unix-likes. #8107
+  uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
@@ -48,12 +51,19 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+#ifdef WIN32
+    uvproc->uvstdio[0].flags |= UV_OVERLAPPED_PIPE;
+#endif
     uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->in.uv.pipe);
   }
 
   if (!proc->out.closed) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+#ifdef WIN32
+    // pipe must be readable for IOCP to work.
+    uvproc->uvstdio[1].flags |= UV_READABLE_PIPE | UV_OVERLAPPED_PIPE;
+#endif
     uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->out.uv.pipe);
   }

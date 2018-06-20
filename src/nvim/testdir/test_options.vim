@@ -22,6 +22,13 @@ function! Test_whichwrap()
   set whichwrap&
 endfunction
 
+function! Test_isfname()
+  " This used to cause Vim to access uninitialized memory.
+  set isfname=
+  call assert_equal("~X", expand("~X"))
+  set isfname&
+endfunction
+
 function! Test_options()
   let caught = 'ok'
   try
@@ -158,6 +165,8 @@ func Test_set_completion()
   call assert_equal('"set fileencodings:ucs-bom,utf-8,default,latin1', @:)
 
   " Expand directories.
+  let shellslash = &shellslash
+  set shellslash
   call feedkeys(":set cdpath=./\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('./samples/ ', @:)
   call assert_notmatch('./small.vim ', @:)
@@ -168,6 +177,7 @@ func Test_set_completion()
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
+  let &shellslash = shellslash
 endfunc
 
 func Test_set_errors()
@@ -209,12 +219,51 @@ func Test_set_errors()
   call assert_fails('set statusline=%{', 'E540:')
   call assert_fails('set statusline=' . repeat("%p", 81), 'E541:')
   call assert_fails('set statusline=%(', 'E542:')
-  call assert_fails('set guicursor=x', 'E545:')
+  if has('cursorshape')
+    " This invalid value for 'guicursor' used to cause Vim to crash.
+    call assert_fails('set guicursor=i-ci,r-cr:h', 'E545:')
+    call assert_fails('set guicursor=i-ci', 'E545:')
+    call assert_fails('set guicursor=x', 'E545:')
+    call assert_fails('set guicursor=r-cr:horx', 'E548:')
+    call assert_fails('set guicursor=r-cr:hor0', 'E549:')
+  endif
   call assert_fails('set backupext=~ patchmode=~', 'E589:')
   call assert_fails('set winminheight=10 winheight=9', 'E591:')
   call assert_fails('set winminwidth=10 winwidth=9', 'E592:')
   call assert_fails("set showbreak=\x01", 'E595:')
   call assert_fails('set t_foo=', 'E846:')
+endfunc
+
+func Test_set_ttytype()
+  " Nvim does not support 'ttytype'.
+  if !has('nvim') && !has('gui_running') && has('unix')
+    " Setting 'ttytype' used to cause a double-free when exiting vim and
+    " when vim is compiled with -DEXITFREE.
+    set ttytype=ansi
+    call assert_equal('ansi', &ttytype)
+    call assert_equal(&ttytype, &term)
+    set ttytype=xterm
+    call assert_equal('xterm', &ttytype)
+    call assert_equal(&ttytype, &term)
+    " "set ttytype=" gives E522 instead of E529
+    " in travis on some builds. Why?  Catch both for now
+    try
+      set ttytype=
+      call assert_report('set ttype= did not fail')
+    catch /E529\|E522/
+    endtry
+
+    " Some systems accept any terminal name and return dumb settings,
+    " check for failure of finding the entry and for missing 'cm' entry.
+    try
+      set ttytype=xxx
+      call assert_report('set ttype=xxx did not fail')
+    catch /E522\|E437/
+    endtry
+
+    set ttytype&
+    call assert_equal(&ttytype, &term)
+  endif
 endfunc
 
 func Test_complete()
@@ -226,3 +275,15 @@ func Test_complete()
   set complete&
 endfun
 
+func ResetIndentexpr()
+  set indentexpr=
+endfunc
+
+func Test_set_indentexpr()
+  " this was causing usage of freed memory
+  set indentexpr=ResetIndentexpr()
+  new
+  call feedkeys("i\<c-f>", 'x')
+  call assert_equal('', &indentexpr)
+  bwipe!
+endfunc

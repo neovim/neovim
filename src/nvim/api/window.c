@@ -309,7 +309,8 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// @param name     Option name
 /// @param value    Option value
 /// @param[out] err Error details, if any
-void nvim_win_set_option(Window window, String name, Object value, Error *err)
+void nvim_win_set_option(uint64_t channel_id, Window window,
+                         String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -318,7 +319,7 @@ void nvim_win_set_option(Window window, String name, Object value, Error *err)
     return;
   }
 
-  set_option_to(win, SREQ_WIN, name, value, err);
+  set_option_to(channel_id, win, SREQ_WIN, name, value, err);
 }
 
 /// Gets the window position in display cells. First position is zero.

@@ -4,8 +4,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
 
-if helpers.pending_win32(pending) then return end
-
 describe('argument list commands', function()
   before_each(clear)
 
@@ -222,20 +220,19 @@ describe('argument list commands', function()
     eq({'a', 'b'}, eval('argv()'))
     eq('b', eval('expand("%:t")'))
     command('argedit a')
-    eq({'a', 'b'}, eval('argv()'))
+    eq({'a', 'b', 'a'}, eval('argv()'))
     eq('a', eval('expand("%:t")'))
     command('argedit c')
-    eq({'a', 'c', 'b'}, eval('argv()'))
+    eq({'a', 'b', 'a', 'c'}, eval('argv()'))
     command('0argedit x')
-    eq({'x', 'a', 'c', 'b'}, eval('argv()'))
+    eq({'x', 'a', 'b', 'a', 'c'}, eval('argv()'))
     command('enew! | set modified')
     assert_fails('argedit y', 'E37:')
     command('argedit! y')
-    eq({'x', 'y', 'a', 'c', 'b'}, eval('argv()'))
+    eq({'x', 'y', 'y', 'a', 'b', 'a', 'c'}, eval('argv()'))
     command('%argd')
-    -- Nvim allows unescaped spaces in filename on all platforms. #6010
     command('argedit a b')
-    eq({'a b'}, eval('argv()'))
+    eq({'a', 'b'}, eval('argv()'))
   end)
 
   it('test for :argdelete command', function()

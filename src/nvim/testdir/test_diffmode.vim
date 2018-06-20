@@ -1,5 +1,4 @@
 " Tests for diff mode
-set belloff=all
 
 func Test_diff_fold_sync()
   enew!

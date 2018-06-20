@@ -2,11 +2,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, request, neq = helpers.command, helpers.request, helpers.neq
+local command, neq = helpers.command, helpers.neq
+local curbufmeths = helpers.curbufmeths
 
 describe('Buffer highlighting', function()
   local screen
-  local curbuf
 
   before_each(function()
     clear()
@@ -25,21 +25,14 @@ describe('Buffer highlighting', function()
       [9] = {foreground = Screen.colors.SlateBlue, underline = true},
       [10] = {foreground = Screen.colors.Red}
     })
-    curbuf = request('nvim_get_current_buf')
   end)
 
   after_each(function()
     screen:detach()
   end)
 
-  local function add_hl(...)
-    return request('nvim_buf_add_highlight', curbuf, ...)
-  end
-
-  local function clear_hl(...)
-    return request('nvim_buf_clear_highlight', curbuf, ...)
-  end
-
+  local add_hl = curbufmeths.add_highlight
+  local clear_hl = curbufmeths.clear_highlight
 
   it('works', function()
     insert([[

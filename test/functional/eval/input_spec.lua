@@ -58,6 +58,7 @@ before_each(function()
     RBP2={background=Screen.colors.Yellow},
     RBP3={background=Screen.colors.Green},
     RBP4={background=Screen.colors.Blue},
+    SEP={bold = true, reverse = true},
   })
 end)
 
@@ -65,9 +66,9 @@ describe('input()', function()
   it('works with multiline prompts', function()
     feed([[:call input("Test\nFoo")<CR>]])
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       Test                     |
       Foo^                      |
     ]])
@@ -75,9 +76,9 @@ describe('input()', function()
   it('works with multiline prompts and :echohl', function()
     feed([[:echohl Test | call input("Test\nFoo")<CR>]])
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       {T:Test}                     |
       {T:Foo}^                      |
     ]])
@@ -242,17 +243,17 @@ describe('input()', function()
   it('is not hidden by :silent', function()
     feed([[:silent call input('Foo: ')<CR>]])
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       Foo: ^                    |
                                |
     ]])
     feed('Bar')
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       Foo: Bar^                 |
                                |
     ]])
@@ -263,9 +264,9 @@ describe('inputdialog()', function()
   it('works with multiline prompts', function()
     feed([[:call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       Test                     |
       Foo^                      |
     ]])
@@ -273,9 +274,9 @@ describe('inputdialog()', function()
   it('works with multiline prompts and :echohl', function()
     feed([[:echohl Test | call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
+                               |
       {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
+      {SEP:                         }|
       {T:Test}                     |
       {T:Foo}^                      |
     ]])

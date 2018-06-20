@@ -38,33 +38,33 @@ uint64_t os_hrtime(void)
   return uv_hrtime();
 }
 
-/// Sleeps for a certain amount of milliseconds.
+/// Sleeps for `ms` milliseconds.
 ///
-/// @param milliseconds Number of milliseconds to sleep
+/// @param ms          Number of milliseconds to sleep
 /// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
-void os_delay(uint64_t milliseconds, bool ignoreinput)
+void os_delay(uint64_t ms, bool ignoreinput)
 {
   if (ignoreinput) {
-    if (milliseconds > INT_MAX) {
-      milliseconds = INT_MAX;
+    if (ms > INT_MAX) {
+      ms = INT_MAX;
     }
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)milliseconds, got_int);
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, (int)ms, got_int);
   } else {
-    os_microdelay(milliseconds * 1000u, ignoreinput);
+    os_microdelay(ms * 1000u, ignoreinput);
   }
 }
 
-/// Sleeps for a certain amount of microseconds.
+/// Sleeps for `us` microseconds.
 ///
-/// @param ms          Number of microseconds to sleep.
+/// @param us          Number of microseconds to sleep.
 /// @param ignoreinput If true, ignore all input (including SIGINT/CTRL-C).
 ///                    If false, waiting is aborted on any input.
-void os_microdelay(uint64_t ms, bool ignoreinput)
+void os_microdelay(uint64_t us, bool ignoreinput)
 {
   uint64_t elapsed = 0u;
   uint64_t base = uv_hrtime();
   // Convert microseconds to nanoseconds, or UINT64_MAX on overflow.
-  const uint64_t ns = (ms < UINT64_MAX / 1000u) ? ms * 1000u : UINT64_MAX;
+  const uint64_t ns = (us < UINT64_MAX / 1000u) ? us * 1000u : UINT64_MAX;
 
   uv_mutex_lock(&delay_mutex);
 

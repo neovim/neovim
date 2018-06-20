@@ -15,7 +15,7 @@ describe('Test getting and setting file permissions', function()
 
   it('file permissions', function()
     eq('', call('getfperm', tempfile))
-    eq(0, call('setfperm', tempfile, 'r------'))
+    eq(0, call('setfperm', tempfile, 'r--------'))
 
     call('writefile', {'one'}, tempfile)
     eq(9, call('len', call('getfperm', tempfile)))

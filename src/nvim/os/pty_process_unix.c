@@ -44,6 +44,7 @@ static struct termios termios_default;
 /// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
 void pty_process_save_termios(int tty_fd)
 {
+  DLOG("tty_fd=%d", tty_fd);
   if (tty_fd == -1 || tcgetattr(tty_fd, &termios_default) != 0) {
     return;
   }
@@ -115,6 +116,11 @@ error:
   return status;
 }
 
+const char *pty_process_tty_name(PtyProcess *ptyproc)
+{
+  return ptsname(ptyproc->tty_fd);
+}
+
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -145,8 +151,12 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
+static void init_child(PtyProcess *ptyproc)
+  FUNC_ATTR_NONNULL_ALL
 {
+  // New session/process-group. #6530
+  setsid();
+
   unsetenv("COLUMNS");
   unsetenv("LINES");
   unsetenv("TERMCAP");

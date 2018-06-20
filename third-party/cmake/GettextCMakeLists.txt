@@ -1,0 +1,271 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(gettext C)
+
+# Adds PREFIX to each item in LIST
+macro(PREFIX_LIST_ITEMS LIST PREFIX)
+  string(REPLACE ";" ";${PREFIX}" ${LIST} ";${${LIST}}")
+endmacro()
+
+file(READ gettext-runtime/config.h.in CONFIG_CONTENT)
+string(REPLACE "#undef HAVE_GETCWD" "#define HAVE_GETCWD 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef uintmax_t" "
+  #if _WIN64
+  # define intmax_t long long
+  # define uintmax_t unsigned long long
+  #elif _WIN32
+  # define intmax_t long
+  # define uintmax_t unsigned long
+  #endif"
+  CONFIG_CONTENT ${CONFIG_CONTENT})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/config.h ${CONFIG_CONTENT})
+
+set(HAVE_NEWLOCALE 0)
+set(HAVE_POSIX_PRINTF 0)
+set(HAVE_SNPRINTF 0)
+set(HAVE_ASPRINTF 0)
+set(HAVE_WPRINTF 0)
+configure_file(gettext-runtime/intl/libgnuintl.in.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl/libgnuintl.h)
+
+set(LOCALDIR "gettext")
+set(LIBDIR "gettext")
+set(PKGDATADIR "gettext")
+set(PACKAGE_SUFFIX "gettext")
+add_definitions(-DLOCALEDIR=\"${LOCALDIR}\"
+  -DLOCALE_ALIAS_PATH=\"${LOCALDIR}\"
+  -DLIBDIR=\"${LOCALDIR}\"
+  -DINSTALLDIR=\"${LOCALDIR}\"
+  -DEXEEXT=\".exe\"
+  -DLOCALEDIR=\"${LOCALDIR}\"
+  -DLIBDIR=\"${LIBDIR}\"
+  -DPACKAGE_SUFFIX=\"${PACKAGE_SUFFIX}\"
+  -DGETTEXTDATADIR=\"${PKGDATADIR}\"
+  -DBISON_LOCALEDIR=\"${LOCALDIR}\"
+  -DHAVE_CONFIG_H)
+
+set(libintl_SOURCES
+  bindtextdom.c dcgettext.c dcigettext.c dcngettext.c dgettext.c dngettext.c
+  explodename.c finddomain.c gettext.c hash-string.c l10nflist.c langprefs.c
+  loadmsgcat.c localcharset.c localealias.c localename.c lock.c log.c ngettext.c
+  plural-exp.c plural.c printf.c relocatable.c setlocale.c textdomain.c
+  threadlib.c version.c)
+PREFIX_LIST_ITEMS(libintl_SOURCES "gettext-runtime/intl/")
+
+add_library(libintl ${libintl_SOURCES})
+set_property(TARGET libintl APPEND PROPERTY INCLUDE_DIRECTORIES
+  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime
+  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl)
+set_property(TARGET libintl APPEND PROPERTY COMPILE_DEFINITIONS
+  BUILDING_LIBINTL
+  IN_LIBINTL
+  ENABLE_RELOCATABLE=1
+  IN_LIBRARY
+  NO_XMALLOC
+  set_relocation_prefix=libintl_set_relocation_prefix
+  relocate=libintl_relocate
+  HAVE_CONFIG_H
+  _CRT_SECURE_NO_WARNINGS)
+
+
+file(READ gettext-tools/config.h.in CONFIG_CONTENT)
+string(REPLACE "#undef ENDIANNESS" "#define ENDIANNESS 0" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef GNULIB_FWRITEERROR" "#define GNULIB_FWRITEERROR 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_DECL_STRERROR_R" "#define HAVE_DECL_STRERROR_R 0" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_DUP2" "#define HAVE_DUP2 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_LIBUNISTRING" "#define HAVE_LIBUNISTRING 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_STDINT_H_WITH_UINTMAX" "#define HAVE_STDINT_H_WITH_UINTMAX 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_STDINT_H" "#define HAVE_STDINT_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_STRING_H" "#define HAVE_STRING_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE_SYS_TIMEB_H" "#define HAVE_SYS_TIMEB_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef HAVE__FTIME" "#define HAVE__FTIME 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef ICONV_CONST" "#define ICONV_CONST const" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef PACKAGE" "#define PACKAGE \"gettext\"\n#define gettext_VERSION" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef VERSION" "#define VERSION \"\"" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef mode_t" "#define mode_t int" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef pid_t" "#define pid_t int" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef restrict" "#define restrict __restrict" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef ssize_t" "#include <BaseTsd.h>\n#define ssize_t SSIZE_T" CONFIG_CONTENT ${CONFIG_CONTENT})
+string(REPLACE "#undef uid_t" "#define uid_t int" CONFIG_CONTENT ${CONFIG_CONTENT})
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gettext-tools/config.h ${CONFIG_CONTENT})
+
+set(libgettextsrc_COMMON_SOURCE 
+  message.c po-error.c po-xerror.c read-catalog-abstract.c po-lex.c
+  po-gram-gen.c po-charset.c read-po.c read-properties.c read-stringtable.c
+  open-catalog.c dir-list.c
+  str-list.c)
+
+set(libgettextsrc_FORMAT_SOURCE
+  format.c format-invalid.h format-c.c format-c-parse.h format-sh.c
+  format-python.c format-python-brace.c format-lisp.c format-elisp.c
+  format-librep.c format-scheme.c format-java.c format-csharp.c format-awk.c
+  format-pascal.c format-ycp.c format-tcl.c format-perl.c format-perl-brace.c
+  format-php.c format-gcc-internal.c format-gfc-internal.c format-qt.c
+  format-qt-plural.c format-kde.c format-kde-kuit.c format-boost.c format-lua.c
+  format-javascript.c)
+
+set(libgettextsrc_SOURCES
+  ${libgettextsrc_COMMON_SOURCE} read-catalog.c color.c write-catalog.c
+  write-properties.c write-stringtable.c write-po.c msgl-ascii.c msgl-iconv.c
+  msgl-equal.c msgl-cat.c msgl-header.c msgl-english.c msgl-check.c file-list.c
+  msgl-charset.c po-time.c plural-exp.c plural-eval.c plural-count.c
+  plural-table.c quote.h sentence.h sentence.c ${libgettextsrc_FORMAT_SOURCE}
+  read-desktop.c locating-rule.c its.c search-path.c)
+PREFIX_LIST_ITEMS(libgettextsrc_SOURCES "gettext-tools/src/")
+
+set(GLIBC_SOURCE
+  uniname/uniname.c javaexec.c unsetenv.c classpath.c setenv.c xsetenv.c
+  sh-quote.c execute.c javaversion.c csharpcomp.c csharpexec.c javacomp.c
+  gettimeofday.c getdtablesize.c fcntl.c dup-safer-flag.c cloexec.c
+  fd-safer-flag.c fd-safer.c pipe2.c pipe2-safer.c spawn-pipe.c xmemdup0.c
+  secure_getenv.c tmpdir.c tempname.c mkdtemp.c fnmatch.c clean-temp.c
+  gl_array_list.c tputs.c wait-process.c waitpid.c getdelim.c getline.c
+  sigprocmask.c sigaction.c addext.c argmatch.c backupfile.c basename.c
+  c-strcasecmp.c c-strncasecmp.c c-strstr.c closeout.c concat-filename.c
+  error-progname.c error.c exitfail.c file-ostream.c fstrcmp.c full-write.c
+  fwriteerror.c getopt.c getopt1.c hash.c libxml/buf.c localcharset.c malloca.c
+  mbchar.c mbslen.c mbsstr.c mbswidth.c obstack.c ostream.c html-ostream.c
+  fd-ostream.c styled-ostream.c progname.c html-styled-ostream.c printf-args.c
+  printf-parse.c propername.c quotearg.c rawmemchr.c safe-read.c safe-write.c
+  stpcpy.c stpncpy.c strchrnul.c striconveh.c striconveha.c strnlen1.c
+  term-ostream.c term-styled-ostream.c tparm.c trim.c gcd.c gl_linkedhash_list.c
+  uniconv/u8-conv-from-enc.c unictype/ctype_space.c unilbrk/lbrktables.c
+  unilbrk/u8-possible-linebreaks.c unilbrk/u8-width-linebreaks.c
+  unilbrk/ulc-common.c unilbrk/ulc-width-linebreaks.c unistr/u16-mbtouc-aux.c
+  unistr/u16-mbtouc.c unistr/u8-check.c unistr/u8-mblen.c unistr/u8-mbtouc-aux.c
+  unistr/u8-mbtouc-unsafe-aux.c unistr/u8-mbtouc-unsafe.c unistr/u8-mbtouc.c
+  unistr/u8-mbtoucr.c unistr/u8-prev.c unistr/u8-uctomb-aux.c unistr/u8-uctomb.c
+  uniwidth/width.c vasnprintf.c vasprintf.c wcwidth.c xasprintf.c
+  xconcat-filename.c xerror.c xmalloc.c xstrdup.c xvasprintf.c glib/ghash.c
+  glib/glist.c glib/gmessages.c glib/gprimes.c glib/gstrfuncs.c glib/gstring.c
+  libcroco/cr-additional-sel.c libcroco/cr-attr-sel.c libcroco/cr-cascade.c
+  libcroco/cr-declaration.c libcroco/cr-doc-handler.c libcroco/cr-enc-handler.c
+  libcroco/cr-fonts.c libcroco/cr-input.c libcroco/cr-num.c
+  libcroco/cr-om-parser.c libcroco/cr-parser.c libcroco/cr-parsing-location.c
+  libcroco/cr-prop-list.c libcroco/cr-pseudo.c libcroco/cr-rgb.c
+  libcroco/cr-sel-eng.c libcroco/cr-selector.c libcroco/cr-simple-sel.c
+  libcroco/cr-statement.c libcroco/cr-string.c libcroco/cr-style.c
+  libcroco/cr-stylesheet.c libcroco/cr-term.c libcroco/cr-tknzr.c
+  libcroco/cr-token.c libcroco/cr-utils.c libxml/DOCBparser.c
+  libxml/HTMLparser.c libxml/HTMLtree.c libxml/SAX.c libxml/SAX2.c libxml/c14n.c
+  libxml/catalog.c libxml/chvalid.c libxml/debugXML.c libxml/dict.c
+  libxml/encoding.c libxml/entities.c libxml/error.c libxml/globals.c
+  libxml/hash.c libxml/legacy.c libxml/list.c libxml/nanoftp.c libxml/nanohttp.c
+  libxml/parser.c libxml/parserInternals.c libxml/pattern.c libxml/relaxng.c
+  libxml/schematron.c libxml/threads.c libxml/tree.c libxml/trionan.c
+  libxml/uri.c libxml/valid.c libxml/xinclude.c libxml/xlink.c libxml/xmlIO.c
+  libxml/xmlmemory.c libxml/xmlmodule.c libxml/xmlreader.c libxml/xmlregexp.c
+  libxml/xmlsave.c libxml/xmlschemas.c libxml/xmlschemastypes.c
+  libxml/xmlstring.c libxml/xmlunicode.c libxml/xmlwriter.c libxml/xpath.c
+  libxml/xpointer.c fatal-signal.c copy-file.c)
+PREFIX_LIST_ITEMS(GLIBC_SOURCE "gettext-tools/gnulib-lib/")
+
+set(libgettextsrc_SOURCES ${libgettextsrc_SOURCES} ${GLIBC_SOURCE})
+
+set(HEADER_TEMPLATES_PATH "gettext-tools/gnulib-lib")
+set(HEADER_TEMPLATES_ABS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER_TEMPLATES_PATH}")
+file(GLOB_RECURSE HEADER_TEMPLATES "${HEADER_TEMPLATES_ABS_PATH}/*.in.h")
+list(REMOVE_ITEM HEADER_TEMPLATES  "${HEADER_TEMPLATES_ABS_PATH}/stdint.in.h")
+list(REMOVE_ITEM HEADER_TEMPLATES  "${HEADER_TEMPLATES_ABS_PATH}/wchar.in.h")
+foreach(HEADER_TEMPLATE ${HEADER_TEMPLATES})
+  file(READ ${HEADER_TEMPLATE} HEADER_CONTENT)
+  string(REPLACE "/* The definition of _GL_ARG_NONNULL is copied here.  */" "#include \"arg-nonnull.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "/* The definition of _GL_WARN_ON_USE is copied here.  */" "#include \"warn-on-use.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "/* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */" "#include \"c++defs.h\"" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_LSTAT@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_MBSINIT@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_SIGACTION@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_SIGPROCMASK@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_STPCPY@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_STPNCPY@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@GNULIB_STRCHRNUL@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@HAVE_ISWCNTRL@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@HAVE_WCTYPE_T@" "1" HEADER_CONTENT "${HEADER_CONTENT}")
+  string(REPLACE "@PRAGMA_COLUMNS@" "" HEADER_CONTENT "${HEADER_CONTENT}")
+
+  string(REGEX REPLACE "^${HEADER_TEMPLATES_ABS_PATH}/" "" HEADER_PATH "${HEADER_TEMPLATE}")
+  string(REPLACE ".in" "" HEADER_PATH ${HEADER_PATH})
+  string(REPLACE "_" "/" HEADER_PATH ${HEADER_PATH})
+  # find_file will create a cache entry for the variable
+  # SYSTEM_HEADER, so reset it before each call
+  set(SYSTEM_HEADER "SYSTEM_HEADER-NOTFOUND")
+  find_file(SYSTEM_HEADER ${HEADER_PATH} PATHS "${LIBICONV_INCLUDE_DIRS}")
+  if(SYSTEM_HEADER)
+    # Gnulib uses #include_next to extend system header files,
+    # but MSVC doesn't support it, so a regular include directive
+    # with a relative path is used instead
+    string(REGEX REPLACE ".*/(.*/${HEADER_PATH})" "../\\1"
+      INCLUDE_PATH "${SYSTEM_HEADER}")
+    string(REGEX REPLACE "@INCLUDE_NEXT[^@]*@ @NEXT_[^@\n]+@"
+      "include <${INCLUDE_PATH}>" HEADER_CONTENT "${HEADER_CONTENT}")
+  endif()
+
+  # Default any remaining template variables to 0
+  string(REGEX REPLACE "@[^@\n]+@" "0" HEADER_CONTENT "${HEADER_CONTENT}")
+
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${HEADER_TEMPLATES_PATH}/${HEADER_PATH}" "${HEADER_CONTENT}")
+endforeach()
+
+add_library(libgettextsrc ${libgettextsrc_SOURCES})
+target_link_libraries(libgettextsrc ${LIBICONV_LIBRARIES})
+
+set(msgmerge_SOURCES
+  msgmerge.c
+  msgl-fsearch.c
+  lang-table.c
+  )
+PREFIX_LIST_ITEMS(msgmerge_SOURCES "gettext-tools/src/")
+
+add_executable(msgmerge ${msgmerge_SOURCES})
+target_link_libraries(msgmerge libgettextsrc)
+add_dependencies(msgmerge libgettextsrc libintl)
+
+set(msgfmt_SOURCES
+  msgfmt.c
+  write-mo.c
+  write-java.c
+  write-csharp.c
+  write-resources.c
+  write-tcl.c
+  write-qt.c
+  write-desktop.c
+  write-xml.c)
+PREFIX_LIST_ITEMS(msgfmt_SOURCES "gettext-tools/src/")
+
+add_executable(msgfmt ${msgfmt_SOURCES} gettext-runtime/intl/hash-string.c)
+target_link_libraries(msgfmt libgettextsrc)
+add_dependencies(msgfmt libgettextsrc libintl)
+
+set(xgettext_SOURCES
+  xgettext.c x-c.c x-po.c x-sh.c x-python.c x-lisp.c x-elisp.c x-librep.c
+  x-scheme.c x-smalltalk.c x-java.c x-csharp.c x-awk.c x-ycp.c x-tcl.c x-perl.c
+  x-php.c x-rst.c x-lua.c x-javascript.c x-vala.c x-desktop.c)
+PREFIX_LIST_ITEMS(xgettext_SOURCES "gettext-tools/src/")
+
+add_executable(xgettext ${xgettext_SOURCES})
+target_link_libraries(xgettext libgettextsrc)
+add_dependencies(xgettext libgettextsrc libintl)
+
+set_property(TARGET msgmerge msgfmt xgettext libgettextsrc APPEND PROPERTY
+  INCLUDE_DIRECTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/gettext-runtime/intl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gettext-tools/libgettextpo
+    ${CMAKE_CURRENT_SOURCE_DIR}/gettext-tools/gnulib-lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/gettext-tools/gnulib-lib/libcroco
+    ${CMAKE_CURRENT_SOURCE_DIR}/build-aux/snippet
+    ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl
+    ${CMAKE_CURRENT_BINARY_DIR}/gettext-tools
+    ${CMAKE_CURRENT_BINARY_DIR}/gettext-tools/gnulib-lib
+    ${LIBICONV_INCLUDE_DIRS})
+
+include(GNUInstallDirs)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/intl/libgnuintl.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RENAME libintl.h)
+
+install(TARGETS libintl msgmerge msgfmt xgettext
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

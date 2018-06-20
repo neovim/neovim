@@ -280,6 +280,7 @@ return {
     spellsuggest={args={1, 3}},
     split={args={1, 3}},
     sqrt={args=1, func="float_op_wrapper", data="&sqrt"},
+    stdpath={args=1},
     str2float={args=1},
     str2nr={args={1, 2}},
     strcharpart={args={2, 3}},

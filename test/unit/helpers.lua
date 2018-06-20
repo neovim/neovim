@@ -138,7 +138,7 @@ local function filter_complex_blocks(body)
   for line in body:gmatch("[^\r\n]+") do
     if not (string.find(line, "(^)", 1, true) ~= nil
             or string.find(line, "_ISwupper", 1, true)
-            or string.find(line, "_Float128")
+            or string.find(line, "_Float")
             or string.find(line, "msgpack_zone_push_finalizer")
             or string.find(line, "msgpack_unpacker_reserve_buffer")
             or string.find(line, "UUID_NULL")  -- static const uuid_t UUID_NULL = {...}
@@ -779,7 +779,7 @@ local function gen_itp(it)
 end
 
 local function cppimport(path)
-  return cimport(Paths.test_include_path .. '/' .. path)
+  return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
 cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
