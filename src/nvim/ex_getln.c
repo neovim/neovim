@@ -861,7 +861,7 @@ static int command_line_execute(VimState *state, int key)
   if (s->c == cedit_key || s->c == K_CMDWIN) {
     if (ex_normal_busy == 0 && got_int == false) {
       // Open a window to edit the command line (and history).
-      s->c = ex_window();
+      s->c = open_cmdwin();
       s->some_key_typed = true;
     }
   } else {
@@ -1444,7 +1444,7 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
   case K_IGNORE:
-    // Ignore mouse event or ex_window() result.
+    // Ignore mouse event or open_cmdwin() result.
     return command_line_not_changed(s);
 
 
@@ -6001,7 +6001,7 @@ int cmd_gchar(int offset)
  *	Ctrl_C	 if it is to be abandoned
  *	K_IGNORE if editing continues
  */
-static int ex_window(void)
+static int open_cmdwin(void)
 {
   struct cmdline_info save_ccline;
   bufref_T            old_curbuf;
@@ -6034,6 +6034,7 @@ static int ex_window(void)
   block_autocmds();
   /* don't use a new tab page */
   cmdmod.tab = 0;
+  cmdmod.noswapfile = 1;
 
   /* Create a window for the command-line buffer. */
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {

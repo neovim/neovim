@@ -2,8 +2,8 @@
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-cmake_minimum_required(VERSION 2.8.7)
-project(nvim)
+cmake_minimum_required(VERSION 2.8.12)
+project(nvim C)
 
 if(POLICY CMP0059)
   cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
@@ -15,12 +15,41 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # We don't support building in-tree.
 include(PreventInTreeBuilds)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
   set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
   set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  # When running from within CLion or Visual Studio,
+  # build bundled dependencies automatically.
+  if(NOT EXISTS ${DEPS_PREFIX}
+     AND (DEFINED ENV{CLION_IDE}
+          OR DEFINED ENV{VisualStudioEdition}))
+    message(STATUS "Building dependencies...")
+    set(DEPS_BUILD_DIR ${PROJECT_BINARY_DIR}/.deps)
+    file(MAKE_DIRECTORY ${DEPS_BUILD_DIR})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_C_FLAGS_DEBUG=${CMAKE_C_FLAGS_DEBUG}
+        -DCMAKE_C_FLAGS_MINSIZEREL=${CMAKE_C_FLAGS_MINSIZEREL}
+        -DCMAKE_C_FLAGS_RELWITHDEBINFO=${CMAKE_C_FLAGS_RELWITHDEBINFO}
+        -DCMAKE_C_FLAGS_RELEASE=${CMAKE_C_FLAGS_RELEASE}
+        -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+        ${PROJECT_SOURCE_DIR}/third-party
+      WORKING_DIRECTORY ${DEPS_BUILD_DIR})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} --build ${DEPS_BUILD_DIR}
+        --config ${CMAKE_BUILD_TYPE})
+    set(DEPS_PREFIX ${DEPS_BUILD_DIR}/usr)
+  endif()
 endif()
+
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
   list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
@@ -46,9 +75,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # now.
   if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
-  endif()
-  if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
   endif()
 endif()
 
@@ -181,7 +207,6 @@ if(NOT HAS_ACCEPTABLE_FORTIFY)
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
 # Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
@@ -264,7 +289,7 @@ if(HAS_DIAG_COLOR_FLAG)
   add_definitions(-fdiagnostics-color=auto)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   # 1. Array-bounds testing is broken in some GCC versions before 4.8.5.
   #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
   # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
@@ -297,19 +322,19 @@ option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
 
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+    set(NO_UNDEFINED "-Wl,--no-undefined -lsocket")
+  elseif(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(NO_UNDEFINED "-Wl,--no-undefined")
+  endif()
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${NO_UNDEFINED}")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${NO_UNDEFINED}")
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
   # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
   # For ptsname(). #6743
   add_definitions(-D_GNU_SOURCE)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined -lsocket")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -357,7 +382,7 @@ main(void)
 }
 " MSGPACK_HAS_FLOAT32)
 if(MSGPACK_HAS_FLOAT32)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
+  add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
 
 option(FEAT_TUI "Enable the Terminal UI" ON)
@@ -378,7 +403,7 @@ if(FEAT_TUI)
   }
   " UNIBI_HAS_VAR_FROM)
   if(UNIBI_HAS_VAR_FROM)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_UNIBI_HAS_VAR_FROM")
+    add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
   find_package(LibTermkey REQUIRED)
@@ -547,6 +572,7 @@ if(BUSTED_PRG)
   # Useful for automated build systems, if they want to manually run the tests.
   add_custom_target(unittest-prereqs
     DEPENDS ${UNITTEST_PREREQS})
+  set_target_properties(unittest-prereqs PROPERTIES FOLDER test)
 
   add_custom_target(functionaltest-prereqs
     DEPENDS ${FUNCTIONALTEST_PREREQS})
@@ -569,35 +595,22 @@ if(BUSTED_PRG)
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
+    set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
 
-  if(${CMAKE_VERSION} VERSION_LESS 2.8.12)
-    if(CMAKE_GENERATOR MATCHES "Visual Studio")
-      set(TEST_LIBNVIM_PATH ${CMAKE_BINARY_DIR}/lib/nvim-test.dll)
-    else()
-      get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
-    endif()
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+  if(LUA_HAS_FFI)
+    set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
   else()
-    # To avoid duplicating paths.lua.in while we still support CMake < 2.8.12,
-    # use configure_file() to add the generator expression and then generate
-    # the final file
-    if(LUA_HAS_FFI)
-      set(TEST_LIBNVIM_PATH $<TARGET_FILE:nvim-test>)
-    else()
-      set(TEST_LIBNVIM_PATH "")
-    endif()
-    configure_file(
-      ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
-      ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
-    file(GENERATE
-      OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
-      INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+    set(TEST_LIBNVIM_PATH "")
   endif()
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/test/config/paths.lua.in
+    ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
+  file(GENERATE
+    OUTPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua
+    INPUT ${CMAKE_BINARY_DIR}/test/config/paths.lua.gen)
 
   add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
@@ -613,6 +626,8 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(functionaltest functionaltest-prereqs
+    PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -628,6 +643,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
 endif()
 
 if(BUSTED_LUA_PRG)
@@ -645,6 +661,7 @@ if(BUSTED_LUA_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
 if(LUACHECK_PRG)

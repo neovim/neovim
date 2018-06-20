@@ -185,11 +185,12 @@ argument.
 		delete(), rename(), mkdir(), writefile(), libcall(),
 		jobstart(), etc.
 
-							*-e*
--e		Start Vim in Ex mode |Q|.
+-e							*-e* *-E*
+-E		Start Nvim in Ex mode |gQ|.
 
-							*-E*
--E		Start Vim in improved Ex mode |gQ|.
+		If stdin is not a TTY:
+		  -e reads stdin as Ex commands.
+		  -E reads stdin as text (into buffer 1).
 
 							*-es* *-Es*
 -es							*-s-ex* *silent-mode*
@@ -207,6 +208,11 @@ argument.
 <
 		User |init.vim| is skipped (unless given with |-u|).
 		|$TERM| is not used.
+
+		If stdin is not a TTY:
+		  -es reads stdin as Ex commands.
+		  -Es reads stdin as text (into buffer 1).
+
 		Example: >
 			printf "put ='foo'\n%%print\n" | nvim -es
 <

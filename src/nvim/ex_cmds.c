@@ -1306,10 +1306,10 @@ filterend:
  * Call a shell to execute a command.
  * When "cmd" is NULL start an interactive shell.
  */
-void 
-do_shell (
+void
+do_shell(
     char_u *cmd,
-    int flags              /* may be SHELL_DOOUT when output is redirected */
+    int flags             // may be SHELL_DOOUT when output is redirected
 )
 {
   int save_nwr;
@@ -1789,14 +1789,14 @@ theend:
  * May set eap->forceit if a dialog says it's OK to overwrite.
  * Return OK if it's OK, FAIL if it is not.
  */
-int 
-check_overwrite (
+int
+check_overwrite(
     exarg_T *eap,
     buf_T *buf,
-    char_u *fname,         /* file name to be used (can differ from
-                               buf->ffname) */
-    char_u *ffname,        /* full path version of fname */
-    int other                  /* writing under other name */
+    char_u *fname,         // file name to be used (can differ from
+                           //   buf->ffname)
+    char_u *ffname,        // full path version of fname
+    int other              // writing under other name
 )
 {
   /*
@@ -2823,7 +2823,7 @@ void ex_change(exarg_T *eap)
 void ex_z(exarg_T *eap)
 {
   char_u      *x;
-  int bigness;
+  int64_t     bigness;
   char_u      *kind;
   int minus = 0;
   linenr_T start, end, curs, i;
@@ -2856,10 +2856,17 @@ void ex_z(exarg_T *eap)
       EMSG(_("E144: non-numeric argument to :z"));
       return;
     }
-    bigness = atoi((char *)x);
+    bigness = atol((char *)x);
+
+    // bigness could be < 0 if atol(x) overflows.
+    if (bigness > 2 * curbuf->b_ml.ml_line_count || bigness < 0) {
+      bigness = 2 * curbuf->b_ml.ml_line_count;
+    }
+
     p_window = bigness;
-    if (*kind == '=')
+    if (*kind == '=') {
       bigness += 2;
+    }
   }
 
   /* the number of '-' and '+' multiplies the distance */
@@ -4587,11 +4594,11 @@ char_u *check_help_lang(char_u *arg)
  * Assumption is made that the matched_string passed has already been found to
  * match some string for which help is requested.  webb.
  */
-int 
-help_heuristic (
+int
+help_heuristic(
     char_u *matched_string,
-    int offset,                             /* offset for match */
-    int wrong_case                         /* no matching case */
+    int offset,                             // offset for match
+    int wrong_case                          // no matching case
 )
 {
   int num_letters;

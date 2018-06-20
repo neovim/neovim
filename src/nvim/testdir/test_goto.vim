@@ -288,3 +288,24 @@ func Test_cursorline_keep_col()
   set nocursorline
 endfunc
 
+func Test_gd_local_block()
+  let lines = [
+	\ '  int main()',
+	\ '{',
+	\ '  char *a = "NOT NULL";',
+	\ '  if(a)',
+	\ '  {',
+	\ '    char *b = a;',
+	\ '    printf("%s\n", b);',
+	\ '  }',
+	\ '  else',
+	\ '  {',
+	\ '    char *b = "NULL";',
+	\ '    return b;',
+	\ '  }',
+	\ '',
+	\ '  return 0;',
+	\ '}',
+  \ ]
+  call XTest_goto_decl('1gd', lines, 11, 11)
+endfunc

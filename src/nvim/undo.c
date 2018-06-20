@@ -1635,7 +1635,13 @@ static time_t undo_read_time(bufinfo_T *bi)
 static bool undo_read(bufinfo_T *bi, uint8_t *buffer, size_t size)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  return fread(buffer, size, 1, bi->bi_fp) == 1;
+  const bool retval = fread(buffer, size, 1, bi->bi_fp) == 1;
+  if (!retval) {
+    // Error may be checked for only later.  Fill with zeros,
+    // so that the reader won't use garbage.
+    memset(buffer, 0, size);
+  }
+  return retval;
 }
 
 /// Reads a string of length "len" from "bi->bi_fd" and appends a zero to it.
@@ -2441,9 +2447,9 @@ static void u_undo_end(
 /*
  * u_sync: stop adding to the current entry list
  */
-void 
-u_sync (
-    int force              /* Also sync when no_u_sync is set. */
+void
+u_sync(
+    int force               // Also sync when no_u_sync is set.
 )
 {
   /* Skip it when already synced or syncing is disabled. */
@@ -2715,11 +2721,11 @@ static void u_getbot(void)
 /*
  * Free one header "uhp" and its entry list and adjust the pointers.
  */
-static void 
-u_freeheader (
+static void
+u_freeheader(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_header_T      *uhap;
@@ -2751,11 +2757,11 @@ u_freeheader (
 /*
  * Free an alternate branch and any following alternate branches.
  */
-static void 
-u_freebranch (
+static void
+u_freebranch(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_header_T      *tofree, *next;
@@ -2785,11 +2791,11 @@ u_freebranch (
  * Free all the undo entries for one header and the header itself.
  * This means that "uhp" is invalid when returning.
  */
-static void 
-u_freeentries (
+static void
+u_freeentries(
     buf_T *buf,
     u_header_T *uhp,
-    u_header_T **uhpp         /* if not NULL reset when freeing this header */
+    u_header_T **uhpp         // if not NULL reset when freeing this header
 )
 {
   u_entry_T       *uep, *nuep;
