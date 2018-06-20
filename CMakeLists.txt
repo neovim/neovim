@@ -15,12 +15,41 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # We don't support building in-tree.
 include(PreventInTreeBuilds)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
   set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
   set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  # When running from within CLion or Visual Studio,
+  # build bundled dependencies automatically.
+  if(NOT EXISTS ${DEPS_PREFIX}
+     AND (DEFINED ENV{CLION_IDE}
+          OR DEFINED ENV{VisualStudioEdition}))
+    message(STATUS "Building dependencies...")
+    set(DEPS_BUILD_DIR ${PROJECT_BINARY_DIR}/.deps)
+    file(MAKE_DIRECTORY ${DEPS_BUILD_DIR})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_C_FLAGS_DEBUG=${CMAKE_C_FLAGS_DEBUG}
+        -DCMAKE_C_FLAGS_MINSIZEREL=${CMAKE_C_FLAGS_MINSIZEREL}
+        -DCMAKE_C_FLAGS_RELWITHDEBINFO=${CMAKE_C_FLAGS_RELWITHDEBINFO}
+        -DCMAKE_C_FLAGS_RELEASE=${CMAKE_C_FLAGS_RELEASE}
+        -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+        ${PROJECT_SOURCE_DIR}/third-party
+      WORKING_DIRECTORY ${DEPS_BUILD_DIR})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} --build ${DEPS_BUILD_DIR}
+        --config ${CMAKE_BUILD_TYPE})
+    set(DEPS_PREFIX ${DEPS_BUILD_DIR}/usr)
+  endif()
 endif()
+
 if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
   list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
@@ -543,6 +572,7 @@ if(BUSTED_PRG)
   # Useful for automated build systems, if they want to manually run the tests.
   add_custom_target(unittest-prereqs
     DEPENDS ${UNITTEST_PREREQS})
+  set_target_properties(unittest-prereqs PROPERTIES FOLDER test)
 
   add_custom_target(functionaltest-prereqs
     DEPENDS ${FUNCTIONALTEST_PREREQS})
@@ -565,6 +595,7 @@ if(BUSTED_PRG)
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
       DEPENDS ${UNITTEST_PREREQS}
       ${TEST_TARGET_ARGS})
+    set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
   endif()
@@ -595,6 +626,8 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(functionaltest functionaltest-prereqs
+    PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -610,6 +643,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
+  set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
 endif()
 
 if(BUSTED_LUA_PRG)
@@ -627,6 +661,7 @@ if(BUSTED_LUA_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
+    set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
 if(LUACHECK_PRG)

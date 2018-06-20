@@ -424,39 +424,52 @@ if(WIN32)
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
 
+  # A CMake script is used for copying the files to avoid the
+  # "command line is too long" error that occurs when Ninja tries running
+  # a command that exceeds the length limit (8191 characters) on Windows.
+  # See https://developercommunity.visualstudio.com/content/problem/212207/file-open-cmake-the-command-line-is-too-long.html
+  set(EXTERNAL_BLOBS_SCRIPT
+    "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
+  foreach(DEP_FILE IN ITEMS
+                      ca-bundle.crt
+                      cat.exe
+                      curl.exe
+                      diff.exe
+                      tee.exe
+                      tidy.exe
+                      win32yank.exe
+                      winpty-agent.exe
+                      xxd.exe
+
+                      D3Dcompiler_47.dll
+                      libEGL.dll
+                      libgcc_s_dw2-1.dll
+                      libGLESV2.dll
+                      libstdc++-6.dll
+                      libwinpthread-1.dll
+                      nvim-qt.exe
+                      Qt5Core.dll
+                      Qt5Gui.dll
+                      Qt5Network.dll
+                      Qt5Svg.dll
+                      Qt5Widgets.dll
+                      winpty.dll
+
+                      platforms/qwindows.dll
+                      )
+    set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
+      "file(COPY \"${DEPS_PREFIX}/bin/${DEP_FILE}\"
+         DESTINATION \"${PROJECT_BINARY_DIR}/windows_runtime_deps/\")")
+  endforeach()
+  file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/ca-bundle.crt"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/cat.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/curl.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/diff.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/xxd.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libgcc_s_dw2-1.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libGLESV2.dll"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libstdc++-6.dll"     ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libwinpthread-1.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/nvim-qt.exe"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Core.dll"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Gui.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
-    )
+    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
+  set_target_properties(external_blobs PROPERTIES FOLDER deps)
   add_dependencies(nvim_runtime_deps external_blobs)
 else()
   add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
+set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
 add_library(
   libnvim
@@ -568,6 +581,7 @@ foreach(hfile ${NVIM_HEADERS})
       TARGET ${texe}
       APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
     )
+    set_target_properties(${texe} PROPERTIES FOLDER test)
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
