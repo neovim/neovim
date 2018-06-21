@@ -43,6 +43,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/buffer.h"
 
 static bool did_syntax_onoff = false;
 
@@ -406,12 +407,12 @@ void syntax_start(win_T *wp, linenr_T lnum)
    */
   if (syn_block != wp->w_s
       || syn_buf != wp->w_buffer
-      || changedtick != syn_buf->b_changedtick) {
+      || changedtick != buf_get_changedtick(syn_buf)) {
     invalidate_current_state();
     syn_buf = wp->w_buffer;
     syn_block = wp->w_s;
   }
-  changedtick = syn_buf->b_changedtick;
+  changedtick = buf_get_changedtick(syn_buf);
   syn_win = wp;
 
   /*

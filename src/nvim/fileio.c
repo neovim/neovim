@@ -3566,13 +3566,11 @@ restore_backup:
    * writing to the original file and '+' is not in 'cpoptions'. */
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
-      && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)
-      ) {
-    unchanged(buf, TRUE);
-    /* buf->b_changedtick is always incremented in unchanged() but that
-     * should not trigger a TextChanged event. */
-    if (buf->b_last_changedtick + 1 == buf->b_changedtick) {
-      buf->b_last_changedtick = buf->b_changedtick;
+      && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
+    unchanged(buf, true);
+    const varnumber_T changedtick = buf_get_changedtick(buf);
+    if (buf->b_last_changedtick + 1 == changedtick) {
+      buf->b_last_changedtick = changedtick;
     }
     u_unchanged(buf);
     u_update_save_nr(buf);

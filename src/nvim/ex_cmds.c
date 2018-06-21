@@ -6293,7 +6293,7 @@ void ex_substitute(exarg_T *eap)
   garray_T save_view;
   win_size_save(&save_view);  // Save current window sizes.
   save_search_patterns();
-  int save_changedtick = curbuf->b_changedtick;
+  int save_changedtick = buf_get_changedtick(curbuf);
   time_t save_b_u_time_cur = curbuf->b_u_time_cur;
   u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
   long save_b_p_ul = curbuf->b_p_ul;
@@ -6310,7 +6310,7 @@ void ex_substitute(exarg_T *eap)
   buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false);
   p_hls = save_hls;
 
-  if (save_changedtick != curbuf->b_changedtick) {
+  if (save_changedtick != buf_get_changedtick(curbuf)) {
     // Undo invisibly. This also moves the cursor!
     if (!u_undo_and_forget(1)) { abort(); }
     // Restore newhead. It is meaningless when curhead is valid, but we must
