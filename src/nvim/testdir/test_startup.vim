@@ -259,7 +259,7 @@ func Test_default_term()
   endif
 
   let save_term = $TERM
-  let $TERM = 'unknown'
+  let $TERM = 'unknownxxx'
   let out = system(GetVimCommand() . ' -c''set term'' -c cq')
   call assert_match("defaulting to 'ansi'", out)
   let $TERM = save_term
