@@ -6599,7 +6599,7 @@ void vimrc_found(char_u *fname, char_u *envname)
 /// @param[in]  name  Option name.
 ///
 /// @return True if it was set.
-static bool option_was_set(const char *name)
+bool option_was_set(const char *name)
 {
   int idx;
 
@@ -6610,6 +6610,18 @@ static bool option_was_set(const char *name)
     return true;
   }
   return false;
+}
+
+/// Reset the flag indicating option "name" was set.
+///
+/// @param[in]  name  Option name.
+void reset_option_was_set(const char *name)
+{
+  const int idx = findoption(name);
+
+  if (idx >= 0) {
+    options[idx].flags &= ~P_WAS_SET;
+  }
 }
 
 /*
