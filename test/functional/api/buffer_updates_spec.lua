@@ -744,6 +744,10 @@ describe('API: buffer events:', function()
 end)
 
 describe('API: buffer events:', function()
+  before_each(function()
+    helpers.clear()
+  end)
+
   it('from a fresh terminal', function()
     nvim('set_option', 'shell', nvim_dir..'/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
@@ -764,7 +768,38 @@ describe('API: buffer events:', function()
     local nextlines = { 'ready $', '[Process exited 0]' }
     sendkeys("<Enter>")
     expectn('nvim_buf_lines_event', {b, tick + 1, 0, 2, nextlines, false})
+    sendkeys("<Enter>")
+  end)
 
+  it('with a nested nvim instance', function()
+    command("terminal " .. nvim_dir .."/nvim")
+    local b = nvim('get_current_buf')
+    local tick = eval('b:changedtick')
+    local lines = {}
+
+    for i = 1,23 do
+      table.insert(lines,'~')
+    end
+
+    lines[1] = ''
+    lines[22] = 'tmp                                                           ' ..
+                '0,0-1          All'
+    lines[23] = '"tmp" [New File]'
+
+    ok(buffer('attach', b, true, {}))
+    next_msg()
+
+    sendkeys("i:e tmp<Enter>")
+    next_msg()
+    expectn('nvim_buf_lines_event', {b, tick + 2, 0, 23, lines, false})
+
+    lines[1] = 'Blarg'
+    lines[22] = 'tmp [+]                                                       ' ..
+                '1,6            All'
+    lines[23] = '-- INSERT --'
+
+    sendkeys("iBlarg")
+    expectn('nvim_buf_lines_event', {b, tick + 3, 0, 23, lines, false})
   end)
 
 end)
