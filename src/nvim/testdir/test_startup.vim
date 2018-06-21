@@ -260,7 +260,7 @@ func Test_default_term()
 
   let save_term = $TERM
   let $TERM = 'unknownxxx'
-  let out = system(GetVimCommand() . ' -c''set term'' -c cq')
-  call assert_match("defaulting to 'ansi'", out)
+  let out = system(GetVimCommand() . ' -c ''echo &term'' -c cq')
+  call assert_match('nvim', out)
   let $TERM = save_term
 endfunc
