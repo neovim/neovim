@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 local clear, feed, feed_command = helpers.clear, helpers.feed, helpers.feed_command
 
@@ -15,7 +16,7 @@ describe(":drop", function()
       [2] = {reverse = true},
       [3] = {bold = true},
     })
-    feed_command("set laststatus=2")
+    command("set laststatus=2 shortmess-=F")
   end)
 
   after_each(function()
