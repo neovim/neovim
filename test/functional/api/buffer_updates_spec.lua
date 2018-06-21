@@ -4,6 +4,7 @@ local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 local expect_err = helpers.expect_err
 local write_file = helpers.write_file
+local nvim_dir = helpers.nvim_dir
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -738,6 +739,32 @@ describe('API: buffer events:', function()
     helpers.clear()
     local b = editoriginal(false)
     expect_err("dict isn't empty", buffer, 'attach', b, false, {builtin="asfd"})
+  end)
+
+end)
+
+describe('API: buffer events:', function()
+  it('from a fresh terminal', function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test')
+    nvim('set_option', 'shellcmdflag', 'EXE')
+
+    command("terminal")
+    local b = nvim('get_current_buf')
+    local tick = eval('b:changedtick')
+    local lines = {}
+
+    for i = 1,23 do
+      table.insert(lines,'')
+    end
+    lines[1] = 'ready $'
+
+    ok(buffer('attach', b, true, {}))
+    expectn('nvim_buf_lines_event', {b, tick, 0, -1, lines, false})
+
+    local nextlines = { 'ready $', '[Process exited 0]' }
+    sendkeys("<Enter>")
+    expectn('nvim_buf_lines_event', {b, tick + 1, 0, 2, nextlines, false})
+
   end)
 
 end)
