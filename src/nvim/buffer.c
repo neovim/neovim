@@ -343,7 +343,7 @@ open_buffer (
 void set_bufref(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
-  bufref->br_fnum = buf->b_fnum;
+  bufref->br_fnum = buf == NULL ? 0 : buf->b_fnum;
   bufref->br_buf_free_count = buf_free_count;
 }
 
@@ -1901,10 +1901,10 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
   }
 
-  ++RedrawingDisabled;
-  if (getfile(buf->b_fnum, NULL, NULL, (options & GETF_SETMARK),
-          lnum, forceit) <= 0) {
-    --RedrawingDisabled;
+  RedrawingDisabled++;
+  if (GETFILE_SUCCESS(getfile(buf->b_fnum, NULL, NULL,
+                              (options & GETF_SETMARK), lnum, forceit))) {
+    RedrawingDisabled--;
 
     /* cursor is at to BOL and w_cursor.lnum is checked due to getfile() */
     if (!p_sol && col != 0) {
@@ -1915,7 +1915,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
     return OK;
   }
-  --RedrawingDisabled;
+  RedrawingDisabled--;
   return FAIL;
 }
 

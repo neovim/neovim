@@ -2006,11 +2006,14 @@ static int check_readonly(int *forceit, buf_T *buf)
 
 /*
  * Try to abandon current file and edit a new or existing file.
- * 'fnum' is the number of the file, if zero use ffname/sfname.
+ * "fnum" is the number of the file, if zero use ffname/sfname.
+ * "lnum" is the line number for the cursor in the new file (if non-zero).
  *
- * Return 1 for "normal" error, 2 for "not written" error, 0 for success
- * -1 for successfully opening another file.
- * 'lnum' is the line number for the cursor in the new file (if non-zero).
+ * Return:
+ * GETFILE_ERROR for "normal" error,
+ * GETFILE_NOT_WRITTEN for "not written" error,
+ * GETFILE_SAME_FILE for success
+ * GETFILE_OPEN_OTHER for successfully opening another file.
  */
 int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, int forceit)
 {
@@ -2018,10 +2021,12 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   int retval;
   char_u      *free_me = NULL;
 
-  if (text_locked())
-    return 1;
-  if (curbuf_locked())
-    return 1;
+  if (text_locked()) {
+    return GETFILE_ERROR;
+  }
+  if (curbuf_locked()) {
+    return GETFILE_ERROR;
+  }
 
   if (fnum == 0) {
     /* make ffname full path, set sfname */
@@ -2042,7 +2047,7 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
     if (curbufIsChanged()) {
       no_wait_return--;
       EMSG(_(e_nowrtmsg));
-      retval = 2;  // File has been changed.
+      retval = GETFILE_NOT_WRITTEN;     // File has been changed.
       goto theend;
     }
   }
@@ -2056,13 +2061,13 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
     }
     check_cursor_lnum();
     beginline(BL_SOL | BL_FIX);
-    retval = 0;         // it's in the same file
+    retval = GETFILE_SAME_FILE;     // it's in the same file
   } else if (do_ecmd(fnum, ffname, sfname, NULL, lnum,
                      (buf_hide(curbuf) ? ECMD_HIDE : 0)
                      + (forceit ? ECMD_FORCEIT : 0), curwin) == OK) {
-    retval = -1;        // opened another file
+    retval = GETFILE_OPEN_OTHER;    // opened another file
   } else {
-    retval = 1;         // error encountered
+    retval = GETFILE_ERROR;         // error encountered
   }
 
 theend:

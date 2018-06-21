@@ -17,6 +17,15 @@ enum getf_values {
   GETF_SWITCH  = 0x04, // respect 'switchbuf' settings when jumping
 };
 
+// Return values of getfile()
+enum getf_retvalues {
+  GETFILE_ERROR       = 1,    // normal error
+  GETFILE_NOT_WRITTEN = 2,    // "not written" error
+  GETFILE_SAME_FILE   = 0,    // success, same file
+  GETFILE_OPEN_OTHER  = -1,   // success, opened another file
+  GETFILE_UNUSED      = 8
+};
+
 // Values for buflist_new() flags
 enum bln_values {
   BLN_CURBUF = 1,   // May re-use curbuf for new buffer

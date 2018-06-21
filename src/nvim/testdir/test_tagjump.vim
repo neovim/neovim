@@ -65,6 +65,48 @@ func Test_duplicate_tagjump()
   call delete('Xfile1')
 endfunc
 
+func Test_tagjump_switchbuf()
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "second\tXfile1\t2",
+        \ "third\tXfile1\t3",],
+        \ 'Xtags')
+  call writefile(['first', 'second', 'third'], 'Xfile1')
+
+  enew | only
+  set switchbuf=
+  stag second
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, line('.'))
+  stag third
+  call assert_equal(3, winnr('$'))
+  call assert_equal(3, line('.'))
+
+  enew | only
+  set switchbuf=useopen
+  stag second
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, line('.'))
+  stag third
+  call assert_equal(2, winnr('$'))
+  call assert_equal(3, line('.'))
+
+  enew | only
+  set switchbuf=usetab
+  tab stag second
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(2, line('.'))
+  1tabnext | stag third
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(3, line('.'))
+
+  tabclose!
+  enew | only
+  call delete('Xfile1')
+  call delete('Xtags')
+  set switchbuf&vim
+endfunc
+
 " Tests for [ CTRL-I and CTRL-W CTRL-I commands
 function Test_keyword_jump()
   call writefile(["#include Xinclude", "",

@@ -41,6 +41,7 @@ typedef struct {
 // for kvec
 #include "nvim/lib/kvec.h"
 
+#define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
 
 /*
