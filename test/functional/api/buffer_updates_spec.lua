@@ -5,6 +5,7 @@ local buffer, command, eval, nvim, next_msg = helpers.buffer,
 local expect_err = helpers.expect_err
 local write_file = helpers.write_file
 local nvim_dir = helpers.nvim_dir
+--local sleep = helpers.sleep
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -23,7 +24,7 @@ local function sendkeys(keys)
   -- give nvim some time to process msgpack requests before possibly sending
   -- more key presses - otherwise they all pile up in the queue and get
   -- processed at once
-  local ntime = os.clock() + 0.1
+  local ntime = os.clock() + 0.001
   repeat until os.clock() > ntime
 end
 
@@ -748,58 +749,68 @@ describe('API: buffer events:', function()
     helpers.clear()
   end)
 
-  it('from a fresh terminal', function()
-    nvim('set_option', 'shell', nvim_dir..'/shell-test')
-    nvim('set_option', 'shellcmdflag', 'EXE')
+  -- terminal buffer has 23 lines, updates pass
+  -- a contiguous range, so we only need to replace
+  -- the new lines
+  local function update_lines(buffer_lines)
+    local msg = next_msg()
 
-    command("terminal")
-    local b = nvim('get_current_buf')
-    local tick = eval('b:changedtick')
-    local lines = {}
+    while(msg ~= nil) do
+      local event = msg[2]
+      if event == "nvim_buf_lines_event" then
+        local args = msg[3]
+        local starts = args[3]
+        local newlines = args[5]
 
-    for i = 1,23 do
-      table.insert(lines,'')
+        for i = 1,#newlines do
+          buffer_lines[starts + i] = newlines[i]
+        end
+      end
+      msg = next_msg()
     end
-    lines[1] = 'ready $'
+  end
 
-    ok(buffer('attach', b, true, {}))
-    expectn('nvim_buf_lines_event', {b, tick, 0, -1, lines, false})
+  it('terminal with a nested nvim instance', function()
+    local buffer_lines = {}
+    local expected_lines = {}
 
-    local nextlines = { 'ready $', '[Process exited 0]' }
-    sendkeys("<Enter>")
-    expectn('nvim_buf_lines_event', {b, tick + 1, 0, 2, nextlines, false})
-    sendkeys("<Enter>")
-  end)
+    for _ = 1,23 do
+      table.insert(expected_lines,'~')
+    end
+    expected_lines[1] = ''
+    expected_lines[22] = 'tmp_terminal_nvim                                             ' ..
+                '0,0-1          All'
+    expected_lines[23] = '"tmp_terminal_nvim" [New File]'
 
-  it('with a nested nvim instance', function()
     command("terminal " .. nvim_dir .."/nvim")
     local b = nvim('get_current_buf')
-    local tick = eval('b:changedtick')
-    local lines = {}
-
-    for i = 1,23 do
-      table.insert(lines,'~')
-    end
-
-    lines[1] = ''
-    lines[22] = 'tmp                                                           ' ..
-                '0,0-1          All'
-    lines[23] = '"tmp" [New File]'
-
     ok(buffer('attach', b, true, {}))
-    next_msg()
 
-    sendkeys("i:e tmp<Enter>")
-    next_msg()
-    expectn('nvim_buf_lines_event', {b, tick + 2, 0, 23, lines, false})
-
-    lines[1] = 'Blarg'
-    lines[22] = 'tmp [+]                                                       ' ..
-                '1,6            All'
-    lines[23] = '-- INSERT --'
+    sendkeys("i:e tmp_terminal_nvim<Enter>")
+    update_lines(buffer_lines)
+    eq(expected_lines, buffer_lines)
 
     sendkeys("iBlarg")
-    expectn('nvim_buf_lines_event', {b, tick + 3, 0, 23, lines, false})
+    expected_lines[1] = 'Blarg'
+    expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
+                '1,6            All'
+    expected_lines[23] = '-- INSERT --'
+
+    update_lines(buffer_lines)
+    eq(expected_lines, buffer_lines)
+
+    local s = string.rep('\nxyz', 30)
+    sendkeys(s)
+    for i = 1,21 do
+      expected_lines[i] = 'xyz'
+    end
+    expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
+                '31,4           Bot'
+    expected_lines[23] = '-- INSERT --'
+    update_lines(buffer_lines)
+    eq(expected_lines, buffer_lines)
+
+    sendkeys("<Esc>:qa!")
   end)
 
 end)
