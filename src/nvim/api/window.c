@@ -93,6 +93,9 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // When column is out of range silently correct it.
   check_cursor_col_win(win);
 
+  // Make sure we stick in this column.
+  win->w_curswant = (colnr_T)col;
+
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
