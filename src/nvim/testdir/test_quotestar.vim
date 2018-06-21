@@ -50,6 +50,15 @@ func Do_test_quotestar_for_x11()
   endtry
 
   let name = 'XVIMCLIPBOARD'
+
+  " Make sure a previous server has exited
+  try
+    call remote_send(name, ":qa!\<CR>")
+    call WaitFor('serverlist() !~ "' . name . '"')
+  catch /E241:/
+  endtry
+  call assert_notmatch(name, serverlist())
+
   let cmd .= ' --servername ' . name
   let g:job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
   call WaitFor('job_status(g:job) == "run"')
@@ -76,6 +85,7 @@ func Do_test_quotestar_for_x11()
   call assert_equal('yes', remote_expr(name, "@*", "", 2))
 
   " Check that the *-register of this vim instance is changed as expected.
+  call WaitFor('@* == "yes"')
   call assert_equal('yes', @*)
 
   if has('unix') && has('gui') && !has('gui_running')
