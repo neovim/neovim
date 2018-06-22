@@ -21,7 +21,7 @@ func Test_writefile_fails_gently()
   call assert_false(filereadable("Xfile"))
   call delete("Xfile")
 
-  call assert_fails('call writefile(["test", [], [], [], "tset"], "Xfile")', 'E730:')
+  call assert_fails('call writefile(["test", [], [], [], "tset"], "Xfile")', 'E745:')
   call assert_false(filereadable("Xfile"))
   call delete("Xfile")
 
