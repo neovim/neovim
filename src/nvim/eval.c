@@ -17675,7 +17675,7 @@ static void f_wordcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "writefile()" function
 static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = 0;  // Assuming success.
+  rettv->vval.v_number = -1;
 
   if (check_restricted() || check_secure()) {
     return;
@@ -17685,6 +17685,12 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     EMSG2(_(e_listarg), "writefile()");
     return;
   }
+  const list_T *const list = argvars[0].vval.v_list;
+  TV_LIST_ITER_CONST(list, li, {
+    if (!tv_check_str_or_nr(TV_LIST_ITEM_TV(li))) {
+      return;
+    }
+  });
 
   bool binary = false;
   bool append = false;
@@ -17716,7 +17722,6 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   FileDescriptor fp;
   int error;
-  rettv->vval.v_number = -1;
   if (*fname == NUL) {
     EMSG(_("E482: Can't open file with an empty name"));
   } else if ((error = file_open(&fp, fname,
@@ -17725,7 +17730,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsgf(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
   } else {
-    if (write_list(&fp, argvars[0].vval.v_list, binary)) {
+    if (write_list(&fp, list, binary)) {
       rettv->vval.v_number = 0;
     }
     if ((error = file_close(&fp, do_fsync)) != 0) {
