@@ -142,7 +142,7 @@ describe('input non-printable chars', function()
       [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
     })
     screen:attach()
-    command("set display-=msgsep")
+    command("set display-=msgsep shortmess-=F")
 
     feed_command("e Xtest-overwrite")
     screen:expect([[
