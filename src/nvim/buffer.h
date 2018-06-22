@@ -96,7 +96,7 @@ static inline void buf_set_changedtick(buf_T *const buf,
                                        const varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
-/// Set b_changedtick and corresponding variable
+/// Set b:changedtick, also checking b: for consistency in debug build
 ///
 /// @param[out]  buf  Buffer to set changedtick in.
 /// @param[in]  changedtick  New value.
@@ -114,10 +114,35 @@ static inline void buf_set_changedtick(buf_T *const buf,
   assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
 # endif
   assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
-  assert(&buf->b_changedtick  // -V501
-         == &buf->changedtick_di.di_tv.vval.v_number);
 #endif
-  buf->b_changedtick = changedtick;
+  buf->changedtick_di.di_tv.vval.v_number = changedtick;
+}
+
+static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE
+  REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get b:changedtick value
+///
+/// Faster then querying b:.
+///
+/// @param[in]  buf  Buffer to get b:changedtick from.
+static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
+{
+  return buf->changedtick_di.di_tv.vval.v_number;
+}
+
+static inline void buf_inc_changedtick(buf_T *const buf)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
+
+/// Increment b:changedtick value
+///
+/// Also checks b: for consistency in case of debug build.
+///
+/// @param[in,out]  buf  Buffer to increment value in.
+static inline void buf_inc_changedtick(buf_T *const buf)
+{
+  buf_set_changedtick(buf, buf_get_changedtick(buf) + 1);
 }
 
 #define WITH_BUFFER(b, code) \

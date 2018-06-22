@@ -1386,22 +1386,22 @@ ins_redraw (
     last_cursormoved = curwin->w_cursor;
   }
 
-  // Trigger TextChangedI if b_changedtick differs.
+  // Trigger TextChangedI if changedtick differs.
   if (ready && has_event(EVENT_TEXTCHANGEDI)
-      && curbuf->b_last_changedtick != curbuf->b_changedtick
+      && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)
       && !pum_visible()) {
     apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
-    curbuf->b_last_changedtick = curbuf->b_changedtick;
+    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
   }
 
-  // Trigger TextChangedP if b_changedtick differs. When the popupmenu closes
+  // Trigger TextChangedP if changedtick differs. When the popupmenu closes
   // TextChangedI will need to trigger for backwards compatibility, thus use
   // different b_last_changedtick* variables.
   if (ready && has_event(EVENT_TEXTCHANGEDP)
-      && curbuf->b_last_changedtick_pum != curbuf->b_changedtick
+      && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
       apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
-      curbuf->b_last_changedtick_pum = curbuf->b_changedtick;
+      curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
   }
 
   if (must_redraw)

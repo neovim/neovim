@@ -6,6 +6,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/assert.h"
+#include "nvim/buffer.h"
 
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
@@ -38,7 +39,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);
-    args.items[1] = INTEGER_OBJ(buf->b_changedtick);
+    args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
     // the first line that changed (zero-indexed)
     args.items[2] = INTEGER_OBJ(0);
     // the last line that was changed
@@ -148,7 +149,7 @@ void buf_updates_send_changes(buf_T *buf,
     args.items[0] = BUFFER_OBJ(buf->handle);
 
     // next argument is b:changedtick
-    args.items[1] = send_tick ? INTEGER_OBJ(buf->b_changedtick) : NIL;
+    args.items[1] = send_tick ? INTEGER_OBJ(buf_get_changedtick(buf)) : NIL;
 
     // the first line that changed (zero-indexed)
     args.items[2] = INTEGER_OBJ(firstline - 1);
@@ -203,7 +204,7 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
     args.items[0] = BUFFER_OBJ(buf->handle);
 
     // next argument is b:changedtick
-    args.items[1] = INTEGER_OBJ(buf->b_changedtick);
+    args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
     // don't try and clean up dead channels here
     rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);

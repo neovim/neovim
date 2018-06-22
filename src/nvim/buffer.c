@@ -1555,7 +1555,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
       .v_lock = VAR_FIXED,
-      .vval.v_number = buf->b_changedtick,
+      .vval.v_number = buf_get_changedtick(buf),
     },
     .di_key = "changedtick",
   };

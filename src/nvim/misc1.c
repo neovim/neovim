@@ -1795,7 +1795,7 @@ void changed(void)
     }
     changed_int();
   }
-  buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
+  buf_inc_changedtick(curbuf);
 }
 
 /*
@@ -1922,9 +1922,9 @@ changed_lines(
     linenr_T lnume,       // line below last changed line
     long xtra,            // number of extra lines (negative when deleting)
     bool do_buf_event  // some callers like undo/redo call changed_lines()
-                       // and then increment b_changedtick *again*. This flag
+                       // and then increment changedtick *again*. This flag
                        // allows these callers to send the nvim_buf_lines_event
-                       // events after they're done modifying b_changedtick.
+                       // events after they're done modifying changedtick.
 )
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
@@ -2168,7 +2168,7 @@ unchanged (
     redraw_tabline = TRUE;
     need_maketitle = TRUE;          /* set window title later */
   }
-  buf_set_changedtick(buf, buf->b_changedtick + 1);
+  buf_inc_changedtick(buf);
 }
 
 /*

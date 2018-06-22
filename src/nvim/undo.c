@@ -2289,7 +2289,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     unchanged(curbuf, FALSE);
   }
 
-  // because the calls to changed()/unchanged() above will bump b_changedtick
+  // because the calls to changed()/unchanged() above will bump changedtick
   // again, we need to send a nvim_buf_lines_event with just the new value of
   // b:changedtick
   if (do_buf_event && kv_size(curbuf->update_channels)) {

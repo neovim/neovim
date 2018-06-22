@@ -496,7 +496,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
     return -1;
   }
 
-  return buf->b_changedtick;
+  return buf_get_changedtick(buf);
 }
 
 /// Gets a list of buffer-local |mapping| definitions.
