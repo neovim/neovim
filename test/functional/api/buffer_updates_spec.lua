@@ -24,7 +24,7 @@ local function sendkeys(keys)
   -- give nvim some time to process msgpack requests before possibly sending
   -- more key presses - otherwise they all pile up in the queue and get
   -- processed at once
-  local ntime = os.clock() + 0.001
+  local ntime = os.clock() + 0.1
   repeat until os.clock() > ntime
 end
 
@@ -783,7 +783,7 @@ describe('API: buffer events:', function()
     expected_lines[22] = 'tmp_terminal_nvim                                             ' ..
                 '0,0-1          All'
 
-    command("terminal " .. nvim_dir .."/nvim")
+    command("terminal " .. nvim_dir ..'/nvim -n -c "set shortmess+=A"')
     local b = nvim('get_current_buf')
     ok(buffer('attach', b, true, {}))
 
