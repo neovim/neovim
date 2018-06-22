@@ -902,8 +902,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'M': {  // "-M"  no changes or writing of files
           reset_modifiable();
-          // FALLTHROUGH
-        }
+        } // FALLTHROUGH
         case 'm': {  // "-m"  no writing of files
           p_write = false;
           break;
@@ -1018,8 +1017,7 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx = -1;
             break;
           }
-          // FALLTHROUGH
-        }
+        } // FALLTHROUGH
         case 'S':    // "-S {file}" execute Vim script
         case 'i':    // "-i {shada}" use for ShaDa file
         case 'u':    // "-u {vimrc}" vim inits file
@@ -1163,8 +1161,7 @@ scripterror:
               argv_idx = -1;
               break;
             }
-            // FALLTHROUGH
-          }
+          } // FALLTHROUGH
           case 'W': {  // "-W {scriptout}" overwrite script file
             if (scriptout != NULL) {
               goto scripterror;
