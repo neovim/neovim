@@ -2384,12 +2384,15 @@ void get_winopts(buf_T *buf)
   wip = find_wininfo(buf, true);
   if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
       && wip->wi_win->w_buffer == buf) {
+    // The buffer is currently displayed in the window: use the actual
+    // option values instead of the saved (possibly outdated) values.
     win_T *wp = wip->wi_win;
     copy_winopt(&wp->w_onebuf_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wp->w_fold_manual;
     curwin->w_foldinvalid = true;
     cloneFoldGrowArray(&wp->w_folds, &curwin->w_folds);
   } else if (wip != NULL && wip->wi_optset) {
+    // the buffer was displayed in the current window earlier
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
     curwin->w_foldinvalid = true;
