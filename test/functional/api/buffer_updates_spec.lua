@@ -5,7 +5,7 @@ local buffer, command, eval, nvim, next_msg = helpers.buffer,
 local expect_err = helpers.expect_err
 local write_file = helpers.write_file
 local nvim_dir = helpers.nvim_dir
---local sleep = helpers.sleep
+local sleep = helpers.sleep
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -768,25 +768,27 @@ describe('API: buffer events:', function()
       end
       msg = next_msg()
     end
+    -- we don't expect the msg area, it's too flakey
+    buffer_lines[23] = nil
   end
 
   it('terminal with a nested nvim instance', function()
     local buffer_lines = {}
     local expected_lines = {}
 
-    for _ = 1,23 do
+    for _ = 1,22 do
       table.insert(expected_lines,'~')
     end
     expected_lines[1] = ''
     expected_lines[22] = 'tmp_terminal_nvim                                             ' ..
                 '0,0-1          All'
-    expected_lines[23] = '"tmp_terminal_nvim" [New File]'
 
     command("terminal " .. nvim_dir .."/nvim")
     local b = nvim('get_current_buf')
     ok(buffer('attach', b, true, {}))
 
     sendkeys("i:e tmp_terminal_nvim<Enter>")
+    sleep(10)
     update_lines(buffer_lines)
     eq(expected_lines, buffer_lines)
 
@@ -794,8 +796,8 @@ describe('API: buffer events:', function()
     expected_lines[1] = 'Blarg'
     expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
                 '1,6            All'
-    expected_lines[23] = '-- INSERT --'
 
+    sleep(10)
     update_lines(buffer_lines)
     eq(expected_lines, buffer_lines)
 
@@ -806,7 +808,7 @@ describe('API: buffer events:', function()
     end
     expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
                 '31,4           Bot'
-    expected_lines[23] = '-- INSERT --'
+    sleep(10)
     update_lines(buffer_lines)
     eq(expected_lines, buffer_lines)
 
