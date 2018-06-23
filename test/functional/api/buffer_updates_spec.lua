@@ -5,7 +5,6 @@ local buffer, command, eval, nvim, next_msg = helpers.buffer,
 local expect_err = helpers.expect_err
 local write_file = helpers.write_file
 local nvim_dir = helpers.nvim_dir
-local sleep = helpers.sleep
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -824,8 +823,6 @@ describe('API: buffer events:', function()
     local s = string.rep('\nxyz', 30)
     sendkeys(s)
     did_match_somwhere(buffer_lines, expected_lines)
-
-    sendkeys("<Esc>:qa!")
   end)
 
 end)
