@@ -218,11 +218,11 @@ void do_exmode(int improved)
       exmode_active = FALSE;
       break;
     }
-    msg_scroll = TRUE;
-    need_wait_return = FALSE;
-    ex_pressedreturn = FALSE;
-    ex_no_reprint = FALSE;
-    changedtick = curbuf->b_changedtick;
+    msg_scroll = true;
+    need_wait_return = false;
+    ex_pressedreturn = false;
+    ex_no_reprint = false;
+    changedtick = buf_get_changedtick(curbuf);
     prev_msg_row = msg_row;
     prev_line = curwin->w_cursor.lnum;
     cmdline_row = msg_row;
@@ -230,10 +230,10 @@ void do_exmode(int improved)
     lines_left = Rows - 1;
 
     if ((prev_line != curwin->w_cursor.lnum
-         || changedtick != curbuf->b_changedtick) && !ex_no_reprint) {
-      if (curbuf->b_ml.ml_flags & ML_EMPTY)
+         || changedtick != buf_get_changedtick(curbuf)) && !ex_no_reprint) {
+      if (curbuf->b_ml.ml_flags & ML_EMPTY) {
         EMSG(_(e_emptybuf));
-      else {
+      } else {
         if (ex_pressedreturn) {
           /* go up one line, to overwrite the ":<CR>" line, so the
            * output doesn't contain empty lines. */

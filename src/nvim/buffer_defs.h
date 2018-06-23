@@ -41,6 +41,7 @@ typedef struct {
 // for kvec
 #include "nvim/lib/kvec.h"
 
+#define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
 
 /*
@@ -482,9 +483,11 @@ struct file_buffer {
 
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
-/// Change identifier incremented for each change, including undo
-#define b_changedtick changedtick_di.di_tv.vval.v_number
-  ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
+
+  /// Change identifier incremented for each change, including undo
+  ///
+  /// This is a dictionary item used to store in b:changedtick.
+  ChangedtickDictItem changedtick_di;
 
   varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or
                                         // TextChangedI was last triggered.
@@ -1193,5 +1196,9 @@ static inline int win_hl_attr(win_T *wp, int hlf)
 {
   return wp->w_hl_attrs[hlf];
 }
+
+/// Macros defined in Vim, but not in Neovim
+#define CHANGEDTICK(buf) \
+    (=== Include buffer.h & use buf_(get|set|inc)_changedtick ===)
 
 #endif // NVIM_BUFFER_DEFS_H

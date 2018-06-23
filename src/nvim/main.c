@@ -603,7 +603,7 @@ void getout(int exitval)
         }
 
         buf_T *buf = wp->w_buffer;
-        if (buf->b_changedtick != -1) {
+        if (buf_get_changedtick(buf) != -1) {
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
                          buf->b_fname, false, buf);
           buf_set_changedtick(buf, -1);  // note that we did it already
@@ -902,8 +902,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'M': {  // "-M"  no changes or writing of files
           reset_modifiable();
-          // FALLTHROUGH
-        }
+        } // FALLTHROUGH
         case 'm': {  // "-m"  no writing of files
           p_write = false;
           break;
@@ -1018,8 +1017,7 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx = -1;
             break;
           }
-          // FALLTHROUGH
-        }
+        } // FALLTHROUGH
         case 'S':    // "-S {file}" execute Vim script
         case 'i':    // "-i {shada}" use for ShaDa file
         case 'u':    // "-u {vimrc}" vim inits file
@@ -1163,8 +1161,7 @@ scripterror:
               argv_idx = -1;
               break;
             }
-            // FALLTHROUGH
-          }
+          } // FALLTHROUGH
           case 'W': {  // "-W {scriptout}" overwrite script file
             if (scriptout != NULL) {
               goto scripterror;

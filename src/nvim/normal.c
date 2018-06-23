@@ -1213,11 +1213,11 @@ static void normal_check_cursor_moved(NormalState *s)
 
 static void normal_check_text_changed(NormalState *s)
 {
-  // Trigger TextChanged if b_changedtick differs.
+  // Trigger TextChanged if changedtick differs.
   if (!finish_op && has_event(EVENT_TEXTCHANGED)
-      && curbuf->b_last_changedtick != curbuf->b_changedtick) {
+      && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)) {
     apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-    curbuf->b_last_changedtick = curbuf->b_changedtick;
+    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
   }
 }
 

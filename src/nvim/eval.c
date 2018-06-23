@@ -7906,7 +7906,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (lnum < 0)         /* ignore type error in {lnum} arg */
     lnum = 0;
   if (lnum != prev_lnum
-      || changedtick != curbuf->b_changedtick
+      || changedtick != buf_get_changedtick(curbuf)
       || fnum != curbuf->b_fnum) {
     /* New line, buffer, change: need to get the values. */
     filler_lines = diff_check(curwin, lnum);
@@ -7923,7 +7923,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else
       hlID = (hlf_T)0;
     prev_lnum = lnum;
-    changedtick = curbuf->b_changedtick;
+    changedtick = buf_get_changedtick(curbuf);
     fnum = curbuf->b_fnum;
   }
 
@@ -9172,7 +9172,7 @@ static dict_T *get_buffer_info(buf_T *buf)
   tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
   tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
   tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
-  tv_dict_add_nr(dict, S_LEN("changedtick"), buf->b_changedtick);
+  tv_dict_add_nr(dict, S_LEN("changedtick"), buf_get_changedtick(buf));
   tv_dict_add_nr(dict, S_LEN("hidden"),
                  buf->b_ml.ml_mfp != NULL && buf->b_nwindows == 0);
 

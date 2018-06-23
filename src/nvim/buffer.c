@@ -343,7 +343,7 @@ open_buffer (
 void set_bufref(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
-  bufref->br_fnum = buf->b_fnum;
+  bufref->br_fnum = buf == NULL ? 0 : buf->b_fnum;
   bufref->br_buf_free_count = buf_free_count;
 }
 
@@ -1555,7 +1555,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
       .v_lock = VAR_FIXED,
-      .vval.v_number = buf->b_changedtick,
+      .vval.v_number = buf_get_changedtick(buf),
     },
     .di_key = "changedtick",
   };
@@ -1901,10 +1901,10 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
   }
 
-  ++RedrawingDisabled;
-  if (getfile(buf->b_fnum, NULL, NULL, (options & GETF_SETMARK),
-          lnum, forceit) <= 0) {
-    --RedrawingDisabled;
+  RedrawingDisabled++;
+  if (GETFILE_SUCCESS(getfile(buf->b_fnum, NULL, NULL,
+                              (options & GETF_SETMARK), lnum, forceit))) {
+    RedrawingDisabled--;
 
     /* cursor is at to BOL and w_cursor.lnum is checked due to getfile() */
     if (!p_sol && col != 0) {
@@ -1915,7 +1915,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
     return OK;
   }
-  --RedrawingDisabled;
+  RedrawingDisabled--;
   return FAIL;
 }
 
@@ -2381,8 +2381,15 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wip = find_wininfo(buf, TRUE);
-  if (wip != NULL && wip->wi_optset) {
+  wip = find_wininfo(buf, true);
+  if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
+      && wip->wi_win->w_buffer == buf) {
+    win_T *wp = wip->wi_win;
+    copy_winopt(&wp->w_onebuf_opt, &curwin->w_onebuf_opt);
+    curwin->w_fold_manual = wp->w_fold_manual;
+    curwin->w_foldinvalid = true;
+    cloneFoldGrowArray(&wp->w_folds, &curwin->w_folds);
+  } else if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
     curwin->w_foldinvalid = true;

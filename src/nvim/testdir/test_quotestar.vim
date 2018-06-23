@@ -50,6 +50,15 @@ func Do_test_quotestar_for_x11()
   endtry
 
   let name = 'XVIMCLIPBOARD'
+
+  " Make sure a previous server has exited
+  try
+    call remote_send(name, ":qa!\<CR>")
+    call WaitFor('serverlist() !~ "' . name . '"')
+  catch /E241:/
+  endtry
+  call assert_notmatch(name, serverlist())
+
   let cmd .= ' --servername ' . name
   let g:job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
   call WaitFor('job_status(g:job) == "run"')
@@ -60,23 +69,23 @@ func Do_test_quotestar_for_x11()
 
   " Takes a short while for the server to be active.
   call WaitFor('serverlist() =~ "' . name . '"')
-  call assert_match(name, serverlist())
 
   " Wait for the server to be up and answering requests.  One second is not
   " always sufficient.
   call WaitFor('remote_expr("' . name . '", "v:version", "", 2) != ""')
 
-  " Clear the *-register of this vim instance.
-  let @* = ''
-
-  " Try to change the *-register of the server.
+  " Clear the *-register of this vim instance and wait for it to be picked up
+  " by the server.
+  let @* = 'no'
   call remote_foreground(name)
+  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "no"', 3000)
+
+  " Set the * register on the server.
   call remote_send(name, ":let @* = 'yes'\<CR>")
-  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "yes"')
-  call assert_equal('yes', remote_expr(name, "@*", "", 2))
+  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "yes"', 3000)
 
   " Check that the *-register of this vim instance is changed as expected.
-  call assert_equal('yes', @*)
+  call WaitFor('@* == "yes"', 3000)
 
   if has('unix') && has('gui') && !has('gui_running')
     let @* = ''

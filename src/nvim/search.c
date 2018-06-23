@@ -1288,9 +1288,9 @@ end_do_search:
  * search_for_exact_line(buf, pos, dir, pat)
  *
  * Search for a line starting with the given pattern (ignoring leading
- * white-space), starting from pos and going in direction dir.	pos will
+ * white-space), starting from pos and going in direction "dir". "pos" will
  * contain the position of the match found.    Blank lines match only if
- * ADDING is set.  if p_ic is set then the pattern must be in lowercase.
+ * ADDING is set.  If p_ic is set then the pattern must be in lowercase.
  * Return OK for success, or FAIL if no line found.
  */
 int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
@@ -4595,20 +4595,23 @@ search_line:
             RESET_BINDING(curwin);
           }
           if (depth == -1) {
-            /* match in current file */
+            // match in current file
             if (l_g_do_tagpreview != 0) {
-              if (getfile(0, curwin_save->w_buffer->b_fname,
-                      NULL, TRUE, lnum, FALSE) > 0)
-                break;                  /* failed to jump to file */
-            } else
+              if (!GETFILE_SUCCESS(getfile(0, curwin_save->w_buffer->b_fname,
+                                           NULL, true, lnum, false))) {
+                break;    // failed to jump to file
+              }
+            } else {
               setpcmark();
+            }
             curwin->w_cursor.lnum = lnum;
           } else {
-            if (getfile(0, files[depth].name, NULL, TRUE,
-                    files[depth].lnum, FALSE) > 0)
-              break;                    /* failed to jump to file */
-            /* autocommands may have changed the lnum, we don't
-             * want that here */
+            if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
+                                         files[depth].lnum, false))) {
+              break;    // failed to jump to file
+            }
+            // autocommands may have changed the lnum, we don't
+            // want that here
             curwin->w_cursor.lnum = files[depth].lnum;
           }
         }

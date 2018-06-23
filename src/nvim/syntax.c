@@ -43,6 +43,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/buffer.h"
 
 static bool did_syntax_onoff = false;
 
@@ -406,12 +407,12 @@ void syntax_start(win_T *wp, linenr_T lnum)
    */
   if (syn_block != wp->w_s
       || syn_buf != wp->w_buffer
-      || changedtick != syn_buf->b_changedtick) {
+      || changedtick != buf_get_changedtick(syn_buf)) {
     invalidate_current_state();
     syn_buf = wp->w_buffer;
     syn_block = wp->w_s;
   }
-  changedtick = syn_buf->b_changedtick;
+  changedtick = buf_get_changedtick(syn_buf);
   syn_win = wp;
 
   /*
@@ -6812,15 +6813,21 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
+                  int dark = -1;
+
                   if (t_colors < 16) {
-                    i = (color == 0 || color == 4);
-                  } else {
-                    i = (color < 7 || color == 8);
+                    dark = (color == 0 || color == 4);
+                  } else if (color < 16) {
+                    // Limit the heuristic to the standard 16 colors
+                    dark = (color < 7 || color == 8);
                   }
                   // Set the 'background' option if the value is
                   // wrong.
-                  if (i != (*p_bg == 'd')) {
-                    set_option_value("bg", 0L, (i ? "dark" : "light"), 0);
+                  if (dark != -1
+                      && dark != (*p_bg == 'd')
+                      && !option_was_set("bg")) {
+                    set_option_value("bg", 0L, (dark ? "dark" : "light"), 0);
+                    reset_option_was_set("bg");
                   }
                 }
               }

@@ -2320,7 +2320,7 @@ jumpto_tag (
   char_u      *fname;
   tagptrs_T tagp;
   int retval = FAIL;
-  int getfile_result;
+  int getfile_result = GETFILE_UNUSED;
   int search_options;
   int save_no_hlsearch;
   win_T       *curwin_save = NULL;
@@ -2406,7 +2406,31 @@ jumpto_tag (
 
   // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
   // open a new tab page.
-  if (postponed_split || cmdmod.tab != 0) {
+  if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
+    buf_T *const existing_buf = buflist_findname_exp(fname);
+
+    if (existing_buf != NULL) {
+      const win_T *wp = NULL;
+
+      if (swb_flags & SWB_USEOPEN) {
+        wp = buf_jump_open_win(existing_buf);
+      }
+
+      // If 'switchbuf' contains "usetab": jump to first window in any tab
+      // page containing "existing_buf" if one exists
+      if (wp == NULL && (swb_flags & SWB_USETAB)) {
+        wp = buf_jump_open_tab(existing_buf);
+      }
+
+      // We've switched to the buffer, the usual loading of the file must
+      // be skipped.
+      if (wp != NULL) {
+        getfile_result = GETFILE_SAME_FILE;
+      }
+    }
+  }
+  if (getfile_result == GETFILE_UNUSED
+      && (postponed_split || cmdmod.tab != 0)) {
     if (win_split(postponed_split > 0 ? postponed_split : 0,
                   postponed_split_flags) == FAIL) {
       RedrawingDisabled--;
@@ -2423,11 +2447,13 @@ jumpto_tag (
     else
       keep_help_flag = curbuf->b_help;
   }
-  getfile_result = getfile(0, fname, NULL, TRUE, (linenr_T)0, forceit);
-  keep_help_flag = FALSE;
+  if (getfile_result == GETFILE_UNUSED) {
+    getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
+  }
+  keep_help_flag = false;
 
-  if (getfile_result <= 0) {            /* got to the right file */
-    curwin->w_set_curswant = TRUE;
+  if (GETFILE_SUCCESS(getfile_result)) {    // got to the right file
+    curwin->w_set_curswant = true;
     postponed_split = 0;
 
     save_secure = secure;
@@ -2545,9 +2571,10 @@ jumpto_tag (
       SET_NO_HLSEARCH(save_no_hlsearch);
     }
 
-    /* Return OK if jumped to another file (at least we found the file!). */
-    if (getfile_result == -1)
+    // Return OK if jumped to another file (at least we found the file!).
+    if (getfile_result == GETFILE_OPEN_OTHER) {
       retval = OK;
+    }
 
     if (retval == OK) {
       /*
