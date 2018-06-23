@@ -749,10 +749,20 @@ describe('API: buffer events:', function()
     helpers.clear()
   end)
 
-  -- terminal buffer has 23 lines, updates pass
-  -- a contiguous range, so we only need to replace
-  -- the new lines
-  local function update_lines(buffer_lines)
+  local function lines_subset(first, second)
+    for i = 1,#first do
+      if first[i] ~= second[i] then
+        return false
+      end
+    end
+    return true
+  end
+
+  local function lines_equal(f, s)
+    return lines_subset(f, s) and lines_subset(s, f)
+  end
+
+  local function did_match_somwhere(buffer_lines, expected_lines)
     local msg = next_msg()
 
     while(msg ~= nil) do
@@ -762,55 +772,58 @@ describe('API: buffer events:', function()
         local starts = args[3]
         local newlines = args[5]
 
+        -- Size of the contained neovim instance is 23 lines, this might change
+        -- with the test setup. Note updates are continguous.
+        assert(#newlines <= 23)
+
         for i = 1,#newlines do
           buffer_lines[starts + i] = newlines[i]
+        end
+        -- we don't compare the msg area of the embedded nvim, it's too flakey
+        buffer_lines[23] = nil
+
+        if lines_equal(buffer_lines, expected_lines) then
+          return true
         end
       end
       msg = next_msg()
     end
-    -- we don't expect the msg area, it's too flakey
-    buffer_lines[23] = nil
+    return false
   end
 
   it('terminal with a nested nvim instance', function()
     local buffer_lines = {}
     local expected_lines = {}
+    command("terminal " .. nvim_dir ..'/nvim -n -c "set shortmess+=A"')
+    local b = nvim('get_current_buf')
+    ok(buffer('attach', b, true, {}))
 
     for _ = 1,22 do
       table.insert(expected_lines,'~')
     end
     expected_lines[1] = ''
     expected_lines[22] = 'tmp_terminal_nvim                                             ' ..
-                '0,0-1          All'
-
-    command("terminal " .. nvim_dir ..'/nvim -n -c "set shortmess+=A"')
-    local b = nvim('get_current_buf')
-    ok(buffer('attach', b, true, {}))
+                         '0,0-1          All'
 
     sendkeys("i:e tmp_terminal_nvim<Enter>")
-    sleep(10)
-    update_lines(buffer_lines)
-    eq(expected_lines, buffer_lines)
+    did_match_somwhere(buffer_lines, expected_lines)
 
-    sendkeys("iBlarg")
     expected_lines[1] = 'Blarg'
     expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
-                '1,6            All'
+                         '1,6            All'
 
-    sleep(10)
-    update_lines(buffer_lines)
-    eq(expected_lines, buffer_lines)
+    sendkeys("iBlarg")
+    did_match_somwhere(buffer_lines, expected_lines)
 
-    local s = string.rep('\nxyz', 30)
-    sendkeys(s)
     for i = 1,21 do
       expected_lines[i] = 'xyz'
     end
     expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
-                '31,4           Bot'
-    sleep(10)
-    update_lines(buffer_lines)
-    eq(expected_lines, buffer_lines)
+                         '31,4           Bot'
+
+    local s = string.rep('\nxyz', 30)
+    sendkeys(s)
+    did_match_somwhere(buffer_lines, expected_lines)
 
     sendkeys("<Esc>:qa!")
   end)
