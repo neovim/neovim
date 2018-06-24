@@ -457,9 +457,10 @@ if(WIN32)
 
                       platforms/qwindows.dll
                       )
+    get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
     set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
       "file(COPY \"${DEPS_PREFIX}/bin/${DEP_FILE}\"
-         DESTINATION \"${PROJECT_BINARY_DIR}/windows_runtime_deps/\")")
+         DESTINATION \"${PROJECT_BINARY_DIR}/windows_runtime_deps/${DEP_FILE_DIR}\")")
   endforeach()
   file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
