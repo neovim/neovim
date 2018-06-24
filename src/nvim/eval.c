@@ -21174,6 +21174,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   proftime_T wait_start;
   proftime_T call_start;
   bool did_save_redo = false;
+  save_redo_T save_redo;
 
   /* If depth of calling is getting too high, don't execute the function */
   if (depth >= p_mfd) {
@@ -21186,7 +21187,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   // Save search patterns and redo buffer.
   save_search_patterns();
   if (!ins_compl_active()) {
-    saveRedobuff();
+    saveRedobuff(&save_redo);
     did_save_redo = true;
   }
   ++fp->uf_calls;
@@ -21501,7 +21502,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   }
   // restore search patterns and redo buffer
   if (did_save_redo) {
-    restoreRedobuff();
+    restoreRedobuff(&save_redo);
   }
   restore_search_patterns();
 }
