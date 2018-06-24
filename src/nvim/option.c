@@ -4769,8 +4769,8 @@ int get_option_value_strict(char *name,
         curwin->w_buffer = curbuf;
       }
     } else if (opt_type == SREQ_WIN) {
-      win_T	*save_curwin = curwin;
-      curwin = (win_T *) from;
+      win_T *save_curwin = curwin;
+      curwin = (win_T *)from;
       curbuf = curwin->w_buffer;
       varp = get_varp(p);
       curwin = save_curwin;
