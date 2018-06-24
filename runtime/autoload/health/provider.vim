@@ -383,8 +383,10 @@ function! s:check_python(version) abort
   endif
 
   " Check if $VIRTUAL_ENV is valid.
-  if exists('$VIRTUAL_ENV')
-    if !empty(pyname) && $VIRTUAL_ENV !=# matchstr(exepath(pyname), '^\V'.$VIRTUAL_ENV)
+  if exists('$VIRTUAL_ENV') && !empty(python_bin)
+    if $VIRTUAL_ENV ==# matchstr(python_bin, '^\V'.$VIRTUAL_ENV)
+      call health#report_info('$VIRTUAL_ENV matches executable')
+    else
       call health#report_warn(
         \ '$VIRTUAL_ENV exists but appears to be inactive. '
         \ . 'This could lead to unexpected results.',
