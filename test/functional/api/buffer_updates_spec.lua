@@ -761,7 +761,7 @@ describe('API: buffer events:', function()
     return lines_subset(f, s) and lines_subset(s, f)
   end
 
-  local function did_match_somwhere(buffer_lines, expected_lines)
+  local function did_match_somewhere(buffer_lines, expected_lines)
     local msg = next_msg()
 
     while(msg ~= nil) do
@@ -793,7 +793,7 @@ describe('API: buffer events:', function()
   it('terminal with a nested nvim instance', function()
     local buffer_lines = {}
     local expected_lines = {}
-    command("terminal " .. nvim_dir ..'/nvim -n -c "set shortmess+=A"')
+    command("terminal " .. nvim_dir ..'/nvim -u NONE -i NONE -n -c "set shortmess+=A"')
     local b = nvim('get_current_buf')
     ok(buffer('attach', b, true, {}))
 
@@ -822,7 +822,7 @@ describe('API: buffer events:', function()
 
     local s = string.rep('\nxyz', 30)
     sendkeys(s)
-    did_match_somwhere(buffer_lines, expected_lines)
+    did_match_somewhere(buffer_lines, expected_lines)
   end)
 
 end)
