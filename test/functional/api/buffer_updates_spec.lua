@@ -801,28 +801,31 @@ describe('API: buffer events:', function()
       table.insert(expected_lines,'~')
     end
     expected_lines[1] = ''
-    expected_lines[22] = 'tmp_terminal_nvim                                             ' ..
-                         '0,0-1          All'
+    expected_lines[22] = ('tmp_terminal_nvim'..(' '):rep(45)
+                          ..'0,0-1          All')
 
     sendkeys("i:e tmp_terminal_nvim<Enter>")
-    did_match_somwhere(buffer_lines, expected_lines)
+    assert(did_match_somewhere(buffer_lines, expected_lines),
+           'did not match expected lines')
 
     expected_lines[1] = 'Blarg'
-    expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
-                         '1,6            All'
+    expected_lines[22] = ('tmp_terminal_nvim [+]'..(' '):rep(41)
+                          ..'1,6            All')
 
     sendkeys("iBlarg")
-    did_match_somwhere(buffer_lines, expected_lines)
+    assert(did_match_somewhere(buffer_lines, expected_lines),
+           'did not match expected lines')
 
     for i = 1,21 do
       expected_lines[i] = 'xyz'
     end
-    expected_lines[22] = 'tmp_terminal_nvim [+]                                         ' ..
-                         '31,4           Bot'
+    expected_lines[22] = ('tmp_terminal_nvim [+]'..(' '):rep(41)
+                          ..'31,4           Bot')
 
     local s = string.rep('\nxyz', 30)
     sendkeys(s)
-    did_match_somewhere(buffer_lines, expected_lines)
+    assert(did_match_somewhere(buffer_lines, expected_lines),
+           'did not match expected lines')
   end)
 
 end)
