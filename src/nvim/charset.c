@@ -842,7 +842,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return (c >= 0x100
-          ? (utf_class(c) >= 2)
+          ? (utf_class_tab(c, chartab) >= 2)
           : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
 }
 
@@ -866,10 +866,7 @@ bool vim_iswordc_buf(int c, buf_T *buf)
 bool vim_iswordp(char_u *p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
-  }
-  return GET_CHARTAB(curbuf, *p) != 0;
+  return vim_iswordp_buf(p, curbuf);
 }
 
 /// Just like vim_iswordc_buf() but uses a pointer to the (multi-byte)
@@ -882,10 +879,12 @@ bool vim_iswordp(char_u *p)
 bool vim_iswordp_buf(char_u *p, buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
+  int c = *p;
+
+  if (MB_BYTE2LEN(c) > 1) {
+    c = utf_ptr2char(p);
   }
-  return GET_CHARTAB(buf, *p) != 0;
+  return vim_iswordc_buf(c, buf);
 }
 
 /// Check that "c" is a valid file-name character.
