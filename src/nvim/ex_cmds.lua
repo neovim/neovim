@@ -3076,7 +3076,7 @@ return {
   },
   {
     command='wincmd',
-    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR),
+    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR, CMDWIN),
     addr_type=ADDR_WINDOWS,
     func='ex_wincmd',
   },

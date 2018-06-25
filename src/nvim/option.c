@@ -3243,6 +3243,10 @@ did_set_string_option (
         did_filetype = true;
         apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
                        curbuf->b_fname, true, curbuf);
+        // Just in case the old "curbuf" is now invalid
+        if (varp != &(curbuf->b_p_ft)) {
+          varp = NULL;
+        }
       }
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
