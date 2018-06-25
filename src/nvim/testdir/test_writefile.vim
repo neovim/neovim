@@ -1,5 +1,6 @@
+" Tests for the writefile() function.
 
-function! Test_WriteFile()
+func Test_writefile()
   let f = tempname()
   call writefile(["over","written"], f, "b")
   call writefile(["hello","world"], f, "b")
@@ -13,4 +14,20 @@ function! Test_WriteFile()
   call assert_equal("morning", l[3])
   call assert_equal("vimmers", l[4])
   call delete(f)
-endfunction
+endfunc
+
+func Test_writefile_fails_gently()
+  call assert_fails('call writefile(["test"], "Xfile", [])', 'E730:')
+  call assert_false(filereadable("Xfile"))
+  call delete("Xfile")
+
+  call assert_fails('call writefile(["test", [], [], [], "tset"], "Xfile")', 'E745:')
+  call assert_false(filereadable("Xfile"))
+  call delete("Xfile")
+
+  call assert_fails('call writefile([], "Xfile", [])', 'E730:')
+  call assert_false(filereadable("Xfile"))
+  call delete("Xfile")
+
+  call assert_fails('call writefile([], [])', 'E730:')
+endfunc
