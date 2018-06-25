@@ -4513,9 +4513,7 @@ eval_index(
             item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
           }
           tv_clear(rettv);
-          rettv->v_type = VAR_LIST;
-          rettv->vval.v_list = l;
-          tv_list_ref(l);
+          tv_list_set_ret(rettv, l);
         } else {
           tv_copy(TV_LIST_ITEM_TV(tv_list_find(rettv->vval.v_list, n1)), &var1);
           tv_clear(rettv);
@@ -4899,9 +4897,7 @@ failret:
 
   *arg = skipwhite(*arg + 1);
   if (evaluate) {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = l;
-    tv_list_ref(l);
+    tv_list_set_ret(rettv, l);
   }
 
   return OK;
@@ -5626,9 +5622,7 @@ failret:
 
   *arg = skipwhite(*arg + 1);
   if (evaluate) {
-    rettv->v_type = VAR_DICT;
-    rettv->vval.v_dict = d;
-    ++d->dv_refcount;
+    tv_dict_set_ret(rettv, d);
   }
 
   return OK;
@@ -8225,8 +8219,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       && argvars[2].v_type != VAR_UNKNOWN
       && tv_get_number_chk(&argvars[2], &error)
       && !error) {
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = NULL;
+    tv_list_set_ret(rettv, NULL);
   }
 
   const char *s = tv_get_string(&argvars[0]);
@@ -9111,11 +9104,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           func_ref(rettv->vval.v_string);
         }
       } else if (strcmp(what, "dict") == 0) {
-        rettv->v_type = VAR_DICT;
-        rettv->vval.v_dict = pt->pt_dict;
-        if (pt->pt_dict != NULL) {
-          (pt->pt_dict->dv_refcount)++;
-        }
+        tv_dict_set_ret(rettv, pt->pt_dict);
       } else if (strcmp(what, "args") == 0) {
         rettv->v_type = VAR_LIST;
         if (tv_list_alloc_ret(rettv, pt->pt_argc) != NULL) {
@@ -9366,9 +9355,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         dict_T *opts = get_winbuf_options(true);
 
         if (opts != NULL) {
-          rettv->v_type = VAR_DICT;
-          rettv->vval.v_dict = opts;
-          opts->dv_refcount++;
+          tv_dict_set_ret(rettv, opts);
           done = true;
         }
       } else if (get_option_tv(&varname, rettv, true) == OK) {
@@ -10419,9 +10406,7 @@ getwinvar(
           dict_T *opts = get_winbuf_options(false);
 
           if (opts != NULL) {
-            rettv->v_type = VAR_DICT;
-            rettv->vval.v_dict = opts;
-            opts->dv_refcount++;
+            tv_dict_set_ret(rettv, opts);
             done = true;
           }
         } else if (get_option_tv(&varname, rettv, 1) == OK) {
@@ -10471,8 +10456,7 @@ static void f_glob(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
       if (tv_get_number_chk(&argvars[2], &error)) {
-        rettv->v_type = VAR_LIST;
-        rettv->vval.v_list = NULL;
+        tv_list_set_ret(rettv, NULL);
       }
       if (argvars[3].v_type != VAR_UNKNOWN
           && tv_get_number_chk(&argvars[3], &error)) {
@@ -10520,8 +10504,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (argvars[3].v_type != VAR_UNKNOWN) {
       if (tv_get_number_chk(&argvars[3], &error)) {
-        rettv->v_type = VAR_LIST;
-        rettv->vval.v_list = NULL;
+        tv_list_set_ret(rettv, NULL);
       }
       if (argvars[4].v_type != VAR_UNKNOWN
           && tv_get_number_chk(&argvars[4], &error)) {
@@ -13590,9 +13573,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                             N_("reverse() argument"), TV_TRANSLATE)) {
     tv_list_reverse(l);
-    rettv->vval.v_list = l;
-    rettv->v_type = VAR_LIST;
-    tv_list_ref(l);
+    tv_list_set_ret(rettv, l);
   }
 }
 
@@ -15351,9 +15332,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     if (tv_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
       goto theend;
     }
-    rettv->vval.v_list = l;
-    rettv->v_type = VAR_LIST;
-    tv_list_ref(l);
+    tv_list_set_ret(rettv, l);
 
     len = tv_list_len(l);
     if (len <= 1) {
@@ -16330,8 +16309,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int matchid = 0;
   char_u str[NUMBUFLEN];
 
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = NULL;
+  tv_list_set_ret(rettv, NULL);
 
   // -1 on type error (both)
   const linenr_T lnum = tv_get_lnum(argvars);
@@ -16368,8 +16346,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_synstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = NULL;
+  tv_list_set_ret(rettv, NULL);
 
   // -1 on type error (both)
   const linenr_T lnum = tv_get_lnum(argvars);
