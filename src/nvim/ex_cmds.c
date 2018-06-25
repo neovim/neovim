@@ -4906,7 +4906,9 @@ void fix_help_buffer(void)
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+    curbuf_lock++;
     set_option_value("ft", 0L, "help", OPT_LOCAL);
+    curbuf_lock--;
   }
 
   if (!syntax_present(curwin)) {

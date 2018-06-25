@@ -2172,7 +2172,7 @@ endfunc
 func Test_cclose_from_copen()
     augroup QF_Test
 	au!
-	au FileType qf :cclose
+        au FileType qf :call assert_fails(':cclose', 'E788')
     augroup END
     copen
     augroup QF_Test
@@ -2208,4 +2208,20 @@ endfunc
 func Test_Qf_Size()
   call XsizeTests('c')
   call XsizeTests('l')
+endfunc
+
+func Test_cclose_in_autocmd()
+  " Problem is only triggered if "starting" is zero, so that the OptionsSet
+  " event will be triggered.
+  " call test_override('starting', 1)
+  augroup QF_Test
+    au!
+    au FileType qf :call assert_fails(':cclose', 'E788')
+  augroup END
+  copen
+  augroup QF_Test
+    au!
+  augroup END
+  augroup! QF_Test
+  " call test_override('starting', 0)
 endfunc
