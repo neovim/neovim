@@ -223,6 +223,13 @@ void init_homedir(void)
 #endif
     homedir = xstrdup(var);
   }
+  else {
+    char IObuff_signed[MAXPATHL] = "";
+    if (uv_os_homedir(IObuff_signed, (size_t *)MAXPATHL)) {
+      var = IObuff_signed;
+      homedir = xstrdup(var);
+    }
+  }
 }
 
 #if defined(EXITFREE)
