@@ -187,40 +187,28 @@ void init_homedir(void)
 
   const char *var = os_getenv("HOME");
 
+  bool is_var = 0;
+
+  if (var) {
+    is_var = 1; 
+  }
+  size_t max_path_size = 2000;
+
+  if (!uv_os_homedir((char *)IObuff, &max_path_size)) {
+    var = (char *)IObuff;
+    if (!is_var) {
+#ifdef UNIX    
+      os_setenv("HOME", var, 1); 
+#endif
 #ifdef WIN32
-  // Typically, $HOME is not defined on Windows, unless the user has
-  // specifically defined it for Vim's sake. However, on Windows NT
-  // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
-  // each user. Try constructing $HOME from these.
-  if (var == NULL) {
-    const char *homedrive = os_getenv("HOMEDRIVE");
-    const char *homepath = os_getenv("HOMEPATH");
-    if (homepath == NULL) {
-        homepath = "\\";
-    }
-    if (homedrive != NULL && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
-      snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
-      if (os_buf[0] != NUL) {
-        var = os_buf;
-        vim_setenv("HOME", os_buf);
-      }
+      vim_setenv("HOME", var);
+#endif
     }
   }
-#endif
-
+  else {
+    printf("failed");
+  }
   if (var != NULL) {
-#ifdef UNIX
-    // Change to the directory and get the actual path.  This resolves
-    // links.  Don't do it when we can't return.
-    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = (char *)IObuff;
-      }
-      if (os_chdir(os_buf) != 0) {
-        EMSG(_(e_prev_dir));
-      }
-    }
-#endif
     homedir = xstrdup(var);
   }
 }
