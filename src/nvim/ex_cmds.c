@@ -2352,8 +2352,8 @@ int do_ecmd(
         } else {
           // <VN> We could instead free the synblock
           // and re-attach to buffer, perhaps.
-          if (curwin->w_buffer != NULL
-              && curwin->w_s == &(curwin->w_buffer->b_s)) {
+          if (curwin->w_buffer == NULL
+              || curwin->w_s == &(curwin->w_buffer->b_s)) {
             curwin->w_s = &(buf->b_s);
           }
 
