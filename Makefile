@@ -83,6 +83,7 @@ endif
 build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	mkdir -p $(DEPS_BUILD_DIR)
+	echo cp -f nvim-client-0.1.0-1.rockspec $(DEPS_BUILD_DIR)/
 	cp -f nvim-client-0.1.0-1.rockspec $(DEPS_BUILD_DIR)/
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
