@@ -262,26 +262,22 @@ C project source, too.  https://github.com/libmpack/libmpack/
 
 EXTERNAL UI 						*dev-ui*
 
-Compatibility ~
 External UIs should be aware of the |api-contract|. In particular, future
 versions of Nvim may add new items to existing events. The API is strongly
-backwards-compatible, but clients must not break if new fields are added to
-existing events.
+backwards-compatible, but clients must not break if new (optional) fields are
+added to existing events.
 
-Common Features ~
 External UIs are expected to implement these common features:
-- Cursor style (shape, color) should respond to the 'guicursor' properties
+- Cursor style (shape, color) should conform to the 'guicursor' properties
   delivered with the mode_info_set UI event.
 - Send the ALT/META ("Option" on macOS) key as a |<M-| chord.
 - Send the "super" key (Windows key, Apple key) as a |<D-| chord.
-- Avoid mappings that conflict with Nvim defaults. GUIs have many new chords
-  like <C-,> <C-Enter> <C-S-x> <D-x> and patterns like "shift shift", which
-  don't conflict with typical Nvim mappings.
-
-Implementation ~
-- UI-related options ('guifont', 'ambiwidth', …) are published in the
-  "option_set" |ui-global| event.  The event is triggered when the UI first
-  connects to Nvim and whenever an option is changed by the user or a plugin.
+- Avoid mappings that conflict with the Nvim keymap-space; GUIs have many new
+  chords (<C-,> <C-Enter> <C-S-x> <D-x>) and patterns ("shift shift") that do
+  not potentially conflict with Nvim defaults, plugins, etc.
+- Consider the "option_set" |ui-global| event as a hint for other GUI
+  behaviors. UI-related options ('guifont', 'ambiwidth', …) are published in
+  this event.
 
 
  vim:tw=78:ts=8:ft=help:norl:
