@@ -30,34 +30,31 @@ a dictionary with these (optional) keys:
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
 
-Specifying a non-existent option is an error. To facilitate an ui that
-supports different versions of Nvim, the |api-metadata| key `ui_options`
-contains the list of supported options. Additionally Nvim currently requires
+Specifying a non-existent option is an error. UIs can check the |api-metadata|
+`ui_options` key for supported options. Additionally Nvim (currently) requires
 that all connected UIs use the same set of widgets. Therefore the active
 widgets will be the intersection of the requested widget sets of all connected
-UIs. The "option_set" event will be used to specify which widgets actually are
-active.
+UIs. The "option_set" event announces which widgets actually are active.
 
-After attaching, Nvim will send msgpack-rpc notifications, with the method
-name "redraw" and a single argument, an array of screen update events.  Update
-events are arrays whose first element is the event name and remaining elements
-are each tuples of event parameters. This allows multiple events of the same
-kind to be sent in a row without the event name being repeated. This batching
-is mostly used for "put", as each "put" event just puts contents in one screen
-cell, but clients must be prepared for multiple argument sets being batched
-for all event kinds.
+Nvim sends msgpack-rpc notifications to all attached UIs, with method name
+"redraw" and a single argument: an array (batch) of screen "update events".
+Each update event is itself an array whose first element is the event name and
+remaining elements are event-parameter tuples. This allows multiple events of
+the same kind to be sent in a row without the event name being repeated. This
+batching is mostly used for "put", because each "put" event puts contents in
+one screen cell, but clients must be prepared for multiple argument sets being
+batched for all event kinds.
 
-Events must be handled in order. The user should only see the updated screen
+Events must be handled in-order. The user should only see the updated screen
 state after all events in the same "redraw" batch are processed (not any
 intermediate state after processing only part of the array).
 
 Nvim sends |ui-global| and |ui-grid| events unconditionally; these suffice to
-implement a terminal-like interface.
+implement a terminal-like layout.
 
 Nvim optionally sends screen elements "semantically" as structured events
-instead of raw grid-lines. Then the UI must decide how to present those
-elements itself; Nvim will not draw those elements on the grid. This is
-controlled by the |ui-ext-options|.
+instead of raw grid-lines, controlled by |ui-ext-options|. The UI must present
+those elements itself; Nvim will not draw those elements on the |ui-grid|.
 
 Future versions of Nvim may add new update kinds and may append new parameters
 to existing update kinds. Clients must be prepared to ignore such extensions,
@@ -93,8 +90,7 @@ Global Events							    *ui-global*
 	Some keys are missing in some modes.
 
 ["option_set", name, value]
-	The value of ui related option `name` changed. The sent options are
-	listed below:
+	UI-related option changed, where `name` is one of:
 
 	'arabicshape'
 	'ambiwidth'
@@ -105,15 +101,18 @@ Global Events							    *ui-global*
 	'linespace'
 	'showtabline'
 	'termguicolors'
-	`ext_*` (all |ui-ext-options|)
+	"ext_*" (all |ui-ext-options|)
 
-	Options are not added to the list if their effects are already taken
-	care of. For instance, instead of forwarding the raw 'mouse' option
-	value, `mouse_on` and `mouse_off` directly indicate if mouse support
-	is active right now. Some options like 'ambiwidth' have already taken
-	effect on the grid, where appropriate empty cells are added, however
-	an ui might still use these options when rendering raw text sent from
-	Nvim, like the text of the cmdline when |ui-ext-cmdline| is set.
+	Triggered when the UI first connects to Nvim, and whenever an option
+	is changed by the user or a plugin.
+
+	Options are not represented here if their effects are communicated in
+	other UI events. For example, instead of forwarding the 'mouse' option
+	value, the "mouse_on" and "mouse_off" UI events directly indicate if
+	mouse support is active. Some options like 'ambiwidth' have already
+	taken effect on the grid, where appropriate empty cells are added,
+	however a UI might still use such options when rendering raw text
+	sent from Nvim, like for |ui-ext-cmdline|.
 
 ["mode_change", mode, mode_idx]
 	The mode changed.  The first parameter `mode` is a string representing
