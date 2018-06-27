@@ -287,7 +287,6 @@ static void parse_msgpack(Channel *channel)
   }
 }
 
-
 static void handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -313,27 +312,24 @@ static void handle_request(Channel *channel, msgpack_object *request)
     return;
   }
 
-  // Retrieve the request handler
   MsgpackRpcRequestHandler handler;
-  Array args = ARRAY_DICT_INIT;
   msgpack_object *method = msgpack_rpc_method(request);
+  handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                        method->via.bin.size,
+                                        &error);
 
-  if (method) {
-    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
-                                          method->via.bin.size);
-    if (handler.fn == msgpack_rpc_handle_missing_method) {
-      String m = method->via.bin.size > 0
-        ? cbuf_to_string(method->via.bin.ptr, method->via.bin.size)
-        : cstr_to_string("<empty>");
-      ADD(args, STRING_OBJ(m));
-      handler.async = true;
-    } else if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-      handler.fn = msgpack_rpc_handle_invalid_arguments;
-      handler.async = true;
-    }
-  } else {
-    handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
+  // check method arguments
+  Array args = ARRAY_DICT_INIT;
+  if (!ERROR_SET(&error)
+      && !msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+    api_set_error(&error, kErrorTypeException, "Invalid method arguments");
+  }
+
+  if (ERROR_SET(&error)) {
+    send_error(channel, request_id, error.msg);
+    api_clear_error(&error);
+    api_free_array(args);
+    return;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));

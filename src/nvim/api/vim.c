@@ -1162,11 +1162,12 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     }
     Array args = call.items[1].data.array;
 
-    MsgpackRpcRequestHandler handler = msgpack_rpc_get_handler_for(name.data,
-                                                                   name.size);
-    if (handler.fn == msgpack_rpc_handle_missing_method) {
-      api_set_error(&nested_error, kErrorTypeException, "Invalid method: %s",
-                    name.size > 0 ? name.data : "<empty>");
+    MsgpackRpcRequestHandler handler =
+        msgpack_rpc_get_handler_for(name.data,
+                                    name.size,
+                                    &nested_error);
+
+    if (ERROR_SET(&nested_error)) {
       break;
     }
     Object result = handler.fn(channel_id, args, &nested_error);

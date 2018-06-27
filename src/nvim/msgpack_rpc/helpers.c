@@ -488,25 +488,6 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
   }
 }
 
-/// Handler executed when an invalid method name is passed
-Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
-                                         Array args,
-                                         Error *error)
-{
-  api_set_error(error, kErrorTypeException, "Invalid method: %s",
-                args.size > 0 ? args.items[0].data.string.data : "?");
-  return NIL;
-}
-
-/// Handler executed when malformated arguments are passed
-Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
-                                            Array args,
-                                            Error *error)
-{
-  api_set_error(error, kErrorTypeException, "Invalid method arguments");
-  return NIL;
-}
-
 /// Serializes a msgpack-rpc request or notification(id == 0)
 void msgpack_rpc_serialize_request(uint64_t request_id,
                                    const String method,

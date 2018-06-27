@@ -32,16 +32,19 @@ static void msgpack_rpc_add_method_handler(String method,
 /// @param name API method name
 /// @param name_len name size (includes terminating NUL)
 MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
-                                                     size_t name_len)
+                                                     size_t name_len,
+                                                     Error *error)
 {
   String m = { .data = (char *)name, .size = name_len };
   MsgpackRpcRequestHandler rv =
     map_get(String, MsgpackRpcRequestHandler)(methods, m);
 
   if (!rv.fn) {
-    rv.fn = msgpack_rpc_handle_missing_method;
+    String method_name = m.size > 0 ?
+      m : cstr_as_string("<empty>");
+    api_set_error(error, kErrorTypeException, "Invalid method: %s",
+                  method_name);
   }
-
   return rv;
 }
 
