@@ -826,7 +826,7 @@ bool vim_isIDc(int c)
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
 /// @param  c  character to check
-bool vim_iswordc(int c)
+bool vim_iswordc(const int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return vim_iswordc_buf(c, curbuf);
@@ -852,7 +852,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
 ///
 /// @param  c    character to check
 /// @param  buf  buffer whose keywords to use
-bool vim_iswordc_buf(int c, buf_T *buf)
+bool vim_iswordc_buf(const int c, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
   return vim_iswordc_tab(c, buf->b_chartab);
@@ -863,7 +863,7 @@ bool vim_iswordc_buf(int c, buf_T *buf)
 /// @param  p  pointer to the multi-byte character
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp(char_u *p)
+bool vim_iswordp(const char_u *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return vim_iswordp_buf(p, curbuf);
@@ -876,7 +876,7 @@ bool vim_iswordp(char_u *p)
 /// @param  buf  buffer whose keywords to use
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp_buf(char_u *p, buf_T *buf)
+bool vim_iswordp_buf(const char_u *const p, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   int c = *p;
