@@ -6906,4 +6906,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When negative, all redrawn characters cause a delay, even if the
 	character already was displayed by the UI.  For debugging purposes.
 
+	<C-C><C-C> resets writedelay to 0.
+
  vim:tw=78:ts=8:ft=help:noet:norl:
