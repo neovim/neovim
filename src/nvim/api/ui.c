@@ -245,8 +245,15 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
                 name.data);
 }
 
-/// Sets the inner "width" and "height" of the window grid identified by
-/// "grid" handle. If the grid does not exist, set error.
+/// Tell nvim to resize a grid. Nvim sends grid_resize event with the
+/// requested grid size is within size limits and with maximum allowed size
+/// otherwise.
+///
+/// On invalid grid handle, fails with error.
+///
+/// @param grid    The handle of the grid to be changed.
+/// @param width   The new requested width.
+/// @param height  The new requested height.
 void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
                              Integer height, Error *error)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY
