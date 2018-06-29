@@ -2374,7 +2374,11 @@ int win_close(win_T *win, bool free_buf)
   int dir;
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
-  frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
+  frame_T *win_frame;
+
+  if (!ui_is_external(kUIWindows)) {
+    win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
+  }
 
   if (last_window() && !win->w_floating) {
     EMSG(_("E444: Cannot close last window"));
@@ -2700,8 +2704,11 @@ static win_T *win_free_mem(
   frame_T     *frp;
   win_T       *wp;
 
-  if (!win->w_floating) {
+  if (ui_is_external(kUIWindows)) {
     // TODO(utkarshme): kUIWindows
+    // If not handling windows, send the next (or prev) window in the list
+    wp = win->w_next == NULL ? win->w_prev : win->w_next;
+  } else if (!win->w_floating) {
     // Remove the window and its frame from the tree of frames.
     frp = win->w_frame;
     wp = winframe_remove(win, dirp, tp);
