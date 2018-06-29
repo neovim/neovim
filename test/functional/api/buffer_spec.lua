@@ -35,8 +35,37 @@ describe('api/buf', function()
       -- There's always at least one line
       eq(1, curbuf_depr('line_count'))
     end)
-  end)
 
+    it('line_count has defined behaviour for unloaded buffers', function()
+      -- we'll need to know our bufnr for when it gets unloaded
+      local bufnr = curbuf('get_number')
+      -- replace the buffer contents with these three lines
+      request('nvim_buf_set_lines', bufnr, 0, -1, 1, {"line1", "line2", "line3", "line4"})
+      -- check the line count is correct
+      eq(4, request('nvim_buf_line_count', bufnr))
+      -- force unload the buffer (this will discard changes)
+      command('new')
+      command('bunload! '..bufnr)
+      -- line count for an unloaded buffer should always be 0
+      eq(0, request('nvim_buf_line_count', bufnr))
+    end)
+
+    it('get_lines has defined behaviour for unloaded buffers', function()
+      -- we'll need to know our bufnr for when it gets unloaded
+      local bufnr = curbuf('get_number')
+      -- replace the buffer contents with these three lines
+      buffer('set_lines', bufnr, 0, -1, 1, {"line1", "line2", "line3", "line4"})
+      -- confirm that getting lines works
+      eq({"line2", "line3"}, buffer('get_lines', bufnr, 1, 3, 1))
+      -- force unload the buffer (this will discard changes)
+      command('new')
+      command('bunload! '..bufnr)
+      -- attempting to get lines now always gives empty list
+      eq({}, buffer('get_lines', bufnr, 1, 3, 1))
+      -- it's impossible to get out-of-bounds errors for an unloaded buffer
+      eq({}, buffer('get_lines', bufnr, 8888, 9999, 1))
+    end)
+  end)
 
   describe('{get,set,del}_line', function()
     it('works', function()
@@ -69,7 +98,6 @@ describe('api/buf', function()
       eq('ab\0cd', curbuf_depr('get_line', 0))
     end)
   end)
-
 
   describe('{get,set}_line_slice', function()
     it('get_line_slice: out-of-bounds returns empty array', function()
@@ -342,6 +370,31 @@ describe('api/buf', function()
       ok(f ~= nil)
       f:close()
       os.remove(new_name)
+    end)
+  end)
+
+  describe('is_loaded', function()
+    it('works', function()
+      -- record our buffer number for when we unload it
+      local bufnr = curbuf('get_number')
+      -- api should report that the buffer is loaded
+      ok(buffer('is_loaded', bufnr))
+      -- hide the current buffer by switching to a new empty buffer
+      -- Careful! we need to modify the buffer first or vim will just reuse it
+      buffer('set_lines', bufnr, 0, -1, 1, {'line1'})
+      command('hide enew')
+      -- confirm the buffer is hidden, but still loaded
+      local infolist = nvim('eval', 'getbufinfo('..bufnr..')')
+      eq(1, #infolist)
+      eq(1, infolist[1].hidden)
+      eq(1, infolist[1].loaded)
+      -- now force unload the buffer
+      command('bunload! '..bufnr)
+      -- confirm the buffer is unloaded
+      infolist = nvim('eval', 'getbufinfo('..bufnr..')')
+      eq(0, infolist[1].loaded)
+      -- nvim_buf_is_loaded() should also report the buffer as unloaded
+      eq(false, buffer('is_loaded', bufnr))
     end)
   end)
 
