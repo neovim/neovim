@@ -1528,8 +1528,8 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 		event, e.g. |DirChanged| or |TextYankPost|.
 			KEY		DESCRIPTION ~
 			abort		Whether the event triggered during
-					an aborting condition, i e |c_Esc| or
-					|c_CTRL-c|for |CmdlineLeave|.
+					an aborting condition (e.g. |c_Esc| or
+					|c_CTRL-c| for |CmdlineLeave|).
 			cmdlevel	Level of cmdline.
 			cmdtype		Type of cmdline, |cmdline-char|.
 			cwd		Current working directory.
@@ -4995,6 +4995,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
 <		(See |shell-unquoting| for details.)
 
+		Example: >
+		  :call jobstart('nvim -h', {'on_stdout':{j,d,e->append(line('.'),d)}})
+<
 		Returns |job-id| on success, 0 on invalid arguments (or job
 		table is full), -1 if {cmd}[0] or 'shell' is not executable.
 		For communication over the job's stdio, it is represented as a

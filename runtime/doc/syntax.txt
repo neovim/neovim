@@ -4845,9 +4845,10 @@ Cursor		character under the cursor
 							*hl-CursorIM*
 CursorIM	like Cursor, but used when in IME mode |CursorIM|
 							*hl-CursorColumn*
-CursorColumn	screen column at the cursor, when 'cursorcolumn' is set
+CursorColumn	Screen-column at the cursor, when 'cursorcolumn' is set.
 							*hl-CursorLine*
-CursorLine	screen line at the cursor, when 'cursorline' is set
+CursorLine	Screen-line at the cursor, when 'cursorline' is set.
+		Low-priority if foreground (ctermfg OR guifg) is not set.
 							*hl-Directory*
 Directory	directory names (and other special names in listings)
 							*hl-DiffAdd*
