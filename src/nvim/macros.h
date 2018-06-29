@@ -126,7 +126,7 @@
 
 # define MB_CHARLEN(p)      mb_charlen(p)
 # define MB_CHAR2LEN(c)     mb_char2len(c)
-# define PTR2CHAR(p)        mb_ptr2char(p)
+# define PTR2CHAR(p)        utf_ptr2char(p)
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
 

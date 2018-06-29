@@ -776,7 +776,7 @@ static int get_equi_class(char_u **pp)
       l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '=' && p[l + 3] == ']') {
       if (has_mbyte)
-        c = mb_ptr2char(p + 2);
+        c = utf_ptr2char(p + 2);
       else
         c = p[2];
       *pp += l + 4;
@@ -1111,7 +1111,7 @@ static int get_coll_element(char_u **pp)
       l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '.' && p[l + 3] == ']') {
       if (has_mbyte)
-        c = mb_ptr2char(p + 2);
+        c = utf_ptr2char(p + 2);
       else
         c = p[2];
       *pp += l + 4;
@@ -1300,7 +1300,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 
     if (OP(scan) == EXACTLY) {
       if (has_mbyte)
-        r->regstart = (*mb_ptr2char)(OPERAND(scan));
+        r->regstart = utf_ptr2char(OPERAND(scan));
       else
         r->regstart = *OPERAND(scan);
     } else if (OP(scan) == BOW
@@ -1311,7 +1311,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
       char_u *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
         if (has_mbyte)
-          r->regstart = (*mb_ptr2char)(OPERAND(regnext_scan));
+          r->regstart = utf_ptr2char(OPERAND(regnext_scan));
         else
           r->regstart = *OPERAND(regnext_scan);
       }
@@ -2417,7 +2417,7 @@ collection:
 
               /* produce a multibyte character, including any
                * following composing characters */
-              startc = mb_ptr2char(regparse);
+              startc = utf_ptr2char(regparse);
               len = (*mb_ptr2len)(regparse);
               if (enc_utf8 && utf_char2len(startc) != len)
                 startc = -1;                    /* composing chars */
@@ -2907,7 +2907,7 @@ static int peekchr(void)
        * Then backslashing it won't do anything.
        */
       if (has_mbyte)
-        curchr = (*mb_ptr2char)(regparse + 1);
+        curchr = utf_ptr2char(regparse + 1);
       else
         curchr = c;
     }
@@ -2916,7 +2916,7 @@ static int peekchr(void)
 
   default:
     if (has_mbyte)
-      curchr = (*mb_ptr2char)(regparse);
+      curchr = utf_ptr2char(regparse);
   }
 
   return curchr;
@@ -3469,7 +3469,7 @@ static long bt_regexec_both(char_u *line,
     int c;
 
     if (has_mbyte)
-      c = (*mb_ptr2char)(prog->regmust);
+      c = utf_ptr2char(prog->regmust);
     else
       c = *prog->regmust;
     s = line + col;
@@ -3505,7 +3505,7 @@ static long bt_regexec_both(char_u *line,
     int c;
 
     if (has_mbyte)
-      c = (*mb_ptr2char)(regline + col);
+      c = utf_ptr2char(regline + col);
     else
       c = regline[col];
     if (prog->regstart == NUL
@@ -3861,7 +3861,7 @@ regmatch (
         if (WITH_NL(op))
           op -= ADD_NL;
         if (has_mbyte)
-          c = (*mb_ptr2char)(reginput);
+          c = utf_ptr2char(reginput);
         else
           c = *reginput;
         switch (op) {
@@ -5474,7 +5474,7 @@ do_class:
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
       } else if (has_mbyte && (len = (*mb_ptr2len)(scan)) > 1) {
-        if ((cstrchr(opnd, (*mb_ptr2char)(scan)) == NULL) == testval) {
+        if ((cstrchr(opnd, utf_ptr2char(scan)) == NULL) == testval) {
           break;
         }
         scan += len;
@@ -6783,7 +6783,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
             c = *src++;
           }
         } else if (has_mbyte)
-          c = mb_ptr2char(src - 1);
+          c = utf_ptr2char(src - 1);
 
         /* Write to buffer, if copy is set. */
         if (func_one != (fptr_T)NULL)
@@ -6879,7 +6879,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                 dst += 2;
               } else {
                 if (has_mbyte)
-                  c = mb_ptr2char(s);
+                  c = utf_ptr2char(s);
                 else
                   c = *s;
 

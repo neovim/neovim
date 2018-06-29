@@ -3620,9 +3620,9 @@ int do_join(size_t count,
       curr = skipwhite(curr);
       if (*curr != ')' && currsize != 0 && endcurr1 != TAB
           && (!has_format_option(FO_MBYTE_JOIN)
-              || (mb_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
+              || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
-              || mb_ptr2char(curr) < 0x100 || endcurr1 < 0x100)
+              || utf_ptr2char(curr) < 0x100 || endcurr1 < 0x100)
           ) {
         /* don't add a space if the line is ending in a space */
         if (endcurr1 == ' ')
@@ -3642,10 +3642,10 @@ int do_join(size_t count,
       if (has_mbyte) {
         cend = curr + currsize;
         MB_PTR_BACK(curr, cend);
-        endcurr1 = (*mb_ptr2char)(cend);
+        endcurr1 = utf_ptr2char(cend);
         if (cend > curr) {
           MB_PTR_BACK(curr, cend);
-          endcurr2 = (*mb_ptr2char)(cend);
+          endcurr2 = utf_ptr2char(cend);
         }
       } else {
         endcurr1 = *(curr + currsize - 1);

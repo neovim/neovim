@@ -1512,7 +1512,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       && msg_silent == 0
       && !ins_compl_active()
       ) {
-    showmatch(mb_ptr2char(buf));
+    showmatch(utf_ptr2char(buf));
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
@@ -1752,7 +1752,7 @@ int gchar_pos(pos_T *pos)
   char_u      *ptr = ml_get_pos(pos);
 
   if (has_mbyte)
-    return (*mb_ptr2char)(ptr);
+    return utf_ptr2char(ptr);
   return (int)*ptr;
 }
 
@@ -2393,7 +2393,7 @@ int get_keystroke(void)
       if (MB_BYTE2LEN(n) > len)
         continue;               /* more bytes to get */
       buf[len >= buflen ? buflen - 1 : len] = NUL;
-      n = (*mb_ptr2char)(buf);
+      n = utf_ptr2char(buf);
     }
 #ifdef UNIX
     if (n == intr_char)

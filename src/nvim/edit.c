@@ -2312,8 +2312,8 @@ static void ins_compl_longest_match(compl_T *match)
     s = match->cp_str;
     while (*p != NUL) {
       if (has_mbyte) {
-        c1 = mb_ptr2char(p);
-        c2 = mb_ptr2char(s);
+        c1 = utf_ptr2char(p);
+        c2 = utf_ptr2char(s);
       } else {
         c1 = *p;
         c2 = *s;
@@ -6199,8 +6199,8 @@ int oneright(void)
     /* Adjust for multi-wide char (excluding TAB) */
     ptr = get_cursor_pos_ptr();
     coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(
-                                   (*mb_ptr2char)(ptr)
-                                   ))
+                                 utf_ptr2char(ptr)
+                                 ))
                               ? ptr2cells(ptr) : 1));
     curwin->w_set_curswant = TRUE;
     /* Return OK if the cursor moved, FAIL otherwise (at window edge). */
@@ -6259,7 +6259,7 @@ int oneleft(void)
       /* Adjust for multi-wide char (not a TAB) */
       ptr = get_cursor_pos_ptr();
       if (*ptr != TAB && vim_isprintc(
-              (*mb_ptr2char)(ptr)
+              utf_ptr2char(ptr)
               ) && ptr2cells(ptr) > 1)
         curwin->w_cursor.coladd = 0;
     }
@@ -8496,7 +8496,7 @@ int ins_copychar(linenr_T lnum)
   if ((colnr_T)temp > curwin->w_virtcol)
     ptr = prev_ptr;
 
-  c = (*mb_ptr2char)(ptr);
+  c = utf_ptr2char(ptr);
   if (c == NUL) {
     vim_beep(BO_COPY);
   }

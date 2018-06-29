@@ -674,7 +674,7 @@ int mb_ptr2char_adv(const char_u **const pp)
 {
   int c;
 
-  c = (*mb_ptr2char)(*pp);
+  c = utf_ptr2char(*pp);
   *pp += (*mb_ptr2len)(*pp);
   return c;
 }
@@ -687,7 +687,7 @@ int mb_cptr2char_adv(const char_u **pp)
 {
   int c;
 
-  c = (*mb_ptr2char)(*pp);
+  c = utf_ptr2char(*pp);
   *pp += utf_ptr2len(*pp);
   return c;
 }
@@ -1714,7 +1714,7 @@ void mb_check_adjust_col(void *win_)
     // Reset `coladd` when the cursor would be on the right half of a
     // double-wide character.
     if (win->w_cursor.coladd == 1 && p[win->w_cursor.col] != TAB
-        && vim_isprintc((*mb_ptr2char)(p + win->w_cursor.col))
+        && vim_isprintc(utf_ptr2char(p + win->w_cursor.col))
         && ptr2cells(p + win->w_cursor.col) > 1) {
       win->w_cursor.coladd = 0;
     }

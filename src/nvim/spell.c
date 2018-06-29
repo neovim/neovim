@@ -1956,7 +1956,7 @@ static int count_syllables(slang_T *slang, char_u *word)
       skip = false;
     } else {
       // No recognized syllable item, at least a syllable char then?
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       len = (*mb_ptr2len)(p);
       if (vim_strchr(slang->sl_syllable, c) == NULL)
         skip = false;               // No, search for next syllable
@@ -2271,7 +2271,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       int c, l, n;
       char_u  *bp;
 
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       l = (*mb_ptr2len)(p);
       if (c < 256 && l <= 2)
         wp->w_s->b_spell_ismw[c] = true;
@@ -2597,14 +2597,14 @@ static bool spell_iswordp(char_u *p, win_T *wp)
       if (wp->w_s->b_spell_ismw[*p])
         s = p + 1;                      // skip a mid-word character
     } else {
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       if (c < 256 ? wp->w_s->b_spell_ismw[c]
           : (wp->w_s->b_spell_ismw_mb != NULL
              && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL))
         s = p + l;
     }
 
-    c = mb_ptr2char(s);
+    c = utf_ptr2char(s);
     if (c > 255)
       return spell_mb_isword_class(mb_get_class(s), wp);
     return spelltab.st_isw[c];
@@ -2620,7 +2620,7 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
   int c;
 
   if (has_mbyte) {
-    c = mb_ptr2char(p);
+    c = utf_ptr2char(p);
     if (c > 255) {
       return spell_mb_isword_class(mb_get_class(p), wp);
     }
@@ -4303,10 +4303,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 } else if (!soundfold
                            && slang->sl_has_map
                            && similar_chars(slang,
-                                            mb_ptr2char(tword
+                                            utf_ptr2char(tword
                                                         + sp->ts_twordlen
                                                         - sp->ts_tcharlen),
-                                            mb_ptr2char(fword
+                                            utf_ptr2char(fword
                                                         + sp->ts_fcharstart))) {
                   // For a similar character adjust score from
                   // SCORE_SUBST to SCORE_SIMILAR.
@@ -4315,7 +4315,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
               } else if (sp->ts_isdiff == DIFF_INSERT
                          && sp->ts_twordlen > sp->ts_tcharlen) {
                 p = tword + sp->ts_twordlen - sp->ts_tcharlen;
-                c = mb_ptr2char(p);
+                c = utf_ptr2char(p);
                 if (enc_utf8 && utf_iscomposing(c)) {
                   // Inserting a composing char doesn't
                   // count that much.
@@ -4327,7 +4327,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                   // tree (might seem illogical but does
                   // give better scores).
                   MB_PTR_BACK(tword, p);
-                  if (c == mb_ptr2char(p)) {
+                  if (c == utf_ptr2char(p)) {
                     sp->ts_score -= SCORE_INS - SCORE_INSDUP;
                   }
                 }
@@ -4389,11 +4389,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // a bit illogical for soundfold tree but it does give better
         // results.
         if (has_mbyte) {
-          c = mb_ptr2char(fword + sp->ts_fidx);
+          c = utf_ptr2char(fword + sp->ts_fidx);
           stack[depth].ts_fidx += MB_PTR2LEN(fword + sp->ts_fidx);
           if (enc_utf8 && utf_iscomposing(c)) {
             stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
-          } else if (c == mb_ptr2char(fword + stack[depth].ts_fidx)) {
+          } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
             stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
           }
         } else {
@@ -4517,13 +4517,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       if (has_mbyte) {
         n = MB_CPTR2LEN(p);
-        c = mb_ptr2char(p);
+        c = utf_ptr2char(p);
         if (p[n] == NUL)
           c2 = NUL;
         else if (!soundfold && !spell_iswordp(p + n, curwin))
           c2 = c;           // don't swap non-word char
         else
-          c2 = mb_ptr2char(p + n);
+          c2 = utf_ptr2char(p + n);
       } else {
         if (p[1] == NUL)
           c2 = NUL;
@@ -4578,7 +4578,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
         n = MB_PTR2LEN(p);
-        c = mb_ptr2char(p + n);
+        c = utf_ptr2char(p + n);
         memmove(p + MB_PTR2LEN(p + n), p, n);
         mb_char2bytes(c, p);
       } else {
@@ -4594,13 +4594,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
         n = MB_CPTR2LEN(p);
-        c = mb_ptr2char(p);
+        c = utf_ptr2char(p);
         fl = MB_CPTR2LEN(p + n);
-        c2 = mb_ptr2char(p + n);
+        c2 = utf_ptr2char(p + n);
         if (!soundfold && !spell_iswordp(p + n + fl, curwin))
           c3 = c;               // don't swap non-word char
         else
-          c3 = mb_ptr2char(p + n + fl);
+          c3 = utf_ptr2char(p + n + fl);
       } else {
         c = *p;
         c2 = p[1];
@@ -4653,9 +4653,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
         n = MB_PTR2LEN(p);
-        c2 = mb_ptr2char(p + n);
+        c2 = utf_ptr2char(p + n);
         fl = MB_PTR2LEN(p + n);
-        c = mb_ptr2char(p + n + fl);
+        c = utf_ptr2char(p + n + fl);
         tl = MB_PTR2LEN(p + n + fl);
         memmove(p + fl + tl, p, n);
         mb_char2bytes(c, p);
@@ -4692,7 +4692,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         p = fword + sp->ts_fidx;
         if (has_mbyte) {
           n = MB_CPTR2LEN(p);
-          c = mb_ptr2char(p);
+          c = utf_ptr2char(p);
           fl = MB_CPTR2LEN(p + n);
           fl += MB_CPTR2LEN(p + n + fl);
           memmove(p, p + n, fl);
@@ -4717,7 +4717,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (has_mbyte) {
         n = MB_PTR2LEN(p);
         n += MB_PTR2LEN(p + n);
-        c = mb_ptr2char(p + n);
+        c = utf_ptr2char(p + n);
         tl = MB_PTR2LEN(p + n);
         memmove(p + tl, p, n);
         mb_char2bytes(c, p);
@@ -4745,7 +4745,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         if (has_mbyte) {
           n = MB_CPTR2LEN(p);
           n += MB_CPTR2LEN(p + n);
-          c = mb_ptr2char(p + n);
+          c = utf_ptr2char(p + n);
           tl = MB_CPTR2LEN(p + n);
           memmove(p + tl, p, n);
           mb_char2bytes(c, p);
@@ -4767,7 +4767,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo ROT3R: "312" -> "123"
       p = fword + sp->ts_fidx;
       if (has_mbyte) {
-        c = mb_ptr2char(p);
+        c = utf_ptr2char(p);
         tl = MB_PTR2LEN(p);
         n = MB_PTR2LEN(p + tl);
         n += MB_PTR2LEN(p + tl + n);
@@ -5607,7 +5607,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
     if (HASHITEM_EMPTY(hi))
       m1 = 0;
     else
-      m1 = mb_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
+      m1 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
   } else
     m1 = slang->sl_map_array[c1];
   if (m1 == 0)
@@ -5620,7 +5620,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
     if (HASHITEM_EMPTY(hi))
       m2 = 0;
     else
-      m2 = mb_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
+      m2 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
   } else
     m2 = slang->sl_map_array[c2];
 
@@ -5660,7 +5660,7 @@ add_suggestion (
     MB_PTR_BACK(goodword, pgood);
     MB_PTR_BACK(su->su_badptr, pbad);
     if (has_mbyte) {
-      if (mb_ptr2char(pgood) != mb_ptr2char(pbad))
+      if (utf_ptr2char(pgood) != utf_ptr2char(pbad))
         break;
     } else if (*pgood != *pbad)
       break;

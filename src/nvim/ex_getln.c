@@ -3329,7 +3329,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff; ) {
         if (has_mbyte) {
           len = (*mb_head_off)(ccline.cmdbuff, w - 1) + 1;
-          if (!vim_iswordc(mb_ptr2char(w - len)))
+          if (!vim_iswordc(utf_ptr2char(w - len)))
             break;
           w -= len;
         } else {
@@ -3845,13 +3845,13 @@ ExpandOne (
     for (len = 0; xp->xp_files[0][len]; len += mb_len) {
       if (has_mbyte) {
         mb_len = (* mb_ptr2len)(&xp->xp_files[0][len]);
-        c0 = (* mb_ptr2char)(&xp->xp_files[0][len]);
+        c0 = utf_ptr2char(&xp->xp_files[0][len]);
       } else {
         c0 = xp->xp_files[0][len];
       }
       for (i = 1; i < xp->xp_numfiles; ++i) {
         if (has_mbyte) {
-          ci =(* mb_ptr2char)(&xp->xp_files[i][len]);
+          ci = utf_ptr2char(&xp->xp_files[i][len]);
         } else {
           ci = xp->xp_files[i][len];
         }

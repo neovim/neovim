@@ -477,7 +477,7 @@ bool leftcol_changed(void)
 int gchar_cursor(void)
 {
   if (has_mbyte)
-    return (*mb_ptr2char)(get_cursor_pos_ptr());
+    return utf_ptr2char(get_cursor_pos_ptr());
   return (int)*get_cursor_pos_ptr();
 }
 

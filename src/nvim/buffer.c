@@ -3223,7 +3223,7 @@ int build_stl_str_hl(
   if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr))
     byteval = 0;
   else
-    byteval = (*mb_ptr2char)(line_ptr + wp->w_cursor.col);
+    byteval = utf_ptr2char(line_ptr + wp->w_cursor.col);
 
   int groupdepth = 0;
 

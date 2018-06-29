@@ -2900,7 +2900,7 @@ const char * set_one_cmd_context(
     p = (const char *)xp->xp_pattern;
     while (*p != NUL) {
       if (has_mbyte) {
-        c = mb_ptr2char((const char_u *)p);
+        c = utf_ptr2char((const char_u *)p);
       } else {
         c = (uint8_t)(*p);
       }
@@ -2922,7 +2922,7 @@ const char * set_one_cmd_context(
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
           if (has_mbyte) {
-            c = mb_ptr2char((const char_u *)p);
+            c = utf_ptr2char((const char_u *)p);
           } else {
             c = *p;
           }

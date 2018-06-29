@@ -4103,7 +4103,7 @@ get_syn_options(
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=')   {
       /* cchar=? */
       if (has_mbyte) {
-        *conceal_char = mb_ptr2char(arg + 6);
+        *conceal_char = utf_ptr2char(arg + 6);
         arg += mb_ptr2len(arg + 6) - 1;
       } else {
         *conceal_char = arg[6];
