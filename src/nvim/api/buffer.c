@@ -755,6 +755,19 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   }
 }
 
+/// Checks if a buffer is valid and loaded
+///
+/// @param buffer Buffer handle
+/// @return true if the buffer is valid and loaded, false otherwise
+Boolean nvim_buf_is_loaded(Buffer buffer)
+  FUNC_API_SINCE(5)
+{
+  Error stub = ERROR_INIT;
+  buf_T *buf = find_buffer_by_handle(buffer, &stub);
+  api_clear_error(&stub);
+  return buf && buf->b_ml.ml_mfp != NULL;
+}
+
 /// Checks if a buffer is valid
 ///
 /// @param buffer Buffer handle
