@@ -45,6 +45,11 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
     return 0;
   }
 
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    return 0;
+  }
+
   return buf->b_ml.ml_line_count;
 }
 
@@ -218,6 +223,11 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return rv;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
     return rv;
   }
 
