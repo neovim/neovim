@@ -442,7 +442,7 @@ void ui_puts(uint8_t *str)
     if (p_wd) {  // 'writedelay': flush & delay each time.
       ui_flush();
       uint64_t wd = (uint64_t)labs(p_wd);
-      os_delay(wd, false);
+      os_microdelay(wd * 1000u, true);
     }
   }
 }
