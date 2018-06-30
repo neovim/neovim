@@ -498,9 +498,3 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
     win_set_inner_size(wp);
   }
 }
-
-void ui_win_goto(handle_T win_handle, Error *error)
-{
-  win_T *win = find_window_by_handle(win_handle, error);
-  win_goto(win);
-}

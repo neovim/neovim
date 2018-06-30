@@ -7,6 +7,7 @@
 
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/window.h"
@@ -4179,7 +4180,13 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
   frame_T     *foundfr;
 
   if (ui_is_external(kUIWindows)) {
-    ui_call_win_move_cursor(up, count);
+    handle_T win_handle = ui_win_move_cursor(up, count);
+    Error error = ERROR_INIT;
+    win_T *win = find_window_by_handle(win_handle, &error);
+    api_clear_error(&error);
+    if (win != NULL) {
+      win_goto(win);
+    }
     return;
   }
 
@@ -4233,6 +4240,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
       nfr = fr;
     }
   }
+
 end:
   return foundfr != NULL ? foundfr->fr_win : NULL;
 }
@@ -4265,8 +4273,14 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
   frame_T     *foundfr;
 
   if (ui_is_external(kUIWindows)) {
-    // TODO(utkarshme): 0, 1 for vertical directions. 2, 3 for horizontal.
-    ui_call_win_move_cursor(2 + left, count);  // calls win_goto
+    // "0" and "1" is reserved for top, bottom directions. left, right are 2, 3
+    handle_T win_handle = ui_win_move_cursor(2 + left, count);
+    Error error = ERROR_INIT;
+    win_T *win = find_window_by_handle(win_handle, &error);
+    api_clear_error(&error);
+    if (win != NULL) {
+      win_goto(win);
+    }
     return;
   }
 

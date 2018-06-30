@@ -63,7 +63,6 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->bridge.option_set = ui_bridge_option_set;
   rv->bridge.raw_line = ui_bridge_raw_line;
-  rv->bridge.win_move_cursor = ui_bridge_win_move_cursor;
   rv->scheduler = scheduler;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
