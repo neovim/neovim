@@ -118,7 +118,7 @@ void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
 void win_split(Integer win1, Integer grid1, Integer win2, Integer grid2, Integer flags)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY;
 void win_move_cursor(Integer direction, Integer count)
-  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_IMPL;
 void win_exchange(Integer win, Integer grid, Integer count)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY;
 void win_resize_equal (void)

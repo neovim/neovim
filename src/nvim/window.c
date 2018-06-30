@@ -4266,7 +4266,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
 
   if (ui_is_external(kUIWindows)) {
     // TODO(utkarshme): 0, 1 for vertical directions. 2, 3 for horizontal.
-    ui_call_win_move_cursor(2 + left, count);
+    ui_call_win_move_cursor(2 + left, count);  // calls win_goto
     return;
   }
 
