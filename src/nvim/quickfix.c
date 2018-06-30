@@ -2127,7 +2127,7 @@ win_found:
       save_cursor = curwin->w_cursor;
       curwin->w_cursor.lnum = 0;
       if (!do_search(NULL, '/', qf_ptr->qf_pattern, (long)1,
-              SEARCH_KEEP, NULL))
+              SEARCH_KEEP, NULL, NULL))
         curwin->w_cursor = save_cursor;
     }
 
@@ -3748,7 +3748,7 @@ void ex_vimgrep(exarg_T *eap)
            ++lnum) {
         col = 0;
         while (vim_regexec_multi(&regmatch, curwin, buf, lnum,
-                                 col, NULL) > 0) {
+                                 col, NULL, NULL) > 0) {
           // Pass the buffer number so that it gets used even for a
           // dummy buffer, unless duplicate_name is set, then the
           // buffer will be wiped out below.

@@ -3564,6 +3564,7 @@ static char *pim_info(nfa_pim_T *pim)
 // Used during execution: whether a match has been found.
 static int nfa_match;
 static proftime_T *nfa_time_limit;
+static int *nfa_timed_out;
 static int nfa_time_count;
 
 // Copy postponed invisible match info from "from" to "to".
@@ -4935,6 +4936,17 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 #undef PTR2LEN
 }
 
+static bool nfa_did_time_out(void)
+{
+  if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
+    if (nfa_timed_out != NULL) {
+      *nfa_timed_out = true;
+    }
+    return true;
+  }
+  return false;
+}
+
 /// Main matching routine.
 ///
 /// Run NFA to determine whether it matches reginput.
@@ -4978,7 +4990,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 #endif
     return false;
   }
-  if (nfa_time_limit != NULL && profile_passed_limit(*nfa_time_limit)) {
+  if (nfa_did_time_out()) {
 #ifdef NFA_REGEXP_DEBUG_LOG
     fclose(debug);
 #endif
@@ -5092,6 +5104,18 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
     /* compute nextlist */
     for (listidx = 0; listidx < thislist->n; ++listidx) {
+      // If the list gets very long there probably is something wrong.
+      // At least allow interrupting with CTRL-C.
+      fast_breakcheck();
+      if (got_int) {
+        break;
+      }
+      if (nfa_time_limit != NULL && ++nfa_time_count == 20) {
+        nfa_time_count = 0;
+        if (nfa_did_time_out()) {
+          break;
+        }
+      }
       t = &thislist->t[listidx];
 
 #ifdef NFA_REGEXP_DEBUG_LOG
@@ -6213,7 +6237,7 @@ nextchar:
     // Check for timeout once every twenty times to avoid overhead.
     if (nfa_time_limit != NULL && ++nfa_time_count == 20) {
       nfa_time_count = 0;
-      if (profile_passed_limit(*nfa_time_limit)) {
+      if (nfa_did_time_out()) {
         break;
       }
     }
@@ -6240,7 +6264,12 @@ theend:
 
 // Try match of "prog" with at regline["col"].
 // Returns <= 0 for failure, number of lines contained in the match otherwise.
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
+static long nfa_regtry(
+    nfa_regprog_T *prog,
+    colnr_T col,
+    proftime_T *tm,   // timeout limit or NULL
+    int *timed_out    // flag set on timeout or NULL
+)
 {
   int i;
   regsubs_T subs, m;
@@ -6251,6 +6280,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
 
   reginput = regline + col;
   nfa_time_limit = tm;
+  nfa_timed_out = timed_out;
   nfa_time_count = 0;
 
 #ifdef REGEXP_DEBUG
@@ -6356,13 +6386,15 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
 /// Match a regexp against a string ("line" points to the string) or multiple
 /// lines ("line" is NULL, use reg_getline()).
 ///
-/// @param line String in which to search or NULL
-/// @param startcol Column to start looking for match
-/// @param tm Timeout limit or NULL
+/// @param line       String in which to search or NULL
+/// @param startcol   Column to start looking for match
+/// @param tm         Timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
 ///
 /// @return <= 0 if there is no match and number of lines contained in the
 /// match otherwise.
-static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm)
+static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm,
+                             int *timed_out)
 {
   nfa_regprog_T   *prog;
   long retval = 0L;
@@ -6444,7 +6476,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm)
     prog->state[i].lastlist[1] = 0;
   }
 
-  retval = nfa_regtry(prog, col, tm);
+  retval = nfa_regtry(prog, col, tm, timed_out);
 
   nfa_regengine.expr = NULL;
 
@@ -6597,18 +6629,19 @@ nfa_regexec_nl (
   rex.reg_ic = rmp->rm_ic;
   rex.reg_icombine = false;
   rex.reg_maxcol = 0;
-  return nfa_regexec_both(line, col, NULL);
+  return nfa_regexec_both(line, col, NULL, NULL);
 }
 
 /// Matches a regexp against multiple lines.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
 /// Uses curbuf for line count and 'iskeyword'.
 ///
-/// @param win Window in which to search or NULL
-/// @param buf Buffer in which to search
-/// @param lnum Number of line to start looking for match
-/// @param col Column to start looking for match
-/// @param tm Timeout limit or NULL
+/// @param win        Window in which to search or NULL
+/// @param buf        Buffer in which to search
+/// @param lnum       Number of line to start looking for match
+/// @param col        Column to start looking for match
+/// @param tm         Timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
 ///
 /// @return <= 0 if there is no match and number of lines contained in the match
 /// otherwise.
@@ -6635,7 +6668,8 @@ nfa_regexec_nl (
 /// @par
 /// FIXME if this behavior is not compatible.
 static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                              linenr_T lnum, colnr_T col, proftime_T *tm)
+                              linenr_T lnum, colnr_T col, proftime_T *tm,
+                              int *timed_out)
 {
   rex.reg_match = NULL;
   rex.reg_mmatch = rmp;
@@ -6648,5 +6682,5 @@ static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   rex.reg_icombine = false;
   rex.reg_maxcol = rmp->rmm_maxcol;
 
-  return nfa_regexec_both(NULL, col, tm);
+  return nfa_regexec_both(NULL, col, tm, timed_out);
 }

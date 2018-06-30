@@ -3294,7 +3294,7 @@ bt_regexec_nl (
   rex.reg_icombine = false;
   rex.reg_maxcol = 0;
 
-  long r = bt_regexec_both(line, col, NULL);
+  long r = bt_regexec_both(line, col, NULL, NULL);
   assert(r <= INT_MAX);
   return (int)r;
 }
@@ -3345,16 +3345,18 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
 /// Uses curbuf for line count and 'iskeyword'.
 /// 
-/// @param win Window in which to search or NULL
-/// @param buf Buffer in which to search
-/// @param lnum Number of line to start looking for match 
-/// @param col Column to start looking for match
-/// @param tm Timeout limit or NULL
+/// @param win        Window in which to search or NULL
+/// @param buf        Buffer in which to search
+/// @param lnum       Number of line to start looking for match
+/// @param col        Column to start looking for match
+/// @param tm         Timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
 ///
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
 static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                             linenr_T lnum, colnr_T col, proftime_T *tm)
+                             linenr_T lnum, colnr_T col, proftime_T *tm,
+                             int *timed_out)
 {
   rex.reg_match = NULL;
   rex.reg_mmatch = rmp;
@@ -3367,7 +3369,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   rex.reg_icombine = false;
   rex.reg_maxcol = rmp->rmm_maxcol;
 
-  return bt_regexec_both(NULL, col, tm);
+  return bt_regexec_both(NULL, col, tm, timed_out);
 }
 
 /*
@@ -3375,10 +3377,12 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
  * lines ("line" is NULL, use reg_getline()).
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long bt_regexec_both(char_u *line,
-                            colnr_T col, /* column to start looking for match */
-                            proftime_T *tm /* timeout limit or NULL */
-                            )
+static long bt_regexec_both(
+    char_u *line,
+    colnr_T col,      // column to start looking for match
+    proftime_T *tm,   // timeout limit or NULL
+    int *timed_out    // flag set on timeout or NULL
+)
 {
   bt_regprog_T        *prog;
   char_u      *s;
@@ -3522,8 +3526,12 @@ static long bt_regexec_both(char_u *line,
       /* Check for timeout once in a twenty times to avoid overhead. */
       if (tm != NULL && ++tm_count == 20) {
         tm_count = 0;
-        if (profile_passed_limit(*tm))
+        if (profile_passed_limit(*tm)) {
+          if (timed_out != NULL) {
+            *timed_out = true;
+          }
           break;
+        }
       }
     }
   }
@@ -7268,11 +7276,12 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
  */
 long vim_regexec_multi(
   regmmatch_T *rmp,
-  win_T       *win,               /* window in which to search or NULL */
-  buf_T       *buf,               /* buffer in which to search */
-  linenr_T lnum,                  /* nr of line to start looking for match */
-  colnr_T col,                    /* column to start looking for match */
-  proftime_T  *tm                 /* timeout limit or NULL */
+  win_T       *win,   // window in which to search or NULL
+  buf_T       *buf,   // buffer in which to search
+  linenr_T lnum,      // nr of line to start looking for match
+  colnr_T col,        // column to start looking for match
+  proftime_T  *tm,    // timeout limit or NULL
+  int *timed_out      // flag is set when timeout limit reached
 )
 {
   regexec_T rex_save;
@@ -7284,8 +7293,8 @@ long vim_regexec_multi(
   }
   rex_in_use = true;
 
-  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm);
+  int result = rmp->regprog->engine->regexec_multi(
+      rmp, win, buf, lnum, col, tm, timed_out);
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
@@ -7299,8 +7308,8 @@ long vim_regexec_multi(
     report_re_switch(pat);
     rmp->regprog = vim_regcomp(pat, re_flags);
     if (rmp->regprog != NULL) {
-      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm);
+      result = rmp->regprog->engine->regexec_multi(
+          rmp, win, buf, lnum, col, tm, timed_out);
     }
 
     xfree(pat);
