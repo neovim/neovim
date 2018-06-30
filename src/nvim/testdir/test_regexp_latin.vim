@@ -30,3 +30,13 @@ func Test_equivalence_re2()
   set re=2
   call s:equivalence_test()
 endfunc
+
+func Test_backref()
+  new
+  call setline(1, ['one', 'two', 'three', 'four', 'five'])
+  call assert_equal(3, search('\%#=1\(e\)\1'))
+  call assert_equal(3, search('\%#=2\(e\)\1'))
+  call assert_fails('call search("\\%#=1\\(e\\1\\)")', 'E65:')
+  call assert_fails('call search("\\%#=2\\(e\\1\\)")', 'E65:')
+  bwipe!
+endfunc
