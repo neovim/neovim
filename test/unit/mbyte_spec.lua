@@ -33,13 +33,27 @@ describe('mbyte', function()
       eq(c, mbyte.utf_ptr2char(to_string({c, 0})))
     end
 
-    -- Some ill formed byte sequences that should not be recognized as UTF-8
-    -- First byte: 0xc0 or 0xc1
-    -- Second byte: 0x80 .. 0xbf
-    --eq(0x00c0, mbyte.utf_ptr2char(to_string({0xc0, 0x80})))
-    --eq(0x00c1, mbyte.utf_ptr2char(to_string({0xc1, 0xbf})))
     --
     -- Sequences with more than four bytes
+  end)
+
+  itp('overlong sequences', function()
+    -- Some ill formed byte sequences that should not be recognized as UTF-8
+    local overlong = {{0xc0, 0x80}, {0xc1, 0xbf},
+                      {0xe0, 0x80, 0x80}, {0xe0, 0x9f, 0xbf},
+                      {0xf0, 0x80, 0x80, 0x80},
+                      {0xf0, 0x8f, 0xbf, 0xbf},
+                      {0xf4, 0x90, 0x80, 0x80}, -- out of range
+                     }
+    for _, s in ipairs(overlong) do
+      eq(s[1], mbyte.utf_ptr2char(to_string(s)))
+      eq(1, mbyte.utf_ptr2len(to_string(s)))
+      eq(1, mbyte.utf_ptr2len_len(to_string(s), #s))
+      if #s > 2 then
+        eq(#s, mbyte.utf_ptr2len_len(to_string(s), 1))
+        eq(1, mbyte.utf_ptr2len_len(to_string(s), 2))
+      end
+    end
   end)
 
 
