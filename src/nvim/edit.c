@@ -6198,12 +6198,10 @@ int oneright(void)
 
     /* Adjust for multi-wide char (excluding TAB) */
     ptr = get_cursor_pos_ptr();
-    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(
-                                 utf_ptr2char(ptr)
-                                 ))
-                              ? ptr2cells(ptr) : 1));
-    curwin->w_set_curswant = TRUE;
-    /* Return OK if the cursor moved, FAIL otherwise (at window edge). */
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))) ?
+                              ptr2cells(ptr) : 1));
+    curwin->w_set_curswant = true;
+    // Return OK if the cursor moved, FAIL otherwise (at window edge).
     return (prevpos.col != curwin->w_cursor.col
             || prevpos.coladd != curwin->w_cursor.coladd) ? OK : FAIL;
   }
@@ -6258,10 +6256,10 @@ int oneleft(void)
 
       /* Adjust for multi-wide char (not a TAB) */
       ptr = get_cursor_pos_ptr();
-      if (*ptr != TAB && vim_isprintc(
-              utf_ptr2char(ptr)
-              ) && ptr2cells(ptr) > 1)
+      if (*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))
+          && ptr2cells(ptr) > 1) {
         curwin->w_cursor.coladd = 0;
+      }
     }
 
     curwin->w_set_curswant = TRUE;

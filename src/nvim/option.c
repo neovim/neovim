@@ -6406,21 +6406,24 @@ static void langmap_set(void)
         ++p;
         break;
       }
-      if (p[0] == '\\' && p[1] != NUL)
-        ++p;
+      if (p[0] == '\\' && p[1] != NUL) {
+        p++;
+      }
       from = utf_ptr2char(p);
       to = NUL;
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
-          if (p[0] == '\\')
-            ++p;
+          if (p[0] == '\\') {
+            p++;
+          }
           to = utf_ptr2char(p);
         }
       } else {
         if (p2[0] != ',') {
-          if (p2[0] == '\\')
-            ++p2;
+          if (p2[0] == '\\') {
+            p2++;
+          }
           to = utf_ptr2char(p2);
         }
       }
@@ -6857,10 +6860,10 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
         if (switchit) {
           *findc = *initc;
           *initc = utf_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = TRUE;
+          *backwards = true;
         } else {
           *findc = utf_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = FALSE;
+          *backwards = false;
         }
         return;
       }
@@ -6870,10 +6873,10 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
         if (switchit) {
           *findc = *initc;
           *initc = utf_ptr2char(prev);
-          *backwards = FALSE;
+          *backwards = false;
         } else {
           *findc = utf_ptr2char(prev);
-          *backwards = TRUE;
+          *backwards = true;
         }
         return;
       }

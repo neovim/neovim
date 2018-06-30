@@ -3329,8 +3329,9 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff; ) {
         if (has_mbyte) {
           len = (*mb_head_off)(ccline.cmdbuff, w - 1) + 1;
-          if (!vim_iswordc(utf_ptr2char(w - len)))
+          if (!vim_iswordc(utf_ptr2char(w - len))) {
             break;
+          }
           w -= len;
         } else {
           if (!vim_iswordc(w[-1]))

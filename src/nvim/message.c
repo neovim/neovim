@@ -2868,8 +2868,9 @@ do_dialog (
       retval = 1;
       for (i = 0; hotkeys[i]; ++i) {
         if (has_mbyte) {
-          if (utf_ptr2char(hotkeys + i) == c)
+          if (utf_ptr2char(hotkeys + i) == c) {
             break;
+          }
           i += (*mb_ptr2len)(hotkeys + i) - 1;
         } else if (hotkeys[i] == c)
           break;

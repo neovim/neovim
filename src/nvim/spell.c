@@ -2600,13 +2600,15 @@ static bool spell_iswordp(char_u *p, win_T *wp)
       c = utf_ptr2char(p);
       if (c < 256 ? wp->w_s->b_spell_ismw[c]
           : (wp->w_s->b_spell_ismw_mb != NULL
-             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL))
+             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
         s = p + l;
+      }
     }
 
     c = utf_ptr2char(s);
-    if (c > 255)
+    if (c > 255) {
       return spell_mb_isword_class(mb_get_class(s), wp);
+    }
     return spelltab.st_isw[c];
   }
 
@@ -4300,14 +4302,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                     && utf_iscomposing(utf_ptr2char(fword
                                                     + sp->ts_fcharstart))) {
                   sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
-                } else if (!soundfold
-                           && slang->sl_has_map
+                } else if (!soundfold && slang->sl_has_map
                            && similar_chars(slang,
-                                            utf_ptr2char(tword
-                                                        + sp->ts_twordlen
-                                                        - sp->ts_tcharlen),
-                                            utf_ptr2char(fword
-                                                        + sp->ts_fcharstart))) {
+                                            utf_ptr2char(tword + sp->ts_twordlen
+                                                         - sp->ts_tcharlen),
+                                            utf_ptr2char(fword +
+                                                         sp->ts_fcharstart))) {
                   // For a similar character adjust score from
                   // SCORE_SUBST to SCORE_SIMILAR.
                   sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
@@ -4518,19 +4518,21 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (has_mbyte) {
         n = MB_CPTR2LEN(p);
         c = utf_ptr2char(p);
-        if (p[n] == NUL)
+        if (p[n] == NUL) {
           c2 = NUL;
-        else if (!soundfold && !spell_iswordp(p + n, curwin))
-          c2 = c;           // don't swap non-word char
-        else
+        } else if (!soundfold && !spell_iswordp(p + n, curwin)) {
+          c2 = c;  // don't swap non-word char
+        } else {
           c2 = utf_ptr2char(p + n);
+        }
       } else {
-        if (p[1] == NUL)
+        if (p[1] == NUL) {
           c2 = NUL;
-        else if (!soundfold && !spell_iswordp(p + 1, curwin))
-          c2 = c;           // don't swap non-word char
-        else
+        } else if (!soundfold && !spell_iswordp(p + 1, curwin)) {
+          c2 = c;  // don't swap non-word char
+        } else {
           c2 = p[1];
+        }
       }
 
       // When the second character is NUL we can't swap.
@@ -4538,17 +4540,17 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
         break;
-      }
+          }
 
-      // When characters are identical, swap won't do anything.
-      // Also get here if the second char is not a word character.
-      if (c == c2) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_SWAP3;
-        break;
-      }
-      if (c2 != NUL && TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
-        go_deeper(stack, depth, SCORE_SWAP);
+          // When characters are identical, swap won't do anything.
+          // Also get here if the second char is not a word character.
+          if (c == c2) {
+            PROF_STORE(sp->ts_state)
+            sp->ts_state = STATE_SWAP3;
+            break;
+          }
+          if (c2 != NUL && TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
+            go_deeper(stack, depth, SCORE_SWAP);
 #ifdef DEBUG_TRIEWALK
         sprintf(changename[depth], "%.*s-%s: swap %c and %c",
             sp->ts_twordlen, tword, fword + sp->ts_fidx,
@@ -4597,10 +4599,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         c = utf_ptr2char(p);
         fl = MB_CPTR2LEN(p + n);
         c2 = utf_ptr2char(p + n);
-        if (!soundfold && !spell_iswordp(p + n + fl, curwin))
+        if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
           c3 = c;               // don't swap non-word char
-        else
+        } else {
           c3 = utf_ptr2char(p + n + fl);
+        }
       } else {
         c = *p;
         c2 = p[1];
@@ -5604,25 +5607,29 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
   if (c1 >= 256) {
     buf[mb_char2bytes(c1, buf)] = 0;
     hi = hash_find(&slang->sl_map_hash, buf);
-    if (HASHITEM_EMPTY(hi))
+    if (HASHITEM_EMPTY(hi)) {
       m1 = 0;
-    else
+    } else {
       m1 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
-  } else
+    }
+  } else {
     m1 = slang->sl_map_array[c1];
-  if (m1 == 0)
+  }
+  if (m1 == 0) {
     return false;
-
+  }
 
   if (c2 >= 256) {
     buf[mb_char2bytes(c2, buf)] = 0;
     hi = hash_find(&slang->sl_map_hash, buf);
-    if (HASHITEM_EMPTY(hi))
+    if (HASHITEM_EMPTY(hi)) {
       m2 = 0;
-    else
+    } else {
       m2 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
-  } else
+    }
+  } else {
     m2 = slang->sl_map_array[c2];
+  }
 
   return m1 == m2;
 }
@@ -5660,10 +5667,12 @@ add_suggestion (
     MB_PTR_BACK(goodword, pgood);
     MB_PTR_BACK(su->su_badptr, pbad);
     if (has_mbyte) {
-      if (utf_ptr2char(pgood) != utf_ptr2char(pbad))
+      if (utf_ptr2char(pgood) != utf_ptr2char(pbad)) {
         break;
-    } else if (*pgood != *pbad)
+      }
+    } else if (*pgood != *pbad) {
       break;
+    }
   }
 
   if (badlen == 0 && goodlen == 0)
@@ -7608,5 +7617,3 @@ int expand_spelling(linenr_T lnum, char_u *pat, char_u ***matchp)
   *matchp = ga.ga_data;
   return ga.ga_len;
 }
-
-

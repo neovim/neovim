@@ -476,9 +476,10 @@ bool leftcol_changed(void)
 
 int gchar_cursor(void)
 {
-  if (has_mbyte)
+  if (has_mbyte) {
     return utf_ptr2char(get_cursor_pos_ptr());
-  return (int)*get_cursor_pos_ptr();
+  }
+  return (int)(*get_cursor_pos_ptr());
 }
 
 /*
@@ -507,4 +508,3 @@ char_u *get_cursor_pos_ptr(void)
   return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) +
          curwin->w_cursor.col;
 }
-

@@ -1767,8 +1767,9 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
         int len;
 
         if (has_mbyte && (len = (*mb_ptr2len)(p)) > 1) {
-          if (!vim_isprintc(utf_ptr2char(p)))
+          if (!vim_isprintc(utf_ptr2char(p))) {
             break;
+          }
           p += len - 1;
         } else if (*p == TAB)
           *p = ' ';

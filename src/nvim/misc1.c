@@ -1749,11 +1749,12 @@ del_lines (
 
 int gchar_pos(pos_T *pos)
 {
-  char_u      *ptr = ml_get_pos(pos);
+  char_u *ptr = ml_get_pos(pos);
 
-  if (has_mbyte)
+  if (has_mbyte) {
     return utf_ptr2char(ptr);
-  return (int)*ptr;
+  }
+  return (int)(*ptr);
 }
 
 /*
@@ -2840,4 +2841,3 @@ int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
 }
-

@@ -775,10 +775,11 @@ static int get_equi_class(char_u **pp)
     if (has_mbyte)
       l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '=' && p[l + 3] == ']') {
-      if (has_mbyte)
+      if (has_mbyte) {
         c = utf_ptr2char(p + 2);
-      else
+      } else {
         c = p[2];
+      }
       *pp += l + 4;
       return c;
     }
@@ -1110,10 +1111,11 @@ static int get_coll_element(char_u **pp)
     if (has_mbyte)
       l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '.' && p[l + 3] == ']') {
-      if (has_mbyte)
+      if (has_mbyte) {
         c = utf_ptr2char(p + 2);
-      else
+      } else {
         c = p[2];
+      }
       *pp += l + 4;
       return c;
     }
@@ -1299,10 +1301,11 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
     }
 
     if (OP(scan) == EXACTLY) {
-      if (has_mbyte)
+      if (has_mbyte) {
         r->regstart = utf_ptr2char(OPERAND(scan));
-      else
+      } else {
         r->regstart = *OPERAND(scan);
+      }
     } else if (OP(scan) == BOW
                || OP(scan) == EOW
                || OP(scan) == NOTHING
@@ -1310,10 +1313,11 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
       char_u *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
-        if (has_mbyte)
+        if (has_mbyte) {
           r->regstart = utf_ptr2char(OPERAND(regnext_scan));
-        else
+        } else {
           r->regstart = *OPERAND(regnext_scan);
+        }
       }
     }
 
@@ -2906,17 +2910,19 @@ static int peekchr(void)
        * Next character can never be (made) magic?
        * Then backslashing it won't do anything.
        */
-      if (has_mbyte)
+      if (has_mbyte) {
         curchr = utf_ptr2char(regparse + 1);
-      else
+      } else {
         curchr = c;
+      }
     }
     break;
   }
 
   default:
-    if (has_mbyte)
+    if (has_mbyte) {
       curchr = utf_ptr2char(regparse);
+    }
   }
 
   return curchr;
@@ -3468,10 +3474,11 @@ static long bt_regexec_both(char_u *line,
   if (prog->regmust != NULL) {
     int c;
 
-    if (has_mbyte)
+    if (has_mbyte) {
       c = utf_ptr2char(prog->regmust);
-    else
+    } else {
       c = *prog->regmust;
+    }
     s = line + col;
 
     // This is used very often, esp. for ":global".  Use two versions of
@@ -3504,10 +3511,11 @@ static long bt_regexec_both(char_u *line,
   if (prog->reganch) {
     int c;
 
-    if (has_mbyte)
+    if (has_mbyte) {
       c = utf_ptr2char(regline + col);
-    else
+    } else {
       c = regline[col];
+    }
     if (prog->regstart == NUL
         || prog->regstart == c
         || (rex.reg_ic
@@ -3860,10 +3868,11 @@ regmatch (
       } else {
         if (WITH_NL(op))
           op -= ADD_NL;
-        if (has_mbyte)
+        if (has_mbyte) {
           c = utf_ptr2char(reginput);
-        else
+        } else {
           c = *reginput;
+        }
         switch (op) {
         case BOL:
           if (reginput != regline)
@@ -6782,8 +6791,9 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           }
             c = *src++;
           }
-        } else if (has_mbyte)
+        } else if (has_mbyte) {
           c = utf_ptr2char(src - 1);
+        }
 
         /* Write to buffer, if copy is set. */
         if (func_one != (fptr_T)NULL)
@@ -6878,10 +6888,11 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                 }
                 dst += 2;
               } else {
-                if (has_mbyte)
+                if (has_mbyte) {
                   c = utf_ptr2char(s);
-                else
+                } else {
                   c = *s;
+                }
 
                 if (func_one != (fptr_T)NULL)
                   /* Turbo C complains without the typecast */

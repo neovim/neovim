@@ -3220,10 +3220,11 @@ int build_stl_str_hl(
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr))
+  if (wp->w_cursor.col > (colnr_T)STRLEN(line_ptr)) {
     byteval = 0;
-  else
+  } else {
     byteval = utf_ptr2char(line_ptr + wp->w_cursor.col);
+  }
 
   int groupdepth = 0;
 
