@@ -5033,13 +5033,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
     int curc;
     int clen;
 
-    if (has_mbyte) {
-      curc = utf_ptr2char(reginput);
-      clen = (*mb_ptr2len)(reginput);
-    } else {
-      curc = *reginput;
-      clen = 1;
-    }
+    curc = utf_ptr2char(reginput);
+    clen = utfc_ptr2len(reginput);
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;

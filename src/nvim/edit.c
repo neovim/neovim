@@ -2311,24 +2311,14 @@ static void ins_compl_longest_match(compl_T *match)
     p = compl_leader;
     s = match->cp_str;
     while (*p != NUL) {
-      if (has_mbyte) {
-        c1 = utf_ptr2char(p);
-        c2 = utf_ptr2char(s);
-      } else {
-        c1 = *p;
-        c2 = *s;
-      }
-      if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2))
-          : (c1 != c2)) {
+      c1 = utf_ptr2char(p);
+      c2 = utf_ptr2char(s);
+
+      if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2)) : (c1 != c2)) {
         break;
       }
-      if (has_mbyte) {
-        MB_PTR_ADV(p);
-        MB_PTR_ADV(s);
-      } else {
-        ++p;
-        ++s;
-      }
+      MB_PTR_ADV(p);
+      MB_PTR_ADV(s);
     }
 
     if (*p != NUL) {
