@@ -2158,7 +2158,7 @@ return {
   },
   {
     command='resize',
-    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1, CMDWIN),
+    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1),
     addr_type=ADDR_LINES,
     func='ex_resize',
   },
