@@ -482,7 +482,7 @@ describe('API: buffer events:', function()
 
     local function wantn(sessionid, name, args)
       local session = sessions[sessionid]
-      eq({'notification', name, args}, session:next_message())
+      eq({'notification', name, args}, session:next_message(10000))
     end
 
     -- Edit a new file, but don't enable buffer events.
