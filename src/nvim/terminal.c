@@ -1239,9 +1239,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
-  changed_lines(change_start, 0, change_end, added,
-                // Don't send nvim_buf_lines_event for :terminal buffer.
-                false);
+  changed_lines(change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }
