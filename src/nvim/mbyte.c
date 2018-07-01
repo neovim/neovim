@@ -428,7 +428,7 @@ int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
     }
     return 1;
   }
-  return utf_class(utf_ptr2char(p));
+  return utf_class_tab(utf_ptr2char(p), chartab);
 }
 
 /*
@@ -1039,7 +1039,12 @@ bool utf_printable(int c)
  * 1: punctuation
  * 2 or bigger: some class of word character.
  */
-int utf_class(int c)
+int utf_class(const int c)
+{
+  return utf_class_tab(c, curbuf->b_chartab);
+}
+
+int utf_class_tab(const int c, const uint64_t *const chartab)
 {
   /* sorted list of non-overlapping intervals */
   static struct clinterval {
@@ -1122,11 +1127,13 @@ int utf_class(int c)
 
   /* First quick check for Latin1 characters, use 'iskeyword'. */
   if (c < 0x100) {
-    if (c == ' ' || c == '\t' || c == NUL || c == 0xa0)
-      return 0;             /* blank */
-    if (vim_iswordc(c))
-      return 2;             /* word character */
-    return 1;               /* punctuation */
+    if (c == ' ' || c == '\t' || c == NUL || c == 0xa0) {
+      return 0;             // blank
+    }
+    if (vim_iswordc_tab(c, chartab)) {
+      return 2;             // word character
+    }
+    return 1;               // punctuation
   }
 
   /* binary search in table */

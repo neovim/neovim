@@ -5,6 +5,7 @@ local ffi     = helpers.ffi
 local eq      = helpers.eq
 
 local mbyte = helpers.cimport("./src/nvim/mbyte.h")
+local charset = helpers.cimport('./src/nvim/charset.h')
 
 describe('mbyte', function()
 
@@ -42,6 +43,15 @@ describe('mbyte', function()
     -- Sequences with more than four bytes
   end)
 
+  itp('utf_char2bytes', function()
+    local char_p = ffi.typeof('char[?]')
+    for c = 0, 0xFFFF do
+      local p = char_p(4, 0)
+      mbyte.utf_char2bytes(c, p)
+      eq(c, mbyte.utf_ptr2char(p))
+      eq(charset.vim_iswordc(c), charset.vim_iswordp(p))
+    end
+  end)
 
   describe('utfc_ptr2char_len', function()
 
