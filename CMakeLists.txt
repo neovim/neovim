@@ -85,6 +85,7 @@ endif()
 
 option(ENABLE_LIBINTL "enable libintl" ON)
 option(ENABLE_LIBICONV "enable libiconv" ON)
+option(ENABLE_LTO "enable link time optimization" ON)
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
