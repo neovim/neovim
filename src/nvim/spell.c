@@ -4297,12 +4297,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                     && utf_iscomposing(utf_ptr2char(fword
                                                     + sp->ts_fcharstart))) {
                   sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
-                } else if (!soundfold && slang->sl_has_map
-                           && similar_chars(slang,
-                                            utf_ptr2char(tword + sp->ts_twordlen
-                                                         - sp->ts_tcharlen),
-                                            utf_ptr2char(fword +
-                                                         sp->ts_fcharstart))) {
+                } else if (
+                    !soundfold
+                    && slang->sl_has_map
+                    && similar_chars(
+                        slang,
+                        utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen),
+                        utf_ptr2char(fword + sp->ts_fcharstart))) {
                   // For a similar character adjust score from
                   // SCORE_SUBST to SCORE_SIMILAR.
                   sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
@@ -4520,21 +4521,22 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
         break;
-          }
+      }
 
-          // When characters are identical, swap won't do anything.
-          // Also get here if the second char is not a word character.
-          if (c == c2) {
-            PROF_STORE(sp->ts_state)
-            sp->ts_state = STATE_SWAP3;
-            break;
-          }
-          if (c2 != NUL && TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
-            go_deeper(stack, depth, SCORE_SWAP);
+      // When characters are identical, swap won't do anything.
+      // Also get here if the second char is not a word character.
+      if (c == c2) {
+        PROF_STORE(sp->ts_state)
+        sp->ts_state = STATE_SWAP3;
+        break;
+      }
+      if (c2 != NUL && TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
+        go_deeper(stack, depth, SCORE_SWAP);
 #ifdef DEBUG_TRIEWALK
-        sprintf(changename[depth], "%.*s-%s: swap %c and %c",
-            sp->ts_twordlen, tword, fword + sp->ts_fidx,
-            c, c2);
+        snprintf(changename[depth], sizeof(changename[0]),
+                 "%.*s-%s: swap %c and %c",
+                 sp->ts_twordlen, tword, fword + sp->ts_fidx,
+                 c, c2);
 #endif
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
@@ -4652,21 +4654,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         sp->ts_state = STATE_UNROT3L;
         ++depth;
         p = fword + sp->ts_fidx;
-        if (has_mbyte) {
-          n = MB_CPTR2LEN(p);
-          c = utf_ptr2char(p);
-          fl = MB_CPTR2LEN(p + n);
-          fl += MB_CPTR2LEN(p + n + fl);
-          memmove(p, p + n, fl);
-          mb_char2bytes(c, p + fl);
-          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-        } else {
-          c = *p;
-          *p = p[1];
-          p[1] = p[2];
-          p[2] = c;
-          stack[depth].ts_fidxtry = sp->ts_fidx + 3;
-        }
+        n = MB_CPTR2LEN(p);
+        c = utf_ptr2char(p);
+        fl = MB_CPTR2LEN(p + n);
+        fl += MB_CPTR2LEN(p + n + fl);
+        memmove(p, p + n, fl);
+        utf_char2bytes(c, p + fl);
+        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;

@@ -2866,15 +2866,12 @@ do_dialog (
       // Make the character lowercase, as chars in "hotkeys" are.
       c = mb_tolower(c);
       retval = 1;
-      for (i = 0; hotkeys[i]; ++i) {
-        if (has_mbyte) {
-          if (utf_ptr2char(hotkeys + i) == c) {
-            break;
-          }
-          i += (*mb_ptr2len)(hotkeys + i) - 1;
-        } else if (hotkeys[i] == c)
+      for (i = 0; hotkeys[i]; i++) {
+        if (utf_ptr2char(hotkeys + i) == c) {
           break;
-        ++retval;
+        }
+        i += utfc_ptr2len(hotkeys + i) - 1;
+        retval++;
       }
       if (hotkeys[i])
         break;
@@ -2906,25 +2903,13 @@ copy_char (
     int lowercase                  /* make character lower case */
 )
 {
-  int len;
-  int c;
-
-  if (has_mbyte) {
-    if (lowercase) {
-      c = mb_tolower(utf_ptr2char(from));
-      return (*mb_char2bytes)(c, to);
-    } else {
-      len = (*mb_ptr2len)(from);
-      memmove(to, from, (size_t)len);
-      return len;
-    }
-  } else {
-    if (lowercase)
-      *to = (char_u)TOLOWER_LOC(*from);
-    else
-      *to = *from;
-    return 1;
+  if (lowercase) {
+    int c = mb_tolower(utf_ptr2char(from));
+    return utf_char2bytes(c, to);
   }
+  int len = utfc_ptr2len(from);
+  memmove(to, from, (size_t)len);
+  return len;
 }
 
 #define HAS_HOTKEY_LEN 30

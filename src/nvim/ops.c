@@ -3639,18 +3639,12 @@ int do_join(size_t count,
     sumsize += currsize + spaces[t];
     endcurr1 = endcurr2 = NUL;
     if (insert_space && currsize > 0) {
-      if (has_mbyte) {
-        cend = curr + currsize;
+      cend = curr + currsize;
+      MB_PTR_BACK(curr, cend);
+      endcurr1 = utf_ptr2char(cend);
+      if (cend > curr) {
         MB_PTR_BACK(curr, cend);
-        endcurr1 = utf_ptr2char(cend);
-        if (cend > curr) {
-          MB_PTR_BACK(curr, cend);
-          endcurr2 = utf_ptr2char(cend);
-        }
-      } else {
-        endcurr1 = *(curr + currsize - 1);
-        if (currsize > 1)
-          endcurr2 = *(curr + currsize - 2);
+        endcurr2 = utf_ptr2char(cend);
       }
     }
     line_breakcheck();

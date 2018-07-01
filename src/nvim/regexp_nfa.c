@@ -5030,11 +5030,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
    * Run for each character.
    */
   for (;; ) {
-    int curc;
-    int clen;
-
-    curc = utf_ptr2char(reginput);
-    clen = utfc_ptr2len(reginput);
+    int curc = utf_ptr2char(reginput);
+    int clen = utfc_ptr2len(reginput);
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;

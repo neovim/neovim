@@ -1103,7 +1103,7 @@ static int get_coll_element(char_u **pp)
   char_u      *p = *pp;
 
   if (p[0] != NUL && p[1] == '.') {
-    l = (*mb_ptr2len)(p + 2);
+    l = utfc_ptr2len(p + 2);
     if (p[l + 2] == '.' && p[l + 3] == ']') {
       c = utf_ptr2char(p + 2);
       *pp += l + 4;
@@ -3444,9 +3444,7 @@ static long bt_regexec_both(char_u *line,
 
   /* If there is a "must appear" string, look for it. */
   if (prog->regmust != NULL) {
-    int c;
-
-    c = utf_ptr2char(prog->regmust);
+    int c = utf_ptr2char(prog->regmust);
     s = line + col;
 
     // This is used very often, esp. for ":global".  Use two versions of
@@ -5441,7 +5439,7 @@ do_class:
         }
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
-      } else if (has_mbyte && (len = (*mb_ptr2len)(scan)) > 1) {
+      } else if ((len = utfc_ptr2len(scan)) > 1) {
         if ((cstrchr(opnd, utf_ptr2char(scan)) == NULL) == testval) {
           break;
         }
@@ -6756,14 +6754,13 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         // Write to buffer, if copy is set.
         if (func_one != NULL) {
           func_one = (fptr_T)(func_one(&cc, c));
+        } else if (func_all != NULL) {
+          func_all = (fptr_T)(func_all(&cc, c));
         } else {
-          if (func_all != NULL) {
-            func_all = (fptr_T)(func_all(&cc, c));
-          } else {
-            // just copy
-            cc = c;
-          }
+          // just copy
+          cc = c;
         }
+
         if (has_mbyte) {
           int totlen = mb_ptr2len(src - 1);
 
