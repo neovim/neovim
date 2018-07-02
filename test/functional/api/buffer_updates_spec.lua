@@ -1,9 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
+local clear = helpers.clear
 local eq, ok = helpers.eq, helpers.ok
 local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 local expect_err = helpers.expect_err
 local nvim_prog = helpers.nvim_prog
+local sleep = helpers.sleep
 local write_file = helpers.write_file
 
 local origlines = {"original line 1",
@@ -51,7 +53,7 @@ local function editoriginal(activate, lines)
     lines = origlines
   end
   -- load up the file with the correct contents
-  helpers.clear()
+  clear()
   return open(activate, lines)
 end
 
@@ -435,8 +437,7 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_changedtick_event', {b3, tick3})
   end)
 
-  it('does not get confused if enabled/disabled many times',
-     function()
+  it('does not get confused if enabled/disabled many times', function()
     local channel = nvim('get_api_info')[1]
     local b, tick = editoriginal(false)
 
@@ -462,7 +463,7 @@ describe('API: buffer events:', function()
   end)
 
   it('can notify several channels at once', function()
-    helpers.clear()
+    clear()
 
     -- create several new sessions, in addition to our main API
     local sessions = {}
@@ -482,7 +483,7 @@ describe('API: buffer events:', function()
 
     local function wantn(sessionid, name, args)
       local session = sessions[sessionid]
-      eq({'notification', name, args}, session:next_message())
+      eq({'notification', name, args}, session:next_message(10000))
     end
 
     -- Edit a new file, but don't enable buffer events.
@@ -710,10 +711,9 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'AA'}, false})
   end)
 
-  it('detaches if the buffer is unloaded/deleted/wiped',
-     function()
+  it('detaches if the buffer is unloaded/deleted/wiped', function()
     -- start with a blank nvim
-    helpers.clear()
+    clear()
     -- need to make a new window with a buffer because :bunload doesn't let you
     -- unload the last buffer
     for _, cmd in ipairs({'bunload', 'bdelete', 'bwipeout'}) do
@@ -729,23 +729,36 @@ describe('API: buffer events:', function()
   end)
 
   it('does not send the buffer content if not requested', function()
-    helpers.clear()
+    clear()
     local b, tick = editoriginal(false)
     ok(buffer('attach', b, false, {}))
     expectn('nvim_buf_changedtick_event', {b, tick})
   end)
 
   it('returns a proper error on nonempty options dict', function()
-    helpers.clear()
+    clear()
     local b = editoriginal(false)
     expect_err("dict isn't empty", buffer, 'attach', b, false, {builtin="asfd"})
   end)
 
+  it('nvim_buf_attach returns response after delay #8634', function()
+    clear()
+    sleep(250)
+    -- response
+    eq(true, helpers.request('nvim_buf_attach', 0, false, {}))
+    -- notification
+    eq({
+        [1] = 'notification',
+        [2] = 'nvim_buf_changedtick_event',
+        [3] = {
+               [1] = { id = 1 },
+               [2] = 2 }, }, next_msg())
+  end)
 end)
 
 describe('API: buffer events:', function()
   before_each(function()
-    helpers.clear()
+    clear()
   end)
 
   local function lines_subset(first, second)
