@@ -743,7 +743,7 @@ describe('API: buffer events:', function()
 
   it('nvim_buf_attach returns response after delay #8634', function()
     clear()
-    sleep(1000)
+    sleep(250)
     -- response
     eq(true, helpers.request('nvim_buf_attach', 0, false, {}))
     -- notification
