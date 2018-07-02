@@ -202,7 +202,7 @@ static void terminfo_start(UI *ui)
   const char *term = os_getenv("TERM");
   data->ut = unibi_from_env();
   char *termname = NULL;
-  if (!data->ut) {
+  if (!term || !data->ut) {
     data->ut = terminfo_from_builtin(term, &termname);
   } else {
     termname = xstrdup(term);
