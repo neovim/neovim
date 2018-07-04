@@ -568,6 +568,7 @@ describe('API', function()
         second line]])
     end)
 
+
     it('does not complete ("interrupt") `d` #3732', function()
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -1267,5 +1268,32 @@ describe('API', function()
       eq(expected, nvim("list_uis"))
     end)
   end)
-
+  describe('statusline', function()
+    it('last char shows (multibyte)', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      command('set laststatus=2')
+      command('set statusline=你好')
+      screen:expect([[
+      ^                    |
+      ~                   |
+      你好                |
+                          |
+      ]])
+    end)
+  end)
+  describe('statusline', function()
+    it('last char shows', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      command('set laststatus=2')
+      command('set statusline=abc')
+      screen:expect([[
+      ^                    |
+      ~                   |
+      abc                 |
+                          |
+      ]])
+    end)
+  end)
 end)
