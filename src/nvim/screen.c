@@ -337,6 +337,8 @@ void update_screen(int type)
     screenclear();              // will reset clear_cmdline
     cmdline_screen_cleared();   // clear external cmdline state
     type = NOT_VALID;
+    // must_redraw may be set indirectly, avoid another redraw later
+    must_redraw = 0;
   }
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
