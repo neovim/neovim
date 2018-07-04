@@ -27,7 +27,7 @@ function! s:find_node_client(package_manager) abort
     return ''
   endif
   let is_yarn = a:package_manager ==# 'yarn'
-  let cmd = is_yarn ? 'yarn global dir' : 'npm root -g'
+  let cmd = is_yarn ? 'yarn global dir' : 'npm --loglevel silent root -g'
   let global_modules_dir = get(split(system(cmd), "\n"), 0, '')
   if v:shell_error || !isdirectory(global_modules_dir)
     return ''
