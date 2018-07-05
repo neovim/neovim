@@ -218,10 +218,9 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       // stdout/stderr, they will be closed when it exits(possibly due to being
       // terminated after a timeout)
       stream_may_close(&proc->in);
-      if (proc->detach != kNone) {
-        os_proc_tree_kill(proc->pid, SIGTERM);
-      } else {
-        uv_kill(proc->pid, SIGTERM);
+      os_proc_tree_kill(proc->pid, SIGTERM);
+      if (proc->detach == kNone) {
+        abort();  // Never happens (unless #8678 is implemented).
       }
       break;
     }

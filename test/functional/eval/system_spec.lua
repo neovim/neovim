@@ -6,7 +6,6 @@ local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.feed, helpers.nvim
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local matches = helpers.matches
 local iswin = helpers.iswin
 
 local Screen = require('test.functional.ui.screen')
@@ -34,19 +33,6 @@ end
 
 describe('system()', function()
   before_each(clear)
-
-  it('runs in the same process-group as Nvim #8217', function()
-    if iswin() then
-      return  -- Not applicable.
-    end
-    local pid = tostring(eval('getpid()'))
-    -- system({string})
-    local out = eval([[filter(split(system('ps'), "\n"), 'v:val =~# "\\<'.getpid().'\\>"')]])
-    matches(pid..'.*nvim', out[1])
-    -- system({list})
-    out = eval([[filter(split(system(['ps']), "\n"), 'v:val =~# "\\<'.getpid().'\\>"')]])
-    matches(pid..'.*nvim', out[1])
-  end)
 
   describe('command passed as a List', function()
     local function printargs_path()
@@ -373,19 +359,6 @@ end)
 describe('systemlist()', function()
   -- Similar to `system()`, but returns List instead of String.
   before_each(clear)
-
-  it('runs in the same process-group as Nvim #8217', function()
-    if iswin() then
-      return  -- Not applicable.
-    end
-    local pid = tostring(eval('getpid()'))
-    -- systemlist({string})
-    local out = eval([[filter(systemlist('ps'), 'v:val =~# "\\<'.getpid().'\\>"')]])
-    matches(pid..'.*nvim', out[1])
-    -- systemlist({list})
-    out = eval([[filter(systemlist(['ps']), 'v:val =~# "\\<'.getpid().'\\>"')]])
-    matches(pid..'.*nvim', out[1])
-  end)
 
   it('sets v:shell_error', function()
     if iswin() then

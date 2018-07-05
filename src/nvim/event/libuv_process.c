@@ -37,10 +37,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   }
 #else
   // Always setsid() on unix. #8107
-  // Except for system(), systemlist(), :!. #8217
-  if (proc->detach != kNone) {
-    uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
-  }
+  uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;

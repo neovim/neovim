@@ -1,3 +1,7 @@
+local global_helpers = require('test.helpers')
+local collect = global_helpers.collect
+local list_count = global_helpers.list_count
+
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
@@ -15,6 +19,7 @@ local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
 local nvim_set = helpers.nvim_set
+local sleep = helpers.sleep
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
 local Screen = require('test.functional.ui.screen')
@@ -747,6 +752,28 @@ describe('jobs', function()
         eq(NIL, meths.get_proc(child_pid))
       end
     end)
+  end)
+
+  it('CTRL-C during system() kills all descendants #6530', function()
+    if iswin() then
+      return  -- Don't know how to test this.
+    end
+    feed(':call system("sleep 30 | sleep 30 | sleep 30 | sleep 30 | sleep 30")<CR>')
+    sleep(100)
+    feed('<c-c>')
+    -- XXX: Search the whole system (i.e. from PID 1). Because Nvim detaches
+    -- (setsid) the subtree, we don't know their PIDs ...
+    local l = collect(meths.get_proc_children,
+                      1,
+                      (function(pid)
+                        local p = meths.get_proc(pid)
+                        return (type(p) == 'table' and p['name'] or nil)
+                      end),
+                      9)
+    -- Most systems shouldn't (?) have many "sleep" processes.
+    local n = list_count(l, 'sleep')
+    assert(n < 5, string.format(
+      'found %d "sleep" processes: regression of #6530 ?', n))
   end)
 
   describe('running tty-test program', function()

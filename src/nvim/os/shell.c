@@ -221,7 +221,6 @@ static int do_os_system(char **argv,
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
-  proc->detach = kNone;  // No setsid(). #8217
   int status = process_spawn(proc, has_input, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);

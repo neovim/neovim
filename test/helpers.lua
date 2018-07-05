@@ -618,6 +618,58 @@ local function table_flatten(arr)
   return result
 end
 
+-- Applies fn() recursively on each item returned by fn().
+-- Collects results into a flat list.
+-- Applies tfn() to the results.
+--
+-- fn       : Takes 1 argument and produces a list.
+-- input    : Initial input to fn(). Also included in the final list.
+-- tfn      : (Optional) Transformer, applied to each item in the final list.
+-- maxdepth : (Optional) Limit recursion to this depth.
+-- depth    : (Internal) Current depth.
+local function collect(fn, input, tfn, maxdepth, depth)
+  assert(type(fn) == 'function')
+  assert(tfn == nil or type(tfn) == 'function')
+  assert(maxdepth == nil or type(maxdepth) == 'number')
+  assert(depth == nil or type(depth) == 'number')
+  if nil == tfn then
+    tfn = (function(v) return v end)
+  end
+  depth = (depth == nil and 0 or depth)
+  local rv = {}
+  if depth == 0 then
+    rv = { tfn(input) }
+  end
+  local l = fn(input)
+  if type(l) ~= 'table' then
+    l = { l }
+  end
+  for _,v in ipairs(l) do
+    tv = tfn(v)
+    table.insert(rv, tv)
+    if depth < maxdepth then
+      -- Recurse.
+      l2 = collect(fn, v, tfn, maxdepth, depth + 1)
+      for _,v2 in ipairs(l2) do
+        table.insert(rv, tv)
+      end
+    end
+  end
+  return rv
+end
+
+local function list_count(tbl, item)
+  assert(type(tbl) == 'table')
+  assert(item ~= nil)
+  local i = 0
+  for _,v in ipairs(tbl) do
+    if item == v then
+      i = i + 1
+    end
+  end
+  return i
+end
+
 local function hexdump(str)
   local len = string.len(str)
   local dump = ""
@@ -676,6 +728,7 @@ local module = {
   argss_to_cmd = argss_to_cmd,
   check_cores = check_cores,
   check_logs = check_logs,
+  collect = collect,
   concat_tables = concat_tables,
   dedent = dedent,
   deepcopy = deepcopy,
@@ -691,6 +744,7 @@ local module = {
   hasenv = hasenv,
   hexdump = hexdump,
   intchar2lua = intchar2lua,
+  list_count = list_count,
   map = map,
   matches = matches,
   mergedicts_copy = mergedicts_copy,
@@ -700,8 +754,8 @@ local module = {
   popen_w = popen_w,
   read_file = read_file,
   repeated_read_cmd = repeated_read_cmd,
-  sleep = sleep,
   shallowcopy = shallowcopy,
+  sleep = sleep,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
