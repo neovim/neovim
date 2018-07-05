@@ -230,4 +230,32 @@ func Test_tag_file_encoding()
   call delete('Xtags1')
 endfunc
 
+func Test_tagjump_etags()
+  if !has('emacs_tags')
+    return
+  endif
+  call writefile([
+        \ "void foo() {}",
+        \ "int main(int argc, char **argv)",
+        \ "{",
+        \ "\tfoo();",
+        \ "\treturn 0;",
+        \ "}",
+        \ ], 'Xmain.c')
+
+  call writefile([
+	\ "\x0c",
+        \ "Xmain.c,64",
+        \ "void foo() {}\x7ffoo\x011,0",
+        \ "int main(int argc, char **argv)\x7fmain\x012,14",
+	\ ], 'Xtags')
+  set tags=Xtags
+  ta foo
+  call assert_equal('void foo() {}', getline('.'))
+
+  call delete('Xtags')
+  call delete('Xmain.c')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -2223,7 +2223,7 @@ static size_t matching_line_len(const char_u *const lbuf)
   const char_u *p = lbuf + 1;
 
   // does the same thing as parse_match()
-  p += STRLEN(p) + 2;
+  p += STRLEN(p) + 1;
   return (p - lbuf) + STRLEN(p);
 }
 
