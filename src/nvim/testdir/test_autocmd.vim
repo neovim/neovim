@@ -1,6 +1,5 @@
 " Tests for autocommands
 
-
 func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
     if bufloaded(bnr) && bufnr('%') != bnr
