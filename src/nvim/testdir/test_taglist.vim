@@ -1,4 +1,4 @@
-" test 'taglist' function
+" test 'taglist' function and :tags command
 
 func Test_taglist()
   call writefile([
@@ -55,4 +55,9 @@ func Test_taglist_ctags_etags()
 	\ map(taglist('set_signals'), {i, v -> [v.name, v.cmd]}))
 
   call delete('Xtags')
+endfunc
+
+func Test_tags_too_long()
+  call assert_fails('tag ' . repeat('x', 1020), 'E426')
+  tags
 endfunc
