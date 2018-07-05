@@ -381,10 +381,10 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
         memmove(buf_p, p, l);
         buf_p += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
           char hexbuf[11];
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
-          if (buf_p + hexlen >= buf_e) {
+          if (buf_p + hexlen > buf_e) {
             break;
           }
           memmove(buf_p, hexbuf, hexlen);

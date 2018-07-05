@@ -1295,5 +1295,17 @@ describe('API', function()
                           |
       ]])
     end)
+    it('unicode control points', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      command('set laststatus=2')
+      feed(':set statusline=<C-v>u9f<SPACE><CR>')
+      screen:expect([[
+      ^                    |
+      ~                   |
+      <9f>                |
+                          |
+      ]])
+    end)
   end)
 end)
