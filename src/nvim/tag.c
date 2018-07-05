@@ -2217,6 +2217,16 @@ static bool test_for_static(tagptrs_T *tagp)
   return FALSE;
 }
 
+// Returns the length of a matching tag line.
+static size_t matching_line_len(const char_u *const lbuf)
+{
+  const char_u *p = lbuf + 1;
+
+  // does the same thing as parse_match()
+  p += STRLEN(p) + 2;
+  return (p - lbuf) + STRLEN(p);
+}
+
 /*
  * Parse a line from a matching tag.  Does not change the line itself.
  *
@@ -2295,16 +2305,13 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
   return fullname;
 }
 
-/*
- * Jump to a tag that has been found in one of the tag files
- *
- * returns OK for success, NOTAGFILE when file not found, FAIL otherwise.
- */
-static int 
-jumpto_tag (
-    char_u *lbuf,              /* line from the tags file for this tag */
-    int forceit,                    /* :ta with ! */
-    int keep_help                  /* keep help flag (FALSE for cscope) */
+// Jump to a tag that has been found in one of the tag files
+//
+// Returns OK for success, NOTAGFILE when file not found, FAIL otherwise.
+static int jumpto_tag(
+    char_u *const lbuf_arg,     // line from the tags file for this tag
+    const int forceit,          // :ta with !
+    const bool keep_help        // keep help flag (false for cscope)
 )
 {
   int save_secure;
@@ -2312,7 +2319,6 @@ jumpto_tag (
   bool save_p_ws;
   int save_p_scs, save_p_ic;
   linenr_T save_lnum;
-  int csave = 0;
   char_u      *str;
   char_u      *pbuf;                    /* search pattern buffer */
   char_u      *pbuf_end;
@@ -2325,7 +2331,9 @@ jumpto_tag (
   int save_no_hlsearch;
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
-  int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
+  int old_KeyTyped = KeyTyped;              // getting the file may reset it
+  const size_t len = matching_line_len(lbuf_arg);
+  char_u *lbuf = xmalloc(len);
   const int l_g_do_tagpreview = g_do_tagpreview;
 
   pbuf = xmalloc(LSIZE);
@@ -2337,7 +2345,6 @@ jumpto_tag (
   }
 
   /* truncate the file name, so it can be used as a string */
-  csave = *tagp.fname_end;
   *tagp.fname_end = NUL;
   fname = tagp.fname;
 
@@ -2447,7 +2454,10 @@ jumpto_tag (
     else
       keep_help_flag = curbuf->b_help;
   }
+
   if (getfile_result == GETFILE_UNUSED) {
+    // Careful: getfile() may trigger autocommands and call jumpto_tag()
+    // recursively
     getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
   }
   keep_help_flag = false;
@@ -2606,8 +2616,7 @@ jumpto_tag (
 
 erret:
   g_do_tagpreview = 0;   /* For next time */
-  if (tagp.fname_end != NULL)
-    *tagp.fname_end = csave;
+  xfree(lbuf);
   xfree(pbuf);
   xfree(tofree_fname);
   xfree(full_fname);
