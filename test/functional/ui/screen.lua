@@ -221,6 +221,14 @@ function Screen:attach(options, session)
     options.ext_linegrid = true
   end
 
+  if options.ext_windows then
+    options.ext_multigrid = true
+  end
+  if options.ext_multigrid then
+    options.ext_linegrid = true
+    self._multigrid = true
+  end
+
   self._session = session
   self._options = options
   self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
@@ -636,6 +644,10 @@ end
 
 function Screen:set_on_event_handler(callback)
   self._on_event = callback
+end
+
+function Screen:set_on_request_handler(callback)
+  self._on_request = callback
 end
 
 function Screen:_handle_resize(width, height)
