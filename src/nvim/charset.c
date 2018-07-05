@@ -370,7 +370,8 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
   while (*p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      if (buf_p + l >= buf_e) {
+      //ignore lengths that do not fit the buffer
+      if (buf_p + l > buf_e) {
         break;
       }
       int pcc[MAX_MCO + 2];
