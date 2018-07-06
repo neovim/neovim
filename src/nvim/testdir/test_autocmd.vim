@@ -1,6 +1,5 @@
 " Tests for autocommands
 
-
 func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
     if bufloaded(bnr) && bufnr('%') != bnr
@@ -247,6 +246,24 @@ func Test_augroup_warning()
   redir END
   call assert_true(match(res, "W19:") < 0)
   au! VimEnter
+endfunc
+
+func Test_BufReadCmdHelp()
+  " This used to cause access to free memory
+  au BufReadCmd * e +h
+  help
+
+  helpclose
+  au! BufReadCmd
+endfunc
+
+func Test_BufReadCmdHelpJump()
+  " This used to cause access to free memory
+  au BufReadCmd * e +h{
+  help
+
+  helpclose
+  au! BufReadCmd
 endfunc
 
 func Test_augroup_deleted()
