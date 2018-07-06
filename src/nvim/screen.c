@@ -4232,25 +4232,19 @@ win_line (
         /* Remember that the line wraps, used for modeless copy. */
         LineWraps[screen_row - 1] = TRUE;
 
-        /*
-         * Special trick to make copy/paste of wrapped lines work with
-         * xterm/screen: write an extra character beyond the end of
-         * the line. This will work with all terminal types
-         * (regardless of the xn,am settings).
-         * Only do this if the cursor is on the current line
-         * (something has been written in it).
-         * Don't do this for double-width characters.
-         * Don't do this for a window not at the right screen border.
-         */
-        if (!(utf_off2cells(LineOffset[screen_row],
-                            LineOffset[screen_row] + screen_Columns)
-                     == 2
-                     || utf_off2cells(LineOffset[screen_row - 1]
-                                        + (int)Columns - 2,
-                                        LineOffset[screen_row] + screen_Columns)
-                     == 2)
-            ) {
-          ui_add_linewrap(screen_row-1);
+        // Special trick to make copy/paste of wrapped lines work with
+        // xterm/screen: write an extra character beyond the end of
+        // the line. This will work with all terminal types
+        // (regardless of the xn,am settings).
+        // Only do this if the cursor is on the current line
+        // (something has been written in it).
+        // Don't do this for double-width characters.
+        // Don't do this for a window not at the right screen border.
+        if (utf_off2cells(LineOffset[screen_row],
+                          LineOffset[screen_row] + screen_Columns) != 2
+            && utf_off2cells(LineOffset[screen_row - 1] + (int)Columns - 2,
+                             LineOffset[screen_row] + screen_Columns) != 2) {
+          ui_add_linewrap(screen_row - 1);
         }
       }
 
@@ -4329,15 +4323,11 @@ static void screen_line(int row, int coloff, int endcol,
   unsigned max_off_to;
   int col = 0;
   int hl;
-  int force = FALSE;                    /* force update rest of the line */
-  int redraw_this                       /* bool: does character need redraw? */
-  ;
-  int redraw_next;                      /* redraw_this for next character */
-  int clear_next = FALSE;
-  int char_cells;                       /* 1: normal char */
-                                        /* 2: occupies two display cells */
-# define CHAR_CELLS char_cells
-
+  bool redraw_this;                         // Does character need redraw?
+  bool redraw_next;                         // redraw_this for next character
+  bool clear_next = false;
+  int char_cells;                           // 1: normal char
+                                            // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
 
   /* Check for illegal row and col, just in case. */
@@ -4382,15 +4372,14 @@ static void screen_line(int row, int coloff, int endcol,
   redraw_next = char_needs_redraw(off_from, off_to, endcol - col);
 
   while (col < endcol) {
-    if (col + 1 < endcol)
+    char_cells = 1;
+    if (col + 1 < endcol) {
       char_cells = utf_off2cells(off_from, max_off_from);
-    else
-      char_cells = 1;
-
+    }
     redraw_this = redraw_next;
-    redraw_next = force || char_needs_redraw(off_from + CHAR_CELLS,
-        off_to + CHAR_CELLS, endcol - col - CHAR_CELLS);
-
+    redraw_next = char_needs_redraw(off_from + char_cells,
+                                    off_to + char_cells,
+                                    endcol - col - char_cells);
 
     if (redraw_this) {
       if (start_dirty == -1) {
@@ -4424,9 +4413,9 @@ static void screen_line(int row, int coloff, int endcol,
       }
     }
 
-    off_to += CHAR_CELLS;
-    off_from += CHAR_CELLS;
-    col += CHAR_CELLS;
+    off_to += char_cells;
+    off_from += char_cells;
+    col += char_cells;
   }
 
   if (clear_next) {
