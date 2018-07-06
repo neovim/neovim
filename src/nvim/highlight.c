@@ -38,7 +38,7 @@ void highlight_init(void)
 bool highlight_use_hlstate(void)
 {
   if (hlstate_active) {
-      return false;
+    return false;
   }
   hlstate_active = true;
   // hl tables must now be rebuilt.
@@ -89,7 +89,24 @@ static int get_attr_entry(HlEntry entry)
 
   map_put(HlEntry, int)(attr_entry_ids, entry, id);
 
+  Array inspect = hl_inspect(id);
+
+  // Note: internally we don't distinguish between cterm and rgb attributes,
+  // remote_ui_hl_attr_define will however.
+  ui_call_hl_attr_define(id, entry.attr, entry.attr, inspect);
+  api_free_array(inspect);
   return id;
+}
+
+/// When a UI connects, we need to send it the table of higlights used so far.
+void ui_send_all_hls(UI *ui)
+{
+  for (size_t i = 1; i < kv_size(attr_entries); i++) {
+    Array inspect = hl_inspect((int)i);
+    ui->hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
+                       kv_A(attr_entries, i).attr, inspect);
+    api_free_array(inspect);
+  }
 }
 
 /// Get attribute code for a syntax group.

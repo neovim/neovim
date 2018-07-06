@@ -10,14 +10,6 @@
 #include "nvim/func_attr.h"
 #include "nvim/ui.h"
 
-void resize(Integer width, Integer height)
-  FUNC_API_SINCE(3);
-void clear(void)
-  FUNC_API_SINCE(3);
-void eol_clear(void)
-  FUNC_API_SINCE(3);
-void cursor_goto(Integer row, Integer col)
-  FUNC_API_SINCE(3);
 void mode_info_set(Boolean enabled, Array cursor_styles)
   FUNC_API_SINCE(3);
 void update_menu(void)
@@ -32,29 +24,12 @@ void mouse_off(void)
   FUNC_API_SINCE(3);
 void mode_change(String mode, Integer mode_idx)
   FUNC_API_SINCE(3);
-void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)
-  FUNC_API_SINCE(3);
-void scroll(Integer count)
-  FUNC_API_SINCE(3);
-void highlight_set(HlAttrs attrs)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
-void put(String str)
-  FUNC_API_SINCE(3);
 void bell(void)
   FUNC_API_SINCE(3);
 void visual_bell(void)
   FUNC_API_SINCE(3);
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
-void update_fg(Integer fg)
-  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
-void update_bg(Integer bg)
-  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
-void update_sp(Integer sp)
-  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
-void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
-                        Integer cterm_fg, Integer cterm_bg)
-  FUNC_API_SINCE(4);
 void suspend(void)
   FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void set_title(String title)
@@ -63,6 +38,49 @@ void set_icon(String icon)
   FUNC_API_SINCE(3);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
+
+// First revison of the grid protocol, used by default
+void update_fg(Integer fg)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void update_bg(Integer bg)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void update_sp(Integer sp)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void resize(Integer width, Integer height)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void clear(void)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void eol_clear(void)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cursor_goto(Integer row, Integer col)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void highlight_set(HlAttrs attrs)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL;
+void put(String str)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void scroll(Integer count)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
+// Second revison of the grid protocol, used with ext_newgrid ui option
+void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
+                        Integer cterm_fg, Integer cterm_bg)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
+                    Array info)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+void grid_resize(Integer grid, Integer width, Integer height)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+void grid_clear(Integer grid)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+void grid_cursor_goto(Integer grid, Integer row, Integer col)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+void grid_line(Integer grid, Integer row, Integer col_start, Array data)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
+void grid_scroll(Integer grid, Integer top, Integer bot,
+                 Integer left, Integer right, Integer rows, Integer cols)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;

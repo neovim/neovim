@@ -215,6 +215,8 @@ static int hislen = 0;                  /* actual length of history tables */
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
+static bool need_cursor_update = false;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -2944,30 +2946,22 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
     char *buf = xmallocz(len);
     memset(buf, '*', len);
     Array item = ARRAY_DICT_INIT;
-    ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+    ADD(item, INTEGER_OBJ(0));
     ADD(item, STRING_OBJ(((String) { .data = buf, .size = len })));
     ADD(content, ARRAY_OBJ(item));
   } else if (kv_size(line->last_colors.colors)) {
     for (size_t i = 0; i < kv_size(line->last_colors.colors); i++) {
       CmdlineColorChunk chunk = kv_A(line->last_colors.colors, i);
       Array item = ARRAY_DICT_INIT;
+      ADD(item, INTEGER_OBJ(chunk.attr));
 
-      if (chunk.attr) {
-        HlAttrs *aep = syn_attr2entry(chunk.attr);
-        // TODO(bfredl): this desicion could be delayed by making attr_code a
-        // recognized type
-        Dictionary rgb_attrs = hlattrs2dict(aep, true);
-        ADD(item, DICTIONARY_OBJ(rgb_attrs));
-      } else {
-        ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
-      }
       ADD(item, STRING_OBJ(cbuf_to_string((char *)line->cmdbuff + chunk.start,
                                           chunk.end-chunk.start)));
       ADD(content, ARRAY_OBJ(item));
     }
   } else {
     Array item = ARRAY_DICT_INIT;
-    ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+    ADD(item, INTEGER_OBJ(0));
     ADD(item, STRING_OBJ(cstr_to_string((char *)(line->cmdbuff))));
     ADD(content, ARRAY_OBJ(item));
   }
@@ -3033,6 +3027,8 @@ void cmdline_screen_cleared(void)
     }
     prev_ccline = prev_ccline->prev_ccline;
   }
+
+  need_cursor_update = true;
 }
 
 /// called by ui_flush, do what redraws neccessary to keep cmdline updated.
@@ -3500,6 +3496,10 @@ static void cursorcmd(void)
   if (ui_is_external(kUICmdline)) {
     if (ccline.redraw_state < kCmdRedrawPos) {
       ccline.redraw_state = kCmdRedrawPos;
+    }
+    if (need_cursor_update) {
+      need_cursor_update = false;
+      setcursor();
     }
     return;
   }

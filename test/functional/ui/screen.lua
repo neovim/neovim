@@ -142,6 +142,8 @@ function Screen.new(width, height)
     _default_attr_ignore = nil,
     _mouse_enabled = true,
     _attrs = {},
+    _attr_table = {[0]={{},{}}},
+    _clear_attrs = {},
     _cursor = {
       row = 1, col = 1
     },
@@ -163,6 +165,11 @@ function Screen:attach(options)
   if options == nil then
     options = {rgb=true}
   end
+  if options.ext_newgrid == nil then
+    options.ext_newgrid = true
+  end
+  self._options = options
+  self._clear_attrs = (options.ext_newgrid and {{},{}}) or {}
   uimeths.attach(self._width, self._height, options)
 end
 
@@ -176,6 +183,7 @@ end
 
 function Screen:set_option(option, value)
   uimeths.set_option(option, value)
+  self._options[option] = value
 end
 
 -- Asserts that `expected` eventually matches the screen state.
@@ -339,7 +347,7 @@ function Screen:_handle_resize(width, height)
   for _ = 1, height do
     local cols = {}
     for _ = 1, width do
-      table.insert(cols, {text = ' ', attrs = {}})
+      table.insert(cols, {text = ' ', attrs = self._clear_attrs})
     end
     table.insert(rows, cols)
   end
@@ -353,14 +361,24 @@ function Screen:_handle_resize(width, height)
   }
 end
 
+function Screen:_handle_grid_resize(grid, width, height)
+  assert(grid == 1)
+  self:_handle_resize(width, height)
+end
+
+
 function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
   self._cursor_style_enabled = cursor_style_enabled
   self._mode_info = mode_info
 end
 
 function Screen:_handle_clear()
-  self:_clear_block(self._scroll_region.top, self._scroll_region.bot,
-                    self._scroll_region.left, self._scroll_region.right)
+  self:_clear_block(1, self._height, 1, self._width)
+end
+
+function Screen:_handle_grid_clear(grid)
+  assert(grid == 1)
+  self:_handle_clear()
 end
 
 function Screen:_handle_eol_clear()
@@ -369,6 +387,12 @@ function Screen:_handle_eol_clear()
 end
 
 function Screen:_handle_cursor_goto(row, col)
+  self._cursor.row = row + 1
+  self._cursor.col = col + 1
+end
+
+function Screen:_handle_grid_cursor_goto(grid, row, col)
+  assert(grid == 1)
   self._cursor.row = row + 1
   self._cursor.col = col + 1
 end
@@ -434,6 +458,27 @@ function Screen:_handle_scroll(count)
   end
 end
 
+function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
+  assert(grid == 1)
+  assert(cols == 0)
+  -- TODO: if we truly believe we should translate the other way
+  self:_handle_set_scroll_region(top,bot-1,left,right-1)
+  self:_handle_scroll(rows)
+end
+
+function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
+  self._attr_table[id] = {rgb_attrs, cterm_attrs}
+  self._new_attrs = true
+end
+
+function Screen:get_hl(val)
+  if self._options.ext_newgrid then
+    return self._attr_table[val][1]
+  else
+    return val
+  end
+end
+
 function Screen:_handle_highlight_set(attrs)
   self._attrs = attrs
 end
@@ -443,6 +488,25 @@ function Screen:_handle_put(str)
   cell.text = str
   cell.attrs = self._attrs
   self._cursor.col = self._cursor.col + 1
+end
+
+function Screen:_handle_grid_line(grid, row, col, items)
+  assert(grid == 1)
+  local line = self._rows[row+1]
+  local colpos = col+1
+  local hl = self._clear_attrs
+  for _,item in ipairs(items) do
+    local text, hlid, count = unpack(item)
+    if hlid ~= nil then
+      hl = self._attr_table[hlid]
+    end
+    for _ = 1, (count or 1) do
+      local cell = line[colpos]
+      cell.text = text
+      cell.attrs = hl
+      colpos = colpos+1
+    end
+  end
 end
 
 function Screen:_handle_bell()
@@ -498,7 +562,7 @@ function Screen:_clear_row_section(rownum, startcol, stopcol)
   local row = self._rows[rownum]
   for i = startcol, stopcol do
     row[i].text = ' '
-    row[i].attrs = {}
+    row[i].attrs = self._clear_attrs
   end
 end
 
@@ -506,7 +570,11 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
   local rv = {}
   local current_attr_id
   for i = 1, self._width do
-    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, row[i].attrs)
+    local attrs = row[i].attrs
+    if self._options.ext_newgrid then
+      attrs = attrs[(self._options.rgb and 1) or 2]
+    end
+    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, attrs, row[i].hl_id)
     if current_attr_id and attr_id ~= current_attr_id then
       -- close current attribute bracket, add it before any whitespace
       -- up to the current cell
@@ -647,6 +715,7 @@ function Screen:_get_attr_id(attr_ids, ignore, attrs)
   if not attr_ids then
     return
   end
+
   for id, a in pairs(attr_ids) do
     if self:_equal_attrs(a, attrs) then
        return id

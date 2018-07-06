@@ -29,6 +29,9 @@ describe('external cmdline', function()
       if name == "cmdline_show" then
         local content, pos, firstc, prompt, indent, level = unpack(data)
         ok(level > 0)
+        for _,item in ipairs(content) do
+          item[1] = screen:get_hl(item[1])
+        end
         cmdline[level] = {content=content, pos=pos, firstc=firstc,
                           prompt=prompt, indent=indent}
         last_level = level
@@ -87,6 +90,7 @@ describe('external cmdline', function()
                                |
     ]], nil, nil, function()
       eq(1, last_level)
+      --print(require('inspect')(cmdline))
       eq({{
         content = { { {}, "" } },
         firstc = ":",
@@ -168,10 +172,10 @@ describe('external cmdline', function()
     it('from normal mode', function()
       feed(':')
       screen:expect([[
-                                 |
+        ^                         |
         {1:~                        }|
         {1:~                        }|
-        {3:c^                        }|
+        {3:c                        }|
                                  |
       ]], nil, nil, function()
         eq({{
@@ -351,11 +355,11 @@ describe('external cmdline', function()
     -- redraw! forgets cursor position. Be OK with that, as UI should indicate
     -- focus is at external cmdline anyway.
     screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
       ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
     ]], nil, nil, function()
       eq(expectation, cmdline)
     end)
@@ -363,11 +367,11 @@ describe('external cmdline', function()
 
     feed('<cr>')
     screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
       ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
     ]], nil, nil, function()
       eq({{
         content = { { {}, "xx3" } },
@@ -424,11 +428,11 @@ describe('external cmdline', function()
     block = {}
     command("redraw!")
     screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
       ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
     ]], nil, nil, function()
       eq({ { { {}, 'function Foo()'} },
            { { {}, '  line1'} } }, block)
@@ -528,9 +532,9 @@ describe('external cmdline', function()
     screen:expect([[
                                |
       {2:[No Name]                }|
-      {1::}make                    |
+      {1::}make^                    |
       {3:[Command Line]           }|
-      ^                         |
+                               |
     ]], nil, nil, function()
       eq({nil, {
         content = { { {}, "yank" } },
@@ -572,11 +576,11 @@ describe('external cmdline', function()
     cmdline = {}
     command("redraw!")
     screen:expect([[
-                               |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
       ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
     ]], nil, nil, function()
       eq({{
         content = { { {}, "make" } },

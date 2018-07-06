@@ -6798,14 +6798,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
-              must_redraw = CLEAR;
             }
           } else {
             HL_TABLE()[idx].sg_cterm_bg = color + 1;
             if (is_normal_group) {
               cterm_normal_bg_color = color + 1;
               if (!ui_rgb_attached()) {
-                must_redraw = CLEAR;
                 if (color >= 0) {
                   int dark = -1;
 
@@ -6909,8 +6907,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
-      // If the normal group has changed, it is simpler to refresh every UI
-      ui_refresh();
+
+      if (!ui_is_external(kUINewgrid)) {
+        // Older UIs assume that we clear the screen after normal group is
+        // changed
+        ui_refresh();
+      } else {
+        // TUI and newer UIs will repaint the screen themselves. NOT_VALID
+        // redraw below will still handle usages of guibg=fg etc.
+        ui_default_colors_set();
+      }
     } else {
       set_hl_attr(idx);
     }

@@ -8,6 +8,8 @@
 typedef int32_t RgbValue;
 
 /// Highlighting attribute bits.
+///
+/// sign bit should not be used here, as it identifies invalid highlight
 typedef enum {
   HL_INVERSE     = 0x01,
   HL_BOLD        = 0x02,
@@ -28,6 +30,17 @@ typedef struct attr_entry {
 #define HLATTRS_INIT (HlAttrs) { \
   .rgb_ae_attr = 0, \
   .cterm_ae_attr = 0, \
+  .rgb_fg_color = -1, \
+  .rgb_bg_color = -1, \
+  .rgb_sp_color = -1, \
+  .cterm_fg_color = 0, \
+  .cterm_bg_color = 0, \
+}
+
+// sentinel value that compares unequal to any valid highlight
+#define HLATTRS_INVALID (HlAttrs) { \
+  .rgb_ae_attr = -1, \
+  .cterm_ae_attr = -1, \
   .rgb_fg_color = -1, \
   .rgb_bg_color = -1, \
   .rgb_sp_color = -1, \

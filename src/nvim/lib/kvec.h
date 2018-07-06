@@ -98,14 +98,14 @@
     (*kv_pushp(v) = (x))
 
 #define kv_a(v, i) \
-    (((v).capacity <= (size_t) (i) \
+    (*(((v).capacity <= (size_t) (i) \
       ? ((v).capacity = (v).size = (i) + 1, \
          kv_roundup32((v).capacity), \
-         kv_resize((v), (v).capacity), 0) \
+         kv_resize((v), (v).capacity), 0UL) \
       : ((v).size <= (size_t) (i) \
          ? (v).size = (i) + 1 \
-         : 0)), \
-     (v).items[(i)])
+         : 0UL)), \
+     &(v).items[(i)]))
 
 /// Type of a vector with a few first members allocated on stack
 ///

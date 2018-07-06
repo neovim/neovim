@@ -454,7 +454,6 @@ int main(int argc, char **argv)
   }
 
   setmouse();  // may start using the mouse
-  ui_reset_scroll_region();  // In case Rows changed
 
   if (exmode_active) {
     must_redraw = CLEAR;  // Don't clear the screen when starting in Ex mode.
@@ -1374,7 +1373,7 @@ static void handle_quickfix(mparm_T *paramp)
           paramp->use_ef, OPT_FREE, SID_CARG);
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
-      ui_linefeed();
+      msg_putchar('\n');
       mch_exit(3);
     }
     TIME_MSG("reading errorfile");

@@ -52,14 +52,10 @@ static UI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
 static int row = 0, col = 0;
-static struct {
-  int top, bot, left, right;
-} sr;
-static int current_attr_code = -1;
 static bool pending_cursor_update = false;
 static int busy = 0;
-static int height, width;
-static int old_mode_idx = -1;
+static int mode_idx = SHAPE_IDX_N;
+static bool pending_mode_update = false;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -89,7 +85,6 @@ static char uilog_last_event[1024] = { 0 };
 #ifdef _MSC_VER
 # define UI_CALL(funname, ...) \
     do { \
-      flush_cursor_update(); \
       UI_LOG(funname, 0); \
       for (size_t i = 0; i < ui_count; i++) { \
         UI *ui = uis[i]; \
@@ -99,7 +94,6 @@ static char uilog_last_event[1024] = { 0 };
 #else
 # define UI_CALL(...) \
     do { \
-      flush_cursor_update(); \
       UI_LOG(__VA_ARGS__, 0); \
       for (size_t i = 0; i < ui_count; i++) { \
         UI *ui = uis[i]; \
@@ -108,8 +102,8 @@ static char uilog_last_event[1024] = { 0 };
     } while (0)
 #endif
 #define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, \
-                            MORE, MORE, ZERO, ignore)
-#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, ...) a7
+                            MORE, MORE, MORE, MORE, MORE, ZERO, ignore)
+#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ...) a10
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
 // Resolves to UI_CALL_MORE or UI_CALL_ZERO.
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
@@ -199,6 +193,9 @@ void ui_refresh(void)
   }
 
   row = col = 0;
+  pending_cursor_update = true;
+
+  ui_default_colors_set();
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
@@ -207,13 +204,14 @@ void ui_refresh(void)
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ui_ext[i] = ext_widgets[i];
-    ui_call_option_set(cstr_as_string((char *)ui_ext_names[i]),
-                       BOOLEAN_OBJ(ext_widgets[i]));
+    if (i < kUIGlobalCount) {
+      ui_call_option_set(cstr_as_string((char *)ui_ext_names[i]),
+                         BOOLEAN_OBJ(ext_widgets[i]));
+    }
   }
   ui_mode_info_set();
-  old_mode_idx = -1;
+  pending_mode_update = true;
   ui_cursor_shape();
-  current_attr_code = -1;
 }
 
 static void ui_refresh_event(void **argv)
@@ -226,25 +224,15 @@ void ui_schedule_refresh(void)
   loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
-void ui_resize(int new_width, int new_height)
+void ui_resize(int width, int height)
 {
-  width = new_width;
-  height = new_height;
+  ui_call_grid_resize(1, width, height);
+}
 
-  // TODO(bfredl): update default colors when they changed, NOT on resize.
+void ui_default_colors_set(void)
+{
   ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
                              cterm_normal_fg_color, cterm_normal_bg_color);
-
-  // Deprecated:
-  UI_CALL(update_fg, (ui->rgb ? normal_fg : cterm_normal_fg_color - 1));
-  UI_CALL(update_bg, (ui->rgb ? normal_bg : cterm_normal_bg_color - 1));
-  UI_CALL(update_sp, (ui->rgb ? normal_sp : -1));
-
-  sr.top = 0;
-  sr.bot = height - 1;
-  sr.left = 0;
-  sr.right = width - 1;
-  ui_call_resize(width, height);
 }
 
 void ui_busy_start(void)
@@ -269,6 +257,18 @@ void ui_attach_impl(UI *ui)
 
   uis[ui_count++] = ui;
   ui_refresh_options();
+
+  for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
+    ui_set_ext_option(ui, i, ui->ui_ext[i]);
+  }
+
+  bool sent = false;
+  if (ui->ui_ext[kUIHlState]) {
+    sent = highlight_use_hlstate();
+  }
+  if (!sent) {
+    ui_send_all_hls(ui);
+  }
   ui_refresh();
 }
 
@@ -302,95 +302,32 @@ void ui_detach_impl(UI *ui)
   }
 }
 
-// Set scrolling region for window 'wp'.
-// The region starts 'off' lines from the start of the window.
-// Also set the vertical scroll region for a vertically split window.  Always
-// the full width of the window, excluding the vertical separator.
-void ui_set_scroll_region(win_T *wp, int off)
+void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
 {
-  sr.top = wp->w_winrow + off;
-  sr.bot = wp->w_winrow + wp->w_height - 1;
-
-  if (wp->w_width != Columns) {
-    sr.left = wp->w_wincol;
-    sr.right = wp->w_wincol + wp->w_width - 1;
-  }
-
-  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
-}
-
-// Reset scrolling region to the whole screen.
-void ui_reset_scroll_region(void)
-{
-  sr.top = 0;
-  sr.bot = (int)Rows - 1;
-  sr.left = 0;
-  sr.right = (int)Columns - 1;
-  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
-}
-
-void ui_set_highlight(int attr_code)
-{
-  if (current_attr_code == attr_code) {
+  if (ext < kUIGlobalCount) {
+    ui_refresh();
     return;
   }
-  current_attr_code = attr_code;
-
-  HlAttrs attrs = HLATTRS_INIT;
-
-  if (attr_code != 0) {
-    HlAttrs *aep = syn_attr2entry(attr_code);
-    if (aep) {
-      attrs = *aep;
-    }
-  }
-
-  UI_CALL(highlight_set, attrs);
-}
-
-void ui_clear_highlight(void)
-{
-  ui_set_highlight(0);
-}
-
-void ui_puts(uint8_t *str)
-{
-  uint8_t *p = str;
-  uint8_t c;
-
-  while ((c = *p)) {
-    if (c < 0x20) {
-      abort();
-    }
-
-    size_t clen = (size_t)mb_ptr2len(p);
-    ui_call_put((String){ .data = (char *)p, .size = clen });
-    col++;
-    if (mb_ptr2cells(p) > 1) {
-      // double cell character, blank the next cell
-      ui_call_put((String)STRING_INIT);
-      col++;
-    }
-    if (utf_ambiguous_width(utf_ptr2char(p))) {
-      pending_cursor_update = true;
-    }
-    if (col >= width) {
-      ui_linefeed();
-    }
-    p += clen;
-
-    if (p_wd) {  // 'writedelay': flush & delay each time.
-      ui_flush();
-      uint64_t wd = (uint64_t)labs(p_wd);
-      os_microdelay(wd * 1000u, true);
-    }
+  if (ui->option_set) {
+    ui->option_set(ui, cstr_as_string((char *)ui_ext_names[ext]),
+                   BOOLEAN_OBJ(active));
   }
 }
 
-void ui_putc(uint8_t c)
+void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr)
 {
-  uint8_t buf[2] = {c, 0};
-  ui_puts(buf);
+  size_t off = LineOffset[row]+(size_t)startcol;
+  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr,
+          (const schar_T *)ScreenLines+off, (const sattr_T *)ScreenAttrs+off);
+  if (p_wd) {  // 'writedelay': flush & delay each time.
+    int old_row = row, old_col = col;
+    // If'writedelay is active, we set the cursor to highlight what was drawn
+    ui_cursor_goto(row, MIN(clearcol, (int)Columns-1));
+    ui_flush();
+    uint64_t wd = (uint64_t)labs(p_wd);
+    os_microdelay(wd * 1000u, true);
+    ui_cursor_goto(old_row, old_col);
+  }
 }
 
 void ui_cursor_goto(int new_row, int new_col)
@@ -450,29 +387,18 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
+  if (pending_cursor_update) {
+    ui_call_grid_cursor_goto(1, row, col);
+    pending_cursor_update = false;
+  }
+  if (pending_mode_update) {
+    char *full_name = shape_table[mode_idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
+    pending_mode_update = false;
+  }
   ui_call_flush();
 }
 
-
-void ui_linefeed(void)
-{
-  int new_col = 0;
-  int new_row = row;
-  if (new_row < sr.bot) {
-    new_row++;
-  } else {
-    ui_call_scroll(1);
-  }
-  ui_cursor_goto(new_row, new_col);
-}
-
-static void flush_cursor_update(void)
-{
-  if (pending_cursor_update) {
-    pending_cursor_update = false;
-    ui_call_cursor_goto(row, col);
-  }
-}
 
 /// Check if current mode has changed.
 /// May update the shape of the cursor.
@@ -481,12 +407,11 @@ void ui_cursor_shape(void)
   if (!full_screen) {
     return;
   }
-  int mode_idx = cursor_get_mode_idx();
+  int new_mode_idx = cursor_get_mode_idx();
 
-  if (old_mode_idx != mode_idx) {
-    old_mode_idx = mode_idx;
-    char *full_name = shape_table[mode_idx].full_name;
-    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
+  if (new_mode_idx != mode_idx) {
+    mode_idx = new_mode_idx;
+    pending_mode_update = true;
   }
   conceal_check_cursur_line();
 }
