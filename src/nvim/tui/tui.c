@@ -1722,30 +1722,25 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.enable_lr_margin",
-      "\x1b[?69h");
-  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.disable_lr_margin",
-      "\x1b[?69l");
-  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.enable_bpaste",
-      "\x1b[?2004h");
-  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.disable_bpaste",
-      "\x1b[?2004l");
-  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.enable_focus",
-      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.disable_focus",
-      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.enable_mouse",
-      "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.disable_mouse",
-      "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.enable_lr_margin", "\x1b[?69h");
+  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.disable_lr_margin", "\x1b[?69l");
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.enable_bpaste", "\x1b[?2004h");
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.disable_bpaste", "\x1b[?2004l");
+  // For urxvt send BOTH xterm and old urxvt sequences. #8695
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.enable_focus",
+      rxvt ? "\x1b[?1004h\x1b]777;focus;on\x7" : "\x1b[?1004h");
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.disable_focus",
+      rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.enable_mouse", "\x1b[?1002h\x1b[?1006h");
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 }
 
 static void flush_buf(UI *ui)
