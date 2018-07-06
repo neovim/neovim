@@ -5202,9 +5202,9 @@ line({expr})	The result is a Number, which is the line number of the file
 		This autocommand jumps to the last known position in a file
 		just after opening it, if the '" mark is set: >
      :au BufReadPost *
-         \ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit'
-         \ |   exe "normal! g`\""
-         \ | endif
+	\ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit'
+	\ |   exe "normal! g`\""
+	\ | endif
 
 line2byte({lnum})					*line2byte()*
 		Return the byte count from the start of the buffer for line
@@ -5671,7 +5671,7 @@ min({expr})	Return the minimum value of all items in {expr}.
 		it returns the minimum of all values in the dictionary.
 		If {expr} is neither a list nor a dictionary, or one of the
 		items in {expr} cannot be used as a Number this results in
-                an error.  An empty |List| or |Dictionary| results in zero.
+		an error.  An empty |List| or |Dictionary| results in zero.
 
 							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
@@ -8253,8 +8253,8 @@ winwidth({nr})						*winwidth()*
   :if winwidth(0) <= 50
   :  exe "normal 50\<C-W>|"
   :endif
-<               For getting the terminal or screen size, see the 'columns'
-               option.
+<		For getting the terminal or screen size, see the 'columns'
+		option.
 
 
 wordcount()						*wordcount()*
@@ -8272,11 +8272,11 @@ wordcount()						*wordcount()*
 			cursor_words    Number of words before cursor position
 					(not in Visual mode)
 			visual_bytes    Number of bytes visually selected
-			                (only in Visual mode)
+					(only in Visual mode)
 			visual_chars    Number of chars visually selected
-			                (only in Visual mode)
+					(only in Visual mode)
 			visual_words    Number of chars visually selected
-			                (only in Visual mode)
+					(only in Visual mode)
 
 
 							*writefile()*
@@ -8560,6 +8560,9 @@ See |:verbose-cmd| for more information.
 			not used an error message is given.  When [!] is used,
 			an existing function is silently replaced.  Unless it
 			is currently being executed, that is an error.
+			NOTE: Use ! wisely.  If used without care it can cause
+			an existing function to be replaced unexpectedly,
+			which is hard to debug.
 
 			For the {arguments} see |function-argument|.
 
