@@ -297,8 +297,8 @@ Name			triggered by ~
 |SourceCmd|		before sourcing a Vim script |Cmd-event|
 
 |VimResized|		after the Vim window size changed
-|FocusGained|		Vim got input focus
-|FocusLost|		Vim lost input focus
+|FocusGained|		Nvim got focus
+|FocusLost|		Nvim lost focus
 |CursorHold|		the user doesn't press a key for a while
 |CursorHoldI|		the user doesn't press a key for a while in Insert mode
 |CursorMoved|		the cursor was moved in Normal mode
@@ -735,14 +735,10 @@ FilterWritePre			Before writing a file for a filter command or
 				filter command.
 				Not triggered when 'shelltemp' is off.
 							*FocusGained*
-FocusGained			When Vim got input focus.  Only for the GUI
-				version and a few console versions where this
-				can be detected.
+FocusGained			Nvim got focus.
 							*FocusLost*
-FocusLost			When Vim lost input focus.  Only for the GUI
-				version and a few console versions where this
-				can be detected.  May also happen when a
-				dialog pops up.
+FocusLost			Nvim lost focus.  Also (potentially) when
+				a GUI dialog pops up.
 							*FuncUndefined*
 FuncUndefined			When a user function is used but it isn't
 				defined.  Useful for defining a function only

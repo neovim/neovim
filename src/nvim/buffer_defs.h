@@ -143,6 +143,12 @@ struct buffheader {
   size_t bh_space;          // space in bh_curr for appending
 };
 
+typedef struct
+{
+  buffheader_T sr_redobuff;
+  buffheader_T sr_old_redobuff;
+} save_redo_T;
+
 /*
  * Structure that contains all options that are local to a window.
  * Used twice in a window: for the current buffer and for all buffers.

@@ -413,17 +413,34 @@ static inline void list_log(const list_T *const l,
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
+static inline void tv_list_ref(list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE;
+
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
 ///
-/// @param[in]  l  List to modify.
+/// @param[in,out]  l  List to modify.
 static inline void tv_list_ref(list_T *const l)
 {
   if (l == NULL) {
     return;
   }
   l->lv_refcount++;
+}
+
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a list as the return value
+///
+/// @param[out]  tv  Object to receive the list
+/// @param[in,out]  l  List to pass to the object
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+{
+  tv->v_type = VAR_LIST;
+  tv->vval.v_list = l;
+  tv_list_ref(l);
 }
 
 static inline VarLockStatus tv_list_locked(const list_T *const l)
@@ -586,6 +603,22 @@ static inline listitem_T *tv_list_last(const list_T *const l)
   }
   list_log(l, l->lv_last, NULL, "last");
   return l->lv_last;
+}
+
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a dictionary as the return value
+///
+/// @param[out]  tv  Object to receive the dictionary
+/// @param[in,out]  d  Dictionary to pass to the object
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+{
+  tv->v_type = VAR_DICT;
+  tv->vval.v_dict = d;
+  if (d != NULL) {
+    d->dv_refcount++;
+  }
 }
 
 static inline long tv_dict_len(const dict_T *const d)

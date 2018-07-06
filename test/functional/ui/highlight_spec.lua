@@ -541,7 +541,7 @@ describe("'listchars' highlight", function()
     ]])
     feed_command('set cursorline')
     screen:expect([[
-      {2:^>-------.}{1:abcd}{2:.}{1:Lorem}{4:>}|
+      {2:^>-------.}{1:abcd}{2:.}{1:Lorem}{3:>}|
       {5:>-------.}abcd{5:*}{4:¬}     |
       {4:¬}                   |
       {4:~                   }|
@@ -549,7 +549,7 @@ describe("'listchars' highlight", function()
     ]])
     feed('$')
     screen:expect([[
-      {4:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
+      {3:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
       {4:<}                   |
       {4:<}                   |
       {4:~                   }|
@@ -630,7 +630,7 @@ describe("'listchars' highlight", function()
     feed('<esc>$')
     screen:expect([[
       {4:<}                   |
-      {4:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
+      {3:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
       {4:<}                   |
       {4:~                   }|
                           |
@@ -674,6 +674,46 @@ describe("'listchars' highlight", function()
     ]])
   end)
 end)
+
+describe('CursorLine highlight', function()
+  before_each(clear)
+  it('overridden by Error, ColorColumn if fg not set', function()
+    local screen = Screen.new(50,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.SlateBlue},
+      [2] = {bold = true, foreground = Screen.colors.Brown},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
+      [5] = {background = Screen.colors.Gray90},
+      [6] = {bold = true, foreground = Screen.colors.Blue1},
+      [7] = {background = Screen.colors.LightRed},
+    })
+    screen:attach()
+
+    feed_command('filetype on')
+    feed_command('syntax on')
+    feed_command('set cursorline ft=json')
+    feed('i{<cr>"a" : abc // 10;<cr>}<cr><esc>')
+    screen:expect([[
+      {1:{}                                                 |
+      "{2:a}" : {3:abc} {3:// 10;}                                  |
+      {1:}}                                                 |
+      {5:^                                                  }|
+                                                        |
+    ]])
+
+    feed_command('set colorcolumn=3')
+    feed('i  <esc>')
+    screen:expect([[
+      {1:{} {7: }                                               |
+      "{2:a}{7:"} : {3:abc} {3:// 10;}                                  |
+      {1:}} {7: }                                               |
+      {5: ^ }{7: }{5:                                               }|
+                                                        |
+    ]])
+  end)
+end)
+
 
 describe("MsgSeparator highlight and msgsep fillchar", function()
   before_each(clear)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Parses Doxygen XML output to generate Neovim's API documentation.
 
 This would be easier using lxml and XSLT, but:

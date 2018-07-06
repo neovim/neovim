@@ -2158,7 +2158,7 @@ return {
   },
   {
     command='resize',
-    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1),
+    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_resize',
   },
@@ -3076,7 +3076,7 @@ return {
   },
   {
     command='wincmd',
-    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR),
+    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR, CMDWIN),
     addr_type=ADDR_WINDOWS,
     func='ex_wincmd',
   },

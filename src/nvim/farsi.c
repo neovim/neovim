@@ -1580,7 +1580,7 @@ static void conv_to_pvim(void)
         ptr[i] = toF_leading(ptr[i]);
         i++;
 
-        while (canF_Rjoin(ptr[i]) && i < llen) {
+        while (i < llen && canF_Rjoin(ptr[i])) {
           ptr[i] = toF_Rjoin(ptr[i]);
           if (F_isterm(ptr[i]) || !F_isalpha(ptr[i])) {
             break;

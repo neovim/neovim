@@ -2352,8 +2352,8 @@ int do_ecmd(
         } else {
           // <VN> We could instead free the synblock
           // and re-attach to buffer, perhaps.
-          if (curwin->w_buffer != NULL
-              && curwin->w_s == &(curwin->w_buffer->b_s)) {
+          if (curwin->w_buffer == NULL
+              || curwin->w_s == &(curwin->w_buffer->b_s)) {
             curwin->w_s = &(buf->b_s);
           }
 
@@ -4906,7 +4906,9 @@ void fix_help_buffer(void)
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+    curbuf_lock++;
     set_option_value("ft", 0L, "help", OPT_LOCAL);
+    curbuf_lock--;
   }
 
   if (!syntax_present(curwin)) {

@@ -1727,7 +1727,7 @@ Functions and variable names are the same color by default, because VIM
 doesn't specify different colors for Functions and Identifiers.  To change
 this (which is recommended if you want function names to be recognizable in a
 different color) you need to add the following line to your vimrc: >
-  :hi Function term=underline cterm=bold ctermfg=LightGray
+  :hi Function cterm=bold ctermfg=LightGray
 
 Of course, the ctermfg can be a different color if you choose.
 
@@ -2183,9 +2183,8 @@ with the correct typesetting of your file, is to define an eye-catching
 highlighting definition for the syntax groups "nroffDefinition" and
 "nroffDefSpecial" in your configuration files.  For example: >
 
-  hi def nroffDefinition term=italic cterm=italic gui=reverse
-  hi def nroffDefSpecial term=italic,bold cterm=italic,bold
-			 \ gui=reverse,bold
+  hi def nroffDefinition cterm=italic gui=reverse
+  hi def nroffDefSpecial cterm=italic,bold gui=reverse,bold
 
 If you want to navigate preprocessor entries in your source file as easily as
 with section markers, you can activate the following option in your vimrc
@@ -4628,37 +4627,36 @@ a file with ":highlight" commands such as this: >
 Note that all settings that are not included remain the same, only the
 specified field is used, and settings are merged with previous ones.  So, the
 result is like this single command has been used: >
-   :hi Comment	term=bold ctermfg=Cyan guifg=#80a0ff gui=bold
+   :hi Comment	ctermfg=Cyan guifg=#80a0ff gui=bold
 <
 							*:highlight-verbose*
 When listing a highlight group and 'verbose' is non-zero, the listing will
 also tell where it was last set.  Example: >
 	:verbose hi Comment
-<	Comment        xxx term=bold ctermfg=4 guifg=Blue ~
+<	Comment        xxx ctermfg=4 guifg=Blue ~
 	   Last set from /home/mool/vim/vim7/runtime/syntax/syncolor.vim ~
 
 When ":hi clear" is used then the script where this command is used will be
 mentioned for the default values. See |:verbose-cmd| for more information.
 
 					*highlight-args* *E416* *E417* *E423*
-There are three types of terminals for highlighting:
-term	a normal terminal (vt100, xterm)
-cterm	a color terminal (Windows console, color-xterm)
-gui	the GUI
+There are two types of UIs for highlighting:
+cterm	terminal UI (|TUI|)
+gui	GUI or RGB-capable TUI ('termguicolors')
 
 For each type the highlighting can be given.  This makes it possible to use
-the same syntax file on all terminals, and use the optimal highlighting.
+the same syntax file on all UIs.
 
-1. highlight arguments for normal terminals
+1. TUI highlight arguments
 
 					*bold* *underline* *undercurl*
 					*inverse* *italic* *standout*
-term={attr-list}			*attr-list* *highlight-term* *E418*
+cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
-		undercurl	a curly underline
+		undercurl	curly underline
 		reverse
 		inverse		same as reverse
 		italic
@@ -4689,17 +4687,6 @@ stop={term-list}				*term-list* *highlight-stop*
         like "<Esc>" and "<Space>".  Example:
 		start=<Esc>[27h;<Esc>[<Space>r;
 
-
-2. highlight arguments for color terminals
-
-cterm={attr-list}					*highlight-cterm*
-	See above for the description of {attr-list} |attr-list|.
-	The "cterm" argument is likely to be different from "term", when
-	colors are used.  For example, in a normal terminal comments could
-	be underlined, in a color terminal they can be made Blue.
-	Note: Many terminals (e.g., DOS console) can't mix these attributes
-	with coloring.	Use only one of "cterm=" OR "ctermfg=" OR "ctermbg=".
-
 ctermfg={color-nr}				*highlight-ctermfg* *E421*
 ctermbg={color-nr}				*highlight-ctermbg*
 	The {color-nr} argument is a color number.  Its range is zero to
@@ -4709,7 +4696,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"cterm".  For example, on some systems "cterm=bold ctermfg=3" gives
 	another color, on others you just get color 3.
 
-	The following names are recognized, with the color number used:
+	The following (case-insensitive) names are recognized:
 
 							*cterm-colors*
 	    NR-16   NR-8    COLOR NAME ~
@@ -4740,7 +4727,6 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"cterm=" argument AFTER the "ctermfg=" or "ctermbg=" argument.	Or use
 	a number instead of a color name.
 
-	The case of the color names is ignored.
 	Note that for 16 color ansi style terminals (including xterms), the
 	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that Blue
 	is 12, DarkGray is 8 etc.
@@ -4779,7 +4765,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"fg" and "bg" colors will not be adjusted.
 
 
-3. highlight arguments for the GUI
+2. GUI highlight arguments
 
 gui={attr-list}						*highlight-gui*
 	These give the attributes to use in the GUI mode.
@@ -4855,15 +4841,13 @@ ColorColumn	used for the columns set with 'colorcolumn'
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
 							*hl-Cursor*
-Cursor		the character under the cursor
+Cursor		character under the cursor
 							*hl-CursorIM*
 CursorIM	like Cursor, but used when in IME mode |CursorIM|
 							*hl-CursorColumn*
-CursorColumn	the screen column that the cursor is in when 'cursorcolumn' is
-		set
+CursorColumn	screen column at the cursor, when 'cursorcolumn' is set
 							*hl-CursorLine*
-CursorLine	the screen line that the cursor is in when 'cursorline' is
-		set
+CursorLine	screen line at the cursor, when 'cursorline' is set
 							*hl-Directory*
 Directory	directory names (and other special names in listings)
 							*hl-DiffAdd*

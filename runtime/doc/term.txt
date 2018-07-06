@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Terminal UI						*tui*
+Terminal UI						*TUI* *tui*
 
 Nvim (except in |--headless| mode) uses information about the terminal you are
 using to present a built-in UI.  If that information is not correct, the

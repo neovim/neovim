@@ -6057,8 +6057,10 @@ static int open_cmdwin(void)
   curbuf->b_p_ma = true;
   curwin->w_p_fen = false;
 
-  /* Do execute autocommands for setting the filetype (load syntax). */
+  // Do execute autocommands for setting the filetype (load syntax).
   unblock_autocmds();
+  // But don't allow switching to another buffer.
+  curbuf_lock++;
 
   /* Showing the prompt may have set need_wait_return, reset it. */
   need_wait_return = FALSE;
@@ -6071,6 +6073,7 @@ static int open_cmdwin(void)
     }
     set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
+  curbuf_lock--;
 
   /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
    * sets 'textwidth' to 78). */
@@ -6183,9 +6186,13 @@ static int open_cmdwin(void)
       ccline.cmdbuff = NULL;
     } else
       ccline.cmdbuff = vim_strsave(get_cursor_line_ptr());
-    if (ccline.cmdbuff == NULL)
+    if (ccline.cmdbuff == NULL) {
+      ccline.cmdbuff = vim_strsave((char_u *)"");
+      ccline.cmdlen = 0;
+      ccline.cmdbufflen = 1;
+      ccline.cmdpos = 0;
       cmdwin_result = Ctrl_C;
-    else {
+    } else {
       ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
       ccline.cmdbufflen = ccline.cmdlen + 1;
       ccline.cmdpos = curwin->w_cursor.col;

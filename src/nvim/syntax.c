@@ -3034,9 +3034,9 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_conceal) {
-      MSG(_("syn conceal on"));
+      MSG(_("syntax conceal on"));
     } else {
-      MSG(_("syn conceal off"));
+      MSG(_("syntax conceal off"));
     }
   } else if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2) {
     curwin->w_s->b_syn_conceal = true;

@@ -127,23 +127,20 @@ describe('writefile()', function()
     eq('TEST', read_file(fname))
   end)
 
-  it('stops writing to file after error in list', function()
+  it('does not write to file if error in list', function()
     local args = '["tset"] + repeat([%s], 3), "' .. fname .. '"'
-    eq('\nE806: using Float as a String',
+    eq('\nE805: Expected a Number or a String, Float found',
         redir_exec(('call writefile(%s)'):format(args:format('0.0'))))
-    eq('tset\n', read_file(fname))
+    eq(nil, read_file(fname))
     write_file(fname, 'TEST')
-    eq('\nE730: using List as a String',
+    eq('\nE745: Expected a Number or a String, List found',
         redir_exec(('call writefile(%s)'):format(args:format('[]'))))
-    eq('tset\n', read_file(fname))
-    write_file(fname, 'TEST')
-    eq('\nE731: using Dictionary as a String',
+    eq('TEST', read_file(fname))
+    eq('\nE728: Expected a Number or a String, Dictionary found',
         redir_exec(('call writefile(%s)'):format(args:format('{}'))))
-    eq('tset\n', read_file(fname))
-    write_file(fname, 'TEST')
-    eq('\nE729: using Funcref as a String',
+    eq('TEST', read_file(fname))
+    eq('\nE703: Expected a Number or a String, Funcref found',
         redir_exec(('call writefile(%s)'):format(args:format('function("tr")'))))
-    eq('tset\n', read_file(fname))
-    write_file(fname, 'TEST')
+    eq('TEST', read_file(fname))
   end)
 end)

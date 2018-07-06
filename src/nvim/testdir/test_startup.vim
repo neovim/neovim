@@ -251,3 +251,16 @@ func Test_silent_ex_mode()
   let out = system(GetVimCommand() . '-u NONE -es -c''set verbose=1|h|exe "%norm\<c-y>\<c-d>"'' -c cq')
   call assert_notmatch('E315:', out)
 endfunc
+
+func Test_default_term()
+  if !has('unix') || has('gui_running')
+    " can't get output of Vim.
+    return
+  endif
+
+  let save_term = $TERM
+  let $TERM = 'unknownxxx'
+  let out = system(GetVimCommand() . ' -c ''echo &term'' -c cq')
+  call assert_match('nvim', out)
+  let $TERM = save_term
+endfunc

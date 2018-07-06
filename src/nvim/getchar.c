@@ -78,11 +78,9 @@ FileDescriptor *scriptin[NSCRIPT] = { NULL };
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
-static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
+static buffheader_T old_redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
+static buffheader_T recordbuff = { { NULL, { NUL } }, NULL, 0, 0 };
 
 // First read ahead buffer. Used for translated commands.
 static buffheader_T readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
@@ -480,41 +478,31 @@ void CancelRedo(void)
   }
 }
 
-/*
- * Save redobuff and old_redobuff to save_redobuff and save_old_redobuff.
- * Used before executing autocommands and user functions.
- */
-static int save_level = 0;
-
-void saveRedobuff(void)
+/// Save redobuff and old_redobuff to save_redobuff and save_old_redobuff.
+/// Used before executing autocommands and user functions.
+void saveRedobuff(save_redo_T *save_redo)
 {
-  if (save_level++ == 0) {
-    save_redobuff = redobuff;
-    redobuff.bh_first.b_next = NULL;
-    save_old_redobuff = old_redobuff;
-    old_redobuff.bh_first.b_next = NULL;
+  save_redo->sr_redobuff = redobuff;
+  redobuff.bh_first.b_next = NULL;
+  save_redo->sr_old_redobuff = old_redobuff;
+  old_redobuff.bh_first.b_next = NULL;
 
-    // Make a copy, so that ":normal ." in a function works.
-    char *const s = (char *)get_buffcont(&save_redobuff, false);
-    if (s != NULL) {
-      add_buff(&redobuff, s, -1L);
-      xfree(s);
-    }
+  // Make a copy, so that ":normal ." in a function works.
+  char *const s = (char *)get_buffcont(&save_redo->sr_redobuff, false);
+  if (s != NULL) {
+    add_buff(&redobuff, s, -1L);
+    xfree(s);
   }
 }
 
-/*
- * Restore redobuff and old_redobuff from save_redobuff and save_old_redobuff.
- * Used after executing autocommands and user functions.
- */
-void restoreRedobuff(void)
+/// Restore redobuff and old_redobuff from save_redobuff and save_old_redobuff.
+/// Used after executing autocommands and user functions.
+void restoreRedobuff(save_redo_T *save_redo)
 {
-  if (--save_level == 0) {
-    free_buff(&redobuff);
-    redobuff = save_redobuff;
-    free_buff(&old_redobuff);
-    old_redobuff = save_old_redobuff;
-  }
+  free_buff(&redobuff);
+  redobuff = save_redo->sr_redobuff;
+  free_buff(&old_redobuff);
+  old_redobuff = save_redo->sr_old_redobuff;
 }
 
 /*

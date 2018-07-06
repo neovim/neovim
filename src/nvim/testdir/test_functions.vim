@@ -795,3 +795,31 @@ func Test_shellescape()
 
   let &shell = save_shell
 endfunc
+
+func Test_redo_in_nested_functions()
+  nnoremap g. :set opfunc=Operator<CR>g@
+  function Operator( type, ... )
+     let @x = 'XXX'
+     execute 'normal! g`[' . (a:type ==# 'line' ? 'V' : 'v') . 'g`]' . '"xp'
+  endfunction
+
+  function! Apply()
+      5,6normal! .
+  endfunction
+
+  new
+  call setline(1, repeat(['some "quoted" text', 'more "quoted" text'], 3))
+  1normal g.i"
+  call assert_equal('some "XXX" text', getline(1))
+  3,4normal .
+  call assert_equal('some "XXX" text', getline(3))
+  call assert_equal('more "XXX" text', getline(4))
+  call Apply()
+  call assert_equal('some "XXX" text', getline(5))
+  call assert_equal('more "XXX" text', getline(6))
+  bwipe!
+
+  nunmap g.
+  delfunc Operator
+  delfunc Apply
+endfunc
