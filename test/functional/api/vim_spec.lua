@@ -1281,8 +1281,6 @@ describe('API', function()
                           |
       ]])
     end)
-  end)
-  describe('statusline', function()
     it('last char shows', function()
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -1299,12 +1297,25 @@ describe('API', function()
       local screen = Screen.new(20, 4)
       screen:attach()
       command('set laststatus=2')
-      feed(':set statusline=<C-v>u9f<SPACE><CR>')
+      feed(':set statusline=<C-v>u9f<CR>')
       screen:expect([[
       ^                    |
       ~                   |
       <9f>                |
                           |
+      ]])
+    end)
+    it('MAX_MCO (6) unicode combination points', function()
+      local screen = Screen.new(24, 4)
+      screen:attach()
+      command('set laststatus=2')
+      command('set statusline=o̸⃯ᷰ⃐⃧⃝')
+      --o + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + UU+20DD
+      screen:expect([[
+      ^                        |
+      ~                       |
+      o̸⃯ᷰ⃐⃧⃝                       |
+                              |
       ]])
     end)
   end)
