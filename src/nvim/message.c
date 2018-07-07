@@ -2763,6 +2763,12 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   --no_wait_return;
 }
 
+void give_warning2(char_u *const message, char_u *const a1, bool hl)
+{
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)message, a1);
+  give_warning(IObuff, hl);
+}
+
 /*
  * Advance msg cursor to column "col".
  */
