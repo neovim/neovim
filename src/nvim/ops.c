@@ -1391,7 +1391,7 @@ int op_delete(oparg_T *oap)
      */
     if (oap->regname != 0 || oap->motion_type == kMTLineWise
         || oap->line_count > 1 || oap->use_reg_one) {
-      free_register(&y_regs[9]); // free register "9
+      free_register(&y_regs[9]);  // free register "9
       for (n = 9; n > 1; n--) {
         y_regs[n] = y_regs[n - 1];
       }
