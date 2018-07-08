@@ -361,7 +361,7 @@ size_t transstr_len(const char *const s)
 ///
 /// @return length of the resulting string, without the NUL byte.
 size_t transstr_buf(const char *const s, char *const buf, const size_t len)
-FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
   char *buf_p = buf;
@@ -370,7 +370,7 @@ FUNC_ATTR_NONNULL_ALL
   while (*p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      //ignore lengths that do not fit the buffer
+      // ignore lengths that do not fit the buffer
       if (buf_p + l > buf_e) {
         break;
       }
@@ -382,7 +382,7 @@ FUNC_ATTR_NONNULL_ALL
         buf_p += l;
       } else {
         for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
-          char hexbuf[9]; //<up to 6 bytes>NUL
+          char hexbuf[9];  // <up to 6 bytes>NUL
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
           if (buf_p + hexlen > buf_e) {
             break;
