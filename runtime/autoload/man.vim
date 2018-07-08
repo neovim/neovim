@@ -212,9 +212,9 @@ function! man#extract_sect_and_name_ref(ref) abort
 endfunction
 
 function! s:get_path(sect, name) abort
+  " Some man implementations (OpenBSD) return all available paths from the
+  " search command, so we get() the first one. #8341
   if empty(a:sect)
-    " Some man implementations (OpenBSD) return all available paths from the
-    " search command, so we get() the first one. #8341
     return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
   endif
   " '-s' flag handles:
@@ -222,7 +222,7 @@ function! s:get_path(sect, name) abort
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return substitute(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name]), '\n\+$', '', '')
+  return substitute(get(split(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])), 0, ''), '\n\+$', '', '')
 endfunction
 
 function! s:verify_exists(sect, name) abort
