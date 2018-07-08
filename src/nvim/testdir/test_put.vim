@@ -34,3 +34,14 @@ func Test_put_char_block2()
   bw!
   call setreg('a', a[0], a[1])
 endfunc
+
+func Test_put_lines()
+  new
+  let a = [ getreg('a'), getregtype('a') ]
+  call setline(1, ['Line 1', 'Line2', 'Line 3', ''])
+  exe 'norm! gg"add"AddG""p'
+  call assert_equal(['Line 3', '', 'Line 1', 'Line2'], getline(1,'$'))
+  " clean up
+  bw!
+  call setreg('a', a[0], a[1])
+endfunc

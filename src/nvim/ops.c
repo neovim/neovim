@@ -1391,11 +1391,15 @@ int op_delete(oparg_T *oap)
      */
     if (oap->regname != 0 || oap->motion_type == kMTLineWise
         || oap->line_count > 1 || oap->use_reg_one) {
-      free_register(&y_regs[9]); /* free register "9 */
-      for (n = 9; n > 1; n--)
+      free_register(&y_regs[9]);  // free register "9
+      for (n = 9; n > 1; n--) {
         y_regs[n] = y_regs[n - 1];
-      y_previous = &y_regs[1];
-      y_regs[1].y_array = NULL;                 /* set register "1 to empty */
+      }
+      y_current = &y_regs[1];
+      if (!y_append) {
+        y_previous = y_current;
+      }
+      y_regs[1].y_array = NULL;              // set register "1 to empty
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
     }
