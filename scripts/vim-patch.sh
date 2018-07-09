@@ -427,7 +427,7 @@ review_commit() {
   local nvim_patch
   nvim_patch="$(curl -Ssf "${nvim_patch_url}")"
   local vim_version
-  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
+  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n 's/'"${git_patch_prefix}"'vim-patch:\([a-z0-9.]*\)$/\1/p')"
 
   echo
   if [[ -n "${vim_version}" ]]; then
