@@ -196,6 +196,7 @@ static int new_cmdpos;          /* position set by set_cmdline_pos() */
 
 static int extra_char = NUL;    // extra character to display when redrawing
                                 // the command line
+static bool extra_char_shift;
 
 /// currently displayed block of context
 static Array cmdline_block = ARRAY_DICT_INIT;
@@ -1340,7 +1341,6 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_R:                        // insert register
     putcmdline('"', true);
-    extra_char = '"';
     no_mapping++;
     s->i = s->c = plain_vgetc();      // CTRL-R <char>
     if (s->i == Ctrl_O) {
@@ -1703,7 +1703,6 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_Q:
     s->ignore_drag_release = true;
     putcmdline('^', true);
-    extra_char = '^';
     s->c = get_literal();                 // get next (two) character(s)
     s->do_abbr = false;                   // don't do abbreviation now
     extra_char = NUL;
@@ -1723,7 +1722,6 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_K:
     s->ignore_drag_release = true;
     putcmdline('?', true);
-    extra_char = '?';
     s->c = get_digraph(true);
     extra_char = NUL;
 
@@ -3092,6 +3090,8 @@ void putcmdline(int c, int shift)
   }
   cursorcmd();
   ui_cursor_shape();
+  extra_char = c;
+  extra_char_shift = shift;
 }
 
 /// Undo a putcmdline(c, FALSE).
@@ -3109,6 +3109,7 @@ void unputcmdline(void)
   msg_no_more = false;
   cursorcmd();
   ui_cursor_shape();
+  extra_char = NUL;
 }
 
 /*
@@ -3480,7 +3481,7 @@ void redrawcmd(void)
 
   set_cmdspos_cursor();
   if (extra_char != NUL) {
-    putcmdline(extra_char, true);
+    putcmdline(extra_char, extra_char_shift);
   }
 
   /*
