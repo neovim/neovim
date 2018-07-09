@@ -11,7 +11,6 @@
 # include <unistd.h>
 # include <sys/mman.h>
 # include <errno.h>
-# include <string.h>
 #endif
 
 #include "nvim/vim.h"

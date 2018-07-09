@@ -266,17 +266,17 @@ else
   cimportstr = _cimportstr
 end
 
-local function pagealloc(size, alloc_log)
-  local lib = cimport('./src/nvim/memory.h')
-  local pagesize = lib.mem_pagesize()
+local function pagealloc(size)
+  local m = cimport('./src/nvim/memory.h')
+  local pagesize = m.mem_pagesize()
   local num_pages = 1
   while num_pages * pagesize < size do
     num_pages = num_pages + 1
   end
-  local mem = ffi.gc(lib.mem_pagealloc(num_pages), nil)
+  local mem = ffi.gc(m.mem_pagealloc(num_pages), nil)
   local start = ffi.cast('char*', mem) + ((num_pages * pagesize) - size)
   local free = function(_)
-    lib.mem_pagefree(mem, num_pages)
+    m.mem_pagefree(mem, num_pages)
   end
   return ffi.gc(start, free), free
 end

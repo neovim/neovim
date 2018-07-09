@@ -10,7 +10,7 @@ local make_enum_conv_tab = helpers.make_enum_conv_tab
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
-local function new_pstate(strings, do_pagealloc, alloc_log)
+local function new_pstate(strings, do_pagealloc)
   local strings_idx = 0
   local frees = {}
   local function get_line(_, ret_pline)
@@ -20,7 +20,7 @@ local function new_pstate(strings, do_pagealloc, alloc_log)
     if type(str) == 'string' then
       size = #str
       if do_pagealloc then
-        local start, free = pagealloc(size, alloc_log)
+        local start, free = pagealloc(size)
         frees[#frees + 1] = free
         data = ffi.gc(start, nil)
         for i = 0, (size - 1) do
