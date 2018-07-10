@@ -1051,30 +1051,35 @@ const char *gettail_dir(const char *const fname)
  * result in "gap".
  * Returns the total number of matches.
  */
-static int 
-expand_in_path (
-    garray_T *gap,
-    char_u *pattern,
-    int flags                      /* EW_* flags */
+static int expand_in_path(
+    garray_T *const gap,
+    char_u *const pattern,
+    const int flags                 // EW_* flags
 )
 {
-  char_u      *curdir;
   garray_T path_ga;
-  char_u      *paths = NULL;
 
-  curdir = xmalloc(MAXPATHL);
+  char_u *const curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
   xfree(curdir);
-  if (GA_EMPTY(&path_ga))
+  if (GA_EMPTY(&path_ga)) {
     return 0;
+  }
 
-  paths = ga_concat_strings(&path_ga);
+  char_u *const paths = ga_concat_strings(&path_ga);
   ga_clear_strings(&path_ga);
 
-  globpath(paths, pattern, gap, (flags & EW_ICASE) ? WILD_ICASE : 0);
+  int glob_flags = 0;
+  if (flags & EW_ICASE) {
+    glob_flags |= WILD_ICASE;
+  }
+  if (flags & EW_ADDSLASH) {
+    glob_flags |= WILD_ADD_SLASH;
+  }
+  globpath(paths, pattern, gap, glob_flags);
   xfree(paths);
 
   return gap->ga_len;
