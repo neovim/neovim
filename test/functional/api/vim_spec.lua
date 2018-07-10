@@ -568,6 +568,7 @@ describe('API', function()
         second line]])
     end)
 
+
     it('does not complete ("interrupt") `d` #3732', function()
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -1267,5 +1268,4 @@ describe('API', function()
       eq(expected, nvim("list_uis"))
     end)
   end)
-
 end)
