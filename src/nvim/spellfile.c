@@ -880,9 +880,10 @@ void suggest_load_files(void)
       // don't try again and again.
       slang->sl_sugloaded = true;
 
-      dotp = vim_strrchr(slang->sl_fname, '.');
-      if (dotp == NULL || fnamecmp(dotp, ".spl") != 0)
+      dotp = STRRCHR(slang->sl_fname, '.');
+      if (dotp == NULL || fnamecmp(dotp, ".spl") != 0) {
         continue;
+      }
       STRCPY(dotp, ".sug");
       fd = mch_fopen((char *)slang->sl_fname, "r");
       if (fd == NULL)

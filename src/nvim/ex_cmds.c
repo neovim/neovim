@@ -307,9 +307,12 @@ static int linelen(int *has_tab)
     ;
   save = *last;
   *last = NUL;
-  len = linetabsize(line);              /* get line length */
-  if (has_tab != NULL)                  /* check for embedded TAB */
-    *has_tab = (vim_strrchr(first, TAB) != NULL);
+  // Get line length.
+  len = linetabsize(line);
+  // Check for embedded TAB.
+  if (has_tab != NULL) {
+    *has_tab = STRRCHR(first, TAB) != NULL;
+  }
   *last = save;
 
   return len;
@@ -5016,8 +5019,8 @@ void fix_help_buffer(void)
                 if (fnamencmp(f1, f2, t1 - f1) != 0) {
                   continue;
                 }
-                const char_u *const e1 = vim_strrchr(t1, '.');
-                const char_u *const e2 = vim_strrchr(path_tail(f2), '.');
+                const char_u *const e1 = STRRCHR(t1, '.');
+                const char_u *const e2 = STRRCHR(path_tail(f2), '.');
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }

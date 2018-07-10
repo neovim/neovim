@@ -456,25 +456,6 @@ char_u *vim_strchr(const char_u *const string, const int c)
 }
 
 /*
- * Search for last occurrence of "c" in "string".
- * Return NULL if not found.
- * Does not handle multi-byte char for "c"!
- */
-char_u *vim_strrchr(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *retval = NULL;
-  const char_u *p = string;
-
-  while (*p) {
-    if (*p == c)
-      retval = p;
-    MB_PTR_ADV(p);
-  }
-  return (char_u *) retval;
-}
-
-/*
  * Sort an array of strings.
  */
 

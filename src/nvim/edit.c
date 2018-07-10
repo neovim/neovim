@@ -6398,8 +6398,10 @@ stuff_inserted (
   /* may want to stuff the command character, to start Insert mode */
   if (c != NUL)
     stuffcharReadbuff(c);
-  if ((esc_ptr = (char_u *)vim_strrchr(ptr, ESC)) != NULL)
-    *esc_ptr = NUL;         /* remove the ESC */
+  if ((esc_ptr = STRRCHR(ptr, ESC)) != NULL) {
+    // remove the ESC.
+    *esc_ptr = NUL;
+  }
 
   /* when the last char is either "0" or "^" it will be quoted if no ESC
    * comes after it OR if it will inserted more than once and "ptr"
