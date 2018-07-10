@@ -395,6 +395,9 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
     } else {
       const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
+      if (buf_p + tb_len > buf_e) {
+        break;
+      }
       memmove(buf_p, tb, tb_len);
       buf_p += tb_len;
     }
