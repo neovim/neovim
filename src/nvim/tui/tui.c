@@ -459,8 +459,8 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   bool underline = attr & (HL_UNDERLINE), undercurl = attr & (HL_UNDERCURL);
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
-    if (bold || reverse || underline || undercurl) {
-      UNIBI_SET_NUM_VAR(data->params[0], 0);   // standout
+    if (bold || reverse || underline || undercurl || standout) {
+      UNIBI_SET_NUM_VAR(data->params[0], standout);
       UNIBI_SET_NUM_VAR(data->params[1], underline || undercurl);
       UNIBI_SET_NUM_VAR(data->params[2], reverse);
       UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
@@ -520,7 +520,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->default_attr = fg == -1 && bg == -1
-    && !bold && !italic && !underline && !undercurl && !reverse;
+    && !bold && !italic && !underline && !undercurl && !reverse && !standout;
 }
 
 static void final_column_wrap(UI *ui)
