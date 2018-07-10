@@ -331,14 +331,14 @@ size_t transstr_len(const char *const s)
   while (*p) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         len += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];
           len += transchar_hex(hexbuf, pcc[i]);
         }
       }
@@ -370,20 +370,20 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
   while (*p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      if (buf_p + l >= buf_e) {
-        break;
+      if (buf_p + l > buf_e) {
+        break;  // Exceeded `buf` size.
       }
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         memmove(buf_p, p, l);
         buf_p += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];  // <up to 6 bytes>NUL
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
-          if (buf_p + hexlen >= buf_e) {
+          if (buf_p + hexlen > buf_e) {
             break;
           }
           memmove(buf_p, hexbuf, hexlen);
@@ -394,6 +394,9 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
     } else {
       const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
+      if (buf_p + tb_len > buf_e) {
+        break;  // Exceeded `buf` size.
+      }
       memmove(buf_p, tb, tb_len);
       buf_p += tb_len;
     }

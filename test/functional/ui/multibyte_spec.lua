@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
+local command = helpers.command
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local insert = helpers.insert
@@ -120,3 +121,65 @@ describe("multibyte rendering", function()
   end)
 end)
 
+describe('multibyte rendering: statusline', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(40, 4)
+    screen:attach()
+    command('set laststatus=2')
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('last char shows (multibyte)', function()
+    command('set statusline=你好')
+    screen:expect([[
+    ^                                        |
+    ~                                       |
+    你好                                    |
+                                            |
+    ]])
+  end)
+  it('last char shows (single byte)', function()
+    command('set statusline=abc')
+    screen:expect([[
+    ^                                        |
+    ~                                       |
+    abc                                     |
+                                            |
+    ]])
+  end)
+  it('unicode control points', function()
+    command('set statusline=')
+    screen:expect([[
+    ^                                        |
+    ~                                       |
+    <9f>                                    |
+                                            |
+    ]])
+  end)
+  it('MAX_MCO (6) unicode combination points', function()
+    command('set statusline=o̸⃯ᷰ⃐⃧⃝')
+    -- o + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
+    screen:expect([[
+    ^                                        |
+    ~                                       |
+    o̸⃯ᷰ⃐⃧⃝                                       |
+                                            |
+    ]])
+  end)
+  it('non-printable followed by MAX_MCO unicode combination points', function()
+    command('set statusline=̸⃯ᷰ⃐⃧⃝')
+    -- U+9F + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
+    screen:expect([[
+    ^                                        |
+    ~                                       |
+    <9f><1df0><20ef><0338><20d0><20e7><20dd>|
+                                            |
+    ]])
+  end)
+end)
