@@ -2222,6 +2222,8 @@ remote_read({serverid} [, {timeout}])
 				String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
+remote_startserver({name})	none	become server {name}
+				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
@@ -6268,6 +6270,7 @@ remote_send({server}, {string} [, {idvar}])
 		See also |clientserver| |RemoteReply|.
 		This function is not available in the |sandbox|.
 		{only available when compiled with the |+clientserver| feature}
+
 		Note: Any errors will be reported in the server and may mess
 		up the display.
 		Examples: >
@@ -6279,6 +6282,12 @@ remote_send({server}, {string} [, {idvar}])
 		:echo remote_send("gvim", ":sleep 10 | echo ".
 		 \ 'server2client(expand("<client>"), "HELLO")<CR>')
 <
+					*remote_startserver()* *E941* *E942*
+remote_startserver({name})
+		Become the server {name}.  This fails if already running as a
+		server, when |v:servername| is not empty.
+		{only available when compiled with the |+clientserver| feature}
+
 remove({list}, {idx} [, {end}])				*remove()*
 		Without {end}: Remove the item at {idx} from |List| {list} and
 		return the item.
