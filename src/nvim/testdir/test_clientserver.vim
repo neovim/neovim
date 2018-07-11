@@ -41,7 +41,7 @@ func Test_client_server()
   call remote_foreground(name)
 
   call remote_send(name, ":let testvar = 'yes'\<CR>")
-  call WaitFor('remote_expr("' . name . '", "testvar", "", 1) == "yes"')
+  call WaitFor('remote_expr("' . name . '", "exists(\"testvar\") ? testvar : \"\"", "", 1) == "yes"')
   call assert_equal('yes', remote_expr(name, "testvar", "", 2))
 
   if has('unix') && has('gui') && !has('gui_running')
