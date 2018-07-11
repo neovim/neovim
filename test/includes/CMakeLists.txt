@@ -7,6 +7,13 @@ foreach(gen_include ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
   list(APPEND gen_cflags ${CMAKE_INCLUDE_FLAG_C}${gen_include})
 endforeach()
 
+get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
+foreach(gen_cdef ${gen_cdefs})
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+    list(APPEND gen_cflags "-D${gen_cdef}")
+  endif()
+endforeach()
+
 foreach(hfile ${PRE_HEADERS})
   string(REGEX REPLACE ^pre/ post/ post_hfile ${hfile})
   get_filename_component(hdir ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile} PATH)
