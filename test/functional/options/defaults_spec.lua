@@ -118,6 +118,13 @@ describe('startup defaults', function()
       clear('-u', 'NORC', '-c', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
     end)
+
+    it('":if 0|syntax on|endif" does not affect default #8728', function()
+      clear('-u', 'NORC', '--cmd', ':if 0|syntax on|endif')
+      eq(1, eval('exists("g:syntax_on")'))
+      clear('-u', 'NORC', '--cmd', ':if 0|syntax off|endif')
+      eq(1, eval('exists("g:syntax_on")'))
+    end)
   end)
 
   describe("'fillchars'", function()
