@@ -68,6 +68,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/lua/executor.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -1689,9 +1690,10 @@ static void exe_commands(mparm_T *parmp)
 /// Does one of the following things, stops after whichever succeeds:
 ///
 /// 1. Execution of VIMINIT environment variable.
-/// 2. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
-/// 3. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
-/// 4. Execution of EXINIT environment variable.
+/// 2. Executing user init.lua file ($XDG_CONFIG_HOME/nvim/init.lua).
+/// 3. Sourcing user vimrc file ($XDG_CONFIG_HOME/nvim/init.vim).
+/// 4. Sourcing other vimrc files ($XDG_CONFIG_DIRS[1]/nvim/init.vim, …).
+/// 5. Execution of EXINIT environment variable.
 ///
 /// @return True if it is needed to attempt to source exrc file according to
 ///         'exrc' option definition.
@@ -1703,6 +1705,20 @@ static bool do_user_initialization(void)
     do_exrc = p_exrc;
     return do_exrc;
   }
+  char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
+
+  if (execute_init_lua(init_lua_path)) {
+    // the 'exrc' script should also be executed
+    do_exrc = p_exrc;
+    if (do_exrc) {
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, init_lua_path, false)
+                 != kEqualFiles);
+    }
+    xfree(init_lua_path);
+    return do_exrc;
+  }
+  xfree(init_lua_path);
+
   char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;

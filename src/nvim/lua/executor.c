@@ -17,12 +17,14 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/message.h"
 #include "nvim/memline.h"
+#include "nvim/option.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/macros.h"
 #include "nvim/screen.h"
 #include "nvim/cursor.h"
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
+#include "nvim/os/os.h"
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
@@ -546,4 +548,38 @@ void ex_luafile(exarg_T *const eap)
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return;
   }
+}
+
+/// Execute ~/.config/nvim/init.lua
+///
+/// @return True if the script was executed, false otherwise.
+bool execute_init_lua(char_u *script_path) {
+  // bail out if the file doesn't exist
+  if (!os_file_is_readable((const char*)script_path)) {
+    return false;
+  }
+
+  if (os_isdir(script_path)) {
+    smsg(_("init.lua is a directory: \"%s\""), (const char *)script_path);
+    return false;
+  }
+
+  lua_State *const lstate = nlua_enter();
+
+  // TODO: I think this will error out correctly if the path is a directory or
+  // doesn't exist; but will the error be fit for human consumption?
+  if (luaL_loadfile(lstate, (const char*)script_path)) {
+    nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
+    return false;
+  }
+
+  if (lua_pcall(lstate, 0, 0, 0)) {
+    nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
+  }
+
+  vimrc_found(script_path, (char_u *)"MYVIMRC");
+
+  // Even if the init.lua error'ed out, it existed and we attempted to execute
+  // it. That means we _don't_ want to fall back to .vimrc.
+  return true;
 }
