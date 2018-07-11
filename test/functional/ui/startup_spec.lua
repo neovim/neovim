@@ -21,8 +21,9 @@ before_each(function()
   mkdir(fakehome..'/.config')
   mkdir(fakehome..'/.config/nvim')
 
-  -- start a new session that points to our fake $HOME dir
-  clear{env={HOME=fakehome}}
+  -- NOTE: we can't just call clear() to start a new nvim session because the
+  -- tests need to write out .nvimrc files and such before nvim starts up.
+  -- See begin_session() for how nvim is spawned.
 end)
 
 after_each(function()
@@ -40,6 +41,11 @@ local function writefile(path, data)
   f:close()
 end
 
+local function begin_session()
+  -- invoke clear() with our newly crafted home dir
+  clear{env={HOME=fakehome}}
+end
+
 describe('init.lua rc file', function()
   it('is loaded instead of init.vim', function()
     -- write out a bunch of init scripts that will each define a specific
@@ -50,6 +56,8 @@ describe('init.lua rc file', function()
     writefile('.config/nvim/init.vim', [[
           let g:reached_init_vim = 1
     ]])
+
+    begin_session()
 
     -- prove that init.lua was executed
     eq(1, eval('get(g:, "reached_init_lua", 0)'))
