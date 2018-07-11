@@ -41,9 +41,13 @@ local function writefile(path, data)
   f:close()
 end
 
-local function begin_session()
+local function begin_session(env_override)
   -- invoke clear() with our newly crafted home dir
-  clear{allow_vimrc=true, env={HOME=fakehome}}
+  local env = {HOME=fakehome}
+  for k, v in pairs(env_override) do
+    env[k] = v
+  end
+  clear{allow_vimrc=true, env=env}
 end
 
 describe('init.lua rc file', function()
@@ -57,7 +61,7 @@ describe('init.lua rc file', function()
           let g:reached_init_vim = 1
     ]])
 
-    begin_session()
+    begin_session({})
 
     -- prove that init.lua was executed
     eq(1, eval('get(g:, "reached_init_lua", 0)'))
@@ -67,5 +71,16 @@ describe('init.lua rc file', function()
 
     -- $MYVIMRC should be set to the name of the init.lua
     eq(fakehome..'/.config/nvim/init.lua', eval('$MYVIMRC'))
+  end)
+
+  it('is not put in $MYVIMRC if already set', function()
+    -- make a placeholder init.lua
+    writefile('.config/nvim/init.lua', [[vim.api.nvim_set_var('reached_init_lua', 1)]])
+
+    begin_session({MYVIMRC='fireflies'})
+
+    -- prove that init.lua was executed; $MYVIMRC should _not_ have changed
+    eq(1, eval('get(g:, "reached_init_lua", 0)'))
+    eq('fireflies', eval('$MYVIMRC'))
   end)
 end)
