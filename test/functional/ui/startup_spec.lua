@@ -6,6 +6,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
 
 local clear = helpers.clear
+local eq = helpers.eq
+local eval = helpers.eval
 local set_session = helpers.set_session
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
@@ -31,8 +33,31 @@ after_each(function()
   set_session(nil, false)
 end)
 
+local function writefile(path, data)
+  local f = io.open(fakehome..'/'..path, 'w')
+  f:write(data)
+  f:write('\n')
+  f:close()
+end
+
 describe('init.lua rc file', function()
   it('is loaded instead of init.vim', function()
-    -- TODO: prove that init.lua is loaded
+    -- write out a bunch of init scripts that will each define a specific
+    -- global variable we can look for
+    writefile('.config/nvim/init.lua', [[
+          vim.api.nvim_set_var('reached_init_lua', 1)
+    ]])
+    writefile('.config/nvim/init.vim', [[
+          let g:reached_init_vim = 1
+    ]])
+
+    -- prove that init.lua was executed
+    eq(1, eval('get(g:, "reached_init_lua", 0)'))
+
+    -- prove that we _didn't_ execute init.vim
+    eq(0, eval('get(g:, "reached_init_vim", 0)'))
+
+    -- $MYVIMRC should be set to the name of the init.lua
+    eq(fakehome..'/.config/nvim/init.lua', eval('$MYVIMRC'))
   end)
 end)
