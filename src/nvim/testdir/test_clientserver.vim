@@ -11,6 +11,19 @@ func Test_client_server()
   if cmd == ''
     return
   endif
+  if has('x11')
+    if empty($DISPLAY)
+      throw 'Skipped: $DISPLAY is not set'
+    endif
+    try
+      call remote_send('xxx', '')
+    catch
+      if v:exception =~ 'E240:'
+	throw 'Skipped: no connection to the X server'
+      endif
+      " ignore other errors
+    endtry
+  endif
 
   let name = 'XVIMTEST'
   let cmd .= ' --servername ' . name
@@ -32,7 +45,7 @@ func Test_client_server()
   call assert_equal('yes', remote_expr(name, "testvar", "", 2))
 
   if has('unix') && has('gui') && !has('gui_running')
-    " Running in a terminal and the GUI is avaiable: Tell the server to open
+    " Running in a terminal and the GUI is available: Tell the server to open
     " the GUI and check that the remote command still works.
     " Need to wait for the GUI to start up, otherwise the send hangs in trying
     " to send to the terminal window.
@@ -43,7 +56,9 @@ func Test_client_server()
       call remote_send(name, ":gui -f\<CR>")
     endif
     " Wait for the server to be up and answering requests.
+    sleep 100m
     call WaitFor('remote_expr("' . name . '", "v:version", "", 1) != ""')
+    call assert_true(remote_expr(name, "v:version", "", 1) != "")
 
     call remote_send(name, ":let testvar = 'maybe'\<CR>")
     call WaitFor('remote_expr("' . name . '", "testvar", "", 1) == "maybe"')
