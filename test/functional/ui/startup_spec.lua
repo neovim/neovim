@@ -43,7 +43,7 @@ end
 
 local function begin_session()
   -- invoke clear() with our newly crafted home dir
-  clear{env={HOME=fakehome}}
+  clear{allow_vimrc=true, env={HOME=fakehome}}
 end
 
 describe('init.lua rc file', function()

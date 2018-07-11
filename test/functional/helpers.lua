@@ -36,8 +36,20 @@ local nvim_prog = (
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
                   ..' belloff= noshowcmd noruler nomore'
-local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', nvim_set, '--embed'}
+local function get_default_argv(allow_vimrc)
+  local argv = {nvim_prog}
+  if not allow_vimrc then
+    table.insert(argv, '-u')
+    table.insert(argv, 'NONE')
+  end
+  local other_args = {'-i', 'NONE', '-N', '--cmd', nvim_set, '--embed'}
+  for _, item in ipairs(other_args) do
+    table.insert(argv, item)
+  end
+  return argv
+end
+local nvim_argv = get_default_argv(false)
+
 -- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
 if nvim_dir == nvim_prog then
@@ -352,6 +364,11 @@ local function clear(...)
       for k, v in pairs(env_tbl) do
         env[#env + 1] = k .. '=' .. v
       end
+    end
+    -- if we want to load the vimrc, then we need to regenerate the default
+    -- args just for this invocation
+    if opts.allow_vimrc then
+      args = get_default_argv(true)
     end
     new_args = opts.args or {}
   else
