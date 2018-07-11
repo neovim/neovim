@@ -1173,7 +1173,7 @@ do_buffer (
       } else {
         if (buf->terminal) {
           if (p_confirm || cmdmod.confirm) {
-            if (dialog_close_terminal(buf) == false) {
+            if (!dialog_close_terminal(buf)) {
               return FAIL;
             }
           } else {

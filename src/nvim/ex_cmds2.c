@@ -1348,7 +1348,7 @@ bool dialog_close_terminal(buf_T *buf)
   char_u buff[DIALOG_MSG_SIZE];
 
   dialog_msg(buff, _("Close \"%s\"?"),
-             (buf->b_fname != NULL) ? buf->b_fname : (char_u *)_("Untitled"));
+             (buf->b_fname != NULL) ? buf->b_fname : (char_u *)"?");
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 
