@@ -262,7 +262,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
 
   // format current timestamp in local time
   struct tm local_time;
-  if (os_get_localtime(&local_time) == NULL) {
+  if (os_localtime(&local_time) == NULL) {
     return false;
   }
   char date_time[20];
