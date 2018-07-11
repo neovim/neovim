@@ -6396,6 +6396,13 @@ int showmode(void)
     /* Position on the last line in the window, column 0 */
     msg_pos_mode();
     attr = HL_ATTR(HLF_CM);                     // Highlight mode
+
+    // When the screen is too narrow to show the entire mode messsage,
+    // avoid scrolling and truncate instead.
+    msg_no_more = true;
+    int save_lines_left = lines_left;
+    lines_left = 0;
+
     if (do_mode) {
       MSG_PUTS_ATTR("--", attr);
       // CTRL-X in Insert mode
@@ -6495,10 +6502,13 @@ int showmode(void)
     msg_didout = FALSE;                 /* overwrite this message */
     length = msg_col;
     msg_col = 0;
-    need_wait_return = nwr_save;        /* never ask for hit-return for this */
-  } else if (clear_cmdline && msg_silent == 0)
-    /* Clear the whole command line.  Will reset "clear_cmdline". */
+    msg_no_more = false;
+    lines_left = save_lines_left;
+    need_wait_return = nwr_save;        // never ask for hit-return for this
+  } else if (clear_cmdline && msg_silent == 0) {
+    // Clear the whole command line.  Will reset "clear_cmdline".
     msg_clr_cmdline();
+  }
 
   /* In Visual mode the size of the selected area must be redrawn. */
   if (VIsual_active)
