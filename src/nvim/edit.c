@@ -2983,7 +2983,7 @@ static int ins_compl_bs(void)
   // Respect the 'backspace' option.
   if ((int)(p - line) - (int)compl_col < 0
       || ((int)(p - line) - (int)compl_col == 0
-          && ctrl_x_mode != CTRL_X_OMNI) || ctrl_x_mode == CTRL_X_EVAL
+          && ctrl_x_mode != CTRL_X_OMNI)
       || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
           - compl_length < 0)) {
     return K_BS;
@@ -2991,9 +2991,11 @@ static int ins_compl_bs(void)
 
   /* Deleted more than what was used to find matches or didn't finish
    * finding all matches: need to look for matches all over again. */
-  if (curwin->w_cursor.col <= compl_col + compl_length
-      || ins_compl_need_restart())
-    ins_compl_restart();
+    if (ctrl_x_mode != CTRL_X_EVAL
+        && (curwin->w_cursor.col <= compl_col + compl_length
+            || ins_compl_need_restart())) {
+      ins_compl_restart();
+    }
 
   xfree(compl_leader);
   compl_leader = vim_strnsave(line + compl_col, (int)(p - line) - compl_col);
