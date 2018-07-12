@@ -1172,14 +1172,21 @@ do_buffer (
         }
       } else {
         if (buf->terminal) {
-          EMSG2(_("E89: %s will be killed(add ! to override)"),
-              (char *)buf->b_fname);
+          if (p_confirm || cmdmod.confirm) {
+            if (!dialog_close_terminal(buf)) {
+              return FAIL;
+            }
+          } else {
+            EMSG2(_("E89: %s will be killed(add ! to override)"),
+                  (char *)buf->b_fname);
+            return FAIL;
+          }
         } else {
           EMSGN(_("E89: No write since last change for buffer %" PRId64
                   " (add ! to override)"),
                 buf->b_fnum);
+          return FAIL;
         }
-        return FAIL;
       }
     }
 

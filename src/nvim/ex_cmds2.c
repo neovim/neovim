@@ -1339,6 +1339,22 @@ void dialog_changed(buf_T *buf, int checkall)
   }
 }
 
+/// Ask the user whether to close the terminal buffer or not.
+///
+/// @param buf The terminal buffer.
+/// @return bool Whether to close the buffer or not.
+bool dialog_close_terminal(buf_T *buf)
+{
+  char_u buff[DIALOG_MSG_SIZE];
+
+  dialog_msg(buff, _("Close \"%s\"?"),
+             (buf->b_fname != NULL) ? buf->b_fname : (char_u *)"?");
+
+  int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
+
+  return (ret == VIM_YES) ? true : false;
+}
+
 /// Return true if the buffer "buf" can be abandoned, either by making it
 /// hidden, autowriting it or unloading it.
 bool can_abandon(buf_T *buf, int forceit)
