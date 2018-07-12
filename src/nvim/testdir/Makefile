@@ -18,7 +18,6 @@ SCRIPTS_DEFAULT = \
            test24.out             \
            test37.out             \
            test40.out             \
-           test42.out             \
            test48.out             \
            test52.out             \
            test64.out             \
