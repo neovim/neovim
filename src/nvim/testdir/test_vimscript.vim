@@ -1274,6 +1274,26 @@ func Test_user_command_with_bang()
     delcommand Nieuw
 endfunc
 
+" Test for script-local function
+func <SID>DoLast()
+  call append(line('$'), "last line")
+endfunc
+
+func s:DoNothing()
+  call append(line('$'), "nothing line")
+endfunc
+
+func Test_script_local_func()
+  set nocp viminfo+=nviminfo
+  new
+  nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
+
+  normal _x
+  call assert_equal('nothing line', getline(2))
+  call assert_equal('last line', getline(3))
+  enew! | close
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker

@@ -17,7 +17,6 @@ SCRIPTS_DEFAULT = \
            test14.out             \
            test24.out             \
            test37.out             \
-           test40.out             \
            test42.out             \
            test48.out             \
            test52.out             \
@@ -102,6 +101,7 @@ NEW_TESTS ?= \
 	    test_stat.res \
 	    test_startup.res \
 	    test_substitute.res \
+	    test_swap.res \
 	    test_syntax.res \
 	    test_system.res \
 	    test_tab.res \
@@ -114,6 +114,7 @@ NEW_TESTS ?= \
 	    test_visual.res \
 	    test_winbuf_close.res \
 	    test_window_id.res \
+	    test_wordcount.res \
 	    test_writefile.res \
 	    test_alot_latin.res \
 	    test_alot_utf8.res \
