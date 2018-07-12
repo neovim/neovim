@@ -2222,6 +2222,8 @@ remote_read({serverid} [, {timeout}])
 				String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
+remote_startserver({name})	none	become server {name}
+				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
@@ -6196,15 +6198,17 @@ reltimestr({time})				*reltimestr()*
 <		Also see |profiling|.
 
 							*remote_expr()* *E449*
-remote_expr({server}, {string} [, {idvar}])
+remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 		Send the {string} to {server}.	The string is sent as an
 		expression and the result is returned after evaluation.
 		The result must be a String or a |List|.  A |List| is turned
 		into a String by joining the items with a line break in
 		between (not at the end), like with join(expr, "\n").
-		If {idvar} is present, it is taken as the name of a
-		variable and a {serverid} for later use with
+		If {idvar} is present and not empty, it is taken as the name
+		of a variable and a {serverid} for later use with
 		remote_read() is stored there.
+		If {timeout} is given the read times out after this many
+		seconds.  Otherwise a timeout of 600 seconds is used.
 		See also |clientserver| |RemoteReply|.
 		This function is not available in the |sandbox|.
 		{only available when compiled with the |+clientserver| feature}
@@ -6248,9 +6252,10 @@ remote_peek({serverid} [, {retvar}])		*remote_peek()*
 			:let repl = ""
 			:echo "PEEK: ".remote_peek(id, "repl").": ".repl
 
-remote_read({serverid})				*remote_read()*
+remote_read({serverid}, [{timeout}])			*remote_read()*
 		Return the oldest available reply from {serverid} and consume
-		it.  It blocks until a reply is available.
+		it.  Unless a {timeout} in seconds is given, it blocks until a
+		reply is available.
 		See also |clientserver|.
 		This function is not available in the |sandbox|.
 		{only available when compiled with the |+clientserver| feature}
@@ -6268,6 +6273,7 @@ remote_send({server}, {string} [, {idvar}])
 		See also |clientserver| |RemoteReply|.
 		This function is not available in the |sandbox|.
 		{only available when compiled with the |+clientserver| feature}
+
 		Note: Any errors will be reported in the server and may mess
 		up the display.
 		Examples: >
@@ -6279,6 +6285,12 @@ remote_send({server}, {string} [, {idvar}])
 		:echo remote_send("gvim", ":sleep 10 | echo ".
 		 \ 'server2client(expand("<client>"), "HELLO")<CR>')
 <
+					*remote_startserver()* *E941* *E942*
+remote_startserver({name})
+		Become the server {name}.  This fails if already running as a
+		server, when |v:servername| is not empty.
+		{only available when compiled with the |+clientserver| feature}
+
 remove({list}, {idx} [, {end}])				*remove()*
 		Without {end}: Remove the item at {idx} from |List| {list} and
 		return the item.

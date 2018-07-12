@@ -40,6 +40,7 @@ NEW_TESTS ?= \
 	    test_changedtick.res \
 	    test_charsearch.res \
 	    test_cindent.res \
+	    test_clientserver.res \
 	    test_close_count.res \
 	    test_cmdline.res \
 	    test_command_count.res \
