@@ -427,7 +427,7 @@ review_commit() {
   local nvim_patch
   nvim_patch="$(curl -Ssf "${nvim_patch_url}")"
   local vim_version
-  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
+  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n 's/'"${git_patch_prefix}"'vim-patch:\([a-z0-9.]*\)\(:.*\)\{0,1\}$/\1/p')"
 
   echo
   if [[ -n "${vim_version}" ]]; then
@@ -449,12 +449,21 @@ review_commit() {
 
   assign_commit_details "${vim_version}"
 
+  echo
+  echo "Creating files."
+  echo "${nvim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
+  msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
+  CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
+
+  local nvim="nvim -u NORC -n -i NONE --headless"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'1,/^$/g/^ /-1join' +w +q "${NVIM_SOURCE_DIR}/n${patch_file}"
+
   local expected_commit_message
   expected_commit_message="$(commit_message)"
   local message_length
   message_length="$(wc -l <<< "${expected_commit_message}")"
   local commit_message
-  commit_message="$(tail -n +4 <<< "${nvim_patch}" | head -n "${message_length}")"
+  commit_message="$(tail -n +4 "${NVIM_SOURCE_DIR}/n${patch_file}" | head -n "${message_length}")"
   if [[ "${commit_message#${git_patch_prefix}}" == "${expected_commit_message}" ]]; then
     msg_ok "Found expected commit message."
   else
@@ -464,12 +473,6 @@ review_commit() {
     echo "  Actual:"
     echo "${commit_message#${git_patch_prefix}}"
   fi
-
-  echo
-  echo "Creating files."
-  echo "${nvim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
-  msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
-  CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
   get_vimpatch "${vim_version}"
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/${patch_file}")

@@ -3273,9 +3273,6 @@ int build_stl_str_hl(
     // Two `%` in a row is the escape sequence to print a
     // single `%` in the output buffer.
     if (*fmt_p == '%') {
-      // Ignore the character if we're out of room in the output buffer.
-      if (out_p >= out_end_p)
-        break;
       *out_p++ = *fmt_p++;
       prevchar_isflag = prevchar_isitem = false;
       continue;

@@ -571,10 +571,10 @@ class _CppLintState(object):
     def PrintErrorCounts(self):
         """Print a summary of errors by category, and the total."""
         for category, count in self.errors_by_category.items():
-            sys.stderr.write('Category \'%s\' errors found: %d\n' %
+            sys.stdout.write('Category \'%s\' errors found: %d\n' %
                              (category, count))
         if self.error_count:
-            sys.stderr.write('Total errors found: %d\n' % self.error_count)
+            sys.stdout.write('Total errors found: %d\n' % self.error_count)
 
     def SuppressErrorsFrom(self, fname):
         """Open file and read a list of suppressed errors from it"""
@@ -821,13 +821,13 @@ def Error(filename, linenum, category, confidence, message):
     if _ShouldPrintError(category, confidence, linenum):
         _cpplint_state.IncrementErrorCount(category)
         if _cpplint_state.output_format == 'vs7':
-            sys.stderr.write('%s(%s):  %s  [%s] [%d]\n' % (
+            sys.stdout.write('%s(%s):  %s  [%s] [%d]\n' % (
                 filename, linenum, message, category, confidence))
         elif _cpplint_state.output_format == 'eclipse':
-            sys.stderr.write('%s:%s: warning: %s  [%s] [%d]\n' % (
+            sys.stdout.write('%s:%s: warning: %s  [%s] [%d]\n' % (
                 filename, linenum, message, category, confidence))
         else:
-            sys.stderr.write('%s:%s:  %s  [%s] [%d]\n' % (
+            sys.stdout.write('%s:%s:  %s  [%s] [%d]\n' % (
                 filename, linenum, message, category, confidence))
 
 

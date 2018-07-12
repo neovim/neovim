@@ -1061,6 +1061,7 @@ func Test_echo_and_string()
     let l = split(result, "\n")
     call assert_equal(["{'a': [], 'b': []}",
 		     \ "{'a': [], 'b': []}"], l)
+endfunc
 
 "-------------------------------------------------------------------------------
 " Test 94:  64-bit Numbers					    {{{1

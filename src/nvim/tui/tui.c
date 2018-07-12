@@ -459,8 +459,8 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   bool underline = attr & (HL_UNDERLINE), undercurl = attr & (HL_UNDERCURL);
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
-    if (bold || reverse || underline || undercurl) {
-      UNIBI_SET_NUM_VAR(data->params[0], 0);   // standout
+    if (bold || reverse || underline || undercurl || standout) {
+      UNIBI_SET_NUM_VAR(data->params[0], standout);
       UNIBI_SET_NUM_VAR(data->params[1], underline || undercurl);
       UNIBI_SET_NUM_VAR(data->params[2], reverse);
       UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
@@ -520,7 +520,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->default_attr = fg == -1 && bg == -1
-    && !bold && !italic && !underline && !undercurl && !reverse;
+    && !bold && !italic && !underline && !undercurl && !reverse && !standout;
 }
 
 static void final_column_wrap(UI *ui)
@@ -1722,30 +1722,25 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.enable_lr_margin",
-      "\x1b[?69h");
-  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.disable_lr_margin",
-      "\x1b[?69l");
-  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.enable_bpaste",
-      "\x1b[?2004h");
-  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.disable_bpaste",
-      "\x1b[?2004l");
-  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.enable_focus",
-      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.disable_focus",
-      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.enable_mouse",
-      "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.disable_mouse",
-      "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.enable_lr_margin", "\x1b[?69h");
+  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.disable_lr_margin", "\x1b[?69l");
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.enable_bpaste", "\x1b[?2004h");
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.disable_bpaste", "\x1b[?2004l");
+  // For urxvt send BOTH xterm and old urxvt sequences. #8695
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.enable_focus",
+      rxvt ? "\x1b[?1004h\x1b]777;focus;on\x7" : "\x1b[?1004h");
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.disable_focus",
+      rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.enable_mouse", "\x1b[?1002h\x1b[?1006h");
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 }
 
 static void flush_buf(UI *ui)

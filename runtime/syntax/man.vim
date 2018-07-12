@@ -30,17 +30,28 @@ endif
 if !exists('b:man_sect')
   call man#init_pager()
 endif
-if b:man_sect =~# '^[23]'
+if b:man_sect =~# '^[023]'
+  syntax case match
   syntax include @c $VIMRUNTIME/syntax/c.vim
   syntax match manCFuncDefinition display '\<\h\w*\>\ze\(\s\|\n\)*(' contained
+  syntax match manSentence display '\%(^ \{3,7}\u\|\.  \u\)\_.\{-}
+        \\%(-$\|\.$\|:$\)\|
+        \ \{3,7}\a.*\%(\.\|:\)$' contained contains=manReference
   syntax region manSynopsis start='^\%(
         \SYNOPSIS\|
         \SYNTAX\|
         \SINTASSI\|
         \SKŁADNIA\|
         \СИНТАКСИС\|
-        \書式\)$' end='^\%(\S.*\)\=\S$' keepend contains=manSectionHeading,@c,manCFuncDefinition
+        \書式\)$' end='^\%(\S.*\)\=\S$' keepend contains=manSentence,manSectionHeading,@c,manCFuncDefinition
   highlight default link manCFuncDefinition Function
+
+  syntax region manExample start='^EXAMPLES\=$' end='^\%(\S.*\)\=\S$' keepend contains=manSentence,manSectionHeading,manSubHeading,@c,manCFuncDefinition
+
+  " XXX: groupthere doesn't seem to work
+  syntax sync minlines=500
+  "syntax sync match manSyncExample groupthere manExample '^EXAMPLES\=$'
+  "syntax sync match manSyncExample groupthere NONE '^\%(EXAMPLES\=\)\@!\%(\S.*\)\=\S$'
 endif
 
 " Prevent everything else from matching the last line

@@ -19584,6 +19584,7 @@ static const char *find_option_end(const char **const arg, int *const opt_flags)
 void ex_function(exarg_T *eap)
 {
   char_u      *theline;
+  char_u      *line_to_free = NULL;
   int c;
   int saved_did_emsg;
   int saved_wait_return = need_wait_return;
@@ -19815,7 +19816,6 @@ void ex_function(exarg_T *eap)
 
   /* When there is a line break use what follows for the function body.
    * Makes 'exe "func Test()\n...\nendfunc"' work. */
-  const char *const end = (const char *)p + STRLEN(p);
   if (*p == '\n') {
     line_arg = p + 1;
   } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
@@ -19865,12 +19865,18 @@ void ex_function(exarg_T *eap)
         *p = NUL;
         line_arg = p + 1;
       }
-    } else if (eap->getline == NULL)
-      theline = getcmdline(':', 0L, indent);
-    else
-      theline = eap->getline(':', eap->cookie, indent);
-    if (KeyTyped)
+    } else {
+      xfree(line_to_free);
+      if (eap->getline == NULL) {
+        theline = getcmdline(':', 0L, indent);
+      } else {
+        theline = eap->getline(':', eap->cookie, indent);
+      }
+      line_to_free = theline;
+    }
+    if (KeyTyped) {
       lines_left = Rows - 1;
+    }
     if (theline == NULL) {
       EMSG(_("E126: Missing :endfunction"));
       goto erret;
@@ -19902,25 +19908,24 @@ void ex_function(exarg_T *eap)
         if (*p == '!') {
           p++;
         }
-        const char *const comment_start = strchr((const char *)p, '"');
-        const char *const endfunc_end = (comment_start
-                                         ? strchr(comment_start, '\n')
-                                         : strpbrk((const char *)p, "\n|"));
-        p = (endfunc_end
-             ? (char_u *)endfunc_end
-             : p + STRLEN(p));
+        char_u *nextcmd = NULL;
         if (*p == '|') {
-          emsgf(_(e_trailing2), p);
-          if (line_arg == NULL) {
-            xfree(theline);
-          }
-          goto erret;
+          nextcmd = p + 1;
+        } else if (line_arg != NULL && *skipwhite(line_arg) != NUL) {
+          nextcmd = line_arg;
+        } else if (*p != NUL && *p != '"' && p_verbose > 0) {
+          give_warning2((char_u *)_("W22: Text found after :endfunction: %s"),
+                        p, true);
         }
-        if (line_arg == NULL) {
-          xfree(theline);
-        } else {
-          if ((const char *)p < end) {
-            eap->nextcmd = p + 1;
+        if (nextcmd != NULL) {
+          // Another command follows. If the line came from "eap" we
+          // can simply point into it, otherwise we need to change
+          // "eap->cmdlinep".
+          eap->nextcmd = nextcmd;
+          if (line_to_free != NULL) {
+            xfree(*eap->cmdlinep);
+            *eap->cmdlinep = line_to_free;
+            line_to_free = NULL;
           }
         }
         break;
@@ -19997,11 +20002,7 @@ void ex_function(exarg_T *eap)
      * allocates 250 bytes per line, this saves 80% on average.  The cost
      * is an extra alloc/free. */
     p = vim_strsave(theline);
-    if (line_arg == NULL)
-      xfree(theline);
-    theline = p;
-
-    ((char_u **)(newlines.ga_data))[newlines.ga_len++] = theline;
+    ((char_u **)(newlines.ga_data))[newlines.ga_len++] = p;
 
     /* Add NULL lines for continuation lines, so that the line count is
      * equal to the index in the growarray.   */
@@ -20166,6 +20167,7 @@ errret_2:
   ga_clear_strings(&newlines);
 ret_free:
   xfree(skip_until);
+  xfree(line_to_free);
   xfree(fudi.fd_newkey);
   xfree(name);
   did_emsg |= saved_did_emsg;
