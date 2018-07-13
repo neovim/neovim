@@ -189,6 +189,7 @@ enum key_extra {
   , KE_TAB = 54               // unshifted TAB key
   , KE_S_TAB_OLD = 55         // shifted TAB key (no longer used)
 
+  // , KE_SNIFF_UNUSED = 56   // obsolete
   , KE_XF1 = 57               // extra vt100 function keys for xterm
   , KE_XF2 = 58
   , KE_XF3 = 59
@@ -239,13 +240,16 @@ enum key_extra {
   , KE_X2RELEASE = 94
 
   , KE_DROP = 95              // DnD data is available
+  // , KE_CURSORHOLD = 96     // CursorHold event
   , KE_NOP = 97               // doesn't do something
   , KE_FOCUSGAINED = 98       // focus gained
   , KE_FOCUSLOST = 99         // focus lost
-  , KE_EVENT = 100            // event
-  , KE_PASTE = 101            // special key to toggle the 'paste' option.
+  // , KE_MOUSEMOVE = 100     // mouse moved with no button down
+  // , KE_CANCEL = 101        // return from vgetc
+  , KE_EVENT = 102            // event
+  , KE_PASTE = 103            // special key to toggle the 'paste' option.
                               // sent only by UIs
-  , KE_COMMAND = 102          // special key to execute command in any mode
+  , KE_COMMAND = 104          // special key to execute command in any mode
 };
 
 /*
