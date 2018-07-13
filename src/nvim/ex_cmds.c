@@ -4176,6 +4176,17 @@ do_sub_msg (
   return false;
 }
 
+static void global_exe_one(char_u *const cmd, const linenr_T lnum)
+{
+  curwin->w_cursor.lnum = lnum;
+  curwin->w_cursor.col = 0;
+  if (*cmd == NUL || *cmd == '\n') {
+    do_cmdline((char_u *)"p", NULL, NULL, DOCMD_NOWAIT);
+  } else {
+    do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
+  }
+}
+
 /*
  * Execute a global command of the form:
  *
@@ -4205,8 +4216,12 @@ void ex_global(exarg_T *eap)
   int match;
   int which_pat;
 
-  if (global_busy) {
-    EMSG(_("E147: Cannot do :global recursive"));       /* will increment global_busy */
+  // When nesting the command works on one line.  This allows for
+  // ":g/found/v/notfound/command".
+  if (global_busy && (eap->line1 != 1
+                      || eap->line2 != curbuf->b_ml.ml_line_count)) {
+    // will increment global_busy to break out of the loop
+    EMSG(_("E147: Cannot do :global recursive with a range"));
     return;
   }
 
@@ -4255,35 +4270,40 @@ void ex_global(exarg_T *eap)
     return;
   }
 
-  /*
-   * pass 1: set marks for each (not) matching line
-   */
-  for (lnum = eap->line1; lnum <= eap->line2 && !got_int; ++lnum) {
-    /* a match on this line? */
+  if (global_busy) {
+    lnum = curwin->w_cursor.lnum;
     match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-        (colnr_T)0, NULL);
+                              (colnr_T)0, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
-      ml_setmarked(lnum);
-      ndone++;
-    }
-    line_breakcheck();
-  }
-
-  /*
-   * pass 2: execute the command for each line that has been marked
-   */
-  if (got_int)
-    MSG(_(e_interr));
-  else if (ndone == 0) {
-    if (type == 'v') {
-      smsg(_("Pattern found in every line: %s"), pat);
-    } else {
-      smsg(_("Pattern not found: %s"), pat);
+      global_exe_one(cmd, lnum);
     }
   } else {
-    global_exe(cmd);
+    // pass 1: set marks for each (not) matching line
+    for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
+      // a match on this line?
+      match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
+                                (colnr_T)0, NULL);
+      if ((type == 'g' && match) || (type == 'v' && !match)) {
+        ml_setmarked(lnum);
+        ndone++;
+      }
+      line_breakcheck();
+    }
+
+    // pass 2: execute the command for each line that has been marked
+    if (got_int) {
+      MSG(_(e_interr));
+    } else if (ndone == 0) {
+      if (type == 'v') {
+        smsg(_("Pattern found in every line: %s"), pat);
+      } else {
+        smsg(_("Pattern not found: %s"), pat);
+      }
+    } else {
+      global_exe(cmd);
+    }
+    ml_clearmarked();         // clear rest of the marks
   }
-  ml_clearmarked();        /* clear rest of the marks */
   vim_regfree(regmatch.regprog);
 }
 
@@ -4312,13 +4332,7 @@ void global_exe(char_u *cmd)
   old_lcount = curbuf->b_ml.ml_line_count;
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-    curwin->w_cursor.lnum = lnum;
-    curwin->w_cursor.col = 0;
-    if (*cmd == NUL || *cmd == '\n') {
-      do_cmdline((char_u *)"p", NULL, NULL, DOCMD_NOWAIT);
-    } else {
-      do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
-    }
+    global_exe_one(cmd, lnum);
     os_breakcheck();
   }
 

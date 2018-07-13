@@ -37,7 +37,7 @@ of area is used, see |visual-repeat|.
 ==============================================================================
 2. Multiple repeats					*multi-repeat*
 
-						*:g* *:global* *E147* *E148*
+						*:g* *:global* *E148*
 :[range]g[lobal]/{pattern}/[cmd]
 			Execute the Ex command [cmd] (default ":p") on the
 			lines within [range] where {pattern} matches.
@@ -70,8 +70,15 @@ The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
 line is aborted and the global command continues with the next marked or
 unmarked line.
+								*E147* 
+When the command is used recursively, it only works on one line.  Giving a
+range is then not allowed. This is useful to find all lines that match a
+pattern and do not match another pattern: >
+	:g/found/v/notfound/{cmd}
+This first finds all lines containing "found", but only executes {cmd} when
+there is no match for "notfound".
 
-To repeat a non-Ex command, you can use the ":normal" command: >
+To execute a non-Ex command, you can use the `:normal` command: >
 	:g/pat/normal {commands}
 Make sure that {commands} ends with a whole command, otherwise Vim will wait
 for you to type the rest of the command for each match.  The screen will not
