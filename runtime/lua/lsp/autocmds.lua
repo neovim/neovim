@@ -49,6 +49,7 @@ local accepted_autocomand_postfixes = {
   pre = true,
   post = true,
   response = true,
+  notification = true,
 }
 
 local doautocmd = function(autocmd)
@@ -56,7 +57,6 @@ local doautocmd = function(autocmd)
     return nil
   end
 
-  -- TODO: Was having problem with errors here... remove the silent for awhile to see why
   log.debug('Sending autocmd: ', autocmd)
   return vim.api.nvim_command('silent doautocmd ' .. autocmd)
 end
@@ -76,7 +76,7 @@ local lsp_doautocmd = function(method, stage)
     method_name = 'UNKNOWN'
   end
 
-  doautocmd('LanguageServerProtocol User ' .. method_name .. '/' .. stage)
+  doautocmd('User LSP/' .. method_name .. '/' .. stage)
 end
 
 local export_autocmds = function()

@@ -44,7 +44,7 @@ function RequestMessage:new(client, method, params)
   if request_func and type(request_func) == 'function' then
     request_params, acceptable_method = request_func(client, params)
   else
-    log.info(string.format('No request function found for: %s', util.tostring(method)))
+    log.debug(string.format('No request function found for: %s', util.tostring(method)))
     request_params = params
   end
 
