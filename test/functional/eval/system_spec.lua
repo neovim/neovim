@@ -203,6 +203,28 @@ describe('system()', function()
       ]])
     end)
 
+    it('prints verbose information', function()
+      feed(':4verbose echo system("echo hi")<cr>')
+      screen:expect([[
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        Calling shell to execute: "echo hi"                  |
+                                                             |
+        hi                                                   |
+                                                             |
+        Press ENTER or type command to continue^              |
+      ]])
+      feed('<cr>')
+      feed('<cr>')
+    end)
+
     it('`yes` interrupted with CTRL-C', function()
       feed(':call system("' .. (iswin()
         and 'for /L %I in (1,0,2) do @echo y'
