@@ -115,135 +115,139 @@
                              KS_ZERO ? K_ZERO : TERMCAP2KEY(a, b))
 
 // Codes for keys that do not have a termcap name.
+// The numbers are fixed to make sure that recorded key sequences remain valid.
+// Add new entries at the end, not halfway.
 //
 // K_SPECIAL KS_EXTRA KE_xxx
 //
 // Entries must be in the range 0x02-0x7f (see comment at K_SPECIAL).
 enum key_extra {
-  KE_NAME = 3           /* name of this terminal entry */
+  KE_NAME = 3                 // name of this terminal entry
 
-  , KE_S_UP             /* shift-up */
-  , KE_S_DOWN           /* shift-down */
+  , KE_S_UP = 4               // shift-up
+  , KE_S_DOWN = 5             // shift-down
 
-  , KE_S_F1             /* shifted function keys */
-  , KE_S_F2
-  , KE_S_F3
-  , KE_S_F4
-  , KE_S_F5
-  , KE_S_F6
-  , KE_S_F7
-  , KE_S_F8
-  , KE_S_F9
-  , KE_S_F10
+  , KE_S_F1 = 6               // shifted function keys
+  , KE_S_F2 = 7
+  , KE_S_F3 = 8
+  , KE_S_F4 = 9
+  , KE_S_F5 = 10
+  , KE_S_F6 = 11
+  , KE_S_F7 = 12
+  , KE_S_F8 = 13
+  , KE_S_F9 = 14
+  , KE_S_F10 = 15
 
-  , KE_S_F11
-  , KE_S_F12
-  , KE_S_F13
-  , KE_S_F14
-  , KE_S_F15
-  , KE_S_F16
-  , KE_S_F17
-  , KE_S_F18
-  , KE_S_F19
-  , KE_S_F20
+  , KE_S_F11 = 16
+  , KE_S_F12 = 17
+  , KE_S_F13 = 18
+  , KE_S_F14 = 19
+  , KE_S_F15 = 20
+  , KE_S_F16 = 21
+  , KE_S_F17 = 22
+  , KE_S_F18 = 23
+  , KE_S_F19 = 24
+  , KE_S_F20 = 25
 
-  , KE_S_F21
-  , KE_S_F22
-  , KE_S_F23
-  , KE_S_F24
-  , KE_S_F25
-  , KE_S_F26
-  , KE_S_F27
-  , KE_S_F28
-  , KE_S_F29
-  , KE_S_F30
+  , KE_S_F21 = 26
+  , KE_S_F22 = 27
+  , KE_S_F23 = 28
+  , KE_S_F24 = 29
+  , KE_S_F25 = 30
+  , KE_S_F26 = 31
+  , KE_S_F27 = 32
+  , KE_S_F28 = 33
+  , KE_S_F29 = 34
+  , KE_S_F30 = 35
 
-  , KE_S_F31
-  , KE_S_F32
-  , KE_S_F33
-  , KE_S_F34
-  , KE_S_F35
-  , KE_S_F36
-  , KE_S_F37
+  , KE_S_F31 = 36
+  , KE_S_F32 = 37
+  , KE_S_F33 = 38
+  , KE_S_F34 = 39
+  , KE_S_F35 = 40
+  , KE_S_F36 = 41
+  , KE_S_F37 = 42
 
-  , KE_MOUSE            /* mouse event start */
+  , KE_MOUSE = 43             // mouse event start
 
-  /*
-   * Symbols for pseudo keys which are translated from the real key symbols
-   * above.
-   */
-  , KE_LEFTMOUSE        /* Left mouse button click */
-  , KE_LEFTDRAG         /* Drag with left mouse button down */
-  , KE_LEFTRELEASE      /* Left mouse button release */
-  , KE_MIDDLEMOUSE      /* Middle mouse button click */
-  , KE_MIDDLEDRAG       /* Drag with middle mouse button down */
-  , KE_MIDDLERELEASE    /* Middle mouse button release */
-  , KE_RIGHTMOUSE       /* Right mouse button click */
-  , KE_RIGHTDRAG        /* Drag with right mouse button down */
-  , KE_RIGHTRELEASE     /* Right mouse button release */
+  // Symbols for pseudo keys which are translated from the real key symbols
+  // above.
+  , KE_LEFTMOUSE = 44         // Left mouse button click
+  , KE_LEFTDRAG = 45          // Drag with left mouse button down
+  , KE_LEFTRELEASE = 46       // Left mouse button release
+  , KE_MIDDLEMOUSE = 47       // Middle mouse button click
+  , KE_MIDDLEDRAG = 48        // Drag with middle mouse button down
+  , KE_MIDDLERELEASE = 49     // Middle mouse button release
+  , KE_RIGHTMOUSE = 50        // Right mouse button click
+  , KE_RIGHTDRAG = 51         // Drag with right mouse button down
+  , KE_RIGHTRELEASE = 52      // Right mouse button release
 
-  , KE_IGNORE           /* Ignored mouse drag/release */
+  , KE_IGNORE = 53            // Ignored mouse drag/release
 
-  , KE_TAB              /* unshifted TAB key */
-  , KE_S_TAB_OLD        /* shifted TAB key (no longer used) */
+  , KE_TAB = 54               // unshifted TAB key
+  , KE_S_TAB_OLD = 55         // shifted TAB key (no longer used)
 
-  , KE_XF1              /* extra vt100 function keys for xterm */
-  , KE_XF2
-  , KE_XF3
-  , KE_XF4
-  , KE_XEND             /* extra (vt100) end key for xterm */
-  , KE_ZEND             /* extra (vt100) end key for xterm */
-  , KE_XHOME            /* extra (vt100) home key for xterm */
-  , KE_ZHOME            /* extra (vt100) home key for xterm */
-  , KE_XUP              /* extra vt100 cursor keys for xterm */
-  , KE_XDOWN
-  , KE_XLEFT
-  , KE_XRIGHT
+  // , KE_SNIFF_UNUSED = 56   // obsolete
+  , KE_XF1 = 57               // extra vt100 function keys for xterm
+  , KE_XF2 = 58
+  , KE_XF3 = 59
+  , KE_XF4 = 60
+  , KE_XEND = 61              // extra (vt100) end key for xterm
+  , KE_ZEND = 62              // extra (vt100) end key for xterm
+  , KE_XHOME = 63             // extra (vt100) home key for xterm
+  , KE_ZHOME = 64             // extra (vt100) home key for xterm
+  , KE_XUP = 65               // extra vt100 cursor keys for xterm
+  , KE_XDOWN = 66
+  , KE_XLEFT = 67
+  , KE_XRIGHT = 68
 
-  , KE_LEFTMOUSE_NM     /* non-mappable Left mouse button click */
-  , KE_LEFTRELEASE_NM   /* non-mappable left mouse button release */
+  , KE_LEFTMOUSE_NM = 69      // non-mappable Left mouse button click
+  , KE_LEFTRELEASE_NM = 70    // non-mappable left mouse button release
 
-  , KE_S_XF1            /* extra vt100 shifted function keys for xterm */
-  , KE_S_XF2
-  , KE_S_XF3
-  , KE_S_XF4
+  , KE_S_XF1 = 71             // vt100 shifted function keys for xterm
+  , KE_S_XF2 = 72
+  , KE_S_XF3 = 73
+  , KE_S_XF4 = 74
 
-  /* NOTE: The scroll wheel events are inverted: i.e. UP is the same as
-   * moving the actual scroll wheel down, LEFT is the same as moving the
-   * scroll wheel right. */
-  , KE_MOUSEDOWN        /* scroll wheel pseudo-button Down */
-  , KE_MOUSEUP          /* scroll wheel pseudo-button Up */
-  , KE_MOUSELEFT        /* scroll wheel pseudo-button Left */
-  , KE_MOUSERIGHT       /* scroll wheel pseudo-button Right */
+  // NOTE: The scroll wheel events are inverted: i.e. UP is the same as
+  // moving the actual scroll wheel down, LEFT is the same as moving the
+  // scroll wheel right.
+  , KE_MOUSEDOWN = 75         // scroll wheel pseudo-button Down
+  , KE_MOUSEUP = 76           // scroll wheel pseudo-button Up
+  , KE_MOUSELEFT = 77         // scroll wheel pseudo-button Left
+  , KE_MOUSERIGHT = 78        // scroll wheel pseudo-button Right
 
-  , KE_KINS             /* keypad Insert key */
-  , KE_KDEL             /* keypad Delete key */
+  , KE_KINS = 79              // keypad Insert key
+  , KE_KDEL = 80              // keypad Delete key
 
-  , KE_CSI              /* CSI typed directly */
-  , KE_SNR              /* <SNR> */
-  , KE_PLUG             /* <Plug> */
-  , KE_CMDWIN           /* open command-line window from Command-line Mode */
+  , KE_CSI = 81               // CSI typed directly
+  , KE_SNR = 82               // <SNR>
+  , KE_PLUG = 83              // <Plug>
+  , KE_CMDWIN = 84            // open command-line window from Command-line Mode
 
-  , KE_C_LEFT           /* control-left */
-  , KE_C_RIGHT          /* control-right */
-  , KE_C_HOME           /* control-home */
-  , KE_C_END            /* control-end */
+  , KE_C_LEFT = 85            // control-left
+  , KE_C_RIGHT = 86           // control-right
+  , KE_C_HOME = 87            // control-home
+  , KE_C_END = 88             // control-end
 
-  , KE_X1MOUSE          /* X1/X2 mouse-buttons */
-  , KE_X1DRAG
-  , KE_X1RELEASE
-  , KE_X2MOUSE
-  , KE_X2DRAG
-  , KE_X2RELEASE
+  , KE_X1MOUSE = 89           // X1/X2 mouse-buttons
+  , KE_X1DRAG = 90
+  , KE_X1RELEASE = 91
+  , KE_X2MOUSE = 92
+  , KE_X2DRAG = 93
+  , KE_X2RELEASE = 94
 
-  , KE_DROP             /* DnD data is available */
-  , KE_NOP              /* doesn't do something */
-  , KE_FOCUSGAINED      /* focus gained */
-  , KE_FOCUSLOST        /* focus lost */
-  , KE_EVENT            // event
-  , KE_PASTE            // special key to toggle the 'paste' option.
-                        // sent only by UIs
-  , KE_COMMAND          // special key to execute command in any mode
+  , KE_DROP = 95              // DnD data is available
+  // , KE_CURSORHOLD = 96     // CursorHold event
+  , KE_NOP = 97               // doesn't do something
+  , KE_FOCUSGAINED = 98       // focus gained
+  , KE_FOCUSLOST = 99         // focus lost
+  // , KE_MOUSEMOVE = 100     // mouse moved with no button down
+  // , KE_CANCEL = 101        // return from vgetc
+  , KE_EVENT = 102            // event
+  , KE_PASTE = 103            // special key to toggle the 'paste' option.
+                              // sent only by UIs
+  , KE_COMMAND = 104          // <Cmd> special key
 };
 
 /*
