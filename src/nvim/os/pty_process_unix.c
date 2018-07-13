@@ -273,26 +273,24 @@ static void chld_handler(uv_signal_t *handle, int signum)
   int stat = 0;
   int pid;
 
-  do {
-    pid = waitpid(-1, &stat, WNOHANG);
-  } while (pid < 0 && errno == EINTR);
-
-  if (pid <= 0) {
-    return;
-  }
-
   Loop *loop = handle->loop->data;
 
   kl_iter(WatcherPtr, loop->children, current) {
     Process *proc = (*current)->data;
-    if (proc->pid == pid) {
-      if (WIFEXITED(stat)) {
-        proc->status = WEXITSTATUS(stat);
-      } else if (WIFSIGNALED(stat)) {
-        proc->status = WTERMSIG(stat);
-      }
-      proc->internal_exit_cb(proc);
-      break;
+    do {
+      pid = waitpid(proc->pid, &stat, WNOHANG);
+    } while (pid < 0 && errno == EINTR);
+
+    if (pid <= 0) {
+      continue;
     }
+
+    if (WIFEXITED(stat)) {
+      proc->status = WEXITSTATUS(stat);
+    } else if (WIFSIGNALED(stat)) {
+      proc->status = WTERMSIG(stat);
+    }
+    proc->internal_exit_cb(proc);
+    break;
   }
 }
