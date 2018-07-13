@@ -222,7 +222,6 @@ describe('system()', function()
         Press ENTER or type command to continue^              |
       ]])
       feed('<cr>')
-      feed('<cr>')
     end)
 
     it('`yes` interrupted with CTRL-C', function()
