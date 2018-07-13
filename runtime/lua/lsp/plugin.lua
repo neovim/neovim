@@ -90,7 +90,9 @@ plugin.client.request_autocmd = function(method, arguments, cb, filetype)
     return
   end
 
-  return plugin.client.request_async(method, arguments, cb, filetype)
+  plugin.client.request(method, arguments, cb, filetype)
+
+  return true
 end
 
 plugin.client.wait_request = function(request_id, filetype)

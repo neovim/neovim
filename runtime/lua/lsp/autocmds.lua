@@ -14,7 +14,7 @@ local util = require('neovim.util')
 local autocmd_table = {
   ['textDocument/didOpen'] = {
     -- After initialization, make sure to tell the LSP that we opened the file
-    {'User', 'initialize/post'},
+    {'User', 'LSP/initialize/post'},
 
     'BufReadPost',
     -- 'BufEnter',
@@ -41,7 +41,7 @@ local autocmd_table = {
     'TextChanged',
     'InsertLeave',
 
-    {'User', 'textDocument/completion/pre'},
+    {'User', 'LSP/textDocument/completion/pre'},
   },
 }
 
@@ -95,7 +95,7 @@ local export_autocmds = function()
       if #autocmd_string > 0 then
         vim.api.nvim_command(
           string.format(
-            [[autocmd %s nested call luaeval("require('lsp.plugin').client.request_autocmd('%s')")]],
+            [[autocmd %s nested lua require('lsp.plugin').client.request_autocmd('%s')]],
             autocmd_string,
             request_name)
           )
