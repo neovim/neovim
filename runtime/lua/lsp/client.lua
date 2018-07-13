@@ -307,11 +307,12 @@ client.on_message = function(self, json_message)
     local callback_list = get_list_of_callbacks(json_message.method)
 
     if (not callback_list) or (type(callback_list) ~= 'table') then
-      log.info('Unsupported notification: ', json_message.method)
+      log.debug('Unsupported notification: ', json_message.method)
       return
     end
 
     call_callbacks(callback_list, true, json_message.params)
+    lsp_doautocmd(json_message.method, 'notification')
 
     return
   -- Handle responses

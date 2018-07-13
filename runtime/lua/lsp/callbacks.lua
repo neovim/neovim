@@ -201,11 +201,6 @@ CallbackMapping.textDocument.publishDiagnostics = default_callback_object(functi
 
   local result = vim.api.nvim_call_function('setloclist', {0, loclist})
 
-  -- if loclist ~= {} and not util.is_loclist_open() then
-  --   vim.api.nvim_command('lopen')
-  --   vim.api.nvim_command('wincmd p')
-  -- end
-
   return result
 end)
 
