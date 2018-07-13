@@ -224,6 +224,21 @@ describe('system()', function()
       feed('<cr>')
     end)
 
+    it('does not compute external time as self time', function()
+      local tempfile = helpers.tmpname()
+
+      feed(':function! A()<cr>')
+      feed('echo system("sleep 2")<cr>')
+      feed('endfunction<cr>')
+      feed(':profile start ' .. tempfile .. '<cr>')
+      feed(':profile func A<cr>')
+      feed(':call A()<cr>')
+      feed(':profile dump<cr>')
+      feed(':edit ' .. tempfile .. '<cr>')
+      selftimeLessThan2 = eval('(0+substitute(split(getline(4), \':\')[1], \' \\+\', \'\', \'\'))<2')
+      eq(1, selftimeLessThan2)
+    end)
+
     it('`yes` interrupted with CTRL-C', function()
       feed(':call system("' .. (iswin()
         and 'for /L %I in (1,0,2) do @echo y'
