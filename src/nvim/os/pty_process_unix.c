@@ -291,6 +291,5 @@ static void chld_handler(uv_signal_t *handle, int signum)
       proc->status = WTERMSIG(stat);
     }
     proc->internal_exit_cb(proc);
-    break;
   }
 }
