@@ -5,9 +5,10 @@ vim.lsp = {
   },
 
   config = {
+    autocmds  = require('lsp.config.autocmds'),
     callbacks = require('lsp.config.callbacks'),
-    request = require('lsp.config.request'),
-    log = require('lsp.config.log'),
+    log       = require('lsp.config.log'),
+    request   = require('lsp.config.request'),
   },
 }
 
