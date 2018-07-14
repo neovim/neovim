@@ -238,7 +238,7 @@ describe('system()', function()
 
       feed(':edit ' .. tempfile .. '<cr>')
 
-      selftime = tonumber(eval('split(getline(4), \':\')[1]'))
+      selftime = tonumber(helpers.funcs.split(helpers.funcs.getline(4), ':', 0)[2])
       helpers.near(selftime, 0, 0.01)
     end)
 
