@@ -54,6 +54,9 @@ end
 local function ok(res)
   return assert.is_true(res)
 end
+local function near(actual, expected, tolerance)
+  return assert.is.near(actual, expected, tolerance)
+end
 local function matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
@@ -696,6 +699,7 @@ local module = {
   mergedicts_copy = mergedicts_copy,
   neq = neq,
   ok = ok,
+  near = near,
   popen_r = popen_r,
   popen_w = popen_w,
   read_file = read_file,
