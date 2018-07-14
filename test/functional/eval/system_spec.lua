@@ -224,19 +224,22 @@ describe('system()', function()
       feed('<cr>')
     end)
 
-    it('does not compute external time as self time', function()
+    it('execution time not profiled as self time', function()
       local tempfile = helpers.tmpname()
 
-      feed(':function! A()<cr>')
+      feed(':function! AlmostNoSelfTime()<cr>')
       feed('echo system("sleep 2")<cr>')
       feed('endfunction<cr>')
+
       feed(':profile start ' .. tempfile .. '<cr>')
-      feed(':profile func A<cr>')
-      feed(':call A()<cr>')
+      feed(':profile func AlmostNoSelfTime<cr>')
+      feed(':call AlmostNoSelfTime()<cr>')
       feed(':profile dump<cr>')
+
       feed(':edit ' .. tempfile .. '<cr>')
-      selftimeLessThan2 = eval('(0+substitute(split(getline(4), \':\')[1], \' \\+\', \'\', \'\'))<2')
-      eq(1, selftimeLessThan2)
+
+      selftime = tonumber(eval('split(getline(4), \':\')[1]'))
+      helpers.near(selftime, 0, 0.01)
     end)
 
     it('`yes` interrupted with CTRL-C', function()
