@@ -514,3 +514,17 @@ func Test_highlight_eol_on_diff()
   bwipe!
   diffoff
 endfunc
+
+func Test_termguicolors()
+  if !exists('+termguicolors')
+    return
+  endif
+
+  " Basic test that setting 'termguicolors' works with one color.
+  set termguicolors
+  redraw
+  set t_Co=1
+  redraw
+  set t_Co=0
+  redraw
+endfunc
