@@ -2197,7 +2197,7 @@ win_line (
   match_T     *shl;                     // points to search_hl or a match
   int shl_flag;                         // flag to indicate whether search_hl
                                         // has been processed or not
-  int prevcol_hl_flag;                  // flag to indicate whether prevcol
+  bool prevcol_hl_flag;                 // flag to indicate whether prevcol
                                         // equals startcol of search_hl or one
                                         // of the matches
   int prev_c = 0;                       // previous Arabic character
@@ -3026,6 +3026,10 @@ win_line (
           if (shl != &search_hl && cur != NULL)
             cur = cur->next;
         }
+        // Only highlight one character after the last column.
+        if (*ptr == NUL && did_line_attr >= 1) {
+          search_attr = 0;
+        }
       }
 
       if (diff_hlf != (hlf_T)0) {
@@ -3674,7 +3678,9 @@ win_line (
 
           // don't do search HL for the rest of the line
           if ((line_attr_lowprio || line_attr)
-              && char_attr == search_attr && col > 0) {
+              && char_attr == search_attr
+              && (did_line_attr > 1
+                  || (wp->w_p_list && lcs_eol > 0))) {
             char_attr = line_attr;
           }
           if (diff_hlf == HLF_TXD) {
@@ -3833,9 +3839,12 @@ win_line (
                    || lnum == VIsual.lnum
                    || lnum == curwin->w_cursor.lnum)
                && c == NUL)
-              /* highlight 'hlsearch' match at end of line */
-              || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
-              )) {
+              // highlight 'hlsearch' match at end of line
+              || (prevcol_hl_flag
+                  && !(wp->w_p_cul && lnum == wp->w_cursor.lnum
+                       && !(wp == curwin && VIsual_active))
+                  && diff_hlf == (hlf_T)0
+                  && did_line_attr <= 1))) {
         int n = 0;
 
         if (wp->w_p_rl) {
