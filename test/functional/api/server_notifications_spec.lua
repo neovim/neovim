@@ -65,4 +65,11 @@ describe('notify', function()
       eq(nest_level, act_nest_level)
     end)
   end)
+
+  it('unsubscribe non-existing event #8745', function()
+    nvim('subscribe', 'event1')
+    nvim('unsubscribe', 'doesnotexist')
+    nvim('unsubscribe', 'event1')
+    eq(2, eval('1+1'))  -- Still alive?
+  end)
 end)

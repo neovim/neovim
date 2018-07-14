@@ -505,6 +505,11 @@ end:
 static void unsubscribe(Channel *channel, char *event)
 {
   char *event_string = pmap_get(cstr_t)(event_strings, event);
+  if (!event_string) {
+      WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
+           channel->id, event);
+      return;
+  }
   pmap_del(cstr_t)(channel->rpc.subscribed_events, event_string);
 
   map_foreach_value(channels, channel, {
