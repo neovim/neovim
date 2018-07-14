@@ -86,3 +86,19 @@ func Test_var()
   call assert_equal(1, gettabwinvar(2, 3, '&nux', 1))
   tabonly
 endfunc
+
+" It was discovered that "gettabvar()" would fail if called from within the
+" tabline when the user closed a window.  This test confirms the fix.
+func Test_gettabvar_in_tabline()
+  let t:var_str = 'value'
+
+  set tabline=%{assert_equal('value',gettabvar(1,'var_str'))}
+  set showtabline=2
+
+  " Simulate the user opening a split (which becomes window #1) and then
+  " closing the split, which triggers the redrawing of the tabline.
+  leftabove split
+  redrawstatus!
+  close
+  redrawstatus!
+endfunc

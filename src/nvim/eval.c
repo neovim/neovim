@@ -10222,7 +10222,8 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (tp != NULL && varname != NULL) {
     // Set tp to be our tabpage, temporarily.  Also set the window to the
     // first window in the tabpage, otherwise the window is not valid.
-    win_T *window = tp->tp_firstwin == NULL ? firstwin : tp->tp_firstwin;
+    win_T *window = tp == curtab || tp->tp_firstwin == NULL ? firstwin
+                                                            : tp->tp_firstwin;
     if (switch_win(&oldcurwin, &oldtabpage, window, tp, true) == OK) {
       // look up the variable
       // Let gettabvar({nr}, "") return the "t:" dictionary.
