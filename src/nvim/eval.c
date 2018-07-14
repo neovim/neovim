@@ -16411,8 +16411,10 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
   if (p_verbose > 3) {
     char buf[NUMBUFLEN];
+    const char * cmd = tv_get_string_buf(argvars, buf);
+
     verbose_enter_scroll();
-    smsg(_("Calling shell to execute: \"%s\""), tv_get_string_buf(argvars, buf));
+    smsg(_("Calling shell to execute: \"%s\""), cmd);
     msg_puts("\n\n");
     verbose_leave_scroll();
   }
