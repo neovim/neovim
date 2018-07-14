@@ -288,7 +288,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   chan->on_stdout = on_stdout;
   chan->on_stderr = on_stderr;
   chan->on_exit = on_exit;
-  chan->is_rpc = rpc;
 
   if (pty) {
     if (detach) {
@@ -326,7 +325,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     has_out = true;
     has_err = false;
   } else {
-    has_out = chan->is_rpc || callback_reader_set(chan->on_stdout);
+    has_out = rpc || callback_reader_set(chan->on_stdout);
     has_err = callback_reader_set(chan->on_stderr);
   }
   int status = process_spawn(proc, true, has_out, has_err);
@@ -347,7 +346,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     rstream_init(&proc->out, 0);
   }
 
-  if (chan->is_rpc) {
+  if (rpc) {
     // the rpc takes over the in and out streams
     rpc_start(chan);
   } else {
