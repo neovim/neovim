@@ -62,7 +62,7 @@ struct hl_group {
   int sg_cterm;                 ///< "cterm=" highlighting attr
   int sg_cterm_fg;              ///< terminal fg color number + 1
   int sg_cterm_bg;              ///< terminal bg color number + 1
-  int sg_cterm_bold;            ///< bold attr was set for light color
+  bool sg_cterm_bold;           ///< bold attr was set for light color
   // for RGB UIs
   int sg_gui;                   ///< "gui=" highlighting attributes
                                 ///< (combination of \ref HlAttrFlags)
@@ -6385,6 +6385,89 @@ int load_colors(char_u *name)
   return retval;
 }
 
+static char *(color_names[28]) = {
+  "Black", "DarkBlue", "DarkGreen", "DarkCyan",
+  "DarkRed", "DarkMagenta", "Brown", "DarkYellow",
+  "Gray", "Grey", "LightGray", "LightGrey",
+  "DarkGray", "DarkGrey",
+  "Blue", "LightBlue", "Green", "LightGreen",
+  "Cyan", "LightCyan", "Red", "LightRed", "Magenta",
+  "LightMagenta", "Yellow", "LightYellow", "White", "NONE" };
+  // indices:
+  // 0, 1, 2, 3,
+  // 4, 5, 6, 7,
+  // 8, 9, 10, 11,
+  // 12, 13,
+  // 14, 15, 16, 17,
+  // 18, 19, 20, 21, 22,
+  // 23, 24, 25, 26, 27
+static int color_numbers_16[28] = { 0, 1, 2, 3,
+  4, 5, 6, 6,
+  7, 7, 7, 7,
+  8, 8,
+  9, 9, 10, 10,
+  11, 11, 12, 12, 13,
+  13, 14, 14, 15, -1 };
+// for xterm with 88 colors...
+static int color_numbers_88[28] = { 0, 4, 2, 6,
+  1, 5, 32, 72,
+  84, 84, 7, 7,
+  82, 82,
+  12, 43, 10, 61,
+  14, 63, 9, 74, 13,
+  75, 11, 78, 15, -1 };
+// for xterm with 256 colors...
+static int color_numbers_256[28] = { 0, 4, 2, 6,
+  1, 5, 130, 130,
+  248, 248, 7, 7,
+  242, 242,
+  12, 81, 10, 121,
+  14, 159, 9, 224, 13,
+  225, 11, 229, 15, -1 };
+// for terminals with less than 16 colors...
+static int color_numbers_8[28] = { 0, 4, 2, 6,
+  1, 5, 3, 3,
+  7, 7, 7, 7,
+  0+8, 0+8,
+  4+8, 4+8, 2+8, 2+8,
+  6+8, 6+8, 1+8, 1+8, 5+8,
+  5+8, 3+8, 3+8, 7+8, -1 };
+
+// Lookup the "cterm" value to be used for color with index "idx" in
+// color_names[].
+int lookup_color(const int idx, const bool foreground)
+{
+  int color = color_numbers_16[idx];
+
+  // Use the _16 table to check if it's a valid color name.
+  if (color < 0) {
+    return -1;
+  }
+
+  if (t_colors == 8) {
+    // t_Co is 8: use the 8 colors table
+    color = color_numbers_8[idx];
+    if (foreground) {
+      // set/reset bold attribute to get light foreground
+      // colors (on some terminals, e.g. "linux")
+      if (color & 8) {
+        HL_TABLE()[idx].sg_cterm |= HL_BOLD;
+        HL_TABLE()[idx].sg_cterm_bold = true;
+      } else {
+        HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+      }
+    }
+    color &= 7;   // truncate to 8 colors
+  } else if (t_colors == 16) {
+    color = color_numbers_8[idx];
+  } else if (t_colors == 88) {
+    color = color_numbers_88[idx];
+  } else if (t_colors >= 256) {
+    color = color_numbers_256[idx];
+  }
+  return color;
+}
+
 
 /// Handle ":highlight" command
 ///
@@ -6651,7 +6734,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               HL_TABLE()[idx].sg_set |= SG_CTERM;
             }
             HL_TABLE()[idx].sg_cterm = attr;
-            HL_TABLE()[idx].sg_cterm_bold = FALSE;
+            HL_TABLE()[idx].sg_cterm_bold = false;
           }
         } else if (*key == 'G') {
           if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
@@ -6673,7 +6756,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
            * flag was set for a light color, reset it now */
           if (key[5] == 'F' && HL_TABLE()[idx].sg_cterm_bold) {
             HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
-            HL_TABLE()[idx].sg_cterm_bold = FALSE;
+            HL_TABLE()[idx].sg_cterm_bold = false;
           }
 
           if (ascii_isdigit(*arg)) {
@@ -6695,60 +6778,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               break;
             }
           } else {
-            static const char *color_names[] = {
-              "Black", "DarkBlue", "DarkGreen", "DarkCyan",
-              "DarkRed", "DarkMagenta", "Brown", "DarkYellow",
-              "Gray", "Grey",
-              "LightGray", "LightGrey", "DarkGray", "DarkGrey",
-              "Blue", "LightBlue", "Green", "LightGreen",
-              "Cyan", "LightCyan", "Red", "LightRed", "Magenta",
-              "LightMagenta", "Yellow", "LightYellow", "White",
-              "NONE"
-            };
-            static const int color_numbers_16[] = {
-              0, 1, 2, 3,
-              4, 5, 6, 6,
-              7, 7,
-              7, 7, 8, 8,
-              9, 9, 10, 10,
-              11, 11, 12, 12, 13,
-              13, 14, 14, 15,
-              -1
-            };
-            // For xterm with 88 colors:
-            static int color_numbers_88[] = {
-              0, 4, 2, 6,
-              1, 5, 32, 72,
-              84, 84,
-              7, 7, 82, 82,
-              12, 43, 10, 61,
-              14, 63, 9, 74, 13,
-              75, 11, 78, 15,
-              -1
-            };
-            // For xterm with 256 colors:
-            static int color_numbers_256[] = {
-              0, 4, 2, 6,
-              1, 5, 130, 130,
-              248, 248,
-              7, 7, 242, 242,
-              12, 81, 10, 121,
-              14, 159, 9, 224, 13,
-              225, 11, 229, 15,
-              -1
-            };
-            // For terminals with less than 16 colors:
-            static int color_numbers_8[28] = {
-              0, 4, 2, 6,
-              1, 5, 3, 3,
-              7, 7,
-              7, 7, 0+8, 0+8,
-              4+8, 4+8, 2+8, 2+8,
-              6+8, 6+8, 1+8, 1+8, 5+8,
-              5+8, 3+8, 3+8, 7+8,
-              -1
-            };
-
             // Reduce calls to STRICMP a bit, it can be slow.
             off = TOUPPER_ASC(*arg);
             for (i = ARRAY_SIZE(color_names); --i >= 0; ) {
@@ -6764,33 +6793,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               break;
             }
 
-            // Use the _16 table to check if it's a valid color name.
-            color = color_numbers_16[i];
-            if (color >= 0) {
-              if (t_colors == 8) {
-                // t_Co is 8: use the 8 colors table.
-                color = color_numbers_8[i];
-                if (key[5] == 'F') {
-                  /* set/reset bold attribute to get light foreground
-                   * colors (on some terminals, e.g. "linux") */
-                  if (color & 8) {
-                    HL_TABLE()[idx].sg_cterm |= HL_BOLD;
-                    HL_TABLE()[idx].sg_cterm_bold = true;
-                  } else {
-                    HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
-                  }
-                }
-                color &= 7;             // truncate to 8 colors
-              } else if (t_colors == 16 || t_colors == 88 || t_colors >= 256) {
-                if (t_colors == 88) {
-                    color = color_numbers_88[i];
-                } else if (t_colors >= 256) {
-                    color = color_numbers_256[i];
-                } else {
-                    color = color_numbers_8[i];
-                }
-              }
-            }
+            color = lookup_color(i, key[5] == 'F');
           }
           // Add one to the argument, to avoid zero.  Zero is used for
           // "NONE", then "color" is -1.
@@ -6980,7 +6983,7 @@ static void highlight_clear(int idx)
 
   HL_TABLE()[idx].sg_attr = 0;
   HL_TABLE()[idx].sg_cterm = 0;
-  HL_TABLE()[idx].sg_cterm_bold = FALSE;
+  HL_TABLE()[idx].sg_cterm_bold = false;
   HL_TABLE()[idx].sg_cterm_fg = 0;
   HL_TABLE()[idx].sg_cterm_bg = 0;
   HL_TABLE()[idx].sg_gui = 0;
