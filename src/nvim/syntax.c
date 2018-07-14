@@ -6435,7 +6435,9 @@ static int color_numbers_8[28] = { 0, 4, 2, 6,
 
 // Lookup the "cterm" value to be used for color with index "idx" in
 // color_names[].
-int lookup_color(const int idx, const bool foreground)
+// "boldp" will be set to TRUE or FALSE for a foreground color when using 8
+// colors, otherwise it will be unchanged.
+int lookup_color(const int idx, const bool foreground, TriState *const boldp)
 {
   int color = color_numbers_16[idx];
 
@@ -6451,10 +6453,9 @@ int lookup_color(const int idx, const bool foreground)
       // set/reset bold attribute to get light foreground
       // colors (on some terminals, e.g. "linux")
       if (color & 8) {
-        HL_TABLE()[idx].sg_cterm |= HL_BOLD;
-        HL_TABLE()[idx].sg_cterm_bold = true;
+        *boldp = kTrue;
       } else {
-        HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+        *boldp = kFalse;
       }
     }
     color &= 7;   // truncate to 8 colors
@@ -6793,7 +6794,17 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               break;
             }
 
-            color = lookup_color(i, key[5] == 'F');
+            TriState bold = kNone;
+            color = lookup_color(i, key[5] == 'F', &bold);
+
+            // set/reset bold attribute to get light foreground
+            // colors (on some terminals, e.g. "linux")
+            if (bold == kTrue) {
+              HL_TABLE()[idx].sg_cterm |= HL_BOLD;
+              HL_TABLE()[idx].sg_cterm_bold = true;
+            } else if (bold == kFalse) {
+              HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+            }
           }
           // Add one to the argument, to avoid zero.  Zero is used for
           // "NONE", then "color" is -1.
