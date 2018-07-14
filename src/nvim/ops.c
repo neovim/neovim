@@ -312,7 +312,6 @@ static void shift_block(oparg_T *oap, int amount)
 {
   int left = (oap->op_type == OP_LSHIFT);
   int oldstate = State;
-  int total;
   char_u              *newp, *oldp;
   int oldcol = curwin->w_cursor.col;
   int p_sw = get_sw_value(curbuf);
@@ -331,8 +330,12 @@ static void shift_block(oparg_T *oap, int amount)
   if (bd.is_short)
     return;
 
-  /* total is number of screen columns to be inserted/removed */
-  total = amount * p_sw;
+  // total is number of screen columns to be inserted/removed
+  int total = (int)((unsigned)amount * (unsigned)p_sw);
+  if ((total / p_sw) != amount) {
+    return;   // multiplication overflow
+  }
+
   oldp = get_cursor_line_ptr();
 
   if (!left) {

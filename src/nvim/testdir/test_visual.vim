@@ -17,6 +17,14 @@ func Test_block_shift_multibyte()
   q!
 endfunc
 
+func Test_block_shift_overflow()
+  " This used to cause a multiplication overflow followed by a crash.
+  new
+  normal ii
+  exe "normal \<C-V>876543210>"
+  q!
+endfunc
+
 func Test_Visual_ctrl_o()
   new
   call setline(1, ['one', 'two', 'three'])
