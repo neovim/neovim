@@ -16411,11 +16411,10 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
   if (p_verbose > 3) {
     char buf[NUMBUFLEN];
-    verbose_enter();
+    verbose_enter_scroll();
     smsg(_("Calling shell to execute: \"%s\""), tv_get_string_buf(argvars, buf));
-    smsg(_("")); // TODO: why do I need to add this?
-    ui_linefeed();
-    verbose_leave();
+    msg_puts("\n\n");
+    verbose_leave_scroll();
   }
 
   if (do_profiling == PROF_YES) {

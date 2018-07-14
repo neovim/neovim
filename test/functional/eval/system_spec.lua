@@ -206,6 +206,7 @@ describe('system()', function()
     it('prints verbose information', function()
       feed(':4verbose echo system("echo hi")<cr>')
       screen:expect([[
+                                                             |
         ~                                                    |
         ~                                                    |
         ~                                                    |
@@ -213,8 +214,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        ~                                                    |
-        ~                                                    |
+                                                             |
         Calling shell to execute: "echo hi"                  |
                                                              |
         hi                                                   |
