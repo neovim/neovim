@@ -11,7 +11,7 @@ local log = require('lsp.log')
 local util = require('neovim.util')
 
 
-local autocmd_table = {
+local default_autocmds = {
   ['textDocument/didOpen'] = {
     -- After initialization, make sure to tell the LSP that we opened the file
     {'User', 'LSP/initialize/post'},
@@ -79,7 +79,14 @@ local lsp_doautocmd = function(method, stage)
   doautocmd('User LSP/' .. method_name .. '/' .. stage)
 end
 
-local export_autocmds = function()
+--- Export the autocmds from the table
+-- @param autocmd_table (table) - Optional table to give the list of autocmds to generate.
+--                                  If not passed in, then we will use the default tables.
+local export_autocmds = function(autocmd_table)
+  if util.table.is_empty(autocmd_table) then
+    autocmd_table = default_autocmds
+  end
+
   local autocmd_string
   for request_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
@@ -104,6 +111,17 @@ local export_autocmds = function()
   end
 end
 
+local nvim_enable_autocmd = function(request_name, autocmd_event)
+  local command = string.format(
+    [[autocmd %s nested lua require('lsp.plugin').client.request('%s')]],
+    autocmd_event,
+    request_name
+  )
+
+  vim.api.nvim_command(command)
+end
+
+
 -- Allow users to configure what autocmds are associated with messages
 local reset_method = function()
   -- TODO(tjdevries)
@@ -114,7 +132,7 @@ local set_method = function()
 end
 
 return {
-  default_autocmd_table = autocmd_table,
+  default_autocmds = default_autocmds,
   export_autocmds = export_autocmds,
   lsp_doautocmd = lsp_doautocmd,
   reset_method = reset_method,
