@@ -60,12 +60,14 @@ NEW_TESTS ?= \
 	    test_fnameescape.res \
 	    test_fold.res \
 	    test_ga.res \
+	    test_getvar.res \
 	    test_glob2regpat.res \
 	    test_gf.res \
 	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
 	    test_hide.res \
+	    test_highlight.res \
 	    test_history.res \
 	    test_hlsearch.res \
 	    test_increment.res \

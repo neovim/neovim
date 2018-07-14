@@ -417,4 +417,42 @@ func Test_window_newtab()
 endfunc
 
 
+" Tests for adjusting window and contents
+func GetScreenStr(row)
+   let str = ""
+   for c in range(1,3)
+       let str .= nr2char(screenchar(a:row, c))
+   endfor
+   return str
+endfunc
+
+func Test_window_contents()
+  enew! | only | new
+  call setline(1, range(1,256))
+
+  exe "norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3=GetScreenStr(1)
+  wincmd p
+  call assert_equal(1, line("w0"))
+  call assert_equal('1  ', s3)
+
+  exe "norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3=GetScreenStr(1)
+  wincmd p
+  call assert_equal(50, line("w0"))
+  call assert_equal('50 ', s3)
+
+  exe "norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3=GetScreenStr(1)
+  wincmd p
+  call assert_equal(59, line("w0"))
+  call assert_equal('59 ', s3)
+
+  bwipeout!
+  call test_garbagecollect_now()
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
