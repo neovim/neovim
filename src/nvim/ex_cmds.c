@@ -1598,6 +1598,7 @@ void ex_file(exarg_T *eap)
     // print full file name if :cd used
     fileinfo(false, false, eap->forceit);
   }
+  redraw_tabline = true;
 }
 
 /*
