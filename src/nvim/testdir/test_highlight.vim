@@ -59,6 +59,16 @@ function! HiCursorLine()
   return [hiCursorLine, hi_ul, hi_bg]
 endfunction
 
+function! Check_lcs_eol_attrs(attrs, row, col)
+  let save_lcs = &lcs
+  set list
+
+  call assert_equal(a:attrs, ScreenAttrs(a:row, a:col)[0])
+
+  set nolist
+  let &lcs = save_lcs
+endfunction
+
 func Test_highlight_eol_with_cursorline()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
 
@@ -83,7 +93,8 @@ func Test_highlight_eol_with_cursorline()
   " expected:
   " 'abcd      '
   "  ^^^^         underline
-  "      ^^^^^^   'Search' highlight with underline
+  "      ^        'Search' highlight with underline
+  "       ^^^^^   underline
   let attrs = ScreenAttrs(1, 10)[0]
   call assert_equal(repeat([attrs[0]], 4), attrs[0:3])
   call assert_equal([attrs[4]] + repeat([attrs[5]], 5), attrs[4:9])
@@ -91,6 +102,7 @@ func Test_highlight_eol_with_cursorline()
   call assert_notequal(attrs[4], attrs[5])
   call assert_notequal(attrs0[0], attrs[0])
   call assert_notequal(attrs0[4], attrs[4])
+  call Check_lcs_eol_attrs(attrs, 1, 10)
 
   if IsColorable()
     " bg-color
@@ -109,6 +121,7 @@ func Test_highlight_eol_with_cursorline()
     call assert_notequal(attrs[4], attrs[5])
     call assert_notequal(attrs0[0], attrs[0])
     call assert_notequal(attrs0[5], attrs[5])
+    call Check_lcs_eol_attrs(attrs, 1, 10)
   endif
 
   call CloseWindow()
@@ -168,6 +181,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   call assert_notequal(attrs[5], attrs[6])
   call assert_notequal(attrs0[0], attrs[0])
   call assert_notequal(attrs0[4], attrs[4])
+  call Check_lcs_eol_attrs(attrs, 1, 15)
 
   if IsColorable()
     " bg-color
@@ -187,6 +201,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
     call assert_notequal(attrs[5], attrs[6])
     call assert_notequal(attrs0[0], attrs[0])
     call assert_equal(attrs0[4], attrs[4])
+    call Check_lcs_eol_attrs(attrs, 1, 15)
   endif
 
   call CloseWindow()
@@ -223,6 +238,7 @@ func Test_highlight_eol_with_cursorline_rightleft()
   call assert_notequal(attrs[4], attrs[5])
   call assert_notequal(attrs0[9], attrs[9])
   call assert_notequal(attrs0[5], attrs[5])
+  call Check_lcs_eol_attrs(attrs, 1, 10)
 
   if IsColorable()
     " bg-color
@@ -241,6 +257,7 @@ func Test_highlight_eol_with_cursorline_rightleft()
     call assert_notequal(attrs[5], attrs[4])
     call assert_notequal(attrs0[9], attrs[9])
     call assert_notequal(attrs0[4], attrs[4])
+    call Check_lcs_eol_attrs(attrs, 1, 10)
   endif
 
   call CloseWindow()
@@ -274,6 +291,7 @@ func Test_highlight_eol_with_cursorline_linewrap()
   call assert_notequal(attrs[4], attrs[5])
   call assert_notequal(attrs0[0], attrs[0])
   call assert_notequal(attrs0[4], attrs[4])
+  call Check_lcs_eol_attrs(attrs, 5, 10)
 
   if IsColorable()
     " bg-color
@@ -292,6 +310,7 @@ func Test_highlight_eol_with_cursorline_linewrap()
     call assert_notequal(attrs[4], attrs[5])
     call assert_notequal(attrs0[0], attrs[0])
     call assert_notequal(attrs0[5], attrs[5])
+    call Check_lcs_eol_attrs(attrs, 5, 10)
   endif
 
   setlocal nocursorline nowrap
@@ -314,6 +333,7 @@ func Test_highlight_eol_with_cursorline_linewrap()
   call assert_notequal(attrs[6], attrs[7])
   call assert_notequal(attrs0[0], attrs[0])
   call assert_notequal(attrs0[6], attrs[6])
+  call Check_lcs_eol_attrs(attrs, 1, 10)
 
   if IsColorable()
     " bg-color
@@ -332,6 +352,7 @@ func Test_highlight_eol_with_cursorline_linewrap()
     call assert_notequal(attrs[6], attrs[7])
     call assert_notequal(attrs0[0], attrs[0])
     call assert_notequal(attrs0[7], attrs[7])
+    call Check_lcs_eol_attrs(attrs, 1, 10)
   endif
 
   call CloseWindow()
@@ -370,6 +391,7 @@ func Test_highlight_eol_with_cursorline_sign()
   call assert_notequal(attrs[6], attrs[7])
   call assert_notequal(attrs0[2], attrs[2])
   call assert_notequal(attrs0[6], attrs[6])
+  call Check_lcs_eol_attrs(attrs, 1, 10)
 
   if IsColorable()
     " bg-color
@@ -389,6 +411,7 @@ func Test_highlight_eol_with_cursorline_sign()
     call assert_notequal(attrs[6], attrs[7])
     call assert_notequal(attrs0[2], attrs[2])
     call assert_notequal(attrs0[7], attrs[7])
+    call Check_lcs_eol_attrs(attrs, 1, 10)
   endif
 
   sign unplace 1
@@ -431,6 +454,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
   call assert_notequal(attrs0[2], attrs[2])
   call assert_notequal(attrs0[3], attrs[3])
   call assert_notequal(attrs0[6], attrs[6])
+  call Check_lcs_eol_attrs(attrs, 2, 10)
 
   if IsColorable()
     " bg-color
@@ -455,6 +479,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
     call assert_notequal(attrs0[2], attrs[2])
     call assert_notequal(attrs0[3], attrs[3])
     call assert_notequal(attrs0[7], attrs[7])
+    call Check_lcs_eol_attrs(attrs, 2, 10)
   endif
 
   call CloseWindow()
@@ -484,6 +509,7 @@ func Test_highlight_eol_on_diff()
   call assert_notequal(attrs[0], attrs[2])
   call assert_notequal(attrs[0], attrs[6])
   call assert_notequal(attrs[2], attrs[6])
+  call Check_lcs_eol_attrs(attrs, 1, 10)
 
   bwipe!
   diffoff

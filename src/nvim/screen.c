@@ -3027,7 +3027,9 @@ win_line (
             cur = cur->next;
         }
         // Only highlight one character after the last column.
-        if (*ptr == NUL && did_line_attr >= 1) {
+        if (*ptr == NUL
+            && (did_line_attr >= 1
+                || (wp->w_p_list && lcs_eol_one == -1))) {
           search_attr = 0;
         }
       }
