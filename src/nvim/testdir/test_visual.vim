@@ -129,6 +129,8 @@ endfunc
 " Test Virtual replace mode.
 func Test_virtual_replace()
   throw 'skipped: TODO: '
+  let save_t_kD = &t_kD
+  let save_t_kb = &t_kb
   exe "set t_kD=\<C-V>x7f t_kb=\<C-V>x08"
   enew!
   exe "normal a\nabcdefghi\njk\tlmn\n    opq	rst\n\<C-D>uvwxyz"
@@ -159,7 +161,9 @@ func Test_virtual_replace()
   call assert_equal(['AB......CDEFGHI.Jkl',
 	      \ 'AB	IJKLMNO	QRst'], getline(12, 13))
   enew!
-  set noai bs&vim t_kD&vim t_kb&vim
+  set noai bs&vim
+  let &t_kD = save_t_kD
+  let &t_kb = save_t_kb
 endfunc
 
 " Test Virtual replace mode.
