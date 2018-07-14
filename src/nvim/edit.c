@@ -7486,6 +7486,13 @@ static void ins_del(void)
       vim_beep(BO_BS);
     } else {
       curwin->w_cursor.col = temp;
+      // Adjust orig_line_count in case more lines have been deleted than
+      // have been added. That makes sure, that open_line() later
+      // can access all buffer lines correctly
+      if (State & VREPLACE_FLAG
+          && orig_line_count > curbuf->b_ml.ml_line_count) {
+        orig_line_count = curbuf->b_ml.ml_line_count;
+      }
     }
   } else if (del_char(false) == FAIL) {  // delete char under cursor
     vim_beep(BO_BS);

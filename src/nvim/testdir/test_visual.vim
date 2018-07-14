@@ -159,6 +159,61 @@ func Test_virtual_replace()
   call assert_equal(['AB......CDEFGHI.Jkl',
 	      \ 'AB	IJKLMNO	QRst'], getline(12, 13))
   enew!
+  set noai bs&vim t_kD&vim t_kb&vim
+endfunc
+
+" Test Virtual replace mode.
+func Test_virtual_replace2()
+  enew!
+  set bs=2
+  exe "normal a\nabcdefghi\njk\tlmn\n    opq	rst\n\<C-D>uvwxyz"
+  call cursor(1,1)
+  " Test 1: Test that del deletes the newline
+  exe "normal gR0\<del> 1\nA\nBCDEFGHIJ\n\tKL\nMNO\nPQR"
+  call assert_equal(['0 1',
+	      \ 'A',
+	      \ 'BCDEFGHIJ',
+	      \ '	KL',
+	      \ 'MNO',
+	      \ 'PQR',
+	      \ ], getline(1, 6))
+  " Test 2:
+  " a newline is not deleted, if no newline has been added in virtual replace mode
+  %d_
+  call setline(1, ['abcd', 'efgh', 'ijkl'])
+  call cursor(2,1)
+  exe "norm! gR1234\<cr>5\<bs>\<bs>\<bs>"
+  call assert_equal(['abcd',
+        \ '123h',
+        \ 'ijkl'], getline(1, '$'))
+  " Test 3:
+  " a newline is deleted, if a newline has been inserted before in virtual replace mode
+  %d_
+  call setline(1, ['abcd', 'efgh', 'ijkl'])
+  call cursor(2,1)
+  exe "norm! gR1234\<cr>\<cr>56\<bs>\<bs>\<bs>"
+  call assert_equal(['abcd',
+        \ '1234',
+        \ 'ijkl'], getline(1, '$'))
+  " Test 4:
+  " delete add a newline, delete it, add it again and check undo
+  %d_
+  call setline(1, ['abcd', 'efgh', 'ijkl'])
+  call cursor(2,1)
+  " break undo sequence explicitly
+  let &ul = &ul
+  exe "norm! gR1234\<cr>\<bs>\<del>56\<cr>"
+  let &ul = &ul
+  call assert_equal(['abcd',
+        \ '123456',
+        \ ''], getline(1, '$'))
+  norm! u
+  call assert_equal(['abcd',
+        \ 'efgh',
+        \ 'ijkl'], getline(1, '$'))
+  " clean up
+  %d_
+  set bs&vim
 endfunc
 
 " Test for Visual mode not being reset causing E315 error.
@@ -171,14 +226,14 @@ func TriggerTheProblem()
       exe "normal \<Esc>"
   catch /^Vim\%((\a\+)\)\=:E315/
       echom 'Snap! E315 error!'
-      let g:msg='Snap! E315 error!'
+      let g:msg = 'Snap! E315 error!'
   endtry
 endfunc
 
 func Test_visual_mode_reset()
   set belloff=all
   enew
-  let g:msg="Everything's fine."
+  let g:msg = "Everything's fine."
   enew
   setl buftype=nofile
   call append(line('$'), 'Delete this line.')
