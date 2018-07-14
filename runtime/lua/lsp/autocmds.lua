@@ -82,7 +82,7 @@ end
 --- Export the autocmds from the table
 -- @param autocmd_table (table) - Optional table to give the list of autocmds to generate.
 --                                  If not passed in, then we will use the default tables.
-local export_autocmds = function(autocmd_table)
+local export_autocmds = function(autocmd_table, autocmd_pattern)
   if util.table.is_empty(autocmd_table) then
     autocmd_table = default_autocmds
   end
@@ -90,27 +90,40 @@ local export_autocmds = function(autocmd_table)
   local autocmd_string
   for request_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
-      if type(autocmd_item) == 'string' then
-        autocmd_string = autocmd_item .. ' *'
-      elseif type(autocmd_item == 'table') then
-        autocmd_string = table.concat(autocmd_item, ' ')
-      else
-        -- TODO: Error out here or something
-        autocmd_string = ''
-      end
+      autocmd_string = get_autocmd_event_name(autocmd_item, autocmd_pattern)
 
       if #autocmd_string > 0 then
-        vim.api.nvim_command(
-          string.format(
-            [[autocmd %s nested lua require('lsp.plugin').client.request_autocmd('%s')]],
-            autocmd_string,
-            request_name)
-          )
+        nvim_enable_autocmd(request_name, autocmd_string)
       end
     end
   end
 end
 
+
+--- Get the event string
+-- @param autocmd_item (string)     -
+-- @param autocmd_pattern (string)  - (Optional) See |autocmd-patterns|. If not specified, '*'
+local get_autocmd_event_name = function(autocmd_item, autocmd_pattern)
+  if autocmd_pattern == nil or autocmd_pattern == '' then
+    autocmd_pattern = '*'
+  end
+
+  local autocmd_string
+  if type(autocmd_item) == 'string' then
+    autocmd_string = autocmd_item .. autocmd_pattern
+  elseif type(autocmd_item == 'table') then
+    autocmd_string = table.concat(autocmd_item, ' ')
+  else
+    -- TODO: Error out here or something
+    autocmd_string = ''
+  end
+
+  return autocmd_string
+end
+
+--- Register an autocmd with neovim
+-- @param request_name (string) - Name of the request to register
+-- @param autocmd_event (string) - Native or User even that will fire this event
 local nvim_enable_autocmd = function(request_name, autocmd_event)
   local command = string.format(
     [[autocmd %s nested lua require('lsp.plugin').client.request('%s')]],

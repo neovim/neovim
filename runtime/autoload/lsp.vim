@@ -1,6 +1,8 @@
 let s:client_string = "require('lsp.plugin').client"
 
 let s:autocmds_initialized = get(s:, 'autocmds_initialized ', v:false)
+
+" TODO(tjdevries): Make these autocmds filetype / pattern matching specific
 function! s:initialize_autocmds() abort
   if s:autocmds_initialized
     return
