@@ -466,4 +466,28 @@ func Test_access_freed_mem()
   bwipe xxx
 endfunc
 
+func Test_visual_cleared_after_window_split()
+  new | only!
+  let smd_save = &showmode
+  set showmode
+  let ls_save = &laststatus
+  set laststatus=1
+  call setline(1, ['a', 'b', 'c', 'd', ''])
+  norm! G
+  exe "norm! kkvk"
+  redraw
+  exe "norm! \<C-W>v"
+  redraw
+  " check if '-- VISUAL --' disappeared from command line
+  let columns = range(1, &columns)
+  let cmdlinechars = map(columns, 'nr2char(screenchar(&lines, v:val))')
+  let cmdline = join(cmdlinechars, '')
+  let cmdline_ltrim = substitute(cmdline, '^\s*', "", "")
+  let mode_shown = substitute(cmdline_ltrim, '\s*$', "", "")
+  call assert_equal('', mode_shown)
+  let &showmode = smd_save
+  let &laststatus = ls_save
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

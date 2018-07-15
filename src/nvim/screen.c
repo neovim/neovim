@@ -5816,7 +5816,8 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
     // TODO(bfredl): The relevant caller should do this
     if (row == Rows - 1) {  // overwritten the command line
       redraw_cmdline = true;
-      if (c1 == ' ' && c2 == ' ') {
+      if (start_col == 0 && end_col == Columns
+          && c1 == ' ' && c2 == ' ' && attr == 0) {
         clear_cmdline = false;  // command line has been cleared
       }
       if (start_col == 0) {
