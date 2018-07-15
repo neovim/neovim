@@ -17,7 +17,7 @@ func Test_window_cmd_ls0_with_split()
 endfunc
 
 func Test_window_cmd_cmdwin_with_vsp()
-  let efmt='Expected 0 but got %d (in ls=%d, %s window)'
+  let efmt = 'Expected 0 but got %d (in ls=%d, %s window)'
   for v in range(0, 2)
     exec "set ls=" . v
     vsplit
@@ -432,21 +432,21 @@ func Test_window_contents()
 
   exe "norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"
   redraw
-  let s3=GetScreenStr(1)
+  let s3 = GetScreenStr(1)
   wincmd p
   call assert_equal(1, line("w0"))
   call assert_equal('1  ', s3)
 
   exe "norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"
   redraw
-  let s3=GetScreenStr(1)
+  let s3 = GetScreenStr(1)
   wincmd p
   call assert_equal(50, line("w0"))
   call assert_equal('50 ', s3)
 
   exe "norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"
   redraw
-  let s3=GetScreenStr(1)
+  let s3 = GetScreenStr(1)
   wincmd p
   call assert_equal(59, line("w0"))
   call assert_equal('59 ', s3)
@@ -488,6 +488,21 @@ func Test_visual_cleared_after_window_split()
   let &showmode = smd_save
   let &laststatus = ls_save
   bwipe!
+endfunc
+
+func Test_winrestcmd()
+  2split
+  3vsplit
+  let a = winrestcmd()
+  call assert_equal(2, winheight(0))
+  call assert_equal(3, winwidth(0))
+  wincmd =
+  call assert_notequal(2, winheight(0))
+  call assert_notequal(3, winwidth(0))
+  exe a
+  call assert_equal(2, winheight(0))
+  call assert_equal(3, winwidth(0))
+  only
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
