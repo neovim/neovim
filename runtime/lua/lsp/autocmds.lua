@@ -10,6 +10,14 @@
 local log = require('lsp.log')
 local util = require('neovim.util')
 
+local Enum = require('neovim.meta').Enum
+
+local AUTOCMD = Enum({
+  AuGroup = 'LanguageServerProtocol',
+})
+
+
+
 
 local default_autocmds = {
   ['textDocument/didOpen'] = {
@@ -61,45 +69,6 @@ local doautocmd = function(autocmd)
   return vim.api.nvim_command('silent doautocmd ' .. autocmd)
 end
 
-local lsp_doautocmd = function(method, stage)
-  if not accepted_autocomand_postfixes[stage] then
-    return nil
-  end
-
-  local method_name
-  if type(method) == 'string' then
-    method_name = method
-  elseif type(method) == 'table' then
-    method_name = table.concat(method, '/')
-  else
-    log.info('Unknown method type: ' .. util.tostring(method))
-    method_name = 'UNKNOWN'
-  end
-
-  doautocmd('User LSP/' .. method_name .. '/' .. stage)
-end
-
---- Export the autocmds from the table
--- @param autocmd_table (table) - Optional table to give the list of autocmds to generate.
---                                  If not passed in, then we will use the default tables.
-local export_autocmds = function(autocmd_table, autocmd_pattern)
-  if util.table.is_empty(autocmd_table) then
-    autocmd_table = default_autocmds
-  end
-
-  local autocmd_string
-  for request_name, autocmd_list in pairs(autocmd_table) do
-    for _, autocmd_item in ipairs(autocmd_list) do
-      autocmd_string = get_autocmd_event_name(autocmd_item, autocmd_pattern)
-
-      if #autocmd_string > 0 then
-        nvim_enable_autocmd(request_name, autocmd_string)
-      end
-    end
-  end
-end
-
-
 --- Get the event string
 -- @param autocmd_item (string)     -
 -- @param autocmd_pattern (string)  - (Optional) See |autocmd-patterns|. If not specified, '*'
@@ -122,9 +91,16 @@ local get_autocmd_event_name = function(autocmd_item, autocmd_pattern)
 end
 
 --- Register an autocmd with neovim
--- @param request_name (string) - Name of the request to register
--- @param autocmd_event (string) - Native or User even that will fire this event
-local nvim_enable_autocmd = function(request_name, autocmd_event)
+-- @param request_name (string)         - Name of the request to register
+-- @param autocmd_item (string|table)   -
+-- @param autocmd_pattern (string)      - (Optional) See |autocmd-patterns|. If not specified, '*'
+local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern)
+  local autocmd_event = get_autocmd_event_name(autocmd_item, autocmd_pattern)
+
+  if #autocmd_event == 0 then
+    return
+  end
+
   local command = string.format(
     [[autocmd %s nested lua require('lsp.plugin').client.request('%s')]],
     autocmd_event,
@@ -132,22 +108,75 @@ local nvim_enable_autocmd = function(request_name, autocmd_event)
   )
 
   vim.api.nvim_command(command)
+
+  if util.table.is_empty(default_autocmds[request_name]) then
+    return
+  end
+
+  if not util.table.is_empty(default_autocmds[request_name]) then
+    table.insert(default_autocmds[request_name], autocmd_item)
+  end
+end
+
+--- Export the autocmds from the table
+-- @param autocmd_table (table)     - (Optional) Table to give the list of autocmds to generate.
+--                                      If not passed in, then we will use the default tables.
+-- @param autocmd_pattern (string)  - (Optional) See |autocmd-patterns|. If not specified, '*'
+local export_autocmds = function(autocmd_table, autocmd_pattern)
+  if util.table.is_empty(autocmd_table) then
+    autocmd_table = default_autocmds
+  end
+
+  for request_name, autocmd_list in pairs(autocmd_table) do
+    for _, autocmd_item in ipairs(autocmd_list) do
+      nvim_enable_autocmd(request_name, autocmd_item, autocmd_pattern)
+    end
+  end
+end
+
+local lsp_doautocmd = function(method, stage)
+  if not accepted_autocomand_postfixes[stage] then
+    return nil
+  end
+
+  local method_name
+  if type(method) == 'string' then
+    method_name = method
+  elseif type(method) == 'table' then
+    method_name = table.concat(method, '/')
+  else
+    log.info('Unknown method type: ' .. util.tostring(method))
+    method_name = 'UNKNOWN'
+  end
+
+  doautocmd('User LSP/' .. method_name .. '/' .. stage)
 end
 
 
--- Allow users to configure what autocmds are associated with messages
-local reset_method = function()
-  -- TODO(tjdevries)
+local __has_initialized = false
+local initialize_autocmds = function()
+  if __has_initialized then
+    return
+  end
+
+  vim.api.nvim_command('augroup ' .. AUTOCMD.AuGroup)
+  vim.api.nvim_command('autocmd!')
+
+  export_autocmds(default_autocmds)
+
+  vim.api.nvim_command('augroup END')
+
 end
 
-local set_method = function()
-  -- TODO(tjdevries)
-end
+
+
 
 return {
   default_autocmds = default_autocmds,
   export_autocmds = export_autocmds,
   lsp_doautocmd = lsp_doautocmd,
-  reset_method = reset_method,
-  set_method = set_method,
+  get_autocmd_event_name = get_autocmd_event_name,
+  nvim_enable_autocmd = nvim_enable_autocmd,
+
+  initialize_autocmds = initialize_autocmds,
 }

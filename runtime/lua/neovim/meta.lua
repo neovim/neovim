@@ -9,6 +9,7 @@ meta.Enum = {
   __index = function(t, k)
     error("attempt to get unknown enum " .. k .. "from " .. tostring(t), 2)
   end,
+
   __newindex = function(t, k, v)
     error(
       string.format("attempt to update enum table with %s, %s, %s", t, k, v),

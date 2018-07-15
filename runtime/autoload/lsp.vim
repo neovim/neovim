@@ -1,24 +1,7 @@
 let s:client_string = "require('lsp.plugin').client"
 
-let s:autocmds_initialized = get(s:, 'autocmds_initialized ', v:false)
-
-" TODO(tjdevries): Make these autocmds filetype / pattern matching specific
-function! s:initialize_autocmds() abort
-  if s:autocmds_initialized
-    return
-  endif
-
-  let s:autocmds_initialized = v:true
-
-  augroup LanguageServerProtocol
-    autocmd!
-    lua require("lsp.autocmds").export_autocmds()
-  augroup END
-
-endfunction
-
 function! lsp#start(...) abort
-  call s:initialize_autocmds()
+  lua require('lsp.autocmds').initialize_autocmds()
 
   let start_filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
@@ -79,8 +62,6 @@ endfunction
 function! lsp#handle(request, data, ...) abort abort
   let file_type = get(a:000, 0, &filetype)
   let default_only = get(a:000, 1, v:true)
-
-  " Gets the default callback,
   " and then calls it with the provided data
   return luaeval(s:client_string . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
         \ 'filetype': file_type,
