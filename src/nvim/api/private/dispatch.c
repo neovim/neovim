@@ -40,10 +40,8 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
     map_get(String, MsgpackRpcRequestHandler)(methods, m);
 
   if (!rv.fn) {
-    String method_name = m.size > 0 ?
-      m : cstr_as_string("<empty>");
     api_set_error(error, kErrorTypeException, "Invalid method: %s",
-                  method_name);
+                  m.size > 0 ? m.data : "<empty>");
   }
   return rv;
 }
