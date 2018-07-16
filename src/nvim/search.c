@@ -1549,36 +1549,31 @@ static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 
 pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 {
-  static pos_T pos;                     /* current search position */
-  int findc = 0;                        /* matching brace */
-  int c;
-  int count = 0;                        /* cumulative number of braces */
-  int backwards = false;                /* init for gcc */
-  int raw_string = false;               /* search for raw string */
-  int inquote = false;                  /* true when inside quotes */
-  char_u      *linep;                   /* pointer to current line */
+  static pos_T pos;                     // current search position
+  int findc = 0;                        // matching brace
+  int count = 0;                        // cumulative number of braces
+  int backwards = false;                // init for gcc
+  bool raw_string = false;              // search for raw string
+  bool inquote = false;                 // true when inside quotes
   char_u      *ptr;
-  int do_quotes;                        /* check for quotes in current line */
-  int at_start;                         /* do_quotes value at start position */
-  int hash_dir = 0;                     /* Direction searched for # things */
-  int comment_dir = 0;                  /* Direction searched for comments */
-  pos_T match_pos;                      /* Where last slash-star was found */
-  int traveled = 0;                     /* how far we've searched so far */
-  int ignore_cend = FALSE;              /* ignore comment end */
-  int cpo_match;                        /* vi compatible matching */
-  int cpo_bsl;                          /* don't recognize backslashes */
-  int match_escaped = 0;                /* search for escaped match */
-  int dir;                              /* Direction to search */
-  int comment_col = MAXCOL;             /* start of / / comment */
-  int lispcomm = FALSE;                 /* inside of Lisp-style comment */
-  int lisp = curbuf->b_p_lisp;           /* engage Lisp-specific hacks ;) */
+  int hash_dir = 0;                     // Direction searched for # things
+  int comment_dir = 0;                  // Direction searched for comments
+  int traveled = 0;                     // how far we've searched so far
+  bool ignore_cend = false;             // ignore comment end
+  int match_escaped = 0;                // search for escaped match
+  int dir;                              // Direction to search
+  int comment_col = MAXCOL;             // start of / / comment
+  bool lispcomm = false;                // inside of Lisp-style comment
+  bool lisp = curbuf->b_p_lisp;         // engage Lisp-specific hacks ;)
 
   pos = curwin->w_cursor;
   pos.coladd = 0;
-  linep = ml_get(pos.lnum);
+  char_u *linep = ml_get(pos.lnum);     // pointer to current line
 
-  cpo_match = (vim_strchr(p_cpo, CPO_MATCH) != NULL);
-  cpo_bsl = (vim_strchr(p_cpo, CPO_MATCHBSL) != NULL);
+  // vi compatible matching
+  bool cpo_match = (vim_strchr(p_cpo, CPO_MATCH) != NULL);
+  // don't recognize backslashes
+  bool cpo_bsl = (vim_strchr(p_cpo, CPO_MATCHBSL) != NULL);
 
   /* Direction to search when initc is '/', '*' or '#' */
   if (flags & FM_BACKWARD)
@@ -1747,13 +1742,16 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     }
   }
 
-  /* This is just guessing: when 'rightleft' is set, search for a matching
-   * paren/brace in the other direction. */
-  if (curwin->w_p_rl && vim_strchr((char_u *)"()[]{}<>", initc) != NULL)
+  // This is just guessing: when 'rightleft' is set, search for a matching
+  // paren/brace in the other direction.
+  if (curwin->w_p_rl && vim_strchr((char_u *)"()[]{}<>", initc) != NULL) {
     backwards = !backwards;
+  }
 
-  do_quotes = -1;
-  TriState start_in_quotes = kNone;
+  int do_quotes = -1;                 // check for quotes in current line
+  int at_start;                       // do_quotes value at start position
+  TriState start_in_quotes = kNone;   // start position is in quotes
+  pos_T match_pos;                    // Where last slash-star was found
   clearpos(&match_pos);
 
   /* backward search: Check if this line contains a single-line comment */
@@ -1761,8 +1759,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       || lisp
       )
     comment_col = check_linecomment(linep);
-  if (lisp && comment_col != MAXCOL && pos.col > (colnr_T)comment_col)
-    lispcomm = TRUE;        /* find match inside this comment */
+  if (lisp && comment_col != MAXCOL && pos.col > (colnr_T)comment_col) {
+    lispcomm = true;        // find match inside this comment
+  }
   while (!got_int) {
     /*
      * Go to the next position, forward or backward. We could use
@@ -1924,15 +1923,15 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
        * one for a '\' at the end.
        */
       if (!do_quotes) {
-        inquote = FALSE;
+        inquote = false;
         if (ptr[-1] == '\\') {
           do_quotes = 1;
           if (start_in_quotes == kNone) {
             // Do we need to use at_start here?
-            inquote = TRUE;
+            inquote = true;
             start_in_quotes = kTrue;
           } else if (backwards) {
-            inquote = TRUE;
+            inquote = true;
           }
         }
         if (pos.lnum > 1) {
@@ -1945,7 +1944,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
                 start_in_quotes = kTrue;
               }
             } else if (!backwards) {
-              inquote = TRUE;
+              inquote = true;
             }
           }
 
@@ -1969,12 +1968,12 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
      *   inquote if the number of quotes in a line is even, unless this
      *   line or the previous one ends in a '\'.  Complicated, isn't it?
      */
-    c = PTR2CHAR(linep + pos.col);
+    const int c = PTR2CHAR(linep + pos.col);
     switch (c) {
     case NUL:
       /* at end of line without trailing backslash, reset inquote */
       if (pos.col == 0 || linep[pos.col - 1] != '\\') {
-        inquote = FALSE;
+        inquote = false;
         start_in_quotes = kFalse;
       }
       break;
