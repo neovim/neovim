@@ -833,12 +833,13 @@ static void win_update(win_T *wp)
       type = VALID;
   }
 
-  /* Trick: we want to avoid clearing the screen twice.  screenclear() will
-   * set "screen_cleared" to TRUE.  The special value MAYBE (which is still
-   * non-zero and thus not FALSE) will indicate that screenclear() was not
-   * called. */
-  if (screen_cleared)
-    screen_cleared = MAYBE;
+  // Trick: we want to avoid clearing the screen twice.  screenclear() will
+  // set "screen_cleared" to kTrue.  The special value kNone (which is still
+  // non-zero and thus not kFalse) will indicate that screenclear() was not
+  // called.
+  if (screen_cleared) {
+    screen_cleared = kNone;
+  }
 
   /*
    * If there are no changes on the screen that require a complete redraw,
@@ -999,14 +1000,16 @@ static void win_update(win_T *wp)
     if (mid_start == 0) {
       mid_end = wp->w_height;
       if (ONE_WINDOW) {
-        /* Clear the screen when it was not done by win_del_lines() or
-         * win_ins_lines() above, "screen_cleared" is FALSE or MAYBE
-         * then. */
-        if (screen_cleared != TRUE)
+        // Clear the screen when it was not done by win_del_lines() or
+        // win_ins_lines() above, "screen_cleared" is kFalse or kNone
+        // then.
+        if (screen_cleared != kTrue) {
           screenclear();
-        /* The screen was cleared, redraw the tab pages line. */
-        if (redraw_tabline)
+        }
+        // The screen was cleared, redraw the tab pages line.
+        if (redraw_tabline) {
           draw_tabline();
+        }
       }
     }
 
@@ -1014,8 +1017,9 @@ static void win_update(win_T *wp)
      * cleared (only happens for the first window) or when screenclear()
      * was called directly above, "must_redraw" will have been set to
      * NOT_VALID, need to reset it here to avoid redrawing twice. */
-    if (screen_cleared == TRUE)
+    if (screen_cleared == kTrue) {
       must_redraw = 0;
+    }
   } else {
     /* Not VALID or INVERTED: redraw all lines. */
     mid_start = 0;
@@ -6068,7 +6072,7 @@ static void screenclear2(void)
   ui_call_grid_clear(1);  // clear the display
   clear_cmdline = false;
   mode_displayed = false;
-  screen_cleared = true;  // can use contents of ScreenLines now
+  screen_cleared = kTrue;   // can use contents of ScreenLines now
 
   win_rest_invalid(firstwin);
   redraw_cmdline = TRUE;

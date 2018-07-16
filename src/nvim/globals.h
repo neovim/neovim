@@ -191,7 +191,7 @@ EXTERN int cmdline_star INIT(= FALSE);          /* cmdline is crypted */
 
 EXTERN int exec_from_reg INIT(= FALSE);         /* executing register */
 
-EXTERN int screen_cleared INIT(= FALSE);        /* screen has been cleared */
+EXTERN TriState screen_cleared INIT(= kFalse);  // screen has been cleared
 
 /*
  * When '$' is included in 'cpoptions' option set:
