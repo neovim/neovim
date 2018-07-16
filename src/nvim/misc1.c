@@ -1240,10 +1240,10 @@ plines_win_nofill (
   if (wp->w_width == 0)
     return 1;
 
-  /* A folded lines is handled just like an empty line. */
-  /* NOTE: Caller must handle lines that are MAYBE folded. */
-  if (lineFolded(wp, lnum) == TRUE)
+  // A folded lines is handled just like an empty line.
+  if (lineFolded(wp, lnum)) {
     return 1;
+  }
 
   lines = plines_win_nofold(wp, lnum);
   if (winheight > 0 && lines > wp->w_height)
