@@ -1157,7 +1157,7 @@ static void set_option_value_err(char *key,
 }
 
 void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;
