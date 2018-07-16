@@ -2140,7 +2140,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
   linenr_T startlnum2 = startlnum;
   linenr_T firstlnum = flp->lnum;       /* first lnum we got */
   int i;
-  int finish = FALSE;
+  bool finish = false;
   linenr_T linecount = flp->wp->w_buffer->b_ml.ml_line_count - flp->off;
   int concat;
 
@@ -2309,8 +2309,9 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
                * found. */
               if (getlevel == foldlevelMarker
                   || getlevel == foldlevelExpr
-                  || getlevel == foldlevelSyntax)
-                finish = TRUE;
+                  || getlevel == foldlevelSyntax) {
+                finish = true;
+              }
             }
             if (fp->fd_top == startlnum && concat) {
               i = (int)(fp - (fold_T *)gap->ga_data);
@@ -2367,7 +2368,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
           if (getlevel == foldlevelMarker
               || getlevel == foldlevelExpr
               || getlevel == foldlevelSyntax) {
-            finish = TRUE;
+            finish = true;
           }
           fold_changed = TRUE;
           break;
@@ -2388,12 +2389,11 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
      * Check "fp" for safety.
      */
     if (lvl > level && fp != NULL) {
-      /*
-       * There is a nested fold, handle it recursively.
-       */
-      /* At least do one line (can happen when finish is TRUE). */
-      if (bot < flp->lnum)
+      // There is a nested fold, handle it recursively.
+      // At least do one line (can happen when finish is true).
+      if (bot < flp->lnum) {
         bot = flp->lnum;
+      }
 
       /* Line numbers in the nested fold are relative to the start of
        * this fold. */
