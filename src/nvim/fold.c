@@ -76,8 +76,8 @@ typedef struct {
                                    this line (copy of "end" of prev. line) */
 } fline_T;
 
-/* Flag is set when redrawing is needed. */
-static int fold_changed;
+// Flag is set when redrawing is needed.
+static bool fold_changed;
 
 /* Function used by foldUpdateIEMSRecurse */
 typedef void (*LevelGetter)(fline_T *);
@@ -1928,12 +1928,13 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
     bot += diff_context;
   }
 
-  /* When deleting lines at the end of the buffer "top" can be past the end
-   * of the buffer. */
-  if (top > wp->w_buffer->b_ml.ml_line_count)
+  // When deleting lines at the end of the buffer "top" can be past the end
+  // of the buffer.
+  if (top > wp->w_buffer->b_ml.ml_line_count) {
     top = wp->w_buffer->b_ml.ml_line_count;
+  }
 
-  fold_changed = FALSE;
+  fold_changed = false;
   fline.wp = wp;
   fline.off = 0;
   fline.lvl = 0;
@@ -2336,9 +2337,9 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
              * to stop just above startlnum.  */
             fp->fd_len = startlnum - fp->fd_top;
             foldMarkAdjustRecurse(&fp->fd_nested,
-                (linenr_T)fp->fd_len, (linenr_T)MAXLNUM,
-                (linenr_T)MAXLNUM, 0L);
-            fold_changed = TRUE;
+                                  (linenr_T)fp->fd_len, (linenr_T)MAXLNUM,
+                                  (linenr_T)MAXLNUM, 0L);
+            fold_changed = true;
           }
         } else {
           /* Insert new fold.  Careful: ga_data may be NULL and it
@@ -2370,7 +2371,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
               || getlevel == foldlevelSyntax) {
             finish = true;
           }
-          fold_changed = TRUE;
+          fold_changed = true;
           break;
         }
       }
@@ -2456,7 +2457,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
   if (fp->fd_len < flp->lnum - fp->fd_top) {
     fp->fd_len = flp->lnum - fp->fd_top;
     fp->fd_small = kNone;
-    fold_changed = TRUE;
+    fold_changed = true;
   }
 
   /* Delete contained folds from the end of the last one found until where
@@ -2483,8 +2484,9 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
           foldSplit(gap, i, flp->lnum, bot);
           fp = (fold_T *)gap->ga_data + i;
         }
-      } else
+      } else {
         fp->fd_len = flp->lnum - fp->fd_top;
+      }
       fold_changed = true;
     }
   }
@@ -2503,7 +2505,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
             (linenr_T)MAXLNUM, (long)(fp2->fd_top - flp->lnum));
         fp2->fd_len -= flp->lnum - fp2->fd_top;
         fp2->fd_top = flp->lnum;
-        fold_changed = TRUE;
+        fold_changed = true;
       }
 
       if (lvl >= level) {
@@ -2512,7 +2514,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
       }
       break;
     }
-    fold_changed = TRUE;
+    fold_changed = true;
     deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), TRUE);
   }
 
@@ -2587,7 +2589,7 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
     gap1->ga_len -= len;
   }
   fp->fd_len = top - fp->fd_top;
-  fold_changed = TRUE;
+  fold_changed = true;
 }
 
 /* foldRemove() {{{2 */
@@ -2850,7 +2852,7 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
 
   fp1->fd_len += fp2->fd_len;
   deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), TRUE);
-  fold_changed = TRUE;
+  fold_changed = true;
 }
 
 /* foldlevelIndent() {{{2 */
