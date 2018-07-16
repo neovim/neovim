@@ -3299,6 +3299,13 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
         error(filename, linenum, 'readability/bool', 4,
               'Use %s instead of %s.' % (token.lower(), token))
 
+    # Detect MAYBE
+    match = Search(r'\b(MAYBE)\b', line)
+    if match:
+        token = match.group(1)
+        error(filename, linenum, 'readability/bool', 4,
+              'Use kNONE from TriState instead of %s.' % token)
+
     # Detect preincrement/predecrement
     match = Match(r'^\s*(?:\+\+|--)', line)
     if match:
