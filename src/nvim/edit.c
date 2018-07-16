@@ -242,8 +242,8 @@ static int ins_need_undo;               /* call u_save() before inserting a
 
 static int did_add_space = FALSE;       /* auto_format() added an extra space
                                            under the cursor */
-static int dont_sync_undo = false;      // CTRL-G U prevents syncing undo
-                                        // for the next left/right cursor
+static TriState dont_sync_undo = kFalse;  // CTRL-G U prevents syncing undo
+                                          // for the next left/right cursor
 
 static linenr_T o_lnum = 0;
 
@@ -595,10 +595,10 @@ static int insert_check(VimState *state)
   s->lastc = s->c;   // remember previous char for CTRL-D
 
   // After using CTRL-G U the next cursor key will not break undo.
-  if (dont_sync_undo == MAYBE) {
-    dont_sync_undo = true;
+  if (dont_sync_undo == kNone) {
+    dont_sync_undo = kTrue;
   } else {
-    dont_sync_undo = false;
+    dont_sync_undo = kFalse;
   }
 
   return 1;
@@ -997,7 +997,7 @@ static int insert_handle_key(InsertState *s)
     if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
       ins_s_left();
     } else {
-      ins_left(dont_sync_undo == false);
+      ins_left(dont_sync_undo == kFalse);
     }
     break;
 
@@ -1010,7 +1010,7 @@ static int insert_handle_key(InsertState *s)
     if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
       ins_s_right();
     } else {
-      ins_right(dont_sync_undo == false);
+      ins_right(dont_sync_undo == kFalse);
     }
     break;
 
@@ -7174,7 +7174,7 @@ static void ins_ctrl_g(void)
   case 'U':
     // Allow one left/right cursor movement with the next char,
     // without breaking undo.
-    dont_sync_undo = MAYBE;
+    dont_sync_undo = kNone;
     break;
 
   /* Unknown CTRL-G command, reserved for future expansion. */
@@ -7954,7 +7954,7 @@ static void ins_left(bool end_change)
   } else {
     vim_beep(BO_CRSR);
   }
-  dont_sync_undo = false;
+  dont_sync_undo = kFalse;
 }
 
 static void ins_home(int c)
@@ -8039,7 +8039,7 @@ static void ins_right(bool end_change)
   } else {
     vim_beep(BO_CRSR);
   }
-  dont_sync_undo = false;
+  dont_sync_undo = kFalse;
 }
 
 static void ins_s_right(void)
