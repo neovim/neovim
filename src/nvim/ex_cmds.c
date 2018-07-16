@@ -5055,9 +5055,9 @@ void fix_help_buffer(void)
               if (IObuff[0] == '*'
                   && (s = vim_strchr(IObuff + 1, '*'))
                   != NULL) {
-                int this_utf = MAYBE;
-                /* Change tag definition to a
-                 * reference and remove <CR>/<NL>. */
+                TriState this_utf = kNone;
+                // Change tag definition to a
+                // reference and remove <CR>/<NL>.
                 IObuff[0] = '|';
                 *s = '|';
                 while (*s != NUL) {
@@ -5067,13 +5067,12 @@ void fix_help_buffer(void)
                    * above 127 is found and no
                    * illegal byte sequence is found.
                    */
-                  if (*s >= 0x80 && this_utf != FALSE) {
-                    int l;
-
-                    this_utf = TRUE;
-                    l = utf_ptr2len(s);
-                    if (l == 1)
-                      this_utf = FALSE;
+                  if (*s >= 0x80 && this_utf != kFalse) {
+                    this_utf = kTrue;
+                    const int l = utf_ptr2len(s);
+                    if (l == 1) {
+                      this_utf = kFalse;
+                    }
                     s += l - 1;
                   }
                   ++s;
@@ -5082,18 +5081,20 @@ void fix_help_buffer(void)
                  * conversion to the current
                  * 'encoding' may be required. */
                 vc.vc_type = CONV_NONE;
-                convert_setup(&vc, (char_u *)(
-                      this_utf == TRUE ? "utf-8"
-                      : "latin1"), p_enc);
-                if (vc.vc_type == CONV_NONE)
-                  /* No conversion needed. */
+                convert_setup(
+                    &vc,
+                    (char_u *)(this_utf == kTrue ? "utf-8" : "latin1"),
+                    p_enc);
+                if (vc.vc_type == CONV_NONE) {
+                  // No conversion needed.
                   cp = IObuff;
-                else {
-                  /* Do the conversion.  If it fails
-                   * use the unconverted text. */
+                } else {
+                  // Do the conversion.  If it fails
+                  // use the unconverted text.
                   cp = string_convert(&vc, IObuff, NULL);
-                  if (cp == NULL)
+                  if (cp == NULL) {
                     cp = IObuff;
+                  }
                 }
                 convert_setup(&vc, NULL, NULL);
 
@@ -5150,8 +5151,7 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   int fi;
   char_u      *s;
   char_u      *fname;
-  int utf8 = MAYBE;
-  int this_utf8;
+  TriState utf8 = kNone;
   int firstline;
   int mix = FALSE;              /* detected mixed encodings */
 
@@ -5220,26 +5220,26 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
     firstline = TRUE;
     while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
-        /* Detect utf-8 file by a non-ASCII char in the first line. */
-        this_utf8 = MAYBE;
-        for (s = IObuff; *s != NUL; ++s)
+        // Detect utf-8 file by a non-ASCII char in the first line.
+        TriState this_utf8 = kNone;
+        for (s = IObuff; *s != NUL; s++) {
           if (*s >= 0x80) {
-            int l;
-
-            this_utf8 = TRUE;
-            l = utf_ptr2len(s);
+            this_utf8 = kTrue;
+            const int l = utf_ptr2len(s);
             if (l == 1) {
-              /* Illegal UTF-8 byte sequence. */
-              this_utf8 = FALSE;
+              // Illegal UTF-8 byte sequence.
+              this_utf8 = kFalse;
               break;
             }
             s += l - 1;
           }
-        if (this_utf8 == MAYBE)             /* only ASCII characters found */
-          this_utf8 = FALSE;
-        if (utf8 == MAYBE)                  /* first file */
+        }
+        if (this_utf8 == kNone) {           // only ASCII characters found
+          this_utf8 = kFalse;
+        }
+        if (utf8 == kNone) {                // first file
           utf8 = this_utf8;
-        else if (utf8 != this_utf8) {
+        } else if (utf8 != this_utf8) {
           EMSG2(_(
                   "E670: Mix of help file encodings within a language: %s"),
               files[fi]);
@@ -5316,8 +5316,9 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
       }
     }
 
-    if (utf8 == TRUE)
+    if (utf8 == kTrue) {
       fprintf(fd_tags, "!_TAG_FILE_ENCODING\tutf-8\t//\n");
+    }
 
     /*
      * Write the tags into the file.
