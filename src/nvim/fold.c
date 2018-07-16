@@ -1303,13 +1303,12 @@ static void foldOpenNested(fold_T *fpr)
   }
 }
 
-/* deleteFoldEntry() {{{2 */
-/*
- * Delete fold "idx" from growarray "gap".
- * When "recursive" is TRUE also delete all the folds contained in it.
- * When "recursive" is FALSE contained folds are moved one level up.
- */
-static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
+// deleteFoldEntry() {{{2
+// Delete fold "idx" from growarray "gap".
+// When "recursive" is true also delete all the folds contained in it.
+// When "recursive" is false contained folds are moved one level up.
+static void deleteFoldEntry(garray_T *const gap, const int idx,
+                            const bool recursive)
 {
   fold_T      *fp;
   int i;
@@ -1427,14 +1426,15 @@ static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1, linenr_T line2,
       fp->fd_top += amount_after;
     } else {
       if (fp->fd_top >= top && last <= line2) {
-        /* 4. fold completely contained in range */
+        // 4. fold completely contained in range
         if (amount == MAXLNUM) {
-          /* Deleting lines: delete the fold completely */
-          deleteFoldEntry(gap, i, TRUE);
-          --i;              /* adjust index for deletion */
-          --fp;
-        } else
+          // Deleting lines: delete the fold completely
+          deleteFoldEntry(gap, i, true);
+          i--;              // adjust index for deletion
+          fp--;
+        } else {
           fp->fd_top += amount;
+        }
       } else {
         if (fp->fd_top < top) {
           /* 2 or 3: need to correct nested folds too */
@@ -2327,11 +2327,10 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
             break;
           }
           if (fp->fd_top >= startlnum) {
-            /* A fold that starts at or after startlnum and stops
-             * before the new fold must be deleted.  Continue
-             * looking for the next one. */
-            deleteFoldEntry(gap,
-                (int)(fp - (fold_T *)gap->ga_data), TRUE);
+            // A fold that starts at or after startlnum and stops
+            // before the new fold must be deleted.  Continue
+            // looking for the next one.
+            deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), true);
           } else {
             /* A fold has some lines above startlnum, truncate it
              * to stop just above startlnum.  */
@@ -2515,7 +2514,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
       break;
     }
     fold_changed = true;
-    deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), TRUE);
+    deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
   }
 
   /* Need to redraw the lines we inspected, which might be further down than
@@ -2851,7 +2850,7 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
   }
 
   fp1->fd_len += fp2->fd_len;
-  deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), TRUE);
+  deleteFoldEntry(gap, (int)(fp2 - (fold_T *)gap->ga_data), true);
   fold_changed = true;
 }
 
