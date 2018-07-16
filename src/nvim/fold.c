@@ -160,7 +160,7 @@ bool hasFoldingWin(
     foldinfo_T *infop             /* where to store fold info */
 )
 {
-  int had_folded = FALSE;
+  bool had_folded = false;
   linenr_T first = 0;
   linenr_T last = 0;
   linenr_T lnum_rel = lnum;
@@ -1506,26 +1506,27 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /*
  * Check if a fold is closed and update the info needed to check nested folds.
  */
-static int
-check_closed(
-    win_T *win,
-    fold_T *fp,
-    int *use_levelp,            // TRUE: outer fold had FD_LEVEL
-    int level,                  // folding depth
-    int *maybe_smallp,          // TRUE: outer this had fd_small == MAYBE
-    linenr_T lnum_off           // line number offset for fp->fd_top
+static bool check_closed(
+    win_T *const win,
+    fold_T *const fp,
+    int *const use_levelp,      // TRUE: outer fold had FD_LEVEL
+    const int level,            // folding depth
+    int *const maybe_smallp,    // TRUE: outer this had fd_small == kNone
+    const linenr_T lnum_off     // line number offset for fp->fd_top
 )
 {
-  int closed = FALSE;
+  bool closed = false;
 
   /* Check if this fold is closed.  If the flag is FD_LEVEL this
    * fold and all folds it contains depend on 'foldlevel'. */
   if (*use_levelp || fp->fd_flags == FD_LEVEL) {
     *use_levelp = TRUE;
-    if (level >= win->w_p_fdl)
-      closed = TRUE;
-  } else if (fp->fd_flags == FD_CLOSED)
-    closed = TRUE;
+    if (level >= win->w_p_fdl) {
+      closed = true;
+    }
+  } else if (fp->fd_flags == FD_CLOSED) {
+    closed = true;
+  }
 
   // Small fold isn't closed anyway.
   if (fp->fd_small == kNone) {
@@ -1537,7 +1538,7 @@ check_closed(
     }
     checkSmall(win, fp, lnum_off);
     if (fp->fd_small == kTrue) {
-      closed = FALSE;
+      closed = false;
     }
   }
   return closed;
