@@ -269,7 +269,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
     return false;
   }
   char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%y%m%d.%H%M%S",
+  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
                &local_time) == 0) {
     return false;
   }
