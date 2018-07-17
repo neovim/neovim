@@ -2556,10 +2556,20 @@ void vim_beep(unsigned val)
 {
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
-      if (p_vb) {
-        ui_call_visual_bell();
-      } else {
-        ui_call_bell();
+      static bool did_init = false;
+      static uint64_t elapsed = 0u;
+
+      // Only beep once per half a second, otherwise a sequence of beeps
+      // would freeze Vim
+      if (!did_init || uv_hrtime() > elapsed + 500000000u) {
+        did_init = true;
+        elapsed = uv_hrtime();
+
+        if (p_vb) {
+          ui_call_visual_bell();
+        } else {
+          ui_call_bell();
+        }
       }
     }
 
