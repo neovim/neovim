@@ -25,3 +25,41 @@ func Test_yank_shows_register()
 
     bwipe!
 endfunc
+
+func Test_display_registers()
+    e file1
+    e file2
+    call setline(1, ['foo', 'bar'])
+    /bar
+    exe 'norm! y2l"axx'
+    call feedkeys("i\<C-R>=2*4\n\<esc>")
+    call feedkeys(":ls\n", 'xt')
+
+    let a = execute('display')
+    let b = execute('registers')
+
+    call assert_equal(a, b)
+    call assert_match('^\n--- Registers ---\n'
+          \ .         '""   a\n'
+          \ .         '"0   ba\n'
+          \ .         '"1   b\n'
+          \ .         '"a   b\n'
+          \ .         '.*'
+          \ .         '"-   a\n'
+          \ .         '.*'
+          \ .         '":   ls\n'
+          \ .         '"%   file2\n'
+          \ .         '"#   file1\n'
+          \ .         '"/   bar\n'
+          \ .         '"=   2\*4', a)
+
+    let a = execute('registers a')
+    call assert_match('^\n--- Registers ---\n'
+          \ .         '"a   b', a)
+
+    let a = execute('registers :')
+    call assert_match('^\n--- Registers ---\n'
+          \ .         '":   ls', a)
+
+    bwipe!
+endfunc
