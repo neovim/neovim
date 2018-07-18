@@ -6332,7 +6332,6 @@ int load_colors(char_u *name)
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = false;
-  ui_refresh();
 
   return retval;
 }
@@ -6885,7 +6884,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // "fg", which have been changed now.
       highlight_attr_set_all();
 
-      if (!ui_is_external(kUINewgrid)) {
+      if (!ui_is_external(kUINewgrid) && starting != NO_SCREEN) {
         // Older UIs assume that we clear the screen after normal group is
         // changed
         ui_refresh();

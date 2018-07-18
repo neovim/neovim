@@ -344,6 +344,24 @@ int main(int argc, char **argv)
     p_lpl = false;
   }
 
+  // give embedders a chance to set up nvim, by processing a request before
+  // startup. This allows an external UI to show messages and prompts from
+  // --cmd and buffer loading (e.g. swap files)
+  bool early_ui = false;
+  if (embedded_mode) {
+    TIME_MSG("waiting for embedder to make request");
+    rpc_wait_for_request();
+    TIME_MSG("done waiting for embedder");
+
+    if (ui_active()) {
+      // prepare screen now, so external UIs can display messages
+      starting = NO_BUFFERS;
+      screenclear();
+      early_ui = true;
+      TIME_MSG("initialized screen early for embedder");
+    }
+  }
+
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
@@ -456,8 +474,10 @@ int main(int argc, char **argv)
 
   setmouse();  // may start using the mouse
 
-  if (exmode_active) {
-    must_redraw = CLEAR;  // Don't clear the screen when starting in Ex mode.
+  if (exmode_active || early_ui) {
+    // Don't clear the screen when starting in Ex mode, or when an
+    // embedding UI might have displayed messages
+    must_redraw = CLEAR;
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");

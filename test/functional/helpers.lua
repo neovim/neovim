@@ -362,6 +362,8 @@ local function clear(...)
     table.insert(args, arg)
   end
   set_session(spawn(args, nil, env))
+  -- Dummy request so that --embed continues past UI initialization
+  session:request('nvim_eval', "0")
 end
 
 local function insert(...)
