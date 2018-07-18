@@ -191,11 +191,11 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   return nvim_buf_get_lines(0, buffer, start , end, false, err);
 }
 
-/// Retrieves a line range from the buffer
+/// Gets a line-range from the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
-/// as length+1+index, i e -1 refers to the index past the end. So to get the
-/// last element set start=-2 and end=-1.
+/// as length+1+index: -1 refers to the index past the end. So to get the
+/// last element use start=-2 and end=-1.
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
@@ -286,14 +286,14 @@ void buffer_set_line_slice(Buffer buffer,
 }
 
 
-/// Replaces line range on the buffer
+/// Sets (replaces) a line-range in the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
-/// as length+1+index, i e -1 refers to the index past the end. So to change
-/// or delete the last element set start=-2 and end=-1.
+/// as length+1+index: -1 refers to the index past the end. So to change
+/// or delete the last element use start=-2 and end=-1.
 ///
-/// To insert lines at a given index, set both start and end to the same index.
-/// To delete a range of lines, set replacement to an empty array.
+/// To insert lines at a given index, set `start` and `end` to the same index.
+/// To delete a range of lines, set `replacement` to an empty array.
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.

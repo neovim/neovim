@@ -188,7 +188,7 @@ def parse_params(parent, width=62):
             desc = parse_parblock(desc_node, width=None)
         items.append((name.strip(), desc.strip()))
 
-    out = 'Parameters:~\n'
+    out = 'Parameters: ~\n'
     for name, desc in items:
         name = '    %s' % name.ljust(name_length)
         out += doc_wrap(desc, prefix=name, width=width) + '\n'
@@ -229,7 +229,7 @@ def parse_para(parent, width=62):
                                           prefix='    ',
                                           width=width))
                 elif kind == 'return':
-                    lines.append('%s:~' % kind.title())
+                    lines.append('%s: ~' % kind.title())
                     lines.append(doc_wrap(parse_para(child),
                                           prefix='    ',
                                           width=width))
@@ -361,16 +361,16 @@ def parse_source_xml(filename):
 
         annotations = '\n'.join(annotations)
         if annotations:
-            annotations = ('\n\nAttributes:~\n' +
+            annotations = ('\n\nAttributes: ~\n' +
                            textwrap.indent(annotations, '    '))
-            i = doc.rfind('Parameters:~')
+            i = doc.rfind('Parameters: ~')
             if i == -1:
                 doc += annotations
             else:
                 doc = doc[:i] + annotations + '\n\n' + doc[i:]
 
         if 'INCLUDE_C_DECL' in os.environ:
-            doc += '\n\nC Declaration:~\n>\n'
+            doc += '\n\nC Declaration: ~\n>\n'
             doc += c_decl
             doc += '\n<'
 
@@ -441,7 +441,7 @@ def gen_docs(config):
                     doc += '\n\n' + functions
 
                 if 'INCLUDE_DEPRECATED' in os.environ and deprecated:
-                    doc += '\n\n\nDeprecated %s Functions:~\n\n' % name
+                    doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
                     doc += deprecated
 
                 if doc:

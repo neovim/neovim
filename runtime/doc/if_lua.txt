@@ -310,14 +310,22 @@ semantically equivalent in Lua to:
 	    return chunk(arg) -- return typval
 	end
 
-Note that "_A" receives the argument to "luaeval". Lua nils, numbers, strings, 
-tables and booleans are converted to their respective VimL types. An error is 
-thrown if conversion of any of the remaining Lua types is attempted.
+Lua nils, numbers, strings, tables and booleans are converted to their
+respective VimL types. An error is thrown if conversion of any other Lua types
+is attempted.
 
-Note 2: lua tables are used as both dictionaries and lists, thus making it 
-impossible to determine whether empty table is meant to be empty list or empty 
-dictionary. Additionally lua does not have integer numbers. To distinguish 
-between these cases there is the following agreement:
+The magic global "_A" contains the second argument to luaeval().
+
+Example: >
+	 :echo luaeval('_A[1] + _A[2]', [40, 2])
+	 42
+	 :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
+	 foo
+
+Lua tables are used as both dictionaries and lists, so it is impossible to
+determine whether empty table is meant to be empty list or empty dictionary.
+Additionally lua does not have integer numbers. To distinguish between these
+cases there is the following agreement:
 
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and 
