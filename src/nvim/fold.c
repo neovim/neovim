@@ -167,8 +167,8 @@ bool hasFoldingWin(
   int x;
   fold_T      *fp;
   int level = 0;
-  int use_level = FALSE;
-  int maybe_small = FALSE;
+  bool use_level = false;
+  bool maybe_small = false;
   garray_T    *gap;
   int low_level = 0;
 
@@ -673,8 +673,7 @@ deleteFold(
   garray_T    *found_ga;
   fold_T      *found_fp = NULL;
   linenr_T found_off = 0;
-  int use_level;
-  int maybe_small = FALSE;
+  bool maybe_small = false;
   int level = 0;
   linenr_T lnum = start;
   linenr_T lnum_off;
@@ -689,7 +688,7 @@ deleteFold(
     gap = &curwin->w_folds;
     found_ga = NULL;
     lnum_off = 0;
-    use_level = FALSE;
+    bool use_level = false;
     for (;; ) {
       if (!foldFind(gap, lnum - lnum_off, &fp))
         break;
@@ -846,8 +845,6 @@ foldMoveTo(
   linenr_T lnum_off;
   linenr_T lnum_found;
   linenr_T lnum;
-  int use_level;
-  int maybe_small;
   garray_T    *gap;
   fold_T      *fp;
   int level;
@@ -861,8 +858,8 @@ foldMoveTo(
      * that moves the cursor is used. */
     lnum_off = 0;
     gap = &curwin->w_folds;
-    use_level = FALSE;
-    maybe_small = FALSE;
+    bool use_level = false;
+    bool maybe_small = false;
     lnum_found = curwin->w_cursor.lnum;
     level = 0;
     last = FALSE;
@@ -1506,9 +1503,9 @@ static int getDeepestNestingRecurse(garray_T *gap)
 static bool check_closed(
     win_T *const win,
     fold_T *const fp,
-    int *const use_levelp,      // TRUE: outer fold had FD_LEVEL
+    bool *const use_levelp,     // true: outer fold had FD_LEVEL
     const int level,            // folding depth
-    int *const maybe_smallp,    // TRUE: outer this had fd_small == kNone
+    bool *const maybe_smallp,   // true: outer this had fd_small == kNone
     const linenr_T lnum_off     // line number offset for fp->fd_top
 )
 {
@@ -1517,7 +1514,7 @@ static bool check_closed(
   /* Check if this fold is closed.  If the flag is FD_LEVEL this
    * fold and all folds it contains depend on 'foldlevel'. */
   if (*use_levelp || fp->fd_flags == FD_LEVEL) {
-    *use_levelp = TRUE;
+    *use_levelp = true;
     if (level >= win->w_p_fdl) {
       closed = true;
     }
@@ -1527,7 +1524,7 @@ static bool check_closed(
 
   // Small fold isn't closed anyway.
   if (fp->fd_small == kNone) {
-    *maybe_smallp = TRUE;
+    *maybe_smallp = true;
   }
   if (closed) {
     if (*maybe_smallp) {
