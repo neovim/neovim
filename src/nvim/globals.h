@@ -952,9 +952,9 @@ EXTERN char psepcN INIT(= '/');            // abnormal path separator character
 EXTERN char pseps[2] INIT(= { '\\', 0 });  // normal path separator string
 #endif
 
-/* Set to TRUE when an operator is being executed with virtual editing, MAYBE
- * when no operator is being executed, FALSE otherwise. */
-EXTERN int virtual_op INIT(= MAYBE);
+// Set to kTrue when an operator is being executed with virtual editing
+// kNone when no operator is being executed, kFalse otherwise.
+EXTERN TriState virtual_op INIT(= kNone);
 
 /* Display tick, incremented for each call to update_screen() */
 EXTERN disptick_T display_tick INIT(= 0);

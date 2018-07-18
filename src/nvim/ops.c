@@ -5383,7 +5383,7 @@ void cursor_pos_info(dict_T *dict)
         case Ctrl_V:
           virtual_op = virtual_active();
           block_prep(&oparg, &bd, lnum, 0);
-          virtual_op = MAYBE;
+          virtual_op = kNone;
           s = bd.textstart;
           len = (long)bd.textlen;
           break;
