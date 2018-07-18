@@ -924,7 +924,7 @@ restofline:
         if (qfprev == NULL) {
           return QF_FAIL;
         }
-        if (*fields->errmsg && !qi->qf_multiignore) {
+        if (*fields->errmsg) {
           size_t len = STRLEN(qfprev->qf_text);
           qfprev->qf_text = xrealloc(qfprev->qf_text,
                                      len + STRLEN(fields->errmsg) + 2);
@@ -2062,7 +2062,7 @@ win_found:
         EMSG(_("E924: Current window was closed"));
         is_abort = true;
         opened_window = false;
-      } else if (old_qf_curlist != qi->qf_curlist
+      } else if (old_qf_curlist != qi->qf_curlist  // -V560
                  || !is_qf_entry_present(qi, qf_ptr)) {
         if (qi == &ql_info) {
           EMSG(_("E925: Current quickfix was changed"));
@@ -2260,7 +2260,7 @@ void qf_list(exarg_T *eap)
         vim_snprintf((char *)IObuff, IOSIZE, "%2d %s",
             i, (char *)fname);
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
-                        ? hl_attr(HLF_QFL) : hl_attr(HLF_D));
+                        ? HL_ATTR(HLF_QFL) : HL_ATTR(HLF_D));
       if (qfp->qf_lnum == 0) {
         IObuff[0] = NUL;
       } else if (qfp->qf_col == 0) {
@@ -2271,7 +2271,7 @@ void qf_list(exarg_T *eap)
       }
       vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s:",
                    (char *)qf_types(qfp->qf_type, qfp->qf_nr));
-      msg_puts_attr((const char *)IObuff, hl_attr(HLF_N));
+      msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);
         xstrlcat((char *)IObuff, ":", IOSIZE);
@@ -3008,6 +3008,7 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
     // Set the 'filetype' to "qf" each time after filling the buffer.  This
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
+    curbuf_lock++;
     set_option_value("ft", 0L, "qf", OPT_LOCAL);
     curbuf->b_p_ma = false;
 
@@ -3017,6 +3018,7 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
     apply_autocmds(EVENT_BUFWINENTER, (char_u *)"quickfix", NULL,
                    false, curbuf);
     keep_filetype = false;
+    curbuf_lock--;
 
     // make sure it will be redrawn
     redraw_curbuf_later(NOT_VALID);
@@ -3029,7 +3031,7 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
 /*
  * Return TRUE if "buf" is the quickfix buffer.
  */
-int bt_quickfix(buf_T *buf)
+int bt_quickfix(const buf_T *const buf)
 {
   return buf != NULL && buf->b_p_bt[0] == 'q';
 }
@@ -3626,7 +3628,7 @@ void ex_vimgrep(exarg_T *eap)
        && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
       || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
-    qf_new_list(qi, title != NULL ? title : *eap->cmdlinep);
+    qf_new_list(qi, title);
   }
 
   /* parse the list of arguments */
@@ -3649,8 +3651,8 @@ void ex_vimgrep(exarg_T *eap)
   cur_qf_start = qi->qf_lists[qi->qf_curlist].qf_start;
 
   seconds = (time_t)0;
-  for (fi = 0; fi < fcount && !got_int && tomatch > 0; ++fi) {
-    fname = path_shorten_fname_if_possible(fnames[fi]);
+  for (fi = 0; fi < fcount && !got_int && tomatch > 0; fi++) {
+    fname = path_try_shorten_fname(fnames[fi]);
     if (time(NULL) > seconds) {
       /* Display the file name every second or so, show the user we are
        * working on it. */
@@ -3909,6 +3911,7 @@ load_dummy_buffer (
   bufref_T newbuf_to_wipe;
   int failed = true;
   aco_save_T aco;
+  int readfile_result;
 
   // Allocate a buffer without putting it in the buffer list.
   newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
@@ -3922,7 +3925,9 @@ load_dummy_buffer (
 
   /* need to open the memfile before putting the buffer in a window */
   if (ml_open(newbuf) == OK) {
-    /* set curwin/curbuf to buf and save a few things */
+    // Make sure this buffer isn't wiped out by auto commands.
+    newbuf->b_locked++;
+    // set curwin/curbuf to buf and save a few things
     aucmd_prepbuf(&aco, newbuf);
 
     /* Need to set the filename for autocommands. */
@@ -3936,9 +3941,11 @@ load_dummy_buffer (
     curbuf->b_flags &= ~BF_DUMMY;
 
     newbuf_to_wipe.br_buf = NULL;
-    if (readfile(fname, NULL,
-            (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
-            NULL, READ_NEW | READ_DUMMY) == OK
+    readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
+                               (linenr_T)MAXLNUM, NULL,
+                               READ_NEW | READ_DUMMY);
+    newbuf->b_locked--;
+    if (readfile_result == OK
         && !got_int
         && !(curbuf->b_flags & BF_NEW)) {
       failed = FALSE;
@@ -4200,11 +4207,9 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
     if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
       di = tv_dict_item_alloc_len(S_LEN("context"));
-      if (di != NULL) {
-        tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-        if (tv_dict_add(retdict, di) == FAIL) {
-          tv_dict_item_free(di);
-        }
+      tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
+      if (tv_dict_add(retdict, di) == FAIL) {
+        tv_dict_item_free(di);
       }
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
@@ -4735,15 +4740,7 @@ void ex_helpgrep(exarg_T *eap)
   regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
-    vimconv_T vc;
-
-    /* Help files are in utf-8 or latin1, convert lines when 'encoding'
-     * differs. */
-    vc.vc_type = CONV_NONE;
-    if (!enc_utf8)
-      convert_setup(&vc, (char_u *)"utf-8", p_enc);
-
-    /* create a new quickfix list */
+    // Create a new quickfix list.
     qf_new_list(qi, *eap->cmdlinep);
 
     /* Go through all directories in 'runtimepath' */
@@ -4775,15 +4772,6 @@ void ex_helpgrep(exarg_T *eap)
             lnum = 1;
             while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
               char_u    *line = IObuff;
-              /* Convert a line if 'encoding' is not utf-8 and
-               * the line contains a non-ASCII character. */
-              if (vc.vc_type != CONV_NONE
-                  && has_non_ascii(IObuff)) {
-                line = string_convert(&vc, IObuff, NULL);
-                if (line == NULL)
-                  line = IObuff;
-              }
-
               if (vim_regexec(&regmatch, line, (colnr_T)0)) {
                 int l = (int)STRLEN(line);
 
@@ -4826,8 +4814,6 @@ void ex_helpgrep(exarg_T *eap)
     }
 
     vim_regfree(regmatch.regprog);
-    if (vc.vc_type != CONV_NONE)
-      convert_setup(&vc, NULL, NULL);
 
     qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
     qi->qf_lists[qi->qf_curlist].qf_ptr =

@@ -66,11 +66,13 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   BuildLuarocks(
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-    INSTALL_COMMAND ${MAKE_PRG} bootstrap)
+    INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
 
   if(MINGW)
-    set(MINGW_FLAG /MW)
+    set(COMPILER_FLAG /MW)
+  elseif(MSVC)
+    set(COMPILER_FLAG /MSVC)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
@@ -82,7 +84,7 @@ elseif(MSVC OR MINGW)
     /P ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION} /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
-    ${MINGW_FLAG}
+    ${COMPILER_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION}/luarocks.bat)
@@ -104,7 +106,7 @@ endif()
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build mpack ${LUAROCKS_BUILDARGS}
+  ARGS build mpack 1.0.7-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(mpack
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack)
@@ -113,7 +115,7 @@ list(APPEND THIRD_PARTY_DEPS mpack)
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build lpeg ${LUAROCKS_BUILDARGS}
+  ARGS build lpeg 1.0.1-1 ${LUAROCKS_BUILDARGS}
   DEPENDS mpack)
 add_custom_target(lpeg
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg)
@@ -123,7 +125,7 @@ list(APPEND THIRD_PARTY_DEPS lpeg)
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/inspect
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build inspect ${LUAROCKS_BUILDARGS}
+  ARGS build inspect 3.1.1-0 ${LUAROCKS_BUILDARGS}
   DEPENDS lpeg)
 add_custom_target(inspect
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/inspect)
@@ -134,7 +136,7 @@ if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build luabitop ${LUAROCKS_BUILDARGS}
+    ARGS build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
     DEPENDS inspect)
   add_custom_target(luabitop
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luabitop)
@@ -150,12 +152,12 @@ if(USE_BUNDLED_BUSTED)
   endif()
 
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
-  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2
+  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build penlight 1.3.2-2 ${LUAROCKS_BUILDARGS}
+    ARGS build penlight 1.5.4-1 ${LUAROCKS_BUILDARGS}
     DEPENDS ${PENLIGHT_DEPENDS})
   add_custom_target(penlight
-    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight/1.3.2-2)
+    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/penlight)
 
   if(WIN32)
     set(BUSTED_EXE "${HOSTDEPS_BIN_DIR}/busted.bat")
@@ -167,7 +169,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc12-1/busted-2.0.rc12-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build busted 2.0.rc12-1 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted
     DEPENDS ${BUSTED_EXE})
@@ -175,7 +177,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/mpeterv/luacheck/master/luacheck-dev-1.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build luacheck 0.21.2-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${LUACHECK_EXE})
@@ -200,7 +202,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-26/nvim-client-0.0.1-26.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build nvim-client 0.1.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)

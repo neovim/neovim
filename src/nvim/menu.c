@@ -97,7 +97,7 @@ ex_menu(exarg_T *eap)
     while (*arg != NUL && *arg != ' ') {
       if (*arg == '\\')
         STRMOVE(arg, arg + 1);
-      mb_ptr_adv(arg);
+      MB_PTR_ADV(arg);
     }
     if (*arg != NUL) {
       *arg++ = NUL;
@@ -825,8 +825,8 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
       msg_outnum((long)menu->priority);
       MSG_PUTS(" ");
     }
-    /* Same highlighting as for directories!? */
-    msg_outtrans_attr(menu->name, hl_attr(HLF_D));
+    // Same highlighting as for directories!?
+    msg_outtrans_attr(menu->name, HL_ATTR(HLF_D));
   }
 
   if (menu != NULL && menu->children == NULL) {
@@ -854,7 +854,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
           msg_putchar(' ');
         MSG_PUTS(" ");
         if (*menu->strings[bit] == NUL) {
-          msg_puts_attr("<Nop>", hl_attr(HLF_8));
+          msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
         } else {
           msg_outtrans_special(menu->strings[bit], false);
         }
@@ -1099,7 +1099,7 @@ char_u *menu_name_skip(char_u *const name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p)) {
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
     if (*p == '\\' || *p == Ctrl_V) {
       STRMOVE(p, p + 1);
       if (*p == NUL)
@@ -1549,9 +1549,11 @@ static void menu_unescape_name(char_u *name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p))
-    if (*p == '\\')
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
       STRMOVE(p, p + 1);
+    }
+  }
 }
 
 /*

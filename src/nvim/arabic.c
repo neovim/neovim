@@ -580,6 +580,9 @@ static int chg_c_a2f(int cur_c)
 }
 
 // Change shape - from Initial to Medial
+// This code is unreachable, because for the relevant characters ARABIC_CHAR()
+// is FALSE;
+#if 0
 static int chg_c_i2m(int cur_c)
 {
   switch (cur_c) {
@@ -609,6 +612,7 @@ static int chg_c_i2m(int cur_c)
   }
   return 0;
 }
+#endif
 
 // Change shape - from Final to Medial
 static int chg_c_f2m(int cur_c)
@@ -736,7 +740,11 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
   } else if (!shape_c || A_is_f(shape_c) || A_is_s(shape_c) || prev_laa) {
     curr_c = A_is_valid(next_c) ? chg_c_a2i(c) : chg_c_a2s(c);
   } else if (A_is_valid(next_c)) {
+#if 0
     curr_c = A_is_iso(c) ? chg_c_a2m(c) : chg_c_i2m(c);
+#else
+    curr_c = A_is_iso(c) ? chg_c_a2m(c) : 0;
+#endif
   } else if (A_is_valid(prev_c)) {
     curr_c = chg_c_a2f(c);
   } else {

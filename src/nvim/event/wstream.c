@@ -14,7 +14,7 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-#define DEFAULT_MAXMEM 1024 * 1024 * 10
+#define DEFAULT_MAXMEM 1024 * 1024 * 2000
 
 typedef struct {
   Stream *stream;

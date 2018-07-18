@@ -1,11 +1,9 @@
-find_package(Gettext)
+find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
 
-if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
-  set(ENV{OLD_PO_FILE_INPUT} yes)
-  set(ENV{OLD_PO_FILE_OUTPUT} yes)
-
+option(LANGUAGES "Localizations to build")
+if(NOT LANGUAGES)
   set(LANGUAGES
     af
     ca
@@ -31,6 +29,12 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     vi
     zh_CN.UTF-8
     zh_TW.UTF-8)
+endif()
+
+if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
+  set(ENV{OLD_PO_FILE_INPUT} yes)
+  set(ENV{OLD_PO_FILE_OUTPUT} yes)
+
 
   set(NVIM_RELATIVE_SOURCES)
   foreach(SRC ${NVIM_SOURCES} ${NVIM_HEADERS})
@@ -51,6 +55,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     DEPENDS ${NVIM_SOURCES})
 
   add_custom_target(potfile DEPENDS ${NVIM_POT})
+  set_target_properties(potfile PROPERTIES FOLDER po)
 
   set(LANGUAGE_MO_FILES)
   set(UPDATE_PO_TARGETS)
@@ -87,6 +92,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
       COMMENT "Checking ${name}.po"
       VERBATIM
       DEPENDS ${poFile})
+    set_target_properties(check-po-${name} PROPERTIES FOLDER po/check)
   endmacro()
 
   macro(BuildPoIconvGenericWithCharset
@@ -135,22 +141,30 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   endmacro()
 
   # Create some translations from others.
-  BuildPoIconv(ja utf-8 euc-jp)
-  BuildMo(ja.euc-jp)
+  if(";${LANGUAGES};" MATCHES ";ja;")
+    BuildPoIconv(ja utf-8 euc-jp)
+    BuildMo(ja.euc-jp)
+  endif()
 
-  BuildPoIconv(cs ISO-8859-2 cp1250)
-  BuildMo(cs.cp1250)
+  if(";${LANGUAGES};" MATCHES ";cs;")
+    BuildPoIconv(cs ISO-8859-2 cp1250)
+    BuildMo(cs.cp1250)
+  endif()
 
-  BuildPoIconv(sk ISO-8859-2 cp1250)
-  BuildMo(sk.cp1250)
+  if(";${LANGUAGES};" MATCHES ";sk;")
+    BuildPoIconv(sk ISO-8859-2 cp1250)
+    BuildMo(sk.cp1250)
+  endif()
 
   add_custom_target(update-po-nb
     COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/no.po ${CMAKE_CURRENT_SOURCE_DIR}/nb.po
     DEPENDS no.po)
   list(APPEND UPDATE_PO_TARGETS update-po-nb)
-  CheckPo(nb)
-  BuildMo(nb)
+  if(";${LANGUAGES};" MATCHES ";no;")
+    CheckPo(nb)
+    BuildMo(nb)
+  endif()
 
   foreach(LANGUAGE ${LANGUAGES})
     set(poFile "${CMAKE_CURRENT_SOURCE_DIR}/${LANGUAGE}.po")
@@ -170,7 +184,9 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
 
     BuildMo(${LANGUAGE})
   endforeach()
+  set_target_properties(${UPDATE_PO_TARGETS} PROPERTIES FOLDER po/update)
 
   add_custom_target(translations ALL DEPENDS ${LANGUAGE_MO_FILES})
   add_custom_target(update-po DEPENDS ${UPDATE_PO_TARGETS})
+  set_target_properties(translations update-po PROPERTIES FOLDER po)
 endif()

@@ -180,13 +180,14 @@ void terminal_init(void)
       vterm_state_get_palette_color(state, color_index, &color);
     }
     map_put(int, int)(color_indexes,
-        RGB(color.red, color.green, color.blue), color_index + 1);
+                      RGB_(color.red, color.green, color.blue),
+                      color_index + 1);
   }
 
   VTermColor fg, bg;
   vterm_state_get_default_colors(state, &fg, &bg);
-  default_vt_fg = RGB(fg.red, fg.green, fg.blue);
-  default_vt_bg = RGB(bg.red, bg.green, bg.blue);
+  default_vt_fg = RGB_(fg.red, fg.green, fg.blue);
+  default_vt_bg = RGB_(bg.red, bg.green, bg.blue);
   default_vt_bg_rgb = bg;
   vterm_free(vt);
 }
@@ -358,6 +359,15 @@ void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
     return;
   }
 
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer && wp->w_buffer->terminal == term) {
+      const uint16_t win_width =
+        (uint16_t)(MAX(0, wp->w_width - win_col_off(wp)));
+      width = MAX(width, win_width);
+      height = (uint16_t)MAX(height, wp->w_height);
+    }
+  }
+
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   term->pending_resize = true;
@@ -386,15 +396,14 @@ void terminal_enter(void)
   win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
-  int save_w_p_rnu = curwin->w_p_rnu;
   curwin->w_p_cul = false;
   curwin->w_p_cuc = false;
-  curwin->w_p_rnu = false;
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   showmode();
+  curwin->w_redr_status = true;  // For mode() in statusline. #8323
   ui_busy_start();
   redraw(false);
 
@@ -407,7 +416,6 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;
-    curwin->w_p_rnu = save_w_p_rnu;
   }
 
   // draw the unfocused cursor
@@ -458,6 +466,10 @@ static int terminal_execute(VimState *state, int key)
         s->close = true;
         return 0;
       }
+      break;
+
+    case K_COMMAND:
+      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
       break;
 
     case Ctrl_N:
@@ -516,6 +528,13 @@ void terminal_send(Terminal *term, char *data, size_t size)
   term->opts.write_cb(data, size, term->opts.data);
 }
 
+void terminal_flush_output(Terminal *term)
+{
+  size_t len = vterm_output_read(term->vt, term->textbuf,
+                                 sizeof(term->textbuf));
+  terminal_send(term, term->textbuf, len);
+}
+
 void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
@@ -533,9 +552,7 @@ void terminal_send_key(Terminal *term, int c)
     vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
   }
 
-  size_t len = vterm_output_read(term->vt, term->textbuf,
-      sizeof(term->textbuf));
-  terminal_send(term, term->textbuf, (size_t)len);
+  terminal_flush_output(term);
 }
 
 void terminal_receive(Terminal *term, char *data, size_t len)
@@ -565,8 +582,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
     // Get the rgb value set by libvterm.
-    int vt_fg = RGB(cell.fg.red, cell.fg.green, cell.fg.blue);
-    int vt_bg = RGB(cell.bg.red, cell.bg.green, cell.bg.blue);
+    int vt_fg = RGB_(cell.fg.red, cell.fg.green, cell.fg.blue);
+    int vt_bg = RGB_(cell.bg.red, cell.bg.green, cell.bg.blue);
     vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
     vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
     // Since libvterm does not expose the color index used by the program, we
@@ -585,7 +602,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int attr_id = 0;
 
     if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
-      attr_id = get_attr_entry(&(attrentry_T) {
+      attr_id = get_attr_entry(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
@@ -605,6 +622,11 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     term_attrs[col] = attr_id;
   }
+}
+
+Buffer terminal_buf(const Terminal *term)
+{
+  return term->buf_handle;
 }
 
 // }}}
@@ -965,7 +987,7 @@ static bool send_mouse_event(Terminal *term, int c)
 
     mouse_action(term, button, row, col, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
-        sizeof(term->textbuf));
+                                   sizeof(term->textbuf));
     terminal_send(term, term->textbuf, (size_t)len);
     return false;
   }
@@ -1083,7 +1105,6 @@ static void refresh_terminal(Terminal *term)
     refresh_size(term, buf);
     refresh_scrollback(term, buf);
     refresh_screen(term, buf);
-    redraw_buf_later(buf, NOT_VALID);
   });
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
@@ -1093,6 +1114,7 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
   refresh_pending = false;
   if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
+      || (State & CMDPREVIEW)
       // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
       // skip redraws to keep it visible.
       || wild_menu_showing == WM_LIST) {
@@ -1217,7 +1239,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
-  changed_lines(change_start, 0, change_end, added);
+  changed_lines(change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }

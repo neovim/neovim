@@ -31,6 +31,29 @@ describe("'wildmenu'", function()
     ]])
   end)
 
+  it(':sign <tab> <space> hides wildmenu #8453', function()
+    command('set wildmode=full')
+    -- only a regression if status-line open
+    command('set laststatus=2')
+    command('set wildmenu')
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<space>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      [No Name]                |
+      :sign define ^            |
+    ]])
+  end)
+
   it('does not crash after cycling back to original text', function()
     command('set wildmode=full')
     feed(':j<Tab><Tab><Tab>')
@@ -60,8 +83,7 @@ describe("'wildmenu'", function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
     if iswin() then
-      if helpers.pending_win32(pending) then return end
-      -- feed([[:terminal 1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
     end

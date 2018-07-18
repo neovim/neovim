@@ -35,10 +35,16 @@ function(BuildLuajit)
     INSTALL_COMMAND "${_luajit_INSTALL_COMMAND}")
 endfunction()
 
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  set(AMD64_ABI "LDFLAGS=-lpthread -lc++abi")
+else()
+  set(AMD64_ABI "")
+endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
+                                ${AMD64_ABI}
                                 CCDEBUG+=-g
                                 Q=
                                 install)
@@ -72,8 +78,12 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
 elseif(MINGW)
 
-
-	BuildLuaJit(BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} CC=${DEPS_C_COMPILER}
+  if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(LUAJIT_MAKE_PRG ${MAKE_PRG})
+  else()
+    set(LUAJIT_MAKE_PRG ${CMAKE_MAKE_PROGRAM})
+  endif()
+  BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
@@ -81,7 +91,7 @@ elseif(MINGW)
                                 CCDEBUG+=-g
                                 BUILDMODE=static
                       # Build a DLL too
-                      COMMAND ${CMAKE_MAKE_PROGRAM} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
+                      COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
 
           INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
@@ -101,7 +111,10 @@ elseif(MSVC)
       COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_INSTALL_DIR}/lib
+      # Luarocks searches for lua51.lib
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_INSTALL_DIR}/lib/lua51.lib
+      # Luv searches for luajit.lib
+      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.lib ${DEPS_INSTALL_DIR}/lib/luajit.lib
       COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include/luajit-2.0
       COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/luajit/src/*.h -DTO=${DEPS_INSTALL_DIR}/include/luajit-2.0 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake)
 

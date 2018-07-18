@@ -3,21 +3,21 @@ local lfs = require('lfs')
 local command, eq, neq, spawn, nvim_prog, set_session, write_file =
   helpers.command, helpers.eq, helpers.neq, helpers.spawn,
   helpers.nvim_prog, helpers.set_session, helpers.write_file
+local iswin = helpers.iswin
+local read_file = helpers.read_file
 
 describe(':wshada', function()
   local shada_file = 'wshada_test'
   local session
 
   before_each(function()
-    if session then
-      session:close()
-    end
-
     -- Override the default session because we need 'swapfile' for these tests.
-    session = spawn({nvim_prog, '-u', 'NONE', '-i', '/dev/null', '--embed',
+    session = spawn({nvim_prog, '-u', 'NONE', '-i', iswin() and 'nul' or '/dev/null', '--embed',
                            '--cmd', 'set swapfile'})
     set_session(session)
-
+  end)
+  after_each(function ()
+    session:close()
     os.remove(shada_file)
   end)
 
@@ -36,7 +36,7 @@ describe(':wshada', function()
     write_file(shada_file, text)
 
     -- sanity check
-    eq(text, io.open(shada_file):read())
+    eq(text, read_file(shada_file))
     neq(nil, lfs.attributes(shada_file))
 
     command('wsh! '..shada_file)
@@ -48,9 +48,5 @@ describe(':wshada', function()
     -- ShaDa file starts with a “header” entry
     assert(char1:byte() == 0x01,
       shada_file..' should be a shada file')
-  end)
-
-  teardown(function()
-    os.remove(shada_file)
   end)
 end)

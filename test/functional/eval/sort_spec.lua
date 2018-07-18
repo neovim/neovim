@@ -8,6 +8,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local redir_exec = helpers.redir_exec
 
 before_each(clear)
 
@@ -37,5 +38,19 @@ describe('sort()', function()
     }, errors)
     eq('[-1.0e-4, function(\'tr\'), v:true, v:false, v:null, [], {\'a\': 42}, \'check\', 1.0e-4]',
        eval('string(g:list)'))
+  end)
+
+  it('can yield E702 and stop sorting after that', function()
+    command([[
+      function Cmp(a, b)
+        if type(a:a) == type([]) || type(a:b) == type([])
+          return []
+        endif
+        return (a:a > a:b) - (a:a < a:b)
+      endfunction
+    ]])
+    eq('\nE745: Using a List as a Number\nE702: Sort compare function failed',
+       redir_exec('let sl = sort([1, 0, [], 3, 2], "Cmp")'))
+    eq({1, 0, {}, 3, 2}, meths.get_var('sl'))
   end)
 end)

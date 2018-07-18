@@ -10,19 +10,19 @@ source "${CI_DIR}/common/suite.sh"
 
 enter_suite 'clint'
 
-run_test 'top_make clint-full' clint
+run_test 'make clint-full' clint
 
 exit_suite --continue
 
 enter_suite 'testlint'
 
-run_test 'top_make testlint' testlint
+run_test 'make testlint' testlint
 
 exit_suite --continue
 
 enter_suite 'lualint'
 
-run_test 'top_make lualint' lualint
+run_test 'make lualint' lualint
 
 exit_suite --continue
 
@@ -31,7 +31,7 @@ enter_suite single-includes
 CLICOLOR_FORCE=1 run_test_wd \
   --allow-hang \
   10s \
-  'top_make check-single-includes' \
+  'make check-single-includes' \
   'csi_clean' \
   single-includes
 

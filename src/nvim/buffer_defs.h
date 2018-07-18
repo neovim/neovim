@@ -38,7 +38,10 @@ typedef struct {
 #include "nvim/api/private/defs.h"
 // for Map(K, V)
 #include "nvim/map.h"
+// for kvec
+#include "nvim/lib/kvec.h"
 
+#define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
 
 /*
@@ -140,6 +143,12 @@ struct buffheader {
   size_t bh_space;          // space in bh_curr for appending
 };
 
+typedef struct
+{
+  buffheader_T sr_redobuff;
+  buffheader_T sr_old_redobuff;
+} save_redo_T;
+
 /*
  * Structure that contains all options that are local to a window.
  * Used twice in a window: for the current buffer and for all buffers.
@@ -237,7 +246,7 @@ typedef struct {
   char_u *wo_winhl;
 # define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
 
-  int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
+  LastSet wo_scriptID[WV_COUNT];        // SIDs for window-local options
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
 } winopt_T;
 
@@ -480,9 +489,16 @@ struct file_buffer {
 
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
-/// Change identifier incremented for each change, including undo
-#define b_changedtick changedtick_di.di_tv.vval.v_number
-  ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
+
+  /// Change identifier incremented for each change, including undo
+  ///
+  /// This is a dictionary item used to store in b:changedtick.
+  ChangedtickDictItem changedtick_di;
+
+  varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or
+                                        // TextChangedI was last triggered.
+  varnumber_T b_last_changedtick_pum;   // b:changedtick when TextChangedP was
+                                        // last triggered.
 
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
@@ -590,7 +606,7 @@ struct file_buffer {
    */
   bool b_p_initialized;                 /* set when options initialized */
 
-  int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
+  LastSet b_p_scriptID[BV_COUNT];       // SIDs for buffer-local options
 
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
@@ -766,6 +782,10 @@ struct file_buffer {
   BufhlInfo b_bufhl_info;       // buffer stored highlights
 
   kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
+
+  // array of channelids which have asked to receive updates for this
+  // buffer.
+  kvec_t(uint64_t) update_channels;
 };
 
 /*
@@ -1182,5 +1202,9 @@ static inline int win_hl_attr(win_T *wp, int hlf)
 {
   return wp->w_hl_attrs[hlf];
 }
+
+/// Macros defined in Vim, but not in Neovim
+#define CHANGEDTICK(buf) \
+    (=== Include buffer.h & use buf_(get|set|inc)_changedtick ===)
 
 #endif // NVIM_BUFFER_DEFS_H

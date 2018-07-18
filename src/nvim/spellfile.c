@@ -228,7 +228,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <wctype.h>
-#include <strings.h>
 
 #include "nvim/vim.h"
 #include "nvim/spell_defs.h"
@@ -1508,9 +1507,10 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // sl_sal_first[] for this.
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
       c = mb_cptr2char_adv((const char_u **)&p);
-      mb_cptr_adv(s);
-      if (c >= 256)
-        ++lp->sl_sal_first[c & 0xff];
+      MB_CPTR_ADV(s);
+      if (c >= 256) {
+        lp->sl_sal_first[c & 0xff]++;
+      }
     }
     if (*p != NUL || *s != NUL)             // lengths differ
       return SP_FORMERROR;
@@ -1645,7 +1645,7 @@ spell_read_tree (
   if (len < 0) {
     return SP_TRUNCERROR;
   }
-  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+  if ((size_t)len >= SIZE_MAX / sizeof(int)) {  // -V547
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
   }
@@ -1950,7 +1950,6 @@ static void spell_print_tree(wordnode_T *root)
 static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 {
   FILE        *fd;
-  afffile_T   *aff;
   char_u rline[MAXLINELEN];
   char_u      *line;
   char_u      *pc = NULL;
@@ -2007,11 +2006,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   do_mapline = GA_EMPTY(&spin->si_map);
 
   // Allocate and init the afffile_T structure.
-  aff = (afffile_T *)getroom(spin, sizeof(afffile_T), true);
-  if (aff == NULL) {
-    fclose(fd);
-    return NULL;
-  }
+  afffile_T *aff = getroom(spin, sizeof(*aff), true);
   hash_init(&aff->af_pref);
   hash_init(&aff->af_suff);
   hash_init(&aff->af_comp);
@@ -2099,20 +2094,18 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_("FLAG after using flags in %s line %d: %s"),
                fname, lnum, items[1]);
       } else if (spell_info_item(items[0]) && itemcnt > 1)   {
-        p = (char_u *)getroom(spin,
-            (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
-            + STRLEN(items[0])
-            + STRLEN(items[1]) + 3, false);
-        if (p != NULL) {
-          if (spin->si_info != NULL) {
-            STRCPY(p, spin->si_info);
-            STRCAT(p, "\n");
-          }
-          STRCAT(p, items[0]);
-          STRCAT(p, " ");
-          STRCAT(p, items[1]);
-          spin->si_info = p;
+        p = getroom(spin,
+                    (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
+                    + STRLEN(items[0])
+                    + STRLEN(items[1]) + 3, false);
+        if (spin->si_info != NULL) {
+          STRCPY(p, spin->si_info);
+          STRCAT(p, "\n");
         }
+        STRCAT(p, items[0]);
+        STRCAT(p, " ");
+        STRCAT(p, items[1]);
+        spin->si_info = p;
       } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2)
                  && midword == NULL) {
         midword = getroom_save(spin, items[1]);
@@ -2292,14 +2285,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                  fname, lnum, items[1]);
         } else {
           // New affix letter.
-          cur_aff = (affheader_T *)getroom(spin,
-              sizeof(affheader_T), true);
-          if (cur_aff == NULL)
-            break;
+          cur_aff = getroom(spin, sizeof(*cur_aff), true);
           cur_aff->ah_flag = affitem2flag(aff->af_flagtype, items[1],
-              fname, lnum);
-          if (cur_aff->ah_flag == 0 || STRLEN(items[1]) >= AH_KEY_LEN)
+                                          fname, lnum);
+          if (cur_aff->ah_flag == 0 || STRLEN(items[1]) >= AH_KEY_LEN) {
             break;
+          }
           if (cur_aff->ah_flag == aff->af_bad
               || cur_aff->ah_flag == aff->af_rare
               || cur_aff->ah_flag == aff->af_keepcase
@@ -2307,11 +2298,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               || cur_aff->ah_flag == aff->af_circumfix
               || cur_aff->ah_flag == aff->af_nosuggest
               || cur_aff->ah_flag == aff->af_needcomp
-              || cur_aff->ah_flag == aff->af_comproot)
+              || cur_aff->ah_flag == aff->af_comproot) {
             smsg(_("Affix also used for "
                    "BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST"
                    "in %s line %d: %s"),
-                fname, lnum, items[1]);
+                 fname, lnum, items[1]);
+          }
           STRCPY(cur_aff->ah_key, items[1]);
           hash_add(tp, cur_aff->ah_key);
 
@@ -2373,11 +2365,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_(e_afftrailing), fname, lnum, items[lasti]);
 
         // New item for an affix letter.
-        --aff_todo;
-        aff_entry = (affentry_T *)getroom(spin,
-            sizeof(affentry_T), true);
-        if (aff_entry == NULL)
-          break;
+        aff_todo--;
+        aff_entry = getroom(spin, sizeof(*aff_entry), true);
 
         if (STRCMP(items[2], "0") != 0)
           aff_entry->ae_chop = getroom_save(spin, items[2]);
@@ -2439,7 +2428,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                       || PTR2CHAR(aff_entry->ae_cond) == c)) {
                 p = aff_entry->ae_add
                     + STRLEN(aff_entry->ae_add);
-                mb_ptr_back(aff_entry->ae_add, p);
+                MB_PTR_BACK(aff_entry->ae_add, p);
                 if (PTR2CHAR(p) == c_up) {
                   upper = true;
                   aff_entry->ae_chop = NULL;
@@ -2540,12 +2529,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         if (items[0][3] == 'S' ? do_repsal : do_rep) {
           // Replace underscore with space (can't include a space
           // directly).
-          for (p = items[1]; *p != NUL; mb_ptr_adv(p))
-            if (*p == '_')
+          for (p = items[1]; *p != NUL; MB_PTR_ADV(p)) {
+            if (*p == '_') {
               *p = ' ';
-          for (p = items[2]; *p != NUL; mb_ptr_adv(p))
-            if (*p == '_')
+            }
+          }
+          for (p = items[2]; *p != NUL; MB_PTR_ADV(p)) {
+            if (*p == '_') {
               *p = ' ';
+            }
+          }
           add_fromto(spin, items[0][3] == 'S'
               ? &spin->si_repsal
               : &spin->si_rep, items[1], items[2]);
@@ -2849,12 +2842,10 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
         // the existing ID.  Otherwise add a new entry.
         STRLCPY(key, prevp, p - prevp + 1);
         hi = hash_find(&aff->af_comp, key);
-        if (!HASHITEM_EMPTY(hi))
+        if (!HASHITEM_EMPTY(hi)) {
           id = HI2CI(hi)->ci_newID;
-        else {
-          ci = (compitem_T *)getroom(spin, sizeof(compitem_T), true);
-          if (ci == NULL)
-            break;
+        } else {
+          ci = getroom(spin, sizeof(compitem_T), true);
           STRCPY(ci->ci_key, key);
           ci->ci_flag = flag;
           // Avoid using a flag ID that has a special meaning in a
@@ -3084,10 +3075,10 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     // Truncate the word at the "/", set "afflist" to what follows.
     // Replace "\/" by "/" and "\\" by "\".
     afflist = NULL;
-    for (p = w; *p != NUL; mb_ptr_adv(p)) {
-      if (*p == '\\' && (p[1] == '\\' || p[1] == '/'))
+    for (p = w; *p != NUL; MB_PTR_ADV(p)) {
+      if (*p == '\\' && (p[1] == '\\' || p[1] == '/')) {
         STRMOVE(p, p + 1);
-      else if (*p == '/') {
+      } else if (*p == '/') {
         *p = NUL;
         afflist = p + 1;
         break;
@@ -3357,19 +3348,22 @@ store_aff_word (
             // Match.  Remove the chop and add the affix.
             if (xht == NULL) {
               // prefix: chop/add at the start of the word
-              if (ae->ae_add == NULL)
+              if (ae->ae_add == NULL) {
                 *newword = NUL;
-              else
+              } else {
                 STRLCPY(newword, ae->ae_add, MAXWLEN);
+              }
               p = word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
                 if (has_mbyte) {
                   i = mb_charlen(ae->ae_chop);
-                  for (; i > 0; --i)
-                    mb_ptr_adv(p);
-                } else
+                  for (; i > 0; i--) {
+                    MB_PTR_ADV(p);
+                  }
+                } else {
                   p += STRLEN(ae->ae_chop);
+                }
               }
               STRCAT(newword, p);
             } else {
@@ -3379,8 +3373,9 @@ store_aff_word (
                 // Remove chop string.
                 p = newword + STRLEN(newword);
                 i = (int)MB_CHARLEN(ae->ae_chop);
-                for (; i > 0; --i)
-                  mb_ptr_back(newword, p);
+                for (; i > 0; i--) {
+                  MB_PTR_BACK(newword, p);
+                }
                 *p = NUL;
               }
               if (ae->ae_add != NULL)
@@ -3738,12 +3733,8 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
 // Returns NULL when out of memory.
 static char_u *getroom_save(spellinfo_T *spin, char_u *s)
 {
-  char_u      *sc;
-
-  sc = (char_u *)getroom(spin, STRLEN(s) + 1, false);
-  if (sc != NULL)
-    STRCPY(sc, s);
-  return sc;
+  const size_t s_size = STRLEN(s) + 1;
+  return memcpy(getroom(spin, s_size, false), s, s_size);
 }
 
 
@@ -3762,6 +3753,7 @@ static void free_blocks(sblock_T *bl)
 // Allocate the root of a word tree.
 // Returns NULL when out of memory.
 static wordnode_T *wordtree_alloc(spellinfo_T *spin)
+  FUNC_ATTR_NONNULL_RET
 {
   return (wordnode_T *)getroom(spin, sizeof(wordnode_T), true);
 }
@@ -4795,8 +4787,6 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
 
   // We use si_foldroot for the soundfolded trie.
   spin->si_foldroot = wordtree_alloc(spin);
-  if (spin->si_foldroot == NULL)
-    return FAIL;
 
   // Let tree_add_word() know we're adding to the soundfolded tree
   spin->si_sugtree = true;
@@ -5184,12 +5174,6 @@ mkspell (
     spin.si_foldroot = wordtree_alloc(&spin);
     spin.si_keeproot = wordtree_alloc(&spin);
     spin.si_prefroot = wordtree_alloc(&spin);
-    if (spin.si_foldroot == NULL
-        || spin.si_keeproot == NULL
-        || spin.si_prefroot == NULL) {
-      free_blocks(spin.si_blocks);
-      goto theend;
-    }
 
     // When not producing a .add.spl file clear the character table when
     // we encounter one in the .aff file.  This means we dump the current
@@ -5393,8 +5377,9 @@ spell_add_word (
           // doesn't work for all systems, close the file first.
           fclose(fd);
           fd = mch_fopen((char *)fname, "r+");
-          if (fd == NULL)
+          if (fd == NULL) {
             break;
+          }
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
@@ -5403,7 +5388,9 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          fseek(fd, fpos_next, SEEK_SET);
+          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+            break;
+          }
         }
       }
       if (fd != NULL)

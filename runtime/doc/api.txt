@@ -16,26 +16,23 @@ Applications can also embed libnvim to work with the C API directly.
 ==============================================================================
 API Types							   *api-types*
 
-Nvim's C API uses custom types for all functions. Some are just typedefs
-around C99 standard types, and some are Nvim-defined data structures.
+The Nvim C API defines custom types for all function parameters. Some are just
+typedefs around C99 standard types, others are Nvim-defined data structures.
 
-Boolean				  -> bool
-Integer (signed 64-bit integer)	  -> int64_t
-Float (IEEE 754 double precision) -> double
-String				  -> {char* data, size_t size} struct
-
-Additionally, the following data structures are defined:
-
-Array
-Dictionary
-Object
+  Boolean				-> bool
+  Integer (signed 64-bit integer)	-> int64_t
+  Float (IEEE 754 double precision)	-> double
+  String				-> {char* data, size_t size} struct
+  Array
+  Dictionary
+  Object
 
 The following handle types are defined as integer typedefs, but are
 discriminated as separate types in an Object:
 
-Buffer				  -> enum value kObjectTypeBuffer
-Window				  -> enum value kObjectTypeWindow
-Tabpage				  -> enum value kObjectTypeTabpage
+  Buffer				-> enum value kObjectTypeBuffer
+  Window				-> enum value kObjectTypeWindow
+  Tabpage				-> enum value kObjectTypeTabpage
 
 ==============================================================================
 API metadata							 *api-metadata*
@@ -49,6 +46,7 @@ version.api_prerelease	Declares the current API level as unstable >
 			(version.api_prerelease && fn.since == version.api_level)
 functions		API function signatures
 ui_events		UI event signatures |ui|
+ui_options		Supported |ui-options|
 {fn}.since		API level where function {fn} was introduced
 {fn}.deprecated_since	API level where function {fn} was deprecated
 types			Custom handle types defined by Nvim
@@ -59,10 +57,14 @@ External programs ("clients") can use the metadata to discover the |rpc-api|.
 ==============================================================================
 API contract                                                     *api-contract*
 
-The API is made of functions and events. Clients call functions like those
-described at |api-global|, and may "attach" to receive rich |ui-events|.
+The Nvim API is composed of functions and events.
 
-As Nvim develops, its API may change only according the following "contract":
+- Clients call functions like those described at |api-global|.
+- Clients can subscribe to |ui-events|, |api-buffer-updates|, etc.
+- API function names are prefixed with "nvim_".
+- API event names are prefixed with "nvim_" and suffixed with "_event".
+
+As Nvim evolves the API may change in compliance with this CONTRACT:
 
 - New functions and events may be added.
   - Any such extensions are OPTIONAL: old clients may ignore them.
@@ -76,6 +78,101 @@ As Nvim develops, its API may change only according the following "contract":
   - Any such new items are OPTIONAL: old clients may ignore them.
   - Existing items will not be removed (after release).
 - Deprecated functions will not be removed until Nvim version 2.0
+
+==============================================================================
+Buffer update events					*api-buffer-updates*
+
+API clients can "attach" to Nvim buffers to subscribe to buffer update events.
+This is similar to |TextChanged| but more powerful and granular.
+
+Call |nvim_buf_attach| to receive these events on the channel:
+
+                                                        *nvim_buf_lines_event*
+nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, {more}]
+
+  When the buffer text between {firstline} and {lastline} (end-exclusive,
+  zero-indexed) were changed to the new text in the {linedata} list. The
+  granularity is a line, i.e. if a single character is changed in the editor,
+  the entire line is sent.
+
+  When {changedtick} is |v:null| this means the screen lines (display) changed
+  but not the buffer contents. {linedata} contains the changed screen lines.
+  This happens when |inccommand| shows a buffer preview.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+
+    {changedtick} value of |b:changedtick| for the buffer. If you send an API
+    command back to nvim you can check the value of |b:changedtick| as part of
+    your request to ensure that no other changes have been made.
+
+    {firstline} integer line number of the first line that was replaced.
+    Zero-indexed: if line 1 was replaced then {firstline} will be 0, not 1.
+    {firstline} is always less than or equal to the number of lines that were
+    in the buffer before the lines were replaced.
+
+    {lastline} integer line number of the first line that was not replaced
+    (i.e. the range {firstline}, {lastline} is end-exclusive).
+    Zero-indexed: if line numbers 2 to 5 were replaced, this will be 5 instead
+    of 6. {lastline} is always be less than or equal to the number of lines
+    that were in the buffer before the lines were replaced. {lastline} will be
+    -1 if the event is part of the initial update after attaching.
+
+    {linedata} list of strings containing the contents of the new buffer
+    lines. Newline characters are omitted; empty lines are sent as empty
+    strings.
+
+    {more} boolean, true for a "multipart" change notification: the current
+    change was chunked into multiple |nvim_buf_lines_event| notifications
+    (e.g. because it was too big).
+
+nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
+
+  When |b:changedtick| was incremented but no text was changed. Relevant for
+  undo/redo.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+    {changedtick} new value of |b:changedtick| for the buffer
+
+nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
+
+  When buffer is detached (i.e. updates are disabled). Triggered explicitly by
+  |nvim_buf_detach| or implicitly in these cases:
+  - Buffer was |abandon|ed and 'hidden' is not set.
+  - Buffer was reloaded, e.g. with |:edit| or an external change triggered
+    |:checktime| or 'autoread'.
+  - Generally: whenever the buffer contents are unloaded from memory.
+
+  Properties:~
+    {buf} API buffer handle (buffer number)
+
+
+EXAMPLE ~
+
+Calling |nvim_buf_attach| with send_buffer=true on an empty buffer, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
+
+User adds two lines to the buffer, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
+
+User moves to a line containing the text "Hello world" and inserts "!", emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, {linenr}, {linenr} + 1,
+                       ["Hello world!"], v:false]
+
+User moves to line 3 and deletes 20 lines using "20dd", emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 22, [], v:false]
+
+User selects lines 3-5 using |linewise-visual| mode and then types "p" to
+paste a block of 6 lines, emits: >
+  nvim_buf_lines_event[{buf}, {changedtick}, 2, 5,
+    ['pasted line 1', 'pasted line 2', 'pasted line 3', 'pasted line 4',
+     'pasted line 5', 'pasted line 6'],
+    v:false
+  ]
+
+User reloads the buffer with ":edit", emits: >
+  nvim_buf_detach_event[{buf}]
 
 ==============================================================================
 Buffer highlighting					       *api-highlights*
@@ -128,8 +225,10 @@ An example of calling the api from vimscript: >
 Global Functions                                                  *api-global*
 
 nvim_command({command})                                       *nvim_command()*
-                Executes an ex-command. On VimL error: Returns the VimL error;
-                v:errmsg is not updated.
+                Executes an ex-command.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
 
                 Parameters:~
                     {command}  Ex-command string
@@ -155,22 +254,24 @@ nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
                     Highlight definition map
 
 nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
-                Passes input keys to Nvim. On VimL error: Does not fail, but
-                updates v:errmsg.
+                Sends input-keys to Nvim, subject to various quirks controlled
+                by `mode` flags. This is a blocking call, unlike
+                |nvim_input()|.
+
+                On execution error: does not fail, but updates v:errmsg.
 
                 Parameters:~
                     {keys}        to be typed
-                    {mode}        mapping options
+                    {mode}        behavior flags, see |feedkeys()|
                     {escape_csi}  If true, escape K_SPECIAL/CSI bytes in
                                   `keys`
 
 nvim_input({keys})                                              *nvim_input()*
-                Passes keys to Nvim as raw user-input. On VimL error: Does not
-                fail, but updates v:errmsg.
+                Queues raw user-input. Unlike |nvim_feedkeys()|, this uses a
+                low-level input buffer and the call is non-blocking (input is
+                processed asynchronously by the eventloop).
 
-                Unlike `nvim_feedkeys`, this uses a lower-level input buffer
-                and the call is not deferred. This is the most reliable way to
-                send real user input.
+                On execution error: does not fail, but updates v:errmsg.
 
                 Note:
                     |keycodes| like <CR> are translated, so "<" is special. To
@@ -199,32 +300,28 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                     {special}    Replace |keycodes|, e.g. <CR> becomes a "\n"
                                  char.
 
-nvim_command_output({str})                             *nvim_command_output()*
-                TODO: Documentation
+nvim_command_output({command})                         *nvim_command_output()*
+                Executes an ex-command and returns its (non-error) output.
+                Shell |:!| output is not captured.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters:~
+                    {command}  Ex-command string
 
 nvim_eval({expr})                                                *nvim_eval()*
                 Evaluates a VimL expression (:help expression). Dictionaries
-                and Lists are recursively expanded. On VimL error: Returns a
-                generic error; v:errmsg is not updated.
+                and Lists are recursively expanded.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
 
                 Parameters:~
                     {expr}  VimL expression string
 
                 Return:~
                     Evaluation result or expanded object
-
-nvim_call_function({fname}, {args})                     *nvim_call_function()*
-                Calls a VimL function with the given arguments
-
-                On VimL error: Returns a generic error; v:errmsg is not
-                updated.
-
-                Parameters:~
-                    {fname}  Function to call
-                    {args}   Function arguments packed in an Array
-
-                Return:~
-                    Result of the function call
 
 nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
                 Execute lua code. Parameters (if any) are available as `...`
@@ -239,6 +336,34 @@ nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
 
                 Return:~
                     Return value of lua code if present or NIL.
+
+nvim_call_function({fn}, {args})                        *nvim_call_function()*
+                Calls a VimL function with the given arguments.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters:~
+                    {fn}    Function to call
+                    {args}  Function arguments packed in an Array
+
+                Return:~
+                    Result of the function call
+
+nvim_call_dict_function({dict}, {fn}, {args})      *nvim_call_dict_function()*
+                Calls a VimL |Dictionary-function| with the given arguments.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters:~
+                    {dict}  Dictionary, or String evaluating to a VimL |self|
+                            dict
+                    {fn}    Name of the function defined on the VimL dict
+                    {args}  Function arguments packed in an Array
+
+                Return:~
+                    Result of the function call
 
 nvim_strwidth({text})                                        *nvim_strwidth()*
                 Calculates the number of display cells occupied by `text`.
@@ -434,15 +559,28 @@ nvim_get_mode()                                              *nvim_get_mode()*
                     {async}
 
 nvim_get_keymap({mode})                                    *nvim_get_keymap()*
-                Gets a list of dictionaries describing global (non-buffer)
-                mappings. The "buffer" key in the returned dictionary is
-                always zero.
+                Gets a list of global (non-buffer-local) |mapping|
+                definitions.
 
                 Parameters:~
                     {mode}  Mode short-name ("n", "i", "v", ...)
 
                 Return:~
-                    Array of maparg()-like dictionaries describing mappings
+                    Array of maparg()-like dictionaries describing mappings.
+                    The "buffer" key is always zero.
+
+nvim_get_commands({opts})                                *nvim_get_commands()*
+                Gets a map of global (non-buffer-local) Ex commands.
+
+                Currently only |user-commands| are supported, not builtin Ex
+                commands.
+
+                Parameters:~
+                    {opts}  Optional parameters. Currently only supports
+                            {"builtin":false}
+
+                Return:~
+                    Map of maps describing commands.
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 Returns a 2-tuple (Array), where item 0 is the current channel
@@ -454,17 +592,83 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
                 Attributes:~
                     {async}
 
-nvim_call_atomic({calls})                                 *nvim_call_atomic()*
-                Call many api methods atomically
+                                                      *nvim_set_client_info()*
+nvim_set_client_info({name}, {version}, {type}, {methods},
+                     {attributes})
+                Identify the client for nvim. Can be called more than once,
+                but subsequent calls will remove earlier info, which should be
+                resent if it is still valid. (This could happen if a library
+                first identifies the channel, and a plugin using that library
+                later overrides that info)
 
-                This has two main usages: Firstly, to perform several requests
-                from an async context atomically, i.e. without processing
-                requests from other rpc clients or redrawing or allowing user
-                interaction in between. Note that api methods that could fire
-                autocommands or do event processing still might do so. For
-                instance invoking the :sleep command might call timer
-                callbacks. Secondly, it can be used to reduce rpc overhead
-                (roundtrips) when doing many requests in sequence.
+                Parameters:~
+                    {name}        short name for the connected client
+                    {version}     Dictionary describing the version, with the
+                                  following possible keys (all optional)
+                                  "major" major version (defaults to 0 if not
+                                  set, for no release yet)  "minor" minor
+                                  version  "patch" patch number  "prerelease"
+                                  string describing a prerelease, like "dev"
+                                  or "beta1"  "commit" hash or similar
+                                  identifier of commit
+                    {type}        Must be one of the following values. A
+                                  client library should use "remote" if the
+                                  library user hasn't specified other value.
+                                  "remote" remote client that connected to
+                                  nvim.  "ui" gui frontend  "embedder"
+                                  application using nvim as a component, for
+                                  instance IDE/editor implementing a vim mode.
+                                  "host" plugin host, typically started by
+                                  nvim  "plugin" single plugin, started by
+                                  nvim
+                    {methods}     Builtin methods in the client. For a host,
+                                  this does not include plugin methods which
+                                  will be discovered later. The key should be
+                                  the method name, the values are dicts with
+                                  the following (optional) keys:   "async" if
+                                  true, send as a notification. If false or
+                                  unspecified, use a blocking request  "nargs"
+                                  Number of arguments. Could be a single
+                                  integer or an array two integers, minimum
+                                  and maximum inclusive. Further keys might be
+                                  added in later versions of nvim and unknown
+                                  keys are thus ignored. Clients must only use
+                                  keys defined in this or later versions of
+                                  nvim!
+                    {attributes}  Informal attributes describing the client.
+                                  Clients might define their own keys, but the
+                                  following are suggested:   "website" Website
+                                  of client (for instance github repository)
+                                  "license" Informal descripton of the
+                                  license, such as "Apache 2", "GPLv3" or
+                                  "MIT"  "logo" URI or path to image,
+                                  preferably small logo or icon. .png or .svg
+                                  format is preferred.
+
+nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
+                Get information about a channel.
+
+                Return:~
+                    a Dictionary, describing a channel with the following
+                    keys:   "stream" the stream underlying the channel
+                    "stdio" stdin and stdout of this Nvim instance  "stderr"
+                    stderr of this Nvim instance  "socket" TCP/IP socket or
+                    named pipe  "job" job with communication over its stdio
+
+                  "mode" how data received on the channel is interpreted   "bytes" send and recieve raw bytes  "terminal" a |terminal| instance interprets ASCII sequences  "rpc" |RPC| communication on the channel is active  "pty" Name of pseudoterminal, if one is used (optional). On a POSIX system, this will be a device path like /dev/pts/1. Even if the name is unknown, the key will still be present to indicate a pty is used. This is currently the case when using winpty on windows.  "buffer" buffer with connected |terminal| instance (optional)  "client" information about the client on the other end of the RPC channel, if it has added it using |nvim_set_client_info|. (optional)
+
+nvim_list_chans()                                          *nvim_list_chans()*
+                Get information about all open channels.
+
+                Return:~
+                    Array of Dictionaries, each describing a channel with the
+                    format specified at |nvim_get_chan_info|.
+
+nvim_call_atomic({calls})                                 *nvim_call_atomic()*
+                Calls many API methods atomically.
+
+                This has two main usages:
+                  To perform several requests from an async context atomically, i.e. without interleaving redraws, RPC requests from other clients, or user interactions (however API methods may trigger autocommands or event processing which have such side-effects, e.g. |:sleep| may wake timers).  To minimize RPC overhead (roundtrips) of a sequence of many requests.
 
                 Parameters:~
                     {calls}  an array of calls, where each call is described
@@ -477,7 +681,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     If a call resulted in an error, it is a three-element
                     array with the zero-based index of the call which resulted
                     in an error, the error type and the error message. If an
-                    error ocurred, the values from all preceding calls will
+                    error occurred, the values from all preceding calls will
                     still be returned.
 
                                                      *nvim_parse_expression()*
@@ -606,6 +810,32 @@ nvim__id_float({flt})                                       *nvim__id_float()*
                 Return:~
                     its argument.
 
+nvim__stats()                                                  *nvim__stats()*
+                Gets internal stats.
+
+                Return:~
+                    Map of various internal stats.
+
+nvim_list_uis()                                              *nvim_list_uis()*
+                Gets a list of dictionaries representing attached UIs.
+
+                Return:~
+                    Array of UI dictionaries
+                Each dictionary has the following keys:
+                  "height" requested height of the UI  "width" requested width of the UI  "rgb" whether the UI uses rgb colors (false implies cterm colors)  "ext_..." Requested UI extensions, see |ui-options|  "chan" Channel id of remote UI (not present for TUI)
+
+nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
+                Gets the immediate children of process `pid`.
+
+                Return:~
+                    Array of child process ids, empty if process not found.
+
+nvim_get_proc({pid})                                         *nvim_get_proc()*
+                Gets info describing process `pid`.
+
+                Return:~
+                    Map of process properties, or NIL if process not found.
+
 
 ==============================================================================
 Buffer Functions                                                  *api-buffer*
@@ -618,6 +848,34 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
 
                 Return:~
                     Line count
+
+nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
+                Activate updates from this buffer to the current channel.
+
+                Parameters:~
+                    {buffer}       The buffer handle
+                    {send_buffer}  Set to true if the initial notification
+                                   should contain the whole buffer. If so, the
+                                   first notification will be a
+                                   `nvim_buf_lines_event`. Otherwise, the
+                                   first notification will be a
+                                   `nvim_buf_changedtick_event`
+                    {opts}         Optional parameters. Currently not used.
+
+                Return:~
+                    False when updates couldn't be enabled because the buffer
+                    isn't loaded or optscontained an invalid key; otherwise
+                    True.
+
+nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
+                Deactivate updates from this buffer to the current channel.
+
+                Parameters:~
+                    {buffer}  The buffer handle
+
+                Return:~
+                    False when updates couldn't be disabled because the buffer
+                    isn't loaded; otherwise True.
 
                                                         *nvim_buf_get_lines()*
 nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
@@ -685,16 +943,25 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
                     b:changedtickvalue.
 
 nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
-                Gets a list of dictionaries describing buffer-local mappings.
-                The "buffer" key in the returned dictionary reflects the
-                buffer handle where the mapping is present.
+                Gets a list of buffer-local |mapping| definitions.
 
                 Parameters:~
                     {mode}    Mode short-name ("n", "i", "v", ...)
                     {buffer}  Buffer handle
 
                 Return:~
-                    Array of maparg()-like dictionaries describing mappings
+                    Array of maparg()-like dictionaries describing mappings.
+                    The "buffer" key holds the associated buffer handle.
+
+nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
+                Gets a map of buffer-local |user-commands|.
+
+                Parameters:~
+                    {buffer}  Buffer handle.
+                    {opts}    Optional parameters. Currently not used.
+
+                Return:~
+                    Map of maps describing commands.
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
@@ -811,7 +1078,7 @@ nvim_buf_clear_highlight({buffer}, {src_id}, {line_start}, {line_end})
                 Clears highlights from a given source group and a range of
                 lines
 
-                To clear a source group in the entire buffer, pass in 1 and -1
+                To clear a source group in the entire buffer, pass in 0 and -1
                 to line_start and line_end respectively.
 
                 Parameters:~

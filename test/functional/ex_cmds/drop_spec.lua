@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 local clear, feed, feed_command = helpers.clear, helpers.feed, helpers.feed_command
 
@@ -15,7 +16,7 @@ describe(":drop", function()
       [2] = {reverse = true},
       [3] = {bold = true},
     })
-    feed_command("set laststatus=2")
+    command("set laststatus=2 shortmess-=F")
   end)
 
   after_each(function()
@@ -44,14 +45,14 @@ describe(":drop", function()
     feed_command("edit tmp2")
     feed_command("drop tmp1")
     screen:expect([[
-                    {2:|}^                    |
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
-      {0:~             }{2:|}{0:~                   }|
+                    {2:│}^                    |
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
+      {0:~             }{2:│}{0:~                   }|
       {2:tmp2           }{1:tmp1                }|
       :drop tmp1                         |
     ]])
@@ -64,14 +65,14 @@ describe(":drop", function()
     feed("iABC<esc>")
     feed_command("drop tmp3")
     screen:expect([[
-      ^                    {2:|}              |
-      {0:~                   }{2:|}{0:~             }|
-      {0:~                   }{2:|}{0:~             }|
-      {0:~                   }{2:|}{0:~             }|
-      {1:tmp3                }{2:|}{0:~             }|
-      ABC                 {2:|}{0:~             }|
-      {0:~                   }{2:|}{0:~             }|
-      {0:~                   }{2:|}{0:~             }|
+      ^                    {2:│}              |
+      {0:~                   }{2:│}{0:~             }|
+      {0:~                   }{2:│}{0:~             }|
+      {0:~                   }{2:│}{0:~             }|
+      {1:tmp3                }{2:│}{0:~             }|
+      ABC                 {2:│}{0:~             }|
+      {0:~                   }{2:│}{0:~             }|
+      {0:~                   }{2:│}{0:~             }|
       {2:tmp2 [+]             tmp1          }|
       "tmp3" [New File]                  |
     ]])

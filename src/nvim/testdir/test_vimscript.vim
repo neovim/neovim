@@ -1061,6 +1061,7 @@ func Test_echo_and_string()
     let l = split(result, "\n")
     call assert_equal(["{'a': [], 'b': []}",
 		     \ "{'a': [], 'b': []}"], l)
+endfunc
 
 "-------------------------------------------------------------------------------
 " Test 94:  64-bit Numbers					    {{{1
@@ -1238,10 +1239,12 @@ func Test_endfunction_trailing()
 
     set verbose=1
     exe "func Xtest()\necho 'hello'\nendfunc \" garbage"
+    call assert_notmatch('W22:', split(execute('1messages'), "\n")[0])
     call assert_true(exists('*Xtest'))
     delfunc Xtest
 
-    call assert_fails("func Xtest()\necho 'hello'\nendfunc garbage", 'E946')
+    exe "func Xtest()\necho 'hello'\nendfunc garbage"
+    call assert_match('W22:', split(execute('1messages'), "\n")[0])
     call assert_true(exists('*Xtest'))
     delfunc Xtest
     set verbose=0

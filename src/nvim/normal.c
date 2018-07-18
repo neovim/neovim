@@ -345,6 +345,7 @@ static const struct nv_cmd {
   { K_F8,      farsi_f8,       0,                      0 },
   { K_F9,      farsi_f9,       0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
+  { K_COMMAND, nv_colon,       0,                      0 },
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -1212,15 +1213,11 @@ static void normal_check_cursor_moved(NormalState *s)
 
 static void normal_check_text_changed(NormalState *s)
 {
-  // Trigger TextChanged if b_changedtick differs.
+  // Trigger TextChanged if changedtick differs.
   if (!finish_op && has_event(EVENT_TEXTCHANGED)
-      && last_changedtick != curbuf->b_changedtick) {
-    if (last_changedtick_buf == curbuf) {
-      apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
-    }
-
-    last_changedtick_buf = curbuf;
-    last_changedtick = curbuf->b_changedtick;
+      && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)) {
+    apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, false, curbuf);
+    curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
   }
 }
 
@@ -1473,13 +1470,13 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           AppendToRedobuffLit(cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
-      } else if (cap->cmdchar == ':') {
-        /* do_cmdline() has stored the first typed line in
-         * "repeat_cmdline".  When several lines are typed repeating
-         * won't be possible. */
-        if (repeat_cmdline == NULL)
+      } else if (cap->cmdchar == ':' || cap->cmdchar == K_COMMAND) {
+        // do_cmdline() has stored the first typed line in
+        // "repeat_cmdline".  When several lines are typed repeating
+        // won't be possible.
+        if (repeat_cmdline == NULL) {
           ResetRedobuff();
-        else {
+        } else {
           AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
           xfree(repeat_cmdline);
@@ -1637,16 +1634,22 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         /* Prepare for redoing.  Only use the nchar field for "r",
          * otherwise it might be the second char of the operator. */
         if (cap->cmdchar == 'g' && (cap->nchar == 'n'
-                                    || cap->nchar == 'N'))
+                                    || cap->nchar == 'N')) {
           prep_redo(oap->regname, cap->count0,
-              get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
-              oap->motion_force, cap->cmdchar, cap->nchar);
-        else if (cap->cmdchar != ':')
-          prep_redo(oap->regname, 0L, NUL, 'v',
-              get_op_char(oap->op_type),
-              get_extra_op_char(oap->op_type),
-              oap->op_type == OP_REPLACE
-              ? cap->nchar : NUL);
+                    get_op_char(oap->op_type), get_extra_op_char(oap->op_type),
+                    oap->motion_force, cap->cmdchar, cap->nchar);
+        } else if (cap->cmdchar != ':') {
+          int nchar = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
+
+          // reverse what nv_replace() did
+          if (nchar == REPLACE_CR_NCHAR) {
+            nchar = CAR;
+          } else if (nchar == REPLACE_NL_NCHAR) {
+            nchar = NL;
+          }
+          prep_redo(oap->regname, 0L, NUL, 'v', get_op_char(oap->op_type),
+                    get_extra_op_char(oap->op_type), nchar);
+        }
         if (!redo_VIsual_busy) {
           redo_VIsual_mode = resel_VIsual_mode;
           redo_VIsual_vcol = resel_VIsual_vcol;
@@ -1805,7 +1808,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         (void)op_delete(oap);
         if (oap->motion_type == kMTLineWise && has_format_option(FO_AUTO)) {
-          u_save_cursor();  // cursor line wasn't saved yet
+          // cursor line wasn't saved yet
+          if (u_save_cursor() == FAIL) {
+            break;
+          }
         }
         auto_format(false, true);
       }
@@ -2927,8 +2933,9 @@ void check_visual_highlight(void)
   static bool did_check = false;
 
   if (full_screen) {
-    if (!did_check && hl_attr(HLF_V) == 0)
+    if (!did_check && HL_ATTR(HLF_V) == 0) {
       MSG(_("Warning: terminal cannot highlight"));
+    }
     did_check = true;
   }
 }
@@ -3762,14 +3769,17 @@ find_decl (
       t = false;         /* match after start is failure too */
 
     if (thisblock && t != false) {
-      pos_T       *pos;
+      const int64_t maxtravel = old_pos.lnum - curwin->w_cursor.lnum + 1;
+      const pos_T *pos = findmatchlimit(NULL, '}', FM_FORWARD, maxtravel);
 
-      /* Check that the block the match is in doesn't end before the
-       * position where we started the search from. */
-      if ((pos = findmatchlimit(NULL, '}', FM_FORWARD,
-               (int)(old_pos.lnum - curwin->w_cursor.lnum + 1))) != NULL
-          && pos->lnum < old_pos.lnum)
+      // Check that the block the match is in doesn't end before the
+      // position where we started the search from.
+      if (pos != NULL && pos->lnum < old_pos.lnum) {
+        // There can't be a useful match before the end of this block.
+        // Skip to the end
+        curwin->w_cursor = *pos;
         continue;
+      }
     }
 
     if (t == false) {
@@ -4518,23 +4528,22 @@ static void nv_exmode(cmdarg_T *cap)
   }
 }
 
-/*
- * Handle a ":" command.
- */
+/// Handle a ":" command and <Cmd>.
 static void nv_colon(cmdarg_T *cap)
 {
   int old_p_im;
   bool cmd_result;
+  bool is_cmdkey = cap->cmdchar == K_COMMAND;
 
-  if (VIsual_active)
+  if (VIsual_active && !is_cmdkey) {
     nv_operator(cap);
-  else {
+  } else {
     if (cap->oap->op_type != OP_NOP) {
       // Using ":" as a movement is characterwise exclusive.
       cap->oap->motion_type = kMTCharWise;
       cap->oap->inclusive = false;
-    } else if (cap->count0) {
-      /* translate "count:" into ":.,.+(count - 1)" */
+    } else if (cap->count0 && !is_cmdkey) {
+      // translate "count:" into ":.,.+(count - 1)"
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
         stuffReadbuff(",.+");
@@ -4548,9 +4557,9 @@ static void nv_colon(cmdarg_T *cap)
 
     old_p_im = p_im;
 
-    /* get a command line and execute it */
-    cmd_result = do_cmdline(NULL, getexline, NULL,
-        cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+    // get a command line and execute it
+    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+                            cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
 
     /* If 'insertmode' changed, enter or exit Insert mode */
     if (p_im != old_p_im) {
@@ -5224,13 +5233,13 @@ static void nv_gotofile(cmdarg_T *cap)
 
   if (ptr != NULL) {
     // do autowrite if necessary
-    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf)) {
+    if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !buf_hide(curbuf)) {
       (void)autowrite(curbuf, false);
     }
     setpcmark();
-    (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
-        P_HID(curbuf) ? ECMD_HIDE : 0, curwin);
-    if (cap->nchar == 'F' && lnum >= 0) {
+    if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
+                buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
+        && cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;
       check_cursor_lnum();
       beginline(BL_SOL | BL_FIX);
@@ -5854,10 +5863,13 @@ static void nv_replace(cmdarg_T *cap)
     if (got_int)
       reset_VIsual();
     if (had_ctrl_v) {
-      if (cap->nchar == '\r')
-        cap->nchar = -1;
-      else if (cap->nchar == '\n')
-        cap->nchar = -2;
+      // Use a special (negative) number to make a difference between a
+      // literal CR or NL and a line break.
+      if (cap->nchar == CAR) {
+        cap->nchar = REPLACE_CR_NCHAR;
+      } else if (cap->nchar == NL) {
+        cap->nchar = REPLACE_NL_NCHAR;
+      }
     }
     nv_operator(cap);
     return;
@@ -6132,7 +6144,7 @@ static void n_swapchar(cmdarg_T *cap)
   curwin->w_set_curswant = true;
   if (did_change) {
     changed_lines(startpos.lnum, startpos.col, curwin->w_cursor.lnum + 1,
-        0L);
+                  0L, true);
     curbuf->b_op_start = startpos;
     curbuf->b_op_end = curwin->w_cursor;
     if (curbuf->b_op_end.col > 0)
@@ -6886,7 +6898,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     else
       show_utf8();
     break;
-
+  // "g<": show scrollback text
   case '<':
     show_sb_text();
     break;
@@ -7142,7 +7154,7 @@ static void set_op_var(int optype)
     assert(opchar0 >= 0 && opchar0 <= UCHAR_MAX);
     opchars[0] = (char) opchar0;
 
-    int opchar1 = get_extra_op_char(optype); 
+    int opchar1 = get_extra_op_char(optype);
     assert(opchar1 >= 0 && opchar1 <= UCHAR_MAX);
     opchars[1] = (char) opchar1;
 
@@ -7455,8 +7467,10 @@ static void nv_esc(cmdarg_T *cap)
     if (restart_edit == 0
         && cmdwin_type == 0
         && !VIsual_active
-        && no_reason)
-      MSG(_("Type  :quit<Enter>  to exit Nvim"));
+        && no_reason) {
+      MSG(_("Type  :qa!  and press <Enter> to abandon all changes"
+            " and exit Nvim"));
+    }
 
     /* Don't reset "restart_edit" when 'insertmode' is set, it won't be
      * set again below when halfway through a mapping. */

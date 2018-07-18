@@ -37,9 +37,17 @@ set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
   "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
 
+# Replace luv default rockspec with the alternate one under the "rockspecs"
+# directory
 set(LUV_PATCH_COMMAND
-  ${CMAKE_COMMAND} -DLUV_SRC_DIR=${LUV_SRC_DIR}
-  -P ${PROJECT_SOURCE_DIR}/cmake/PatchLuv.cmake)
+    ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
+if(MINGW)
+  set(LUV_PATCH_COMMAND
+    ${LUV_PATCH_COMMAND}
+    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} init
+    COMMAND ${GIT_EXECUTABLE} -C ${LUV_SRC_DIR} apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/luv-Add-missing-definitions-for-MinGW.patch)
+endif()
 
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}
@@ -49,6 +57,12 @@ set(LUV_CONFIGURE_COMMAND_COMMON
   -DWITH_SHARED_LIBUV=ON
   -DBUILD_SHARED_LIBS=OFF
   -DBUILD_MODULE=OFF)
+
+if(USE_BUNDLED_LIBUV)
+  set(LUV_CONFIGURE_COMMAND_COMMON
+    ${LUV_CONFIGURE_COMMAND_COMMON}
+    -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
+endif()
 
 if(MINGW AND CMAKE_CROSSCOMPILING)
   get_filename_component(TOOLCHAIN ${CMAKE_TOOLCHAIN_FILE} REALPATH)
@@ -78,7 +92,12 @@ else()
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS} -fPIC")
 endif()
 
-set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build .)
+if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
+        (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
+  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
+else()
+  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build .)
+endif()
 set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install)
 
 BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}

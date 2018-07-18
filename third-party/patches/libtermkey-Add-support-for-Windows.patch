@@ -1,0 +1,170 @@
+From fbe91a958816d85fa93665eb8f7a7a8e05eb9650 Mon Sep 17 00:00:00 2001
+From: Rui Abreu Ferreira <raf-ep@gmx.com>
+Date: Tue, 5 Apr 2016 00:12:41 +0100
+Subject: [PATCH] Add support for Windows
+
+Ported termkey for windows.
+
+- The TERMKEY_FLAG_NOTERMIOS is ignore in Windows, since there is no termios.
+- The termkey_waitkey() function is not implemented in windows, since there
+  is no poll() alternative.
+- The CMake recipe only supports unibilium, not curses.
+---
+ driver-ti.c        |  8 +++++++-
+ termkey-internal.h | 11 ++++++++++-
+ termkey.c          | 22 ++++++++++++++++++----
+ 3 files changed, 35 insertions(+), 6 deletions(-)
+
+diff --git a/driver-ti.c b/driver-ti.c
+index e673ab7..f5f8052 100644
+--- a/driver-ti.c
++++ b/driver-ti.c
+@@ -17,7 +17,9 @@
+ #include <ctype.h>
+ #include <stdio.h>
+ #include <string.h>
+-#include <unistd.h>
++#ifndef _WIN32
++# include <unistd.h>
++#endif
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
+@@ -338,8 +340,10 @@ static int start_driver(TermKey *tk, void *info)
+   if(fstat(tk->fd, &statbuf) == -1)
+     return 0;
+ 
++#ifndef _WIN32
+   if(S_ISFIFO(statbuf.st_mode))
+     return 1;
++#endif
+ 
+   // Can't call putp or tputs because they suck and don't give us fd control
+   len = strlen(start_string);
+@@ -367,8 +371,10 @@ static int stop_driver(TermKey *tk, void *info)
+   if(fstat(tk->fd, &statbuf) == -1)
+     return 0;
+ 
++#ifndef _WIN32
+   if(S_ISFIFO(statbuf.st_mode))
+     return 1;
++#endif
+ 
+   /* The terminfo database will contain keys in application cursor key mode.
+    * We may need to enable that mode
+diff --git a/termkey-internal.h b/termkey-internal.h
+index 52829b3..b796729 100644
+--- a/termkey-internal.h
++++ b/termkey-internal.h
+@@ -4,7 +4,14 @@
+ #include "termkey.h"
+ 
+ #include <stdint.h>
+-#include <termios.h>
++#ifndef _WIN32
++# include <termios.h>
++#endif
++
++#ifdef _MSC_VER
++#include <BaseTsd.h>
++typedef SSIZE_T ssize_t;
++#endif
+ 
+ struct TermKeyDriver
+ {
+@@ -41,8 +48,10 @@ struct TermKey {
+   size_t hightide; /* Position beyond buffstart at which peekkey() should next start
+                     * normally 0, but see also termkey_interpret_csi */
+ 
++#ifndef _WIN32
+   struct termios restore_termios;
+   char restore_termios_valid;
++#endif
+ 
+   TermKey_Terminfo_Getstr_Hook *ti_getstr_hook;
+   void *ti_getstr_hook_data;
+diff --git a/termkey.c b/termkey.c
+index 2f01f3a..145b99f 100644
+--- a/termkey.c
++++ b/termkey.c
+@@ -3,14 +3,20 @@
+ 
+ #include <ctype.h>
+ #include <errno.h>
+-#include <poll.h>
+-#include <unistd.h>
++#ifndef _WIN32
++# include <poll.h>
++# include <unistd.h>
++# include <strings.h>
++#endif
+ #include <string.h>
+-#include <strings.h>
+ 
+ #include <stdio.h>
+ 
+-#define strcaseeq(a,b) (strcasecmp(a,b) == 0)
++#ifdef _MSC_VER
++# define strcaseeq(a,b) (_stricmp(a,b) == 0)
++#else
++# define strcaseeq(a,b) (strcasecmp(a,b) == 0)
++#endif
+ 
+ void termkey_check_version(int major, int minor)
+ {
+@@ -282,7 +288,9 @@ static TermKey *termkey_alloc(void)
+   tk->buffsize  = 256; /* bytes */
+   tk->hightide  = 0;
+ 
++#ifndef _WIN32
+   tk->restore_termios_valid = 0;
++#endif
+ 
+   tk->ti_getstr_hook = NULL;
+   tk->ti_getstr_hook_data = NULL;
+@@ -483,6 +491,7 @@ int termkey_start(TermKey *tk)
+   if(tk->is_started)
+     return 1;
+ 
++#ifndef _WIN32
+   if(tk->fd != -1 && !(tk->flags & TERMKEY_FLAG_NOTERMIOS)) {
+     struct termios termios;
+     if(tcgetattr(tk->fd, &termios) == 0) {
+@@ -517,6 +526,7 @@ int termkey_start(TermKey *tk)
+       tcsetattr(tk->fd, TCSANOW, &termios);
+     }
+   }
++#endif
+ 
+   struct TermKeyDriverNode *p;
+   for(p = tk->drivers; p; p = p->next)
+@@ -542,8 +552,10 @@ int termkey_stop(TermKey *tk)
+     if(p->driver->stop_driver)
+       (*p->driver->stop_driver)(tk, p->info);
+ 
++#ifndef _WIN32
+   if(tk->restore_termios_valid)
+     tcsetattr(tk->fd, TCSANOW, &tk->restore_termios);
++#endif
+ 
+   tk->is_started = 0;
+ 
+@@ -1046,6 +1058,7 @@ TermKeyResult termkey_getkey_force(TermKey *tk, TermKeyKey *key)
+   return ret;
+ }
+ 
++#ifndef _WIN32
+ TermKeyResult termkey_waitkey(TermKey *tk, TermKeyKey *key)
+ {
+   if(tk->fd == -1) {
+@@ -1105,6 +1118,7 @@ retry:
+ 
+   /* UNREACHABLE */
+ }
++#endif
+ 
+ TermKeyResult termkey_advisereadable(TermKey *tk)
+ {
+-- 
+2.16.1.windows.4
+

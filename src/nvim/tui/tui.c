@@ -125,7 +125,6 @@ UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
   ui->stop = tui_stop;
-  ui->rgb = p_tgc;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
@@ -143,15 +142,12 @@ UI *tui_start(void)
   ui->put = tui_put;
   ui->bell = tui_bell;
   ui->visual_bell = tui_visual_bell;
-  ui->update_fg = tui_update_fg;
-  ui->update_bg = tui_update_bg;
-  ui->update_sp = tui_update_sp;
+  ui->default_colors_set = tui_default_colors_set;
   ui->flush = tui_flush;
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->option_set= tui_option_set;
-  ui->event = tui_event;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
@@ -206,7 +202,7 @@ static void terminfo_start(UI *ui)
   const char *term = os_getenv("TERM");
   data->ut = unibi_from_env();
   char *termname = NULL;
-  if (!data->ut) {
+  if (!term || !data->ut) {
     data->ut = terminfo_from_builtin(term, &termname);
   } else {
     termname = xstrdup(term);
@@ -323,8 +319,14 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  // Flag UI as "stopped". Needed by tui_scheduler (called from main thread).
+  // Flag UI as "stopped".
   ui->data = NULL;
+}
+
+/// Returns true if UI `ui` is stopped.
+static bool tui_is_stopped(UI *ui)
+{
+  return ui->data == NULL;
 }
 
 /// Main function of the TUI thread.
@@ -356,17 +358,17 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
                          event_create(show_termcap_event, 1, data->ut));
 
   // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !ui_is_stopped(ui);) {
+  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
     ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
   }
-  if (!ui_is_stopped(ui)) {
+  if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
     // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
     // terminal response may not get processed until user hits a key.
     loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
   }
   // "Passive" (I/O-driven) loop: TUI thread "main loop".
-  while (!ui_is_stopped(ui)) {
+  while (!tui_is_stopped(ui)) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
@@ -388,9 +390,6 @@ static void tui_dummy_event(void **argv)
 static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
-  if (ui_is_stopped(ui)) {
-    return;  // tui_stop was handled, teardown underway.
-  }
   TUIData *data = ui->data;
   loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }
@@ -406,40 +405,67 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
   got_winch = true;
   UI *ui = data;
+  if (tui_is_stopped(ui)) {
+    return;
+  }
+
   update_size(ui);
   ui_schedule_refresh();
 }
 
-static bool attrs_differ(HlAttrs a1, HlAttrs a2)
+static bool attrs_differ(HlAttrs a1, HlAttrs a2, bool rgb)
 {
-  return a1.foreground != a2.foreground || a1.background != a2.background
-    || a1.bold != a2.bold || a1.italic != a2.italic
-    || a1.undercurl != a2.undercurl || a1.underline != a2.underline
-    || a1.reverse != a2.reverse;
+  if (rgb) {
+    // TODO(bfredl): when we start to support special color,
+    // rgb_sp_color must be added here
+    return a1.rgb_fg_color != a2.rgb_fg_color
+      || a1.rgb_bg_color != a2.rgb_bg_color
+      || a1.rgb_ae_attr != a2.rgb_ae_attr;
+  } else {
+    return a1.cterm_fg_color != a2.cterm_fg_color
+      || a1.cterm_bg_color != a2.cterm_bg_color
+      || a1.cterm_ae_attr != a2.cterm_ae_attr;
+  }
 }
 
 static void update_attrs(UI *ui, HlAttrs attrs)
 {
   TUIData *data = ui->data;
 
-  if (!attrs_differ(attrs, data->print_attrs)) {
+  if (!attrs_differ(attrs, data->print_attrs, ui->rgb)) {
     return;
   }
 
   data->print_attrs = attrs;
   UGrid *grid = &data->grid;
 
-  int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
-  int bg = attrs.background != -1 ? attrs.background : grid->bg;
+  int fg = ui->rgb ? attrs.rgb_fg_color : (attrs.cterm_fg_color - 1);
+  if (fg == -1) {
+    fg = ui->rgb ? grid->clear_attrs.rgb_fg_color
+                 : (grid->clear_attrs.cterm_fg_color - 1);
+  }
+
+  int bg = ui->rgb ? attrs.rgb_bg_color : (attrs.cterm_bg_color - 1);
+  if (bg == -1) {
+    bg = ui->rgb ? grid->clear_attrs.rgb_bg_color
+                 : (grid->clear_attrs.cterm_bg_color - 1);
+  }
+
+  int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
+  bool bold = attr & HL_BOLD;
+  bool italic = attr & HL_ITALIC;
+  bool reverse = attr & HL_INVERSE;
+  bool standout = attr & HL_STANDOUT;
+  bool underline = attr & (HL_UNDERLINE), undercurl = attr & (HL_UNDERCURL);
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
-    if (attrs.bold || attrs.reverse || attrs.underline || attrs.undercurl) {
-      UNIBI_SET_NUM_VAR(data->params[0], 0);   // standout
-      UNIBI_SET_NUM_VAR(data->params[1], attrs.underline || attrs.undercurl);
-      UNIBI_SET_NUM_VAR(data->params[2], attrs.reverse);
+    if (bold || reverse || underline || undercurl || standout) {
+      UNIBI_SET_NUM_VAR(data->params[0], standout);
+      UNIBI_SET_NUM_VAR(data->params[1], underline || undercurl);
+      UNIBI_SET_NUM_VAR(data->params[2], reverse);
       UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
       UNIBI_SET_NUM_VAR(data->params[4], 0);   // dim
-      UNIBI_SET_NUM_VAR(data->params[5], attrs.bold);
+      UNIBI_SET_NUM_VAR(data->params[5], bold);
       UNIBI_SET_NUM_VAR(data->params[6], 0);   // blank
       UNIBI_SET_NUM_VAR(data->params[7], 0);   // protect
       UNIBI_SET_NUM_VAR(data->params[8], 0);   // alternate character set
@@ -451,17 +477,20 @@ static void update_attrs(UI *ui, HlAttrs attrs)
     if (!data->default_attr) {
       unibi_out(ui, unibi_exit_attribute_mode);
     }
-    if (attrs.bold) {
+    if (bold) {
       unibi_out(ui, unibi_enter_bold_mode);
     }
-    if (attrs.underline || attrs.undercurl) {
+    if (underline || undercurl) {
       unibi_out(ui, unibi_enter_underline_mode);
     }
-    if (attrs.reverse) {
+    if (standout) {
+      unibi_out(ui, unibi_enter_standout_mode);
+    }
+    if (reverse) {
       unibi_out(ui, unibi_enter_reverse_mode);
     }
   }
-  if (attrs.italic) {
+  if (italic) {
     unibi_out(ui, unibi_enter_italics_mode);
   }
   if (ui->rgb) {
@@ -491,8 +520,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->default_attr = fg == -1 && bg == -1
-    && !attrs.bold && !attrs.italic && !attrs.underline && !attrs.undercurl
-    && !attrs.reverse;
+    && !bold && !italic && !underline && !undercurl && !reverse && !standout;
 }
 
 static void final_column_wrap(UI *ui)
@@ -534,7 +562,7 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
   UCell *cell = grid->cells[row] + col;
   while (next) {
     next--;
-    if (attrs_differ(cell->attrs, data->print_attrs)) {
+    if (attrs_differ(cell->attrs, data->print_attrs, ui->rgb)) {
       if (data->default_attr) {
         return false;
       }
@@ -581,8 +609,7 @@ static void cursor_goto(UI *ui, int row, int col)
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2)
           && cheap_to_print(ui, grid->row, grid->col, n)) {
-        UGRID_FOREACH_CELL(grid, grid->row, grid->row,
-                           grid->col, col - 1, {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->row, grid->col, col - 1, {
           print_cell(ui, cell);
         });
       }
@@ -659,13 +686,12 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   int saved_col = grid->col;
 
   bool cleared = false;
-  if (grid->bg == -1 && right == ui->width -1) {
+  bool nobg = ui->rgb ? grid->clear_attrs.rgb_bg_color == -1
+                      : grid->clear_attrs.cterm_bg_color == 0;
+  if (nobg && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
-    HlAttrs clear_attrs = HLATTRS_INIT;
-    clear_attrs.foreground = grid->fg;
-    clear_attrs.background = grid->bg;
-    update_attrs(ui, clear_attrs);
+    update_attrs(ui, grid->clear_attrs);
     if (left == 0) {
       if (bot == ui->height - 1) {
         if (top == 0) {
@@ -788,6 +814,7 @@ static void tui_clear(UI *ui)
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   ugrid_clear(grid);
+  kv_size(data->invalid_regions) = 0;
   clear_region(ui, grid->top, grid->bot, grid->left, grid->right);
 }
 
@@ -806,7 +833,7 @@ static void tui_cursor_goto(UI *ui, Integer row, Integer col)
 
 CursorShape tui_cursor_decode_shape(const char *shape_str)
 {
-  CursorShape shape = 0;
+  CursorShape shape;
   if (strequal(shape_str, "block")) {
     shape = SHAPE_BLOCK;
   } else if (strequal(shape_str, "vertical")) {
@@ -814,14 +841,15 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
   } else if (strequal(shape_str, "horizontal")) {
     shape = SHAPE_HOR;
   } else {
-    EMSG2(_(e_invarg2), shape_str);
+    WLOG("Unknown shape value '%s'", shape_str);
+    shape = SHAPE_BLOCK;
   }
   return shape;
 }
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
 {
-  cursorentry_T r;
+  cursorentry_T r = shape_table[0];
 
   for (size_t i = 0; i < args.size; i++) {
     char *key = args.items[i].key.data;
@@ -900,22 +928,22 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   }
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
-  int shape = c.shape;
 
   if (c.id != 0 && ui->rgb) {
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      HlAttrs *aep = syn_cterm_attr2entry(attr);
       UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
   }
 
-  switch (shape) {
+  int shape;
+  switch (c.shape) {
+    default:          abort(); break;
     case SHAPE_BLOCK: shape = 1; break;
     case SHAPE_HOR:   shape = 3; break;
     case SHAPE_VER:   shape = 5; break;
-    default: WLOG("Unknown shape value %d", shape); break;
   }
   UNIBI_SET_NUM_VAR(data->params[0], shape + (int)(c.blinkon == 0));
   unibi_out_ext(ui, data->unibi_ext.set_cursor_style);
@@ -960,10 +988,7 @@ static void tui_scroll(UI *ui, Integer count)
     cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
-      HlAttrs clear_attrs = HLATTRS_INIT;
-      clear_attrs.foreground = grid->fg;
-      clear_attrs.background = grid->bg;
-      update_attrs(ui, clear_attrs);
+      update_attrs(ui, grid->clear_attrs);
     }
 
     if (count > 0) {
@@ -1028,19 +1053,16 @@ static void tui_visual_bell(UI *ui)
   unibi_out(ui, unibi_flash_screen);
 }
 
-static void tui_update_fg(UI *ui, Integer fg)
+static void tui_default_colors_set(UI *ui, Integer rgb_fg, Integer rgb_bg,
+                                   Integer rgb_sp,
+                                   Integer cterm_fg, Integer cterm_bg)
 {
-  ((TUIData *)ui->data)->grid.fg = (int)fg;
-}
-
-static void tui_update_bg(UI *ui, Integer bg)
-{
-  ((TUIData *)ui->data)->grid.bg = (int)bg;
-}
-
-static void tui_update_sp(UI *ui, Integer sp)
-{
-  // Do nothing; 'special' color is for GUI only
+  UGrid *grid = &((TUIData *)ui->data)->grid;
+  grid->clear_attrs.rgb_fg_color = (int)rgb_fg;
+  grid->clear_attrs.rgb_bg_color = (int)rgb_bg;
+  grid->clear_attrs.rgb_sp_color = (int)rgb_sp;
+  grid->clear_attrs.cterm_fg_color = (int)cterm_fg;
+  grid->clear_attrs.cterm_bg_color = (int)cterm_bg;
 }
 
 static void tui_flush(UI *ui)
@@ -1065,6 +1087,7 @@ static void tui_flush(UI *ui)
 
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
+    assert(r.bot < grid->height && r.right < grid->width);
     UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
@@ -1149,16 +1172,11 @@ static void tui_set_icon(UI *ui, String icon)
 
 static void tui_option_set(UI *ui, String name, Object value)
 {
+  TUIData *data = ui->data;
   if (strequal(name.data, "termguicolors")) {
-    // NB: value for bridge is set in ui_bridge.c
     ui->rgb = value.data.boolean;
+    invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
   }
-}
-
-// NB: if we start to use this, the ui_bridge must be updated
-// to make a copy for the tui thread
-static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
-{
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
@@ -1704,30 +1722,25 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.enable_lr_margin",
-      "\x1b[?69h");
-  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut,
-      "ext.disable_lr_margin",
-      "\x1b[?69l");
-  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.enable_bpaste",
-      "\x1b[?2004h");
-  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut,
-      "ext.disable_bpaste",
-      "\x1b[?2004l");
-  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.enable_focus",
-      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut,
-      "ext.disable_focus",
-      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.enable_mouse",
-      "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut,
-      "ext.disable_mouse",
-      "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.enable_lr_margin", "\x1b[?69h");
+  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(
+      ut, "ext.disable_lr_margin", "\x1b[?69l");
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.enable_bpaste", "\x1b[?2004h");
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(
+      ut, "ext.disable_bpaste", "\x1b[?2004l");
+  // For urxvt send BOTH xterm and old urxvt sequences. #8695
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.enable_focus",
+      rxvt ? "\x1b[?1004h\x1b]777;focus;on\x7" : "\x1b[?1004h");
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(
+      ut, "ext.disable_focus",
+      rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.enable_mouse", "\x1b[?1002h\x1b[?1006h");
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
+      ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 }
 
 static void flush_buf(UI *ui)
@@ -1756,7 +1769,8 @@ static void flush_buf(UI *ui)
     bufp++;
   }
 
-  if (!data->busy && data->is_invisible) {
+  if (!data->busy) {
+    assert(data->is_invisible);
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;

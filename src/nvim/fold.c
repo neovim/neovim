@@ -20,6 +20,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -381,13 +382,13 @@ void closeFoldRecurse(linenr_T lnum)
  * Open or Close folds for current window in lines "first" to "last".
  * Used for "zo", "zO", "zc" and "zC" in Visual mode.
  */
-void 
-opFoldRange (
+void
+opFoldRange(
     linenr_T first,
     linenr_T last,
-    int opening,                    /* TRUE to open, FALSE to close */
-    int recurse,                    /* TRUE to do it recursively */
-    int had_visual                 /* TRUE when Visual selection used */
+    int opening,                    // TRUE to open, FALSE to close
+    int recurse,                    // TRUE to do it recursively
+    int had_visual                  // TRUE when Visual selection used
 )
 {
   int done = DONE_NOTHING;              /* avoid error messages */
@@ -662,12 +663,12 @@ void foldCreate(linenr_T start, linenr_T end)
  * When "end" is not 0, delete all folds from "start" to "end".
  * When "recursive" is TRUE delete recursively.
  */
-void 
-deleteFold (
+void
+deleteFold(
     linenr_T start,
     linenr_T end,
     int recursive,
-    int had_visual                 /* TRUE when Visual selection used */
+    int had_visual                 // TRUE when Visual selection used
 )
 {
   garray_T    *gap;
@@ -742,8 +743,20 @@ deleteFold (
     /* Deleting markers may make cursor column invalid. */
     check_cursor_col();
 
-  if (last_lnum > 0)
-    changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L);
+  if (last_lnum > 0) {
+    changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L, false);
+
+    // send one nvim_buf_lines_event at the end
+    if (kv_size(curbuf->update_channels)) {
+      // last_lnum is the line *after* the last line of the outermost fold
+      // that was modified. Note also that deleting a fold might only require
+      // the modification of the *first* line of the fold, but we send through a
+      // notification that includes every line that was part of the fold
+      int64_t num_changed = last_lnum - first_lnum;
+      buf_updates_send_changes(curbuf, first_lnum, num_changed,
+                               num_changed, true);
+    }
+  }
 }
 
 /* clearFolding() {{{2 */
@@ -824,10 +837,10 @@ void foldUpdateAll(win_T *win)
  * If "updown" is TRUE: move to fold at the same level.
  * If not moved return FAIL.
  */
-int 
-foldMoveTo (
+int
+foldMoveTo(
     int updown,
-    int dir,                    /* FORWARD or BACKWARD */
+    int dir,                    // FORWARD or BACKWARD
     long count
 )
 {
@@ -1143,11 +1156,11 @@ static void setFoldRepeat(linenr_T lnum, long count, int do_open)
  * Open or close the fold in the current window which contains "lnum".
  * Also does this for other windows in diff mode when needed.
  */
-static linenr_T 
-setManualFold (
+static linenr_T
+setManualFold(
     linenr_T lnum,
-    int opening,                /* TRUE when opening, FALSE when closing */
-    int recurse,                /* TRUE when closing/opening recursive */
+    int opening,                // TRUE when opening, FALSE when closing
+    int recurse,                // TRUE when closing/opening recursive
     int *donep
 )
 {
@@ -1181,12 +1194,12 @@ setManualFold (
  * Return the line number of the next line that could be closed.
  * It's only valid when "opening" is TRUE!
  */
-static linenr_T 
-setManualFoldWin (
+static linenr_T
+setManualFoldWin(
     win_T *wp,
     linenr_T lnum,
-    int opening,                /* TRUE when opening, FALSE when closing */
-    int recurse,                /* TRUE when closing/opening recursive */
+    int opening,                // TRUE when opening, FALSE when closing
+    int recurse,                // TRUE when closing/opening recursive
     int *donep
 )
 {
@@ -1492,14 +1505,14 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /*
  * Check if a fold is closed and update the info needed to check nested folds.
  */
-static int 
-check_closed (
+static int
+check_closed(
     win_T *win,
     fold_T *fp,
-    int *use_levelp,            /* TRUE: outer fold had FD_LEVEL */
-    int level,                          /* folding depth */
-    int *maybe_smallp,          /* TRUE: outer this had fd_small == MAYBE */
-    linenr_T lnum_off                  /* line number offset for fp->fd_top */
+    int *use_levelp,            // TRUE: outer fold had FD_LEVEL
+    int level,                  // folding depth
+    int *maybe_smallp,          // TRUE: outer this had fd_small == MAYBE
+    linenr_T lnum_off           // line number offset for fp->fd_top
 )
 {
   int closed = FALSE;
@@ -1530,11 +1543,11 @@ check_closed (
 /*
  * Update fd_small field of fold "fp".
  */
-static void 
-checkSmall (
+static void
+checkSmall(
     win_T *wp,
     fold_T *fp,
-    linenr_T lnum_off              /* offset for fp->fd_top */
+    linenr_T lnum_off             // offset for fp->fd_top
 )
 {
   int count;
@@ -1590,7 +1603,15 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
 
   /* Update both changes here, to avoid all folds after the start are
    * changed when the start marker is inserted and the end isn't. */
-  changed_lines(start, (colnr_T)0, end, 0L);
+  changed_lines(start, (colnr_T)0, end, 0L, false);
+
+  if (kv_size(curbuf->update_channels)) {
+    // Note: foldAddMarker() may not actually change start and/or end if
+    // u_save() is unable to save the buffer line, but we send the
+    // nvim_buf_lines_event anyway since it won't do any harm.
+    int64_t num_changed = 1 + end - start;
+    buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
+  }
 }
 
 /* foldAddMarker() {{{2 */
@@ -1630,11 +1651,11 @@ static void foldAddMarker(linenr_T lnum, const char_u *marker, size_t markerlen)
 /*
  * Delete the markers for a fold, causing it to be deleted.
  */
-static void 
-deleteFoldMarkers (
+static void
+deleteFoldMarkers(
     fold_T *fp,
     int recursive,
-    linenr_T lnum_off              /* offset for fp->fd_top */
+    linenr_T lnum_off             // offset for fp->fd_top
 )
 {
   if (recursive) {
@@ -1775,7 +1796,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
           break;
       }
       if (*p != NUL) {
-        p = transstr(text);
+        p = (char_u *)transstr((const char *)text);
         xfree(text);
         text = p;
       }
@@ -1785,7 +1806,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     unsigned long count = (unsigned long)(lnume - lnum + 1);
 
     vim_snprintf((char *)buf, FOLD_TEXT_LEN,
-                 ngettext("+--%3ld line folded",
+                 NGETTEXT("+--%3ld line folded",
                           "+--%3ld lines folded ", count),
                  count);
     text = buf;
@@ -1862,7 +1883,7 @@ void foldtext_cleanup(char_u *str)
         ++len;
       STRMOVE(s, s + len);
     } else {
-      mb_ptr_adv(s);
+      MB_PTR_ADV(s);
     }
   }
 }
@@ -2443,27 +2464,27 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
       flp->lnum - 1 - fp->fd_top);
 
   if (lvl < level) {
-    /* End of fold found, update the length when it got shorter. */
+    // End of fold found, update the length when it got shorter.
     if (fp->fd_len != flp->lnum - fp->fd_top) {
-      if (fp->fd_top + fp->fd_len > bot + 1) {
-        /* fold continued below bot */
+      if (fp->fd_top + fp->fd_len - 1 > bot) {
+        // fold continued below bot
         if (getlevel == foldlevelMarker
             || getlevel == foldlevelExpr
             || getlevel == foldlevelSyntax) {
-          /* marker method: truncate the fold and make sure the
-           * previously included lines are processed again */
+          // marker method: truncate the fold and make sure the
+          // previously included lines are processed again
           bot = fp->fd_top + fp->fd_len - 1;
           fp->fd_len = flp->lnum - fp->fd_top;
         } else {
-          /* indent or expr method: split fold to create a new one
-           * below bot */
+          // indent or expr method: split fold to create a new one
+          // below bot
           i = (int)(fp - (fold_T *)gap->ga_data);
           foldSplit(gap, i, flp->lnum, bot);
           fp = (fold_T *)gap->ga_data + i;
         }
       } else
         fp->fd_len = flp->lnum - fp->fd_top;
-      fold_changed = TRUE;
+      fold_changed = true;
     }
   }
 
@@ -2634,9 +2655,14 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
   }
 }
 
-// foldMoveRange() {{{2
-static void reverse_fold_order(garray_T *gap, size_t start, size_t end)
+// foldReverseOrder() {{{2
+static void foldReverseOrder(
+    garray_T *gap,
+    const linenr_T start_arg,
+    const linenr_T end_arg)
 {
+  linenr_T start = start_arg;
+  linenr_T end = end_arg;
   for (; start < end; start++, end--) {
     fold_T *left = (fold_T *)gap->ga_data + start;
     fold_T *right = (fold_T *)gap->ga_data + end;
@@ -2646,6 +2672,7 @@ static void reverse_fold_order(garray_T *gap, size_t start, size_t end)
   }
 }
 
+// foldMoveRange() {{{2
 // Move folds within the inclusive range "line1" to "line2" to after "dest"
 // require "line1" <= "line2" <= "dest"
 //
@@ -2777,9 +2804,11 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
     // There are no folds after those moved, so none were moved out of order.
     return;
   }
-  reverse_fold_order(gap, move_start, dest_index - 1);
-  reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
-  reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);
+  foldReverseOrder(gap, (linenr_T)move_start, (linenr_T)(dest_index - 1));
+  foldReverseOrder(gap, (linenr_T)move_start,
+                   (linenr_T)(move_start + dest_index - move_end - 1));
+  foldReverseOrder(gap, (linenr_T)(move_start + dest_index - move_end),
+                   (linenr_T)(dest_index - 1));
 }
 #undef FOLD_END
 #undef VALID_FOLD
@@ -3033,10 +3062,12 @@ static void foldlevelMarker(fline_T *flp)
           if (flp->lvl_next > start_lvl)
             flp->lvl_next = start_lvl;
         }
-      } else
-        --flp->lvl_next;
-    } else
-      mb_ptr_adv(s);
+      } else {
+        flp->lvl_next--;
+      }
+    } else {
+      MB_PTR_ADV(s);
+    }
   }
 
   /* The level can't go negative, must be missing a start marker. */

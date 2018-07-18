@@ -512,10 +512,10 @@ do_tag (
         if (msg_col == 0)
           msg_didout = FALSE;           /* overwrite previous message */
         msg_start();
-        MSG_PUTS_ATTR(_("  # pri kind tag"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("  # pri kind tag"), HL_ATTR(HLF_T));
         msg_clr_eos();
         taglen_advance(taglen);
-        MSG_PUTS_ATTR(_("file\n"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("file\n"), HL_ATTR(HLF_T));
 
         for (i = 0; i < num_matches && !got_int; i++) {
           parse_match(matches[i], &tagp);
@@ -535,15 +535,15 @@ do_tag (
           }
           msg_advance(13);
           msg_outtrans_len_attr(tagp.tagname,
-              (int)(tagp.tagname_end - tagp.tagname),
-              hl_attr(HLF_T));
+                                (int)(tagp.tagname_end - tagp.tagname),
+                                HL_ATTR(HLF_T));
           msg_putchar(' ');
           taglen_advance(taglen);
 
           /* Find out the actual file name. If it is long, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
-          msg_puts_long_attr(p, hl_attr(HLF_D));
+          msg_puts_long_attr(p, HL_ATTR(HLF_D));
           xfree(p);
 
           if (msg_col > 0)
@@ -573,8 +573,8 @@ do_tag (
                 p = tagp.tagkind_end;
                 continue;
               }
-              /* print all other extra fields */
-              attr = hl_attr(HLF_CM);
+              // print all other extra fields
+              attr = HL_ATTR(HLF_CM);
               while (*p && *p != '\r' && *p != '\n') {
                 if (msg_col + ptr2cells(p) >= Columns) {
                   msg_putchar('\n');
@@ -849,7 +849,7 @@ do_tag (
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
           if (ic) {
-            msg_attr((const char *)IObuff, hl_attr(HLF_W));
+            msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
           } else {
             msg(IObuff);
           }
@@ -960,7 +960,7 @@ void do_tags(exarg_T *eap)
           tagstack[i].fmark.mark.lnum);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
-          ? hl_attr(HLF_D) : 0);
+                        ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
     ui_flush();                    /* show one line at a time */
@@ -2320,7 +2320,7 @@ jumpto_tag (
   char_u      *fname;
   tagptrs_T tagp;
   int retval = FAIL;
-  int getfile_result;
+  int getfile_result = GETFILE_UNUSED;
   int search_options;
   int save_no_hlsearch;
   win_T       *curwin_save = NULL;
@@ -2404,11 +2404,38 @@ jumpto_tag (
     }
   }
 
-  /* If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
-   * open a new tab page. */
-  if (postponed_split || cmdmod.tab != 0) {
-    win_split(postponed_split > 0 ? postponed_split : 0,
-        postponed_split_flags);
+  // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
+  // open a new tab page.
+  if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
+    buf_T *const existing_buf = buflist_findname_exp(fname);
+
+    if (existing_buf != NULL) {
+      const win_T *wp = NULL;
+
+      if (swb_flags & SWB_USEOPEN) {
+        wp = buf_jump_open_win(existing_buf);
+      }
+
+      // If 'switchbuf' contains "usetab": jump to first window in any tab
+      // page containing "existing_buf" if one exists
+      if (wp == NULL && (swb_flags & SWB_USETAB)) {
+        wp = buf_jump_open_tab(existing_buf);
+      }
+
+      // We've switched to the buffer, the usual loading of the file must
+      // be skipped.
+      if (wp != NULL) {
+        getfile_result = GETFILE_SAME_FILE;
+      }
+    }
+  }
+  if (getfile_result == GETFILE_UNUSED
+      && (postponed_split || cmdmod.tab != 0)) {
+    if (win_split(postponed_split > 0 ? postponed_split : 0,
+                  postponed_split_flags) == FAIL) {
+      RedrawingDisabled--;
+      goto erret;
+    }
     RESET_BINDING(curwin);
   }
 
@@ -2420,11 +2447,13 @@ jumpto_tag (
     else
       keep_help_flag = curbuf->b_help;
   }
-  getfile_result = getfile(0, fname, NULL, TRUE, (linenr_T)0, forceit);
-  keep_help_flag = FALSE;
+  if (getfile_result == GETFILE_UNUSED) {
+    getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
+  }
+  keep_help_flag = false;
 
-  if (getfile_result <= 0) {            /* got to the right file */
-    curwin->w_set_curswant = TRUE;
+  if (GETFILE_SUCCESS(getfile_result)) {    // got to the right file
+    curwin->w_set_curswant = true;
     postponed_split = 0;
 
     save_secure = secure;
@@ -2542,9 +2571,10 @@ jumpto_tag (
       SET_NO_HLSEARCH(save_no_hlsearch);
     }
 
-    /* Return OK if jumped to another file (at least we found the file!). */
-    if (getfile_result == -1)
+    // Return OK if jumped to another file (at least we found the file!).
+    if (getfile_result == GETFILE_OPEN_OTHER) {
       retval = OK;
+    }
 
     if (retval == OK) {
       /*

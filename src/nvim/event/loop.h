@@ -37,7 +37,6 @@ typedef struct loop {
   // generic timer, used by loop_poll_events()
   uv_timer_t poll_timer;
 
-  size_t children_stop_requests;
   uv_async_t async;
   uv_mutex_t mutex;
   int recursive;
@@ -52,6 +51,8 @@ typedef struct loop {
       (handler)(argv); \
     } \
   } while (0)
+
+// -V:LOOP_PROCESS_EVENTS_UNTIL:547
 
 // Poll for events until a condition or timeout
 #define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \

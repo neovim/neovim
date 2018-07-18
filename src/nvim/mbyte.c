@@ -37,6 +37,8 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+#include "nvim/eval.h"
+#include "nvim/path.h"
 #include "nvim/iconv.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
@@ -71,6 +73,9 @@ struct interval {
 # include "mbyte.c.generated.h"
 # include "unicode_tables.generated.h"
 #endif
+
+char_u e_loadlib[] = "E370: Could not load library %s";
+char_u e_loadfunc[] = "E448: Could not load library function %s";
 
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in
 // bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
@@ -423,7 +428,7 @@ int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
     }
     return 1;
   }
-  return utf_class(utf_ptr2char(p));
+  return utf_class_tab(utf_ptr2char(p), chartab);
 }
 
 /*
@@ -555,7 +560,7 @@ size_t mb_string2cells(const char_u *str)
 /// We make sure that the offset used is less than "max_off".
 int utf_off2cells(unsigned off, unsigned max_off)
 {
-  return (off + 1 < max_off && ScreenLines[off + 1] == 0) ? 2 : 1;
+  return (off + 1 < max_off && ScreenLines[off + 1][0] == 0) ? 2 : 1;
 }
 
 /// Convert a UTF-8 byte sequence to a wide character
@@ -704,12 +709,14 @@ bool utf_composinglike(const char_u *p1, const char_u *p2)
   return arabic_combine(utf_ptr2char(p1), c2);
 }
 
-/*
- * Convert a UTF-8 byte string to a wide character. Also get up to MAX_MCO
- * composing characters.
- *
- * @param [out] pcc: composing chars, last one is 0
- */
+/// Convert a UTF-8 string to a wide character
+///
+/// Also gets up to #MAX_MCO composing characters.
+///
+/// @param[out]  pcc  Location where to store composing characters. Must have
+///                   space at least for #MAX_MCO + 1 elements.
+///
+/// @return leading character.
 int utfc_ptr2char(const char_u *p, int *pcc)
 {
   int len;
@@ -781,27 +788,6 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 
   return c;
 #undef ISCOMPOSING
-}
-
-/*
- * Convert the character at screen position "off" to a sequence of bytes.
- * Includes the composing characters.
- * "buf" must at least have the length MB_MAXBYTES + 1.
- * Only to be used when ScreenLinesUC[off] != 0.
- * Returns the produced number of bytes.
- */
-int utfc_char2bytes(int off, char_u *buf)
-{
-  int len;
-  int i;
-
-  len = utf_char2bytes(ScreenLinesUC[off], buf);
-  for (i = 0; i < Screen_mco; ++i) {
-    if (ScreenLinesC[i][off] == 0)
-      break;
-    len += utf_char2bytes(ScreenLinesC[i][off], buf + len);
-  }
-  return len;
 }
 
 /// Get the length of a UTF-8 byte sequence representing a single codepoint
@@ -1053,7 +1039,12 @@ bool utf_printable(int c)
  * 1: punctuation
  * 2 or bigger: some class of word character.
  */
-int utf_class(int c)
+int utf_class(const int c)
+{
+  return utf_class_tab(c, curbuf->b_chartab);
+}
+
+int utf_class_tab(const int c, const uint64_t *const chartab)
 {
   /* sorted list of non-overlapping intervals */
   static struct clinterval {
@@ -1136,11 +1127,13 @@ int utf_class(int c)
 
   /* First quick check for Latin1 characters, use 'iskeyword'. */
   if (c < 0x100) {
-    if (c == ' ' || c == '\t' || c == NUL || c == 0xa0)
-      return 0;             /* blank */
-    if (vim_iswordc(c))
-      return 2;             /* word character */
-    return 1;               /* punctuation */
+    if (c == ' ' || c == '\t' || c == NUL || c == 0xa0) {
+      return 0;             // blank
+    }
+    if (vim_iswordc_tab(c, chartab)) {
+      return 2;             // word character
+    }
+    return 1;               // punctuation
   }
 
   /* binary search in table */
@@ -1342,7 +1335,7 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
 #endif
 
 /// Reassigns `strw` to a new, allocated pointer to a UTF16 string.
-int utf8_to_utf16(const char *str, WCHAR **strw)
+int utf8_to_utf16(const char *str, wchar_t **strw)
   FUNC_ATTR_NONNULL_ALL
 {
   ssize_t wchar_len = 0;
@@ -1358,7 +1351,7 @@ int utf8_to_utf16(const char *str, WCHAR **strw)
     return GetLastError();
   }
 
-  ssize_t buf_sz = wchar_len * sizeof(WCHAR);
+  ssize_t buf_sz = wchar_len * sizeof(wchar_t);
 
   if (buf_sz == 0) {
     *strw = NULL;
@@ -1372,19 +1365,19 @@ int utf8_to_utf16(const char *str, WCHAR **strw)
                               0,
                               str,
                               -1,
-                              (WCHAR *)pos,
+                              (wchar_t *)pos,
                               wchar_len);
   assert(r == wchar_len);
   if (r != wchar_len) {
     EMSG2("MultiByteToWideChar failed: %d", r);
   }
-  *strw = (WCHAR *)pos;
+  *strw = (wchar_t *)pos;
 
   return 0;
 }
 
 /// Reassigns `str` to a new, allocated pointer to a UTF8 string.
-int utf16_to_utf8(const WCHAR *strw, char **str)
+int utf16_to_utf8(const wchar_t *strw, char **str)
   FUNC_ATTR_NONNULL_ALL
 {
   // Compute the space required to store the string as UTF-8.
@@ -1736,8 +1729,9 @@ char_u * mb_prevptr(
     char_u *p
     )
 {
-  if (p > line)
-    mb_ptr_back(line, p);
+  if (p > line) {
+    MB_PTR_BACK(line, p);
+  }
   return p;
 }
 
@@ -1846,7 +1840,7 @@ int mb_fix_col(int col, int row)
   col = check_col(col);
   row = check_row(row);
   if (ScreenLines != NULL && col > 0
-      && ScreenLines[LineOffset[row] + col] == 0) {
+      && ScreenLines[LineOffset[row] + col][0] == 0) {
     return col - 1;
   }
   return col;
@@ -1977,37 +1971,39 @@ char_u * enc_locale(void)
     return NULL;
   }
 
-  /* The most generic locale format is:
-   * language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
-   * If there is a '.' remove the part before it.
-   * if there is something after the codeset, remove it.
-   * Make the name lowercase and replace '_' with '-'.
-   * Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
-   * "ko_KR.EUC" == "euc-kr"
-   */
+  // The most generic locale format is:
+  // language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
+  // If there is a '.' remove the part before it.
+  // if there is something after the codeset, remove it.
+  // Make the name lowercase and replace '_' with '-'.
+  // Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
+  // "ko_KR.EUC" == "euc-kr"
   const char *p = (char *)vim_strchr((char_u *)s, '.');
   if (p != NULL) {
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
         && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
-      /* copy "XY.EUC" to "euc-XY" to buf[10] */
-      strcpy(buf + 10, "euc-");
-      buf[14] = p[-2];
-      buf[15] = p[-1];
-      buf[16] = 0;
-      s = buf + 10;
-    } else
-      s = p + 1;
-  }
-  for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
-    if (s[i] == '_' || s[i] == '-') {
-      buf[i] = '-';
-    } else if (isalnum((int)s[i])) {
-      buf[i] = TOLOWER_ASC(s[i]);
+      // Copy "XY.EUC" to "euc-XY" to buf[10].
+      memmove(buf, "euc-", 4);
+      buf[4] = (ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
+      buf[5] = (ASCII_ISALNUM(p[-1]) ? TOLOWER_ASC(p[-1]) : 0);
+      buf[6] = NUL;
     } else {
-      break;
+      s = p + 1;
+      goto enc_locale_copy_enc;
     }
+  } else {
+enc_locale_copy_enc:
+    for (i = 0; i < (int)sizeof(buf) - 1 && s[i] != NUL; i++) {
+      if (s[i] == '_' || s[i] == '-') {
+        buf[i] = '-';
+      } else if (ASCII_ISALNUM((uint8_t)s[i])) {
+        buf[i] = TOLOWER_ASC(s[i]);
+      } else {
+        break;
+      }
+    }
+    buf[i] = NUL;
   }
-  buf[i] = NUL;
 
   return enc_canonize((char_u *)buf);
 }
@@ -2034,9 +2030,10 @@ void * my_iconv_open(char_u *to, char_u *from)
     return (void *)-1;          /* detected a broken iconv() previously */
 
 #ifdef DYNAMIC_ICONV
-  /* Check if the iconv.dll can be found. */
-  if (!iconv_enabled(true))
+  // Check if the iconv.dll can be found.
+  if (!iconv_enabled(true)) {
     return (void *)-1;
+  }
 #endif
 
   fd = iconv_open((char *)enc_skip(to), (char *)enc_skip(from));
@@ -2158,7 +2155,7 @@ static HINSTANCE hMsvcrtDLL = 0;
 
 #  ifndef DYNAMIC_ICONV_DLL
 #   define DYNAMIC_ICONV_DLL "iconv.dll"
-#   define DYNAMIC_ICONV_DLL_ALT "libiconv.dll"
+#   define DYNAMIC_ICONV_DLL_ALT "libiconv-2.dll"
 #  endif
 #  ifndef DYNAMIC_MSVCRT_DLL
 #   define DYNAMIC_MSVCRT_DLL "msvcrt.dll"
@@ -2203,6 +2200,35 @@ static void * get_iconv_import_func(HINSTANCE hInst,
   }
   return NULL;
 }
+
+// Load library "name".
+HINSTANCE vimLoadLib(char *name)
+{
+  HINSTANCE dll = NULL;
+
+  // NOTE: Do not use mch_dirname() and mch_chdir() here, they may call
+  //       vimLoadLib() recursively, which causes a stack overflow.
+  wchar_t old_dirw[MAXPATHL];
+
+  // Path to exe dir.
+  char *buf = xstrdup((char *)get_vim_var_str(VV_PROGPATH));
+  // ptrdiff_t len = ;
+  // assert(len > 0);
+  buf[path_tail_with_sep(buf) - buf] = '\0';
+
+  if (GetCurrentDirectoryW(MAXPATHL, old_dirw) != 0) {
+    // Change directory to where the executable is, both to make
+    // sure we find a .dll there and to avoid looking for a .dll
+    // in the current directory.
+    SetCurrentDirectory((LPCSTR)buf);
+    // TODO(justinmk): use uv_dlopen instead. see os_libcall
+    dll = LoadLibrary(name);
+    SetCurrentDirectoryW(old_dirw);
+  }
+
+  return dll;
+}
+
 
 /*
  * Try opening the iconv.dll and return TRUE if iconv() can be used.
@@ -2251,10 +2277,13 @@ bool iconv_enabled(bool verbose)
 
 void iconv_end(void)
 {
-  if (hIconvDLL != 0)
+  if (hIconvDLL != 0) {
+    // TODO(justinmk): use uv_dlclose instead.
     FreeLibrary(hIconvDLL);
-  if (hMsvcrtDLL != 0)
+  }
+  if (hMsvcrtDLL != 0) {
     FreeLibrary(hMsvcrtDLL);
+  }
   hIconvDLL = 0;
   hMsvcrtDLL = 0;
 }

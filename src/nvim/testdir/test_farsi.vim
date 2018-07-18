@@ -1,4 +1,5 @@
 " Simplistic testing of Farsi mode.
+" Note: must be edited with latin1 encoding.
 
 if !has('farsi') || has('nvim')  " Not supported in Nvim. #6192
   finish
@@ -81,4 +82,52 @@ func Test_farsi_map()
   iunmap xyz
   set noaltkeymap
   bwipe!
+endfunc
+
+func Test_input_farsi()
+  new
+  setlocal rightleft fkmap
+  " numbers switch input direction
+  call feedkeys("aabc0123456789.+-^%#=xyz\<Esc>", 'tx')
+  call assert_equal("\x8cÌÎ½®¥ª­«¦¹¸·¶µ´³²±°Ô\x93Õ", getline('.'))
+
+  " all non-number special chars with spaces
+  call feedkeys("oB E F H I K L M O P Q R T U W Y ` !  @ # $ % ^ & * () - _ = + \\ | : \" .  / < > ? \<Esc>", 'tx')
+  call assert_equal("¡ ô ú À ö æ ç Â [ ] ÷ ó ò ð õ ñ ¢ £  § ® ¤ ¥ ª ¬ è ¨© ­ é ½ « ë ê º » ¦  ¯ ¾ ¼ ¿ ", getline('.'))
+
+  " all non-number special chars without spaces
+  call feedkeys("oBEFHIKLMOPQRTUWY`!@#$%^&*()-_=+\\|:\"./<>?\<Esc>",'tx')
+  call assert_equal("¡ôúÀöæçÂ[]÷óòðõñ¢£§®¤¥ª¬è¨©­é½«ëêº»¦¯¾¼¿", getline('.'))
+
+  " all letter chars with spaces
+  call feedkeys("oa A b c C d D e f g G h i j J k l m n N o p q r s S t u v V w x X y z Z ; \ , [ ] \<Esc>", 'tx')
+  call assert_equal("Ñ ù Ì Î Ï á þ Æ Ã Ü ø Á à Å ü Þ Ý Ä Ë Ë Ê É Ó Ù Ð û Ø Ö Í Í Ò Ô Ô × Õ ý Ú  ß Ç È ", getline('.'))
+
+  " all letter chars without spaces
+  call feedkeys("oaAbcCdDefgGhijJklmnNopqrsStuvVwxXyzZ;\,[]\<Esc>", 'tx')
+  call assert_equal("\x8cùÌÎÏ\x9fî\x86\x83ÜøÁ\x9d\x85\x80\x9c\x9b\x84ËË\x8a\x89\x8e\x96\x8bì\x95\x90ÍÍ\x8dÔÔ\x93Õý\x97ß\x87\x88", getline('.'))
+
+  bwipe!
+endfunc
+
+func Test_command_line_farsi()
+  set allowrevins altkeymap
+
+  " letter characters with spaces
+  call feedkeys(":\"\<C-_>a A b c C d D e f g G h i j J k l m n N o p q r s S t u v V w x X y z Z ; \\ , [ ]\<CR>", 'tx')
+  call assert_equal("\"\x88 Ç ß ë Ú Õ Õ × Ô Ô Ò Í Í Ö Ø û Ð Ù Ó É Ê Ë Ë Ä Ý Þ ü Å à Á ø Ü Ã Æ þ á Ï Î Ì ù Ñ", getreg(':'))
+ 
+  " letter characters without spaces
+  call feedkeys(":\"\<C-_>aAbcCdDefgGhijJklmnNopqrsStuvVwxXyzZ;\\,[]\<CR>", 'tx')
+  call assert_equal("\"\x88\x87ßëÚÕÕ\x93ÔÔ\x8dÍÍ\x90\x95ì\x8b\x96\x8e\x89\x8aËË\x84\x9b\x9c\x80\x85\x9dÁøÜ\x83\x86î\x9fÏÎÌù\x8c", getreg(':'))
+ 
+  " other characters with spaces
+  call feedkeys(":\"\<C-_>0 1 2 3 4 5 6 7 8 9 ` .  !  \" $ % ^ & / () = \\ ?  + - _ * : # ~ @ < > { } | B E F H I K L M O P Q R T U W Y\<CR>", 'tx')
+  call assert_equal("\"ñ õ ð ò ó ÷ ] [ Â ç æ ö À ú ô ¡ ê } { ¼ ¾ § ~ ® º è é ­ «  ¿ ë ½ ©¨ ¯ ¬ ª ¥ ¤ »  £  ¦ ¢ ¹ ¸ · ¶ µ ´ ³ ² ± °", getreg(':'))
+
+  " other characters without spaces
+  call feedkeys(":\"\<C-_>0123456789`.!\"$%^&/()=\\?+-_*:#~@<>{}|BEFHIKLMOPQRTUWY\<CR>", 'tx')
+  call assert_equal("\"ñõðòó÷][ÂçæöÀúô¡ê}{¼¾§~®ºèé­«¿ë½©¨¯¬ª¥¤»£¦¢¹¸·¶µ´³²±°", getreg(':'))
+
+  set noallowrevins noaltkeymap
 endfunc

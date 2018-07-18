@@ -5,7 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local expect = helpers.expect
-local next_msg = helpers.next_message
+local next_msg = helpers.next_msg
 local feed = helpers.feed
 local meths = helpers.meths
 
@@ -59,24 +59,25 @@ describe('cmdline autocommands', function()
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [4] = {bold = true, reverse = true},
     })
     command("autocmd CmdlineEnter * echoerr 'FAIL'")
     command("autocmd CmdlineLeave * echoerr 'very error'")
     feed(':')
     screen:expect([[
+                                                                              |
       {1:~                                                                       }|
       {1:~                                                                       }|
       {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {4:                                                                        }|
       :                                                                       |
       {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
       :^                                                                       |
     ]])
     feed("put ='lorem ipsum'<cr>")
     screen:expect([[
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+                                                                              |
+      {4:                                                                        }|
       :                                                                       |
       {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
       :put ='lorem ipsum'                                                     |

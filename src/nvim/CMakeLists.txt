@@ -175,7 +175,7 @@ endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
-  if(NOT "${gen_cdef}" MATCHES "INCLUDE_GENERATED_DECLARATIONS")
+  if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()
 endforeach()
@@ -359,6 +359,10 @@ endforeach()
 
 # Our dependencies come first.
 
+if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  list(APPEND NVIM_LINK_LIBRARIES pthread c++abi)
+endif()
+
 if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
@@ -390,12 +394,6 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-if(CMAKE_VERSION VERSION_LESS "2.8.8")
-  # Use include_directories() because INCLUDE_DIRECTORIES target property
-  # is not supported
-  include_directories(${LUA_PREFERRED_INCLUDE_DIRS})
-endif()
-
 # Don't use jemalloc in the unit test library.
 if(JEMALLOC_FOUND)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
@@ -426,36 +424,53 @@ if(WIN32)
       -P ${PROJECT_SOURCE_DIR}/cmake/WindowsDllCopy.cmake)
   add_dependencies(nvim_runtime_deps nvim_dll_deps)
 
+  # A CMake script is used for copying the files to avoid the
+  # "command line is too long" error that occurs when Ninja tries running
+  # a command that exceeds the length limit (8191 characters) on Windows.
+  # See https://developercommunity.visualstudio.com/content/problem/212207/file-open-cmake-the-command-line-is-too-long.html
+  set(EXTERNAL_BLOBS_SCRIPT
+    "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
+  foreach(DEP_FILE IN ITEMS
+                      ca-bundle.crt
+                      cat.exe
+                      curl.exe
+                      diff.exe
+                      tee.exe
+                      tidy.exe
+                      win32yank.exe
+                      winpty-agent.exe
+                      xxd.exe
+
+                      D3Dcompiler_47.dll
+                      libEGL.dll
+                      libgcc_s_dw2-1.dll
+                      libGLESV2.dll
+                      libstdc++-6.dll
+                      libwinpthread-1.dll
+                      nvim-qt.exe
+                      Qt5Core.dll
+                      Qt5Gui.dll
+                      Qt5Network.dll
+                      Qt5Svg.dll
+                      Qt5Widgets.dll
+                      winpty.dll
+
+                      platforms/qwindows.dll
+                      )
+    get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
+    set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
+      "file(COPY \"${DEPS_PREFIX}/bin/${DEP_FILE}\"
+         DESTINATION \"${PROJECT_BINARY_DIR}/windows_runtime_deps/${DEP_FILE_DIR}\")")
+  endforeach()
+  file(WRITE ${PROJECT_BINARY_DIR}/external_blobs.cmake ${EXTERNAL_BLOBS_SCRIPT})
   add_custom_target(external_blobs
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/ca-bundle.crt"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/cat.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/curl.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/diff.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tee.exe"             ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/tidy.exe"            ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/win32yank.exe"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty-agent.exe"    ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/D3Dcompiler_47.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libEGL.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libgcc_s_dw2-1.dll"  ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libGLESV2.dll"       ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libstdc++-6.dll"     ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/libwinpthread-1.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/nvim-qt.exe"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Core.dll"         ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Gui.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Network.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Svg.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/Qt5Widgets.dll"      ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/winpty.dll"          ${PROJECT_BINARY_DIR}/windows_runtime_deps/
-
-    COMMAND ${CMAKE_COMMAND} -E copy "${DEPS_PREFIX}/bin/platforms/qwindows.dll" ${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms/
-    )
+    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/external_blobs.cmake)
+  set_target_properties(external_blobs PROPERTIES FOLDER deps)
   add_dependencies(nvim_runtime_deps external_blobs)
+else()
+  add_custom_target(nvim_runtime_deps)  # Stub target to avoid CMP0046.
 endif()
+set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
 add_library(
   libnvim
@@ -477,7 +492,9 @@ set_property(
   APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
 )
 
-if(LUAJIT_FOUND)
+if(NOT LUAJIT_FOUND)
+  message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
+else()
   set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
   add_library(
     nvim-test
@@ -565,6 +582,7 @@ foreach(hfile ${NVIM_HEADERS})
       TARGET ${texe}
       APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
     )
+    set_target_properties(${texe} PROPERTIES FOLDER test)
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)

@@ -61,10 +61,17 @@ static void time_watcher_cb(uv_timer_t *handle)
   CREATE_EVENT(watcher->events, time_event, 1, watcher);
 }
 
+static void close_event(void **argv)
+{
+  TimeWatcher *watcher = argv[0];
+  watcher->close_cb(watcher, watcher->data);
+}
+
 static void close_cb(uv_handle_t *handle)
+  FUNC_ATTR_NONNULL_ALL
 {
   TimeWatcher *watcher = handle->data;
   if (watcher->close_cb) {
-    watcher->close_cb(watcher, watcher->data);
+    CREATE_EVENT(watcher->events, close_event, 1, watcher);
   }
 }

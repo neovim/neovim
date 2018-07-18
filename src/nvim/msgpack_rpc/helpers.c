@@ -493,7 +493,8 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          Error *error)
 {
-  api_set_error(error, kErrorTypeException, "Invalid method name");
+  api_set_error(error, kErrorTypeException, "Invalid method: %s",
+                args.size > 0 ? args.items[0].data.string.data : "?");
   return NIL;
 }
 

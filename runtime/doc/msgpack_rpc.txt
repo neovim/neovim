@@ -70,9 +70,8 @@ An rpc socket is automatically created with each instance. The socket
  location is stored in |v:servername|. By default this is a named pipe
 with an automatically generated address. See |XXX|.
 
-To make Nvim listen on a TCP/IP socket instead, set the
-   |$NVIM_LISTEN_ADDRESS| environment variable before starting Nvim: >
-        NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim
+To make Nvim listen on a TCP/IP socket instead, specify |--listen|: >
+    nvim --listen 127.0.0.1:6666
 <Also, more sockets and named pipes can be listened on using |serverstart()|.
 
 Note that localhost TCP sockets are generally less secure than named pipes,
@@ -191,10 +190,10 @@ prefix is stripped off.
 5. Types							    *rpc-types*
 
 The Nvim C API uses custom types for all functions. |api-types|
-At the RPC layer, the types can be split into two groups:
+At the RPC layer, types form two groups:
 
-  - Basic types that map natively to msgpack (and probably have a default
-    representation in msgpack-supported programming languages)
+  - Basic types that map natively to msgpack (and have a default
+    representation in most msgpack-supported programming languages)
   - Special Nvim types that map to msgpack EXT with custom type codes.
 
 Basic types ~
@@ -206,6 +205,8 @@ Basic types ~
   String                            -> msgpack string
   Array                             -> msgpack array
   Dictionary                        -> msgpack map
+
+  Note: in function calls, empty Array is accepted for Dictionary parameter.
 
 Special types (msgpack EXT) ~
 
@@ -242,4 +243,4 @@ Even for statically compiled clients it is good practice to avoid hardcoding
 the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
 
-
+ vim:tw=78:ts=8:ft=help:norl:

@@ -83,7 +83,14 @@ local function basic_register_test(noblock)
 end
 
 describe('clipboard', function()
-  before_each(clear)
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(72, 4)
+    screen:attach()
+    command("set display-=msgsep")
+  end)
 
   it('unnamed register works without provider', function()
     eq('"', eval('v:register'))
@@ -92,8 +99,6 @@ describe('clipboard', function()
 
   it('`:redir @+>` with invalid g:clipboard shows exactly one error #7184',
   function()
-    local screen = Screen.new(72, 4)
-    screen:attach()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
@@ -106,8 +111,6 @@ describe('clipboard', function()
 
   it('`:redir @+>|bogus_cmd|redir END` + invalid g:clipboard must not recurse #7184',
   function()
-    local screen = Screen.new(72, 4)
-    screen:attach()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
@@ -123,8 +126,6 @@ describe('clipboard', function()
     eq('', eval('provider#clipboard#Executable()'))
     eq('clipboard: invalid g:clipboard', eval('provider#clipboard#Error()'))
 
-    local screen = Screen.new(72, 4)
-    screen:attach()
     command("let g:clipboard = 'bogus'")
     -- Explicit clipboard attempt, should show a hint message.
     feed_command('let @+="foo"')
@@ -493,10 +494,10 @@ describe('clipboard', function()
     feed_command("let g:test_clip['+'] = ['such', 'plus', 'stuff']")
     feed_command("registers")
     screen:expect([[
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {4:                                                            }|
       :registers                                                  |
       {1:--- Registers ---}                                           |
       "*   some{2:^J}star data{2:^J}                                      |
@@ -504,10 +505,11 @@ describe('clipboard', function()
       ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']       |
       {3:Press ENTER or type command to continue}^                     |
     ]], {
+      [0] = {bold = true, foreground = Screen.colors.Blue},
       [1] = {bold = true, foreground = Screen.colors.Fuchsia},
       [2] = {foreground = Screen.colors.Blue},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen}},
-      {{bold = true, foreground = Screen.colors.Blue}})
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [4] = {bold = true, reverse = true}})
     feed('<cr>') -- clear out of Press ENTER screen
   end)
 

@@ -10,8 +10,10 @@ typedef int colnr_T;
 /// Format used to print values which have colnr_T type
 #define PRIdCOLNR "d"
 
-#define MAXLNUM 0x7fffffff     // maximum (invalid) line number
-#define MAXCOL  0x7fffffff     // maximum column number, 31 bits
+/// Maximal (invalid) line number
+enum { MAXLNUM = 0x7fffffff };
+/// Maximal column number, 31 bits
+enum { MAXCOL = 0x7fffffff };
 
 /*
  * position in file or buffer

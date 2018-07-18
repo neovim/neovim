@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local command = helpers.command
+local feed_command = helpers.feed_command
 local eval = helpers.eval
 local eq = helpers.eq
 local run = helpers.run
@@ -26,6 +27,18 @@ describe('v:exiting', function()
       command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
       command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
       command('quit')
+    end
+    local function on_request()
+      eq(0, eval('v:exiting'))
+      return ''
+    end
+    run(on_request, nil, on_setup)
+  end)
+  it('is 0 on exit from ex-mode involving try-catch', function()
+    local function on_setup()
+      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
+      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
+      feed_command('call feedkey("Q")','try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
     end
     local function on_request()
       eq(0, eval('v:exiting'))

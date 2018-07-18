@@ -7,7 +7,7 @@ function(BuildLibuv)
   cmake_parse_arguments(_libuv
     "BUILD_IN_SOURCE"
     "TARGET"
-    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
+    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
     ${ARGN})
 
   if(NOT _libuv_CONFIGURE_COMMAND AND NOT _libuv_BUILD_COMMAND
@@ -31,6 +31,7 @@ function(BuildLibuv)
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
+    PATCH_COMMAND "${_libuv_PATCH_COMMAND}"
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
@@ -41,9 +42,14 @@ set(UNIX_CFGCMD sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
   --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/lib
   CC=${DEPS_C_COMPILER})
 
+set(LIBUV_PATCH_COMMAND
+${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
+  COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
+    ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-overlapped.patch)
+
 if(UNIX)
   BuildLibuv(
-    CONFIGURE_COMMAND ${UNIX_CFGCMD}
+    CONFIGURE_COMMAND ${UNIX_CFGCMD} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
@@ -54,46 +60,33 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
   # Build libuv for the target
   BuildLibuv(
+    PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
     CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
-elseif(MINGW)
+elseif(WIN32)
 
-  # Native MinGW
-  BuildLibUv(BUILD_IN_SOURCE
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Makefile.mingw
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/libuv/libuv.a ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include
-    )
-
-elseif(WIN32 AND MSVC)
-
-  find_package(PythonInterp 2.6 REQUIRED)
-  if(NOT PYTHONINTERP_FOUND OR PYTHON_VERSION_MAJOR GREATER 2)
-    message(FATAL_ERROR "Python2 is required to build libuv on windows, use -DPYTHON_EXECUTABLE to set a python interpreter")
-  endif()
-
-  include(TargetArch)
-  if("${TARGET_ARCH}" STREQUAL "X86_64")
-    set(TARGET_ARCH x64)
-  elseif(TARGET_ARCH STREQUAL "X86")
-    set(TARGET_ARCH x86)
-  endif()
-  string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_BUILD_TYPE)
   set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
-  BuildLibUv(
-    BUILD_COMMAND set PYTHON=${PYTHON_EXECUTABLE} COMMAND ${DEPS_BUILD_DIR}/src/libuv/vcbuild.bat shared ${LOWERCASE_BUILD_TYPE} ${TARGET_ARCH}
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib
-      # Some applications (lua-client/luarocks) look for uv.lib instead of libuv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.lib ${DEPS_INSTALL_DIR}/lib/uv.lib
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/
-      COMMAND ${CMAKE_COMMAND} -E copy ${UV_OUTPUT_DIR}/libuv.dll ${DEPS_INSTALL_DIR}/bin/uv.dll
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/libuv/include ${DEPS_INSTALL_DIR}/include)
+  if(MSVC)
+    set(BUILD_SHARED ON)
+  elseif(MINGW)
+    set(BUILD_SHARED OFF)
+  else()
+    message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
+  endif()
+  BuildLibUv(BUILD_IN_SOURCE
+    PATCH_COMMAND ${LIBUV_PATCH_COMMAND}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibuvCMakeLists.txt
+        ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+      COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/libuv/CMakeLists.txt
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DBUILD_SHARED_LIBS=${BUILD_SHARED}
+        -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 else()
   message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")

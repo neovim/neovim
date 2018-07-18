@@ -1,6 +1,7 @@
 -- Tests for backtrace debug commands.
 
 local helpers = require('test.functional.helpers')(after_each)
+local command = helpers.command
 local feed, clear = helpers.feed, helpers.clear
 local feed_command, expect = helpers.feed_command, helpers.expect
 
@@ -8,6 +9,7 @@ describe('108', function()
   before_each(clear)
 
   it('is working', function()
+    command("set shortmess-=F")
     feed_command('lang mess C')
     feed_command('function! Foo()')
     feed_command('   let var1 = 1')

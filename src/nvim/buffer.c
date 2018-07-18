@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
@@ -72,6 +73,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
+#include "nvim/buffer_updates.h"
 
 typedef enum {
   kBLSUnchanged = 0,
@@ -341,7 +343,7 @@ open_buffer (
 void set_bufref(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
-  bufref->br_fnum = buf->b_fnum;
+  bufref->br_fnum = buf == NULL ? 0 : buf->b_fnum;
   bufref->br_buf_free_count = buf_free_count;
 }
 
@@ -573,6 +575,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
+  // disable buffer updates for the current buffer
+  buf_updates_unregister_all(buf);
+
   /*
    * Remove the buffer from the list.
    */
@@ -783,6 +788,8 @@ free_buffer_stuff (
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   xfree(buf->b_start_fenc);
   buf->b_start_fenc = NULL;
+
+  buf_updates_unregister_all(buf);
 }
 
 /*
@@ -1387,31 +1394,40 @@ void set_curbuf(buf_T *buf, int action)
   /* Don't restart Select mode after switching to another buffer. */
   VIsual_reselect = FALSE;
 
-  /* close_windows() or apply_autocmds() may change curbuf */
+  // close_windows() or apply_autocmds() may change curbuf and wipe out "buf"
   prevbuf = curbuf;
-  bufref_T bufref;
-  set_bufref(&bufref, prevbuf);
+  bufref_T newbufref;
+  bufref_T prevbufref;
+  set_bufref(&prevbufref, prevbuf);
+  set_bufref(&newbufref, buf);
 
+  // Autocommands may delete the curren buffer and/or the buffer we wan to go
+  // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
-      || (bufref_valid(&bufref) && !aborting())) {
+      || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
+          && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
     }
     if (unload) {
       close_windows(prevbuf, false);
     }
-    if (bufref_valid(&bufref) && !aborting()) {
+    if (bufref_valid(&prevbufref) && !aborting()) {
       win_T  *previouswin = curwin;
-      if (prevbuf == curbuf)
-        u_sync(FALSE);
-      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL, prevbuf,
-          unload ? action : (action == DOBUF_GOTO
-                             && !P_HID(prevbuf)
-                             && !bufIsChanged(
-                                 prevbuf)) ? DOBUF_UNLOAD : 0, FALSE);
-      if (curwin != previouswin && win_valid(previouswin))
-        /* autocommands changed curwin, Grr! */
+      if (prevbuf == curbuf) {
+        u_sync(false);
+      }
+      close_buffer(prevbuf == curwin->w_buffer ? curwin : NULL,
+                   prevbuf,
+                   unload
+                   ? action
+                   : (action == DOBUF_GOTO && !buf_hide(prevbuf)
+                      && !bufIsChanged(prevbuf)) ? DOBUF_UNLOAD : 0,
+                   false);
+      if (curwin != previouswin && win_valid(previouswin)) {
+        // autocommands changed curwin, Grr!
         curwin = previouswin;
+      }
     }
   }
   /* An autocommand may have deleted "buf", already entered it (e.g., when
@@ -1539,7 +1555,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
       .v_lock = VAR_FIXED,
-      .vval.v_number = buf->b_changedtick,
+      .vval.v_number = buf_get_changedtick(buf),
     },
     .di_key = "changedtick",
   };
@@ -1722,9 +1738,11 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (flags & BLN_DUMMY)
     buf->b_flags |= BF_DUMMY;
   buf_clear_file(buf);
-  clrallmarks(buf);                     /* clear marks */
-  fmarks_check_names(buf);              /* check file marks for this file */
-  buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
+  clrallmarks(buf);                     // clear marks
+  fmarks_check_names(buf);              // check file marks for this file
+  buf->b_p_bl = (flags & BLN_LISTED) ? true : false;    // init 'buflisted'
+  kv_destroy(buf->update_channels);
+  kv_init(buf->update_channels);
   if (!(flags & BLN_DUMMY)) {
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
@@ -1883,10 +1901,10 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
   }
 
-  ++RedrawingDisabled;
-  if (getfile(buf->b_fnum, NULL, NULL, (options & GETF_SETMARK),
-          lnum, forceit) <= 0) {
-    --RedrawingDisabled;
+  RedrawingDisabled++;
+  if (GETFILE_SUCCESS(getfile(buf->b_fnum, NULL, NULL,
+                              (options & GETF_SETMARK), lnum, forceit))) {
+    RedrawingDisabled--;
 
     /* cursor is at to BOL and w_cursor.lnum is checked due to getfile() */
     if (!p_sol && col != 0) {
@@ -1897,7 +1915,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     }
     return OK;
   }
-  --RedrawingDisabled;
+  RedrawingDisabled--;
   return FAIL;
 }
 
@@ -2363,8 +2381,15 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wip = find_wininfo(buf, TRUE);
-  if (wip != NULL && wip->wi_optset) {
+  wip = find_wininfo(buf, true);
+  if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
+      && wip->wi_win->w_buffer == buf) {
+    win_T *wp = wip->wi_win;
+    copy_winopt(&wp->w_onebuf_opt, &curwin->w_onebuf_opt);
+    curwin->w_fold_manual = wp->w_fold_manual;
+    curwin->w_foldinvalid = true;
+    cloneFoldGrowArray(&wp->w_folds, &curwin->w_folds);
+  } else if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
     curwin->w_foldinvalid = true;
@@ -2674,7 +2699,7 @@ void buflist_altfpos(win_T *win)
 }
 
 /// Check that "ffname" is not the same file as current file.
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  ffname  full path name to check
 bool otherfile(char_u *ffname)
@@ -2684,7 +2709,7 @@ bool otherfile(char_u *ffname)
 }
 
 /// Check that "ffname" is not the same file as the file loaded in "buf".
-/// Fname must have a full path (expanded by path_get_absolute_path()).
+/// Fname must have a full path (expanded by path_to_absolute()).
 ///
 /// @param  buf            buffer to check
 /// @param  ffname         full path name to check
@@ -2876,15 +2901,13 @@ static char_u *lasticon = NULL;
 
 void maketitle(void)
 {
-  char_u      *p;
   char_u      *t_str = NULL;
   char_u      *i_name;
   char_u      *i_str = NULL;
   int maxlen = 0;
   int len;
   int mustset;
-  char_u buf[IOSIZE];
-  int off;
+  char buf[IOSIZE];
 
   if (!redrawing()) {
     /* Postpone updating the title when 'lazyredraw' is set. */
@@ -2904,97 +2927,117 @@ void maketitle(void)
       }
     }
 
-    t_str = buf;
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
         int use_sandbox = FALSE;
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
-        called_emsg = FALSE;
-        build_stl_str_hl(curwin, t_str, sizeof(buf),
-            p_titlestring, use_sandbox,
-            0, maxlen, NULL, NULL);
-        if (called_emsg)
-          set_string_option_direct((char_u *)"titlestring", -1,
-              (char_u *)"", OPT_FREE, SID_ERROR);
+        called_emsg = false;
+        build_stl_str_hl(curwin, (char_u *)buf, sizeof(buf),
+                         p_titlestring, use_sandbox,
+                         0, maxlen, NULL, NULL);
+        t_str = (char_u *)buf;
+        if (called_emsg) {
+          set_string_option_direct((char_u *)"titlestring", -1, (char_u *)"",
+                                   OPT_FREE, SID_ERROR);
+        }
         called_emsg |= save_called_emsg;
-      } else
+      } else {
         t_str = p_titlestring;
+      }
     } else {
-      /* format: "fname + (path) (1 of 2) - VIM" */
+      // Format: "fname + (path) (1 of 2) - VIM".
 
-#define SPACE_FOR_FNAME (IOSIZE - 100)
-#define SPACE_FOR_DIR   (IOSIZE - 20)
-#define SPACE_FOR_ARGNR (IOSIZE - 10)  /* at least room for " - VIM" */
-      if (curbuf->b_fname == NULL)
-        STRLCPY(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
-      else {
-        p = transstr(path_tail(curbuf->b_fname));
-        STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
-        xfree(p);
+#define SPACE_FOR_FNAME (sizeof(buf) - 100)
+#define SPACE_FOR_DIR   (sizeof(buf) - 20)
+#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - NVIM".
+      char *buf_p = buf;
+      if (curbuf->b_fname == NULL) {
+        const size_t size = xstrlcpy(buf_p, _("[No Name]"),
+                                     SPACE_FOR_FNAME + 1);
+        buf_p += MIN(size, SPACE_FOR_FNAME);
+      } else {
+        buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
+                              buf_p, SPACE_FOR_FNAME + 1);
       }
 
       switch (bufIsChanged(curbuf)
-              + (curbuf->b_p_ro * 2)
-              + (!MODIFIABLE(curbuf) * 4)) {
-      case 1: STRCAT(buf, " +"); break;
-      case 2: STRCAT(buf, " ="); break;
-      case 3: STRCAT(buf, " =+"); break;
-      case 4:
-      case 6: STRCAT(buf, " -"); break;
-      case 5:
-      case 7: STRCAT(buf, " -+"); break;
+              | (curbuf->b_p_ro << 1)
+              | (!MODIFIABLE(curbuf) << 2)) {
+        case 0: break;
+        case 1: buf_p = strappend(buf_p, " +"); break;
+        case 2: buf_p = strappend(buf_p, " ="); break;
+        case 3: buf_p = strappend(buf_p, " =+"); break;
+        case 4:
+        case 6: buf_p = strappend(buf_p, " -"); break;
+        case 5:
+        case 7: buf_p = strappend(buf_p, " -+"); break;
+        default: assert(false);
       }
 
       if (curbuf->b_fname != NULL) {
-        /* Get path of file, replace home dir with ~ */
-        off = (int)STRLEN(buf);
-        buf[off++] = ' ';
-        buf[off++] = '(';
-        home_replace(curbuf, curbuf->b_ffname,
-                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
+        // Get path of file, replace home dir with ~.
+        *buf_p++ = ' ';
+        *buf_p++ = '(';
+        home_replace(curbuf, curbuf->b_ffname, (char_u *)buf_p,
+                     (SPACE_FOR_DIR - (size_t)(buf_p - buf)), true);
 #ifdef BACKSLASH_IN_FILENAME
-        /* avoid "c:/name" to be reduced to "c" */
-        if (isalpha(buf[off]) && buf[off + 1] == ':')
-          off += 2;
-#endif
-        /* remove the file name */
-        p = path_tail_with_sep(buf + off);
-        if (p == buf + off)
-          /* must be a help buffer */
-          STRLCPY(buf + off, _("help"), SPACE_FOR_DIR - off);
-        else
-          *p = NUL;
-
-        /* Translate unprintable chars and concatenate.  Keep some
-         * room for the server name.  When there is no room (very long
-         * file name) use (...). */
-        if (off < SPACE_FOR_DIR) {
-          p = transstr(buf + off);
-          STRLCPY(buf + off, p, SPACE_FOR_DIR - off + 1);
-          xfree(p);
-        } else {
-          STRLCPY(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
+        // Avoid "c:/name" to be reduced to "c".
+        if (isalpha((uint8_t)buf_p) && *(buf_p + 1) == ':') {
+          buf_p += 2;
         }
-        STRCAT(buf, ")");
+#endif
+        // Remove the file name.
+        char *p = (char *)path_tail_with_sep((char_u *)buf_p);
+        if (p == buf_p) {
+          // Must be a help buffer.
+          xstrlcpy(buf_p, _("help"), SPACE_FOR_DIR - (size_t)(buf_p - buf));
+        } else {
+          *p = NUL;
+        }
+
+        // Translate unprintable chars and concatenate.  Keep some
+        // room for the server name.  When there is no room (very long
+        // file name) use (...).
+        if ((size_t)(buf_p - buf) < SPACE_FOR_DIR) {
+          char *const tbuf = transstr(buf_p);
+          const size_t free_space = SPACE_FOR_DIR - (size_t)(buf_p - buf) + 1;
+          const size_t dir_len = xstrlcpy(buf_p, tbuf, free_space);
+          buf_p += MIN(dir_len, free_space - 1);
+          xfree(tbuf);
+        } else {
+          const size_t free_space = SPACE_FOR_ARGNR - (size_t)(buf_p - buf) + 1;
+          const size_t dots_len = xstrlcpy(buf_p, "...", free_space);
+          buf_p += MIN(dots_len, free_space - 1);
+        }
+        *buf_p++ = ')';
+        *buf_p = NUL;
+      } else {
+        *buf_p = NUL;
       }
 
-      append_arg_number(curwin, buf, SPACE_FOR_ARGNR, FALSE);
+      append_arg_number(curwin, (char_u *)buf_p,
+                        (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)), false);
 
-      STRCAT(buf, " - NVIM");
+      xstrlcat(buf_p, " - NVIM", (sizeof(buf) - (size_t)(buf_p - buf)));
 
       if (maxlen > 0) {
-        /* make it shorter by removing a bit in the middle */
-        if (vim_strsize(buf) > maxlen)
-          trunc_string(buf, buf, maxlen, IOSIZE);
+        // Make it shorter by removing a bit in the middle.
+        if (vim_strsize((char_u *)buf) > maxlen) {
+          trunc_string((char_u *)buf, (char_u *)buf, maxlen, sizeof(buf));
+        }
       }
+      t_str = (char_u *)buf;
+#undef SPACE_FOR_FNAME
+#undef SPACE_FOR_DIR
+#undef SPACE_FOR_ARGNR
     }
   }
   mustset = ti_change(t_str, &lasttitle);
 
   if (p_icon) {
-    i_str = buf;
+    i_str = (char_u *)buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         int use_sandbox = FALSE;
@@ -3082,7 +3125,6 @@ void free_titles(void)
 /// be used when printing numbers in the status line.
 typedef enum {
   kNumBaseDecimal = 10,
-  kNumBaseOctal = 8,
   kNumBaseHexadecimal = 16
 } NumberBase;
 
@@ -3231,9 +3273,6 @@ int build_stl_str_hl(
     // Two `%` in a row is the escape sequence to print a
     // single `%` in the output buffer.
     if (*fmt_p == '%') {
-      // Ignore the character if we're out of room in the output buffer.
-      if (out_p >= out_end_p)
-        break;
       *out_p++ = *fmt_p++;
       prevchar_isflag = prevchar_isitem = false;
       continue;
@@ -3880,9 +3919,7 @@ int build_stl_str_hl(
 
       // Note: The `*` means we take the width as one of the arguments
       *t++ = '*';
-      *t++ = (char_u) (base == kNumBaseHexadecimal ? 'X'
-                        : (base == kNumBaseOctal ? 'o'
-                        : 'd'));
+      *t++ = (char_u)(base == kNumBaseHexadecimal ? 'X' : 'd');
       *t = 0;
       // }
 
@@ -4408,12 +4445,12 @@ do_arg_all (
       }
       wp->w_arg_idx = i;
 
-      if (i == opened_len && !keep_tabs) {    /* close this window */
-        if (P_HID(buf) || forceit || buf->b_nwindows > 1
+      if (i == opened_len && !keep_tabs) {    // close this window
+        if (buf_hide(buf) || forceit || buf->b_nwindows > 1
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
            * try autowriting. */
-          if (!P_HID(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
+          if (!buf_hide(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
             bufref_T bufref;
             set_bufref(&bufref, buf);
             (void)autowrite(buf, false);
@@ -4428,7 +4465,7 @@ do_arg_all (
               && (first_tabpage->tp_next == NULL || !had_tab)) {
             use_firstwin = true;
           } else {
-            win_close(wp, !P_HID(buf) && !bufIsChanged(buf));
+            win_close(wp, !buf_hide(buf) && !bufIsChanged(buf));
             // check if autocommands removed the next window
             if (!win_valid(wpnext)) {
               // start all over...
@@ -4506,14 +4543,15 @@ do_arg_all (
         new_curwin = curwin;
         new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL,
-          ECMD_ONE,
-          ((P_HID(curwin->w_buffer)
-            || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0)
-          + ECMD_OLDBUF, curwin);
-      if (use_firstwin)
-        ++autocmd_no_leave;
-      use_firstwin = FALSE;
+      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
+                    ((buf_hide(curwin->w_buffer)
+                      || bufIsChanged(curwin->w_buffer))
+                     ? ECMD_HIDE : 0) + ECMD_OLDBUF,
+                    curwin);
+      if (use_firstwin) {
+        autocmd_no_leave++;
+      }
+      use_firstwin = false;
     }
     os_breakcheck();
 
@@ -4700,14 +4738,14 @@ void ex_buffer_all(exarg_T *eap)
    * Close superfluous windows.
    */
   for (wp = lastwin; open_wins > count; ) {
-    r = (P_HID(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, FALSE) == OK);
+    r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
+         || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
     } else if (r) {
-      win_close(wp, !P_HID(wp->w_buffer));
-      --open_wins;
+      win_close(wp, !buf_hide(wp->w_buffer));
+      open_wins--;
       wp = lastwin;
     } else {
       wp = wp->w_prev;
@@ -5159,7 +5197,7 @@ void sign_list_placed(buf_T *rbuf)
     while (buf != NULL && !got_int) {
         if (buf->b_signlist != NULL) {
             vim_snprintf(lbuf, BUFSIZ, _("Signs for %s:"), buf->b_fname);
-            MSG_PUTS_ATTR(lbuf, hl_attr(HLF_D));
+            MSG_PUTS_ATTR(lbuf, HL_ATTR(HLF_D));
             msg_putchar('\n');
         }
         for (p = buf->b_signlist; p != NULL && !got_int; p = p->next) {
@@ -5336,7 +5374,7 @@ void bufhl_clear_line_range(buf_T *buf,
     if (line > line_end) {
       break;
     }
-    if (line_start <= line && line <= line_end) {
+    if (line_start <= line) {
       BufhlLineStatus status = bufhl_clear_line(l, src_id, line);
       if (status != kBLSUnchanged) {
         if (line > last_changed) {

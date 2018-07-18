@@ -108,7 +108,7 @@ return {
   },
   {
     command='argedit',
-    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILE1, EDITCMD, ARGOPT, TRLBAR),
+    flags=bit.bor(BANG, NEEDARG, RANGE, NOTADR, ZEROR, FILES, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_ARGUMENTS,
     func='ex_argedit',
   },
@@ -698,7 +698,7 @@ return {
   },
   {
     command='delfunction',
-    flags=bit.bor(NEEDARG, WORD1, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_delfunction',
   },
@@ -2158,7 +2158,7 @@ return {
   },
   {
     command='resize',
-    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1),
+    flags=bit.bor(RANGE, NOTADR, TRLBAR, WORD1, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_resize',
   },
@@ -3076,13 +3076,13 @@ return {
   },
   {
     command='wincmd',
-    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR),
+    flags=bit.bor(NEEDARG, WORD1, RANGE, NOTADR, CMDWIN),
     addr_type=ADDR_WINDOWS,
     func='ex_wincmd',
   },
   {
     command='windo',
-    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, RANGE, NOTADR, DFLALL),
     addr_type=ADDR_WINDOWS,
     func='ex_listdo',
   },

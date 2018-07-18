@@ -59,7 +59,9 @@
 #define BUFUNL        0x20000   /* accepts unlisted buffer too */
 #define ARGOPT        0x40000   /* allow "++opt=val" argument */
 #define SBOXOK        0x80000   /* allowed in the sandbox */
-#define CMDWIN       0x100000   /* allowed in cmdline window */
+#define CMDWIN       0x100000   /* allowed in cmdline window; when missing
+                                 * disallows editing another buffer when
+                                 * curbuf_lock is set */
 #define MODIFY       0x200000   /* forbidden in non-'modifiable' buffer */
 #define EXFLAGS      0x400000   /* allow flags after count in argument */
 #define FILES   (XFILE | EXTRA) /* multiple extra files allowed */

@@ -641,11 +641,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (oldwin->w_width - new_size - 1 < p_wmw)
       do_equal = TRUE;
 
-    /* We don't like to take lines for the new window from a
-     * 'winfixwidth' window.  Take them from a window to the left or right
-     * instead, if possible. */
-    if (oldwin->w_p_wfw)
-      win_setwidth_win(oldwin->w_width + new_size, oldwin);
+    // We don't like to take lines for the new window from a
+    // 'winfixwidth' window.  Take them from a window to the left or right
+    // instead, if possible. Add one for the separator.
+    if (oldwin->w_p_wfw) {
+      win_setwidth_win(oldwin->w_width + new_size + 1, oldwin);
+    }
 
     /* Only make all windows the same width if one of them (except oldwin)
      * is wider than one of the split windows. */
@@ -2857,7 +2858,7 @@ close_others (
       if (bufIsChanged(wp->w_buffer))
         continue;
     }
-    win_close(wp, !P_HID(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
+    win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
   }
 
   if (message && !ONE_WINDOW)
@@ -3731,7 +3732,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   if (restart_edit)
     redraw_later(VALID);        /* causes status line redraw */
 
-  if (hl_attr(HLF_INACTIVE)
+  if (HL_ATTR(HLF_INACTIVE)
       || (prevwin && prevwin->w_hl_ids[HLF_INACTIVE])
       || curwin->w_hl_ids[HLF_INACTIVE]) {
     redraw_all_later(NOT_VALID);
@@ -4465,8 +4466,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
       if (width <= room)
         break;
       if (run == 2 || curfrp->fr_height >= ROWS_AVAIL) {
-        if (width > room)
-          width = room;
+        width = room;
         break;
       }
       frame_setwidth(curfrp->fr_parent, width
@@ -4806,7 +4806,7 @@ void win_new_height(win_T *wp, int height)
       // call win_new_height() recursively.
       validate_cursor();
     }
-    if (wp->w_height != prev_height) {
+    if (wp->w_height != prev_height) {  // -V547
       return;  // Recursive call already changed the size, bail out.
     }
     if (wp->w_wrow != wp->w_prev_fraction_row) {
@@ -5101,11 +5101,13 @@ file_name_in_line (
    * search forward for what could be the start of a file name
    */
   ptr = line + col;
-  while (*ptr != NUL && !vim_isfilec(*ptr))
-    mb_ptr_adv(ptr);
-  if (*ptr == NUL) {            /* nothing found */
-    if (options & FNAME_MESS)
+  while (*ptr != NUL && !vim_isfilec(*ptr)) {
+    MB_PTR_ADV(ptr);
+  }
+  if (*ptr == NUL) {            // nothing found
+    if (options & FNAME_MESS) {
       EMSG(_("E446: No file name under cursor"));
+    }
     return NULL;
   }
 

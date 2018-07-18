@@ -93,7 +93,6 @@ typedef struct {
   const struct msglist *const *msg_list;
   int trylevel;
   int got_int;
-  int did_throw;
   int need_rethrow;
   int did_emsg;
 } TryState;

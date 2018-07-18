@@ -29,6 +29,8 @@ static void msgpack_rpc_add_method_handler(String method,
   map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
 }
 
+/// @param name API method name
+/// @param name_len name size (includes terminating NUL)
 MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
                                                      size_t name_len)
 {

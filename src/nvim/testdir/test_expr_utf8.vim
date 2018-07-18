@@ -3,7 +3,7 @@ if !has('multi_byte')
   finish
 endif
 
-func Test_strgetchar_utf8()
+func Test_strgetchar()
   call assert_equal(char2nr('á'), strgetchar('áxb', 0))
   call assert_equal(char2nr('x'), strgetchar('áxb', 1))
 
@@ -16,7 +16,7 @@ func Test_strgetchar_utf8()
   call assert_equal(char2nr('い'), strgetchar('あaい', 2))
 endfunc
 
-func Test_strcharpart_utf8()
+func Test_strcharpart()
   call assert_equal('áxb', strcharpart('áxb', 0))
   call assert_equal('á', strcharpart('áxb', 0, 1))
   call assert_equal('x', strcharpart('áxb', 1, 1))

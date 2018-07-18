@@ -301,11 +301,19 @@ func Test_syntax_arg_skipped()
 
   syn clear
 endfunc
- 
-func Test_invalid_arg()
+
+func Test_syntax_invalid_arg()
   call assert_fails('syntax case asdf', 'E390:')
-  call assert_fails('syntax conceal asdf', 'E390:')
+  if has('conceal')
+    call assert_fails('syntax conceal asdf', 'E390:')
+  endif
   call assert_fails('syntax spell asdf', 'E390:')
+  call assert_fails('syntax clear @ABCD', 'E391:')
+  call assert_fails('syntax include @Xxx', 'E397:')
+  call assert_fails('syntax region X start="{"', 'E399:')
+  call assert_fails('syntax sync x', 'E404:')
+  call assert_fails('syntax keyword Abc a[', 'E789:')
+  call assert_fails('syntax keyword Abc a[bc]d', 'E890:')
 endfunc
 
 func Test_syn_sync()
@@ -322,13 +330,16 @@ func Test_syn_clear()
   syntax keyword Bar tar
   call assert_match('Foo', execute('syntax'))
   call assert_match('Bar', execute('syntax'))
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   syn clear Foo
   call assert_notmatch('Foo', execute('syntax'))
   call assert_match('Bar', execute('syntax'))
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   syn clear Foo Bar
   call assert_notmatch('Foo', execute('syntax'))
   call assert_notmatch('Bar', execute('syntax'))
   hi clear Foo
+  call assert_equal('Foo', synIDattr(hlID("Foo"), "name"))
   hi clear Bar
 endfunc
 
@@ -343,6 +354,50 @@ func Test_invalid_name()
   hi clear @Wrong
 endfunc
 
+func Test_ownsyntax()
+  new Xfoo
+  call setline(1, '#define FOO')
+  syntax on
+  set filetype=c
+  ownsyntax perl
+  call assert_equal('perlComment', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c',    b:current_syntax)
+  call assert_equal('perl', w:current_syntax)
+
+  " A new split window should have the original syntax.
+  split
+  call assert_equal('cDefine', synIDattr(synID(line('.'), col('.'), 1), 'name'))
+  call assert_equal('c', b:current_syntax)
+  call assert_equal(0, exists('w:current_syntax'))
+
+  wincmd x
+  call assert_equal('perlComment', synIDattr(synID(line("."), col("."), 1), "name"))
+
+  syntax off
+  set filetype&
+  %bw!
+endfunc
+
+func Test_ownsyntax_completion()
+  call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"ownsyntax java javacc javascript', @:)
+endfunc
+
+func Test_highlight_invalid_arg()
+  if has('gui_running')
+    call assert_fails('hi XXX guifg=xxx', 'E254:')
+  endif
+  call assert_fails('hi DoesNotExist', 'E411:')
+  call assert_fails('hi link', 'E412:')
+  call assert_fails('hi link a', 'E412:')
+  call assert_fails('hi link a b c', 'E413:')
+  call assert_fails('hi XXX =', 'E415:')
+  call assert_fails('hi XXX cterm', 'E416:')
+  call assert_fails('hi XXX cterm=', 'E417:')
+  call assert_fails('hi XXX cterm=DoesNotExist', 'E418:')
+  call assert_fails('hi XXX ctermfg=DoesNotExist', 'E421:')
+  call assert_fails('hi XXX xxx=White', 'E423:')
+endfunc
 
 func Test_conceal()
   if !has('conceal')
@@ -378,4 +433,28 @@ func Test_conceal()
   syn clear
   set conceallevel&
   bw!
+endfunc
+
+func Test_bg_detection()
+  if has('gui_running')
+    return
+  endif
+  " auto-detection of &bg, make sure sure it isn't set anywhere before
+  " this test
+  hi Normal ctermbg=0
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=4
+  call assert_equal('dark', &bg)
+  hi Normal ctermbg=12
+  call assert_equal('light', &bg)
+  hi Normal ctermbg=15
+  call assert_equal('light', &bg)
+
+  " manually-set &bg takes precendence over auto-detection
+  set bg=light
+  hi Normal ctermbg=4
+  call assert_equal('light', &bg)
+  set bg=dark
+  hi Normal ctermbg=12
+  call assert_equal('dark', &bg)
 endfunc

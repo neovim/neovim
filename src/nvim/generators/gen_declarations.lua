@@ -224,23 +224,15 @@ local static = header
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
 local curfile
 
-local init = 0
+local init = 1
 local curfile = nil
 local neededfile = fname:match('[^/]+$')
 local declline = 0
 local declendpos = 0
 local curdir = nil
 local is_needed_file = false
+local init_is_nl = true
 while init ~= nil do
-  init = text:find('[\n;}]', init)
-  if init == nil then
-    break
-  end
-  local init_is_nl = text:sub(init, init) == '\n'
-  init = init + 1
-  if init_is_nl and is_needed_file then
-    declline = declline + 1
-  end
   if init_is_nl and text:sub(init, init) == '#' then
     local line, dir, file = text:match(filepattern, init)
     if file ~= nil then
@@ -292,6 +284,15 @@ while init ~= nil do
       end
       declendpos = e
     end
+  end
+  init = text:find('[\n;}]', init)
+  if init == nil then
+    break
+  end
+  init_is_nl = text:sub(init, init) == '\n'
+  init = init + 1
+  if init_is_nl and is_needed_file then
+    declline = declline + 1
   end
 end
 

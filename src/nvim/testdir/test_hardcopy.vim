@@ -50,6 +50,7 @@ endfunc
 " We don't check much of the contents.
 func Test_with_syntax()
   if has('postscript')
+    edit test_hardcopy.vim
     set printoptions=syntax:y
     syn on
     hardcopy > Xhardcopy
@@ -58,5 +59,16 @@ func Test_with_syntax()
     call assert_true(lines[0] =~ 'PS-Adobe')
     call delete('Xhardcopy')
     set printoptions&
+  endif
+endfunc
+
+func Test_fname_with_spaces()
+  if has('postscript')
+    split t\ e\ s\ t.txt
+    call setline(1, ['just', 'some', 'text'])
+    hardcopy > %.ps
+    call assert_true(filereadable('t e s t.txt.ps'))
+    call delete('t e s t.txt.ps')
+    bwipe!
   endif
 endfunc

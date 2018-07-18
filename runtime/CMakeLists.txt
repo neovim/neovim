@@ -21,17 +21,13 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${FUNCS_DATA}
 )
 
-if(POLICY CMP0054)
-  cmake_policy(SET CMP0054 OLD)
-endif()
-
 file(GLOB PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
 
 set(GENERATED_PACKAGE_TAGS)
 foreach(PACKAGE ${PACKAGES})
   get_filename_component(PACKNAME ${PACKAGE} NAME)
   file(GLOB "${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
-  if("${PACKNAME}_DOC_FILES")
+  if(${PACKNAME}_DOC_FILES)
     file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
     add_custom_target("${PACKNAME}-tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -42,6 +38,7 @@ foreach(PACKAGE ${PACKAGES})
         nvim
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
+    add_dependencies(${PACKNAME}-tags nvim_runtime_deps)
 
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       DEPENDS
@@ -71,7 +68,7 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_target(helptags
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${GENERATED_RUNTIME_DIR}/doc
+  COMMAND ${CMAKE_COMMAND} -E remove ${GENERATED_RUNTIME_DIR}/doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
@@ -80,6 +77,7 @@ add_custom_target(helptags
     nvim
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
+add_dependencies(helptags nvim_runtime_deps)
 
 add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   DEPENDS

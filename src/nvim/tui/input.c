@@ -170,11 +170,21 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
   char buf[64];
   size_t len = 0;
   int button, row, col;
+  static int last_pressed_button = 0;
   TermKeyMouseEvent ev;
   termkey_interpret_mouse(input->tk, key, &ev, &button, &row, &col);
 
-  if (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
-      && ev != TERMKEY_MOUSE_RELEASE) {
+  if ((ev == TERMKEY_MOUSE_RELEASE || ev == TERMKEY_MOUSE_DRAG)
+      && button == 0) {
+    // Some terminals (like urxvt) don't report which button was released.
+    // libtermkey reports button 0 in this case.
+    // For drag and release, we can reasonably infer the button to be the last
+    // pressed one.
+    button = last_pressed_button;
+  }
+
+  if (button == 0 || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
+                      && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
   }
 
@@ -210,6 +220,7 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
                                 "ScrollWheelDown");
       } else {
         len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
+        last_pressed_button = button;
       }
       break;
     case TERMKEY_MOUSE_DRAG:

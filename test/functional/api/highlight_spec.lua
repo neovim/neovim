@@ -5,7 +5,7 @@ local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
 local meths = helpers.meths
 
-describe('highlight api',function()
+describe('API: highlight',function()
   local expected_rgb = {
     background = Screen.colors.Yellow,
     foreground = Screen.colors.Red,
@@ -99,5 +99,14 @@ describe('highlight api',function()
     eq(false, err)
     eq('Invalid highlight name: ',
        string.match(emsg, 'Invalid.*'))
+
+    -- Test "standout" attribute. #8054
+    eq({ underline = true, },
+       meths.get_hl_by_name('cursorline', 0));
+    command('hi CursorLine cterm=standout,underline term=standout,underline gui=standout,underline')
+    command('set cursorline')
+    eq({ underline = true, standout = true, },
+       meths.get_hl_by_name('cursorline', 0));
+
   end)
 end)
