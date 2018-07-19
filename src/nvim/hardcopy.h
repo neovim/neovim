@@ -2,10 +2,11 @@
 #define NVIM_HARDCOPY_H
 
 #include <stdint.h>
-#include <stdlib.h> // for size_t
+#include <stdlib.h>  // for size_t
 
-#include "nvim/types.h" // for char_u
-#include "nvim/ex_cmds_defs.h" // for exarg_T
+#include "nvim/globals.h"  // for TriState
+#include "nvim/types.h"  // for char_u
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
 
 /*
  * Structure to hold printing color and font attributes.
@@ -13,9 +14,9 @@
 typedef struct {
   uint32_t fg_color;
   uint32_t bg_color;
-  int bold;
-  int italic;
-  int underline;
+  TriState bold;
+  TriState italic;
+  TriState underline;
   int undercurl;
 } prt_text_attr_T;
 

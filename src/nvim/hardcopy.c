@@ -134,9 +134,9 @@ static int current_syn_id;
 #define PRCOLOR_BLACK 0
 #define PRCOLOR_WHITE 0xffffff
 
-static int curr_italic;
-static int curr_bold;
-static int curr_underline;
+static TriState curr_italic;
+static TriState curr_bold;
+static TriState curr_underline;
 static uint32_t curr_bg;
 static uint32_t curr_fg;
 static int page_count;
@@ -417,7 +417,8 @@ static void prt_set_bg(uint32_t bg)
   }
 }
 
-static void prt_set_font(int bold, int italic, int underline)
+static void prt_set_font(const TriState bold, const TriState italic,
+                         const TriState underline)
 {
   if (curr_bold != bold
       || curr_italic != italic
@@ -449,14 +450,14 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
   for (i = 0; i < 6; i++)
     (void)mch_print_text_out(&tbuf[i], 1);
 
-  if (psettings->do_syntax)
-    /* Set colors for next character. */
+  if (psettings->do_syntax) {
+    // Set colors for next character.
     current_syn_id = -1;
-  else {
-    /* Set colors and font back to normal. */
+  } else {
+    // Set colors and font back to normal.
     prt_set_fg(PRCOLOR_BLACK);
     prt_set_bg(PRCOLOR_WHITE);
-    prt_set_font(FALSE, FALSE, FALSE);
+    prt_set_font(kFalse, kFalse, kFalse);
   }
 }
 
@@ -548,7 +549,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
 
   prt_set_fg(PRCOLOR_BLACK);
   prt_set_bg(PRCOLOR_WHITE);
-  prt_set_font(TRUE, FALSE, FALSE);
+  prt_set_font(kTrue, kFalse, kFalse);
 
   /* Use a negative line number to indicate printing in the top margin. */
   page_line = 0 - prt_header_height();
@@ -567,14 +568,14 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
 
   xfree(tbuf);
 
-  if (psettings->do_syntax)
-    /* Set colors for next character. */
+  if (psettings->do_syntax) {
+    // Set colors for next character.
     current_syn_id = -1;
-  else {
-    /* Set colors and font back to normal. */
+  } else {
+    // Set colors and font back to normal.
     prt_set_fg(PRCOLOR_BLACK);
     prt_set_bg(PRCOLOR_WHITE);
-    prt_set_font(FALSE, FALSE, FALSE);
+    prt_set_font(kFalse, kFalse, kFalse);
   }
 }
 
@@ -640,21 +641,19 @@ void ex_hardcopy(exarg_T *eap)
   else
     settings.do_syntax = settings.has_color;
 
-  /* Set up printing attributes for line numbers */
+  // Set up printing attributes for line numbers
   settings.number.fg_color = PRCOLOR_BLACK;
   settings.number.bg_color = PRCOLOR_WHITE;
-  settings.number.bold = FALSE;
-  settings.number.italic = TRUE;
-  settings.number.underline = FALSE;
-  /*
-   * Syntax highlighting of line numbers.
-   */
-  if (prt_use_number() && settings.do_syntax) {
-    int id;
+  settings.number.bold = kFalse;
+  settings.number.italic = kTrue;
+  settings.number.underline = kFalse;
 
-    id = syn_name2id((char_u *)"LineNr");
-    if (id > 0)
+  // Syntax highlighting of line numbers.
+  if (prt_use_number() && settings.do_syntax) {
+    int id = syn_name2id((char_u *)"LineNr");
+    if (id > 0) {
       id = syn_get_final_id(id);
+    }
 
     prt_get_attr(id, &settings.number, settings.modec);
   }
@@ -672,13 +671,13 @@ void ex_hardcopy(exarg_T *eap)
   /* Set colors and font to normal. */
   curr_bg = 0xffffffff;
   curr_fg = 0xffffffff;
-  curr_italic = MAYBE;
-  curr_bold = MAYBE;
-  curr_underline = MAYBE;
+  curr_italic = kNone;
+  curr_bold = kNone;
+  curr_underline = kNone;
 
   prt_set_fg(PRCOLOR_BLACK);
   prt_set_bg(PRCOLOR_WHITE);
-  prt_set_font(FALSE, FALSE, FALSE);
+  prt_set_font(kFalse, kFalse, kFalse);
   current_syn_id = -1;
 
   jobsplit = (printer_opts[OPT_PRINT_JOBSPLIT].present
@@ -1266,8 +1265,8 @@ static int prt_do_moveto;
 static int prt_need_font;
 static int prt_font;
 static int prt_need_underline;
-static int prt_underline;
-static int prt_do_underline;
+static TriState prt_underline;
+static TriState prt_do_underline;
 static int prt_need_fgcol;
 static uint32_t prt_fgcol;
 static int prt_need_bgcol;
@@ -2855,7 +2854,7 @@ int mch_print_begin_page(char_u *str)
   /* We have reset the font attributes, force setting them again. */
   curr_bg = 0xffffffff;
   curr_fg = 0xffffffff;
-  curr_bold = MAYBE;
+  curr_bold = kNone;
 
   return !prt_file_error;
 }
@@ -3059,7 +3058,8 @@ int mch_print_text_out(char_u *const textp, size_t len)
   return need_break;
 }
 
-void mch_print_set_font(int iBold, int iItalic, int iUnderline)
+void mch_print_set_font(const TriState iBold, const TriState iItalic,
+                        const TriState iUnderline)
 {
   int font = 0;
 
