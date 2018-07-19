@@ -430,25 +430,23 @@ static void prt_set_font(const TriState bold, const TriState italic,
   }
 }
 
-/*
- * Print the line number in the left margin.
- */
-static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T lnum)
+// Print the line number in the left margin.
+static void prt_line_number(prt_settings_T *const psettings,
+                            const int page_line, const linenr_T lnum)
 {
-  int i;
-  char_u tbuf[20];
-
   prt_set_fg(psettings->number.fg_color);
   prt_set_bg(psettings->number.bg_color);
   prt_set_font(psettings->number.bold, psettings->number.italic,
-      psettings->number.underline);
-  mch_print_start_line(TRUE, page_line);
+               psettings->number.underline);
+  mch_print_start_line(true, page_line);
 
-  /* Leave two spaces between the number and the text; depends on
-   * PRINT_NUMBER_WIDTH. */
-  sprintf((char *)tbuf, "%6ld", (long)lnum);
-  for (i = 0; i < 6; i++)
+  // Leave two spaces between the number and the text; depends on
+  // PRINT_NUMBER_WIDTH.
+  char_u tbuf[20];
+  snprintf((char *)tbuf, sizeof(tbuf), "%6ld", (long)lnum);
+  for (int i = 0; i < 6; i++) {
     (void)mch_print_text_out(&tbuf[i], 1);
+  }
 
   if (psettings->do_syntax) {
     // Set colors for next character.
@@ -500,22 +498,20 @@ int prt_get_unit(int idx)
   return u;
 }
 
-/*
- * Print the page header.
- */
-static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
+// Print the page header.
+static void prt_header(prt_settings_T *const psettings, const int pagenum,
+                       const linenr_T lnum)
 {
   int width = psettings->chars_per_line;
-  int page_line;
-  char_u      *tbuf;
-  char_u      *p;
 
-  /* Also use the space for the line number. */
-  if (prt_use_number())
+  // Also use the space for the line number.
+  if (prt_use_number()) {
     width += PRINT_NUMBER_WIDTH;
+  }
 
   assert(width >= 0);
-  tbuf = xmalloc((size_t)width + IOSIZE);
+  const size_t tbuf_size = (size_t)width + IOSIZE;
+  char_u *tbuf = xmalloc(tbuf_size);
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
@@ -544,24 +540,26 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
     curwin->w_cursor.lnum = tmp_lnum;
     curwin->w_topline = tmp_topline;
     curwin->w_botline = tmp_botline;
-  } else
-    sprintf((char *)tbuf, _("Page %d"), pagenum);
+  } else {
+    snprintf((char *)tbuf, tbuf_size, _("Page %d"), pagenum);
+  }
 
   prt_set_fg(PRCOLOR_BLACK);
   prt_set_bg(PRCOLOR_WHITE);
   prt_set_font(kTrue, kFalse, kFalse);
 
-  /* Use a negative line number to indicate printing in the top margin. */
-  page_line = 0 - prt_header_height();
-  mch_print_start_line(TRUE, page_line);
-  for (p = tbuf; *p != NUL; ) {
-    int l = (*mb_ptr2len)(p);
+  // Use a negative line number to indicate printing in the top margin.
+  int page_line = 0 - prt_header_height();
+  mch_print_start_line(true, page_line);
+  for (char_u *p = tbuf; *p != NUL; ) {
+    const int l = (*mb_ptr2len)(p);
     assert(l >= 0);
     if (mch_print_text_out(p, (size_t)l)) {
-      ++page_line;
-      if (page_line >= 0)       /* out of room in header */
+      page_line++;
+      if (page_line >= 0) {     // out of room in header
         break;
-      mch_print_start_line(TRUE, page_line);
+      }
+      mch_print_start_line(true, page_line);
     }
     p += l;
   }
@@ -840,7 +838,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     tab_spaces = ppos->lead_spaces;
   }
 
-  mch_print_start_line(0, page_line);
+  mch_print_start_line(false, page_line);
   line = ml_get(ppos->file_line);
 
   /*
@@ -2867,11 +2865,12 @@ int mch_print_blank_page(void)
 static double prt_pos_x = 0;
 static double prt_pos_y = 0;
 
-void mch_print_start_line(int margin, int page_line)
+void mch_print_start_line(const bool margin, const int page_line)
 {
   prt_pos_x = prt_left_margin;
-  if (margin)
+  if (margin) {
     prt_pos_x -= prt_number_width;
+  }
 
   prt_pos_y = prt_top_margin - prt_first_line_height -
               page_line * prt_line_height;
