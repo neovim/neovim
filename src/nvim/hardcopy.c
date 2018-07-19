@@ -2882,19 +2882,13 @@ void mch_print_start_line(int margin, int page_line)
   prt_half_width = FALSE;
 }
 
-int mch_print_text_out(char_u *textp, size_t len)
+int mch_print_text_out(char_u *const textp, size_t len)
 {
   char_u *p = textp;
-  int need_break;
   char_u ch;
   char_u ch_buff[8];
-  double char_width;
-  double next_pos;
-  int in_ascii;
-  int half_width;
   char_u *tofree = NULL;
-
-  char_width = prt_char_width;
+  double char_width = prt_char_width;
 
   /* Ideally VIM would create a rearranged CID font to combine a Roman and
    * CJKV font to do what VIM is doing here - use a Roman font for characters
@@ -2904,7 +2898,7 @@ int mch_print_text_out(char_u *textp, size_t len)
    * years!  If they ever do, a lot of this code will disappear.
    */
   if (prt_use_courier) {
-    in_ascii = (len == 1 && *p < 0x80);
+    const bool in_ascii = (len == 1 && *p < 0x80);
     if (prt_in_ascii) {
       if (!in_ascii) {
         /* No longer in ASCII range - need to switch font */
@@ -2920,9 +2914,10 @@ int mch_print_text_out(char_u *textp, size_t len)
     }
   }
   if (prt_out_mbyte) {
-    half_width = ((*mb_ptr2cells)(p) == 1);
-    if (half_width)
+    const bool half_width = ((*mb_ptr2cells)(p) == 1);
+    if (half_width) {
       char_width /= 2;
+    }
     if (prt_half_width) {
       if (!half_width) {
         prt_half_width = FALSE;
@@ -3053,12 +3048,13 @@ int mch_print_text_out(char_u *textp, size_t len)
   prt_pos_x += char_width;
 
   // The downside of fp - use relative error on right margin check
-  next_pos = prt_pos_x + prt_char_width;
-  need_break = ((next_pos > prt_right_margin)
-                && ((next_pos - prt_right_margin) > (prt_right_margin * 1e-5)));
+  const double next_pos = prt_pos_x + prt_char_width;
+  const bool need_break = (next_pos > prt_right_margin)
+      && ((next_pos - prt_right_margin) > (prt_right_margin * 1e-5));
 
-  if (need_break)
+  if (need_break) {
     prt_flush_buffer();
+  }
 
   return need_break;
 }
