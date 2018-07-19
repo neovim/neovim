@@ -1369,7 +1369,7 @@ static digr_T digraphdefault[] =
   { '~', '!', 161 },  // ¡
   { 'c', '|', 162 },  // ¢
   { '$', '$', 163 },  // £
-  { 'o', 'x', 164 },  // ¤ - currency symbol in ISO 8859-1
+  { 'o', 'x', 164 },  // ¤ - currency symbol
   { 'Y', '-', 165 },  // ¥
   { '|', '|', 166 },  // ¦
   { 'c', 'O', 169 },  // ©
@@ -1397,7 +1397,7 @@ static digr_T digraphdefault[] =
   { 'O', '`', 210 },  // Ò
   { 'O', '^', 212 },  // Ô
   { 'O', '~', 213 },  // Õ
-  { '/', '\\', 215 }, // × - multiplication symbol in ISO 8859-1
+  { '/', '\\', 215 },  // × - multiplication symbol
   { 'U', '`', 217 },  // Ù
   { 'U', '^', 219 },  // Û
   { 'I', 'p', 222 },  // Þ
