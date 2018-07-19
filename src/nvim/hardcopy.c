@@ -2882,8 +2882,9 @@ void mch_print_start_line(int margin, int page_line)
   prt_half_width = FALSE;
 }
 
-int mch_print_text_out(char_u *p, size_t len)
+int mch_print_text_out(char_u *textp, size_t len)
 {
+  char_u *p = textp;
   int need_break;
   char_u ch;
   char_u ch_buff[8];
@@ -2996,6 +2997,10 @@ int mch_print_text_out(char_u *p, size_t len)
   if (prt_do_conv) {
     // Convert from multi-byte to 8-bit encoding
     tofree = p = string_convert(&prt_conv, p, &len);
+    if (p == NULL) {
+      p = (char_u *)"";
+      len = 0;
+    }
   }
 
   if (prt_out_mbyte) {

@@ -63,12 +63,27 @@ func Test_with_syntax()
 endfunc
 
 func Test_fname_with_spaces()
-  if has('postscript')
-    split t\ e\ s\ t.txt
-    call setline(1, ['just', 'some', 'text'])
-    hardcopy > %.ps
-    call assert_true(filereadable('t e s t.txt.ps'))
-    call delete('t e s t.txt.ps')
-    bwipe!
+  if !has('postscript')
+    return
   endif
+  split t\ e\ s\ t.txt
+  call setline(1, ['just', 'some', 'text'])
+  hardcopy > %.ps
+  call assert_true(filereadable('t e s t.txt.ps'))
+  call delete('t e s t.txt.ps')
+  bwipe!
 endfunc
+
+func Test_illegal_byte()
+  if !has('postscript') || &enc != 'utf-8'
+    return
+  endif
+  new
+  " conversion of 0xff will fail, this used to cause a crash
+  call setline(1, "\xff")
+  hardcopy >Xpstest
+
+  bwipe!
+  call delete('Xpstest')
+endfunc
+
