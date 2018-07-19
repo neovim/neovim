@@ -2891,6 +2891,7 @@ int mch_print_text_out(char_u *p, size_t len)
   double next_pos;
   int in_ascii;
   int half_width;
+  char_u *tofree = NULL;
 
   char_width = prt_char_width;
 
@@ -2993,23 +2994,20 @@ int mch_print_text_out(char_u *p, size_t len)
   }
 
   if (prt_do_conv) {
-    /* Convert from multi-byte to 8-bit encoding */
-    p = string_convert(&prt_conv, p, &len);
-    if (p == NULL)
-      p = (char_u *)xstrdup("");
+    // Convert from multi-byte to 8-bit encoding
+    tofree = p = string_convert(&prt_conv, p, &len);
   }
 
   if (prt_out_mbyte) {
-    /* Multi-byte character strings are represented more efficiently as hex
-     * strings when outputting clean 8 bit PS.
-     */
-    do {
+    // Multi-byte character strings are represented more efficiently as hex
+    // strings when outputting clean 8 bit PS.
+    while (len-- > 0) {
       ch = prt_hexchar[(unsigned)(*p) >> 4];
       ga_append(&prt_ps_buffer, (char)ch);
       ch = prt_hexchar[(*p) & 0xf];
       ga_append(&prt_ps_buffer, (char)ch);
       p++;
-    } while (--len);
+    }
   } else {
     /* Add next character to buffer of characters to output.
      * Note: One printed character may require several PS characters to
@@ -3043,9 +3041,8 @@ int mch_print_text_out(char_u *p, size_t len)
       ga_append(&prt_ps_buffer, (char)ch);
   }
 
-  /* Need to free any translated characters */
-  if (prt_do_conv)
-    xfree(p);
+  // Need to free any translated characters
+  xfree(tofree);
 
   prt_text_run += char_width;
   prt_pos_x += char_width;
