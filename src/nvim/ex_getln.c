@@ -3068,7 +3068,7 @@ void cmdline_ui_flush(void)
  * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
  * "c" must be printable (fit in one display cell)!
  */
-void putcmdline(int c, int shift)
+void putcmdline(const int c, const bool shift)
 {
   if (cmd_silent) {
     return;

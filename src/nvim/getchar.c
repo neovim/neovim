@@ -2237,9 +2237,9 @@ static int vgetorpeek(int advance)
           if ((State & CMDLINE)
               && cmdline_star == 0
               && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-                  + typebuf.tb_len - 1) == 1) {
-            putcmdline(typebuf.tb_buf[typebuf.tb_off
-                                      + typebuf.tb_len - 1], FALSE);
+                           + typebuf.tb_len - 1) == 1) {
+            putcmdline(typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len - 1],
+                       false);
             c1 = 1;
           }
         }
