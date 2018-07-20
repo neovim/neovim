@@ -75,7 +75,7 @@ and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Transitioning from Vim
 --------------------
 
-See [`:help nvim-features`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) for instructions.
+See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) for instructions.
 
 Project layout
 --------------
