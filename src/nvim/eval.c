@@ -16377,7 +16377,7 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
   return list;
 }
 
-// os_call_shell wrapper. Handles 'verbose', :profile, and v:shell_error.
+// os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
 static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
                                        bool retlist)
 {
