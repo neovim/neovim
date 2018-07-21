@@ -2775,6 +2775,11 @@ static FILE *fopen_noinh_readbin(char *filename)
   return fdopen(fd_tmp, READBIN);
 }
 
+int do_source_str(char_u *cmd)
+{
+  do_cmdline(cmd, NULL, NULL, DOCMD_VERBOSE|DOCMD_NOWAIT);
+  return OK;
+}
 
 /// Read the file "fname" and execute its lines as EX commands.
 ///
