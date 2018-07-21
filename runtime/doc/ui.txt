@@ -21,7 +21,7 @@ After connecting to Nvim (usually a spawned, embedded instance) use the
 |nvim_ui_attach| API method to tell Nvim that your program wants to draw the
 Nvim screen grid with a size of width × height cells. `options` must be
 a dictionary with these (optional) keys:
-	`rgb`			Decides the color format.
+	`rgb`			Decides the color format. |ui-rgb|
 				Set true (default) for 24-bit RGB colors.
 				Set false for terminal colors (max of 256).
 							      *ui-ext-options*
@@ -29,6 +29,8 @@ a dictionary with these (optional) keys:
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
+	`ext_newgrid`		Use new revision of the grid events. |ui-newgrid|
+	`ext_hlstate`		Use detailed highlight state. |ui-hlstate|
 
 Specifying a non-existent option is an error. UIs can check the |api-metadata|
 `ui_options` key for supported options. Additionally Nvim (currently) requires
@@ -49,12 +51,18 @@ Events must be handled in-order. The user should only see the updated screen
 state after all events in the same "redraw" batch are processed (not any
 intermediate state after processing only part of the array).
 
-Nvim sends |ui-global| and |ui-grid| events unconditionally; these suffice to
-implement a terminal-like layout.
+By default, Nvim sends |ui-global| and |ui-grid-old| events; these suffice to
+implement a terminal-like interface. However there are two revisions of the
+grid part of the protocol. The newer revision |ui-newgrid|, enabled by
+`ext_newgrid` option, has some improvements, such as a more efficient
+representation of highlighted text, simplified events and room for futher
+enhancements that will use multiple grids. The older revision is available and
+used by default only for backwards compatibility reasons. New UIs are strongly
+recommended to use |ui-newgrid|, as further protocol extensions will require it.
 
 Nvim optionally sends screen elements "semantically" as structured events
 instead of raw grid-lines, controlled by |ui-ext-options|. The UI must present
-those elements itself; Nvim will not draw those elements on the |ui-grid|.
+those elements itself; Nvim will not draw those elements on the grid.
 
 Future versions of Nvim may add new update kinds and may append new parameters
 to existing update kinds. Clients must be prepared to ignore such extensions,
@@ -149,7 +157,147 @@ Global Events							    *ui-global*
 	Notify the user with an audible or visual bell, respectively.
 
 ==============================================================================
-Grid Events							      *ui-grid*
+Grid Events (new revision)					  *ui-newgrid*
+
+These events are used if `ext_newgrid` option is set (recommended for all new
+UIs).
+
+Most of these events take a `grid` index as first parameter.  Grid 1 is the
+global grid used by default for the entire editor screen state. Grids other
+than that will be defined by future extensions. Just activating the `ext_newgrid`
+option by itself will never cause any additional grids to be created.
+
+Highlight attribute groups are predefined. UIs should maintain a table to map
+numerical highlight `id`:s to the actual attributes.
+
+["grid_resize", grid, width, height]
+	Resize a `grid`. If `grid` wasn't seen by the client before, a new grid is
+	being created with this size.
+
+["default_colors_set", rgb_fg, rgb_bg, rgb_sp, cterm_fg, cterm_bg]
+	The first three arguments set the default foreground, background and
+	special colors respectively. `cterm_fg` and `cterm_bg` specifies the
+	default color codes to use in a 256-color terminal.
+
+	Note: unlike the corresponding events in the first revision, the
+	screen is not always cleared after sending this event. The GUI has to
+	repaint the screen with changed background color itself.
+
+							*ui-event-hl_attr_define*
+["hl_attr_define", id, rgb_attr, cterm_attr, info]
+	Add a highlight with `id`  to the highlight table, with the
+	attributes specified by the `rgb_attr` and `cterm_attr` dicts, with the
+	following (all optional) keys.
+
+	`foreground`:	foreground color.
+	`background`:	background color.
+	`special`:	color to use for underline and undercurl, when present.
+	`reverse`:	reverse video. Foreground and background colors are
+			switched.
+	`italic`:	italic text.
+	`bold`:		bold text.
+	`underline`:	underlined text. The line has `special` color.
+	`undercurl`:	undercurled text. The curl has `special` color.
+
+	For absent color keys the default color should be used. Don't store
+	the default value in the table, rather a sentinel value, so that
+	a changed default color will take effect.
+	All boolean keys default to false, and will only be sent when they
+	are true.
+
+	Highlights are always transmitted both for both the rgb format and as
+	terminal 256-color codes, as the `rgb_attr` and `cterm_attr` parameters
+	respectively. The |ui-rgb| option has no effect effect anymore.
+	Most external UIs will only need to store and use the `rgb_attr`
+	attributes.
+
+	`id` 0 will always be used for the default highlight with colors defined
+	by `default_colors_set` and no styles applied.
+
+	Note: `id`:s can be reused if Nvim's internal highlight table is full.
+	In this case, Nvim will always issue redraws of screen cells that are
+	affected by redefined `id`:s, so UIs do not need to keep track of this
+	themselves.
+
+	`info` is an empty array per default, and will be used by the
+	|ui-hlstate| extension explaned below.
+
+							    *ui-event-grid_line*
+["grid_line", grid, row, col_start, cells]
+	Redraw a continous part of a `row` on a `grid`, starting at the column
+	`col_start`. `cells` is an array of arrays each with 1 to 3 items:
+	`[text(, hl_id, repeat)]` . `text` is the UTF-8 text that should be put in
+	a cell, with the highlight `hl_id` defined by a previous `hl_attr_define`
+	call.  If `hl_id` is not present the most recently seen `hl_id` in
+	the same call should be used (it is always sent for the first
+	cell in the event). If `repeat` is present, the cell should be
+	repeated `repeat` times (including the first time), otherwise just
+	once.
+
+	The right cell of a double-width char will be represented as the empty
+	string. Double-width chars never use `repeat`.
+
+	If the array of cell changes doesn't reach to the end of the line, the
+	rest should remain unchanged. A whitespace char, repeated
+	enough to cover the remaining line, will be sent when the rest of the
+	line should be cleared.
+
+["grid_clear", grid]
+	Clear a `grid`.
+
+["grid_destroy", grid]
+	`grid` will not be used anymore and the UI can free any data associated
+	with it.
+
+["grid_cursor_goto", grid, row, column]
+	Makes `grid` the current grid and `row, column` the cursor position on this
+	grid.  This event will be sent at most once in a `redraw` batch and
+	indicates the visible cursor position.
+
+["grid_scroll", grid, top, bot, left, right, rows, cols]
+	Scroll the text in the a region of `grid`. The diagrams below illustrate
+	what will happen, depending on the scroll direction. "=" is used to
+	represent the SR(scroll region) boundaries and "-" the moved rectangles.
+	Note that dst and src share a common region.
+
+	If `rows` is bigger than 0, move a rectangle in the SR up, this can
+	happen while scrolling down.
+>
+		+-------------------------+
+		| (clipped above SR)      |            ^
+		|=========================| dst_top    |
+		| dst (still in SR)       |            |
+		+-------------------------+ src_top    |
+		| src (moved up) and dst  |            |
+		|-------------------------| dst_bot    |
+		| src (cleared)           |            |
+		+=========================+ src_bot
+<
+	If `rows` is less than zero, move a rectangle in the SR down, this can
+	happen while scrolling up.
+>
+		+=========================+ src_top
+		| src (cleared)           |            |
+		|------------------------ | dst_top    |
+		| src (moved down) and dst|            |
+		+-------------------------+ src_bot    |
+		| dst (still in SR)       |            |
+		|=========================| dst_bot    |
+		| (clipped below SR)      |            v
+		+-------------------------+
+<
+	`cols` is always zero in this version of Nvim, and reserved for future
+	use. 
+
+	Note when updating code from |ui-grid-old| events: ranges are
+	end-exclusive, which is consistent with API conventions, but different
+	from `set_scroll_region` which was end-inclusive.
+
+==============================================================================
+Grid Events (first revision)					   *ui-grid-old*
+
+This is an older representation of the screen grid, used if `ext_newgrid`
+option is not set.
 
 ["resize", width, height]
 	The grid is resized to `width` and `height` cells.
@@ -173,7 +321,7 @@ Grid Events							      *ui-grid*
 	Set the default foreground, background and special colors
 	respectively.
 
-						      *ui-event-highlight_set*
+							*ui-event-highlight_set*
 ["highlight_set", attrs]
 	Set the attributes that the next text put on the grid will have.
 	`attrs` is a dict with the keys below. Any absent key is reset
@@ -197,6 +345,9 @@ Grid Events							      *ui-grid*
 
 ["set_scroll_region", top, bot, left, right]
 	Define the scroll region used by `scroll` below.
+	
+	Note: ranges are end-inclusive, which is inconsistent with API
+	conventions.
 
 ["scroll", count]
 	Scroll the text in the scroll region. The diagrams below illustrate
@@ -230,6 +381,42 @@ Grid Events							      *ui-grid*
 		| (clipped below SR)      |            v
 		+-------------------------+
 <
+==============================================================================
+Detailed highlight state Extension 				  *ui-hlstate*
+
+
+Only sent if `ext_hlstate` option is set in |ui-options|. `ext_hlstate` implies
+`ext_newgrid`.
+
+By default, nvim will only describe grid cells using the final calculated
+higlight attributes, as described by the dict keys in |ui-event-highlight_set|.
+The `ext_hlstate` extension allows to the UI to also receive a semantic
+describtion of the higlights active in a cell. In this mode highlights will be
+predefined in a table, see |ui-event-hl_attr_define| and |ui-event-grid_line|.
+The `info` parameter in `hl_attr_define` will contain a semantic description
+of the highlights. As highlight groups can be combined, this will be an array
+of items, with the item with highest priority last. Each item is a dictionary
+with the following possible keys:
+
+    `kind`:	always present. One of the following values:
+	"ui":       A builtin ui highlight.
+	"syntax":   highlight applied to a buffer by a syntax declaration or
+	            other runtime/plugin functionallity such as
+		    |nvim_buf_add_highlight|
+	"terminal": highlight from a process running in a |terminal-emulator|.
+		    Contains no futher semantic information.
+    `ui_name`:	Name of the builtin highlight. See |highlight-groups| for
+	        possible values. Only present for "ui".
+    `hi_name`:	Name of the final |:highlight| group where the used
+		attributes are defined.
+    `id`:	Unique numeric id representing this item.
+
+Note: "ui" items will have both `ui_name` and `hi_name` present. These can
+differ, because the builtin group was linked to another group |hi-link| , or
+because 'winhighlight' was used. UI items will be transmitted, even if the
+highlight group is cleared, so `ui_name` can always be used to reliably identify
+screen elements, even if no attributes have been applied.
+
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
 

@@ -23,6 +23,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
+#include "nvim/highlight.h"
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
@@ -182,6 +183,7 @@ void early_init(void)
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
+  highlight_init();
 
 #if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
@@ -452,7 +454,6 @@ int main(int argc, char **argv)
   }
 
   setmouse();  // may start using the mouse
-  ui_reset_scroll_region();  // In case Rows changed
 
   if (exmode_active) {
     must_redraw = CLEAR;  // Don't clear the screen when starting in Ex mode.
@@ -1372,7 +1373,7 @@ static void handle_quickfix(mparm_T *paramp)
           paramp->use_ef, OPT_FREE, SID_CARG);
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
-      ui_linefeed();
+      msg_putchar('\n');
       mch_exit(3);
     }
     TIME_MSG("reading errorfile");

@@ -207,7 +207,7 @@ describe('tui', function()
     screen:set_default_attr_ids({
       [1] = {reverse = true},
       [2] = {foreground = 13, special = Screen.colors.Grey0},
-      [3] = {special = Screen.colors.Grey0, bold = true, reverse = true},
+      [3] = {bold = true, reverse = true, special = Screen.colors.Grey0},
       [4] = {bold = true},
       [5] = {special = Screen.colors.Grey0, reverse = true, foreground = 4},
       [6] = {foreground = 4, special = Screen.colors.Grey0},
@@ -257,11 +257,11 @@ describe('tui', function()
   it('shows up in nvim_list_uis', function()
     feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(v))})\013')
     screen:expect([=[
-      {5:                                                  }|
-      [[['ext_cmdline', v:false], ['ext_popupmenu', v:fa|
-      lse], ['ext_tabline', v:false], ['ext_wildmenu', v|
-      :false], ['height', 6], ['rgb', v:false], ['width'|
-      , 50]]]                                           |
+      [[['ext_cmdline', v:false], ['ext_hlstate', v:fals|
+      e], ['ext_newgrid', v:true], ['ext_popupmenu', v:f|
+      alse], ['ext_tabline', v:false], ['ext_wildmenu', |
+      v:false], ['height', 6], ['rgb', v:false], ['width|
+      ', 50]]]                                          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]=])

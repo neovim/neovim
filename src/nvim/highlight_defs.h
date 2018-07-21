@@ -8,6 +8,8 @@
 typedef int32_t RgbValue;
 
 /// Highlighting attribute bits.
+///
+/// sign bit should not be used here, as it identifies invalid highlight
 typedef enum {
   HL_INVERSE     = 0x01,
   HL_BOLD        = 0x02,
@@ -28,6 +30,17 @@ typedef struct attr_entry {
 #define HLATTRS_INIT (HlAttrs) { \
   .rgb_ae_attr = 0, \
   .cterm_ae_attr = 0, \
+  .rgb_fg_color = -1, \
+  .rgb_bg_color = -1, \
+  .rgb_sp_color = -1, \
+  .cterm_fg_color = 0, \
+  .cterm_bg_color = 0, \
+}
+
+// sentinel value that compares unequal to any valid highlight
+#define HLATTRS_INVALID (HlAttrs) { \
+  .rgb_ae_attr = -1, \
+  .cterm_ae_attr = -1, \
   .rgb_fg_color = -1, \
   .rgb_bg_color = -1, \
   .rgb_sp_color = -1, \
@@ -151,5 +164,20 @@ EXTERN int cterm_normal_bg_color INIT(= 0);
 EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);
 EXTERN RgbValue normal_sp INIT(= -1);
+
+typedef enum {
+  kHlUnknown,
+  kHlUI,
+  kHlSyntax,
+  kHlTerminal,
+  kHlCombine,
+} HlKind;
+
+typedef struct {
+  HlAttrs attr;
+  HlKind kind;
+  int id1;
+  int id2;
+} HlEntry;
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

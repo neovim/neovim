@@ -10,6 +10,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/eval.h"
+#include "nvim/highlight.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -696,7 +697,7 @@ void free_all_mem(void)
   /* screenlines (can't display anything now!) */
   free_screenlines();
 
-  clear_hl_tables();
+  clear_hl_tables(false);
   list_free_log();
 }
 

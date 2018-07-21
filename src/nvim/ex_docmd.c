@@ -6320,8 +6320,10 @@ static void ex_stop(exarg_T *eap)
       autowrite_all();
     }
     apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+
+    // TODO(bfredl): the TUI should do this on suspend
     ui_cursor_goto((int)Rows - 1, 0);
-    ui_linefeed();
+    ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
     ui_flush();
     ui_call_suspend();  // call machine specific function
 
