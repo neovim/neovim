@@ -224,11 +224,11 @@ describe('system()', function()
       feed('<cr>')
     end)
 
-    it('execution time not profiled as self time', function()
+    it('self and total time recorded separately', function()
       local tempfile = helpers.tmpname()
 
       feed(':function! AlmostNoSelfTime()<cr>')
-      feed('echo system("sleep 2")<cr>')
+      feed('echo system("echo hi")<cr>')
       feed('endfunction<cr>')
 
       feed(':profile start ' .. tempfile .. '<cr>')
@@ -238,8 +238,11 @@ describe('system()', function()
 
       feed(':edit ' .. tempfile .. '<cr>')
 
-      local selftime = tonumber(helpers.funcs.split(helpers.funcs.getline(4), ':', 0)[2])
-      helpers.near(selftime, 0, 0.01)
+      local command_total_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[2])
+      local command_self_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[3])
+
+      helpers.neq(nil, command_total_time)
+      helpers.neq(nil, command_self_time)
     end)
 
     it('`yes` interrupted with CTRL-C', function()
