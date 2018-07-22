@@ -683,28 +683,40 @@ char_u *vim_findfile(void *search_ctx_arg)
         dirptrs[0] = file_path;
         dirptrs[1] = NULL;
 
-        /* if we have a start dir copy it in */
+        // if we have a start dir copy it in
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
+          if (STRLEN(search_ctx->ffsc_start_dir) + 1 >= MAXPATHL) {
+            goto fail;
+          }
           STRCPY(file_path, search_ctx->ffsc_start_dir);
-          add_pathsep((char *)file_path);
+          if (!add_pathsep((char *)file_path)) {
+            goto fail;
+          }
         }
 
-        /* append the fix part of the search path */
+        // append the fix part of the search path
+        if (STRLEN(file_path) + STRLEN(stackp->ffs_fix_path) + 1 >= MAXPATHL) {
+          goto fail;
+        }
         STRCAT(file_path, stackp->ffs_fix_path);
-        add_pathsep((char *)file_path);
+        if (!add_pathsep((char *)file_path)) {
+          goto fail;
+        }
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
           len = STRLEN(file_path);
           if (STRNCMP(rest_of_wildcards, "**", 2) == 0) {
-            /* pointer to the restrict byte
-             * The restrict byte is not a character!
-             */
+            // pointer to the restrict byte
+            // The restrict byte is not a character!
             p = rest_of_wildcards + 2;
 
             if (*p > 0) {
               (*p)--;
+              if (len + 1 >= MAXPATHL) {
+                goto fail;
+              }
               file_path[len++] = '*';
             }
 
@@ -729,8 +741,12 @@ char_u *vim_findfile(void *search_ctx_arg)
            * on the stack again for further search.
            */
           while (*rest_of_wildcards
-                 && !vim_ispathsep(*rest_of_wildcards))
+                 && !vim_ispathsep(*rest_of_wildcards)) {
+            if (len + 1 >= MAXPATHL) {
+              goto fail;
+            }
             file_path[len++] = *rest_of_wildcards++;
+          }
 
           file_path[len] = NUL;
           if (vim_ispathsep(*rest_of_wildcards))
@@ -773,10 +789,15 @@ char_u *vim_findfile(void *search_ctx_arg)
                 && !os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
 
-            /* prepare the filename to be checked for existence
-             * below */
+            // prepare the filename to be checked for existence below
+            if (STRLEN(stackp->ffs_filearray[i]) + 1
+                + STRLEN(search_ctx->ffsc_file_to_search) >= MAXPATHL) {
+              goto fail;
+            }
             STRCPY(file_path, stackp->ffs_filearray[i]);
-            add_pathsep((char *)file_path);
+            if (!add_pathsep((char *)file_path)) {
+              goto fail;
+            }
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
 
             /*
@@ -924,8 +945,14 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (*search_ctx->ffsc_start_dir == 0)
         break;
 
+      if (STRLEN(search_ctx->ffsc_start_dir) + 1
+          + STRLEN(search_ctx->ffsc_fix_path) >= MAXPATHL) {
+        goto fail;
+      }
       STRCPY(file_path, search_ctx->ffsc_start_dir);
-      add_pathsep((char *)file_path);
+      if (!add_pathsep((char *)file_path)) {
+        goto fail;
+      }
       STRCAT(file_path, search_ctx->ffsc_fix_path);
 
       /* create a new stack entry */
@@ -936,6 +963,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       break;
   }
 
+fail:
   xfree(file_path);
   return NULL;
 }
