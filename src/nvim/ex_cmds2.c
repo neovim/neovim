@@ -2775,25 +2775,36 @@ static FILE *fopen_noinh_readbin(char *filename)
   return fdopen(fd_tmp, READBIN);
 }
 
+typedef struct {
+  char_u *buf;
+  uint32_t pointer;
+} GetStrLineCookie;
+
+static char_u *get_str_line(int c, void *cookie, int ident)
+{
+  GetStrLineCookie *p = (GetStrLineCookie*)cookie;
+  uint32_t i = p->pointer;
+  if(strlen((char *)p->buf) <= p->pointer){
+	return NULL;
+  } 
+  while(!(p->buf[i] == '\n' || p->buf[i] == '\0')){
+	i++;
+  }
+  char buf[i - p->pointer + 1];
+  strncpy(buf, (char *)p->buf+p->pointer, i);
+  buf[i-p->pointer]='\0';
+  p->pointer = i+1;
+  return (char_u *)xstrdup(buf);
+}
+
 int do_source_str(char_u *cmd)
 {
   int retval;
-  FILE *fp;
-  char cwd[1024];
-  getcwd(cwd, sizeof(cwd));
-  char *filename = tempnam(cwd, "dostr");
-  if(filename == 0){
-	smsg(_("cannot get unique filename: %d"),filename);
-  }
-  fp = fopen(filename,"w");
-  if (fp == 0){
-	smsg(_("cannot open file: %s"),filename);
-  }
-  fprintf(fp, "%s", cmd);
-  fclose(fp);
-  retval = do_source((unsigned char*)filename, false, DOSO_NONE);
-  remove(filename);
-  free(filename);
+  GetStrLineCookie cookie = {
+	.buf = cmd,
+	.pointer = 0,
+  };
+  retval = do_cmdline(NULL,get_str_line,(void*)&cookie ,DOCMD_VERBOSE|DOCMD_NOWAIT);
   return retval;
 }
 
