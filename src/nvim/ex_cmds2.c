@@ -2777,8 +2777,24 @@ static FILE *fopen_noinh_readbin(char *filename)
 
 int do_source_str(char_u *cmd)
 {
-  do_cmdline(cmd, NULL, NULL, DOCMD_VERBOSE|DOCMD_NOWAIT);
-  return OK;
+  int retval;
+  FILE *fp;
+  char cwd[1024];
+  getcwd(cwd, sizeof(cwd));
+  char *filename = tempnam(cwd, "dostr");
+  if(filename == 0){
+	smsg(_("cannot get unique filename: %d"),filename);
+  }
+  fp = fopen(filename,"w");
+  if (fp == 0){
+	smsg(_("cannot open file: %s"),filename);
+  }
+  fprintf(fp, "%s", cmd);
+  fclose(fp);
+  retval = do_source((unsigned char*)filename, false, DOSO_NONE);
+  remove(filename);
+  free(filename);
+  return retval;
 }
 
 /// Read the file "fname" and execute its lines as EX commands.

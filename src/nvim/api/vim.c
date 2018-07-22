@@ -45,6 +45,14 @@
 # include "api/vim.c.generated.h"
 #endif
 
+void nvim_source(String command, Error *err)
+	FUNC_API_SINCE(1)
+{
+	try_start();
+	do_source_str(command.data);
+	update_screen(VALID);
+	try_end(err);
+}
 /// Executes an ex-command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
