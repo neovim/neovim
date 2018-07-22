@@ -2790,7 +2790,7 @@ static char_u *get_str_line(int c, void *cookie, int ident)
   while(!(p->buf[i] == '\n' || p->buf[i] == '\0')){
 	i++;
   }
-  char buf[i - p->pointer + 1];
+  char buf[2046];
   strncpy(buf, (char *)p->buf+p->pointer, i);
   buf[i-p->pointer]='\0';
   p->pointer = i+1;
