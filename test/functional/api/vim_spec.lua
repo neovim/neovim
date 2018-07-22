@@ -1267,5 +1267,30 @@ describe('API', function()
       eq(expected, nvim("list_uis"))
     end)
   end)
+  describe('nvim_input unicode', function()
+    local screen
+
+    before_each(function()
+      clear()
+      screen = Screen.new(20, 4)
+      screen:attach()
+    end)
+
+    after_each(function()
+      screen:detach()
+    end)
+
+    it('<c-☻>', function()
+      command("map <c-☻> :echo 'success'<CR>")
+			command("call nvim_input('<c-☻>')")
+      screen:expect([[
+      ^                    |
+      ~                   |
+      ~                   |
+      success             |
+      ]])
+
+    end)
+  end)
 
 end)
