@@ -23,6 +23,7 @@
 #include "nvim/file_search.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memory.h"
@@ -49,7 +50,7 @@ void nvim_source(String command, Error *err)
 	FUNC_API_SINCE(1)
 {
 	try_start();
-	do_source_str(command.data);
+	do_source_str((char_u*)command.data);
 	update_screen(VALID);
 	try_end(err);
 }
