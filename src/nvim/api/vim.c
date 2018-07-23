@@ -47,7 +47,7 @@
 #endif
 
 void nvim_source(String command, Error *err)
-	FUNC_API_SINCE(5)
+	FUNC_API_SINCE(4)
 {
 	try_start();
 	do_source_str((char_u*)command.data);
