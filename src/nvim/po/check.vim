@@ -38,6 +38,7 @@ let s:save_wrapscan = &wrapscan
 set nowrapscan
 
 " Start at the first "msgid" line.
+let wsv = winsaveview()
 1
 /^msgid\>
 
@@ -113,7 +114,43 @@ if search('msgid "\("\n"\)\?\([EW][0-9]\+:\).*\nmsgstr "\("\n"\)\?[^"]\@=\2\@!')
   endif
 endif
 
+func! CountNl(first, last)
+  let nl = 0
+  for lnum in range(a:first, a:last)
+    if getline(lnum) =~ '\\n'
+      let nl += 1
+    endif
+  endfor
+  return nl
+endfunc
+
+" Check that the \n at the end of the msid line is also present in the msgstr
+" line.  Skip over the header.
+/^"MIME-Version:
+while 1
+  let lnum = search('^msgid\>')
+  if lnum <= 0
+    break
+  endif
+  let strlnum = search('^msgstr\>')
+  let end = search('^$')
+  if end <= 0
+    let end = line('$') + 1
+  endif
+  let origcount = CountNl(lnum, strlnum - 1)
+  let transcount = CountNl(strlnum, end - 1)
+  " Allow for a few more or less line breaks when there are 2 or more
+  if origcount != transcount && (origcount <= 2 || transcount <= 2)
+    echomsg 'Mismatching "\\n" in line ' . line('.')
+    if error == 0
+      let error = lnum
+    endif
+  endif
+endwhile
+
 if error == 0
+  " If all was OK restore the view.
+  call winrestview(wsv)
   echomsg "OK"
 else
   exe error
