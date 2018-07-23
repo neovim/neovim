@@ -7920,7 +7920,7 @@ static void ex_mkrc(exarg_T *eap)
     if (failed) {
       EMSG(_(e_write));
     } else if (eap->cmdidx == CMD_mksession) {
-      // successful session write - set this_session var
+      // successful session write - set v:this_session
       char *const tbuf = xmalloc(MAXPATHL);
       if (vim_FullName(fname, tbuf, MAXPATHL, false) == OK) {
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
@@ -8784,15 +8784,15 @@ makeopens(
   if (ssop_flags & SSOP_BUFFERS)
     only_save_windows = FALSE;                  /* Save ALL buffers */
 
-  /*
-   * Begin by setting the this_session variable, and then other
-   * sessionable variables.
-   */
-  if (put_line(fd, "let v:this_session=expand(\"<sfile>:p\")") == FAIL)
+  // Begin by setting v:this_session, and then other sessionable variables.
+  if (put_line(fd, "let v:this_session=expand(\"<sfile>:p\")") == FAIL) {
     return FAIL;
-  if (ssop_flags & SSOP_GLOBALS)
-    if (store_session_globals(fd) == FAIL)
+  }
+  if (ssop_flags & SSOP_GLOBALS) {
+    if (store_session_globals(fd) == FAIL) {
       return FAIL;
+    }
+  }
 
   /*
    * Close all windows but one.
