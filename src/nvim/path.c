@@ -52,7 +52,8 @@
 /// @param s2 Second file name.
 /// @param checkname When both files don't exist, only compare their names.
 /// @return Enum of type FileComparison. @see FileComparison.
-FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
+FileComparison path_full_compare(char_u *const s1, char_u *const s2,
+                                 const bool checkname)
 {
   assert(s1 && s2);
   char_u exp1[MAXPATHL];
