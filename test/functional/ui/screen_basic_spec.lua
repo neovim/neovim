@@ -354,6 +354,43 @@ local function screen_tests(newgrid)
         {0:~                                                    }|
                                                              |
       ]])
+
+      feed(':echo "'..string.rep('x\\n', 12)..'"<cr>')
+      screen:expect([[
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+        x                                                    |
+                                                             |
+        {7:Press ENTER or type command to continue}^              |
+      ]])
+
+      feed('<cr>')
+      screen:expect([[
+        {4: [No Name] }{2: [No Name] }{3:                              }{4:X}|
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
     end)
   end)
 
