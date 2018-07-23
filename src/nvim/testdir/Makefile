@@ -93,6 +93,7 @@ NEW_TESTS ?= \
 	    test_quickfix.res \
 	    test_quotestar.res \
 	    test_recover.res \
+	    test_registers.res \
 	    test_retab.res \
 	    test_scrollbind.res \
 	    test_search.res \
