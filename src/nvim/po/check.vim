@@ -117,14 +117,12 @@ endif
 func! CountNl(first, last)
   let nl = 0
   for lnum in range(a:first, a:last)
-    if getline(lnum) =~ '\\n'
-      let nl += 1
-    endif
+    let nl += count(getline(lnum), "\n")
   endfor
   return nl
 endfunc
 
-" Check that the \n at the end of the msid line is also present in the msgstr
+" Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
 /^"MIME-Version:
 while 1
@@ -141,7 +139,7 @@ while 1
   let transcount = CountNl(strlnum, end - 1)
   " Allow for a few more or less line breaks when there are 2 or more
   if origcount != transcount && (origcount <= 2 || transcount <= 2)
-    echomsg 'Mismatching "\\n" in line ' . line('.')
+    echomsg 'Mismatching "\n" in line ' . line('.')
     if error == 0
       let error = lnum
     endif
