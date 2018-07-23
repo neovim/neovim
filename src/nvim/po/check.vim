@@ -124,6 +124,7 @@ endfunc
 
 " Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
+1
 /^"MIME-Version:
 while 1
   let lnum = search('^msgid\>')
