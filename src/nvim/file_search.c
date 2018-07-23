@@ -577,7 +577,7 @@ char_u *vim_findfile(void *search_ctx_arg)
   char_u      *file_path;
   char_u      *rest_of_wildcards;
   char_u      *path_end = NULL;
-  ff_stack_T  *stackp;
+  ff_stack_T  *stackp = NULL;
   size_t len;
   char_u      *p;
   char_u      *suf;
@@ -964,6 +964,7 @@ char_u *vim_findfile(void *search_ctx_arg)
   }
 
 fail:
+  ff_free_stack_element(stackp);
   xfree(file_path);
   return NULL;
 }
@@ -1222,6 +1223,10 @@ static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
  */
 static void ff_free_stack_element(ff_stack_T *stack_ptr)
 {
+  if (stack_ptr == NULL) {
+    return;
+  }
+
   /* free handles possible NULL pointers */
   xfree(stack_ptr->ffs_fix_path);
   xfree(stack_ptr->ffs_wc_path);
