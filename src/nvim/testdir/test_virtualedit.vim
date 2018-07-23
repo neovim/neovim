@@ -41,3 +41,21 @@ func Test_paste_end_of_line()
   bwipe!
   set virtualedit=
 endfunc
+
+func Test_edit_CTRL_G()
+  new
+  set virtualedit=insert
+  call setline(1, ['123', '1', '12'])
+  exe "normal! ggA\<c-g>jx\<c-g>jx"
+  call assert_equal(['123', '1  x', '12 x'], getline(1,'$'))
+
+  set virtualedit=all
+  %d_
+  call setline(1, ['1', '12'])
+  exe "normal! ggllix\<c-g>jx"
+  call assert_equal(['1 x', '12x'], getline(1,'$'))
+
+
+  bwipe!
+  set virtualedit=
+endfunc
