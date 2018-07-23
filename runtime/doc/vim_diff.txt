@@ -352,6 +352,9 @@ TUI:
 
 VimL (Vim script) compatibility:
   `count` does not alias to |v:count|
+  `errmsg` does not alias to |v:errmsg|
+  `shell_error` does not alias to |v:shell_error|
+  `this_session` does not alias to |v:this_session|
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*

@@ -132,19 +132,21 @@ for i = 1, #events do
     end
   end
 
-  call_output:write('void ui_call_'..ev.name)
-  write_signature(call_output, ev, '')
-  call_output:write('\n{\n')
-  if ev.remote_only then
-    write_arglist(call_output, ev, false)
-    call_output:write('  UI_LOG('..ev.name..', 0);\n')
-    call_output:write('  ui_event("'..ev.name..'", args);\n')
-  else
-    call_output:write('  UI_CALL')
-    write_signature(call_output, ev, ev.name, true)
-    call_output:write(";\n")
+  if not (ev.remote_only and ev.remote_impl) then
+    call_output:write('void ui_call_'..ev.name)
+    write_signature(call_output, ev, '')
+    call_output:write('\n{\n')
+    if ev.remote_only then
+      write_arglist(call_output, ev, false)
+      call_output:write('  UI_LOG('..ev.name..', 0);\n')
+      call_output:write('  ui_event("'..ev.name..'", args);\n')
+    else
+      call_output:write('  UI_CALL')
+      write_signature(call_output, ev, ev.name, true)
+      call_output:write(";\n")
+    end
+    call_output:write("}\n\n")
   end
-  call_output:write("}\n\n")
 
 end
 

@@ -48,13 +48,13 @@ describe('screen', function()
   end)
 end)
 
-describe('Screen', function()
+local function screen_tests(newgrid)
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach()
+    screen:attach({rgb=true,ext_newgrid=newgrid})
     screen:set_default_attr_ids( {
       [0] = {bold=true, foreground=255},
       [1] = {bold=true, reverse=true},
@@ -741,4 +741,12 @@ describe('Screen', function()
                                                            |
     ]])
   end)
+end
+
+describe("Screen (char-based)", function()
+  screen_tests(false)
+end)
+
+describe("Screen (line-based)", function()
+  screen_tests(true)
 end)

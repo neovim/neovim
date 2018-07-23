@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/log.h"
 #include "nvim/ui.h"
+#include "nvim/highlight.h"
 #include "nvim/map.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
@@ -31,13 +32,13 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/syntax.h"
 #include "nvim/macros.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
@@ -87,6 +88,7 @@ typedef struct {
   bool cont_received;
   UGrid grid;
   kvec_t(Rect) invalid_regions;
+  int row, col;
   int out_fd;
   bool scroll_region_is_full_screen;
   bool can_change_scroll_region;
@@ -97,6 +99,8 @@ typedef struct {
   bool busy, is_invisible;
   bool cork, overflow;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
+  HlAttrs clear_attrs;
+  kvec_t(HlAttrs) attrs;
   HlAttrs print_attrs;
   bool default_attr;
   ModeShape showing_mode;
@@ -125,10 +129,9 @@ UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
   ui->stop = tui_stop;
-  ui->resize = tui_resize;
-  ui->clear = tui_clear;
-  ui->eol_clear = tui_eol_clear;
-  ui->cursor_goto = tui_cursor_goto;
+  ui->grid_resize = tui_grid_resize;
+  ui->grid_clear = tui_grid_clear;
+  ui->grid_cursor_goto = tui_grid_cursor_goto;
   ui->mode_info_set = tui_mode_info_set;
   ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
@@ -136,10 +139,8 @@ UI *tui_start(void)
   ui->mouse_on = tui_mouse_on;
   ui->mouse_off = tui_mouse_off;
   ui->mode_change = tui_mode_change;
-  ui->set_scroll_region = tui_set_scroll_region;
-  ui->scroll = tui_scroll;
-  ui->highlight_set = tui_highlight_set;
-  ui->put = tui_put;
+  ui->grid_scroll = tui_grid_scroll;
+  ui->hl_attr_define = tui_hl_attr_define;
   ui->bell = tui_bell;
   ui->visual_bell = tui_visual_bell;
   ui->default_colors_set = tui_default_colors_set;
@@ -148,8 +149,10 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->option_set= tui_option_set;
+  ui->raw_line = tui_raw_line;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+  ui->ui_ext[kUINewgrid] = true;
 
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
@@ -289,7 +292,7 @@ static void terminfo_stop(UI *ui)
 static void tui_terminal_start(UI *ui)
 {
   TUIData *data = ui->data;
-  data->print_attrs = HLATTRS_INIT;
+  data->print_attrs = HLATTRS_INVALID;
   ugrid_init(&data->grid);
   terminfo_start(ui);
   update_size(ui);
@@ -345,6 +348,9 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
 #endif
 
+  // TODO(bfredl): zero hl is empty, send this explicitly?
+  kv_push(data->attrs, HLATTRS_INIT);
+
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
 #endif
@@ -379,6 +385,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   signal_watcher_close(&data->winch_handle, NULL);
   loop_close(&tui_loop, false);
   kv_destroy(data->invalid_regions);
+  kv_destroy(data->attrs);
   xfree(data);
 }
 
@@ -437,18 +444,17 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->print_attrs = attrs;
-  UGrid *grid = &data->grid;
 
   int fg = ui->rgb ? attrs.rgb_fg_color : (attrs.cterm_fg_color - 1);
   if (fg == -1) {
-    fg = ui->rgb ? grid->clear_attrs.rgb_fg_color
-                 : (grid->clear_attrs.cterm_fg_color - 1);
+    fg = ui->rgb ? data->clear_attrs.rgb_fg_color
+                 : (data->clear_attrs.cterm_fg_color - 1);
   }
 
   int bg = ui->rgb ? attrs.rgb_bg_color : (attrs.cterm_bg_color - 1);
   if (bg == -1) {
-    bg = ui->rgb ? grid->clear_attrs.rgb_bg_color
-                 : (grid->clear_attrs.cterm_bg_color - 1);
+    bg = ui->rgb ? data->clear_attrs.rgb_bg_color
+                 : (data->clear_attrs.cterm_bg_color - 1);
   }
 
   int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
@@ -591,6 +597,8 @@ static void cursor_goto(UI *ui, int row, int col)
   if (row == grid->row && col == grid->col) {
     return;
   }
+  grid->row = row;
+  grid->col = col;
   if (0 == row && 0 == col) {
     unibi_out(ui, unibi_cursor_home);
     ugrid_goto(grid, row, col);
@@ -678,20 +686,20 @@ static void cursor_goto(UI *ui, int row, int col)
   ugrid_goto(grid, row, col);
 }
 
-static void clear_region(UI *ui, int top, int bot, int left, int right)
+static void clear_region(UI *ui, int top, int bot, int left, int right,
+                         HlAttrs attrs)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  int saved_row = grid->row;
-  int saved_col = grid->col;
 
   bool cleared = false;
-  bool nobg = ui->rgb ? grid->clear_attrs.rgb_bg_color == -1
-                      : grid->clear_attrs.cterm_bg_color == 0;
+  // TODO(bfredl): support BCE for non-default background
+  bool nobg = ui->rgb ? attrs.rgb_bg_color == -1
+                      : attrs.cterm_bg_color == 0;
   if (nobg && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
-    update_attrs(ui, grid->clear_attrs);
+    update_attrs(ui, attrs);
     if (left == 0) {
       if (bot == ui->height - 1) {
         if (top == 0) {
@@ -724,7 +732,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   }
 
   // restore cursor
-  cursor_goto(ui, saved_row, saved_col);
+  cursor_goto(ui, data->row, data->col);
 }
 
 static bool can_use_scroll(UI * ui)
@@ -791,7 +799,7 @@ static void reset_scroll_region(UI *ui)
   unibi_goto(ui, grid->row, grid->col);
 }
 
-static void tui_resize(UI *ui, Integer width, Integer height)
+static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
 {
   TUIData *data = ui->data;
   ugrid_resize(&data->grid, (int)width, (int)height);
@@ -809,25 +817,21 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   }
 }
 
-static void tui_clear(UI *ui)
+static void tui_grid_clear(UI *ui, Integer g)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   ugrid_clear(grid);
   kv_size(data->invalid_regions) = 0;
-  clear_region(ui, grid->top, grid->bot, grid->left, grid->right);
+  clear_region(ui, grid->top, grid->bot, grid->left, grid->right,
+               data->clear_attrs);
 }
 
-static void tui_eol_clear(UI *ui)
+static void tui_grid_cursor_goto(UI *ui, Integer grid, Integer row, Integer col)
 {
   TUIData *data = ui->data;
-  UGrid *grid = &data->grid;
-  ugrid_eol_clear(grid);
-  clear_region(ui, grid->row, grid->row, grid->col, grid->right);
-}
-
-static void tui_cursor_goto(UI *ui, Integer row, Integer col)
-{
+  data->row = (int)row;
+  data->col = (int)col;
   cursor_goto(ui, (int)row, (int)col);
 }
 
@@ -932,7 +936,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   if (c.id != 0 && ui->rgb) {
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
-      HlAttrs *aep = syn_cterm_attr2entry(attr);
+      HlAttrs *aep = syn_attr2entry(attr);
       UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
@@ -957,27 +961,23 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
   data->showing_mode = (ModeShape)mode_idx;
 }
 
-static void tui_set_scroll_region(UI *ui, Integer top, Integer bot,
-                                  Integer left, Integer right)
-{
-  TUIData *data = ui->data;
-  ugrid_set_scroll_region(&data->grid, (int)top, (int)bot,
-                          (int)left, (int)right);
-  data->scroll_region_is_full_screen =
-    left == 0 && right == ui->width - 1
-    && top == 0 && bot == ui->height - 1;
-}
-
-static void tui_scroll(UI *ui, Integer count)
+static void tui_grid_scroll(UI *ui, Integer g, Integer top, Integer bot,
+                            Integer left, Integer right,
+                            Integer rows, Integer cols)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
+  ugrid_set_scroll_region(&data->grid, (int)top, (int)bot-1,
+                          (int)left, (int)right-1);
+
+  data->scroll_region_is_full_screen =
+    left == 0 && right == ui->width
+    && top == 0 && bot == ui->height;
+
   int clear_top, clear_bot;
-  ugrid_scroll(grid, (int)count, &clear_top, &clear_bot);
+  ugrid_scroll(grid, (int)rows, &clear_top, &clear_bot);
 
   if (can_use_scroll(ui)) {
-    int saved_row = grid->row;
-    int saved_col = grid->col;
     bool scroll_clears_to_current_colour =
       unibi_get_bool(data->ut, unibi_back_color_erase);
 
@@ -988,21 +988,21 @@ static void tui_scroll(UI *ui, Integer count)
     cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
-      update_attrs(ui, grid->clear_attrs);
+      update_attrs(ui, data->clear_attrs);
     }
 
-    if (count > 0) {
-      if (count == 1) {
+    if (rows > 0) {
+      if (rows == 1) {
         unibi_out(ui, unibi_delete_line);
       } else {
-        UNIBI_SET_NUM_VAR(data->params[0], (int)count);
+        UNIBI_SET_NUM_VAR(data->params[0], (int)rows);
         unibi_out(ui, unibi_parm_delete_line);
       }
     } else {
-      if (count == -1) {
+      if (rows == -1) {
         unibi_out(ui, unibi_insert_line);
       } else {
-        UNIBI_SET_NUM_VAR(data->params[0], -(int)count);
+        UNIBI_SET_NUM_VAR(data->params[0], -(int)rows);
         unibi_out(ui, unibi_parm_insert_line);
       }
     }
@@ -1011,12 +1011,13 @@ static void tui_scroll(UI *ui, Integer count)
     if (!data->scroll_region_is_full_screen) {
       reset_scroll_region(ui);
     }
-    cursor_goto(ui, saved_row, saved_col);
+    cursor_goto(ui, data->row, data->col);
 
     if (!scroll_clears_to_current_colour) {
       // Scrolling will leave wrong background in the cleared area on non-BCE
       // terminals. Update the cleared area.
-      clear_region(ui, clear_top, clear_bot, grid->left, grid->right);
+      clear_region(ui, clear_top, clear_bot, grid->left, grid->right,
+                   data->clear_attrs);
     }
   } else {
     // Mark the entire scroll region as invalid for redrawing later
@@ -1024,23 +1025,11 @@ static void tui_scroll(UI *ui, Integer count)
   }
 }
 
-static void tui_highlight_set(UI *ui, HlAttrs attrs)
-{
-  ((TUIData *)ui->data)->grid.attrs = attrs;
-}
-
-static void tui_put(UI *ui, String text)
+static void tui_hl_attr_define(UI *ui, Integer id, HlAttrs attrs,
+                               HlAttrs cterm_attrs, Array info)
 {
   TUIData *data = ui->data;
-  UGrid *grid = &data->grid;
-  UCell *cell;
-
-  cell = ugrid_put(&data->grid, (uint8_t *)text.data, text.size);
-  // ugrid_put does not advance the cursor correctly, as the actual terminal
-  // will when we print.  Its cursor motion model is simplistic and wrong.  So
-  // we have to undo what it has just done before doing it right.
-  grid->col--;
-  print_cell(ui, cell);
+  kv_a(data->attrs, (size_t)id) = attrs;
 }
 
 static void tui_bell(UI *ui)
@@ -1057,12 +1046,16 @@ static void tui_default_colors_set(UI *ui, Integer rgb_fg, Integer rgb_bg,
                                    Integer rgb_sp,
                                    Integer cterm_fg, Integer cterm_bg)
 {
-  UGrid *grid = &((TUIData *)ui->data)->grid;
-  grid->clear_attrs.rgb_fg_color = (int)rgb_fg;
-  grid->clear_attrs.rgb_bg_color = (int)rgb_bg;
-  grid->clear_attrs.rgb_sp_color = (int)rgb_sp;
-  grid->clear_attrs.cterm_fg_color = (int)cterm_fg;
-  grid->clear_attrs.cterm_bg_color = (int)cterm_bg;
+  TUIData *data = ui->data;
+
+  data->clear_attrs.rgb_fg_color = (int)rgb_fg;
+  data->clear_attrs.rgb_bg_color = (int)rgb_bg;
+  data->clear_attrs.rgb_sp_color = (int)rgb_sp;
+  data->clear_attrs.cterm_fg_color = (int)cterm_fg;
+  data->clear_attrs.cterm_bg_color = (int)cterm_bg;
+
+  data->print_attrs = HLATTRS_INVALID;
+  invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
 }
 
 static void tui_flush(UI *ui)
@@ -1082,9 +1075,6 @@ static void tui_flush(UI *ui)
     tui_busy_stop(ui);  // avoid hidden cursor
   }
 
-  int saved_row = grid->row;
-  int saved_col = grid->col;
-
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
     assert(r.bot < grid->height && r.right < grid->width);
@@ -1094,7 +1084,7 @@ static void tui_flush(UI *ui)
     });
   }
 
-  cursor_goto(ui, saved_row, saved_col);
+  cursor_goto(ui, data->row, data->col);
 
   flush_buf(ui);
 }
@@ -1175,7 +1165,34 @@ static void tui_option_set(UI *ui, String name, Object value)
   TUIData *data = ui->data;
   if (strequal(name.data, "termguicolors")) {
     ui->rgb = value.data.boolean;
+
+    data->print_attrs = HLATTRS_INVALID;
     invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
+  }
+}
+
+static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
+                         Integer endcol, Integer clearcol, Integer clearattr,
+                         const schar_T *chunk, const sattr_T *attrs)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  for (Integer c = startcol; c < endcol; c++) {
+    memcpy(grid->cells[linerow][c].data, chunk[c-startcol], sizeof(schar_T));
+    grid->cells[linerow][c].attrs = kv_A(data->attrs, attrs[c-startcol]);
+  }
+  UGRID_FOREACH_CELL(grid, (int)linerow, (int)linerow, (int)startcol,
+                     (int)endcol-1, {
+    cursor_goto(ui, row, col);
+    print_cell(ui, cell);
+  });
+
+  if (clearcol > endcol) {
+    HlAttrs cl_attrs = kv_A(data->attrs, (size_t)clearattr);
+    ugrid_clear_chunk(grid, (int)linerow, (int)endcol, (int)clearcol,
+                      cl_attrs);
+    clear_region(ui, (int)linerow, (int)linerow, (int)endcol, (int)clearcol-1,
+                 cl_attrs);
   }
 }
 

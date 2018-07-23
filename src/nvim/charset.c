@@ -1344,7 +1344,11 @@ colnr_T getvcol_nolist(pos_T *posp)
   colnr_T vcol;
 
   curwin->w_p_list = false;
-  getvcol(curwin, posp, NULL, &vcol, NULL);
+  if (posp->coladd) {
+    getvvcol(curwin, posp, NULL, &vcol, NULL);
+  } else {
+    getvcol(curwin, posp, NULL, &vcol, NULL);
+  }
   curwin->w_p_list = list_save;
   return vcol;
 }

@@ -17,7 +17,6 @@
 void ugrid_init(UGrid *grid)
 {
   grid->attrs = HLATTRS_INIT;
-  grid->clear_attrs = HLATTRS_INIT;
   grid->cells = NULL;
 }
 
@@ -45,12 +44,13 @@ void ugrid_resize(UGrid *grid, int width, int height)
 
 void ugrid_clear(UGrid *grid)
 {
-  clear_region(grid, grid->top, grid->bot, grid->left, grid->right);
+  clear_region(grid, grid->top, grid->bot, grid->left, grid->right,
+               HLATTRS_INIT);
 }
 
-void ugrid_eol_clear(UGrid *grid)
+void ugrid_clear_chunk(UGrid *grid, int row, int col, int endcol, HlAttrs attrs)
 {
-  clear_region(grid, grid->row, grid->row, grid->col, grid->right);
+  clear_region(grid, row, row, col, endcol-1, attrs);
 }
 
 void ugrid_goto(UGrid *grid, int row, int col)
@@ -99,7 +99,8 @@ void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
     *clear_bot = stop;
     *clear_top = stop + count + 1;
   }
-  clear_region(grid, *clear_top, *clear_bot, grid->left, grid->right);
+  clear_region(grid, *clear_top, *clear_bot, grid->left, grid->right,
+               HLATTRS_INIT);
 }
 
 UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
@@ -117,13 +118,13 @@ UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
   return cell;
 }
 
-static void clear_region(UGrid *grid, int top, int bot, int left, int right)
+static void clear_region(UGrid *grid, int top, int bot, int left, int right,
+                         HlAttrs attrs)
 {
-  HlAttrs clear_attrs = grid->clear_attrs;
   UGRID_FOREACH_CELL(grid, top, bot, left, right, {
     cell->data[0] = ' ';
     cell->data[1] = 0;
-    cell->attrs = clear_attrs;
+    cell->attrs = attrs;
   });
 }
 

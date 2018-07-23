@@ -341,6 +341,8 @@ void pum_redraw(void)
     idx = i + pum_first;
     attr = (idx == pum_selected) ? attr_select : attr_norm;
 
+    screen_puts_line_start(row);
+
     // prepend a space if there is room
     if (curwin->w_p_rl) {
       if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
@@ -488,6 +490,7 @@ void pum_redraw(void)
                        ? attr_thumb : attr_scroll);
       }
     }
+    screen_puts_line_flush(false);
     row++;
   }
 }
