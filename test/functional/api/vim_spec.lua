@@ -34,6 +34,59 @@ describe('API', function()
                request, nil)
   end)
 
+  describe('nvim_source', function()
+	it('works with a one-liner', function()
+	  nvim('source', "let x1 = 'a'")
+	  eq(nvim('get_var', 'x1'), 'a')
+	end)
+
+	it('works with stray newline character', function()
+	  nvim('source', "let x2 = 'a'\n")
+	  eq(nvim('get_var', 'x2'),'a')
+	end)
+
+	it('works with multiline command', function()
+	  nvim('source', 'lua <<EOF\ny=3\nEOF')
+	  eq(nvim('command_output', "echo luaeval('y')"),'3')
+	end)
+
+	it('works with multiple stray newline character', function()
+	  nvim('source','lua <<EOF\n\n\n\ny=3\n\n\nEOF')
+	  eq(nvim('command_output', "echo luaeval('y')"), '3')
+	end)
+
+	it('works with utf-8', function()
+	  local fname = helpers.tmpname()
+	  nvim('command', 'new')
+	  nvim('command', 'edit '..fname)
+	  nvim('command', 'normal i ax \n Ax ')
+	  nvim('source', ":%s/ax/--a1234--/g | :%s/Ax/--A1234--/g")
+	  nvim('command', 'w')
+	  local f = io.open(fname)
+	  ok(f ~= nil)
+	  eq(' --a1234-- ',f:read())
+	  eq(' --A1234-- ',f:read())
+	  f:close()
+	  os.remove(fname)
+	end)
+
+	it('nvim_source validation error:fails with specific error', function()
+      local status, rv = pcall(nvim, "source", "bogus_command")
+      eq(false, status)                       -- nvim_command() failed.
+      eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
+      eq('', nvim('eval', 'v:errmsg'))        -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+    end)
+
+	it('nvim_source execution error: fails with specific error', function()
+      local status, rv = pcall(nvim, "source", "buffer 23487")
+      eq(false, status)                 -- nvim_command() failed.
+      eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+    end)
+  end)
+
   describe('nvim_command', function()
     it('works', function()
       local fname = helpers.tmpname()
