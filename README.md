@@ -29,6 +29,21 @@ for more information.
 
 [![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
 
+Features
+--------
+
+- Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
+- [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
+  access from any language including clojure, lisp, go, haskell, lua,
+  javascript, perl, python, ruby, rust.
+- Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
+- Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
+- [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
+- [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
+- Compatible with most Vim plugins, including Ruby and Python plugins.
+
+See [`:help nvim-features`][nvim-features] for the full list!
+
 Install from source
 -------------------
 
@@ -57,6 +72,11 @@ Pre-built packages for Windows, macOS, and Linux are found at the
 Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
 and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
+Transitioning from Vim
+--------------------
+
+See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) for instructions.
+
 Project layout
 --------------
 
@@ -75,21 +95,6 @@ Project layout
     │  └─ tui/          built-in UI
     ├─ third-party/     cmake subproject to build dependencies
     └─ test/            tests (see test/README.md)
-
-Features
---------
-
-- Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
-- [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  access from any language including clojure, lisp, go, haskell, lua,
-  javascript, perl, python, ruby, rust.
-- Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
-- Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
-- [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
-- [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
-- Compatible with most Vim plugins, including Ruby and Python plugins.
-
-See [`:help nvim-features`][nvim-features] for the full list!
 
 License
 -------

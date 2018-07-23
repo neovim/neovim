@@ -22,6 +22,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/hashtab.h"
+#include "nvim/highlight.h"
 #include "nvim/indent_c.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -42,7 +43,6 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 
 static bool did_syntax_onoff = false;
@@ -215,12 +215,6 @@ struct name_list {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.c.generated.h"
 #endif
-
-/*
- * An attribute number is the index in attr_table plus ATTR_OFF.
- */
-#define ATTR_OFF 1
-
 
 static char *(spo_name_tab[SPO_COUNT]) =
 {"ms=", "me=", "hs=", "he=", "rs=", "re=", "lc="};
@@ -6804,14 +6798,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
-              must_redraw = CLEAR;
             }
           } else {
             HL_TABLE()[idx].sg_cterm_bg = color + 1;
             if (is_normal_group) {
               cterm_normal_bg_color = color + 1;
               if (!ui_rgb_attached()) {
-                must_redraw = CLEAR;
                 if (color >= 0) {
                   int dark = -1;
 
@@ -6915,8 +6907,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
-      // If the normal group has changed, it is simpler to refresh every UI
-      ui_refresh();
+
+      if (!ui_is_external(kUINewgrid)) {
+        // Older UIs assume that we clear the screen after normal group is
+        // changed
+        ui_refresh();
+      } else {
+        // TUI and newer UIs will repaint the screen themselves. NOT_VALID
+        // redraw below will still handle usages of guibg=fg etc.
+        ui_default_colors_set();
+      }
     } else {
       set_hl_attr(idx);
     }
@@ -7000,161 +7000,6 @@ static void highlight_clear(int idx)
   }
 }
 
-
-/// Table with the specifications for an attribute number.
-/// Note that this table is used by ALL buffers.  This is required because the
-/// GUI can redraw at any time for any buffer.
-static garray_T attr_table = GA_EMPTY_INIT_VALUE;
-
-static inline HlAttrs * ATTR_ENTRY(int idx)
-{
-  return &((HlAttrs *)attr_table.ga_data)[idx];
-}
-
-
-/// Return the attr number for a set of colors and font.
-/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
-/// if the combination is new.
-/// @return 0 for error.
-int get_attr_entry(HlAttrs *aep)
-{
-  garray_T *table = &attr_table;
-  HlAttrs *taep;
-  static int recursive = false;
-
-  /*
-   * Init the table, in case it wasn't done yet.
-   */
-  table->ga_itemsize = sizeof(HlAttrs);
-  ga_set_growsize(table, 7);
-
-  // Try to find an entry with the same specifications.
-  for (int i = 0; i < table->ga_len; i++) {
-    taep = &(((HlAttrs *)table->ga_data)[i]);
-    if (aep->cterm_ae_attr == taep->cterm_ae_attr
-        && aep->cterm_fg_color == taep->cterm_fg_color
-        && aep->cterm_bg_color == taep->cterm_bg_color
-        && aep->rgb_ae_attr == taep->rgb_ae_attr
-        && aep->rgb_fg_color == taep->rgb_fg_color
-        && aep->rgb_bg_color == taep->rgb_bg_color
-        && aep->rgb_sp_color == taep->rgb_sp_color) {
-      return i + ATTR_OFF;
-    }
-  }
-
-  if (table->ga_len + ATTR_OFF > MAX_TYPENR) {
-    /*
-     * Running out of attribute entries!  remove all attributes, and
-     * compute new ones for all groups.
-     * When called recursively, we are really out of numbers.
-     */
-    if (recursive) {
-      EMSG(_("E424: Too many different highlighting attributes in use"));
-      return 0;
-    }
-    recursive = TRUE;
-
-    clear_hl_tables();
-
-    must_redraw = CLEAR;
-
-    for (int i = 0; i < highlight_ga.ga_len; ++i) {
-      set_hl_attr(i);
-    }
-
-    recursive = FALSE;
-  }
-
-
-  // This is a new combination of colors and font, add an entry.
-  taep = GA_APPEND_VIA_PTR(HlAttrs, table);
-  memset(taep, 0, sizeof(*taep));
-  taep->cterm_ae_attr = aep->cterm_ae_attr;
-  taep->cterm_fg_color = aep->cterm_fg_color;
-  taep->cterm_bg_color = aep->cterm_bg_color;
-  taep->rgb_ae_attr = aep->rgb_ae_attr;
-  taep->rgb_fg_color = aep->rgb_fg_color;
-  taep->rgb_bg_color = aep->rgb_bg_color;
-  taep->rgb_sp_color = aep->rgb_sp_color;
-
-  return table->ga_len - 1 + ATTR_OFF;
-}
-
-// Clear all highlight tables.
-void clear_hl_tables(void)
-{
-  ga_clear(&attr_table);
-}
-
-// Combine special attributes (e.g., for spelling) with other attributes
-// (e.g., for syntax highlighting).
-// "prim_attr" overrules "char_attr".
-// This creates a new group when required.
-// Since we expect there to be few spelling mistakes we don't cache the
-// result.
-// Return the resulting attributes.
-int hl_combine_attr(int char_attr, int prim_attr)
-{
-  HlAttrs *char_aep = NULL;
-  HlAttrs *spell_aep;
-  HlAttrs new_en = HLATTRS_INIT;
-
-  if (char_attr == 0) {
-    return prim_attr;
-  }
-
-  if (prim_attr == 0) {
-    return char_attr;
-  }
-
-  // Find the entry for char_attr
-  char_aep = syn_cterm_attr2entry(char_attr);
-
-  if (char_aep != NULL) {
-    // Copy all attributes from char_aep to the new entry
-    new_en = *char_aep;
-  }
-
-  spell_aep = syn_cterm_attr2entry(prim_attr);
-  if (spell_aep != NULL) {
-    new_en.cterm_ae_attr |= spell_aep->cterm_ae_attr;
-    new_en.rgb_ae_attr |= spell_aep->rgb_ae_attr;
-
-    if (spell_aep->cterm_fg_color > 0) {
-      new_en.cterm_fg_color = spell_aep->cterm_fg_color;
-    }
-
-    if (spell_aep->cterm_bg_color > 0) {
-      new_en.cterm_bg_color = spell_aep->cterm_bg_color;
-    }
-
-    if (spell_aep->rgb_fg_color >= 0) {
-      new_en.rgb_fg_color = spell_aep->rgb_fg_color;
-    }
-
-    if (spell_aep->rgb_bg_color >= 0) {
-      new_en.rgb_bg_color = spell_aep->rgb_bg_color;
-    }
-
-    if (spell_aep->rgb_sp_color >= 0) {
-      new_en.rgb_sp_color = spell_aep->rgb_sp_color;
-    }
-  }
-  return get_attr_entry(&new_en);
-}
-
-/// \note this function does not apply exclusively to cterm attr contrary
-/// to what its name implies
-/// \warn don't call it with attr 0 (i.e., the null attribute)
-HlAttrs *syn_cterm_attr2entry(int attr)
-{
-  attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len) {
-    // did ":syntax clear"
-    return NULL;
-  }
-  return ATTR_ENTRY(attr);
-}
 
 /// \addtogroup LIST_XXX
 /// @{
@@ -7410,15 +7255,7 @@ static void set_hl_attr(int idx)
   at_en.rgb_bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
   at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
 
-  if (at_en.cterm_fg_color != 0 || at_en.cterm_bg_color != 0
-      || at_en.rgb_fg_color != -1 || at_en.rgb_bg_color != -1
-      || at_en.rgb_sp_color != -1 || at_en.cterm_ae_attr != 0
-      || at_en.rgb_ae_attr != 0) {
-    sgp->sg_attr = get_attr_entry(&at_en);
-  } else {
-    // If all the fields are cleared, clear the attr field back to default value
-    sgp->sg_attr = 0;
-  }
+  sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
 }
 
 /// Lookup a highlight group name and return its ID.
@@ -7553,7 +7390,7 @@ static void syn_unadd_group(void)
 
 
 /// Translate a group ID to highlight attributes.
-/// @see syn_cterm_attr2entry
+/// @see syn_attr2entry
 int syn_id2attr(int hl_id)
 {
   struct hl_group     *sgp;
@@ -7590,7 +7427,7 @@ int syn_get_final_id(int hl_id)
 }
 
 /// Refresh the color attributes of all highlight groups.
-static void highlight_attr_set_all(void)
+void highlight_attr_set_all(void)
 {
   for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
     struct hl_group *sgp = &HL_TABLE()[idx];
@@ -7613,7 +7450,6 @@ static void highlight_attr_set_all(void)
 /// screen redraw after any :highlight command.
 void highlight_changed(void)
 {
-  int attr;
   int id;
   char_u userhl[10];
   int id_SNC = -1;
@@ -7628,13 +7464,15 @@ void highlight_changed(void)
     if (id == 0) {
       abort();
     }
-    attr = syn_id2attr(id);
+    int final_id = syn_get_final_id(id);
     if (hlf == (int)HLF_SNC) {
-      id_SNC = syn_get_final_id(id);
+      id_SNC = final_id;
     } else if (hlf == (int)HLF_S) {
-      id_S = syn_get_final_id(id);
+      id_S = final_id;
     }
-    highlight_attr[hlf] = attr;
+
+    highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
+                                         hlf == (int)HLF_INACTIVE);
   }
 
   /* Setup the user highlights
@@ -8520,26 +8358,6 @@ RgbValue name_to_color(const char_u *name)
   }
 
   return -1;
-}
-
-/// Gets highlight description for id `attr_id` as a map.
-Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
-{
-  HlAttrs *aep = NULL;
-  Dictionary dic = ARRAY_DICT_INIT;
-
-  if (attr_id == 0) {
-    return dic;
-  }
-
-  aep = syn_cterm_attr2entry((int)attr_id);
-  if (!aep) {
-    api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id: %" PRId64, attr_id);
-    return dic;
-  }
-
-  return hlattrs2dict(aep, rgb);
 }
 
 

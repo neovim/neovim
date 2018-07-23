@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define EVENT_HANDLER_MAX_ARGC 6
+#define EVENT_HANDLER_MAX_ARGC 9
 
 typedef void (*argv_callback)(void **argv);
 typedef struct message {

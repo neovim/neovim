@@ -6320,8 +6320,10 @@ static void ex_stop(exarg_T *eap)
       autowrite_all();
     }
     apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+
+    // TODO(bfredl): the TUI should do this on suspend
     ui_cursor_goto((int)Rows - 1, 0);
-    ui_linefeed();
+    ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
     ui_flush();
     ui_call_suspend();  // call machine specific function
 
@@ -7918,7 +7920,7 @@ static void ex_mkrc(exarg_T *eap)
     if (failed) {
       EMSG(_(e_write));
     } else if (eap->cmdidx == CMD_mksession) {
-      // successful session write - set this_session var
+      // successful session write - set v:this_session
       char *const tbuf = xmalloc(MAXPATHL);
       if (vim_FullName(fname, tbuf, MAXPATHL, false) == OK) {
         set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
@@ -8782,15 +8784,15 @@ makeopens(
   if (ssop_flags & SSOP_BUFFERS)
     only_save_windows = FALSE;                  /* Save ALL buffers */
 
-  /*
-   * Begin by setting the this_session variable, and then other
-   * sessionable variables.
-   */
-  if (put_line(fd, "let v:this_session=expand(\"<sfile>:p\")") == FAIL)
+  // Begin by setting v:this_session, and then other sessionable variables.
+  if (put_line(fd, "let v:this_session=expand(\"<sfile>:p\")") == FAIL) {
     return FAIL;
-  if (ssop_flags & SSOP_GLOBALS)
-    if (store_session_globals(fd) == FAIL)
+  }
+  if (ssop_flags & SSOP_GLOBALS) {
+    if (store_session_globals(fd) == FAIL) {
       return FAIL;
+    }
+  }
 
   /*
    * Close all windows but one.

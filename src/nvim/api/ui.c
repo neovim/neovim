@@ -16,6 +16,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/highlight.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -25,6 +26,12 @@
 typedef struct {
   uint64_t channel_id;
   Array buffer;
+
+  int hl_id;  // current higlight for legacy put event
+  Integer cursor_row, cursor_col;  // Intended visibule cursor position
+
+  // Position of legacy cursor, used both for drawing and visible user cursor.
+  Integer client_row, client_col;
 } UIData;
 
 static PMap(uint64_t) *connected_uis = NULL;
@@ -70,10 +77,9 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->width = (int)width;
   ui->height = (int)height;
   ui->rgb = true;
-  ui->resize = remote_ui_resize;
-  ui->clear = remote_ui_clear;
-  ui->eol_clear = remote_ui_eol_clear;
-  ui->cursor_goto = remote_ui_cursor_goto;
+  ui->grid_resize = remote_ui_grid_resize;
+  ui->grid_clear = remote_ui_grid_clear;
+  ui->grid_cursor_goto = remote_ui_grid_cursor_goto;
   ui->mode_info_set = remote_ui_mode_info_set;
   ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
@@ -81,16 +87,12 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->mouse_on = remote_ui_mouse_on;
   ui->mouse_off = remote_ui_mouse_off;
   ui->mode_change = remote_ui_mode_change;
-  ui->set_scroll_region = remote_ui_set_scroll_region;
-  ui->scroll = remote_ui_scroll;
-  ui->highlight_set = remote_ui_highlight_set;
-  ui->put = remote_ui_put;
+  ui->grid_scroll = remote_ui_grid_scroll;
+  ui->hl_attr_define = remote_ui_hl_attr_define;
+  ui->raw_line = remote_ui_raw_line;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
   ui->default_colors_set = remote_ui_default_colors_set;
-  ui->update_fg = remote_ui_update_fg;
-  ui->update_bg = remote_ui_update_bg;
-  ui->update_sp = remote_ui_update_sp;
   ui->flush = remote_ui_flush;
   ui->suspend = remote_ui_suspend;
   ui->set_title = remote_ui_set_title;
@@ -102,16 +104,22 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
   for (size_t i = 0; i < options.size; i++) {
-    ui_set_option(ui, options.items[i].key, options.items[i].value, err);
+    ui_set_option(ui, true, options.items[i].key, options.items[i].value, err);
     if (ERROR_SET(err)) {
       xfree(ui);
       return;
     }
   }
 
+  if (ui->ui_ext[kUIHlState]) {
+    ui->ui_ext[kUINewgrid] = true;
+  }
+
   UIData *data = xmalloc(sizeof(UIData));
   data->channel_id = channel_id;
   data->buffer = (Array)ARRAY_DICT_INIT;
+  data->hl_id = 0;
+  data->client_col = -1;
   ui->data = data;
 
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
@@ -173,13 +181,11 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
 
-  ui_set_option(ui, name, value, error);
-  if (!ERROR_SET(error)) {
-    ui_refresh();
-  }
+  ui_set_option(ui, false, name, value, error);
 }
 
-static void ui_set_option(UI *ui, String name, Object value, Error *error)
+static void ui_set_option(UI *ui, bool init, String name, Object value,
+                          Error *error)
 {
   if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
@@ -187,40 +193,46 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
       return;
     }
     ui->rgb = value.data.boolean;
+    // A little drastic, but only legacy uis need to use this option
+    if (!init) {
+      ui_refresh();
+    }
     return;
   }
 
+  // LEGACY: Deprecated option, use `ext_cmdline` instead.
+  bool is_popupmenu = strequal(name.data, "popupmenu_external");
+
   for (UIExtension i = 0; i < kUIExtCount; i++) {
-    if (strequal(name.data, ui_ext_names[i])) {
+    if (strequal(name.data, ui_ext_names[i])
+        || (i == kUIPopupmenu && is_popupmenu)) {
       if (value.type != kObjectTypeBoolean) {
         snprintf((char *)IObuff, IOSIZE, "%s must be a Boolean",
-                 ui_ext_names[i]);
+                 name.data);
         api_set_error(error, kErrorTypeValidation, (char *)IObuff);
         return;
       }
-      ui->ui_ext[i] = value.data.boolean;
+      bool boolval = value.data.boolean;
+      if (!init && i == kUINewgrid && boolval != ui->ui_ext[i]) {
+        // There shouldn't be a reason for an UI to do this ever
+        // so explicitly don't support this.
+        api_set_error(error, kErrorTypeValidation,
+                      "ext_newgrid option cannot be changed");
+      }
+      ui->ui_ext[i] = boolval;
+      if (!init) {
+        ui_set_ext_option(ui, i, boolval);
+      }
       return;
     }
-  }
-
-  if (strequal(name.data, "popupmenu_external")) {
-    // LEGACY: Deprecated option, use `ext_cmdline` instead.
-    if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation,
-                    "popupmenu_external must be a Boolean");
-      return;
-    }
-    ui->ui_ext[kUIPopupmenu] = value.data.boolean;
-    return;
   }
 
   api_set_error(error, kErrorTypeValidation, "No such UI option: %s",
                 name.data);
-#undef UI_EXT_OPTION
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().
-static void push_call(UI *ui, char *name, Array args)
+static void push_call(UI *ui, const char *name, Array args)
 {
   Array call = ARRAY_DICT_INIT;
   UIData *data = ui->data;
@@ -242,27 +254,293 @@ static void push_call(UI *ui, char *name, Array args)
   kv_A(data->buffer, kv_size(data->buffer) - 1).data.array = call;
 }
 
-
-static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
+static void remote_ui_grid_clear(UI *ui, Integer grid)
 {
   Array args = ARRAY_DICT_INIT;
+  if (ui->ui_ext[kUINewgrid]) {
+    ADD(args, INTEGER_OBJ(grid));
+  }
+  const char *name = ui->ui_ext[kUINewgrid] ? "grid_clear" : "clear";
+  push_call(ui, name, args);
+}
+
+static void remote_ui_grid_resize(UI *ui, Integer grid,
+                                  Integer width, Integer height)
+{
+  Array args = ARRAY_DICT_INIT;
+  if (ui->ui_ext[kUINewgrid]) {
+    ADD(args, INTEGER_OBJ(grid));
+  }
+  ADD(args, INTEGER_OBJ(width));
+  ADD(args, INTEGER_OBJ(height));
+  const char *name = ui->ui_ext[kUINewgrid] ? "grid_resize" : "resize";
+  push_call(ui, name, args);
+}
+
+static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
+                                  Integer bot, Integer left, Integer right,
+                                  Integer rows, Integer cols)
+{
+  if (ui->ui_ext[kUINewgrid]) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(grid));
+    ADD(args, INTEGER_OBJ(top));
+    ADD(args, INTEGER_OBJ(bot));
+    ADD(args, INTEGER_OBJ(left));
+    ADD(args, INTEGER_OBJ(right));
+    ADD(args, INTEGER_OBJ(rows));
+    ADD(args, INTEGER_OBJ(cols));
+    push_call(ui, "grid_scroll", args);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(top));
+    ADD(args, INTEGER_OBJ(bot-1));
+    ADD(args, INTEGER_OBJ(left));
+    ADD(args, INTEGER_OBJ(right-1));
+    push_call(ui, "set_scroll_region", args);
+
+    args = (Array)ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(rows));
+    push_call(ui, "scroll", args);
+  }
+}
+
+static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
+                                         Integer rgb_bg, Integer rgb_sp,
+                                         Integer cterm_fg, Integer cterm_bg)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(rgb_fg));
+  ADD(args, INTEGER_OBJ(rgb_bg));
+  ADD(args, INTEGER_OBJ(rgb_sp));
+  ADD(args, INTEGER_OBJ(cterm_fg));
+  ADD(args, INTEGER_OBJ(cterm_bg));
+  push_call(ui, "default_colors_set", args);
+
+  // Deprecated
+  if (!ui->ui_ext[kUINewgrid]) {
+    args = (Array)ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ui->rgb ? rgb_fg : cterm_fg - 1));
+    push_call(ui, "update_fg", args);
+
+    args = (Array)ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ui->rgb ? rgb_bg : cterm_bg - 1));
+    push_call(ui, "update_bg", args);
+
+    args = (Array)ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(ui->rgb ? rgb_sp : -1));
+    push_call(ui, "update_sp", args);
+  }
+}
+
+static void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs,
+                                     HlAttrs cterm_attrs, Array info)
+{
+  if (!ui->ui_ext[kUINewgrid]) {
+    return;
+  }
+  Array args = ARRAY_DICT_INIT;
+
+  ADD(args, INTEGER_OBJ(id));
+
+  Dictionary rgb_hl = hlattrs2dict(&rgb_attrs, true);
+  ADD(args, DICTIONARY_OBJ(rgb_hl));
+
+  Dictionary cterm_hl = hlattrs2dict(&cterm_attrs, false);
+  ADD(args, DICTIONARY_OBJ(cterm_hl));
+
+  if (ui->ui_ext[kUIHlState]) {
+    ADD(args, ARRAY_OBJ(copy_array(info)));
+  } else {
+    ADD(args, ARRAY_OBJ((Array)ARRAY_DICT_INIT));
+  }
+
+  push_call(ui, "hl_attr_define", args);
+}
+
+static void remote_ui_highlight_set(UI *ui, int id)
+{
+  Array args = ARRAY_DICT_INIT;
+  UIData *data = ui->data;
+
+  HlAttrs attrs = HLATTRS_INIT;
+
+  if (data->hl_id == id) {
+    return;
+  }
+  data->hl_id = id;
+
+  if (id != 0) {
+    HlAttrs *aep = syn_attr2entry(id);
+    if (aep) {
+      attrs = *aep;
+    }
+  }
+
   Dictionary hl = hlattrs2dict(&attrs, ui->rgb);
 
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);
 }
 
+/// "true" cursor used only for input focus
+static void remote_ui_grid_cursor_goto(UI *ui, Integer grid, Integer row,
+                                       Integer col)
+{
+  if (ui->ui_ext[kUINewgrid]) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(grid));
+    ADD(args, INTEGER_OBJ(row));
+    ADD(args, INTEGER_OBJ(col));
+    push_call(ui, "grid_cursor_goto", args);
+  } else {
+    UIData *data = ui->data;
+    data->cursor_row = row;
+    data->cursor_col = col;
+    remote_ui_cursor_goto(ui, row, col);
+  }
+}
+
+/// emulated cursor used both for drawing and for input focus
+static void remote_ui_cursor_goto(UI *ui, Integer row, Integer col)
+{
+  UIData *data = ui->data;
+  if (data->client_row == row && data->client_col == col) {
+    return;
+  }
+  data->client_row = row;
+  data->client_col = col;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(row));
+  ADD(args, INTEGER_OBJ(col));
+  push_call(ui, "cursor_goto", args);
+}
+
+static void remote_ui_put(UI *ui, const char *cell)
+{
+  UIData *data = ui->data;
+  data->client_col++;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string(cell)));
+  push_call(ui, "put", args);
+}
+
+static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
+                               Integer startcol, Integer endcol,
+                               Integer clearcol, Integer clearattr,
+                               const schar_T *chunk, const sattr_T *attrs)
+{
+  UIData *data = ui->data;
+  if (ui->ui_ext[kUINewgrid]) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(grid));
+    ADD(args, INTEGER_OBJ(row));
+    ADD(args, INTEGER_OBJ(startcol));
+    Array cells = ARRAY_DICT_INIT;
+    int repeat = 0;
+    size_t ncells = (size_t)(endcol-startcol);
+    int last_hl = -1;
+    for (size_t i = 0; i < ncells; i++) {
+      repeat++;
+      if (i == ncells-1 || attrs[i] != attrs[i+1]
+          || STRCMP(chunk[i], chunk[i+1])) {
+        Array cell = ARRAY_DICT_INIT;
+        ADD(cell, STRING_OBJ(cstr_to_string((const char *)chunk[i])));
+        if (attrs[i] != last_hl || repeat > 1) {
+          ADD(cell, INTEGER_OBJ(attrs[i]));
+          last_hl = attrs[i];
+        }
+        if (repeat > 1) {
+          ADD(cell, INTEGER_OBJ(repeat));
+        }
+        ADD(cells, ARRAY_OBJ(cell));
+        repeat = 0;
+      }
+    }
+    if (endcol < clearcol) {
+      Array cell = ARRAY_DICT_INIT;
+      ADD(cell, STRING_OBJ(cstr_to_string(" ")));
+      ADD(cell, INTEGER_OBJ(clearattr));
+      ADD(cell, INTEGER_OBJ(clearcol-endcol));
+      ADD(cells, ARRAY_OBJ(cell));
+    }
+    ADD(args, ARRAY_OBJ(cells));
+
+    push_call(ui, "grid_line", args);
+  } else {
+    for (int i = 0; i < endcol-startcol; i++) {
+      remote_ui_cursor_goto(ui, row, startcol+i);
+      remote_ui_highlight_set(ui, attrs[i]);
+      remote_ui_put(ui, (const char *)chunk[i]);
+      if (utf_ambiguous_width(utf_ptr2char(chunk[i]))) {
+        data->client_col = -1;  // force cursor update
+      }
+    }
+    if (endcol < clearcol) {
+      remote_ui_cursor_goto(ui, row, endcol);
+      remote_ui_highlight_set(ui, (int)clearattr);
+      // legacy eol_clear was only ever used with cleared attributes
+      // so be on the safe side
+      if (clearattr == 0 && clearcol == Columns) {
+        Array args = ARRAY_DICT_INIT;
+        push_call(ui, "eol_clear", args);
+      } else {
+        for (Integer c = endcol; c < clearcol; c++) {
+          remote_ui_put(ui, " ");
+        }
+      }
+    }
+  }
+}
+
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
   if (data->buffer.size > 0) {
+    if (!ui->ui_ext[kUINewgrid]) {
+      remote_ui_cursor_goto(ui, data->cursor_row, data->cursor_col);
+    }
     rpc_send_event(data->channel_id, "redraw", data->buffer);
     data->buffer = (Array)ARRAY_DICT_INIT;
   }
 }
 
+static void remote_ui_cmdline_show(UI *ui, Array args)
+{
+  Array new_args = ARRAY_DICT_INIT;
+  Array contents = args.items[0].data.array;
+  Array new_contents = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < contents.size; i++) {
+    Array item = contents.items[i].data.array;
+    Array new_item = ARRAY_DICT_INIT;
+    int attr = (int)item.items[0].data.integer;
+    if (attr) {
+      HlAttrs *aep = syn_attr2entry(attr);
+      Dictionary rgb_attrs = hlattrs2dict(aep, ui->rgb ? kTrue : kFalse);
+      ADD(new_item, DICTIONARY_OBJ(rgb_attrs));
+    } else {
+      ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+    }
+    ADD(new_item, copy_object(item.items[1]));
+    ADD(new_contents, ARRAY_OBJ(new_item));
+  }
+  ADD(new_args, ARRAY_OBJ(new_contents));
+  for (size_t i = 1; i < args.size; i++) {
+    ADD(new_args, copy_object(args.items[i]));
+  }
+  push_call(ui, "cmdline_show", new_args);
+}
+
 static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
+  if (!ui->ui_ext[kUINewgrid]) {
+    // the representation of cmdline_show changed, translate back
+    if (strequal(name, "cmdline_show")) {
+      remote_ui_cmdline_show(ui, args);
+      // never consumes args
+      return;
+    }
+  }
   Array my_args = ARRAY_DICT_INIT;
   // Objects are currently single-reference
   // make a copy, but only if necessary

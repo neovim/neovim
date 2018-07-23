@@ -837,7 +837,7 @@ resulting file, when executed with a ":source" command:
    such as creating menu items in the GUI version.
 
 After restoring the Session, the full filename of your current Session is
-available in the internal variable "v:this_session" |this_session-variable|.
+available in the internal variable |v:this_session|.
 An example mapping: >
   :nmap <F2> :wa<Bar>exe "mksession! " . v:this_session<CR>:so ~/sessions/
 This saves the current Session, and starts off the command to load another.

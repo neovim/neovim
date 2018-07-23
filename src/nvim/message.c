@@ -1888,11 +1888,9 @@ static void msg_scroll_up(void)
                   fill_msgsep, fill_msgsep, HL_ATTR(HLF_MSGSEP));
     }
     int nscroll = MIN(msg_scrollsize()+1, Rows);
-    ui_call_set_scroll_region(Rows-nscroll, Rows-1, 0, Columns-1);
-    screen_del_lines(Rows-nscroll, 0, 1, nscroll, NULL);
-    ui_reset_scroll_region();
+    screen_del_lines(Rows-nscroll, 1, Rows, 0, Columns);
   } else {
-    screen_del_lines(0, 0, 1, (int)Rows, NULL);
+    screen_del_lines(0, 1, (int)Rows, 0, Columns);
   }
 }
 
@@ -2307,9 +2305,9 @@ static int do_more_prompt(int typed_char)
               mp_last = msg_sb_start(mp_last->sb_prev);
           }
 
-          if (toscroll == -1 && screen_ins_lines(0, 0, 1,
-                  (int)Rows, NULL) == OK) {
-            /* display line at top */
+          if (toscroll == -1
+              && screen_ins_lines(0, 1, (int)Rows, 0, (int)Columns) == OK) {
+            // display line at top
             (void)disp_sb_line(0, mp);
           } else {
             /* redisplay all lines */

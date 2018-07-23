@@ -2509,19 +2509,27 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     }
     // Some versions of Vi use ">=" here, some don't...
     if (yanklines > (size_t)p_report) {
+      char namebuf[100];
+
+      if (oap->regname == NUL) {
+        *namebuf = NUL;
+      } else {
+        vim_snprintf(namebuf, sizeof(namebuf), _(" into \"%c"), oap->regname);
+      }
+
       // redisplay now, so message is not deleted
       update_topline_redraw();
       if (yanklines == 1) {
         if (yank_type == kMTBlockWise) {
-          MSG(_("block of 1 line yanked"));
+          smsg(_("block of 1 line yanked%s"), namebuf);
         } else {
-          MSG(_("1 line yanked"));
+          smsg(_("1 line yanked%s"), namebuf);
         }
       } else if (yank_type == kMTBlockWise) {
-        smsg(_("block of %" PRId64 " lines yanked"),
-             (int64_t)yanklines);
+        smsg(_("block of %" PRId64 " lines yanked%s"),
+             (int64_t)yanklines, namebuf);
       } else {
-        smsg(_("%" PRId64 " lines yanked"), (int64_t)yanklines);
+        smsg(_("%" PRId64 " lines yanked%s"), (int64_t)yanklines, namebuf);
       }
     }
   }
