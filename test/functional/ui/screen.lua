@@ -73,6 +73,7 @@
 
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
+local eq = helpers.eq
 local dedent = helpers.dedent
 
 local Screen = {}
@@ -389,12 +390,21 @@ function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
 end
 
 function Screen:_handle_clear()
+  -- the first implemented UI protocol clients (python-gui and builitin TUI)
+  -- allowed the cleared region to be restricted by setting the scroll region.
+  -- this was never used by nvim tough, and not documented and implemented by
+  -- newer clients, to check we remain compatible with both kind of clients,
+  -- ensure the scroll region is in a reset state.
+  local expected_region = {
+    top = 1, bot = self._height, left = 1, right = self._width
+  }
+  eq(expected_region, self._scroll_region)
   self:_clear_block(1, self._height, 1, self._width)
 end
 
 function Screen:_handle_grid_clear(grid)
   assert(grid == 1)
-  self:_handle_clear()
+  self:_clear_block(1, self._height, 1, self._width)
 end
 
 function Screen:_handle_eol_clear()
@@ -446,22 +456,30 @@ function Screen:_handle_scroll(count)
   local bot = self._scroll_region.bot
   local left = self._scroll_region.left
   local right = self._scroll_region.right
+  self:_handle_grid_scroll(1, top-1, bot, left-1, right, count, 0)
+end
+
+function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
+  top = top+1
+  left = left+1
+  assert(grid == 1)
+  assert(cols == 0)
   local start, stop, step
 
-  if count > 0 then
+  if rows > 0 then
     start = top
-    stop = bot - count
+    stop = bot - rows
     step = 1
   else
     start = bot
-    stop = top - count
+    stop = top - rows
     step = -1
   end
 
   -- shift scroll region
   for i = start, stop, step do
     local target = self._rows[i]
-    local source = self._rows[i + count]
+    local source = self._rows[i + rows]
     for j = left, right do
       target[j].text = source[j].text
       target[j].attrs = source[j].attrs
@@ -470,17 +488,9 @@ function Screen:_handle_scroll(count)
   end
 
   -- clear invalid rows
-  for i = stop + step, stop + count, step do
+  for i = stop + step, stop + rows, step do
     self:_clear_row_section(i, left, right)
   end
-end
-
-function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
-  assert(grid == 1)
-  assert(cols == 0)
-  -- TODO: if we truly believe we should translate the other way
-  self:_handle_set_scroll_region(top,bot-1,left,right-1)
-  self:_handle_scroll(rows)
 end
 
 function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)

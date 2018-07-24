@@ -44,7 +44,7 @@ void ugrid_resize(UGrid *grid, int width, int height)
 
 void ugrid_clear(UGrid *grid)
 {
-  clear_region(grid, grid->top, grid->bot, grid->left, grid->right,
+  clear_region(grid, 0, grid->height-1, 0, grid->width-1,
                HLATTRS_INIT);
 }
 
