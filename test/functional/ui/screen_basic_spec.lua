@@ -392,6 +392,64 @@ local function screen_tests(newgrid)
       ]])
 
     end)
+
+    it('redraws properly with :tab split right after scroll', function()
+      feed('30Ofoo<esc>gg')
+
+      command('vsplit')
+      screen:expect([[
+        ^foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        {1:[No Name] [+]              }{3:[No Name] [+]             }|
+                                                             |
+      ]])
+
+      feed('<PageDown>')
+      screen:expect([[
+        ^foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        foo                       {3:│}foo                       |
+        {1:[No Name] [+]              }{3:[No Name] [+]             }|
+                                                             |
+      ]])
+
+      command('tab split')
+      screen:expect([[
+        {4: }{5:2}{4:+ [No Name] }{2: + [No Name] }{3:                         }{4:X}|
+        ^foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+        foo                                                  |
+                                                             |
+      ]])
+    end)
   end)
 
   describe('insert mode', function()
