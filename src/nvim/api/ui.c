@@ -302,6 +302,15 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
     args = (Array)ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(rows));
     push_call(ui, "scroll", args);
+
+    // some clients have "clear" being affected by scroll region,
+    // so reset it.
+    args = (Array)ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(0));
+    ADD(args, INTEGER_OBJ(ui->height-1));
+    ADD(args, INTEGER_OBJ(0));
+    ADD(args, INTEGER_OBJ(ui->width-1));
+    push_call(ui, "set_scroll_region", args);
   }
 }
 
