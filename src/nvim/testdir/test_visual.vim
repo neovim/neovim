@@ -126,6 +126,25 @@ func Test_blockwise_visual()
   enew!
 endfunc
 
+" Test swapping corners in blockwise visual mode with o and O
+func Test_blockwise_visual_o_O()
+  enew!
+
+  exe "norm! 10i.\<Esc>Y4P3lj\<C-V>4l2jr "
+  exe "norm! gvO\<Esc>ra"
+  exe "norm! gvO\<Esc>rb"
+  exe "norm! gvo\<C-c>rc"
+  exe "norm! gvO\<C-c>rd"
+
+  call assert_equal(['..........',
+        \            '...c   d..',
+        \            '...     ..',
+        \            '...a   b..',
+        \            '..........'], getline(1, '$'))
+
+  enew!
+endfun
+
 " Test Virtual replace mode.
 func Test_virtual_replace()
   throw 'skipped: TODO: '
