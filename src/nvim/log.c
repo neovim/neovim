@@ -285,10 +285,10 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   // Print the log message.
   int64_t pid = os_get_pid();
   int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s.%-3d %" PRId64 " %s",
+    ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
               log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "?:" : context))
-    : fprintf(log_file, "%s %s.%-3d %" PRId64 " %s%s:%d: ",
+    : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
               log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "" : context),
               func_name, line_num);
