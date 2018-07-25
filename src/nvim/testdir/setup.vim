@@ -16,7 +16,8 @@ set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
 let &packpath = &rtp
 
 " Make sure $HOME does not get read or written.
-let $HOME = '/does/not/exist'
+let $HOME = getcwd() . '/XfakeHOME'
+call mkdir($HOME)
 
 " Use default shell on Windows to avoid segfault, caused by TUI
 if has('win32')
