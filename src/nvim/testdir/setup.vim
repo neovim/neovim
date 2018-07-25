@@ -1,5 +1,11 @@
 " Common preparations for running tests.
 
+" Only load this once.
+if exists('s:did_load')
+  finish
+endif
+let s:did_load = 1
+
 " Align Nvim defaults to Vim.
 set sidescroll=0
 set directory^=.
