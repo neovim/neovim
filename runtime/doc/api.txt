@@ -836,9 +836,25 @@ nvim_get_proc({pid})                                         *nvim_get_proc()*
                 Return: ~
                     Map of process properties, or NIL if process not found.
 
+nvim__inspect_cell({row}, {col})                        *nvim__inspect_cell()*
+                TODO: Documentation
+
 
 ==============================================================================
 Buffer Functions                                                  *api-buffer*
+
+Unloaded Buffers:~
+
+Buffers may be unloaded by the |:bunload| command or the
+buffer's |'bufhidden'| option. When a buffer is unloaded its
+file contents are freed from memory and vim cannot operate on
+the buffer lines until it is reloaded (usually by opening the
+buffer again in a new window). API methods such as
+|nvim_buf_get_lines()| and |nvim_buf_line_count()| will be
+affected.
+
+You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()|
+to check whether a buffer is loaded.
 
 nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                 Gets the buffer line count
@@ -847,7 +863,8 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     {buffer}  Buffer handle
 
                 Return: ~
-                    Line count
+                    Line count, or `0` if the buffer has been unloaded (see
+                    |api-buffer|).
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activate updates from this buffer to the current channel.
@@ -896,7 +913,8 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
                                        error.
 
                 Return: ~
-                    Array of lines
+                    Array of lines. If the buffer has been unloaded then an
+                    empty array will be returned instead. (See |api-buffer|.)
 
                                                         *nvim_buf_set_lines()*
 nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
@@ -1013,14 +1031,28 @@ nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
                     {buffer}  Buffer handle
                     {name}    Buffer name
 
-nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
-                Checks if a buffer is valid
+nvim_buf_is_loaded({buffer})                            *nvim_buf_is_loaded()*
+                Checks if a buffer is valid and loaded. See |api-buffer| for
+                more info about unloaded buffers.
 
                 Parameters: ~
                     {buffer}  Buffer handle
 
                 Return: ~
-                    true if the buffer is valid, false otherwise
+                    true if the buffer is valid and loaded, false otherwise.
+
+nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
+                Checks if a buffer is valid.
+
+                Note:
+                    Even if a buffer is valid it may have been unloaded. See
+                    |api-buffer| for more info about unloaded buffers.
+
+                Parameters: ~
+                    {buffer}  Buffer handle
+
+                Return: ~
+                    true if the buffer is valid, false otherwise.
 
 nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
                 Return a tuple (row,col) representing the position of the
