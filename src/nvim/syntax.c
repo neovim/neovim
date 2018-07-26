@@ -5385,20 +5385,18 @@ get_id_list(
 /*
  * Make a copy of an ID list.
  */
-static short *copy_id_list(short *list)
+static int16_t *copy_id_list(const int16_t *const list)
 {
-  int len;
-  int count;
-  short   *retval;
-
-  if (list == NULL)
+  if (list == NULL) {
     return NULL;
+  }
 
-  for (count = 0; list[count]; ++count)
-    ;
-  len = (count + 1) * sizeof(short);
-  retval = xmalloc(len);
-  memmove(retval, list, (size_t)len);
+  int count;
+  for (count = 0; list[count]; count++) {
+  }
+  const size_t len = (count + 1) * sizeof(int16_t);
+  int16_t *const retval = xmalloc(len);
+  memmove(retval, list, len);
 
   return retval;
 }
