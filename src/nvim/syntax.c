@@ -187,14 +187,14 @@ typedef struct state_item {
  * very often.
  */
 typedef struct {
-  int flags;                    /* flags for contained and transparent */
-  int keyword;                  /* TRUE for ":syn keyword" */
-  int         *sync_idx;        /* syntax item for "grouphere" argument, NULL
-                                   if not allowed */
-  char has_cont_list;           /* TRUE if "cont_list" can be used */
-  short       *cont_list;       /* group IDs for "contains" argument */
-  short       *cont_in_list;    /* group IDs for "containedin" argument */
-  short       *next_list;       /* group IDs for "nextgroup" argument */
+  int flags;                   // flags for contained and transparent
+  bool keyword;                // true for ":syn keyword"
+  int *sync_idx;               // syntax item for "grouphere" argument, NULL
+                               // if not allowed
+  bool has_cont_list;          // true if "cont_list" can be used
+  int16_t *cont_list;          // group IDs for "contains" argument
+  int16_t *cont_in_list;       // group IDs for "containedin" argument
+  int16_t *next_list;          // group IDs for "nextgroup" argument
 } syn_opt_arg_T;
 
 typedef struct {
@@ -4405,9 +4405,9 @@ syn_cmd_match(
 
   /* Get options before the pattern */
   syn_opt_arg.flags = 0;
-  syn_opt_arg.keyword = FALSE;
+  syn_opt_arg.keyword = false;
   syn_opt_arg.sync_idx = syncing ? &sync_idx : NULL;
-  syn_opt_arg.has_cont_list = TRUE;
+  syn_opt_arg.has_cont_list = true;
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
@@ -4527,9 +4527,9 @@ syn_cmd_region(
   init_syn_patterns();
 
   syn_opt_arg.flags = 0;
-  syn_opt_arg.keyword = FALSE;
+  syn_opt_arg.keyword = false;
   syn_opt_arg.sync_idx = NULL;
-  syn_opt_arg.has_cont_list = TRUE;
+  syn_opt_arg.has_cont_list = true;
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
