@@ -943,10 +943,11 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   cursorentry_T c = data->cursor_shapes[mode];
 
   if (c.id != 0 && ui->rgb) {
+    // TODO(bfredl): NOT threadsafe, include attr in cursor_shape already.
     int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      HlAttrs *aep = syn_attr2entry(attr);
-      UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
+    if (attr > 0 && attr < (int)kv_size(data->attrs)) {
+      int color = kv_A(data->attrs, attr).rgb_bg_color;
+      UNIBI_SET_NUM_VAR(data->params[0], color);
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
   }

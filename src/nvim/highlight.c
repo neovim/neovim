@@ -135,11 +135,8 @@ int hl_get_ui_attr(int idx, int final_id, bool optional)
 
   int syn_attr = syn_id2attr(final_id);
   if (syn_attr != 0) {
-    HlAttrs *aep = syn_attr2entry(syn_attr);
-    if (aep) {
-      attrs = *aep;
-      available = true;
-    }
+    attrs = syn_attr2entry(syn_attr);
+    available = true;
   }
   if (optional && !available) {
     return 0;
@@ -232,42 +229,33 @@ int hl_combine_attr(int char_attr, int prim_attr)
     return id;
   }
 
-  HlAttrs *char_aep, *spell_aep;
-  HlAttrs new_en = HLATTRS_INIT;
+  HlAttrs char_aep = syn_attr2entry(char_attr);
+  HlAttrs spell_aep = syn_attr2entry(prim_attr);
 
+  // start with low-priority attribute, and override colors if present below.
+  HlAttrs new_en = char_aep;
 
-  // Find the entry for char_attr
-  char_aep = syn_attr2entry(char_attr);
+  new_en.cterm_ae_attr |= spell_aep.cterm_ae_attr;
+  new_en.rgb_ae_attr |= spell_aep.rgb_ae_attr;
 
-  if (char_aep != NULL) {
-    // Copy all attributes from char_aep to the new entry
-    new_en = *char_aep;
+  if (spell_aep.cterm_fg_color > 0) {
+    new_en.cterm_fg_color = spell_aep.cterm_fg_color;
   }
 
-  spell_aep = syn_attr2entry(prim_attr);
-  if (spell_aep != NULL) {
-    new_en.cterm_ae_attr |= spell_aep->cterm_ae_attr;
-    new_en.rgb_ae_attr |= spell_aep->rgb_ae_attr;
+  if (spell_aep.cterm_bg_color > 0) {
+    new_en.cterm_bg_color = spell_aep.cterm_bg_color;
+  }
 
-    if (spell_aep->cterm_fg_color > 0) {
-      new_en.cterm_fg_color = spell_aep->cterm_fg_color;
-    }
+  if (spell_aep.rgb_fg_color >= 0) {
+    new_en.rgb_fg_color = spell_aep.rgb_fg_color;
+  }
 
-    if (spell_aep->cterm_bg_color > 0) {
-      new_en.cterm_bg_color = spell_aep->cterm_bg_color;
-    }
+  if (spell_aep.rgb_bg_color >= 0) {
+    new_en.rgb_bg_color = spell_aep.rgb_bg_color;
+  }
 
-    if (spell_aep->rgb_fg_color >= 0) {
-      new_en.rgb_fg_color = spell_aep->rgb_fg_color;
-    }
-
-    if (spell_aep->rgb_bg_color >= 0) {
-      new_en.rgb_bg_color = spell_aep->rgb_bg_color;
-    }
-
-    if (spell_aep->rgb_sp_color >= 0) {
-      new_en.rgb_sp_color = spell_aep->rgb_sp_color;
-    }
+  if (spell_aep.rgb_sp_color >= 0) {
+    new_en.rgb_sp_color = spell_aep.rgb_sp_color;
   }
 
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
@@ -280,44 +268,41 @@ int hl_combine_attr(int char_attr, int prim_attr)
 }
 
 /// Get highlight attributes for a attribute code
-HlAttrs *syn_attr2entry(int attr)
+HlAttrs syn_attr2entry(int attr)
 {
   if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
     // invalid attribute code, or the tables were cleared
-    return NULL;
+    return HLATTRS_INIT;
   }
-  return &(kv_A(attr_entries, attr).attr);
+  return kv_A(attr_entries, attr).attr;
 }
 
 /// Gets highlight description for id `attr_id` as a map.
 Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
 {
-  HlAttrs *aep = NULL;
   Dictionary dic = ARRAY_DICT_INIT;
 
   if (attr_id == 0) {
     return dic;
   }
 
-  aep = syn_attr2entry((int)attr_id);
-  if (!aep) {
+  if (attr_id <= 0 || attr_id >= (int)kv_size(attr_entries)) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
 
-  return hlattrs2dict(aep, rgb);
+  return hlattrs2dict(syn_attr2entry((int)attr_id), rgb);
 }
 
 /// Converts an HlAttrs into Dictionary
 ///
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
+Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
 {
-  assert(aep);
   Dictionary hl = ARRAY_DICT_INIT;
-  int mask  = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
+  int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
   if (mask & HL_BOLD) {
     PUT(hl, "bold", BOOLEAN_OBJ(true));
@@ -344,24 +329,24 @@ Dictionary hlattrs2dict(const HlAttrs *aep, bool use_rgb)
   }
 
   if (use_rgb) {
-    if (aep->rgb_fg_color != -1) {
-      PUT(hl, "foreground", INTEGER_OBJ(aep->rgb_fg_color));
+    if (ae.rgb_fg_color != -1) {
+      PUT(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }
 
-    if (aep->rgb_bg_color != -1) {
-      PUT(hl, "background", INTEGER_OBJ(aep->rgb_bg_color));
+    if (ae.rgb_bg_color != -1) {
+      PUT(hl, "background", INTEGER_OBJ(ae.rgb_bg_color));
     }
 
-    if (aep->rgb_sp_color != -1) {
-      PUT(hl, "special", INTEGER_OBJ(aep->rgb_sp_color));
+    if (ae.rgb_sp_color != -1) {
+      PUT(hl, "special", INTEGER_OBJ(ae.rgb_sp_color));
     }
   } else {
-    if (cterm_normal_fg_color != aep->cterm_fg_color) {
-      PUT(hl, "foreground", INTEGER_OBJ(aep->cterm_fg_color - 1));
+    if (cterm_normal_fg_color != ae.cterm_fg_color) {
+      PUT(hl, "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
     }
 
-    if (cterm_normal_bg_color != aep->cterm_bg_color) {
-      PUT(hl, "background", INTEGER_OBJ(aep->cterm_bg_color - 1));
+    if (cterm_normal_bg_color != ae.cterm_bg_color) {
+      PUT(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
   }
 
