@@ -66,7 +66,6 @@ describe('API', function()
 	end)
 
 	it('works with latin characters', function()
-	  local fname = helpers.tmpname()
 	  nvim('command', 'new')
 	  nvim('command', "call setline(1,['xxx'])")
 	  nvim('source', "call feedkeys('r')|call feedkeys('ñ', 'xt')")
