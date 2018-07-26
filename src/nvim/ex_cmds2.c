@@ -2804,10 +2804,11 @@ static char_u *get_str_line(int c, void *cookie, int ident)
     i++;
   }
   char buf[2046];
-  xstpncpy(buf, (char *)p->buf+p->pointer, i);
+  char *dst;
+  dst = xstpncpy(buf, (char *)p->buf+p->pointer, i);
   buf[i-p->pointer]='\0';
   p->pointer = i+1;
-  return (char_u *)xstrdup(buf);
+  return (char_u *)xstrdup(dst);
 }
 
 int do_source_str(char_u *cmd)
