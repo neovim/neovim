@@ -59,13 +59,13 @@ struct syn_state {
     bufstate_T sst_stack[SST_FIX_STATES];          /* short state stack */
     garray_T sst_ga;            /* growarray for long state stack */
   } sst_union;
-  int sst_next_flags;           /* flags for sst_next_list */
-  int sst_stacksize;            /* number of states on the stack */
-  short       *sst_next_list;   /* "nextgroup" list in this state
-                                 * (this is a copy, don't free it! */
-  disptick_T sst_tick;          /* tick when last displayed */
-  linenr_T sst_change_lnum;     /* when non-zero, change in this line
-                                 * may have made the state invalid */
+  int sst_next_flags;           // flags for sst_next_list
+  int sst_stacksize;            // number of states on the stack
+  int16_t *sst_next_list;       // "nextgroup" list in this state
+                                // (this is a copy, don't free it!
+  disptick_T sst_tick;          // tick when last displayed
+  linenr_T sst_change_lnum;     // when non-zero, change in this line
+                                // may have made the state invalid
 };
 
 #endif // NVIM_SYNTAX_DEFS_H
