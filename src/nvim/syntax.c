@@ -3695,15 +3695,13 @@ static void syn_list_cluster(int id)
   }
 }
 
-static void put_id_list(const char *name,
-                        short *list,  // NOLINT(runtime/int)
-                        int attr)
+static void put_id_list(const char *const name,
+                        const int16_t *const list,
+                        const int attr)
 {
-  short               *p;
-
   msg_puts_attr(name, attr);
   msg_putchar('=');
-  for (p = list; *p; ++p) {
+  for (const int16_t *p = list; *p; p++) {
     if (*p >= SYNID_ALLBUT && *p < SYNID_TOP) {
       if (p[1]) {
         msg_puts("ALLBUT");
