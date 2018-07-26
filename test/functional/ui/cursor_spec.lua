@@ -28,6 +28,8 @@ describe('ui/cursor', function()
         name = 'normal',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'n' },
       [2] = {
@@ -39,6 +41,8 @@ describe('ui/cursor', function()
         name = 'visual',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'v' },
       [3] = {
@@ -50,6 +54,8 @@ describe('ui/cursor', function()
         name = 'insert',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'i' },
       [4] = {
@@ -61,6 +67,8 @@ describe('ui/cursor', function()
         name = 'replace',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'r' },
       [5] = {
@@ -72,6 +80,8 @@ describe('ui/cursor', function()
         name = 'cmdline_normal',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'c' },
       [6] = {
@@ -83,6 +93,8 @@ describe('ui/cursor', function()
         name = 'cmdline_insert',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'ci' },
       [7] = {
@@ -94,6 +106,8 @@ describe('ui/cursor', function()
         name = 'cmdline_replace',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'cr' },
       [8] = {
@@ -105,6 +119,8 @@ describe('ui/cursor', function()
         name = 'operator',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 'o' },
       [9] = {
@@ -116,6 +132,8 @@ describe('ui/cursor', function()
         name = 'visual_select',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         mouse_shape = 0,
         short_name = 've' },
       [10] = {
@@ -155,6 +173,8 @@ describe('ui/cursor', function()
         name = 'showmatch',
         hl_id = 0,
         id_lm = 0,
+        attr = {},
+        attr_lm = {},
         short_name = 'sm' },
       }
 
@@ -179,6 +199,7 @@ describe('ui/cursor', function()
     end)
 
     -- Change the cursor style.
+    helpers.command('hi Cursor guibg=DarkGray')
     helpers.command('set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr-o:hor20'
       ..',a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor'
       ..',sm:block-blinkwait175-blinkoff150-blinkon175')
@@ -194,10 +215,33 @@ describe('ui/cursor', function()
         if m.blinkoff then m.blinkoff = 400 end
         if m.blinkwait then m.blinkwait = 700 end
       end
-      if m.hl_id then m.hl_id = 49 end
+      if m.hl_id then
+          m.hl_id = 49
+          m.attr = {background = Screen.colors.DarkGray}
+      end
       if m.id_lm then m.id_lm = 50 end
     end
 
+    -- Assert the new expectation.
+    screen:expect(function()
+      eq(expected_mode_info, screen._mode_info)
+      eq(true, screen._cursor_style_enabled)
+      eq('normal', screen.mode)
+    end)
+
+    -- Change hl groups only, should update the styles
+    helpers.command('hi Cursor guibg=Red')
+    helpers.command('hi lCursor guibg=Green')
+
+    -- Update the expected values.
+    for _, m in ipairs(expected_mode_info) do
+      if m.hl_id then
+          m.attr = {background = Screen.colors.Red}
+      end
+      if m.id_lm then
+          m.attr_lm = {background = Screen.colors.Green}
+      end
+    end
     -- Assert the new expectation.
     screen:expect(function()
       eq(expected_mode_info, screen._mode_info)
