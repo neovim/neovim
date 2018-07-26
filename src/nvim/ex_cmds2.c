@@ -2795,13 +2795,13 @@ typedef struct {
 
 static char_u *get_str_line(int c, void *cookie, int ident)
 {
-  GetStrLineCookie *p = (GetStrLineCookie*)cookie;
+  GetStrLineCookie *p = (GetStrLineCookie *)cookie;
   uint32_t i = p->pointer;
-  if(strlen((char *)p->buf) <= p->pointer){
-	return NULL;
-  } 
-  while(!(p->buf[i] == '\n' || p->buf[i] == '\0')){
-	i++;
+  if (strlen((char *)p->buf) <= p->pointer) {
+    return NULL;
+  }
+  while (!(p->buf[i] == '\n' || p->buf[i] == '\0')) {
+    i++;
   }
   char buf[2046];
   strncpy(buf, (char *)p->buf+p->pointer, i);
@@ -2814,10 +2814,11 @@ int do_source_str(char_u *cmd)
 {
   int retval;
   GetStrLineCookie cookie = {
-	.buf = cmd,
-	.pointer = 0,
+    .buf = cmd,
+    .pointer = 0,
   };
-  retval = do_cmdline(NULL,get_str_line,(void*)&cookie ,DOCMD_VERBOSE|DOCMD_NOWAIT);
+  retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
+                      DOCMD_VERBOSE|DOCMD_NOWAIT);
   return retval;
 }
 
