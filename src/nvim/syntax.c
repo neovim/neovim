@@ -3950,19 +3950,19 @@ static void clear_keywtab(hashtab_T *ht)
 /// @param flags flags for this keyword
 /// @param cont_in_list containedin for this keyword
 /// @param next_list nextgroup for this keyword
-static void add_keyword(char_u *name,
-                        int id,
-                        int flags,
-                        short *cont_in_list,
-                        short *next_list,
-                        int conceal_char)
+static void add_keyword(char_u *const name,
+                        const int id,
+                        const int flags,
+                        int16_t *const cont_in_list,
+                        int16_t *const next_list,
+                        const int conceal_char)
 {
   char_u name_folded[MAXKEYWLEN + 1];
-  char_u *name_ic = (curwin->w_s->b_syn_ic)
-   ? str_foldcase(name, (int)STRLEN(name), name_folded, sizeof(name_folded))
-   : name;
+  const char_u *const name_ic = (curwin->w_s->b_syn_ic)
+      ? str_foldcase(name, (int)STRLEN(name), name_folded, sizeof(name_folded))
+      : name;
 
-  keyentry_T *kp = xmalloc(sizeof(keyentry_T) + STRLEN(name_ic));
+  keyentry_T *const kp = xmalloc(sizeof(keyentry_T) + STRLEN(name_ic));
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = id;
   kp->k_syn.inc_tag = current_syn_inc_tag;
@@ -3974,11 +3974,12 @@ static void add_keyword(char_u *name,
   }
   kp->next_list = copy_id_list(next_list);
 
-  hash_T hash = hash_hash(kp->keyword);
-  hashtab_T *ht = (curwin->w_s->b_syn_ic) ? &curwin->w_s->b_keywtab_ic
-                                          : &curwin->w_s->b_keywtab;
-  hashitem_T *hi = hash_lookup(ht, (const char *)kp->keyword,
-                               STRLEN(kp->keyword), hash);
+  const hash_T hash = hash_hash(kp->keyword);
+  hashtab_T *const ht = (curwin->w_s->b_syn_ic)
+      ? &curwin->w_s->b_keywtab_ic
+      : &curwin->w_s->b_keywtab;
+  hashitem_T *const hi = hash_lookup(ht, (const char *)kp->keyword,
+                                     STRLEN(kp->keyword), hash);
 
   // even though it looks like only the kp->keyword member is
   // being used here, vim uses some pointer trickery to get the orignal
