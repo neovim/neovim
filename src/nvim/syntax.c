@@ -115,35 +115,35 @@ static int hl_attr_table[] =
 {HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
  HL_INVERSE, 0};
 
-/*
- * The patterns that are being searched for are stored in a syn_pattern.
- * A match item consists of one pattern.
- * A start/end item consists of n start patterns and m end patterns.
- * A start/skip/end item consists of n start patterns, one skip pattern and m
- * end patterns.
- * For the latter two, the patterns are always consecutive: start-skip-end.
- *
- * A character offset can be given for the matched text (_m_start and _m_end)
- * and for the actually highlighted text (_h_start and _h_end).
- */
+// The patterns that are being searched for are stored in a syn_pattern.
+// A match item consists of one pattern.
+// A start/end item consists of n start patterns and m end patterns.
+// A start/skip/end item consists of n start patterns, one skip pattern and m
+// end patterns.
+// For the latter two, the patterns are always consecutive: start-skip-end.
+//
+// A character offset can be given for the matched text (_m_start and _m_end)
+// and for the actually highlighted text (_h_start and _h_end).
+//
+// Note that ordering of members is optimized to reduce padding.
 typedef struct syn_pattern {
-  char sp_type;                         /* see SPTYPE_ defines below */
-  char sp_syncing;                      /* this item used for syncing */
-  int sp_flags;                         /* see HL_ defines below */
-  int sp_cchar;                         /* conceal substitute character */
-  struct sp_syn sp_syn;                 /* struct passed to in_id_list() */
-  short sp_syn_match_id;                /* highlight group ID of pattern */
-  char_u      *sp_pattern;              /* regexp to match, pattern */
-  regprog_T   *sp_prog;                 /* regexp to match, program */
+  char sp_type;                         // see SPTYPE_ defines below
+  char sp_syncing;                      // this item used for syncing
+  int16_t sp_syn_match_id;              // highlight group ID of pattern
+  int16_t sp_off_flags;                 // see below
+  int sp_offsets[SPO_COUNT];            // offsets
+  int sp_flags;                         // see HL_ defines below
+  int sp_cchar;                         // conceal substitute character
+  int sp_ic;                            // ignore-case flag for sp_prog
+  int sp_sync_idx;                      // sync item index (syncing only)
+  int sp_line_id;                       // ID of last line where tried
+  int sp_startcol;                      // next match in sp_line_id line
+  int16_t *sp_cont_list;                // cont. group IDs, if non-zero
+  int16_t *sp_next_list;                // next group IDs, if non-zero
+  struct sp_syn sp_syn;                 // struct passed to in_id_list()
+  char_u *sp_pattern;                   // regexp to match, pattern
+  regprog_T *sp_prog;                   // regexp to match, program
   syn_time_T sp_time;
-  int sp_ic;                            /* ignore-case flag for sp_prog */
-  short sp_off_flags;                   /* see below */
-  int sp_offsets[SPO_COUNT];            /* offsets */
-  short       *sp_cont_list;            /* cont. group IDs, if non-zero */
-  short       *sp_next_list;            /* next group IDs, if non-zero */
-  int sp_sync_idx;                      /* sync item index (syncing only) */
-  int sp_line_id;                       /* ID of last line where tried */
-  int sp_startcol;                      /* next match in sp_line_id line */
 } synpat_T;
 
 
