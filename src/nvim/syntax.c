@@ -364,9 +364,9 @@ static int current_state_stored = 0;      /* TRUE if stored current state
 static int current_finished = 0;        /* current line has been finished */
 static garray_T current_state           /* current stack of state_items */
   = GA_EMPTY_INIT_VALUE;
-static short    *current_next_list = NULL; /* when non-zero, nextgroup list */
-static int current_next_flags = 0;      /* flags for current_next_list */
-static int current_line_id = 0;         /* unique number for current line */
+static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
+static int current_next_flags = 0;          // flags for current_next_list
+static int current_line_id = 0;             // unique number for current line
 
 #define CUR_STATE(idx)  ((stateitem_T *)(current_state.ga_data))[idx]
 
