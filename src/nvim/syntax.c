@@ -3790,36 +3790,30 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
  * List or clear the keywords for one syntax group.
  * Return TRUE if the header has been printed.
  */
-static int
-syn_list_keywords(
-    int id,
-    hashtab_T *ht,
-    int did_header,                         /* header has already been printed */
-    int attr
+static int syn_list_keywords(
+    const int id,
+    const hashtab_T *const ht,
+    int did_header,                         // header has already been printed
+    const int attr
 )
 {
   int outlen;
-  hashitem_T  *hi;
-  keyentry_T  *kp;
-  int todo;
   int prev_contained = 0;
-  short       *prev_next_list = NULL;
-  short       *prev_cont_in_list = NULL;
+  const int16_t *prev_next_list = NULL;
+  const int16_t *prev_cont_in_list = NULL;
   int prev_skipnl = 0;
   int prev_skipwhite = 0;
   int prev_skipempty = 0;
 
-  /*
-   * Unfortunately, this list of keywords is not sorted on alphabet but on
-   * hash value...
-   */
-  todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0 && !got_int; ++hi) {
+  // Unfortunately, this list of keywords is not sorted on alphabet but on
+  // hash value...
+  size_t todo = ht->ht_used;
+  for (const hashitem_T *hi = ht->ht_array; todo > 0 && !got_int; hi++) {
     if (HASHITEM_EMPTY(hi)) {
       continue;
     }
-    --todo;
-    for (kp = HI2KE(hi); kp != NULL && !got_int; kp = kp->ke_next) {
+    todo--;
+    for (keyentry_T *kp = HI2KE(hi); kp != NULL && !got_int; kp = kp->ke_next) {
       if (kp->k_syn.id == id) {
         if (prev_contained != (kp->flags & HL_CONTAINED)
             || prev_skipnl != (kp->flags & HL_SKIPNL)
