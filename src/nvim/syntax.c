@@ -6500,6 +6500,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   bool error = false;
   int color;
   bool is_normal_group = false;   // "Normal" group
+  bool did_highlight_changed = false;
 
   // If no argument, list current highlighting.
   if (ends_excmd((uint8_t)(*line))) {
@@ -6944,6 +6945,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         // redraw below will still handle usages of guibg=fg etc.
         ui_default_colors_set();
       }
+      item = &HL_TABLE()[idx];
+      did_highlight_changed = true;
+      redraw_all_later(NOT_VALID);
     } else {
       set_hl_attr(idx);
     }
@@ -6954,7 +6958,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
-  if (memcmp(item, &item_before, sizeof(item_before)) != 0) {
+  if (memcmp(item, &item_before, sizeof(item_before)) != 0
+      && !did_highlight_changed) {
     redraw_all_later(NOT_VALID);
     need_highlight_changed = true;
   }
