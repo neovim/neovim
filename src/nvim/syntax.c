@@ -159,27 +159,27 @@ typedef struct syn_cluster_S {
  * (The end positions have the column number of the next char)
  */
 typedef struct state_item {
-  int si_idx;                           /* index of syntax pattern or
-                                           KEYWORD_IDX */
-  int si_id;                            /* highlight group ID for keywords */
-  int si_trans_id;                      /* idem, transparency removed */
-  int si_m_lnum;                        /* lnum of the match */
-  int si_m_startcol;                    /* starting column of the match */
-  lpos_T si_m_endpos;                   /* just after end posn of the match */
-  lpos_T si_h_startpos;                 /* start position of the highlighting */
-  lpos_T si_h_endpos;                   /* end position of the highlighting */
-  lpos_T si_eoe_pos;                    /* end position of end pattern */
-  int si_end_idx;                       /* group ID for end pattern or zero */
-  int si_ends;                          /* if match ends before si_m_endpos */
-  int si_attr;                          /* attributes in this state */
-  long si_flags;                        /* HL_HAS_EOL flag in this state, and
-                                         * HL_SKIP* for si_next_list */
-  int si_seqnr;                         /* sequence number */
-  int si_cchar;                         /* substitution character for conceal */
-  short       *si_cont_list;            /* list of contained groups */
-  short       *si_next_list;            /* nextgroup IDs after this item ends */
-  reg_extmatch_T *si_extmatch;          /* \z(...\) matches from start
-                                         * pattern */
+  int si_idx;                           // index of syntax pattern or
+                                        // KEYWORD_IDX
+  int si_id;                            // highlight group ID for keywords
+  int si_trans_id;                      // idem, transparency removed
+  int si_m_lnum;                        // lnum of the match
+  int si_m_startcol;                    // starting column of the match
+  lpos_T si_m_endpos;                   // just after end posn of the match
+  lpos_T si_h_startpos;                 // start position of the highlighting
+  lpos_T si_h_endpos;                   // end position of the highlighting
+  lpos_T si_eoe_pos;                    // end position of end pattern
+  int si_end_idx;                       // group ID for end pattern or zero
+  int si_ends;                          // if match ends before si_m_endpos
+  int si_attr;                          // attributes in this state
+  long si_flags;                        // HL_HAS_EOL flag in this state, and
+                                        // HL_SKIP* for si_next_list
+  int si_seqnr;                         // sequence number
+  int si_cchar;                         // substitution character for conceal
+  int16_t *si_cont_list;                // list of contained groups
+  int16_t *si_next_list;                // nextgroup IDs after this item ends
+  reg_extmatch_T *si_extmatch;          // \z(...\) matches from start
+                                        // pattern
 } stateitem_T;
 
 /*
@@ -318,9 +318,10 @@ static int keepend_level = -1;
 
 static char msg_no_items[] = N_("No Syntax items defined for this buffer");
 
-#define KEYWORD_IDX     -1          /* value of si_idx for keywords */
-#define ID_LIST_ALL     (short *)-1 /* valid of si_cont_list for containing all
-                                       but contained groups */
+// value of si_idx for keywords
+#define KEYWORD_IDX     -1
+// valid of si_cont_list for containing all but contained groups
+#define ID_LIST_ALL     (int16_t *)-1
 
 static int next_seqnr = 1;              /* value to use for si_seqnr */
 
