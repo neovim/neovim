@@ -1186,7 +1186,7 @@ int call_vim_function(
     const char_u *func,
     int argc,
     const char_u *const *const argv,
-    int safe,                       // use the sandbox
+    _Bool safe,                       // use the sandbox
     int str_arg_only,               // all arguments are strings
     typval_T *rettv
 )
@@ -1303,7 +1303,7 @@ char *call_func_retstr(const char *const func, const int argc,
 /// @return [allocated] NULL when calling function fails or return tv is not a
 ///                     List, allocated List otherwise.
 void *call_func_retlist(char_u *func, int argc, const char_u *const *const argv,
-                        int safe)
+                        _Bool safe)
 {
   typval_T rettv;
 
