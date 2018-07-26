@@ -6492,7 +6492,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   int attr;
   int id;
   int idx;
-  struct hl_group *item;
   struct hl_group item_before;
   bool dodefault = false;
   bool doclear = false;
@@ -6568,7 +6567,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
     from_id = syn_check_group((const char_u *)from_start,
                               (int)(from_end - from_start));
-    item = &HL_TABLE()[from_id - 1];
     if (strncmp(to_start, "NONE", 4) == 0) {
       to_id = 0;
     } else {
@@ -6576,7 +6574,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
                               (int)(to_end - to_start));
     }
 
-    if (from_id > 0 && (!init || item->sg_set == 0)) {
+    if (from_id > 0 && (!init || HL_TABLE()[from_id - 1].sg_set == 0)) {
       // Don't allow a link when there already is some highlighting
       // for the group, unless '!' is used
       if (to_id > 0 && !forceit && !init
@@ -6584,15 +6582,15 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         if (sourcing_name == NULL && !dodefault) {
           EMSG(_("E414: group has settings, highlight link ignored"));
         }
-      } else if (item->sg_link != to_id
-                 || item->sg_scriptID != current_SID
-                 || item->sg_cleared) {
+      } else if (HL_TABLE()[from_id - 1].sg_link != to_id
+                 || HL_TABLE()[from_id - 1].sg_scriptID != current_SID
+                 || HL_TABLE()[from_id - 1].sg_cleared) {
         if (!init) {
-          item->sg_set |= SG_LINK;
+          HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
         }
-        item->sg_link = to_id;
-        item->sg_scriptID = current_SID;
-        item->sg_cleared = false;
+        HL_TABLE()[from_id - 1].sg_link = to_id;
+        HL_TABLE()[from_id - 1].sg_scriptID = current_SID;
+        HL_TABLE()[from_id - 1].sg_cleared = false;
         redraw_all_later(SOME_VALID);
 
         // Only call highlight changed() once after multiple changes
@@ -6629,7 +6627,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     return;
   }
   idx = id - 1;  // Index is ID minus one.
-  item = &HL_TABLE()[idx];
 
   // Return if "default" was used and the group already has settings
   if (dodefault && hl_has_settings(idx, true)) {
@@ -6637,14 +6634,14 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // Make a copy so we can check if any attribute actually changed
-  item_before = *item;
-  is_normal_group = (STRCMP(item->sg_name_u, "NORMAL") == 0);
+  item_before = HL_TABLE()[idx];
+  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0);
 
   // Clear the highlighting for ":hi clear {group}" and ":hi clear".
   if (doclear || (forceit && init)) {
     highlight_clear(idx);
     if (!doclear) {
-      item->sg_set = 0;
+      HL_TABLE()[idx].sg_set = 0;
     }
   }
 
@@ -6670,9 +6667,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       linep = (const char *)skipwhite((const char_u *)linep);
 
       if (strcmp(key, "NONE") == 0) {
-        if (!init || item->sg_set == 0) {
+        if (!init || HL_TABLE()[idx].sg_set == 0) {
           if (!init) {
-            item->sg_set |= SG_CTERM+SG_GUI;
+            HL_TABLE()[idx].sg_set |= SG_CTERM+SG_GUI;
           }
           highlight_clear(idx);
         }
@@ -6741,34 +6738,34 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           break;
         }
         if (*key == 'C')   {
-          if (!init || !(item->sg_set & SG_CTERM)) {
+          if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
             if (!init) {
-              item->sg_set |= SG_CTERM;
+              HL_TABLE()[idx].sg_set |= SG_CTERM;
             }
-            item->sg_cterm = attr;
-            item->sg_cterm_bold = false;
+            HL_TABLE()[idx].sg_cterm = attr;
+            HL_TABLE()[idx].sg_cterm_bold = false;
           }
         } else if (*key == 'G') {
-          if (!init || !(item->sg_set & SG_GUI)) {
+          if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
             if (!init) {
-              item->sg_set |= SG_GUI;
+              HL_TABLE()[idx].sg_set |= SG_GUI;
             }
-            item->sg_gui = attr;
+            HL_TABLE()[idx].sg_gui = attr;
           }
         }
       } else if (STRCMP(key, "FONT") == 0)   {
         // in non-GUI fonts are simply ignored
       } else if (STRCMP(key, "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0) {
-        if (!init || !(item->sg_set & SG_CTERM)) {
+        if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
           if (!init) {
-            item->sg_set |= SG_CTERM;
+            HL_TABLE()[idx].sg_set |= SG_CTERM;
           }
 
           /* When setting the foreground color, and previously the "bold"
            * flag was set for a light color, reset it now */
-          if (key[5] == 'F' && item->sg_cterm_bold) {
-            item->sg_cterm &= ~HL_BOLD;
-            item->sg_cterm_bold = false;
+          if (key[5] == 'F' && HL_TABLE()[idx].sg_cterm_bold) {
+            HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+            HL_TABLE()[idx].sg_cterm_bold = false;
           }
 
           if (ascii_isdigit(*arg)) {
@@ -6811,21 +6808,21 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             // set/reset bold attribute to get light foreground
             // colors (on some terminals, e.g. "linux")
             if (bold == kTrue) {
-              item->sg_cterm |= HL_BOLD;
-              item->sg_cterm_bold = true;
+              HL_TABLE()[idx].sg_cterm |= HL_BOLD;
+              HL_TABLE()[idx].sg_cterm_bold = true;
             } else if (bold == kFalse) {
-              item->sg_cterm &= ~HL_BOLD;
+              HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
             }
           }
           // Add one to the argument, to avoid zero.  Zero is used for
           // "NONE", then "color" is -1.
           if (key[5] == 'F') {
-            item->sg_cterm_fg = color + 1;
+            HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
             }
           } else {
-            item->sg_cterm_bg = color + 1;
+            HL_TABLE()[idx].sg_cterm_bg = color + 1;
             if (is_normal_group) {
               cterm_normal_bg_color = color + 1;
               if (!ui_rgb_attached()) {
@@ -6852,61 +6849,61 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
         }
       } else if (strcmp(key, "GUIFG") == 0)   {
-        if (!init || !(item->sg_set & SG_GUI)) {
+        if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
-            item->sg_set |= SG_GUI;
+            HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(item->sg_rgb_fg_name);
+          xfree(HL_TABLE()[idx].sg_rgb_fg_name);
           if (strcmp(arg, "NONE")) {
-            item->sg_rgb_fg_name = (char_u *)xstrdup((char *)arg);
-            item->sg_rgb_fg = name_to_color((const char_u *)arg);
+            HL_TABLE()[idx].sg_rgb_fg_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_fg = name_to_color((const char_u *)arg);
           } else {
-            item->sg_rgb_fg_name = NULL;
-            item->sg_rgb_fg = -1;
+            HL_TABLE()[idx].sg_rgb_fg_name = NULL;
+            HL_TABLE()[idx].sg_rgb_fg = -1;
           }
         }
 
         if (is_normal_group) {
-          normal_fg = item->sg_rgb_fg;
+          normal_fg = HL_TABLE()[idx].sg_rgb_fg;
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
-        if (!init || !(item->sg_set & SG_GUI)) {
+        if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
-            item->sg_set |= SG_GUI;
+            HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(item->sg_rgb_bg_name);
+          xfree(HL_TABLE()[idx].sg_rgb_bg_name);
           if (STRCMP(arg, "NONE") != 0) {
-            item->sg_rgb_bg_name = (char_u *)xstrdup((char *)arg);
-            item->sg_rgb_bg = name_to_color((const char_u *)arg);
+            HL_TABLE()[idx].sg_rgb_bg_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_bg = name_to_color((const char_u *)arg);
           } else {
-            item->sg_rgb_bg_name = NULL;
-            item->sg_rgb_bg = -1;
+            HL_TABLE()[idx].sg_rgb_bg_name = NULL;
+            HL_TABLE()[idx].sg_rgb_bg = -1;
           }
         }
 
         if (is_normal_group) {
-          normal_bg = item->sg_rgb_bg;
+          normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
       } else if (strcmp(key, "GUISP") == 0)   {
-        if (!init || !(item->sg_set & SG_GUI)) {
+        if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
-            item->sg_set |= SG_GUI;
+            HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(item->sg_rgb_sp_name);
+          xfree(HL_TABLE()[idx].sg_rgb_sp_name);
           if (strcmp(arg, "NONE") != 0) {
-            item->sg_rgb_sp_name = (char_u *)xstrdup((char *)arg);
-            item->sg_rgb_sp = name_to_color((const char_u *)arg);
+            HL_TABLE()[idx].sg_rgb_sp_name = (char_u *)xstrdup((char *)arg);
+            HL_TABLE()[idx].sg_rgb_sp = name_to_color((const char_u *)arg);
           } else {
-            item->sg_rgb_sp_name = NULL;
-            item->sg_rgb_sp = -1;
+            HL_TABLE()[idx].sg_rgb_sp_name = NULL;
+            HL_TABLE()[idx].sg_rgb_sp = -1;
           }
         }
 
         if (is_normal_group) {
-          normal_sp = item->sg_rgb_sp;
+          normal_sp = HL_TABLE()[idx].sg_rgb_sp;
         }
       } else if (strcmp(key, "START") == 0 || strcmp(key, "STOP") == 0)   {
         // Ignored for now
@@ -6915,11 +6912,11 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         error = true;
         break;
       }
-      item->sg_cleared = false;
+      HL_TABLE()[idx].sg_cleared = false;
 
       // When highlighting has been given for a group, don't link it.
-      if (!init || !(item->sg_set & SG_LINK)) {
-        item->sg_link = 0;
+      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
+        HL_TABLE()[idx].sg_link = 0;
       }
 
       // Continue with next argument.
@@ -6945,20 +6942,19 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         // redraw below will still handle usages of guibg=fg etc.
         ui_default_colors_set();
       }
-      item = &HL_TABLE()[idx];
       did_highlight_changed = true;
       redraw_all_later(NOT_VALID);
     } else {
       set_hl_attr(idx);
     }
-    item->sg_scriptID = current_SID;
+    HL_TABLE()[idx].sg_scriptID = current_SID;
   }
   xfree(key);
   xfree(arg);
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
-  if (memcmp(item, &item_before, sizeof(item_before)) != 0
+  if (memcmp(&HL_TABLE()[idx], &item_before, sizeof(item_before)) != 0
       && !did_highlight_changed) {
     redraw_all_later(NOT_VALID);
     need_highlight_changed = true;
