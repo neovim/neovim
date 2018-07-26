@@ -2804,7 +2804,7 @@ static char_u *get_str_line(int c, void *cookie, int ident)
     i++;
   }
   char buf[2046];
-  strncpy(buf, (char *)p->buf+p->pointer, i);
+  xstpncpy(buf, (char *)p->buf+p->pointer, i);
   buf[i-p->pointer]='\0';
   p->pointer = i+1;
   return (char_u *)xstrdup(buf);
