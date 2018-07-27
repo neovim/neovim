@@ -1533,10 +1533,9 @@ syn_finish_line(
   colnr_T prev_current_col;
 
   while (!current_finished) {
-    (void)syn_current_attr(syncing, FALSE, NULL, FALSE);
-    /*
-     * When syncing, and found some item, need to check the item.
-     */
+    (void)syn_current_attr(syncing, false, NULL, false);
+
+    // When syncing, and found some item, need to check the item.
     if (syncing && current_state.ga_len) {
       /*
        * Check for match with sync item.
@@ -1610,9 +1609,9 @@ get_syntax_attr(
    * Skip from the current column to "col", get the attributes for "col".
    */
   while (current_col <= col) {
-    attr = syn_current_attr(FALSE, TRUE, can_spell,
-        current_col == col ? keep_state : FALSE);
-    ++current_col;
+    attr = syn_current_attr(false, true, can_spell,
+                            current_col == col ? keep_state : false);
+    current_col++;
   }
 
   return attr;
@@ -1621,42 +1620,37 @@ get_syntax_attr(
 /*
  * Get syntax attributes for current_lnum, current_col.
  */
-static int
-syn_current_attr(
-    int syncing,                           // When 1: called for syncing
-    int displaying,                        // result will be displayed
-    bool *can_spell,                       // return: do spell checking
-    int keep_state                         // keep syntax stack afterwards
+static int syn_current_attr(
+    const bool syncing,                   // When true: called for syncing
+    const bool displaying,                // result will be displayed
+    bool *const can_spell,                // return: do spell checking
+    const bool keep_state                 // keep syntax stack afterwards
 )
 {
-  int syn_id;
-  lpos_T endpos;                /* was: char_u *endp; */
-  lpos_T hl_startpos;           /* was: int hl_startcol; */
+  lpos_T endpos;                // was: char_u *endp;
+  lpos_T hl_startpos;           // was: int hl_startcol;
   lpos_T hl_endpos;
-  lpos_T eos_pos;               /* end-of-start match (start region) */
-  lpos_T eoe_pos;               /* end-of-end pattern */
-  int end_idx;                  /* group ID for end pattern */
-  synpat_T    *spp;
+  lpos_T eos_pos;               // end-of-start match (start region)
+  lpos_T eoe_pos;               // end-of-end pattern
+  int end_idx;                  // group ID for end pattern
   stateitem_T *cur_si, *sip = NULL;
   int startcol;
   int endcol;
   long flags;
   int cchar;
-  short       *next_list;
-  int found_match;                          /* found usable match */
-  static int try_next_column = FALSE;       /* must try in next col */
-  int do_keywords;
+  int16_t *next_list;
+  bool found_match;                         // found usable match
+  static bool try_next_column = false;      // must try in next col
   regmmatch_T regmatch;
   lpos_T pos;
-  int lc_col;
   reg_extmatch_T *cur_extmatch = NULL;
   char_u      buf_chartab[32];  // chartab array for syn iskeyword
   char_u      *line;            // current line.  NOTE: becomes invalid after
                                 // looking for a pattern match!
 
-  /* variables for zero-width matches that have a "nextgroup" argument */
-  int keep_next_list;
-  int zero_width_next_list = FALSE;
+  // variables for zero-width matches that have a "nextgroup" argument
+  bool keep_next_list;
+  bool zero_width_next_list = false;
   garray_T zero_width_next_ga;
 
   /*
@@ -1691,13 +1685,13 @@ syn_current_attr(
    */
   if (try_next_column) {
     next_match_idx = -1;
-    try_next_column = FALSE;
+    try_next_column = false;
   }
 
-  /* Only check for keywords when not syncing and there are some. */
-  do_keywords = !syncing
-                && (syn_block->b_keywtab.ht_used > 0
-                    || syn_block->b_keywtab_ic.ht_used > 0);
+  // Only check for keywords when not syncing and there are some.
+  const bool do_keywords = !syncing
+      && (syn_block->b_keywtab.ht_used > 0
+          || syn_block->b_keywtab_ic.ht_used > 0);
 
   /* Init the list of zero-width matches with a nextlist.  This is used to
    * avoid matching the same item in the same position twice. */
@@ -1712,9 +1706,9 @@ syn_current_attr(
    * column.
    */
   do {
-    found_match = FALSE;
-    keep_next_list = FALSE;
-    syn_id = 0;
+    found_match = false;
+    keep_next_list = false;
+    int syn_id = 0;
 
     /*
      * 1. Check for a current state.
@@ -1807,7 +1801,7 @@ syn_current_attr(
           next_match_idx = 0;                   /* no match in this line yet */
           next_match_col = MAXCOL;
           for (int idx = syn_block->b_syn_patterns.ga_len; --idx >= 0; ) {
-            spp = &(SYN_ITEMS(syn_block)[idx]);
+            synpat_T *const spp = &(SYN_ITEMS(syn_block)[idx]);
             if (       spp->sp_syncing == syncing
                        && (displaying || !(spp->sp_flags & HL_DISPLAY))
                        && (spp->sp_type == SPTYPE_MATCH
@@ -1828,13 +1822,14 @@ syn_current_attr(
                 continue;
               spp->sp_line_id = current_line_id;
 
-              lc_col = current_col - spp->sp_offsets[SPO_LC_OFF];
-              if (lc_col < 0)
+              colnr_T lc_col = current_col - spp->sp_offsets[SPO_LC_OFF];
+              if (lc_col < 0) {
                 lc_col = 0;
+              }
 
               regmatch.rmm_ic = spp->sp_ic;
               regmatch.regprog = spp->sp_prog;
-              int r = syn_regexec(&regmatch, current_lnum, (colnr_T)lc_col,
+              int r = syn_regexec(&regmatch, current_lnum, lc_col,
                                   IF_SYN_TIME(&spp->sp_time));
               spp->sp_prog = regmatch.regprog;
               if (!r) {
@@ -1873,7 +1868,7 @@ syn_current_attr(
                * column, because it may match from there.
                */
               if (did_match_already(idx, &zero_width_next_ga)) {
-                try_next_column = TRUE;
+                try_next_column = true;
                 continue;
               }
 
@@ -1935,9 +1930,9 @@ syn_current_attr(
                    * If an empty string is matched, may need
                    * to try matching again at next column.
                    */
-                  if (regmatch.startpos[0].col
-                      == regmatch.endpos[0].col)
-                    try_next_column = TRUE;
+                  if (regmatch.startpos[0].col == regmatch.endpos[0].col) {
+                    try_next_column = true;
+                  }
                   continue;
                 }
               }
@@ -1982,8 +1977,8 @@ syn_current_attr(
               && lspp->sp_next_list != NULL) {
             current_next_list = lspp->sp_next_list;
             current_next_flags = lspp->sp_flags;
-            keep_next_list = TRUE;
-            zero_width_next_list = TRUE;
+            keep_next_list = true;
+            zero_width_next_list = true;
 
             /* Add the index to a list, so that we can check
              * later that we don't match it again (and cause an
@@ -2026,8 +2021,9 @@ syn_current_attr(
        */
       current_next_list = NULL;
       next_match_idx = -1;
-      if (!zero_width_next_list)
-        found_match = TRUE;
+      if (!zero_width_next_list) {
+        found_match = true;
+      }
     }
 
   } while (found_match);
