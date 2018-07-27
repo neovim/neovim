@@ -2932,39 +2932,35 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
  * The caller must check if a keyword can start at startcol.
  * Return its ID if found, 0 otherwise.
  */
-static int
-check_keyword_id(
-    char_u *line,
-    int startcol,                   /* position in line to check for keyword */
-    int *endcolp,           /* return: character after found keyword */
-    long *flagsp,            /* return: flags of matching keyword */
-    short **next_listp,       /* return: next_list of matching keyword */
-    stateitem_T *cur_si,            /* item at the top of the stack */
-    int *ccharp     /* conceal substitution char */
+static int check_keyword_id(
+    char_u *const line,
+    const int startcol,           // position in line to check for keyword
+    int *const endcolp,           // return: character after found keyword
+    long *const flagsp,           // return: flags of matching keyword
+    int16_t **const next_listp,   // return: next_list of matching keyword
+    stateitem_T *const cur_si,    // item at the top of the stack
+    int *const ccharp             // conceal substitution char
 )
 {
-  char_u      *kwp;
-  int kwlen;
-  char_u keyword[MAXKEYWLEN + 1];        /* assume max. keyword len is 80 */
-
-  /* Find first character after the keyword.  First character was already
-   * checked. */
-  kwp = line + startcol;
-  kwlen = 0;
+  // Find first character after the keyword.  First character was already
+  // checked.
+  char_u *const kwp = line + startcol;
+  int kwlen = 0;
   do {
-    if (has_mbyte)
+    if (has_mbyte) {
       kwlen += (*mb_ptr2len)(kwp + kwlen);
-    else
-      ++kwlen;
+    } else {
+      kwlen++;
+    }
   } while (vim_iswordp_buf(kwp + kwlen, syn_buf));
 
-  if (kwlen > MAXKEYWLEN)
+  if (kwlen > MAXKEYWLEN) {
     return 0;
+  }
 
-  /*
-   * Must make a copy of the keyword, so we can add a NUL and make it
-   * lowercase.
-   */
+  // Must make a copy of the keyword, so we can add a NUL and make it
+  // lowercase.
+  char_u keyword[MAXKEYWLEN + 1];         // assume max. keyword len is 80
   STRLCPY(keyword, kwp, kwlen + 1);
 
   keyentry_T *kp = NULL;
