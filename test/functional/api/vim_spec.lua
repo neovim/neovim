@@ -104,6 +104,12 @@ describe('API', function()
 	  nvim('source','source '..fname)
 	  eq(nvim('get_var','x1'),'a')
 	end)
+
+	it('nvim_source: functions work', function()
+	  nvim('source','function Foo()\ncall setline(1,["xxx"])\nendfunction')
+	  nvim('source','call Foo()')
+	  eq(nvim('get_current_line'),'xxx')
+	end)
   end)
 
   describe('nvim_command', function()
