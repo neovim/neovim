@@ -507,6 +507,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
         init_search_hl(wp);
         start_search_hl();
         prepare_search_hl(wp, lnum);
+        update_window_hl(wp, false);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
         end_search_hl();
         break;
@@ -579,6 +580,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_redr_type != 0) {
+        update_window_hl(wp, wp->w_redr_type >= NOT_VALID);
         win_update(wp);
       }
       if (wp->w_redr_status) {

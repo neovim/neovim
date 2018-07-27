@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
+local source = helpers.source
 
 describe('Signs', function()
   local screen
@@ -13,6 +14,9 @@ describe('Signs', function()
       [0] = {bold=true, foreground=255},
       [1] = {background = Screen.colors.Yellow},
       [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},
+      [3] = {background = Screen.colors.Gray90},
+      [4] = {bold = true, reverse = true},
+      [5] = {reverse = true},
     } )
   end)
 
@@ -42,6 +46,35 @@ describe('Signs', function()
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
+                                                             |
+      ]])
+    end)
+
+    it('can be called right after :split', function()
+      feed('ia<cr>b<cr>c<cr><esc>gg')
+      -- This used to cause a crash due to :sign using a special redraw
+      -- (not updating nvim's specific highlight data structures)
+      -- without proper redraw first, as split just flags for redraw later.
+      source([[
+        set cursorline
+        sign define piet text=>> texthl=Search
+        split
+        sign place 3 line=2 name=piet buffer=1
+      ]])
+      screen:expect([[
+        {2:  }{3:^a                                                  }|
+        {1:>>}b                                                  |
+        {2:  }c                                                  |
+        {2:  }                                                   |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {4:[No Name] [+]                                        }|
+        {2:  }{3:a                                                  }|
+        {1:>>}b                                                  |
+        {2:  }c                                                  |
+        {2:  }                                                   |
+        {2:  }{0:~                                                  }|
+        {5:[No Name] [+]                                        }|
                                                              |
       ]])
     end)
