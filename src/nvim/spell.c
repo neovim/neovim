@@ -2043,9 +2043,11 @@ char_u *did_set_spelllang(win_T *wp)
         dont_use_region = true;
 
       // Check if we loaded this language before.
-      for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-        if (path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles)
+      for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
+        if (path_full_compare(lang, slang->sl_fname, false) == kEqualFiles) {
           break;
+        }
+      }
     } else {
       filename = false;
       if (len > 3 && lang[len - 3] == '_') {
@@ -2085,8 +2087,9 @@ char_u *did_set_spelllang(win_T *wp)
     }
 
     // Loop over the languages, there can be several files for "lang".
-    for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (filename ? path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles
+    for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
+      if (filename
+          ? path_full_compare(lang, slang->sl_fname, false) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -2116,6 +2119,7 @@ char_u *did_set_spelllang(win_T *wp)
             nobreak = true;
         }
       }
+    }
   }
 
   // round 0: load int_wordlist, if possible.
@@ -2137,17 +2141,21 @@ char_u *did_set_spelllang(win_T *wp)
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL && path_full_compare(spf_name, p, FALSE) == kEqualFiles)
+        if (p != NULL
+            && path_full_compare(spf_name, p, false) == kEqualFiles) {
           break;
+        }
       }
       if (c < ga.ga_len)
         continue;
     }
 
     // Check if it was loaded already.
-    for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (path_full_compare(spf_name, slang->sl_fname, FALSE) == kEqualFiles)
+    for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
+      if (path_full_compare(spf_name, slang->sl_fname, false) == kEqualFiles) {
         break;
+      }
+    }
     if (slang == NULL) {
       // Not loaded, try loading it now.  The language name includes the
       // region name, the region is ignored otherwise.  for int_wordlist

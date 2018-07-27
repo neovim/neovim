@@ -5062,38 +5062,33 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
  */
 static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
 {
-  char_u      *retstr;
-  char_u      *s;
   char_u      *e;
-  char_u keep;
   garray_T ga;
 
-  retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp,
-                                 num_file, file);
+  char_u *const retstr = call_user_expand_func(
+      (user_expand_func_T)call_func_retstr, xp, num_file, file);
   if (retstr == NULL) {
     return FAIL;
   }
 
   ga_init(&ga, (int)sizeof(char *), 3);
-  for (s = retstr; *s != NUL; s = e) {
+  for (char_u *s = retstr; *s != NUL; s = e) {
     e = vim_strchr(s, '\n');
     if (e == NULL)
       e = s + STRLEN(s);
-    keep = *e;
-    *e = 0;
+    const int keep = *e;
+    *e = NUL;
 
-    if (xp->xp_pattern[0] && vim_regexec(regmatch, s, (colnr_T)0) == 0) {
-      *e = keep;
-      if (*e != NUL)
-        ++e;
-      continue;
+    const bool skip = xp->xp_pattern[0]
+        && vim_regexec(regmatch, s, (colnr_T)0) == 0;
+    *e = keep;
+    if (!skip) {
+      GA_APPEND(char_u *, &ga, vim_strnsave(s, (int)(e - s)));
     }
 
-    GA_APPEND(char_u *, &ga, vim_strnsave(s, (int)(e - s)));
-
-    *e = keep;
-    if (*e != NUL)
-      ++e;
+    if (*e != NUL) {
+      e++;
+    }
   }
   xfree(retstr);
   *file = ga.ga_data;
