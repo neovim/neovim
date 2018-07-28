@@ -5196,35 +5196,28 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
  */
 static int
 get_id_list(
-    char_u **arg,
-    int keylen,         // length of keyword
-    int16_t **list,     // where to store the resulting list, if not
-                        // NULL, the list is silently skipped!
-    int skip
+    char_u **const arg,
+    const int keylen,       // length of keyword
+    int16_t **const list,   // where to store the resulting list, if not
+                            // NULL, the list is silently skipped!
+    const bool skip
 )
 {
   char_u      *p = NULL;
   char_u      *end;
-  int round;
-  int count;
   int total_count = 0;
-  short       *retval = NULL;
-  char_u      *name;
+  int16_t *retval = NULL;
   regmatch_T regmatch;
   int id;
-  int failed = FALSE;
+  bool failed = false;
 
-  /*
-   * We parse the list twice:
-   * round == 1: count the number of items, allocate the array.
-   * round == 2: fill the array with the items.
-   * In round 1 new groups may be added, causing the number of items to
-   * grow when a regexp is used.  In that case round 1 is done once again.
-   */
-  for (round = 1; round <= 2; ++round) {
-    /*
-     * skip "contains"
-     */
+  // We parse the list twice:
+  // round == 1: count the number of items, allocate the array.
+  // round == 2: fill the array with the items.
+  // In round 1 new groups may be added, causing the number of items to
+  // grow when a regexp is used.  In that case round 1 is done once again.
+  for (int round = 1; round <= 2; round++) {
+    // skip "contains"
     p = skipwhite(*arg + keylen);
     if (*p != '=') {
       EMSG2(_("E405: Missing equal sign: %s"), *arg);
@@ -5236,14 +5229,12 @@ get_id_list(
       break;
     }
 
-    /*
-     * parse the arguments after "contains"
-     */
-    count = 0;
+    // parse the arguments after "contains"
+    int count = 0;
     do {
-      for (end = p; *end && !ascii_iswhite(*end) && *end != ','; ++end)
-        ;
-      name = xmalloc((int)(end - p + 3));             /* leave room for "^$" */
+      for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {
+      }
+      char_u *const name = xmalloc((int)(end - p + 3));   // leave room for "^$"
       STRLCPY(name + 1, p, end - p + 1);
       if (       STRCMP(name + 1, "ALLBUT") == 0
                  || STRCMP(name + 1, "ALL") == 0
@@ -5251,7 +5242,7 @@ get_id_list(
                  || STRCMP(name + 1, "CONTAINED") == 0) {
         if (TOUPPER_ASC(**arg) != 'C') {
           EMSG2(_("E407: %s not allowed here"), name + 1);
-          failed = TRUE;
+          failed = true;
           xfree(name);
           break;
         }
@@ -5287,7 +5278,7 @@ get_id_list(
           STRCAT(name, "$");
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
           if (regmatch.regprog == NULL) {
-            failed = TRUE;
+            failed = true;
             xfree(name);
             break;
           }
@@ -5318,7 +5309,7 @@ get_id_list(
       xfree(name);
       if (id == 0) {
         EMSG2(_("E409: Unknown group name: %s"), p);
-        failed = TRUE;
+        failed = true;
         break;
       }
       if (id > 0) {
@@ -5341,8 +5332,8 @@ get_id_list(
     if (failed)
       break;
     if (round == 1) {
-      retval = xmalloc((count + 1) * sizeof(short));
-      retval[count] = 0;            /* zero means end of the list */
+      retval = xmalloc((count + 1) * sizeof(*retval));
+      retval[count] = 0;            // zero means end of the list
       total_count = count;
     }
   }
