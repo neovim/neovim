@@ -4695,30 +4695,25 @@ syn_cmd_region(
   }
 }
 
-/*
- * A simple syntax group ID comparison function suitable for use in qsort()
- */
-static int syn_compare_stub(const void *v1, const void *v2)
+// A simple syntax group ID comparison function suitable for use in qsort()
+static int syn_compare_stub(const void *const v1, const void *const v2)
 {
-  const short *s1 = v1;
-  const short *s2 = v2;
+  const int16_t *const s1 = v1;
+  const int16_t *const s2 = v2;
 
   return *s1 > *s2 ? 1 : *s1 < *s2 ? -1 : 0;
 }
 
-/*
- * Combines lists of syntax clusters.
- * *clstr1 and *clstr2 must both be allocated memory; they will be consumed.
- */
-static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
+// Combines lists of syntax clusters.
+// *clstr1 and *clstr2 must both be allocated memory; they will be consumed.
+static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2,
+                             const int list_op)
 {
-  int count1 = 0;
-  int count2 = 0;
-  short       *g1;
-  short       *g2;
-  short       *clstr = NULL;
-  int count;
-  int round;
+  size_t count1 = 0;
+  size_t count2 = 0;
+  const int16_t *g1;
+  const int16_t *g2;
+  int16_t *clstr = NULL;
 
   /*
    * Handle degenerate cases.
@@ -4735,27 +4730,25 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
     return;
   }
 
-  for (g1 = *clstr1; *g1; g1++)
-    ++count1;
-  for (g2 = *clstr2; *g2; g2++)
-    ++count2;
+  for (g1 = *clstr1; *g1; g1++) {
+    count1++;
+  }
+  for (g2 = *clstr2; *g2; g2++) {
+    count2++;
+  }
 
-  /*
-   * For speed purposes, sort both lists.
-   */
-  qsort(*clstr1, (size_t)count1, sizeof(short), syn_compare_stub);
-  qsort(*clstr2, (size_t)count2, sizeof(short), syn_compare_stub);
+  // For speed purposes, sort both lists.
+  qsort(*clstr1, count1, sizeof(**clstr1), syn_compare_stub);
+  qsort(*clstr2, count2, sizeof(**clstr2), syn_compare_stub);
 
-  /*
-   * We proceed in two passes; in round 1, we count the elements to place
-   * in the new list, and in round 2, we allocate and populate the new
-   * list.  For speed, we use a mergesort-like method, adding the smaller
-   * of the current elements in each list to the new list.
-   */
-  for (round = 1; round <= 2; round++) {
+  // We proceed in two passes; in round 1, we count the elements to place
+  // in the new list, and in round 2, we allocate and populate the new
+  // list.  For speed, we use a mergesort-like method, adding the smaller
+  // of the current elements in each list to the new list.
+  for (int round = 1; round <= 2; round++) {
     g1 = *clstr1;
     g2 = *clstr2;
-    count = 0;
+    int count = 0;
 
     /*
      * First, loop through the lists until one of them is empty.
@@ -4807,7 +4800,7 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
         clstr = NULL;
         break;
       }
-      clstr = xmalloc((count + 1) * sizeof(short));
+      clstr = xmalloc((count + 1) * sizeof(*clstr));
       clstr[count] = 0;
     }
   }
