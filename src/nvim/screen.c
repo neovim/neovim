@@ -543,52 +543,57 @@ static void update_finish(void)
     updating_screen = FALSE;
 }
 
-void update_debug_sign(buf_T *buf, linenr_T lnum)
+void update_debug_sign(const buf_T *const buf, const linenr_T lnum)
 {
-    int  doit = FALSE;
-    win_foldinfo.fi_level = 0;
+  bool doit = false;
+  win_foldinfo.fi_level = 0;
 
-    /* update/delete a specific mark */
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (buf != NULL && lnum > 0) {
-        if (wp->w_buffer == buf && lnum >= wp->w_topline
-            && lnum < wp->w_botline) {
-          if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
-            wp->w_redraw_top = lnum;
-          }
-          if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
-            wp->w_redraw_bot = lnum;
-          }
-          redraw_win_later(wp, VALID);
+  // update/delete a specific mark
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (buf != NULL && lnum > 0) {
+      if (wp->w_buffer == buf && lnum >= wp->w_topline
+          && lnum < wp->w_botline) {
+        if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
+          wp->w_redraw_top = lnum;
         }
-      } else {
+        if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
+          wp->w_redraw_bot = lnum;
+        }
         redraw_win_later(wp, VALID);
       }
-      if (wp->w_redr_type != 0) {
-        doit = TRUE;
-      }
+    } else {
+      redraw_win_later(wp, VALID);
     }
-
-    /* Return when there is nothing to do, screen updating is already
-     * happening (recursive call) or still starting up. */
-    if (!doit || updating_screen || starting) {
-        return;
+    if (wp->w_redr_type != 0) {
+      doit = true;
     }
+  }
 
-    /* update all windows that need updating */
-    update_prepare();
+  // Return when there is nothing to do, screen updating is already
+  // happening (recursive call), messages on the screen or still starting up.
+  if (!doit
+      || updating_screen
+      || State == ASKMORE
+      || State == HITRETURN
+      || msg_scrolled
+      || starting) {
+    return;
+  }
 
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_redr_type != 0) {
-        update_window_hl(wp, wp->w_redr_type >= NOT_VALID);
-        win_update(wp);
-      }
-      if (wp->w_redr_status) {
-        win_redr_status(wp);
-      }
+  // update all windows that need updating
+  update_prepare();
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_redr_type != 0) {
+      update_window_hl(wp, wp->w_redr_type >= NOT_VALID);
+      win_update(wp);
     }
+    if (wp->w_redr_status) {
+      win_redr_status(wp);
+    }
+  }
 
-    update_finish();
+  update_finish();
 }
 
 /*

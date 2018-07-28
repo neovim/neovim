@@ -1221,18 +1221,19 @@ static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
 /*
  * free the given stack element
  */
-static void ff_free_stack_element(ff_stack_T *stack_ptr)
+static void ff_free_stack_element(ff_stack_T *const stack_ptr)
 {
   if (stack_ptr == NULL) {
     return;
   }
 
-  /* free handles possible NULL pointers */
+  // free handles possible NULL pointers
   xfree(stack_ptr->ffs_fix_path);
   xfree(stack_ptr->ffs_wc_path);
 
-  if (stack_ptr->ffs_filearray != NULL)
+  if (stack_ptr->ffs_filearray != NULL) {
     FreeWild(stack_ptr->ffs_filearray_size, stack_ptr->ffs_filearray);
+  }
 
   xfree(stack_ptr);
 }
