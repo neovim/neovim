@@ -148,9 +148,9 @@ typedef struct syn_pattern {
 
 
 typedef struct syn_cluster_S {
-  char_u          *scl_name;        /* syntax cluster name */
-  char_u          *scl_name_u;      /* uppercase of scl_name */
-  short           *scl_list;        /* IDs in this syntax cluster */
+  char_u *scl_name;         // syntax cluster name
+  char_u *scl_name_u;       // uppercase of scl_name
+  int16_t *scl_list;        // IDs in this syntax cluster
 } syn_cluster_T;
 
 /*
@@ -4177,8 +4177,8 @@ static void syn_incl_toplevel(int id, int *flagsp)
     return;
   *flagsp |= HL_CONTAINED;
   if (curwin->w_s->b_syn_topgrp >= SYNID_CLUSTER) {
-    /* We have to alloc this, because syn_combine_list() will free it. */
-    short *grp_list = xmalloc(2 * sizeof(short));
+    // We have to alloc this, because syn_combine_list() will free it.
+    int16_t *grp_list = xmalloc(2 * sizeof(*grp_list));
     int tlg_id = curwin->w_s->b_syn_topgrp - SYNID_CLUSTER;
 
     grp_list[0] = id;
@@ -4913,8 +4913,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   char_u      *group_name_end;
   char_u      *rest;
   int scl_id;
-  short       *clstr_list;
-  int got_clstr = FALSE;
+  bool got_clstr = false;
   int opt_len;
   int list_op;
 
@@ -4946,7 +4945,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
       } else
         break;
 
-      clstr_list = NULL;
+      int16_t *clstr_list = NULL;
       if (get_id_list(&rest, opt_len, &clstr_list, eap->skip) == FAIL) {
         EMSG2(_(e_invarg2), rest);
         break;
