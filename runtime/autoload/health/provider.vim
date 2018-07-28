@@ -291,20 +291,14 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-  endif
-
-  if !empty(pyname)
-    if exists('g:'.host_prog_var)
-      let python_bin = exepath(pyname)
-    endif
-    let pyname = fnamemodify(pyname, ':t')
+  elseif exists('g:'.host_prog_var)
+    let python_bin = pyname
   endif
 
   if !empty(pythonx_errs)
     call health#report_error('Python provider error', pythonx_errs)
-  endif
 
-  if !empty(pyname) && empty(python_bin) && empty(pythonx_errs)
+  elseif !empty(pyname) && empty(python_bin)
     if !exists('g:'.host_prog_var)
       call health#report_info(printf('`g:%s` is not set.  Searching for '
             \ . '%s in the environment.', host_prog_var, pyname))
