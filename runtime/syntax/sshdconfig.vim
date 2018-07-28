@@ -221,6 +221,7 @@ syn keyword sshdconfigKeyword Subsystem
 syn keyword sshdconfigKeyword SyslogFacility
 syn keyword sshdconfigKeyword TCPKeepAlive
 syn keyword sshdconfigKeyword TrustedUserCAKeys
+syn keyword sshdconfigKeyword UseBlacklist
 syn keyword sshdconfigKeyword UseDNS
 syn keyword sshdconfigKeyword UseLogin
 syn keyword sshdconfigKeyword UsePAM
