@@ -198,7 +198,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name,
   }
   assert(24 + exepathlen < IOSIZE);  // Must fit in `cmdbuf` below.
 
-  char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace))];
+  char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace)) + MAXPATHL];
   snprintf(cmdbuf, sizeof(cmdbuf), "addr2line -e %s -f -p", exepath);
   for (int i = 1; i < trace_size; i++) {
     char buf[20];  // 64-bit pointer 0xNNNNNNNNNNNNNNNN with leading space.
