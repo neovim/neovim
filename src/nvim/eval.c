@@ -16401,9 +16401,12 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
   return list;
 }
 
+// os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
 static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
                                        bool retlist)
 {
+  proftime_T wait_time;
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
@@ -16430,10 +16433,28 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     return;  // Already did emsg.
   }
 
+  if (p_verbose > 3) {
+    char buf[NUMBUFLEN];
+    const char * cmd = tv_get_string_buf(argvars, buf);
+
+    verbose_enter_scroll();
+    smsg(_("Calling shell to execute: \"%s\""), cmd);
+    msg_puts("\n\n");
+    verbose_leave_scroll();
+  }
+
+  if (do_profiling == PROF_YES) {
+    prof_child_enter(&wait_time);
+  }
+
   // execute the command
   size_t nread = 0;
   char *res = NULL;
   int status = os_system(argv, input, input_len, &res, &nread);
+
+  if (do_profiling == PROF_YES) {
+    prof_child_exit(&wait_time);
+  }
 
   xfree(input);
 
