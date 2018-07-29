@@ -2245,3 +2245,27 @@ func Test_resize_from_copen()
 	augroup! QF_Test
     endtry
 endfunc
+
+" Tests for the quickfix buffer b:changedtick variable
+func Xchangedtick_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  new | only
+
+  Xexpr "" | Xexpr "" | Xexpr ""
+
+  Xopen
+  Xolder
+  Xolder
+  Xaddexpr "F1:10:Line10"
+  Xaddexpr "F2:20:Line20"
+  call g:Xsetlist([{"filename":"F3", "lnum":30, "text":"Line30"}], 'a')
+  call g:Xsetlist([], 'f')
+  call assert_equal(8, getbufvar('%', 'changedtick'))
+  Xclose
+endfunc
+
+func Test_changedtick()
+    call Xchangedtick_tests('c')
+    call Xchangedtick_tests('l')
+endfunc

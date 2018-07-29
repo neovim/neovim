@@ -2887,6 +2887,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
     qf_update_win_titlevar(qi);
 
     qf_fill_buffer(qi, buf, old_last);
+    buf_inc_changedtick(buf);
 
     if (old_last == NULL) {
       (void)qf_win_pos_update(qi, 0);
