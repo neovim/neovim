@@ -680,7 +680,13 @@ func Test_count()
   call assert_equal(0, count(d, 'c', 1))
 
   call assert_fails('call count(d, "a", 0, 1)', 'E474:')
-  call assert_fails('call count("a", "a")', 'E712:')
+
+  call assert_equal(0, count("foo", "bar"))
+  call assert_equal(1, count("foo", "oo"))
+  call assert_equal(2, count("foo", "o"))
+  call assert_equal(0, count("foo", "O"))
+  call assert_equal(2, count("foo", "O", 1))
+  call assert_equal(2, count("fooooo", "oo"))
 endfunc
 
 func Test_changenr()
