@@ -14,8 +14,6 @@ typedef struct syn_state synstate_T;
 #include "nvim/buffer_defs.h"
 #include "nvim/regexp_defs.h"
 
-typedef unsigned short disptick_T;      /* display tick type */
-
 /* struct passed to in_id_list() */
 struct sp_syn {
   int inc_tag;                  // ":syn include" unique tag
