@@ -283,17 +283,17 @@ void update_screen(int type)
   if (msg_scrolled) {
     clear_cmdline = true;
     if (dy_flags & DY_MSGSEP) {
+      int valid = MAX(Rows - msg_scrollsize(), 0);
+      if (valid == 0) {
+        redraw_tabline = true;
+      }
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        int valid = Rows - msg_scrollsize();
         if (wp->w_winrow + wp->w_height > valid) {
           wp->w_redr_type = NOT_VALID;
           wp->w_lines_valid = 0;
         }
         if (wp->w_winrow + wp->w_height + wp->w_status_height > valid) {
           wp->w_redr_status = true;
-        }
-        if (valid == 0) {
-          redraw_tabline = true;
         }
       }
     } else if (msg_scrolled > Rows - 5) {  // clearing is faster

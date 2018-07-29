@@ -802,7 +802,16 @@ static void reset_scroll_region(UI *ui)
 static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
 {
   TUIData *data = ui->data;
-  ugrid_resize(&data->grid, (int)width, (int)height);
+  UGrid *grid = &data->grid;
+  ugrid_resize(grid, (int)width, (int)height);
+
+  // resize might not always be followed by a clear before flush
+  // so clip the invalid region
+  for (size_t i = 0; i < kv_size(data->invalid_regions); i++) {
+    Rect *r = &kv_A(data->invalid_regions, i);
+    r->bot = MIN(r->bot, grid->height-1);
+    r->right = MIN(r->right, grid->width-1);
+  }
 
   if (!got_winch) {  // Try to resize the terminal window.
     UNIBI_SET_NUM_VAR(data->params[0], (int)height);
@@ -823,7 +832,7 @@ static void tui_grid_clear(UI *ui, Integer g)
   UGrid *grid = &data->grid;
   ugrid_clear(grid);
   kv_size(data->invalid_regions) = 0;
-  clear_region(ui, grid->top, grid->bot, grid->left, grid->right,
+  clear_region(ui, 0, grid->height-1, 0, grid->width-1,
                data->clear_attrs);
 }
 

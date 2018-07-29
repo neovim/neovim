@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#if !defined(WIN32)
+# include <sys/time.h>  // for gettimeofday()
+#endif
 #include <uv.h>
 
 #include "nvim/log.h"
@@ -260,25 +263,33 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
-  // format current timestamp in local time
+  // Format the timestamp.
   struct tm local_time;
-  if (os_get_localtime(&local_time) == NULL) {
+  if (os_localtime(&local_time) == NULL) {
     return false;
   }
   char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%Y/%m/%d %H:%M:%S",
+  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
                &local_time) == 0) {
     return false;
   }
 
-  // print the log message prefixed by the current timestamp and pid
+  int millis = 0;
+#if !defined(WIN32)
+  struct timeval curtime;
+  if (gettimeofday(&curtime, NULL) == 0) {
+    millis = (int)curtime.tv_usec / 1000;
+  }
+#endif
+
+  // Print the log message.
   int64_t pid = os_get_pid();
   int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s %" PRId64 " %s", date_time,
-              log_levels[log_level], pid,
+    ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
+              log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "?:" : context))
-    : fprintf(log_file, "%s %s %" PRId64 " %s%s:%d: ", date_time,
-              log_levels[log_level], pid,
+    : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
+              log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "" : context),
               func_name, line_num);
   if (rv < 0) {
