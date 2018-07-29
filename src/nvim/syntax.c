@@ -3314,12 +3314,10 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
           EMSG2(_("E391: No such syntax cluster: %s"), arg);
           break;
         } else {
-          /*
-           * We can't physically delete a cluster without changing
-           * the IDs of other clusters, so we do the next best thing
-           * and make it empty.
-           */
-          short scl_id = id - SYNID_CLUSTER;
+          // We can't physically delete a cluster without changing
+          // the IDs of other clusters, so we do the next best thing
+          // and make it empty.
+          int scl_id = id - SYNID_CLUSTER;
 
           xfree(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
           SYN_CLSTR(curwin->w_s)[scl_id].scl_list = NULL;
@@ -3706,7 +3704,7 @@ static void put_id_list(const char *const name,
     } else if (*p >= SYNID_CONTAINED && *p < SYNID_CLUSTER)   {
       msg_puts("CONTAINED");
     } else if (*p >= SYNID_CLUSTER)   {
-      short scl_id = *p - SYNID_CLUSTER;
+      int scl_id = *p - SYNID_CLUSTER;
 
       msg_putchar('@');
       msg_outtrans(SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
@@ -4905,7 +4903,6 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   char_u      *arg = eap->arg;
   char_u      *group_name_end;
   char_u      *rest;
-  int scl_id;
   bool got_clstr = false;
   int opt_len;
   int list_op;
@@ -4917,9 +4914,10 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   rest = get_group_name(arg, &group_name_end);
 
   if (rest != NULL) {
-    scl_id = syn_check_cluster(arg, (int)(group_name_end - arg));
-    if (scl_id == 0)
+    int scl_id = syn_check_cluster(arg, (int)(group_name_end - arg));
+    if (scl_id == 0) {
       return;
+    }
     scl_id -= SYNID_CLUSTER;
 
     for (;; ) {
