@@ -1526,31 +1526,26 @@ int syntax_check_changed(linenr_T lnum)
  */
 static bool
 syn_finish_line(
-    bool syncing                  // called for syncing
+    const bool syncing            // called for syncing
 )
 {
-  stateitem_T *cur_si;
-  colnr_T prev_current_col;
-
   while (!current_finished) {
     (void)syn_current_attr(syncing, false, NULL, false);
 
     // When syncing, and found some item, need to check the item.
     if (syncing && current_state.ga_len) {
-      /*
-       * Check for match with sync item.
-       */
-      cur_si = &CUR_STATE(current_state.ga_len - 1);
+      // Check for match with sync item.
+      const stateitem_T *const cur_si = &CUR_STATE(current_state.ga_len - 1);
       if (cur_si->si_idx >= 0
           && (SYN_ITEMS(syn_block)[cur_si->si_idx].sp_flags
               & (HL_SYNC_HERE|HL_SYNC_THERE))) {
         return true;
       }
 
-      /* syn_current_attr() will have skipped the check for an item
-       * that ends here, need to do that now.  Be careful not to go
-       * past the NUL. */
-      prev_current_col = current_col;
+      // syn_current_attr() will have skipped the check for an item
+      // that ends here, need to do that now.  Be careful not to go
+      // past the NUL.
+      const colnr_T prev_current_col = current_col;
       if (syn_getcurline()[current_col] != NUL) {
         current_col++;
       }
