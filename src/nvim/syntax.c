@@ -3554,9 +3554,7 @@ syn_list_one(
     int link_only                      /* when TRUE; list link-only too */
 )
 {
-  int attr;
-  int did_header = FALSE;
-  synpat_T    *spp;
+  bool did_header = false;
   static struct name_list namelist1[] =
   {
     {HL_DISPLAY, "display"},
@@ -3579,23 +3577,26 @@ syn_list_one(
     {0, NULL}
   };
 
-  attr = HL_ATTR(HLF_D);                // highlight like directories
+  const int attr = HL_ATTR(HLF_D);      // highlight like directories
 
-  /* list the keywords for "id" */
+  // list the keywords for "id"
   if (!syncing) {
-    did_header = syn_list_keywords(id, &curwin->w_s->b_keywtab, FALSE, attr);
+    did_header = syn_list_keywords(id, &curwin->w_s->b_keywtab, false, attr);
     did_header = syn_list_keywords(id, &curwin->w_s->b_keywtab_ic,
-        did_header, attr);
+                                   did_header, attr);
   }
 
-  /* list the patterns for "id" */
-  for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len && !got_int; ++idx) {
-    spp = &(SYN_ITEMS(curwin->w_s)[idx]);
-    if (spp->sp_syn.id != id || spp->sp_syncing != syncing)
+  // list the patterns for "id"
+  for (int idx = 0;
+       idx < curwin->w_s->b_syn_patterns.ga_len && !got_int;
+       idx++) {
+    const synpat_T *const spp = &(SYN_ITEMS(curwin->w_s)[idx]);
+    if (spp->sp_syn.id != id || spp->sp_syncing != syncing) {
       continue;
+    }
 
     (void)syn_list_header(did_header, 999, id);
-    did_header = TRUE;
+    did_header = true;
     last_matchgroup = 0;
     if (spp->sp_type == SPTYPE_MATCH) {
       put_pattern("match", ' ', spp, attr);
@@ -3716,12 +3717,10 @@ static void put_id_list(const char *const name,
   msg_putchar(' ');
 }
 
-static void put_pattern(char *s, int c, synpat_T *spp, int attr)
+static void put_pattern(const char *const s, const int c,
+                        const synpat_T *const spp, const int attr)
 {
-  long n;
-  int mask;
-  int first;
-  static char *sepchars = "/+=-#@\"|'^&";
+  static const char *const sepchars = "/+=-#@\"|'^&";
   int i;
 
   /* May have to write "matchgroup=group" */
@@ -3750,10 +3749,10 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
   msg_outtrans(spp->sp_pattern);
   msg_putchar(sepchars[i]);
 
-  /* output any pattern options */
-  first = TRUE;
-  for (i = 0; i < SPO_COUNT; ++i) {
-    mask = (1 << i);
+  // output any pattern options
+  bool first = true;
+  for (i = 0; i < SPO_COUNT; i++) {
+    const int mask = (1 << i);
     if (!(spp->sp_off_flags & (mask + (mask << SPO_COUNT)))) {
       continue;
     }
@@ -3761,7 +3760,7 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
       msg_putchar(',');  // Separate with commas.
     }
     msg_puts(spo_name_tab[i]);
-    n = spp->sp_offsets[i];
+    const long n = spp->sp_offsets[i];
     if (i != SPO_LC_OFF) {
       if (spp->sp_off_flags & mask)
         msg_putchar('s');
@@ -3770,21 +3769,20 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
       if (n > 0)
         msg_putchar('+');
     }
-    if (n || i == SPO_LC_OFF)
+    if (n || i == SPO_LC_OFF) {
       msg_outnum(n);
-    first = FALSE;
+    }
+    first = false;
   }
   msg_putchar(' ');
 }
 
-/*
- * List or clear the keywords for one syntax group.
- * Return TRUE if the header has been printed.
- */
-static int syn_list_keywords(
+// List or clear the keywords for one syntax group.
+// Return true if the header has been printed.
+static bool syn_list_keywords(
     const int id,
     const hashtab_T *const ht,
-    int did_header,                         // header has already been printed
+    bool did_header,                        // header has already been printed
     const int attr
 )
 {
@@ -3824,7 +3822,7 @@ static int syn_list_keywords(
           prev_skipwhite = 0;
           prev_skipempty = 0;
         }
-        did_header = TRUE;
+        did_header = true;
         if (prev_contained != (kp->flags & HL_CONTAINED)) {
           msg_puts_attr("contained", attr);
           msg_putchar(' ');
@@ -6973,12 +6971,10 @@ static void highlight_clear(int idx)
 #define LIST_INT    3
 /// @}
 
-static void highlight_list_one(int id)
+static void highlight_list_one(const int id)
 {
-  struct hl_group     *sgp;
-  int didh = FALSE;
-
-  sgp = &HL_TABLE()[id - 1];        /* index is ID minus one */
+  struct hl_group *const sgp = &HL_TABLE()[id - 1];  // index is ID minus one
+  bool didh = false;
 
   didh = highlight_list_arg(id, didh, LIST_ATTR,
       sgp->sg_cterm, NULL, "cterm");
@@ -7015,24 +7011,24 @@ static void highlight_list_one(int id)
 /// @param type one of \ref LIST_XXX
 /// @param iarg integer argument used if \p type == LIST_INT
 /// @param sarg string used if \p type == LIST_STRING
-static int highlight_list_arg(int id, int didh, int type, int iarg,
-                              char_u *sarg, const char *name)
+static bool highlight_list_arg(
+    const int id, bool didh, const int type, int iarg,
+    char_u *const sarg, const char *const name)
 {
   char_u buf[100];
-  char_u      *ts;
-  int i;
 
-  if (got_int)
-    return FALSE;
+  if (got_int) {
+    return false;
+  }
   if (type == LIST_STRING ? (sarg != NULL) : (iarg != 0)) {
-    ts = buf;
-    if (type == LIST_INT)
-      sprintf((char *)buf, "%d", iarg - 1);
-    else if (type == LIST_STRING)
+    char_u *ts = buf;
+    if (type == LIST_INT) {
+      snprintf((char *)buf, sizeof(buf), "%d", iarg - 1);
+    } else if (type == LIST_STRING) {
       ts = sarg;
-    else {   /* type == LIST_ATTR */
+    } else {    // type == LIST_ATTR
       buf[0] = NUL;
-      for (i = 0; hl_attr_table[i] != 0; ++i) {
+      for (int i = 0; hl_attr_table[i] != 0; i++) {
         if (iarg & hl_attr_table[i]) {
           if (buf[0] != NUL)
             xstrlcat((char *)buf, ",", 100);
@@ -7042,9 +7038,8 @@ static int highlight_list_arg(int id, int didh, int type, int iarg,
       }
     }
 
-    (void)syn_list_header(didh,
-        (int)(vim_strsize(ts) + STRLEN(name) + 1), id);
-    didh = TRUE;
+    (void)syn_list_header(didh, (int)(vim_strsize(ts) + STRLEN(name) + 1), id);
+    didh = true;
     if (!got_int) {
       if (*name != NUL) {
         MSG_PUTS_ATTR(name, HL_ATTR(HLF_D));
@@ -7162,11 +7157,11 @@ const char *highlight_color(const int id, const char *const what,
 /// @param outlen length of string that comes
 /// @param id highlight group id
 /// @return true when started a new line.
-static int
-syn_list_header(int did_header, int outlen, int id)
+static bool syn_list_header(const bool did_header, const int outlen,
+                            const int id)
 {
   int endcol = 19;
-  int newline = TRUE;
+  bool newline = true;
 
   if (!did_header) {
     msg_putchar('\n');
@@ -7177,11 +7172,13 @@ syn_list_header(int did_header, int outlen, int id)
     endcol = 15;
   } else if (msg_col + outlen + 1 >= Columns)   {
     msg_putchar('\n');
-    if (got_int)
-      return TRUE;
+    if (got_int) {
+      return true;
+    }
   } else {
-    if (msg_col >= endcol)      /* wrap around is like starting a new line */
-      newline = FALSE;
+    if (msg_col >= endcol) {    // wrap around is like starting a new line
+      newline = false;
+    }
   }
 
   if (msg_col >= endcol)        /* output at least one space */
