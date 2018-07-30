@@ -5051,7 +5051,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
 
   ret = user_expand_func(xp->xp_arg,
                          3,
-                         (const unsigned char * const *)args,
+                         (const char_u * const *)args,
                          false);
 
   ccline = save_ccline;
