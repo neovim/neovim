@@ -1786,7 +1786,7 @@ spell_reload_one (
   bool didit = false;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(fname, slang->sl_fname, FALSE) == kEqualFiles) {
+    if (path_full_compare(fname, slang->sl_fname, false) == kEqualFiles) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, false) == NULL)
         // reloading failed, clear the language
@@ -4714,9 +4714,11 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   // pointer-linked version of the trie.  And it avoids having two versions
   // of the code for the soundfolding stuff.
   // It might have been done already by spell_reload_one().
-  for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-    if (path_full_compare(wfname, slang->sl_fname, FALSE) == kEqualFiles)
+  for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
+    if (path_full_compare(wfname, slang->sl_fname, false) == kEqualFiles) {
       break;
+    }
+  }
   if (slang == NULL) {
     spell_message(spin, (char_u *)_("Reading back spell file..."));
     slang = spell_load_file(wfname, NULL, NULL, false);

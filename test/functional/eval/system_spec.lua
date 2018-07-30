@@ -203,6 +203,48 @@ describe('system()', function()
       ]])
     end)
 
+    it('prints verbose information', function()
+      feed(':4verbose echo system("echo hi")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+                                                             |
+        Calling shell to execute: "echo hi"                  |
+                                                             |
+        hi                                                   |
+                                                             |
+        Press ENTER or type command to continue^              |
+      ]])
+      feed('<cr>')
+    end)
+
+    it('self and total time recorded separately', function()
+      local tempfile = helpers.tmpname()
+
+      feed(':function! AlmostNoSelfTime()<cr>')
+      feed('echo system("echo hi")<cr>')
+      feed('endfunction<cr>')
+
+      feed(':profile start ' .. tempfile .. '<cr>')
+      feed(':profile func AlmostNoSelfTime<cr>')
+      feed(':call AlmostNoSelfTime()<cr>')
+      feed(':profile dump<cr>')
+
+      feed(':edit ' .. tempfile .. '<cr>')
+
+      local command_total_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[2])
+      local command_self_time = tonumber(helpers.funcs.split(helpers.funcs.getline(7))[3])
+
+      helpers.neq(nil, command_total_time)
+      helpers.neq(nil, command_self_time)
+    end)
+
     it('`yes` interrupted with CTRL-C', function()
       feed(':call system("' .. (iswin()
         and 'for /L %I in (1,0,2) do @echo y'

@@ -173,6 +173,9 @@ func FinishTesting()
   " Don't write viminfo on exit.
   set viminfo=
 
+  " Clean up files created by setup.vim
+  call delete('XfakeHOME', 'rf')
+
   if s:fail == 0
     " Success, create the .res file so that make knows it's done.
     exe 'split ' . fnamemodify(g:testname, ':r') . '.res'

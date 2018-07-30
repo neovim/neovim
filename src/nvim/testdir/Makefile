@@ -116,6 +116,7 @@ NEW_TESTS ?= \
 	    test_visual.res \
 	    test_winbuf_close.res \
 	    test_window_id.res \
+	    test_windows_home.res \
 	    test_wordcount.res \
 	    test_writefile.res \
 	    test_alot_latin.res \

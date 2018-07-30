@@ -7592,9 +7592,38 @@ static void f_copy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   long n = 0;
-  int ic = FALSE;
+  int ic = 0;
+  bool error = false;
 
-  if (argvars[0].v_type == VAR_LIST) {
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    ic = tv_get_number_chk(&argvars[2], &error);
+  }
+
+  if (argvars[0].v_type == VAR_STRING) {
+    const char_u *expr = (char_u *)tv_get_string_chk(&argvars[1]);
+    const char_u *p = argvars[0].vval.v_string;
+
+    if (!error && expr != NULL && p != NULL) {
+      if (ic) {
+        const size_t len = STRLEN(expr);
+
+        while (*p != NUL) {
+          if (mb_strnicmp(p, expr, len) == 0) {
+            n++;
+            p += len;
+          } else {
+            MB_PTR_ADV(p);
+          }
+        }
+      } else {
+        char_u *next;
+        while ((next = (char_u *)strstr((char *)p, (char *)expr)) != NULL) {
+          n++;
+          p = next + STRLEN(expr);
+        }
+      }
+    }
+  } else if (argvars[0].v_type == VAR_LIST) {
     listitem_T      *li;
     list_T          *l;
     long idx;
@@ -7602,9 +7631,6 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if ((l = argvars[0].vval.v_list) != NULL) {
       li = tv_list_first(l);
       if (argvars[2].v_type != VAR_UNKNOWN) {
-        bool error = false;
-
-        ic = tv_get_number_chk(&argvars[2], &error);
         if (argvars[3].v_type != VAR_UNKNOWN) {
           idx = tv_get_number_chk(&argvars[3], &error);
           if (!error) {
@@ -7630,10 +7656,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     hashitem_T      *hi;
 
     if ((d = argvars[0].vval.v_dict) != NULL) {
-      bool error = false;
-
       if (argvars[2].v_type != VAR_UNKNOWN) {
-        ic = tv_get_number_chk(&argvars[2], &error);
         if (argvars[3].v_type != VAR_UNKNOWN) {
           EMSG(_(e_invarg));
         }
@@ -7649,8 +7672,9 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
       }
     }
-  } else
+  } else {
     EMSG2(_(e_listdictarg), "count()");
+  }
   rettv->vval.v_number = n;
 }
 
@@ -16377,9 +16401,12 @@ static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
   return list;
 }
 
+// os_system wrapper. Handles 'verbose', :profile, and v:shell_error.
 static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
                                        bool retlist)
 {
+  proftime_T wait_time;
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
@@ -16406,10 +16433,28 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     return;  // Already did emsg.
   }
 
+  if (p_verbose > 3) {
+    char buf[NUMBUFLEN];
+    const char * cmd = tv_get_string_buf(argvars, buf);
+
+    verbose_enter_scroll();
+    smsg(_("Calling shell to execute: \"%s\""), cmd);
+    msg_puts("\n\n");
+    verbose_leave_scroll();
+  }
+
+  if (do_profiling == PROF_YES) {
+    prof_child_enter(&wait_time);
+  }
+
   // execute the command
   size_t nread = 0;
   char *res = NULL;
   int status = os_system(argv, input, input_len, &res, &nread);
+
+  if (do_profiling == PROF_YES) {
+    prof_child_exit(&wait_time);
+  }
 
   xfree(input);
 

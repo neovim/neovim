@@ -2289,7 +2289,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 {
   int c = *tagp->fname_end;
   *tagp->fname_end = NUL;
-  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
+  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, false);
   *tagp->fname_end = c;
 
   return fullname;
@@ -2363,8 +2363,8 @@ jumpto_tag (
    * Expand file name, when needed (for environment variables).
    * If 'tagrelative' option set, may change file name.
    */
-  fname = expand_tag_fname(fname, tagp.tag_fname, TRUE);
-  tofree_fname = fname;         /* free() it later */
+  fname = expand_tag_fname(fname, tagp.tag_fname, true);
+  tofree_fname = fname;         // free() it later
 
   /*
    * Check if the file with the tag exists before abandoning the current
@@ -2615,13 +2615,12 @@ erret:
   return retval;
 }
 
-/*
- * If "expand" is TRUE, expand wildcards in fname.
- * If 'tagrelative' option set, change fname (name of file containing tag)
- * according to tag_fname (name of tag file containing fname).
- * Returns a pointer to allocated memory.
- */
-static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
+// If "expand" is true, expand wildcards in fname.
+// If 'tagrelative' option set, change fname (name of file containing tag)
+// according to tag_fname (name of tag file containing fname).
+// Returns a pointer to allocated memory.
+static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname,
+                                const bool expand)
 {
   char_u      *p;
   char_u      *expanded_fname = NULL;
@@ -2676,8 +2675,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       c = *fname_end;
       *fname_end = NUL;
     }
-    fullname = expand_tag_fname(fname, tag_fname, TRUE);
-    retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
+    fullname = expand_tag_fname(fname, tag_fname, true);
+    retval = (path_full_compare(fullname, buf_ffname, true) & kEqualFiles);
     xfree(fullname);
     *fname_end = c;
   }
