@@ -128,7 +128,7 @@ static int hl_attr_table[] =
 // Note that ordering of members is optimized to reduce padding.
 typedef struct syn_pattern {
   char sp_type;                         // see SPTYPE_ defines below
-  char sp_syncing;                      // this item used for syncing
+  bool sp_syncing;                      // this item used for syncing
   int16_t sp_syn_match_id;              // highlight group ID of pattern
   int16_t sp_off_flags;                 // see below
   int sp_offsets[SPO_COUNT];            // offsets
@@ -3335,7 +3335,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
 /*
  * Clear one syntax group for the current buffer.
  */
-static void syn_clear_one(int id, int syncing)
+static void syn_clear_one(const int id, const bool syncing)
 {
   synpat_T    *spp;
 
@@ -3477,8 +3477,8 @@ syn_cmd_list(
     /*
      * No argument: List all group IDs and all syntax clusters.
      */
-    for (int id = 1; id <= highlight_ga.ga_len && !got_int; ++id) {
-      syn_list_one(id, syncing, FALSE);
+    for (int id = 1; id <= highlight_ga.ga_len && !got_int; id++) {
+      syn_list_one(id, syncing, false);
     }
     for (int id = 0; id < curwin->w_s->b_syn_clusters.ga_len && !got_int; ++id) {
       syn_list_cluster(id);
@@ -3497,10 +3497,11 @@ syn_cmd_list(
           syn_list_cluster(id - SYNID_CLUSTER);
       } else {
         int id = syn_namen2id(arg, (int)(arg_end - arg));
-        if (id == 0)
+        if (id == 0) {
           EMSG2(_(e_nogroup), arg);
-        else
-          syn_list_one(id, syncing, TRUE);
+        } else {
+          syn_list_one(id, syncing, true);
+        }
       }
       arg = skipwhite(arg_end);
     }
@@ -3544,9 +3545,9 @@ static int last_matchgroup;
  */
 static void
 syn_list_one(
-    int id,
-    int syncing,                        /* when TRUE: list syncing items */
-    int link_only                      /* when TRUE; list link-only too */
+    const int id,
+    const bool syncing,                 // when true: list syncing items
+    const bool link_only                // when true; list link-only too
 )
 {
   bool did_header = false;
