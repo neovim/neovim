@@ -1568,9 +1568,9 @@ syn_finish_line(
  */
 int
 get_syntax_attr(
-    colnr_T col,
-    bool *can_spell,
-    int keep_state                 /* keep state of char at "col" */
+    const colnr_T col,
+    bool *const can_spell,
+    const bool keep_state           // keep state of char at "col"
 )
 {
   int attr = 0;
