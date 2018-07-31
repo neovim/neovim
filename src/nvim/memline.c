@@ -1365,11 +1365,11 @@ recover_names (
      */
     if (curbuf->b_ml.ml_mfp != NULL
         && (p = curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
-      for (int i = 0; i < num_files; ++i)
-        if (path_full_compare(p, files[i], TRUE) & kEqualFiles) {
-          /* Remove the name from files[i].  Move further entries
-           * down.  When the array becomes empty free it here, since
-           * FreeWild() won't be called below. */
+      for (int i = 0; i < num_files; i++) {
+        if (path_full_compare(p, files[i], true) & kEqualFiles) {
+          // Remove the name from files[i].  Move further entries
+          // down.  When the array becomes empty free it here, since
+          // FreeWild() won't be called below.
           xfree(files[i]);
           if (--num_files == 0)
             xfree(files);
@@ -1377,6 +1377,7 @@ recover_names (
             for (; i < num_files; ++i)
               files[i] = files[i + 1];
         }
+      }
     }
     if (nr > 0) {
       file_count += num_files;

@@ -1,5 +1,11 @@
 " Common preparations for running tests.
 
+" Only load this once.
+if exists('s:did_load')
+  finish
+endif
+let s:did_load = 1
+
 " Align Nvim defaults to Vim.
 set sidescroll=0
 set directory^=.
@@ -16,7 +22,10 @@ set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
 let &packpath = &rtp
 
 " Make sure $HOME does not get read or written.
-let $HOME = '/does/not/exist'
+let $HOME = expand(getcwd() . '/XfakeHOME')
+if !isdirectory($HOME)
+  call mkdir($HOME)
+endif
 
 " Use default shell on Windows to avoid segfault, caused by TUI
 if has('win32')

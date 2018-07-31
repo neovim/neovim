@@ -3603,15 +3603,16 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  if (s != NULL && *s == NUL) {
-    /* Pattern is empty, use last search pattern. */
+  if (s == NULL || *s == NUL) {
+    // Pattern is empty, use last search pattern.
     if (last_search_pat() == NULL) {
       EMSG(_(e_noprevre));
       goto theend;
     }
     regmatch.regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
-  } else
+  } else {
     regmatch.regprog = vim_regcomp(s, RE_MAGIC);
+  }
 
   if (regmatch.regprog == NULL)
     goto theend;

@@ -37,7 +37,12 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event ==# 'stdout' || a:event ==# 'stderr'
+  if a:event ==# 'stderr'
+    let self.stderr .= join(a:data, '')
+    if !self.ignore_stderr
+      let self.output .= join(a:data, '')
+    endif
+  elseif a:event ==# 'stdout'
     let self.output .= join(a:data, '')
   elseif a:event ==# 'exit'
     let s:shell_error = a:data
@@ -57,16 +62,15 @@ endfunction
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
   let stdin = a:0 ? a:1 : ''
-  let ignore_stderr = a:0 > 1 ? a:2 : 0
   let ignore_error = a:0 > 2 ? a:3 : 0
   let opts = {
+        \ 'ignore_stderr': a:0 > 1 ? a:2 : 0,
         \ 'output': '',
+        \ 'stderr': '',
         \ 'on_stdout': function('s:system_handler'),
+        \ 'on_stderr': function('s:system_handler'),
         \ 'on_exit': function('s:system_handler'),
         \ }
-  if !ignore_stderr
-    let opts.on_stderr = function('s:system_handler')
-  endif
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
@@ -85,8 +89,8 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (job=%d): `%s` (in %s)\nOutput: %s",
-          \ jobid, s:shellify(a:cmd), string(getcwd()), opts.output))
+    call health#report_error(printf("Command error (job=%d, exit code %d): `%s` (in %s)\nOutput: %s\nStderr: %s",
+          \ jobid, s:shell_error, s:shellify(a:cmd), string(getcwd()), opts.output, opts.stderr))
   endif
 
   return opts.output
@@ -291,20 +295,14 @@ function! s:check_python(version) abort
   if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
-  endif
-
-  if !empty(pyname)
-    if exists('g:'.host_prog_var)
-      let python_bin = exepath(pyname)
-    endif
-    let pyname = fnamemodify(pyname, ':t')
+  elseif exists('g:'.host_prog_var)
+    let python_bin = pyname
   endif
 
   if !empty(pythonx_errs)
     call health#report_error('Python provider error', pythonx_errs)
-  endif
 
-  if !empty(pyname) && empty(python_bin) && empty(pythonx_errs)
+  elseif !empty(pyname) && empty(python_bin)
     if !exists('g:'.host_prog_var)
       call health#report_info(printf('`g:%s` is not set.  Searching for '
             \ . '%s in the environment.', host_prog_var, pyname))

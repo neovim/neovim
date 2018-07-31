@@ -4977,7 +4977,8 @@ void fix_help_buffer(void)
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         rt = (char_u *)vim_getenv("VIMRUNTIME");
-        if (path_full_compare(rt, NameBuff, FALSE) != kEqualFiles) {
+        if (rt != NULL
+            && path_full_compare(rt, NameBuff, false) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
           FILE        *fd;
@@ -5197,8 +5198,9 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
    * add the "help-tags" tag.
    */
   ga_init(&ga, (int)sizeof(char_u *), 100);
-  if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
-          dir, FALSE) == kEqualFiles) {
+  if (add_help_tags
+      || path_full_compare((char_u *)"$VIMRUNTIME/doc",
+                           dir, false) == kEqualFiles) {
     s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
     GA_APPEND(char_u *, &ga, s);
