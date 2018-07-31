@@ -1186,7 +1186,7 @@ int call_vim_function(
     const char_u *func,
     int argc,
     const char_u *const *const argv,
-    _Bool safe,                       // use the sandbox
+    bool safe,                       // use the sandbox
     int str_arg_only,               // all arguments are strings
     typval_T *rettv
 )
