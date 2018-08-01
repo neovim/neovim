@@ -310,18 +310,16 @@ void shift_line(
  */
 static void shift_block(oparg_T *oap, int amount)
 {
-  int left = (oap->op_type == OP_LSHIFT);
-  int oldstate = State;
-  char_u              *newp, *oldp;
-  int oldcol = curwin->w_cursor.col;
-  int p_sw = get_sw_value(curbuf);
-  int p_ts = (int)curbuf->b_p_ts;
+  const bool left = (oap->op_type == OP_LSHIFT);
+  const int oldstate = State;
+  char_u *newp;
+  const int oldcol = curwin->w_cursor.col;
+  const int p_sw = get_sw_value(curbuf);
+  const int p_ts = (int)curbuf->b_p_ts;
   struct block_def bd;
   int incr;
-  colnr_T ws_vcol;
   int i = 0, j = 0;
-  int len;
-  int old_p_ri = p_ri;
+  const int old_p_ri = p_ri;
 
   p_ri = 0;                     /* don't want revins in indent */
 
@@ -336,7 +334,7 @@ static void shift_block(oparg_T *oap, int amount)
     return;   // multiplication overflow
   }
 
-  oldp = get_cursor_line_ptr();
+  char_u *const oldp = get_cursor_line_ptr();
 
   if (!left) {
     /*
@@ -345,8 +343,8 @@ static void shift_block(oparg_T *oap, int amount)
      *  3. Divvy into TABs & spp
      *  4. Construct new string
      */
-    total += bd.pre_whitesp;     /* all virtual WS up to & incl a split TAB */
-    ws_vcol = bd.start_vcol - bd.pre_whitesp;
+    total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
+    colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
     if (bd.startspaces) {
       if (has_mbyte) {
         if ((*mb_ptr2len)(bd.textstart) == 1) {
@@ -375,8 +373,8 @@ static void shift_block(oparg_T *oap, int amount)
       j = total;
     /* if we're splitting a TAB, allow for it */
     bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
-    len = (int)STRLEN(bd.textstart) + 1;
-    newp = (char_u *) xmalloc((size_t)(bd.textcol + i + j + len));
+    const int len = (int)STRLEN(bd.textstart) + 1;
+    newp = (char_u *)xmalloc((size_t)(bd.textcol + i + j + len));
     memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
     memmove(newp, oldp, (size_t)bd.textcol);
     memset(newp + bd.textcol, TAB, (size_t)i);
@@ -393,10 +391,7 @@ static void shift_block(oparg_T *oap, int amount)
     size_t fill;                  // nr of spaces that replace a TAB
     size_t new_line_len;          // the length of the line after the
                                   // block shift
-    colnr_T block_space_width;
-    colnr_T shift_amount;
     char_u      *non_white = bd.textstart;
-    colnr_T non_white_col;
 
     /*
      * Firstly, let's find the first non-whitespace character that is
@@ -413,19 +408,20 @@ static void shift_block(oparg_T *oap, int amount)
       MB_PTR_ADV(non_white);
     }
 
-    /* The character's column is in "bd.start_vcol".  */
-    non_white_col = bd.start_vcol;
+    // The character's column is in "bd.start_vcol".
+    colnr_T non_white_col = bd.start_vcol;
 
     while (ascii_iswhite(*non_white)) {
       incr = lbr_chartabsize_adv(bd.textstart, &non_white, non_white_col);
       non_white_col += incr;
     }
 
-    block_space_width = non_white_col - oap->start_vcol;
-    /* We will shift by "total" or "block_space_width", whichever is less.
-     */
-    shift_amount = (block_space_width < total ? block_space_width : total);
 
+    const colnr_T block_space_width = non_white_col - oap->start_vcol;
+    // We will shift by "total" or "block_space_width", whichever is less.
+    const colnr_T shift_amount = block_space_width < total
+        ? block_space_width
+        : total;
     // The column to which we will shift the text.
     destination_col = non_white_col - shift_amount;
 
@@ -457,7 +453,7 @@ static void shift_block(oparg_T *oap, int amount)
     fill = (size_t)(destination_col - verbatim_copy_width);
 
     assert(verbatim_copy_end - oldp >= 0);
-    size_t verbatim_diff = (size_t)(verbatim_copy_end - oldp);
+    const size_t verbatim_diff = (size_t)(verbatim_copy_end - oldp);
     // The replacement line will consist of:
     // - the beginning of the original line up to "verbatim_copy_end",
     // - "fill" number of spaces,
