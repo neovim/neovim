@@ -7475,12 +7475,11 @@ static void ins_shift(int c, int lastc)
 
 static void ins_del(void)
 {
-  int temp;
-
-  if (stop_arrow() == FAIL)
+  if (stop_arrow() == FAIL) {
     return;
-  if (gchar_cursor() == NUL) {          /* delete newline */
-    temp = curwin->w_cursor.col;
+  }
+  if (gchar_cursor() == NUL) {          // delete newline
+    const int temp = curwin->w_cursor.col;
     if (!can_bs(BS_EOL)  // only if "eol" included
         || do_join(2, false, true, false, false) == FAIL) {
       vim_beep(BO_BS);
