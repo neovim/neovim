@@ -10210,25 +10210,26 @@ static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *oldcurwin;
-  tabpage_T *tp, *oldtabpage;
-  dictitem_T  *v;
+  tabpage_T *oldtabpage;
   bool done = false;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
   const char *const varname = tv_get_string_chk(&argvars[1]);
-  tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
+  tabpage_T *const tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
   if (tp != NULL && varname != NULL) {
     // Set tp to be our tabpage, temporarily.  Also set the window to the
     // first window in the tabpage, otherwise the window is not valid.
-    win_T *window = tp == curtab || tp->tp_firstwin == NULL ? firstwin
-                                                            : tp->tp_firstwin;
+    win_T *const window = tp == curtab || tp->tp_firstwin == NULL
+        ? firstwin
+        : tp->tp_firstwin;
     if (switch_win(&oldcurwin, &oldtabpage, window, tp, true) == OK) {
       // look up the variable
       // Let gettabvar({nr}, "") return the "t:" dictionary.
-      v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't',
-                         varname, strlen(varname), false);
+      const dictitem_T *const v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't',
+                                                 varname, strlen(varname),
+                                                 false);
       if (v != NULL) {
         tv_copy(&v->di_tv, rettv);
         done = true;
