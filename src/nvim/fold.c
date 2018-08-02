@@ -1530,14 +1530,11 @@ static bool check_closed(
  */
 static void
 checkSmall(
-    win_T *wp,
-    fold_T *fp,
-    linenr_T lnum_off             // offset for fp->fd_top
+    win_T *const wp,
+    fold_T *const fp,
+    const linenr_T lnum_off       // offset for fp->fd_top
 )
 {
-  int count;
-  int n;
-
   if (fp->fd_small == kNone) {
     // Mark any nested folds to maybe-small
     setSmallMaybe(&fp->fd_nested);
@@ -1545,8 +1542,8 @@ checkSmall(
     if (fp->fd_len > curwin->w_p_fml) {
       fp->fd_small = kFalse;
     } else {
-      count = 0;
-      for (n = 0; n < fp->fd_len; n++) {
+      int count = 0;
+      for (int n = 0; n < fp->fd_len; n++) {
         count += plines_win_nofold(wp, fp->fd_top + lnum_off + n);
         if (count > curwin->w_p_fml) {
           fp->fd_small = kFalse;
