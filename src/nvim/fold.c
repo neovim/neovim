@@ -659,34 +659,30 @@ void foldCreate(linenr_T start, linenr_T end)
  * When "end" is not 0, delete all folds from "start" to "end".
  * When "recursive" is TRUE delete recursively.
  */
-void
-deleteFold(
-    linenr_T start,
-    linenr_T end,
-    int recursive,
-    int had_visual                 // TRUE when Visual selection used
+void deleteFold(
+    const linenr_T start,
+    const linenr_T end,
+    const int recursive,
+    const bool had_visual         // true when Visual selection used
 )
 {
-  garray_T    *gap;
   fold_T      *fp;
-  garray_T    *found_ga;
   fold_T      *found_fp = NULL;
   linenr_T found_off = 0;
   bool maybe_small = false;
   int level = 0;
   linenr_T lnum = start;
-  linenr_T lnum_off;
-  int did_one = FALSE;
+  bool did_one = false;
   linenr_T first_lnum = MAXLNUM;
   linenr_T last_lnum = 0;
 
   checkupdate(curwin);
 
   while (lnum <= end) {
-    /* Find the deepest fold for "start". */
-    gap = &curwin->w_folds;
-    found_ga = NULL;
-    lnum_off = 0;
+    // Find the deepest fold for "start".
+    garray_T *gap = &curwin->w_folds;
+    garray_T *found_ga = NULL;
+    linenr_T lnum_off = 0;
     bool use_level = false;
     for (;; ) {
       if (!foldFind(gap, lnum - lnum_off, &fp))
@@ -723,7 +719,7 @@ deleteFold(
           parseMarker(curwin);
         deleteFoldMarkers(found_fp, recursive, found_off);
       }
-      did_one = TRUE;
+      did_one = true;
 
       /* redraw window */
       changed_window_setting();
