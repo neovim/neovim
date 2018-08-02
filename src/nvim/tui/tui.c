@@ -606,8 +606,6 @@ static void cursor_goto(UI *ui, int row, int col)
   if (row == grid->row && col == grid->col) {
     return;
   }
-  grid->row = row;
-  grid->col = col;
   if (0 == row && 0 == col) {
     unibi_out(ui, unibi_cursor_home);
     ugrid_goto(grid, row, col);
