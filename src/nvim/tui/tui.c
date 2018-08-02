@@ -95,6 +95,7 @@ typedef struct {
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
   bool immediate_wrap_after_last_column;
+  bool bce;
   bool mouse_enabled;
   bool busy, is_invisible;
   bool cork, overflow;
@@ -236,6 +237,7 @@ static void terminfo_start(UI *ui)
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
+  data->bce = unibi_get_bool(data->ut, unibi_back_color_erase);
   data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
                                     data->norm, sizeof data->norm);
   data->invislen = unibi_pre_fmt_str(data, unibi_cursor_invisible,
@@ -433,6 +435,12 @@ static bool attrs_differ(HlAttrs a1, HlAttrs a2, bool rgb)
       || a1.cterm_bg_color != a2.cterm_bg_color
       || a1.cterm_ae_attr != a2.cterm_ae_attr;
   }
+}
+
+static bool no_bg(UI *ui, HlAttrs attrs)
+{
+  return  ui->rgb ? attrs.rgb_bg_color == -1
+                  : attrs.cterm_bg_color == 0;
 }
 
 static void update_attrs(UI *ui, HlAttrs attrs)
@@ -693,10 +701,11 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
   UGrid *grid = &data->grid;
 
   bool cleared = false;
-  // TODO(bfredl): support BCE for non-default background
-  bool nobg = ui->rgb ? attrs.rgb_bg_color == -1
-                      : attrs.cterm_bg_color == 0;
-  if (nobg && right == ui->width -1) {
+
+  // non-BCE terminals can't clear with non-default background color
+  bool can_clear = data->bce || no_bg(ui, attrs);
+
+  if (can_clear && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
     update_attrs(ui, attrs);
@@ -984,18 +993,13 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer top, Integer bot,
   ugrid_scroll(grid, (int)rows, &clear_top, &clear_bot);
 
   if (can_use_scroll(ui)) {
-    bool scroll_clears_to_current_colour =
-      unibi_get_bool(data->ut, unibi_back_color_erase);
-
     // Change terminal scroll region and move cursor to the top
     if (!data->scroll_region_is_full_screen) {
       set_scroll_region(ui);
     }
     cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
-    if (scroll_clears_to_current_colour) {
-      update_attrs(ui, data->clear_attrs);
-    }
+    update_attrs(ui, data->clear_attrs);
 
     if (rows > 0) {
       if (rows == 1) {
@@ -1019,7 +1023,7 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer top, Integer bot,
     }
     cursor_goto(ui, data->row, data->col);
 
-    if (!scroll_clears_to_current_colour) {
+    if (!(data->bce || no_bg(ui, data->clear_attrs))) {
       // Scrolling will leave wrong background in the cleared area on non-BCE
       // terminals. Update the cleared area.
       clear_region(ui, clear_top, clear_bot, grid->left, grid->right,
