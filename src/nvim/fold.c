@@ -1876,13 +1876,10 @@ void foldtext_cleanup(char_u *str)
  * Update the folding for window "wp", at least from lines "top" to "bot".
  * Return TRUE if any folds did change.
  */
-static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
+static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
 {
-  linenr_T start;
-  linenr_T end;
   fline_T fline;
   void        (*getlevel)(fline_T *);
-  int level;
   fold_T      *fp;
 
   /* Avoid problems when being called recursively. */
@@ -1935,8 +1932,8 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
     /* Need to get the level of the line above top, it is used if there is
      * no marker at the top. */
     if (top > 1) {
-      /* Get the fold level at top - 1. */
-      level = foldLevelWin(wp, top - 1);
+      // Get the fold level at top - 1.
+      const int level = foldLevelWin(wp, top - 1);
 
       /* The fold may end just above the top, check for that. */
       fline.lnum = top - 1;
@@ -2012,11 +2009,12 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
     }
   }
 
-  start = fline.lnum;
-  end = bot;
-  /* Do at least one line. */
-  if (start > end && end < wp->w_buffer->b_ml.ml_line_count)
+  linenr_T start = fline.lnum;
+  linenr_T end = bot;
+  // Do at least one line.
+  if (start > end && end < wp->w_buffer->b_ml.ml_line_count) {
     end = start;
+  }
   while (!got_int) {
     /* Always stop at the end of the file ("end" can be past the end of
      * the file). */
