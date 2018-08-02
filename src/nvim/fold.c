@@ -1295,17 +1295,14 @@ static void foldOpenNested(fold_T *fpr)
 static void deleteFoldEntry(garray_T *const gap, const int idx,
                             const bool recursive)
 {
-  fold_T      *fp;
-  int i;
-  fold_T      *nfp;
-
-  fp = (fold_T *)gap->ga_data + idx;
+  fold_T *fp = (fold_T *)gap->ga_data + idx;
   if (recursive || GA_EMPTY(&fp->fd_nested)) {
-    /* recursively delete the contained folds */
+    // recursively delete the contained folds
     deleteFoldRecurse(&fp->fd_nested);
-    --gap->ga_len;
-    if (idx < gap->ga_len)
-      memmove(fp, fp + 1, sizeof(fold_T) * (size_t)(gap->ga_len - idx));
+    gap->ga_len--;
+    if (idx < gap->ga_len) {
+      memmove(fp, fp + 1, sizeof(*fp) * (size_t)(gap->ga_len - idx));
+    }
   } else {
     /* Move nested folds one level up, to overwrite the fold that is
      * deleted. */
@@ -1315,9 +1312,9 @@ static void deleteFoldEntry(garray_T *const gap, const int idx,
       /* Get "fp" again, the array may have been reallocated. */
       fp = (fold_T *)gap->ga_data + idx;
 
-      /* adjust fd_top and fd_flags for the moved folds */
-      nfp = (fold_T *)fp->fd_nested.ga_data;
-      for (i = 0; i < moved; ++i) {
+      // adjust fd_top and fd_flags for the moved folds
+      fold_T *nfp = (fold_T *)fp->fd_nested.ga_data;
+      for (int i = 0; i < moved; i++) {
         nfp[i].fd_top += fp->fd_top;
         if (fp->fd_flags == FD_LEVEL)
           nfp[i].fd_flags = FD_LEVEL;
@@ -1326,12 +1323,13 @@ static void deleteFoldEntry(garray_T *const gap, const int idx,
         }
       }
 
-      /* move the existing folds down to make room */
-      if (idx + 1 < gap->ga_len)
+      // move the existing folds down to make room
+      if (idx + 1 < gap->ga_len) {
         memmove(fp + moved, fp + 1,
-                sizeof(fold_T) * (size_t)(gap->ga_len - (idx + 1)));
-      /* move the contained folds one level up */
-      memmove(fp, nfp, sizeof(fold_T) * (size_t)moved);
+                sizeof(*fp) * (size_t)(gap->ga_len - (idx + 1)));
+      }
+      // move the contained folds one level up
+      memmove(fp, nfp, sizeof(*fp) * (size_t)moved);
       xfree(nfp);
       gap->ga_len += moved - 1;
     }
