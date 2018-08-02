@@ -5130,21 +5130,16 @@ void ex_viusage(exarg_T *eap)
 /// @param tagname  Name of the tags file ("tags" for English, "tags-fr" for
 ///                 French)
 /// @param add_help_tags  Whether to add the "help-tags" tag
-static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
-                         bool add_help_tags)
+static void helptags_one(char_u *const dir, const char_u *const ext,
+                         const char_u *const tagfname, const bool add_help_tags)
 {
-  FILE        *fd_tags;
-  FILE        *fd;
   garray_T ga;
   int filecount;
   char_u      **files;
   char_u      *p1, *p2;
-  int fi;
   char_u      *s;
-  char_u      *fname;
   TriState utf8 = kNone;
-  int firstline;
-  int mix = FALSE;              /* detected mixed encodings */
+  bool mix = false;             // detected mixed encodings
 
   // Find all *.txt files.
   size_t dirlen = STRLCPY(NameBuff, dir, sizeof(NameBuff));
@@ -5177,7 +5172,8 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
     EMSG(_(e_fnametoolong));
     return;
   }
-  fd_tags = mch_fopen((char *)NameBuff, "w");
+
+  FILE *const fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
     FreeWild(filecount, files);
@@ -5200,15 +5196,15 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   /*
    * Go over all the files and extract the tags.
    */
-  for (fi = 0; fi < filecount && !got_int; ++fi) {
-    fd = mch_fopen((char *)files[fi], "r");
+  for (int fi = 0; fi < filecount && !got_int; fi++) {
+    FILE *const fd = mch_fopen((char *)files[fi], "r");
     if (fd == NULL) {
       EMSG2(_("E153: Unable to open %s for reading"), files[fi]);
       continue;
     }
-    fname = files[fi] + dirlen + 1;
+    const char_u *const fname = files[fi] + dirlen + 1;
 
-    firstline = TRUE;
+    bool firstline = true;
     while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
         // Detect utf-8 file by a non-ASCII char in the first line.
@@ -5237,7 +5233,7 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
           mix = !got_int;
           got_int = TRUE;
         }
-        firstline = FALSE;
+        firstline = false;
       }
       p1 = vim_strchr(IObuff, '*');             /* find first '*' */
       while (p1 != NULL) {
