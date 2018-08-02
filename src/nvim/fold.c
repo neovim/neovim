@@ -2105,22 +2105,21 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
  * Returns bot, which may have been increased for lines that also need to be
  * updated as a result of a detected change in the fold.
  */
-static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
-                                      linenr_T startlnum, fline_T *flp,
-                                      LevelGetter getlevel,
-                                      linenr_T bot,
-                                      char topflags /* containing fold flags */
-                                      )
+static linenr_T foldUpdateIEMSRecurse(
+    garray_T *const gap, const int level, const linenr_T startlnum,
+    fline_T *const flp, LevelGetter getlevel, linenr_T bot,
+    const char topflags  // containing fold flags
+)
 {
   linenr_T ll;
   fold_T      *fp = NULL;
   fold_T      *fp2;
   int lvl = level;
   linenr_T startlnum2 = startlnum;
-  linenr_T firstlnum = flp->lnum;       /* first lnum we got */
+  const linenr_T firstlnum = flp->lnum;     // first lnum we got
   int i;
   bool finish = false;
-  linenr_T linecount = flp->wp->w_buffer->b_ml.ml_line_count - flp->off;
+  const linenr_T linecount = flp->wp->w_buffer->b_ml.ml_line_count - flp->off;
   int concat;
 
   /*
