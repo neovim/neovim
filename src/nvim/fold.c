@@ -2527,19 +2527,15 @@ static void foldInsert(garray_T *gap, int i)
  * The caller must first have taken care of any nested folds from "top" to
  * "bot"!
  */
-static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
+static void foldSplit(garray_T *const gap, const int i, const linenr_T top,
+                      const linenr_T bot)
 {
-  fold_T      *fp;
   fold_T      *fp2;
-  garray_T    *gap1;
-  garray_T    *gap2;
-  int idx;
-  int len;
 
   /* The fold continues below bot, need to split it. */
   foldInsert(gap, i + 1);
 
-  fp = (fold_T *)gap->ga_data + i;
+  fold_T *const fp = (fold_T *)gap->ga_data + i;
   fp[1].fd_top = bot + 1;
   // check for wrap around (MAXLNUM, and 32bit)
   assert(fp[1].fd_top > bot);
@@ -2550,13 +2546,13 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
 
   /* Move nested folds below bot to new fold.  There can't be
    * any between top and bot, they have been removed by the caller. */
-  gap1 = &fp->fd_nested;
-  gap2 = &fp[1].fd_nested;
+  garray_T *const gap1 = &fp->fd_nested;
+  garray_T *const gap2 = &fp[1].fd_nested;
   (void)(foldFind(gap1, bot + 1 - fp->fd_top, &fp2));
-  len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
+  const int len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
   if (len > 0) {
     ga_grow(gap2, len);
-    for (idx = 0; idx < len; ++idx) {
+    for (int idx = 0; idx < len; idx++) {
       ((fold_T *)gap2->ga_data)[idx] = fp2[idx];
       ((fold_T *)gap2->ga_data)[idx].fd_top
         -= fp[1].fd_top - fp->fd_top;
