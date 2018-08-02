@@ -147,29 +147,27 @@ int hasAnyFolding(win_T *win)
  */
 bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
-  return hasFoldingWin(curwin, lnum, firstp, lastp, TRUE, NULL);
+  return hasFoldingWin(curwin, lnum, firstp, lastp, true, NULL);
 }
 
 /* hasFoldingWin() {{{2 */
 bool hasFoldingWin(
-    win_T *win,
-    linenr_T lnum,
-    linenr_T *firstp,
-    linenr_T *lastp,
-    int cache,                      /* when TRUE: use cached values of window */
-    foldinfo_T *infop             /* where to store fold info */
+    win_T *const win,
+    const linenr_T lnum,
+    linenr_T *const firstp,
+    linenr_T *const lastp,
+    const bool cache,             // when true: use cached values of window
+    foldinfo_T *const infop       // where to store fold info
 )
 {
   bool had_folded = false;
   linenr_T first = 0;
   linenr_T last = 0;
   linenr_T lnum_rel = lnum;
-  int x;
   fold_T      *fp;
   int level = 0;
   bool use_level = false;
   bool maybe_small = false;
-  garray_T    *gap;
   int low_level = 0;
 
   checkupdate(win);
@@ -187,7 +185,7 @@ bool hasFoldingWin(
      * First look in cached info for displayed lines.  This is probably
      * the fastest, but it can only be used if the entry is still valid.
      */
-    x = find_wl_entry(win, lnum);
+    const int x = find_wl_entry(win, lnum);
     if (x >= 0) {
       first = win->w_lines[x].wl_lnum;
       last = win->w_lines[x].wl_lastlnum;
@@ -199,7 +197,7 @@ bool hasFoldingWin(
     /*
      * Recursively search for a fold that contains "lnum".
      */
-    gap = &win->w_folds;
+    garray_T *gap = &win->w_folds;
     for (;; ) {
       if (!foldFind(gap, lnum_rel, &fp))
         break;
@@ -296,8 +294,9 @@ long foldedCount(win_T *win, linenr_T lnum, foldinfo_T *infop)
 {
   linenr_T last;
 
-  if (hasFoldingWin(win, lnum, NULL, &last, FALSE, infop))
+  if (hasFoldingWin(win, lnum, NULL, &last, false, infop)) {
     return (long)(last - lnum + 1);
+  }
   return 0;
 }
 
