@@ -31,17 +31,38 @@
 # include "api/buffer.c.generated.h"
 #endif
 
+
+/// \defgroup api-buffer
+///
+/// Unloaded Buffers:~
+///
+/// Buffers may be unloaded by the |:bunload| command or the buffer's
+/// |'bufhidden'| option. When a buffer is unloaded its file contents are freed
+/// from memory and vim cannot operate on the buffer lines until it is reloaded
+/// (usually by opening the buffer again in a new window). API methods such as
+/// |nvim_buf_get_lines()| and |nvim_buf_line_count()| will be affected.
+///
+/// You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()| to check
+/// whether a buffer is loaded.
+
+
 /// Gets the buffer line count
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
-/// @return Line count
+/// @return Line count, or \`0` if the buffer has been unloaded (see
+///         |api-buffer|).
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return 0;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
     return 0;
   }
 
@@ -205,7 +226,8 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
-/// @return Array of lines
+/// @return Array of lines. If the buffer has been unloaded then an empty array
+///                         will be returned instead. (See |api-buffer|.)
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buffer,
                                    Integer start,
@@ -218,6 +240,11 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return rv;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
     return rv;
   }
 
@@ -745,10 +772,27 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   }
 }
 
-/// Checks if a buffer is valid
+/// Checks if a buffer is valid and loaded. See |api-buffer| for more info
+/// about unloaded buffers.
 ///
 /// @param buffer Buffer handle
-/// @return true if the buffer is valid, false otherwise
+/// @return true if the buffer is valid and loaded, false otherwise.
+Boolean nvim_buf_is_loaded(Buffer buffer)
+  FUNC_API_SINCE(5)
+{
+  Error stub = ERROR_INIT;
+  buf_T *buf = find_buffer_by_handle(buffer, &stub);
+  api_clear_error(&stub);
+  return buf && buf->b_ml.ml_mfp != NULL;
+}
+
+/// Checks if a buffer is valid.
+///
+/// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
+/// for more info about unloaded buffers.
+///
+/// @param buffer Buffer handle
+/// @return true if the buffer is valid, false otherwise.
 Boolean nvim_buf_is_valid(Buffer buffer)
   FUNC_API_SINCE(1)
 {

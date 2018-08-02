@@ -413,10 +413,26 @@ def gen_docs(config):
         sys.exit(p.returncode)
 
     sections = {}
+    intros = {}
     sep = '=' * text_width
 
     base = os.path.join(out_dir, 'xml')
     dom = minidom.parse(os.path.join(base, 'index.xml'))
+
+    # generate docs for section intros
+    for compound in dom.getElementsByTagName('compound'):
+        if compound.getAttribute('kind') != 'group':
+            continue
+
+        groupname = get_text(find_first(compound, 'name'))
+        groupxml = os.path.join(base, '%s.xml' % compound.getAttribute('refid'))
+
+        desc = find_first(minidom.parse(groupxml), 'detaileddescription')
+        if desc:
+            doc = parse_parblock(desc)
+            if doc:
+                intros[groupname] = doc
+
     for compound in dom.getElementsByTagName('compound'):
         if compound.getAttribute('kind') != 'file':
             continue
@@ -437,6 +453,11 @@ def gen_docs(config):
                     name = name.title()
 
                 doc = ''
+
+                intro = intros.get('api-%s' % name.lower())
+                if intro:
+                    doc += '\n\n' + intro
+
                 if functions:
                     doc += '\n\n' + functions
 
