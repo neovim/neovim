@@ -4913,11 +4913,7 @@ void fix_help_buffer(void)
 {
   linenr_T lnum;
   char_u      *line;
-  int in_example = FALSE;
-  int len;
-  char_u      *fname;
-  char_u      *p;
-  char_u      *rt;
+  bool in_example = false;
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
@@ -4927,9 +4923,9 @@ void fix_help_buffer(void)
   }
 
   if (!syntax_present(curwin)) {
-    for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
-      line = ml_get_buf(curbuf, lnum, FALSE);
-      len = (int)STRLEN(line);
+    for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
+      line = ml_get_buf(curbuf, lnum, false);
+      const size_t len = STRLEN(line);
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         /* End of example: non-white or '<' in first column. */
         if (line[0] == '<') {
@@ -4937,14 +4933,14 @@ void fix_help_buffer(void)
           line = ml_get_buf(curbuf, lnum, TRUE);
           line[0] = ' ';
         }
-        in_example = FALSE;
+        in_example = false;
       }
       if (!in_example && len > 0) {
         if (line[len - 1] == '>' && (len == 1 || line[len - 2] == ' ')) {
           /* blank-out a '>' in the last column (start of example) */
           line = ml_get_buf(curbuf, lnum, TRUE);
           line[len - 1] = ' ';
-          in_example = TRUE;
+          in_example = true;
         } else if (line[len - 1] == '~') {
           /* blank-out a '~' at the end of line (header marker) */
           line = ml_get_buf(curbuf, lnum, TRUE);
@@ -4958,7 +4954,7 @@ void fix_help_buffer(void)
    * In the "help.txt" and "help.abx" file, add the locally added help
    * files.  This uses the very first line in the help file.
    */
-  fname = path_tail(curbuf->b_fname);
+  char_u *const fname = path_tail(curbuf->b_fname);
   if (fnamecmp(fname, "help.txt") == 0
       || (fnamencmp(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
@@ -4973,17 +4969,15 @@ void fix_help_buffer(void)
 
       /* Go through all directories in 'runtimepath', skipping
        * $VIMRUNTIME. */
-      p = p_rtp;
+      char_u *p = p_rtp;
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
-        rt = (char_u *)vim_getenv("VIMRUNTIME");
+        char_u *const rt = (char_u *)vim_getenv("VIMRUNTIME");
         if (rt != NULL
             && path_full_compare(rt, NameBuff, false) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
-          FILE        *fd;
           char_u      *s;
-          int fi;
           vimconv_T vc;
           char_u      *cp;
 
@@ -5001,29 +4995,24 @@ void fix_help_buffer(void)
           if (gen_expand_wildcards(1, buff_list, &fcount,
                   &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
-            int i1;
-            int i2;
-            char_u  *f1;
-            char_u  *f2;
-            char_u  *t1;
-            char_u  *e1;
-            char_u  *e2;
-
-            /* If foo.abx is found use it instead of foo.txt in
-             * the same directory. */
-            for (i1 = 0; i1 < fcount; ++i1) {
-              for (i2 = 0; i2 < fcount; ++i2) {
-                if (i1 == i2)
+            // If foo.abx is found use it instead of foo.txt in
+            // the same directory.
+            for (int i1 = 0; i1 < fcount; i1++) {
+              for (int i2 = 0; i2 < fcount; i2++) {
+                if (i1 == i2) {
                   continue;
-                if (fnames[i1] == NULL || fnames[i2] == NULL)
+                }
+                if (fnames[i1] == NULL || fnames[i2] == NULL) {
                   continue;
-                f1 = fnames[i1];
-                f2 = fnames[i2];
-                t1 = path_tail(f1);
-                if (fnamencmp(f1, f2, t1 - f1) != 0)
+                }
+                const char_u *const f1 = fnames[i1];
+                const char_u *const f2 = fnames[i2];
+                const char_u *const t1 = path_tail(f1);
+                if (fnamencmp(f1, f2, t1 - f1) != 0) {
                   continue;
-                e1 = vim_strrchr(t1, '.');
-                e2 = vim_strrchr(path_tail(f2), '.');
+                }
+                const char_u *const e1 = vim_strrchr(t1, '.');
+                const char_u *const e2 = vim_strrchr(path_tail(f2), '.');
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
@@ -5044,10 +5033,12 @@ void fix_help_buffer(void)
                 }
               }
             }
-            for (fi = 0; fi < fcount; ++fi) {
-              if (fnames[fi] == NULL)
+            for (int fi = 0; fi < fcount; fi++) {
+              if (fnames[fi] == NULL) {
                 continue;
-              fd = mch_fopen((char *)fnames[fi], "r");
+              }
+
+              FILE *const fd = mch_fopen((char *)fnames[fi], "r");
               if (fd == NULL) {
                 continue;
               }
