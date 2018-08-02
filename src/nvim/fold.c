@@ -822,42 +822,34 @@ void foldUpdateAll(win_T *win)
   redraw_win_later(win, NOT_VALID);
 }
 
-/* foldMoveTo() {{{2 */
-/*
- * If "updown" is FALSE: Move to the start or end of the fold.
- * If "updown" is TRUE: move to fold at the same level.
- * If not moved return FAIL.
- */
-int
-foldMoveTo(
-    int updown,
-    int dir,                    // FORWARD or BACKWARD
-    long count
+// foldMoveTo() {{{2
+//
+// If "updown" is false: Move to the start or end of the fold.
+// If "updown" is true: move to fold at the same level.
+// If not moved return FAIL.
+int foldMoveTo(
+    const bool updown,
+    const int dir,              // FORWARD or BACKWARD
+    const long count
 )
 {
-  long n;
   int retval = FAIL;
-  linenr_T lnum_off;
-  linenr_T lnum_found;
   linenr_T lnum;
-  garray_T    *gap;
   fold_T      *fp;
-  int level;
-  int last;
 
   checkupdate(curwin);
 
-  /* Repeat "count" times. */
-  for (n = 0; n < count; ++n) {
-    /* Find nested folds.  Stop when a fold is closed.  The deepest fold
-     * that moves the cursor is used. */
-    lnum_off = 0;
-    gap = &curwin->w_folds;
+  // Repeat "count" times.
+  for (long n = 0; n < count; n++) {
+    // Find nested folds.  Stop when a fold is closed.  The deepest fold
+    // that moves the cursor is used.
+    linenr_T lnum_off = 0;
+    garray_T *gap = &curwin->w_folds;
     bool use_level = false;
     bool maybe_small = false;
-    lnum_found = curwin->w_cursor.lnum;
-    level = 0;
-    last = FALSE;
+    linenr_T lnum_found = curwin->w_cursor.lnum;
+    int level = 0;
+    bool last = false;
     for (;; ) {
       if (!foldFind(gap, curwin->w_cursor.lnum - lnum_off, &fp)) {
         if (!updown)
@@ -875,14 +867,15 @@ foldMoveTo(
         }
         /* don't look for contained folds, they will always move
          * the cursor too far. */
-        last = TRUE;
+        last = true;
       }
 
       if (!last) {
         /* Check if this fold is closed. */
         if (check_closed(curwin, fp, &use_level, level,
-                &maybe_small, lnum_off))
-          last = TRUE;
+                         &maybe_small, lnum_off)) {
+          last = true;
+        }
 
         /* "[z" and "]z" stop at closed fold */
         if (last && !updown)
