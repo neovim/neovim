@@ -88,6 +88,7 @@ typedef struct {
   bool cont_received;
   UGrid grid;
   kvec_t(Rect) invalid_regions;
+  bool did_resize;
   int row, col;
   int out_fd;
   bool scroll_region_is_full_screen;
@@ -738,6 +739,14 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
     });
+
+    if (data->did_resize && top == 0) {
+      // TODO(bfredl): the first line of the screen doesn't gets properly
+      // cleared after resize by the loop above, so redraw the final state
+      // after the next flush.
+      invalidate(ui, 0, bot, left, right);
+      data->did_resize = false;
+    }
   }
 
   // restore cursor
@@ -813,6 +822,7 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   ugrid_resize(grid, (int)width, (int)height);
+  data->did_resize = true;
 
   // resize might not always be followed by a clear before flush
   // so clip the invalid region
