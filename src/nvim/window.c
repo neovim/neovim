@@ -4848,8 +4848,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     sline = wp->w_wrow - line_size;
 
     if (sline >= 0) {
-      /* Make sure the whole cursor line is visible, if possible. */
-      int rows = plines_win(wp, lnum, FALSE);
+      // Make sure the whole cursor line is visible, if possible.
+      const int rows = plines_win(wp, lnum, false);
 
       if (sline > wp->w_height - rows) {
         sline = wp->w_height - rows;
@@ -4884,12 +4884,13 @@ void scroll_to_fraction(win_T *wp, int prev_height)
           --sline;
           break;
         }
-        --lnum;
-        if (lnum == wp->w_topline)
-          line_size = plines_win_nofill(wp, lnum, TRUE)
+        lnum--;
+        if (lnum == wp->w_topline) {
+          line_size = plines_win_nofill(wp, lnum, true)
                       + wp->w_topfill;
-        else
-          line_size = plines_win(wp, lnum, TRUE);
+        } else {
+          line_size = plines_win(wp, lnum, true);
+        }
         sline -= line_size;
       }
 

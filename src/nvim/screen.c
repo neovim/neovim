@@ -990,7 +990,7 @@ static void win_update(win_T *wp)
            * when it won't get updated below. */
           if (wp->w_p_diff && bot_start > 0)
             wp->w_lines[0].wl_size =
-              plines_win_nofill(wp, wp->w_topline, TRUE)
+              plines_win_nofill(wp, wp->w_topline, true)
               + wp->w_topfill;
         }
       }
@@ -1447,12 +1447,13 @@ static void win_update(win_T *wp)
       }
 
       wp->w_lines[idx].wl_lnum = lnum;
-      wp->w_lines[idx].wl_valid = TRUE;
-      if (row > wp->w_height) {         /* past end of screen */
-        /* we may need the size of that too long line later on */
-        if (dollar_vcol == -1)
-          wp->w_lines[idx].wl_size = plines_win(wp, lnum, TRUE);
-        ++idx;
+      wp->w_lines[idx].wl_valid = true;
+      if (row > wp->w_height) {         // past end of screen
+        // we may need the size of that too long line later on
+        if (dollar_vcol == -1) {
+          wp->w_lines[idx].wl_size = plines_win(wp, lnum, true);
+        }
+        idx++;
         break;
       }
       if (dollar_vcol == -1)
