@@ -3294,8 +3294,7 @@ win_line (
           did_emsg = FALSE;
 
           syntax_attr = get_syntax_attr((colnr_T)v - 1,
-              has_spell ? &can_spell :
-              NULL, FALSE);
+                                        has_spell ? &can_spell : NULL, false);
 
           if (did_emsg) {
             wp->w_s->b_syn_error = TRUE;

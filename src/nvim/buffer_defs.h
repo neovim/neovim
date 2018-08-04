@@ -94,6 +94,7 @@ typedef struct {
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
+typedef uint16_t disptick_T;  // display tick type
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -425,7 +426,7 @@ typedef struct {
   synstate_T  *b_sst_firstfree;
   int b_sst_freecount;
   linenr_T b_sst_check_lnum;
-  uint16_t b_sst_lasttick;      /* last display tick */
+  disptick_T b_sst_lasttick;    // last display tick
 
   // for spell checking
   garray_T b_langp;             // list of pointers to slang_T, see spell.c
