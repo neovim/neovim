@@ -48,9 +48,9 @@ static int diff_flags = DIFF_FILLER;
 
 #define LBUFLEN 50               // length of line in diff file
 
-// TRUE when "diff -a" works, FALSE when it doesn't work, MAYBE when not
-// checked yet
-static int diff_a_works = MAYBE;
+// kTrue when "diff -a" works, kFalse when it doesn't work,
+// kNone when not checked yet
+static TriState diff_a_works = kNone;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -686,9 +686,9 @@ void ex_diffupdate(exarg_T *eap)
   // there are differences.
   // May try twice, first with "-a" and then without.
   int io_error = false;
-  bool ok = false;
+  TriState ok = kFalse;
   for (;;) {
-    ok = false;
+    ok = kFalse;
     FILE *fd = mch_fopen(tmp_orig, "w");
 
     if (fd == NULL) {
@@ -722,7 +722,7 @@ void ex_diffupdate(exarg_T *eap)
             }
 
             if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = TRUE;
+              ok = kTrue;
             }
           }
           fclose(fd);
@@ -739,7 +739,7 @@ void ex_diffupdate(exarg_T *eap)
     }
 
     // If we checked if "-a" works already, break here.
-    if (diff_a_works != MAYBE) {
+    if (diff_a_works != kNone) {
       break;
     }
     diff_a_works = ok;
@@ -755,7 +755,7 @@ void ex_diffupdate(exarg_T *eap)
       EMSG(_("E810: Cannot read or write temp files"));
     }
     EMSG(_("E97: Cannot create diffs"));
-    diff_a_works = MAYBE;
+    diff_a_works = kNone;
     goto theend;
   }
 
@@ -830,7 +830,7 @@ static void diff_file(const char *const tmp_orig, const char *const tmp_new,
      * differences are of no use.  Ignore errors, diff returns
      * non-zero when differences have been found. */
     vim_snprintf(cmd, len, "diff %s%s%s%s%s %s",
-                 diff_a_works ? "-a " : "",
+                 diff_a_works == kFalse ? "" : "-a ",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
@@ -1486,7 +1486,7 @@ int diff_check(win_T *wp, linenr_T lnum)
   }
 
   // A closed fold never has filler lines.
-  if (hasFoldingWin(wp, lnum, NULL, NULL, TRUE, NULL)) {
+  if (hasFoldingWin(wp, lnum, NULL, NULL, true, NULL)) {
     return 0;
   }
 
@@ -1793,7 +1793,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
   check_topfill(towin, false);
   (void)hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
-                      NULL, TRUE, NULL);
+                      NULL, true, NULL);
 }
 
 /// This is called when 'diffopt' is changed.

@@ -783,16 +783,18 @@ static void win_update(win_T *wp)
           }
         }
 
-      (void)hasFoldingWin(wp, mod_top, &mod_top, NULL, TRUE, NULL);
-      if (mod_top > lnumt)
+      (void)hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
+      if (mod_top > lnumt) {
         mod_top = lnumt;
+      }
 
-      /* Now do the same for the bottom line (one above mod_bot). */
-      --mod_bot;
-      (void)hasFoldingWin(wp, mod_bot, NULL, &mod_bot, TRUE, NULL);
-      ++mod_bot;
-      if (mod_bot < lnumb)
+      // Now do the same for the bottom line (one above mod_bot).
+      mod_bot--;
+      (void)hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
+      mod_bot++;
+      if (mod_bot < lnumb) {
         mod_bot = lnumb;
+      }
     }
 
     /* When a change starts above w_topline and the end is below
@@ -833,12 +835,13 @@ static void win_update(win_T *wp)
       type = VALID;
   }
 
-  /* Trick: we want to avoid clearing the screen twice.  screenclear() will
-   * set "screen_cleared" to TRUE.  The special value MAYBE (which is still
-   * non-zero and thus not FALSE) will indicate that screenclear() was not
-   * called. */
-  if (screen_cleared)
-    screen_cleared = MAYBE;
+  // Trick: we want to avoid clearing the screen twice.  screenclear() will
+  // set "screen_cleared" to kTrue.  The special value kNone (which is still
+  // non-zero and thus not kFalse) will indicate that screenclear() was not
+  // called.
+  if (screen_cleared) {
+    screen_cleared = kNone;
+  }
 
   /*
    * If there are no changes on the screen that require a complete redraw,
@@ -875,7 +878,7 @@ static void win_update(win_T *wp)
           ++j;
           if (j >= wp->w_height - 2)
             break;
-          (void)hasFoldingWin(wp, ln, NULL, &ln, TRUE, NULL);
+          (void)hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
         }
       } else
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
@@ -987,7 +990,7 @@ static void win_update(win_T *wp)
            * when it won't get updated below. */
           if (wp->w_p_diff && bot_start > 0)
             wp->w_lines[0].wl_size =
-              plines_win_nofill(wp, wp->w_topline, TRUE)
+              plines_win_nofill(wp, wp->w_topline, true)
               + wp->w_topfill;
         }
       }
@@ -999,14 +1002,16 @@ static void win_update(win_T *wp)
     if (mid_start == 0) {
       mid_end = wp->w_height;
       if (ONE_WINDOW) {
-        /* Clear the screen when it was not done by win_del_lines() or
-         * win_ins_lines() above, "screen_cleared" is FALSE or MAYBE
-         * then. */
-        if (screen_cleared != TRUE)
+        // Clear the screen when it was not done by win_del_lines() or
+        // win_ins_lines() above, "screen_cleared" is kFalse or kNone
+        // then.
+        if (screen_cleared != kTrue) {
           screenclear();
-        /* The screen was cleared, redraw the tab pages line. */
-        if (redraw_tabline)
+        }
+        // The screen was cleared, redraw the tab pages line.
+        if (redraw_tabline) {
           draw_tabline();
+        }
       }
     }
 
@@ -1014,8 +1019,9 @@ static void win_update(win_T *wp)
      * cleared (only happens for the first window) or when screenclear()
      * was called directly above, "must_redraw" will have been set to
      * NOT_VALID, need to reset it here to avoid redrawing twice. */
-    if (screen_cleared == TRUE)
+    if (screen_cleared == kTrue) {
       must_redraw = 0;
+    }
   } else {
     /* Not VALID or INVERTED: redraw all lines. */
     mid_start = 0;
@@ -1303,15 +1309,15 @@ static void win_update(win_T *wp)
           /* Able to count old number of rows: Count new window
            * rows, and may insert/delete lines */
           j = idx;
-          for (l = lnum; l < mod_bot; ++l) {
-            if (hasFoldingWin(wp, l, NULL, &l, TRUE, NULL))
-              ++new_rows;
-            else if (l == wp->w_topline)
-              new_rows += plines_win_nofill(wp, l, TRUE)
-                          + wp->w_topfill;
-            else
-              new_rows += plines_win(wp, l, TRUE);
-            ++j;
+          for (l = lnum; l < mod_bot; l++) {
+            if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
+              new_rows++;
+            } else if (l == wp->w_topline) {
+              new_rows += plines_win_nofill(wp, l, true) + wp->w_topfill;
+            } else {
+              new_rows += plines_win(wp, l, true);
+            }
+            j++;
             if (new_rows > wp->w_height - row - 2) {
               /* it's getting too much, must redraw the rest */
               new_rows = 9999;
@@ -1441,12 +1447,13 @@ static void win_update(win_T *wp)
       }
 
       wp->w_lines[idx].wl_lnum = lnum;
-      wp->w_lines[idx].wl_valid = TRUE;
-      if (row > wp->w_height) {         /* past end of screen */
-        /* we may need the size of that too long line later on */
-        if (dollar_vcol == -1)
-          wp->w_lines[idx].wl_size = plines_win(wp, lnum, TRUE);
-        ++idx;
+      wp->w_lines[idx].wl_valid = true;
+      if (row > wp->w_height) {         // past end of screen
+        // we may need the size of that too long line later on
+        if (dollar_vcol == -1) {
+          wp->w_lines[idx].wl_size = plines_win(wp, lnum, true);
+        }
+        idx++;
         break;
       }
       if (dollar_vcol == -1)
@@ -5520,10 +5527,12 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
         && re_multiline(shl->rm.regprog)) {
       if (shl->first_lnum == 0) {
         for (shl->first_lnum = lnum;
-             shl->first_lnum > wp->w_topline; --shl->first_lnum)
-          if (hasFoldingWin(wp, shl->first_lnum - 1,
-                  NULL, NULL, TRUE, NULL))
+             shl->first_lnum > wp->w_topline;
+             shl->first_lnum--) {
+          if (hasFoldingWin(wp, shl->first_lnum - 1, NULL, NULL, true, NULL)) {
             break;
+          }
+        }
       }
       if (cur != NULL) {
         cur->pos.cur = 0;
@@ -6067,7 +6076,7 @@ static void screenclear2(void)
   ui_call_grid_clear(1);  // clear the display
   clear_cmdline = false;
   mode_displayed = false;
-  screen_cleared = true;  // can use contents of ScreenLines now
+  screen_cleared = kTrue;   // can use contents of ScreenLines now
 
   win_rest_invalid(firstwin);
   redraw_cmdline = TRUE;

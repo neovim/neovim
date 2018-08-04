@@ -2015,7 +2015,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     default:
       clearopbeep(oap);
     }
-    virtual_op = MAYBE;
+    virtual_op = kNone;
     if (!gui_yank) {
       /*
        * if 'sol' not set, go back to old column for some commands
@@ -2090,7 +2090,7 @@ static void op_colon(oparg_T *oap)
  */
 static void op_function(oparg_T *oap)
 {
-  int save_virtual_op = virtual_op;
+  const TriState save_virtual_op = virtual_op;
 
   if (*p_opfunc == NUL)
     EMSG(_("E774: 'operatorfunc' is empty"));
@@ -2113,7 +2113,7 @@ static void op_function(oparg_T *oap)
 
     // Reset virtual_op so that 'virtualedit' can be changed in the
     // function.
-    virtual_op = MAYBE;
+    virtual_op = kNone;
 
     (void)call_func_retnr(p_opfunc, 1, argv, false);
 

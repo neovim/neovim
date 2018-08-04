@@ -7395,7 +7395,7 @@ static void ex_operators(exarg_T *eap)
   oa.end.lnum = eap->line2;
   oa.line_count = eap->line2 - eap->line1 + 1;
   oa.motion_type = kMTLineWise;
-  virtual_op = false;
+  virtual_op = kFalse;
   if (eap->cmdidx != CMD_yank) {  // position cursor for undo
     setpcmark();
     curwin->w_cursor.lnum = eap->line1;
@@ -7426,7 +7426,7 @@ static void ex_operators(exarg_T *eap)
     op_shift(&oa, FALSE, eap->amount);
     break;
   }
-  virtual_op = MAYBE;
+  virtual_op = kNone;
   ex_may_print(eap);
 }
 

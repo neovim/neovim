@@ -1203,16 +1203,15 @@ int get_last_leader_offset(char_u *line, char_u **flags)
 /*
  * Return the number of window lines occupied by buffer line "lnum".
  */
-int plines(linenr_T lnum)
+int plines(const linenr_T lnum)
 {
-  return plines_win(curwin, lnum, TRUE);
+  return plines_win(curwin, lnum, true);
 }
 
-int 
-plines_win (
-    win_T *wp,
-    linenr_T lnum,
-    int winheight                  /* when TRUE limit to window height */
+int plines_win(
+    win_T *const wp,
+    const linenr_T lnum,
+    const bool winheight          // when true limit to window height
 )
 {
   /* Check for filler lines above this buffer line.  When folded the result
@@ -1220,34 +1219,34 @@ plines_win (
   return plines_win_nofill(wp, lnum, winheight) + diff_check_fill(wp, lnum);
 }
 
-int plines_nofill(linenr_T lnum)
+int plines_nofill(const linenr_T lnum)
 {
-  return plines_win_nofill(curwin, lnum, TRUE);
+  return plines_win_nofill(curwin, lnum, true);
 }
 
-int 
-plines_win_nofill (
-    win_T *wp,
-    linenr_T lnum,
-    int winheight                  /* when TRUE limit to window height */
+int plines_win_nofill(
+    win_T *const wp,
+    const linenr_T lnum,
+    const bool winheight          // when true limit to window height
 )
 {
-  int lines;
-
-  if (!wp->w_p_wrap)
+  if (!wp->w_p_wrap) {
     return 1;
+  }
 
-  if (wp->w_width == 0)
+  if (wp->w_width == 0) {
     return 1;
+  }
 
-  /* A folded lines is handled just like an empty line. */
-  /* NOTE: Caller must handle lines that are MAYBE folded. */
-  if (lineFolded(wp, lnum) == TRUE)
+  // A folded lines is handled just like an empty line.
+  if (lineFolded(wp, lnum)) {
     return 1;
+  }
 
-  lines = plines_win_nofold(wp, lnum);
-  if (winheight > 0 && lines > wp->w_height)
+  const int lines = plines_win_nofold(wp, lnum);
+  if (winheight && lines > wp->w_height) {
     return wp->w_height;
+  }
   return lines;
 }
 
@@ -1347,11 +1346,12 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
       ++count;              /* count 1 for "+-- folded" line */
       first += x;
     } else {
-      if (first == wp->w_topline)
-        count += plines_win_nofill(wp, first, TRUE) + wp->w_topfill;
-      else
-        count += plines_win(wp, first, TRUE);
-      ++first;
+      if (first == wp->w_topline) {
+        count += plines_win_nofill(wp, first, true) + wp->w_topfill;
+      } else {
+        count += plines_win(wp, first, true);
+      }
+      first++;
     }
   }
   return count;
