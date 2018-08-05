@@ -439,6 +439,9 @@ void flush_buffers(int flush_typeahead)
       ;
     typebuf.tb_off = MAXMAPLEN;
     typebuf.tb_len = 0;
+    // Reset the flag that text received from a client or from feedkeys()
+    // was inserted in the typeahead buffer.
+    typebuf_was_filled = false;
   } else {                /* remove mapped characters at the start only */
     typebuf.tb_off += typebuf.tb_maplen;
     typebuf.tb_len -= typebuf.tb_maplen;
