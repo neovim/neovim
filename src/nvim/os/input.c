@@ -346,7 +346,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+  if ((ms == -1 || ms > 0) && !events_enabled && !input_eof) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
