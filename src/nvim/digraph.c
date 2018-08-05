@@ -1464,7 +1464,7 @@ int get_digraph(int cmdline)
 
     if (cmdline) {
       if ((char2cells(c) == 1) && (cmdline_star == 0)) {
-        putcmdline(c, TRUE);
+        putcmdline(c, true);
       }
     } else {
       add_to_showcmd(c);

@@ -942,8 +942,8 @@ EXTERN int no_hlsearch INIT(= FALSE);
 EXTERN linenr_T printer_page_num;
 
 
-EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
-                                                     or from feedkeys() */
+EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
+                                                  // or from feedkeys()
 
 
 #ifdef BACKSLASH_IN_FILENAME
