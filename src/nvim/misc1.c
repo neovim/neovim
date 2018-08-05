@@ -2479,7 +2479,7 @@ int prompt_for_number(int *mouse_used)
   save_cmdline_row = cmdline_row;
   cmdline_row = 0;
   save_State = State;
-  State = CMDLINE;
+  State = ASKMORE;  // prevents a screen update when using a timer
 
   i = get_number(TRUE, mouse_used);
   if (KeyTyped) {
