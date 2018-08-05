@@ -201,7 +201,10 @@ static Array cmdline_block = ARRAY_DICT_INIT;
 /*
  * Type used by call_user_expand_func
  */
-typedef void *(*user_expand_func_T)(char_u *, int, char_u **, int);
+typedef void *(*user_expand_func_T)(const char_u *,
+                                    int,
+                                    const char_u * const *,
+                                    bool);
 
 static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
 static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1};       /* lastused entry */
@@ -5046,7 +5049,10 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
   ccline.cmdprompt = NULL;
   current_SID = xp->xp_scriptID;
 
-  ret = user_expand_func(xp->xp_arg, 3, args, FALSE);
+  ret = user_expand_func(xp->xp_arg,
+                         3,
+                         (const char_u * const *)args,
+                         false);
 
   ccline = save_ccline;
   current_SID = save_current_SID;
@@ -5062,11 +5068,12 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
  */
 static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
 {
-  char_u      *e;
-  garray_T ga;
+  char_u   *e;
+  garray_T  ga;
 
   char_u *const retstr = call_user_expand_func(
       (user_expand_func_T)call_func_retstr, xp, num_file, file);
+
   if (retstr == NULL) {
     return FAIL;
   }

@@ -1186,7 +1186,7 @@ int call_vim_function(
     const char_u *func,
     int argc,
     const char_u *const *const argv,
-    int safe,                       // use the sandbox
+    bool safe,                       // use the sandbox
     int str_arg_only,               // all arguments are strings
     typval_T *rettv
 )
@@ -1276,9 +1276,9 @@ varnumber_T call_func_retnr(char_u *func, int argc,
 ///
 /// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
-char *call_func_retstr(const char *const func, const int argc,
-                       const char_u *const *const argv,
-                       const bool safe)
+char *call_func_retstr(const char *const func, int argc,
+                       const char_u *const *argv,
+                       bool safe)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
@@ -1302,8 +1302,8 @@ char *call_func_retstr(const char *const func, const int argc,
 ///
 /// @return [allocated] NULL when calling function fails or return tv is not a
 ///                     List, allocated List otherwise.
-void *call_func_retlist(char_u *func, int argc, const char_u *const *const argv,
-                        int safe)
+void *call_func_retlist(char_u *func, int argc, const char_u *const *argv,
+                        bool safe)
 {
   typval_T rettv;
 
