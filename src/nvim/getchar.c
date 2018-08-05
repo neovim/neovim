@@ -1080,9 +1080,10 @@ void del_typebuf(int len, int offset)
 
   /* Reset the flag that text received from a client or from feedkeys()
    * was inserted in the typeahead buffer. */
-  typebuf_was_filled = FALSE;
-  if (++typebuf.tb_change_cnt == 0)
+  typebuf_was_filled = false;
+  if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
+  }
 }
 
 /*
