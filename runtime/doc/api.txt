@@ -1120,6 +1120,33 @@ nvim_buf_clear_highlight({buffer}, {src_id}, {line_start}, {line_end})
                     {line_end}    End of range of lines to clear (exclusive)
                                   or -1 to clear to end of file.
 
+                                                 *nvim_buf_set_virtual_text()*
+nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
+                          {opts})
+                Set the virtual text (annotation) for a buffer line.
+
+                By default (and currently the only option) the text will be
+                placed after the buffer text. Virtual text will never cause
+                reflow, rather virtual text will be truncated at the end of
+                the screen line. The virtual text will begin after one cell to
+                the right of the ordinary text, this will contain the |lcs-
+                eol| char if set, otherwise just be a space.
+
+                Parameters: ~
+                    {buffer}  Buffer handle
+                    {src_id}  Source group to use or 0 to use a new group, or
+                              -1 for a ungrouped annotation
+                    {line}    Line to annotate with virtual text (zero-
+                              indexed)
+                    {chunks}  A list of [text, hl_group] arrays, each
+                              representing a text chunk with specified
+                              highlight. `hl_group` element can be omitted for
+                              no highlight.
+                    {opts}    Optional parameters. Currently not used.
+
+                Return: ~
+                    The src_id that was used
+
 
 ==============================================================================
 Window Functions                                                  *api-window*

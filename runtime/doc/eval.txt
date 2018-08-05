@@ -1817,11 +1817,11 @@ v:shell_error	Result of the last shell command.  When non-zero, the last
 v:statusmsg	Last given status message.  It's allowed to set this variable.
 
 					*v:stderr* *stderr-variable*
-v:stderr	Channel id for stderr. Unlike stdin and stdout (see
-		|stdioopen()|), stderr is always open for writing. This channel
-		ID is always 2, but this variable can be used to be explicit.
-		Example: >
-	:call chansend(v:stderr, "something bad happened\n")
+v:stderr	|channel-id| corresponding to stderr. The value is always 2;
+		use this variable to make your code more descriptive.
+		Unlike stdin and stdout (see |stdioopen()|), stderr is always
+		open for writing. Example: >
+			:call chansend(v:stderr, "error: toaster empty\n")
 <
 					*v:swapname* *swapname-variable*
 v:swapname	Only valid when executing |SwapExists| autocommands: Name of
@@ -5024,11 +5024,10 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 <
 		Returns |job-id| on success, 0 on invalid arguments (or job
 		table is full), -1 if {cmd}[0] or 'shell' is not executable.
-		For communication over the job's stdio, it is represented as a
-		|channel|, and a channel ID is returned on success. Use
-		|chansend()| (or |rpcnotify()| and |rpcrequest()| if "rpc" option
-		was used) to send data to stdin and |chanclose()| to close stdio
-		streams without stopping the job explicitly.
+		The returned job-id is a valid |channel-id| representing the
+		job's stdio streams. Use |chansend()| (or |rpcnotify()| and
+		|rpcrequest()| if "rpc" was enabled) to send data to stdin and
+		|chanclose()| to close the streams without stopping the job.
 
 		See |job-control| and |RPC|.
 
@@ -5082,18 +5081,24 @@ jobstop({id})						*jobstop()*
 		See |job-control|.
 
 jobwait({ids}[, {timeout}])				*jobwait()*
-		Wait for a set of jobs to finish. The {ids} argument is a list
-		of |job-id|s to wait for. {timeout} is the maximum number of
-		milliseconds to wait. During jobwait(), callbacks for jobs not
-		in the {ids} list may be invoked. The screen will not redraw
-		unless |:redraw| is invoked by a callback.
+		Wait for a set of jobs to complete.
+
+		{ids} is a list of |job-id|s to wait for.
+		{timeout} is the maximum number of milliseconds to wait.
+		{timeout} of zero can be used to check if a job-id is valid,
+		without waiting.
+
+		During jobwait() callbacks for jobs not in the {ids} list may
+		be invoked. The screen will not redraw unless |:redraw| is
+		invoked by a callback.
 
 		Returns a list of len({ids}) integers, where each integer is
-		the wait-result of the corresponding job. Each wait-result is:
-		    Job exit-code, if the job exited
-		    -1 if the wait timed out for the job
-		    -2 if the job was interrupted
-		    -3 if the |job-id| is invalid.
+		the wait-result of the corresponding job. Each wait-result is
+		one of the following:
+			* Exit-code, if the job exited
+			* -1 if the timeout was exceeded
+			* -2 if the job was interrupted
+			* -3 if the |job-id| is invalid
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
@@ -7325,14 +7330,17 @@ stdpath({what})					*stdpath()* *E6100*
 		directories.
 
 		{what}       Type    Description ~
-		cache        String  Cache directory. Useful for plugins
-		                     that need temporary files to work.
+		cache        String  Cache directory. Arbitrary temporary
+		                     storage for plugins, etc.
 		config       String  User configuration directory. The
 		                     |init.vim| is stored here.
 		config_dirs  List    Additional configuration directories.
 		data         String  User data directory. The |shada-file|
 		                     is stored here.
 		data_dirs    List    Additional data directories.
+
+		Example: >
+			:echo stdpath("config")
 
 
 str2float({expr})					*str2float()*

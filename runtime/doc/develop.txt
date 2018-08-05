@@ -239,7 +239,14 @@ Example: `nvim_buf_changedtick_event`.
 
 API-CLIENT						*dev-api-client*
 
+Standard Features ~
+
+- Clients should call |nvim_set_client_info()| after connecting, so users and
+  plugins can detect the client by handling the |ChanInfo| event. This
+  avoids the need for special variables or other client hints.
+
 Package Naming ~
+
 API client packages should NOT be named something ambiguous like "neovim" or
 "python-client".  Use "nvim" as a prefix/suffix to some other identifier
 following ecosystem conventions.
@@ -255,10 +262,11 @@ Examples of API-client package names:
         BAD:  neovim
 
 Implementation ~
-Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
-small, efficient, and C89-compatible. It can be easily inlined in your
-C project source, too.  https://github.com/libmpack/libmpack/
 
+Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
+small (can be inlined into your C/C++ project) and efficient (no allocations).
+It also implements msgpack-RPC.
+https://github.com/libmpack/libmpack/
 
 EXTERNAL UI 						*dev-ui*
 
@@ -267,7 +275,13 @@ versions of Nvim may add new items to existing events. The API is strongly
 backwards-compatible, but clients must not break if new (optional) fields are
 added to existing events.
 
+Standard Features ~
+
 External UIs are expected to implement these common features:
+
+- Call |nvim_set_client_info()| after connecting, so users and plugins can
+  detect the UI by handling the |ChanInfo| event. This avoids the need for
+  special variables and UI-specific config files (gvimrc, macvimrc, …).
 - Cursor style (shape, color) should conform to the 'guicursor' properties
   delivered with the mode_info_set UI event.
 - Send the ALT/META ("Option" on macOS) key as a |<M-| chord.

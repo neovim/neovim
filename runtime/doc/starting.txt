@@ -699,26 +699,24 @@ greps in the help files) you might be able to use this: >
 4. Suspending						*suspend*
 
 					*iconize* *iconise* *CTRL-Z* *v_CTRL-Z*
-CTRL-Z			Suspend Vim, like ":stop".
+CTRL-Z			Suspend Nvim, like ":stop".
 			Works in Normal and in Visual mode.  In Insert and
 			Command-line mode, the CTRL-Z is inserted as a normal
-			character.  In Visual mode Vim goes back to Normal
+			character.  In Visual mode Nvim goes back to Normal
 			mode.
 
 :sus[pend][!]	or			*:sus* *:suspend* *:st* *:stop*
-:st[op][!]		Suspend Vim.  Vim will continue if you make it the
-			foreground job again.
-			If the '!' is not given and 'autowrite' is set, every
+:st[op][!]		Suspend Nvim using OS "job control"; it will continue
+			if you make it the foreground job again.  Triggers
+			|VimSuspend| before suspending and |VimResume| when
+			resumed.
+			If "!" is not given and 'autowrite' is set, every
 			buffer with changes and a file name is written out.
-			If the '!' is given or 'autowrite' is not set, changed
-			buffers are not written, don't forget to bring Vim
+			If "!" is given or 'autowrite' is not set, changed
+			buffers are not written, don't forget to bring Nvim
 			back to the foreground later!
 
 In the GUI, suspending is implementation-defined.
-
-In X-windows the selection is disowned when Vim suspends.  this means you
-can't paste it in another application (since Vim is going to sleep an attempt
-to get the selection would make the program hang).
 
 ==============================================================================
 5. Exiting						*exiting*
@@ -1373,7 +1371,7 @@ file when reading and include:
 9. Standard Paths				*standard-path*
 
 Nvim stores configuration and data in standard locations. Plugins are strongly
-encouraged to follow this pattern also.
+encouraged to follow this pattern also. Use |stdpath()| to get the paths.
 
 						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
@@ -1381,18 +1379,18 @@ https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 The $XDG_CONFIG_HOME and $XDG_DATA_HOME environment variables are used if they
 exist, otherwise default values (listed below) are used.
 
+CONFIG DIRECTORY (DEFAULT) ~
+                  *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
+    Unix:         ~/.config                   ~/.config/nvim
+    Windows:      ~/AppData/Local             ~/AppData/Local/nvim
+
+DATA DIRECTORY (DEFAULT) ~
+                  *$XDG_DATA_HOME*              Nvim: stdpath("data")
+    Unix:         ~/.local/share              ~/.local/share/nvim
+    Windows:      ~/AppData/Local             ~/AppData/Local/nvim-data
+
 Note: Throughout the user manual these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
-
-CONFIG DIRECTORY				*$XDG_CONFIG_HOME*
-          Base                Nvim ~
-Unix:     ~/.config           ~/.config/nvim
-Windows:  ~/AppData/Local     ~/AppData/Local/nvim
-
-DATA DIRECTORY					*$XDG_DATA_HOME*
-          Base                Nvim ~
-Unix:     ~/.local/share      ~/.local/share/nvim
-Windows:  ~/AppData/Local     ~/AppData/Local/nvim-data
 
 LOG FILE					*$NVIM_LOG_FILE*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
