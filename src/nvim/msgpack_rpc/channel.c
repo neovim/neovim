@@ -12,6 +12,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
+#include "nvim/getchar.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/libuv_process.h"
@@ -558,7 +559,9 @@ void rpc_close(Channel *channel)
 static void exit_event(void **argv)
 {
   if (!exiting) {
-    mch_exit(0);
+    // <C-\><C-N>:qall!<CR>
+    ins_typebuf((char_u *)"\034\016:qall!\n", REMAP_NONE, typebuf.tb_len, 1,
+                true);
   }
 }
 
