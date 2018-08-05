@@ -315,7 +315,7 @@ submit_pr() {
     local push_remote
     push_remote="$(git config --get github.user || echo origin)"
     echo "Pushing to '${push_remote}/${checked_out_branch}'."
-    output="$(git push "${push_remote}" "${checked_out_branch}" 2>&1)" &&
+    output="$(git push --set-upstream "${push_remote}" "${checked_out_branch}" 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
 
