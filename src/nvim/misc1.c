@@ -165,7 +165,7 @@ open_line (
     *p_extra = NUL;
   }
 
-  u_clearline();                /* cannot do "U" command when adding lines */
+  u_clearline();                // cannot do "U" command when adding lines
   did_si = false;
   ai_col = 0;
 
@@ -287,7 +287,7 @@ open_line (
            */
           if (last_char == '{') {
             did_si = true;              // do indent
-            no_si = TRUE;               /* don't delete it when '{' typed */
+            no_si = true;               // don't delete it when '{' typed
           }
           /*
            * Look for "if" and the like, use 'cinwords'.

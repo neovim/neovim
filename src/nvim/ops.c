@@ -1473,8 +1473,8 @@ int op_delete(oparg_T *oap)
       }
       if (u_save_cursor() == FAIL)
         return FAIL;
-      if (curbuf->b_p_ai) {                 /* don't delete indent */
-        beginline(BL_WHITE);                /* cursor on first non-white */
+      if (curbuf->b_p_ai) {                 // don't delete indent
+        beginline(BL_WHITE);                // cursor on first non-white
         did_ai = true;                      // delete the indent when ESC hit
         ai_col = curwin->w_cursor.col;
       } else

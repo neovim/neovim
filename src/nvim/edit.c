@@ -7881,7 +7881,7 @@ static void ins_mousescroll(int dir)
     int row = mouse_row;
     int col = mouse_col;
 
-    /* find the window at the pointer coordinates */
+    // find the window at the pointer coordinates
     win_T *const wp = mouse_find_win(&row, &col);
     if (wp == NULL) {
       return;
