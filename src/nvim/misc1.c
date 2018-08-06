@@ -320,10 +320,11 @@ open_line (
           }
         }
         p = skipwhite(ptr);
-        if (*p == '}')              /* if line starts with '}': do indent */
+        if (*p == '}') {            // if line starts with '}': do indent
           did_si = TRUE;
-        else                        /* can delete indent when '{' typed */
-          can_si_back = TRUE;
+        } else {                    // can delete indent when '{' typed
+          can_si_back = true;
+        }
       }
       curwin->w_cursor = old_cursor;
     }

@@ -4467,9 +4467,10 @@ static int ins_complete(int c, bool enable_pum)
     did_ai = FALSE;
     did_si = FALSE;
     can_si = FALSE;
-    can_si_back = FALSE;
-    if (stop_arrow() == FAIL)
+    can_si_back = false;
+    if (stop_arrow() == FAIL) {
       return FAIL;
+    }
 
     line = ml_get(curwin->w_cursor.lnum);
     curs_col = curwin->w_cursor.col;
@@ -5272,7 +5273,7 @@ insertchar (
   did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
-  can_si_back = FALSE;
+  can_si_back = false;
 
   // If there's any pending input, grab up to INPUT_BUFLEN at once.
   // This speeds up normal text input considerably.
@@ -5661,7 +5662,7 @@ internal_format (
     did_ai = FALSE;
     did_si = FALSE;
     can_si = FALSE;
-    can_si_back = FALSE;
+    can_si_back = false;
     line_breakcheck();
   }
 
@@ -6083,7 +6084,7 @@ stop_insert (
   did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
-  can_si_back = FALSE;
+  can_si_back = false;
 
   /* Set '[ and '] to the inserted text.  When end_insert_pos is NULL we are
    * now in a different buffer. */
@@ -7467,7 +7468,7 @@ static void ins_shift(int c, int lastc)
     did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
-  can_si_back = FALSE;
+  can_si_back = false;
   can_cindent = false;          // no cindenting after ^D or ^T
 }
 
@@ -7491,7 +7492,7 @@ static void ins_del(void)
   did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
-  can_si_back = FALSE;
+  can_si_back = false;
   AppendCharToRedobuff(K_DEL);
 }
 

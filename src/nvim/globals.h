@@ -644,7 +644,7 @@ EXTERN int can_si INIT(= FALSE);
  * This flag is set after an "O" command. If the next typed character is a '{'
  * one indent will be removed.
  */
-EXTERN int can_si_back INIT(= FALSE);
+EXTERN bool can_si_back INIT(= false);
 
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT(= INIT_POS_T(0, 0, 0));
