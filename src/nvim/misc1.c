@@ -165,8 +165,8 @@ open_line (
     *p_extra = NUL;
   }
 
-  u_clearline();                /* cannot do "U" command when adding lines */
-  did_si = FALSE;
+  u_clearline();                // cannot do "U" command when adding lines
+  did_si = false;
   ai_col = 0;
 
   /*
@@ -286,8 +286,8 @@ open_line (
            * checking for "if" and the like.
            */
           if (last_char == '{') {
-            did_si = TRUE;              /* do indent */
-            no_si = TRUE;               /* don't delete it when '{' typed */
+            did_si = true;              // do indent
+            no_si = true;               // don't delete it when '{' typed
           }
           /*
            * Look for "if" and the like, use 'cinwords'.
@@ -296,7 +296,7 @@ open_line (
            */
           else if (last_char != ';' && last_char != '}'
                    && cin_is_cinword(ptr))
-            did_si = TRUE;
+            did_si = true;
         }
       } else {  // dir == BACKWARD
         // Skip preprocessor directives, unless they are
@@ -320,17 +320,19 @@ open_line (
           }
         }
         p = skipwhite(ptr);
-        if (*p == '}')              /* if line starts with '}': do indent */
-          did_si = TRUE;
-        else                        /* can delete indent when '{' typed */
-          can_si_back = TRUE;
+        if (*p == '}') {            // if line starts with '}': do indent
+          did_si = true;
+        } else {                    // can delete indent when '{' typed
+          can_si_back = true;
+        }
       }
       curwin->w_cursor = old_cursor;
     }
-    if (do_si)
-      can_si = TRUE;
+    if (do_si) {
+      can_si = true;
+    }
 
-    did_ai = TRUE;
+    did_ai = true;
   }
 
   /*
@@ -665,7 +667,7 @@ open_line (
         }
       }
 
-      did_si = can_si = FALSE;
+      did_si = can_si = false;
     } else if (comment_end != NULL) {
       // We have finished a comment, so we don't use the leader.
       // If this was a C-comment and 'ai' or 'si' is set do a normal
@@ -708,8 +710,9 @@ open_line (
         ++less_cols_off;
       }
     }
-    if (*p_extra != NUL)
-      did_ai = FALSE;               /* append some text, don't truncate now */
+    if (*p_extra != NUL) {
+      did_ai = false;               // append some text, don't truncate now
+    }
 
     /* columns for marks adjusted for removed columns */
     less_cols = (int)(p_extra - saved_line);
@@ -736,7 +739,7 @@ open_line (
     }
     STRCAT(leader, p_extra);
     p_extra = leader;
-    did_ai = TRUE;          /* So truncating blanks works with comments */
+    did_ai = true;          // So truncating blanks works with comments
     less_cols -= lead_len;
   } else
     end_comment_pending = NUL;      /* turns out there was no leader */
@@ -812,8 +815,9 @@ open_line (
       }
     }
     newcol += curwin->w_cursor.col;
-    if (no_si)
-      did_si = FALSE;
+    if (no_si) {
+      did_si = false;
+    }
   }
 
   /*
@@ -2479,7 +2483,7 @@ int prompt_for_number(int *mouse_used)
   save_cmdline_row = cmdline_row;
   cmdline_row = 0;
   save_State = State;
-  State = CMDLINE;
+  State = ASKMORE;  // prevents a screen update when using a timer
 
   i = get_number(TRUE, mouse_used);
   if (KeyTyped) {

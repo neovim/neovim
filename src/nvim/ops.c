@@ -1473,9 +1473,9 @@ int op_delete(oparg_T *oap)
       }
       if (u_save_cursor() == FAIL)
         return FAIL;
-      if (curbuf->b_p_ai) {                 /* don't delete indent */
-        beginline(BL_WHITE);                /* cursor on first non-white */
-        did_ai = TRUE;                      /* delete the indent when ESC hit */
+      if (curbuf->b_p_ai) {                 // don't delete indent
+        beginline(BL_WHITE);                // cursor on first non-white
+        did_ai = true;                      // delete the indent when ESC hit
         ai_col = curwin->w_cursor.col;
       } else
         beginline(0);                       /* cursor in column 0 */
@@ -2178,7 +2178,7 @@ int op_change(oparg_T *oap)
     if (!p_paste && curbuf->b_p_si
         && !curbuf->b_p_cin
         )
-      can_si = TRUE;            /* It's like opening a new line, do si */
+      can_si = true;            // It's like opening a new line, do si
   }
 
   /* First delete the text in the region.  In an empty buffer only need to

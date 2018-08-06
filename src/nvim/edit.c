@@ -227,7 +227,7 @@ static int last_insert_skip;      /* nr of chars in front of previous insert */
 static int new_insert_skip;       /* nr of chars in front of current insert */
 static int did_restart_edit;            /* "restart_edit" when calling edit() */
 
-static int can_cindent;                 /* may do cindenting on this line */
+static bool can_cindent;                // may do cindenting on this line
 
 static int old_indent = 0;              /* for ^^D command in insert mode */
 
@@ -4456,7 +4456,7 @@ static int ins_complete(int c, bool enable_pum)
   int save_w_wrow;
   int save_w_leftcol;
   int insert_match;
-  int save_did_ai = did_ai;
+  const bool save_did_ai = did_ai;
 
   compl_direction = ins_compl_key2dir(c);
   insert_match = ins_compl_use_match(c);
@@ -4464,12 +4464,13 @@ static int ins_complete(int c, bool enable_pum)
   if (!compl_started) {
     /* First time we hit ^N or ^P (in a row, I mean) */
 
-    did_ai = FALSE;
-    did_si = FALSE;
-    can_si = FALSE;
-    can_si_back = FALSE;
-    if (stop_arrow() == FAIL)
+    did_ai = false;
+    did_si = false;
+    can_si = false;
+    can_si_back = false;
+    if (stop_arrow() == FAIL) {
       return FAIL;
+    }
 
     line = ml_get(curwin->w_cursor.lnum);
     curs_col = curwin->w_cursor.col;
@@ -5269,10 +5270,10 @@ insertchar (
   }
   end_comment_pending = NUL;
 
-  did_ai = FALSE;
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
+  did_ai = false;
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
 
   // If there's any pending input, grab up to INPUT_BUFLEN at once.
   // This speeds up normal text input considerably.
@@ -5367,7 +5368,7 @@ internal_format (
 {
   int cc;
   int save_char = NUL;
-  int haveto_redraw = FALSE;
+  bool haveto_redraw = false;
   int fo_ins_blank = has_format_option(FO_INS_BLANK);
   int fo_multibyte = has_format_option(FO_MBYTE_BREAK);
   int fo_white_par = has_format_option(FO_WHITE_PAR);
@@ -5655,13 +5656,13 @@ internal_format (
         curwin->w_cursor.col = len;
     }
 
-    haveto_redraw = TRUE;
-    can_cindent = TRUE;
-    /* moved the cursor, don't autoindent or cindent now */
-    did_ai = FALSE;
-    did_si = FALSE;
-    can_si = FALSE;
-    can_si_back = FALSE;
+    haveto_redraw = true;
+    can_cindent = true;
+    // moved the cursor, don't autoindent or cindent now
+    did_ai = false;
+    did_si = false;
+    can_si = false;
+    can_si_back = false;
     line_breakcheck();
   }
 
@@ -6080,10 +6081,10 @@ stop_insert (
       }
     }
   }
-  did_ai = FALSE;
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
+  did_ai = false;
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
 
   /* Set '[ and '] to the inserted text.  When end_insert_pos is NULL we are
    * now in a different buffer. */
@@ -7463,12 +7464,13 @@ static void ins_shift(int c, int lastc)
   } else
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
 
-  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
-    did_ai = FALSE;
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
-  can_cindent = FALSE;          /* no cindenting after ^D or ^T */
+  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL) {
+    did_ai = false;
+  }
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
+  can_cindent = false;          // no cindenting after ^D or ^T
 }
 
 static void ins_del(void)
@@ -7488,10 +7490,10 @@ static void ins_del(void)
   } else if (del_char(false) == FAIL) {  // delete char under cursor
     vim_beep(BO_BS);
   }
-  did_ai = FALSE;
-  did_si = FALSE;
-  can_si = FALSE;
-  can_si_back = FALSE;
+  did_ai = false;
+  did_si = false;
+  can_si = false;
+  can_si_back = false;
   AppendCharToRedobuff(K_DEL);
 }
 
@@ -7658,7 +7660,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         State = oldState;
       }
     }
-    did_ai = FALSE;
+    did_ai = false;
   } else {
     /*
      * Delete character(s) before the cursor.
@@ -7862,7 +7864,7 @@ static void ins_mouse(int c)
       curwin = new_curwin;
       curbuf = curwin->w_buffer;
     }
-    can_cindent = TRUE;
+    can_cindent = true;
   }
 
   /* redraw status lines (in case another window became active) */
@@ -7871,20 +7873,20 @@ static void ins_mouse(int c)
 
 static void ins_mousescroll(int dir)
 {
-  pos_T tpos;
-  win_T       *old_curwin = curwin;
-  int did_scroll = FALSE;
-
-  tpos = curwin->w_cursor;
+  win_T *const old_curwin = curwin;
+  bool did_scroll = false;
+  pos_T tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row, col;
+    int row = mouse_row;
+    int col = mouse_col;
 
-    row = mouse_row;
-    col = mouse_col;
-
-    /* find the window at the pointer coordinates */
-    curwin = mouse_find_win(&row, &col);
+    // find the window at the pointer coordinates
+    win_T *const wp = mouse_find_win(&row, &col);
+    if (wp == NULL) {
+      return;
+    }
+    curwin = wp;
     curbuf = curwin->w_buffer;
   }
   if (curwin == old_curwin)
@@ -7903,7 +7905,7 @@ static void ins_mousescroll(int dir)
     } else {
         mouse_scroll_horiz(dir);
     }
-    did_scroll = TRUE;
+    did_scroll = true;
   }
 
   curwin->w_redr_status = TRUE;
@@ -7921,7 +7923,7 @@ static void ins_mousescroll(int dir)
 
   if (!equalpos(curwin->w_cursor, tpos)) {
     start_arrow(&tpos);
-    can_cindent = TRUE;
+    can_cindent = true;
   }
 }
 
@@ -8389,8 +8391,8 @@ static bool ins_eol(int c)
                      has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
                      old_indent);
   old_indent = 0;
-  can_cindent = TRUE;
-  /* When inserting a line the cursor line must never be in a closed fold. */
+  can_cindent = true;
+  // When inserting a line the cursor line must never be in a closed fold.
   foldOpenCursor();
 
   return !i;

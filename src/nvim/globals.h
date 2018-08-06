@@ -604,7 +604,7 @@ EXTERN pos_T where_paste_started;
  * reset when any other editing is done on the line. If an <ESC> or <RETURN>
  * is received, and did_ai is TRUE, the line is truncated.
  */
-EXTERN int did_ai INIT(= FALSE);
+EXTERN bool did_ai INIT(= false);
 
 /*
  * Column of first char after autoindent.  0 when no autoindent done.  Used
@@ -632,19 +632,19 @@ EXTERN int did_syncbind INIT(= FALSE);
  * This flag is set when a smart indent has been performed. When the next typed
  * character is a '{' the inserted tab will be deleted again.
  */
-EXTERN int did_si INIT(= FALSE);
+EXTERN bool did_si INIT(= false);
 
 /*
  * This flag is set after an auto indent. If the next typed character is a '}'
  * one indent will be removed.
  */
-EXTERN int can_si INIT(= FALSE);
+EXTERN bool can_si INIT(= false);
 
 /*
  * This flag is set after an "O" command. If the next typed character is a '{'
  * one indent will be removed.
  */
-EXTERN int can_si_back INIT(= FALSE);
+EXTERN bool can_si_back INIT(= false);
 
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT(= INIT_POS_T(0, 0, 0));
@@ -942,8 +942,8 @@ EXTERN int no_hlsearch INIT(= FALSE);
 EXTERN linenr_T printer_page_num;
 
 
-EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
-                                                     or from feedkeys() */
+EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
+                                                  // or from feedkeys()
 
 
 #ifdef BACKSLASH_IN_FILENAME

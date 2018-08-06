@@ -9493,6 +9493,9 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         /* Find the window at the mouse coordinates and compute the
          * text position. */
         win = mouse_find_win(&row, &col);
+        if (win == NULL) {
+          return;
+        }
         (void)mouse_comp_pos(win, &row, &col, &lnum);
         for (wp = firstwin; wp != win; wp = wp->w_next)
           ++winnr;

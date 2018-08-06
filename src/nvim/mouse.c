@@ -125,6 +125,9 @@ retnomove:
 
     // find the window where the row is in
     wp = mouse_find_win(&row, &col);
+    if (wp == NULL) {
+      return IN_UNKNOWN;
+    }
     dragwin = NULL;
     // winpos and height may change in win_enter()!
     if (row >= wp->w_height) {                  // In (or below) status line
@@ -427,6 +430,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
 // Find the window at screen position "*rowp" and "*colp".  The positions are
 // updated to become relative to the top-left of the window.
+// Returns NULL when something is wrong.
 win_T *mouse_find_win(int *rowp, int *colp)
 {
   frame_T     *fp;
@@ -450,7 +454,14 @@ win_T *mouse_find_win(int *rowp, int *colp)
       }
     }
   }
-  return fp->fr_win;
+  // When using a timer that closes a window the window might not actually
+  // exist.
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp == fp->fr_win) {
+      return wp;
+    }
+  }
+  return NULL;
 }
 
 /*
