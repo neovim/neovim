@@ -632,7 +632,7 @@ EXTERN int did_syncbind INIT(= FALSE);
  * This flag is set when a smart indent has been performed. When the next typed
  * character is a '{' the inserted tab will be deleted again.
  */
-EXTERN int did_si INIT(= FALSE);
+EXTERN bool did_si INIT(= false);
 
 /*
  * This flag is set after an auto indent. If the next typed character is a '}'

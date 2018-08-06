@@ -166,7 +166,7 @@ open_line (
   }
 
   u_clearline();                /* cannot do "U" command when adding lines */
-  did_si = FALSE;
+  did_si = false;
   ai_col = 0;
 
   /*
@@ -286,7 +286,7 @@ open_line (
            * checking for "if" and the like.
            */
           if (last_char == '{') {
-            did_si = TRUE;              /* do indent */
+            did_si = true;              // do indent
             no_si = TRUE;               /* don't delete it when '{' typed */
           }
           /*
@@ -296,7 +296,7 @@ open_line (
            */
           else if (last_char != ';' && last_char != '}'
                    && cin_is_cinword(ptr))
-            did_si = TRUE;
+            did_si = true;
         }
       } else {  // dir == BACKWARD
         // Skip preprocessor directives, unless they are
@@ -321,7 +321,7 @@ open_line (
         }
         p = skipwhite(ptr);
         if (*p == '}') {            // if line starts with '}': do indent
-          did_si = TRUE;
+          did_si = true;
         } else {                    // can delete indent when '{' typed
           can_si_back = true;
         }
@@ -814,8 +814,9 @@ open_line (
       }
     }
     newcol += curwin->w_cursor.col;
-    if (no_si)
-      did_si = FALSE;
+    if (no_si) {
+      did_si = false;
+    }
   }
 
   /*

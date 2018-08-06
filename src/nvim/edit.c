@@ -4465,7 +4465,7 @@ static int ins_complete(int c, bool enable_pum)
     /* First time we hit ^N or ^P (in a row, I mean) */
 
     did_ai = FALSE;
-    did_si = FALSE;
+    did_si = false;
     can_si = false;
     can_si_back = false;
     if (stop_arrow() == FAIL) {
@@ -5271,7 +5271,7 @@ insertchar (
   end_comment_pending = NUL;
 
   did_ai = FALSE;
-  did_si = FALSE;
+  did_si = false;
   can_si = false;
   can_si_back = false;
 
@@ -5660,7 +5660,7 @@ internal_format (
     can_cindent = true;
     // moved the cursor, don't autoindent or cindent now
     did_ai = FALSE;
-    did_si = FALSE;
+    did_si = false;
     can_si = false;
     can_si_back = false;
     line_breakcheck();
@@ -6082,7 +6082,7 @@ stop_insert (
     }
   }
   did_ai = FALSE;
-  did_si = FALSE;
+  did_si = false;
   can_si = false;
   can_si_back = false;
 
@@ -7466,7 +7466,7 @@ static void ins_shift(int c, int lastc)
 
   if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
     did_ai = FALSE;
-  did_si = FALSE;
+  did_si = false;
   can_si = false;
   can_si_back = false;
   can_cindent = false;          // no cindenting after ^D or ^T
@@ -7490,7 +7490,7 @@ static void ins_del(void)
     vim_beep(BO_BS);
   }
   did_ai = FALSE;
-  did_si = FALSE;
+  did_si = false;
   can_si = false;
   can_si_back = false;
   AppendCharToRedobuff(K_DEL);
