@@ -3603,7 +3603,7 @@ int build_stl_str_hl(
 
       // Store the current buffer number as a string variable
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
-      set_internal_string_var((char_u *)"actual_curbuf", tmp);
+      set_internal_string_var((char_u *)"g:actual_curbuf", tmp);
 
       buf_T *o_curbuf = curbuf;
       win_T *o_curwin = curwin;
