@@ -227,7 +227,7 @@ static int last_insert_skip;      /* nr of chars in front of previous insert */
 static int new_insert_skip;       /* nr of chars in front of current insert */
 static int did_restart_edit;            /* "restart_edit" when calling edit() */
 
-static int can_cindent;                 /* may do cindenting on this line */
+static bool can_cindent;                // may do cindenting on this line
 
 static int old_indent = 0;              /* for ^^D command in insert mode */
 
@@ -5656,8 +5656,8 @@ internal_format (
     }
 
     haveto_redraw = TRUE;
-    can_cindent = TRUE;
-    /* moved the cursor, don't autoindent or cindent now */
+    can_cindent = true;
+    // moved the cursor, don't autoindent or cindent now
     did_ai = FALSE;
     did_si = FALSE;
     can_si = FALSE;
@@ -7468,7 +7468,7 @@ static void ins_shift(int c, int lastc)
   did_si = FALSE;
   can_si = FALSE;
   can_si_back = FALSE;
-  can_cindent = FALSE;          /* no cindenting after ^D or ^T */
+  can_cindent = false;          // no cindenting after ^D or ^T
 }
 
 static void ins_del(void)
@@ -7862,7 +7862,7 @@ static void ins_mouse(int c)
       curwin = new_curwin;
       curbuf = curwin->w_buffer;
     }
-    can_cindent = TRUE;
+    can_cindent = true;
   }
 
   /* redraw status lines (in case another window became active) */
@@ -7921,7 +7921,7 @@ static void ins_mousescroll(int dir)
 
   if (!equalpos(curwin->w_cursor, tpos)) {
     start_arrow(&tpos);
-    can_cindent = TRUE;
+    can_cindent = true;
   }
 }
 
@@ -8389,8 +8389,8 @@ static bool ins_eol(int c)
                      has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
                      old_indent);
   old_indent = 0;
-  can_cindent = TRUE;
-  /* When inserting a line the cursor line must never be in a closed fold. */
+  can_cindent = true;
+  // When inserting a line the cursor line must never be in a closed fold.
   foldOpenCursor();
 
   return !i;
