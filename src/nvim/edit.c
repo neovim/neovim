@@ -4466,7 +4466,7 @@ static int ins_complete(int c, bool enable_pum)
 
     did_ai = FALSE;
     did_si = FALSE;
-    can_si = FALSE;
+    can_si = false;
     can_si_back = false;
     if (stop_arrow() == FAIL) {
       return FAIL;
@@ -5272,7 +5272,7 @@ insertchar (
 
   did_ai = FALSE;
   did_si = FALSE;
-  can_si = FALSE;
+  can_si = false;
   can_si_back = false;
 
   // If there's any pending input, grab up to INPUT_BUFLEN at once.
@@ -5661,7 +5661,7 @@ internal_format (
     // moved the cursor, don't autoindent or cindent now
     did_ai = FALSE;
     did_si = FALSE;
-    can_si = FALSE;
+    can_si = false;
     can_si_back = false;
     line_breakcheck();
   }
@@ -6083,7 +6083,7 @@ stop_insert (
   }
   did_ai = FALSE;
   did_si = FALSE;
-  can_si = FALSE;
+  can_si = false;
   can_si_back = false;
 
   /* Set '[ and '] to the inserted text.  When end_insert_pos is NULL we are
@@ -7467,7 +7467,7 @@ static void ins_shift(int c, int lastc)
   if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
     did_ai = FALSE;
   did_si = FALSE;
-  can_si = FALSE;
+  can_si = false;
   can_si_back = false;
   can_cindent = false;          // no cindenting after ^D or ^T
 }
@@ -7491,7 +7491,7 @@ static void ins_del(void)
   }
   did_ai = FALSE;
   did_si = FALSE;
-  can_si = FALSE;
+  can_si = false;
   can_si_back = false;
   AppendCharToRedobuff(K_DEL);
 }

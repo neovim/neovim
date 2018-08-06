@@ -328,8 +328,9 @@ open_line (
       }
       curwin->w_cursor = old_cursor;
     }
-    if (do_si)
-      can_si = TRUE;
+    if (do_si) {
+      can_si = true;
+    }
 
     did_ai = TRUE;
   }
@@ -666,7 +667,7 @@ open_line (
         }
       }
 
-      did_si = can_si = FALSE;
+      did_si = can_si = false;
     } else if (comment_end != NULL) {
       // We have finished a comment, so we don't use the leader.
       // If this was a C-comment and 'ai' or 'si' is set do a normal

@@ -638,7 +638,7 @@ EXTERN int did_si INIT(= FALSE);
  * This flag is set after an auto indent. If the next typed character is a '}'
  * one indent will be removed.
  */
-EXTERN int can_si INIT(= FALSE);
+EXTERN bool can_si INIT(= false);
 
 /*
  * This flag is set after an "O" command. If the next typed character is a '{'

@@ -2178,7 +2178,7 @@ int op_change(oparg_T *oap)
     if (!p_paste && curbuf->b_p_si
         && !curbuf->b_p_cin
         )
-      can_si = TRUE;            /* It's like opening a new line, do si */
+      can_si = true;            // It's like opening a new line, do si
   }
 
   /* First delete the text in the region.  In an empty buffer only need to
