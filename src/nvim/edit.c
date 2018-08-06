@@ -5367,7 +5367,7 @@ internal_format (
 {
   int cc;
   int save_char = NUL;
-  int haveto_redraw = FALSE;
+  bool haveto_redraw = false;
   int fo_ins_blank = has_format_option(FO_INS_BLANK);
   int fo_multibyte = has_format_option(FO_MBYTE_BREAK);
   int fo_white_par = has_format_option(FO_WHITE_PAR);
@@ -5655,7 +5655,7 @@ internal_format (
         curwin->w_cursor.col = len;
     }
 
-    haveto_redraw = TRUE;
+    haveto_redraw = true;
     can_cindent = true;
     // moved the cursor, don't autoindent or cindent now
     did_ai = FALSE;
