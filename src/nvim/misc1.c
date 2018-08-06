@@ -332,7 +332,7 @@ open_line (
       can_si = true;
     }
 
-    did_ai = TRUE;
+    did_ai = true;
   }
 
   /*
@@ -710,8 +710,9 @@ open_line (
         ++less_cols_off;
       }
     }
-    if (*p_extra != NUL)
-      did_ai = FALSE;               /* append some text, don't truncate now */
+    if (*p_extra != NUL) {
+      did_ai = false;               // append some text, don't truncate now
+    }
 
     /* columns for marks adjusted for removed columns */
     less_cols = (int)(p_extra - saved_line);
@@ -738,7 +739,7 @@ open_line (
     }
     STRCAT(leader, p_extra);
     p_extra = leader;
-    did_ai = TRUE;          /* So truncating blanks works with comments */
+    did_ai = true;          // So truncating blanks works with comments
     less_cols -= lead_len;
   } else
     end_comment_pending = NUL;      /* turns out there was no leader */

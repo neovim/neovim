@@ -1475,7 +1475,7 @@ int op_delete(oparg_T *oap)
         return FAIL;
       if (curbuf->b_p_ai) {                 /* don't delete indent */
         beginline(BL_WHITE);                /* cursor on first non-white */
-        did_ai = TRUE;                      /* delete the indent when ESC hit */
+        did_ai = true;                      // delete the indent when ESC hit
         ai_col = curwin->w_cursor.col;
       } else
         beginline(0);                       /* cursor in column 0 */

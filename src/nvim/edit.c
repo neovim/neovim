@@ -4456,7 +4456,7 @@ static int ins_complete(int c, bool enable_pum)
   int save_w_wrow;
   int save_w_leftcol;
   int insert_match;
-  int save_did_ai = did_ai;
+  const bool save_did_ai = did_ai;
 
   compl_direction = ins_compl_key2dir(c);
   insert_match = ins_compl_use_match(c);
@@ -4464,7 +4464,7 @@ static int ins_complete(int c, bool enable_pum)
   if (!compl_started) {
     /* First time we hit ^N or ^P (in a row, I mean) */
 
-    did_ai = FALSE;
+    did_ai = false;
     did_si = false;
     can_si = false;
     can_si_back = false;
@@ -5270,7 +5270,7 @@ insertchar (
   }
   end_comment_pending = NUL;
 
-  did_ai = FALSE;
+  did_ai = false;
   did_si = false;
   can_si = false;
   can_si_back = false;
@@ -5659,7 +5659,7 @@ internal_format (
     haveto_redraw = true;
     can_cindent = true;
     // moved the cursor, don't autoindent or cindent now
-    did_ai = FALSE;
+    did_ai = false;
     did_si = false;
     can_si = false;
     can_si_back = false;
@@ -6081,7 +6081,7 @@ stop_insert (
       }
     }
   }
-  did_ai = FALSE;
+  did_ai = false;
   did_si = false;
   can_si = false;
   can_si_back = false;
@@ -7464,8 +7464,9 @@ static void ins_shift(int c, int lastc)
   } else
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
 
-  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
-    did_ai = FALSE;
+  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL) {
+    did_ai = false;
+  }
   did_si = false;
   can_si = false;
   can_si_back = false;
@@ -7489,7 +7490,7 @@ static void ins_del(void)
   } else if (del_char(false) == FAIL) {  // delete char under cursor
     vim_beep(BO_BS);
   }
-  did_ai = FALSE;
+  did_ai = false;
   did_si = false;
   can_si = false;
   can_si_back = false;
@@ -7659,7 +7660,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         State = oldState;
       }
     }
-    did_ai = FALSE;
+    did_ai = false;
   } else {
     /*
      * Delete character(s) before the cursor.

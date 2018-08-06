@@ -604,7 +604,7 @@ EXTERN pos_T where_paste_started;
  * reset when any other editing is done on the line. If an <ESC> or <RETURN>
  * is received, and did_ai is TRUE, the line is truncated.
  */
-EXTERN int did_ai INIT(= FALSE);
+EXTERN bool did_ai INIT(= false);
 
 /*
  * Column of first char after autoindent.  0 when no autoindent done.  Used
