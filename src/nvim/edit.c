@@ -5807,7 +5807,7 @@ static void check_auto_format(
       }
       if (c != NUL) {
         // The space is no longer at the end of the line, delete it.
-        del_char(FALSE);
+        del_char(false);
         did_add_space = false;
       }
     }
@@ -6053,10 +6053,12 @@ stop_insert (
         if (gchar_cursor() == NUL && curwin->w_cursor.col > 0)
           --curwin->w_cursor.col;
         cc = gchar_cursor();
-        if (!ascii_iswhite(cc))
+        if (!ascii_iswhite(cc)) {
           break;
-        if (del_char(TRUE) == FAIL)
-          break;            /* should not happen */
+        }
+        if (del_char(true) == FAIL) {
+          break;            // should not happen
+        }
       }
       if (curwin->w_cursor.lnum != tpos.lnum)
         curwin->w_cursor = tpos;
@@ -6710,8 +6712,8 @@ static void replace_do_bs(int limit_col)
        * text aligned. */
       curwin->w_cursor.col += ins_len;
       while (vcol > orig_vcols && gchar_cursor() == ' ') {
-        del_char(FALSE);
-        ++orig_vcols;
+        del_char(false);
+        orig_vcols++;
       }
       curwin->w_cursor.col -= ins_len;
     }
@@ -7453,13 +7455,15 @@ static void ins_shift(int c, int lastc)
    */
   if (c == Ctrl_D && (lastc == '0' || lastc == '^')
       && curwin->w_cursor.col > 0) {
-    --curwin->w_cursor.col;
-    (void)del_char(FALSE);              /* delete the '^' or '0' */
-    /* In Replace mode, restore the characters that '^' or '0' replaced. */
-    if (State & REPLACE_FLAG)
+    curwin->w_cursor.col--;
+    (void)del_char(false);              // delete the '^' or '0'
+    // In Replace mode, restore the characters that '^' or '0' replaced.
+    if (State & REPLACE_FLAG) {
       replace_pop_ins();
-    if (lastc == '^')
-      old_indent = get_indent();        /* remember curr. indent */
+    }
+    if (lastc == '^') {
+      old_indent = get_indent();        // remember curr. indent
+    }
     change_indent(INDENT_SET, 0, TRUE, 0, TRUE);
   } else
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
@@ -7517,8 +7521,9 @@ static void ins_bs_one(colnr_T *vcolp)
     if (curwin->w_cursor.lnum != Insstart.lnum
         || curwin->w_cursor.col >= Insstart.col)
       replace_do_bs(-1);
-  } else
-    (void)del_char(FALSE);
+  } else {
+    (void)del_char(false);
+  }
 }
 
 /// Handle Backspace, delete-word and delete-line in Insert mode.
@@ -7782,16 +7787,16 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         else {
           const bool l_enc_utf8 = enc_utf8;
           const int l_p_deco = p_deco;
-          if (l_enc_utf8 && l_p_deco)
+          if (l_enc_utf8 && l_p_deco) {
             (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
-          (void)del_char(FALSE);
-          /*
-           * If there are combining characters and 'delcombine' is set
-           * move the cursor back.  Don't back up before the base
-           * character.
-           */
-          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL)
+          }
+          (void)del_char(false);
+          // If there are combining characters and 'delcombine' is set
+          // move the cursor back.  Don't back up before the base
+          // character.
+          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL) {
             inc_cursor();
+          }
           if (revins_chars) {
             revins_chars--;
             revins_legal++;

@@ -1555,14 +1555,12 @@ void ins_str(char_u *s)
   curwin->w_cursor.col += newlen;
 }
 
-/*
- * Delete one character under the cursor.
- * If "fixpos" is TRUE, don't leave the cursor on the NUL after the line.
- * Caller must have prepared for undo.
- *
- * return FAIL for failure, OK otherwise
- */
-int del_char(int fixpos)
+// Delete one character under the cursor.
+// If "fixpos" is true, don't leave the cursor on the NUL after the line.
+// Caller must have prepared for undo.
+//
+// return FAIL for failure, OK otherwise
+int del_char(bool fixpos)
 {
   if (has_mbyte) {
     /* Make sure the cursor is at the start of a character. */
