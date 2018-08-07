@@ -2944,7 +2944,7 @@ void spell_suggest(int count)
     memmove(p, line, c);
     STRCPY(p + c, stp->st_word);
     STRCAT(p, sug.su_badptr + stp->st_orglen);
-    ml_replace(curwin->w_cursor.lnum, p, FALSE);
+    ml_replace(curwin->w_cursor.lnum, p, false);
     curwin->w_cursor.col = c;
 
     // For redo we use a change-word command.
@@ -3062,7 +3062,7 @@ void ex_spellrepall(exarg_T *eap)
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
-      ml_replace(curwin->w_cursor.lnum, p, FALSE);
+      ml_replace(curwin->w_cursor.lnum, p, false);
       changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
       if (curwin->w_cursor.lnum != prev_lnum) {

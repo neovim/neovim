@@ -1766,8 +1766,8 @@ change_indent (
     /* We only put back the new line up to the cursor */
     new_line[curwin->w_cursor.col] = NUL;
 
-    /* Put back original line */
-    ml_replace(curwin->w_cursor.lnum, orig_line, FALSE);
+    // Put back original line
+    ml_replace(curwin->w_cursor.lnum, orig_line, false);
     curwin->w_cursor.col = orig_col;
 
     /* Backspace from cursor to start of line */
@@ -5770,8 +5770,8 @@ auto_format (
       pnew = vim_strnsave(new, len + 2);
       pnew[len] = ' ';
       pnew[len + 1] = NUL;
-      ml_replace(curwin->w_cursor.lnum, pnew, FALSE);
-      /* remove the space later */
+      ml_replace(curwin->w_cursor.lnum, pnew, false);
+      // remove the space later
       did_add_space = TRUE;
     } else
       /* may remove added space */

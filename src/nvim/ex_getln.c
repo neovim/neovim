@@ -6100,7 +6100,7 @@ static int open_cmdwin(void)
 
   /* Replace the empty last line with the current command-line and put the
    * cursor there. */
-  ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, TRUE);
+  ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, true);
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();

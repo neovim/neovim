@@ -716,11 +716,13 @@ void ex_retab(exarg_T *eap)
             memmove(new_line + start_col + len,
                 ptr + col, (size_t)(old_len - col + 1));
             ptr = new_line + start_col;
-            for (col = 0; col < len; col++)
+            for (col = 0; col < len; col++) {
               ptr[col] = (col < num_tabs) ? '\t' : ' ';
-            ml_replace(lnum, new_line, FALSE);
-            if (first_line == 0)
+            }
+            ml_replace(lnum, new_line, false);
+            if (first_line == 0) {
               first_line = lnum;
+            }
             last_line = lnum;
             ptr = new_line;
             col = start_col + len;
@@ -3625,7 +3627,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 // before the cursor.
                 len_change = (int)STRLEN(new_line) - (int)STRLEN(orig_line);
                 curwin->w_cursor.col += len_change;
-                ml_replace(lnum, new_line, FALSE);
+                ml_replace(lnum, new_line, false);
               }
 
               search_match_lines = regmatch.endpos[0].lnum
@@ -3667,9 +3669,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               msg_col = 0;
               gotocmdline(TRUE);
 
-              /* restore the line */
-              if (orig_line != NULL)
-                ml_replace(lnum, orig_line, FALSE);
+              // restore the line
+              if (orig_line != NULL) {
+                ml_replace(lnum, orig_line, false);
+              }
             }
 
             need_wait_return = FALSE;             /* no hit-return prompt */
@@ -3926,9 +3929,10 @@ skip:
             prev_matchcol = (colnr_T)STRLEN(sub_firstline)
                             - prev_matchcol;
 
-            if (u_savesub(lnum) != OK)
+            if (u_savesub(lnum) != OK) {
               break;
-            ml_replace(lnum, new_start, TRUE);
+            }
+            ml_replace(lnum, new_start, true);
 
             if (nmatch_tl > 0) {
               /*

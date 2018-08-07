@@ -466,8 +466,8 @@ static void shift_block(oparg_T *oap, int amount)
     memset(newp + verbatim_diff, ' ', fill);
     STRMOVE(newp + verbatim_diff + fill, non_white);
   }
-  /* replace the line */
-  ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+  // replace the line
+  ml_replace(curwin->w_cursor.lnum, newp, false);
   changed_bytes(curwin->w_cursor.lnum, (colnr_T)bd.textcol);
   State = oldstate;
   curwin->w_cursor.col = oldcol;
@@ -561,7 +561,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       offset += count;
     STRMOVE(newp + offset, oldp);
 
-    ml_replace(lnum, newp, FALSE);
+    ml_replace(lnum, newp, false);
 
     if (lnum == oap->end.lnum) {
       /* Set "']" mark to the end of the block instead of the end of
@@ -1749,8 +1749,8 @@ int op_replace(oparg_T *oap, int c)
         after_p = (char_u *)xmalloc(after_p_len);
         memmove(after_p, oldp, after_p_len);
       }
-      /* replace the line */
-      ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+      // replace the line
+      ml_replace(curwin->w_cursor.lnum, newp, false);
       if (after_p != NULL) {
         ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
         appended_lines_mark(curwin->w_cursor.lnum, 1L);
@@ -2265,7 +2265,7 @@ int op_change(oparg_T *oap)
           offset += ins_len;
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
-          ml_replace(linenr, newp, FALSE);
+          ml_replace(linenr, newp, false);
         }
       }
       check_cursor();
@@ -3119,10 +3119,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             ptr += yanklen;
           }
           STRMOVE(ptr, oldp + col);
-          ml_replace(lnum, newp, FALSE);
-          /* Place cursor on last putted char. */
+          ml_replace(lnum, newp, false);
+          // Place cursor on last putted char.
           if (lnum == curwin->w_cursor.lnum) {
-            /* make sure curwin->w_virtcol is updated */
+            // make sure curwin->w_virtcol is updated
             changed_cline_bef_curs();
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
@@ -3166,7 +3166,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           memmove(newp, oldp, (size_t)col);
           /* append to first line */
           memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
-          ml_replace(lnum, newp, FALSE);
+          ml_replace(lnum, newp, false);
 
           curwin->w_cursor.lnum = lnum;
           i = 1;
@@ -3695,7 +3695,7 @@ int do_join(size_t count,
       curr = skipwhite(curr);
     currsize = (int)STRLEN(curr);
   }
-  ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+  ml_replace(curwin->w_cursor.lnum, newp, false);
 
   if (setmark) {
     // Set the '] mark.
