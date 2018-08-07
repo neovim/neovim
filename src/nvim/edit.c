@@ -5703,8 +5703,8 @@ auto_format (
   pos = curwin->w_cursor;
   old = get_cursor_line_ptr();
 
-  /* may remove added space */
-  check_auto_format(FALSE);
+  // may remove added space
+  check_auto_format(false);
 
   /* Don't format in Insert mode when the cursor is on a trailing blank, the
    * user might insert normal text next.  Also skip formatting when "1" is
@@ -5775,7 +5775,7 @@ auto_format (
       did_add_space = true;
     } else {
       // may remove added space
-      check_auto_format(FALSE);
+      check_auto_format(false);
     }
   }
 
@@ -5787,9 +5787,8 @@ auto_format (
  * delete it now.  The space must be under the cursor, just after the insert
  * position.
  */
-static void
-check_auto_format (
-    int end_insert                     /* TRUE when ending Insert mode */
+static void check_auto_format(
+    bool end_insert                   // true when ending Insert mode
 )
 {
   int c = ' ';
@@ -6034,8 +6033,8 @@ stop_insert (
       }
     }
 
-    /* If a space was inserted for auto-formatting, remove it now. */
-    check_auto_format(TRUE);
+    // If a space was inserted for auto-formatting, remove it now.
+    check_auto_format(true);
 
     /* If we just did an auto-indent, remove the white space from the end
      * of the line, and put the cursor back.
