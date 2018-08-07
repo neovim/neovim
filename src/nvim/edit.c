@@ -240,8 +240,8 @@ static int ins_need_undo;               /* call u_save() before inserting a
                                            char.  Set when edit() is called.
                                            after that arrow_used is used. */
 
-static int did_add_space = FALSE;       /* auto_format() added an extra space
-                                           under the cursor */
+static bool did_add_space = false;      // auto_format() added an extra space
+                                        // under the cursor
 static TriState dont_sync_undo = kFalse;  // CTRL-G U prevents syncing undo
                                           // for the next left/right cursor
 
@@ -5772,10 +5772,11 @@ auto_format (
       pnew[len + 1] = NUL;
       ml_replace(curwin->w_cursor.lnum, pnew, false);
       // remove the space later
-      did_add_space = TRUE;
-    } else
-      /* may remove added space */
+      did_add_space = true;
+    } else {
+      // may remove added space
       check_auto_format(FALSE);
+    }
   }
 
   check_cursor();
@@ -5796,19 +5797,19 @@ check_auto_format (
 
   if (did_add_space) {
     cc = gchar_cursor();
-    if (!WHITECHAR(cc))
-      /* Somehow the space was removed already. */
-      did_add_space = FALSE;
-    else {
+    if (!WHITECHAR(cc)) {
+      // Somehow the space was removed already.
+      did_add_space = false;
+    } else {
       if (!end_insert) {
         inc_cursor();
         c = gchar_cursor();
         dec_cursor();
       }
       if (c != NUL) {
-        /* The space is no longer at the end of the line, delete it. */
+        // The space is no longer at the end of the line, delete it.
         del_char(FALSE);
-        did_add_space = FALSE;
+        did_add_space = false;
       }
     }
   }
