@@ -701,7 +701,7 @@ static int read_redo(int init, int old_redo)
     buf[i] = (char_u)c;
     if (i == n - 1) {         // last byte of a character
       if (n != 1) {
-        c = (*mb_ptr2char)(buf);
+        c = utf_ptr2char(buf);
       }
       break;
     }
@@ -1486,7 +1486,7 @@ int vgetc(void)
           }
         }
         no_mapping--;
-        c = (*mb_ptr2char)(buf);
+        c = utf_ptr2char(buf);
       }
 
       break;

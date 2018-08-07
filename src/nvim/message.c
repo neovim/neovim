@@ -1219,7 +1219,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
     // Don't include composing chars after the end.
     mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
     if (mb_l > 1) {
-      c = (*mb_ptr2char)((char_u *)str);
+      c = utf_ptr2char((char_u *)str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
         retval += (*mb_ptr2cells)((char_u *)str);
@@ -1480,7 +1480,7 @@ void msg_prt_line(char_u *s, int list)
       col += (*mb_ptr2cells)(s);
       char buf[MB_MAXBYTES + 1];
       if (lcs_nbsp != NUL && list
-          && (mb_ptr2char(s) == 160 || mb_ptr2char(s) == 0x202f)) {
+          && (utf_ptr2char(s) == 160 || utf_ptr2char(s) == 0x202f)) {
         mb_char2bytes(lcs_nbsp, (char_u *)buf);
         buf[(*mb_ptr2len)((char_u *)buf)] = NUL;
       } else {
@@ -2866,14 +2866,12 @@ do_dialog (
       // Make the character lowercase, as chars in "hotkeys" are.
       c = mb_tolower(c);
       retval = 1;
-      for (i = 0; hotkeys[i]; ++i) {
-        if (has_mbyte) {
-          if ((*mb_ptr2char)(hotkeys + i) == c)
-            break;
-          i += (*mb_ptr2len)(hotkeys + i) - 1;
-        } else if (hotkeys[i] == c)
+      for (i = 0; hotkeys[i]; i++) {
+        if (utf_ptr2char(hotkeys + i) == c) {
           break;
-        ++retval;
+        }
+        i += utfc_ptr2len(hotkeys + i) - 1;
+        retval++;
       }
       if (hotkeys[i])
         break;
@@ -2905,25 +2903,13 @@ copy_char (
     int lowercase                  /* make character lower case */
 )
 {
-  int len;
-  int c;
-
-  if (has_mbyte) {
-    if (lowercase) {
-      c = mb_tolower((*mb_ptr2char)(from));
-      return (*mb_char2bytes)(c, to);
-    } else {
-      len = (*mb_ptr2len)(from);
-      memmove(to, from, (size_t)len);
-      return len;
-    }
-  } else {
-    if (lowercase)
-      *to = (char_u)TOLOWER_LOC(*from);
-    else
-      *to = *from;
-    return 1;
+  if (lowercase) {
+    int c = mb_tolower(utf_ptr2char(from));
+    return utf_char2bytes(c, to);
   }
+  int len = utfc_ptr2len(from);
+  memmove(to, from, (size_t)len);
+  return len;
 }
 
 #define HAS_HOTKEY_LEN 30

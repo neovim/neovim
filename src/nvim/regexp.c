@@ -772,13 +772,9 @@ static int get_equi_class(char_u **pp)
   char_u      *p = *pp;
 
   if (p[1] == '=') {
-    if (has_mbyte)
-      l = (*mb_ptr2len)(p + 2);
+    l = (*mb_ptr2len)(p + 2);
     if (p[l + 2] == '=' && p[l + 3] == ']') {
-      if (has_mbyte)
-        c = mb_ptr2char(p + 2);
-      else
-        c = p[2];
+      c = utf_ptr2char(p + 2);
       *pp += l + 4;
       return c;
     }
@@ -1107,13 +1103,9 @@ static int get_coll_element(char_u **pp)
   char_u      *p = *pp;
 
   if (p[0] != NUL && p[1] == '.') {
-    if (has_mbyte)
-      l = (*mb_ptr2len)(p + 2);
+    l = utfc_ptr2len(p + 2);
     if (p[l + 2] == '.' && p[l + 3] == ']') {
-      if (has_mbyte)
-        c = mb_ptr2char(p + 2);
-      else
-        c = p[2];
+      c = utf_ptr2char(p + 2);
       *pp += l + 4;
       return c;
     }
@@ -1299,10 +1291,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
     }
 
     if (OP(scan) == EXACTLY) {
-      if (has_mbyte)
-        r->regstart = (*mb_ptr2char)(OPERAND(scan));
-      else
-        r->regstart = *OPERAND(scan);
+      r->regstart = utf_ptr2char(OPERAND(scan));
     } else if (OP(scan) == BOW
                || OP(scan) == EOW
                || OP(scan) == NOTHING
@@ -1310,10 +1299,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
       char_u *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
-        if (has_mbyte)
-          r->regstart = (*mb_ptr2char)(OPERAND(regnext_scan));
-        else
-          r->regstart = *OPERAND(regnext_scan);
+        r->regstart = utf_ptr2char(OPERAND(regnext_scan));
       }
     }
 
@@ -2412,20 +2398,16 @@ collection:
               break;
             }
           } else {
-            if (has_mbyte) {
-              int len;
-
-              /* produce a multibyte character, including any
-               * following composing characters */
-              startc = mb_ptr2char(regparse);
-              len = (*mb_ptr2len)(regparse);
-              if (enc_utf8 && utf_char2len(startc) != len)
-                startc = -1;                    /* composing chars */
-              while (--len >= 0)
-                regc(*regparse++);
-            } else {
-              startc = *regparse++;
-              regc(startc);
+            // produce a multibyte character, including any
+            // following composing characters.
+            startc = utf_ptr2char(regparse);
+            int len = utfc_ptr2len(regparse);
+            if (utf_char2len(startc) != len) {
+              // composing chars
+              startc = -1;
+            }
+            while (--len >= 0) {
+              regc(*regparse++);
             }
           }
         }
@@ -2906,17 +2888,13 @@ static int peekchr(void)
        * Next character can never be (made) magic?
        * Then backslashing it won't do anything.
        */
-      if (has_mbyte)
-        curchr = (*mb_ptr2char)(regparse + 1);
-      else
-        curchr = c;
+      curchr = utf_ptr2char(regparse + 1);
     }
     break;
   }
 
   default:
-    if (has_mbyte)
-      curchr = (*mb_ptr2char)(regparse);
+    curchr = utf_ptr2char(regparse);
   }
 
   return curchr;
@@ -3466,12 +3444,7 @@ static long bt_regexec_both(char_u *line,
 
   /* If there is a "must appear" string, look for it. */
   if (prog->regmust != NULL) {
-    int c;
-
-    if (has_mbyte)
-      c = (*mb_ptr2char)(prog->regmust);
-    else
-      c = *prog->regmust;
+    int c = utf_ptr2char(prog->regmust);
     s = line + col;
 
     // This is used very often, esp. for ":global".  Use two versions of
@@ -3502,16 +3475,11 @@ static long bt_regexec_both(char_u *line,
 
   /* Simplest case: Anchored match need be tried only once. */
   if (prog->reganch) {
-    int c;
-
-    if (has_mbyte)
-      c = (*mb_ptr2char)(regline + col);
-    else
-      c = regline[col];
+    int c = utf_ptr2char(regline + col);
     if (prog->regstart == NUL
         || prog->regstart == c
         || (rex.reg_ic
-            && (((enc_utf8 && utf_fold(prog->regstart) == utf_fold(c)))
+            && (utf_fold(prog->regstart) == utf_fold(c)
                 || (c < 255 && prog->regstart < 255
                     && mb_tolower(prog->regstart) == mb_tolower(c))))) {
       retval = regtry(prog, col);
@@ -3858,12 +3826,10 @@ regmatch (
       } else if (rex.reg_line_lbr && WITH_NL(op) && *reginput == '\n') {
         ADVANCE_REGINPUT();
       } else {
-        if (WITH_NL(op))
+        if (WITH_NL(op)) {
           op -= ADD_NL;
-        if (has_mbyte)
-          c = (*mb_ptr2char)(reginput);
-        else
-          c = *reginput;
+        }
+        c = utf_ptr2char(reginput);
         switch (op) {
         case BOL:
           if (reginput != regline)
@@ -5473,8 +5439,8 @@ do_class:
         }
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
-      } else if (has_mbyte && (len = (*mb_ptr2len)(scan)) > 1) {
-        if ((cstrchr(opnd, (*mb_ptr2char)(scan)) == NULL) == testval) {
+      } else if ((len = utfc_ptr2len(scan)) > 1) {
+        if ((cstrchr(opnd, utf_ptr2char(scan)) == NULL) == testval) {
           break;
         }
         scan += len;
@@ -6782,18 +6748,18 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           }
             c = *src++;
           }
-        } else if (has_mbyte)
-          c = mb_ptr2char(src - 1);
-
-        /* Write to buffer, if copy is set. */
-        if (func_one != (fptr_T)NULL)
-          /* Turbo C complains without the typecast */
+        } else {
+          c = utf_ptr2char(src - 1);
+        }
+        // Write to buffer, if copy is set.
+        if (func_one != NULL) {
           func_one = (fptr_T)(func_one(&cc, c));
-        else if (func_all != (fptr_T)NULL)
-          /* Turbo C complains without the typecast */
+        } else if (func_all != NULL) {
           func_all = (fptr_T)(func_all(&cc, c));
-        else     /* just copy */
+        } else {
+          // just copy
           cc = c;
+        }
 
         if (has_mbyte) {
           int totlen = mb_ptr2len(src - 1);
@@ -6878,10 +6844,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                 }
                 dst += 2;
               } else {
-                if (has_mbyte)
-                  c = mb_ptr2char(s);
-                else
-                  c = *s;
+                c = utf_ptr2char(s);
 
                 if (func_one != (fptr_T)NULL)
                   /* Turbo C complains without the typecast */

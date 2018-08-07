@@ -2899,11 +2899,7 @@ const char * set_one_cmd_context(
     xp->xp_pattern = skipwhite((const char_u *)arg);
     p = (const char *)xp->xp_pattern;
     while (*p != NUL) {
-      if (has_mbyte) {
-        c = mb_ptr2char((const char_u *)p);
-      } else {
-        c = (uint8_t)(*p);
-      }
+      c = utf_ptr2char((const char_u *)p);
       if (c == '\\' && p[1] != NUL) {
         p++;
       } else if (c == '`') {
@@ -2921,19 +2917,11 @@ const char * set_one_cmd_context(
             || ascii_iswhite(c)) {
         len = 0;          /* avoid getting stuck when space is in 'isfname' */
         while (*p != NUL) {
-          if (has_mbyte) {
-            c = mb_ptr2char((const char_u *)p);
-          } else {
-            c = *p;
-          }
+          c = utf_ptr2char((const char_u *)p);
           if (c == '`' || vim_isfilec_or_wc(c)) {
             break;
           }
-          if (has_mbyte) {
-            len = (size_t)(*mb_ptr2len)((const char_u *)p);
-          } else {
-            len = 1;
-          }
+          len = (size_t)utfc_ptr2len((const char_u *)p);
           MB_PTR_ADV(p);
         }
         if (in_quote) {

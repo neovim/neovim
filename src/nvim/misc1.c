@@ -701,13 +701,12 @@ open_line (
       replace_push(NUL);            /* end of extra blanks */
     if (curbuf->b_p_ai || (flags & OPENLINE_DELSPACES)) {
       while ((*p_extra == ' ' || *p_extra == '\t')
-             && (!enc_utf8
-                 || !utf_iscomposing(utf_ptr2char(p_extra + 1)))
-             ) {
-        if (REPLACE_NORMAL(State))
+             && !utf_iscomposing(utf_ptr2char(p_extra + 1))) {
+        if (REPLACE_NORMAL(State)) {
           replace_push(*p_extra);
-        ++p_extra;
-        ++less_cols_off;
+        }
+        p_extra++;
+        less_cols_off++;
       }
     }
     if (*p_extra != NUL) {
@@ -1512,7 +1511,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       && msg_silent == 0
       && !ins_compl_active()
       ) {
-    showmatch(mb_ptr2char(buf));
+    showmatch(utf_ptr2char(buf));
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
@@ -1749,11 +1748,7 @@ del_lines (
 
 int gchar_pos(pos_T *pos)
 {
-  char_u      *ptr = ml_get_pos(pos);
-
-  if (has_mbyte)
-    return (*mb_ptr2char)(ptr);
-  return (int)*ptr;
+  return utf_ptr2char(ml_get_pos(pos));
 }
 
 /*
@@ -2389,12 +2384,12 @@ int get_keystroke(void)
       }
       break;
     }
-    if (has_mbyte) {
-      if (MB_BYTE2LEN(n) > len)
-        continue;               /* more bytes to get */
-      buf[len >= buflen ? buflen - 1 : len] = NUL;
-      n = (*mb_ptr2char)(buf);
+    if (MB_BYTE2LEN(n) > len) {
+      // more bytes to get.
+      continue;
     }
+    buf[len >= buflen ? buflen - 1 : len] = NUL;
+    n = utf_ptr2char(buf);
 #ifdef UNIX
     if (n == intr_char)
       n = ESC;
@@ -2840,4 +2835,3 @@ int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
 }
-

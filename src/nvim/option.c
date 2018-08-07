@@ -2703,7 +2703,7 @@ did_set_string_option (
         if (*p != NUL)
           x2 = *p++;
         if (*p != NUL) {
-          x3 = mb_ptr2char(p);
+          x3 = utf_ptr2char(p);
           p += mb_ptr2len(p);
         }
         if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
@@ -6406,22 +6406,25 @@ static void langmap_set(void)
         ++p;
         break;
       }
-      if (p[0] == '\\' && p[1] != NUL)
-        ++p;
-      from = (*mb_ptr2char)(p);
+      if (p[0] == '\\' && p[1] != NUL) {
+        p++;
+      }
+      from = utf_ptr2char(p);
       to = NUL;
       if (p2 == NULL) {
         MB_PTR_ADV(p);
         if (p[0] != ',') {
-          if (p[0] == '\\')
-            ++p;
-          to = (*mb_ptr2char)(p);
+          if (p[0] == '\\') {
+            p++;
+          }
+          to = utf_ptr2char(p);
         }
       } else {
         if (p2[0] != ',') {
-          if (p2[0] == '\\')
-            ++p2;
-          to = (*mb_ptr2char)(p2);
+          if (p2[0] == '\\') {
+            p2++;
+          }
+          to = utf_ptr2char(p2);
         }
       }
       if (to == NUL) {
@@ -6846,66 +6849,37 @@ int get_sts_value(void)
  */
 void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
 {
-  char_u      *ptr;
+  char_u *ptr = curbuf->b_p_mps;
 
-  ptr = curbuf->b_p_mps;
   while (*ptr != NUL) {
-    if (has_mbyte) {
-      char_u *prev;
-
-      if (mb_ptr2char(ptr) == *initc) {
-        if (switchit) {
-          *findc = *initc;
-          *initc = mb_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = TRUE;
-        } else {
-          *findc = mb_ptr2char(ptr + mb_ptr2len(ptr) + 1);
-          *backwards = FALSE;
-        }
-        return;
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = true;
+      } else {
+        *findc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
+        *backwards = false;
       }
-      prev = ptr;
-      ptr += mb_ptr2len(ptr) + 1;
-      if (mb_ptr2char(ptr) == *initc) {
-        if (switchit) {
-          *findc = *initc;
-          *initc = mb_ptr2char(prev);
-          *backwards = FALSE;
-        } else {
-          *findc = mb_ptr2char(prev);
-          *backwards = TRUE;
-        }
-        return;
-      }
-      ptr += mb_ptr2len(ptr);
-    } else {
-      if (*ptr == *initc) {
-        if (switchit) {
-          *backwards = TRUE;
-          *findc = *initc;
-          *initc = ptr[2];
-        } else {
-          *backwards = FALSE;
-          *findc = ptr[2];
-        }
-        return;
-      }
-      ptr += 2;
-      if (*ptr == *initc) {
-        if (switchit) {
-          *backwards = FALSE;
-          *findc = *initc;
-          *initc = ptr[-2];
-        } else {
-          *backwards = TRUE;
-          *findc =  ptr[-2];
-        }
-        return;
-      }
-      ++ptr;
+      return;
     }
-    if (*ptr == ',')
-      ++ptr;
+    char_u *prev = ptr;
+    ptr += utfc_ptr2len(ptr) + 1;
+    if (utf_ptr2char(ptr) == *initc) {
+      if (switchit) {
+        *findc = *initc;
+        *initc = utf_ptr2char(prev);
+        *backwards = false;
+      } else {
+        *findc = utf_ptr2char(prev);
+        *backwards = true;
+      }
+      return;
+    }
+    ptr += utfc_ptr2len(ptr);
+    if (*ptr == ',') {
+      ptr++;
+    }
   }
 }
 

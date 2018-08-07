@@ -5609,7 +5609,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
   m->match.rmm_maxcol = 0;
   m->conceal_char = 0;
   if (conceal_char != NULL) {
-    m->conceal_char = (*mb_ptr2char)((const char_u *)conceal_char);
+    m->conceal_char = utf_ptr2char((const char_u *)conceal_char);
   }
 
   // Set up position matches

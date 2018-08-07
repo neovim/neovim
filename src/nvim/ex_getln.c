@@ -3327,16 +3327,11 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
       /* Locate start of last word in the cmd buffer. */
       for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff; ) {
-        if (has_mbyte) {
-          len = (*mb_head_off)(ccline.cmdbuff, w - 1) + 1;
-          if (!vim_iswordc(mb_ptr2char(w - len)))
-            break;
-          w -= len;
-        } else {
-          if (!vim_iswordc(w[-1]))
-            break;
-          --w;
+        len = utf_head_off(ccline.cmdbuff, w - 1) + 1;
+        if (!vim_iswordc(utf_ptr2char(w - len))) {
+          break;
         }
+        w -= len;
       }
       len = (int)((ccline.cmdbuff + ccline.cmdpos) - w);
       if (p_ic ? STRNICMP(w, arg, len) == 0 : STRNCMP(w, arg, len) == 0)
@@ -3837,24 +3832,13 @@ ExpandOne (
 
   // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
-    size_t len;
-    size_t mb_len = 1;
-    int c0;
-    int ci;
+    size_t len = 0;
 
-    for (len = 0; xp->xp_files[0][len]; len += mb_len) {
-      if (has_mbyte) {
-        mb_len = (* mb_ptr2len)(&xp->xp_files[0][len]);
-        c0 = (* mb_ptr2char)(&xp->xp_files[0][len]);
-      } else {
-        c0 = xp->xp_files[0][len];
-      }
-      for (i = 1; i < xp->xp_numfiles; ++i) {
-        if (has_mbyte) {
-          ci =(* mb_ptr2char)(&xp->xp_files[i][len]);
-        } else {
-          ci = xp->xp_files[i][len];
-        }
+    for (size_t mb_len; xp->xp_files[0][len]; len += mb_len) {
+      mb_len = utfc_ptr2len(&xp->xp_files[0][len]);
+      int c0 = utf_ptr2char(&xp->xp_files[0][len]);
+      for (i = 1; i < xp->xp_numfiles; i++) {
+        int ci = utf_ptr2char(&xp->xp_files[i][len]);
 
         if (p_fic && (xp->xp_context == EXPAND_DIRECTORIES
                       || xp->xp_context == EXPAND_FILES

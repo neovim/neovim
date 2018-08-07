@@ -4101,13 +4101,9 @@ get_syn_options(
         return NULL;
       }
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=')   {
-      /* cchar=? */
-      if (has_mbyte) {
-        *conceal_char = mb_ptr2char(arg + 6);
-        arg += mb_ptr2len(arg + 6) - 1;
-      } else {
-        *conceal_char = arg[6];
-      }
+      // cchar=?
+      *conceal_char = utf_ptr2char(arg + 6);
+      arg += mb_ptr2len(arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
         EMSG(_("E844: invalid cchar value"));
         return NULL;

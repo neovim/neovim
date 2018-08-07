@@ -1536,7 +1536,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
       to = string_convert(&vc, buf, &len);
 
       if (to != NULL) {
-        retval = (*mb_ptr2char)(to);
+        retval = utf_ptr2char(to);
         xfree(to);
       }
       (void)convert_setup(&vc, NULL, NULL);

@@ -5030,16 +5030,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
    * Run for each character.
    */
   for (;; ) {
-    int curc;
-    int clen;
-
-    if (has_mbyte) {
-      curc = (*mb_ptr2char)(reginput);
-      clen = (*mb_ptr2len)(reginput);
-    } else {
-      curc = *reginput;
-      clen = 1;
-    }
+    int curc = utf_ptr2char(reginput);
+    int clen = utfc_ptr2len(reginput);
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;
@@ -5501,7 +5493,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // We don't care about the order of composing characters.
           // Get them into cchars[] first.
           while (len < clen) {
-            mc = mb_ptr2char(reginput + len);
+            mc = utf_ptr2char(reginput + len);
             cchars[ccount++] = mc;
             len += mb_char2len(mc);
             if (ccount == MAX_MCO)

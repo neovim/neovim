@@ -1956,7 +1956,7 @@ static int count_syllables(slang_T *slang, char_u *word)
       skip = false;
     } else {
       // No recognized syllable item, at least a syllable char then?
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       len = (*mb_ptr2len)(p);
       if (vim_strchr(slang->sl_syllable, c) == NULL)
         skip = false;               // No, search for next syllable
@@ -2271,7 +2271,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       int c, l, n;
       char_u  *bp;
 
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       l = (*mb_ptr2len)(p);
       if (c < 256 && l <= 2)
         wp->w_s->b_spell_ismw[c] = true;
@@ -2597,16 +2597,18 @@ static bool spell_iswordp(char_u *p, win_T *wp)
       if (wp->w_s->b_spell_ismw[*p])
         s = p + 1;                      // skip a mid-word character
     } else {
-      c = mb_ptr2char(p);
+      c = utf_ptr2char(p);
       if (c < 256 ? wp->w_s->b_spell_ismw[c]
           : (wp->w_s->b_spell_ismw_mb != NULL
-             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL))
+             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
         s = p + l;
+      }
     }
 
-    c = mb_ptr2char(s);
-    if (c > 255)
+    c = utf_ptr2char(s);
+    if (c > 255) {
       return spell_mb_isword_class(mb_get_class(s), wp);
+    }
     return spelltab.st_isw[c];
   }
 
@@ -2617,16 +2619,11 @@ static bool spell_iswordp(char_u *p, win_T *wp)
 // Unlike spell_iswordp() this doesn't check for "midword" characters.
 bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
-  int c;
-
-  if (has_mbyte) {
-    c = mb_ptr2char(p);
-    if (c > 255) {
-      return spell_mb_isword_class(mb_get_class(p), wp);
-    }
-    return spelltab.st_isw[c];
+  int c = utf_ptr2char(p);
+  if (c > 255) {
+    return spell_mb_isword_class(mb_get_class(p), wp);
   }
-  return spelltab.st_isw[*p];
+  return spelltab.st_isw[c];
 }
 
 // Returns true if word class indicates a word character.
@@ -4300,14 +4297,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                     && utf_iscomposing(utf_ptr2char(fword
                                                     + sp->ts_fcharstart))) {
                   sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
-                } else if (!soundfold
-                           && slang->sl_has_map
-                           && similar_chars(slang,
-                                            mb_ptr2char(tword
-                                                        + sp->ts_twordlen
-                                                        - sp->ts_tcharlen),
-                                            mb_ptr2char(fword
-                                                        + sp->ts_fcharstart))) {
+                } else if (
+                    !soundfold
+                    && slang->sl_has_map
+                    && similar_chars(
+                        slang,
+                        utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen),
+                        utf_ptr2char(fword + sp->ts_fcharstart))) {
                   // For a similar character adjust score from
                   // SCORE_SUBST to SCORE_SIMILAR.
                   sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
@@ -4315,8 +4311,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
               } else if (sp->ts_isdiff == DIFF_INSERT
                          && sp->ts_twordlen > sp->ts_tcharlen) {
                 p = tword + sp->ts_twordlen - sp->ts_tcharlen;
-                c = mb_ptr2char(p);
-                if (enc_utf8 && utf_iscomposing(c)) {
+                c = utf_ptr2char(p);
+                if (utf_iscomposing(c)) {
                   // Inserting a composing char doesn't
                   // count that much.
                   sp->ts_score -= SCORE_INS - SCORE_INSCOMP;
@@ -4327,7 +4323,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                   // tree (might seem illogical but does
                   // give better scores).
                   MB_PTR_BACK(tword, p);
-                  if (c == mb_ptr2char(p)) {
+                  if (c == utf_ptr2char(p)) {
                     sp->ts_score -= SCORE_INS - SCORE_INSDUP;
                   }
                 }
@@ -4388,19 +4384,14 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // score if the same character is following "nn" -> "n".  It's
         // a bit illogical for soundfold tree but it does give better
         // results.
-        if (has_mbyte) {
-          c = mb_ptr2char(fword + sp->ts_fidx);
-          stack[depth].ts_fidx += MB_PTR2LEN(fword + sp->ts_fidx);
-          if (enc_utf8 && utf_iscomposing(c)) {
-            stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
-          } else if (c == mb_ptr2char(fword + stack[depth].ts_fidx)) {
-            stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
-          }
-        } else {
-          ++stack[depth].ts_fidx;
-          if (fword[sp->ts_fidx] == fword[sp->ts_fidx + 1])
-            stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
+        c = utf_ptr2char(fword + sp->ts_fidx);
+        stack[depth].ts_fidx += MB_PTR2LEN(fword + sp->ts_fidx);
+        if (utf_iscomposing(c)) {
+          stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
+        } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
+          stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
         }
+
         break;
       }
     // FALLTHROUGH
@@ -4515,22 +4506,14 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         break;
       }
 
-      if (has_mbyte) {
-        n = MB_CPTR2LEN(p);
-        c = mb_ptr2char(p);
-        if (p[n] == NUL)
-          c2 = NUL;
-        else if (!soundfold && !spell_iswordp(p + n, curwin))
-          c2 = c;           // don't swap non-word char
-        else
-          c2 = mb_ptr2char(p + n);
+      n = MB_CPTR2LEN(p);
+      c = utf_ptr2char(p);
+      if (p[n] == NUL) {
+        c2 = NUL;
+      } else if (!soundfold && !spell_iswordp(p + n, curwin)) {
+        c2 = c;  // don't swap non-word char
       } else {
-        if (p[1] == NUL)
-          c2 = NUL;
-        else if (!soundfold && !spell_iswordp(p + 1, curwin))
-          c2 = c;           // don't swap non-word char
-        else
-          c2 = p[1];
+        c2 = utf_ptr2char(p + n);
       }
 
       // When the second character is NUL we can't swap.
@@ -4550,9 +4533,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (c2 != NUL && TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
         go_deeper(stack, depth, SCORE_SWAP);
 #ifdef DEBUG_TRIEWALK
-        sprintf(changename[depth], "%.*s-%s: swap %c and %c",
-            sp->ts_twordlen, tword, fword + sp->ts_fidx,
-            c, c2);
+        snprintf(changename[depth], sizeof(changename[0]),
+                 "%.*s-%s: swap %c and %c",
+                 sp->ts_twordlen, tword, fword + sp->ts_fidx,
+                 c, c2);
 #endif
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
@@ -4576,38 +4560,25 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNSWAP:
       // Undo the STATE_SWAP swap: "21" -> "12".
       p = fword + sp->ts_fidx;
-      if (has_mbyte) {
-        n = MB_PTR2LEN(p);
-        c = mb_ptr2char(p + n);
-        memmove(p + MB_PTR2LEN(p + n), p, n);
-        mb_char2bytes(c, p);
-      } else {
-        c = *p;
-        *p = p[1];
-        p[1] = c;
-      }
+      n = MB_PTR2LEN(p);
+      c = utf_ptr2char(p + n);
+      memmove(p + MB_PTR2LEN(p + n), p, n);
+      mb_char2bytes(c, p);
+
     // FALLTHROUGH
 
     case STATE_SWAP3:
       // Swap two bytes, skipping one: "123" -> "321".  We change
       // "fword" here, it's changed back afterwards at STATE_UNSWAP3.
       p = fword + sp->ts_fidx;
-      if (has_mbyte) {
-        n = MB_CPTR2LEN(p);
-        c = mb_ptr2char(p);
-        fl = MB_CPTR2LEN(p + n);
-        c2 = mb_ptr2char(p + n);
-        if (!soundfold && !spell_iswordp(p + n + fl, curwin))
-          c3 = c;               // don't swap non-word char
-        else
-          c3 = mb_ptr2char(p + n + fl);
+      n = MB_CPTR2LEN(p);
+      c = utf_ptr2char(p);
+      fl = MB_CPTR2LEN(p + n);
+      c2 = utf_ptr2char(p + n);
+      if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
+        c3 = c;  // don't swap non-word char
       } else {
-        c = *p;
-        c2 = p[1];
-        if (!soundfold && !spell_iswordp(p + 2, curwin))
-          c3 = c;               // don't swap non-word char
-        else
-          c3 = p[2];
+        c3 = utf_ptr2char(p + n + fl);
       }
 
       // When characters are identical: "121" then SWAP3 result is
@@ -4651,22 +4622,15 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNSWAP3:
       // Undo STATE_SWAP3: "321" -> "123"
       p = fword + sp->ts_fidx;
-      if (has_mbyte) {
-        n = MB_PTR2LEN(p);
-        c2 = mb_ptr2char(p + n);
-        fl = MB_PTR2LEN(p + n);
-        c = mb_ptr2char(p + n + fl);
-        tl = MB_PTR2LEN(p + n + fl);
-        memmove(p + fl + tl, p, n);
-        mb_char2bytes(c, p);
-        mb_char2bytes(c2, p + tl);
-        p = p + tl;
-      } else {
-        c = *p;
-        *p = p[2];
-        p[2] = c;
-        ++p;
-      }
+      n = MB_PTR2LEN(p);
+      c2 = utf_ptr2char(p + n);
+      fl = MB_PTR2LEN(p + n);
+      c = utf_ptr2char(p + n + fl);
+      tl = MB_PTR2LEN(p + n + fl);
+      memmove(p + fl + tl, p, n);
+      mb_char2bytes(c, p);
+      mb_char2bytes(c2, p + tl);
+      p = p + tl;
 
       if (!soundfold && !spell_iswordp(p, curwin)) {
         // Middle char is not a word char, skip the rotate.  First and
@@ -4690,21 +4654,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         sp->ts_state = STATE_UNROT3L;
         ++depth;
         p = fword + sp->ts_fidx;
-        if (has_mbyte) {
-          n = MB_CPTR2LEN(p);
-          c = mb_ptr2char(p);
-          fl = MB_CPTR2LEN(p + n);
-          fl += MB_CPTR2LEN(p + n + fl);
-          memmove(p, p + n, fl);
-          mb_char2bytes(c, p + fl);
-          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-        } else {
-          c = *p;
-          *p = p[1];
-          p[1] = p[2];
-          p[2] = c;
-          stack[depth].ts_fidxtry = sp->ts_fidx + 3;
-        }
+        n = MB_CPTR2LEN(p);
+        c = utf_ptr2char(p);
+        fl = MB_CPTR2LEN(p + n);
+        fl += MB_CPTR2LEN(p + n + fl);
+        memmove(p, p + n, fl);
+        utf_char2bytes(c, p + fl);
+        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
@@ -4714,19 +4670,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNROT3L:
       // Undo ROT3L: "231" -> "123"
       p = fword + sp->ts_fidx;
-      if (has_mbyte) {
-        n = MB_PTR2LEN(p);
-        n += MB_PTR2LEN(p + n);
-        c = mb_ptr2char(p + n);
-        tl = MB_PTR2LEN(p + n);
-        memmove(p + tl, p, n);
-        mb_char2bytes(c, p);
-      } else {
-        c = p[2];
-        p[2] = p[1];
-        p[1] = *p;
-        *p = c;
-      }
+      n = MB_PTR2LEN(p);
+      n += MB_PTR2LEN(p + n);
+      c = utf_ptr2char(p + n);
+      tl = MB_PTR2LEN(p + n);
+      memmove(p + tl, p, n);
+      mb_char2bytes(c, p);
 
       // Rotate three bytes right: "123" -> "312".  We change "fword"
       // here, it's changed back afterwards at STATE_UNROT3R.
@@ -4742,21 +4691,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         sp->ts_state = STATE_UNROT3R;
         ++depth;
         p = fword + sp->ts_fidx;
-        if (has_mbyte) {
-          n = MB_CPTR2LEN(p);
-          n += MB_CPTR2LEN(p + n);
-          c = mb_ptr2char(p + n);
-          tl = MB_CPTR2LEN(p + n);
-          memmove(p + tl, p, n);
-          mb_char2bytes(c, p);
-          stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
-        } else {
-          c = p[2];
-          p[2] = p[1];
-          p[1] = *p;
-          *p = c;
-          stack[depth].ts_fidxtry = sp->ts_fidx + 3;
-        }
+        n = MB_CPTR2LEN(p);
+        n += MB_CPTR2LEN(p + n);
+        c = utf_ptr2char(p + n);
+        tl = MB_CPTR2LEN(p + n);
+        memmove(p + tl, p, n);
+        mb_char2bytes(c, p);
+        stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
@@ -4766,19 +4707,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNROT3R:
       // Undo ROT3R: "312" -> "123"
       p = fword + sp->ts_fidx;
-      if (has_mbyte) {
-        c = mb_ptr2char(p);
-        tl = MB_PTR2LEN(p);
-        n = MB_PTR2LEN(p + tl);
-        n += MB_PTR2LEN(p + tl + n);
-        memmove(p, p + tl, n);
-        mb_char2bytes(c, p + n);
-      } else {
-        c = *p;
-        *p = p[1];
-        p[1] = p[2];
-        p[2] = c;
-      }
+      c = utf_ptr2char(p);
+      tl = MB_PTR2LEN(p);
+      n = MB_PTR2LEN(p + tl);
+      n += MB_PTR2LEN(p + tl + n);
+      memmove(p, p + tl, n);
+      mb_char2bytes(c, p + n);
+
     // FALLTHROUGH
 
     case STATE_REP_INI:
@@ -5604,25 +5539,29 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
   if (c1 >= 256) {
     buf[mb_char2bytes(c1, buf)] = 0;
     hi = hash_find(&slang->sl_map_hash, buf);
-    if (HASHITEM_EMPTY(hi))
+    if (HASHITEM_EMPTY(hi)) {
       m1 = 0;
-    else
-      m1 = mb_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
-  } else
+    } else {
+      m1 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
+    }
+  } else {
     m1 = slang->sl_map_array[c1];
-  if (m1 == 0)
+  }
+  if (m1 == 0) {
     return false;
-
+  }
 
   if (c2 >= 256) {
     buf[mb_char2bytes(c2, buf)] = 0;
     hi = hash_find(&slang->sl_map_hash, buf);
-    if (HASHITEM_EMPTY(hi))
+    if (HASHITEM_EMPTY(hi)) {
       m2 = 0;
-    else
-      m2 = mb_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
-  } else
+    } else {
+      m2 = utf_ptr2char(hi->hi_key + STRLEN(hi->hi_key) + 1);
+    }
+  } else {
     m2 = slang->sl_map_array[c2];
+  }
 
   return m1 == m2;
 }
@@ -5659,11 +5598,9 @@ add_suggestion (
       break;
     MB_PTR_BACK(goodword, pgood);
     MB_PTR_BACK(su->su_badptr, pbad);
-    if (has_mbyte) {
-      if (mb_ptr2char(pgood) != mb_ptr2char(pbad))
-        break;
-    } else if (*pgood != *pbad)
+    if (utf_ptr2char(pgood) != utf_ptr2char(pbad)) {
       break;
+    }
   }
 
   if (badlen == 0 && goodlen == 0)
@@ -7608,5 +7545,3 @@ int expand_spelling(linenr_T lnum, char_u *pat, char_u ***matchp)
   *matchp = ga.ga_data;
   return ga.ga_len;
 }
-
-

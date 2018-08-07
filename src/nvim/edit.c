@@ -2311,24 +2311,14 @@ static void ins_compl_longest_match(compl_T *match)
     p = compl_leader;
     s = match->cp_str;
     while (*p != NUL) {
-      if (has_mbyte) {
-        c1 = mb_ptr2char(p);
-        c2 = mb_ptr2char(s);
-      } else {
-        c1 = *p;
-        c2 = *s;
-      }
-      if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2))
-          : (c1 != c2)) {
+      c1 = utf_ptr2char(p);
+      c2 = utf_ptr2char(s);
+
+      if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2)) : (c1 != c2)) {
         break;
       }
-      if (has_mbyte) {
-        MB_PTR_ADV(p);
-        MB_PTR_ADV(s);
-      } else {
-        ++p;
-        ++s;
-      }
+      MB_PTR_ADV(p);
+      MB_PTR_ADV(s);
     }
 
     if (*p != NUL) {
@@ -6198,12 +6188,10 @@ int oneright(void)
 
     /* Adjust for multi-wide char (excluding TAB) */
     ptr = get_cursor_pos_ptr();
-    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(
-                                   (*mb_ptr2char)(ptr)
-                                   ))
-                              ? ptr2cells(ptr) : 1));
-    curwin->w_set_curswant = TRUE;
-    /* Return OK if the cursor moved, FAIL otherwise (at window edge). */
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))) ?
+                              ptr2cells(ptr) : 1));
+    curwin->w_set_curswant = true;
+    // Return OK if the cursor moved, FAIL otherwise (at window edge).
     return (prevpos.col != curwin->w_cursor.col
             || prevpos.coladd != curwin->w_cursor.coladd) ? OK : FAIL;
   }
@@ -6258,10 +6246,10 @@ int oneleft(void)
 
       /* Adjust for multi-wide char (not a TAB) */
       ptr = get_cursor_pos_ptr();
-      if (*ptr != TAB && vim_isprintc(
-              (*mb_ptr2char)(ptr)
-              ) && ptr2cells(ptr) > 1)
+      if (*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))
+          && ptr2cells(ptr) > 1) {
         curwin->w_cursor.coladd = 0;
+      }
     }
 
     curwin->w_set_curswant = TRUE;
@@ -8496,7 +8484,7 @@ int ins_copychar(linenr_T lnum)
   if ((colnr_T)temp > curwin->w_virtcol)
     ptr = prev_ptr;
 
-  c = (*mb_ptr2char)(ptr);
+  c = utf_ptr2char(ptr);
   if (c == NUL) {
     vim_beep(BO_COPY);
   }

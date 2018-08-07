@@ -1120,8 +1120,8 @@ int do_search(
       msgbuf = xmalloc(STRLEN(p) + 40);
       {
         msgbuf[0] = dirc;
-        if (enc_utf8 && utf_iscomposing(utf_ptr2char(p))) {
-          /* Use a space to draw the composing char on. */
+        if (utf_iscomposing(utf_ptr2char(p))) {
+          // Use a space to draw the composing char on.
           msgbuf[1] = ' ';
           STRCPY(msgbuf + 2, p);
         } else
