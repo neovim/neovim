@@ -10236,8 +10236,8 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
-    /* restore previous notion of curwin */
-    restore_win(oldcurwin, oldtabpage, TRUE);
+    // restore previous notion of curwin
+    restore_win(oldcurwin, oldtabpage, true);
   }
 
   if (!done && argvars[2].v_type != VAR_UNKNOWN) {

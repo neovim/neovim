@@ -5502,12 +5502,10 @@ int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage
   return OK;
 }
 
-/*
- * Restore current tabpage and window saved by switch_win(), if still valid.
- * When "no_display" is TRUE the display won't be affected, no redraw is
- * triggered.
- */
-void restore_win(win_T *save_curwin, tabpage_T *save_curtab, int no_display)
+// Restore current tabpage and window saved by switch_win(), if still valid.
+// When "no_display" is true the display won't be affected, no redraw is
+// triggered.
+void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
 {
   if (save_curtab != NULL && valid_tabpage(save_curtab)) {
     if (no_display) {
