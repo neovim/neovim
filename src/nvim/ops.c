@@ -323,10 +323,11 @@ static void shift_block(oparg_T *oap, int amount)
 
   p_ri = 0;                     /* don't want revins in indent */
 
-  State = INSERT;               /* don't want REPLACE for State */
-  block_prep(oap, &bd, curwin->w_cursor.lnum, TRUE);
-  if (bd.is_short)
+  State = INSERT;               // don't want REPLACE for State
+  block_prep(oap, &bd, curwin->w_cursor.lnum, true);
+  if (bd.is_short) {
     return;
+  }
 
   // total is number of screen columns to be inserted/removed
   int total = (int)((unsigned)amount * (unsigned)p_sw);
@@ -1426,10 +1427,11 @@ int op_delete(oparg_T *oap)
       return FAIL;
     }
 
-    for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; ++lnum) {
-      block_prep(oap, &bd, lnum, TRUE);
-      if (bd.textlen == 0)              /* nothing to delete */
+    for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; lnum++) {
+      block_prep(oap, &bd, lnum, true);
+      if (bd.textlen == 0) {            // nothing to delete
         continue;
+      }
 
       /* Adjust cursor position for tab replaced by spaces and 'lbr'. */
       if (lnum == curwin->w_cursor.lnum) {
@@ -1655,11 +1657,12 @@ int op_replace(oparg_T *oap, int c)
    */
   if (oap->motion_type == kMTBlockWise) {
     bd.is_MAX = (curwin->w_curswant == MAXCOL);
-    for (; curwin->w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = 0;        /* make sure cursor position is valid */
-      block_prep(oap, &bd, curwin->w_cursor.lnum, TRUE);
-      if (bd.textlen == 0 && (!virtual_op || bd.is_MAX))
-        continue;                   /* nothing to replace */
+    for (; curwin->w_cursor.lnum <= oap->end.lnum; curwin->w_cursor.lnum++) {
+      curwin->w_cursor.col = 0;       // make sure cursor position is valid
+      block_prep(oap, &bd, curwin->w_cursor.lnum, true);
+      if (bd.textlen == 0 && (!virtual_op || bd.is_MAX)) {
+        continue;                     // nothing to replace
+      }
 
       /* n == number of extra chars required
        * If we split a TAB, it may be replaced by several characters.
@@ -1851,7 +1854,7 @@ void op_tilde(oparg_T *oap)
     for (; pos.lnum <= oap->end.lnum; pos.lnum++) {
       int one_change;
 
-      block_prep(oap, &bd, pos.lnum, FALSE);
+      block_prep(oap, &bd, pos.lnum, false);
       pos.col = bd.textcol;
       one_change = swapchars(oap->op_type, &pos, bd.textlen);
       did_change |= one_change;
@@ -2029,8 +2032,8 @@ void op_insert(oparg_T *oap, long count1)
         --curwin->w_cursor.col;
       ve_flags = old_ve_flags;
     }
-    /* Get the info about the block before entering the text */
-    block_prep(oap, &bd, oap->start.lnum, TRUE);
+    // Get the info about the block before entering the text
+    block_prep(oap, &bd, oap->start.lnum, true);
     firstline = ml_get(oap->start.lnum) + bd.textcol;
     if (oap->op_type == OP_APPEND)
       firstline += bd.textlen;
@@ -2118,7 +2121,7 @@ void op_insert(oparg_T *oap, long count1)
      * tabs.  Get the starting column again and correct the length.
      * Don't do this when "$" used, end-of-line will have changed.
      */
-    block_prep(oap, &bd2, oap->start.lnum, TRUE);
+    block_prep(oap, &bd2, oap->start.lnum, true);
     if (!bd.is_MAX || bd2.textlen < bd.textlen) {
       if (oap->op_type == OP_APPEND) {
         pre_textlen += bd2.textlen - bd.textlen;
@@ -2238,7 +2241,7 @@ int op_change(oparg_T *oap)
       STRLCPY(ins_text, firstline + bd.textcol, ins_len + 1);
       for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
            linenr++) {
-        block_prep(oap, &bd, linenr, TRUE);
+        block_prep(oap, &bd, linenr, true);
         if (!bd.is_short || virtual_op) {
           pos_T vpos;
 
@@ -4244,7 +4247,8 @@ int paragraph_start(linenr_T lnum)
  * - start/endspaces is the number of columns of the first/last yanked char
  *   that are to be yanked.
  */
-static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int is_del)
+static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
+                       bool is_del)
 {
   int incr = 0;
   char_u      *pend;
@@ -5381,7 +5385,7 @@ void cursor_pos_info(dict_T *dict)
         switch (l_VIsual_mode) {
         case Ctrl_V:
           virtual_op = virtual_active();
-          block_prep(&oparg, &bd, lnum, 0);
+          block_prep(&oparg, &bd, lnum, false);
           virtual_op = kNone;
           s = bd.textstart;
           len = (long)bd.textlen;
