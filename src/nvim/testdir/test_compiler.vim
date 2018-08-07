@@ -19,9 +19,8 @@ func Test_compiler()
   w!
   call feedkeys(":make\<CR>\<CR>", 'tx')
   let a=execute('clist')
-  call assert_equal("\n 1 Xfoo.pl:3: Global symbol \"\$foo\" "
-  \ .               "requires explicit package name "
-  \ .               "(did you forget to declare \"my $foo\"?)", a)
+  call assert_match("\n 1 Xfoo.pl:3: Global symbol \"\$foo\" "
+  \ .               "requires explicit package name", a)
 
   call delete('Xfoo.pl')
   bw!
