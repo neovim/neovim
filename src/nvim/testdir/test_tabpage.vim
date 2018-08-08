@@ -107,6 +107,19 @@ function Test_tabpage()
   call assert_equal(4, tabpagenr())
   7tabmove 5
   call assert_equal(5, tabpagenr())
+
+  " The following are a no-op
+  norm! 2gt
+  call assert_equal(2, tabpagenr())
+  tabmove 2
+  call assert_equal(2, tabpagenr())
+  2tabmove
+  call assert_equal(2, tabpagenr())
+  tabmove 1
+  call assert_equal(2, tabpagenr())
+  1tabmove
+  call assert_equal(2, tabpagenr())
+
   call assert_fails("99tabmove", 'E16:')
   call assert_fails("+99tabmove", 'E16:')
   call assert_fails("-99tabmove", 'E16:')
