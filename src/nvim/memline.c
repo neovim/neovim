@@ -2378,7 +2378,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
         )
       set_keep_msg((char_u *)_(no_lines_msg), 0);
 
-    i = ml_replace((linenr_T)1, (char_u *)"", TRUE);
+    i = ml_replace((linenr_T)1, (char_u *)"", true);
     buf->b_ml.ml_flags |= ML_EMPTY;
 
     return i;

@@ -17,7 +17,7 @@ func Test_window_cmd_ls0_with_split()
 endfunc
 
 func Test_window_cmd_cmdwin_with_vsp()
-  let efmt='Expected 0 but got %d (in ls=%d, %s window)'
+  let efmt = 'Expected 0 but got %d (in ls=%d, %s window)'
   for v in range(0, 2)
     exec "set ls=" . v
     vsplit
@@ -416,5 +416,93 @@ func Test_window_newtab()
   %bw!
 endfunc
 
+
+" Tests for adjusting window and contents
+func GetScreenStr(row)
+   let str = ""
+   for c in range(1,3)
+       let str .= nr2char(screenchar(a:row, c))
+   endfor
+   return str
+endfunc
+
+func Test_window_contents()
+  enew! | only | new
+  call setline(1, range(1,256))
+
+  exe "norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3 = GetScreenStr(1)
+  wincmd p
+  call assert_equal(1, line("w0"))
+  call assert_equal('1  ', s3)
+
+  exe "norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3 = GetScreenStr(1)
+  wincmd p
+  call assert_equal(50, line("w0"))
+  call assert_equal('50 ', s3)
+
+  exe "norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"
+  redraw
+  let s3 = GetScreenStr(1)
+  wincmd p
+  call assert_equal(59, line("w0"))
+  call assert_equal('59 ', s3)
+
+  bwipeout!
+  call test_garbagecollect_now()
+endfunc
+
+func Test_access_freed_mem()
+  " This was accessing freed memory
+  au * 0 vs xxx
+  arg 0
+  argadd
+  all
+  all
+  au!
+  bwipe xxx
+endfunc
+
+func Test_visual_cleared_after_window_split()
+  new | only!
+  let smd_save = &showmode
+  set showmode
+  let ls_save = &laststatus
+  set laststatus=1
+  call setline(1, ['a', 'b', 'c', 'd', ''])
+  norm! G
+  exe "norm! kkvk"
+  redraw
+  exe "norm! \<C-W>v"
+  redraw
+  " check if '-- VISUAL --' disappeared from command line
+  let columns = range(1, &columns)
+  let cmdlinechars = map(columns, 'nr2char(screenchar(&lines, v:val))')
+  let cmdline = join(cmdlinechars, '')
+  let cmdline_ltrim = substitute(cmdline, '^\s*', "", "")
+  let mode_shown = substitute(cmdline_ltrim, '\s*$', "", "")
+  call assert_equal('', mode_shown)
+  let &showmode = smd_save
+  let &laststatus = ls_save
+  bwipe!
+endfunc
+
+func Test_winrestcmd()
+  2split
+  3vsplit
+  let a = winrestcmd()
+  call assert_equal(2, winheight(0))
+  call assert_equal(3, winwidth(0))
+  wincmd =
+  call assert_notequal(2, winheight(0))
+  call assert_notequal(3, winwidth(0))
+  exe a
+  call assert_equal(2, winheight(0))
+  call assert_equal(3, winwidth(0))
+  only
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

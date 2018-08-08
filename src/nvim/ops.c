@@ -310,30 +310,32 @@ void shift_line(
  */
 static void shift_block(oparg_T *oap, int amount)
 {
-  int left = (oap->op_type == OP_LSHIFT);
-  int oldstate = State;
-  int total;
-  char_u              *newp, *oldp;
-  int oldcol = curwin->w_cursor.col;
-  int p_sw = get_sw_value(curbuf);
-  int p_ts = (int)curbuf->b_p_ts;
+  const bool left = (oap->op_type == OP_LSHIFT);
+  const int oldstate = State;
+  char_u *newp;
+  const int oldcol = curwin->w_cursor.col;
+  const int p_sw = get_sw_value(curbuf);
+  const int p_ts = (int)curbuf->b_p_ts;
   struct block_def bd;
   int incr;
-  colnr_T ws_vcol;
   int i = 0, j = 0;
-  int len;
-  int old_p_ri = p_ri;
+  const int old_p_ri = p_ri;
 
   p_ri = 0;                     /* don't want revins in indent */
 
-  State = INSERT;               /* don't want REPLACE for State */
-  block_prep(oap, &bd, curwin->w_cursor.lnum, TRUE);
-  if (bd.is_short)
+  State = INSERT;               // don't want REPLACE for State
+  block_prep(oap, &bd, curwin->w_cursor.lnum, true);
+  if (bd.is_short) {
     return;
+  }
 
-  /* total is number of screen columns to be inserted/removed */
-  total = amount * p_sw;
-  oldp = get_cursor_line_ptr();
+  // total is number of screen columns to be inserted/removed
+  int total = (int)((unsigned)amount * (unsigned)p_sw);
+  if ((total / p_sw) != amount) {
+    return;   // multiplication overflow
+  }
+
+  char_u *const oldp = get_cursor_line_ptr();
 
   if (!left) {
     /*
@@ -342,8 +344,8 @@ static void shift_block(oparg_T *oap, int amount)
      *  3. Divvy into TABs & spp
      *  4. Construct new string
      */
-    total += bd.pre_whitesp;     /* all virtual WS up to & incl a split TAB */
-    ws_vcol = bd.start_vcol - bd.pre_whitesp;
+    total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
+    colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
     if (bd.startspaces) {
       if (has_mbyte) {
         if ((*mb_ptr2len)(bd.textstart) == 1) {
@@ -372,8 +374,8 @@ static void shift_block(oparg_T *oap, int amount)
       j = total;
     /* if we're splitting a TAB, allow for it */
     bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
-    len = (int)STRLEN(bd.textstart) + 1;
-    newp = (char_u *) xmalloc((size_t)(bd.textcol + i + j + len));
+    const int len = (int)STRLEN(bd.textstart) + 1;
+    newp = (char_u *)xmalloc((size_t)(bd.textcol + i + j + len));
     memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
     memmove(newp, oldp, (size_t)bd.textcol);
     memset(newp + bd.textcol, TAB, (size_t)i);
@@ -390,10 +392,7 @@ static void shift_block(oparg_T *oap, int amount)
     size_t fill;                  // nr of spaces that replace a TAB
     size_t new_line_len;          // the length of the line after the
                                   // block shift
-    colnr_T block_space_width;
-    colnr_T shift_amount;
     char_u      *non_white = bd.textstart;
-    colnr_T non_white_col;
 
     /*
      * Firstly, let's find the first non-whitespace character that is
@@ -410,19 +409,20 @@ static void shift_block(oparg_T *oap, int amount)
       MB_PTR_ADV(non_white);
     }
 
-    /* The character's column is in "bd.start_vcol".  */
-    non_white_col = bd.start_vcol;
+    // The character's column is in "bd.start_vcol".
+    colnr_T non_white_col = bd.start_vcol;
 
     while (ascii_iswhite(*non_white)) {
       incr = lbr_chartabsize_adv(bd.textstart, &non_white, non_white_col);
       non_white_col += incr;
     }
 
-    block_space_width = non_white_col - oap->start_vcol;
-    /* We will shift by "total" or "block_space_width", whichever is less.
-     */
-    shift_amount = (block_space_width < total ? block_space_width : total);
 
+    const colnr_T block_space_width = non_white_col - oap->start_vcol;
+    // We will shift by "total" or "block_space_width", whichever is less.
+    const colnr_T shift_amount = block_space_width < total
+        ? block_space_width
+        : total;
     // The column to which we will shift the text.
     destination_col = non_white_col - shift_amount;
 
@@ -454,7 +454,7 @@ static void shift_block(oparg_T *oap, int amount)
     fill = (size_t)(destination_col - verbatim_copy_width);
 
     assert(verbatim_copy_end - oldp >= 0);
-    size_t verbatim_diff = (size_t)(verbatim_copy_end - oldp);
+    const size_t verbatim_diff = (size_t)(verbatim_copy_end - oldp);
     // The replacement line will consist of:
     // - the beginning of the original line up to "verbatim_copy_end",
     // - "fill" number of spaces,
@@ -466,8 +466,8 @@ static void shift_block(oparg_T *oap, int amount)
     memset(newp + verbatim_diff, ' ', fill);
     STRMOVE(newp + verbatim_diff + fill, non_white);
   }
-  /* replace the line */
-  ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+  // replace the line
+  ml_replace(curwin->w_cursor.lnum, newp, false);
   changed_bytes(curwin->w_cursor.lnum, (colnr_T)bd.textcol);
   State = oldstate;
   curwin->w_cursor.col = oldcol;
@@ -561,7 +561,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       offset += count;
     STRMOVE(newp + offset, oldp);
 
-    ml_replace(lnum, newp, FALSE);
+    ml_replace(lnum, newp, false);
 
     if (lnum == oap->end.lnum) {
       /* Set "']" mark to the end of the block instead of the end of
@@ -1427,10 +1427,11 @@ int op_delete(oparg_T *oap)
       return FAIL;
     }
 
-    for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; ++lnum) {
-      block_prep(oap, &bd, lnum, TRUE);
-      if (bd.textlen == 0)              /* nothing to delete */
+    for (lnum = curwin->w_cursor.lnum; lnum <= oap->end.lnum; lnum++) {
+      block_prep(oap, &bd, lnum, true);
+      if (bd.textlen == 0) {            // nothing to delete
         continue;
+      }
 
       /* Adjust cursor position for tab replaced by spaces and 'lbr'. */
       if (lnum == curwin->w_cursor.lnum) {
@@ -1656,11 +1657,12 @@ int op_replace(oparg_T *oap, int c)
    */
   if (oap->motion_type == kMTBlockWise) {
     bd.is_MAX = (curwin->w_curswant == MAXCOL);
-    for (; curwin->w_cursor.lnum <= oap->end.lnum; ++curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = 0;        /* make sure cursor position is valid */
-      block_prep(oap, &bd, curwin->w_cursor.lnum, TRUE);
-      if (bd.textlen == 0 && (!virtual_op || bd.is_MAX))
-        continue;                   /* nothing to replace */
+    for (; curwin->w_cursor.lnum <= oap->end.lnum; curwin->w_cursor.lnum++) {
+      curwin->w_cursor.col = 0;       // make sure cursor position is valid
+      block_prep(oap, &bd, curwin->w_cursor.lnum, true);
+      if (bd.textlen == 0 && (!virtual_op || bd.is_MAX)) {
+        continue;                     // nothing to replace
+      }
 
       /* n == number of extra chars required
        * If we split a TAB, it may be replaced by several characters.
@@ -1747,8 +1749,8 @@ int op_replace(oparg_T *oap, int c)
         after_p = (char_u *)xmalloc(after_p_len);
         memmove(after_p, oldp, after_p_len);
       }
-      /* replace the line */
-      ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+      // replace the line
+      ml_replace(curwin->w_cursor.lnum, newp, false);
       if (after_p != NULL) {
         ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
         appended_lines_mark(curwin->w_cursor.lnum, 1L);
@@ -1852,7 +1854,7 @@ void op_tilde(oparg_T *oap)
     for (; pos.lnum <= oap->end.lnum; pos.lnum++) {
       int one_change;
 
-      block_prep(oap, &bd, pos.lnum, FALSE);
+      block_prep(oap, &bd, pos.lnum, false);
       pos.col = bd.textcol;
       one_change = swapchars(oap->op_type, &pos, bd.textlen);
       did_change |= one_change;
@@ -1956,7 +1958,7 @@ int swapchar(int op_type, pos_T *pos)
 
     /* Special handling of German sharp s: change to "SS". */
     curwin->w_cursor = *pos;
-    del_char(FALSE);
+    del_char(false);
     ins_char('S');
     ins_char('S');
     curwin->w_cursor = sp;
@@ -2030,8 +2032,8 @@ void op_insert(oparg_T *oap, long count1)
         --curwin->w_cursor.col;
       ve_flags = old_ve_flags;
     }
-    /* Get the info about the block before entering the text */
-    block_prep(oap, &bd, oap->start.lnum, TRUE);
+    // Get the info about the block before entering the text
+    block_prep(oap, &bd, oap->start.lnum, true);
     firstline = ml_get(oap->start.lnum) + bd.textcol;
     if (oap->op_type == OP_APPEND)
       firstline += bd.textlen;
@@ -2119,7 +2121,7 @@ void op_insert(oparg_T *oap, long count1)
      * tabs.  Get the starting column again and correct the length.
      * Don't do this when "$" used, end-of-line will have changed.
      */
-    block_prep(oap, &bd2, oap->start.lnum, TRUE);
+    block_prep(oap, &bd2, oap->start.lnum, true);
     if (!bd.is_MAX || bd2.textlen < bd.textlen) {
       if (oap->op_type == OP_APPEND) {
         pre_textlen += bd2.textlen - bd.textlen;
@@ -2239,7 +2241,7 @@ int op_change(oparg_T *oap)
       STRLCPY(ins_text, firstline + bd.textcol, ins_len + 1);
       for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
            linenr++) {
-        block_prep(oap, &bd, linenr, TRUE);
+        block_prep(oap, &bd, linenr, true);
         if (!bd.is_short || virtual_op) {
           pos_T vpos;
 
@@ -2263,7 +2265,7 @@ int op_change(oparg_T *oap)
           offset += ins_len;
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
-          ml_replace(linenr, newp, FALSE);
+          ml_replace(linenr, newp, false);
         }
       }
       check_cursor();
@@ -3117,10 +3119,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             ptr += yanklen;
           }
           STRMOVE(ptr, oldp + col);
-          ml_replace(lnum, newp, FALSE);
-          /* Place cursor on last putted char. */
+          ml_replace(lnum, newp, false);
+          // Place cursor on last putted char.
           if (lnum == curwin->w_cursor.lnum) {
-            /* make sure curwin->w_virtcol is updated */
+            // make sure curwin->w_virtcol is updated
             changed_cline_bef_curs();
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
@@ -3164,7 +3166,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           memmove(newp, oldp, (size_t)col);
           /* append to first line */
           memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
-          ml_replace(lnum, newp, FALSE);
+          ml_replace(lnum, newp, false);
 
           curwin->w_cursor.lnum = lnum;
           i = 1;
@@ -3687,7 +3689,7 @@ int do_join(size_t count,
       curr = skipwhite(curr);
     currsize = (int)STRLEN(curr);
   }
-  ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+  ml_replace(curwin->w_cursor.lnum, newp, false);
 
   if (setmark) {
     // Set the '] mark.
@@ -4239,7 +4241,8 @@ int paragraph_start(linenr_T lnum)
  * - start/endspaces is the number of columns of the first/last yanked char
  *   that are to be yanked.
  */
-static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int is_del)
+static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum,
+                       bool is_del)
 {
   int incr = 0;
   char_u      *pend;
@@ -5376,7 +5379,7 @@ void cursor_pos_info(dict_T *dict)
         switch (l_VIsual_mode) {
         case Ctrl_V:
           virtual_op = virtual_active();
-          block_prep(&oparg, &bd, lnum, 0);
+          block_prep(&oparg, &bd, lnum, false);
           virtual_op = kNone;
           s = bd.textstart;
           len = (long)bd.textlen;

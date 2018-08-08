@@ -1081,7 +1081,7 @@ int fkmap(int c)
 
       if (gchar_cursor() == _LAM) {
         chg_l_toXor_X();
-        del_char(FALSE);
+        del_char(false);
         AppendCharToRedobuff(K_BS);
 
         if (!p_ri) {

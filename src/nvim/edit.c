@@ -240,8 +240,8 @@ static int ins_need_undo;               /* call u_save() before inserting a
                                            char.  Set when edit() is called.
                                            after that arrow_used is used. */
 
-static int did_add_space = FALSE;       /* auto_format() added an extra space
-                                           under the cursor */
+static bool did_add_space = false;      // auto_format() added an extra space
+                                        // under the cursor
 static TriState dont_sync_undo = kFalse;  // CTRL-G U prevents syncing undo
                                           // for the next left/right cursor
 
@@ -1766,8 +1766,8 @@ change_indent (
     /* We only put back the new line up to the cursor */
     new_line[curwin->w_cursor.col] = NUL;
 
-    /* Put back original line */
-    ml_replace(curwin->w_cursor.lnum, orig_line, FALSE);
+    // Put back original line
+    ml_replace(curwin->w_cursor.lnum, orig_line, false);
     curwin->w_cursor.col = orig_col;
 
     /* Backspace from cursor to start of line */
@@ -5693,8 +5693,8 @@ auto_format (
   pos = curwin->w_cursor;
   old = get_cursor_line_ptr();
 
-  /* may remove added space */
-  check_auto_format(FALSE);
+  // may remove added space
+  check_auto_format(false);
 
   /* Don't format in Insert mode when the cursor is on a trailing blank, the
    * user might insert normal text next.  Also skip formatting when "1" is
@@ -5760,12 +5760,13 @@ auto_format (
       pnew = vim_strnsave(new, len + 2);
       pnew[len] = ' ';
       pnew[len + 1] = NUL;
-      ml_replace(curwin->w_cursor.lnum, pnew, FALSE);
-      /* remove the space later */
-      did_add_space = TRUE;
-    } else
-      /* may remove added space */
-      check_auto_format(FALSE);
+      ml_replace(curwin->w_cursor.lnum, pnew, false);
+      // remove the space later
+      did_add_space = true;
+    } else {
+      // may remove added space
+      check_auto_format(false);
+    }
   }
 
   check_cursor();
@@ -5776,9 +5777,8 @@ auto_format (
  * delete it now.  The space must be under the cursor, just after the insert
  * position.
  */
-static void
-check_auto_format (
-    int end_insert                     /* TRUE when ending Insert mode */
+static void check_auto_format(
+    bool end_insert                   // true when ending Insert mode
 )
 {
   int c = ' ';
@@ -5786,19 +5786,19 @@ check_auto_format (
 
   if (did_add_space) {
     cc = gchar_cursor();
-    if (!WHITECHAR(cc))
-      /* Somehow the space was removed already. */
-      did_add_space = FALSE;
-    else {
+    if (!WHITECHAR(cc)) {
+      // Somehow the space was removed already.
+      did_add_space = false;
+    } else {
       if (!end_insert) {
         inc_cursor();
         c = gchar_cursor();
         dec_cursor();
       }
       if (c != NUL) {
-        /* The space is no longer at the end of the line, delete it. */
-        del_char(FALSE);
-        did_add_space = FALSE;
+        // The space is no longer at the end of the line, delete it.
+        del_char(false);
+        did_add_space = false;
       }
     }
   }
@@ -6023,8 +6023,8 @@ stop_insert (
       }
     }
 
-    /* If a space was inserted for auto-formatting, remove it now. */
-    check_auto_format(TRUE);
+    // If a space was inserted for auto-formatting, remove it now.
+    check_auto_format(true);
 
     /* If we just did an auto-indent, remove the white space from the end
      * of the line, and put the cursor back.
@@ -6043,10 +6043,12 @@ stop_insert (
         if (gchar_cursor() == NUL && curwin->w_cursor.col > 0)
           --curwin->w_cursor.col;
         cc = gchar_cursor();
-        if (!ascii_iswhite(cc))
+        if (!ascii_iswhite(cc)) {
           break;
-        if (del_char(TRUE) == FAIL)
-          break;            /* should not happen */
+        }
+        if (del_char(true) == FAIL) {
+          break;            // should not happen
+        }
       }
       if (curwin->w_cursor.lnum != tpos.lnum)
         curwin->w_cursor = tpos;
@@ -6698,8 +6700,8 @@ static void replace_do_bs(int limit_col)
        * text aligned. */
       curwin->w_cursor.col += ins_len;
       while (vcol > orig_vcols && gchar_cursor() == ' ') {
-        del_char(FALSE);
-        ++orig_vcols;
+        del_char(false);
+        orig_vcols++;
       }
       curwin->w_cursor.col -= ins_len;
     }
@@ -7441,13 +7443,15 @@ static void ins_shift(int c, int lastc)
    */
   if (c == Ctrl_D && (lastc == '0' || lastc == '^')
       && curwin->w_cursor.col > 0) {
-    --curwin->w_cursor.col;
-    (void)del_char(FALSE);              /* delete the '^' or '0' */
-    /* In Replace mode, restore the characters that '^' or '0' replaced. */
-    if (State & REPLACE_FLAG)
+    curwin->w_cursor.col--;
+    (void)del_char(false);              // delete the '^' or '0'
+    // In Replace mode, restore the characters that '^' or '0' replaced.
+    if (State & REPLACE_FLAG) {
       replace_pop_ins();
-    if (lastc == '^')
-      old_indent = get_indent();        /* remember curr. indent */
+    }
+    if (lastc == '^') {
+      old_indent = get_indent();        // remember curr. indent
+    }
     change_indent(INDENT_SET, 0, TRUE, 0, TRUE);
   } else
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
@@ -7463,17 +7467,23 @@ static void ins_shift(int c, int lastc)
 
 static void ins_del(void)
 {
-  int temp;
-
-  if (stop_arrow() == FAIL)
+  if (stop_arrow() == FAIL) {
     return;
-  if (gchar_cursor() == NUL) {          /* delete newline */
-    temp = curwin->w_cursor.col;
+  }
+  if (gchar_cursor() == NUL) {          // delete newline
+    const int temp = curwin->w_cursor.col;
     if (!can_bs(BS_EOL)  // only if "eol" included
         || do_join(2, false, true, false, false) == FAIL) {
       vim_beep(BO_BS);
     } else {
       curwin->w_cursor.col = temp;
+      // Adjust orig_line_count in case more lines have been deleted than
+      // have been added. That makes sure, that open_line() later
+      // can access all buffer lines correctly
+      if (State & VREPLACE_FLAG
+          && orig_line_count > curbuf->b_ml.ml_line_count) {
+        orig_line_count = curbuf->b_ml.ml_line_count;
+      }
     }
   } else if (del_char(false) == FAIL) {  // delete char under cursor
     vim_beep(BO_BS);
@@ -7499,8 +7509,9 @@ static void ins_bs_one(colnr_T *vcolp)
     if (curwin->w_cursor.lnum != Insstart.lnum
         || curwin->w_cursor.col >= Insstart.col)
       replace_do_bs(-1);
-  } else
-    (void)del_char(FALSE);
+  } else {
+    (void)del_char(false);
+  }
 }
 
 /// Handle Backspace, delete-word and delete-line in Insert mode.
@@ -7764,16 +7775,16 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         else {
           const bool l_enc_utf8 = enc_utf8;
           const int l_p_deco = p_deco;
-          if (l_enc_utf8 && l_p_deco)
+          if (l_enc_utf8 && l_p_deco) {
             (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
-          (void)del_char(FALSE);
-          /*
-           * If there are combining characters and 'delcombine' is set
-           * move the cursor back.  Don't back up before the base
-           * character.
-           */
-          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL)
+          }
+          (void)del_char(false);
+          // If there are combining characters and 'delcombine' is set
+          // move the cursor back.  Don't back up before the base
+          // character.
+          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL) {
             inc_cursor();
+          }
           if (revins_chars) {
             revins_chars--;
             revins_legal++;

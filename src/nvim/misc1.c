@@ -771,7 +771,7 @@ open_line (
       (void)u_save_cursor();                        /* errors are ignored! */
       vr_lines_changed++;
     }
-    ml_replace(curwin->w_cursor.lnum, p_extra, TRUE);
+    ml_replace(curwin->w_cursor.lnum, p_extra, true);
     changed_bytes(curwin->w_cursor.lnum, 0);
     curwin->w_cursor.lnum--;
     did_append = FALSE;
@@ -831,12 +831,13 @@ open_line (
 
   if (dir == FORWARD) {
     if (trunc_line || (State & INSERT)) {
-      /* truncate current line at cursor */
+      // truncate current line at cursor
       saved_line[curwin->w_cursor.col] = NUL;
-      /* Remove trailing white space, unless OPENLINE_KEEPTRAIL used. */
-      if (trunc_line && !(flags & OPENLINE_KEEPTRAIL))
+      // Remove trailing white space, unless OPENLINE_KEEPTRAIL used.
+      if (trunc_line && !(flags & OPENLINE_KEEPTRAIL)) {
         truncate_spaces(saved_line);
-      ml_replace(curwin->w_cursor.lnum, saved_line, FALSE);
+      }
+      ml_replace(curwin->w_cursor.lnum, saved_line, false);
       saved_line = NULL;
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
@@ -912,8 +913,8 @@ open_line (
     /* Put new line in p_extra */
     p_extra = vim_strsave(get_cursor_line_ptr());
 
-    /* Put back original line */
-    ml_replace(curwin->w_cursor.lnum, next_line, FALSE);
+    // Put back original line
+    ml_replace(curwin->w_cursor.lnum, next_line, false);
 
     /* Insert new stuff into line again */
     curwin->w_cursor.col = 0;
@@ -1497,8 +1498,8 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     p[i] = ' ';
   }
 
-  /* Replace the line in the buffer. */
-  ml_replace(lnum, newp, FALSE);
+  // Replace the line in the buffer.
+  ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, (colnr_T)col);
@@ -1548,19 +1549,17 @@ void ins_str(char_u *s)
     memmove(newp, oldp, (size_t)col);
   memmove(newp + col, s, (size_t)newlen);
   memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
-  ml_replace(lnum, newp, FALSE);
+  ml_replace(lnum, newp, false);
   changed_bytes(lnum, col);
   curwin->w_cursor.col += newlen;
 }
 
-/*
- * Delete one character under the cursor.
- * If "fixpos" is TRUE, don't leave the cursor on the NUL after the line.
- * Caller must have prepared for undo.
- *
- * return FAIL for failure, OK otherwise
- */
-int del_char(int fixpos)
+// Delete one character under the cursor.
+// If "fixpos" is true, don't leave the cursor on the NUL after the line.
+// Caller must have prepared for undo.
+//
+// return FAIL for failure, OK otherwise
+int del_char(bool fixpos)
 {
   if (has_mbyte) {
     /* Make sure the cursor is at the start of a character. */
@@ -1666,8 +1665,9 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
-  if (!was_alloced)
-    ml_replace(lnum, newp, FALSE);
+  if (!was_alloced) {
+    ml_replace(lnum, newp, false);
+  }
 
   /* mark the buffer as changed and prepare for displaying */
   changed_bytes(lnum, curwin->w_cursor.col);

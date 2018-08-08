@@ -1687,7 +1687,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
-      ml_replace(lnum, newline, FALSE);
+      ml_replace(lnum, newline, false);
     }
     break;
   }
