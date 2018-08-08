@@ -1,5 +1,6 @@
 " Tests for tabpage
 
+
 function Test_tabpage()
   bw!
   " Simple test for opening and closing a tab page
@@ -319,6 +320,34 @@ function s:reconstruct_tabpage_for_test(nr)
   endfor
 endfunc
 
+func Test_tabpage_ctrl_pgup_pgdown()
+  enew!
+  tabnew tab1
+  tabnew tab2
+
+  call assert_equal(3, tabpagenr())
+  exe "norm! \<C-PageUp>"
+  call assert_equal(2, tabpagenr())
+  exe "norm! \<C-PageDown>"
+  call assert_equal(3, tabpagenr())
+
+  " Check wrapping at last or first page.
+  exe "norm! \<C-PageDown>"
+  call assert_equal(1, tabpagenr())
+  exe "norm! \<C-PageUp>"
+  call assert_equal(3, tabpagenr())
+
+ " With a count, <C-PageUp> and <C-PageDown> are not symmetrical somehow:
+ " - {count}<C-PageUp> goes {count} pages downward (relative count)
+ " - {count}<C-PageDown> goes to page number {count} (absolute count)
+  exe "norm! 2\<C-PageUp>"
+  call assert_equal(1, tabpagenr())
+  exe "norm! 2\<C-PageDown>"
+  call assert_equal(2, tabpagenr())
+
+  1tabonly!
+endfunc
+
 " Test for [count] of tabclose
 function Test_tabpage_with_tabclose()
 
@@ -491,6 +520,20 @@ func Test_close_on_quitpre()
     bwipe!
   endwhile
   buf Xtest
+endfunc
+
+func Test_tabs()
+  enew!
+  tabnew tab1
+  norm ixxx
+  let a=split(execute(':tabs'), "\n")
+  call assert_equal(['Tab page 1',
+      \              '    [No Name]',
+      \              'Tab page 2',
+      \              '> + tab1'], a)
+
+  1tabonly!
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
