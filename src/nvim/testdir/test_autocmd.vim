@@ -1239,10 +1239,8 @@ func Test_TextChangedI_with_setline()
   call assert_equal('(', getline(1))
   call assert_equal('x)', getline(2))
   undo
-  call assert_equal('(', getline(1))
-  call assert_equal('', getline(2))
-  undo
   call assert_equal('', getline(1))
+  call assert_equal('', getline(2))
 
   call test_override('starting', 0)
   bwipe!
