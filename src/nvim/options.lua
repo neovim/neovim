@@ -2044,9 +2044,9 @@ return {
       vi_def=true,
       varname='p_sp',
       defaults={
-        condition='UNIX',
-        if_true={vi="| tee"},
-        if_false={vi=">"},
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi="| tee"},
       }
     },
     {
