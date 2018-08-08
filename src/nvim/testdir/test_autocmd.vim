@@ -567,7 +567,7 @@ func Test_OptionSet()
   " Cleanup
   au! OptionSet
   for opt in ['nu', 'ai', 'acd', 'ar', 'bs', 'backup', 'cul', 'cp']
-    exe printf(":set %s&vi", opt)
+    exe printf(":set %s&vim", opt)
   endfor
   call test_override('starting', 0)
   delfunc! AutoCommandOptionSet
@@ -1220,4 +1220,30 @@ func Test_ChangedP()
   set complete&vim completeopt&vim
 
   bw!
+endfunc
+
+let g:setline_handled = v:false
+func! SetLineOne()
+  if !g:setline_handled
+    call setline(1, "(x)")
+    let g:setline_handled = v:true
+  endif
+endfunc
+
+func Test_TextChangedI_with_setline()
+  throw 'skipped: Nvim does not support test_override()'
+  new
+  call test_override('char_avail', 1)
+  autocmd TextChangedI <buffer> call SetLineOne()
+  call feedkeys("i(\<CR>\<Esc>", 'tx')
+  call assert_equal('(', getline(1))
+  call assert_equal('x)', getline(2))
+  undo
+  call assert_equal('(', getline(1))
+  call assert_equal('', getline(2))
+  undo
+  call assert_equal('', getline(1))
+
+  call test_override('starting', 0)
+  bwipe!
 endfunc

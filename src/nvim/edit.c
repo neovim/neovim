@@ -1392,11 +1392,20 @@ ins_redraw (
       && !pum_visible()) {
     aco_save_T aco;
 
+    // Sync undo when the autocommand calls setline() or append(), so that
+    // it can be undone separately.
+    u_sync_once = 2;
+
     // save and restore curwin and curbuf, in case the autocmd changes them
     aucmd_prepbuf(&aco, curbuf);
     apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
     aucmd_restbuf(&aco);
     curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+
+    if (u_sync_once == 1) {
+      ins_need_undo = true;
+    }
+    u_sync_once = 0;
   }
 
   // Trigger TextChangedP if changedtick differs. When the popupmenu closes
