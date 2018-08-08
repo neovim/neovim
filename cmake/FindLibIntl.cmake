@@ -27,7 +27,7 @@ find_path(LibIntl_INCLUDE_DIR
 )
 
 find_library(LibIntl_LIBRARY
-    NAMES intl libintl
+    NAMES intl libintl.a
 )
 
 if (LibIntl_INCLUDE_DIR)
