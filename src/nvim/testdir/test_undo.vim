@@ -4,22 +4,82 @@
 " Also tests :earlier and :later.
 
 func Test_undotree()
-  exe "normal Aabc\<Esc>"
+  new
+
+  normal! Aabc
   set ul=100
-  exe "normal Adef\<Esc>"
-  set ul=100
-  undo
   let d = undotree()
-  call assert_true(d.seq_last > 0)
-  call assert_true(d.seq_cur > 0)
-  call assert_true(d.seq_cur < d.seq_last)
-  call assert_true(len(d.entries) > 0)
-  " TODO: check more members of d
+  call assert_equal(1, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(1, len(d.entries))
+  call assert_equal(1, d.entries[0].newhead)
+  call assert_equal(1, d.entries[0].seq)
+  call assert_true(d.entries[0].time <= d.time_cur)
+
+  normal! Adef
+  set ul=100
+  let d = undotree()
+  call assert_equal(2, d.seq_last)
+  call assert_equal(2, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(2, d.entries[1].seq)
+  call assert_true(d.entries[1].time <= d.time_cur)
+
+  undo
+  set ul=100
+  let d = undotree()
+  call assert_equal(2, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(1, d.entries[1].curhead)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(2, d.entries[1].seq)
+  call assert_true(d.entries[1].time == d.time_cur)
+
+  normal! Aghi
+  set ul=100
+  let d = undotree()
+  call assert_equal(3, d.seq_last)
+  call assert_equal(3, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(2, d.entries[1].alt[0].seq)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(3, d.entries[1].seq)
+  call assert_true(d.entries[1].time <= d.time_cur)
+
+  undo
+  set ul=100
+  let d = undotree()
+  call assert_equal(3, d.seq_last)
+  call assert_equal(1, d.seq_cur)
+  call assert_equal(0, d.save_last)
+  call assert_equal(0, d.save_cur)
+  call assert_equal(2, len(d.entries))
+  call assert_equal(1, d.entries[0].seq)
+  call assert_equal(2, d.entries[1].alt[0].seq)
+  call assert_equal(1, d.entries[1].curhead)
+  call assert_equal(1, d.entries[1].newhead)
+  call assert_equal(3, d.entries[1].seq)
+  call assert_true(d.entries[1].time == d.time_cur)
 
   w! Xtest
-  call assert_equal(d.save_last + 1, undotree().save_last)
+  let d = undotree()
+  call assert_equal(1, d.save_cur)
+  call assert_equal(1, d.save_last)
   call delete('Xtest')
-  bwipe Xtest
+  bwipe! Xtest
 endfunc
 
 func FillBuffer()
