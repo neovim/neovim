@@ -185,46 +185,60 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
-  const char *var = os_getenv("HOME");
+  // uv_os_homedir doesn't work when a buffer initialized to NULL is passed 
+  // so using a local buffer
+  char home[MAXPATHL];
+  size_t size = MAXPATHL;
+  memset(home, 0, size);
 
-#ifdef WIN32
-  // Typically, $HOME is not defined on Windows, unless the user has
-  // specifically defined it for Vim's sake. However, on Windows NT
-  // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
-  // each user. Try constructing $HOME from these.
-  if (var == NULL) {
-    const char *homedrive = os_getenv("HOMEDRIVE");
-    const char *homepath = os_getenv("HOMEPATH");
-    if (homepath == NULL) {
-      homepath = "\\";
-    }
-    if (homedrive != NULL
-        && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
-      snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
-      if (os_buf[0] != NUL) {
-        var = os_buf;
-      }
-    }
+  // if uv_os_homedir fails, fall back to the old procedure
+  if(!uv_os_homedir(home, &size))
+  {
+    homedir = xstrdup((const char*)home);
   }
-  if (var == NULL) {
-    var = os_getenv("USERPROFILE");
-  }
-#endif
+  else 
+  {
+    const char *var = os_getenv("HOME");
 
-  if (var != NULL) {
-#ifdef UNIX
-    // Change to the directory and get the actual path.  This resolves
-    // links.  Don't do it when we can't return.
-    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = (char *)IObuff;
+  #ifdef WIN32
+    // Typically, $HOME is not defined on Windows, unless the user has
+    // specifically defined it for Vim's sake. However, on Windows NT
+    // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
+    // each user. Try constructing $HOME from these.
+    if (var == NULL) {
+      const char *homedrive = os_getenv("HOMEDRIVE");
+      const char *homepath = os_getenv("HOMEPATH");
+      if (homepath == NULL) {
+        homepath = "\\";
       }
-      if (os_chdir(os_buf) != 0) {
-        EMSG(_(e_prev_dir));
+      if (homedrive != NULL
+          && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
+        snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
+        if (os_buf[0] != NUL) {
+          var = os_buf;
+        }
       }
     }
-#endif
-    homedir = xstrdup(var);
+    if (var == NULL) {
+      var = os_getenv("USERPROFILE");
+    }
+  #endif
+
+    if (var != NULL) {
+  #ifdef UNIX
+      // Change to the directory and get the actual path.  This resolves
+      // links.  Don't do it when we can't return.
+      if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+        if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+          var = (char *)IObuff;
+        }
+        if (os_chdir(os_buf) != 0) {
+          EMSG(_(e_prev_dir));
+        }
+      }
+  #endif
+      homedir = xstrdup(var);
+    }
   }
 }
 
