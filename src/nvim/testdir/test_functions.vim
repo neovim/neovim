@@ -96,6 +96,30 @@ func Test_min()
   " call assert_fails('call min(v:none)', 'E712:')
 endfunc
 
+func Test_strwidth()
+  for aw in ['single', 'double']
+    exe 'set ambiwidth=' . aw
+    call assert_equal(0, strwidth(''))
+    call assert_equal(1, strwidth("\t"))
+    call assert_equal(3, strwidth('Vim'))
+    call assert_equal(4, strwidth(1234))
+    call assert_equal(5, strwidth(-1234))
+
+    if has('multi_byte')
+      call assert_equal(2, strwidth('😉'))
+      call assert_equal(17, strwidth('Eĥoŝanĝo ĉiuĵaŭde'))
+      call assert_equal((aw == 'single') ? 6 : 7, strwidth('Straße'))
+    endif
+
+    call assert_fails('call strwidth({->0})', 'E729:')
+    call assert_fails('call strwidth([])', 'E730:')
+    call assert_fails('call strwidth({})', 'E731:')
+    call assert_fails('call strwidth(1.2)', 'E806:')
+  endfor
+
+  set ambiwidth&
+endfunc
+
 func Test_str2nr()
   call assert_equal(0, str2nr(''))
   call assert_equal(1, str2nr('1'))
