@@ -1390,7 +1390,12 @@ ins_redraw (
   if (ready && has_event(EVENT_TEXTCHANGEDI)
       && curbuf->b_last_changedtick != buf_get_changedtick(curbuf)
       && !pum_visible()) {
+    aco_save_T aco;
+
+    // save and restore curwin and curbuf, in case the autocmd changes them
+    aucmd_prepbuf(&aco, curbuf);
     apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
+    aucmd_restbuf(&aco);
     curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
   }
 
@@ -1400,8 +1405,13 @@ ins_redraw (
   if (ready && has_event(EVENT_TEXTCHANGEDP)
       && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
-      apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
-      curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
+    aco_save_T aco;
+
+    // save and restore curwin and curbuf, in case the autocmd changes them
+    aucmd_prepbuf(&aco, curbuf);
+    apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
+    aucmd_restbuf(&aco);
+    curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
   }
 
   if (must_redraw)
