@@ -8680,11 +8680,12 @@ static char_u *do_insert_char_pre(int c)
 
   char_u *res = NULL;
   if (ins_apply_autocmds(EVENT_INSERTCHARPRE)) {
-    /* Get the value of v:char.  It may be empty or more than one
-     * character.  Only use it when changed, otherwise continue with the
-     * original character to avoid breaking autoindent. */
-    if (STRCMP(buf, get_vim_var_str(VV_CHAR)) != 0)
+    // Get the value of v:char.  It may be empty or more than one
+    // character.  Only use it when changed, otherwise continue with the
+    // original character to avoid breaking autoindent.
+    if (STRCMP(buf, get_vim_var_str(VV_CHAR)) != 0) {
       res = vim_strsave(get_vim_var_str(VV_CHAR));
+    }
   }
 
   set_vim_var_string(VV_CHAR, NULL, -1);
