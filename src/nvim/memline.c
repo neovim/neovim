@@ -3525,17 +3525,16 @@ static int b0_magic_wrong(ZERO_BL *b0p)
  *		== 0   == 0	OK	FAIL	TRUE
  *
  * current file doesn't exist, inode for swap unknown, both file names not
- * available -> probably same file
- *		== 0   == 0    FAIL	FAIL	FALSE
+ * available -> compare file names
+ *		== 0   == 0    FAIL	FAIL	fname_c != fname_s
  *
  * Only the last 32 bits of the inode will be used. This can't be changed
  * without making the block 0 incompatible with 32 bit versions.
  */
 
-static int
-fnamecmp_ino (
-    char_u *fname_c,               /* current file name */
-    char_u *fname_s,               /* file name from swap file */
+static bool fnamecmp_ino(
+    char_u *fname_c,              // current file name
+    char_u *fname_s,              // file name from swap file
     long ino_block0
 )
 {
@@ -3576,11 +3575,13 @@ fnamecmp_ino (
 
   /*
    * Can't compare inodes or file names, guess that the files are different,
-   * unless both appear not to exist at all.
+   * unless both appear not to exist at all, then compare with the file name
+   * in the swap file.
    */
-  if (ino_s == 0 && ino_c == 0 && retval_c == FAIL && retval_s == FAIL)
-    return FALSE;
-  return TRUE;
+  if (ino_s == 0 && ino_c == 0 && retval_c == FAIL && retval_s == FAIL) {
+    return STRCMP(fname_c, fname_s) != 0;
+  }
+  return true;
 }
 
 /*
