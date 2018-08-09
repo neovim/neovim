@@ -7603,7 +7603,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     const char_u *expr = (char_u *)tv_get_string_chk(&argvars[1]);
     const char_u *p = argvars[0].vval.v_string;
 
-    if (!error && expr != NULL && p != NULL) {
+    if (!error && expr != NULL && *expr != NUL && p != NULL) {
       if (ic) {
         const size_t len = STRLEN(expr);
 

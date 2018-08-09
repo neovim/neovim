@@ -723,6 +723,7 @@ func Test_count()
   call assert_equal(0, count("foo", "O"))
   call assert_equal(2, count("foo", "O", 1))
   call assert_equal(2, count("fooooo", "oo"))
+  call assert_equal(0, count("foo", ""))
 endfunc
 
 func Test_changenr()
