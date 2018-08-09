@@ -423,7 +423,9 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 			which will indicate the command that produced the
 			quickfix list. This can be used to compose a custom
 			status line if the value of 'statusline' is adjusted
-			properly.
+			properly. Whenever this buffer is modified by a
+			quickfix command or function, the |b:changedtick|
+			variable is incremented.
 
 							*:lop* *:lopen*
 :lop[en] [height]	Open a window to show the location list for the

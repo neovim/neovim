@@ -1044,10 +1044,12 @@ qf_init_ext(
   if (newlist || qi->qf_curlist == qi->qf_listcount) {
     // make place for a new list
     qf_new_list(qi, qf_title);
-  } else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+  } else {
     // Adding to existing list, use last entry.
     adding = true;
-    old_last = qi->qf_lists[qi->qf_curlist].qf_last;
+    if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+      old_last = qi->qf_lists[qi->qf_curlist].qf_last;
+    }
   }
 
   // Use the local value of 'errorformat' if it's set.
@@ -2885,6 +2887,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
     qf_update_win_titlevar(qi);
 
     qf_fill_buffer(qi, buf, old_last);
+    buf_inc_changedtick(buf);
 
     if (old_last == NULL) {
       (void)qf_win_pos_update(qi, 0);
@@ -4209,7 +4212,8 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
       di = tv_dict_item_alloc_len(S_LEN("context"));
       tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-      if (tv_dict_add(retdict, di) == FAIL) {
+      status = tv_dict_add(retdict, di);
+      if (status == FAIL) {
         tv_dict_item_free(di);
       }
     } else {
@@ -4398,6 +4402,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
     typval_T *ctx = xcalloc(1, sizeof(typval_T));
     tv_copy(&di->di_tv, ctx);
     qi->qf_lists[qf_idx].qf_ctx = ctx;
+    retval = OK;
   }
 
   return retval;

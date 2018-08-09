@@ -1702,7 +1702,8 @@ func Xproperty_tests(cchar)
     Xopen
     wincmd p
     call g:Xsetlist([{'filename':'foo', 'lnum':27}])
-    call g:Xsetlist([], 'a', {'title' : 'Sample'})
+    let s = g:Xsetlist([], 'a', {'title' : 'Sample'})
+    call assert_equal(0, s)
     let d = g:Xgetlist({"title":1})
     call assert_equal('Sample', d.title)
 
@@ -1756,7 +1757,8 @@ func Xproperty_tests(cchar)
     endif
 
     " Context related tests
-    call g:Xsetlist([], 'a', {'context':[1,2,3]})
+    let s = g:Xsetlist([], 'a', {'context':[1,2,3]})
+    call assert_equal(0, s)
     call test_garbagecollect_now()
     let d = g:Xgetlist({'context':1})
     call assert_equal([1,2,3], d.context)
@@ -1821,8 +1823,9 @@ func Xproperty_tests(cchar)
     " Test for setting/getting items
     Xexpr ""
     let qfprev = g:Xgetlist({'nr':0})
-    call g:Xsetlist([], ' ', {'title':'Green',
+    let s = g:Xsetlist([], ' ', {'title':'Green',
 		\ 'items' : [{'filename':'F1', 'lnum':10}]})
+    call assert_equal(0, s)
     let qfcur = g:Xgetlist({'nr':0})
     call assert_true(qfcur.nr == qfprev.nr + 1)
     let l = g:Xgetlist({'items':1})
@@ -2241,4 +2244,28 @@ func Test_resize_from_copen()
 	augroup END
 	augroup! QF_Test
     endtry
+endfunc
+
+" Tests for the quickfix buffer b:changedtick variable
+func Xchangedtick_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  new | only
+
+  Xexpr "" | Xexpr "" | Xexpr ""
+
+  Xopen
+  Xolder
+  Xolder
+  Xaddexpr "F1:10:Line10"
+  Xaddexpr "F2:20:Line20"
+  call g:Xsetlist([{"filename":"F3", "lnum":30, "text":"Line30"}], 'a')
+  call g:Xsetlist([], 'f')
+  call assert_equal(8, getbufvar('%', 'changedtick'))
+  Xclose
+endfunc
+
+func Test_changedtick()
+    call Xchangedtick_tests('c')
+    call Xchangedtick_tests('l')
 endfunc
