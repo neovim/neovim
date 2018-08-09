@@ -12424,13 +12424,13 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     vim_regfree(regmatch.regprog);
   }
 
-  if (type == kSomeMatchStrPos && l == NULL) {
+theend:
+  if (type == kSomeMatchStrPos && l == NULL && rettv->vval.v_list != NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
     tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
   }
 
-theend:
   xfree(tofree);
   p_cpo = save_cpo;
 }
