@@ -1465,7 +1465,11 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
 {
   if (lp->col > 0 || lp->coladd > 1) {
     const char_u *const p = ml_get_buf(buf, lp->lnum, false);
-    lp->col -= (*mb_head_off)(p, p + lp->col);
+    if (*p == NUL || (int)STRLEN(p) < lp->col) {
+      lp->col = 0;
+    } else {
+      lp->col -= (*mb_head_off)(p, p + lp->col);
+    }
     // Reset "coladd" when the cursor would be on the right half of a
     // double-wide character.
     if (lp->coladd == 1

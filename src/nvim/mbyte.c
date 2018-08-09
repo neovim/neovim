@@ -566,7 +566,9 @@ int utf_off2cells(unsigned off, unsigned max_off)
 /// Convert a UTF-8 byte sequence to a wide character
 ///
 /// If the sequence is illegal or truncated by a NUL then the first byte is
-/// returned. Does not include composing characters for obvious reasons.
+/// returned.
+/// For an overlong sequence this may return zero.
+/// Does not include composing characters for obvious reasons.
 ///
 /// @param[in]  p  String to convert.
 ///
