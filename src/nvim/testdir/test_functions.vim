@@ -841,6 +841,17 @@ func Test_col()
   bw!
 endfunc
 
+func Test_inputlist()
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>1\<cr>", 'tx')
+  call assert_equal(1, c)
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>2\<cr>", 'tx')
+  call assert_equal(2, c)
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>3\<cr>", 'tx')
+  call assert_equal(3, c)
+
+  call assert_fails('call inputlist("")', 'E686:')
+endfunc
+
 func Test_balloon_show()
   if has('balloon_eval')
     " This won't do anything but must not crash either.
