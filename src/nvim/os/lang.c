@@ -31,7 +31,7 @@ void lang_init(void)
       char buf[20] = { 0 };
       if (CFStringGetCString(cf_lang_region, buf, 20,
                              kCFStringEncodingUTF8)) {
-        os_setenv("LANG", lang_region, true);
+        os_setenv("LANG", buf, true);
       }
     }
     CFRelease(cf_lang_region);
