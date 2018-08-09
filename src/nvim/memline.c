@@ -3532,10 +3532,9 @@ static int b0_magic_wrong(ZERO_BL *b0p)
  * without making the block 0 incompatible with 32 bit versions.
  */
 
-static int
-fnamecmp_ino (
-    char_u *fname_c,               /* current file name */
-    char_u *fname_s,               /* file name from swap file */
+static bool fnamecmp_ino(
+    char_u *fname_c,              // current file name
+    char_u *fname_s,              // file name from swap file
     long ino_block0
 )
 {
@@ -3582,7 +3581,7 @@ fnamecmp_ino (
   if (ino_s == 0 && ino_c == 0 && retval_c == FAIL && retval_s == FAIL) {
     return STRCMP(fname_c, fname_s) != 0;
   }
-  return TRUE;
+  return true;
 }
 
 /*
