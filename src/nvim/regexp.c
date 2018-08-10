@@ -4922,8 +4922,11 @@ regmatch (
               }
             } else {
               if (has_mbyte) {
+                const char_u *const line =
+                    reg_getline(behind_pos.rs_u.pos.lnum);
+
                 rp->rs_un.regsave.rs_u.pos.col -=
-                  (*mb_head_off)(regline, regline
+                  (*mb_head_off)(line, line
                                  + rp->rs_un.regsave.rs_u.pos.col - 1) + 1;
               } else {
                 rp->rs_un.regsave.rs_u.pos.col--;
