@@ -2421,6 +2421,8 @@ int win_close(win_T *win, bool free_buf)
 
   if (ui_is_external(kUIWindows)) {
     ui_call_win_close(win->handle, win->w_grid.handle);
+    // If not handling windows, send the next (or prev) window in the list
+    wp = win->w_next == NULL ? win->w_prev : win->w_next;
   } else if (win == curwin) {
     /*
      * Guess which window is going to be the new current window.
@@ -2578,7 +2580,8 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (!was_floating) {
-    if (!curwin->w_floating && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
+    if (!curwin->w_floating && !ui_is_external(kUIWindows)
+        && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
       // If the frame of the closed window contains the new current window,
       // only resize that frame.  Otherwise resize all windows.
       win_equal(curwin, curwin->w_frame->fr_parent == win_frame, dir);
@@ -2606,7 +2609,7 @@ int win_close(win_T *win, bool free_buf)
 
   /* After closing the help window, try restoring the window layout from
    * before it was opened. */
-  if (help_window)
+  if (!ui_is_external(kUIWindows) && help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
 
   curwin->w_pos_changed = true;
