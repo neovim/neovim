@@ -5136,13 +5136,13 @@ mkspell (
       spin.si_add = true;
   }
 
-  if (incount <= 0)
+  if (incount <= 0) {
     EMSG(_(e_invarg));          // need at least output and input names
-  else if (vim_strchr(path_tail(wfname), '_') != NULL)
+  } else if (vim_strchr(path_tail(wfname), '_') != NULL) {
     EMSG(_("E751: Output file name must not have region name"));
-  else if (incount > MAXREGIONS)
+  } else if (incount > MAXREGIONS) {
     EMSGN(_("E754: Only up to %ld regions supported"), MAXREGIONS);
-  else {
+  } else {
     // Check for overwriting before doing things that may take a lot of
     // time.
     if (!over_write && os_path_exists(wfname)) {
