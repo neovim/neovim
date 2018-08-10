@@ -1485,7 +1485,7 @@ static int nfa_regatom(void)
 
     default:
     {
-      int n = 0;
+      long n = 0;
       int cmp = c;
 
       if (c == '<' || c == '>')
@@ -1511,7 +1511,13 @@ static int nfa_regatom(void)
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
         }
-        EMIT(n);
+#if SIZEOF_INT < SIZEOF_LONG
+        if (n > INT_MAX) {
+          EMSG(_("E951: \\% value too large"));
+          return FAIL;
+        }
+#endif
+        EMIT((int)n);
         break;
       } else if (c == '\'' && n == 0) {
         /* \%'m  \%<'m  \%>'m  */
