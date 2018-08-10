@@ -129,9 +129,7 @@ void win_rotate(Integer win, Integer grid, Integer direction, Integer count)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_move(Integer win, Integer grid, Integer flags)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void win_height_set(Integer win, Integer grid, Integer height)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void win_width_set(Integer win, Integer grid, Integer width)
+void win_resize(Integer win, Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected,
