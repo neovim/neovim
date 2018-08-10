@@ -13,6 +13,9 @@
                                 // Some places assume a word length fits in a
                                 // byte, thus it can't be above 255.
 
+// Number of regions supported.
+#define MAXREGIONS 8
+
 // Type used for indexes in the word tree need to be at least 4 bytes.  If int
 // is 8 bytes we could use something smaller, but what?
 typedef int idx_T;
@@ -124,7 +127,8 @@ struct slang_S {
 
   char_u      *sl_info;         // infotext string or NULL
 
-  char_u sl_regions[17];        // table with up to 8 region names plus NUL
+  char_u sl_regions[MAXREGIONS * 2 + 1];
+                                // table with up to 8 region names plus NUL
 
   char_u      *sl_midword;      // MIDWORD string or NULL
 
