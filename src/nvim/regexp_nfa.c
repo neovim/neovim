@@ -3224,7 +3224,13 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (pattern) {
         /* NFA_ZEND -> NFA_END_PATTERN -> NFA_SKIP -> what follows. */
         skip = alloc_state(NFA_SKIP, NULL, NULL);
+        if (skip == NULL) {
+          goto theend;
+        }
         zend = alloc_state(NFA_ZEND, s1, NULL);
+        if (zend == NULL) {
+          goto theend;
+        }
         s1->out= skip;
         patch(e.out, zend);
         PUSH(frag(s, list1(&skip->out)));
