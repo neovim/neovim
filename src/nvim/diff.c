@@ -1609,8 +1609,7 @@ static bool diff_equal_char(const char_u *const p1, const char_u *const p2,
   }
   if (l > 1) {
     if (STRNCMP(p1, p2, l) != 0
-        && (!enc_utf8
-            || !(diff_flags & DIFF_ICASE)
+        && (!(diff_flags & DIFF_ICASE)
             || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
       return false;
     }
