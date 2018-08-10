@@ -1597,6 +1597,35 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
   return true;
 }
 
+// Compare the characters at "p1" and "p2".  If they are equal (possibly
+// ignoring case) return true and set "len" to the number of bytes.
+static bool diff_equal_char(const char_u *const p1, const char_u *const p2,
+                            int *const len)
+{
+  const int l = utfc_ptr2len(p1);
+
+  if (l != utfc_ptr2len(p2)) {
+    return false;
+  }
+  if (l > 1) {
+    if (STRNCMP(p1, p2, l) != 0
+        && (!enc_utf8
+            || !(diff_flags & DIFF_ICASE)
+            || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
+      return false;
+    }
+    *len = l;
+  } else {
+    if ((*p1 != *p2)
+        && (!(diff_flags & DIFF_ICASE)
+            || TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2))) {
+      return false;
+    }
+    *len = 1;
+  }
+  return true;
+}
+
 /// Compare strings "s1" and "s2" according to 'diffopt'.
 /// Return non-zero when they are different.
 ///
@@ -1623,30 +1652,12 @@ static int diff_cmp(char_u *s1, char_u *s2)
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
-      int l  = (*mb_ptr2len)(p1);
-      if (l != (*mb_ptr2len)(p2)) {
+      int l;
+      if (!diff_equal_char(p1, p2, &l)) {
         break;
       }
-
-      if (l > 1) {
-        if ((STRNCMP(p1, p2, l) != 0)
-            && (!enc_utf8
-                || !(diff_flags & DIFF_ICASE)
-                || (utf_fold(utf_ptr2char(p1))
-                    != utf_fold(utf_ptr2char(p2))))) {
-          break;
-        }
-        p1 += l;
-        p2 += l;
-      } else {
-        if ((*p1 != *p2)
-            && (!(diff_flags & DIFF_ICASE)
-                || (TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2)))) {
-          break;
-        }
-        ++p1;
-        ++p2;
-      }
+      p1 += l;
+      p2 += l;
     }
   }
 
@@ -1868,35 +1879,6 @@ bool diffopt_horizontal(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_HORIZONTAL) != 0;
-}
-
-// Compare the characters at "p1" and "p2".  If they are equal (possibly
-// ignoring case) return true and set "len" to the number of bytes.
-static bool diff_equal_char(const char_u *const p1, const char_u *const p2,
-                            int *const len)
-{
-  const int l = utfc_ptr2len(p1);
-
-  if (l != utfc_ptr2len(p2)) {
-    return false;
-  }
-  if (l > 1) {
-    if (STRNCMP(p1, p2, l) != 0
-        && (!enc_utf8
-            || !(diff_flags & DIFF_ICASE)
-            || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
-      return false;
-    }
-    *len = l;
-  } else {
-    if ((*p1 != *p2)
-        && (!(diff_flags & DIFF_ICASE)
-            || TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2))) {
-      return false;
-    }
-    *len = 1;
-  }
-  return true;
 }
 
 /// Find the difference within a changed line.
