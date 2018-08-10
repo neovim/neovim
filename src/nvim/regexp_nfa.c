@@ -1409,7 +1409,7 @@ static int nfa_regatom(void)
     case 'u':               /* %uabcd hex 4 */
     case 'U':               /* %U1234abcd hex 8 */
     {
-      int nr;
+      int64_t nr;
 
       switch (c) {
       case 'd': nr = getdecchrs(); break;
@@ -1859,7 +1859,7 @@ static int nfa_regpiece(void)
   int greedy = TRUE;                /* Braces are prefixed with '-' ? */
   parse_state_T old_state;
   parse_state_T new_state;
-  int c2;
+  int64_t c2;
   int old_post_pos;
   int my_post_start;
   int quest;
