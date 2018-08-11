@@ -12227,7 +12227,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   long start = 0;
   long nth = 1;
   colnr_T startcol = 0;
-  int match = 0;
+  bool match = false;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
   long idx = 0;
@@ -12325,7 +12325,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     for (;; ) {
       if (l != NULL) {
         if (li == NULL) {
-          match = FALSE;
+          match = false;
           break;
         }
         xfree(tofree);
@@ -12351,7 +12351,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         startcol = (colnr_T)(regmatch.startp[0]
                              + (*mb_ptr2len)(regmatch.startp[0]) - str);
         if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
-            match = FALSE;
+            match = false;
             break;
         }
       }
