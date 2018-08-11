@@ -44,6 +44,7 @@ static int diff_busy = FALSE;    // ex_diffgetput() is busy
 #define DIFF_IWHITE     4        // ignore change in white space
 #define DIFF_HORIZONTAL 8        // horizontal splits
 #define DIFF_VERTICAL   16       // vertical splits
+#define DIFF_HIDDEN_OFF 32       // diffoff when hidden
 static int diff_flags = DIFF_FILLER;
 
 #define LBUFLEN 50               // length of line in diff file
@@ -1838,6 +1839,9 @@ int diffopt_changed(void)
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
       diff_foldcolumn_new = getdigits_int(&p);
+    } else if (STRNCMP(p, "hiddenoff", 9) == 0) {
+      p += 9;
+      diff_flags_new |= DIFF_HIDDEN_OFF;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -1878,6 +1882,12 @@ bool diffopt_horizontal(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_HORIZONTAL) != 0;
+}
+
+// Return true if 'diffopt' contains "hiddenoff".
+bool diffopt_hiddenoff(void)
+{
+  return (diff_flags & DIFF_HIDDEN_OFF) != 0;
 }
 
 /// Find the difference within a changed line.
