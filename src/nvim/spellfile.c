@@ -3032,7 +3032,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   hash_init(&ht);
 
   vim_snprintf((char *)IObuff, IOSIZE,
-      _("Reading dictionary file %s..."), fname);
+               _("Reading dictionary file %s..."), fname);
   spell_message(spin, IObuff);
 
   // start with a message for the first line
@@ -4998,7 +4998,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
   }
 
   vim_snprintf((char *)IObuff, IOSIZE,
-      _("Writing suggestion file %s..."), fname);
+               _("Writing suggestion file %s..."), fname);
   spell_message(spin, IObuff);
 
   // <SUGHEADER>: <fileID> <versionnr> <timestamp>
@@ -5234,7 +5234,7 @@ mkspell (
     if (!error && !got_int) {
       // Write the info in the spell file.
       vim_snprintf((char *)IObuff, IOSIZE,
-          _("Writing spell file %s..."), wfname);
+                   _("Writing spell file %s..."), wfname);
       spell_message(&spin, IObuff);
 
       error = write_vim_spell(&spin, wfname) == FAIL;
