@@ -36,7 +36,7 @@ typedef enum {
 } MessageType;
 
 /// Used as the message ID of notifications.
-#define NO_RESPONSE UINT64_MAX
+#define NO_RESPONSE UINT32_MAX
 
 /// Mask for all internal calls
 #define INTERNAL_CALL_MASK (((uint64_t)1) << (sizeof(uint64_t) * 8 - 1))
