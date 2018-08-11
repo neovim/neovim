@@ -505,9 +505,10 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   int nwindows = buf->b_nwindows;
 
-  /* decrease the link count from windows (unless not in any window) */
-  if (buf->b_nwindows > 0)
-    --buf->b_nwindows;
+  // decrease the link count from windows (unless not in any window)
+  if (buf->b_nwindows > 0) {
+    buf->b_nwindows--;
+  }
 
   if (diffopt_hiddenoff() && !unload_buf && buf->b_nwindows == 0) {
     diff_buf_delete(buf);   // Clear 'diff' for hidden buffer.
@@ -515,8 +516,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   /* Return when a window is displaying the buffer or when it's not
    * unloaded. */
-  if (buf->b_nwindows > 0 || !unload_buf)
+  if (buf->b_nwindows > 0 || !unload_buf) {
     return;
+  }
 
   if (buf->terminal) {
     terminal_close(buf->terminal, NULL);
