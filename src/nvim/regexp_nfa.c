@@ -4698,7 +4698,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     fprintf(log_fd, "****************************\n");
   } else {
     EMSG(_(
-            "Could not open temporary log file for writing, displaying on stderr ... "));
+            "Could not open temporary log file for writing, displaying on stderr... "));
     log_fd = stderr;
   }
 #endif
