@@ -185,6 +185,11 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
+  const char *var = os_getenv("HOME");
+
+#ifdef UNIX
+  // use uv_os_homedir only for unix systems
+  // as uv_os_homedir checks %USERPROFILE% first then only %HOMEDRIVE%%HOMEPATH%  
   // uv_os_homedir doesn't work when a buffer initialized to NULL is passed 
   // so using a local buffer
   char home[MAXPATHL];
@@ -196,11 +201,26 @@ void init_homedir(void)
   {
     homedir = xstrdup((const char*)home);
   }
-  else 
+  else
   {
-    const char *var = os_getenv("HOME");
+    if(var != NULL){
+      // Change to the directory and get the actual path. This resolves
+      // links. Don't do it when we can't return
+      if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+        if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+          var = (char *)IObuff;
+        }
+        if (os_chdir(os_buf) != 0) {
+          EMSG(_(e_prev_dir));
+        }
+      }
+      homedir = xstrdup(var);
+    }
+  }
+  return;
+#endif
 
-  #ifdef WIN32
+#ifdef WIN32
     // Typically, $HOME is not defined on Windows, unless the user has
     // specifically defined it for Vim's sake. However, on Windows NT
     // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
@@ -222,24 +242,8 @@ void init_homedir(void)
     if (var == NULL) {
       var = os_getenv("USERPROFILE");
     }
-  #endif
-
-    if (var != NULL) {
-  #ifdef UNIX
-      // Change to the directory and get the actual path.  This resolves
-      // links.  Don't do it when we can't return.
-      if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-        if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-          var = (char *)IObuff;
-        }
-        if (os_chdir(os_buf) != 0) {
-          EMSG(_(e_prev_dir));
-        }
-      }
-  #endif
-      homedir = xstrdup(var);
-    }
-  }
+    homedir = xstrdup(var);
+#endif
 }
 
 #if defined(EXITFREE)
