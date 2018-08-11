@@ -2453,6 +2453,7 @@ static void nfa_set_code(int c)
 }
 
 static FILE *log_fd;
+static char_u e_log_open_failed[] = N_("Could not open temporary log file for writing, displaying on stderr... ");
 
 /*
  * Print the postfix notation of the current regexp.
@@ -2466,7 +2467,7 @@ static void nfa_postfix_dump(char_u *expr, int retval)
   if (f != NULL) {
     fprintf(f, "\n-------------------------\n");
     if (retval == FAIL)
-      fprintf(f, ">>> NFA engine failed ... \n");
+      fprintf(f, ">>> NFA engine failed... \n");
     else if (retval == OK)
       fprintf(f, ">>> NFA engine succeeded !\n");
     fprintf(f, "Regexp: \"%s\"\nPostfix notation (char): \"", expr);
@@ -4697,8 +4698,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     fprintf(log_fd, "MATCH = %s\n", !result ? "FALSE" : "OK");
     fprintf(log_fd, "****************************\n");
   } else {
-    EMSG(_(
-            "Could not open temporary log file for writing, displaying on stderr... "));
+    EMSG(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -5002,8 +5002,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         abs(start->id), code);
     fprintf(log_fd, "**********************************\n");
   } else {
-    EMSG(_(
-            "Could not open temporary log file for writing, displaying on stderr ... "));
+    EMSG(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -5068,7 +5067,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
     fprintf(log_fd, "------------------------------------------\n");
     fprintf(log_fd, ">>> Reginput is \"%s\"\n", reginput);
     fprintf(log_fd,
-        ">>> Advanced one character ... Current char is %c (code %d) \n", curc,
+        ">>> Advanced one character... Current char is %c (code %d) \n", curc,
         (int)curc);
     fprintf(log_fd, ">>> Thislist has %d states available: ", thislist->n);
     {
@@ -5108,7 +5107,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         else
           col = (int)(t->subs.norm.list.line[0].start - regline);
         nfa_set_code(t->state->c);
-        fprintf(log_fd, "(%d) char %d %s (start col %d)%s ... \n",
+        fprintf(log_fd, "(%d) char %d %s (start col %d)%s... \n",
             abs(t->state->id), (int)t->state->c, code, col,
             pim_info(&t->pim));
       }
@@ -6493,7 +6492,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
     if (f != NULL) {
       fprintf(
           f,
-          "\n*****************************\n\n\n\n\tCompiling regexp \"%s\" ... hold on !\n",
+          "\n*****************************\n\n\n\n\tCompiling regexp \"%s\"... hold on !\n",
           expr);
       fclose(f);
     }
