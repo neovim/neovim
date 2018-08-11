@@ -362,18 +362,14 @@ static void on_request_event(void **argv)
   uint32_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, args, &error);
-  if (request_id != NO_RESPONSE) {
-    // send the response
-    msgpack_packer response;
-    msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
-    channel_write(channel, serialize_response(channel->id,
-                                              request_id,
-                                              &error,
-                                              result,
-                                              &out_buffer));
-  } else {
-    api_free_object(result);
-  }
+  // send the response
+  msgpack_packer response;
+  msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+  channel_write(channel, serialize_response(channel->id,
+                                            request_id,
+                                            &error,
+                                            result,
+                                            &out_buffer));
   api_free_array(args);
   channel_decref(channel);
   xfree(e);

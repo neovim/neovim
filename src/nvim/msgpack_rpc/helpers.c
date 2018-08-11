@@ -566,8 +566,8 @@ void msgpack_rpc_validate(uint32_t *response_id,
                           Error *err)
 {
   // response id not known yet
-
   *response_id = NO_RESPONSE;
+
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
     api_set_error(err, kErrorTypeValidation, "Message is not an array");
