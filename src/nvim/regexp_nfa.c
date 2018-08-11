@@ -2723,7 +2723,7 @@ static void st_error(int *postfix, int *end, int *p)
     fclose(df);
   }
 #endif
-  EMSG(_("E874: (NFA) Could not pop the stack !"));
+  EMSG(_("E874: (NFA) Could not pop the stack!"));
 }
 
 /*
@@ -4964,7 +4964,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   FILE        *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
   if (debug == NULL) {
-    EMSG2(_("(NFA) COULD NOT OPEN %s !"), NFA_REGEXP_DEBUG_LOG);
+    EMSG2("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
     return false;
   }
 #endif
