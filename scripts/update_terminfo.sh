@@ -83,7 +83,7 @@ for term in $sorted_terms; do
   echo "};"
 done >> "$target"
 
-cat > "$target" <<EOF
+cat >> "$target" <<EOF
 #endif  // NVIM_TUI_TERMINFO_DEFS_H
 EOF
 print_bold 'done\n'
