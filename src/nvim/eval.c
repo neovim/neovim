@@ -7603,7 +7603,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     const char_u *expr = (char_u *)tv_get_string_chk(&argvars[1]);
     const char_u *p = argvars[0].vval.v_string;
 
-    if (!error && expr != NULL && p != NULL) {
+    if (!error && expr != NULL && *expr != NUL && p != NULL) {
       if (ic) {
         const size_t len = STRLEN(expr);
 
@@ -12227,7 +12227,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   long start = 0;
   long nth = 1;
   colnr_T startcol = 0;
-  int match = 0;
+  bool match = false;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
   long idx = 0;
@@ -12325,7 +12325,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     for (;; ) {
       if (l != NULL) {
         if (li == NULL) {
-          match = FALSE;
+          match = false;
           break;
         }
         xfree(tofree);
@@ -12351,7 +12351,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         startcol = (colnr_T)(regmatch.startp[0]
                              + (*mb_ptr2len)(regmatch.startp[0]) - str);
         if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
-            match = FALSE;
+            match = false;
             break;
         }
       }
@@ -12424,13 +12424,13 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     vim_regfree(regmatch.regprog);
   }
 
-  if (type == kSomeMatchStrPos && l == NULL) {
+theend:
+  if (type == kSomeMatchStrPos && l == NULL && rettv->vval.v_list != NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
     tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
   }
 
-theend:
   xfree(tofree);
   p_cpo = save_cpo;
 }

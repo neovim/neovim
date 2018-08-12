@@ -96,6 +96,30 @@ func Test_min()
   " call assert_fails('call min(v:none)', 'E712:')
 endfunc
 
+func Test_strwidth()
+  for aw in ['single', 'double']
+    exe 'set ambiwidth=' . aw
+    call assert_equal(0, strwidth(''))
+    call assert_equal(1, strwidth("\t"))
+    call assert_equal(3, strwidth('Vim'))
+    call assert_equal(4, strwidth(1234))
+    call assert_equal(5, strwidth(-1234))
+
+    if has('multi_byte')
+      call assert_equal(2, strwidth('😉'))
+      call assert_equal(17, strwidth('Eĥoŝanĝo ĉiuĵaŭde'))
+      call assert_equal((aw == 'single') ? 6 : 7, strwidth('Straße'))
+    endif
+
+    call assert_fails('call strwidth({->0})', 'E729:')
+    call assert_fails('call strwidth([])', 'E730:')
+    call assert_fails('call strwidth({})', 'E731:')
+    call assert_fails('call strwidth(1.2)', 'E806:')
+  endfor
+
+  set ambiwidth&
+endfunc
+
 func Test_str2nr()
   call assert_equal(0, str2nr(''))
   call assert_equal(1, str2nr('1'))
@@ -215,6 +239,21 @@ func Test_setbufvar_options()
   bwipe!
 endfunc
 
+func Test_pathshorten()
+  call assert_equal('', pathshorten(''))
+  call assert_equal('foo', pathshorten('foo'))
+  call assert_equal('/foo', pathshorten('/foo'))
+  call assert_equal('f/', pathshorten('foo/'))
+  call assert_equal('f/bar', pathshorten('foo/bar'))
+  call assert_equal('f/b/foobar', pathshorten('foo/bar/foobar'))
+  call assert_equal('/f/b/foobar', pathshorten('/foo/bar/foobar'))
+  call assert_equal('.f/bar', pathshorten('.foo/bar'))
+  call assert_equal('~f/bar', pathshorten('~foo/bar'))
+  call assert_equal('~.f/bar', pathshorten('~.foo/bar'))
+  call assert_equal('.~f/bar', pathshorten('.~foo/bar'))
+  call assert_equal('~/f/bar', pathshorten('~/foo/bar'))
+endfunc
+
 func Test_strpart()
   call assert_equal('de', strpart('abcdefg', 3, 2))
   call assert_equal('ab', strpart('abcdefg', -2, 4))
@@ -299,6 +338,11 @@ func Test_tolower()
   " Ⱥ (U+023A) and Ⱦ (U+023E) are the *only* code points to increase
   " in length (2 to 3 bytes) when lowercased. So let's test them.
   call assert_equal("ⱥ ⱦ", tolower("Ⱥ Ⱦ"))
+
+  " This call to tolower with invalid utf8 sequence used to cause access to
+  " invalid memory.
+  call tolower("\xC0\x80\xC0")
+  call tolower("123\xC0\x80\xC0")
 endfunc
 
 func Test_toupper()
@@ -369,6 +413,11 @@ func Test_toupper()
   call assert_equal("ZŹŻŽƵẐẔ", toupper("ZŹŻŽƵẐẔ"))
 
   call assert_equal("Ⱥ Ⱦ", toupper("ⱥ ⱦ"))
+
+  " This call to toupper with invalid utf8 sequence used to cause access to
+  " invalid memory.
+  call toupper("\xC0\x80\xC0")
+  call toupper("123\xC0\x80\xC0")
 endfunc
 
 " Tests for the mode() function
@@ -573,10 +622,46 @@ func Test_strridx()
   call assert_equal(-1, strridx('hello', 'hello world'))
 endfunc
 
+func Test_match_func()
+  call assert_equal(4,  match('testing', 'ing'))
+  call assert_equal(4,  match('testing', 'ing', 2))
+  call assert_equal(-1, match('testing', 'ing', 5))
+  call assert_equal(-1, match('testing', 'ing', 8))
+  call assert_equal(1, match(['vim', 'testing', 'execute'], 'ing'))
+  call assert_equal(-1, match(['vim', 'testing', 'execute'], 'img'))
+endfunc
+
 func Test_matchend()
   call assert_equal(7,  matchend('testing', 'ing'))
   call assert_equal(7,  matchend('testing', 'ing', 2))
   call assert_equal(-1, matchend('testing', 'ing', 5))
+  call assert_equal(-1, matchend('testing', 'ing', 8))
+  call assert_equal(match(['vim', 'testing', 'execute'], 'ing'), matchend(['vim', 'testing', 'execute'], 'ing'))
+  call assert_equal(match(['vim', 'testing', 'execute'], 'img'), matchend(['vim', 'testing', 'execute'], 'img'))
+endfunc
+
+func Test_matchlist()
+  call assert_equal(['acd', 'a', '', 'c', 'd', '', '', '', '', ''],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)'))
+  call assert_equal(['d', '', '', '', 'd', '', '', '', '', ''],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2))
+  call assert_equal([],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 4))
+endfunc
+
+func Test_matchstr()
+  call assert_equal('ing',  matchstr('testing', 'ing'))
+  call assert_equal('ing',  matchstr('testing', 'ing', 2))
+  call assert_equal('', matchstr('testing', 'ing', 5))
+  call assert_equal('', matchstr('testing', 'ing', 8))
+  call assert_equal('testing', matchstr(['vim', 'testing', 'execute'], 'ing'))
+  call assert_equal('', matchstr(['vim', 'testing', 'execute'], 'img'))
+endfunc
+
+func Test_matchstrpos()
+  call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing'))
+  call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing', 2))
+  call assert_equal(['', -1, -1], matchstrpos('testing', 'ing', 5))
+  call assert_equal(['', -1, -1], matchstrpos('testing', 'ing', 8))
+  call assert_equal(['ing', 1, 4, 7], matchstrpos(['vim', 'testing', 'execute'], 'ing'))
+  call assert_equal(['', -1, -1, -1], matchstrpos(['vim', 'testing', 'execute'], 'img'))
 endfunc
 
 func Test_nextnonblank_prevnonblank()
@@ -687,6 +772,7 @@ func Test_count()
   call assert_equal(0, count("foo", "O"))
   call assert_equal(2, count("foo", "O", 1))
   call assert_equal(2, count("fooooo", "oo"))
+  call assert_equal(0, count("foo", ""))
 endfunc
 
 func Test_changenr()
@@ -768,6 +854,17 @@ func Test_col()
   call assert_equal(0, col([1, 100]))
   call assert_equal(0, col([1]))
   bw!
+endfunc
+
+func Test_inputlist()
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>1\<cr>", 'tx')
+  call assert_equal(1, c)
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>2\<cr>", 'tx')
+  call assert_equal(2, c)
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>3\<cr>", 'tx')
+  call assert_equal(3, c)
+
+  call assert_fails('call inputlist("")', 'E686:')
 endfunc
 
 func Test_balloon_show()

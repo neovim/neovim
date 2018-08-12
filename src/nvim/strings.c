@@ -344,14 +344,17 @@ char *strcase_save(const char *const orig, bool upper)
 
   char *p = res;
   while (*p != NUL) {
-    int l;
-
     int c = utf_ptr2char((const char_u *)p);
+    int l = utf_ptr2len((const char_u *)p);
+    if (c == 0) {
+      // overlong sequence, use only the first byte
+      c = *p;
+      l = 1;
+    }
     int uc = upper ? mb_toupper(c) : mb_tolower(c);
 
     // Reallocate string when byte count changes.  This is rare,
     // thus it's OK to do another malloc()/free().
-    l = utf_ptr2len((const char_u *)p);
     int newl = utf_char2len(uc);
     if (newl != l) {
       // TODO(philix): use xrealloc() in strup_save()
