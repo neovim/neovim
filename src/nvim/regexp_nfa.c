@@ -2139,7 +2139,7 @@ static int nfa_regbranch(void)
   if (nfa_regconcat() == FAIL)
     return FAIL;
 
-  /* Try next concats */
+  // Try next concats
   while (peekchr() == Magic('&')) {
     skipchr();
     // if concat is empty do emit a node
