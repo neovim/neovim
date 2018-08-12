@@ -38,15 +38,18 @@ if ($compiler -eq 'MINGW') {
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
   # in MSYS2, but we cannot build inside the MSYS2 shell.
-  $cmakeGenerator = 'MinGW Makefiles'
-  $cmakeGeneratorArgs = 'VERBOSE=1'
+  $cmakeGenerator = 'Ninja'
+  $cmakeGeneratorArgs = '-v'
+  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils', 'unibilium').ForEach({
+    "mingw-w64-$arch-$_"
+  })
 
   # Add MinGW to the PATH
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
 
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-$arch-cmake mingw-w64-$arch-perl mingw-w64-$arch-diffutils mingw-w64-$arch-unibilium" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
@@ -57,9 +60,6 @@ elseif ($compiler -eq 'MSVC') {
     $cmakeGenerator = 'Visual Studio 15 2017 Win64'
   }
 }
-
-# Remove Git Unix utilities from the PATH
-$env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
 
 # Setup python (use AppVeyor system python)
 C:\Python27\python.exe -m pip install neovim ; exitIfFailed
