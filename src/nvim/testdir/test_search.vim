@@ -453,3 +453,30 @@ func Test_search_multibyte()
   enew!
   let &encoding = save_enc
 endfunc
+
+func Test_search_undefined_behaviour()
+  if !has("terminal")
+    return
+  endif
+  let h = winheight(0)
+  if h < 3
+    return
+  endif
+  " did cause an undefined left shift
+  let g:buf = term_start([GetVimProg(), '--clean', '-e', '-s', '-c', 'call search(getline("."))', 'samples/test000'], {'term_rows': 3})
+  call assert_equal([''], getline(1, '$'))
+  call term_sendkeys(g:buf, ":qa!\<cr>")
+  bwipe!
+endfunc
+
+func Test_search_undefined_behaviour2()
+  call search("\%UC0000000")
+endfunc
+
+" This was causing E874.  Also causes an invalid read?
+func Test_look_behind()
+  new
+  call setline(1, '0\|\&\n\@<=') 
+  call search(getline("."))
+  bwipe!
+endfunc

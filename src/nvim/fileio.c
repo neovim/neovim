@@ -1380,15 +1380,15 @@ retry:
             }
           } else if (fio_flags & FIO_UCS4) {
             if (fio_flags & FIO_ENDIAN_L) {
-              u8c = (*--p << 24);
-              u8c += (*--p << 16);
-              u8c += (*--p << 8);
+              u8c = (unsigned)(*--p) << 24;
+              u8c += (unsigned)(*--p) << 16;
+              u8c += (unsigned)(*--p) << 8;
               u8c += *--p;
             } else {          /* big endian */
               u8c = *--p;
-              u8c += (*--p << 8);
-              u8c += (*--p << 16);
-              u8c += (*--p << 24);
+              u8c += (unsigned)(*--p) << 8;
+              u8c += (unsigned)(*--p) << 16;
+              u8c += (unsigned)(*--p) << 24;
             }
           } else {        /* UTF-8 */
             if (*--p < 0x80)
