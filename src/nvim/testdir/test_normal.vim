@@ -1201,6 +1201,13 @@ func! Test_normal19_z_spell()
   call assert_match("Word 'goood' added to ./Xspellfile2.add", a)
   call assert_equal('goood', cnt[0])
 
+  " Test for :spellgood!
+  let temp = execute(':spe!0/0')
+  call assert_match('Invalid region', temp)
+  let spellfile = matchstr(temp, 'Invalid region nr in \zs.*\ze line \d: 0')
+  call assert_equal(['# goood', '# goood/!', '#oood', '0/0'], readfile(spellfile))
+  call delete(spellfile)
+
   " clean up
   exe "lang" oldlang
   call delete("./Xspellfile.add")
