@@ -472,3 +472,11 @@ endfunc
 func Test_search_undefined_behaviour2()
   call search("\%UC0000000")
 endfunc
+
+" This was causing E874.  Also causes an invalid read?
+func Test_look_behind()
+  new
+  call setline(1, '0\|\&\n\@<=') 
+  call search(getline("."))
+  bwipe!
+endfunc
