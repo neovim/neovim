@@ -9,6 +9,7 @@ let s:did_load = 1
 " Align Nvim defaults to Vim.
 set sidescroll=0
 set directory^=.
+set undodir^=.
 set backspace=
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 set listchars=eol:$
