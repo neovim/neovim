@@ -26,6 +26,7 @@ readonly -A entries=(
   [tmux-256color]=tmux_256colour_terminfo
   [vte-256color]=vte_256colour_terminfo
   [xterm-256color]=xterm_256colour_terminfo
+  [cygwin]=cygwin_terminfo
 )
 
 db="$(mktemp -du)"
