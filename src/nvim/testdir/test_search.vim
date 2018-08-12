@@ -468,3 +468,7 @@ func Test_search_undefined_behaviour()
   call term_sendkeys(g:buf, ":qa!\<cr>")
   bwipe!
 endfunc
+
+func Test_search_undefined_behaviour2()
+  call search("\%UC0000000")
+endfunc
