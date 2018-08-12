@@ -1664,9 +1664,8 @@ static char_u *regpiece(int *flagp)
   case Magic('@'):
   {
     int lop = END;
-    int nr;
+    int64_t nr = getdecchrs();
 
-    nr = getdecchrs();
     switch (no_Magic(getchr())) {
     case '=': lop = MATCH; break;                                 /* \@= */
     case '!': lop = NOMATCH; break;                               /* \@! */
@@ -2087,7 +2086,7 @@ static char_u *regatom(int *flagp)
     case 'u':               /* %uabcd hex 4 */
     case 'U':               /* %U1234abcd hex 8 */
     {
-      int i;
+      int64_t i;
 
       switch (c) {
       case 'd': i = getdecchrs(); break;
@@ -2976,9 +2975,9 @@ static void ungetchr(void)
  * The parameter controls the maximum number of input characters. This will be
  * 2 when reading a \%x20 sequence and 4 when reading a \%u20AC sequence.
  */
-static int gethexchrs(int maxinputlen)
+static int64_t gethexchrs(int maxinputlen)
 {
-  int nr = 0;
+  int64_t nr = 0;
   int c;
   int i;
 
@@ -3000,9 +2999,9 @@ static int gethexchrs(int maxinputlen)
  * Get and return the value of the decimal string immediately after the
  * current position. Return -1 for invalid.  Consumes all digits.
  */
-static int getdecchrs(void)
+static int64_t getdecchrs(void)
 {
-  int nr = 0;
+  int64_t nr = 0;
   int c;
   int i;
 
@@ -3029,9 +3028,9 @@ static int getdecchrs(void)
  *     blahblah\%o210asdf
  *	   before-^  ^-after
  */
-static int getoctchrs(void)
+static int64_t getoctchrs(void)
 {
-  int nr = 0;
+  int64_t nr = 0;
   int c;
   int i;
 
@@ -3055,7 +3054,7 @@ static int getoctchrs(void)
  */
 static int coll_get_char(void)
 {
-  int nr = -1;
+  int64_t nr = -1;
 
   switch (*regparse++) {
   case 'd': nr = getdecchrs(); break;
@@ -4922,13 +4921,13 @@ regmatch (
                   (colnr_T)STRLEN(regline);
               }
             } else {
-              if (has_mbyte) {
-                rp->rs_un.regsave.rs_u.pos.col -=
-                  (*mb_head_off)(regline, regline
-                                 + rp->rs_un.regsave.rs_u.pos.col - 1) + 1;
-              } else {
-                rp->rs_un.regsave.rs_u.pos.col--;
-              }
+              const char_u *const line =
+                  reg_getline(behind_pos.rs_u.pos.lnum);
+
+              rp->rs_un.regsave.rs_u.pos.col -=
+                  utf_head_off(line,
+                               line + rp->rs_un.regsave.rs_u.pos.col - 1)
+                  + 1;
             }
           } else {
             if (rp->rs_un.regsave.rs_u.ptr == regline) {
