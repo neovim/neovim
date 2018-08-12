@@ -279,13 +279,13 @@ func Test_diffopt_icase()
   set diffopt=icase,foldcolumn:0
 
   e one
-  call setline(1, ['One', 'Two', 'Three', 'Four'])
+  call setline(1, ['One', 'Two', 'Three', 'Four', 'Fi#ve'])
   redraw
   let normattr = screenattr(1, 1)
   diffthis
 
   botright vert new two
-  call setline(1, ['one', 'TWO', 'Three ', 'Four'])
+  call setline(1, ['one', 'TWO', 'Three ', 'Four', 'fI=VE'])
   diffthis
 
   redraw
@@ -293,6 +293,10 @@ func Test_diffopt_icase()
   call assert_equal(normattr, screenattr(2, 1))
   call assert_notequal(normattr, screenattr(3, 1))
   call assert_equal(normattr, screenattr(4, 1))
+
+  let dtextattr = screenattr(5, 3)
+  call assert_notequal(dtextattr, screenattr(5, 1))
+  call assert_notequal(dtextattr, screenattr(5, 5))
 
   diffoff!
   %bwipe!
@@ -369,6 +373,29 @@ func Test_diffopt_vertical()
   set diffopt&
   diffoff!
   %bwipe
+endfunc
+
+func Test_diffopt_hiddenoff()
+  set diffopt=filler,foldcolumn:0,hiddenoff
+  e! one
+  call setline(1, ['Two', 'Three'])
+  redraw
+  let normattr = screenattr(1, 1)
+  diffthis
+  botright vert new two
+  call setline(1, ['One', 'Four'])
+  diffthis
+  redraw
+  call assert_notequal(normattr, screenattr(1, 1))
+  set hidden
+  close
+  redraw
+  " should not diffing with hidden buffer two while 'hiddenoff' is enabled
+  call assert_equal(normattr, screenattr(1, 1))
+
+  bwipe!
+  bwipe!
+  set hidden& diffopt&
 endfunc
 
 func Test_diffoff_hidden()
