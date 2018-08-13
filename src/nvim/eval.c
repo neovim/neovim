@@ -17218,6 +17218,69 @@ error:
   return;
 }
 
+// "trim({expr})" function
+static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char buf1[NUMBUFLEN];
+  char buf2[NUMBUFLEN];
+  const char_u *head = (const char_u *)tv_get_string_buf_chk(&argvars[0], buf1);
+  const char_u *mask = NULL;
+  const char_u *tail;
+  const char_u *prev;
+  const char_u *p;
+  int c1;
+
+  rettv->v_type = VAR_STRING;
+  if (head == NULL) {
+    rettv->vval.v_string = NULL;
+    return;
+  }
+
+  if (argvars[1].v_type == VAR_STRING) {
+    mask = (const char_u *)tv_get_string_buf_chk(&argvars[1], buf2);
+  }
+
+  while (*head != NUL) {
+    c1 = PTR2CHAR(head);
+    if (mask == NULL) {
+      if (c1 > ' ' && c1 != 0xa0) {
+        break;
+      }
+    } else {
+      for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
+        if (c1 == PTR2CHAR(p)) {
+          break;
+        }
+      }
+      if (*p == NUL) {
+        break;
+      }
+    }
+    MB_PTR_ADV(head);
+  }
+
+  for (tail = head + STRLEN(head); tail > head; tail = prev) {
+    prev = tail;
+    MB_PTR_BACK(head, prev);
+    c1 = PTR2CHAR(prev);
+    if (mask == NULL) {
+      if (c1 > ' ' && c1 != 0xa0) {
+        break;
+      }
+    } else {
+      for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
+        if (c1 == PTR2CHAR(p)) {
+          break;
+        }
+      }
+      if (*p == NUL) {
+        break;
+      }
+    }
+  }
+  rettv->vval.v_string = vim_strnsave(head, (int)(tail - head));
+}
+
 /*
  * "type(expr)" function
  */

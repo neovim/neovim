@@ -2336,6 +2336,7 @@ tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
 					to chars in {tostr}
+trim({text}[, {mask}]) 		String	trim characters in {mask} from {text}
 trunc({expr})			Float	truncate Float {expr}
 type({name})			Number	type of variable {name}
 undofile({name})		String	undo file name for {name}
@@ -7961,6 +7962,22 @@ tr({src}, {fromstr}, {tostr})				*tr()*
 <		returns "Hello THere" >
 			echo tr("<blob>", "<>", "{}")
 <		returns "{blob}"
+
+trim({text}[, {mask}])						*trim()*
+		Return {text} as a String where any character in {mask} is
+		removed from the beginning and  end of {text}.
+		If {mask} is not given, {mask} is all characters up to 0x20,
+		which includes Tab, space, NL and CR, plus the non-breaking
+		space character 0xa0.
+		This code deals with multibyte characters properly.
+
+		Examples: >
+			echo trim("  \r\t\t\r RESERVE \t \t\n\x0B\x0B")."_TAIL"
+<		returns "RESERVE_TAIL" >
+			echo trim("needrmvRESERVEnnneeedddrrmmmmvv", "ednmrv")
+<		returns "RESERVE" >
+			echo trim("rm<blob1><blob2><any_chars>rrmm<blob1><blob2><blob2>", "rm<blob1><blob2>")
+<		returns "any_chas"
 
 trunc({expr})							*trunc()*
 		Return the largest integral value with magnitude less than or
