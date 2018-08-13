@@ -813,13 +813,13 @@ Integer ui_win_move_cursor(Integer direction, Integer count)
                                 &error);
 
   if (ERROR_SET(&error)) {
-    api_set_error(&error, kErrorTypeException, "%s", error.msg);
+    EMSG2(_("Error invoking win_move_cursor: %s"), error.msg);
     api_clear_error(&error);
     api_free_object(result);
     return 0;
   }
 
-  if (!object_to_vim(result, &rettv, &error)) {
+  if (result.type != kObjectTypeInteger) {
     api_set_error(&error, kErrorTypeValidation,
                   "Error converting the call result: %s", error.msg);
     api_clear_error(&error);
