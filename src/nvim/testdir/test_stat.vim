@@ -46,6 +46,15 @@ func Test_existent_directory()
   call assert_equal('rwx', getfperm(dname)[0:2])
 endfunc
 
+func SleepForTimestamp()
+  " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
+  if has('win32')
+    sleep 2
+  else
+    sleep 2
+  endif
+endfunc
+
 func Test_checktime()
   let fname = 'Xtest.tmp'
 
@@ -53,12 +62,7 @@ func Test_checktime()
   call writefile(fl, fname)
   set autoread
   exec 'e' fname
-  " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
-  if has('win32')
-    sleep 2
-  else
-    sleep 2
-  endif
+  call SleepForTimestamp()
   let fl = readfile(fname)
   let fl[0] .= ' - checktime'
   call writefile(fl, fname)
@@ -67,6 +71,46 @@ func Test_checktime()
 
   call delete(fname)
 endfunc
+
+func Test_autoread_file_deleted()
+  new Xautoread
+  set autoread
+  call setline(1, 'original')
+  w!
+
+  call SleepForTimestamp()
+  if has('win32')
+    silent !echo changed > Xautoread
+  else
+    silent !echo 'changed' > Xautoread
+  endif
+  checktime
+  call assert_equal('changed', trim(getline(1)))
+
+  call SleepForTimestamp()
+  messages clear
+  if has('win32')
+    silent !del Xautoread
+  else
+    silent !rm Xautoread
+  endif
+  checktime
+  call assert_match('E211:', execute('messages'))
+  call assert_equal('changed', trim(getline(1)))
+
+  call SleepForTimestamp()
+  if has('win32')
+    silent !echo recreated > Xautoread
+  else
+    silent !echo 'recreated' > Xautoread
+  endif
+  checktime
+  call assert_equal('recreated', trim(getline(1)))
+
+  call delete('Xautoread')
+  bwipe!
+endfunc
+
 
 func Test_nonexistent_file()
   let fname = 'Xtest.tmp'
