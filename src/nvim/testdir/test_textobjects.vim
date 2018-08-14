@@ -152,3 +152,16 @@ func Test_match()
   call assert_equal(3 , match('abc', '\zs', 3, 1))
   call assert_equal(-1, match('abc', '\zs', 4, 1))
 endfunc
+
+" This was causing an illegal memory access
+func Test_inner_tag()
+  new
+  norm ixxx
+  call feedkeys("v", 'xt')
+  insert
+x
+x
+.
+  norm it
+  q!
+endfunc
