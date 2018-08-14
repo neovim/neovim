@@ -386,6 +386,17 @@ end
 
 function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
   self._cursor_style_enabled = cursor_style_enabled
+  for _, item in pairs(mode_info) do
+      -- attr IDs are not stable, but their value should be
+      if item.attr_id ~= nil then
+        item.attr = self._attr_table[item.attr_id][1]
+        item.attr_id = nil
+      end
+      if item.attr_id_lm ~= nil then
+        item.attr_lm = self._attr_table[item.attr_id_lm][1]
+        item.attr_id_lm = nil
+      end
+  end
   self._mode_info = mode_info
 end
 

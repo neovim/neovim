@@ -55,6 +55,7 @@ static int row = 0, col = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int mode_idx = SHAPE_IDX_N;
+static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
@@ -368,10 +369,7 @@ void ui_add_linewrap(int row)
 
 void ui_mode_info_set(void)
 {
-  Array style = mode_style_array();
-  bool enabled = (*p_guicursor != NUL);
-  ui_call_mode_info_set(enabled, style);
-  api_free_array(style);
+  pending_mode_info_update = true;
 }
 
 int ui_current_row(void)
@@ -390,6 +388,13 @@ void ui_flush(void)
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(1, row, col);
     pending_cursor_update = false;
+  }
+  if (pending_mode_info_update) {
+    Array style = mode_style_array();
+    bool enabled = (*p_guicursor != NUL);
+    ui_call_mode_info_set(enabled, style);
+    api_free_array(style);
+    pending_mode_info_update = false;
   }
   if (pending_mode_update) {
     char *full_name = shape_table[mode_idx].full_name;

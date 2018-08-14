@@ -874,7 +874,7 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
       r.blinkon = (int)value.data.integer;
     } else if (strequal(key, "blinkoff")) {
       r.blinkoff = (int)value.data.integer;
-    } else if (strequal(key, "hl_id")) {
+    } else if (strequal(key, "attr_id")) {
       r.id = (int)value.data.integer;
     }
   }
@@ -942,13 +942,10 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
 
-  if (c.id != 0 && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      HlAttrs *aep = syn_attr2entry(attr);
-      UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
-      unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
-    }
+  if (c.id != 0 && c.id < (int)kv_size(data->attrs) && ui->rgb) {
+    int color = kv_A(data->attrs, c.id).rgb_bg_color;
+    UNIBI_SET_NUM_VAR(data->params[0], color);
+    unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
   }
 
   int shape;

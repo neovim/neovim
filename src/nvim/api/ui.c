@@ -351,12 +351,8 @@ static void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs,
   Array args = ARRAY_DICT_INIT;
 
   ADD(args, INTEGER_OBJ(id));
-
-  Dictionary rgb_hl = hlattrs2dict(&rgb_attrs, true);
-  ADD(args, DICTIONARY_OBJ(rgb_hl));
-
-  Dictionary cterm_hl = hlattrs2dict(&cterm_attrs, false);
-  ADD(args, DICTIONARY_OBJ(cterm_hl));
+  ADD(args, DICTIONARY_OBJ(hlattrs2dict(rgb_attrs, true)));
+  ADD(args, DICTIONARY_OBJ(hlattrs2dict(cterm_attrs, false)));
 
   if (ui->ui_ext[kUIHlState]) {
     ADD(args, ARRAY_OBJ(copy_array(info)));
@@ -372,21 +368,12 @@ static void remote_ui_highlight_set(UI *ui, int id)
   Array args = ARRAY_DICT_INIT;
   UIData *data = ui->data;
 
-  HlAttrs attrs = HLATTRS_INIT;
 
   if (data->hl_id == id) {
     return;
   }
   data->hl_id = id;
-
-  if (id != 0) {
-    HlAttrs *aep = syn_attr2entry(id);
-    if (aep) {
-      attrs = *aep;
-    }
-  }
-
-  Dictionary hl = hlattrs2dict(&attrs, ui->rgb);
+  Dictionary hl = hlattrs2dict(syn_attr2entry(id), ui->rgb);
 
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);
@@ -524,8 +511,7 @@ static void remote_ui_cmdline_show(UI *ui, Array args)
     Array new_item = ARRAY_DICT_INIT;
     int attr = (int)item.items[0].data.integer;
     if (attr) {
-      HlAttrs *aep = syn_attr2entry(attr);
-      Dictionary rgb_attrs = hlattrs2dict(aep, ui->rgb ? kTrue : kFalse);
+      Dictionary rgb_attrs = hlattrs2dict(syn_attr2entry(attr), ui->rgb);
       ADD(new_item, DICTIONARY_OBJ(rgb_attrs));
     } else {
       ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));

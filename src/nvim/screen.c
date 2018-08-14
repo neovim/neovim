@@ -2424,12 +2424,12 @@ win_line (
   if (wp->w_p_cul && lnum == wp->w_cursor.lnum
       && !(wp == curwin && VIsual_active)) {
     int cul_attr = win_hl_attr(wp, HLF_CUL);
-    HlAttrs *aep = syn_attr2entry(cul_attr);
+    HlAttrs ae = syn_attr2entry(cul_attr);
 
     // We make a compromise here (#7383):
     //  * low-priority CursorLine if fg is not set
     //  * high-priority ("same as Vim" priority) CursorLine if fg is set
-    if (aep->rgb_fg_color == -1 && aep->cterm_fg_color == 0) {
+    if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
       line_attr_lowprio = cul_attr;
     } else {
       if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)

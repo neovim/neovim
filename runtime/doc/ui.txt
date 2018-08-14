@@ -89,13 +89,18 @@ Global Events							    *ui-global*
 	`cursor_shape`:	"block", "horizontal", "vertical"
 	`cell_percentage`: Cell % occupied by the cursor.
 	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
-	`hl_id`:	Cursor highlight group.
-	`hl_lm`:	Cursor highlight group if 'langmap' is active.
+	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`)
+	`attr_id_lm`:	Cursor attribute id for when 'langmap' is active.
 	`short_name`:	Mode code name, see 'guicursor'.
 	`name`:		Mode descriptive name.
 	`mouse_shape`:	(To be implemented.)
 
 	Some keys are missing in some modes.
+	
+	The following keys are deprecated:
+
+	`hl_id`:	Use `attr_id` instead.
+	`hl_lm`:	Use `attr_id_lm` instead.
 
 ["option_set", name, value]
 	UI-related option changed, where `name` is one of:

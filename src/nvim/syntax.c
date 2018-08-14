@@ -16,6 +16,7 @@
 #include "nvim/ascii.h"
 #include "nvim/syntax.h"
 #include "nvim/charset.h"
+#include "nvim/cursor_shape.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
@@ -7228,7 +7229,6 @@ static void set_hl_attr(int idx)
   HlAttrs at_en = HLATTRS_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
   at_en.cterm_bg_color = sgp->sg_cterm_bg;
@@ -7241,6 +7241,11 @@ static void set_hl_attr(int idx)
   at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
 
   sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
+
+  // a cursor style uses this syn_id, make sure its atribute is updated.
+  if (cursor_mode_uses_syn_id(idx+1)) {
+    ui_mode_info_set();
+  }
 }
 
 /// Lookup a highlight group name and return its ID.
