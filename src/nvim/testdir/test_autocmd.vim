@@ -253,16 +253,15 @@ func Test_BufReadCmdHelp()
   au BufReadCmd * e +h
   help
 
-  helpclose
   au! BufReadCmd
 endfunc
 
 func Test_BufReadCmdHelpJump()
   " This used to cause access to free memory
   au BufReadCmd * e +h{
-  help
+  " } to fix highlighting
+  call assert_fails('help', 'E434:')
 
-  helpclose
   au! BufReadCmd
 endfunc
 
