@@ -43,7 +43,7 @@ func Test_existent_directory()
 
   call assert_equal(0, getfsize(dname))
   call assert_equal('dir', getftype(dname))
-  call assert_equal('rwx', getfperm(dname)[0:2])
+  call assert_equal(has('win32') ? 'rw-' : 'rwx', getfperm(dname)[0:2])
 endfunc
 
 func SleepForTimestamp()
