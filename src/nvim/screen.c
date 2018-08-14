@@ -423,7 +423,7 @@ void update_screen(int type)
 
     /* redraw status line after the window to minimize cursor movement */
     if (wp->w_redr_status) {
-      win_redr_status(wp);
+      win_redr_status(wp, true);  // any popup menu will be redrawn below
     }
   }
   end_search_hl();
@@ -589,7 +589,7 @@ void update_debug_sign(const buf_T *const buf, const linenr_T lnum)
       win_update(wp);
     }
     if (wp->w_redr_status) {
-      win_redr_status(wp);
+      win_redr_status(wp, false);
     }
   }
 
@@ -4542,7 +4542,7 @@ void redraw_statuslines(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
-      win_redr_status(wp);
+      win_redr_status(wp, false);
     }
   }
   if (redraw_tabline)
@@ -4809,7 +4809,9 @@ win_redr_status_matches (
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
-static void win_redr_status(win_T *wp)
+/// If "ignore_pum" is true, also redraw statusline when the popup menu is
+/// displayed.
+static void win_redr_status(win_T *wp, int ignore_pum)
 {
   int row;
   char_u      *p;
@@ -4832,7 +4834,7 @@ static void win_redr_status(win_T *wp)
   if (wp->w_status_height == 0) {
     // no status line, can only be last window
     redraw_cmdline = true;
-  } else if (!redrawing() || pum_drawn()) {
+  } else if (!redrawing() || (!ignore_pum && pum_drawn())) {
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
