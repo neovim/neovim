@@ -953,11 +953,11 @@ void do_tags(exarg_T *eap)
 
       msg_putchar('\n');
       vim_snprintf((char *)IObuff, IOSIZE, "%c%2d %2d %-15s %5ld  ",
-          i == tagstackidx ? '>' : ' ',
-          i + 1,
-          tagstack[i].cur_match + 1,
-          tagstack[i].tagname,
-          tagstack[i].fmark.mark.lnum);
+                   i == tagstackidx ? '>' : ' ',
+                   i + 1,
+                   tagstack[i].cur_match + 1,
+                   tagstack[i].tagname,
+                   tagstack[i].fmark.mark.lnum);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
                         ? HL_ATTR(HLF_D) : 0);
@@ -2618,7 +2618,7 @@ static int jumpto_tag(
   }
 
 erret:
-  g_do_tagpreview = 0;   /* For next time */
+  g_do_tagpreview = 0;  // For next time
   xfree(lbuf);
   xfree(pbuf);
   xfree(tofree_fname);
