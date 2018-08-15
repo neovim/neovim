@@ -10310,6 +10310,15 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "win_screenpos()" function
+static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, 2);
+  const win_T *const wp = find_win_by_nr(&argvars[0], NULL);
+  tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_winrow + 1);
+  tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
+}
+
 /*
  * "getwinposx()" function
  */

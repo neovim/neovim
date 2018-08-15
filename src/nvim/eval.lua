@@ -338,6 +338,7 @@ return {
     win_gotoid={args=1},
     win_id2tabwin={args=1},
     win_id2win={args=1},
+    win_screenpos={args=1},
     winbufnr={args=1},
     wincol={},
     winheight={args=1},
