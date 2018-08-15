@@ -13,7 +13,7 @@ local function _os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'ucomm=', }
+  local cmd = { 'ps', '-p', pid, '-o', 'comm=', }
   local err, name = _system(cmd)
   if 1 == err and string.gsub(name, '%s*', '') == '' then
     return {}  -- Process not found.
