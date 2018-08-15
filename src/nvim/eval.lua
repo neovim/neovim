@@ -323,6 +323,7 @@ return {
     tolower={args=1},
     toupper={args=1},
     tr={args=3},
+    trim={args={1,2}},
     trunc={args=1, func="float_op_wrapper", data="&trunc"},
     type={args=1},
     undofile={args=1},

@@ -43,7 +43,16 @@ func Test_existent_directory()
 
   call assert_equal(0, getfsize(dname))
   call assert_equal('dir', getftype(dname))
-  call assert_equal('rwx', getfperm(dname)[0:2])
+  call assert_equal(has('win32') ? 'rw-' : 'rwx', getfperm(dname)[0:2])
+endfunc
+
+func SleepForTimestamp()
+  " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
+  if has('win32')
+    sleep 2
+  else
+    sleep 2
+  endif
 endfunc
 
 func Test_checktime()
@@ -53,12 +62,7 @@ func Test_checktime()
   call writefile(fl, fname)
   set autoread
   exec 'e' fname
-  " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
-  if has('win32')
-    sleep 2
-  else
-    sleep 2
-  endif
+  call SleepForTimestamp()
   let fl = readfile(fname)
   let fl[0] .= ' - checktime'
   call writefile(fl, fname)
@@ -68,6 +72,46 @@ func Test_checktime()
   call delete(fname)
 endfunc
 
+func Test_autoread_file_deleted()
+  new Xautoread
+  set autoread
+  call setline(1, 'original')
+  w!
+
+  call SleepForTimestamp()
+  if has('win32')
+    silent !echo changed > Xautoread
+  else
+    silent !echo 'changed' > Xautoread
+  endif
+  checktime
+  call assert_equal('changed', trim(getline(1)))
+
+  call SleepForTimestamp()
+  messages clear
+  if has('win32')
+    silent !del Xautoread
+  else
+    silent !rm Xautoread
+  endif
+  checktime
+  call assert_match('E211:', execute('messages'))
+  call assert_equal('changed', trim(getline(1)))
+
+  call SleepForTimestamp()
+  if has('win32')
+    silent !echo recreated > Xautoread
+  else
+    silent !echo 'recreated' > Xautoread
+  endif
+  checktime
+  call assert_equal('recreated', trim(getline(1)))
+
+  call delete('Xautoread')
+  bwipe!
+endfunc
+
+
 func Test_nonexistent_file()
   let fname = 'Xtest.tmp'
 
@@ -76,6 +120,41 @@ func Test_nonexistent_file()
   call assert_equal(-1, getfsize(fname))
   call assert_equal('', getftype(fname))
   call assert_equal('', getfperm(fname))
+endfunc
+
+func Test_getftype()
+  call assert_equal('file', getftype(v:progpath))
+  call assert_equal('dir',  getftype('.'))
+
+  if !has('unix')
+    return
+  endif
+
+  silent !ln -s Xfile Xlink
+  call assert_equal('link', getftype('Xlink'))
+  call delete('Xlink')
+
+  if executable('mkfifo')
+    silent !mkfifo Xfifo
+    call assert_equal('fifo', getftype('Xfifo'))
+    call delete('Xfifo')
+  endif
+
+  for cdevfile in systemlist('find /dev -type c -maxdepth 2 2>/dev/null')
+    call assert_equal('cdev', getftype(cdevfile))
+  endfor
+
+  for bdevfile in systemlist('find /dev -type b -maxdepth 2 2>/dev/null')
+    call assert_equal('bdev', getftype(bdevfile))
+  endfor
+
+  " The /run/ directory typically contains socket files.
+  " If it does not, test won't fail but will not test socket files.
+  for socketfile in systemlist('find /run -type s -maxdepth 2 2>/dev/null')
+    call assert_equal('socket', getftype(socketfile))
+  endfor
+
+  " TODO: file type 'other' is not tested. How can we test it?
 endfunc
 
 func Test_win32_symlink_dir()
