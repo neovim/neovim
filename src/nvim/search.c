@@ -818,8 +818,7 @@ int searchit(
               }
             } else {
               --pos->col;
-              if (has_mbyte
-                  && pos->lnum <= buf->b_ml.ml_line_count) {
+              if (pos->lnum <= buf->b_ml.ml_line_count) {
                 ptr = ml_get_buf(buf, pos->lnum, FALSE);
                 pos->col -= utf_head_off(ptr, ptr + pos->col);
               }
@@ -1444,14 +1443,12 @@ int searchc(cmdarg_T *cap, int t_cmd)
   if (t_cmd) {
     /* backup to before the character (possibly double-byte) */
     col -= dir;
-    if (has_mbyte) {
-      if (dir < 0)
-        /* Landed on the search char which is lastc_bytelen long */
-        col += lastc_bytelen - 1;
-      else
-        /* To previous char, which may be multi-byte. */
-        col -= utf_head_off(p, p + col);
-    }
+    if (dir < 0)
+      /* Landed on the search char which is lastc_bytelen long */
+      col += lastc_bytelen - 1;
+    else
+      /* To previous char, which may be multi-byte. */
+      col -= utf_head_off(p, p + col);
   }
   curwin->w_cursor.col = col;
 
@@ -1482,7 +1479,7 @@ pos_T *findmatch(oparg_T *oap, int initc)
 static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
 {
   --col;
-  if (col > 0 && has_mbyte)
+  if (col > 0)
     col -= utf_head_off(linep, linep + col);
   if (prevcol)
     *prevcol = col;
@@ -1794,8 +1791,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           pos.col = comment_col;
       } else {
         --pos.col;
-        if (has_mbyte)
-          pos.col -= utf_head_off(linep, linep + pos.col);
+        pos.col -= utf_head_off(linep, linep + pos.col);
       }
     } else {                          /* forward search */
       if (linep[pos.col] == NUL

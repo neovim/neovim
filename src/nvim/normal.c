@@ -3058,47 +3058,29 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
     /*
      * 2. Back up to start of identifier/string.
      */
-    if (has_mbyte) {
-      /* Remember class of character under cursor. */
-      this_class = mb_get_class(ptr + col);
-      while (col > 0 && this_class != 0) {
-        prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
-        prev_class = mb_get_class(ptr + prevcol);
-        if (this_class != prev_class
-            && (i == 0
-                || prev_class == 0
-                || (find_type & FIND_IDENT))
-            )
-          break;
-        col = prevcol;
-      }
-
-      /* If we don't want just any old string, or we've found an
-       * identifier, stop searching. */
-      if (this_class > 2)
-        this_class = 2;
-      if (!(find_type & FIND_STRING) || this_class == 2)
+    /* Remember class of character under cursor. */
+    this_class = mb_get_class(ptr + col);
+    while (col > 0 && this_class != 0) {
+      prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
+      prev_class = mb_get_class(ptr + prevcol);
+      if (this_class != prev_class
+          && (i == 0
+            || prev_class == 0
+            || (find_type & FIND_IDENT))
+         )
         break;
-    } else {
-      while (col > 0
-             && ((i == 0
-                  ? vim_iswordc(ptr[col - 1])
-                  : (!ascii_iswhite(ptr[col - 1])
-                     && (!(find_type & FIND_IDENT)
-                         || !vim_iswordc(ptr[col - 1]))))
-                 ))
-        --col;
-
-      /* If we don't want just any old string, or we've found an
-       * identifier, stop searching. */
-      if (!(find_type & FIND_STRING) || vim_iswordc(ptr[col]))
-        break;
+      col = prevcol;
     }
+
+    /* If we don't want just any old string, or we've found an
+     * identifier, stop searching. */
+    if (this_class > 2)
+      this_class = 2;
+    if (!(find_type & FIND_STRING) || this_class == 2)
+      break;
   }
 
-  if (ptr[col] == NUL || (i == 0 && (
-                            has_mbyte ? this_class != 2 :
-                            !vim_iswordc(ptr[col])))) {
+  if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
     /*
      * didn't find an identifier or string
      */

@@ -1556,13 +1556,10 @@ void display_dollar(colnr_T col)
 
   save_col = curwin->w_cursor.col;
   curwin->w_cursor.col = col;
-  if (has_mbyte) {
-    char_u *p;
 
-    /* If on the last byte of a multi-byte move to the first byte. */
-    p = get_cursor_line_ptr();
-    curwin->w_cursor.col -= utf_head_off(p, p + col);
-  }
+  /* If on the last byte of a multi-byte move to the first byte. */
+  char_u *p = get_cursor_line_ptr();
+  curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
   if (curwin->w_wcol < curwin->w_width) {
     edit_putchar('$', FALSE);
@@ -4589,22 +4586,15 @@ static int ins_complete(int c, bool enable_pum)
       } else {
         /* Search the point of change class of multibyte character
          * or not a word single byte character backward.  */
-        if (has_mbyte) {
-          int base_class;
-          int head_off;
-
-          startcol -= utf_head_off(line, line + startcol);
-          base_class = mb_get_class(line + startcol);
-          while (--startcol >= 0) {
-            head_off = utf_head_off(line, line + startcol);
-            if (base_class != mb_get_class(line + startcol
-                    - head_off))
-              break;
-            startcol -= head_off;
-          }
-        } else
-          while (--startcol >= 0 && vim_iswordc(line[startcol]))
-            ;
+        startcol -= utf_head_off(line, line + startcol);
+        int base_class = mb_get_class(line + startcol);
+        while (--startcol >= 0) {
+          int head_off = utf_head_off(line, line + startcol);
+          if (base_class != mb_get_class(line + startcol
+                - head_off))
+            break;
+          startcol -= head_off;
+        }
         compl_col += ++startcol;
         compl_length = (int)curs_col - startcol;
         if (compl_length == 1) {

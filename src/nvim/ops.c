@@ -520,7 +520,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       }
     }
 
-    if (has_mbyte && spaces > 0) {
+    if (spaces > 0) {
       int off;
 
       // Avoid starting halfway through a multi-byte character.

@@ -725,9 +725,7 @@ static int command_line_execute(VimState *state, int key)
       s->j = ccline.cmdpos;
       s->i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       while (--s->j > s->i) {
-        if (has_mbyte) {
-          s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
-        }
+        s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
         if (vim_ispathsep(ccline.cmdbuff[s->j])) {
           found = true;
           break;
@@ -747,9 +745,7 @@ static int command_line_execute(VimState *state, int key)
       s->j = ccline.cmdpos - 1;
       s->i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       while (--s->j > s->i) {
-        if (has_mbyte) {
-          s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
-        }
+        s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
             && vim_strchr((const char_u *)" *?[{`$%#", ccline.cmdbuff[s->j + 1])
@@ -1436,19 +1432,16 @@ static int command_line_handle_key(CommandLineState *s)
     }
     do {
       --ccline.cmdpos;
-      if (has_mbyte) {                 // move to first byte of char
-        ccline.cmdpos -= utf_head_off(ccline.cmdbuff,
-                                        ccline.cmdbuff + ccline.cmdpos);
-      }
+      // Move to first byte of possibly multibyte char.
+      ccline.cmdpos -= utf_head_off(ccline.cmdbuff,
+                                    ccline.cmdbuff + ccline.cmdpos);
       ccline.cmdspos -= cmdline_charsize(ccline.cmdpos);
     } while (ccline.cmdpos > 0
              && (s->c == K_S_LEFT || s->c == K_C_LEFT
                  || (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)))
              && ccline.cmdbuff[ccline.cmdpos - 1] != ' ');
 
-    if (has_mbyte) {
-      set_cmdspos_cursor();
-    }
+    set_cmdspos_cursor();
 
     return command_line_not_changed(s);
 
@@ -2268,14 +2261,10 @@ getexmodeline (
 
       if (c1 == BS || c1 == K_BS || c1 == DEL || c1 == K_DEL || c1 == K_KDEL) {
         if (!GA_EMPTY(&line_ga)) {
-          if (has_mbyte) {
-            p = (char_u *)line_ga.ga_data;
-            p[line_ga.ga_len] = NUL;
-            len = utf_head_off(p, p + line_ga.ga_len - 1) + 1;
-            line_ga.ga_len -= len;
-          } else {
-            line_ga.ga_len--;
-          }
+          p = (char_u *)line_ga.ga_data;
+          p[line_ga.ga_len] = NUL;
+          len = utf_head_off(p, p + line_ga.ga_len - 1) + 1;
+          line_ga.ga_len -= len;
           goto redraw;
         }
         continue;

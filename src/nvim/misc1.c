@@ -1646,9 +1646,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
         ) {
       --curwin->w_cursor.col;
       curwin->w_cursor.coladd = 0;
-      if (has_mbyte)
-        curwin->w_cursor.col -=
-          utf_head_off(oldp, oldp + curwin->w_cursor.col);
+      curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);
     }
     count = oldlen - col;
     movelen = 1;

@@ -2129,7 +2129,7 @@ static int vgetorpeek(int advance)
               curwin->w_wcol = curwin->w_width - 1;
               col = curwin->w_cursor.col - 1;
             }
-            if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
+            if (col > 0 && curwin->w_wcol > 0) {
               /* Correct when the cursor is on the right halve
                * of a double-wide character. */
               ptr = get_cursor_line_ptr();

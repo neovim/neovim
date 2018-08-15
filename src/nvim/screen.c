@@ -3430,7 +3430,7 @@ win_line (
         // Found last space before word: check for line break.
         if (wp->w_p_lbr && c0 == c && vim_isbreak(c)
             && !vim_isbreak((int)(*ptr))) {
-          int mb_off = has_mbyte ? utf_head_off(line, ptr - 1) : 0;
+          int mb_off = utf_head_off(line, ptr - 1);
           char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
