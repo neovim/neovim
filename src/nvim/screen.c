@@ -4232,26 +4232,19 @@ win_line (
         /* Remember that the line wraps, used for modeless copy. */
         LineWraps[screen_row - 1] = TRUE;
 
-        /*
-         * Special trick to make copy/paste of wrapped lines work with
-         * xterm/screen: write an extra character beyond the end of
-         * the line. This will work with all terminal types
-         * (regardless of the xn,am settings).
-         * Only do this if the cursor is on the current line
-         * (something has been written in it).
-         * Don't do this for double-width characters.
-         * Don't do this for a window not at the right screen border.
-         */
-        if (!(has_mbyte
-                 && ((*mb_off2cells)(LineOffset[screen_row],
-                                     LineOffset[screen_row] + screen_Columns)
-                     == 2
-                     || (*mb_off2cells)(LineOffset[screen_row - 1]
-                                        + (int)Columns - 2,
-                                        LineOffset[screen_row] + screen_Columns)
-                     == 2))
-            ) {
-          ui_add_linewrap(screen_row-1);
+        // Special trick to make copy/paste of wrapped lines work with
+        // xterm/screen: write an extra character beyond the end of
+        // the line. This will work with all terminal types
+        // (regardless of the xn,am settings).
+        // Only do this if the cursor is on the current line
+        // (something has been written in it).
+        // Don't do this for double-width characters.
+        // Don't do this for a window not at the right screen border.
+        if (utf_off2cells(LineOffset[screen_row],
+                          LineOffset[screen_row] + screen_Columns) != 2
+            && utf_off2cells(LineOffset[screen_row - 1] + (int)Columns - 2,
+                             LineOffset[screen_row] + screen_Columns) != 2) {
+          ui_add_linewrap(screen_row - 1);
         }
       }
 
@@ -4304,7 +4297,7 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
   return (cols > 0
           && ((schar_cmp(ScreenLines[off_from], ScreenLines[off_to])
                || ScreenAttrs[off_from] != ScreenAttrs[off_to]
-               || ((*mb_off2cells)(off_from, off_from + cols) > 1
+               || (utf_off2cells(off_from, off_from + cols) > 1
                    && schar_cmp(ScreenLines[off_from + 1],
                                 ScreenLines[off_to + 1])))
               || p_wd < 0));
@@ -4330,15 +4323,11 @@ static void screen_line(int row, int coloff, int endcol,
   unsigned max_off_to;
   int col = 0;
   int hl;
-  int force = FALSE;                    /* force update rest of the line */
-  int redraw_this                       /* bool: does character need redraw? */
-  ;
-  int redraw_next;                      /* redraw_this for next character */
-  int clear_next = FALSE;
-  int char_cells;                       /* 1: normal char */
-                                        /* 2: occupies two display cells */
-# define CHAR_CELLS char_cells
-
+  bool redraw_this;                         // Does character need redraw?
+  bool redraw_next;                         // redraw_this for next character
+  bool clear_next = false;
+  int char_cells;                           // 1: normal char
+                                            // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
 
   /* Check for illegal row and col, just in case. */
@@ -4383,15 +4372,14 @@ static void screen_line(int row, int coloff, int endcol,
   redraw_next = char_needs_redraw(off_from, off_to, endcol - col);
 
   while (col < endcol) {
-    if (has_mbyte && (col + 1 < endcol))
-      char_cells = (*mb_off2cells)(off_from, max_off_from);
-    else
-      char_cells = 1;
-
+    char_cells = 1;
+    if (col + 1 < endcol) {
+      char_cells = utf_off2cells(off_from, max_off_from);
+    }
     redraw_this = redraw_next;
-    redraw_next = force || char_needs_redraw(off_from + CHAR_CELLS,
-        off_to + CHAR_CELLS, endcol - col - CHAR_CELLS);
-
+    redraw_next = char_needs_redraw(off_from + char_cells,
+                                    off_to + char_cells,
+                                    endcol - col - char_cells);
 
     if (redraw_this) {
       if (start_dirty == -1) {
@@ -4403,12 +4391,12 @@ static void screen_line(int row, int coloff, int endcol,
       // the right halve of the old character.
       // Also required when writing the right halve of a double-width
       // char over the left halve of an existing one
-      if (has_mbyte && col + char_cells == endcol
+      if (col + char_cells == endcol
           && ((char_cells == 1
-               && (*mb_off2cells)(off_to, max_off_to) > 1)
+               && utf_off2cells(off_to, max_off_to) > 1)
               || (char_cells == 2
-                  && (*mb_off2cells)(off_to, max_off_to) == 1
-                  && (*mb_off2cells)(off_to + 1, max_off_to) > 1))) {
+                  && utf_off2cells(off_to, max_off_to) == 1
+                  && utf_off2cells(off_to + 1, max_off_to) > 1))) {
         clear_next = true;
       }
 
@@ -4425,9 +4413,9 @@ static void screen_line(int row, int coloff, int endcol,
       }
     }
 
-    off_to += CHAR_CELLS;
-    off_from += CHAR_CELLS;
-    col += CHAR_CELLS;
+    off_to += char_cells;
+    off_from += char_cells;
+    col += char_cells;
   }
 
   if (clear_next) {
@@ -5396,15 +5384,15 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
       // character with a one-cell character, need to clear the next
       // cell.  Also when overwriting the left halve of a two-cell char
       // with the right halve of a two-cell char.  Do this only once
-      // (mb_off2cells() may return 2 on the right halve).
+      // (utf8_off2cells() may return 2 on the right halve).
       if (clear_next_cell) {
         clear_next_cell = false;
       } else if ((len < 0 ? ptr[mbyte_blen] == NUL
                   : ptr + mbyte_blen >= text + len)
-                 && ((mbyte_cells == 1 && (*mb_off2cells)(off, max_off) > 1)
+                 && ((mbyte_cells == 1 && utf_off2cells(off, max_off) > 1)
                      || (mbyte_cells == 2
-                         && (*mb_off2cells)(off, max_off) == 1
-                         && (*mb_off2cells)(off + 1, max_off) > 1))) {
+                         && utf_off2cells(off, max_off) == 1
+                         && utf_off2cells(off + 1, max_off) > 1))) {
         clear_next_cell = true;
       }
 

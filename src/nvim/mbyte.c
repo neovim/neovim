@@ -1829,8 +1829,8 @@ const char *mb_unescape(const char **const pp)
  */
 bool mb_lefthalve(int row, int col)
 {
-  return (*mb_off2cells)(LineOffset[row] + col,
-      LineOffset[row] + screen_Columns) > 1;
+  return utf_off2cells(LineOffset[row] + col,
+                       LineOffset[row] + screen_Columns) > 1;
 }
 
 /*

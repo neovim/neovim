@@ -53,7 +53,6 @@ enum { MAX_MCO = 6 };
 #define mb_ptr2cells utf_ptr2cells
 #define mb_ptr2cells_len utf_ptr2cells_len
 #define mb_char2cells utf_char2cells
-#define mb_off2cells utf_off2cells
 #define mb_head_off utf_head_off
 
 /// Flags for vimconv_T
