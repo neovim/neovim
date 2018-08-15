@@ -2406,15 +2406,18 @@ int get_keystroke(void)
  * Get a number from the user.
  * When "mouse_used" is not NULL allow using the mouse.
  */
-int 
-get_number (
-    int colon,                              /* allow colon to abort */
-    int *mouse_used
+int get_number(
+    int colon,                              // allow colon to abort
+    int *mouse_used,
+    char *prompt
 )
 {
   int n = 0;
   int c;
   int typed = 0;
+  char *select, *p;
+  int cmd_silent_save = cmd_silent;
+  const int save_ex_normal_busy = ex_normal_busy;
 
   if (mouse_used != NULL)
     *mouse_used = FALSE;
@@ -2424,34 +2427,36 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
+  cmd_silent = false;  // Want to see the prompt.
+  cmdline_row = msg_row;
+
+  select = getcmdline_prompt('#', prompt, 0, EXPAND_NOTHING, NULL,
+                             CALLBACK_NONE, mouse_used);
+  p = select;
+
+  // Since the user typed this, no need to wait for return.
+  need_wait_return = false;
+  msg_didout = false;
+  cmd_silent = cmd_silent_save;
+  ex_normal_busy = save_ex_normal_busy;
+
   no_mapping++;
-  for (;; ) {
-    ui_cursor_goto(msg_row, msg_col);
-    c = safe_vgetc();
+  while (select) {
+    c = *select;
+    select++;
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
-      ++typed;
-    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
-      if (typed > 0) {
-        MSG_PUTS("\b \b");
-        --typed;
-      }
-      n /= 10;
-    } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = TRUE;
+      typed++;
+    } else if (mouse_used != NULL && *mouse_used == true) {
       n = mouse_row + 1;
       break;
-    } else if (n == 0 && c == ':' && colon) {
-      stuffcharReadbuff(':');
-      if (!exmode_active)
-        cmdline_row = msg_row;
-      skip_redraw = TRUE;           /* skip redraw once */
-      do_redraw = FALSE;
+    } else {
       break;
-    } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
-      break;
+    }
   }
+
+  xfree(p);
   no_mapping--;
   return n;
 }
@@ -2463,15 +2468,17 @@ get_number (
  */
 int prompt_for_number(int *mouse_used)
 {
-  int i;
+  int i = 0;
   int save_cmdline_row;
   int save_State;
+  char *msg;
 
-  /* When using ":silent" assume that <CR> was entered. */
-  if (mouse_used != NULL)
-    MSG_PUTS(_("Type number and <Enter> or click with mouse (empty cancels): "));
-  else
-    MSG_PUTS(_("Type number and <Enter> (empty cancels): "));
+  // When using ":silent" assume that <CR> was entered.
+  if (mouse_used != NULL) {
+    msg = "Type number and <Enter> or click with mouse (empty cancels): ";
+  } else {
+    msg = "Type number and <Enter> (empty cancels): ";
+  }
 
   /* Set the state such that text can be selected/copied/pasted and we still
    * get mouse events. */
@@ -2480,7 +2487,7 @@ int prompt_for_number(int *mouse_used)
   save_State = State;
   State = ASKMORE;  // prevents a screen update when using a timer
 
-  i = get_number(TRUE, mouse_used);
+  i = get_number(true, mouse_used, msg);
   if (KeyTyped) {
     /* don't call wait_return() now */
     /* msg_putchar('\n'); */

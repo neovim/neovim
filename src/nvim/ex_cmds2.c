@@ -190,7 +190,7 @@ void do_debug(char_u *cmd)
 
     xfree(cmdline);
     cmdline = (char_u *)getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL,
-                                          CALLBACK_NONE);
+                                          CALLBACK_NONE, NULL);
 
     if (typeahead_saved) {
       restore_typeahead(&typeaheadbuf);

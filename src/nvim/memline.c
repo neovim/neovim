@@ -798,10 +798,11 @@ void ml_recover(void)
       /* list the names of the swap files */
       (void)recover_names(fname, TRUE, 0, NULL);
       msg_putchar('\n');
-      MSG_PUTS(_("Enter number of swap file to use (0 to quit): "));
-      i = get_number(FALSE, NULL);
-      if (i < 1 || i > len)
+      i = get_number(false, NULL,
+                     "Enter number of swap file to use (0 to quit): ");
+      if (i < 1 || i > len) {
         goto theend;
+      }
     }
     /* get the swap file name that will be used */
     (void)recover_names(fname, FALSE, i, &fname_used);

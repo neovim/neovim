@@ -74,7 +74,7 @@ function History_Tests(hist)
 endfunction
 
 function Test_History()
-  for h in ['cmd', ':', '', 'search', '/', '?', 'expr', '=', 'input', '@', 'debug', '>']
+  for h in ['cmd', ':', '', 'search', '/', '?', 'expr', '=', 'input', '@', 'number', '#', 'debug', '>']
     call History_Tests(h)
   endfor
 

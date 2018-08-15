@@ -112,7 +112,7 @@ struct cmdline_info {
   int cmdlen;                   // number of chars in command line
   int cmdpos;                   // current cursor position
   int cmdspos;                  // cursor column on screen
-  int cmdfirstc;                // ':', '/', '?', '=', '>' or NUL
+  int cmdfirstc;                // ':', '/', '?', '=', '>', '#' or NUL
   int cmdindent;                // number of spaces before cmdline
   char_u      *cmdprompt;       // message in front of cmdline
   int cmdattr;                  // attributes for prompt
@@ -131,6 +131,7 @@ struct cmdline_info {
   char special_char;            ///< last putcmdline char (used for redraws)
   bool special_shift;           ///< shift of last putcmdline char
   CmdRedraw redraw_state;       ///< needed redraw for external cmdline
+  bool mouse_used;
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -206,11 +207,12 @@ typedef void *(*user_expand_func_T)(const char_u *,
                                     const char_u * const *,
                                     bool);
 
-static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
-static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1};       /* lastused entry */
-static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0};
-/* identifying (unique) number of newest history entry */
-static int hislen = 0;                  /* actual length of history tables */
+static histentry_T *(history[HIST_COUNT])
+    = { NULL, NULL, NULL, NULL, NULL, NULL };
+static int hisidx[HIST_COUNT] = { -1, -1, -1, -1, -1, -1 };  // lastused entry
+static int hisnum[HIST_COUNT] = { 0, 0, 0, 0, 0, 0 };
+// identifying (unique) number of newest history entry
+static int hislen = 0;                  // actual length of history tables
 
 /// Flag for command_line_handle_key to ignore <C-c>
 ///
@@ -564,8 +566,10 @@ static int command_line_execute(VimState *state, int key)
   // Don't ignore it in :global, we really need to break then, e.g., for
   // ":g/pat/normal /pat" (without the <CR>).
   // Don't ignore it for the input() function.
+  // Don't ignore it for the inputlist() function (#)
   if ((s->c == Ctrl_C)
       && s->firstc != '@'
+      && s->firstc != '#'
       && !s->break_ctrl_c
       && !global_busy) {
     got_int = false;
@@ -1492,6 +1496,11 @@ static int command_line_handle_key(CommandLineState *s)
       return command_line_not_changed(s);                   // Ignore mouse
     }
 
+    if (s->firstc == '#' && (s->c == K_LEFTMOUSE || s->c == K_RIGHTMOUSE)) {
+      ccline.mouse_used = 1;
+      return 0;                                     // Go back to cmd mode
+    }
+
     set_cmdspos();
     for (ccline.cmdpos = 0; ccline.cmdpos < ccline.cmdlen;
          ++ccline.cmdpos) {
@@ -1754,6 +1763,12 @@ static int command_line_handle_key(CommandLineState *s)
     if (!IS_SPECIAL(s->c)) {
       mod_mask = 0x0;
     }
+
+    // if in number mode and key is not number
+    if (s->firstc == '#' && !ascii_isdigit(s->c)) {
+        return -1;
+    }
+
     break;
   }
 
@@ -1977,6 +1992,7 @@ static void abandon_cmdline(void)
  * firstc == '/' or '?'	    get search pattern
  * firstc == '='	    get expression
  * firstc == '@'	    get text for input() function
+ * firstc == '#'	    get number for input_list() function
  * firstc == '>'	    get text for debug mode
  * firstc == NUL	    get text for :insert command
  * firstc == -1		    like NUL, and break on CTRL-C
@@ -2015,7 +2031,8 @@ getcmdline (
 char *getcmdline_prompt(const char firstc, const char *const prompt,
                         const int attr, const int xp_context,
                         const char *const xp_arg,
-                        const Callback highlight_callback)
+                        const Callback highlight_callback,
+                        int *mouse_used)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   const int msg_col_save = msg_col;
@@ -2030,11 +2047,15 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
   ccline.xp_arg = (char_u *)xp_arg;
   ccline.input_fn = (firstc == '@');
   ccline.highlight_callback = highlight_callback;
+  ccline.mouse_used = false;
 
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
 
   char *const ret = (char *)getcmdline(firstc, 1L, 0);
+  if (mouse_used) {
+    *mouse_used = ccline.mouse_used;
+  }
 
   restore_cmdline(&save_ccline);
   msg_silent = msg_silent_saved;
@@ -2115,10 +2136,11 @@ static int cmdline_charsize(int idx)
  */
 static void set_cmdspos(void)
 {
-  if (ccline.cmdfirstc != NUL)
+  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
     ccline.cmdspos = 1 + ccline.cmdindent;
-  else
+  } else {
     ccline.cmdspos = 0 + ccline.cmdindent;
+  }
 }
 
 /*
@@ -3418,14 +3440,14 @@ static void redrawcmdprompt(void)
     ccline.redraw_state = kCmdRedrawAll;
     return;
   }
-  if (ccline.cmdfirstc != NUL) {
+  if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
     msg_putchar(ccline.cmdfirstc);
   }
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
     // do the reverse of set_cmdspos()
-    if (ccline.cmdfirstc != NUL) {
+    if (ccline.cmdfirstc != NUL && ccline.cmdfirstc != '#') {
       ccline.cmdindent--;
     }
   } else {
@@ -5290,6 +5312,9 @@ static HistoryType hist_char2type(const int c)
     case '@': {
       return HIST_INPUT;
     }
+    case '#': {
+      return HIST_INPUT_NUM;
+    }
     case '>': {
       return HIST_DEBUG;
     }
@@ -5318,6 +5343,7 @@ static char *(history_names[]) =
   "search",
   "expr",
   "input",
+  "number",
   "debug",
   NULL
 };
@@ -5329,7 +5355,7 @@ static char *(history_names[]) =
 static char_u *get_history_arg(expand_T *xp, int idx)
 {
   static char_u compl[2] = { NUL, NUL };
-  char *short_names = ":=@>?/";
+  char *short_names = ":=@#>?/";
   int short_names_count = (int)STRLEN(short_names);
   int history_name_count = ARRAY_SIZE(history_names) - 1;
 
@@ -5499,7 +5525,7 @@ HistoryType get_histtype(const char *const name, const size_t len,
     }
   }
 
-  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && len == 1) {
+  if (vim_strchr((char_u *)":=@#>?/", name[0]) != NULL && len == 1) {
     return hist_char2type(name[0]);
   }
 
@@ -5651,7 +5677,7 @@ int set_cmdline_pos(int pos)
 
 /*
  * Get the current command-line type.
- * Returns ':' or '/' or '?' or '@' or '>' or '-'
+ * Returns ':' or '/' or '?' or '@' or '#' or '>' or '-'
  * Only works when the command line is being edited.
  * Returns NUL when something is wrong.
  */
@@ -5877,8 +5903,9 @@ void ex_history(exarg_T *eap)
   if (!(ascii_isdigit(*arg) || *arg == '-' || *arg == ',')) {
     end = arg;
     while (ASCII_ISALPHA(*end)
-           || vim_strchr((char_u *)":=@>/?", *end) != NULL)
+           || vim_strchr((char_u *)":=@#>/?", *end) != NULL) {
       end++;
+    }
     histype1 = get_histtype((const char *)arg, end - arg, false);
     if (histype1 == HIST_INVALID) {
       if (STRNICMP(arg, "all", end - arg) == 0) {
@@ -5949,6 +5976,9 @@ int hist_type2char(int type)
     }
     case HIST_INPUT: {
       return '@';
+    }
+    case HIST_INPUT_NUM: {
+      return '#';
     }
     case HIST_DEBUG: {
       return '>';
