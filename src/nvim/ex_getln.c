@@ -527,7 +527,9 @@ static int command_line_execute(VimState *state, int key)
 
   if (s->c == K_EVENT || s->c == K_COMMAND) {
     if (s->c == K_EVENT) {
+      save_cmdline(&s->save_ccline);
       multiqueue_process_events(main_loop.events);
+      restore_cmdline(&s->save_ccline);
     } else {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     }
