@@ -548,7 +548,7 @@ open_line (
 
           /* blank-out any other chars from the old leader. */
           while (--p >= leader) {
-            int l = mb_head_off(leader, p);
+            int l = utf_head_off(leader, p);
 
             if (l > 1) {
               p -= l;
@@ -1648,7 +1648,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
       curwin->w_cursor.coladd = 0;
       if (has_mbyte)
         curwin->w_cursor.col -=
-          (*mb_head_off)(oldp, oldp + curwin->w_cursor.col);
+          utf_head_off(oldp, oldp + curwin->w_cursor.col);
     }
     count = oldlen - col;
     movelen = 1;

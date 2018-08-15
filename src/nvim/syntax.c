@@ -1730,7 +1730,7 @@ static int syn_current_attr(
             && (current_col == 0
                 || !vim_iswordp_buf(line + current_col - 1
                     - (has_mbyte
-                       ? (*mb_head_off)(line, line + current_col - 1)
+                       ? utf_head_off(line, line + current_col - 1)
                        : 0)
                     , syn_buf))) {
           syn_id = check_keyword_id(line, (int)current_col,

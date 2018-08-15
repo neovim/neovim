@@ -821,7 +821,7 @@ int searchit(
               if (has_mbyte
                   && pos->lnum <= buf->b_ml.ml_line_count) {
                 ptr = ml_get_buf(buf, pos->lnum, FALSE);
-                pos->col -= (*mb_head_off)(ptr, ptr + pos->col);
+                pos->col -= utf_head_off(ptr, ptr + pos->col);
               }
             }
           } else {
@@ -1419,7 +1419,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
         } else {
           if (col == 0)
             return FAIL;
-          col -= (*mb_head_off)(p, p + col - 1) + 1;
+          col -= utf_head_off(p, p + col - 1) + 1;
         }
         if (lastc_bytelen == 1) {
           if (p[col] == c && stop) {
@@ -1450,7 +1450,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
         col += lastc_bytelen - 1;
       else
         /* To previous char, which may be multi-byte. */
-        col -= (*mb_head_off)(p, p + col);
+        col -= utf_head_off(p, p + col);
     }
   }
   curwin->w_cursor.col = col;
@@ -1483,7 +1483,7 @@ static int check_prevcol(char_u *linep, int col, int ch, int *prevcol)
 {
   --col;
   if (col > 0 && has_mbyte)
-    col -= (*mb_head_off)(linep, linep + col);
+    col -= utf_head_off(linep, linep + col);
   if (prevcol)
     *prevcol = col;
   return (col >= 0 && linep[col] == ch) ? TRUE : FALSE;
@@ -1795,7 +1795,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       } else {
         --pos.col;
         if (has_mbyte)
-          pos.col -= (*mb_head_off)(linep, linep + pos.col);
+          pos.col -= utf_head_off(linep, linep + pos.col);
       }
     } else {                          /* forward search */
       if (linep[pos.col] == NUL
@@ -2386,7 +2386,7 @@ findpar (
     if ((curwin->w_cursor.col = (colnr_T)STRLEN(line)) != 0) {
       curwin->w_cursor.col--;
       curwin->w_cursor.col -=
-        (*mb_head_off)(line, line + curwin->w_cursor.col);
+        utf_head_off(line, line + curwin->w_cursor.col);
       *pincl = true;
     }
   } else
@@ -3692,7 +3692,7 @@ find_prev_quote(
 
   while (col_start > 0) {
     --col_start;
-    col_start -= (*mb_head_off)(line, line + col_start);
+    col_start -= utf_head_off(line, line + col_start);
     n = 0;
     if (escape != NULL)
       while (col_start - n > 0 && vim_strchr(escape,

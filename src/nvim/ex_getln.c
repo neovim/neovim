@@ -726,7 +726,7 @@ static int command_line_execute(VimState *state, int key)
       s->i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       while (--s->j > s->i) {
         if (has_mbyte) {
-          s->j -= (*mb_head_off)(ccline.cmdbuff, ccline.cmdbuff + s->j);
+          s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])) {
           found = true;
@@ -748,7 +748,7 @@ static int command_line_execute(VimState *state, int key)
       s->i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       while (--s->j > s->i) {
         if (has_mbyte) {
-          s->j -= (*mb_head_off)(ccline.cmdbuff, ccline.cmdbuff + s->j);
+          s->j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + s->j);
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
@@ -1437,7 +1437,7 @@ static int command_line_handle_key(CommandLineState *s)
     do {
       --ccline.cmdpos;
       if (has_mbyte) {                 // move to first byte of char
-        ccline.cmdpos -= (*mb_head_off)(ccline.cmdbuff,
+        ccline.cmdpos -= utf_head_off(ccline.cmdbuff,
                                         ccline.cmdbuff + ccline.cmdpos);
       }
       ccline.cmdspos -= cmdline_charsize(ccline.cmdpos);
@@ -2271,7 +2271,7 @@ getexmodeline (
           if (has_mbyte) {
             p = (char_u *)line_ga.ga_data;
             p[line_ga.ga_len] = NUL;
-            len = (*mb_head_off)(p, p + line_ga.ga_len - 1) + 1;
+            len = utf_head_off(p, p + line_ga.ga_len - 1) + 1;
             line_ga.ga_len -= len;
           } else {
             line_ga.ga_len--;
@@ -3156,7 +3156,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     i = 0;
     c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
     while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
-      i = (*mb_head_off)(ccline.cmdbuff,
+      i = utf_head_off(ccline.cmdbuff,
                          ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       ccline.cmdpos -= i;
       len += i;
@@ -3164,7 +3164,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     }
     if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
       /* Check the previous character for Arabic combining pair. */
-      i = (*mb_head_off)(ccline.cmdbuff,
+      i = utf_head_off(ccline.cmdbuff,
                          ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       if (arabic_combine(utf_ptr2char(ccline.cmdbuff
                   + ccline.cmdpos - i), c)) {

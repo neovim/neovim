@@ -525,7 +525,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
 
       // Avoid starting halfway through a multi-byte character.
       if (b_insert) {
-        off = (*mb_head_off)(oldp, oldp + offset + spaces);
+        off = utf_head_off(oldp, oldp + offset + spaces);
       } else {
         off = (*mb_off_next)(oldp, oldp + offset);
         offset += off;
@@ -2435,7 +2435,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
                                    /* Don't add space for double-wide
                                     * char; endcol will be on last byte
                                     * of multi-byte char. */
-                                   && (*mb_head_off)(p, p + endcol) == 0
+                                   && utf_head_off(p, p + endcol) == 0
                                    )) {
             if (oap->start.lnum == oap->end.lnum
                 && oap->start.col == oap->end.col) {
@@ -2992,7 +2992,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         bd.startspaces = incr - bd.endspaces;
         --bd.textcol;
         delcount = 1;
-        bd.textcol -= (*mb_head_off)(oldp, oldp + bd.textcol);
+        bd.textcol -= utf_head_off(oldp, oldp + bd.textcol);
         if (oldp[bd.textcol] != TAB) {
           /* Only a Tab can be split into spaces.  Other
            * characters will have to be moved to after the

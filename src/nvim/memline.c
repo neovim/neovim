@@ -4042,7 +4042,7 @@ int dec(pos_T *lp)
     lp->col--;
     if (has_mbyte) {
       p = ml_get(lp->lnum);
-      lp->col -= (*mb_head_off)(p, p + lp->col);
+      lp->col -= utf_head_off(p, p + lp->col);
     }
     return 0;
   }
@@ -4051,7 +4051,7 @@ int dec(pos_T *lp)
     p = ml_get(lp->lnum);
     lp->col = (colnr_T)STRLEN(p);
     if (has_mbyte) {
-      lp->col -= (*mb_head_off)(p, p + lp->col);
+      lp->col -= utf_head_off(p, p + lp->col);
     }
     return 1;
   }

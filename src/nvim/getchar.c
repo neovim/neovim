@@ -2133,7 +2133,7 @@ static int vgetorpeek(int advance)
               /* Correct when the cursor is on the right halve
                * of a double-wide character. */
               ptr = get_cursor_line_ptr();
-              col -= (*mb_head_off)(ptr, ptr + col);
+              col -= utf_head_off(ptr, ptr + col);
               if ((*mb_ptr2cells)(ptr + col) > 1)
                 --curwin->w_wcol;
             }

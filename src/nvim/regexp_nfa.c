@@ -4640,7 +4640,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
       if ((int)(reginput - regline) >= state->val) {
         reginput -= state->val;
         if (has_mbyte)
-          reginput -= mb_head_off(regline, reginput);
+          reginput -= utf_head_off(regline, reginput);
       } else
         reginput = regline;
     }
