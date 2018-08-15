@@ -1,5 +1,7 @@
 " Tests for autocommands
 
+source shared.vim
+
 func! s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
     if bufloaded(bnr) && bufnr('%') != bnr
@@ -1267,5 +1269,24 @@ func Test_TextChangedI_with_setline()
   call assert_equal('', getline(2))
 
   call test_override('starting', 0)
+  bwipe!
+endfunc
+
+func Test_Changed_FirstTime()
+  if !has('terminal') || has('gui_running')
+    return
+  endif
+  " Prepare file for TextChanged event.
+  call writefile([''], 'Xchanged.txt')
+  let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
+  call assert_equal('running', term_getstatus(buf))
+  " It's only adding autocmd, so that no event occurs.
+  call term_sendkeys(buf, ":au! TextChanged <buffer> call writefile(['No'], 'Xchanged.txt')\<cr>")
+  call term_sendkeys(buf, "\<C-\\>\<C-N>:qa!\<cr>")
+  call WaitFor({-> term_getstatus(buf) == 'finished'})
+  call assert_equal([''], readfile('Xchanged.txt'))
+
+  " clean up
+  call delete('Xchanged.txt')
   bwipe!
 endfunc
