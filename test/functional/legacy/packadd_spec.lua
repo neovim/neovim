@@ -15,7 +15,7 @@ describe('packadd', function()
 
     source([=[
       func SetUp()
-        let s:topdir = expand(expand('%:p:h') . '/Xdir')
+        let s:topdir = expand(getcwd() . '/Xdir')
         exe 'set packpath=' . s:topdir
         let s:plugdir = expand(s:topdir . '/pack/mine/opt/mytest')
       endfunc

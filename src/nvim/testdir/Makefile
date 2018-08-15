@@ -114,6 +114,7 @@ NEW_TESTS ?= \
 	    test_timers.res \
 	    test_undo.res \
 	    test_usercommands.res \
+	    test_user_func.res \
 	    test_vimscript.res \
 	    test_visual.res \
 	    test_winbuf_close.res \
