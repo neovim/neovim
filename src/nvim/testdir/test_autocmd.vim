@@ -1182,6 +1182,13 @@ func Test_nocatch_wipe_dummy_buffer()
   au!
 endfunc
 
+func Test_wipe_cbuffer()
+  sv x
+  au * * bw
+  lb
+  au!
+endfunc
+
 " Test TextChangedI and TextChangedP
 func Test_ChangedP()
   " Nvim does not support test_override().

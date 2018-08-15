@@ -4541,11 +4541,6 @@ void ex_cbuffer(exarg_T *eap)
   qf_info_T *qi = &ql_info;
   const char *au_name = NULL;
 
-  if (eap->cmdidx == CMD_lbuffer || eap->cmdidx == CMD_lgetbuffer
-      || eap->cmdidx == CMD_laddbuffer) {
-    qi = ll_get_or_alloc_list(curwin);
-  }
-
   switch (eap->cmdidx) {
     case CMD_cbuffer:
       au_name = "cbuffer";
@@ -4574,6 +4569,13 @@ void ex_cbuffer(exarg_T *eap)
     if (aborting()) {
       return;
     }
+  }
+
+  // Must come after autocommands.
+  if (eap->cmdidx == CMD_lbuffer
+      || eap->cmdidx == CMD_lgetbuffer
+      || eap->cmdidx == CMD_laddbuffer) {
+    qi = ll_get_or_alloc_list(curwin);
   }
 
   if (*eap->arg == NUL)
