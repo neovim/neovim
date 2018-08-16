@@ -4472,8 +4472,10 @@ getwininfo([{winid}])					*getwininfo()*
 			variables	a reference to the dictionary with
 					window-local variables
 			width		window width
+			wincol		leftmost screen column of the window
 			winid		|window-ID|
 			winnr		window number
+			winrow		topmost screen column of the window
 
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
