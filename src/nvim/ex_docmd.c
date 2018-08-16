@@ -8521,9 +8521,13 @@ eval_vars (
       if (*s == '<')                    /* "#<99" uses v:oldfiles */
         ++s;
       i = getdigits_int(&s);
+      if (s == src + 2 && src[1] == '-') {
+        // just a minus sign, don't skip over it
+        s--;
+      }
       *usedlen = (size_t)(s - src);           /* length of what we expand */
 
-      if (src[1] == '<') {
+      if (src[1] == '<' && i != 0) {
         if (*usedlen < 2) {
           /* Should we give an error message for #<text? */
           *usedlen = 1;
@@ -8536,6 +8540,9 @@ eval_vars (
           return NULL;
         }
       } else {
+        if (i == 0 && src[1] == '<' && *usedlen > 1) {
+          *usedlen = 1;
+        }
         buf = buflist_findnr(i);
         if (buf == NULL) {
           *errormsg = (char_u *)_(
