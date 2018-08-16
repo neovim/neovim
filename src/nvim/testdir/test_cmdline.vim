@@ -222,6 +222,11 @@ func Test_getcompletion()
   let l = getcompletion('not', 'messages')
   call assert_equal([], l)
 
+  let l = getcompletion('', 'mapclear')
+  call assert_true(index(l, '<buffer>') >= 0)
+  let l = getcompletion('not', 'mapclear')
+  call assert_equal([], l)
+
   if has('cscope')
     let l = getcompletion('', 'cscope')
     let cmds = ['add', 'find', 'help', 'kill', 'reset', 'show']

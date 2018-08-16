@@ -4099,6 +4099,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		highlight	highlight groups
 		history		:history suboptions
 		locale		locale names (as output of locale -a)
+		mapclear        buffer argument
 		mapping		mapping name
 		menu		menus
 		messages	|:messages| suboptions

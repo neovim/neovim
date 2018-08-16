@@ -1227,6 +1227,7 @@ completion can be enabled:
 	-complete=highlight	highlight groups
 	-complete=history	:history suboptions
 	-complete=locale	locale names (as output of locale -a)
+	-complete=mapclear	buffer argument
 	-complete=mapping	mapping name
 	-complete=menu		menus
 	-complete=messages	|:messages| suboptions

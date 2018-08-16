@@ -4756,6 +4756,7 @@ ExpandFromContext (
     } tab[] = {
       { EXPAND_COMMANDS, get_command_name, false, true },
       { EXPAND_BEHAVE, get_behave_arg, true, true },
+      { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
       { EXPAND_MESSAGES, get_messages_arg, true, true },
       { EXPAND_HISTORY, get_history_arg, true, true },
       { EXPAND_USER_COMMANDS, get_user_commands, false, true },
