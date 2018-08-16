@@ -461,6 +461,22 @@ func Test_getcmdtype()
   cunmap <F6>
 endfunc
 
+func Test_getcmdwintype()
+  call feedkeys("q/:let a = getcmdwintype()\<CR>:q\<CR>", 'x!')
+  call assert_equal('/', a)
+
+  call feedkeys("q?:let a = getcmdwintype()\<CR>:q\<CR>", 'x!')
+  call assert_equal('?', a)
+
+  call feedkeys("q::let a = getcmdwintype()\<CR>:q\<CR>", 'x!')
+  call assert_equal(':', a)
+
+  call feedkeys(":\<C-F>:let a = getcmdwintype()\<CR>:q\<CR>", 'x!')
+  call assert_equal(':', a)
+
+  call assert_equal('', getcmdwintype())
+endfunc
+
 func Test_verbosefile()
   set verbosefile=Xlog
   echomsg 'foo'
