@@ -2859,8 +2859,9 @@ static void find_start_of_word(pos_T *pos)
   while (pos->col > 0) {
     col = pos->col - 1;
     col -= utf_head_off(line, line + col);
-    if (get_mouse_class(line + col) != cclass)
+    if (get_mouse_class(line + col) != cclass) {
       break;
+    }
     pos->col = col;
   }
 }
@@ -2877,7 +2878,7 @@ static void find_end_of_word(pos_T *pos)
 
   line = ml_get(pos->lnum);
   if (*p_sel == 'e' && pos->col > 0) {
-    --pos->col;
+    pos->col--;
     pos->col -= utf_head_off(line, line + pos->col);
   }
   cclass = get_mouse_class(line + pos->col);
@@ -3055,39 +3056,38 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
         ++col;
 
 
-    /*
-     * 2. Back up to start of identifier/string.
-     */
-    /* Remember class of character under cursor. */
+    //
+    // 2. Back up to start of identifier/string.
+    //
+    // Remember class of character under cursor.
     this_class = mb_get_class(ptr + col);
     while (col > 0 && this_class != 0) {
       prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
       prev_class = mb_get_class(ptr + prevcol);
       if (this_class != prev_class
-          && (i == 0
-            || prev_class == 0
-            || (find_type & FIND_IDENT))
-         )
+          && (i == 0 || prev_class == 0 || (find_type & FIND_IDENT))) {
         break;
+      }
       col = prevcol;
     }
 
-    /* If we don't want just any old string, or we've found an
-     * identifier, stop searching. */
-    if (this_class > 2)
+    // If we don't want just any old string, or we've found an
+    // identifier, stop searching.
+    if (this_class > 2) {
       this_class = 2;
-    if (!(find_type & FIND_STRING) || this_class == 2)
+    }
+    if (!(find_type & FIND_STRING) || this_class == 2) {
       break;
+    }
   }
 
   if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
-    /*
-     * didn't find an identifier or string
-     */
-    if (find_type & FIND_STRING)
+    // Didn't find an identifier or string.
+    if (find_type & FIND_STRING) {
       EMSG(_("E348: No string under cursor"));
-    else
+    } else {
       EMSG(_(e_noident));
+    }
     return 0;
   }
   ptr += col;

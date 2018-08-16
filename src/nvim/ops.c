@@ -2432,11 +2432,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         if (virtual_op) {
           getvcol(curwin, &oap->end, &cs, NULL, &ce);
           if (p[endcol] == NUL || (cs + oap->end.coladd < ce
-                                   /* Don't add space for double-wide
-                                    * char; endcol will be on last byte
-                                    * of multi-byte char. */
-                                   && utf_head_off(p, p + endcol) == 0
-                                   )) {
+                                   // Don't add space for double-wide
+                                   // char; endcol will be on last byte
+                                   // of multi-byte char.
+                                   && utf_head_off(p, p + endcol) == 0)) {
             if (oap->start.lnum == oap->end.lnum
                 && oap->start.col == oap->end.col) {
               /* Special case: inside a single char */

@@ -2130,12 +2130,13 @@ static int vgetorpeek(int advance)
               col = curwin->w_cursor.col - 1;
             }
             if (col > 0 && curwin->w_wcol > 0) {
-              /* Correct when the cursor is on the right halve
-               * of a double-wide character. */
+              // Correct when the cursor is on the right halve
+              // of a double-wide character.
               ptr = get_cursor_line_ptr();
               col -= utf_head_off(ptr, ptr + col);
-              if ((*mb_ptr2cells)(ptr + col) > 1)
-                --curwin->w_wcol;
+              if (utf_ptr2cells(ptr + col) > 1) {
+                curwin->w_wcol--;
+              }
             }
           }
           setcursor();

@@ -1431,7 +1431,7 @@ static int command_line_handle_key(CommandLineState *s)
       return command_line_not_changed(s);
     }
     do {
-      --ccline.cmdpos;
+      ccline.cmdpos--;
       // Move to first byte of possibly multibyte char.
       ccline.cmdpos -= utf_head_off(ccline.cmdbuff,
                                     ccline.cmdbuff + ccline.cmdpos);
@@ -3145,18 +3145,15 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     i = 0;
     c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
     while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
-      i = utf_head_off(ccline.cmdbuff,
-                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       ccline.cmdpos -= i;
       len += i;
       c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
     }
     if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
-      /* Check the previous character for Arabic combining pair. */
-      i = utf_head_off(ccline.cmdbuff,
-                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
-      if (arabic_combine(utf_ptr2char(ccline.cmdbuff
-                  + ccline.cmdpos - i), c)) {
+      // Check the previous character for Arabic combining pair.
+      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      if (arabic_combine(utf_ptr2char(ccline.cmdbuff + ccline.cmdpos - i), c)) {
         ccline.cmdpos -= i;
         len += i;
       } else
