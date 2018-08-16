@@ -42,40 +42,38 @@ function Test_tabpage()
   call assert_true(t:val_num == 100 && t:val_str == 'SetTabVar test'  && t:val_list == ['red', 'blue', 'green'])
   tabclose
 
-  if has('nvim') || has('gui') || has('clientserver')
-    " Test for ":tab drop exist-file" to keep current window.
-    sp test1
-    tab drop test1
-    call assert_true(tabpagenr('$') == 1 && winnr('$') == 2 && winnr() == 1)
-    close
-    "
-    "
-    " Test for ":tab drop new-file" to keep current window of tabpage 1.
-    split
-    tab drop newfile
-    call assert_true(tabpagenr('$') == 2 && tabpagewinnr(1, '$') == 2 && tabpagewinnr(1) == 1)
-    tabclose
-    q
-    "
-    "
-    " Test for ":tab drop multi-opend-file" to keep current tabpage and window.
-    new test1
-    tabnew
-    new test1
-    tab drop test1
-    call assert_true(tabpagenr() == 2 && tabpagewinnr(2, '$') == 2 && tabpagewinnr(2) == 1)
-    tabclose
-    q
-    "
-    "
-    " Test for ":tab drop vertical-split-window" to jump test1 buffer
-    tabedit test1
-    vnew
-    tabfirst
-    tab drop test1
-    call assert_equal([2, 2, 2, 2], [tabpagenr('$'), tabpagenr(), tabpagewinnr(2, '$'), tabpagewinnr(2)])
-    1tabonly
-  endif
+  " Test for ":tab drop exist-file" to keep current window.
+  sp test1
+  tab drop test1
+  call assert_true(tabpagenr('$') == 1 && winnr('$') == 2 && winnr() == 1)
+  close
+  "
+  "
+  " Test for ":tab drop new-file" to keep current window of tabpage 1.
+  split
+  tab drop newfile
+  call assert_true(tabpagenr('$') == 2 && tabpagewinnr(1, '$') == 2 && tabpagewinnr(1) == 1)
+  tabclose
+  q
+  "
+  "
+  " Test for ":tab drop multi-opend-file" to keep current tabpage and window.
+  new test1
+  tabnew
+  new test1
+  tab drop test1
+  call assert_true(tabpagenr() == 2 && tabpagewinnr(2, '$') == 2 && tabpagewinnr(2) == 1)
+  tabclose
+  q
+  "
+  "
+  " Test for ":tab drop vertical-split-window" to jump test1 buffer
+  tabedit test1
+  vnew
+  tabfirst
+  tab drop test1
+  call assert_equal([2, 2, 2, 2], [tabpagenr('$'), tabpagenr(), tabpagewinnr(2, '$'), tabpagewinnr(2)])
+  1tabonly
   "
   "
   for i in range(9) | tabnew | endfor
