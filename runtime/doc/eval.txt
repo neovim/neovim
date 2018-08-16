@@ -4079,6 +4079,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		specifies what for.  The following completion types are
 		supported:
 
+		arglist		file names in argument list
 		augroup		autocmd groups
 		buffer		buffer names
 		behave		:behave suboptions

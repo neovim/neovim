@@ -137,6 +137,11 @@ func Test_getcompletion()
   let l = getcompletion('v:notexists', 'var')
   call assert_equal([], l)
 
+  args a.c b.c
+  let l = getcompletion('', 'arglist')
+  call assert_equal(['a.c', 'b.c'], l)
+  %argdelete
+
   let l = getcompletion('', 'augroup')
   call assert_true(index(l, 'END') >= 0)
   let l = getcompletion('blahblah', 'augroup')

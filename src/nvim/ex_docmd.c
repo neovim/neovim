@@ -3454,6 +3454,13 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_argdelete:
+    while ((xp->xp_pattern = vim_strchr((const char_u *)arg, ' ')) != NULL) {
+      arg = (const char *)(xp->xp_pattern + 1);
+    }
+    xp->xp_context = EXPAND_ARGLIST;
+    xp->xp_pattern = (char_u *)arg;
+    break;
 
   default:
     break;
@@ -4859,6 +4866,7 @@ static struct {
  */
 static const char *command_complete[] =
 {
+  [EXPAND_ARGLIST] = "arglist",
   [EXPAND_AUGROUP] = "augroup",
   [EXPAND_BEHAVE] = "behave",
   [EXPAND_BUFFERS] = "buffer",
