@@ -471,4 +471,25 @@ func Test_verbosefile()
   call delete('Xlog')
 endfunc
 
+func Test_setcmdpos()
+  func InsertTextAtPos(text, pos)
+    call assert_equal(0, setcmdpos(a:pos))
+    return a:text
+  endfunc
+
+  " setcmdpos() with position in the middle of the command line.
+  call feedkeys(":\"12\<C-R>=InsertTextAtPos('a', 3)\<CR>b\<CR>", 'xt')
+  call assert_equal('"1ab2', @:)
+
+  call feedkeys(":\"12\<C-R>\<C-R>=InsertTextAtPos('a', 3)\<CR>b\<CR>", 'xt')
+  call assert_equal('"1b2a', @:)
+
+  " setcmdpos() with position beyond the end of the command line.
+  call feedkeys(":\"12\<C-B>\<C-R>=InsertTextAtPos('a', 10)\<CR>b\<CR>", 'xt')
+  call assert_equal('"12ab', @:)
+
+  " setcmdpos() returns 1 when not editing the command line.
+  call assert_equal(1, setcmdpos(3))
+endfunc
+
 set cpo&
