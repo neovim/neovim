@@ -2786,9 +2786,9 @@ const char * set_one_cmd_context(
 
   xp->xp_context = EXPAND_NOTHING;   /* Default now that we're past command */
 
-  if (*p == '!') {                  /* forced commands */
+  if (*p == '!') {                  // forced commands
     forceit = true;
-    ++p;
+    p++;
   }
 
   /*
@@ -2813,9 +2813,9 @@ const char * set_one_cmd_context(
   }
 
   if (ea.cmdidx == CMD_read) {
-    usefilter = forceit;                        /* :r! filter if forced */
-    if (*arg == '!') {                          /* :r !filter */
-      ++arg;
+    usefilter = forceit;                        // :r! filter if forced
+    if (*arg == '!') {                          // :r !filter
+      arg++;
       usefilter = true;
     }
   }
@@ -8393,23 +8393,23 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 #define SPEC_PERC   0
     "#",
 #define SPEC_HASH   (SPEC_PERC + 1)
-    "<cword>",                          /* cursor word */
+    "<cword>",                          // cursor word
 #define SPEC_CWORD  (SPEC_HASH + 1)
-    "<cWORD>",                          /* cursor WORD */
+    "<cWORD>",                          // cursor WORD
 #define SPEC_CCWORD (SPEC_CWORD + 1)
     "<cexpr>",                          // expr under cursor
 #define SPEC_CEXPR  (SPEC_CCWORD + 1)
-    "<cfile>",                          /* cursor path name */
+    "<cfile>",                          // cursor path name
 #define SPEC_CFILE  (SPEC_CEXPR + 1)
-    "<sfile>",                          /* ":so" file name */
+    "<sfile>",                          // ":so" file name
 #define SPEC_SFILE  (SPEC_CFILE + 1)
-    "<slnum>",                          /* ":so" file line number */
+    "<slnum>",                          // ":so" file line number
 #define SPEC_SLNUM  (SPEC_SFILE + 1)
-    "<afile>",                          /* autocommand file name */
+    "<afile>",                          // autocommand file name
 #define SPEC_AFILE  (SPEC_SLNUM + 1)
-    "<abuf>",                           /* autocommand buffer number */
+    "<abuf>",                           // autocommand buffer number
 #define SPEC_ABUF   (SPEC_AFILE + 1)
-    "<amatch>",                         /* autocommand match name */
+    "<amatch>",                         // autocommand match name
 #define SPEC_AMATCH (SPEC_ABUF + 1)
   };
 
@@ -8541,7 +8541,7 @@ eval_vars (
         // just a minus sign, don't skip over it
         s--;
       }
-      *usedlen = (size_t)(s - src);           /* length of what we expand */
+      *usedlen = (size_t)(s - src);           // length of what we expand
 
       if (src[1] == '<' && i != 0) {
         if (*usedlen < 2) {

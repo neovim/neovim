@@ -1207,8 +1207,8 @@ bool get_spec_reg(
     *argp = curbuf->b_fname;
     return true;
 
-  case '#':                     /* alternate file name */
-    *argp = getaltfname(errmsg);                /* may give emsg if not set */
+  case '#':                       // alternate file name
+    *argp = getaltfname(errmsg);  // may give emsg if not set
     return true;
 
   case '=':                     /* result of expression */
@@ -1231,22 +1231,24 @@ bool get_spec_reg(
   case '.':                     /* last inserted text */
     *argp = get_last_insert_save();
     *allocated = true;
-    if (*argp == NULL && errmsg)
+    if (*argp == NULL && errmsg) {
       EMSG(_(e_noinstext));
+    }
     return true;
 
-  case Ctrl_F:                  /* Filename under cursor */
-  case Ctrl_P:                  /* Path under cursor, expand via "path" */
+  case Ctrl_F:                  // Filename under cursor
+  case Ctrl_P:                  // Path under cursor, expand via "path"
     if (!errmsg) {
       return false;
     }
-    *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP
-        | (regname == Ctrl_P ? FNAME_EXP : 0), 1L, NULL);
+    *argp = file_name_at_cursor(
+        FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
+        1L, NULL);
     *allocated = true;
     return true;
 
-  case Ctrl_W:                  /* word under cursor */
-  case Ctrl_A:                  /* WORD (mnemonic All) under cursor */
+  case Ctrl_W:                  // word under cursor
+  case Ctrl_A:                  // WORD (mnemonic All) under cursor
     if (!errmsg) {
       return false;
     }
@@ -2757,8 +2759,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
    * ':' (last command line), etc. we have to create a fake yank register.
    */
   if (get_spec_reg(regname, &insert_string, &allocated, true)) {
-    if (insert_string == NULL)
+    if (insert_string == NULL) {
       return;
+    }
   }
 
   if (!curbuf->terminal) {
@@ -4917,8 +4920,9 @@ void *get_reg_contents(int regname, int flags)
   char_u *retval;
   bool allocated;
   if (get_spec_reg(regname, &retval, &allocated, false)) {
-    if (retval == NULL)
+    if (retval == NULL) {
       return NULL;
+    }
     if (allocated) {
       return get_reg_wrap_one_line(retval, flags);
     }

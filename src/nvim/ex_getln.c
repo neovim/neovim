@@ -3309,9 +3309,9 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
   /* Need to save and restore ccline.  And set "textlock" to avoid nasty
    * things like going to another buffer when evaluating an expression. */
   save_cmdline(&save_ccline);
-  ++textlock;
+  textlock++;
   const bool i = get_spec_reg(regname, &arg, &allocated, true);
-  --textlock;
+  textlock--;
   restore_cmdline(&save_ccline);
 
   if (i) {

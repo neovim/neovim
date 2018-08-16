@@ -3129,13 +3129,12 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   }
 
   if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
-    /*
-     * didn't find an identifier or string
-     */
-    if (find_type & FIND_STRING)
+    // didn't find an identifier or string
+    if (find_type & FIND_STRING) {
       EMSG(_("E348: No string under cursor"));
-    else
+    } else {
       EMSG(_(e_noident));
+    }
     return 0;
   }
   ptr += col;
