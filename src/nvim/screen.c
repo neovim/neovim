@@ -2021,8 +2021,8 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
   int i;
 
   for (i = 0; i < len; i++) {
-    schar_from_ascii(ScreenLines[off + i], buf[i]);
-    ScreenAttrs[off + i] = attr;
+    schar_from_ascii(default_grid.ScreenLines[off + i], buf[i]);
+    default_grid.ScreenAttrs[off + i] = attr;
   }
 }
 
@@ -5967,13 +5967,14 @@ void grid_assign_handle(ScreenGrid *grid)
 
 /*
  * Resize the shell to Rows and Columns.
- * Allocate ScreenLines[] and associated items.
+ * Allocate default_grid.ScreenLines[] and associated items.
  *
  * There may be some time between setting Rows and Columns and (re)allocating
- * ScreenLines[].  This happens when starting up and when (manually) changing
- * the shell size.  Always use screen_Rows and screen_Columns to access items
- * in ScreenLines[].  Use Rows and Columns for positioning text etc. where the
- * final size of the shell is needed.
+ * default_grid.ScreenLines[].  This happens when starting up and when
+ * (manually) changing the shell size.  Always use default_grid.Rows and
+ * default_grid.Columns to access items in default_grid.ScreenLines[].  Use Rows
+ * and Columns for positioning text etc. where the final size of the shell is
+ * needed.
  */
 void screenalloc(bool doclear)
 {
@@ -6044,15 +6045,8 @@ retry:
   clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
   xfree(tab_page_click_defs);
 
-  set_screengrid(&default_grid);
-
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = default_grid.Columns;
-
-  /* It's important that screen_Rows and screen_Columns reflect the actual
-   * size of ScreenLines[].  Set them before calling anything. */
-  screen_Rows = default_grid.Rows;
-  screen_Columns = default_grid.Columns;
 
   default_grid.OffsetRow = 0;
   default_grid.OffsetColumn = 0;
@@ -6129,14 +6123,6 @@ void free_screengrid(ScreenGrid *grid)
   xfree(grid->LineWraps);
 }
 
-void set_screengrid(ScreenGrid *grid)
-{
-  ScreenLines = grid->ScreenLines;
-  ScreenAttrs = grid->ScreenAttrs;
-  LineOffset = grid->LineOffset;
-  LineWraps = grid->LineWraps;
-}
-
 /// Clear tab_page_click_defs table
 ///
 /// @param[out]  tpcd  Table to clear.
@@ -6165,14 +6151,15 @@ static void screenclear2(void)
 {
   int i;
 
-  if (starting == NO_SCREEN || ScreenLines == NULL) {
+  if (starting == NO_SCREEN || default_grid.ScreenLines == NULL) {
     return;
   }
 
   /* blank out ScreenLines */
   for (i = 0; i < default_grid.Rows; ++i) {
-    grid_clear_line(&default_grid, LineOffset[i], (int)default_grid.Columns, true);
-    LineWraps[i] = FALSE;
+    grid_clear_line(&default_grid, default_grid.LineOffset[i],
+                    (int)default_grid.Columns, true);
+    default_grid.LineWraps[i] = FALSE;
   }
 
   ui_call_grid_clear(1);  // clear the display

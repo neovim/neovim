@@ -91,9 +91,10 @@ EXTERN struct nvim_stats_s {
 /*
  * Number of Rows and Columns in the screen.
  * Must be long to be able to use them as options in option.c.
- * Note: Use screen_Rows and screen_Columns to access items in ScreenLines[].
- * They may have different values when the screen wasn't (re)allocated yet
- * after setting Rows or Columns (e.g., when starting up).
+ * Note: Use default_grid.Rows and default_grid.Columns to access items in
+ * default_grid.ScreenLines[]. They may have different values when the screen
+ * wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
+ * up).
  */
 #define DFLT_COLS       80              // default value for 'columns'
 #define DFLT_ROWS       24              // default value for 'lines'
@@ -150,17 +151,11 @@ typedef off_t off_T;
 /// to the next line. It can only be true if a window occupies the entire screen
 /// width.
 ///
+/// These, with other related attributes, are stored in a "ScreenGrid"
+/// datastructure.
 ///
 /// Note: before the screen is initialized and when out of memory these can be
 /// NULL.
-EXTERN schar_T  *ScreenLines INIT(= NULL);
-EXTERN sattr_T  *ScreenAttrs INIT(= NULL);
-EXTERN unsigned *LineOffset INIT(= NULL);
-EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
-
-EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
-EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
-
 EXTERN ScreenGrid default_grid INIT(= { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0,
                                         0, 0 });
 

@@ -213,11 +213,11 @@ void clear_hl_tables(bool reinit)
     highlight_attr_set_all();
     highlight_changed();
     redraw_all_later(NOT_VALID);
-    if (ScreenAttrs) {
+    if (default_grid.ScreenAttrs) {
       // the meaning of 0 doesn't change anyway
       // but the rest must be retransmitted
-      memset(ScreenAttrs, 0,
-             sizeof(*ScreenAttrs) * (size_t)(screen_Rows * screen_Columns));
+      memset(default_grid.ScreenAttrs, 0, sizeof(*default_grid.ScreenAttrs)
+             * (size_t)(default_grid.Rows * default_grid.Columns));
     }
   } else {
     kv_destroy(attr_entries);

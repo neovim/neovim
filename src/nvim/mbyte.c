@@ -560,7 +560,8 @@ size_t mb_string2cells(const char_u *str)
 /// We make sure that the offset used is less than "max_off".
 int utf_off2cells(unsigned off, unsigned max_off)
 {
-  return (off + 1 < max_off && ScreenLines[off + 1][0] == 0) ? 2 : 1;
+  return (off + 1 < max_off
+          && default_grid.ScreenLines[off + 1][0] == 0) ? 2 : 1;
 }
 
 /// Convert a UTF-8 byte sequence to a wide character
@@ -1829,8 +1830,8 @@ const char *mb_unescape(const char **const pp)
  */
 bool mb_lefthalve(int row, int col)
 {
-  return utf_off2cells(LineOffset[row] + col,
-                       LineOffset[row] + screen_Columns) > 1;
+  return utf_off2cells(default_grid.LineOffset[row] + col,
+                       default_grid.LineOffset[row] + screen_Columns) > 1;
 }
 
 /*
@@ -1841,8 +1842,8 @@ int mb_fix_col(int col, int row)
 {
   col = check_col(col);
   row = check_row(row);
-  if (ScreenLines != NULL && col > 0
-      && ScreenLines[LineOffset[row] + col][0] == 0) {
+  if (default_grid.ScreenLines != NULL && col > 0
+      && default_grid.ScreenLines[default_grid.LineOffset[row] + col][0] == 0) {
     return col - 1;
   }
   return col;
