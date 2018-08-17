@@ -656,7 +656,6 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in cmdline mode', function()
-    cmdmap('<F2>', 'call setcmdpos(2)')
     feed(':text<F3>')
     eq('c', eval('m'))
     -- didn't leave cmdline mode
@@ -766,6 +765,33 @@ describe('mappings with <Cmd>', function()
     eq('i', eval('mode(1)'))
     eq(9, eval('g:y'))
 
+  end)
+
+  it("doesn't crash when invoking cmdline mode recursively #8859", function()
+    cmdmap('<F2>', 'norm! :foo')
+    feed(':bar')
+    screen:expect([[
+      some short lines                                                 |
+      of test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      :bar^                                                             |
+    ]])
+
+    feed('<f2>x')
+    screen:expect([[
+      some short lines                                                 |
+      of test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      :barx^                                                            |
+    ]])
   end)
 
 end)
