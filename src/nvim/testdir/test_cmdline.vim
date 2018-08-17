@@ -321,6 +321,9 @@ func Test_paste_in_cmdline()
   call feedkeys("ft:aaa \<C-R>\<C-F> bbb\<C-B>\"\<CR>", 'tx')
   call assert_equal('"aaa /tmp/some bbb', @:)
 
+  call feedkeys(":aaa \<C-R>\<C-L> bbb\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"aaa '.getline(1).' bbb', @:)
+
   set incsearch
   call feedkeys("fy:aaa veryl\<C-R>\<C-W> bbb\<C-B>\"\<CR>", 'tx')
   call assert_equal('"aaa verylongword bbb', @:)
