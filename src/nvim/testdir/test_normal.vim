@@ -392,10 +392,22 @@ func! Test_normal10_expand()
   call setline(1, ['1', 'ifooar,,cbar'])
   2
   norm! $
-  let a=expand('<cword>')
-  let b=expand('<cWORD>')
-  call assert_equal('cbar', a)
-  call assert_equal('ifooar,,cbar', b)
+  call assert_equal('cbar', expand('<cword>'))
+  call assert_equal('ifooar,,cbar', expand('<cWORD>'))
+
+  call setline(1, ['prx = list[idx];'])
+  1
+  let expected = ['', 'prx', 'prx', 'prx',
+	\ 'list', 'list', 'list', 'list', 'list', 'list', 'list',
+	\ 'idx', 'idx', 'idx', 'idx',
+	\ 'list[idx]',
+	\ '];',
+	\ ]
+  for i in range(1, 16)
+    exe 'norm ' . i . '|'
+    call assert_equal(expected[i], expand('<cexpr>'), 'i == ' . i)
+  endfor
+
   " clean up
   bw!
 endfunc
