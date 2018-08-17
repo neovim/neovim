@@ -2665,8 +2665,8 @@ const char * set_one_cmd_context(
   size_t len = 0;
   exarg_T ea;
   int context = EXPAND_NOTHING;
-  int forceit = false;
-  int usefilter = false;  // Filter instead of file name.
+  bool forceit = false;
+  bool usefilter = false;  // Filter instead of file name.
 
   ExpandInit(xp);
   xp->xp_pattern = (char_u *)buff;
@@ -2787,7 +2787,7 @@ const char * set_one_cmd_context(
   xp->xp_context = EXPAND_NOTHING;   /* Default now that we're past command */
 
   if (*p == '!') {                  /* forced commands */
-    forceit = TRUE;
+    forceit = true;
     ++p;
   }
 
@@ -2816,7 +2816,7 @@ const char * set_one_cmd_context(
     usefilter = forceit;                        /* :r! filter if forced */
     if (*arg == '!') {                          /* :r !filter */
       ++arg;
-      usefilter = TRUE;
+      usefilter = true;
     }
   }
 
