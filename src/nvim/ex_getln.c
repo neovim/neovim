@@ -3286,10 +3286,9 @@ void restore_cmdline_alloc(char_u *p)
 /// @returns FAIL for failure, OK otherwise
 static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
-  long i;
   char_u              *arg;
   char_u              *p;
-  int allocated;
+  bool allocated;
   struct cmdline_info save_ccline;
 
   /* check for valid regname; also accept special characters for CTRL-R in
@@ -3311,7 +3310,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
    * things like going to another buffer when evaluating an expression. */
   save_cmdline(&save_ccline);
   ++textlock;
-  i = get_spec_reg(regname, &arg, &allocated, TRUE);
+  const bool i = get_spec_reg(regname, &arg, &allocated, true);
   --textlock;
   restore_cmdline(&save_ccline);
 
