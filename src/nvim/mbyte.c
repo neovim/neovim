@@ -558,10 +558,10 @@ size_t mb_string2cells(const char_u *str)
 
 /// Return number of display cells for char at ScreenLines[off].
 /// We make sure that the offset used is less than "max_off".
-int utf_off2cells(unsigned off, unsigned max_off)
+int utf_off2cells(ScreenGrid *grid, unsigned off, unsigned max_off)
 {
   return (off + 1 < max_off
-          && default_grid.ScreenLines[off + 1][0] == 0) ? 2 : 1;
+          && grid->ScreenLines[off + 1][0] == 0) ? 2 : 1;
 }
 
 /// Convert a UTF-8 byte sequence to a wide character
@@ -1828,22 +1828,22 @@ const char *mb_unescape(const char **const pp)
  * of a double-width character.
  * Caller must make sure "row" and "col" are not invalid!
  */
-bool mb_lefthalve(int row, int col)
+bool mb_lefthalve(ScreenGrid *grid, int row, int col)
 {
-  return utf_off2cells(default_grid.LineOffset[row] + col,
-                       default_grid.LineOffset[row] + screen_Columns) > 1;
+  return utf_off2cells(grid, grid->LineOffset[row] + col,
+                       grid->LineOffset[row] + grid->Columns) > 1;
 }
 
 /*
  * Correct a position on the screen, if it's the right half of a double-wide
  * char move it to the left half.  Returns the corrected column.
  */
-int mb_fix_col(int col, int row)
+int mb_fix_col(ScreenGrid *grid, int col, int row)
 {
-  col = check_col(col);
-  row = check_row(row);
-  if (default_grid.ScreenLines != NULL && col > 0
-      && default_grid.ScreenLines[default_grid.LineOffset[row] + col][0] == 0) {
+  col = check_col(grid, col);
+  row = check_row(grid, row);
+  if (grid->ScreenLines != NULL && col > 0
+      && grid->ScreenLines[grid->LineOffset[row] + col][0] == 0) {
     return col - 1;
   }
   return col;
@@ -2527,21 +2527,21 @@ char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr,
 }
 
 // Check bounds for column number
-static int check_col(int col)
+static int check_col(ScreenGrid *grid, int col)
 {
   if (col < 0)
     return 0;
-  if (col >= screen_Columns)
-    return screen_Columns - 1;
+  if (col >= grid->Columns)
+    return grid->Columns - 1;
   return col;
 }
 
 // Check bounds for row number
-static int check_row(int row)
+static int check_row(ScreenGrid *grid, int row)
 {
   if (row < 0)
     return 0;
-  if (row >= screen_Rows)
-    return screen_Rows - 1;
+  if (row >= grid->Rows)
+    return grid->Rows - 1;
   return row;
 }
