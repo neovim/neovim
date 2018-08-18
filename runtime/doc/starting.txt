@@ -408,9 +408,6 @@ accordingly.  Vim proceeds in this order:
 		Windows		$XDG_CONFIG_HOME/nvim/init.vim
 				(default for $XDG_CONFIG_HOME is ~/AppData/Local)
 
-	The files are searched in the order specified above and only the first
-	one that is found is read.
-
 	RECOMMENDATION: Put all your Vim configuration stuff in the 
 	$HOME/.config/nvim/ directory. That makes it easy to copy it to 
 	another system.
