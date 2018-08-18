@@ -43,6 +43,8 @@ typedef struct {
   // the size expected to be allocated to the internal grid
   int internal_rows;
   int internal_columns;
+
+  int was_resized;
 } ScreenGrid;
 
 #endif  // NVIM_TYPES_H

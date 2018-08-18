@@ -1573,6 +1573,8 @@ static void win_update(win_T *wp)
     }
   }
 
+  wp->w_grid.was_resized = false;
+
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
@@ -5832,8 +5834,12 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
       }
     }
 
-    int dirty_first = INT_MAX;
-    int dirty_last = 0;
+    // if grid was resized (in ext_multigrid mode), the UI has no redraw updates
+    // for the newly resized grid. It is better mark everything as dirty and
+    // send all the updates.
+    int dirty_first = grid->was_resized ? start_col : INT_MAX;
+    int dirty_last = grid->was_resized ? grid->Columns : 0;
+
     int col = start_col;
     schar_from_char(sc, c1);
     int lineoff = grid->LineOffset[row];
@@ -5846,7 +5852,9 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
         if (dirty_first == INT_MAX) {
           dirty_first = col;
         }
-        dirty_last = col+1;
+        if (!grid->was_resized) {
+          dirty_last = col+1;
+        }
       }
       if (col == start_col) {
         schar_from_char(sc, c2);
@@ -5920,7 +5928,6 @@ void win_grid_alloc(win_T *wp, int doclear)
   ScreenGrid *grid = &wp->w_grid;
   int rows = grid->internal_rows;
   int columns = grid->internal_columns;
-  int was_resized = 0;
 
   if (rows == 0) {
     rows = wp->w_height;
@@ -5935,7 +5942,7 @@ void win_grid_alloc(win_T *wp, int doclear)
     grid_alloc(grid, rows, columns, doclear);
     win_free_lsize(wp);
     win_alloc_lines(wp);
-    was_resized = true;
+    grid->was_resized = true;
   }
 
   grid->OffsetRow = wp->w_winrow;
@@ -5947,10 +5954,9 @@ void win_grid_alloc(win_T *wp, int doclear)
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent
   // - the UI wants multigrid event (necessary)
-  if ((send_grid_resize || was_resized)
+  if ((send_grid_resize || grid->was_resized)
       && ui_is_external(kUIMultigrid)) {
     ui_call_grid_resize(grid->handle, grid->Columns, grid->Rows);
-    was_resized = false;
   }
 }
 
