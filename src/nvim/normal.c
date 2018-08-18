@@ -3079,23 +3079,16 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
      * 1. skip to start of identifier/string
      */
     col = startcol;
-    if (has_mbyte) {
-      while (ptr[col] != NUL) {
-        // Stop at a ']' to evaluate "a[x]".
-        if ((find_type & FIND_EVAL) && ptr[col] == ']') {
-          break;
-        }
-        this_class = mb_get_class(ptr + col);
-        if (this_class != 0 && (i == 1 || this_class != 1))
-          break;
-        col += (*mb_ptr2len)(ptr + col);
+    while (ptr[col] != NUL) {
+      // Stop at a ']' to evaluate "a[x]".
+      if ((find_type & FIND_EVAL) && ptr[col] == ']') {
+        break;
       }
-    } else {
-      while (ptr[col] != NUL
-             && (i == 0 ? !vim_iswordc(ptr[col]) : ascii_iswhite(ptr[col]))
-             && (!(find_type & FIND_EVAL) || ptr[col] != ']')) {
-        col++;
+      this_class = mb_get_class(ptr + col);
+      if (this_class != 0 && (i == 1 || this_class != 1)) {
+        break;
       }
+      col += utfc_ptr2len(ptr + col);
     }
 
     // When starting on a ']' count it, so that we include the '['.
@@ -3104,59 +3097,38 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
     /*
      * 2. Back up to start of identifier/string.
      */
-    if (has_mbyte) {
-      // Remember class of character under cursor.
-      if ((find_type & FIND_EVAL) && ptr[col] == ']') {
-        this_class = mb_get_class((char_u *)"a");
-      } else {
-        this_class = mb_get_class(ptr + col);
-      }
-      while (col > 0 && this_class != 0) {
-        prevcol = col - 1 - (*mb_head_off)(ptr, ptr + col - 1);
-        prev_class = mb_get_class(ptr + prevcol);
-        if (this_class != prev_class
-            && (i == 0
-                || prev_class == 0
-                || (find_type & FIND_IDENT))
-            && (!(find_type & FIND_EVAL)
-                || prevcol == 0
-                || !find_is_eval_item(ptr + prevcol, &prevcol, &bn, BACKWARD))
-            ) {
-          break;
-        }
-        col = prevcol;
-      }
-
-      /* If we don't want just any old string, or we've found an
-       * identifier, stop searching. */
-      if (this_class > 2)
-        this_class = 2;
-      if (!(find_type & FIND_STRING) || this_class == 2)
-        break;
+    // Remember class of character under cursor.
+    if ((find_type & FIND_EVAL) && ptr[col] == ']') {
+      this_class = mb_get_class((char_u *)"a");
     } else {
-      while (col > 0
-             && ((i == 0
-                  ? vim_iswordc(ptr[col - 1])
-                  : (!ascii_iswhite(ptr[col - 1])
-                     && (!(find_type & FIND_IDENT)
-                         || !vim_iswordc(ptr[col - 1]))))
-                 || ((find_type & FIND_EVAL)
-                     && col > 1
-                     && find_is_eval_item(ptr + col - 1, &col, &bn, BACKWARD))
-                 )) {
-        col--;
-      }
-
-      /* If we don't want just any old string, or we've found an
-       * identifier, stop searching. */
-      if (!(find_type & FIND_STRING) || vim_iswordc(ptr[col]))
+      this_class = mb_get_class(ptr + col);
+    }
+    while (col > 0 && this_class != 0) {
+      prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
+      prev_class = mb_get_class(ptr + prevcol);
+      if (this_class != prev_class
+          && (i == 0
+              || prev_class == 0
+              || (find_type & FIND_IDENT))
+          && (!(find_type & FIND_EVAL)
+              || prevcol == 0
+              || !find_is_eval_item(ptr + prevcol, &prevcol, &bn, BACKWARD))) {
         break;
+      }
+      col = prevcol;
+    }
+
+    // If we don't want just any old string, or we've found an
+    // identifier, stop searching.
+    if (this_class > 2) {
+      this_class = 2;
+    }
+    if (!(find_type & FIND_STRING) || this_class == 2) {
+      break;
     }
   }
 
-  if (ptr[col] == NUL || (i == 0 && (
-                            has_mbyte ? this_class != 2 :
-                            !vim_iswordc(ptr[col])))) {
+  if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
     /*
      * didn't find an identifier or string
      */
@@ -3175,26 +3147,16 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   bn = 0;
   startcol -= col;
   col = 0;
-  if (has_mbyte) {
-    /* Search for point of changing multibyte character class. */
-    this_class = mb_get_class(ptr);
-    while (ptr[col] != NUL
-           && ((i == 0 ? mb_get_class(ptr + col) == this_class
-                : mb_get_class(ptr + col) != 0)
-               || ((find_type & FIND_EVAL)
-                   && col <= (int)startcol
-                   && find_is_eval_item(ptr + col, &col, &bn, FORWARD))
-               )) {
-      col += (*mb_ptr2len)(ptr + col);
-    }
-  } else {
-    while ((i == 0 ? vim_iswordc(ptr[col])
-            : (ptr[col] != NUL && !ascii_iswhite(ptr[col])))
-           || ((find_type & FIND_EVAL)
-               && col <= (int)startcol
-               && find_is_eval_item(ptr + col, &col, &bn, FORWARD))) {
-      col++;
-    }
+  // Search for point of changing multibyte character class.
+  this_class = mb_get_class(ptr);
+  while (ptr[col] != NUL
+         && ((i == 0
+              ? mb_get_class(ptr + col) == this_class
+              : mb_get_class(ptr + col) != 0)
+             || ((find_type & FIND_EVAL)
+                 && col <= (int)startcol
+                 && find_is_eval_item(ptr + col, &col, &bn, FORWARD)))) {
+    col += utfc_ptr2len(ptr + col);
   }
 
   assert(col >= 0);
