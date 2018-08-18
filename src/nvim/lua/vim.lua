@@ -23,7 +23,7 @@ local function _os_proc_info(pid)
   end
   local _, ppid = _system({ 'ps', '-p', pid, '-o', 'ppid=', })
   -- Remove trailing whitespace.
-  name = string.gsub(name, '%s+$', '')
+  name = string.gsub(string.gsub(name, '%s+$', ''), '^.*/', '')
   ppid = string.gsub(ppid, '%s+$', '')
   ppid = tonumber(ppid) == nil and -1 or tonumber(ppid)
   return {
