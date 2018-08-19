@@ -111,6 +111,15 @@ func Test_gn_command()
   call assert_equal(['foo  baz'], getline(1,'$'))
   sil! %d_
 
+  " search upwards with nowrapscan set
+  call setline('.', ['foo', 'bar', 'foo', 'baz'])
+  set nowrapscan
+  let @/='foo'
+  $
+  norm! dgN
+  call assert_equal(['foo', 'bar', '', 'baz'], getline(1,'$'))
+  sil! %d_
+
   set wrapscan&vim
   set belloff&vim
 endfu

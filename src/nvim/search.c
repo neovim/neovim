@@ -521,7 +521,7 @@ int searchit(
                                        buffer without a window! */
     buf_T       *buf,
     pos_T       *pos,
-    int dir,
+    Direction dir,
     char_u      *pat,
     long count,
     int options,
@@ -3968,8 +3968,9 @@ current_search(
     orig_pos = pos = curwin->w_cursor;
   }
 
-  // Is the pattern is zero-width?
-  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor);
+  // Is the pattern is zero-width?, this time, don't care about the direction
+  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor,
+                             FORWARD);
   if (one_char == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
@@ -4014,12 +4015,13 @@ current_search(
     p_ws = old_p_ws;
   }
 
-  int flags = forward ? SEARCH_END : 0;
+  const int flags = forward ? SEARCH_END : SEARCH_START;
   pos_T start_pos = pos;
+  const Direction direction = forward ? FORWARD : BACKWARD;
 
   // Check again from the current cursor position,
   // since the next match might actually be only one char wide
-  one_char = is_one_char(spats[last_idx].pat, false, &pos);
+  one_char = is_one_char(spats[last_idx].pat, false, &pos, direction);
   if (one_char < 0) {
     // search failed, abort
     return FAIL;
@@ -4028,7 +4030,7 @@ current_search(
   /* move to match, except for zero-width matches, in which case, we are
    * already on the next match */
   if (!one_char)
-    searchit(curwin, curbuf, &pos, (forward ? FORWARD : BACKWARD),
+    searchit(curwin, curbuf, &pos, direction,
         spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH, 0, NULL);
 
   if (!VIsual_active)
@@ -4063,8 +4065,10 @@ current_search(
 /// Check if the pattern is one character long or zero-width.
 /// If move is true, check from the beginning of the buffer,
 /// else from position "cur".
+/// "direction" is FORWARD or BACKWARD.
 /// Returns TRUE, FALSE or -1 for failure.
-static int is_one_char(char_u *pattern, bool move, pos_T *cur)
+static int is_one_char(char_u *pattern, bool move, pos_T *cur,
+                       Direction direction)
 {
   regmmatch_T regmatch;
   int nmatched = 0;
@@ -4091,7 +4095,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur)
     // accept a match at the cursor position
     flag = SEARCH_START;
   }
-  if (searchit(curwin, curbuf, &pos, FORWARD, pattern, 1,
+  if (searchit(curwin, curbuf, &pos, direction, pattern, 1,
                SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
@@ -4103,7 +4107,9 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur)
       if (!nmatched) {
         break;
       }
-    } while (regmatch.startpos[0].col < pos.col);
+    } while (direction == FORWARD
+             ? regmatch.startpos[0].col < pos.col
+             : regmatch.startpos[0].col > pos.col);
 
     if (!called_emsg) {
       result = (nmatched != 0
