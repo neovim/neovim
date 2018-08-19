@@ -3953,7 +3953,9 @@ current_search(
     dec_cursor();
 
   pos_T orig_pos;               /* position of the cursor at beginning */
+  pos_T first_match;            // position of first match
   pos_T pos;                    /* position after the pattern */
+  int result;                   // result of various function calls
 
   if (VIsual_active) {
     orig_pos = pos = curwin->w_cursor;
@@ -3988,7 +3990,7 @@ current_search(
     if (!dir && !one_char)
       flags = SEARCH_END;
 
-    int result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
+    result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
         spats[last_idx].pat, i ? count : 1,
         SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
@@ -4012,6 +4014,9 @@ current_search(
             ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
+    if (i == 0) {
+      first_match = pos;
+    }
     p_ws = old_p_ws;
   }
 
@@ -4029,9 +4034,26 @@ current_search(
 
   /* move to match, except for zero-width matches, in which case, we are
    * already on the next match */
-  if (!one_char)
-    searchit(curwin, curbuf, &pos, direction,
-        spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH, 0, NULL);
+  if (!one_char) {
+    p_ws = false;
+    for (int i = 0; i < 2; i++) {
+      result = searchit(curwin, curbuf, &pos, direction,
+                        spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH,
+                        0, NULL);
+      // Search successfull, break out from the loop
+      if (result) {
+        break;
+      }
+      // search failed, try again from the last search position match
+      pos = first_match;
+    }
+  }
+
+  p_ws = old_p_ws;
+  // not found
+  if (!result) {
+    return FAIL;
+  }
 
   if (!VIsual_active)
     VIsual = start_pos;
