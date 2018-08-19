@@ -4603,7 +4603,7 @@ search_line:
           if (depth == -1) {
             // match in current file
             if (l_g_do_tagpreview != 0) {
-              if (!GETFILE_SUCCESS(getfile(0, curwin_save->w_buffer->b_fname,
+              if (!GETFILE_SUCCESS(getfile(curwin_save->w_buffer->b_fnum, NULL,
                                            NULL, true, lnum, false))) {
                 break;    // failed to jump to file
               }
@@ -4611,6 +4611,7 @@ search_line:
               setpcmark();
             }
             curwin->w_cursor.lnum = lnum;
+            check_cursor();
           } else {
             if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
                                          files[depth].lnum, false))) {
