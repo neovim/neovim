@@ -3957,9 +3957,9 @@ current_search(
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))
     dec_cursor();
 
-  pos_T orig_pos;               /* position of the cursor at beginning */
+  pos_T orig_pos;               // position of the cursor at beginning
   pos_T first_match;            // position of first match
-  pos_T pos;                    /* position after the pattern */
+  pos_T pos;                    // position after the pattern
   int result;                   // result of various function calls
 
   if (VIsual_active) {
@@ -3996,8 +3996,8 @@ current_search(
       flags = SEARCH_END;
 
     result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
-        spats[last_idx].pat, i ? count : 1,
-        SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
+                      spats[last_idx].pat, i ? count : 1,
+                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
     /* First search may fail, but then start searching from the
      * beginning of the file (cursor might be on the search match)
