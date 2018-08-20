@@ -400,7 +400,7 @@ describe('tui FocusGained/FocusLost', function()
       -- Exit cmdline-mode. Redraws from timers/events are blocked during
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
-      screen:expect('lost'..(' '):rep(46)..'\ngained', nil, nil, nil, true)
+      screen:expect{any='lost'..(' '):rep(46)..'\ngained'}
     end)
   end)
 
@@ -740,7 +740,7 @@ describe("tui 'term' option", function()
     screen.timeout = 250  -- We want screen:expect() to fail quickly.
     retry(nil, 2 * full_timeout, function()  -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
-      screen:expect('term='..term_expected, nil, nil, nil, true)
+      screen:expect{any='term='..term_expected}
     end)
   end
 

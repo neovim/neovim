@@ -54,7 +54,7 @@ describe(':terminal', function()
     else
       feed_command([[terminal printf '\e[6n'; sleep 0.5 ]])
     end
-    screen:expect('%^%[%[1;1R', nil, nil, nil, true)
+    screen:expect{any='%^%[%[1;1R'}
   end)
 
   it("in normal-mode :split does not move cursor", function()

@@ -43,7 +43,7 @@ describe("CTRL-C (mapped)", function()
       feed(":global/^/p<CR>")
       screen:sleep(ms)
       feed("<C-C>")
-      screen:expect([[Interrupt]], nil, nil, nil, true)
+      screen:expect{any="Interrupt"}
     end
 
     -- The test is time-sensitive. Try different sleep values.
