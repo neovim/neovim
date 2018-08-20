@@ -4754,4 +4754,21 @@ describe('cindent', function()
       	4
       /* end of define */]=])
   end)
+
+  it('* immediately follows comment / vim-patch 8.0.1291', function()
+    insert_([=[
+      {
+        a = second/*bug*/*line;
+      }]=])
+
+    feed_command('set cin cino&')
+    feed_command('/a = second')
+    feed('ox')
+
+    expect([=[
+      {
+        a = second/*bug*/*line;
+        x
+      }]=])
+  end)
 end)
