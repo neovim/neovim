@@ -3305,7 +3305,7 @@ int
 current_tagblock(
     oparg_T *oap,
     long count_arg,
-    int include                    /* TRUE == include white space */
+    bool include                  // true == include white space
 )
 {
   long count = count_arg;
@@ -3319,7 +3319,7 @@ current_tagblock(
   char_u      *cp;
   int len;
   int r;
-  int do_include = include;
+  bool do_include = include;
   bool save_p_ws = p_ws;
   int retval = FAIL;
   int is_inclusive = true;
@@ -3450,7 +3450,7 @@ again:
     if (VIsual_active
         && equalpos(start_pos, old_start)
         && equalpos(end_pos, old_end)) {
-      do_include = TRUE;
+      do_include = true;
       curwin->w_cursor = old_start;
       count = count_arg;
       goto again;
