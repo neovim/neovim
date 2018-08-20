@@ -88,6 +88,7 @@ NEW_TESTS ?= \
 	    test_normal.res \
 	    test_number.res \
 	    test_options.res \
+	    test_preview.res \
 	    test_profile.res \
 	    test_put.res \
 	    test_python2.res \

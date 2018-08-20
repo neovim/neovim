@@ -521,7 +521,7 @@ int searchit(
                                        buffer without a window! */
     buf_T       *buf,
     pos_T       *pos,
-    int dir,
+    Direction dir,
     char_u      *pat,
     long count,
     int options,
@@ -570,8 +570,12 @@ int searchit(
                && pos->lnum >= 1 && pos->lnum <= buf->b_ml.ml_line_count
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
-      ptr = ml_get_buf(buf, pos->lnum, false) + pos->col;
-      start_char_len = *ptr == NUL ? 1 : (*mb_ptr2len)(ptr);
+      ptr = ml_get_buf(buf, pos->lnum, false);
+      if ((int)STRLEN(ptr) <= pos->col) {
+        start_char_len = 1;
+      } else {
+        start_char_len = utfc_ptr2len(ptr + pos->col);
+      }
     } else {
       start_char_len = 1;
     }
@@ -1849,7 +1853,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       } else {    /* Searching backwards */
         /*
          * A comment may contain / * or / /, it may also start or end
-         * with / * /.	Ignore a / * after / /.
+         * with / * /. Ignore a / * after / / and after *.
          */
         if (pos.col == 0)
           continue;
@@ -1874,6 +1878,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           }
         } else if (  linep[pos.col - 1] == '/'
                    && linep[pos.col] == '*'
+                   && (pos.col == 1 || linep[pos.col - 2] != '*')
                    && (int)pos.col < comment_col) {
           count++;
           match_pos = pos;
@@ -3300,7 +3305,7 @@ int
 current_tagblock(
     oparg_T *oap,
     long count_arg,
-    int include                    /* TRUE == include white space */
+    bool include                  // true == include white space
 )
 {
   long count = count_arg;
@@ -3314,7 +3319,7 @@ current_tagblock(
   char_u      *cp;
   int len;
   int r;
-  int do_include = include;
+  bool do_include = include;
   bool save_p_ws = p_ws;
   int retval = FAIL;
   int is_inclusive = true;
@@ -3440,10 +3445,12 @@ again:
       }
     curwin->w_cursor = end_pos;
 
-    /* If we now have the same text as before reset "do_include" and try
-     * again. */
-    if (equalpos(start_pos, old_start) && equalpos(end_pos, old_end)) {
-      do_include = TRUE;
+    // If we are in Visual mode and now have the same text as before set
+    // "do_include" and try again.
+    if (VIsual_active
+        && equalpos(start_pos, old_start)
+        && equalpos(end_pos, old_end)) {
+      do_include = true;
       curwin->w_cursor = old_start;
       count = count_arg;
       goto again;
@@ -3952,8 +3959,10 @@ current_search(
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))
     dec_cursor();
 
-  pos_T orig_pos;               /* position of the cursor at beginning */
-  pos_T pos;                    /* position after the pattern */
+  pos_T orig_pos;               // position of the cursor at beginning
+  pos_T first_match;            // position of first match
+  pos_T pos;                    // position after the pattern
+  int result;                   // result of various function calls
 
   if (VIsual_active) {
     orig_pos = pos = curwin->w_cursor;
@@ -3968,8 +3977,9 @@ current_search(
     orig_pos = pos = curwin->w_cursor;
   }
 
-  // Is the pattern is zero-width?
-  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor);
+  // Is the pattern is zero-width?, this time, don't care about the direction
+  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor,
+                             FORWARD);
   if (one_char == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
@@ -3987,9 +3997,9 @@ current_search(
     if (!dir && !one_char)
       flags = SEARCH_END;
 
-    int result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
-        spats[last_idx].pat, i ? count : 1,
-        SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
+    result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
+                      spats[last_idx].pat, i ? count : 1,
+                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
     /* First search may fail, but then start searching from the
      * beginning of the file (cursor might be on the search match)
@@ -4011,15 +4021,19 @@ current_search(
             ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
+    if (i == 0) {
+      first_match = pos;
+    }
     p_ws = old_p_ws;
   }
 
-  int flags = forward ? SEARCH_END : 0;
+  const int flags = forward ? SEARCH_END : SEARCH_START;
   pos_T start_pos = pos;
+  const Direction direction = forward ? FORWARD : BACKWARD;
 
   // Check again from the current cursor position,
   // since the next match might actually be only one char wide
-  one_char = is_one_char(spats[last_idx].pat, false, &pos);
+  one_char = is_one_char(spats[last_idx].pat, false, &pos, direction);
   if (one_char < 0) {
     // search failed, abort
     return FAIL;
@@ -4027,9 +4041,26 @@ current_search(
 
   /* move to match, except for zero-width matches, in which case, we are
    * already on the next match */
-  if (!one_char)
-    searchit(curwin, curbuf, &pos, (forward ? FORWARD : BACKWARD),
-        spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH, 0, NULL);
+  if (!one_char) {
+    p_ws = false;
+    for (int i = 0; i < 2; i++) {
+      result = searchit(curwin, curbuf, &pos, direction,
+                        spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH,
+                        0, NULL);
+      // Search successfull, break out from the loop
+      if (result) {
+        break;
+      }
+      // search failed, try again from the last search position match
+      pos = first_match;
+    }
+  }
+
+  p_ws = old_p_ws;
+  // not found
+  if (!result) {
+    return FAIL;
+  }
 
   if (!VIsual_active)
     VIsual = start_pos;
@@ -4063,8 +4094,10 @@ current_search(
 /// Check if the pattern is one character long or zero-width.
 /// If move is true, check from the beginning of the buffer,
 /// else from position "cur".
+/// "direction" is FORWARD or BACKWARD.
 /// Returns TRUE, FALSE or -1 for failure.
-static int is_one_char(char_u *pattern, bool move, pos_T *cur)
+static int is_one_char(char_u *pattern, bool move, pos_T *cur,
+                       Direction direction)
 {
   regmmatch_T regmatch;
   int nmatched = 0;
@@ -4091,7 +4124,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur)
     // accept a match at the cursor position
     flag = SEARCH_START;
   }
-  if (searchit(curwin, curbuf, &pos, FORWARD, pattern, 1,
+  if (searchit(curwin, curbuf, &pos, direction, pattern, 1,
                SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
@@ -4103,7 +4136,9 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur)
       if (!nmatched) {
         break;
       }
-    } while (regmatch.startpos[0].col < pos.col);
+    } while (direction == FORWARD
+             ? regmatch.startpos[0].col < pos.col
+             : regmatch.startpos[0].col > pos.col);
 
     if (!called_emsg) {
       result = (nmatched != 0
@@ -4603,7 +4638,7 @@ search_line:
           if (depth == -1) {
             // match in current file
             if (l_g_do_tagpreview != 0) {
-              if (!GETFILE_SUCCESS(getfile(0, curwin_save->w_buffer->b_fname,
+              if (!GETFILE_SUCCESS(getfile(curwin_save->w_buffer->b_fnum, NULL,
                                            NULL, true, lnum, false))) {
                 break;    // failed to jump to file
               }
@@ -4611,6 +4646,7 @@ search_line:
               setpcmark();
             }
             curwin->w_cursor.lnum = lnum;
+            check_cursor();
           } else {
             if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
                                          files[depth].lnum, false))) {

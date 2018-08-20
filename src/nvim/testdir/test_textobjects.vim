@@ -121,6 +121,23 @@ func Test_string_html_objects()
   enew!
 endfunc
 
+func Test_empty_html_tag()
+  new
+  call setline(1, '<div></div>')
+  normal 0citxxx
+  call assert_equal('<div>xxx</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<cityyy
+  call assert_equal('<div>yyy</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<vitsaaa
+  call assert_equal('aaa', getline(1))
+
+  bwipe!
+endfunc
+
 " Tests for match() and matchstr()
 func Test_match()
   call assert_equal("b", matchstr("abcd", ".", 0, 2))
@@ -151,4 +168,17 @@ func Test_match()
   call assert_equal(2 , match('abc', '\zs', 2, 1))
   call assert_equal(3 , match('abc', '\zs', 3, 1))
   call assert_equal(-1, match('abc', '\zs', 4, 1))
+endfunc
+
+" This was causing an illegal memory access
+func Test_inner_tag()
+  new
+  norm ixxx
+  call feedkeys("v", 'xt')
+  insert
+x
+x
+.
+  norm it
+  q!
 endfunc
