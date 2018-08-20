@@ -3445,9 +3445,11 @@ again:
       }
     curwin->w_cursor = end_pos;
 
-    /* If we now have the same text as before reset "do_include" and try
-     * again. */
-    if (equalpos(start_pos, old_start) && equalpos(end_pos, old_end)) {
+    // If we are in Visual mode and now have the same text as before set
+    // "do_include" and try again.
+    if (VIsual_active
+        && equalpos(start_pos, old_start)
+        && equalpos(end_pos, old_end)) {
       do_include = TRUE;
       curwin->w_cursor = old_start;
       count = count_arg;

@@ -121,6 +121,23 @@ func Test_string_html_objects()
   enew!
 endfunc
 
+func Test_empty_html_tag()
+  new
+  call setline(1, '<div></div>')
+  normal 0citxxx
+  call assert_equal('<div>xxx</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<cityyy
+  call assert_equal('<div>yyy</div>', getline(1))
+
+  call setline(1, '<div></div>')
+  normal 0f<vitsaaa
+  call assert_equal('aaa', getline(1))
+
+  bwipe!
+endfunc
+
 " Tests for match() and matchstr()
 func Test_match()
   call assert_equal("b", matchstr("abcd", ".", 0, 2))
