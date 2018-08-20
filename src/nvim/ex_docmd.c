@@ -2665,8 +2665,8 @@ const char * set_one_cmd_context(
   size_t len = 0;
   exarg_T ea;
   int context = EXPAND_NOTHING;
-  int forceit = false;
-  int usefilter = false;  // Filter instead of file name.
+  bool forceit = false;
+  bool usefilter = false;  // Filter instead of file name.
 
   ExpandInit(xp);
   xp->xp_pattern = (char_u *)buff;
@@ -2786,9 +2786,9 @@ const char * set_one_cmd_context(
 
   xp->xp_context = EXPAND_NOTHING;   /* Default now that we're past command */
 
-  if (*p == '!') {                  /* forced commands */
-    forceit = TRUE;
-    ++p;
+  if (*p == '!') {                  // forced commands
+    forceit = true;
+    p++;
   }
 
   /*
@@ -2813,10 +2813,10 @@ const char * set_one_cmd_context(
   }
 
   if (ea.cmdidx == CMD_read) {
-    usefilter = forceit;                        /* :r! filter if forced */
-    if (*arg == '!') {                          /* :r !filter */
-      ++arg;
-      usefilter = TRUE;
+    usefilter = forceit;                        // :r! filter if forced
+    if (*arg == '!') {                          // :r !filter
+      arg++;
+      usefilter = true;
     }
   }
 
@@ -2978,7 +2978,7 @@ const char * set_one_cmd_context(
       // A full match ~user<Tab> will be replaced by user's home
       // directory i.e. something like ~user<Tab> -> /home/user/
       if (*p == NUL && p > (const char *)xp->xp_pattern + 1
-          && match_user(xp->xp_pattern + 1) == 1) {
+          && match_user(xp->xp_pattern + 1) >= 1) {
         xp->xp_context = EXPAND_USER;
         ++xp->xp_pattern;
       }
@@ -3350,6 +3350,19 @@ const char * set_one_cmd_context(
   case CMD_xunmap:
     return (const char *)set_context_in_map_cmd(
         xp, (char_u *)cmd, (char_u *)arg, forceit, false, true, ea.cmdidx);
+  case CMD_mapclear:
+  case CMD_nmapclear:
+  case CMD_vmapclear:
+  case CMD_omapclear:
+  case CMD_imapclear:
+  case CMD_cmapclear:
+  case CMD_lmapclear:
+  case CMD_smapclear:
+  case CMD_xmapclear:
+    xp->xp_context = EXPAND_MAPCLEAR;
+    xp->xp_pattern = (char_u *)arg;
+    break;
+
   case CMD_abbreviate:    case CMD_noreabbrev:
   case CMD_cabbrev:       case CMD_cnoreabbrev:
   case CMD_iabbrev:       case CMD_inoreabbrev:
@@ -3441,6 +3454,13 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_argdelete:
+    while ((xp->xp_pattern = vim_strchr((const char_u *)arg, ' ')) != NULL) {
+      arg = (const char *)(xp->xp_pattern + 1);
+    }
+    xp->xp_context = EXPAND_ARGLIST;
+    xp->xp_pattern = (char_u *)arg;
+    break;
 
   default:
     break;
@@ -4846,6 +4866,7 @@ static struct {
  */
 static const char *command_complete[] =
 {
+  [EXPAND_ARGLIST] = "arglist",
   [EXPAND_AUGROUP] = "augroup",
   [EXPAND_BEHAVE] = "behave",
   [EXPAND_BUFFERS] = "buffer",
@@ -4870,6 +4891,7 @@ static const char *command_complete[] =
 #ifdef HAVE_WORKING_LIBINTL
   [EXPAND_LOCALES] = "locale",
 #endif
+  [EXPAND_MAPCLEAR] = "mapclear",
   [EXPAND_MAPPINGS] = "mapping",
   [EXPAND_MENUS] = "menu",
   [EXPAND_MESSAGES] = "messages",
@@ -8370,23 +8392,25 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
     "%",
 #define SPEC_PERC   0
     "#",
-#define SPEC_HASH   1
-    "<cword>",                          /* cursor word */
-#define SPEC_CWORD  2
-    "<cWORD>",                          /* cursor WORD */
-#define SPEC_CCWORD 3
-    "<cfile>",                          /* cursor path name */
-#define SPEC_CFILE  4
-    "<sfile>",                          /* ":so" file name */
-#define SPEC_SFILE  5
-    "<slnum>",                          /* ":so" file line number */
-#define SPEC_SLNUM  6
-    "<afile>",                          /* autocommand file name */
-# define SPEC_AFILE 7
-    "<abuf>",                           /* autocommand buffer number */
-# define SPEC_ABUF  8
-    "<amatch>",                         /* autocommand match name */
-# define SPEC_AMATCH 9
+#define SPEC_HASH   (SPEC_PERC + 1)
+    "<cword>",                          // cursor word
+#define SPEC_CWORD  (SPEC_HASH + 1)
+    "<cWORD>",                          // cursor WORD
+#define SPEC_CCWORD (SPEC_CWORD + 1)
+    "<cexpr>",                          // expr under cursor
+#define SPEC_CEXPR  (SPEC_CCWORD + 1)
+    "<cfile>",                          // cursor path name
+#define SPEC_CFILE  (SPEC_CEXPR + 1)
+    "<sfile>",                          // ":so" file name
+#define SPEC_SFILE  (SPEC_CFILE + 1)
+    "<slnum>",                          // ":so" file line number
+#define SPEC_SLNUM  (SPEC_SFILE + 1)
+    "<afile>",                          // autocommand file name
+#define SPEC_AFILE  (SPEC_SLNUM + 1)
+    "<abuf>",                           // autocommand buffer number
+#define SPEC_ABUF   (SPEC_AFILE + 1)
+    "<amatch>",                         // autocommand match name
+#define SPEC_AMATCH (SPEC_ABUF + 1)
   };
 
   for (size_t i = 0; i < ARRAY_SIZE(spec_str); ++i) {
@@ -8467,10 +8491,16 @@ eval_vars (
   /*
    * word or WORD under cursor
    */
-  if (spec_idx == SPEC_CWORD || spec_idx == SPEC_CCWORD) {
-    resultlen = find_ident_under_cursor(&result, (spec_idx == SPEC_CWORD
-                                                  ? (FIND_IDENT|FIND_STRING)
-                                                  : FIND_STRING));
+  if (spec_idx == SPEC_CWORD
+      || spec_idx == SPEC_CCWORD
+      || spec_idx == SPEC_CEXPR) {
+    resultlen = find_ident_under_cursor(
+        &result,
+        spec_idx == SPEC_CWORD
+        ? (FIND_IDENT | FIND_STRING)
+        : (spec_idx == SPEC_CEXPR
+           ? (FIND_IDENT | FIND_STRING | FIND_EVAL)
+           : FIND_STRING));
     if (resultlen == 0) {
       *errormsg = (char_u *)"";
       return NULL;
@@ -8507,9 +8537,13 @@ eval_vars (
       if (*s == '<')                    /* "#<99" uses v:oldfiles */
         ++s;
       i = getdigits_int(&s);
-      *usedlen = (size_t)(s - src);           /* length of what we expand */
+      if (s == src + 2 && src[1] == '-') {
+        // just a minus sign, don't skip over it
+        s--;
+      }
+      *usedlen = (size_t)(s - src);           // length of what we expand
 
-      if (src[1] == '<') {
+      if (src[1] == '<' && i != 0) {
         if (*usedlen < 2) {
           /* Should we give an error message for #<text? */
           *usedlen = 1;
@@ -8522,6 +8556,9 @@ eval_vars (
           return NULL;
         }
       } else {
+        if (i == 0 && src[1] == '<' && *usedlen > 1) {
+          *usedlen = 1;
+        }
         buf = buflist_findnr(i);
         if (buf == NULL) {
           *errormsg = (char_u *)_(
@@ -9651,6 +9688,14 @@ char_u *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
   if (idx == 0) {
     return (char_u *)"clear";
+  }
+  return NULL;
+}
+
+char_u *get_mapclear_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx == 0) {
+    return (char_u *)"<buffer>";
   }
   return NULL;
 }

@@ -4079,6 +4079,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		specifies what for.  The following completion types are
 		supported:
 
+		arglist		file names in argument list
 		augroup		autocmd groups
 		buffer		buffer names
 		behave		:behave suboptions
@@ -4099,6 +4100,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		highlight	highlight groups
 		history		:history suboptions
 		locale		locale names (as output of locale -a)
+		mapclear        buffer argument
 		mapping		mapping name
 		menu		menus
 		messages	|:messages| suboptions

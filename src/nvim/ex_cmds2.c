@@ -2254,6 +2254,15 @@ static int alist_add_list(int count, char_u **files, int after)
   }
 }
 
+// Function given to ExpandGeneric() to obtain the possible arguments of the
+// argedit and argdelete commands.
+char_u *get_arglist_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx >= ARGCOUNT) {
+    return NULL;
+  }
+  return alist_name(&ARGLIST[idx]);
+}
 
 /// ":compiler[!] {name}"
 void ex_compiler(exarg_T *eap)

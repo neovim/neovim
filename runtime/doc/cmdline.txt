@@ -163,12 +163,14 @@ CTRL-R CTRL-F				*c_CTRL-R_CTRL-F* *c_<C-R>_<C-F>*
 CTRL-R CTRL-P				*c_CTRL-R_CTRL-P* *c_<C-R>_<C-P>*
 CTRL-R CTRL-W				*c_CTRL-R_CTRL-W* *c_<C-R>_<C-W>*
 CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
+CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 		Insert the object under the cursor:
 			CTRL-F	the Filename under the cursor
 			CTRL-P	the Filename under the cursor, expanded with
 				'path' as in |gf|
 			CTRL-W	the Word under the cursor
 			CTRL-A	the WORD under the cursor; see |WORD|
+			CTRL-L	the line under the cursor
 
 		When 'incsearch' is set the cursor position at the end of the
 		currently displayed match is used.  With CTRL-W the part of
@@ -176,8 +178,8 @@ CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
+CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		Insert register or object under the cursor.  Works like
 		|c_CTRL-R| but inserts the text literally.  For example, if
 		register a contains "xy^Hz" (where ^H is a backspace),
@@ -786,6 +788,11 @@ Also see |`=|.
 Note: these are typed literally, they are not special keys!
 	<cword>    is replaced with the word under the cursor (like |star|)
 	<cWORD>    is replaced with the WORD under the cursor (see |WORD|)
+	<cexpr>    is replaced with the word under the cursor, including more
+		   to form a C expression.  E.g., when the cursor is on "arg"
+		   of "ptr->arg" then the result is "ptr->arg"; when the
+		   cursor is on "]" of "list[idx]" then the result is
+		   "list[idx]".  This is used for |v:beval_text|.
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name

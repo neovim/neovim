@@ -1110,7 +1110,7 @@ int insert_reg(
 )
 {
   int retval = OK;
-  int allocated;
+  bool allocated;
 
   /*
    * It is possible to get into an endless loop by having CTRL-R a in
@@ -1187,82 +1187,92 @@ static void stuffescaped(const char *arg, int literally)
   }
 }
 
-/*
- * If "regname" is a special register, return TRUE and store a pointer to its
- * value in "argp".
- */
-int get_spec_reg(
+// If "regname" is a special register, return true and store a pointer to its
+// value in "argp".
+bool get_spec_reg(
     int regname,
     char_u **argp,
-    int *allocated,         /* return: TRUE when value was allocated */
-    int errmsg                     /* give error message when failing */
+    bool *allocated,        // return: true when value was allocated
+    bool errmsg             // give error message when failing
 )
 {
   size_t cnt;
 
   *argp = NULL;
-  *allocated = FALSE;
+  *allocated = false;
   switch (regname) {
   case '%':                     /* file name */
     if (errmsg)
       check_fname();            /* will give emsg if not set */
     *argp = curbuf->b_fname;
-    return TRUE;
+    return true;
 
-  case '#':                     /* alternate file name */
-    *argp = getaltfname(errmsg);                /* may give emsg if not set */
-    return TRUE;
+  case '#':                       // alternate file name
+    *argp = getaltfname(errmsg);  // may give emsg if not set
+    return true;
 
   case '=':                     /* result of expression */
     *argp = get_expr_line();
-    *allocated = TRUE;
-    return TRUE;
+    *allocated = true;
+    return true;
 
   case ':':                     /* last command line */
     if (last_cmdline == NULL && errmsg)
       EMSG(_(e_nolastcmd));
     *argp = last_cmdline;
-    return TRUE;
+    return true;
 
   case '/':                     /* last search-pattern */
     if (last_search_pat() == NULL && errmsg)
       EMSG(_(e_noprevre));
     *argp = last_search_pat();
-    return TRUE;
+    return true;
 
   case '.':                     /* last inserted text */
     *argp = get_last_insert_save();
-    *allocated = TRUE;
-    if (*argp == NULL && errmsg)
+    *allocated = true;
+    if (*argp == NULL && errmsg) {
       EMSG(_(e_noinstext));
-    return TRUE;
+    }
+    return true;
 
-  case Ctrl_F:                  /* Filename under cursor */
-  case Ctrl_P:                  /* Path under cursor, expand via "path" */
-    if (!errmsg)
-      return FALSE;
-    *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP
-        | (regname == Ctrl_P ? FNAME_EXP : 0), 1L, NULL);
-    *allocated = TRUE;
-    return TRUE;
+  case Ctrl_F:                  // Filename under cursor
+  case Ctrl_P:                  // Path under cursor, expand via "path"
+    if (!errmsg) {
+      return false;
+    }
+    *argp = file_name_at_cursor(
+        FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
+        1L, NULL);
+    *allocated = true;
+    return true;
 
-  case Ctrl_W:                  /* word under cursor */
-  case Ctrl_A:                  /* WORD (mnemonic All) under cursor */
-    if (!errmsg)
-      return FALSE;
+  case Ctrl_W:                  // word under cursor
+  case Ctrl_A:                  // WORD (mnemonic All) under cursor
+    if (!errmsg) {
+      return false;
+    }
     cnt = find_ident_under_cursor(argp, (regname == Ctrl_W
                                          ? (FIND_IDENT|FIND_STRING)
                                          : FIND_STRING));
     *argp = cnt ? vim_strnsave(*argp, cnt) : NULL;
-    *allocated = TRUE;
-    return TRUE;
+    *allocated = true;
+    return true;
+
+  case Ctrl_L:                  // Line under cursor
+    if (!errmsg) {
+      return false;
+    }
+
+    *argp = ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false);
+    return true;
 
   case '_':                     /* black hole: always empty */
     *argp = (char_u *)"";
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /// Paste a yank register into the command line.
@@ -2652,7 +2662,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   int lendiff = 0;
   pos_T old_pos;
   char_u      *insert_string = NULL;
-  int allocated = FALSE;
+  bool allocated = false;
   long cnt;
 
   if (flags & PUT_FIXINDENT)
@@ -2748,9 +2758,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
    * For special registers '%' (file name), '#' (alternate file name) and
    * ':' (last command line), etc. we have to create a fake yank register.
    */
-  if (get_spec_reg(regname, &insert_string, &allocated, TRUE)) {
-    if (insert_string == NULL)
+  if (get_spec_reg(regname, &insert_string, &allocated, true)) {
+    if (insert_string == NULL) {
       return;
+    }
   }
 
   if (!curbuf->terminal) {
@@ -4907,10 +4918,11 @@ void *get_reg_contents(int regname, int flags)
     return NULL;
 
   char_u *retval;
-  int allocated;
-  if (get_spec_reg(regname, &retval, &allocated, FALSE)) {
-    if (retval == NULL)
+  bool allocated;
+  if (get_spec_reg(regname, &retval, &allocated, false)) {
+    if (retval == NULL) {
       return NULL;
+    }
     if (allocated) {
       return get_reg_wrap_one_line(retval, flags);
     }

@@ -3290,17 +3290,18 @@ void restore_cmdline_alloc(char_u *p)
 /// @returns FAIL for failure, OK otherwise
 static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
-  long i;
   char_u              *arg;
   char_u              *p;
-  int allocated;
+  bool allocated;
   struct cmdline_info save_ccline;
 
   /* check for valid regname; also accept special characters for CTRL-R in
    * the command line */
   if (regname != Ctrl_F && regname != Ctrl_P && regname != Ctrl_W
-      && regname != Ctrl_A && !valid_yank_reg(regname, false))
+      && regname != Ctrl_A && regname != Ctrl_L
+      && !valid_yank_reg(regname, false)) {
     return FAIL;
+  }
 
   /* A register containing CTRL-R can cause an endless loop.  Allow using
    * CTRL-C to break the loop. */
@@ -3312,9 +3313,9 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
   /* Need to save and restore ccline.  And set "textlock" to avoid nasty
    * things like going to another buffer when evaluating an expression. */
   save_cmdline(&save_ccline);
-  ++textlock;
-  i = get_spec_reg(regname, &arg, &allocated, TRUE);
-  --textlock;
+  textlock++;
+  const bool i = get_spec_reg(regname, &arg, &allocated, true);
+  textlock--;
   restore_cmdline(&save_ccline);
 
   if (i) {
@@ -4760,6 +4761,7 @@ ExpandFromContext (
     } tab[] = {
       { EXPAND_COMMANDS, get_command_name, false, true },
       { EXPAND_BEHAVE, get_behave_arg, true, true },
+      { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
       { EXPAND_MESSAGES, get_messages_arg, true, true },
       { EXPAND_HISTORY, get_history_arg, true, true },
       { EXPAND_USER_COMMANDS, get_user_commands, false, true },
@@ -4787,6 +4789,7 @@ ExpandFromContext (
 #endif
       { EXPAND_ENV_VARS, get_env_name, true, true },
       { EXPAND_USER, get_users, true, false },
+      { EXPAND_ARGLIST, get_arglist_name, true, false },
     };
     int i;
 
