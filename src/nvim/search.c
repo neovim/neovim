@@ -571,7 +571,7 @@ int searchit(
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
       ptr = ml_get_buf(buf, pos->lnum, false);
-      if ((int)STRLEN(ptr) < pos->col) {
+      if ((int)STRLEN(ptr) <= pos->col) {
         start_char_len = 1;
       } else {
         start_char_len = utfc_ptr2len(ptr + pos->col);
