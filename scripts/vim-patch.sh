@@ -85,12 +85,12 @@ get_vim_sources() {
     git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
-    if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
+    cd "${VIM_SOURCE_DIR}"
+    if [[ "$(git rev-parse --show-toplevel)" != "${VIM_SOURCE_DIR}" ]]; then
       msg_err "${VIM_SOURCE_DIR} does not appear to be a git repository."
       echo "  Please remove it and try again."
       exit 1
     fi
-    cd "${VIM_SOURCE_DIR}"
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
     git pull &&
       msg_ok "Updated Vim sources." ||
@@ -202,7 +202,7 @@ get_vimpatch() {
   printf "Pre-processing patch...\n"
   preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
 
-  msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
+  msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
 }
 
 stage_patch() {
