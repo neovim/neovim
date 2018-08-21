@@ -1675,10 +1675,11 @@ void u_undo(int count)
     count = 1;
   }
 
-  if (vim_strchr(p_cpo, CPO_UNDO) == NULL)
+  if (vim_strchr(p_cpo, CPO_UNDO) == NULL) {
     undo_undoes = true;
-  else
+  } else {
     undo_undoes = !undo_undoes;
+  }
   u_doit(count, false, true);
 }
 
@@ -2020,11 +2021,9 @@ void undo_time(long step, bool sec, bool file, bool absolute)
   }
 
 found:
-  /* If we found it: Follow the path to go to where we want to be. */
+  // If we found it: Follow the path to go to where we want to be.
   if (uhp != NULL || target == 0) {
-    /*
-     * First go up the tree as much as needed.
-     */
+    // First go up the tree as much as needed.
     while (!got_int) {
       /* Do the change warning now, for the same reason as above. */
       change_warning(0);
@@ -2034,9 +2033,11 @@ found:
         uhp = curbuf->b_u_newhead;
       else
         uhp = uhp->uh_next.ptr;
-      if (uhp == NULL || (target > 0 && uhp->uh_walk != mark)
-          || (uhp->uh_seq == target && !above))
+      if (uhp == NULL
+          || (target > 0 && uhp->uh_walk != mark)
+          || (uhp->uh_seq == target && !above)) {
         break;
+      }
       curbuf->b_u_curhead = uhp;
       u_undoredo(true, true);
       if (target > 0) {
@@ -2428,12 +2429,14 @@ static void u_undo_end(
     if (absolute && curbuf->b_u_curhead->uh_next.ptr != NULL) {
       uhp = curbuf->b_u_curhead->uh_next.ptr;
       did_undo = false;
-    } else if (did_undo)
+    } else if (did_undo) {
       uhp = curbuf->b_u_curhead;
-    else
+    } else {
       uhp = curbuf->b_u_curhead->uh_next.ptr;
-  } else
+    }
+  } else {
     uhp = curbuf->b_u_newhead;
+  }
 
   if (uhp == NULL)
     *msgbuf = NUL;
