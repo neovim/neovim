@@ -1804,16 +1804,14 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
   u_undo_end(undo_undoes, false, quiet);
 }
 
-/*
- * Undo or redo over the timeline.
- * When "step" is negative go back in time, otherwise goes forward in time.
- * When "sec" is FALSE make "step" steps, when "sec" is TRUE use "step" as
- * seconds.
- * When "file" is TRUE use "step" as a number of file writes.
- * When "absolute" is TRUE use "step" as the sequence number to jump to.
- * "sec" must be FALSE then.
- */
-void undo_time(long step, int sec, int file, int absolute)
+// Undo or redo over the timeline.
+// When "step" is negative go back in time, otherwise goes forward in time.
+// When "sec" is false make "step" steps, when "sec" is true use "step" as
+// seconds.
+// When "file" is true use "step" as a number of file writes.
+// When "absolute" is true use "step" as the sequence number to jump to.
+// "sec" must be false then.
+void undo_time(long step, bool sec, bool file, bool absolute)
 {
   long target;
   long closest;
@@ -1825,8 +1823,8 @@ void undo_time(long step, int sec, int file, int absolute)
   int mark;
   int nomark;
   int round;
-  int dosec = sec;
-  int dofile = file;
+  bool dosec = sec;
+  bool dofile = file;
   bool above = false;
   bool did_undo = true;
 
@@ -1867,7 +1865,7 @@ void undo_time(long step, int sec, int file, int absolute)
         if (target <= 0)
           /* Go to before first write: before the oldest change. Use
            * the sequence number for that. */
-          dofile = FALSE;
+          dofile = false;
       } else {
         /* Moving forward to a newer write. */
         target = curbuf->b_u_save_nr_cur + step;
@@ -1875,7 +1873,7 @@ void undo_time(long step, int sec, int file, int absolute)
           /* Go to after last write: after the latest change. Use
            * the sequence number for that. */
           target = curbuf->b_u_seq_last + 1;
-          dofile = FALSE;
+          dofile = false;
         }
       }
     } else
@@ -2014,8 +2012,8 @@ void undo_time(long step, int sec, int file, int absolute)
     }
 
     target = closest_seq;
-    dosec = FALSE;
-    dofile = FALSE;
+    dosec = false;
+    dofile = false;
     if (step < 0) {
       above = true;             // stop above the header
     }
