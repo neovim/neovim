@@ -1820,7 +1820,7 @@ void undo_time(long step, int sec, int file, int absolute)
   long closest_start;
   long closest_seq = 0;
   long val;
-  u_header_T      *uhp;
+  u_header_T      *uhp = NULL;
   u_header_T      *last;
   int mark;
   int nomark;
@@ -1842,13 +1842,7 @@ void undo_time(long step, int sec, int file, int absolute)
   /* "target" is the node below which we want to be.
    * Init "closest" to a value we can't reach. */
   if (absolute) {
-    if (step == 0) {
-      // target 0 does not exist, got to 1 and above it.
-      target = 1;
-      above = true;
-    } else {
-      target = step;
-    }
+    target = step;
     closest = -1;
   } else {
     if (dosec) {
@@ -1905,6 +1899,11 @@ void undo_time(long step, int sec, int file, int absolute)
   }
   closest_start = closest;
   closest_seq = curbuf->b_u_seq_cur;
+
+  // When "target" is 0; Back to origin.
+  if (target == 0) {
+    goto found;
+  }
 
   /*
    * May do this twice:
@@ -2021,8 +2020,9 @@ void undo_time(long step, int sec, int file, int absolute)
       above = TRUE;             /* stop above the header */
   }
 
+found:
   /* If we found it: Follow the path to go to where we want to be. */
-  if (uhp != NULL) {
+  if (uhp != NULL || target == 0) {
     /*
      * First go up the tree as much as needed.
      */
@@ -2035,83 +2035,95 @@ void undo_time(long step, int sec, int file, int absolute)
         uhp = curbuf->b_u_newhead;
       else
         uhp = uhp->uh_next.ptr;
-      if (uhp == NULL || uhp->uh_walk != mark
+      if (uhp == NULL || (target > 0 && uhp->uh_walk != mark)
           || (uhp->uh_seq == target && !above))
         break;
       curbuf->b_u_curhead = uhp;
       u_undoredo(true, true);
-      uhp->uh_walk = nomark;            // don't go back down here
+      if (target > 0) {
+        uhp->uh_walk = nomark;          // don't go back down here
+      }
     }
 
-    /*
-     * And now go down the tree (redo), branching off where needed.
-     */
-    while (!got_int) {
-      /* Do the change warning now, for the same reason as above. */
-      change_warning(0);
+    // When back to origin, redo is not needed.
+    if (target > 0) {
+      // And now go down the tree (redo), branching off where needed.
+      while (!got_int) {
+        // Do the change warning now, for the same reason as above.
+        change_warning(0);
 
-      uhp = curbuf->b_u_curhead;
-      if (uhp == NULL)
-        break;
+        uhp = curbuf->b_u_curhead;
+        if (uhp == NULL) {
+          break;
+        }
 
-      /* Go back to the first branch with a mark. */
-      while (uhp->uh_alt_prev.ptr != NULL
-             && uhp->uh_alt_prev.ptr->uh_walk == mark)
-        uhp = uhp->uh_alt_prev.ptr;
-
-      /* Find the last branch with a mark, that's the one. */
-      last = uhp;
-      while (last->uh_alt_next.ptr != NULL
-             && last->uh_alt_next.ptr->uh_walk == mark)
-        last = last->uh_alt_next.ptr;
-      if (last != uhp) {
-        /* Make the used branch the first entry in the list of
-         * alternatives to make "u" and CTRL-R take this branch. */
-        while (uhp->uh_alt_prev.ptr != NULL)
+        // Go back to the first branch with a mark.
+        while (uhp->uh_alt_prev.ptr != NULL
+               && uhp->uh_alt_prev.ptr->uh_walk == mark) {
           uhp = uhp->uh_alt_prev.ptr;
-        if (last->uh_alt_next.ptr != NULL)
-          last->uh_alt_next.ptr->uh_alt_prev.ptr =
-            last->uh_alt_prev.ptr;
-        last->uh_alt_prev.ptr->uh_alt_next.ptr = last->uh_alt_next.ptr;
-        last->uh_alt_prev.ptr = NULL;
-        last->uh_alt_next.ptr = uhp;
-        uhp->uh_alt_prev.ptr = last;
+        }
 
-        if (curbuf->b_u_oldhead == uhp)
-          curbuf->b_u_oldhead = last;
-        uhp = last;
-        if (uhp->uh_next.ptr != NULL)
-          uhp->uh_next.ptr->uh_prev.ptr = uhp;
-      }
-      curbuf->b_u_curhead = uhp;
+        // Find the last branch with a mark, that's the one.
+        last = uhp;
+        while (last->uh_alt_next.ptr != NULL
+               && last->uh_alt_next.ptr->uh_walk == mark) {
+          last = last->uh_alt_next.ptr;
+        }
+        if (last != uhp) {
+          // Make the used branch the first entry in the list of
+          // alternatives to make "u" and CTRL-R take this branch.
+          while (uhp->uh_alt_prev.ptr != NULL) {
+            uhp = uhp->uh_alt_prev.ptr;
+          }
+          if (last->uh_alt_next.ptr != NULL) {
+            last->uh_alt_next.ptr->uh_alt_prev.ptr = last->uh_alt_prev.ptr;
+          }
+          last->uh_alt_prev.ptr->uh_alt_next.ptr = last->uh_alt_next.ptr;
+          last->uh_alt_prev.ptr = NULL;
+          last->uh_alt_next.ptr = uhp;
+          uhp->uh_alt_prev.ptr = last;
 
-      if (uhp->uh_walk != mark)
-        break;              /* must have reached the target */
+          if (curbuf->b_u_oldhead == uhp) {
+            curbuf->b_u_oldhead = last;
+          }
+          uhp = last;
+          if (uhp->uh_next.ptr != NULL) {
+            uhp->uh_next.ptr->uh_prev.ptr = uhp;
+          }
+        }
+        curbuf->b_u_curhead = uhp;
 
-      /* Stop when going backwards in time and didn't find the exact
-       * header we were looking for. */
-      if (uhp->uh_seq == target && above) {
-        curbuf->b_u_seq_cur = target - 1;
-        break;
-      }
+        if (uhp->uh_walk != mark) {
+          break;            // must have reached the target
+        }
 
-      u_undoredo(false, true);
+        // Stop when going backwards in time and didn't find the exact
+        // header we were looking for.
+        if (uhp->uh_seq == target && above) {
+          curbuf->b_u_seq_cur = target - 1;
+          break;
+        }
 
-      /* Advance "curhead" to below the header we last used.  If it
-      * becomes NULL then we need to set "newhead" to this leaf. */
-      if (uhp->uh_prev.ptr == NULL)
-        curbuf->b_u_newhead = uhp;
-      curbuf->b_u_curhead = uhp->uh_prev.ptr;
-      did_undo = FALSE;
+        u_undoredo(false, true);
 
-      if (uhp->uh_seq == target)        /* found it! */
-        break;
+        // Advance "curhead" to below the header we last used.  If it
+        // becomes NULL then we need to set "newhead" to this leaf.
+        if (uhp->uh_prev.ptr == NULL) {
+          curbuf->b_u_newhead = uhp;
+        }
+        curbuf->b_u_curhead = uhp->uh_prev.ptr;
+        did_undo = false;
 
-      uhp = uhp->uh_prev.ptr;
-      if (uhp == NULL || uhp->uh_walk != mark) {
-        // Need to redo more but can't find it...
-        internal_error("undo_time()");
-        break;
+        if (uhp->uh_seq == target) {    // found it!
+          break;
+        }
+
+        uhp = uhp->uh_prev.ptr;
+        if (uhp == NULL || uhp->uh_walk != mark) {
+          // Need to redo more but can't find it...
+          internal_error("undo_time()");
+          break;
+        }
       }
     }
   }
