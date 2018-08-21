@@ -2990,7 +2990,7 @@ void ui_ext_cmdline_block_append(int indent, const char *line)
   memcpy(buf + indent, line, strlen(line));  // -V575
 
   Array item = ARRAY_DICT_INIT;
-  ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+  ADD(item, INTEGER_OBJ(0));
   ADD(item, STRING_OBJ(cstr_as_string(buf)));
   Array content = ARRAY_DICT_INIT;
   ADD(content, ARRAY_OBJ(item));
