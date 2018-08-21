@@ -7577,10 +7577,11 @@ static void ex_bang(exarg_T *eap)
  */
 static void ex_undo(exarg_T *eap)
 {
-  if (eap->addr_count == 1)         /* :undo 123 */
-    undo_time(eap->line2, FALSE, FALSE, TRUE);
-  else
+  if (eap->addr_count == 1) {       // :undo 123
+    undo_time(eap->line2, false, false, true);
+  } else {
     u_undo(1);
+  }
 }
 
 static void ex_wundo(exarg_T *eap)
@@ -7613,8 +7614,8 @@ static void ex_redo(exarg_T *eap)
 static void ex_later(exarg_T *eap)
 {
   long count = 0;
-  int sec = FALSE;
-  int file = FALSE;
+  bool sec = false;
+  bool file = false;
   char_u      *p = eap->arg;
 
   if (*p == NUL)
@@ -7622,11 +7623,11 @@ static void ex_later(exarg_T *eap)
   else if (isdigit(*p)) {
     count = getdigits_long(&p);
     switch (*p) {
-    case 's': ++p; sec = TRUE; break;
-    case 'm': ++p; sec = TRUE; count *= 60; break;
-    case 'h': ++p; sec = TRUE; count *= 60 * 60; break;
-    case 'd': ++p; sec = TRUE; count *= 24 * 60 * 60; break;
-    case 'f': ++p; file = TRUE; break;
+    case 's': ++p; sec = true; break;
+    case 'm': ++p; sec = true; count *= 60; break;
+    case 'h': ++p; sec = true; count *= 60 * 60; break;
+    case 'd': ++p; sec = true; count *= 24 * 60 * 60; break;
+    case 'f': ++p; file = true; break;
     }
   }
 
@@ -7634,7 +7635,7 @@ static void ex_later(exarg_T *eap)
     EMSG2(_(e_invarg2), eap->arg);
   else
     undo_time(eap->cmdidx == CMD_earlier ? -count : count,
-        sec, file, FALSE);
+              sec, file, false);
 }
 
 /*
