@@ -5112,6 +5112,8 @@ file_name_in_line (
 {
   char_u      *ptr;
   size_t len;
+  bool in_type = true;
+  bool is_url = false;
 
   /*
    * search forward for what could be the start of a file name
@@ -5147,7 +5149,19 @@ file_name_in_line (
    */
   len = 0;
   while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
-         || ((options & FNAME_HYP) && path_is_url((char *)ptr + len))) {
+         || ((options & FNAME_HYP) && path_is_url((char *)ptr + len))
+         || (is_url && vim_strchr((char_u *)"?&=", ptr[len]) != NULL)) {
+    // After type:// we also include ?, & and = as valid characters, so that
+    // http://google.com?q=this&that=ok works.
+    if ((ptr[len] >= 'A' && ptr[len] <= 'Z')
+        || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
+      if (in_type && path_is_url((char *)ptr + len + 1)) {
+        is_url = true;
+      }
+    } else {
+      in_type = false;
+    }
+
     if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
       ++len;
