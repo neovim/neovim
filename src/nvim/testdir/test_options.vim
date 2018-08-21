@@ -339,3 +339,17 @@ func Test_copy_winopt()
   call assert_equal(4,&numberwidth)
   bw!
 endfunc
+
+func Test_shortmess_F()
+  new
+  call assert_match('\[No Name\]', execute('file'))
+  set shortmess+=F
+  call assert_match('\[No Name\]', execute('file'))
+  call assert_match('^\s*$', execute('file foo'))
+  call assert_match('foo', execute('file'))
+  set shortmess-=F
+  call assert_match('bar', execute('file bar'))
+  call assert_match('bar', execute('file'))
+  set shortmess&
+  bwipe
+endfunc
