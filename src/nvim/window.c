@@ -565,6 +565,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int before;
   int minheight;
   int wmh1;
+  bool did_set_fraction = false;
 
   if (flags & WSP_TOP)
     oldwin = firstwin;
@@ -729,6 +730,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * 'winfixheight' window.  Take them from a window above or below
      * instead, if possible. */
     if (oldwin->w_p_wfh) {
+      // Set w_fraction now so that the cursor keeps the same relative
+      // vertical position using the old height.
+      set_fraction(oldwin);
+      did_set_fraction = true;
+
       win_setheight_win(oldwin->w_height + new_size + STATUS_HEIGHT,
           oldwin);
       oldwin_height = oldwin->w_height;
@@ -843,7 +849,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   /* Set w_fraction now so that the cursor keeps the same relative
    * vertical position. */
-  set_fraction(oldwin);
+  if (!did_set_fraction) {
+    set_fraction(oldwin);
+  }
   wp->w_fraction = oldwin->w_fraction;
 
   if (flags & WSP_VERT) {
