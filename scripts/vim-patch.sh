@@ -86,7 +86,8 @@ get_vim_sources() {
     cd "${VIM_SOURCE_DIR}"
   else
     cd "${VIM_SOURCE_DIR}"
-    if [[ "$(git rev-parse --show-toplevel)" != "${VIM_SOURCE_DIR}" ]]; then
+    if ! [ -d ".git" ] \
+        && ! [ "$(git rev-parse --show-toplevel)" = "${VIM_SOURCE_DIR}" ]; then
       msg_err "${VIM_SOURCE_DIR} does not appear to be a git repository."
       echo "  Please remove it and try again."
       exit 1
