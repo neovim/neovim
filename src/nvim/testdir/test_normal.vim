@@ -2201,10 +2201,11 @@ func! Test_normal44_textobjects2()
 endfunc
 
 func! Test_normal45_drop()
-  if !has("dnd")
+  if !has('dnd')
     return
   endif
-  " basic test for :drop command
+
+  " basic test for drag-n-drop
   " unfortunately, without a gui, we can't really test much here,
   " so simply test that ~p fails (which uses the drop register)
   new

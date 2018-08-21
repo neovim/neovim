@@ -2352,6 +2352,7 @@ win_getid([{win} [, {tab}]])	Number	get |window-ID| for {win} in {tab}
 win_gotoid({expr})		Number	go to |window-ID| {expr}
 win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
 win_id2win({expr})		Number	get window nr from |window-ID|
+win_screenpos({nr})		List	get screen position of window {nr}
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
@@ -4473,8 +4474,10 @@ getwininfo([{winid}])					*getwininfo()*
 			variables	a reference to the dictionary with
 					window-local variables
 			width		window width
+			wincol		leftmost screen column of the window
 			winid		|window-ID|
 			winnr		window number
+			winrow		topmost screen column of the window
 
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
@@ -8182,6 +8185,14 @@ win_id2tabwin({expr}					*win_id2tabwin()*
 win_id2win({expr})					*win_id2win()*
 		Return the window number of window with ID {expr}.
 		Return 0 if the window cannot be found in the current tabpage.
+
+win_screenpos({nr})					*win_screenpos()*
+		Return the screen position of window {nr} as a list with two
+		numbers: [row, col].  The first window always has position
+		[1, 1].
+		{nr} can be the window number or the |window-ID|.
+		Return [0, 0] if the window cannot be found in the current
+		tabpage.
 
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
