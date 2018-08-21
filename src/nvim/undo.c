@@ -2386,8 +2386,8 @@ static void u_undoredo(int undo, bool do_buf_event)
 /// Otherwise, report the number of changes (this may be incorrect
 /// in some cases, but it's better than nothing).
 static void u_undo_end(
-    int did_undo,     ///< just did an undo
-    int absolute,     ///< used ":undo N"
+    bool did_undo,    ///< just did an undo
+    bool absolute,    ///< used ":undo N"
     bool quiet)
 {
   char        *msgstr;
@@ -2427,7 +2427,7 @@ static void u_undo_end(
     /* For ":undo N" we prefer a "after #N" message. */
     if (absolute && curbuf->b_u_curhead->uh_next.ptr != NULL) {
       uhp = curbuf->b_u_curhead->uh_next.ptr;
-      did_undo = FALSE;
+      did_undo = false;
     } else if (did_undo)
       uhp = curbuf->b_u_curhead;
     else
