@@ -1595,15 +1595,16 @@ void ex_file(exarg_T *eap)
   }
 
   if (*eap->arg != NUL || eap->addr_count == 1) {
-    if (rename_buffer(eap->arg) == FAIL)
+    if (rename_buffer(eap->arg) == FAIL) {
       return;
+    }
+    redraw_tabline = true;
   }
 
-  if (!shortmess(SHM_FILEINFO)) {
-    // print full file name if :cd used
+  // print file name if no argument or 'F' is not in 'shortmess'
+  if (*eap->arg == NUL || !shortmess(SHM_FILEINFO)) {
     fileinfo(false, false, eap->forceit);
   }
-  redraw_tabline = true;
 }
 
 /*
