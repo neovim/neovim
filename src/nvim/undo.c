@@ -122,7 +122,7 @@ static long u_newcount, u_oldcount;
  * When 'u' flag included in 'cpoptions', we behave like vi.  Need to remember
  * the action that "u" should do.
  */
-static int undo_undoes = FALSE;
+static bool undo_undoes = false;
 
 static int lastmark = 0;
 
@@ -591,7 +591,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   uep->ue_next = curbuf->b_u_newhead->uh_entry;
   curbuf->b_u_newhead->uh_entry = uep;
   curbuf->b_u_synced = false;
-  undo_undoes = FALSE;
+  undo_undoes = false;
 
 #ifdef U_DEBUG
   u_check(FALSE);
@@ -1676,7 +1676,7 @@ void u_undo(int count)
   }
 
   if (vim_strchr(p_cpo, CPO_UNDO) == NULL)
-    undo_undoes = TRUE;
+    undo_undoes = true;
   else
     undo_undoes = !undo_undoes;
   u_doit(count, false, true);
