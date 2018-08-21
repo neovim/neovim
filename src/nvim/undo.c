@@ -1827,8 +1827,8 @@ void undo_time(long step, int sec, int file, int absolute)
   int round;
   int dosec = sec;
   int dofile = file;
-  int above = FALSE;
-  int did_undo = TRUE;
+  bool above = false;
+  bool did_undo = true;
 
   /* First make sure the current undoable change is synced. */
   if (curbuf->b_u_synced == false)
@@ -2016,8 +2016,9 @@ void undo_time(long step, int sec, int file, int absolute)
     target = closest_seq;
     dosec = FALSE;
     dofile = FALSE;
-    if (step < 0)
-      above = TRUE;             /* stop above the header */
+    if (step < 0) {
+      above = true;             // stop above the header
+    }
   }
 
 found:
