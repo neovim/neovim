@@ -3955,7 +3955,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
     /* Don't count the last line break if 'noeol' and ('bin' or
      * 'nofixeol'). */
     if ((!buf->b_p_fixeol || buf->b_p_bin) && !buf->b_p_eol
-        && buf->b_ml.ml_line_count == lnum) {
+        && lnum > buf->b_ml.ml_line_count) {
       size -= ffdos + 1;
     }
   }
