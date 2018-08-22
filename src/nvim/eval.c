@@ -1210,8 +1210,12 @@ int call_vim_function(
     if (str_arg_only) {
       len = 0;
     } else {
-      // Recognize a number argument, the others must be strings.
+      // Recognize a number argument, the others must be strings. A dash
+      // is a string too.
       vim_str2nr(argv[i], NULL, &len, STR2NR_ALL, &n, NULL, 0);
+      if (len == 1 && *argv[i] == '-') {
+        len = 0;
+      }
     }
     if (len != 0 && len == (int)STRLEN(argv[i])) {
       argvars[i].v_type = VAR_NUMBER;
