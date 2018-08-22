@@ -64,7 +64,7 @@ local doautocmd = function(autocmd)
   end
 
   log.debug('Sending autocmd: ', autocmd)
-  -- return vim.api.nvim_command('silent doautocmd ' .. autocmd)
+  return vim.api.nvim_command('silent doautocmd ' .. autocmd)
 end
 
 --- Get the event string

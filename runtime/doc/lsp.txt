@@ -155,6 +155,10 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
 
     See |lsp#request()| for more information.
 
+    Example:
+
+autocmd CursorHold :lua require('lsp.plugin').client.request_async('textDocument/hover', {})
+
 ================================================================================
                                                          *lsp-default-callback*
 
