@@ -8,7 +8,58 @@ Neovim Language Server Protocol (LSP) API
 Neovim exposes a powerful API that conforms to Microsoft's published Language
 Server Protocol specification. The documentation can be found here:
 
-    https://github.com/Microsoft/language-server-protocol
+    https://microsoft.github.io/language-server-protocol/
+
+
+================================================================================
+                                                                  *lsp-server*
+
+Neovim only exposes a powerful API for the language server protocol. To get
+the real benefits of this API, a language server must be installed. Many
+examples can be found here:
+
+  https://microsoft.github.io/language-server-protocol/implementors/servers/
+
+After installing a language server to your machine, you must let Neovim know
+how to start and interact with that language server. To do so, use the
+following APIs:
+
+                                                             *lsp#server#add()*
+lsp#server#add({ftype}, {cmd}, {configuration}):
+    Used to add a language server.
+
+    This will add an autocmd that will start the server and handle any other
+    startup activities whenever the |FileType| event is triggered for {ftype}.
+
+    Parameters:~
+        {ftype}: A string or list of strings of filetypes to associate with
+        this server.
+
+        {cmd}: See |jobstart()| for information on cmd.
+
+        {configuration} (dictionary): Optional configuration for a server.
+            `name`        (string):   The name of the server
+            `callbacks`   (dict):     A dictionary of callbacks to configure the
+                                    server.
+
+              Available callbacks are:
+
+              `root_uri`: function(server) -> string.
+                This function returns a string to populate the `root_uri`
+                parameter in the initialize request for a server.
+
+                Example:~
+                TODO:  Update this example
+>
+  " Python example
+  call lsp#server#add('python', 'pyls')
+
+  " Typescript configuration
+  call lsp#server#add('typescript', {
+      \ 'name': 'ts', ....
+      \ 'callbacks': {
+        \ 'root_uri': { server -> lsp#util#find_root_uri('tsconfig.json') }
+      \ }})
 
 ================================================================================
                                                                   *lsp-request*
@@ -110,9 +161,10 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
 The following requests have built-in callbacks defined to handle the response
 in an idiomatic vim fashion.
 
-  textDocument/hover~
-  textDocument/references~
   textDocument/definition~
+  textDocument/hover~
+  textDocument/publishDiagnostics~
+  textDocument/references~
 
 ================================================================================
                                                                  *lsp-autocmds*
@@ -135,39 +187,6 @@ For the request 'textDocument/hover', the following autocmds will be fired:
 ================================================================================
                                                             *lsp-configuration*
 
-                                                             *lsp#server#add()*
-lsp#server#add({ftype}, {cmd}, {configuration}):
-    Used to add a language server.
-
-    This will add an autocmd that will start the server and handle any other
-    startup activities whenever the |FileType| event is triggered for {ftype}.
-
-    Parameters:~
-        {ftype}: A string or list of strings of filetypes to associate with
-        this server.
-
-        {cmd}: See |jobstart()| for information on cmd.
-
-        {configuration} (dictionary): Optional configuration for a server.
-            `name`        (string):   The name of the server
-            `callbacks`   (dict):     A dictionary of callbacks to configure the
-                                    server.
-
-              Available callbacks are:
-
-              `root_uri`: function(server) -> string.
-                This function returns a string to populate the `root_uri`
-                parameter in the initialize request for a server.
-
-                Example:~
-                TODO:  Update this example
->
-  " Typescript configuration
-  call lsp#server#add('typescript', {
-      \ 'name': 'ts', ....
-      \ 'callbacks': {
-        \ 'root_uri': { server -> lsp#util#find_root_uri('tsconfig.json') }
-      \ }})
 <
 
                                                               *lsp-add_check()*

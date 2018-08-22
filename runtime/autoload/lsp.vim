@@ -17,7 +17,7 @@ function! lsp#start(...) abort
     endif
   else
     echom '[LSP] Client for ' . start_filetype . ' has already started'
-  end
+  endif
 endfunction
 
 " TODO(tjdevries): Make sure this works correctly
