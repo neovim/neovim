@@ -33,7 +33,6 @@
 #include "nvim/os/input.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
-#define log_client_msg(...)
 #define log_server_msg(...)
 #endif
 
@@ -246,7 +245,10 @@ static void parse_msgpack(Channel *channel)
   while ((result = msgpack_unpacker_next(channel->rpc.unpacker, &unpacked)) ==
          MSGPACK_UNPACK_SUCCESS) {
     bool is_response = is_rpc_response(&unpacked.data);
-    log_client_msg(channel->id, !is_response, unpacked.data);
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+    log_client_msg(DEBUG_LOG_LEVEL, channel->id, !is_response,
+                   unpacked.data);
+#endif
 
     if (is_response) {
       uint64_t response_id;
@@ -306,9 +308,13 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                          &out_buffer))) {
       char buf[256];
       snprintf(buf, sizeof(buf),
-               "ch %" PRIu64 " sent an invalid message, closed.",
+               "ch %" PRIu64 ": got invalid message; closing",
                channel->id);
-      call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      bool closed = call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      if (!closed) {
+        ELOG("ch %" PRIu64 ": failed to close", channel->id);
+      }
+      log_client_msg(ERROR_LOG_LEVEL, channel->id, false, *request);
     }
     api_clear_error(&error);
     return;
@@ -596,9 +602,9 @@ static void complete_call(msgpack_object *obj, Channel *channel)
   }
 }
 
-static void call_set_error(Channel *channel, char *msg, int loglevel)
+static bool call_set_error(Channel *channel, char *msg, int loglevel)
 {
-  LOG(loglevel, "RPC: %s", msg);
+  LOG(loglevel, true, "RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
@@ -607,7 +613,7 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
-  channel_close(channel->id, kChannelPartRpc, NULL);
+  return channel_close(channel->id, kChannelPartRpc, NULL);
 }
 
 static WBuffer *serialize_request(uint64_t channel_id,
@@ -666,12 +672,12 @@ Dictionary rpc_client_info(Channel *chan)
   return copy_dictionary(chan->rpc.info);
 }
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 #define REQ "[request]  "
 #define RES "[response] "
 #define NOT "[notify]   "
 #define ERR "[error]    "
 
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 // Cannot define array with negative offsets, so this one is needed to be added
 // to MSGPACK_UNPACK_\* values.
 #define MUR_OFF 2
@@ -720,12 +726,17 @@ static void log_server_msg(uint64_t channel_id,
     }
   }
 }
+#endif
 
-static void log_client_msg(uint64_t channel_id,
+static void log_client_msg(int loglevel,
+                           uint64_t channel_id,
                            bool is_request,
                            msgpack_object msg)
 {
-  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
+  if (loglevel < MIN_LOG_LEVEL) {
+    return;
+  }
+  LOG(loglevel, false, "RPC <-ch %" PRIu64 ": ", channel_id);
   log_lock();
   FILE *f = open_log_file();
   fprintf(f, is_request ? REQ : RES);
@@ -734,11 +745,10 @@ static void log_client_msg(uint64_t channel_id,
 
 static void log_msg_close(FILE *f, msgpack_object msg)
 {
-  msgpack_object_print(f, msg);
+  msgpack_object_print(f, msg);  // Dump the entire message contents.
   fputc('\n', f);
   fflush(f);
   fclose(f);
   log_unlock();
 }
-#endif
 
