@@ -205,7 +205,11 @@ void channel_create_event(Channel *chan, const char *ext_source)
   // to pretty print top level dict in defined order
   (void)object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
   char *str = encode_tv2json(&tv, NULL);
-  ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
+  ILOG("new channel %" PRIu64 " (%s%s) : %s",
+       chan->id,
+       chan->streamtype == kChannelStreamInternal ? "loopback, " : "",
+       source,
+       str);
   xfree(str);
   api_free_dictionary(info);
 

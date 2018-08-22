@@ -68,7 +68,7 @@ void rpc_start(Channel *channel)
     Stream *out = channel_outstream(channel);
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
     Stream *in = channel_instream(channel);
-    DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
+    DLOG("RPC ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
 #endif
 
     rstream_start(out, receive_msgpack, channel);
