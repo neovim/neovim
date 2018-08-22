@@ -434,8 +434,7 @@ void flush_buffers(int flush_typeahead)
      * of an escape sequence.
      * In an xterm we get one char at a time and we have to get them all.
      */
-    while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L,
-               typebuf.tb_change_cnt) != 0)
+    while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L) != 0)
       ;
     typebuf.tb_off = MAXMAPLEN;
     typebuf.tb_len = 0;
@@ -1698,8 +1697,7 @@ static int vgetorpeek(int advance)
         keylen = 0;
         if (got_int) {
           /* flush all input */
-          c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L,
-              typebuf.tb_change_cnt);
+          c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
           /*
            * If inchar() returns TRUE (script file was active) or we
            * are inside a mapping, get out of insert mode.
@@ -2085,8 +2083,7 @@ static int vgetorpeek(int advance)
                    && (p_timeout
                        || (keylen == KEYLEN_PART_KEY && p_ttimeout))
                    && (c = inchar(typebuf.tb_buf + typebuf.tb_off
-                           + typebuf.tb_len, 3, 25L,
-                           typebuf.tb_change_cnt)) == 0) {
+                                  + typebuf.tb_len, 3, 25L)) == 0) {
           colnr_T col = 0, vcol;
           char_u      *ptr;
 
@@ -2269,7 +2266,7 @@ static int vgetorpeek(int advance)
                ? -1L
                : ((keylen == KEYLEN_PART_KEY && p_ttm >= 0)
                   ? p_ttm
-                  : p_tm)), typebuf.tb_change_cnt);
+                  : p_tm)));
 
         if (i != 0)
           pop_showcmd();
@@ -2350,16 +2347,15 @@ static int vgetorpeek(int advance)
  *  Return the number of obtained characters.
  *  Return -1 when end of input script reached.
  */
-int 
-inchar (
+int inchar(
     char_u *buf,
     int maxlen,
-    long wait_time,                     /* milli seconds */
-    int tb_change_cnt
+    long wait_time                      // milli seconds
 )
 {
   int len = 0;  // Init for GCC.
   int retesc = false;  // Return ESC with gotint.
+  const int tb_change_cnt = typebuf.tb_change_cnt;
 
   if (wait_time == -1L || wait_time > 100L) {
     // flush output before waiting
@@ -2430,8 +2426,17 @@ inchar (
     len = os_inchar(buf, maxlen / 3, (int)wait_time, tb_change_cnt);
   }
 
+  // If the typebuf was changed further down, it is like nothing was added by
+  // this call.
   if (typebuf_changed(tb_change_cnt)) {
     return 0;
+  }
+
+  // Note the change in the typeahead buffer, this matters for when
+  // vgetorpeek() is called recursively, e.g. using getchar(1) in a timer
+  // function.
+  if (len > 0 && ++typebuf.tb_change_cnt == 0) {
+    typebuf.tb_change_cnt = 1;
   }
 
   return fix_input_buffer(buf, len);
