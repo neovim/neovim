@@ -6524,11 +6524,17 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
+  const int save_msg_row = msg_row;
+  const int save_msg_col = msg_col;
+
     msg_pos_mode();
     if (Recording) {
       recording_mode(HL_ATTR(HLF_CM));
     }
     msg_clr_eos();
+
+  msg_col = save_msg_col;
+  msg_row = save_msg_row;
 }
 
 static void recording_mode(int attr)
