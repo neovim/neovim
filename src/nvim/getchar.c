@@ -434,8 +434,8 @@ void flush_buffers(int flush_typeahead)
      * of an escape sequence.
      * In an xterm we get one char at a time and we have to get them all.
      */
-    while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L) != 0)
-      ;
+    while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L) != 0) {
+    }
     typebuf.tb_off = MAXMAPLEN;
     typebuf.tb_len = 0;
     // Reset the flag that text received from a client or from feedkeys()
@@ -1696,21 +1696,20 @@ static int vgetorpeek(int advance)
           os_breakcheck();                      /* check for CTRL-C */
         keylen = 0;
         if (got_int) {
-          /* flush all input */
+          // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
-          /*
-           * If inchar() returns TRUE (script file was active) or we
-           * are inside a mapping, get out of insert mode.
-           * Otherwise we behave like having gotten a CTRL-C.
-           * As a result typing CTRL-C in insert mode will
-           * really insert a CTRL-C.
-           */
+          // If inchar() returns TRUE (script file was active) or we
+          // are inside a mapping, get out of insert mode.
+          // Otherwise we behave like having gotten a CTRL-C.
+          // As a result typing CTRL-C in insert mode will
+          // really insert a CTRL-C.
           if ((c || typebuf.tb_maplen)
-              && (State & (INSERT + CMDLINE)))
+              && (State & (INSERT + CMDLINE))) {
             c = ESC;
-          else
+          } else {
             c = Ctrl_C;
-          flush_buffers(TRUE);                  /* flush all typeahead */
+          }
+          flush_buffers(true);                  // flush all typeahead
 
           if (advance) {
             /* Also record this character, it might be needed to
@@ -2073,17 +2072,17 @@ static int vgetorpeek(int advance)
         c = 0;
         new_wcol = curwin->w_wcol;
         new_wrow = curwin->w_wrow;
-        if (       advance
-                   && typebuf.tb_len == 1
-                   && typebuf.tb_buf[typebuf.tb_off] == ESC
-                   && !no_mapping
-                   && ex_normal_busy == 0
-                   && typebuf.tb_maplen == 0
-                   && (State & INSERT)
-                   && (p_timeout
-                       || (keylen == KEYLEN_PART_KEY && p_ttimeout))
-                   && (c = inchar(typebuf.tb_buf + typebuf.tb_off
-                                  + typebuf.tb_len, 3, 25L)) == 0) {
+        if (advance
+            && typebuf.tb_len == 1
+            && typebuf.tb_buf[typebuf.tb_off] == ESC
+            && !no_mapping
+            && ex_normal_busy == 0
+            && typebuf.tb_maplen == 0
+            && (State & INSERT)
+            && (p_timeout
+                || (keylen == KEYLEN_PART_KEY && p_ttimeout))
+            && (c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
+                           3, 25L)) == 0) {
           colnr_T col = 0, vcol;
           char_u      *ptr;
 
