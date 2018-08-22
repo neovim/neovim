@@ -12,11 +12,9 @@ local util = require('neovim.util')
 
 local Enum = require('neovim.meta').Enum
 
-local AUTOCMD = Enum({
+local AUTOCMD = Enum:new({
   AuGroup = 'LanguageServerProtocol',
 })
-
-
 
 
 local default_autocmds = {
@@ -66,7 +64,7 @@ local doautocmd = function(autocmd)
   end
 
   log.debug('Sending autocmd: ', autocmd)
-  return vim.api.nvim_command('silent doautocmd ' .. autocmd)
+  -- return vim.api.nvim_command('silent doautocmd ' .. autocmd)
 end
 
 --- Get the event string
@@ -79,7 +77,7 @@ local get_autocmd_event_name = function(autocmd_item, autocmd_pattern)
 
   local autocmd_string
   if type(autocmd_item) == 'string' then
-    autocmd_string = autocmd_item .. autocmd_pattern
+    autocmd_string = autocmd_item .. ' ' .. autocmd_pattern
   elseif type(autocmd_item == 'table') then
     autocmd_string = table.concat(autocmd_item, ' ')
   else
@@ -102,7 +100,7 @@ local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern
   end
 
   local command = string.format(
-    [[autocmd %s nested lua require('lsp.plugin').client.request('%s')]],
+    [[silent! autocmd %s nested lua require('lsp.plugin').client.request('%s')]],
     autocmd_event,
     request_name
   )
@@ -129,6 +127,7 @@ local export_autocmds = function(autocmd_table, autocmd_pattern)
 
   for request_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
+      print(request_name, autocmd_item, autocmd_pattern)
       nvim_enable_autocmd(request_name, autocmd_item, autocmd_pattern)
     end
   end
@@ -158,6 +157,8 @@ local initialize_autocmds = function()
   if __has_initialized then
     return
   end
+
+  __has_initialized = true
 
   vim.api.nvim_command('augroup ' .. AUTOCMD.AuGroup)
   vim.api.nvim_command('autocmd!')

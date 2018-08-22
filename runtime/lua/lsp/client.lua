@@ -50,8 +50,6 @@ client.new = function(name, ft, cmd)
 
   -- TODO: I'm a little concerned about the milliseconds after starting up the job.
   -- Not sure if we'll register ourselves faster than we will get stdin or out that we want...
-
-  vim.api.nvim_set_var('test', cmd)
   local job_id = vim.api.nvim_call_function('lsp#job#start', { cmd })
 
   assert(job_id)
@@ -91,9 +89,10 @@ client.new = function(name, ft, cmd)
 end
 
 client.initialize = function(self)
-  local result = self:request('initialize', nil, function(_, data) return data.capabilities end)
-
-  self.capabilities = result
+  local result = self:request_async('initialize', nil, function(_, data) 
+    self.capabilities = data.capabilities
+    return data.capabilities
+  end)
 
   return result
 end
