@@ -100,7 +100,7 @@ local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern
   end
 
   local command = string.format(
-    [[silent! autocmd %s nested lua require('lsp.plugin').client.request('%s')]],
+    [[silent! autocmd %s nested lua require('lsp.plugin').client.request_async('%s')]],
     autocmd_event,
     request_name
   )
@@ -111,9 +111,9 @@ local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern
     return
   end
 
-  if not util.table.is_empty(default_autocmds[request_name]) then
-    table.insert(default_autocmds[request_name], autocmd_item)
-  end
+  -- if not util.table.is_empty(default_autocmds[request_name]) then
+  --   table.insert(default_autocmds[request_name], autocmd_item)
+  -- end
 end
 
 --- Export the autocmds from the table
