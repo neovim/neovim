@@ -264,3 +264,27 @@ func Test_default_term()
   call assert_match('nvim', out)
   let $TERM = save_term
 endfunc
+
+func Test_zzz_startinsert()
+  " Test :startinsert
+  call writefile(['123456'], 'Xtestout')
+  let after = [
+	\ ':startinsert',
+  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ ]
+  if RunVim([], after, 'Xtestout')
+    let lines = readfile('Xtestout')
+    call assert_equal(['foobar123456'], lines)
+  endif
+  " Test :startinsert!
+  call writefile(['123456'], 'Xtestout')
+  let after = [
+	\ ':startinsert!',
+  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ ]
+  if RunVim([], after, 'Xtestout')
+    let lines = readfile('Xtestout')
+    call assert_equal(['123456foobar'], lines)
+  endif
+  call delete('Xtestout')
+endfunc
