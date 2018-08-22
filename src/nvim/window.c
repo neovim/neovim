@@ -2337,14 +2337,14 @@ winframe_remove (
   return wp;
 }
 
-/*
- * Find out which frame is going to get the freed up space when "win" is
- * closed.
- * if 'splitbelow'/'splitleft' the space goes to the window above/left.
- * if 'nosplitbelow'/'nosplitleft' the space goes to the window below/right.
- * This makes opening a window and closing it immediately keep the same window
- * layout.
- */
+// Return a pointer to the frame that will receive the empty screen space that
+// is left over after "win" is closed.
+//
+// If 'splitbelow' or 'splitright' is set, the space goes above or to the left
+// by default.  Otherwise, the free space goes below or to the right.  The
+// result is that opening a window and then immediately closing it will
+// preserve the initial window layout.  The 'wfh' and 'wfw' settings are
+// respected when possible.
 static frame_T *
 win_altframe (
     win_T *win,
@@ -2352,20 +2352,40 @@ win_altframe (
 )
 {
   frame_T     *frp;
-  int b;
 
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin)
-    /* Last window in this tab page, will go to next tab page. */
+  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
     return alt_tabpage()->tp_curwin->w_frame;
+  }
 
   frp = win->w_frame;
-  if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_ROW)
-    b = p_spr;
-  else
-    b = p_sb;
-  if ((!b && frp->fr_next != NULL) || frp->fr_prev == NULL)
+
+  if (frp->fr_prev == NULL) {
     return frp->fr_next;
-  return frp->fr_prev;
+  }
+  if (frp->fr_next == NULL) {
+    return frp->fr_prev;
+  }
+
+  frame_T *target_fr = frp->fr_next;
+  frame_T *other_fr  = frp->fr_prev;
+  if (p_spr || p_sb) {
+    target_fr = frp->fr_prev;
+    other_fr  = frp->fr_next;
+  }
+
+  // If 'wfh' or 'wfw' is set for the target and not for the alternate
+  // window, reverse the selection.
+  if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_ROW) {
+    if (frame_fixed_width(target_fr) && !frame_fixed_width(other_fr)) {
+      target_fr = other_fr;
+    }
+  } else {
+    if (frame_fixed_height(target_fr) && !frame_fixed_height(other_fr)) {
+      target_fr = other_fr;
+    }
+  }
+
+  return target_fr;
 }
 
 /*
