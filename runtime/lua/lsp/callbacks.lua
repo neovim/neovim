@@ -298,7 +298,7 @@ CallbackMapping.textDocument.hover = default_callback_object(function(success, d
       long_string = data.contents
     end
 
-    vim.api.nvim_command('echon "' .. long_string .. '"')
+    vim.api.nvim_out_write(long_string .. '\n')
     return long_string
   end
 
