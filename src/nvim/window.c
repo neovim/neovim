@@ -565,6 +565,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int before;
   int minheight;
   int wmh1;
+  bool did_set_fraction = false;
 
   if (flags & WSP_TOP)
     oldwin = firstwin;
@@ -729,6 +730,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * 'winfixheight' window.  Take them from a window above or below
      * instead, if possible. */
     if (oldwin->w_p_wfh) {
+      // Set w_fraction now so that the cursor keeps the same relative
+      // vertical position using the old height.
+      set_fraction(oldwin);
+      did_set_fraction = true;
+
       win_setheight_win(oldwin->w_height + new_size + STATUS_HEIGHT,
           oldwin);
       oldwin_height = oldwin->w_height;
@@ -843,8 +849,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   /* Set w_fraction now so that the cursor keeps the same relative
    * vertical position. */
-  if (oldwin->w_height > 0)
+  if (!did_set_fraction) {
     set_fraction(oldwin);
+  }
   wp->w_fraction = oldwin->w_fraction;
 
   if (flags & WSP_VERT) {
@@ -2330,14 +2337,14 @@ winframe_remove (
   return wp;
 }
 
-/*
- * Find out which frame is going to get the freed up space when "win" is
- * closed.
- * if 'splitbelow'/'splitleft' the space goes to the window above/left.
- * if 'nosplitbelow'/'nosplitleft' the space goes to the window below/right.
- * This makes opening a window and closing it immediately keep the same window
- * layout.
- */
+// Return a pointer to the frame that will receive the empty screen space that
+// is left over after "win" is closed.
+//
+// If 'splitbelow' or 'splitright' is set, the space goes above or to the left
+// by default.  Otherwise, the free space goes below or to the right.  The
+// result is that opening a window and then immediately closing it will
+// preserve the initial window layout.  The 'wfh' and 'wfw' settings are
+// respected when possible.
 static frame_T *
 win_altframe (
     win_T *win,
@@ -2345,20 +2352,40 @@ win_altframe (
 )
 {
   frame_T     *frp;
-  int b;
 
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin)
-    /* Last window in this tab page, will go to next tab page. */
+  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin) {
     return alt_tabpage()->tp_curwin->w_frame;
+  }
 
   frp = win->w_frame;
-  if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_ROW)
-    b = p_spr;
-  else
-    b = p_sb;
-  if ((!b && frp->fr_next != NULL) || frp->fr_prev == NULL)
+
+  if (frp->fr_prev == NULL) {
     return frp->fr_next;
-  return frp->fr_prev;
+  }
+  if (frp->fr_next == NULL) {
+    return frp->fr_prev;
+  }
+
+  frame_T *target_fr = frp->fr_next;
+  frame_T *other_fr  = frp->fr_prev;
+  if (p_spr || p_sb) {
+    target_fr = frp->fr_prev;
+    other_fr  = frp->fr_next;
+  }
+
+  // If 'wfh' or 'wfw' is set for the target and not for the alternate
+  // window, reverse the selection.
+  if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_ROW) {
+    if (frame_fixed_width(target_fr) && !frame_fixed_width(other_fr)) {
+      target_fr = other_fr;
+    }
+  } else {
+    if (frame_fixed_height(target_fr) && !frame_fixed_height(other_fr)) {
+      target_fr = other_fr;
+    }
+  }
+
+  return target_fr;
 }
 
 /*
@@ -4791,10 +4818,13 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
 #define FRACTION_MULT   16384L
 
 // Set wp->w_fraction for the current w_wrow and w_height.
+// Has no effect when the window is less than two lines.
 void set_fraction(win_T *wp)
 {
-  wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height / 2)
+  if (wp->w_height > 1) {
+    wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height / 2)
                    / (long)wp->w_height;
+  }
 }
 
 /*
@@ -5110,6 +5140,8 @@ file_name_in_line (
 {
   char_u      *ptr;
   size_t len;
+  bool in_type = true;
+  bool is_url = false;
 
   /*
    * search forward for what could be the start of a file name
@@ -5145,7 +5177,19 @@ file_name_in_line (
    */
   len = 0;
   while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
-         || ((options & FNAME_HYP) && path_is_url((char *)ptr + len))) {
+         || ((options & FNAME_HYP) && path_is_url((char *)ptr + len))
+         || (is_url && vim_strchr((char_u *)"?&=", ptr[len]) != NULL)) {
+    // After type:// we also include ?, & and = as valid characters, so that
+    // http://google.com?q=this&that=ok works.
+    if ((ptr[len] >= 'A' && ptr[len] <= 'Z')
+        || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
+      if (in_type && path_is_url((char *)ptr + len + 1)) {
+        is_url = true;
+      }
+    } else {
+      in_type = false;
+    }
+
     if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
       ++len;
