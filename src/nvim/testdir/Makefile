@@ -36,6 +36,7 @@ SCRIPTS ?= $(SCRIPTS_DEFAULT)
 NEW_TESTS ?= \
 	    test_arabic.res \
 	    test_autocmd.res \
+	    test_blockedit.res \
 	    test_bufwintabinfo.res \
 	    test_changedtick.res \
 	    test_charsearch.res \
