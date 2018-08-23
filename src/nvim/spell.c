@@ -1398,13 +1398,14 @@ spell_move_to (
       capcol = 0;
 
     // For checking first word with a capital skip white space.
-    if (capcol == 0)
+    if (capcol == 0) {
       capcol = (int)getwhitecols(line);
-    else if (curline && wp == curwin) {
+    } else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
       col = (int)getwhitecols(line);
-      if (check_need_cap(lnum, col))
+      if (check_need_cap(lnum, col)) {
         capcol = col;
+      }
 
       // Need to get the line again, may have looked at the previous
       // one.

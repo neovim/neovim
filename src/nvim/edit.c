@@ -6919,7 +6919,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         p = look + STRLEN(look);
       if ((try_match || try_match_word)
           && curwin->w_cursor.col >= (colnr_T)(p - look)) {
-        int match = FALSE;
+        bool match = false;
 
         if (keytyped == KEY_COMPLETE) {
           char_u      *s;
@@ -6944,28 +6944,30 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
               && (icase
                   ? mb_strnicmp(s, look, (size_t)(p - look))
                   : STRNCMP(s, look, p - look)) == 0)
-            match = TRUE;
-        } else
-        /* TODO: multi-byte */
-        if (keytyped == (int)p[-1] || (icase && keytyped < 256
-                                       && TOLOWER_LOC(keytyped) ==
-                                       TOLOWER_LOC((int)p[-1]))) {
-          line = get_cursor_pos_ptr();
-          assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
-          if ((curwin->w_cursor.col == (colnr_T)(p - look)
-               || !vim_iswordc(line[-(p - look) - 1]))
-              && (icase
-                  ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
-                  : STRNCMP(line - (p - look), look, p - look))
-              == 0)
-            match = TRUE;
+            match = true;
+        } else {
+          // TODO(@brammool): multi-byte
+          if (keytyped == (int)p[-1]
+              || (icase && keytyped < 256
+                  && TOLOWER_LOC(keytyped) == TOLOWER_LOC((int)p[-1]))) {
+            line = get_cursor_pos_ptr();
+            assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
+            if ((curwin->w_cursor.col == (colnr_T)(p - look)
+                 || !vim_iswordc(line[-(p - look) - 1]))
+                && (icase
+                    ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
+                    : STRNCMP(line - (p - look), look, p - look)) == 0) {
+              match = true;
+            }
+          }
         }
         if (match && try_match_word && !try_match) {
           /* "0=word": Check if there are only blanks before the
            * word. */
           if (getwhitecols(line) !=
-              (int)(curwin->w_cursor.col - (p - look)))
-            match = FALSE;
+              (int)(curwin->w_cursor.col - (p - look))) {
+            match = false;
+          }
         }
         if (match) {
           return true;

@@ -1409,8 +1409,9 @@ static pos_T *find_start_brace(void)
         && (pos = ind_find_start_CORS(NULL)) == NULL) {   // XXX
       break;
     }
-    if (pos != NULL)
+    if (pos != NULL) {
       curwin->w_cursor.lnum = pos->lnum;
+    }
   }
   curwin->w_cursor = cursor_save;
   return trypos;
@@ -2066,7 +2067,7 @@ int get_c_indent(void)
           }
           curwin->w_cursor.lnum = lnum;
 
-          /* Skip a comment or raw string. XXX */
+          // Skip a comment or raw string. XXX
           if ((trypos = ind_find_start_CORS(NULL)) != NULL) {
             lnum = trypos->lnum + 1;
             continue;
@@ -2588,10 +2589,9 @@ int get_c_indent(void)
             break;
           }
 
-          /*
-           * If we're in a comment or raw string now, skip to the start
-           * of it.
-           */					    /* XXX */
+          // If we're in a comment or raw string now, skip to the start
+          // of it.
+          // XXX
           if ((trypos = ind_find_start_CORS(&raw_string_start)) != NULL) {
             curwin->w_cursor.lnum = trypos->lnum + 1;
             curwin->w_cursor.col = 0;
@@ -3359,10 +3359,9 @@ term_again:
 
     l = get_cursor_line_ptr();
 
-    /*
-     * If we're in a comment or raw string now, skip to the start
-     * of it.
-     */						/* XXX */
+    // If we're in a comment or raw string now, skip to the start
+    // of it.
+    // XXX
     if ((trypos = ind_find_start_CORS(NULL)) != NULL) {
       curwin->w_cursor.lnum = trypos->lnum + 1;
       curwin->w_cursor.col = 0;
