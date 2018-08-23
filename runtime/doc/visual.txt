@@ -302,8 +302,8 @@ Visual-block Insert						*v_b_I*
 With a blockwise selection, I{string}<ESC> will insert {string} at the start
 of block on every line of the block, provided that the line extends into the
 block.  Thus lines that are short will remain unmodified.  TABs are split to
-retain visual columns.
-See |v_b_I_example|.
+retain visual columns.  Works only for adding text to a line, not for
+deletions.  See |v_b_I_example|.
 
 Visual-block Append						*v_b_A*
 With a blockwise selection, A{string}<ESC> will append {string} to the end of
@@ -319,6 +319,7 @@ See |v_b_A_example|.
 Note: "I" and "A" behave differently for lines that don't extend into the
 selected block.  This was done intentionally, so that you can do it the way
 you want.
+Works only for adding text to a line, not for deletions.
 
 Visual-block change						*v_b_c*
 All selected text in the block will be replaced by the same text string.  When

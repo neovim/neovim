@@ -68,9 +68,38 @@ func Test_cino_extern_c()
     call assert_equal(pair[2], getline(len(lines) + 1), 'Failed for "' . string(lines) . '"')
   endfor
 
-
-
   bwipe!
+endfunc
+
+func Test_cindent_rawstring()
+  new
+  setl cindent
+  call feedkeys("i" .
+          \ "int main() {\<CR>" .
+          \ "R\"(\<CR>" .
+          \ ")\";\<CR>" .
+          \ "statement;\<Esc>", "x")
+  call assert_equal("\tstatement;", getline(line('.')))
+  bw!
+endfunc
+
+func Test_cindent_expr()
+  new
+  func! MyIndentFunction()
+    return v:lnum == 1 ? shiftwidth() : 0
+  endfunc
+  setl expandtab sw=8 indentkeys+=; indentexpr=MyIndentFunction()
+  call setline(1, ['var_a = something()', 'b = something()'])
+  call cursor(1, 1)
+  call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
+  call assert_equal(['        var_a = something();', 'b = something();'], getline(1, '$'))
+
+  %d
+  call setline(1, ['                var_a = something()', '                b = something()'])
+  call cursor(1, 1)
+  call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
+  call assert_equal(['        var_a = something();', '                b = something()'], getline(1, '$'))
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
