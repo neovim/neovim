@@ -2014,7 +2014,7 @@ void op_insert(oparg_T *oap, long count1)
 {
   long ins_len, pre_textlen = 0;
   char_u              *firstline, *ins_text;
-  colnr_T ind_pre;
+  colnr_T ind_pre = 0;
   struct block_def bd;
   int i;
   pos_T t1;
