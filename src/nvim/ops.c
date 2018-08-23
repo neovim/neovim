@@ -2014,7 +2014,7 @@ void op_insert(oparg_T *oap, long count1)
 {
   long ins_len, pre_textlen = 0;
   char_u              *firstline, *ins_text;
-  colnr_T ind_pre, ind_post;
+  colnr_T ind_pre;
   struct block_def bd;
   int i;
   pos_T t1;
@@ -2095,14 +2095,6 @@ void op_insert(oparg_T *oap, long count1)
     oap->start = curbuf->b_op_start_orig;
   }
 
-  // if indent kicked in, the firstline might have changed
-  // but only do that, if the indent actually increased
-  ind_post = (colnr_T)getwhitecols_curline();
-  if (curbuf->b_op_start.col > ind_pre && ind_post > ind_pre) {
-    bd.textcol += ind_post - ind_pre;
-    bd.start_vcol += ind_post - ind_pre;
-  }
-
   /* If user has moved off this line, we don't know what to do, so do
    * nothing.
    * Also don't repeat the insert when Insert mode ended with CTRL-C. */
@@ -2111,6 +2103,14 @@ void op_insert(oparg_T *oap, long count1)
 
   if (oap->motion_type == kMTBlockWise) {
     struct block_def bd2;
+
+    // if indent kicked in, the firstline might have changed
+    // but only do that, if the indent actually increased
+    const colnr_T ind_post = (colnr_T)getwhitecols_curline();
+    if (curbuf->b_op_start.col > ind_pre && ind_post > ind_pre) {
+      bd.textcol += ind_post - ind_pre;
+      bd.start_vcol += ind_post - ind_pre;
+    }
 
     /* The user may have moved the cursor before inserting something, try
      * to adjust the block for that. */
