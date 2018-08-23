@@ -4506,7 +4506,7 @@ static int ins_complete(int c, bool enable_pum)
            * first non_blank in the line, if it is not a wordchar
            * include it to get a better pattern, but then we don't
            * want the "\\<" prefix, check it bellow */
-          compl_col = (colnr_T)(skipwhite(line) - line);
+          compl_col = (colnr_T)getwhitecols(line);
           compl_startpos.col = compl_col;
           compl_startpos.lnum = curwin->w_cursor.lnum;
           compl_cont_status &= ~CONT_SOL;             /* clear SOL if present */
@@ -4625,7 +4625,7 @@ static int ins_complete(int c, bool enable_pum)
         }
       }
     } else if (CTRL_X_MODE_LINE_OR_EVAL(ctrl_x_mode)) {
-      compl_col = (colnr_T)(skipwhite(line) - line);
+      compl_col = (colnr_T)getwhitecols(line);
       compl_length = (int)curs_col - (int)compl_col;
       if (compl_length < 0)             /* cursor in indent: empty pattern */
         compl_length = 0;
@@ -6963,8 +6963,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         if (match && try_match_word && !try_match) {
           /* "0=word": Check if there are only blanks before the
            * word. */
-          line = get_cursor_line_ptr();
-          if ((int)(skipwhite(line) - line) !=
+          if (getwhitecols(line) !=
               (int)(curwin->w_cursor.col - (p - look)))
             match = FALSE;
         }

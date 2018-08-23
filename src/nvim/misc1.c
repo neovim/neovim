@@ -884,8 +884,7 @@ open_line (
       && curbuf->b_p_lisp
       && curbuf->b_p_ai) {
     fixthisline(get_lisp_indent);
-    p = get_cursor_line_ptr();
-    ai_col = (colnr_T)(skipwhite(p) - p);
+    ai_col = (colnr_T)getwhitecols_curline();
   }
   /*
    * May do indenting after opening a new line.
@@ -898,8 +897,7 @@ open_line (
           ? KEY_OPEN_FORW
           : KEY_OPEN_BACK, ' ', linewhite(curwin->w_cursor.lnum))) {
     do_c_expr_indent();
-    p = get_cursor_line_ptr();
-    ai_col = (colnr_T)(skipwhite(p) - p);
+    ai_col = (colnr_T)getwhitecols_curline();
   }
   if (vreplace_mode != 0)
     State = vreplace_mode;

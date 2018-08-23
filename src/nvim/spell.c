@@ -1399,10 +1399,10 @@ spell_move_to (
 
     // For checking first word with a capital skip white space.
     if (capcol == 0)
-      capcol = (int)(skipwhite(line) - line);
+      capcol = (int)getwhitecols(line);
     else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
-      col = (int)(skipwhite(line) - line);
+      col = (int)getwhitecols(line);
       if (check_need_cap(lnum, col))
         capcol = col;
 
@@ -2976,7 +2976,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
 
   line = get_cursor_line_ptr();
   endcol = 0;
-  if ((int)(skipwhite(line) - line) >= (int)col) {
+  if (getwhitecols(line) >= (int)col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1)

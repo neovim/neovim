@@ -30,7 +30,7 @@
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"
-
+#include "nvim/cursor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.c.generated.h"
@@ -1463,6 +1463,18 @@ char_u *skipwhite(const char_u *q)
     p++;
   }
   return (char_u *)p;
+}
+
+// getwhitecols: return the number of whitespace
+// columns (bytes) at the start of a given line
+intptr_t getwhitecols_curline(void)
+{
+  return getwhitecols(get_cursor_line_ptr());
+}
+
+intptr_t getwhitecols(const char_u *p)
+{
+  return skipwhite(p) - p;
 }
 
 /// Skip over digits

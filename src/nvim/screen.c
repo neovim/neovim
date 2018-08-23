@@ -2462,7 +2462,7 @@ win_line (
   if (has_spell) {
     /* For checking first word with a capital skip white space. */
     if (cap_col == 0)
-      cap_col = (int)(skipwhite(line) - line);
+      cap_col = (int)getwhitecols(line);
 
     /* To be able to spell-check over line boundaries copy the end of the
      * current line into nextline[].  Above the start of the next line was
