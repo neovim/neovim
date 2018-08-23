@@ -1135,7 +1135,7 @@ There are ten types of registers:			*registers* *E354*
 5. three read-only registers ":, "., "%
 6. alternate buffer register "#
 7. the expression register "=
-8. The selection and drop registers "*, "+ and "~ 
+8. The selection registers "* and "+
 9. The black hole register "_
 10. Last search pattern register "/
 
@@ -1236,7 +1236,7 @@ If the "= register is used for the "p" command, the String is split up at <NL>
 characters.  If the String ends in a <NL>, it is regarded as a linewise
 register.
 
-8. Selection and drop registers "*, "+ and "~ 
+8. Selection registers "* and "+
 Use these registers for storing and retrieving the selected text for the GUI.
 See |quotestar| and |quoteplus|.  When the clipboard is not available or not
 working, the unnamed register is used instead.  For Unix systems and Mac OS X,
