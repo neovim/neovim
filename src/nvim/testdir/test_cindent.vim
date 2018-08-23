@@ -68,9 +68,18 @@ func Test_cino_extern_c()
     call assert_equal(pair[2], getline(len(lines) + 1), 'Failed for "' . string(lines) . '"')
   endfor
 
-
-
   bwipe!
 endfunc
 
+func! Test_cindent_rawstring()
+  new
+  setl cindent
+  call feedkeys("i" .
+          \ "int main() {\<CR>" .
+          \ "R\"(\<CR>" .
+          \ ")\";\<CR>" .
+          \ "statement;\<Esc>", "x")
+  call assert_equal("\tstatement;", getline(line('.')))
+  bw!
+endfunction
 " vim: shiftwidth=2 sts=2 expandtab
