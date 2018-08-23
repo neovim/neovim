@@ -2216,15 +2216,12 @@ showmatch(
 // sentence when found.  If the next sentence is found, return OK.  Return FAIL
 // otherwise.  See ":h sentence" for the precise definition of a "sentence"
 // text object.
-int findsent(int dir, long count)
+int findsent(Direction dir, long count)
 {
   pos_T pos, tpos;
   int c;
   int         (*func)(pos_T *);
-  int startlnum;
-  int noskip = FALSE;               /* do not skip blanks */
-  int cpo_J;
-  int found_dot;
+  bool noskip = false;              // do not skip blanks
 
   pos = curwin->w_cursor;
   if (dir == FORWARD)
@@ -2259,7 +2256,7 @@ int findsent(int dir, long count)
     }
 
     // go back to the previous non-white non-punctuation character
-    found_dot = false;
+    bool found_dot = false;
     while (c = gchar_pos(&pos), ascii_iswhite(c)
            || vim_strchr((char_u *)".!?)]\"'", c) != NULL) {
       tpos = pos;
@@ -2279,9 +2276,9 @@ int findsent(int dir, long count)
       decl(&pos);
     }
 
-    /* remember the line where the search started */
-    startlnum = pos.lnum;
-    cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
+    // remember the line where the search started
+    const int startlnum = pos.lnum;
+    const bool cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
 
     for (;; ) {                 /* find end of sentence */
       c = gchar_pos(&pos);
@@ -2309,7 +2306,7 @@ int findsent(int dir, long count)
       if ((*func)(&pos) == -1) {
         if (count)
           return FAIL;
-        noskip = TRUE;
+        noskip = true;
         break;
       }
     }
