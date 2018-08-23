@@ -217,3 +217,22 @@ function Test_CompleteDoneList()
   let s:called_completedone = 0
   au! CompleteDone
 endfunc
+
+func Test_omni_dash()
+  func Omni(findstart, base)
+    if a:findstart
+        return 5
+    else
+        echom a:base
+	return ['-help', '-v']
+    endif
+  endfunc
+  set omnifunc=Omni
+  new
+  exe "normal Gofind -\<C-x>\<C-o>"
+  call assert_equal("\n-\nmatch 1 of 2", execute(':2mess'))
+
+  bwipe!
+  delfunc Omni
+  set omnifunc=
+endfunc
