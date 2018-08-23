@@ -182,3 +182,78 @@ x
   norm it
   q!
 endfunc
+
+func Test_sentence()
+  enew!
+  call setline(1, 'A sentence.  A sentence?  A sentence!')
+
+  normal yis
+  call assert_equal('A sentence.', @")
+  normal yas
+  call assert_equal('A sentence.  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence?', @")
+  normal yas
+  call assert_equal('A sentence?  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence!', @")
+  normal yas
+  call assert_equal('  A sentence!', @")
+
+  normal 0
+  normal 2yis
+  call assert_equal('A sentence.  ', @")
+  normal 3yis
+  call assert_equal('A sentence.  A sentence?', @")
+  normal 2yas
+  call assert_equal('A sentence.  A sentence?  ', @")
+
+  %delete _
+endfunc
+
+func Test_sentence_with_quotes()
+  enew!
+  call setline(1, 'A "sentence."  A sentence.')
+
+  normal yis
+  call assert_equal('A "sentence."', @")
+  normal yas
+  call assert_equal('A "sentence."  ', @")
+
+  normal )
+
+  normal yis
+  call assert_equal('A sentence.', @")
+  normal yas
+  call assert_equal('  A sentence.', @")
+
+  %delete _
+endfunc
+
+func! Test_sentence_with_cursor_on_delimiter()
+  enew!
+  call setline(1, "A '([sentence.])'  A sentence.")
+
+  normal! 15|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 15|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  normal! 16|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 16|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  normal! 17|yis
+  call assert_equal("A '([sentence.])'", @")
+  normal! 17|yas
+  call assert_equal("A '([sentence.])'  ", @")
+
+  %delete _
+endfunc
