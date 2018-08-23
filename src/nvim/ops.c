@@ -2104,6 +2104,7 @@ void op_insert(oparg_T *oap, long count1)
 
   if (oap->motion_type == kMTBlockWise) {
     struct block_def bd2;
+    bool did_indent = false;
 
     // if indent kicked in, the firstline might have changed
     // but only do that, if the indent actually increased
@@ -2111,11 +2112,15 @@ void op_insert(oparg_T *oap, long count1)
     if (curbuf->b_op_start.col > ind_pre && ind_post > ind_pre) {
       bd.textcol += ind_post - ind_pre;
       bd.start_vcol += ind_post - ind_pre;
+      did_indent = true;
     }
 
-    /* The user may have moved the cursor before inserting something, try
-     * to adjust the block for that. */
-    if (oap->start.lnum == curbuf->b_op_start_orig.lnum && !bd.is_MAX) {
+    // The user may have moved the cursor before inserting something, try
+    // to adjust the block for that.  But only do it, if the difference
+    // does not come from indent kicking in.
+    if (oap->start.lnum == curbuf->b_op_start_orig.lnum
+        && !bd.is_MAX
+        && !did_indent) {
       if (oap->op_type == OP_INSERT
           && oap->start.col + oap->start.coladd
           != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
