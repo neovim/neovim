@@ -118,7 +118,7 @@ Instead, put the Python command in a function and call that function:
 Note that "EOF" must be at the start of the line.
 
 ==============================================================================
-2. The vim module					*python-vim*
+2. The vim module					*python-vim* *python2*
 
 Python code gets all of its access to vim (with one exception - see
 |python-output| below) via the "vim" module.  The vim module implements two
