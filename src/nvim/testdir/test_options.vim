@@ -355,3 +355,24 @@ func Test_shortmess_F()
   set shortmess&
   bwipe
 endfunc
+
+func Test_shortmess_F2()
+  e file1
+  e file2
+  call assert_match('file1', execute('bn', ''))
+  call assert_match('file2', execute('bn', ''))
+  set shortmess+=F
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  set hidden
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  set nohidden
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  set shortmess&
+  call assert_match('file1', execute('bn', ''))
+  call assert_match('file2', execute('bn', ''))
+  bwipe
+  bwipe
+endfunc
