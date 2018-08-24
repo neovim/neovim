@@ -2211,21 +2211,17 @@ showmatch(
   }
 }
 
-/*
- * findsent(dir, count) - Find the start of the next sentence in direction
- * "dir" Sentences are supposed to end in ".", "!" or "?" followed by white
- * space or a line break. Also stop at an empty line.
- * Return OK if the next sentence was found.
- */
-int findsent(int dir, long count)
+// Find the start of the next sentence, searching in the direction specified
+// by the "dir" argument.  The cursor is positioned on the start of the next
+// sentence when found.  If the next sentence is found, return OK.  Return FAIL
+// otherwise.  See ":h sentence" for the precise definition of a "sentence"
+// text object.
+int findsent(Direction dir, long count)
 {
   pos_T pos, tpos;
   int c;
   int         (*func)(pos_T *);
-  int startlnum;
-  int noskip = FALSE;               /* do not skip blanks */
-  int cpo_J;
-  int found_dot;
+  bool noskip = false;              // do not skip blanks
 
   pos = curwin->w_cursor;
   if (dir == FORWARD)
@@ -2259,30 +2255,30 @@ int findsent(int dir, long count)
       decl(&pos);
     }
 
-    // go back to the previous non-blank char
-    found_dot = false;
-    while ((c = gchar_pos(&pos)) == ' ' || c == '\t'
-           || (dir == BACKWARD
-               && vim_strchr((char_u *)".!?)]\"'", c) != NULL)) {
-      if (vim_strchr((char_u *)".!?", c) != NULL) {
-        /* Only skip over a '.', '!' and '?' once. */
-        if (found_dot)
-          break;
-        found_dot = TRUE;
-      }
-      if (decl(&pos) == -1) {
+    // go back to the previous non-white non-punctuation character
+    bool found_dot = false;
+    while (c = gchar_pos(&pos), ascii_iswhite(c)
+           || vim_strchr((char_u *)".!?)]\"'", c) != NULL) {
+      tpos = pos;
+      if (decl(&tpos) == -1 || (LINEEMPTY(tpos.lnum) && dir == FORWARD)) {
         break;
       }
-      // when going forward: Stop in front of empty line
-      if (LINEEMPTY(pos.lnum) && dir == FORWARD) {
-        incl(&pos);
-        goto found;
+      if (found_dot) {
+        break;
       }
+      if (vim_strchr((char_u *) ".!?", c) != NULL) {
+        found_dot = true;
+      }
+      if (vim_strchr((char_u *) ")]\"'", c) != NULL
+          && vim_strchr((char_u *) ".!?)]\"'", gchar_pos(&tpos)) == NULL) {
+        break;
+      }
+      decl(&pos);
     }
 
-    /* remember the line where the search started */
-    startlnum = pos.lnum;
-    cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
+    // remember the line where the search started
+    const int startlnum = pos.lnum;
+    const bool cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
 
     for (;; ) {                 /* find end of sentence */
       c = gchar_pos(&pos);
@@ -2310,7 +2306,7 @@ int findsent(int dir, long count)
       if ((*func)(&pos) == -1) {
         if (count)
           return FAIL;
-        noskip = TRUE;
+        noskip = true;
         break;
       }
     }
