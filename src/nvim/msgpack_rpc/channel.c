@@ -33,6 +33,7 @@
 #include "nvim/os/input.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
+#define log_client_msg(...)
 #define log_server_msg(...)
 #endif
 
@@ -205,6 +206,8 @@ void rpc_unsubscribe(uint64_t id, char *event)
   unsubscribe(channel, event);
 }
 
+/// Gets RPC messages (requests and responses sent by a client) from the
+/// underlying stream of a channel.
 static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
                             void *data, bool eof)
 {
@@ -247,10 +250,12 @@ end:
   channel_decref(channel);
 }
 
+/// Parses RPC messages (requests and responses sent by a client) from the
+/// underlying stream of `channel`.
+///
 /// @return false if msgpack or msgpack-RPC validation failed; else true.
 static bool parse_msgpack(Channel *channel)
 {
-  bool msgpack_valid = true;
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
   msgpack_unpack_return result;
@@ -259,10 +264,8 @@ static bool parse_msgpack(Channel *channel)
   while ((result = msgpack_unpacker_next(channel->rpc.unpacker, &unpacked)) ==
          MSGPACK_UNPACK_SUCCESS) {
     bool is_response = is_rpc_response(&unpacked.data);
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
     log_client_msg(DEBUG_LOG_LEVEL, channel->id, !is_response,
                    unpacked.data);
-#endif
 
     if (is_response) {
       uint64_t response_id;
@@ -279,10 +282,14 @@ static bool parse_msgpack(Channel *channel)
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
-      return msgpack_valid;
+      return true;
     }
 
-    msgpack_valid &= handle_request(channel, &unpacked.data);
+    if (!handle_request(channel, &unpacked.data)) {
+      // Bail out from this event loop iteration
+      msgpack_unpacked_destroy(&unpacked);
+      return false;
+    }
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
@@ -293,19 +300,19 @@ static bool parse_msgpack(Channel *channel)
   }
 
   if (result == MSGPACK_UNPACK_PARSE_ERROR) {
-    // See src/msgpack/unpack_template.h in msgpack source tree for
-    // causes for this error(search for 'goto _failed')
+    // See include/msgpack/unpack_template.h in msgpack source tree for
+    // causes for this error (search for "goto _failed").
     //
     // A not so uncommon cause for this might be deserializing objects with
     // a high nesting level: msgpack will break when its internal parse stack
     // size exceeds MSGPACK_EMBED_STACK_SIZE (defined as 32 by default)
-    send_error(channel, 0, "Invalid msgpack payload. "
-                           "This error can also happen when deserializing "
-                           "an object with high level of nesting");
-    msgpack_valid = false;
+    send_error(channel, 0,
+               "Invalid msgpack payload. (This can also happen when "
+               "deserializing an object with a high level of nesting.)");
+    return false;
   }
 
-  return msgpack_valid;
+  return true;
 }
 
 /// @return false if msgpack-RPC validation failed; true in all other cases,
@@ -693,12 +700,12 @@ Dictionary rpc_client_info(Channel *chan)
   return copy_dictionary(chan->rpc.info);
 }
 
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 #define REQ "[request]  "
 #define RES "[response] "
 #define NOT "[notify]   "
 #define ERR "[error]    "
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 // Cannot define array with negative offsets, so this one is needed to be added
 // to MSGPACK_UNPACK_\* values.
 #define MUR_OFF 2
@@ -747,7 +754,6 @@ static void log_server_msg(uint64_t channel_id,
     }
   }
 }
-#endif
 
 static void log_client_msg(int loglevel,
                            uint64_t channel_id,
@@ -772,4 +778,5 @@ static void log_msg_close(FILE *f, msgpack_object msg)
   fclose(f);
   log_unlock();
 }
+#endif
 

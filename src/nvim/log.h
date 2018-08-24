@@ -23,7 +23,7 @@
 #endif
 
 #define LOG(level, eol, ...) do_log((level), NULL, __func__, __LINE__, eol, \
-                               __VA_ARGS__)
+                                    __VA_ARGS__)
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 # undef DLOG
