@@ -2255,6 +2255,11 @@ static int vgetorpeek(int advance)
         /*
          * get a character: 3. from the user - get it
          */
+        if (typebuf.tb_len == 0) {
+          // timedout may have been set while waiting for a mapping
+          // that has a <Nop> RHS.
+          timedout = false;
+        }
         wait_tb_len = typebuf.tb_len;
         c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
             typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
