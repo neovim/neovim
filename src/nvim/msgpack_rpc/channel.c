@@ -224,19 +224,33 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
   DLOG("ch %" PRIu64 ": parsing %zu bytes from msgpack Stream: %p",
        channel->id, count, stream);
 
+  // Store part of the stream for error-reporting.
+  char buf[1024] = { 0 };
+  RBUFFER_EACH(rbuf, c, i) {
+    if (i >= (sizeof(buf) - 1)) {
+      break;
+    }
+    buf[i] = (c == '\0') ? '?' : c;
+  }
+
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->rpc.unpacker, count);
   rbuffer_read(rbuf, msgpack_unpacker_buffer(channel->rpc.unpacker), count);
   msgpack_unpacker_buffer_consumed(channel->rpc.unpacker, count);
 
-  parse_msgpack(channel);
+  if (!parse_msgpack(channel)) {
+    char *s = str2special_save(buf, false, false);
+    ELOG("RPC: ch %" PRIu64 ": got invalid message: %s", channel->id, s);
+  }
 
 end:
   channel_decref(channel);
 }
 
-static void parse_msgpack(Channel *channel)
+/// @return false if msgpack or msgpack-RPC validation failed; else true.
+static bool parse_msgpack(Channel *channel)
 {
+  bool msgpack_valid = true;
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
   msgpack_unpack_return result;
@@ -265,10 +279,10 @@ static void parse_msgpack(Channel *channel)
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
-      return;
+      return msgpack_valid;
     }
 
-    handle_request(channel, &unpacked.data);
+    msgpack_valid &= handle_request(channel, &unpacked.data);
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
@@ -288,18 +302,24 @@ static void parse_msgpack(Channel *channel)
     send_error(channel, 0, "Invalid msgpack payload. "
                            "This error can also happen when deserializing "
                            "an object with high level of nesting");
+    msgpack_valid = false;
   }
+
+  return msgpack_valid;
 }
 
-static void handle_request(Channel *channel, msgpack_object *request)
+/// @return false if msgpack-RPC validation failed; true in all other cases,
+///         including failed API validation.
+static bool handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
   uint64_t request_id;
   Error error = ERROR_INIT;
-  msgpack_rpc_validate(&request_id, request, &error);
 
+  // msgpack-RPC validation
+  msgpack_rpc_validate(&request_id, request, &error);
   if (ERROR_SET(&error)) {
-    // Validation failed, send response with error
+    // Failed msgpack-RPC validation, send error-response.
     if (channel_write(channel,
                       serialize_response(channel->id,
                                          request_id,
@@ -314,10 +334,9 @@ static void handle_request(Channel *channel, msgpack_object *request)
       if (!closed) {
         ELOG("ch %" PRIu64 ": failed to close", channel->id);
       }
-      log_client_msg(ERROR_LOG_LEVEL, channel->id, false, *request);
     }
     api_clear_error(&error);
-    return;
+    return false;
   }
 
   MsgpackRpcRequestHandler handler;
@@ -326,7 +345,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                         method->via.bin.size,
                                         &error);
 
-  // check method arguments
+  // API validation: check method arguments.
   Array args = ARRAY_DICT_INIT;
   if (!ERROR_SET(&error)
       && !msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
@@ -337,7 +356,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
     send_error(channel, request_id, error.msg);
     api_clear_error(&error);
     api_free_array(args);
-    return;
+    return true;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
@@ -359,6 +378,8 @@ static void handle_request(Channel *channel, msgpack_object *request)
   } else {
     multiqueue_put(channel->events, on_request_event, 1, evdata);
   }
+
+  return true;
 }
 
 static void on_request_event(void **argv)
