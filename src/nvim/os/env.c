@@ -457,12 +457,15 @@ void expand_env_esc(char_u *restrict srcp,
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }
-      *dst++ = *src++;
-      --dstlen;
+      if (dstlen > 0) {
+        *dst++ = *src++;
+        dstlen--;
 
-      if (prefix != NULL && src - prefix_len >= srcp
-          && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
-        at_start = true;
+        if (prefix != NULL
+            && src - prefix_len >= srcp
+            && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
+          at_start = true;
+        }
       }
     }
   }
