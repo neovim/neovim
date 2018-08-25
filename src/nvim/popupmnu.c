@@ -129,10 +129,10 @@ redo:
   }
 
   if (pvwin != NULL) {
-    if (pvwin->w_wrow < curwin->w_wrow) {
-      above_row = pvwin->w_wrow + pvwin->w_height;
-    } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
-      below_row = pvwin->w_wrow;
+    if (pvwin->w_winrow < curwin->w_winrow) {
+      above_row = pvwin->w_winrow + pvwin->w_height;
+    } else if (pvwin->w_winrow > curwin->w_winrow + curwin->w_height) {
+      below_row = pvwin->w_winrow;
     }
   }
 
