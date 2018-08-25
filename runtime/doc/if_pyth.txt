@@ -4,7 +4,7 @@
 		  VIM REFERENCE MANUAL    by Paul Moore
 
 
-The Python Interface to Vim				*python* *Python*
+The Python Interface to Vim				*if_pyth* *python* *Python*
 
 See |provider-python| for more information. {Nvim}
 

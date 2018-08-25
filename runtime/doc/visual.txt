@@ -70,10 +70,7 @@ position.
 			selected.
 
 						*CTRL-V* *blockwise-visual*
-[count]CTRL-V		Start Visual mode blockwise.  Note: Under Windows
-			CTRL-V could be mapped to paste text, it doesn't work
-			to start Visual mode then, see |CTRL-V-alternative|.
-			[count] is used as with `v` above.
+[count]CTRL-V		Start Visual mode blockwise.
 
 If you use <Esc>, click the left mouse button or use any command that
 does a jump to another buffer while in Visual mode, the highlighting stops

@@ -1083,7 +1083,7 @@ void nvim_set_client_info(uint64_t channel_id, String name,
 ///    -  "buffer"  buffer with connected |terminal| instance (optional)
 ///    -  "client"  information about the client on the other end of the
 ///                 RPC channel, if it has added it using
-///                 |nvim_set_client_info|. (optional)
+///                 |nvim_set_client_info()|. (optional)
 ///
 Dictionary nvim_get_chan_info(Integer chan, Error *err)
   FUNC_API_SINCE(4)
@@ -1097,7 +1097,7 @@ Dictionary nvim_get_chan_info(Integer chan, Error *err)
 /// Get information about all open channels.
 ///
 /// @returns Array of Dictionaries, each describing a channel with
-///          the format specified at |nvim_get_chan_info|.
+///          the format specified at |nvim_get_chan_info()|.
 Array nvim_list_chans(void)
   FUNC_API_SINCE(4)
 {

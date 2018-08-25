@@ -4,7 +4,7 @@
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-Automatic commands					*autocommand*
+Automatic commands					*autocmd* *autocommand*
 
 For a basic explanation, see section |40.3| in the user manual.
 
@@ -494,14 +494,14 @@ ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.
 				Sets these |v:event| keys:
 				    info
-				See |nvim_get_chan_info| for the format of the
-				info Dictionary.
+				See |nvim_get_chan_info()| for the format of
+				the info Dictionary.
 							*ChanOpen*
 ChanOpen			Just after a channel was opened.
 				Sets these |v:event| keys:
 				    info
-				See |nvim_get_chan_info| for the format of the
-				info Dictionary.
+				See |nvim_get_chan_info()| for the format of
+				the info Dictionary.
 							*CmdUndefined*
 CmdUndefined			When a user command is used but it isn't
 				defined.  Useful for defining a command only

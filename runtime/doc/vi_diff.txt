@@ -322,7 +322,7 @@ Scripts and Expressions.				|expression|
 	Debugging and profiling are supported. |debug-scripts| |profile|
 	If this is not enough, an interface is provided to |Python|.
 
-Viminfo.						|viminfo-file|
+Viminfo.
 	The command-line history, marks and registers can be stored in a file
 	that is read on startup.  This can be used to repeat a search command
 	or command-line command after exiting and restarting Vim.  It is also

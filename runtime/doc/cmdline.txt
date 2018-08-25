@@ -4,8 +4,8 @@
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-				*Cmdline-mode* *Command-line-mode*
-Command-line mode		*Cmdline* *Command-line* *mode-cmdline* *:*
+				*Cmdline-mode* *Command-line-mode* *Cmdline*
+Command-line mode		*cmdline* *Command-line* *mode-cmdline* *:*
 
 Command-line mode is used to enter Ex commands (":"), search patterns
 ("/" and "?"), and filter commands ("!").

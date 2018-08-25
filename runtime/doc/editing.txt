@@ -1225,9 +1225,6 @@ working directory, which in turn takes precedence over the global
 working directory.  If a local working directory (tab or window) does not
 exist, the next-higher scope in the hierarchy applies.
 
-Commands for changing the working directory can be suffixed with a bang "!"
-(e.g. |:cd!|) which is ignored, for compatibility with Vim.
-
 							*:cd* *E747* *E472*
 :cd[!]			On non-Unix systems: Print the current directory
 			name.  On Unix systems: Change the current directory

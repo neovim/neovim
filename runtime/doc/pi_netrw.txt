@@ -3719,8 +3719,6 @@ netrw:
 	   or
 	     http://vim.sourceforge.net/scripts/script.php?script_id=120
 
-	  Decho.vim is provided as a "vimball"; see |vimball-intro|.
-
 	2. Edit the <netrw.vim> file by typing: >
 
 		vim netrw.vim

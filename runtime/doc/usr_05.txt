@@ -323,8 +323,6 @@ Where can you find plugins?
 - They are sometimes posted in a Vim |maillist|.
 - You could write one yourself, see |write-plugin|.
 
-Some plugins come as a vimball archive, see |vimball|.
-
 
 USING A GLOBAL PLUGIN
 

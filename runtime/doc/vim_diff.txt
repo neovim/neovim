@@ -111,7 +111,7 @@ ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
 stability and allows those plugins to work without blocking the editor. Even
-"legacy" Python and Ruby plugins which use the old Vim interfaces (|if_py| and
+"legacy" Python and Ruby plugins which use the old Vim interfaces (|if_pyth|,
 |if_ruby|) run out-of-process.
 
 Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
@@ -182,7 +182,7 @@ Options:
   'display' flag `msgsep` to minimize scrolling when showing messages
   'guicursor' works in the terminal
   'fillchars' flags: `msgsep` (see 'display' above)
-	      and `eob` for |EndOfBuffer| marker
+	      and `eob` for |hl-EndOfBuffer| marker
   'inccommand' shows interactive results for |:substitute|-like commands
   'scrollback'
   'statusline' supports unlimited alignment sections
@@ -245,7 +245,7 @@ makes things faster. |:terminal| output is never throttled.
 4. Stringifyed infinite and NaN values now use |str2float()| and can be evaled
    back.
 5. (internal) Trying to print or stringify VAR_UNKNOWN in Vim results in 
-   nothing, |E908|, in Neovim it is internal error.
+   nothing, E908, in Nvim it is internal error.
 
 |json_decode()| behaviour changed:
 1. It may output |msgpack-special-dict|.
@@ -287,12 +287,11 @@ coerced to strings. See |id()| for more details, currently it uses
 
 Lua interface (|if_lua.txt|):
 
-- `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim 
+- `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim
   that prints `a` and `b` on separate lines, exactly like
   `:lua print("a\nb")` .
-- `:lua error('TEST')` will print “TEST” as the error in Vim and “E5105: Error 
-  while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
-  Neovim.
+- `:lua error('TEST')` emits the error “E5105: Error while calling lua chunk:
+  [string "<VimL compiled string>"]:1: TEST”, whereas Vim emits only “TEST”.
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Lua package.path and package.cpath are automatically updated according to
   'runtimepath': |lua-require|.
@@ -347,7 +346,7 @@ TUI:
   only 8 colours plus bright foreground on Linux VTs.
 
   Vim combines what is in its |builtin-terms| with what it reads from terminfo,
-  and has a |ttybuiltin| setting to control how that combination works.  Nvim
+  and has a 'ttybuiltin' setting to control how that combination works.  Nvim
   uses one or the other, it does not attempt to merge the two.
 
 VimL (Vim script) compatibility:
