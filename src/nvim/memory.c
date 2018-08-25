@@ -699,7 +699,7 @@ void free_all_mem(void)
   }
 
   // free screenlines (can't display anything now!)
-  free_screengrid(&default_grid);
+  screen_free_all_mem();
 
   clear_hl_tables(false);
   list_free_log();

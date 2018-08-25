@@ -3990,7 +3990,7 @@ void win_free_grid(win_T *wp, bool reinit)
     ui_call_grid_destroy(wp->w_grid.handle);
     wp->w_grid.handle = 0;
   }
-  free_screengrid(&wp->w_grid);
+  grid_free(&wp->w_grid);
   if (reinit) {
     // if a float is turned into a split and back into a float, the grid
     // data structure will be reused
@@ -4100,7 +4100,7 @@ void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
   assert(wp->w_grid.Rows >= 0);
-  wp->w_lines = xcalloc(wp->w_grid.Rows + 1, sizeof(wline_T));
+  wp->w_lines = xcalloc(MAX(wp->w_grid.Rows + 1, Rows), sizeof(wline_T));
 }
 
 /*

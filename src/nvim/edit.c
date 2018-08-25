@@ -1508,7 +1508,7 @@ void edit_putchar(int c, int highlight)
     if (curwin->w_p_rl) {
       pc_col += curwin->w_grid.Columns - 1 - curwin->w_wcol;
       if (has_mbyte) {
-        int fix_col = mb_fix_col(&curwin->w_grid, pc_col, pc_row);
+        int fix_col = grid_fix_col(&curwin->w_grid, pc_col, pc_row);
 
         if (fix_col != pc_col) {
           grid_putchar(&curwin->w_grid, ' ', pc_row, fix_col, attr);
@@ -1518,7 +1518,7 @@ void edit_putchar(int c, int highlight)
       }
     } else {
       pc_col += curwin->w_wcol;
-      if (mb_lefthalve(&curwin->w_grid, pc_row, pc_col))
+      if (grid_lefthalve(&curwin->w_grid, pc_row, pc_col))
         pc_status = PC_STATUS_LEFT;
     }
 

@@ -1823,32 +1823,6 @@ const char *mb_unescape(const char **const pp)
   return NULL;
 }
 
-/*
- * Return true if the character at "row"/"col" on the screen is the left side
- * of a double-width character.
- * Caller must make sure "row" and "col" are not invalid!
- */
-bool mb_lefthalve(ScreenGrid *grid, int row, int col)
-{
-  return utf_off2cells(grid, grid->LineOffset[row] + col,
-                       grid->LineOffset[row] + grid->Columns) > 1;
-}
-
-/*
- * Correct a position on the screen, if it's the right half of a double-wide
- * char move it to the left half.  Returns the corrected column.
- */
-int mb_fix_col(ScreenGrid *grid, int col, int row)
-{
-  col = check_col(grid, col);
-  row = check_row(grid, row);
-  if (grid->ScreenLines != NULL && col > 0
-      && grid->ScreenLines[grid->LineOffset[row] + col][0] == 0) {
-    return col - 1;
-  }
-  return col;
-}
-
 
 /*
  * Skip the Vim specific head of a 'encoding' name.
@@ -2524,24 +2498,4 @@ char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr,
   }
 
   return retval;
-}
-
-// Check bounds for column number
-static int check_col(ScreenGrid *grid, int col)
-{
-  if (col < 0)
-    return 0;
-  if (col >= grid->Columns)
-    return grid->Columns - 1;
-  return col;
-}
-
-// Check bounds for row number
-static int check_row(ScreenGrid *grid, int row)
-{
-  if (row < 0)
-    return 0;
-  if (row >= grid->Rows)
-    return grid->Rows - 1;
-  return row;
 }
