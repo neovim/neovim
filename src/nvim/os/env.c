@@ -187,6 +187,31 @@ void init_homedir(void)
 
   const char *var = os_getenv("HOME");
 
+#ifdef WIN32
+    // Typically, $HOME is not defined on Windows, unless the user has
+    // specifically defined it for Vim's sake. However, on Windows NT
+    // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
+    // each user. Try constructing $HOME from these.
+    if (var == NULL) {
+      const char *homedrive = os_getenv("HOMEDRIVE");
+      const char *homepath = os_getenv("HOMEPATH");
+      if (homepath == NULL) {
+        homepath = "\\";
+      }
+      if (homedrive != NULL
+          && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
+        snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
+        if (os_buf[0] != NUL) {
+          var = os_buf;
+        }
+      }
+    }
+    if (var == NULL) {
+      var = os_getenv("USERPROFILE");
+    }
+    homedir = xstrdup(var);
+#endif
+
 #ifdef UNIX
   // use uv_os_homedir only for unix systems
   // as uv_os_homedir checks %USERPROFILE% first then only %HOMEDRIVE%%HOMEPATH%  
@@ -218,31 +243,6 @@ void init_homedir(void)
     }
   }
   return;
-#endif
-
-#ifdef WIN32
-    // Typically, $HOME is not defined on Windows, unless the user has
-    // specifically defined it for Vim's sake. However, on Windows NT
-    // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
-    // each user. Try constructing $HOME from these.
-    if (var == NULL) {
-      const char *homedrive = os_getenv("HOMEDRIVE");
-      const char *homepath = os_getenv("HOMEPATH");
-      if (homepath == NULL) {
-        homepath = "\\";
-      }
-      if (homedrive != NULL
-          && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
-        snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
-        if (os_buf[0] != NUL) {
-          var = os_buf;
-        }
-      }
-    }
-    if (var == NULL) {
-      var = os_getenv("USERPROFILE");
-    }
-    homedir = xstrdup(var);
 #endif
 }
 
