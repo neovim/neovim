@@ -4,17 +4,14 @@
 " Last Change:	2017 Oct 19
 
 " If there already is an option window, jump to that one.
-if bufwinnr("option-window") > 0
-  let s:thiswin = winnr()
-  while 1
-    if @% == "option-window"
+let buf = bufnr('option-window')
+if buf >= 0
+  let winids = win_findbuf(buf)
+  if len(winids) > 0
+    if win_gotoid(winids[0]) == 1
       finish
     endif
-    wincmd w
-    if s:thiswin == winnr()
-      break
-    endif
-  endwhile
+  endif
 endif
 
 " Make sure the '<' flag is not included in 'cpoptions', otherwise <CR> would
@@ -141,8 +138,8 @@ while exists("b:current_syntax") && b:current_syntax == "help"
   endif
 endwhile
 
-" Open the window
-new option-window
+" Open the window.  $OPTWIN_CMD is set to "tab" for ":tab options".
+exe $OPTWIN_CMD . ' new option-window'
 setlocal ts=15 tw=0 noro buftype=nofile
 
 " Insert help and a "set" command for each option.
