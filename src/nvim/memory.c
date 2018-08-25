@@ -619,7 +619,6 @@ void free_all_mem(void)
 
   /* Obviously named calls. */
   free_all_autocmds();
-  free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
@@ -656,6 +655,9 @@ void free_all_mem(void)
 
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
+
+  // Free all option values.  Must come after closing windows.
+  free_all_options();
 
   free_cmdline_buf();
 
