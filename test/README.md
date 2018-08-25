@@ -3,7 +3,9 @@ Tests
 
 Tests are run by `/cmake/RunTests.cmake` file, using `busted`.
 
-For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight. 
+
+Depending on the presence of binaries (e.g., `xclip`) some tests will be ignored. You must compile with libintl to prevent `E319: The command is not available in this version` errors.
 
 ---
 
