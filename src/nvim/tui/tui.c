@@ -1191,7 +1191,8 @@ static void tui_option_set(UI *ui, String name, Object value)
 
 static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
                          Integer endcol, Integer clearcol, Integer clearattr,
-                         const schar_T *chunk, const sattr_T *attrs)
+                         Boolean wrap, const schar_T *chunk,
+                         const sattr_T *attrs)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
@@ -1211,6 +1212,21 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
                       cl_attrs);
     clear_region(ui, (int)linerow, (int)linerow, (int)endcol, (int)clearcol-1,
                  cl_attrs);
+  }
+
+  if (wrap && ui->width == grid->width && linerow + 1 < grid->height) {
+    // Only do line wrapping if the grid width is equal to the terminal
+    // width and the line continuation is within the grid.
+
+    if (endcol != grid->width) {
+      // Print the last cell of the row, if we haven't already done so.
+      cursor_goto(ui, (int)linerow, grid->width - 1);
+      print_cell(ui, &grid->cells[linerow][grid->width - 1]);
+    }
+
+    // Wrap the cursor over to the next line. The next line will be
+    // printed immediately without an intervening newline.
+    final_column_wrap(ui);
   }
 }
 
