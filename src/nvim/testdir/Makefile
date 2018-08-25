@@ -32,101 +32,24 @@ endif
 SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
-# Keep test_alot*.res as the last one, sort the others.
-NEW_TESTS ?= \
-	test_arabic.res \
-	test_autocmd.res \
-	test_blockedit.res \
-	test_bufwintabinfo.res \
-	test_changedtick.res \
-	test_charsearch.res \
-	test_cindent.res \
-	test_clientserver.res \
-	test_close_count.res \
-	test_cmdline.res \
-	test_command_count.res \
-	test_cscope.res \
-	test_curswant.res \
-	test_digraph.res \
-	test_edit.res \
-	test_erasebackword.res \
-	test_exists.res \
-	test_diffmode.res \
-	test_farsi.res \
-	test_file_size.res \
-	test_filter_map.res \
-	test_find_complete.res \
-	test_fixeol.res \
-	test_findfile.res \
-	test_fnameescape.res \
-	test_fold.res \
-	test_ga.res \
-	test_getvar.res \
-	test_glob2regpat.res \
-	test_gf.res \
-	test_gn.res \
-	test_hardcopy.res \
-	test_help_tagjump.res \
-	test_hide.res \
-	test_highlight.res \
-	test_history.res \
-	test_hlsearch.res \
-	test_increment.res \
-	test_increment_dbcs.res \
-	test_ins_complete.res \
-	test_lambda.res \
-	test_langmap.res \
-	test_let.res \
-	test_lineending.res \
-	test_listdict.res \
-	test_listchars.res \
-	test_makeencoding.res \
-	test_marks.res \
-	test_match.res \
-	test_matchadd_conceal.res \
-	test_mksession.res \
-	test_nested_function.res \
-	test_normal.res \
-	test_number.res \
-	test_options.res \
-	test_preview.res \
-	test_profile.res \
-	test_put.res \
-	test_python2.res \
-	test_python3.res \
-	test_quickfix.res \
-	test_quotestar.res \
-	test_recover.res \
-	test_registers.res \
-	test_retab.res \
-	test_scrollbind.res \
-	test_search.res \
-	test_signs.res \
-	test_smartindent.res \
-	test_spell.res \
-	test_stat.res \
-	test_startup.res \
-	test_substitute.res \
-	test_swap.res \
-	test_syntax.res \
-	test_system.res \
-	test_tab.res \
-	test_tabpage.res \
-	test_textobjects.res \
-	test_timers.res \
-	test_undo.res \
-	test_usercommands.res \
-	test_user_func.res \
-	test_vimscript.res \
-	test_visual.res \
-	test_winbuf_close.res \
-	test_window_id.res \
-	test_windows_home.res \
-	test_wordcount.res \
-	test_writefile.res \
-	test_alot_latin.res \
-	test_alot_utf8.res \
-	test_alot.res
+NEW_TESTS_ALOT := test_alot_utf8 test_alot
+NEW_TESTS_IN_ALOT := $(shell sed '/^source/ s/^source //;s/\.vim$$//' test_alot*.vim)
+# Ignored tests.
+# test_alot_latin1: Nvim does not allow setting encoding.
+# test_arglist: ported to Lua, but kept for easier merging.
+# test_autochdir: ported to Lua, but kept for easier merging.
+# test_eval_func: used as include in old-style test (test_eval.in).
+# test_listlbr: Nvim does not allow setting encoding.
+# test_largefile: uses too much resources to run on CI.
+NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
+  test_alot_latin \
+  test_arglist \
+  test_autochdir \
+  test_eval_func \
+  test_listlbr \
+  test_largefile \
+
+NEW_TESTS = $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
 
 SCRIPTS_GUI := test16.out
 
@@ -220,6 +143,7 @@ test1.out: .gdbinit test1.in
 	@/bin/sh runnvim.sh --oldesttest $(ROOT) $(NVIM_PRG) $* $(RUN_VIM) $*.in
 	@rm -rf X* test.ok viminfo
 
+# Explicit dependencies.
 test49.out: test49.vim
 
 nolog:
