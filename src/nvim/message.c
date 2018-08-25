@@ -610,7 +610,7 @@ static bool emsgfv(const char *fmt, va_list ap)
 /// detected when fuzzing vim.
 void iemsg(const char *s)
 {
-    msg((char_u *)s);
+    emsg((char_u *)s);
 #ifdef ABORT_ON_INTERNAL_ERROR
     abort();
 #endif
