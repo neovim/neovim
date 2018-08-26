@@ -61,18 +61,15 @@ To get a formatted dump of the API using python (requires the `pyyaml` and
 3. Connecting						      *rpc-connecting*
 
 See |channel-intro|, for various ways to open a channel. Most of the channel
-opening functions take an `rpc` key in the options dictionary, to enable rpc.
+opening functions take an `rpc` key in the options dictionary, to enable RPC.
 
-Additionally, rpc channels can be opened by other processes connecting to
+Additionally, RPC channels can be opened by other processes connecting to
 TCP/IP sockets or named pipes listened to by nvim.
 
-An rpc socket is automatically created with each instance. The socket
- location is stored in |v:servername|. By default this is a named pipe
-with an automatically generated address. See |XXX|.
-
-To make Nvim listen on a TCP/IP socket instead, specify |--listen|: >
+Nvim creates a default RPC socket at |startup|, given by |v:servername|. To
+start with a TCP/IP socket instead, use |--listen| with a TCP-style address: >
     nvim --listen 127.0.0.1:6666
-<Also, more sockets and named pipes can be listened on using |serverstart()|.
+Additional sockets and named pipes can be started with |serverstart()|.
 
 Note that localhost TCP sockets are generally less secure than named pipes,
 and can lead to vunerabilities like remote code execution.

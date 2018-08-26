@@ -5189,7 +5189,7 @@ To test your color setup, a file has been included in the Vim distribution.
 To use it, execute this command: >
    :runtime syntax/colortest.vim
 
-Nvim uses |256-color| and |true-color| terminal capabilities whereever possible.
+Nvim uses 256-color and |true-color| terminal capabilities whereever possible.
 
 ==============================================================================
 18. When syntax is slow						*:syntime*

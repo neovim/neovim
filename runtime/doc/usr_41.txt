@@ -2506,9 +2506,6 @@ Vim scripts can be used on any system.  There might not be a tar or gzip
 command.  If you want to pack files together and/or compress them the "zip"
 utility is recommended.
 
-For utmost portability use Vim itself to pack scripts together.  This can be
-done with the Vimball utility.  See |vimball|.
-
 ==============================================================================
 
 Next chapter: |usr_42.txt|  Add new menus

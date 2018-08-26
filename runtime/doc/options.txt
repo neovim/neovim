@@ -728,13 +728,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Vim will guess the value.  In the GUI this should work correctly,
 	in other cases Vim might not be able to guess the right value.
 
-	When the |t_RB| option is set, Vim will use it to request the background
-	color from the terminal.  If the returned RGB value is dark/light and
-	'background' is not dark/light, 'background' will be set and the
-	screen is redrawn.  This may have side effects, make t_BG empty in
-	your .vimrc if you suspect this problem.  The response to |t_RB| can
-	be found in |v:termrbgresp|.
-
 	When starting the GUI, the default value for 'background' will be
 	"light".  When the value is not set in the gvimrc, and Vim detects
 	that the background is actually quite dark, 'background' is set to
@@ -1216,8 +1209,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'channel'*
 'channel'		number (default: 0)
 			local to buffer
-	|Channel| connected to the buffer. Currently only used by
-	|terminal-emulator|. Is 0 if no terminal is open. Cannot be changed.
+	|channel| connected to the buffer, or 0 if no channel is connected.
+	In a |:terminal| buffer this is the terminal channel.
+	Read-only.
 
 				*'charconvert'* *'ccv'* *E202* *E214* *E513*
 'charconvert' 'ccv'	string (default "")
@@ -2041,8 +2035,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			instead of using ^C and ~C.
 	msgsep		When showing messages longer than 'cmdheight', only
 			scroll the message lines, not the entire screen. The
-			separator line is decorated by |MsgSeparator| and the
-			"msgsep" flag of 'fillchars'.
+			separator line is decorated by |hl-MsgSeparator| and
+			the "msgsep" flag of 'fillchars'.
 
 	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
@@ -6767,8 +6761,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	syntax highlighting (use |:ownsyntax| for that).
 	
 	Highlights of vertical separators are determined by the window to the
-	left of the separator.  The highlight of a tabpage in |tabline| is
-	determined by the last-focused window of the tabpage.  Highlights of
+	left of the separator.  The 'tabline' highlight of a tabpage is
+	decided by the last-focused window of the tabpage.  Highlights of
 	the popupmenu are determined by the current window.  Highlights in the
 	message area cannot be overridden.
 

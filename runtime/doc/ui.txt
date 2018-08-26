@@ -18,17 +18,17 @@ the grid ("externalized").
 
 								  *ui-options*
 After connecting to Nvim (usually a spawned, embedded instance) use the
-|nvim_ui_attach| API method to tell Nvim that your program wants to draw the
+|nvim_ui_attach()| API method to tell Nvim that your program wants to draw the
 Nvim screen grid with a size of width × height cells. `options` must be
 a dictionary with these (optional) keys:
-	`rgb`			Decides the color format. |ui-rgb|
+	`rgb`			Decides the color format. *ui-rgb*
 				Set true (default) for 24-bit RGB colors.
 				Set false for terminal colors (max of 256).
 							      *ui-ext-options*
 	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
-	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
+	`ext_wildmenu`		Externalize the wildmenu. |ui-wildmenu|
 	`ext_newgrid`		Use new revision of the grid events. |ui-newgrid|
 	`ext_hlstate`		Use detailed highlight state. |ui-hlstate|
 
@@ -150,7 +150,7 @@ Global Events							    *ui-global*
 	user input. This could be indicated to the user by hiding the cursor.
 
 ["suspend"]
-	|:suspend| command or |Ctrl-Z| mapping is used. A terminal client (or other
+	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or other
 	client where it makes sense) could suspend itself.  Other clients can
 	safely ignore it.
 
@@ -407,7 +407,7 @@ with the following possible keys:
 	"ui":       A builtin ui highlight.
 	"syntax":   highlight applied to a buffer by a syntax declaration or
 	            other runtime/plugin functionallity such as
-		    |nvim_buf_add_highlight|
+		    |nvim_buf_add_highlight()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
 		    Contains no futher semantic information.
     `ui_name`:	Name of the builtin highlight. See |highlight-groups| for
@@ -417,7 +417,7 @@ with the following possible keys:
     `id`:	Unique numeric id representing this item.
 
 Note: "ui" items will have both `ui_name` and `hi_name` present. These can
-differ, because the builtin group was linked to another group |hi-link| , or
+differ, because the builtin group was linked to another group |:hi-link| , or
 because 'winhighlight' was used. UI items will be transmitted, even if the
 highlight group is cleared, so `ui_name` can always be used to reliably identify
 screen elements, even if no attributes have been applied.
@@ -480,7 +480,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 	typing `<c-r>=` at the command line prompt. The `level` field is used
 	to distinguish different command lines active at the same time. The
 	first invoked command line has level 1, the next recursively-invoked
-	prompt has level 2. A command line invoked from the |cmd-line-window|
+	prompt has level 2. A command line invoked from the |cmdline-window|
 	has a higher level than than the edited command line.
 
 ["cmdline_pos", pos, level]
