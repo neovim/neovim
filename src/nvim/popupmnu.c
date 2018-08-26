@@ -140,7 +140,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     if (size < PUM_DEF_HEIGHT) {
       pum_height = size;
     } else {
-
       pum_height = PUM_DEF_HEIGHT;
     }
 
@@ -208,7 +207,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     }
 
     // Compute the width of the widest match and the widest extra.
-    for (i = 0; i < size; ++i) {
+    for (i = 0; i < size; i++) {
       w = vim_strsize(array[i].pum_text);
 
       if (max_width < w) {
@@ -247,7 +246,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     }
 
     if ((((col < Columns - PUM_DEF_WIDTH) || (col < Columns - max_width))
-          && !curwin->w_p_rl)
+         && !curwin->w_p_rl)
         || (curwin->w_p_rl && ((col > PUM_DEF_WIDTH) || (col > max_width)))) {
       // align pum column with "col"
       pum_col = col;
@@ -255,7 +254,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
         pum_width = pum_col - pum_scrollbar + 1;
       } else {
         assert(Columns - pum_col - pum_scrollbar >= INT_MIN
-            && Columns - pum_col - pum_scrollbar <= INT_MAX);
+               && Columns - pum_col - pum_scrollbar <= INT_MAX);
         pum_width = (int)(Columns - pum_col - pum_scrollbar);
       }
 
@@ -286,7 +285,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
       if (curwin->w_p_rl) {
         pum_col = max_width - 1;
       } else {
-        assert(Columns - max_width >= INT_MIN && Columns - max_width <= INT_MAX);
+        assert(Columns - max_width >= INT_MIN
+               && Columns - max_width <= INT_MAX);
         pum_col = (int)(Columns - max_width);
       }
       pum_width = max_width - pum_scrollbar;

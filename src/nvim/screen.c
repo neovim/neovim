@@ -7110,8 +7110,9 @@ void screen_resize(int width, int height)
         } else {
           update_screen(NOT_VALID);
         }
-        if (redrawing())
+        if (redrawing()) {
           setcursor();
+        }
       }
     }
   }
