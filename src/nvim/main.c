@@ -605,9 +605,14 @@ void getout(int exitval)
 
         buf_T *buf = wp->w_buffer;
         if (buf_get_changedtick(buf) != -1) {
+          bufref_T bufref;
+
+          set_bufref(&bufref, buf);
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
                          buf->b_fname, false, buf);
-          buf_set_changedtick(buf, -1);  // note that we did it already
+          if (bufref_valid(&bufref)) {
+            buf_set_changedtick(buf, -1);  // note that we did it already
+          }
           // start all over, autocommands may mess up the lists
           next_tp = first_tabpage;
           break;

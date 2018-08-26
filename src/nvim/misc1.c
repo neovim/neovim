@@ -1605,11 +1605,19 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   char_u *oldp = ml_get(lnum);
   colnr_T oldlen = (colnr_T)STRLEN(oldp);
 
-  /*
-   * Can't do anything when the cursor is on the NUL after the line.
-   */
-  if (col >= oldlen)
+  // Can't do anything when the cursor is on the NUL after the line.
+  if (col >= oldlen) {
     return FAIL;
+  }
+  // If "count" is zero there is nothing to do.
+  if (count == 0) {
+    return OK;
+  }
+  // If "count" is negative the caller must be doing something wrong.
+  if (count < 1) {
+    IEMSGN("E950: Invalid count for del_bytes(): %ld", count);
+    return FAIL;
+  }
 
   /* If 'delcombine' is set and deleting (less than) one character, only
    * delete the last combining character. */

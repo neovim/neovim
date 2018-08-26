@@ -1217,6 +1217,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               str_arg_l = 3;
               zero_padding = 0;
             } else {
+              // Regular float number
               format[0] = '%';
               size_t l = 1;
               if (force_sign) {
@@ -1241,7 +1242,6 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
-              // Regular float number
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
 
