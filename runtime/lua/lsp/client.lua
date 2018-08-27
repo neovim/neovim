@@ -1,9 +1,12 @@
+-- luacheck: globals vim
+
 local json = require('lsp.json')
 local util = require('neovim.util')
 
 local Enum = require('neovim.meta').Enum
 
 local message = require('lsp.message')
+local initialize_filetype_autocmds = require('lsp.autocmds').initialize_filetype_autocmds
 local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
 local get_list_of_callbacks = require('lsp.callbacks').get_list_of_callbacks
 local call_callbacks = require('lsp.callbacks').call_callbacks
@@ -89,10 +92,18 @@ client.new = function(name, ft, cmd)
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', nil, function(_, data) 
+  -- Initialize autocmd for filetypes == self.ft
+  --    These will create buffer local autocmds in each buffer
+  initialize_filetype_autocmds(self.ft)
+
+  local result = self:request_async('initialize', nil, function(_, data)
     self.capabilities = data.capabilities
     return data.capabilities
   end)
+
+  -- Open the document for the language server.
+  -- We only send this automatically on starting the server.
+  self:request_async('textDocument/didOpen')
 
   return result
 end
