@@ -115,7 +115,7 @@ plugin.client.has_started = function(filetype)
   return plugin.client.get(filetype) ~= nil
 end
 plugin.client.handle = function(filetype, method, data, default_only)
-  local callback_list = callbacks.get_list_of_callbacks(method, filetype, default_only)
+  local callback_list = callbacks.get_list_of_callbacks(method, nil, filetype, default_only)
 
   return callbacks.call_callbacks(callback_list, true, data)
 end

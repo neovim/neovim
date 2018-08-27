@@ -40,6 +40,7 @@ lsp#server#add({ftype}, {cmd}, {configuration}):
         {configuration} (dictionary): Optional configuration for a server.
             `name`      (string):
               The name of the server
+
             `callbacks` (dict):
               A dictionary of callbacks to configure the server.
 
