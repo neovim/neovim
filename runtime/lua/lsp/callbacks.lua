@@ -291,11 +291,14 @@ CallbackMapping.textDocument.hover = default_callback_object(function(success, d
       end
 
       log.debug('Hover: ', long_string)
-      -- vim.api.nvim_out_write(long_string)
     elseif type(data.contents) == 'table' then
-      long_string = long_string .. data.contents.value
+      long_string = long_string .. (data.contents.value or '')
     else
       long_string = data.contents
+    end
+
+    if long_string == '' then
+      long_string = 'LSP: No information available'
     end
 
     vim.api.nvim_out_write(long_string .. '\n')
