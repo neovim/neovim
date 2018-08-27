@@ -745,19 +745,19 @@ describe(":substitute, inccommand=split", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
     feed('<Esc>')
   end)
 
@@ -1222,19 +1222,19 @@ describe("inccommand=nosplit", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
     feed('<Esc>')
   end)
 

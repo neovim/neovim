@@ -61,7 +61,7 @@ describe("shell command :!", function()
       ":!for i in $(seq 2 3000); do echo XXXXXXXXXX $i; done\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.
-    screen:expect("\n.", nil, nil, nil, true)
+    screen:expect{any="\n."}
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
@@ -92,7 +92,7 @@ describe("shell command :!", function()
     eq(2, eval('1+1'))  -- Still alive?
   end)
 
-  it([[handles control codes]], function()
+  it('handles control codes', function()
     if iswin() then
       pending('missing printf', function() end)
       return
@@ -112,14 +112,14 @@ describe("shell command :!", function()
     -- Print BELL control code. #4338
     screen.bell = false
     feed([[:!printf '\007\007\007\007text'<CR>]])
-    screen:expect([[
+    screen:expect{grid=[[
       ~                                                 |
       :!printf '\007\007\007\007text'                   |
       text                                              |
       Press ENTER or type command to continue^           |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq(true, screen.bell)
-    end)
+    end}
     feed([[<CR>]])
     -- Print BS control code.
     feed([[:echo system('printf ''\010\n''')<CR>]])
@@ -188,7 +188,7 @@ describe("shell command :!", function()
     it('handles binary and multibyte data', function()
       feed_command('!cat test/functional/fixtures/shell_data.txt')
       screen.bell = false
-      screen:expect([[
+      screen:expect{grid=[[
                                                              |
         {1:~                                                    }|
         {4:                                                     }|
@@ -199,9 +199,9 @@ describe("shell command :!", function()
         t       {2:<ff>}                                         |
                                                              |
         {3:Press ENTER or type command to continue}^              |
-    ]], nil, nil, function()
+      ]], condition=function()
         eq(true, screen.bell)
-      end)
+      end}
     end)
 
     it('handles multibyte sequences split over buffer boundaries', function()

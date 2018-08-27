@@ -501,10 +501,8 @@ static void remote_ui_flush(UI *ui)
   }
 }
 
-static void remote_ui_cmdline_show(UI *ui, Array args)
+static Array translate_contents(UI *ui, Array contents)
 {
-  Array new_args = ARRAY_DICT_INIT;
-  Array contents = args.items[0].data.array;
   Array new_contents = ARRAY_DICT_INIT;
   for (size_t i = 0; i < contents.size; i++) {
     Array item = contents.items[i].data.array;
@@ -519,23 +517,48 @@ static void remote_ui_cmdline_show(UI *ui, Array args)
     ADD(new_item, copy_object(item.items[1]));
     ADD(new_contents, ARRAY_OBJ(new_item));
   }
-  ADD(new_args, ARRAY_OBJ(new_contents));
+  return new_contents;
+}
+
+static Array translate_firstarg(UI *ui, Array args)
+{
+  Array new_args = ARRAY_DICT_INIT;
+  Array contents = args.items[0].data.array;
+
+  ADD(new_args, ARRAY_OBJ(translate_contents(ui, contents)));
   for (size_t i = 1; i < args.size; i++) {
     ADD(new_args, copy_object(args.items[i]));
   }
-  push_call(ui, "cmdline_show", new_args);
+  return new_args;
 }
 
 static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
   if (!ui->ui_ext[kUINewgrid]) {
-    // the representation of cmdline_show changed, translate back
+    // the representation of highlights in cmdline changed, translate back
+    // never consumes args
     if (strequal(name, "cmdline_show")) {
-      remote_ui_cmdline_show(ui, args);
-      // never consumes args
+      Array new_args = translate_firstarg(ui, args);
+      push_call(ui, name, new_args);
+      return;
+    } else if (strequal(name, "cmdline_block_show")) {
+      Array new_args = ARRAY_DICT_INIT;
+      Array block = args.items[0].data.array;
+      Array new_block = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < block.size; i++) {
+        ADD(new_block,
+            ARRAY_OBJ(translate_contents(ui, block.items[i].data.array)));
+      }
+      ADD(new_args, ARRAY_OBJ(new_block));
+      push_call(ui, name, new_args);
+      return;
+    } else if (strequal(name, "cmdline_block_append")) {
+      Array new_args = translate_firstarg(ui, args);
+      push_call(ui, name, new_args);
       return;
     }
   }
+
   Array my_args = ARRAY_DICT_INIT;
   // Objects are currently single-reference
   // make a copy, but only if necessary

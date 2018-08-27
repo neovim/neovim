@@ -188,15 +188,15 @@ describe('ui/cursor', function()
     -- Event is published ONLY if the cursor style changed.
     screen._mode_info = nil
     command("echo 'test'")
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
       test                     |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq(nil, screen._mode_info)
-    end)
+    end}
 
     -- Change the cursor style.
     helpers.command('hi Cursor guibg=DarkGray')

@@ -408,7 +408,7 @@ describe("'scrollback' option", function()
     else
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
-    screen:expect('line30                        ', nil, nil, nil, true)
+    screen:expect{any='line30                        '}
     retry(nil, nil, function() expect_lines(7) end)
 
     screen:detach()
@@ -426,7 +426,7 @@ describe("'scrollback' option", function()
     curbufmeths.set_option('scrollback', 200)
 
     -- Wait for prompt.
-    screen:expect('$', nil, nil, nil, true)
+    screen:expect{any='$'}
 
     wait()
     if iswin() then
@@ -435,7 +435,7 @@ describe("'scrollback' option", function()
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
 
-    screen:expect('line30                        ', nil, nil, nil, true)
+    screen:expect{any='line30                        '}
 
     retry(nil, nil, function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
@@ -452,7 +452,7 @@ describe("'scrollback' option", function()
       feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
     end
 
-    screen:expect('line40                        ', nil, nil, nil, true)
+    screen:expect{any='line40                        '}
 
     retry(nil, nil, function() expect_lines(58) end)
     -- Verify off-screen state

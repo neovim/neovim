@@ -417,7 +417,7 @@ describe('jobs', function()
         \ })
     ]])
 
-    screen:expect("{2:E120: Using <SID> not in a script context: s:OnEvent}",nil,nil,nil,true)
+    screen:expect{any="{2:E120: Using <SID> not in a script context: s:OnEvent}"}
   end)
 
   it('does not repeat output with slow output handlers', function()

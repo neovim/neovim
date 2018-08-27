@@ -167,7 +167,7 @@ describe("'wildmenu'", function()
     screen:sleep(10)      -- Flush
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
-    screen:expect('!  #  &  <  =  >  @  >   \n:!^', nil, nil, nil, true)
+    screen:expect{any='!  #  &  <  =  >  @  >   \n:!^'}
   end)
 end)
 
@@ -204,21 +204,11 @@ end)
 
 describe('ui/ext_wildmenu', function()
   local screen
-  local items, selected = nil, nil
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_wildmenu=true})
-    screen:set_on_event_handler(function(name, data)
-      if name == "wildmenu_show" then
-        items = data[1]
-      elseif name == "wildmenu_select" then
-        selected = data[1]
-      elseif name == "wildmenu_hide" then
-        items, selected = nil, nil
-      end
-    end)
   end)
 
   after_each(function()
@@ -238,63 +228,48 @@ describe('ui/ext_wildmenu', function()
     command('set wildmode=full')
     command('set wildmenu')
     feed(':sign <tab>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       ~                        |
       :sign define^             |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(0, selected)
-    end)
+    ]], wildmenu_items=expected, wildmenu_pos=0}
 
     feed('<tab>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       ~                        |
       :sign jump^               |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(1, selected)
-    end)
+    ]], wildmenu_items=expected, wildmenu_pos=1}
 
     feed('<left><left>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       ~                        |
       :sign ^                   |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(-1, selected)
-    end)
+    ]], wildmenu_items=expected, wildmenu_pos=-1}
 
     feed('<right>')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       ~                        |
       :sign define^             |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(0, selected)
-    end)
+    ]], wildmenu_items=expected, wildmenu_pos=0}
 
     feed('a')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       ~                        |
       :sign definea^            |
-    ]], nil, nil, function()
-      eq(nil, items)
-      eq(nil, selected)
-    end)
+    ]]}
   end)
 end)
