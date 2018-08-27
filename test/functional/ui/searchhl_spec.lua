@@ -93,6 +93,59 @@ describe('search highlighting', function()
     ]])
   end)
 
+  it('highlights after EOL', function()
+    insert("\n\n\n\n\n\n")
+
+    feed("gg/^<cr>")
+    screen:expect([[
+      {2: }                                       |
+      {2:^ }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      /^                                      |
+    ]])
+
+    -- Test that highlights are preserved after moving the cursor.
+    feed("j")
+    screen:expect([[
+      {2: }                                       |
+      {2: }                                       |
+      {2:^ }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      /^                                      |
+    ]])
+
+    -- Repeat the test in rightleft mode.
+    feed_command("nohlsearch")
+    feed_command("set rightleft")
+    feed("gg/^<cr>")
+
+    screen:expect([[
+                                             {2: }|
+                                             {2:^ }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+      ^/                                      |
+    ]])
+
+    feed("j")
+    screen:expect([[
+                                             {2: }|
+                                             {2: }|
+                                             {2:^ }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+      ^/                                      |
+    ]])
+  end)
+
   it('is preserved during :terminal activity', function()
     if iswin() then
       feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
