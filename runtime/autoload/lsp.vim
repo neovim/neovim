@@ -1,20 +1,31 @@
+try
+  " Try and load the LSP API.
+  lua require('lsp.api')
+catch
+  echom 'Language Server Protocol is currently not able to run.'
+  finish
+endtry
+
+" TODO: Should make it easer to use the API without returning the result and
+" writing hard strings
+function! lsp#api_exec(method_format, ...) abort
+  let printf_arguments = []
+  if a:0 > 0
+    let printf_arguments = a:000
+  endif
+
+  echo function('printf', ['lua vim.lsp.' . a:method_format] + printf_arguments)()
+endfunction
+
 let s:client_string = "require('lsp.plugin').client"
 
 function! lsp#start(...) abort
-  lua require('lsp.autocmds').initialize_autocmds()
-
   let start_filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
 
   if force || !luaeval(s:client_string . '.has_started(_A)', start_filetype)
     call luaeval(s:client_string . '.start(nil, _A).name', start_filetype)
-
-    " Open the document in the lsp.
-    " Only do this if we just started the server, to make sure that this
-    " document has been opened. Afterwards, autocmds will handle this.
-    if &filetype == start_filetype
-      silent call lsp#request_async('textDocument/didOpen')
-    endif
+    " call lsp#api_exec('client.start(nil, "%s")', start_filetype)
   else
     echom '[LSP] Client for ' . start_filetype . ' has already started'
   endif

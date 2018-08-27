@@ -11,9 +11,7 @@ local client_map = {}
 
 local plugin = {
   client = {},
-  helpers = {},
 }
-
 
 
 --- Get the client associated with a filetype
@@ -63,6 +61,11 @@ end
 --
 -- @returns: The result of the request
 plugin.client.request = function(method, arguments, cb, filetype)
+  filetype = lsp_util.get_filetype(filetype)
+  if filetype == nil or filetype == '' then
+    return
+  end
+
   local current_client = plugin.client.get(filetype)
 
   if current_client == nil then
@@ -75,6 +78,11 @@ end
 
 --- Send a request to a server, but don't wait for the response
 plugin.client.request_async = function(method, arguments, cb, filetype)
+  filetype = lsp_util.get_filetype(filetype)
+  if filetype == nil or filetype == '' then
+    return
+  end
+
   local current_client = plugin.client.get(filetype)
 
   if current_client == nil then
