@@ -5017,11 +5017,9 @@ void fix_help_buffer(void)
                 const char_u *const f1 = fnames[i1];
                 const char_u *const f2 = fnames[i2];
                 const char_u *const t1 = path_tail(f1);
-                if (fnamencmp(f1, f2, t1 - f1) != 0) {
-                  continue;
-                }
+                const char_u *const t2 = path_tail(f2);
                 const char_u *const e1 = STRRCHR(t1, '.');
-                const char_u *const e2 = STRRCHR(path_tail(f2), '.');
+                const char_u *const e2 = STRRCHR(t2, '.');
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
@@ -5032,8 +5030,10 @@ void fix_help_buffer(void)
                   fnames[i1] = NULL;
                   continue;
                 }
-                if (fnamencmp(f1, f2, e1 - f1) != 0)
+                if (e1 - f1 != e2 - f2
+                    || fnamencmp(f1, f2, e1 - f1) != 0) {
                   continue;
+                }
                 if (fnamecmp(e1, ".txt") == 0
                     && fnamecmp(e2, fname + 4) == 0) {
                   /* use .abx instead of .txt */
