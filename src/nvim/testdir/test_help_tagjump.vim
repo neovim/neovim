@@ -38,6 +38,11 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*:?\*')
   helpclose
 
+  help -?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*-?\*')
+  helpclose
+
   help FileW*Post
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*FileWritePost\*')
