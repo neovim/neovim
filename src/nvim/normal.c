@@ -4771,6 +4771,10 @@ static void nv_ident(cmdarg_T *cap)
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
   bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
+  if (kp_help && *skipwhite(ptr) == NUL) {
+    EMSG(_(e_noident));   // found white space only
+    return;
+  }
   size_t buf_size = n * 2 + 30 + STRLEN(kp);
   char *buf = xmalloc(buf_size);
   buf[0] = NUL;
