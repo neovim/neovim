@@ -688,8 +688,9 @@ static void find_word(matchinf_T *mip, int mode)
     arridx = endidx[endidxcnt];
     wlen = endlen[endidxcnt];
 
-    if ((*mb_head_off)(ptr, ptr + wlen) > 0)
+    if (utf_head_off(ptr, ptr + wlen) > 0) {
       continue;             // not at first byte of character
+    }
     if (spell_iswordp(ptr + wlen, mip->mi_win)) {
       if (slang->sl_compprog == NULL && !slang->sl_nobreak)
         continue;                   // next char is a word character

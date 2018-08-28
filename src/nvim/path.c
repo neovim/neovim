@@ -1819,7 +1819,7 @@ void path_fix_case(char_u *name)
 int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
-         && (!has_mbyte || (*mb_head_off)((char_u *)b, (char_u *)p - 1) == 0);
+         && utf_head_off((char_u *)b, (char_u *)p - 1) == 0;
 }
 
 /*

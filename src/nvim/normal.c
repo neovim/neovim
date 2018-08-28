@@ -2858,9 +2858,10 @@ static void find_start_of_word(pos_T *pos)
 
   while (pos->col > 0) {
     col = pos->col - 1;
-    col -= (*mb_head_off)(line, line + col);
-    if (get_mouse_class(line + col) != cclass)
+    col -= utf_head_off(line, line + col);
+    if (get_mouse_class(line + col) != cclass) {
       break;
+    }
     pos->col = col;
   }
 }
@@ -2877,8 +2878,8 @@ static void find_end_of_word(pos_T *pos)
 
   line = ml_get(pos->lnum);
   if (*p_sel == 'e' && pos->col > 0) {
-    --pos->col;
-    pos->col -= (*mb_head_off)(line, line + pos->col);
+    pos->col--;
+    pos->col -= utf_head_off(line, line + pos->col);
   }
   cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
@@ -3094,9 +3095,9 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
     // When starting on a ']' count it, so that we include the '['.
     bn = ptr[col] == ']';
 
-    /*
-     * 2. Back up to start of identifier/string.
-     */
+    //
+    // 2. Back up to start of identifier/string.
+    //
     // Remember class of character under cursor.
     if ((find_type & FIND_EVAL) && ptr[col] == ']') {
       this_class = mb_get_class((char_u *)"a");
@@ -3129,7 +3130,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol,
   }
 
   if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
-    // didn't find an identifier or string
+    // Didn't find an identifier or string.
     if (find_type & FIND_STRING) {
       EMSG(_("E348: No string under cursor"));
     } else {

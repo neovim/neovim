@@ -1556,14 +1556,11 @@ void display_dollar(colnr_T col)
 
   save_col = curwin->w_cursor.col;
   curwin->w_cursor.col = col;
-  if (has_mbyte) {
-    char_u *p;
 
-    /* If on the last byte of a multi-byte move to the first byte. */
-    p = get_cursor_line_ptr();
-    curwin->w_cursor.col -= (*mb_head_off)(p, p + col);
-  }
-  curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
+  // If on the last byte of a multi-byte move to the first byte.
+  char_u *p = get_cursor_line_ptr();
+  curwin->w_cursor.col -= utf_head_off(p, p + col);
+  curs_columns(false);              // Recompute w_wrow and w_wcol
   if (curwin->w_wcol < curwin->w_width) {
     edit_putchar('$', FALSE);
     dollar_vcol = curwin->w_virtcol;
@@ -3448,10 +3445,10 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
   }
   if (compl_orig_text != NULL) {
     p = compl_orig_text;
-    for (len = 0; p[len] != NUL && p[len] == ptr[len]; ++len)
-      ;
-    if (len > 0)
-      len -= (*mb_head_off)(p, p + len);
+    for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {}
+    if (len > 0) {
+      len -= utf_head_off(p, p + len);
+    }
     for (p += len; *p != NUL; MB_PTR_ADV(p)) {
       AppendCharToRedobuff(K_BS);
     }
@@ -4587,24 +4584,17 @@ static int ins_complete(int c, bool enable_pum)
         compl_col += curs_col;
         compl_length = 0;
       } else {
-        /* Search the point of change class of multibyte character
-         * or not a word single byte character backward.  */
-        if (has_mbyte) {
-          int base_class;
-          int head_off;
-
-          startcol -= (*mb_head_off)(line, line + startcol);
-          base_class = mb_get_class(line + startcol);
-          while (--startcol >= 0) {
-            head_off = (*mb_head_off)(line, line + startcol);
-            if (base_class != mb_get_class(line + startcol
-                    - head_off))
-              break;
-            startcol -= head_off;
+        // Search the point of change class of multibyte character
+        // or not a word single byte character backward.
+        startcol -= utf_head_off(line, line + startcol);
+        int base_class = mb_get_class(line + startcol);
+        while (--startcol >= 0) {
+          int head_off = utf_head_off(line, line + startcol);
+          if (base_class != mb_get_class(line + startcol - head_off)) {
+            break;
           }
-        } else
-          while (--startcol >= 0 && vim_iswordc(line[startcol]))
-            ;
+          startcol -= head_off;
+        }
         compl_col += ++startcol;
         compl_length = (int)curs_col - startcol;
         if (compl_length == 1) {

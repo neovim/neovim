@@ -1962,12 +1962,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
         }
       }
 
-      if (has_mbyte) {
-        // Move back to first byte of character in both lines (may
-        // have "nn^" in line_org and "n^ in line_new).
-        si_org -= (*mb_head_off)(line_org, line_org + si_org);
-        si_new -= (*mb_head_off)(line_new, line_new + si_new);
-      }
+      // Move back to first byte of character in both lines (may
+      // have "nn^" in line_org and "n^ in line_new).
+      si_org -= utf_head_off(line_org, line_org + si_org);
+      si_new -= utf_head_off(line_new, line_new + si_new);
 
       if (*startp > si_org) {
         *startp = si_org;

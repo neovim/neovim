@@ -1710,7 +1710,7 @@ void mb_check_adjust_col(void *win_)
         win->w_cursor.col = len - 1;
       }
       // Move the cursor to the head byte.
-      win->w_cursor.col -= (*mb_head_off)(p, p + win->w_cursor.col);
+      win->w_cursor.col -= utf_head_off(p, p + win->w_cursor.col);
     }
 
     // Reset `coladd` when the cursor would be on the right half of a
