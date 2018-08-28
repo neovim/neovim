@@ -1285,9 +1285,8 @@ void dialog_changed(buf_T *buf, int checkall)
   int ret;
   exarg_T ea;
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"),
-             (buf->b_fname != NULL) ?
-             buf->b_fname : (char_u *)_("Untitled"));
+  assert(buf->b_fname != NULL);
+  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
