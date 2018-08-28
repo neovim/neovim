@@ -1468,7 +1468,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
     if (*p == NUL || (int)STRLEN(p) < lp->col) {
       lp->col = 0;
     } else {
-      lp->col -= (*mb_head_off)(p, p + lp->col);
+      lp->col -= utf_head_off(p, p + lp->col);
     }
     // Reset "coladd" when the cursor would be on the right half of a
     // double-wide character.

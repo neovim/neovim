@@ -3653,8 +3653,7 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
 static int reg_prev_class(void)
 {
   if (reginput > regline) {
-    return mb_get_class_tab(reginput - 1 - (*mb_head_off)(regline,
-                                                          reginput - 1),
+    return mb_get_class_tab(reginput - 1 - utf_head_off(regline, reginput - 1),
                             rex.reg_buf->b_chartab);
   }
   return -1;

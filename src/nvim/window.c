@@ -5162,13 +5162,14 @@ file_name_in_line (
    * Go one char back to ":" before "//" even when ':' is not in 'isfname'.
    */
   while (ptr > line) {
-    if (has_mbyte && (len = (size_t)((*mb_head_off)(line, ptr - 1))) > 0)
+    if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
       ptr -= len + 1;
-    else if (vim_isfilec(ptr[-1])
-             || ((options & FNAME_HYP) && path_is_url((char *)ptr - 1)))
-      --ptr;
-    else
+    } else if (vim_isfilec(ptr[-1])
+               || ((options & FNAME_HYP) && path_is_url((char *)ptr - 1))) {
+      ptr--;
+    } else {
       break;
+    }
   }
 
   /*
