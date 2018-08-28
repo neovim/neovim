@@ -10609,9 +10609,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef HAVE_ACL
     "acl",
 #endif
-#ifdef FEAT_AUTOCHDIR
     "autochdir",
-#endif
     "arabic",
     "autocmd",
     "browsefilter",
