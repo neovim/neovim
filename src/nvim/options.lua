@@ -1774,7 +1774,7 @@ return {
       gettext=true,
       vi_def=true,
       varname='p_header',
-      defaults={if_true={vi=N_("%<%f%h%m%=Page %N")}}
+      defaults={if_true={vi="%<%f%h%m%=Page %N"}}
     },
     {
       full_name='printmbcharset', abbreviation='pmbcs',
