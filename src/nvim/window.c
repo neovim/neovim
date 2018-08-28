@@ -2882,7 +2882,7 @@ close_others (
     }
     if (!r) {
       if (message && (p_confirm || cmdmod.confirm) && p_write) {
-        dialog_changed(wp->w_buffer, FALSE);
+        dialog_changed(wp->w_buffer, false);
         if (!win_valid(wp)) {                 /* autocommands messed wp up */
           nextwp = firstwin;
           continue;
