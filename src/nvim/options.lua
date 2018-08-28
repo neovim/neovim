@@ -1771,7 +1771,6 @@ return {
     {
       full_name='printheader', abbreviation='pheader',
       type='string', scope={'global'},
-      gettext=true,
       vi_def=true,
       varname='p_header',
       defaults={if_true={vi="%<%f%h%m%=Page %N"}}
