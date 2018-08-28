@@ -136,7 +136,6 @@ local function check_logs()
         fd:close()
         os.remove(file)
         if #lines > 0 then
-          -- local out = os.getenv('TRAVIS_CI_BUILD') and io.stdout or io.stderr
           local out = io.stdout
           out:write(start_msg .. '\n')
           out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
@@ -674,6 +673,37 @@ local function write_file(name, text, no_dedent, append)
   file:close()
 end
 
+local function isCI()
+  local is_travis = nil ~= os.getenv('TRAVIS')
+  local is_appveyor = nil ~= os.getenv('APPVEYOR')
+  local is_quickbuild = nil ~= os.getenv('PR_NUMBER')
+  return is_travis or is_appveyor or is_quickbuild
+end
+
+-- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
+-- Also removes the file, if the current environment looks like CI.
+local function read_nvim_log()
+  local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  local logtext = read_file(logfile)
+  local lines = {}
+  for l in string.gmatch(logtext or '', "[^\n]+") do  -- Split at newlines.
+    table.insert(lines, l)
+  end
+  local log = (('-'):rep(78)..'\n'
+    ..string.format('$NVIM_LOG_FILE: %s\n', logfile)
+    ..(logtext and (isCI() and '' or '(last 10 lines)\n') or '(empty)\n'))
+  local keep = (isCI() and #lines or math.min(10, #lines))
+  local startidx = math.max(1, #lines - keep + 1)
+  for i = startidx, (startidx + keep - 1) do
+    log = log..lines[i]..'\n'
+  end
+  log = log..('-'):rep(78)..'\n'
+  if isCI() then
+    os.remove(logfile)
+  end
+  return log
+end
+
 local module = {
   REMOVE_THIS = REMOVE_THIS,
   argss_to_cmd = argss_to_cmd,
@@ -703,9 +733,10 @@ local module = {
   popen_r = popen_r,
   popen_w = popen_w,
   read_file = read_file,
+  read_nvim_log = read_nvim_log,
   repeated_read_cmd = repeated_read_cmd,
-  sleep = sleep,
   shallowcopy = shallowcopy,
+  sleep = sleep,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
