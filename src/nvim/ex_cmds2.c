@@ -2790,14 +2790,14 @@ static FILE *fopen_noinh_readbin(char *filename)
 
 typedef struct {
   char_u *buf;
-  uint32_t pointer;
+  size_t offset;
 } GetStrLineCookie;
 
 static char_u *get_str_line(int c, void *cookie, int ident)
 {
-  GetStrLineCookie *p = (GetStrLineCookie *)cookie;
-  uint32_t i = p->pointer;
-  if (strlen((char *)p->buf) <= p->pointer) {
+  GetStrLineCookie *p = cookie;
+  size_t i = p->offset;
+  if (strlen((char *)p->buf) <= p->offset) {
     return NULL;
   }
   while (!(p->buf[i] == '\n' || p->buf[i] == '\0')) {
@@ -2805,12 +2805,12 @@ static char_u *get_str_line(int c, void *cookie, int ident)
   }
   char buf[2046];
   char *dst;
-  dst = xstpncpy(buf, (char *)p->buf+p->pointer, i - p->pointer);
-  if ((uint32_t)(dst - buf) != i - p->pointer) {
+  dst = xstpncpy(buf, (char *)p->buf+p->offset, i - p->offset);
+  if ((uint32_t)(dst - buf) != i - p->offset) {
     smsg(_("nvim_source error parsing command %s"), p->buf);
   }
-  buf[i-p->pointer]='\0';
-  p->pointer = i + 1;
+  buf[i-p->offset]='\0';
+  p->offset = i + 1;
   return (char_u *)xstrdup(buf);
 }
 
@@ -2819,10 +2819,10 @@ int do_source_str(char_u *cmd)
   int retval;
   GetStrLineCookie cookie = {
     .buf = cmd,
-    .pointer = 0,
+    .offset = 0,
   };
   retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
-                      DOCMD_VERBOSE|DOCMD_NOWAIT);
+                      DOCMD_NOWAIT);
   return retval;
 }
 
