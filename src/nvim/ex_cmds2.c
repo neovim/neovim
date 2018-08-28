@@ -1279,15 +1279,14 @@ bool check_changed(buf_T *buf, int flags)
 ///
 /// @param buf
 /// @param checkall may abandon all changed buffers
-void dialog_changed(buf_T *buf, int checkall)
+void dialog_changed(buf_T *buf, bool checkall)
 {
   char_u buff[DIALOG_MSG_SIZE];
   int ret;
   exarg_T ea;
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"),
-             (buf->b_fname != NULL) ?
-             buf->b_fname : (char_u *)_("Untitled"));
+  assert(buf->b_fname != NULL);
+  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
