@@ -39,13 +39,6 @@ enter_suite() {
 
 exit_suite() {
   set +x
-  if test -f "$NVIM_LOG_FILE" ; then
-    printf "===============================================================================\n"
-    printf "NVIM_LOG_FILE: $NVIM_LOG_FILE\n"
-    cat "$NVIM_LOG_FILE" 2>/dev/null || printf '(empty)'
-    printf "\n"
-    rm -rf "$NVIM_LOG_FILE"
-  fi
   travis_fold end "${NVIM_TEST_CURRENT_SUITE}"
   if test $FAILED -ne 0 ; then
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"

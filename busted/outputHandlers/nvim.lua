@@ -1,6 +1,7 @@
 local s = require 'say'
 local pretty = require 'pl.pretty'
 local term = require 'term'
+local global_helpers = require('test.helpers')
 
 local colors
 
@@ -200,6 +201,7 @@ return function(options)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
     io.write(globalTeardown)
+    io.write(global_helpers.read_nvim_log())
     io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
     io.write(getSummaryString())
     io.flush()
