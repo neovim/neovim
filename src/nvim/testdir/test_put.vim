@@ -34,3 +34,16 @@ func Test_put_char_block2()
   bw!
   call setreg('a', a[0], a[1])
 endfunc
+
+func Test_put_expr()
+  new
+  call setline(1, repeat(['A'], 6))
+  exec "1norm! \"=line('.')\<cr>p"
+  norm! j0.
+  norm! j0.
+  exec "4norm! \"=\<cr>P"
+  norm! j0.
+  norm! j0.
+  call assert_equal(['A1','A2','A3','4A','5A','6A'], getline(1,'$'))
+  bw!
+endfunc
