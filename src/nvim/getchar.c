@@ -652,15 +652,13 @@ void stuffnumReadbuff(long n)
   add_num_buff(&readbuf1, n);
 }
 
-/*
- * Read a character from the redo buffer.  Translates K_SPECIAL, CSI and
- * multibyte characters.
- * The redo buffer is left as it is.
- * If init is TRUE, prepare for redo, return FAIL if nothing to redo, OK
- * otherwise.
- * If old is TRUE, use old_redobuff instead of redobuff.
- */
-static int read_redo(int init, int old_redo)
+// Read a character from the redo buffer.  Translates K_SPECIAL, CSI and
+// multibyte characters.
+// The redo buffer is left as it is.
+// If init is true, prepare for redo, return FAIL if nothing to redo, OK
+// otherwise.
+// If old_redo is true, use old_redobuff instead of redobuff.
+static int read_redo(bool init, bool old_redo)
 {
   static buffblock_T *bp;
   static char_u *p;
@@ -713,38 +711,34 @@ static int read_redo(int init, int old_redo)
   return c;
 }
 
-/*
- * Copy the rest of the redo buffer into the stuff buffer (in a slow way).
- * If old_redo is TRUE, use old_redobuff instead of redobuff.
- * The escaped K_SPECIAL and CSI are copied without translation.
- */
-static void copy_redo(int old_redo)
+// Copy the rest of the redo buffer into the stuff buffer (in a slow way).
+// If old_redo is true, use old_redobuff instead of redobuff.
+// The escaped K_SPECIAL and CSI are copied without translation.
+static void copy_redo(bool old_redo)
 {
   int c;
 
-  while ((c = read_redo(FALSE, old_redo)) != NUL) {
+  while ((c = read_redo(false, old_redo)) != NUL) {
     add_char_buff(&readbuf2, c);
   }
 }
 
-/*
- * Stuff the redo buffer into readbuf2.
- * Insert the redo count into the command.
- * If "old_redo" is TRUE, the last but one command is repeated
- * instead of the last command (inserting text). This is used for
- * CTRL-O <.> in insert mode
- *
- * return FAIL for failure, OK otherwise
- */
-int start_redo(long count, int old_redo)
+// Stuff the redo buffer into readbuf2.
+// Insert the redo count into the command.
+// If "old_redo" is true, the last but one command is repeated
+// instead of the last command (inserting text). This is used for
+// CTRL-O <.> in insert mode
+//
+// return FAIL for failure, OK otherwise
+int start_redo(long count, bool old_redo)
 {
   int c;
 
   /* init the pointers; return if nothing to redo */
-  if (read_redo(TRUE, old_redo) == FAIL)
+  if (read_redo(true, old_redo) == FAIL)
     return FAIL;
 
-  c = read_redo(FALSE, old_redo);
+  c = read_redo(false, old_redo);
 
   /* copy the buffer name, if present */
   if (c == '"') {
@@ -762,7 +756,7 @@ int start_redo(long count, int old_redo)
       cmd_silent = true;
     }
 
-    c = read_redo(FALSE, old_redo);
+    c = read_redo(false, old_redo);
   }
 
   if (c == 'v') {   /* redo Visual */
@@ -771,13 +765,13 @@ int start_redo(long count, int old_redo)
     VIsual_select = FALSE;
     VIsual_reselect = TRUE;
     redo_VIsual_busy = TRUE;
-    c = read_redo(FALSE, old_redo);
+    c = read_redo(false, old_redo);
   }
 
   /* try to enter the count (in place of a previous count) */
   if (count) {
     while (ascii_isdigit(c))      /* skip "old" count */
-      c = read_redo(FALSE, old_redo);
+      c = read_redo(false, old_redo);
     add_num_buff(&readbuf2, count);
   }
 
@@ -796,12 +790,12 @@ int start_redo_ins(void)
 {
   int c;
 
-  if (read_redo(TRUE, FALSE) == FAIL)
+  if (read_redo(true, false) == FAIL)
     return FAIL;
   start_stuff();
 
   /* skip the count and the command character */
-  while ((c = read_redo(FALSE, FALSE)) != NUL) {
+  while ((c = read_redo(false, false)) != NUL) {
     if (vim_strchr((char_u *)"AaIiRrOo", c) != NULL) {
       if (c == 'O' || c == 'o') {
         add_buff(&readbuf2, NL_STR, -1L);
@@ -811,7 +805,7 @@ int start_redo_ins(void)
   }
 
   /* copy the typed text from the redo buffer into the stuff buffer */
-  copy_redo(FALSE);
+  copy_redo(false);
   block_redo = TRUE;
   return OK;
 }
