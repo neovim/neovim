@@ -448,7 +448,7 @@ void flush_buffers(int flush_typeahead)
   }
   typebuf.tb_maplen = 0;
   typebuf.tb_silent = 0;
-  cmd_silent = FALSE;
+  cmd_silent = false;
   typebuf.tb_no_abbr_cnt = 0;
 }
 
@@ -959,7 +959,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
     typebuf.tb_maplen += addlen;
   if (silent || typebuf.tb_silent > offset) {
     typebuf.tb_silent += addlen;
-    cmd_silent = TRUE;
+    cmd_silent = true;
   }
   if (typebuf.tb_no_abbr_cnt && offset == 0)    /* and not used for abbrev.s */
     typebuf.tb_no_abbr_cnt += addlen;
@@ -1723,7 +1723,7 @@ static int vgetorpeek(int advance)
             *typebuf.tb_buf = (char_u)c;
             gotchars(typebuf.tb_buf, 1);
           }
-          cmd_silent = FALSE;
+          cmd_silent = false;
 
           break;
         } else if (typebuf.tb_len > 0) {

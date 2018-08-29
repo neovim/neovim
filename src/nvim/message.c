@@ -541,7 +541,7 @@ int emsg(const char_u *s_)
 
     // Reset msg_silent, an error causes messages to be switched back on.
     msg_silent = 0;
-    cmd_silent = FALSE;
+    cmd_silent = false;
 
     if (global_busy) {        // break :global command
       global_busy++;
