@@ -1202,7 +1202,6 @@ static int read_sal_section(FILE *fd, slang_T *slang)
       SPELL_READ_NONNUL_BYTES(                  // <salfrom>
           (char *)p, (size_t)(ccnt - i), fd, xfree(smp->sm_lead));
       p += (ccnt - i);
-      i = ccnt;
     }
     *p++ = NUL;
 
