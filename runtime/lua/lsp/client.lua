@@ -8,8 +8,7 @@ local Enum = require('neovim.meta').Enum
 local message = require('lsp.message')
 local initialize_filetype_autocmds = require('lsp.autocmds').initialize_filetype_autocmds
 local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
-local get_list_of_callbacks = require('lsp.callbacks').get_list_of_callbacks
-local call_callbacks = require('lsp.callbacks').call_callbacks
+local call_callbacks_for_method = require('lsp.callbacks').call_callbacks_for_method
 local should_send_message = require('lsp.checks').should_send
 
 local log = require('lsp.log')
@@ -170,12 +169,10 @@ client.request_async = function(self, method, params, cb)
     return nil
   end
 
-  local callback_list = get_list_of_callbacks(method, cb)
-
   -- After handling callback semantics, store it to call on reply.
-  if not util.table.is_empty(callback_list) then
+  if cb ~= false then
     self._callbacks[req.id] = {
-      cb = callback_list,
+      cb = cb,
       method = req.method,
     }
   end
@@ -313,53 +310,33 @@ client.on_message = function(self, json_message)
   -- Handle notifications
   if json_message.method and json_message.params then
     log.debug('notification: ', json_message.method)
-
-    local callback_list = get_list_of_callbacks(json_message.method)
-
-    if (not callback_list) or (type(callback_list) ~= 'table') then
-      log.debug('Unsupported notification: ', json_message.method)
-      return
-    end
-
-    call_callbacks(callback_list, true, json_message.params)
+    call_callbacks_for_method(json_message.method, true, json_message.params)
     lsp_doautocmd(json_message.method, 'notification')
 
     return
   -- Handle responses
   elseif not json_message.method and json_message.id then
-    local cb_object = self._callbacks[json_message.id]
+    local cb = self._callbacks[json_message.id].cb
+    local method = self._callbacks[json_message.id].method
+    local success = not json_message['error']
+    local data = json_message['error'] or json_message.result or {}
 
-    if util.table.is_empty(cb_object) then
-      log.trace('Request: "', json_message.id, '" had no registered callbacks')
-      return
-    end
-
-    local callback_list = cb_object.cb
-
-    -- Nothing left to do if we don't have any valid callback
-    if util.table.is_empty(callback_list) then
-      return
-    end
-
-    local method = cb_object.method
     lsp_doautocmd(method, 'response')
+    local result
+    if cb then
+      result = { cb(success, data) }
+    else
+      result = { call_callbacks_for_method(method, success, data) }
+    end
 
     -- Clear the old callback
     self._callbacks[json_message.id] = nil
 
-    -- Store the results
-    local result_table = {}
-    result_table.complete = true
-
-    if json_message.error then
-      result_table.was_error = true
-      result_table.result = call_callbacks(callback_list, false, json_message.error)
-    else
-      result_table.was_error = false
-      result_table.result = call_callbacks(callback_list, true, json_message.result)
-    end
-
-    self._results[json_message.id] = result_table
+    self._results[json_message.id] = {
+      complete = true,
+      was_error = json_message['error'],
+      result = result,
+    }
   end
 end
 

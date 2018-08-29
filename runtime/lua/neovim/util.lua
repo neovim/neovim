@@ -119,14 +119,28 @@ util.get_key = function(table, ...)
   return result
 end
 
-util.is_loclist_open = function()
+util.is_filtetype_open_in_tab = function(filetype, checker)
   for _, buffer_id  in ipairs(vim.api.nvim_call_function('tabpagebuflist', {})) do
-    if vim.api.nvim_buf_get_option(buffer_id, 'filetype') == 'qf' then
-      return true
+    if vim.api.nvim_buf_get_option(buffer_id, 'filetype') == filetype then
+      if checker ~= nil and checker(buffer_id) then
+        return true
+      end
     end
   end
 
   return false
+end
+
+util.is_loclist_open = function()
+  return util.is_filtetype_open_in_tab('qf', function(buffer_id)
+    return (#vim.api.nvim_call_function('getloclist', { buffer_id }) ~= 0)
+  end)
+end
+
+util.is_quickfix_open = function()
+  return util.is_filtetype_open_in_tab('qf', function(buffer_id)
+    return (#vim.api.nvim_call_function('getloclist', { buffer_id }) == 0)
+  end)
 end
 
 util.table.is_empty = function(table)

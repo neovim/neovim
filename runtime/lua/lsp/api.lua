@@ -1,8 +1,6 @@
 
 vim.lsp = {
-  client = {
-    start = require('lsp.plugin').client.start,
-  },
+  client = require('lsp.plugin').client,
 
   server = {
     add = require('lsp.server').add,
