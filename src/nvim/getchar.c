@@ -448,7 +448,7 @@ void flush_buffers(int flush_typeahead)
   }
   typebuf.tb_maplen = 0;
   typebuf.tb_silent = 0;
-  cmd_silent = FALSE;
+  cmd_silent = false;
   typebuf.tb_no_abbr_cnt = 0;
 }
 
@@ -652,15 +652,13 @@ void stuffnumReadbuff(long n)
   add_num_buff(&readbuf1, n);
 }
 
-/*
- * Read a character from the redo buffer.  Translates K_SPECIAL, CSI and
- * multibyte characters.
- * The redo buffer is left as it is.
- * If init is TRUE, prepare for redo, return FAIL if nothing to redo, OK
- * otherwise.
- * If old is TRUE, use old_redobuff instead of redobuff.
- */
-static int read_redo(int init, int old_redo)
+// Read a character from the redo buffer.  Translates K_SPECIAL, CSI and
+// multibyte characters.
+// The redo buffer is left as it is.
+// If init is true, prepare for redo, return FAIL if nothing to redo, OK
+// otherwise.
+// If old_redo is true, use old_redobuff instead of redobuff.
+static int read_redo(bool init, bool old_redo)
 {
   static buffblock_T *bp;
   static char_u *p;
@@ -713,38 +711,35 @@ static int read_redo(int init, int old_redo)
   return c;
 }
 
-/*
- * Copy the rest of the redo buffer into the stuff buffer (in a slow way).
- * If old_redo is TRUE, use old_redobuff instead of redobuff.
- * The escaped K_SPECIAL and CSI are copied without translation.
- */
-static void copy_redo(int old_redo)
+// Copy the rest of the redo buffer into the stuff buffer (in a slow way).
+// If old_redo is true, use old_redobuff instead of redobuff.
+// The escaped K_SPECIAL and CSI are copied without translation.
+static void copy_redo(bool old_redo)
 {
   int c;
 
-  while ((c = read_redo(FALSE, old_redo)) != NUL) {
+  while ((c = read_redo(false, old_redo)) != NUL) {
     add_char_buff(&readbuf2, c);
   }
 }
 
-/*
- * Stuff the redo buffer into readbuf2.
- * Insert the redo count into the command.
- * If "old_redo" is TRUE, the last but one command is repeated
- * instead of the last command (inserting text). This is used for
- * CTRL-O <.> in insert mode
- *
- * return FAIL for failure, OK otherwise
- */
-int start_redo(long count, int old_redo)
+// Stuff the redo buffer into readbuf2.
+// Insert the redo count into the command.
+// If "old_redo" is true, the last but one command is repeated
+// instead of the last command (inserting text). This is used for
+// CTRL-O <.> in insert mode
+//
+// return FAIL for failure, OK otherwise
+int start_redo(long count, bool old_redo)
 {
   int c;
 
-  /* init the pointers; return if nothing to redo */
-  if (read_redo(TRUE, old_redo) == FAIL)
+  // init the pointers; return if nothing to redo
+  if (read_redo(true, old_redo) == FAIL) {
     return FAIL;
+  }
 
-  c = read_redo(FALSE, old_redo);
+  c = read_redo(false, old_redo);
 
   /* copy the buffer name, if present */
   if (c == '"') {
@@ -755,22 +750,30 @@ int start_redo(long count, int old_redo)
     if (c >= '1' && c < '9')
       ++c;
     add_char_buff(&readbuf2, c);
-    c = read_redo(FALSE, old_redo);
+
+    // the expression register should be re-evaluated
+    if (c == '=') {
+      add_char_buff(&readbuf2, CAR);
+      cmd_silent = true;
+    }
+
+    c = read_redo(false, old_redo);
   }
 
   if (c == 'v') {   /* redo Visual */
     VIsual = curwin->w_cursor;
-    VIsual_active = TRUE;
-    VIsual_select = FALSE;
-    VIsual_reselect = TRUE;
-    redo_VIsual_busy = TRUE;
-    c = read_redo(FALSE, old_redo);
+    VIsual_active = true;
+    VIsual_select = false;
+    VIsual_reselect = true;
+    redo_VIsual_busy = true;
+    c = read_redo(false, old_redo);
   }
 
-  /* try to enter the count (in place of a previous count) */
+  // try to enter the count (in place of a previous count)
   if (count) {
-    while (ascii_isdigit(c))      /* skip "old" count */
-      c = read_redo(FALSE, old_redo);
+    while (ascii_isdigit(c)) {    // skip "old" count
+      c = read_redo(false, old_redo);
+    }
     add_num_buff(&readbuf2, count);
   }
 
@@ -789,12 +792,13 @@ int start_redo_ins(void)
 {
   int c;
 
-  if (read_redo(TRUE, FALSE) == FAIL)
+  if (read_redo(true, false) == FAIL) {
     return FAIL;
+  }
   start_stuff();
 
-  /* skip the count and the command character */
-  while ((c = read_redo(FALSE, FALSE)) != NUL) {
+  // skip the count and the command character
+  while ((c = read_redo(false, false)) != NUL) {
     if (vim_strchr((char_u *)"AaIiRrOo", c) != NULL) {
       if (c == 'O' || c == 'o') {
         add_buff(&readbuf2, NL_STR, -1L);
@@ -803,9 +807,9 @@ int start_redo_ins(void)
     }
   }
 
-  /* copy the typed text from the redo buffer into the stuff buffer */
-  copy_redo(FALSE);
-  block_redo = TRUE;
+  // copy the typed text from the redo buffer into the stuff buffer
+  copy_redo(false);
+  block_redo = true;
   return OK;
 }
 
@@ -952,7 +956,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
     typebuf.tb_maplen += addlen;
   if (silent || typebuf.tb_silent > offset) {
     typebuf.tb_silent += addlen;
-    cmd_silent = TRUE;
+    cmd_silent = true;
   }
   if (typebuf.tb_no_abbr_cnt && offset == 0)    /* and not used for abbrev.s */
     typebuf.tb_no_abbr_cnt += addlen;
@@ -1716,7 +1720,7 @@ static int vgetorpeek(int advance)
             *typebuf.tb_buf = (char_u)c;
             gotchars(typebuf.tb_buf, 1);
           }
-          cmd_silent = FALSE;
+          cmd_silent = false;
 
           break;
         } else if (typebuf.tb_len > 0) {

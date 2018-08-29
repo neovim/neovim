@@ -11235,7 +11235,7 @@ void get_user_input(const typval_T *const argvars,
     }
   }
 
-  int cmd_silent_save = cmd_silent;
+  const bool cmd_silent_save = cmd_silent;
 
   cmd_silent = false;  // Want to see the prompt.
   // Only the part of the message after the last NL is considered as
