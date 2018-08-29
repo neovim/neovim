@@ -2917,13 +2917,14 @@ win_line (
           || (vcol + 1 == fromcol && n_extra == 0
               && utf_ptr2cells(ptr) > 1)
           || ((int)vcol_prev == fromcol_prev
-              && vcol_prev < vcol               /* not at margin */
-              && vcol < tocol))
-        area_attr = attr;                       /* start highlighting */
-      else if (area_attr != 0
-               && (vcol == tocol
-                   || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
-        area_attr = 0;                          /* stop highlighting */
+              && vcol_prev < vcol               // not at margin
+              && vcol < tocol)) {
+        area_attr = attr;                       // start highlighting
+      } else if (area_attr != 0 && (vcol == tocol
+                                    || (noinvcur
+                                        && (colnr_T)vcol == wp->w_virtcol))) {
+        area_attr = 0;                          // stop highlighting
+     }
 
       if (!n_extra) {
         /*
@@ -6128,15 +6129,16 @@ void setcursor(void)
 {
   if (redrawing()) {
     validate_cursor();
+    int left_offset = curwin->w_wcol;
+    if (curwin->w_p_rl) {
+      // With 'rightleft' set and the cursor on a double-wide character,
+      // position it on the leftmost column.
+      left_offset = curwin->w_width - curwin->w_wcol
+                    - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
+                        && vim_isprintc(gchar_cursor())) ? 2 : 1);
+    }
     ui_cursor_goto(curwin->w_winrow + curwin->w_wrow,
-        curwin->w_wincol + (
-          /* With 'rightleft' set and the cursor on a double-wide
-           * character, position it on the leftmost column. */
-          curwin->w_p_rl ? (curwin->w_width - curwin->w_wcol - (
-                              (utf_ptr2cells(get_cursor_pos_ptr()) == 2
-                               && vim_isprintc(gchar_cursor())) ? 2 :
-                              1)) :
-          curwin->w_wcol));
+                   curwin->w_wincol + left_offset);
   }
 }
 
@@ -6967,7 +6969,7 @@ static void win_redr_ruler(win_T *wp, int always)
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
     }
-    /* Truncate at window boundary. */
+    // Truncate at window boundary.
     o = 0;
     for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
       o += utf_ptr2cells(buffer + i);

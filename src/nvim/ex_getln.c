@@ -2154,8 +2154,9 @@ static void correct_cmdspos(int idx, int cells)
 {
   if (utfc_ptr2len(ccline.cmdbuff + idx) > 1
       && utf_ptr2cells(ccline.cmdbuff + idx) > 1
-      && ccline.cmdspos % Columns + cells > Columns)
+      && ccline.cmdspos % Columns + cells > Columns) {
     ccline.cmdspos++;
+  }
 }
 
 /*

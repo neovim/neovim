@@ -2124,8 +2124,9 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
        * conversion from 'encoding' to something else.  In other
        * situations we don't know what to skip anyway. */
       *to++ = '?';
-      if (utf_ptr2cells((char_u *)from) > 1)
+      if (utf_ptr2cells((char_u *)from) > 1) {
         *to++ = '?';
+      }
       l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       from += l;
       fromlen -= l;
