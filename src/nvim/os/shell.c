@@ -450,8 +450,8 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void out_data_append_to_screen(char *output, size_t *count,
-                                      bool eof)
+static void out_data_append_to_screen(char *output, size_t *count, bool eof)
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = output, *end = output + *count;
   while (p < end) {
@@ -491,7 +491,7 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
       && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
-  } else {
+  } else if (ptr != NULL) {
     out_data_append_to_screen(ptr, &cnt, eof);
   }
 
