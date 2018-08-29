@@ -699,7 +699,7 @@ char_u *msg_may_trunc(int force, char_u *s)
         return s;
 
       for (n = 0; size >= room; ) {
-        size -= (*mb_ptr2cells)(s + n);
+        size -= utf_ptr2cells(s + n);
         n += (*mb_ptr2len)(s + n);
       }
       --n;
@@ -1222,7 +1222,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
       c = utf_ptr2char((char_u *)str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
-        retval += (*mb_ptr2cells)((char_u *)str);
+        retval += utf_ptr2cells((char_u *)str);
       } else {
         // Unprintable multi-byte char: print the printable chars so
         // far and the translation of the unprintable char.
@@ -1477,7 +1477,7 @@ void msg_prt_line(char_u *s, int list)
       else
         c = *p_extra++;
     } else if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
-      col += (*mb_ptr2cells)(s);
+      col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
       if (lcs_nbsp != NUL && list
           && (utf_ptr2char(s) == 160 || utf_ptr2char(s) == 0x202f)) {
@@ -1549,7 +1549,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   int cw;
 
   msg_didout = true;            // remember that line is not empty
-  cw = (*mb_ptr2cells)(s);
+  cw = utf_ptr2cells(s);
   if (cw > 1
       && (cmdmsg_rl ? msg_col <= 1 : msg_col == Columns - 1)) {
     // Doesn't fit, print a highlighted '>' to fill it up.
@@ -1712,13 +1712,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
                            ? (msg_col <= 1
                               || (*s == TAB && msg_col <= 7)
                               || (has_mbyte
-                                  && (*mb_ptr2cells)(s) > 1
+                                  && utf_ptr2cells(s) > 1
                                   && msg_col <= 2))
                            : (msg_col + t_col >= Columns - 1
                               || (*s == TAB
                                   && msg_col + t_col >= ((Columns - 1) & ~7))
                               || (has_mbyte
-                                  && (*mb_ptr2cells)(s) > 1
+                                  && utf_ptr2cells(s) > 1
                                   && msg_col + t_col >= Columns - 2))))) {
       // The screen is scrolled up when at the last row (some terminals
       // scroll automatically, some don't.  To avoid problems we scroll
@@ -1787,7 +1787,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
     wrap = *s == '\n'
            || msg_col + t_col >= Columns
-           || (has_mbyte && (*mb_ptr2cells)(s) > 1
+           || (has_mbyte && utf_ptr2cells(s) > 1
                && msg_col + t_col >= Columns - 1)
     ;
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
@@ -1821,7 +1821,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
     } else if (*s == BELL) {  // beep (from ":sh")
       vim_beep(BO_SH);
     } else if (*s >= 0x20) {  // printable char
-      cw = mb_ptr2cells(s);
+      cw = utf_ptr2cells(s);
       if (maxlen >= 0) {
         // avoid including composing chars after the end
         l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));

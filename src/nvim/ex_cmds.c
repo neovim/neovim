@@ -5653,7 +5653,7 @@ void ex_sign(exarg_T *eap)
               if (!vim_isprintc(utf_ptr2char(s))) {
                 break;
               }
-              cells += (*mb_ptr2cells)(s);
+              cells += utf_ptr2cells(s);
             }
             // Currently must be one or two display cells
             if (s != p || cells < 1 || cells > 2) {

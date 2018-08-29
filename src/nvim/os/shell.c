@@ -466,7 +466,7 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
       //    incomplete UTF-8 sequence that could be composing with the last
       //    complete sequence.
       // This will be corrected when we switch to vterm based implementation
-      int i = *p ? mb_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
+      int i = *p ? utfc_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
       if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end-p)) {
         *count = (size_t)(p - output);
         goto end;
