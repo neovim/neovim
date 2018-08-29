@@ -18,8 +18,10 @@ end
 configure.add_callback = function(method, cb, override_default_callback, filetype_specific)
   if override_default_callback then
     callbacks.set_default_callback(method, cb)
+  elseif filetype_specific ~= nil then
+    callbacks.add_filetype_callback(method, cb, filetype_specific)
   else
-    callbacks.add_callback(method, cb, filetype_specific)
+    callbacks.add_callback(method, cb)
   end
 end
 

@@ -204,6 +204,8 @@ local initialize_filetype_autocmds = function(filetype)
     )
   )
 
+  -- If we're starting the server in a file where the filetype is already set,
+  -- we should initialize the buffer autocmds manually
   if filetype == vim.api.nvim_buf_get_option(0, 'filetype') then
     initialize_buffer_autocmds()
   end

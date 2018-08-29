@@ -115,15 +115,7 @@ plugin.client.has_started = function(filetype)
   return plugin.client.get(filetype) ~= nil
 end
 plugin.client.handle = function(filetype, method, data, default_only)
-  local callback_list = callbacks.get_list_of_callbacks(method, nil, filetype, default_only)
-
-  return callbacks.call_callbacks(callback_list, true, data)
-end
-
--- Non-client commands
--- Determines if a request is supported or not
-plugin.is_supported_request = function(method)
-  return require('lsp.callbacks').get_list_of_callbacks(method) ~= nil
+  return callbacks.call_callbacks_for_method(method, true, data, default_only, filetype)
 end
 
 return plugin
