@@ -892,10 +892,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
       need_break = 1;
     } else {
       need_break = mch_print_text_out(line + col, (size_t)outputlen);
-      if (has_mbyte)
-        print_pos += utf_ptr2cells(line + col);
-      else
-        print_pos++;
+      print_pos += utf_ptr2cells(line + col);
     }
   }
 

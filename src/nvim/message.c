@@ -700,7 +700,7 @@ char_u *msg_may_trunc(int force, char_u *s)
 
       for (n = 0; size >= room; ) {
         size -= utf_ptr2cells(s + n);
-        n += (*mb_ptr2len)(s + n);
+        n += utfc_ptr2len(s + n);
       }
       --n;
     }
@@ -1476,13 +1476,13 @@ void msg_prt_line(char_u *s, int list)
         c = c_extra;
       else
         c = *p_extra++;
-    } else if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
+    } else if ((l = utfc_ptr2len(s)) > 1) {
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
       if (lcs_nbsp != NUL && list
           && (utf_ptr2char(s) == 160 || utf_ptr2char(s) == 0x202f)) {
-        mb_char2bytes(lcs_nbsp, (char_u *)buf);
-        buf[(*mb_ptr2len)((char_u *)buf)] = NUL;
+        utf_char2bytes(lcs_nbsp, (char_u *)buf);
+        buf[utfc_ptr2len((char_u *)buf)] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
         buf[l] = NUL;
@@ -1711,14 +1711,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
         && (*s == '\n' || (cmdmsg_rl
                            ? (msg_col <= 1
                               || (*s == TAB && msg_col <= 7)
-                              || (has_mbyte
-                                  && utf_ptr2cells(s) > 1
+                              || (utf_ptr2cells(s) > 1
                                   && msg_col <= 2))
                            : (msg_col + t_col >= Columns - 1
                               || (*s == TAB
                                   && msg_col + t_col >= ((Columns - 1) & ~7))
-                              || (has_mbyte
-                                  && utf_ptr2cells(s) > 1
+                              || (utf_ptr2cells(s) > 1
                                   && msg_col + t_col >= Columns - 2))))) {
       // The screen is scrolled up when at the last row (some terminals
       // scroll automatically, some don't.  To avoid problems we scroll
@@ -1787,7 +1785,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
     wrap = *s == '\n'
            || msg_col + t_col >= Columns
-           || (has_mbyte && utf_ptr2cells(s) > 1
+           || (utf_ptr2cells(s) > 1
                && msg_col + t_col >= Columns - 1)
     ;
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'

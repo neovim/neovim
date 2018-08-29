@@ -5649,7 +5649,7 @@ void ex_sign(exarg_T *eap)
 
             // Count cells and check for non-printable chars
             cells = 0;
-            for (s = arg; s < p; s += (*mb_ptr2len)(s)) {
+            for (s = arg; s < p; s += utfc_ptr2len(s)) {
               if (!vim_isprintc(utf_ptr2char(s))) {
                 break;
               }
