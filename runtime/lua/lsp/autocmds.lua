@@ -60,6 +60,7 @@ local default_autocmds = {
     'InsertLeave',
 
     {'User', 'LSP/textDocument/completion/pre'},
+    {'User', 'LSP/textDocument/rename/pre'},
   },
 }
 

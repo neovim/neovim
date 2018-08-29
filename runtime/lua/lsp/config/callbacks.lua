@@ -25,6 +25,10 @@ configure.add_callback = function(method, cb, override_default_callback, filetyp
   end
 end
 
+configure.set_option = function(method, option, value)
+  callbacks.set_option(method, option, value)
+end
+
 configure.disable_default_callback = function(method)
   configure.add_callback(method, nil, true)
 end

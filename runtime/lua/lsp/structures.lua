@@ -1,4 +1,8 @@
+-- luacheck: globals vim
+
 local lsp_util = require('lsp.util')
+
+local protocol = require('lsp.protocol')
 
 -- Helper functions
 local check_table = function (t)
@@ -104,6 +108,7 @@ structures.DidOpenTextDocumentParams = function(args)
     textDocument = structures.TextDocumentItem(args.textDocument)
   }
 end
+
 structures.DidSaveTextDocumentParams = function(args)
   args = check_table(args)
 
@@ -112,6 +117,16 @@ structures.DidSaveTextDocumentParams = function(args)
     text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"),
   }
 end
+
+structures.WillSaveTextDocumentParams = function(args)
+  args = check_table(args)
+
+  return {
+    textDocument = structures.TextDocumentItem(args.textDocument),
+    reason = args.reason or protocol.TextDocumentSaveReason.Manual,
+  }
+end
+
 -- TODO: Incremental changes.
 --  Maybe use the PR that externalizes that once its merged
 structures.DidChangeTextDocumentParams = function(args)
@@ -136,6 +151,7 @@ structures.CompletionContext = function(args)
     triggerCharacter = args.triggerCharacter or nil,
   }
 end
+
 structures.CompletionParams = function(args)
   args = check_table(args)
 
@@ -144,6 +160,24 @@ structures.CompletionParams = function(args)
   result.context = structures.CompletionContext(args.context)
 
   return result
+end
+
+structures.RenameParams = function(args)
+  args = check_table(args)
+
+  return {
+    textDocument = structures.TextDocumentIdentifier(args.textDocument),
+    position = structures.Position(args.position),
+    newName = args.newName or vim.api.nvim_call_function('inputdialog', { 'New Name: ' }),
+  }
+end
+
+structures.WorkspaceSymbolParams = function(args)
+  args = check_table(args)
+
+  return {
+    query = args.query or vim.api.nvim_call_function('expand', { '<cWORD>' })
+  }
 end
 
 return structures

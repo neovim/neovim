@@ -98,4 +98,11 @@ protocol.errorCodes = {
   [-32800] = 'Request Cancelled',
 }
 
+
+protocol.TextDocumentSaveReason = Enum:new({
+  Manual = 1,
+  AfterDelay = 2,
+  FocusOut = 3,
+})
+
 return protocol

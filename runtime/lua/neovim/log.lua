@@ -4,6 +4,7 @@
 local Enum = require('neovim.meta').Enum
 
 local log = {}
+log.__index = log
 
 log.levels = Enum:new({
   bad_level = 0,
@@ -40,43 +41,45 @@ log.write_file = function(self, level, message)
 
 end
 
-for name in pairs(log.levels) do
-  log[name] = function(self, logger, ...)
-    -- If both levels are too high, just quit
-    if self.levels[name] < logger.console_level and
-        self.levels[name] < logger.file_level then
+log.create_functions = function(new_log, new_logger)
+  for name in pairs(log.levels) do
+    if log[name] == nil then
+      log[name] = function(self, logger, ...)
+        -- If both levels are too high, just quit
+        if self.levels[name] < logger.console_level and
+            self.levels[name] < logger.file_level then
 
-      return
-    end
+          return
+        end
 
-    local message = ''
-    for _, arg in ipairs({...}) do
-      message = message .. require('neovim.util').tostring(arg)
-    end
+        local message = ''
+        for _, arg in ipairs({...}) do
+          message = message .. require('neovim.util').tostring(arg)
+        end
 
-    local info = debug.getinfo(2, "Sl")
-    local log_message = string.format("<< [%-6s%s] %s:%-4s >>\n      %s %s",
-      name,
-      os.date("%H:%M:%S"),
-      info.short_src,
-      info.currentline,
-      logger.prefix,
-      message)
+        local info = debug.getinfo(2, "Sl")
+        local log_message = string.format("<< [%-6s%s] %s:%-4s >>\n      %s %s",
+          name,
+          os.date("%H:%M:%S"),
+          info.short_src,
+          info.currentline,
+          logger.prefix,
+          message)
 
-    if self.levels[name] >= logger.file_level then
-      log.write_file(logger, name, log_message)
-    end
+        if self.levels[name] >= logger.file_level then
+          log.write_file(logger, name, log_message)
+        end
 
-    if self.levels[name] >= logger.console_level then
-      print(log_message .. "\n")
+        if self.levels[name] >= logger.console_level then
+          print(log_message .. "\n")
+        end
+      end
     end
   end
-end
 
-log.create_functions = function(self, logger)
   for key, _ in pairs(log.levels) do
-    logger[key] = function(...)
-      return self[key](self, logger, ...)
+    new_logger[key] = function(...)
+      return new_log[key](new_log, new_logger, ...)
     end
   end
 end
@@ -84,10 +87,8 @@ end
 
 log.new = function(self, name)
   local new_logger = setmetatable({
-    __index = self,
+    prefix = '[' .. name .. ']'
   }, self)
-
-  new_logger.prefix = '[' .. name .. ']'
 
   self:create_functions(new_logger)
 

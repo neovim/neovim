@@ -1,3 +1,5 @@
+-- luacheck: globals vim
+
 -- Register requests
 -- Default requests
 -- Override requests
@@ -130,7 +132,19 @@ requests.textDocument.didOpen = function(client, params)
   return structures.DidOpenTextDocumentParams(params), true
 end
 
+requests.textDocument.willSave = function(client, params)
+  if not client.capabilities.synchronization.willSave then
+    return nil, false
+  end
+
+  return structures.WillSaveTextDocumentParams(params), true
+end
+
 requests.textDocument.didSave = function(client, params)
+  if not client.capabilities.synchronization.didSave then
+    return nil, false
+  end
+
   return structures.DidSaveTextDocumentParams(params), true
 end
 
@@ -160,6 +174,10 @@ requests.textDocument.definition = function(client, params)
   end
 
   return structures.TextDocumentPositionParams(params), true
+end
+
+requests.textDocument.rename = function(client, params)
+  return structures.RenameParams(params)
 end
 
 requests.textDocument.signatureHelp = function(client, params)

@@ -4,12 +4,11 @@
 --  Maybe make a remote function
 
 local neovim_log = require('neovim.log')
-
 local log = neovim_log:new('LSP')
 
-neovim_log.set_console_level(log, 'warn')
-neovim_log.set_file_level(log, 'error')
-neovim_log.set_outfile(log, vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt')
+log:set_console_level('warn')
+log:set_file_level('bad_level')
+log:set_outfile(vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt')
 
 return log
 
