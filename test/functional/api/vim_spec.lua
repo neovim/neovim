@@ -337,7 +337,7 @@ describe('API', function()
       eq(1, funcs.exists('g:lua'))
       meths.del_var('lua')
       eq(0, funcs.exists('g:lua'))
-      eq({false, 'Key does not exist: lua'}, meth_pcall(meths.del_var, 'lua'))
+      eq({false, "Key not found: lua"}, meth_pcall(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
       command('lockvar lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
@@ -948,7 +948,7 @@ describe('API', function()
       }
       local status, err = pcall(meths.call_atomic, req)
       eq(false, status)
-      ok(err:match(' All items in calls array must be arrays of size 2') ~= nil)
+      ok(err:match('Items in calls array must be arrays of size 2') ~= nil)
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
 
@@ -958,7 +958,7 @@ describe('API', function()
       }
       status, err = pcall(meths.call_atomic, req)
       eq(false, status)
-      ok(err:match('All items in calls array must be arrays') ~= nil)
+      ok(err:match('Items in calls array must be arrays') ~= nil)
       eq({2,3}, meths.get_var('bvar'))
 
       req = {
