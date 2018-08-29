@@ -75,7 +75,9 @@ end
 
 server.default_callbacks = {
 
-  root_uri = function() return 'file:///tmp/' end,
+  root_uri = function()
+    return 'file://' .. (vim.api.nvim_call_function('getcwd', { }) or '/tmp/')
+  end,
 
 }
 

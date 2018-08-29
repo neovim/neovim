@@ -36,6 +36,16 @@ active_jobs.remove = function(id)
   active_jobs[id] = nil
 end
 
+local mt_capabilities = {
+  __index = function(self, key)
+    if rawget(self, key) ~= nil then
+      return rawget(self, key)
+    end
+
+    return {}
+  end,
+}
+
 local client = {}
 client.__index = client
 
@@ -72,7 +82,7 @@ client.new = function(name, ft, cmd)
     _current_header = {},
 
     -- Capabilities sent by server
-    capabilities = {},
+    capabilities = setmetatable({}, mt_capabilities),
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -96,7 +106,7 @@ client.initialize = function(self)
   initialize_filetype_autocmds(self.ft)
 
   local result = self:request_async('initialize', nil, function(_, data)
-    self.capabilities = data.capabilities
+    self.capabilities = setmetatable(data.capabilities, mt_capabilities)
     return data.capabilities
   end)
 
@@ -129,10 +139,10 @@ client.request = function(self, method, params, cb)
   local request_id = self:request_async(method, params, cb)
 
   -- local later = os.time() + require('lsp.conf.request').timeout
-  local later = os.time() + 2
+  local later = os.time() + 10
 
   while (os.time() < later) and (self._results[request_id]  == nil) do
-    vim.api.nvim_command('sleep 10m')
+    vim.api.nvim_command('sleep 100m')
   end
 
   if self._results[request_id] == nil then

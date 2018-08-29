@@ -35,6 +35,7 @@ local protocol = require('lsp.protocol')
 local errorCodes = protocol.errorCodes
 
 local handle_completion = require('lsp.handle.completion')
+local handle_workspace = require('lsp.handle.workspace')
 
 local CallbackMapping = setmetatable({}, {})
 local CallbackObject = {}
@@ -62,7 +63,7 @@ end
 
 CallbackObject.__call = function(self, success, data, default_only, filetype)
   if self.name ~= 'neovim/error_callback' and not success then
-    method_to_callback_object('neovim/error_callback').default(data)
+    method_to_callback_object('neovim/error_callback').default(self, data)
   end
 
   if util.table.is_empty(self.default) then
@@ -85,9 +86,19 @@ CallbackObject.__call = function(self, success, data, default_only, filetype)
 end
 
 CallbackObject.new = function(method, default_callback, options)
+  options = options or {}
+
   local object = setmetatable({
     method = method,
-    options = options or {},
+    options = setmetatable(options, {
+      __index = function(_, key)
+        error(string.format('Cannot get option (%s) for "%s"', key, method))
+      end,
+
+      __newindex = function(_, key, value)
+        error(string.format('Cannot set option (%s) for "%s" to value [%s]', key, method, value))
+      end,
+    }),
 
     default = {},
     generic = {},
@@ -158,80 +169,70 @@ CallbackObject.get_list_of_callbacks = function(self, default_only, filetype)
   return callback_list
 end
 
---------------------------------------------------------------------------------
 -- Callback definition section
---------------------------------------------------------------------------------
-
 local add_default_callback = function(name, callback, options)
   CallbackMapping[name] = CallbackObject.new(name, callback, options)
 end
 
-
 -- 3 neovim/error_callback
-CallbackMapping.error_callback = (function(name, error_message)
+add_default_callback('neovim/error_callback', function(original, error_message)
   local message = ''
   if error_message.message ~= nil and type(error_message.message) == 'string' then
     message = error_message.message
   elseif rawget(errorCodes, error_message.code) ~= nil then
     message = string.format('[%s] %s',
-    error_message.code, errorCodes[error_message.code]
+      error_message.code, errorCodes[error_message.code]
     )
   end
 
-  vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', name, message))
+  vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', original.method, message))
 
   return
 end)
 
 -- 3 textDocument/publishDiagnostics
-add_default_callback('textDocument/publishDiagnostics',
-  function(self, data)
-    local qflist = {}
+add_default_callback('textDocument/publishDiagnostics', function(self, data)
+  local qflist = {}
 
-    for _, diagnostic in ipairs(data.diagnostics) do
-      local range = diagnostic.range
-      local severity = diagnostic.severity or protocol.DiagnosticSeverity.Information
+  for _, diagnostic in ipairs(data.diagnostics) do
+    local range = diagnostic.range
+    local severity = diagnostic.severity or protocol.DiagnosticSeverity.Information
 
-      local message_type
-      if severity == protocol.DiagnosticSeverity.Error then
-        message_type = 'E'
-      elseif severity == protocol.DiagnosticSeverity.Warning then
-        message_type = 'W'
-      else
-        message_type = 'I'
-      end
-
-      -- local code = diagnostic.code
-      local source = diagnostic.source or 'lsp'
-      local message = diagnostic.message
-
-      table.insert(qflist, {
-        lnum = range.start.line + 1,
-        col = range.start.character + 1,
-        text = '[' .. source .. ']' .. message,
-        filename = lsp_util.get_filename(data.uri),
-        ['type'] = message_type,
-      })
+    local message_type
+    if severity == protocol.DiagnosticSeverity.Error then
+      message_type = 'E'
+    elseif severity == protocol.DiagnosticSeverity.Warning then
+      message_type = 'W'
+    else
+      message_type = 'I'
     end
 
-    vim.api.nvim_call_function('setqflist', {qflist, ' ', 'Language Server Diagnostics'})
+    -- local code = diagnostic.code
+    local source = diagnostic.source or 'lsp'
+    local message = diagnostic.message
 
-    if self.options.auto_quickfix_list then
-      if qflist == {} then
-        vim.api.nvim_command('cclose')
-      else
-        if not util.is_quickfix_open() then
-          vim.api.nvim_command('copen')
-          vim.api.nvim_command('wincmd p')
-        end
-      end
+    table.insert(qflist, {
+      lnum = range.start.line + 1,
+      col = range.start.character + 1,
+      text = '[' .. source .. ']' .. message,
+      filename = lsp_util.get_filename(data.uri),
+      ['type'] = message_type,
+    })
+  end
+
+  vim.api.nvim_call_function('setqflist', {qflist, ' ', 'Language Server Diagnostics'})
+
+  if #qflist == 0  then
+    vim.api.nvim_command('cclose')
+  elseif self.options.auto_quickfix_list then
+    if not util.is_quickfix_open() then
+      vim.api.nvim_command('copen')
+      vim.api.nvim_command('wincmd p')
     end
+  end
 
-    return
-  end, {
-    auto_quickfix_list = true,
-  }
-)
+  return
+end, { auto_quickfix_list = false, })
 
 -- 3 textDocument/completion
 add_default_callback('textDocument/completion', function(self, data)
@@ -243,6 +244,7 @@ add_default_callback('textDocument/completion', function(self, data)
   return handle_completion.getLabels(data)
 end)
 
+-- 3 textDocument/references
 add_default_callback('textDocument/references', function(self, data)
   local locations = data
   local loclist = {}
@@ -280,6 +282,19 @@ add_default_callback('textDocument/references', function(self, data)
   return result
 end, { auto_location_list = true })
 
+-- 3 textDocument/rename
+add_default_callback('textDocument/rename', function(self, data)
+  if data == nil then
+    print(self)
+    return nil
+  end
+
+  vim.api.nvim_set_var('textDocument_rename', data)
+
+  handle_workspace.apply_WorkspaceEdit(data)
+end, { })
+
+-- 3 textDocument/hover
 add_default_callback('textDocument/hover', function(self, data)
   log.trace('textDocument/hover', data, self)
 
@@ -327,6 +342,7 @@ add_default_callback('textDocument/hover', function(self, data)
   end
 end)
 
+-- 3 textDocument/definition
 add_default_callback('textDocument/definition', function(self, data)
   log.trace('callback:textDocument/definiton', data, self)
 
@@ -368,6 +384,52 @@ add_default_callback('textDocument/definition', function(self, data)
 
   return true
 end)
+
+
+-- 2 window
+-- 3 window/showMessage
+add_default_callback('window/showMessage', function(self, data)
+  if data == nil or type(data) ~= 'table' then
+    print(self)
+    return nil
+  end
+
+  local message_type = data['type']
+  local message = data['message']
+
+  if message_type == protocol.MessageType.Error then
+    -- Might want to not use err_writeln,
+    -- but displaying a message with red highlights or something
+    vim.api.nvim_err_writeln(message)
+  else
+    vim.api.nvim_out_write(message .. "\n")
+  end
+
+  return data
+end, { })
+
+-- 3 window/showMessageRequest
+-- TODO: Should probably find some unique way to handle requests from server -> client
+add_default_callback('window/showMessageRequest', function(self, data)
+  if data == nil or type(data) ~= 'table' then
+    print(self)
+    return nil
+  end
+
+  local message_type = data['type']
+  local message = data['message']
+  local actions = data['actions']
+
+  print(message_type, message, actions)
+end, { })
+
+-- 2 workspace
+-- 3 workspace/symbol
+-- TODO: Find a server that supports this request, and also figure out workspaces :)
+-- add_default_callback('workspace/symbol', function(self, data)
+--   print(self, data)
+-- end, { })
+
 
 --- Get a list of callbacks for a particular circumstance
 -- @param method                (required) The name of the method to get the callbacks for
@@ -433,6 +495,10 @@ local add_filetype_callback = function(method, new_callback, filetype)
   method_to_callback_object(method, true):add_filetype_callback(new_callback, filetype)
 end
 
+local set_option = function(method, option, value)
+  method_to_callback_object(method).options[option] = value
+end
+
 return {
   -- Calling configured callback objects
   call_callbacks_for_method = call_callbacks_for_method,
@@ -441,6 +507,7 @@ return {
   set_default_callback = set_default_callback,
   add_callback = add_callback,
   add_filetype_callback = add_filetype_callback,
+  set_option = set_option,
 
   -- Generally private functions
   _callback_mapping = CallbackMapping,

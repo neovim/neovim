@@ -49,9 +49,7 @@ function RequestMessage:new(client, method, params)
   end
 
   if acceptable_method == false then
-    vim.api.nvim_err_writeln(
-      string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name)
-    )
+    log.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
     return nil
   end
 
