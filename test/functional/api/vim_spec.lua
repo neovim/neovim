@@ -24,13 +24,25 @@ describe('API', function()
   before_each(clear)
 
   it('validates requests', function()
-    expect_err('Invalid method: bogus',
+    -- RPC
+    expect_err('Invalid method: bogus$',
                request, 'bogus')
-    expect_err('Invalid method: … の り 。…',
+    expect_err('Invalid method: … の り 。…$',
                request, '… の り 。…')
-    expect_err('Invalid method: <empty>',
+    expect_err('Invalid method: <empty>$',
                request, '')
-    expect_err("can't serialize object",
+
+    -- Non-RPC: rpcrequest(v:servername) uses internal channel.
+    expect_err('Invalid method: … の り 。…$',
+               request, 'nvim_eval',
+               [=[rpcrequest(sockconnect('pipe', v:servername, {'rpc':1}), '… の り 。…')]=])
+    expect_err('Invalid method: bogus$',
+               request, 'nvim_eval',
+               [=[rpcrequest(sockconnect('pipe', v:servername, {'rpc':1}), 'bogus')]=])
+
+    -- XXX: This must be the last one, else next one will fail:
+    --      "Packer instance already working. Use another Packer ..."
+    expect_err("can't serialize object$",
                request, nil)
   end)
 
@@ -158,7 +170,7 @@ describe('API', function()
     end)
 
     it("VimL error: returns error details, does NOT update v:errmsg", function()
-      expect_err('E121: Undefined variable: bogus', request,
+      expect_err('E121: Undefined variable: bogus$', request,
                  'nvim_eval', 'bogus expression')
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
     end)
@@ -173,7 +185,7 @@ describe('API', function()
     end)
 
     it("VimL validation error: returns specific error, does NOT update v:errmsg", function()
-      expect_err('E117: Unknown function: bogus function', request,
+      expect_err('E117: Unknown function: bogus function$', request,
                  'nvim_call_function', 'bogus function', {'arg1'})
       expect_err('E119: Not enough arguments for function: atan', request,
                  'nvim_call_function', 'atan', {})
@@ -182,11 +194,11 @@ describe('API', function()
     end)
 
     it("VimL error: returns error details, does NOT update v:errmsg", function()
-      expect_err('E808: Number or Float required', request,
+      expect_err('E808: Number or Float required$', request,
                  'nvim_call_function', 'atan', {'foo'})
-      expect_err('Invalid channel stream "xxx"', request,
+      expect_err('Invalid channel stream "xxx"$', request,
                  'nvim_call_function', 'chanclose', {999, 'xxx'})
-      expect_err('E900: Invalid channel id', request,
+      expect_err('E900: Invalid channel id$', request,
                  'nvim_call_function', 'chansend', {999, 'foo'})
       eq('', eval('v:exception'))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
@@ -198,7 +210,7 @@ describe('API', function()
           throw 'wtf'
         endfunction
       ]])
-      expect_err('wtf', request,
+      expect_err('wtf$', request,
                  'nvim_call_function', 'Foo', {})
       eq('', eval('v:exception'))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
@@ -212,7 +224,7 @@ describe('API', function()
         endfunction
       ]])
       -- E740
-      expect_err('Function called with too many arguments', request,
+      expect_err('Function called with too many arguments$', request,
                  'nvim_call_function', 'Foo', too_many_args)
     end)
   end)
@@ -248,23 +260,23 @@ describe('API', function()
 
     it('validates args', function()
       command('let g:d={"baz":"zub","meep":[]}')
-      expect_err('Not found: bogus', request,
+      expect_err('Not found: bogus$', request,
                  'nvim_call_dict_function', 'g:d', 'bogus', {1,2})
-      expect_err('Not a function: baz', request,
+      expect_err('Not a function: baz$', request,
                  'nvim_call_dict_function', 'g:d', 'baz', {1,2})
-      expect_err('Not a function: meep', request,
+      expect_err('Not a function: meep$', request,
                  'nvim_call_dict_function', 'g:d', 'meep', {1,2})
-      expect_err('E117: Unknown function: f', request,
+      expect_err('E117: Unknown function: f$', request,
                  'nvim_call_dict_function', { f = '' }, 'f', {1,2})
-      expect_err('Not a function: f', request,
+      expect_err('Not a function: f$', request,
                  'nvim_call_dict_function', "{ 'f': '' }", 'f', {1,2})
-      expect_err('dict argument type must be String or Dictionary', request,
+      expect_err('dict argument type must be String or Dictionary$', request,
                  'nvim_call_dict_function', 42, 'f', {1,2})
-      expect_err('Failed to evaluate dict expression', request,
+      expect_err('Failed to evaluate dict expression$', request,
                  'nvim_call_dict_function', 'foo', 'f', {1,2})
-      expect_err('dict not found', request,
+      expect_err('dict not found$', request,
                  'nvim_call_dict_function', '42', 'f', {1,2})
-      expect_err('Invalid %(empty%) function name', request,
+      expect_err('Invalid %(empty%) function name$', request,
                  'nvim_call_dict_function', "{ 'f': '' }", '', {1,2})
     end)
   end)
