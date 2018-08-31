@@ -1204,14 +1204,14 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               remove_trailing_zeroes = true;
             }
 
-            if (isinf(f)
+            if (isinf((float)f)
                 || (strchr("fF", fmt_spec) != NULL && abs_f > 1.0e307)) {
               xstrlcpy(tmp, infinity_str(f > 0.0, fmt_spec,
                                          force_sign, space_for_positive),
                        sizeof(tmp));
               str_arg_l = strlen(tmp);
               zero_padding = 0;
-            } else if (isnan(f)) {
+            } else if (isnan((float)f)) {
               // Not a number: nan or NAN
               memmove(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan", 4);
               str_arg_l = 3;

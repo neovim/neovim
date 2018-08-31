@@ -327,7 +327,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (fpclassify((float)flt_)) { \
         case FP_NAN: { \
           ga_concat(gap, (char_u *) "str2float('nan')"); \
           break; \
@@ -531,7 +531,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (fpclassify((float)flt_)) { \
         case FP_NAN: { \
           EMSG(_("E474: Unable to represent NaN value in JSON")); \
           return FAIL; \
