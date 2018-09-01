@@ -3433,12 +3433,7 @@ void onecap_copy(char_u *word, char_u *wcopy, bool upper)
   } else {
     c = SPELL_TOFOLD(c);
   }
-  if (has_mbyte) {
-    l = utf_char2bytes(c, wcopy);
-  } else {
-    l = 1;
-    wcopy[0] = c;
-  }
+  l = utf_char2bytes(c, wcopy);
   STRLCPY(wcopy + l, p, MAXWLEN - l);
 }
 
@@ -3466,15 +3461,9 @@ static void allcap_copy(char_u *word, char_u *wcopy)
     } else
       c = SPELL_TOUPPER(c);
 
-    if (has_mbyte) {
-      if (d - wcopy >= MAXWLEN - MB_MAXBYTES)
-        break;
-      d += utf_char2bytes(c, d);
-    } else {
-      if (d - wcopy >= MAXWLEN - 1)
-        break;
-      *d++ = c;
-    }
+    if (d - wcopy >= MAXWLEN - MB_MAXBYTES)
+      break;
+    d += utf_char2bytes(c, d);
   }
   *d = NUL;
 }
@@ -4543,16 +4532,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
         ++depth;
-        if (has_mbyte) {
-          fl = mb_char2len(c2);
-          memmove(p, p + n, fl);
-          utf_char2bytes(c, p + fl);
-          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-        } else {
-          p[0] = c2;
-          p[1] = c;
-          stack[depth].ts_fidxtry = sp->ts_fidx + 2;
-        }
+        fl = mb_char2len(c2);
+        memmove(p, p + n, fl);
+        utf_char2bytes(c, p + fl);
+        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
       } else
         // If this swap doesn't work then SWAP3 won't either.
         PROF_STORE(sp->ts_state)
@@ -4604,17 +4587,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP3;
         ++depth;
-        if (has_mbyte) {
-          tl = mb_char2len(c3);
-          memmove(p, p + n + fl, tl);
-          utf_char2bytes(c2, p + tl);
-          utf_char2bytes(c, p + fl + tl);
-          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl + tl;
-        } else {
-          p[0] = p[2];
-          p[2] = c;
-          stack[depth].ts_fidxtry = sp->ts_fidx + 3;
-        }
+        tl = mb_char2len(c3);
+        memmove(p, p + n + fl, tl);
+        utf_char2bytes(c2, p + tl);
+        utf_char2bytes(c, p + fl + tl);
+        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl + tl;
       } else {
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;

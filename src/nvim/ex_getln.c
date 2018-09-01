@@ -1762,14 +1762,10 @@ static int command_line_handle_key(CommandLineState *s)
   if (IS_SPECIAL(s->c) || mod_mask != 0) {
     put_on_cmdline(get_special_key_name(s->c, mod_mask), -1, true);
   } else {
-    if (has_mbyte) {
-      s->j = utf_char2bytes(s->c, IObuff);
-      IObuff[s->j] = NUL;                // exclude composing chars
-      put_on_cmdline(IObuff, s->j, true);
-    } else {
-      IObuff[0] = s->c;
-      put_on_cmdline(IObuff, 1, true);
-    }
+    s->j = utf_char2bytes(s->c, IObuff);
+    IObuff[s->j] = NUL;                // exclude composing chars
+    put_on_cmdline(IObuff, s->j, true);
+    
   }
   return command_line_changed(s);
 }
@@ -2372,12 +2368,7 @@ redraw:
     if (IS_SPECIAL(c1)) {
       c1 = '?';
     }
-    if (has_mbyte) {
-      len = utf_char2bytes(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
-    } else {
-      len = 1;
-      ((char_u *)line_ga.ga_data)[line_ga.ga_len] = c1;
-    }
+    len = utf_char2bytes(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
     if (c1 == '\n')
       msg_putchar('\n');
     else if (c1 == TAB) {

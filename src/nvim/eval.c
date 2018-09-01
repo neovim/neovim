@@ -9477,10 +9477,8 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       temp[i++] = K_SPECIAL;
       temp[i++] = K_SECOND(n);
       temp[i++] = K_THIRD(n);
-    } else if (has_mbyte)
+    } else
       i += utf_char2bytes(n, temp + i);
-    else
-      temp[i++] = n;
     temp[i++] = NUL;
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = vim_strsave(temp);
@@ -18346,12 +18344,8 @@ void set_vim_var_char(int c)
 {
   char buf[MB_MAXBYTES + 1];
 
-  if (has_mbyte) {
-    buf[utf_char2bytes(c, (char_u *) buf)] = NUL;
-  } else {
-    buf[0] = c;
-    buf[1] = NUL;
-  }
+  buf[utf_char2bytes(c, (char_u *) buf)] = NUL;
+  
   set_vim_var_string(VV_CHAR, buf, -1);
 }
 

@@ -3657,14 +3657,10 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
         } else {
           if (c < ABBR_OFF && (c < ' ' || c > '~'))
             tb[j++] = Ctrl_V;                   /* special char needs CTRL-V */
-          if (has_mbyte) {
-            /* if ABBR_OFF has been added, remove it here */
-            if (c >= ABBR_OFF)
-              c -= ABBR_OFF;
-            j += utf_char2bytes(c, tb + j);
-          } else {
-            tb[j++] = (char_u)c;
-          }
+          /* if ABBR_OFF has been added, remove it here */
+          if (c >= ABBR_OFF)
+            c -= ABBR_OFF;
+          j += utf_char2bytes(c, tb + j);
         }
         tb[j] = NUL;
         /* insert the last typed char */
