@@ -462,14 +462,13 @@ char_u *get_special_key_name(int c, int modifiers)
       string[idx++] = '_';
       string[idx++] = (char_u)KEY2TERMCAP0(c);
       string[idx++] = KEY2TERMCAP1(c);
-    }
-    /* Not a special key, only modifiers, output directly */
-    else {
-      if (utf_char2len(c) > 1)
+    } else {
+      // Not a special key, only modifiers, output directly.
+      if (utf_char2len(c) > 1) {
         idx += utf_char2bytes(c, string + idx);
-      else if (vim_isprintc(c))
+      } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
-      else {
+      } else {
         s = transchar(c);
         while (*s)
           string[idx++] = *s++;

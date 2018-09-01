@@ -8656,7 +8656,7 @@ static char_u *do_insert_char_pre(int c)
   if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
-  buf[utf_char2bytes(c, (char_u *) buf)] = NUL;
+  buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
 
   // Lock the text to avoid weird things from happening.
   textlock++;

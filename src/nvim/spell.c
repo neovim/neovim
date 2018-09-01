@@ -3461,8 +3461,9 @@ static void allcap_copy(char_u *word, char_u *wcopy)
     } else
       c = SPELL_TOUPPER(c);
 
-    if (d - wcopy >= MAXWLEN - MB_MAXBYTES)
+    if (d - wcopy >= MAXWLEN - MB_MAXBYTES) {
       break;
+    }
     d += utf_char2bytes(c, d);
   }
   *d = NUL;
@@ -4531,15 +4532,16 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 #endif
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
-        ++depth;
+        depth++;
         fl = mb_char2len(c2);
         memmove(p, p + n, fl);
         utf_char2bytes(c, p + fl);
         stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-      } else
+      } else {
         // If this swap doesn't work then SWAP3 won't either.
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_REP_INI;
+      }
       break;
 
     case STATE_UNSWAP:
@@ -4586,7 +4588,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 #endif
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP3;
-        ++depth;
+        depth++;
         tl = mb_char2len(c3);
         memmove(p, p + n + fl, tl);
         utf_char2bytes(c2, p + tl);
@@ -5895,8 +5897,9 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
 
       if (c != NUL && c != prevc) {
         ri += utf_char2bytes(c, res + ri);
-        if (ri + MB_MAXBYTES > MAXWLEN)
+        if (ri + MB_MAXBYTES > MAXWLEN) {
           break;
+        }
         prevc = c;
       }
     }
@@ -6416,10 +6419,11 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 
   // Convert wide characters in "wres" to a multi-byte string in "res".
   l = 0;
-  for (n = 0; n < reslen; ++n) {
+  for (n = 0; n < reslen; n++) {
     l += utf_char2bytes(wres[n], res + l);
-    if (l + MB_MAXBYTES > MAXWLEN)
+    if (l + MB_MAXBYTES > MAXWLEN) {
       break;
+    }
   }
   res[l] = NUL;
 }

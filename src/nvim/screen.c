@@ -5121,7 +5121,7 @@ win_redr_custom (
   /* fill up with "fillchar" */
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
     len += utf_char2bytes(fillchar, buf + len);
-    ++width;
+    width++;
   }
   buf[len] = NUL;
 
@@ -6955,7 +6955,7 @@ static void win_redr_ruler(win_T *wp, int always)
       // Need at least 3 chars left for get_rel_pos() + NUL.
       while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
         i += utf_char2bytes(fillchar, buffer + i);
-        ++o;
+        o++;
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
     }

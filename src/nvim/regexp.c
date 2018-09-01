@@ -2538,10 +2538,11 @@ static void regc(int b)
  */
 static void regmbc(int c)
 {
-  if (regcode == JUST_CALC_SIZE)
+  if (regcode == JUST_CALC_SIZE) {
     regsize += utf_char2len(c);
-  else
+  } else {
     regcode += utf_char2bytes(c, regcode);
+  }
 }
 
 /*
@@ -6757,22 +6758,23 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           cc = c;
         }
 
-          int totlen = utfc_ptr2len(src - 1);
+        int totlen = utfc_ptr2len(src - 1);
 
-          if (copy)
-            utf_char2bytes(cc, dst);
-          dst += utf_char2len(cc) - 1;
-          int clen = utf_ptr2len(src - 1);
+        if (copy) {
+          utf_char2bytes(cc, dst);
+        }
+        dst += utf_char2len(cc) - 1;
+        int clen = utf_ptr2len(src - 1);
 
-          /* If the character length is shorter than "totlen", there
-           * are composing characters; copy them as-is. */
-          if (clen < totlen) {
-            if (copy)
-              memmove(dst + 1, src - 1 + clen,
-                  (size_t)(totlen - clen));
-            dst += totlen - clen;
+        // If the character length is shorter than "totlen", there
+        // are composing characters; copy them as-is.
+        if (clen < totlen) {
+          if (copy) {
+            memmove(dst + 1, src - 1 + clen, (size_t)(totlen - clen));
           }
-          src += totlen - 1;
+          dst += totlen - clen;
+        }
+        src += totlen - 1;
         dst++;
       } else {
         if (REG_MULTI) {
@@ -6849,20 +6851,19 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                 if (has_mbyte) {
                   int l;
 
-                  /* Copy composing characters separately, one
-                   * at a time. */
-                  if (enc_utf8)
-                    l = utf_ptr2len(s) - 1;
-                  else
-                    l = utfc_ptr2len(s) - 1;
+                  // Copy composing characters separately, one
+                  // at a time.
+                  l = utf_ptr2len(s) - 1;
 
                   s += l;
                   len -= l;
-                  if (copy)
+                  if (copy) {
                     utf_char2bytes(cc, dst);
+                  }
                   dst += utf_char2len(cc) - 1;
-                } else if (copy)
+                } else if (copy) {
                   *dst = cc;
+                }
                 dst++;
               }
 

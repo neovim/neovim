@@ -1765,7 +1765,6 @@ static int command_line_handle_key(CommandLineState *s)
     s->j = utf_char2bytes(s->c, IObuff);
     IObuff[s->j] = NUL;                // exclude composing chars
     put_on_cmdline(IObuff, s->j, true);
-    
   }
   return command_line_changed(s);
 }
@@ -2369,10 +2368,10 @@ redraw:
       c1 = '?';
     }
     len = utf_char2bytes(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
-    if (c1 == '\n')
+    if (c1 == '\n') {
       msg_putchar('\n');
-    else if (c1 == TAB) {
-      /* Don't use chartabsize(), 'ts' can be different */
+    } else if (c1 == TAB) {
+      // Don't use chartabsize(), 'ts' can be different.
       do {
         msg_putchar(' ');
       } while (++vcol % 8);
@@ -2891,9 +2890,9 @@ static void draw_cmdline(int start, int len)
         newlen += utf_char2bytes(u8c, arshape_buf + newlen);
         if (u8cc[0] != 0) {
           newlen += utf_char2bytes(u8cc[0], arshape_buf + newlen);
-          if (u8cc[1] != 0)
-            newlen += utf_char2bytes(u8cc[1],
-                                       arshape_buf + newlen);
+          if (u8cc[1] != 0) {
+            newlen += utf_char2bytes(u8cc[1], arshape_buf + newlen);
+          }
         }
       } else {
         prev_c = u8c;
