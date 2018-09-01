@@ -1874,8 +1874,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
   // Store multibyte characters in ScreenLines[] et al. correctly.
   for (p = text; *p != NUL; ) {
-    cells = (*mb_ptr2cells)(p);
-    c_len = (*mb_ptr2len)(p);
+    cells = utf_ptr2cells(p);
+    c_len = utfc_ptr2len(p);
     if (col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) {
       break;
     }
@@ -2914,16 +2914,17 @@ win_line (
     if (draw_state == WL_LINE && area_highlighting) {
       /* handle Visual or match highlighting in this line */
       if (vcol == fromcol
-          || (has_mbyte && vcol + 1 == fromcol && n_extra == 0
-              && (*mb_ptr2cells)(ptr) > 1)
+          || (vcol + 1 == fromcol && n_extra == 0
+              && utf_ptr2cells(ptr) > 1)
           || ((int)vcol_prev == fromcol_prev
-              && vcol_prev < vcol               /* not at margin */
-              && vcol < tocol))
-        area_attr = attr;                       /* start highlighting */
-      else if (area_attr != 0
-               && (vcol == tocol
-                   || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
-        area_attr = 0;                          /* stop highlighting */
+              && vcol_prev < vcol               // not at margin
+              && vcol < tocol)) {
+        area_attr = attr;                       // start highlighting
+      } else if (area_attr != 0 && (vcol == tocol
+                                    || (noinvcur
+                                        && (colnr_T)vcol == wp->w_virtcol))) {
+        area_attr = 0;                          // stop highlighting
+     }
 
       if (!n_extra) {
         /*
@@ -4879,8 +4880,8 @@ static void win_redr_status(win_T *wp, int ignore_pum)
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.
       for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += (*mb_ptr2len)(p + i)) {
-        clen -= (*mb_ptr2cells)(p + i);
+           i += utfc_ptr2len(p + i)) {
+        clen -= utf_ptr2cells(p + i);
       }
       len = clen;
       if (i > 0) {
@@ -6128,16 +6129,16 @@ void setcursor(void)
 {
   if (redrawing()) {
     validate_cursor();
+    int left_offset = curwin->w_wcol;
+    if (curwin->w_p_rl) {
+      // With 'rightleft' set and the cursor on a double-wide character,
+      // position it on the leftmost column.
+      left_offset = curwin->w_width - curwin->w_wcol
+                    - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
+                        && vim_isprintc(gchar_cursor())) ? 2 : 1);
+    }
     ui_cursor_goto(curwin->w_winrow + curwin->w_wrow,
-        curwin->w_wincol + (
-          /* With 'rightleft' set and the cursor on a double-wide
-           * character, position it on the leftmost column. */
-          curwin->w_p_rl ? (curwin->w_width - curwin->w_wcol - (
-                              (has_mbyte
-                               && (*mb_ptr2cells)(get_cursor_pos_ptr()) == 2
-                               && vim_isprintc(gchar_cursor())) ? 2 :
-                              1)) :
-          curwin->w_wcol));
+                   curwin->w_wincol + left_offset);
   }
 }
 
@@ -6968,18 +6969,15 @@ static void win_redr_ruler(win_T *wp, int always)
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
     }
-    /* Truncate at window boundary. */
-    if (has_mbyte) {
-      o = 0;
-      for (i = 0; buffer[i] != NUL; i += (*mb_ptr2len)(buffer + i)) {
-        o += (*mb_ptr2cells)(buffer + i);
-        if (this_ru_col + o > width) {
-          buffer[i] = NUL;
-          break;
-        }
+    // Truncate at window boundary.
+    o = 0;
+    for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
+      o += utf_ptr2cells(buffer + i);
+      if (this_ru_col + o > width) {
+        buffer[i] = NUL;
+        break;
       }
-    } else if (this_ru_col + (int)STRLEN(buffer) > width)
-      buffer[width - this_ru_col] = NUL;
+    }
 
     screen_puts(buffer, row, this_ru_col + off, attr);
     i = redraw_cmdline;

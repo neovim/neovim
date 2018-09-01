@@ -2152,10 +2152,11 @@ static void set_cmdspos_cursor(void)
  */
 static void correct_cmdspos(int idx, int cells)
 {
-  if ((*mb_ptr2len)(ccline.cmdbuff + idx) > 1
-      && (*mb_ptr2cells)(ccline.cmdbuff + idx) > 1
-      && ccline.cmdspos % Columns + cells > Columns)
+  if (utfc_ptr2len(ccline.cmdbuff + idx) > 1
+      && utf_ptr2cells(ccline.cmdbuff + idx) > 1
+      && ccline.cmdspos % Columns + cells > Columns) {
     ccline.cmdspos++;
+  }
 }
 
 /*
