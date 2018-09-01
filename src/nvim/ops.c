@@ -1739,7 +1739,7 @@ int op_replace(oparg_T *oap, int c)
           int newp_len = bd.textcol + bd.startspaces;
           if (has_mbyte) {
             while (--num_chars >= 0) {
-              newp_len += (*mb_char2bytes)(c, newp + newp_len);
+              newp_len += utf_char2bytes(c, newp + newp_len);
             }
           } else {
             memset(newp + newp_len, c, (size_t)numc);

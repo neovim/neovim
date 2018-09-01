@@ -2543,7 +2543,7 @@ static void regmbc(int c)
   if (regcode == JUST_CALC_SIZE)
     regsize += (*mb_char2len)(c);
   else
-    regcode += (*mb_char2bytes)(c, regcode);
+    regcode += utf_char2bytes(c, regcode);
 }
 
 /*
@@ -6763,7 +6763,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           int totlen = mb_ptr2len(src - 1);
 
           if (copy)
-            mb_char2bytes(cc, dst);
+            utf_char2bytes(cc, dst);
           dst += mb_char2len(cc) - 1;
           if (enc_utf8) {
             int clen = utf_ptr2len(src - 1);
@@ -6866,7 +6866,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                   s += l;
                   len -= l;
                   if (copy)
-                    mb_char2bytes(cc, dst);
+                    utf_char2bytes(cc, dst);
                   dst += mb_char2len(cc) - 1;
                 } else if (copy)
                   *dst = cc;

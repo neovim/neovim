@@ -761,7 +761,7 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
     char_u buf[MB_MAXBYTES + 1];
 
     // Update the first byte of the character
-    (*mb_char2bytes)(curr_c, buf);
+    utf_char2bytes(curr_c, buf);
     *ccp = buf[0];
   }
 

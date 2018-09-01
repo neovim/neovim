@@ -1460,7 +1460,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
       if (c == '?' || c == '+' || c == '~')
         *pp++ = '\\';               // "a?" becomes "a\?", "a+" becomes "a\+"
       if (enc_utf8)
-        pp += mb_char2bytes(c, pp);
+        pp += utf_char2bytes(c, pp);
       else
         *pp++ = c;
     }
@@ -4246,7 +4246,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     size_t l = 0;
     for (size_t i = 128; i < 256; ++i) {
       if (has_mbyte)
-        l += (size_t)mb_char2bytes(spelltab.st_fold[i], folchars + l);
+        l += (size_t)utf_char2bytes(spelltab.st_fold[i], folchars + l);
       else
         folchars[l++] = spelltab.st_fold[i];
     }
@@ -5710,9 +5710,9 @@ static void set_map_str(slang_T *lp, char_u *map)
         hashitem_T  *hi;
 
         b = xmalloc(cl + headcl + 2);
-        mb_char2bytes(c, b);
+        utf_char2bytes(c, b);
         b[cl] = NUL;
-        mb_char2bytes(headc, b + cl + 1);
+        utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash(b);
         hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);

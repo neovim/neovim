@@ -466,7 +466,7 @@ char_u *get_special_key_name(int c, int modifiers)
     /* Not a special key, only modifiers, output directly */
     else {
       if (has_mbyte && (*mb_char2len)(c) > 1)
-        idx += (*mb_char2bytes)(c, string + idx);
+        idx += utf_char2bytes(c, string + idx);
       else if (vim_isprintc(c))
         string[idx++] = (char_u)c;
       else {
@@ -525,7 +525,7 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
     dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
   } else if (has_mbyte && !keycode) {
-    dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
+    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
   } else if (keycode) {
     char_u *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);

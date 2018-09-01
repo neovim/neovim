@@ -4719,7 +4719,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           /* For "\u" store the number according to
            * 'encoding'. */
           if (c != 'X')
-            name += (*mb_char2bytes)(nr, name);
+            name += utf_char2bytes(nr, name);
           else
             *name++ = nr;
         }
@@ -9478,7 +9478,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       temp[i++] = K_SECOND(n);
       temp[i++] = K_THIRD(n);
     } else if (has_mbyte)
-      i += (*mb_char2bytes)(n, temp + i);
+      i += utf_char2bytes(n, temp + i);
     else
       temp[i++] = n;
     temp[i++] = NUL;
@@ -10010,7 +10010,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (cur->conceal_char) {
       char buf[MB_MAXBYTES + 1];
 
-      buf[(*mb_char2bytes)((int)cur->conceal_char, (char_u *)buf)] = NUL;
+      buf[utf_char2bytes((int)cur->conceal_char, (char_u *)buf)] = NUL;
       tv_dict_add_str(dict, S_LEN("conceal"), buf);
     }
 
@@ -18347,7 +18347,7 @@ void set_vim_var_char(int c)
   char buf[MB_MAXBYTES + 1];
 
   if (has_mbyte) {
-    buf[(*mb_char2bytes)(c, (char_u *) buf)] = NUL;
+    buf[utf_char2bytes(c, (char_u *) buf)] = NUL;
   } else {
     buf[0] = c;
     buf[1] = NUL;

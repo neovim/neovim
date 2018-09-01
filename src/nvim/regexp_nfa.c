@@ -564,7 +564,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
   s = ret;
   while (p->c > 0) {
     if (has_mbyte)
-      s += (*mb_char2bytes)(p->c, s);
+      s += utf_char2bytes(p->c, s);
     else
       *s++ = p->c;
     p = p->out;
