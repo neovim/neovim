@@ -5188,9 +5188,10 @@ static void ex_command(exarg_T *eap)
   while (*p == '-') {
     ++p;
     end = skiptowhite(p);
-    if (uc_scan_attr(p, end - p, &argt, &def, &flags, &compl, &compl_arg, &addr_type_arg)
-        == FAIL)
+    if (uc_scan_attr(p, end - p, &argt, &def, &flags, &compl, &compl_arg,
+                     &addr_type_arg) == FAIL) {
       return;
+    }
     p = skipwhite(end);
   }
 
@@ -5221,9 +5222,10 @@ static void ex_command(exarg_T *eap)
              || (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0)) {
     EMSG(_("E841: Reserved name, cannot be used for user defined command"));
     return;
-  } else
+  } else {
     uc_add_command(name, end - name, p, argt, def, flags, compl, compl_arg,
                    addr_type_arg, eap->forceit);
+  }
 }
 
 /*
@@ -5397,8 +5399,18 @@ uc_check_code(
   char_u      *p = code + 1;
   size_t l = len - 2;
   int quote = 0;
-  enum { ct_ARGS, ct_BANG, ct_COUNT, ct_LINE1, ct_LINE2, ct_MODS,
-  ct_REGISTER, ct_LT, ct_NONE } type = ct_NONE;
+  enum {
+    ct_ARGS,
+    ct_BANG,
+    ct_COUNT,
+    ct_LINE1,
+    ct_LINE2,
+    ct_RANGE,
+    ct_MODS,
+    ct_REGISTER,
+    ct_LT,
+    ct_NONE
+  } type = ct_NONE;
 
   if ((vim_strchr((char_u *)"qQfF", *p) != NULL) && p[1] == '-') {
     quote = (*p == 'q' || *p == 'Q') ? 1 : 2;
@@ -5419,6 +5431,8 @@ uc_check_code(
     type = ct_LINE1;
   } else if (STRNICMP(p, "line2>", l) == 0) {
     type = ct_LINE2;
+  } else if (STRNICMP(p, "range>", l) == 0) {
+    type = ct_RANGE;
   } else if (STRNICMP(p, "lt>", l) == 0) {
     type = ct_LT;
   } else if (STRNICMP(p, "reg>", l) == 0 || STRNICMP(p, "register>", l) == 0) {
@@ -5506,11 +5520,13 @@ uc_check_code(
 
   case ct_LINE1:
   case ct_LINE2:
+  case ct_RANGE:
   case ct_COUNT:
   {
     char num_buf[20];
     long num = (type == ct_LINE1) ? eap->line1 :
                (type == ct_LINE2) ? eap->line2 :
+               (type == ct_RANGE) ? eap->addr_count :
                (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
     size_t num_len;
 
