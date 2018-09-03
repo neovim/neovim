@@ -4683,30 +4683,36 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
                    bool keep_lang)
 {
   int i;
-  static char *(mtable[]) = {"*", "g*", "[*", "]*",
-                             "/*", "/\\*", "\"*", "**",
-                             "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-                             "-?", "q?", "v_g?",
-                             "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-                             "[count]", "[quotex]",
-                             "[range]", ":[range]",
-                             "[pattern]", "\\|", "\\%$",
-                             "s/\\~", "s/\\U", "s/\\L",
-                             "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
-  static char *(rtable[]) = {"star", "gstar", "[star", "]star",
-                             "/star", "/\\\\star", "quotestar", "starstar",
-                             "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-                             "-?", "q?", "v_g?",
-                             "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-                             "\\[count]", "\\[quotex]",
-                             "\\[range]", ":\\[range]",
-                             "\\[pattern]", "\\\\bar", "/\\\\%\\$",
-                             "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
-                             "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
-  static char *(expr_table[]) = {"!=?", "!~?", "<=?", "<?", "==?", "=~?",
-                                 ">=?", ">?", "is?", "isnot?"};
+  static const char *(mtable[]) = {
+      "*", "g*", "[*", "]*",
+      "/*", "/\\*", "\"*", "**",
+      "/\\(\\)", "/\\%(\\)",
+      "?", ":?", "?<CR>", "g?", "g?g?", "g??",
+      "-?", "q?", "v_g?",
+      "/\\?", "/\\z(\\)", "\\=", ":s\\=",
+      "[count]", "[quotex]",
+      "[range]", ":[range]",
+      "[pattern]", "\\|", "\\%$",
+      "s/\\~", "s/\\U", "s/\\L",
+      "s/\\1", "s/\\2", "s/\\3", "s/\\9"
+  };
+  static const char *(rtable[]) = {
+      "star", "gstar", "[star", "]star",
+      "/star", "/\\\\star", "quotestar", "starstar",
+      "/\\\\(\\\\)", "/\\\\%(\\\\)",
+      "?", ":?", "?<CR>", "g?", "g?g?", "g??",
+      "-?", "q?", "v_g?",
+      "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
+      "\\[count]", "\\[quotex]",
+      "\\[range]", ":\\[range]",
+      "\\[pattern]", "\\\\bar", "/\\\\%\\$",
+      "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
+      "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"
+  };
+  static const char *(expr_table[]) = {
+      "!=?", "!~?", "<=?", "<?", "==?", "=~?",
+      ">=?", ">?", "is?", "isnot?"
+  };
   char_u *d = IObuff;       // assume IObuff is long enough!
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
@@ -4870,8 +4876,9 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
   *matches = (char_u **)"";
   *num_matches = 0;
   int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
-  if (keep_lang)
+  if (keep_lang) {
     flags |= TAG_KEEP_LANG;
+  }
   if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
       && *num_matches > 0) {
     /* Sort the matches found on the heuristic number that is after the
