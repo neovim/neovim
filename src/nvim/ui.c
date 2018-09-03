@@ -347,15 +347,17 @@ void ui_cursor_goto(int new_row, int new_col)
 
 void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
 {
-  int off_row = (ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow);
-  int off_col = (ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn);
+  new_row += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow;
+  new_col += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn;
+  int handle = ui_is_external(kUIMultigrid) ? grid->handle : DEFAULT_GRID_HANDLE;
 
-  if (new_row + off_row == row && new_col + off_col == col) {
+  if (new_row == row && new_col == col && handle == cursor_grid_handle) {
     return;
   }
-  row = new_row + off_row;
-  col = new_col + off_col;
-  cursor_grid_handle = grid->handle;
+
+  row = new_row;
+  col = new_col;
+  cursor_grid_handle = handle;
   pending_cursor_update = true;
 }
 
