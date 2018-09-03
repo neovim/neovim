@@ -160,7 +160,7 @@ func Test_mkview_file()
   " Create a view with line number and a fold.
   help :mkview
   set number
-  norm! V}zf
+  norm! V}zf0
   let pos = getcurpos()
   let linefoldclosed1 = foldclosed('.')
   mkview! Xview
