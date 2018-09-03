@@ -86,6 +86,7 @@ func Test_spellreall()
 endfunc
 
 func Test_spellinfo()
+  throw 'skipped: Nvim does not support enc=latin1'
   new
 
   set enc=latin1 spell spelllang=en
