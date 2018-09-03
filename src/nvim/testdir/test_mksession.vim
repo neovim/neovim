@@ -19,7 +19,8 @@ func Test_mksession()
     \   'two	tabs	in one line',
     \   'one ä multibyteCharacter',
     \   'aä Ä  two multiByte characters',
-    \   'Aäöü  three mulTibyte characters'
+    \   'Aäöü  three mulTibyte characters',
+    \   'short line',
     \ ])
   let tmpfile = 'Xtemp'
   exec 'w! ' . tmpfile
@@ -41,6 +42,8 @@ func Test_mksession()
   norm! j16|
   split
   norm! j16|
+  split
+  norm! j$
   wincmd l
 
   set nowrap
@@ -63,7 +66,7 @@ func Test_mksession()
   split
   call wincol()
   mksession! Xtest_mks.out
-  let li = filter(readfile('Xtest_mks.out'), 'v:val =~# "\\(^ *normal! 0\\|^ *exe ''normal!\\)"')
+  let li = filter(readfile('Xtest_mks.out'), 'v:val =~# "\\(^ *normal! [0$]\\|^ *exe ''normal!\\)"')
   let expected = [
     \   'normal! 016|',
     \   'normal! 016|',
@@ -73,6 +76,7 @@ func Test_mksession()
     \   'normal! 016|',
     \   'normal! 016|',
     \   'normal! 016|',
+    \   'normal! $',
     \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
     \   "  normal! 016|",
     \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
@@ -157,7 +161,7 @@ func Test_mkview_file()
   help :mkview
   set number
   norm! V}zf
-  let pos = getpos('.')
+  let pos = getcurpos()
   let linefoldclosed1 = foldclosed('.')
   mkview! Xview
   set nonumber
@@ -169,7 +173,7 @@ func Test_mkview_file()
   source Xview
   call assert_equal(1, &number)
   call assert_match('\*:mkview\*$', getline('.'))
-  call assert_equal(pos, getpos('.'))
+  call assert_equal(pos, getcurpos())
   call assert_equal(linefoldclosed1, foldclosed('.'))
 
   " Creating a view again with the same file name should fail (file
@@ -192,7 +196,7 @@ func Test_mkview_loadview_with_viewdir()
   help :mkview
   set number
   norm! V}zf
-  let pos = getpos('.')
+  let pos = getcurpos()
   let linefoldclosed1 = foldclosed('.')
   mkview 1
   set nonumber
@@ -209,7 +213,7 @@ func Test_mkview_loadview_with_viewdir()
         \           glob('Xviewdir/*'))
   call assert_equal(1, &number)
   call assert_match('\*:mkview\*$', getline('.'))
-  call assert_equal(pos, getpos('.'))
+  call assert_equal(pos, getcurpos())
   call assert_equal(linefoldclosed1, foldclosed('.'))
 
   call delete('Xviewdir', 'rf')
