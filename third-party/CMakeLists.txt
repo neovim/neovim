@@ -138,8 +138,8 @@ set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116
 set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
 set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
-set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afbd796)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/3f62ac6b7bdffda39d68f723fb1806dfd6d6382d.tar.gz)
+set(LIBVTERM_SHA256 1c8b318370f00f831f43e3ec86a48984250e3ee5c76beb106a421c9a42286ac5)
 
 set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/5.1.0/jemalloc-5.1.0.tar.bz2)
 set(JEMALLOC_SHA256 5396e61cc6103ac393136c309fae09e44d74743c86f90e266948c50f3dbb7268)
