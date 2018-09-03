@@ -51,7 +51,7 @@ endfunc
 
 func Test_put_fails_when_nomodifiable()
   new
-  set nomodifiable
+  setlocal nomodifiable
 
   normal! yy
   call assert_fails(':put', 'E21')
@@ -74,7 +74,7 @@ endfunc
 " output duplicate error messages when invoked in a non-modifiable buffer.
 func Test_put_p_errmsg_nodup()
   new
-  set nomodifiable
+  setlocal nomodifiable
 
   normal! yy
 
