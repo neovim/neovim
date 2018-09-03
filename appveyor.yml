@@ -2,6 +2,7 @@ version: '{build}'
 environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
 image: Visual Studio 2017
+# image: Previous Visual Studio 2017
 configuration:
 - MSVC_64
 - MSVC_32
@@ -17,8 +18,8 @@ before_build:
 build_script:
 - powershell ci\build.ps1
 cache:
-- C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
-- .deps -> third-party\**
+# - C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
+# - .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe
