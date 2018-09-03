@@ -6025,6 +6025,7 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
+    not_exiting();
     // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
@@ -6382,6 +6383,7 @@ static void ex_exit(exarg_T *eap)
       // quit last window, exit Vim
       getout(0);
     }
+    not_exiting();
     // Quit current window, may free the buffer.
     win_close(curwin, !buf_hide(curwin->w_buffer));
   }
