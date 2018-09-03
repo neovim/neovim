@@ -39,7 +39,7 @@ function Test_messages()
   endtry
 endfunction
 
-" Patch 7.4.1696 defined the "clearmode()" command for clearing the mode
+" Patch 7.4.1696 defined the "clearmode()" function for clearing the mode
 " indicator (e.g., "-- INSERT --") when ":stopinsert" is invoked.  Message
 " output could then be disturbed when 'cmdheight' was greater than one.
 " This test ensures that the bugfix for this issue remains in place.
