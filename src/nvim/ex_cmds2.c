@@ -1177,7 +1177,7 @@ static void script_dump_profile(FILE *fd)
 /// profiled.
 bool prof_def_func(void)
 {
-  if (current_SID > 0) {
+  if (current_SID > 0 && current_SID < 999999) {
     return SCRIPT_ITEM(current_SID).sn_pr_force;
   }
   return false;
@@ -2821,6 +2821,7 @@ int do_source_str(char_u *cmd)
     .buf = cmd,
     .offset = 0,
   };
+  current_SID = 999999;
   retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
                       DOCMD_NOWAIT);
   return retval;
