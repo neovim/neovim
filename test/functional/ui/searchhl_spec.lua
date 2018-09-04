@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local command = helpers.command
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
@@ -90,6 +91,59 @@ describe('search highlighting', function()
                                               |
       {1:~                                       }|
       :nohlsearch                             |
+    ]])
+  end)
+
+  it('highlights after EOL', function()
+    insert("\n\n\n\n\n\n")
+
+    feed("gg/^<cr>")
+    screen:expect([[
+      {2: }                                       |
+      {2:^ }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      /^                                      |
+    ]])
+
+    -- Test that highlights are preserved after moving the cursor.
+    feed("j")
+    screen:expect([[
+      {2: }                                       |
+      {2: }                                       |
+      {2:^ }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      {2: }                                       |
+      /^                                      |
+    ]])
+
+    -- Repeat the test in rightleft mode.
+    command("nohlsearch")
+    command("set rightleft")
+    feed("gg/^<cr>")
+
+    screen:expect([[
+                                             {2: }|
+                                             {2:^ }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+      ^/                                      |
+    ]])
+
+    feed("j")
+    screen:expect([[
+                                             {2: }|
+                                             {2: }|
+                                             {2:^ }|
+                                             {2: }|
+                                             {2: }|
+                                             {2: }|
+      ^/                                      |
     ]])
   end)
 

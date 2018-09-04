@@ -3912,23 +3912,16 @@ win_line (
       }
     }
 
-    /*
-     * At end of the text line.
-     */
+    //
+    // At end of the text line.
+    //
     if (c == NUL) {
-      if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
-          && lnum == wp->w_cursor.lnum) {
-        /* highlight last char after line */
-        --col;
-        --off;
-        --vcol;
-      }
-
-      /* Highlight 'cursorcolumn' & 'colorcolumn' past end of the line. */
-      if (wp->w_p_wrap)
+      // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
+      if (wp->w_p_wrap) {
         v = wp->w_skipcol;
-      else
+      } else {
         v = wp->w_leftcol;
+      }
 
       /* check if line ends before left margin */
       if (vcol < v + col - win_col_off(wp))
