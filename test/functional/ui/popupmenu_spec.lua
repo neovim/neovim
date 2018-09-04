@@ -97,11 +97,15 @@ describe('popup placement', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(25, 16)
+    screen = Screen.new(32, 20)
     screen:attach()
     screen:set_default_attr_ids({
+      -- popup selected item / scrollbar track
       ['s'] = {background = Screen.colors.WebGray},
+      -- popup non-selected item
       ['n'] = {background = Screen.colors.LightMagenta},
+      -- popup scrollbar knob
+      ['c'] = {background = Screen.colors.Grey0},
       [1] = {bold = true, foreground = Screen.colors.Blue},
       [2] = {bold = true},
       [3] = {reverse = true},
@@ -110,28 +114,31 @@ describe('popup placement', function()
     })
   end)
 
-  it('appears', function()
-    feed(':ped<cr>')
-    feed('ifoo<cr>bar<cr><c-x><c-n>')
-    screen:snapshot_util() -- why doesn't the popup show here?
+  it('positions corectly', function()
+    feed(':ped<CR><c-w>4+<c-w>r')
+    feed('iaa bb cc dd ee ff gg hh ii jj<cr>')
+    feed('<c-x><c-n>')
+    screen:expect([[
+      aa bb cc dd ee ff gg hh ii jj   |
+      aa^                              |
+      {s:aa             }{c: }{1:                }|
+      {n:bb             }{c: }{1:                }|
+      {n:cc             }{c: }{1:                }|
+      {n:dd             }{c: }{1:                }|
+      {n:ee             }{c: }{1:                }|
+      {n:ff             }{c: }{1:                }|
+      {n:gg             }{s: }{1:                }|
+      {n:hh             }{s: }{4:                }|
+      aa bb cc dd ee ff gg hh ii jj   |
+      aa                              |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {3:[No Name] [Preview][+]          }|
+      {2:-- }{5:match 1 of 10}                |
+      ]])
   end)
-
-  -- it('positions corectly', function()
-  --   feed(':ped<CR><c-w>+<c-w>r')
-  --   feed('iaaa<cr>bbb<cr>ccc<cr>ddd<esc>zto')
-  --   feed('<c-x><c-n>')
-  --   screen:snapshot_util()
-  --   screen:expect([[
-  --     ddd                                                         |
-  --     aaa^                                                         |
-  --     {3:[No Name] [+]                                               }|
-  --     aaa                                                         |
-  --     bbb                                                         |
-  --     ccc                                                         |
-  --     {2:[No Name] [Preview][+]                                      }|
-  --     {1:-- Keyword Local completion (^N^P) }{4:match 1 of 4}             |
-  --   ]]
-  -- )
-  -- end)
-
 end)
