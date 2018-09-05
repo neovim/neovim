@@ -169,5 +169,25 @@ func Test_stop_all_in_callback()
   call assert_equal(0, len(info))
 endfunc
 
+func FeedAndPeek(timer)
+  call test_feedinput('a')
+  call getchar(1)
+endfunc
+
+func Interrupt(timer)
+  call test_feedinput("\<C-C>")
+endfunc
+
+func Test_peek_and_get_char()
+  throw 'skipped: Nvim does not support test_feedinput()'
+  if !has('unix') && !has('gui_running')
+    return
+  endif
+  call timer_start(0, 'FeedAndPeek')
+  let intr = timer_start(100, 'Interrupt')
+  let c = getchar()
+  call assert_equal(char2nr('a'), c)
+  call timer_stop(intr)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

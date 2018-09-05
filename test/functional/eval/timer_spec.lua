@@ -96,6 +96,7 @@ describe('timers', function()
     source([[
       func! AddItem(timer)
         call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
+        call getchar(1)
         redraw
       endfunc
       call timer_start(200, 'AddItem')
