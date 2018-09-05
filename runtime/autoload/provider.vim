@@ -4,7 +4,15 @@
 "
 " Returns a valid channel on success
 function! provider#Poll(argv, orig_name, log_env) abort
-  let job = {'rpc': v:true, 'stderr_buffered': v:true}
+  let job = {'rpc': v:true}
+
+  " Jobs are exptected to log errors etc using nvim_log() via the rpc api;
+  " we're just writing stderr to the log file as a courtesy to users who are
+  " trying to debug broken providers. Therefore we we log the events at
+  " "WARNING" level because anything coming via stderr indicates a problem
+  " with the provider.
+  let job['on_stderr'] = function('s:LogEvent', [printf('%s:stderr', a:orig_name), 'WARNING'])
+
   try
     let channel_id = jobstart(a:argv, job)
     if channel_id > 0 && rpcrequest(channel_id, 'poll') ==# 'ok'
@@ -13,9 +21,13 @@ function! provider#Poll(argv, orig_name, log_env) abort
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in get(job, 'stderr', [])
-      echomsg row
-    endfor
   endtry
-  throw remote#host#LoadErrorForHost(a:orig_name, a:log_env)
+
+  throw printf('Failed to load %s. Startup errors should be recorded in $NVIM_LOG_FILE'
+        \ .', or possibly %s if you are using an older neovim client library.',
+        \ a:orig_name, a:log_env)
+endfunction
+
+function! s:LogEvent(who, log_level, job, data, event)
+  call nvim_log(a:log_level, lines, {'who': who})
 endfunction

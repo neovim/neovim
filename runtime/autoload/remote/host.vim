@@ -181,13 +181,6 @@ function! remote#host#PluginsForHost(host) abort
   return s:plugins_for_host[a:host]
 endfunction
 
-function! remote#host#LoadErrorForHost(host, log) abort
-  return 'Failed to load '. a:host . ' host. '.
-        \ 'You can try to see what happened by starting nvim with '.
-        \ a:log . ' set and opening the generated log file.'.
-        \ ' Also, the host stderr is available in messages.'
-endfunction
-
 " Registration of standard hosts
 
 " Python/Python3
