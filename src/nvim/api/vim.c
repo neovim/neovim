@@ -502,7 +502,7 @@ Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
   if (text.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "String length is too high");
+    api_set_error(err, kErrorTypeValidation, "String is too long");
     return 0;
   }
 
@@ -559,7 +559,7 @@ void nvim_set_current_dir(String dir, Error *err)
   FUNC_API_SINCE(1)
 {
   if (dir.size >= MAXPATHL) {
-    api_set_error(err, kErrorTypeValidation, "Directory string is too long");
+    api_set_error(err, kErrorTypeValidation, "Directory name is too long");
     return;
   }
 
@@ -1136,14 +1136,14 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     if (calls.items[i].type != kObjectTypeArray) {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "All items in calls array must be arrays");
+                    "Items in calls array must be arrays");
       goto validation_error;
     }
     Array call = calls.items[i].data.array;
     if (call.size != 2) {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "All items in calls array must be arrays of size 2");
+                    "Items in calls array must be arrays of size 2");
       goto validation_error;
     }
 

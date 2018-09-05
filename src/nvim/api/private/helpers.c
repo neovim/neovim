@@ -162,7 +162,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key '%s' not found", key.data);
+    api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     return (Object)OBJECT_INIT;
   }
 
@@ -191,13 +191,12 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
   }
 
   if (key.size == 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Empty variable names aren't allowed");
+    api_set_error(err, kErrorTypeValidation, "Key name is empty");
     return rv;
   }
 
   if (key.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "Key length is too high");
+    api_set_error(err, kErrorTypeValidation, "Key name is too long");
     return rv;
   }
 
@@ -220,7 +219,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key does not exist: %s",
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
                     key.data);
     } else {
       // Return the old value
@@ -284,9 +283,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
                                       type, from);
 
   if (!flags) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
                   name.data);
     return rv;
   }
@@ -303,15 +300,14 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.data = stringval;
       rv.data.string.size = strlen(stringval);
     } else {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to get value for option \"%s\"",
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get value for option '%s'",
                     name.data);
     }
   } else {
     api_set_error(err,
                   kErrorTypeException,
-                  "Unknown type for option \"%s\"",
+                  "Unknown type for option '%s'",
                   name.data);
   }
 
@@ -336,24 +332,20 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
                   name.data);
     return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to unset option \"%s\"",
+      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'",
                     name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
       api_set_error(err,
                     kErrorTypeException,
-                    "Cannot unset option \"%s\" "
+                    "Cannot unset option '%s' "
                     "because it doesn't have a global value",
                     name.data);
       return;
@@ -370,7 +362,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     if (value.type != kObjectTypeBoolean) {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "Option \"%s\" requires a boolean value",
+                    "Option '%s' requires a Boolean value",
                     name.data);
       return;
     }
@@ -378,17 +370,15 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires an integer value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires an integer value",
                     name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Value for option \"%s\" is outside range",
+      api_set_error(err, kErrorTypeValidation,
+                    "Value for option '%s' is out of range",
                     name.data);
       return;
     }
@@ -396,9 +386,8 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     numval = (int)value.data.integer;
   } else {
     if (value.type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires a string value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires a string value",
                     name.data);
       return;
     }
