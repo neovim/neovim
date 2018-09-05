@@ -4675,15 +4675,13 @@ static int help_compare(const void *s1, const void *s2)
   return strcmp(p1, p2);
 }
 
-/*
- * Find all help tags matching "arg", sort them and return in matches[], with
- * the number of matches in num_matches.
- * The matches will be sorted with a "best" match algorithm.
- * When "keep_lang" is TRUE try keeping the language of the current buffer.
- */
-int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_lang)
+// Find all help tags matching "arg", sort them and return in matches[], with
+// the number of matches in num_matches.
+// The matches will be sorted with a "best" match algorithm.
+// When "keep_lang" is true try keeping the language of the current buffer.
+int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
+                   bool keep_lang)
 {
-  char_u      *s, *d;
   int i;
   static char *(mtable[]) = {"*", "g*", "[*", "]*",
                              "/*", "/\\*", "\"*", "**",
@@ -4709,9 +4707,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
   static char *(expr_table[]) = {"!=?", "!~?", "<=?", "<?", "==?", "=~?",
                                  ">=?", ">?", "is?", "isnot?"};
-  int flags;
-
-  d = IObuff;               /* assume IObuff is long enough! */
+  char_u *d = IObuff;       // assume IObuff is long enough!
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
     // When the string starting with "expr-" and containing '?' and matches
@@ -4764,7 +4760,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
       if (*arg == '(' && arg[1] == '\'') {
           arg++;
       }
-      for (s = arg; *s; s++) {
+      for (const char_u *s = arg; *s; s++) {
         // Replace "|" with "bar" and '"' with "quote" to match the name of
         // the tags for these commands.
         // Replace "*" with ".*" and "?" with "." to match command line
@@ -4873,7 +4869,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
 
   *matches = (char_u **)"";
   *num_matches = 0;
-  flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
+  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
   if (keep_lang)
     flags |= TAG_KEEP_LANG;
   if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
