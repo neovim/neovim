@@ -274,7 +274,8 @@ Name			triggered by ~
 |GUIEnter|		after starting the GUI successfully
 |GUIFailed|		after starting the GUI failed
 |TermResponse|		after the terminal response to |t_RV| is received
-|QuitPre|		when using `:quit`, before deciding whether to quit
+|QuitPre|		when using `:quit`, before deciding whether to exit
+|ExitPre|		when using a command that may make Vim exit
 |VimLeavePre|		before exiting Nvim, before writing the shada file
 |VimLeave|		before exiting Nvim, after writing the shada file
 |VimResume|		after Nvim is resumed
@@ -646,6 +647,11 @@ FileChangedRO			Before making the first change to a read-only
 							*E881*
 				If the number of lines changes saving for undo
 				may fail and the change will be aborted.
+							*ExitPre*
+ExitPre				When using `:quit`, `:wq` in a way it makes
+				Vim exit, or using `:qall`, just after
+				|QuitPre|.  Can be used to close any
+				non-essential window.
 							*FileChangedShell*
 FileChangedShell		When Vim notices that the modification time of
 				a file has changed since editing started.
@@ -862,6 +868,7 @@ QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				or quits Vim.  Can be used to close any
 				non-essential window if the current window is
 				the last ordinary window.
+				Also see |ExitPre|.
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
 				server was received |server2client()|.  The
