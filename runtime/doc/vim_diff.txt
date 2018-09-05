@@ -55,6 +55,7 @@ a complete and centralized reference of those differences.
 - 'smarttab' is set by default
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"
+- 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
 - 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
 - 'viminfo' includes "!"

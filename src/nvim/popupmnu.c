@@ -399,7 +399,7 @@ void pum_redraw(void)
 
               if (size > pum_width) {
                 do {
-                  size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
+                  size -= utf_ptr2cells(rt);
                   MB_PTR_ADV(rt);
                 } while (size > pum_width);
 

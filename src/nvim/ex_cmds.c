@@ -4675,49 +4675,66 @@ static int help_compare(const void *s1, const void *s2)
   return strcmp(p1, p2);
 }
 
-/*
- * Find all help tags matching "arg", sort them and return in matches[], with
- * the number of matches in num_matches.
- * The matches will be sorted with a "best" match algorithm.
- * When "keep_lang" is TRUE try keeping the language of the current buffer.
- */
-int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_lang)
+// Find all help tags matching "arg", sort them and return in matches[], with
+// the number of matches in num_matches.
+// The matches will be sorted with a "best" match algorithm.
+// When "keep_lang" is true try keeping the language of the current buffer.
+int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
+                   bool keep_lang)
 {
-  char_u      *s, *d;
   int i;
-  static char *(mtable[]) = {"*", "g*", "[*", "]*",
-                             "/*", "/\\*", "\"*", "**",
-                             "/\\(\\)", "/\\%(\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-                             "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-                             "[count]", "[quotex]",
-                             "[range]", ":[range]",
-                             "[pattern]", "\\|", "\\%$",
-                             "s/\\~", "s/\\U", "s/\\L",
-                             "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
-  static char *(rtable[]) = {"star", "gstar", "[star", "]star",
-                             "/star", "/\\\\star", "quotestar", "starstar",
-                             "/\\\\(\\\\)", "/\\\\%(\\\\)",
-                             "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-                             "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-                             "\\[count]", "\\[quotex]",
-                             "\\[range]", ":\\[range]",
-                             "\\[pattern]", "\\\\bar", "/\\\\%\\$",
-                             "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
-                             "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
-  int flags;
+  static const char *(mtable[]) = {
+      "*", "g*", "[*", "]*",
+      "/*", "/\\*", "\"*", "**",
+      "/\\(\\)", "/\\%(\\)",
+      "?", ":?", "?<CR>", "g?", "g?g?", "g??",
+      "-?", "q?", "v_g?",
+      "/\\?", "/\\z(\\)", "\\=", ":s\\=",
+      "[count]", "[quotex]",
+      "[range]", ":[range]",
+      "[pattern]", "\\|", "\\%$",
+      "s/\\~", "s/\\U", "s/\\L",
+      "s/\\1", "s/\\2", "s/\\3", "s/\\9"
+  };
+  static const char *(rtable[]) = {
+      "star", "gstar", "[star", "]star",
+      "/star", "/\\\\star", "quotestar", "starstar",
+      "/\\\\(\\\\)", "/\\\\%(\\\\)",
+      "?", ":?", "?<CR>", "g?", "g?g?", "g??",
+      "-?", "q?", "v_g?",
+      "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
+      "\\[count]", "\\[quotex]",
+      "\\[range]", ":\\[range]",
+      "\\[pattern]", "\\\\bar", "/\\\\%\\$",
+      "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
+      "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"
+  };
+  static const char *(expr_table[]) = {
+      "!=?", "!~?", "<=?", "<?", "==?", "=~?",
+      ">=?", ">?", "is?", "isnot?"
+  };
+  char_u *d = IObuff;       // assume IObuff is long enough!
 
-  d = IObuff;               /* assume IObuff is long enough! */
-
-  /*
-   * Recognize a few exceptions to the rule.	Some strings that contain '*'
-   * with "star".  Otherwise '*' is recognized as a wildcard.
-   */
-  for (i = (int)ARRAY_SIZE(mtable); --i >= 0; )
-    if (STRCMP(arg, mtable[i]) == 0) {
-      STRCPY(d, rtable[i]);
-      break;
+  if (STRNICMP(arg, "expr-", 5) == 0) {
+    // When the string starting with "expr-" and containing '?' and matches
+    // the table, it is taken literally.  Otherwise '?' is recognized as a
+    // wildcard.
+    for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
+      if (STRCMP(arg + 5, expr_table[i]) == 0) {
+        STRCPY(d, arg);
+        break;
+      }
     }
+  } else {
+    // Recognize a few exceptions to the rule.  Some strings that contain
+    // '*' with "star".  Otherwise '*' is recognized as a wildcard.
+    for (i = (int)ARRAY_SIZE(mtable); --i >= 0; ) {
+      if (STRCMP(arg, mtable[i]) == 0) {
+        STRCPY(d, rtable[i]);
+        break;
+      }
+    }
+  }
 
   if (i < 0) {  /* no match in table */
     /* Replace "\S" with "/\\S", etc.  Otherwise every tag is matched.
@@ -4749,7 +4766,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
       if (*arg == '(' && arg[1] == '\'') {
           arg++;
       }
-      for (s = arg; *s; s++) {
+      for (const char_u *s = arg; *s; s++) {
         // Replace "|" with "bar" and '"' with "quote" to match the name of
         // the tags for these commands.
         // Replace "*" with ".*" and "?" with "." to match command line
@@ -4858,9 +4875,10 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
 
   *matches = (char_u **)"";
   *num_matches = 0;
-  flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
-  if (keep_lang)
+  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
+  if (keep_lang) {
     flags |= TAG_KEEP_LANG;
+  }
   if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
       && *num_matches > 0) {
     /* Sort the matches found on the heuristic number that is after the
@@ -5017,11 +5035,9 @@ void fix_help_buffer(void)
                 const char_u *const f1 = fnames[i1];
                 const char_u *const f2 = fnames[i2];
                 const char_u *const t1 = path_tail(f1);
-                if (fnamencmp(f1, f2, t1 - f1) != 0) {
-                  continue;
-                }
+                const char_u *const t2 = path_tail(f2);
                 const char_u *const e1 = STRRCHR(t1, '.');
-                const char_u *const e2 = STRRCHR(path_tail(f2), '.');
+                const char_u *const e2 = STRRCHR(t2, '.');
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
@@ -5032,8 +5048,10 @@ void fix_help_buffer(void)
                   fnames[i1] = NULL;
                   continue;
                 }
-                if (fnamencmp(f1, f2, e1 - f1) != 0)
+                if (e1 - f1 != e2 - f2
+                    || fnamencmp(f1, f2, e1 - f1) != 0) {
                   continue;
+                }
                 if (fnamecmp(e1, ".txt") == 0
                     && fnamecmp(e2, fname + 4) == 0) {
                   /* use .abx instead of .txt */
@@ -5649,11 +5667,11 @@ void ex_sign(exarg_T *eap)
 
             // Count cells and check for non-printable chars
             cells = 0;
-            for (s = arg; s < p; s += (*mb_ptr2len)(s)) {
+            for (s = arg; s < p; s += utfc_ptr2len(s)) {
               if (!vim_isprintc(utf_ptr2char(s))) {
                 break;
               }
-              cells += (*mb_ptr2cells)(s);
+              cells += utf_ptr2cells(s);
             }
             // Currently must be one or two display cells
             if (s != p || cells < 1 || cells > 2) {

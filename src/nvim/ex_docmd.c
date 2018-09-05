@@ -5964,9 +5964,35 @@ void not_exiting(void)
   exiting = FALSE;
 }
 
-/*
- * ":quit": quit current window, quit Vim if the last window is closed.
- */
+static bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)
+{
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
+
+  // Bail out when autocommands closed the window.
+  // Refuse to quit when the buffer in the last window is being closed (can
+  // only happen in autocommands).
+  if (!win_valid(wp)
+      || curbuf_locked()
+      || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
+    return true;
+  }
+
+  if (quit_all
+      || (check_more(false, forceit) == OK && only_one_window())) {
+    apply_autocmds(EVENT_EXITPRE, NULL, NULL, false, curbuf);
+    // Refuse to quit when locked or when the buffer in the last window is
+    // being closed (can only happen in autocommands).
+    if (curbuf_locked()
+        || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ":quit": quit current window, quit Vim if the last window is closed.
+// ":{nr}quit": quit window {nr}
 static void ex_quit(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
@@ -5996,11 +6022,9 @@ static void ex_quit(exarg_T *eap)
   if (curbuf_locked()) {
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
-  // Refuse to quit when locked or when the buffer in the last window is
-  // being closed (can only happen in autocommands).
-  if (!win_valid(wp)
-      || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
+
+  // Trigger QuitPre and maybe ExitPre
+  if (before_quit_autocmds(wp, false, eap->forceit)) {
     return;
   }
 
@@ -6025,6 +6049,7 @@ static void ex_quit(exarg_T *eap)
     if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
+    not_exiting();
     // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
@@ -6057,10 +6082,8 @@ static void ex_quit_all(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
-  // Refuse to quit when locked or when the buffer in the last window is
-  // being closed (can only happen in autocommands).
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
+
+  if (before_quit_autocmds(curwin, true, eap->forceit)) {
     return;
   }
 
@@ -6346,9 +6369,7 @@ static void ex_stop(exarg_T *eap)
   }
 }
 
-/*
- * ":exit", ":xit" and ":wq": Write file and exit Vim.
- */
+// ":exit", ":xit" and ":wq": Write file and quite the current window.
 static void ex_exit(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
@@ -6360,10 +6381,8 @@ static void ex_exit(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
-  // Refuse to quit when locked or when the buffer in the last window is
-  // being closed (can only happen in autocommands).
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
+
+  if (before_quit_autocmds(curwin, false, eap->forceit)) {
     return;
   }
 
@@ -6382,6 +6401,7 @@ static void ex_exit(exarg_T *eap)
       // quit last window, exit Vim
       getout(0);
     }
+    not_exiting();
     // Quit current window, may free the buffer.
     win_close(curwin, !buf_hide(curwin->w_buffer));
   }
@@ -9239,6 +9259,18 @@ static int ses_do_win(win_T *wp)
   return true;
 }
 
+static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
+{
+  int r;
+
+  if (wp->w_curswant == MAXCOL) {
+    r = fprintf(fd, "%snormal! $", spaces);
+  } else {
+    r = fprintf(fd, "%snormal! 0%d|", spaces, wp->w_virtcol + 1);
+  }
+  return r < 0 || put_eol(fd) == FAIL ? FAIL : OK;
+}
+
 /*
  * Write commands to "fd" to restore the view of a window.
  * Caller must make sure 'scrolloff' is zero.
@@ -9405,14 +9437,11 @@ put_view(
                 (int64_t)(wp->w_virtcol + 1)) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "else") == FAIL
-            || fprintf(fd, "  normal! 0%d|", wp->w_virtcol + 1) < 0
-            || put_eol(fd) == FAIL
+            || put_view_curpos(fd, wp, "  ") == FAIL
             || put_line(fd, "endif") == FAIL)
           return FAIL;
-      } else {
-        if (fprintf(fd, "normal! 0%d|", wp->w_virtcol + 1) < 0
-            || put_eol(fd) == FAIL)
-          return FAIL;
+      } else if (put_view_curpos(fd, wp, "") == FAIL) {
+        return FAIL;
       }
     }
   }

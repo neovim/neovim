@@ -510,12 +510,7 @@ local function test_cmdline(newgrid)
     screen:set_default_attr_ids({
       RBP1={background = Screen.colors.Red},
       RBP2={background = Screen.colors.Yellow},
-      RBP3={background = Screen.colors.Green},
-      RBP4={background = Screen.colors.Blue},
       EOB={bold = true, foreground = Screen.colors.Blue1},
-      ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      SK={foreground = Screen.colors.Blue},
-      PE={bold = true, foreground = Screen.colors.SeaGreen4}
     })
     feed('<f5>(a(b)a)')
     screen:expect{grid=[[

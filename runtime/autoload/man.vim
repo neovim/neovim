@@ -1,5 +1,10 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
+if exists('s:loaded_man')
+  finish
+endif
+let s:loaded_man = 1
+
 let s:find_arg = '-w'
 let s:localfile_arg = v:true  " Always use -l if possible. #6683
 let s:section_arg = '-s'

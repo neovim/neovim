@@ -34,6 +34,7 @@ return {
     'CursorMovedI',           -- cursor was moved in Insert mode
     'DirChanged',             -- directory changed
     'EncodingChanged',        -- after changing the 'encoding' option
+    'ExitPre',                -- before exiting
     'FileAppendCmd',          -- append to a file using command
     'FileAppendPost',         -- after appending to a file
     'FileAppendPre',          -- before appending to a file

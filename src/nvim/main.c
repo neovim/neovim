@@ -892,6 +892,7 @@ static void command_line_scan(mparm_T *parmp)
           set_option_value("rl", 1L, NULL, 0);
           break;
         }
+        case '?':    // "-?" give help message (for MS-Windows)
         case 'h': {  // "-h" give help message
           usage();
           mch_exit(0);

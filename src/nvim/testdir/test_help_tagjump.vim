@@ -38,6 +38,34 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*:?\*')
   helpclose
 
+  help q?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*q?\*')
+  call assert_true(expand('<cword>') == 'q?')
+  helpclose
+
+  help -?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*-?\*')
+  helpclose
+
+  help v_g?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*v_g?\*')
+  helpclose
+
+  help expr-!=?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*expr-!=?\*')
+  call assert_true(expand('<cword>') == 'expr-!=?')
+  helpclose
+
+  help expr-isnot?
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*expr-isnot?\*')
+  call assert_true(expand('<cword>') == 'expr-isnot?')
+  helpclose
+
   help FileW*Post
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*FileWritePost\*')

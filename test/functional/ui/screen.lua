@@ -78,6 +78,12 @@ local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
 local eq = helpers.eq
 local dedent = helpers.dedent
 
+local inspect = require('inspect')
+
+local function isempty(v)
+  return type(v) == 'table' and next(v) == nil
+end
+
 local Screen = {}
 Screen.__index = Screen
 
@@ -200,6 +206,11 @@ function Screen:set_option(option, value)
   self._options[option] = value
 end
 
+-- canonical order of ext keys, used  to generate asserts
+local ext_keys = {
+  'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos'
+}
+
 -- Asserts that the screen state eventually matches an expected state
 --
 -- This function can either be called with the positional forms
@@ -246,8 +257,10 @@ function Screen:expect(expected, attr_ids, attr_ignore)
   if type(expected) == "table" then
     assert(not (attr_ids ~= nil or attr_ignore ~= nil))
     local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
-                    any=true, mode=true, popupmenu=true, cmdline=true,
-                    cmdline_block=true, wildmenu_items=true, wildmenu_pos=true}
+                    any=true, mode=true}
+    for _, v in ipairs(ext_keys) do
+      is_key[v] = true
+    end
     for k, _ in pairs(expected) do
       if not is_key[k] then
         error("Screen:expect: Unknown keyword argument '"..k.."'")
@@ -278,11 +291,12 @@ function Screen:expect(expected, attr_ids, attr_ignore)
       table.insert(expected_rows, row)
     end
   end
-  local ids = attr_ids or self._default_attr_ids
-  local ignore = attr_ignore or self._default_attr_ignore
-  local id_to_index
+  local attr_state = {
+      ids = attr_ids or self._default_attr_ids,
+      ignore = attr_ignore or self._default_attr_ignore,
+  }
   if self._options.ext_hlstate then
-    id_to_index = self:hlstate_check_attrs(ids or {})
+    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
   end
   self._new_attrs = false
   self:wait(function()
@@ -299,13 +313,12 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     end
 
     if self._options.ext_hlstate and self._new_attrs then
-      id_to_index = self:hlstate_check_attrs(ids or {})
+      attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
     end
 
-    local info = self._options.ext_hlstate and id_to_index or ids
     local actual_rows = {}
     for i = 1, self._height do
-      actual_rows[i] = self:_row_repr(self._rows[i], info, ignore)
+      actual_rows[i] = self:_row_repr(self._rows[i], attr_state)
     end
 
     if expected.any ~= nil then
@@ -342,28 +355,18 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
 
     -- Extension features. The default expectations should cover the case of
     -- the ext_ feature being disabled, or the feature currently not activated
-    -- (for instance no external cmdline visible)
-    local expected_cmdline = expected.cmdline or {}
-    local actual_cmdline = {}
-    for i, entry in pairs(self.cmdline) do
-      entry = shallowcopy(entry)
-      entry.content = self:_chunks_repr(entry.content, info, ignore)
-      actual_cmdline[i] = entry
-    end
-
-    local expected_block = expected.cmdline_block or {}
-    local actual_block = {}
-    for i, entry in ipairs(self.cmdline_block) do
-      actual_block[i] = self:_chunks_repr(entry, info, ignore)
-    end
+    -- (for instance no external cmdline visible). Some extensions require
+    -- preprocessing to prepresent highlights in a reproducible way.
+    local extstate = self:_extstate_repr(attr_state)
 
     -- convert assertion errors into invalid screen state descriptions
     local status, res = pcall(function()
-      eq(expected.popupmenu, self.popupmenu, "popupmenu")
-      eq(expected_cmdline, actual_cmdline, "cmdline")
-      eq(expected_block, actual_block, "cmdline_block")
-      eq(expected.wildmenu_items, self.wildmenu_items, "wildmenu_items")
-      eq(expected.wildmenu_pos, self.wildmenu_pos, "wildmenu_pos")
+      for _, k in ipairs(ext_keys) do
+        -- Empty states is considered the default and need not be mentioned
+        if not (expected[k] == nil and isempty(extstate[k])) then
+          eq(expected[k], extstate[k], k)
+        end
+      end
       if expected.mode ~= nil then
         eq(expected.mode, self.mode, "mode")
       end
@@ -438,7 +441,6 @@ function Screen:_redraw(updates)
         self._on_event(method, update[i])
       end
     end
-    -- print(self:_current_screen())
   end
 end
 
@@ -745,7 +747,7 @@ function Screen:_clear_row_section(rownum, startcol, stopcol)
   end
 end
 
-function Screen:_row_repr(row, attr_ids, attr_ignore)
+function Screen:_row_repr(row, attr_state)
   local rv = {}
   local current_attr_id
   for i = 1, self._width do
@@ -753,7 +755,7 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
     if self._options.ext_newgrid then
       attrs = attrs[(self._options.rgb and 1) or 2]
     end
-    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, attrs, row[i].hl_id)
+    local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
     if current_attr_id and attr_id ~= current_attr_id then
       -- close current attribute bracket, add it before any whitespace
       -- up to the current cell
@@ -779,7 +781,29 @@ function Screen:_row_repr(row, attr_ids, attr_ignore)
   return table.concat(rv, '')--:gsub('%s+$', '')
 end
 
-function Screen:_chunks_repr(chunks, attr_ids, attr_ignore)
+function Screen:_extstate_repr(attr_state)
+  local cmdline = {}
+  for i, entry in pairs(self.cmdline) do
+    entry = shallowcopy(entry)
+    entry.content = self:_chunks_repr(entry.content, attr_state)
+    cmdline[i] = entry
+  end
+
+  local cmdline_block = {}
+  for i, entry in ipairs(self.cmdline_block) do
+    cmdline_block[i] = self:_chunks_repr(entry, attr_state)
+  end
+
+  return {
+    popupmenu=self.popupmenu,
+    cmdline=cmdline,
+    cmdline_block=cmdline_block,
+    wildmenu_items=self.wildmenu_items,
+    wildmenu_pos=self.wildmenu_pos,
+  }
+end
+
+function Screen:_chunks_repr(chunks, attr_state)
   local repr_chunks = {}
   for i, chunk in ipairs(chunks) do
     local hl, text = unpack(chunk)
@@ -789,19 +813,10 @@ function Screen:_chunks_repr(chunks, attr_ids, attr_ignore)
     else
       attrs = hl
     end
-    local attr_id = self:_get_attr_id(attr_ids, attr_ignore, attrs, hl)
+    local attr_id = self:_get_attr_id(attr_state, attrs, hl)
     repr_chunks[i] = {text, attr_id}
   end
   return repr_chunks
-end
-
-function Screen:_current_screen()
-  -- get a string that represents the current screen state(debugging helper)
-  local rv = {}
-  for i = 1, self._height do
-    table.insert(rv, "'"..self:_row_repr(self._rows[i]).."'")
-  end
-  return table.concat(rv, '\n')
 end
 
 -- Generates tests. Call it where Screen:expect() would be. Waits briefly, then
@@ -832,82 +847,77 @@ function Screen:redraw_debug(attrs, ignore, timeout)
 end
 
 function Screen:print_snapshot(attrs, ignore)
+  attrs = attrs or self._default_attr_ids
   if ignore == nil then
     ignore = self._default_attr_ignore
   end
-  local id_to_index = {}
-  if attrs == nil then
-    attrs = {}
-    if self._default_attr_ids ~= nil then
-      for i, a in pairs(self._default_attr_ids) do
-        attrs[i] = a
-      end
-      if self._options.ext_hlstate then
-        id_to_index = self:hlstate_check_attrs(attrs)
-      end
-    end
+  local attr_state = {
+      ids = {},
+      ignore = ignore,
+      mutable = true, -- allow _row_repr to add missing highlights
+  }
 
-    if ignore ~= true then
-      for i = 1, self._height do
-        local row = self._rows[i]
-        for j = 1, self._width do
-          if self._options.ext_hlstate then
-            local hl_id = row[j].hl_id
-            if hl_id ~= 0 then
-              self:_insert_hl_id(attrs, id_to_index, hl_id)
-            end
-          else
-            local attr = row[j].attrs
-            if self:_attr_index(attrs, attr) == nil and self:_attr_index(ignore, attr) == nil then
-              if not self:_equal_attrs(attr, {}) then
-                table.insert(attrs, attr)
-              end
-            end
-          end
-        end
-      end
+  if attrs ~= nil then
+    for i, a in pairs(attrs) do
+      attr_state.ids[i] = a
     end
   end
+  if self._options.ext_hlstate then
+    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids)
+  end
 
-  local rv = {}
-  local info = self._options.ext_hlstate and id_to_index or attrs
+  local lines = {}
   for i = 1, self._height do
-    table.insert(rv, "  "..self:_row_repr(self._rows[i], info, ignore).."|")
+    table.insert(lines, "  "..self:_row_repr(self._rows[i], attr_state).."|")
   end
-  local attrstrs = {}
-  local alldefault = true
-  for i, a in ipairs(attrs) do
-    if self._default_attr_ids == nil or self._default_attr_ids[i] ~= a then
-      alldefault = false
-    end
-    local dict
-    if self._options.ext_hlstate then
-      dict = self:_pprint_hlstate(a)
+
+  local ext_state = self:_extstate_repr(attr_state)
+  local keys = false
+  for k, v in pairs(ext_state) do
+    if isempty(v) then
+      ext_state[k] = nil -- deleting keys while iterating is ok
     else
-      dict = "{"..self:_pprint_attrs(a).."}"
+      keys = true
     end
-    table.insert(attrstrs, "["..tostring(i).."] = "..dict)
   end
-  local attrstr = "{"..table.concat(attrstrs, ", ").."}"
-  print( "\nscreen:expect([[")
-  print( table.concat(rv, '\n'))
-  if alldefault then
-    print( "]])\n")
-  else
-    print( "]], "..attrstr..")\n")
+
+  local attrstr = ""
+  if attr_state.modified then
+    local attrstrs = {}
+    for i, a in pairs(attr_state.ids) do
+      local dict
+      if self._options.ext_hlstate then
+        dict = self:_pprint_hlstate(a)
+      else
+        dict = "{"..self:_pprint_attrs(a).."}"
+      end
+      local keyval = (type(i) == "number") and "["..tostring(i).."]" or i
+      table.insert(attrstrs, "  "..keyval.." = "..dict..",")
+    end
+    attrstr = (", "..(keys and "attr_ids=" or "")
+               .."{\n"..table.concat(attrstrs, "\n").."\n}")
   end
+  print( "\nscreen:expect"..(keys and "{grid=" or "(").."[[")
+  print( table.concat(lines, '\n'))
+  io.stdout:write( "]]"..attrstr)
+  for _, k in ipairs(ext_keys) do
+    if ext_state[k] ~= nil then
+      io.stdout:write(", "..k.."="..inspect(ext_state[k]))
+    end
+  end
+  print((keys and "}" or ")").."\n")
   io.stdout:flush()
 end
 
-function Screen:_insert_hl_id(attrs, id_to_index, hl_id)
-  if id_to_index[hl_id] ~= nil then
-    return id_to_index[hl_id]
+function Screen:_insert_hl_id(attr_state, hl_id)
+  if attr_state.id_to_index[hl_id] ~= nil then
+    return attr_state.id_to_index[hl_id]
   end
   local raw_info = self._hl_info[hl_id]
   local info = {}
   if #raw_info > 1 then
     for i, item in ipairs(raw_info) do
-      info[i] = self:_insert_hl_id(attrs, id_to_index, item.id)
+      info[i] = self:_insert_hl_id(attr_state, item.id)
     end
   else
     info[1] = {}
@@ -927,9 +937,9 @@ function Screen:_insert_hl_id(attrs, id_to_index, hl_id)
   end
 
 
-  table.insert(attrs, attrval)
-  id_to_index[hl_id] = #attrs
-  return #attrs
+  table.insert(attr_state.ids, attrval)
+  attr_state.id_to_index[hl_id] = #attr_state.ids
+  return #attr_state.ids
 end
 
 function Screen:hlstate_check_attrs(attrs)
@@ -1033,27 +1043,38 @@ local function backward_find_meaningful(tbl, from)  -- luacheck: no unused
   return from
 end
 
-function Screen:_get_attr_id(attr_ids, ignore, attrs, hl_id)
-  if not attr_ids then
+function Screen:_get_attr_id(attr_state, attrs, hl_id)
+  if not attr_state.ids then
     return
   end
 
   if self._options.ext_hlstate then
-    local id = attr_ids[hl_id]
+    local id = attr_state.id_to_index[hl_id]
     if id ~= nil or hl_id == 0 then
+      return id
+    end
+    if attr_state.mutable then
+      id = self:_insert_hl_id(attr_state, hl_id)
+      attr_state.modified = true
       return id
     end
     return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
   else
-    for id, a in pairs(attr_ids) do
+    for id, a in pairs(attr_state.ids) do
       if self:_equal_attrs(a, attrs) then
          return id
        end
     end
     if self:_equal_attrs(attrs, {}) or
-        ignore == true or self:_attr_index(ignore, attrs) ~= nil then
+        attr_state.ignore == true or
+        self:_attr_index(attr_state.ignore, attrs) ~= nil then
       -- ignore this attrs
       return nil
+    end
+    if attr_state.mutable then
+      table.insert(attr_state.ids, attrs)
+      attr_state.modified = true
+      return #attr_state.ids
     end
     return "UNEXPECTED "..self:_pprint_attrs(attrs)
   end

@@ -898,7 +898,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
     }
 
     // skip multibyte char correctly
-    for (i = (*mb_ptr2len_len)(src, (int) (end - src) + 1); i > 0; i--) {
+    for (i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       // If compiled with the GUI replace CSI with K_CSI.
