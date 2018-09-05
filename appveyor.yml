@@ -5,12 +5,6 @@ image: Visual Studio 2017
 configuration:
 - MSVC_64
 - MSVC_32
-- MINGW_64
-- MINGW_32
-- MINGW_64-gcov
-matrix:
-  allow_failures:
-    - configuration: MINGW_64-gcov
 install: []
 before_build:
 - ps: Install-Product node 8
