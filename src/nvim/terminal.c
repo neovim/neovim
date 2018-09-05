@@ -1192,9 +1192,14 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
     if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
-      // scrollback full, delete lines at the top
-      ml_delete(1, false);
-      deleted_lines(1, 1);
+      // scrollback full, delete 10% of the lines at the top
+      int lines_to_delete = (int)term->sb_size / 10;
+      int i;
+
+      for (i = 0; i < lines_to_delete; ++i) {
+        ml_delete(1, false);
+        deleted_lines(1, 1);
+      }
     }
     fetch_row(term, -term->sb_pending, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
