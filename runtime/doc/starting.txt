@@ -76,7 +76,8 @@ The option arguments may be given in any order.  Single-letter options can be
 combined after one dash.  There can be no option arguments after the "--"
 argument.
 
---help							*-h* *--help*
+--help							*-h* *--help* *-?*
+-?
 -h		Give usage (help) message and exit.
 		See |info-message| about capturing the text.
 
