@@ -605,13 +605,10 @@ function msgpack#eval(s, special_objs) abort
           call add(expr, dec)
         endif
       endif
-    elseif s =~# '-\?\%(inf\|nan\)'
-      if s[0] is# '-'
-        call add(expr, '-')
-        let s = s[1:]
-      endif
-      call add(expr, s:MSGPACK_SPECIAL_OBJECTS[s[0:2]])
-      let s = s[3:]
+    elseif s =~# '\v^\-%(inf|nan)'
+      call add(expr, '-')
+      call add(expr, s:MSGPACK_SPECIAL_OBJECTS[s[1:3]])
+      let s = s[4:]
     elseif stridx('="+', s[0]) != -1
       let match = matchlist(s, '\v\C^(\=|\+\((\-?\d+)\)|)(\"%(\\.|[^\\"]+)*\")')
       if empty(match)
