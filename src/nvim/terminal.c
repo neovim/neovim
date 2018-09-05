@@ -248,9 +248,12 @@ Terminal *terminal_open(TerminalOptions opts)
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
+  // Calculate 10% delta scrollback buffer so we will be able to delete in
+  // chunks (the delta itself)
+  int scbk_plus_10pct = (int)((double)curbuf->b_p_scbk * 1.1);
   // Configure the scrollback buffer.
   rv->sb_size = curbuf->b_p_scbk < 0
-                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+                ? SB_MAX : (size_t)MAX(1, scbk_plus_10pct);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
@@ -1186,26 +1189,29 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
-  while (term->sb_pending > 0) {
+  if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
+    // scrollback buffer is full - delete 10% from the top
+    int sb_delete = (int)term->sb_size / 10;
+    for(int i = 1; i <= sb_delete; ++i, --term->sb_current) {
+        ml_delete(i, false);
+    }
+    deleted_lines(1, (long)sb_delete);
+  }
+
+  int ml_line_count_keeper = (int)buf->b_ml.ml_line_count;
+  for (;term->sb_pending; --term->sb_pending) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
-    if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
-      // scrollback full, delete 10% of the lines at the top
-      int lines_to_delete = (int)term->sb_size / 10;
-      int i;
-
-      for (i = 0; i < lines_to_delete; ++i) {
-        ml_delete(1, false);
-        deleted_lines(1, 1);
-      }
-    }
     fetch_row(term, -term->sb_pending, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
     ml_append(buf_index, (uint8_t *)term->textbuf, 0, false);
-    appended_lines(buf_index, 1);
-    term->sb_pending--;
+  }
+  int ml_line_diff = (int)buf->b_ml.ml_line_count - ml_line_count_keeper;
+  if (ml_line_diff > 0) {
+    // It means that new lines were appended to the current buffer
+    appended_lines((linenr_T)ml_line_count_keeper, ml_line_diff);
   }
 
   // Remove extra lines at the bottom
