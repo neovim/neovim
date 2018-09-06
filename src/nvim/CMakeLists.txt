@@ -660,4 +660,10 @@ add_custom_target(
   DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
 )
 
+add_custom_target(generated-sources DEPENDS
+  ${NVIM_GENERATED_FOR_SOURCES}
+  ${NVIM_GENERATED_FOR_HEADERS}
+  ${NVIM_GENERATED_SOURCES}
+)
+
 add_subdirectory(po)
