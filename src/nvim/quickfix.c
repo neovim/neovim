@@ -1140,7 +1140,7 @@ qf_init_ext(
   }
   if (state.fd == NULL || !ferror(state.fd)) {
     if (qfl->qf_index == 0) {
-      /* no valid entry found */
+      // no valid entry found
       qfl->qf_ptr = qfl->qf_start;
       qfl->qf_index = 1;
       qfl->qf_nonevalid = true;
@@ -1150,7 +1150,7 @@ qf_init_ext(
         qfl->qf_ptr = qfl->qf_start;
       }
     }
-    /* return number of matches */
+    // return number of matches
     retval = qfl->qf_count;
     goto qf_init_end;
   }
@@ -2597,8 +2597,9 @@ void ex_cclose(exarg_T *eap)
 
   /* Find existing quickfix window and close it. */
   win = qf_find_win(qi);
-  if (win != NULL)
+  if (win != NULL) {
     win_close(win, false);
+  }
 }
 
 /*
@@ -4862,10 +4863,12 @@ void ex_helpgrep(exarg_T *eap)
     /* If the help window is not opened or if it already points to the
      * correct location list, then free the new location list. */
     if (!bt_help(curwin->w_buffer) || curwin->w_llist == qi) {
-      if (new_qi)
+      if (new_qi) {
         ll_free_all(&qi);
-    } else if (curwin->w_llist == NULL)
+      }
+    } else if (curwin->w_llist == NULL) {
       curwin->w_llist = qi;
+    }
   }
 }
 

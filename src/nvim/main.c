@@ -1562,7 +1562,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
     }
     // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
-      ++arg_idx;
+      arg_idx++;
       win_close(curwin, true);
       advance = false;
       continue;

@@ -841,7 +841,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
      * aborting() returns FALSE when closing a window. */
     enter_cleanup(&cs);
 
-    /* Quitting means closing the split window, nothing else. */
+    // Quitting means closing the split window, nothing else.
     win_close(curwin, true);
     swap_exists_action = SEA_NONE;
     swap_exists_did_quit = TRUE;
@@ -4652,9 +4652,9 @@ void ex_buffer_all(exarg_T *eap)
           && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, false);
-        wpnext = firstwin;              /* just in case an autocommand does
-                                           something strange with windows */
-        tpnext = first_tabpage;         /* start all over...*/
+        wpnext = firstwin;              // just in case an autocommand does
+                                        // something strange with windows
+        tpnext = first_tabpage;         // start all over...
         open_wins = 0;
       } else
         ++open_wins;
@@ -4723,9 +4723,9 @@ void ex_buffer_all(exarg_T *eap)
          * aborting() returns FALSE when closing a window. */
         enter_cleanup(&cs);
 
-        /* User selected Quit at ATTENTION prompt; close this window. */
+        // User selected Quit at ATTENTION prompt; close this window.
         win_close(curwin, true);
-        --open_wins;
+        open_wins--;
         swap_exists_action = SEA_NONE;
         swap_exists_did_quit = TRUE;
 

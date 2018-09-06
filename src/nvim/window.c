@@ -1900,10 +1900,11 @@ int win_close(win_T *win, bool free_buf)
 
   /* When closing the help window, try restoring a snapshot after closing
    * the window.  Otherwise clear the snapshot, it's now invalid. */
-  if (bt_help(win->w_buffer))
+  if (bt_help(win->w_buffer)) {
     help_window = true;
-  else
+  } else {
     clear_snapshot(curtab, SNAP_HELP_IDX);
+  }
 
   if (win == curwin) {
     /*
@@ -1967,8 +1968,9 @@ int win_close(win_T *win, bool free_buf)
           || close_last_window_tabpage(win, free_buf, prev_curtab))) {
     // Autocommands have closed all windows, quit now.  Restore
     // curwin->w_buffer, otherwise writing ShaDa file may fail.
-    if (curwin->w_buffer == NULL)
+    if (curwin->w_buffer == NULL) {
       curwin->w_buffer = curbuf;
+    }
     getout(0);
   }
   // Autocommands may have moved to another tab page.
