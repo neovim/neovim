@@ -142,6 +142,9 @@ clint-full: build/.ran-cmake
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
+generated-sources: build/.ran-cmake
+	+$(BUILD_CMD) -C build generated-sources
+
 appimage:
 	bash scripts/genappimage.sh
 
