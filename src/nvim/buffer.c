@@ -252,7 +252,7 @@ open_buffer (
     msg_silent = old_msg_silent;
 
     // Help buffer is filtered.
-    if (curbuf->b_help) {
+    if (bt_help(curbuf)) {
       fix_help_buffer();
     }
   } else if (read_stdin) {
@@ -4928,6 +4928,12 @@ chk_modeline (
   xfree(linecopy);
 
   return retval;
+}
+
+// Return true if "buf" is a help buffer.
+bool bt_help(const buf_T *const buf)
+{
+  return buf != NULL && buf->b_help;
 }
 
 /*

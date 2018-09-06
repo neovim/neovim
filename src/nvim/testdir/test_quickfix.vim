@@ -2269,3 +2269,17 @@ func Test_changedtick()
     call Xchangedtick_tests('c')
     call Xchangedtick_tests('l')
 endfunc
+
+" Open multiple help windows using ":lhelpgrep
+" This test used to crash Vim
+func Test_Multi_LL_Help()
+    new | only
+    lhelpgrep window
+    lopen
+    e#
+    lhelpgrep buffer
+    call assert_equal(3, winnr('$'))
+    call assert_true(len(getloclist(1)) != 0)
+    call assert_true(len(getloclist(2)) != 0)
+    new | only
+endfunc

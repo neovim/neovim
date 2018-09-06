@@ -1839,12 +1839,12 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   /*
    * For ":helpgrep" find a help window or open one.
    */
-  if (qf_ptr->qf_type == 1 && (!curwin->w_buffer->b_help || cmdmod.tab != 0)) {
+  if (qf_ptr->qf_type == 1 && (!bt_help(curwin->w_buffer) || cmdmod.tab != 0)) {
     win_T *wp = NULL;
 
     if (cmdmod.tab == 0) {
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
+        if (bt_help(wp2->w_buffer)) {
           wp = wp2;
           break;
         }
@@ -4721,16 +4721,26 @@ void ex_helpgrep(exarg_T *eap)
   p_cpo = empty_option;
 
   if (eap->cmdidx == CMD_lhelpgrep) {
-    qi = NULL;
+    win_T *wp = NULL;
 
-    /* Find an existing help window */
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer != NULL && wp->w_buffer->b_help) {
-        qi = wp->w_llist;
+    // If the current window is a help window, then use it
+    if (bt_help(curwin->w_buffer)) {
+      wp = curwin;
+    } else {
+      // Find an existing help window
+      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+        if (bt_help(wp2->w_buffer)) {
+          wp = wp2;
+          break;
+        }
       }
     }
 
-    /* Help window not found */
+    if (wp == NULL) {   // Help window not found
+      qi = NULL;
+    } else {
+      qi = wp->w_llist;
+    }
     if (qi == NULL) {
       /* Allocate a new location list for help text matches */
       qi = ll_new_list();
@@ -4851,7 +4861,7 @@ void ex_helpgrep(exarg_T *eap)
   if (eap->cmdidx == CMD_lhelpgrep) {
     /* If the help window is not opened or if it already points to the
      * correct location list, then free the new location list. */
-    if (!curwin->w_buffer->b_help || curwin->w_llist == qi) {
+    if (!bt_help(curwin->w_buffer) || curwin->w_llist == qi) {
       if (new_qi)
         ll_free_all(&qi);
     } else if (curwin->w_llist == NULL)

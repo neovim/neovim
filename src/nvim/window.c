@@ -1902,7 +1902,7 @@ int win_close(win_T *win, int free_buf)
 
   /* When closing the help window, try restoring a snapshot after closing
    * the window.  Otherwise clear the snapshot, it's now invalid. */
-  if (win->w_buffer != NULL && win->w_buffer->b_help)
+  if (bt_help(win->w_buffer))
     help_window = TRUE;
   else
     clear_snapshot(curtab, SNAP_HELP_IDX);
@@ -1967,8 +1967,8 @@ int win_close(win_T *win, int free_buf)
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
       && (last_window() || curtab != prev_curtab
           || close_last_window_tabpage(win, free_buf, prev_curtab))) {
-    /* Autocommands have close all windows, quit now.  Restore
-    * curwin->w_buffer, otherwise writing ShaDa file may fail. */
+    // Autocommands have closed all windows, quit now.  Restore
+    // curwin->w_buffer, otherwise writing ShaDa file may fail.
     if (curwin->w_buffer == NULL)
       curwin->w_buffer = curbuf;
     getout(0);
@@ -5341,7 +5341,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   int count = 0;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
-        && (!((wp->w_buffer->b_help && !curbuf->b_help)
+        && (!((bt_help(wp->w_buffer) && !bt_help(curbuf))
               || wp->w_p_pvw) || wp == curwin) && wp != aucmd_win) {
       count++;
     }
