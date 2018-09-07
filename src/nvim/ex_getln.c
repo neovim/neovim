@@ -6192,7 +6192,7 @@ static int open_cmdwin(void)
     wp = curwin;
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
-    win_close(wp, TRUE);
+    win_close(wp, true);
 
     // win_close() may have already wiped the buffer when 'bh' is
     // set to 'wipe'.

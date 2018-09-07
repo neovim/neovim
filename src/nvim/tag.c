@@ -2608,11 +2608,11 @@ static int jumpto_tag(
       win_enter(curwin_save, true);
     }
 
-    --RedrawingDisabled;
+    RedrawingDisabled--;
   } else {
-    --RedrawingDisabled;
-    if (postponed_split) {              /* close the window */
-      win_close(curwin, FALSE);
+    RedrawingDisabled--;
+    if (postponed_split) {              // close the window
+      win_close(curwin, false);
       postponed_split = 0;
     }
   }

@@ -1859,20 +1859,18 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
   return true;
 }
 
-/*
- * Close window "win".  Only works for the current tab page.
- * If "free_buf" is TRUE related buffer may be unloaded.
- *
- * Called by :quit, :close, :xit, :wq and findtag().
- * Returns FAIL when the window was not closed.
- */
-int win_close(win_T *win, int free_buf)
+// Close window "win".  Only works for the current tab page.
+// If "free_buf" is true related buffer may be unloaded.
+//
+// Called by :quit, :close, :xit, :wq and findtag().
+// Returns FAIL when the window was not closed.
+int win_close(win_T *win, bool free_buf)
 {
   win_T       *wp;
   int other_buffer = FALSE;
   int close_curwin = FALSE;
   int dir;
-  int help_window = FALSE;
+  bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = win->w_frame->fr_parent;
 
@@ -1902,10 +1900,11 @@ int win_close(win_T *win, int free_buf)
 
   /* When closing the help window, try restoring a snapshot after closing
    * the window.  Otherwise clear the snapshot, it's now invalid. */
-  if (win->w_buffer != NULL && win->w_buffer->b_help)
-    help_window = TRUE;
-  else
+  if (bt_help(win->w_buffer)) {
+    help_window = true;
+  } else {
     clear_snapshot(curtab, SNAP_HELP_IDX);
+  }
 
   if (win == curwin) {
     /*
@@ -1967,10 +1966,11 @@ int win_close(win_T *win, int free_buf)
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
       && (last_window() || curtab != prev_curtab
           || close_last_window_tabpage(win, free_buf, prev_curtab))) {
-    /* Autocommands have close all windows, quit now.  Restore
-    * curwin->w_buffer, otherwise writing ShaDa file may fail. */
-    if (curwin->w_buffer == NULL)
+    // Autocommands have closed all windows, quit now.  Restore
+    // curwin->w_buffer, otherwise writing ShaDa file may fail.
+    if (curwin->w_buffer == NULL) {
       curwin->w_buffer = curbuf;
+    }
     getout(0);
   }
   // Autocommands may have moved to another tab page.
@@ -5341,7 +5341,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   int count = 0;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
-        && (!((wp->w_buffer->b_help && !curbuf->b_help)
+        && (!((bt_help(wp->w_buffer) && !bt_help(curbuf))
               || wp->w_p_pvw) || wp == curwin) && wp != aucmd_win) {
       count++;
     }

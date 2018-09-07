@@ -4514,7 +4514,7 @@ void ex_help(exarg_T *eap)
    * Re-use an existing help window or open a new one.
    * Always open a new one for ":tab help".
    */
-  if (!curwin->w_buffer->b_help
+  if (!bt_help(curwin->w_buffer)
       || cmdmod.tab != 0
       ) {
     if (cmdmod.tab != 0) {
@@ -4522,7 +4522,7 @@ void ex_help(exarg_T *eap)
     } else {
       wp = NULL;
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
+        if (bt_help(wp2->w_buffer)) {
           wp = wp2;
           break;
         }
@@ -5509,8 +5509,8 @@ static int      next_sign_typenr = 1;
 void ex_helpclose(exarg_T *eap)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
-    if (win->w_buffer->b_help) {
-      win_close(win, FALSE);
+    if (bt_help(win->w_buffer)) {
+      win_close(win, false);
       return;
     }
   }

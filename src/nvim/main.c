@@ -1540,7 +1540,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
 {
   int arg_idx;                          /* index in argument list */
   int i;
-  int advance = TRUE;
+  bool advance = true;
   win_T       *win;
 
   /*
@@ -1551,8 +1551,8 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
 
   /* When w_arg_idx is -1 remove the window (see create_windows()). */
   if (curwin->w_arg_idx == -1) {
-    win_close(curwin, TRUE);
-    advance = FALSE;
+    win_close(curwin, true);
+    advance = false;
   }
 
   arg_idx = 1;
@@ -1562,9 +1562,9 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
     }
     // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
-      ++arg_idx;
-      win_close(curwin, TRUE);
-      advance = FALSE;
+      arg_idx++;
+      win_close(curwin, true);
+      advance = false;
       continue;
     }
 
@@ -1579,7 +1579,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
         win_enter(curwin->w_next, false);
       }
     }
-    advance = TRUE;
+    advance = true;
 
     // Only open the file if there is no file in this window yet (that can
     // happen when vimrc contains ":sall").
@@ -1598,8 +1598,8 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
           did_emsg = FALSE;             /* avoid hit-enter prompt */
           getout(1);
         }
-        win_close(curwin, TRUE);
-        advance = FALSE;
+        win_close(curwin, true);
+        advance = false;
       }
       if (arg_idx == GARGCOUNT - 1)
         arg_had_last = TRUE;

@@ -91,6 +91,14 @@ typedef struct qf_list_S {
   char_u      *qf_title;        ///< title derived from the command that created
                                 ///< the error list or set by setqflist
   typval_T    *qf_ctx;          ///< context set by setqflist/setloclist
+
+  struct dir_stack_T *qf_dir_stack;
+  char_u *qf_directory;
+  struct dir_stack_T *qf_file_stack;
+  char_u *qf_currfile;
+  bool qf_multiline;
+  bool qf_multiignore;
+  bool qf_multiscan;
 } qf_list_T;
 
 /// Quickfix/Location list stack definition
@@ -106,15 +114,6 @@ struct qf_info_S {
   int qf_listcount;                 /* current number of lists */
   int qf_curlist;                   /* current error list */
   qf_list_T qf_lists[LISTCOUNT];
-
-  int qf_dir_curlist;  ///< error list for qf_dir_stack
-  struct dir_stack_T *qf_dir_stack;
-  char_u *qf_directory;
-  struct dir_stack_T *qf_file_stack;
-  char_u *qf_currfile;
-  bool qf_multiline;
-  bool qf_multiignore;
-  bool qf_multiscan;
 };
 
 static qf_info_T ql_info;       /* global quickfix list */
@@ -223,9 +222,8 @@ int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
     qi = ll_get_or_alloc_list(wp);
   }
 
-  return qf_init_ext(qi, efile, curbuf, NULL, errorformat, newlist,
-                     (linenr_T)0, (linenr_T)0,
-                     qf_title, enc);
+  return qf_init_ext(qi, qi->qf_curlist, efile, curbuf, NULL, errorformat,
+                     newlist, (linenr_T)0, (linenr_T)0, qf_title, enc);
 }
 
 // Maximum number of bytes allowed per line while reading an errorfile.
@@ -712,8 +710,8 @@ static int qf_get_nextline(qfstate_T *state)
 
 /// Parse a line and get the quickfix fields.
 /// Return the QF_ status.
-static int qf_parse_line(qf_info_T *qi, char_u *linebuf, size_t linelen,
-                         efm_T *fmt_first, qffields_T *fields)
+static int qf_parse_line(qf_info_T *qi, int qf_idx, char_u *linebuf,
+                         size_t linelen, efm_T *fmt_first, qffields_T *fields)
 {
   efm_T *fmt_ptr;
   size_t len;
@@ -721,7 +719,7 @@ static int qf_parse_line(qf_info_T *qi, char_u *linebuf, size_t linelen,
   int    idx = 0;
   char_u *tail = NULL;
   regmatch_T regmatch;
-
+  qf_list_T *qfl = &qi->qf_lists[qf_idx];
 
   // Always ignore case when looking for a matching error.
   regmatch.rm_ic = true;
@@ -740,12 +738,12 @@ static int qf_parse_line(qf_info_T *qi, char_u *linebuf, size_t linelen,
 restofline:
   for (; fmt_ptr != NULL; fmt_ptr = fmt_ptr->next) {
     idx = fmt_ptr->prefix;
-    if (qi->qf_multiscan && vim_strchr((char_u *)"OPQ", idx) == NULL) {
+    if (qfl->qf_multiscan && vim_strchr((char_u *)"OPQ", idx) == NULL) {
       continue;
     }
     fields->namebuf[0] = NUL;
     fields->pattern[0] = NUL;
-    if (!qi->qf_multiscan) {
+    if (!qfl->qf_multiscan) {
       fields->errmsg[0] = NUL;
     }
     fields->lnum = 0;
@@ -759,7 +757,7 @@ restofline:
     int r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
     fmt_ptr->prog = regmatch.regprog;
     if (r) {
-      if ((idx == 'C' || idx == 'Z') && !qi->qf_multiline) {
+      if ((idx == 'C' || idx == 'Z') && !qfl->qf_multiline) {
         continue;
       }
       if (vim_strchr((char_u *)"EWI", idx) != NULL) {
@@ -809,7 +807,7 @@ restofline:
         }
         fields->type = *regmatch.startp[i];
       }
-      if (fmt_ptr->flags == '+' && !qi->qf_multiscan) {       // %+
+      if (fmt_ptr->flags == '+' && !qfl->qf_multiscan) {      // %+
         if (linelen >= fields->errmsglen) {
           // linelen + null terminator
           fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
@@ -877,7 +875,7 @@ restofline:
       break;
     }
   }
-  qi->qf_multiscan = false;
+  qfl->qf_multiscan = false;
 
   if (fmt_ptr == NULL || idx == 'D' || idx == 'X') {
     if (fmt_ptr != NULL) {
@@ -886,13 +884,13 @@ restofline:
           EMSG(_("E379: Missing or empty directory name"));
           return QF_FAIL;
         }
-        qi->qf_directory = qf_push_dir(fields->namebuf, &qi->qf_dir_stack,
-                                       false);
-        if (qi->qf_directory == NULL) {
+        qfl->qf_directory = qf_push_dir(fields->namebuf, &qfl->qf_dir_stack,
+                                        false);
+        if (qfl->qf_directory == NULL) {
           return QF_FAIL;
         }
       } else if (idx == 'X') {                        // leave directory
-        qi->qf_directory = qf_pop_dir(&qi->qf_dir_stack);
+        qfl->qf_directory = qf_pop_dir(&qfl->qf_dir_stack);
       }
     }
     fields->namebuf[0] = NUL;                // no match found, remove file name
@@ -906,7 +904,7 @@ restofline:
     // copy whole line to error message
     STRLCPY(fields->errmsg, linebuf, linelen + 1);
     if (fmt_ptr == NULL) {
-      qi->qf_multiline = qi->qf_multiignore = false;
+      qfl->qf_multiline = qfl->qf_multiignore = false;
     }
   } else {
     // honor %> item
@@ -915,12 +913,12 @@ restofline:
     }
 
     if (vim_strchr((char_u *)"AEWI", idx) != NULL) {
-      qi->qf_multiline = true;     // start of a multi-line message
-      qi->qf_multiignore = false;  // reset continuation
+      qfl->qf_multiline = true;     // start of a multi-line message
+      qfl->qf_multiignore = false;  // reset continuation
     } else if (vim_strchr((char_u *)"CZ", idx)
                != NULL) {  // continuation of multi-line msg
-      if (!qi->qf_multiignore) {
-        qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
+      if (!qfl->qf_multiignore) {
+        qfline_T *qfprev = qfl->qf_last;
         if (qfprev == NULL) {
           return QF_FAIL;
         }
@@ -945,15 +943,15 @@ restofline:
         }
         qfprev->qf_viscol = fields->use_viscol;
         if (!qfprev->qf_fnum) {
-          qfprev->qf_fnum = qf_get_fnum(qi, qi->qf_directory,
-                                        *fields->namebuf || qi->qf_directory
+          qfprev->qf_fnum = qf_get_fnum(qi, qf_idx, qfl->qf_directory,
+                                        *fields->namebuf || qfl->qf_directory
                                         ? fields->namebuf
-                                        : qi->qf_currfile && fields->valid
-                                        ? qi->qf_currfile : 0);
+                                        : qfl->qf_currfile && fields->valid
+                                        ? qfl->qf_currfile : 0);
         }
       }
       if (idx == 'Z') {
-        qi->qf_multiline = qi->qf_multiignore = false;
+        qfl->qf_multiline = qfl->qf_multiignore = false;
       }
 
       line_breakcheck();
@@ -963,23 +961,23 @@ restofline:
       fields->valid = false;
       if (*fields->namebuf == NUL || os_path_exists(fields->namebuf)) {
         if (*fields->namebuf && idx == 'P') {
-          qi->qf_currfile = qf_push_dir(fields->namebuf, &qi->qf_file_stack,
-                                        true);
+          qfl->qf_currfile = qf_push_dir(fields->namebuf, &qfl->qf_file_stack,
+                                         true);
         } else if (idx == 'Q') {
-          qi->qf_currfile = qf_pop_dir(&qi->qf_file_stack);
+          qfl->qf_currfile = qf_pop_dir(&qfl->qf_file_stack);
         }
         *fields->namebuf = NUL;
         if (tail && *tail) {
           STRMOVE(IObuff, skipwhite(tail));
-          qi->qf_multiscan = true;
+          qfl->qf_multiscan = true;
           goto restofline;
         }
       }
     }
     if (fmt_ptr->flags == '-') {  // generally exclude this line
-      if (qi->qf_multiline) {
+      if (qfl->qf_multiline) {
         // also exclude continuation lines
-        qi->qf_multiignore = true;
+        qfl->qf_multiignore = true;
       }
       return QF_IGNORE_LINE;
     }
@@ -999,6 +997,7 @@ restofline:
 static int
 qf_init_ext(
     qf_info_T *qi,
+    int qf_idx,
     char_u *efile,
     buf_T *buf,
     typval_T *tv,
@@ -1041,34 +1040,25 @@ qf_init_ext(
     goto qf_init_end;
   }
 
-  if (newlist || qi->qf_curlist == qi->qf_listcount) {
+  if (newlist || qf_idx == qi->qf_listcount) {
     // make place for a new list
     qf_new_list(qi, qf_title);
+    qf_idx = qi->qf_curlist;
   } else {
     // Adding to existing list, use last entry.
     adding = true;
-    if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-      old_last = qi->qf_lists[qi->qf_curlist].qf_last;
+    if (qi->qf_lists[qf_idx].qf_count > 0) {
+      old_last = qi->qf_lists[qf_idx].qf_last;
     }
   }
+
+  qf_list_T *qfl = &qi->qf_lists[qf_idx];
 
   // Use the local value of 'errorformat' if it's set.
   if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
     efm = errorformat;
-  }
-
-  // If we are not adding or adding to another list: clear the state.
-  if (newlist || qi->qf_curlist != qi->qf_dir_curlist) {
-    qi->qf_dir_curlist = qi->qf_curlist;
-    qf_clean_dir_stack(&qi->qf_dir_stack);
-    qi->qf_directory = NULL;
-    qf_clean_dir_stack(&qi->qf_file_stack);
-    qi->qf_currfile = NULL;
-    qi->qf_multiline = false;
-    qi->qf_multiignore = false;
-    qi->qf_multiscan = false;
   }
 
   // If the errorformat didn't change between calls, then reuse the previously
@@ -1120,8 +1110,8 @@ qf_init_ext(
       break;
     }
 
-    status = qf_parse_line(qi, state.linebuf, state.linelen, fmt_first,
-                           &fields);
+    status = qf_parse_line(qi, qf_idx, state.linebuf, state.linelen,
+                           fmt_first, &fields);
     if (status == QF_FAIL) {
       goto error2;
     }
@@ -1130,11 +1120,11 @@ qf_init_ext(
     }
 
     if (qf_add_entry(qi,
-                     qi->qf_curlist,
-                     qi->qf_directory,
-                     (*fields.namebuf || qi->qf_directory)
-                     ? fields.namebuf : ((qi->qf_currfile && fields.valid)
-                                         ? qi->qf_currfile : (char_u *)NULL),
+                     qf_idx,
+                     qfl->qf_directory,
+                     (*fields.namebuf || qfl->qf_directory)
+                     ? fields.namebuf : ((qfl->qf_currfile && fields.valid)
+                                         ? qfl->qf_currfile : (char_u *)NULL),
                      0,
                      fields.errmsg,
                      fields.lnum,
@@ -1149,25 +1139,25 @@ qf_init_ext(
     line_breakcheck();
   }
   if (state.fd == NULL || !ferror(state.fd)) {
-    if (qi->qf_lists[qi->qf_curlist].qf_index == 0) {
-      /* no valid entry found */
-      qi->qf_lists[qi->qf_curlist].qf_ptr =
-        qi->qf_lists[qi->qf_curlist].qf_start;
-      qi->qf_lists[qi->qf_curlist].qf_index = 1;
-      qi->qf_lists[qi->qf_curlist].qf_nonevalid = TRUE;
+    if (qfl->qf_index == 0) {
+      // no valid entry found
+      qfl->qf_ptr = qfl->qf_start;
+      qfl->qf_index = 1;
+      qfl->qf_nonevalid = true;
     } else {
-      qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
-      if (qi->qf_lists[qi->qf_curlist].qf_ptr == NULL)
-        qi->qf_lists[qi->qf_curlist].qf_ptr =
-          qi->qf_lists[qi->qf_curlist].qf_start;
+      qfl->qf_nonevalid = false;
+      if (qfl->qf_ptr == NULL) {
+        qfl->qf_ptr = qfl->qf_start;
+      }
     }
-    /* return number of matches */
-    retval = qi->qf_lists[qi->qf_curlist].qf_count;
+    // return number of matches
+    retval = qfl->qf_count;
     goto qf_init_end;
   }
   EMSG(_(e_readerrf));
 error2:
   if (!adding) {
+    // Error when creating a new list. Free the new list
     qf_free(qi, qi->qf_curlist);
     qi->qf_listcount--;
     if (qi->qf_curlist > 0) {
@@ -1183,7 +1173,9 @@ qf_init_end:
   xfree(fields.pattern);
   xfree(state.growbuf);
 
-  qf_update_buffer(qi, old_last);
+  if (qf_idx == qi->qf_curlist) {
+    qf_update_buffer(qi, old_last);
+  }
 
   if (state.vc.vc_type != CONV_NONE) {
     convert_setup(&state.vc, NULL, NULL);
@@ -1206,9 +1198,9 @@ static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
   }
 }
 
-/*
- * Prepare for adding a new quickfix list.
- */
+// Prepare for adding a new quickfix list. If the current list is in the
+// middle of the stack, then all the following lists are freed and then
+// the new list is added.
 static void qf_new_list(qf_info_T *qi, char_u *qf_title)
 {
   int i;
@@ -1305,7 +1297,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
         (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
     }
   } else {
-    qfp->qf_fnum = qf_get_fnum(qi, dir, fname);
+    qfp->qf_fnum = qf_get_fnum(qi, qf_idx, dir, fname);
   }
   qfp->qf_text = vim_strsave(mesg);
   qfp->qf_lnum = lnum;
@@ -1488,7 +1480,8 @@ void copy_loclist(win_T *from, win_T *to)
 
 // Get buffer number for file "directory/fname".
 // Also sets the b_has_qf_entry flag.
-static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
+static int qf_get_fnum(qf_info_T *qi, int qf_idx, char_u *directory,
+                       char_u *fname)
 {
   char_u *ptr = NULL;
   char_u *bufname;
@@ -1511,7 +1504,7 @@ static int qf_get_fnum(qf_info_T *qi, char_u *directory, char_u *fname)
     // directory change.
     if (!os_path_exists(ptr)) {
       xfree(ptr);
-      directory = qf_guess_filepath(qi, fname);
+      directory = qf_guess_filepath(qi, qf_idx, fname);
       if (directory) {
         ptr = (char_u *)concat_fnames((char *)directory, (char *)fname, true);
       } else {
@@ -1661,18 +1654,19 @@ static void qf_clean_dir_stack(struct dir_stack_T **stackptr)
  * Then qf_push_dir thinks we are in ./aa/bb, but we are in ./bb.
  * qf_guess_filepath will return NULL.
  */
-static char_u *qf_guess_filepath(qf_info_T *qi, char_u *filename)
+static char_u *qf_guess_filepath(qf_info_T *qi, int qf_idx, char_u *filename)
 {
   struct dir_stack_T     *ds_ptr;
   struct dir_stack_T     *ds_tmp;
   char_u                 *fullname;
+  qf_list_T *qfl = &qi->qf_lists[qf_idx];
 
   // no dirs on the stack - there's nothing we can do
-  if (qi->qf_dir_stack == NULL) {
+  if (qfl->qf_dir_stack == NULL) {
     return NULL;
   }
 
-  ds_ptr = qi->qf_dir_stack->next;
+  ds_ptr = qfl->qf_dir_stack->next;
   fullname = NULL;
   while (ds_ptr) {
     xfree(fullname);
@@ -1688,9 +1682,9 @@ static char_u *qf_guess_filepath(qf_info_T *qi, char_u *filename)
   xfree(fullname);
 
   // clean up all dirs we already left
-  while (qi->qf_dir_stack->next != ds_ptr) {
-    ds_tmp = qi->qf_dir_stack->next;
-    qi->qf_dir_stack->next = qi->qf_dir_stack->next->next;
+  while (qfl->qf_dir_stack->next != ds_ptr) {
+    ds_tmp = qfl->qf_dir_stack->next;
+    qfl->qf_dir_stack->next = qfl->qf_dir_stack->next->next;
     xfree(ds_tmp->dirname);
     xfree(ds_tmp);
   }
@@ -1845,12 +1839,12 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   /*
    * For ":helpgrep" find a help window or open one.
    */
-  if (qf_ptr->qf_type == 1 && (!curwin->w_buffer->b_help || cmdmod.tab != 0)) {
+  if (qf_ptr->qf_type == 1 && (!bt_help(curwin->w_buffer) || cmdmod.tab != 0)) {
     win_T *wp = NULL;
 
     if (cmdmod.tab == 0) {
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
+        if (bt_help(wp2->w_buffer)) {
           wp = wp2;
           break;
         }
@@ -2415,11 +2409,12 @@ static void qf_free_items(qf_info_T *qi, int idx)
   qfline_T    *qfp;
   qfline_T    *qfpnext;
   bool stop = false;
+  qf_list_T *qfl = &qi->qf_lists[idx];
 
-  while (qi->qf_lists[idx].qf_count && qi->qf_lists[idx].qf_start != NULL) {
-    qfp = qi->qf_lists[idx].qf_start;
+  while (qfl->qf_count && qfl->qf_start != NULL) {
+    qfp = qfl->qf_start;
     qfpnext = qfp->qf_next;
-    if (qi->qf_lists[idx].qf_title != NULL && !stop) {
+    if (qfl->qf_title != NULL && !stop) {
       xfree(qfp->qf_text);
       stop = (qfp == qfpnext);
       xfree(qfp->qf_pattern);
@@ -2428,40 +2423,41 @@ static void qf_free_items(qf_info_T *qi, int idx)
         // Somehow qf_count may have an incorrect value, set it to 1
         // to avoid crashing when it's wrong.
         // TODO(vim): Avoid qf_count being incorrect.
-        qi->qf_lists[idx].qf_count = 1;
+        qfl->qf_count = 1;
       }
     }
-    qi->qf_lists[idx].qf_start = qfpnext;
-    qi->qf_lists[idx].qf_count--;
+    qfl->qf_start = qfpnext;
+    qfl->qf_count--;
   }
 
-  qi->qf_lists[idx].qf_start = NULL;
-  qi->qf_lists[idx].qf_ptr = NULL;
-  qi->qf_lists[idx].qf_index = 0;
-  qi->qf_lists[idx].qf_start = NULL;
-  qi->qf_lists[idx].qf_last = NULL;
-  qi->qf_lists[idx].qf_ptr = NULL;
-  qi->qf_lists[idx].qf_nonevalid = true;
+  qfl->qf_start = NULL;
+  qfl->qf_ptr = NULL;
+  qfl->qf_index = 0;
+  qfl->qf_start = NULL;
+  qfl->qf_last = NULL;
+  qfl->qf_ptr = NULL;
+  qfl->qf_nonevalid = true;
 
-  qf_clean_dir_stack(&qi->qf_dir_stack);
-  qi->qf_directory = NULL;
-  qf_clean_dir_stack(&qi->qf_file_stack);
-  qi->qf_currfile = NULL;
-  qi->qf_multiline = false;
-  qi->qf_multiignore = false;
-  qi->qf_multiscan = false;
+  qf_clean_dir_stack(&qfl->qf_dir_stack);
+  qfl->qf_directory = NULL;
+  qf_clean_dir_stack(&qfl->qf_file_stack);
+  qfl->qf_currfile = NULL;
+  qfl->qf_multiline = false;
+  qfl->qf_multiignore = false;
+  qfl->qf_multiscan = false;
 }
 
 /// Free error list "idx". Frees all the entries in the quickfix list,
 /// associated context information and the title.
 static void qf_free(qf_info_T *qi, int idx)
 {
+  qf_list_T *qfl = &qi->qf_lists[idx];
   qf_free_items(qi, idx);
 
-  xfree(qi->qf_lists[idx].qf_title);
-  qi->qf_lists[idx].qf_title = NULL;
-  tv_free(qi->qf_lists[idx].qf_ctx);
-  qi->qf_lists[idx].qf_ctx = NULL;
+  xfree(qfl->qf_title);
+  qfl->qf_title = NULL;
+  tv_free(qfl->qf_ctx);
+  qfl->qf_ctx = NULL;
 }
 
 /*
@@ -2601,8 +2597,9 @@ void ex_cclose(exarg_T *eap)
 
   /* Find existing quickfix window and close it. */
   win = qf_find_win(qi);
-  if (win != NULL)
-    win_close(win, FALSE);
+  if (win != NULL) {
+    win_close(win, false);
+  }
 }
 
 /*
@@ -4333,7 +4330,8 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
   return retval;
 }
 
-static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
+static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
+                             char_u *title)
 {
   dictitem_T *di;
   int retval = FAIL;
@@ -4353,25 +4351,32 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
 
       if ((action == ' ' || action == 'a') && qf_idx == qi->qf_listcount) {
         // When creating a new list, accept qf_idx pointing to the next
-        // non-available list
+        // non-available list and add the new list at the end of the
+        // stack.
         newlist = true;
+        qf_idx = qi->qf_listcount - 1;
       } else if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
-      } else {
+      } else if (action != ' ') {
         newlist = false;  // use the specified list
       }
     } else if (di->di_tv.v_type == VAR_STRING
-               && strequal((const char *)di->di_tv.vval.v_string, "$")
-               && qi->qf_listcount > 0) {
-      qf_idx = qi->qf_listcount - 1;
-      newlist = false;
+               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+      if (qi->qf_listcount > 0) {
+        qf_idx = qi->qf_listcount - 1;
+      } else if (newlist) {
+        qf_idx = 0;
+      } else {
+        return FAIL;
+      }
     } else {
       return FAIL;
     }
   }
 
   if (newlist) {
-    qf_new_list(qi, NULL);
+    qi->qf_curlist = qf_idx;
+    qf_new_list(qi, title);
     qf_idx = qi->qf_curlist;
   }
 
@@ -4393,6 +4398,24 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
       retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
                               title_save, action == ' ' ? 'a' : action);
       xfree(title_save);
+    }
+  }
+
+  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
+    // Only string and list values are supported
+    if ((di->di_tv.v_type == VAR_STRING
+         && di->di_tv.vval.v_string != NULL)
+        || (di->di_tv.v_type == VAR_LIST
+            && di->di_tv.vval.v_list != NULL)) {
+      if (action == 'r') {
+        qf_free_items(qi, qf_idx);
+      }
+      if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, p_efm,
+                      false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+        retval = OK;
+      }
+    } else {
+      return FAIL;
     }
   }
 
@@ -4483,7 +4506,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
     // Free the entire quickfix or location list stack
     qf_free_stack(wp, qi);
   } else if (what != NULL) {
-    retval = qf_set_properties(qi, what, action);
+    retval = qf_set_properties(qi, what, action, title);
   } else {
     retval = qf_add_entries(qi, qi->qf_curlist, list, title, action);
   }
@@ -4603,7 +4626,7 @@ void ex_cbuffer(exarg_T *eap)
         qf_title = IObuff;
       }
 
-      if (qf_init_ext(qi, NULL, buf, NULL, p_efm,
+      if (qf_init_ext(qi, qi->qf_curlist, NULL, buf, NULL, p_efm,
                       (eap->cmdidx != CMD_caddbuffer
                        && eap->cmdidx != CMD_laddbuffer),
                       eap->line1, eap->line2, qf_title, NULL) > 0) {
@@ -4668,7 +4691,7 @@ void ex_cexpr(exarg_T *eap)
   if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
         || tv.v_type == VAR_LIST) {
-      if (qf_init_ext(qi, NULL, NULL, &tv, p_efm,
+      if (qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, p_efm,
                       (eap->cmdidx != CMD_caddexpr
                        && eap->cmdidx != CMD_laddexpr),
                       (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL) > 0) {
@@ -4725,16 +4748,26 @@ void ex_helpgrep(exarg_T *eap)
   p_cpo = empty_option;
 
   if (eap->cmdidx == CMD_lhelpgrep) {
-    qi = NULL;
+    win_T *wp = NULL;
 
-    /* Find an existing help window */
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer != NULL && wp->w_buffer->b_help) {
-        qi = wp->w_llist;
+    // If the current window is a help window, then use it
+    if (bt_help(curwin->w_buffer)) {
+      wp = curwin;
+    } else {
+      // Find an existing help window
+      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+        if (bt_help(wp2->w_buffer)) {
+          wp = wp2;
+          break;
+        }
       }
     }
 
-    /* Help window not found */
+    if (wp == NULL) {   // Help window not found
+      qi = NULL;
+    } else {
+      qi = wp->w_llist;
+    }
     if (qi == NULL) {
       /* Allocate a new location list for help text matches */
       qi = ll_new_list();
@@ -4855,11 +4888,13 @@ void ex_helpgrep(exarg_T *eap)
   if (eap->cmdidx == CMD_lhelpgrep) {
     /* If the help window is not opened or if it already points to the
      * correct location list, then free the new location list. */
-    if (!curwin->w_buffer->b_help || curwin->w_llist == qi) {
-      if (new_qi)
+    if (!bt_help(curwin->w_buffer) || curwin->w_llist == qi) {
+      if (new_qi) {
         ll_free_all(&qi);
-    } else if (curwin->w_llist == NULL)
+      }
+    } else if (curwin->w_llist == NULL) {
       curwin->w_llist = qi;
+    }
   }
 }
 
