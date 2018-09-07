@@ -2240,6 +2240,9 @@ void qf_list(exarg_T *eap)
     }
   }
 
+  /* Shorten all the file names, so that it is easy to read */
+  shorten_fnames(FALSE);
+
   if (qi->qf_lists[qi->qf_curlist].qf_nonevalid)
     all = TRUE;
   qfp = qi->qf_lists[qi->qf_curlist].qf_start;
@@ -2944,6 +2947,10 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
 
   /* Check if there is anything to display */
   if (qi->qf_curlist < qi->qf_listcount) {
+     char_u dirname[MAXPATHL];
+
+     *dirname = NUL;
+
     // Add one line for each error
     if (old_last == NULL) {
       qfp = qi->qf_lists[qi->qf_curlist].qf_start;
@@ -2959,6 +2966,14 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
         if (qfp->qf_type == 1) {  // :helpgrep
           STRLCPY(IObuff, path_tail(errbuf->b_fname), sizeof(IObuff));
         } else {
+          /* shorten the file name if not done already */
+          if (errbuf->b_sfname == NULL
+              || path_is_absolute(errbuf->b_sfname))
+          {
+            if (*dirname == NUL)
+              os_dirname(dirname, MAXPATHL);
+            shorten_buf_fname(errbuf, dirname, FALSE);
+          }
           STRLCPY(IObuff, errbuf->b_fname, sizeof(IObuff));
         }
         len = (int)STRLEN(IObuff);
