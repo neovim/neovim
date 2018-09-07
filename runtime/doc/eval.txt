@@ -6851,10 +6851,12 @@ setpos({expr}, {list})
 
 
 setqflist({list} [, {action}[, {what}]])		*setqflist()*
-		Create or replace or add to the quickfix list using the items
-		in {list}.  Each item in {list} is a dictionary.
-		Non-dictionary items in {list} are ignored.  Each dictionary
-		item can contain the following entries:
+		Create or replace or add to the quickfix list.
+		
+		When {what} is not present, use the items in {list}.  Each
+		item must be a dictionary.  Non-dictionary items in {list} are
+		ignored.  Each dictionary item can contain the following
+		entries:
 
 		    bufnr	buffer number; must be the number of a valid
 				buffer
@@ -6909,6 +6911,10 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		argument is ignored.  The following items can be specified in
 		{what}:
 		    context	any Vim type can be stored as a context
+		    text	use 'errorformat' to extract items from the
+				text and add the resulting entries to the
+				quickfix list {nr}.  The value can be a string
+				with one line or a list with multiple lines.
 		    items	list of quickfix entries. Same as the {list}
 				argument.
 		    nr		list number in the quickfix stack; zero

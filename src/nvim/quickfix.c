@@ -4330,7 +4330,8 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
   return retval;
 }
 
-static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
+static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
+                             char_u *title)
 {
   dictitem_T *di;
   int retval = FAIL;
@@ -4368,7 +4369,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   }
 
   if (newlist) {
-    qf_new_list(qi, NULL);
+    qf_new_list(qi, title);
     qf_idx = qi->qf_curlist;
   }
 
@@ -4390,6 +4391,24 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
       retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
                               title_save, action == ' ' ? 'a' : action);
       xfree(title_save);
+    }
+  }
+
+  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
+    // Only string and list values are supported
+    if ((di->di_tv.v_type == VAR_STRING
+         && di->di_tv.vval.v_string != NULL)
+        || (di->di_tv.v_type == VAR_LIST
+            && di->di_tv.vval.v_list != NULL)) {
+      if (action == 'r') {
+        qf_free_items(qi, qf_idx);
+      }
+      if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, p_efm,
+                      false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+        retval = OK;
+      }
+    } else {
+      return FAIL;
     }
   }
 
@@ -4480,7 +4499,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
     // Free the entire quickfix or location list stack
     qf_free_stack(wp, qi);
   } else if (what != NULL) {
-    retval = qf_set_properties(qi, what, action);
+    retval = qf_set_properties(qi, what, action, title);
   } else {
     retval = qf_add_entries(qi, qi->qf_curlist, list, title, action);
   }

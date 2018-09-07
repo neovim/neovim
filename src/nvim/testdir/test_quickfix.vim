@@ -1844,6 +1844,11 @@ func Xproperty_tests(cchar)
     let l = g:Xgetlist({'items':1})
     call assert_equal(0, len(l.items))
 
+    " The following used to crash Vim with address sanitizer
+    call g:Xsetlist([], 'f')
+    call g:Xsetlist([], 'a', {'items' : [{'filename':'F1', 'lnum':10}]})
+    call assert_equal(10, g:Xgetlist({'items':1}).items[0].lnum)
+
     " Save and restore the quickfix stack
     call g:Xsetlist([], 'f')
     call assert_equal(0, g:Xgetlist({'nr':'$'}).nr)
@@ -2266,8 +2271,135 @@ func Xchangedtick_tests(cchar)
 endfunc
 
 func Test_changedtick()
-    call Xchangedtick_tests('c')
-    call Xchangedtick_tests('l')
+  call Xchangedtick_tests('c')
+  call Xchangedtick_tests('l')
+endfunc
+
+" Tests for parsing an expression using setqflist()
+func Xsetexpr_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  let t = ["File1:10:Line10", "File1:20:Line20"]
+  call g:Xsetlist([], ' ', {'text' : t})
+  call g:Xsetlist([], 'a', {'text' : "File1:30:Line30"})
+
+  let l = g:Xgetlist()
+  call assert_equal(3, len(l))
+  call assert_equal(20, l[1].lnum)
+  call assert_equal('Line30', l[2].text)
+  call g:Xsetlist([], 'r', {'text' : "File2:5:Line5"})
+  let l = g:Xgetlist()
+  call assert_equal(1, len(l))
+  call assert_equal('Line5', l[0].text)
+  call assert_equal(-1, g:Xsetlist([], 'a', {'text' : 10}))
+
+  call g:Xsetlist([], 'f')
+  " Add entries to multiple lists
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : ["File1:10:Line10"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : ["File2:20:Line20"]})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : ["File1:15:Line15"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : ["File2:25:Line25"]})
+  call assert_equal('Line15', g:Xgetlist({'nr':1, 'items':1}).items[1].text)
+  call assert_equal('Line25', g:Xgetlist({'nr':2, 'items':1}).items[1].text)
+endfunc
+
+func Test_setexpr()
+  call Xsetexpr_tests('c')
+  call Xsetexpr_tests('l')
+endfunc
+
+" Tests for per quickfix/location list directory stack
+func Xmultidirstack_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([], 'f')
+  Xexpr "" | Xexpr ""
+
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "Entering dir 'Xone/a'"})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "Entering dir 'Xtwo/a'"})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "one.txt:3:one one one"})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "two.txt:5:two two two"})
+
+  let l1 = g:Xgetlist({'nr':1, 'items':1})
+  let l2 = g:Xgetlist({'nr':2, 'items':1})
+  call assert_equal('Xone/a/one.txt', bufname(l1.items[1].bufnr))
+  call assert_equal(3, l1.items[1].lnum)
+  call assert_equal('Xtwo/a/two.txt', bufname(l2.items[1].bufnr))
+  call assert_equal(5, l2.items[1].lnum)
+endfunc
+
+func Test_multidirstack()
+  call mkdir('Xone/a', 'p')
+  call mkdir('Xtwo/a', 'p')
+  let lines = ['1', '2', 'one one one', '4', 'two two two', '6', '7']
+  call writefile(lines, 'Xone/a/one.txt')
+  call writefile(lines, 'Xtwo/a/two.txt')
+  let save_efm = &efm
+  set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
+
+  call Xmultidirstack_tests('c')
+  call Xmultidirstack_tests('l')
+
+  let &efm = save_efm
+  call delete('Xone', 'rf')
+  call delete('Xtwo', 'rf')
+endfunc
+
+" Tests for per quickfix/location list file stack
+func Xmultifilestack_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([], 'f')
+  Xexpr "" | Xexpr ""
+
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "[one.txt]"})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "[two.txt]"})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "(3,5) one one one"})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "(5,9) two two two"})
+
+  let l1 = g:Xgetlist({'nr':1, 'items':1})
+  let l2 = g:Xgetlist({'nr':2, 'items':1})
+  call assert_equal('one.txt', bufname(l1.items[1].bufnr))
+  call assert_equal(3, l1.items[1].lnum)
+  call assert_equal('two.txt', bufname(l2.items[1].bufnr))
+  call assert_equal(5, l2.items[1].lnum)
+endfunc
+
+func Test_multifilestack()
+  let lines = ['1', '2', 'one one one', '4', 'two two two', '6', '7']
+  call writefile(lines, 'one.txt')
+  call writefile(lines, 'two.txt')
+  let save_efm = &efm
+  set efm=%+P[%f],(%l\\,%c)\ %m,%-Q
+
+  call Xmultifilestack_tests('c')
+  call Xmultifilestack_tests('l')
+
+  let &efm = save_efm
+  call delete('one.txt')
+  call delete('two.txt')
+endfunc
+
+" Tests for per buffer 'efm' setting
+func Test_perbuf_efm()
+  call writefile(["File1-10-Line10"], 'one.txt')
+  call writefile(["File2#20#Line20"], 'two.txt')
+  set efm=%f#%l#%m
+  new | only
+  new
+  setlocal efm=%f-%l-%m
+  cfile one.txt
+  wincmd w
+  caddfile two.txt
+
+  let l = getqflist()
+  call assert_equal(10, l[0].lnum)
+  call assert_equal('Line20', l[1].text)
+
+  set efm&
+  new | only
+  call delete('one.txt')
+  call delete('two.txt')
 endfunc
 
 " Open multiple help windows using ":lhelpgrep
