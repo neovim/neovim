@@ -4,4 +4,4 @@ fun:tv_dict_watcher_node_data
 
 # Allocation in loop_schedule_deferred() is freed by loop_deferred_event(), but
 # this sometimes does not happen during teardown.
-func:loop_schedule_deferred
+fun:loop_schedule_deferred
