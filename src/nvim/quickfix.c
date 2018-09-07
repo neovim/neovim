@@ -1198,9 +1198,9 @@ static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
   }
 }
 
-/*
- * Prepare for adding a new quickfix list.
- */
+// Prepare for adding a new quickfix list. If the current list is in the
+// middle of the stack, then all the following lists are freed and then
+// the new list is added.
 static void qf_new_list(qf_info_T *qi, char_u *qf_title)
 {
   int i;
@@ -4351,24 +4351,31 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
 
       if ((action == ' ' || action == 'a') && qf_idx == qi->qf_listcount) {
         // When creating a new list, accept qf_idx pointing to the next
-        // non-available list
+        // non-available list and add the new list at the end of the
+        // stack.
         newlist = true;
+        qf_idx = qi->qf_listcount - 1;
       } else if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
-      } else {
+      } else if (action != ' ') {
         newlist = false;  // use the specified list
       }
     } else if (di->di_tv.v_type == VAR_STRING
-               && strequal((const char *)di->di_tv.vval.v_string, "$")
-               && qi->qf_listcount > 0) {
-      qf_idx = qi->qf_listcount - 1;
-      newlist = false;
+               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+      if (qi->qf_listcount > 0) {
+        qf_idx = qi->qf_listcount - 1;
+      } else if (newlist) {
+        qf_idx = 0;
+      } else {
+        return FAIL;
+      }
     } else {
       return FAIL;
     }
   }
 
   if (newlist) {
+    qi->qf_curlist = qf_idx;
     qf_new_list(qi, title);
     qf_idx = qi->qf_curlist;
   }

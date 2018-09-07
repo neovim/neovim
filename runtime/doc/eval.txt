@@ -6901,7 +6901,10 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 			freed.
 
 		If {action} is not present or is set to ' ', then a new list
-		is created.
+		is created. The new quickfix list is added after the current
+		quickfix list in the stack and all the following lists are
+		freed. To add a new quickfix list at the end of the stack,
+		set "nr" in {what} to '$'.
 
 		If {title} is given, it will be used to set |w:quickfix_title|
 		after opening the quickfix window.
