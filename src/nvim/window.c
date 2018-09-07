@@ -1859,20 +1859,18 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
   return true;
 }
 
-/*
- * Close window "win".  Only works for the current tab page.
- * If "free_buf" is TRUE related buffer may be unloaded.
- *
- * Called by :quit, :close, :xit, :wq and findtag().
- * Returns FAIL when the window was not closed.
- */
-int win_close(win_T *win, int free_buf)
+// Close window "win".  Only works for the current tab page.
+// If "free_buf" is true related buffer may be unloaded.
+//
+// Called by :quit, :close, :xit, :wq and findtag().
+// Returns FAIL when the window was not closed.
+int win_close(win_T *win, bool free_buf)
 {
   win_T       *wp;
   int other_buffer = FALSE;
   int close_curwin = FALSE;
   int dir;
-  int help_window = FALSE;
+  bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = win->w_frame->fr_parent;
 
@@ -1903,7 +1901,7 @@ int win_close(win_T *win, int free_buf)
   /* When closing the help window, try restoring a snapshot after closing
    * the window.  Otherwise clear the snapshot, it's now invalid. */
   if (bt_help(win->w_buffer))
-    help_window = TRUE;
+    help_window = true;
   else
     clear_snapshot(curtab, SNAP_HELP_IDX);
 

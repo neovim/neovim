@@ -2612,7 +2612,7 @@ static int jumpto_tag(
   } else {
     --RedrawingDisabled;
     if (postponed_split) {              /* close the window */
-      win_close(curwin, FALSE);
+      win_close(curwin, false);
       postponed_split = 0;
     }
   }

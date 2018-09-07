@@ -1551,7 +1551,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
 
   /* When w_arg_idx is -1 remove the window (see create_windows()). */
   if (curwin->w_arg_idx == -1) {
-    win_close(curwin, TRUE);
+    win_close(curwin, true);
     advance = FALSE;
   }
 
@@ -1563,7 +1563,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
     // When w_arg_idx is -1 remove the window (see create_windows()).
     if (curwin->w_arg_idx == -1) {
       ++arg_idx;
-      win_close(curwin, TRUE);
+      win_close(curwin, true);
       advance = FALSE;
       continue;
     }
@@ -1598,7 +1598,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
           did_emsg = FALSE;             /* avoid hit-enter prompt */
           getout(1);
         }
-        win_close(curwin, TRUE);
+        win_close(curwin, true);
         advance = FALSE;
       }
       if (arg_idx == GARGCOUNT - 1)

@@ -2598,7 +2598,7 @@ void ex_cclose(exarg_T *eap)
   /* Find existing quickfix window and close it. */
   win = qf_find_win(qi);
   if (win != NULL)
-    win_close(win, FALSE);
+    win_close(win, false);
 }
 
 /*
