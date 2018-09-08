@@ -4122,15 +4122,12 @@ enum {
 };
 
 // Parse text from 'di' and return the quickfix list items
-static int qf_get_list_from_text(dictitem_T *di, dict_T *retdict)
+static int qf_get_list_from_lines(dictitem_T *di, dict_T *retdict)
 {
   int status = FAIL;
 
-  // Only string and list values are supported
-  if ((di->di_tv.v_type == VAR_STRING
-       && di->di_tv.vval.v_string != NULL)
-      || (di->di_tv.v_type == VAR_LIST
-          && di->di_tv.vval.v_list != NULL)) {
+  // Only a List value is supported
+  if (di->di_tv.v_type == VAR_LIST && di->di_tv.vval.v_list != NULL) {
     list_T *l = tv_list_alloc(kListLenMayKnow);
     qf_info_T *qi = xmalloc(sizeof(*qi));
     memset(qi, 0, sizeof(*qi));
@@ -4158,8 +4155,8 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   qf_info_T *qi = &ql_info;
   dictitem_T *di;
 
-  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
-    return qf_get_list_from_text(di, retdict);
+  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
+    return qf_get_list_from_lines(di, retdict);
   }
 
   if (wp != NULL) {
@@ -4474,12 +4471,9 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
     }
   }
 
-  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
-    // Only string and list values are supported
-    if ((di->di_tv.v_type == VAR_STRING
-         && di->di_tv.vval.v_string != NULL)
-        || (di->di_tv.v_type == VAR_LIST
-            && di->di_tv.vval.v_list != NULL)) {
+  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
+    // Only a List value is supported
+    if (di->di_tv.v_type == VAR_LIST && di->di_tv.vval.v_list != NULL) {
       if (action == 'r') {
         qf_free_items(qi, qf_idx);
       }

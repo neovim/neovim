@@ -4339,14 +4339,13 @@ getqflist([{what}])					*getqflist()*
 				|quickfix-ID|; zero means the id for the
 				current list or the list specifed by 'nr'
 			items	quickfix list entries
+			lines	use 'errorformat' to extract items from a list
+				of lines and return the resulting entries.
+				Only a |List| type is accepted.  The current
+				quickfix list is not modified.
 			nr	get information for this quickfix list; zero
 				means the current quickfix list and '$' means
 				the last quickfix list
-			text	use 'errorformat' to extract items from the
-				text and return the resulting entries. The
-				value can be a string with one line or a list
-				with multiple lines. The current quickfix list
-				is not modified.
 			title	get the list title
 			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties
@@ -4374,6 +4373,7 @@ getqflist([{what}])					*getqflist()*
 		Examples: >
 			:echo getqflist({'all': 1})
 			:echo getqflist({'nr': 2, 'title': 1})
+			:echo getqflist({'lines' : ["F1:10:L10"]})
 <
 
 getreg([{regname} [, 1 [, {list}]]])			*getreg()*
@@ -6928,13 +6928,12 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		argument is ignored.  The following items can be specified in
 		{what}:
 		    context	any Vim type can be stored as a context
-		    text	use 'errorformat' to extract items from the
-				text and add the resulting entries to the
-				quickfix list {nr}.  The value can be a string
-				with one line or a list with multiple lines.
 		    id		quickfix list identifier |quickfix-ID|
 		    items	list of quickfix entries. Same as the {list}
 				argument.
+		    lines	use 'errorformat' to parse a list of lines and
+				add the resulting entries to the quickfix list
+				{nr} or {id}.  Only a |List| value is supported.
 		    nr		list number in the quickfix stack; zero
 				means the current quickfix list and '$' means
 				the last quickfix list
@@ -6948,8 +6947,9 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		specify the list.
 
 		Examples: >
-			:call setqflist([], 'r', {'title': 'My search'})
-			:call setqflist([], 'r', {'nr': 2, 'title': 'Errors'})
+		   :call setqflist([], 'r', {'title': 'My search'})
+		   :call setqflist([], 'r', {'nr': 2, 'title': 'Errors'})
+		   :call setqflist([], 'a', {'id':myid, 'lines':["F1:10:L10"]})
 <
 		Returns zero for success, -1 for failure.
 

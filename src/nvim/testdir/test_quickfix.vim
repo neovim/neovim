@@ -2281,25 +2281,26 @@ func Xsetexpr_tests(cchar)
   call s:setup_commands(a:cchar)
 
   let t = ["File1:10:Line10", "File1:20:Line20"]
-  call g:Xsetlist([], ' ', {'text' : t})
-  call g:Xsetlist([], 'a', {'text' : "File1:30:Line30"})
+  call g:Xsetlist([], ' ', {'lines' : t})
+  call g:Xsetlist([], 'a', {'lines' : ["File1:30:Line30"]})
 
   let l = g:Xgetlist()
   call assert_equal(3, len(l))
   call assert_equal(20, l[1].lnum)
   call assert_equal('Line30', l[2].text)
-  call g:Xsetlist([], 'r', {'text' : "File2:5:Line5"})
+  call g:Xsetlist([], 'r', {'lines' : ["File2:5:Line5"]})
   let l = g:Xgetlist()
   call assert_equal(1, len(l))
   call assert_equal('Line5', l[0].text)
-  call assert_equal(-1, g:Xsetlist([], 'a', {'text' : 10}))
+  call assert_equal(-1, g:Xsetlist([], 'a', {'lines' : 10}))
+  call assert_equal(-1, g:Xsetlist([], 'a', {'lines' : "F1:10:L10"}))
 
   call g:Xsetlist([], 'f')
   " Add entries to multiple lists
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : ["File1:10:Line10"]})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : ["File2:20:Line20"]})
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : ["File1:15:Line15"]})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : ["File2:25:Line25"]})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["File1:10:Line10"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["File2:20:Line20"]})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["File1:15:Line15"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["File2:25:Line25"]})
   call assert_equal('Line15', g:Xgetlist({'nr':1, 'items':1}).items[1].text)
   call assert_equal('Line25', g:Xgetlist({'nr':2, 'items':1}).items[1].text)
 endfunc
@@ -2316,10 +2317,10 @@ func Xmultidirstack_tests(cchar)
   call g:Xsetlist([], 'f')
   Xexpr "" | Xexpr ""
 
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "Entering dir 'Xone/a'"})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "Entering dir 'Xtwo/a'"})
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "one.txt:3:one one one"})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "two.txt:5:two two two"})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["Entering dir 'Xone/a'"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["Entering dir 'Xtwo/a'"]})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["one.txt:3:one one one"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["two.txt:5:two two two"]})
 
   let l1 = g:Xgetlist({'nr':1, 'items':1})
   let l2 = g:Xgetlist({'nr':2, 'items':1})
@@ -2353,10 +2354,10 @@ func Xmultifilestack_tests(cchar)
   call g:Xsetlist([], 'f')
   Xexpr "" | Xexpr ""
 
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "[one.txt]"})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "[two.txt]"})
-  call g:Xsetlist([], 'a', {'nr' : 1, 'text' : "(3,5) one one one"})
-  call g:Xsetlist([], 'a', {'nr' : 2, 'text' : "(5,9) two two two"})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["[one.txt]"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["[two.txt]"]})
+  call g:Xsetlist([], 'a', {'nr' : 1, 'lines' : ["(3,5) one one one"]})
+  call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["(5,9) two two two"]})
 
   let l1 = g:Xgetlist({'nr':1, 'items':1})
   let l2 = g:Xgetlist({'nr':2, 'items':1})
@@ -2505,28 +2506,26 @@ endfunc
 
 " Test for getting the quickfix list items from some text without modifying
 " the quickfix stack
-func XgetListFromText(cchar)
+func XgetListFromLines(cchar)
   call s:setup_commands(a:cchar)
   call g:Xsetlist([], 'f')
 
-  let l = g:Xgetlist({'text' : "File1:10:Line10"}).items
-  call assert_equal(1, len(l))
-  call assert_equal('Line10', l[0].text)
-
-  let l = g:Xgetlist({'text' : ["File2:20:Line20", "File2:30:Line30"]}).items
+  let l = g:Xgetlist({'lines' : ["File2:20:Line20", "File2:30:Line30"]}).items
   call assert_equal(2, len(l))
   call assert_equal(30, l[1].lnum)
 
-  call assert_equal({}, g:Xgetlist({'text' : 10}))
-  call assert_equal([], g:Xgetlist({'text' : []}).items)
+  call assert_equal({}, g:Xgetlist({'lines' : 10}))
+  call assert_equal({}, g:Xgetlist({'lines' : 'File1:10:Line10'}))
+  call assert_equal([], g:Xgetlist({'lines' : []}).items)
+  call assert_equal([], g:Xgetlist({'lines' : [10, 20]}).items)
 
   " Make sure that the quickfix stack is not modified
   call assert_equal(0, g:Xgetlist({'nr' : '$'}).nr)
 endfunc
 
-func Test_get_list_from_text()
-  call XgetListFromText('c')
-  call XgetListFromText('l')
+func Test_get_list_from_lines()
+  call XgetListFromLines('c')
+  call XgetListFromLines('l')
 endfunc
 
 " Tests for the quickfix list id
@@ -2549,7 +2548,7 @@ func Xqfid_tests(cchar)
 
   call g:Xsetlist([], 'a', {'id':start_id, 'context':[1,2]})
   call assert_equal([1,2], g:Xgetlist({'nr':1, 'context':1}).context)
-  call g:Xsetlist([], 'a', {'id':start_id+1, 'text':'F1:10:L10'})
+  call g:Xsetlist([], 'a', {'id':start_id+1, 'lines':['F1:10:L10']})
   call assert_equal('L10', g:Xgetlist({'nr':2, 'items':1}).items[0].text)
   call assert_equal(-1, g:Xsetlist([], 'a', {'id':999, 'title':'Vim'}))
   call assert_equal(-1, g:Xsetlist([], 'a', {'id':'abc', 'title':'Vim'}))
