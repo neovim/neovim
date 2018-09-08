@@ -87,7 +87,8 @@ void win_position(Integer win, Integer grid, Integer startrow,
                   Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY;
 
-void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
+void popupmenu_show(Array items, Integer selected,
+                    Integer row, Integer col, Integer grid)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void popupmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
