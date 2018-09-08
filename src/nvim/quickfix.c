@@ -82,6 +82,7 @@ struct qfline_S {
 /// created using setqflist()/setloclist() with a title and/or user context
 /// information and entries can be added later using setqflist()/setloclist().
 typedef struct qf_list_S {
+  unsigned qf_id;               ///< Unique identifier for this list
   qfline_T    *qf_start;        ///< pointer to the first error
   qfline_T    *qf_last;         ///< pointer to the last error
   qfline_T    *qf_ptr;          ///< pointer to the current error
@@ -117,6 +118,7 @@ struct qf_info_S {
 };
 
 static qf_info_T ql_info;       /* global quickfix list */
+static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
 #define FMT_PATTERNS 10         /* maximum number of % recognized */
 
@@ -1224,6 +1226,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
   qf_store_title(qi, qi->qf_curlist, qf_title);
+  qi->qf_lists[qi->qf_curlist].qf_id = ++last_qf_id;
 }
 
 /*
@@ -1466,6 +1469,9 @@ void copy_loclist(win_T *from, win_T *to)
     }
 
     to_qfl->qf_index = from_qfl->qf_index;      /* current index in the list */
+
+    // Assign a new ID for the location list
+    to_qfl->qf_id = ++last_qf_id;
 
     /* When no valid entries are present in the list, qf_ptr points to
      * the first item in the list */
@@ -2458,6 +2464,7 @@ static void qf_free(qf_info_T *qi, int idx)
   qfl->qf_title = NULL;
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
+  qfl->qf_id = 0;
 }
 
 /*
@@ -4110,6 +4117,7 @@ enum {
   QF_GETLIST_NR = 0x4,
   QF_GETLIST_WINID = 0x8,
   QF_GETLIST_CONTEXT = 0x10,
+  QF_GETLIST_ID = 0x20,
   QF_GETLIST_ALL = 0xFF
 };
 
@@ -4155,15 +4163,16 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
-    if (qi == NULL) {
-      // If querying for the size of the location list, return 0
-      if (((di = tv_dict_find(what, S_LEN("nr"))) != NULL)
-          && (di->di_tv.v_type == VAR_STRING)
-          && strequal((const char *)di->di_tv.vval.v_string, "$")) {
-        return tv_dict_add_nr(retdict, S_LEN("nr"), 0);
-      }
-      return FAIL;
+  }
+  // List is not present or is empty
+  if (qi == NULL || qi->qf_listcount == 0) {
+    // If querying for the size of the list, return 0
+    if (((di = tv_dict_find(what, S_LEN("nr"))) != NULL)
+        && (di->di_tv.v_type == VAR_STRING)
+        && (STRCMP(di->di_tv.vval.v_string, "$") == 0)) {
+      return tv_dict_add_nr(retdict, S_LEN("nr"), 0);
     }
+    return FAIL;
   }
 
   int status = OK;
@@ -4179,44 +4188,51 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
         if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
           return FAIL;
         }
-      } else if (qi->qf_listcount == 0) {  // stack is empty
-        return FAIL;
       }
-      flags |= QF_GETLIST_NR;
     } else if (di->di_tv.v_type == VAR_STRING
                && strequal((const char *)di->di_tv.vval.v_string, "$")) {
       // Get the last quickfix list number
-      if (qi->qf_listcount > 0) {
-        qf_idx = qi->qf_listcount - 1;
-      } else {
-        qf_idx = -1;  // Quickfix stack is empty
+      qf_idx = qi->qf_listcount - 1;
+    } else {
+      return FAIL;
+    }
+    flags |= QF_GETLIST_NR;
+  }
+
+  if ((di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+    // Look for a list with the specified id
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      // For zero, use the current list or the list specifed by 'nr'
+      if (di->di_tv.vval.v_number != 0) {
+        for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
+          if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
+            break;
+          }
+        }
+        if (qf_idx == qi->qf_listcount) {
+          return FAIL;      // List not found
+        }
       }
-      flags |= QF_GETLIST_NR;
+      flags |= QF_GETLIST_ID;
     } else {
       return FAIL;
     }
   }
 
-  if (qf_idx != -1) {
-    if (tv_dict_find(what, S_LEN("all")) != NULL) {
-      flags |= QF_GETLIST_ALL;
-    }
-
-    if (tv_dict_find(what, S_LEN("title")) != NULL) {
-      flags |= QF_GETLIST_TITLE;
-    }
-
-    if (tv_dict_find(what, S_LEN("winid")) != NULL) {
-      flags |= QF_GETLIST_WINID;
-    }
-
-    if (tv_dict_find(what, S_LEN("context")) != NULL) {
-      flags |= QF_GETLIST_CONTEXT;
-    }
-
-    if (tv_dict_find(what, S_LEN("items")) != NULL) {
-      flags |= QF_GETLIST_ITEMS;
-    }
+  if (tv_dict_find(what, S_LEN("all")) != NULL) {
+    flags |= QF_GETLIST_ALL;
+  }
+  if (tv_dict_find(what, S_LEN("title")) != NULL) {
+    flags |= QF_GETLIST_TITLE;
+  }
+  if (tv_dict_find(what, S_LEN("winid")) != NULL) {
+    flags |= QF_GETLIST_WINID;
+  }
+  if (tv_dict_find(what, S_LEN("context")) != NULL) {
+    flags |= QF_GETLIST_CONTEXT;
+  }
+  if (tv_dict_find(what, S_LEN("items")) != NULL) {
+    flags |= QF_GETLIST_ITEMS;
   }
 
   if (flags & QF_GETLIST_TITLE) {
@@ -4252,6 +4268,10 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
     }
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_ID)) {
+    status = tv_dict_add_nr(retdict, S_LEN("id"), qi->qf_lists[qf_idx].qf_id);
   }
 
   return status;
@@ -4404,6 +4424,22 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
         qf_idx = 0;
       } else {
         return FAIL;
+      }
+    } else {
+      return FAIL;
+    }
+  }
+
+  if (!newlist && (di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+    // Use the quickfix/location list with the specified id
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
+        if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
+          break;
+        }
+      }
+      if (qf_idx == qi->qf_listcount) {
+        return FAIL;      // List not found
       }
     } else {
       return FAIL;

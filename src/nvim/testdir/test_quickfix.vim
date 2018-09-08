@@ -1879,8 +1879,9 @@ func Xproperty_tests(cchar)
     call g:Xsetlist([], 'r', {'nr':2,'title':'Fruits','context':['Fruits']})
     let l1=g:Xgetlist({'nr':1,'all':1})
     let l2=g:Xgetlist({'nr':2,'all':1})
-    let l1.nr=2
-    let l2.nr=1
+    let save_id = l1.id
+    let l1.id=l2.id
+    let l2.id=save_id
     call g:Xsetlist([], 'r', l1)
     call g:Xsetlist([], 'r', l2)
     let newl1=g:Xgetlist({'nr':1,'all':1})
@@ -2526,4 +2527,39 @@ endfunc
 func Test_get_list_from_text()
   call XgetListFromText('c')
   call XgetListFromText('l')
+endfunc
+
+" Tests for the quickfix list id
+func Xqfid_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  call g:Xsetlist([], 'f')
+  call assert_equal({}, g:Xgetlist({'id':0}))
+  Xexpr ''
+  let start_id = g:Xgetlist({'id' : 0}).id
+  Xexpr '' | Xexpr ''
+  Xolder
+  call assert_equal(start_id, g:Xgetlist({'id':0, 'nr':1}).id)
+  call assert_equal(start_id + 1, g:Xgetlist({'id':0, 'nr':0}).id)
+  call assert_equal(start_id + 2, g:Xgetlist({'id':0, 'nr':'$'}).id)
+  call assert_equal({}, g:Xgetlist({'id':0, 'nr':99}))
+  call assert_equal(2, g:Xgetlist({'id':start_id + 1, 'nr':0}).nr)
+  call assert_equal({}, g:Xgetlist({'id':99, 'nr':0}))
+  call assert_equal({}, g:Xgetlist({'id':"abc", 'nr':0}))
+
+  call g:Xsetlist([], 'a', {'id':start_id, 'context':[1,2]})
+  call assert_equal([1,2], g:Xgetlist({'nr':1, 'context':1}).context)
+  call g:Xsetlist([], 'a', {'id':start_id+1, 'text':'F1:10:L10'})
+  call assert_equal('L10', g:Xgetlist({'nr':2, 'items':1}).items[0].text)
+  call assert_equal(-1, g:Xsetlist([], 'a', {'id':999, 'title':'Vim'}))
+  call assert_equal(-1, g:Xsetlist([], 'a', {'id':'abc', 'title':'Vim'}))
+
+  let qfid = g:Xgetlist({'id':0, 'nr':0})
+  call g:Xsetlist([], 'f')
+  call assert_equal({}, g:Xgetlist({'id':qfid, 'nr':0}))
+endfunc
+
+func Test_qf_id()
+  call Xqfid_tests('c')
+  call Xqfid_tests('l')
 endfunc
