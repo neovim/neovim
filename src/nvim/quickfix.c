@@ -117,7 +117,7 @@ struct qf_info_S {
   qf_list_T qf_lists[LISTCOUNT];
 };
 
-static qf_info_T ql_info;       /* global quickfix list */
+static qf_info_T ql_info;         // global quickfix list
 static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
 #define FMT_PATTERNS 10         /* maximum number of % recognized */
