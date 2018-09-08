@@ -4131,19 +4131,20 @@ static int qf_get_list_from_text(dictitem_T *di, dict_T *retdict)
        && di->di_tv.vval.v_string != NULL)
       || (di->di_tv.v_type == VAR_LIST
           && di->di_tv.vval.v_list != NULL)) {
+    list_T *l = tv_list_alloc(kListLenMayKnow);
     qf_info_T *qi = xmalloc(sizeof(*qi));
     memset(qi, 0, sizeof(*qi));
     qi->qf_refcount++;
 
     if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, p_efm,
                     true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
-      list_T *l = tv_list_alloc(kListLenMayKnow);
       (void)get_errorlist(qi, NULL, 0, l);
-      tv_dict_add_list(retdict, S_LEN("items"), l);
-      status = OK;
       qf_free(qi, 0);
     }
     xfree(qi);
+
+    tv_dict_add_list(retdict, S_LEN("items"), l);
+    status = OK;
   }
 
   return status;

@@ -2518,7 +2518,7 @@ func XgetListFromText(cchar)
   call assert_equal(30, l[1].lnum)
 
   call assert_equal({}, g:Xgetlist({'text' : 10}))
-  call assert_equal({}, g:Xgetlist({'text' : []}))
+  call assert_equal([], g:Xgetlist({'text' : []}).items)
 
   " Make sure that the quickfix stack is not modified
   call assert_equal(0, g:Xgetlist({'nr' : '$'}).nr)
