@@ -2303,6 +2303,17 @@ func Xsetexpr_tests(cchar)
   call g:Xsetlist([], 'a', {'nr' : 2, 'lines' : ["File2:25:Line25"]})
   call assert_equal('Line15', g:Xgetlist({'nr':1, 'items':1}).items[1].text)
   call assert_equal('Line25', g:Xgetlist({'nr':2, 'items':1}).items[1].text)
+
+  " Adding entries using a custom efm
+  set efm&
+  call g:Xsetlist([], ' ', {'efm' : '%f#%l#%m',
+				\ 'lines' : ["F1#10#L10", "F2#20#L20"]})
+  call assert_equal(20, g:Xgetlist({'items':1}).items[1].lnum)
+  call g:Xsetlist([], 'a', {'efm' : '%f#%l#%m', 'lines' : ["F3:30:L30"]})
+  call assert_equal('F3:30:L30', g:Xgetlist({'items':1}).items[2].text)
+  call assert_equal(20, g:Xgetlist({'items':1}).items[1].lnum)
+  call assert_equal(-1, g:Xsetlist([], 'a', {'efm' : [],
+				\ 'lines' : ['F1:10:L10']}))
 endfunc
 
 func Test_setexpr()
@@ -2518,6 +2529,17 @@ func XgetListFromLines(cchar)
   call assert_equal({}, g:Xgetlist({'lines' : 'File1:10:Line10'}))
   call assert_equal([], g:Xgetlist({'lines' : []}).items)
   call assert_equal([], g:Xgetlist({'lines' : [10, 20]}).items)
+
+  " Parse text using a custom efm
+  set efm&
+  let l = g:Xgetlist({'lines':['File3#30#Line30'], 'efm' : '%f#%l#%m'}).items
+  call assert_equal('Line30', l[0].text)
+  let l = g:Xgetlist({'lines':['File3:30:Line30'], 'efm' : '%f-%l-%m'}).items
+  call assert_equal('File3:30:Line30', l[0].text)
+  let l = g:Xgetlist({'lines':['File3:30:Line30'], 'efm' : [1,2]})
+  call assert_equal({}, l)
+  call assert_fails("call g:Xgetlist({'lines':['abc'], 'efm':'%2'})", 'E376:')
+  call assert_fails("call g:Xgetlist({'lines':['abc'], 'efm':''})", 'E378:')
 
   " Make sure that the quickfix stack is not modified
   call assert_equal(0, g:Xgetlist({'nr' : '$'}).nr)
