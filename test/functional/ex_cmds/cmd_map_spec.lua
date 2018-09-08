@@ -8,6 +8,7 @@ local eval = helpers.eval
 local funcs = helpers.funcs
 local insert = helpers.insert
 local exc_exec = helpers.exc_exec
+local source = helpers.source
 local Screen = require('test.functional.ui.screen')
 
 describe('mappings with <Cmd>', function()
@@ -794,5 +795,16 @@ describe('mappings with <Cmd>', function()
     ]])
   end)
 
+  it("works with <SID> mappings", function()
+    source([[
+      map <f2> <Cmd>call <SID>do_it()<Cr>
+      function! s:do_it()
+        let g:x = 10
+      endfunction
+    ]])
+    feed('<f2>')
+    eq('', eval('v:errmsg'))
+    eq(10, eval('g:x'))
+  end)
 end)
 
