@@ -4339,6 +4339,11 @@ getqflist([{what}])					*getqflist()*
 			nr	get information for this quickfix list; zero
 				means the current quickfix list and '$' means
 				the last quickfix list
+			text	use 'errorformat' to extract items from the
+				text and return the resulting entries. The
+				value can be a string with one line or a list
+				with multiple lines. The current quickfix list
+				is not modified.
 			title	get the list title
 			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties
@@ -4347,6 +4352,9 @@ getqflist([{what}])					*getqflist()*
 		To get the number of lists in the quickfix stack, set 'nr' to
 		'$' in {what}. The 'nr' value in the returned dictionary
 		contains the quickfix stack size.
+		When 'text' is specified, all the other items are ignored. The
+		returned dictionary contains the entry 'items' with the list
+		of entries.
 		In case of error processing {what}, an empty dictionary is
 		returned.
 

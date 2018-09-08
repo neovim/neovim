@@ -2501,3 +2501,29 @@ func Test_add_qf()
   call XaddQf_tests('c')
   call XaddQf_tests('l')
 endfunc
+
+" Test for getting the quickfix list items from some text without modifying
+" the quickfix stack
+func XgetListFromText(cchar)
+  call s:setup_commands(a:cchar)
+  call g:Xsetlist([], 'f')
+
+  let l = g:Xgetlist({'text' : "File1:10:Line10"}).items
+  call assert_equal(1, len(l))
+  call assert_equal('Line10', l[0].text)
+
+  let l = g:Xgetlist({'text' : ["File2:20:Line20", "File2:30:Line30"]}).items
+  call assert_equal(2, len(l))
+  call assert_equal(30, l[1].lnum)
+
+  call assert_equal({}, g:Xgetlist({'text' : 10}))
+  call assert_equal({}, g:Xgetlist({'text' : []}))
+
+  " Make sure that the quickfix stack is not modified
+  call assert_equal(0, g:Xgetlist({'nr' : '$'}).nr)
+endfunc
+
+func Test_get_list_from_text()
+  call XgetListFromText('c')
+  call XgetListFromText('l')
+endfunc

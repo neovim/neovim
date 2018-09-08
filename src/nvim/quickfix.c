@@ -2414,7 +2414,7 @@ static void qf_free_items(qf_info_T *qi, int idx)
   while (qfl->qf_count && qfl->qf_start != NULL) {
     qfp = qfl->qf_start;
     qfpnext = qfp->qf_next;
-    if (qfl->qf_title != NULL && !stop) {
+    if (!stop) {
       xfree(qfp->qf_text);
       stop = (qfp == qfpnext);
       xfree(qfp->qf_pattern);
@@ -4031,18 +4031,22 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 
 /// Add each quickfix error to list "list" as a dictionary.
 /// If qf_idx is -1, use the current list. Otherwise, use the specified list.
-int get_errorlist(win_T *wp, int qf_idx, list_T *list)
+int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
 {
-  qf_info_T   *qi = &ql_info;
+  const qf_info_T *qi = qi_arg;
   char_u buf[2];
   qfline_T    *qfp;
   int i;
   int bufnum;
 
-  if (wp != NULL) {
-    qi = GET_LOC_LIST(wp);
-    if (qi == NULL)
-      return FAIL;
+  if (qi == NULL) {
+    qi = &ql_info;
+    if (wp != NULL) {
+      qi = GET_LOC_LIST(wp);
+      if (qi == NULL) {
+        return FAIL;
+      }
+    }
   }
 
   if (qf_idx == -1) {
@@ -4109,6 +4113,34 @@ enum {
   QF_GETLIST_ALL = 0xFF
 };
 
+// Parse text from 'di' and return the quickfix list items
+static int qf_get_list_from_text(dictitem_T *di, dict_T *retdict)
+{
+  int status = FAIL;
+
+  // Only string and list values are supported
+  if ((di->di_tv.v_type == VAR_STRING
+       && di->di_tv.vval.v_string != NULL)
+      || (di->di_tv.v_type == VAR_LIST
+          && di->di_tv.vval.v_list != NULL)) {
+    qf_info_T *qi = xmalloc(sizeof(*qi));
+    memset(qi, 0, sizeof(*qi));
+    qi->qf_refcount++;
+
+    if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, p_efm,
+                    true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+      list_T *l = tv_list_alloc(kListLenMayKnow);
+      (void)get_errorlist(qi, NULL, 0, l);
+      tv_dict_add_list(retdict, S_LEN("items"), l);
+      status = OK;
+      qf_free(qi, 0);
+    }
+    xfree(qi);
+  }
+
+  return status;
+}
+
 /// Return quickfix/location list details (title) as a
 /// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
 /// then current list is used. Otherwise the specified list is used.
@@ -4116,6 +4148,10 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 {
   qf_info_T *qi = &ql_info;
   dictitem_T *di;
+
+  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
+    return qf_get_list_from_text(di, retdict);
+  }
 
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
@@ -4201,7 +4237,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
     list_T *l = tv_list_alloc(kListLenMayKnow);
-    (void)get_errorlist(wp, qf_idx, l);
+    (void)get_errorlist(qi, NULL, qf_idx, l);
     tv_dict_add_list(retdict, S_LEN("items"), l);
   }
 
