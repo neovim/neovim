@@ -15,7 +15,6 @@ export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
 	test14.out             \
-	test24.out             \
 	test37.out             \
 	test42.out             \
 	test48.out             \
@@ -35,7 +34,7 @@ SCRIPTS ?= $(SCRIPTS_DEFAULT)
 NEW_TESTS_ALOT := test_alot_utf8 test_alot
 NEW_TESTS_IN_ALOT := $(shell sed '/^source/ s/^source //;s/\.vim$$//' test_alot*.vim)
 # Ignored tests.
-# test_alot_latin1: Nvim does not allow setting encoding.
+# test_alot_latin: Nvim does not allow setting encoding.
 # test_arglist: ported to Lua, but kept for easier merging.
 # test_autochdir: ported to Lua, but kept for easier merging.
 # test_eval_func: used as include in old-style test (test_eval.in).

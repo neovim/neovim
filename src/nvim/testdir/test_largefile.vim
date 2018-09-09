@@ -1,5 +1,5 @@
 " Tests for large files
-" This is only executed manually: "make test_largefile".
+" This is only executed manually: "TEST_FILE=test_largefile.res make oldtest".
 " This is not run as part of "make test".
 
 func Test_largefile()
