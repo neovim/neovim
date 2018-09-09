@@ -2076,7 +2076,11 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
     return p;
   }
 
-  v = find_var(lp->ll_name, lp->ll_name_len, &ht, flags & GLV_NO_AUTOLOAD);
+  // Only pass &ht when we would write to the variable, it prevents autoload
+  // as well.
+  v = find_var(lp->ll_name, lp->ll_name_len,
+               (flags & GLV_READ_ONLY) ? NULL : &ht,
+               flags & GLV_NO_AUTOLOAD);
   if (v == NULL && !quiet) {
     emsgf(_("E121: Undefined variable: %.*s"),
           (int)lp->ll_name_len, lp->ll_name);
@@ -18322,9 +18326,9 @@ varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
   return vimvars[idx].vv_nr;
 }
 
-/*
- * Get string v: variable value.  Uses a static buffer, can only be used once.
- */
+// Get string v: variable value.  Uses a static buffer, can only be used once.
+// If the String variable has never been set, return an empty string.
+// Never returns NULL;
 char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
   return (char_u *)tv_get_string(&vimvars[idx].vv_tv);
@@ -20360,7 +20364,7 @@ trans_function_name(
   }
 
   // Note that TFN_ flags use the same values as GLV_ flags.
-  end = get_lval((char_u *)start, NULL, &lv, false, skip, flags,
+  end = get_lval((char_u *)start, NULL, &lv, false, skip, flags | GLV_READ_ONLY,
                  lead > 2 ? 0 : FNE_CHECK_START);
   if (end == start) {
     if (!skip)

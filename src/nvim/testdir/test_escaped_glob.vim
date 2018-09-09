@@ -17,6 +17,7 @@ function Test_glob()
   call assert_equal("", glob('Xxx\{'))
   call assert_equal("", glob('Xxx\$'))
   w! Xxx{
+  " } to fix highlighting
   w! Xxx\$
   call assert_equal("Xxx{", glob('Xxx\{'))
   call assert_equal("Xxx$", glob('Xxx\$'))
@@ -25,9 +26,8 @@ function Test_glob()
 endfunction
 
 function Test_globpath()
-  let slash = (!exists('+shellslash') || &shellslash) ? '/' : '\'
-  call assert_equal('sautest'.slash.'autoload'.slash.'footest.vim',
-        \ globpath('sautest/autoload', '*.vim'))
-  call assert_equal(['sautest'.slash.'autoload'.slash.'footest.vim'],
-        \ globpath('sautest/autoload', '*.vim', 0, 1))
+  call assert_equal(expand("sautest/autoload/globone.vim\nsautest/autoload/globtwo.vim"),
+  \ globpath('sautest/autoload', 'glob*.vim'))
+  call assert_equal([expand('sautest/autoload/globone.vim'), expand('sautest/autoload/globtwo.vim')],
+  \ globpath('sautest/autoload', 'glob*.vim', 0, 1))
 endfunction
