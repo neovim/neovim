@@ -14,7 +14,7 @@ coverage:
   status:
     project: yes
     patch: yes
-    changes: yes
+    changes: no
 
 parsers:
   gcov:
