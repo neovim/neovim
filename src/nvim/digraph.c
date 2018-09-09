@@ -1526,29 +1526,6 @@ static int getexactdigraph(int char1, int char2, int meta_char)
     }
   }
 
-  if ((retval != 0) && !enc_utf8) {
-    char_u buf[6], *to;
-    vimconv_T vc;
-
-    // Convert the Unicode digraph to 'encoding'.
-    int i = utf_char2bytes(retval, buf);
-    retval = 0;
-    vc.vc_type = CONV_NONE;
-
-    if (convert_setup(&vc, (char_u *)"utf-8", p_enc) == OK) {
-      vc.vc_fail = true;
-      assert(i >= 0);
-      size_t len = (size_t)i;
-      to = string_convert(&vc, buf, &len);
-
-      if (to != NULL) {
-        retval = utf_ptr2char(to);
-        xfree(to);
-      }
-      (void)convert_setup(&vc, NULL, NULL);
-    }
-  }
-
   if (retval == 0) {
     // digraph deleted or not found
     if ((char1 == ' ') && meta_char) {
