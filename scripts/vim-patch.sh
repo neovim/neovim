@@ -313,8 +313,10 @@ submit_pr() {
   pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
   if [[ $push_first -ne 0 ]]; then
-    echo "Pushing to 'origin/${checked_out_branch}'."
-    output="$(git push origin "${checked_out_branch}" 2>&1)" &&
+    local push_remote
+    push_remote="$(git config --get github.user || echo origin)"
+    echo "Pushing to '${push_remote}/${checked_out_branch}'."
+    output="$(git push --set-upstream "${push_remote}" "${checked_out_branch}" 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
 
