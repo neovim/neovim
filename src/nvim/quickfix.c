@@ -82,6 +82,7 @@ struct qfline_S {
 /// created using setqflist()/setloclist() with a title and/or user context
 /// information and entries can be added later using setqflist()/setloclist().
 typedef struct qf_list_S {
+  unsigned qf_id;               ///< Unique identifier for this list
   qfline_T    *qf_start;        ///< pointer to the first error
   qfline_T    *qf_last;         ///< pointer to the last error
   qfline_T    *qf_ptr;          ///< pointer to the current error
@@ -116,7 +117,8 @@ struct qf_info_S {
   qf_list_T qf_lists[LISTCOUNT];
 };
 
-static qf_info_T ql_info;       /* global quickfix list */
+static qf_info_T ql_info;         // global quickfix list
+static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
 #define FMT_PATTERNS 10         /* maximum number of % recognized */
 
@@ -1224,6 +1226,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
   qf_store_title(qi, qi->qf_curlist, qf_title);
+  qi->qf_lists[qi->qf_curlist].qf_id = ++last_qf_id;
 }
 
 /*
@@ -1466,6 +1469,9 @@ void copy_loclist(win_T *from, win_T *to)
     }
 
     to_qfl->qf_index = from_qfl->qf_index;      /* current index in the list */
+
+    // Assign a new ID for the location list
+    to_qfl->qf_id = ++last_qf_id;
 
     /* When no valid entries are present in the list, qf_ptr points to
      * the first item in the list */
@@ -2414,7 +2420,7 @@ static void qf_free_items(qf_info_T *qi, int idx)
   while (qfl->qf_count && qfl->qf_start != NULL) {
     qfp = qfl->qf_start;
     qfpnext = qfp->qf_next;
-    if (qfl->qf_title != NULL && !stop) {
+    if (!stop) {
       xfree(qfp->qf_text);
       stop = (qfp == qfpnext);
       xfree(qfp->qf_pattern);
@@ -2458,6 +2464,7 @@ static void qf_free(qf_info_T *qi, int idx)
   qfl->qf_title = NULL;
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
+  qfl->qf_id = 0;
 }
 
 /*
@@ -4031,18 +4038,22 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 
 /// Add each quickfix error to list "list" as a dictionary.
 /// If qf_idx is -1, use the current list. Otherwise, use the specified list.
-int get_errorlist(win_T *wp, int qf_idx, list_T *list)
+int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
 {
-  qf_info_T   *qi = &ql_info;
+  const qf_info_T *qi = qi_arg;
   char_u buf[2];
   qfline_T    *qfp;
   int i;
   int bufnum;
 
-  if (wp != NULL) {
-    qi = GET_LOC_LIST(wp);
-    if (qi == NULL)
-      return FAIL;
+  if (qi == NULL) {
+    qi = &ql_info;
+    if (wp != NULL) {
+      qi = GET_LOC_LIST(wp);
+      if (qi == NULL) {
+        return FAIL;
+      }
+    }
   }
 
   if (qf_idx == -1) {
@@ -4106,8 +4117,47 @@ enum {
   QF_GETLIST_NR = 0x4,
   QF_GETLIST_WINID = 0x8,
   QF_GETLIST_CONTEXT = 0x10,
+  QF_GETLIST_ID = 0x20,
   QF_GETLIST_ALL = 0xFF
 };
+
+// Parse text from 'di' and return the quickfix list items
+static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
+{
+  int status = FAIL;
+  char_u *errorformat = p_efm;
+  dictitem_T *efm_di;
+
+  // Only a List value is supported
+  if (di->di_tv.v_type == VAR_LIST && di->di_tv.vval.v_list != NULL) {
+    // If errorformat is supplied then use it, otherwise use the 'efm'
+    // option setting
+    if ((efm_di = tv_dict_find(what, S_LEN("efm"))) != NULL) {
+      if (efm_di->di_tv.v_type != VAR_STRING
+          || efm_di->di_tv.vval.v_string == NULL) {
+        return FAIL;
+      }
+      errorformat = efm_di->di_tv.vval.v_string;
+    }
+
+    list_T *l = tv_list_alloc(kListLenMayKnow);
+    qf_info_T *qi = xmalloc(sizeof(*qi));
+    memset(qi, 0, sizeof(*qi));
+    qi->qf_refcount++;
+
+    if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, errorformat,
+                    true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+      (void)get_errorlist(qi, NULL, 0, l);
+      qf_free(qi, 0);
+    }
+    xfree(qi);
+
+    tv_dict_add_list(retdict, S_LEN("items"), l);
+    status = OK;
+  }
+
+  return status;
+}
 
 /// Return quickfix/location list details (title) as a
 /// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
@@ -4117,17 +4167,22 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   qf_info_T *qi = &ql_info;
   dictitem_T *di;
 
+  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
+    return qf_get_list_from_lines(what, di, retdict);
+  }
+
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
-    if (qi == NULL) {
-      // If querying for the size of the location list, return 0
-      if (((di = tv_dict_find(what, S_LEN("nr"))) != NULL)
-          && (di->di_tv.v_type == VAR_STRING)
-          && strequal((const char *)di->di_tv.vval.v_string, "$")) {
-        return tv_dict_add_nr(retdict, S_LEN("nr"), 0);
-      }
-      return FAIL;
+  }
+  // List is not present or is empty
+  if (qi == NULL || qi->qf_listcount == 0) {
+    // If querying for the size of the list, return 0
+    if (((di = tv_dict_find(what, S_LEN("nr"))) != NULL)
+        && (di->di_tv.v_type == VAR_STRING)
+        && (STRCMP(di->di_tv.vval.v_string, "$") == 0)) {
+      return tv_dict_add_nr(retdict, S_LEN("nr"), 0);
     }
+    return FAIL;
   }
 
   int status = OK;
@@ -4143,44 +4198,51 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
         if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
           return FAIL;
         }
-      } else if (qi->qf_listcount == 0) {  // stack is empty
-        return FAIL;
       }
-      flags |= QF_GETLIST_NR;
     } else if (di->di_tv.v_type == VAR_STRING
                && strequal((const char *)di->di_tv.vval.v_string, "$")) {
       // Get the last quickfix list number
-      if (qi->qf_listcount > 0) {
-        qf_idx = qi->qf_listcount - 1;
-      } else {
-        qf_idx = -1;  // Quickfix stack is empty
+      qf_idx = qi->qf_listcount - 1;
+    } else {
+      return FAIL;
+    }
+    flags |= QF_GETLIST_NR;
+  }
+
+  if ((di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+    // Look for a list with the specified id
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      // For zero, use the current list or the list specifed by 'nr'
+      if (di->di_tv.vval.v_number != 0) {
+        for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
+          if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
+            break;
+          }
+        }
+        if (qf_idx == qi->qf_listcount) {
+          return FAIL;      // List not found
+        }
       }
-      flags |= QF_GETLIST_NR;
+      flags |= QF_GETLIST_ID;
     } else {
       return FAIL;
     }
   }
 
-  if (qf_idx != -1) {
-    if (tv_dict_find(what, S_LEN("all")) != NULL) {
-      flags |= QF_GETLIST_ALL;
-    }
-
-    if (tv_dict_find(what, S_LEN("title")) != NULL) {
-      flags |= QF_GETLIST_TITLE;
-    }
-
-    if (tv_dict_find(what, S_LEN("winid")) != NULL) {
-      flags |= QF_GETLIST_WINID;
-    }
-
-    if (tv_dict_find(what, S_LEN("context")) != NULL) {
-      flags |= QF_GETLIST_CONTEXT;
-    }
-
-    if (tv_dict_find(what, S_LEN("items")) != NULL) {
-      flags |= QF_GETLIST_ITEMS;
-    }
+  if (tv_dict_find(what, S_LEN("all")) != NULL) {
+    flags |= QF_GETLIST_ALL;
+  }
+  if (tv_dict_find(what, S_LEN("title")) != NULL) {
+    flags |= QF_GETLIST_TITLE;
+  }
+  if (tv_dict_find(what, S_LEN("winid")) != NULL) {
+    flags |= QF_GETLIST_WINID;
+  }
+  if (tv_dict_find(what, S_LEN("context")) != NULL) {
+    flags |= QF_GETLIST_CONTEXT;
+  }
+  if (tv_dict_find(what, S_LEN("items")) != NULL) {
+    flags |= QF_GETLIST_ITEMS;
   }
 
   if (flags & QF_GETLIST_TITLE) {
@@ -4201,7 +4263,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
     list_T *l = tv_list_alloc(kListLenMayKnow);
-    (void)get_errorlist(wp, qf_idx, l);
+    (void)get_errorlist(qi, NULL, qf_idx, l);
     tv_dict_add_list(retdict, S_LEN("items"), l);
   }
 
@@ -4216,6 +4278,10 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
     }
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_ID)) {
+    status = tv_dict_add_nr(retdict, S_LEN("id"), qi->qf_lists[qf_idx].qf_id);
   }
 
   return status;
@@ -4336,6 +4402,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
   dictitem_T *di;
   int retval = FAIL;
   int newlist = false;
+  char_u *errorformat = p_efm;
 
   if (action == ' ' || qi->qf_curlist == qi->qf_listcount) {
     newlist = true;
@@ -4374,6 +4441,22 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
     }
   }
 
+  if (!newlist && (di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+    // Use the quickfix/location list with the specified id
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
+        if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
+          break;
+        }
+      }
+      if (qf_idx == qi->qf_listcount) {
+        return FAIL;      // List not found
+      }
+    } else {
+      return FAIL;
+    }
+  }
+
   if (newlist) {
     qi->qf_curlist = qf_idx;
     qf_new_list(qi, title);
@@ -4401,16 +4484,20 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
     }
   }
 
-  if ((di = tv_dict_find(what, S_LEN("text"))) != NULL) {
-    // Only string and list values are supported
-    if ((di->di_tv.v_type == VAR_STRING
-         && di->di_tv.vval.v_string != NULL)
-        || (di->di_tv.v_type == VAR_LIST
-            && di->di_tv.vval.v_list != NULL)) {
+  if ((di = tv_dict_find(what, S_LEN("efm"))) != NULL) {
+    if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL) {
+      return FAIL;
+    }
+    errorformat = di->di_tv.vval.v_string;
+  }
+
+  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
+    // Only a List value is supported
+    if (di->di_tv.v_type == VAR_LIST && di->di_tv.vval.v_list != NULL) {
       if (action == 'r') {
         qf_free_items(qi, qf_idx);
       }
-      if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, p_efm,
+      if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
                       false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
         retval = OK;
       }
