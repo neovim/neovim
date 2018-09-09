@@ -1549,11 +1549,6 @@ static int getexactdigraph(int char1, int char2, int meta_char)
     }
   }
 
-  // Ignore multi-byte characters when not in multi-byte mode.
-  if (!has_mbyte && (retval > 0xff)) {
-    retval = 0;
-  }
-
   if (retval == 0) {
     // digraph deleted or not found
     if ((char1 == ' ') && meta_char) {
@@ -1660,8 +1655,7 @@ void listdigraphs(void)
     tmp.result = getexactdigraph(tmp.char1, tmp.char2, FALSE);
 
     if ((tmp.result != 0)
-        && (tmp.result != tmp.char2)
-        && (has_mbyte || (tmp.result <= 255))) {
+        && (tmp.result != tmp.char2)) {
       printdigraph(&tmp);
     }
     dp++;
