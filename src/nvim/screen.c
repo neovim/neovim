@@ -4588,14 +4588,18 @@ void status_redraw_all(void)
   }
 }
 
-/*
- * mark all status lines of the current buffer for redraw
- */
+/// Marks all status lines of the current buffer for redraw.
 void status_redraw_curbuf(void)
 {
+  status_redraw_buf(curbuf);
+}
+
+/// Marks all status lines of the specified buffer for redraw.
+void status_redraw_buf(buf_T *buf)
+{
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
-      wp->w_redr_status = TRUE;
+    if (wp->w_status_height != 0 && wp->w_buffer == buf) {
+      wp->w_redr_status = true;
       redraw_later(VALID);
     }
   }
