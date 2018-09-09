@@ -668,6 +668,7 @@ static void buf_set_term_title(buf_T *buf, char *title)
                false,
                &err);
   api_clear_error(&err);
+  status_redraw_buf(buf);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
