@@ -80,7 +80,7 @@ static char uilog_last_event[1024] = { 0 };
 #endif
 
 // UI_CALL invokes a function on all registered UI instances. The functions can
-// have 0-5 arguments (configurable by SELECT_NTH).
+// have 0-10 arguments (configurable by SELECT_NTH).
 //
 // See http://stackoverflow.com/a/11172679 for how it works.
 #ifdef _MSC_VER
@@ -102,9 +102,9 @@ static char uilog_last_event[1024] = { 0 };
       } \
     } while (0)
 #endif
-#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, \
-                            MORE, MORE, MORE, MORE, MORE, ZERO, ignore)
-#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ...) a10
+#define CNT(...) SELECT_NTH(__VA_ARGS__, MORE, MORE, MORE, MORE, MORE, \
+                            MORE, MORE, MORE, MORE, ZERO, ignore)
+#define SELECT_NTH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, ...) a11
 #define UI_CALL_HELPER(c, ...) UI_CALL_HELPER2(c, __VA_ARGS__)
 // Resolves to UI_CALL_MORE or UI_CALL_ZERO.
 #define UI_CALL_HELPER2(c, ...) UI_CALL_##c(__VA_ARGS__)
@@ -315,10 +315,11 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
   }
 }
 
-void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr)
+void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
+             bool wrap)
 {
   size_t off = LineOffset[row]+(size_t)startcol;
-  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr,
+  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr, wrap,
           (const schar_T *)ScreenLines+off, (const sattr_T *)ScreenAttrs+off);
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = row, old_col = col;
@@ -339,32 +340,6 @@ void ui_cursor_goto(int new_row, int new_col)
   row = new_row;
   col = new_col;
   pending_cursor_update = true;
-}
-
-void ui_add_linewrap(int row)
-{
-  // TODO(bfredl): check that this actually still works
-  // and move to TUI module in that case.
-#if 0
-  // First make sure we are at the end of the screen line,
-  // then output the same character again to let the
-  // terminal know about the wrap.  If the terminal doesn't
-  // auto-wrap, we overwrite the character.
-  if (ui_current_col() != Columns) {
-    screen_char(LineOffset[row] + (unsigned)Columns - 1, row,
-                (int)(Columns - 1));
-  }
-
-  // When there is a multi-byte character, just output a
-  // space to keep it simple. */
-  if (ScreenLines[LineOffset[row] + (Columns - 1)][1] != 0) {
-    ui_putc(' ');
-  } else {
-    ui_puts(ScreenLines[LineOffset[row] + (Columns - 1)]);
-  }
-  // force a redraw of the first char on the next line
-  ScreenAttrs[LineOffset[row+1]] = (sattr_T)-1;
-#endif
 }
 
 void ui_mode_info_set(void)

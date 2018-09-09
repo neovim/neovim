@@ -47,7 +47,7 @@ struct ui_t {
   // in to the public grid_line format.
   void (*raw_line)(UI *ui, Integer grid, Integer row, Integer startcol,
                    Integer endcol, Integer clearcol, Integer clearattr,
-                   const schar_T *chunk, const sattr_T *attrs);
+                   Boolean wrap, const schar_T *chunk, const sattr_T *attrs);
   void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
   void (*stop)(UI *ui);
   void (*inspect)(UI *ui, Dictionary *info);
