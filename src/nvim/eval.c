@@ -8872,9 +8872,14 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u buf[FOLD_TEXT_LEN];
   foldinfo_T foldinfo;
   int fold_count;
+  static bool entered = false;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
+  if (entered) {
+    return;  // reject recursive use
+  }
+  entered = true;
   linenr_T lnum = tv_get_lnum(argvars);
   // Treat illegal types and illegal string values for {lnum} the same.
   if (lnum < 0) {
@@ -8888,6 +8893,8 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     rettv->vval.v_string = text;
   }
+
+  entered = false;
 }
 
 /*
