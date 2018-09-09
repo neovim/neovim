@@ -1359,6 +1359,12 @@ static digr_T digraphdefault[] =
   { 'f', 't', 0xfb05 },
   { 's', 't', 0xfb06 },
 
+  // extra alternatives, easier to remember
+  { 'W', '`', 0x1e80 },
+  { 'w', '`', 0x1e81 },
+  { 'Y', '`', 0x1ef2 },
+  { 'y', '`', 0x1ef3 },
+
   // Vim 5.x compatible digraphs that don't conflict with the above
   { '~', '!', 161 },  // ¡
   { 'c', '|', 162 },  // ¢
@@ -1520,34 +1526,6 @@ static int getexactdigraph(int char1, int char2, int meta_char)
     }
   }
 
-  if ((retval != 0) && !enc_utf8) {
-    char_u buf[6], *to;
-    vimconv_T vc;
-
-    // Convert the Unicode digraph to 'encoding'.
-    int i = utf_char2bytes(retval, buf);
-    retval = 0;
-    vc.vc_type = CONV_NONE;
-
-    if (convert_setup(&vc, (char_u *)"utf-8", p_enc) == OK) {
-      vc.vc_fail = true;
-      assert(i >= 0);
-      size_t len = (size_t)i;
-      to = string_convert(&vc, buf, &len);
-
-      if (to != NULL) {
-        retval = utf_ptr2char(to);
-        xfree(to);
-      }
-      (void)convert_setup(&vc, NULL, NULL);
-    }
-  }
-
-  // Ignore multi-byte characters when not in multi-byte mode.
-  if (!has_mbyte && (retval > 0xff)) {
-    retval = 0;
-  }
-
   if (retval == 0) {
     // digraph deleted or not found
     if ((char1 == ' ') && meta_char) {
@@ -1654,8 +1632,7 @@ void listdigraphs(void)
     tmp.result = getexactdigraph(tmp.char1, tmp.char2, FALSE);
 
     if ((tmp.result != 0)
-        && (tmp.result != tmp.char2)
-        && (has_mbyte || (tmp.result <= 255))) {
+        && (tmp.result != tmp.char2)) {
       printdigraph(&tmp);
     }
     dp++;
