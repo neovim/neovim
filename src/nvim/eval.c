@@ -12145,8 +12145,12 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   if (!get_dict) {
     // Return a string.
     if (rhs != NULL) {
-      rettv->vval.v_string = (char_u *)str2special_save(
-          (const char *)rhs, false, false);
+      if (*rhs == NUL) {
+        rettv->vval.v_string = vim_strsave((char_u *)"<Nop>");
+      } else {
+        rettv->vval.v_string = (char_u *)str2special_save(
+            (char *)rhs, false, false);
+      }
     }
 
   } else {
