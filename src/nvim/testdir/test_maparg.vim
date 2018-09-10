@@ -29,9 +29,13 @@ function Test_maparg()
         \ maparg('foo', '', 0, 1))
 
   map abc x<char-114>x
-  call assert_equal(maparg('abc'), "xrx")
+  call assert_equal("xrx", maparg('abc'))
   map abc y<S-char-114>y
-  call assert_equal(maparg('abc'), "yRy")
+  call assert_equal("yRy", maparg('abc'))
+
+  map abc <Nop>
+  call assert_equal("<Nop>", maparg('abc'))
+  unmap abc
 endfunction
 
 function Test_range_map()
