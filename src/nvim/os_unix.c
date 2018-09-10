@@ -138,8 +138,8 @@ void mch_exit(int r)
 {
   exiting = true;
 
-  ui_builtin_stop();
   ui_flush();
+  ui_builtin_stop();
   ml_close_all(true);           // remove all memfiles
 
   if (!event_teardown() && r == 0) {
