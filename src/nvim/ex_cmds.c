@@ -1176,16 +1176,6 @@ static void do_filter(
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
   ui_cursor_goto((int)Rows - 1, 0);
 
-  /*
-   * When not redirecting the output the command can write anything to the
-   * screen. If 'shellredir' is equal to ">", screen may be messed up by
-   * stderr output of external command. Clear the screen later.
-   * If do_in is FALSE, this could be something like ":r !cat", which may
-   * also mess up the screen, clear it later.
-   */
-  if (!do_out || STRCMP(p_srr, ">") == 0 || !do_in)
-    redraw_later_clear();
-
   if (do_out) {
     if (u_save((linenr_T)(line2), (linenr_T)(line2 + 1)) == FAIL) {
       xfree(cmd_buf);

@@ -419,7 +419,6 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     xfree(tempname);
     // With interactive completion, the error message is not printed.
     if (!(flags & EW_SILENT)) {
-      redraw_later_clear();             // probably messed up screen
       msg_putchar('\n');                // clear bottom line quickly
 #if SIZEOF_LONG > SIZEOF_INT
       assert(Rows <= (long)INT_MAX + 1);
