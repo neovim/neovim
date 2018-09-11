@@ -16,7 +16,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/move.h"
 #include "nvim/charset.h"
@@ -1726,7 +1725,7 @@ void cursor_correct(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int onepage(int dir, long count)
+int onepage(Direction dir, long count)
 {
   long n;
   int retval = OK;
@@ -1884,16 +1883,18 @@ int onepage(int dir, long count)
   }
   curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|VALID_VIRTCOL);
 
-  /*
-   * Avoid the screen jumping up and down when 'scrolloff' is non-zero.
-   * But make sure we scroll at least one line (happens with mix of long
-   * wrapping lines and non-wrapping line).
-   */
-  if (retval == OK && dir == FORWARD && check_top_offset()) {
-    scroll_cursor_top(1, false);
-    if (curwin->w_topline <= old_topline
-        && old_topline < curbuf->b_ml.ml_line_count) {
-      curwin->w_topline = old_topline + 1;
+  if (retval == OK && dir == FORWARD) {
+    // Avoid the screen jumping up and down when 'scrolloff' is non-zero.
+    // But make sure we scroll at least one line (happens with mix of long
+    // wrapping lines and non-wrapping line).
+    if (check_top_offset()) {
+      scroll_cursor_top(1, false);
+      if (curwin->w_topline <= old_topline
+          && old_topline < curbuf->b_ml.ml_line_count) {
+        curwin->w_topline = old_topline + 1;
+        (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+      }
+    } else if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
       (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
     }
   }
@@ -2166,9 +2167,7 @@ void do_check_cursorbind(void)
         restart_edit = restart_edit_save;
       }
       // Correct cursor for multi-byte character.
-      if (has_mbyte) {
-        mb_adjust_cursor();
-      }
+      mb_adjust_cursor();
       redraw_later(VALID);
 
       // Only scroll when 'scrollbind' hasn't done this.
