@@ -6950,7 +6950,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         if (match && try_match_word && !try_match) {
           /* "0=word": Check if there are only blanks before the
            * word. */
-          if (getwhitecols(line) !=
+          if (getwhitecols_curline() !=
               (int)(curwin->w_cursor.col - (p - look))) {
             match = false;
           }
