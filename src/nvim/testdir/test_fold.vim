@@ -1,5 +1,7 @@
 " Test for folding
 
+source view_util.vim
+
 func PrepIndent(arg)
   return [a:arg] + repeat(["\t".a:arg], 5)
 endfu
@@ -647,4 +649,28 @@ func Test_foldtext_recursive()
   call assert_equal(1, foldclosed(2))
   call assert_equal(3, foldclosedend(2))
   bwipe!
+endfunc
+
+func Test_fold_last_line_with_pagedown()
+  enew!
+  set fdm=manual
+
+  let expect = '+-- 11 lines: 9---'
+  let content = range(1,19)
+  call append(0, content)
+  normal dd9G
+  normal zfG
+  normal zt
+  call assert_equal('9', getline(foldclosed('.')))
+  call assert_equal('19', getline(foldclosedend('.')))
+  call assert_equal(expect, ScreenLines(1, len(expect))[0])
+  call feedkeys("\<C-F>", 'xt')
+  call assert_equal(expect, ScreenLines(1, len(expect))[0])
+  call feedkeys("\<C-F>", 'xt')
+  call assert_equal(expect, ScreenLines(1, len(expect))[0])
+  call feedkeys("\<C-B>\<C-F>\<C-F>", 'xt')
+  call assert_equal(expect, ScreenLines(1, len(expect))[0])
+
+  set fdm&
+  enew!
 endfunc
