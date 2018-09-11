@@ -1737,13 +1737,8 @@ int op_replace(oparg_T *oap, int c)
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
           // strlen(newp) at this point
           int newp_len = bd.textcol + bd.startspaces;
-          if (has_mbyte) {
-            while (--num_chars >= 0) {
-              newp_len += (*mb_char2bytes)(c, newp + newp_len);
-            }
-          } else {
-            memset(newp + newp_len, c, (size_t)numc);
-            newp_len += numc;
+          while (--num_chars >= 0) {
+            newp_len += utf_char2bytes(c, newp + newp_len);
           }
           if (!bd.is_short) {
             // insert post-spaces

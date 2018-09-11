@@ -462,14 +462,13 @@ char_u *get_special_key_name(int c, int modifiers)
       string[idx++] = '_';
       string[idx++] = (char_u)KEY2TERMCAP0(c);
       string[idx++] = KEY2TERMCAP1(c);
-    }
-    /* Not a special key, only modifiers, output directly */
-    else {
-      if (has_mbyte && (*mb_char2len)(c) > 1)
-        idx += (*mb_char2bytes)(c, string + idx);
-      else if (vim_isprintc(c))
+    } else {
+      // Not a special key, only modifiers, output directly.
+      if (utf_char2len(c) > 1) {
+        idx += utf_char2bytes(c, string + idx);
+      } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
-      else {
+      } else {
         s = transchar(c);
         while (*s)
           string[idx++] = *s++;
@@ -524,14 +523,12 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
-  } else if (has_mbyte && !keycode) {
-    dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
-  } else if (keycode) {
+  } else if (!keycode) {
+    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
+  } else {
     char_u *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
-  } else {
-    dst[dlen++] = (char_u)key;
   }
 
   return dlen;

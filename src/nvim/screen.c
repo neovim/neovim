@@ -3539,7 +3539,7 @@ win_line (
             xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
-              mb_char2bytes(lcs_tab2, p);
+              utf_char2bytes(lcs_tab2, p);
               p += mb_char2len(lcs_tab2);
               n_extra += mb_char2len(lcs_tab2) - (saved_nextra > 0 ? 1: 0);
             }
@@ -5114,8 +5114,8 @@ win_redr_custom (
 
   /* fill up with "fillchar" */
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += (*mb_char2bytes)(fillchar, buf + len);
-    ++width;
+    len += utf_char2bytes(fillchar, buf + len);
+    width++;
   }
   buf[len] = NUL;
 
@@ -5223,7 +5223,7 @@ void screen_putchar(int c, int row, int col, int attr)
 {
   char_u buf[MB_MAXBYTES + 1];
 
-  buf[(*mb_char2bytes)(c, buf)] = NUL;
+  buf[utf_char2bytes(c, buf)] = NUL;
   screen_puts(buf, row, col, attr);
 }
 
@@ -6949,11 +6949,8 @@ static void win_redr_ruler(win_T *wp, int always)
     if (this_ru_col + o < width) {
       // Need at least 3 chars left for get_rel_pos() + NUL.
       while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
-        if (has_mbyte)
-          i += (*mb_char2bytes)(fillchar, buffer + i);
-        else
-          buffer[i++] = fillchar;
-        ++o;
+        i += utf_char2bytes(fillchar, buffer + i);
+        o++;
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
     }

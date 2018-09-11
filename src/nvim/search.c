@@ -1376,11 +1376,14 @@ int searchc(cmdarg_T *cap, int t_cmd)
       *lastc = c;
       set_csearch_direction(dir);
       set_csearch_until(t_cmd);
-      lastc_bytelen = (*mb_char2bytes)(c, lastc_bytes);
+      lastc_bytelen = utf_char2bytes(c, lastc_bytes);
       if (cap->ncharC1 != 0) {
-        lastc_bytelen += (*mb_char2bytes)(cap->ncharC1, lastc_bytes + lastc_bytelen);
-        if (cap->ncharC2 != 0)
-          lastc_bytelen += (*mb_char2bytes)(cap->ncharC2, lastc_bytes + lastc_bytelen);
+        lastc_bytelen += utf_char2bytes(cap->ncharC1,
+                                        lastc_bytes + lastc_bytelen);
+        if (cap->ncharC2 != 0) {
+          lastc_bytelen += utf_char2bytes(cap->ncharC2,
+                                          lastc_bytes + lastc_bytelen);
+        }
       }
     }
   } else {            // repeat previous search

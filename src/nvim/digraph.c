@@ -1685,7 +1685,7 @@ static void printdigraph(digr_T *dp)
     if (utf_iscomposing(dp->result)) {
       *p++ = ' ';
     }
-    p += (*mb_char2bytes)(dp->result, p);
+    p += utf_char2bytes(dp->result, p);
 
     *p = NUL;
     msg_outtrans_attr(buf, HL_ATTR(HLF_8));

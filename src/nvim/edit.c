@@ -2131,11 +2131,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
       char_u *p = IObuff;
       i = 0;
       while (i < actual_len && (p - IObuff + 6) < IOSIZE) {
-        if (has_mbyte) {
-          p += (*mb_char2bytes)(wca[i++], p);
-        } else {
-          *(p++) = wca[i++];
-        }
+        p += utf_char2bytes(wca[i++], p);
       }
       *p = NUL;
     }
@@ -3084,10 +3080,10 @@ static void ins_compl_addleader(int c)
   if (stop_arrow() == FAIL) {
         return;
   }
-  if (has_mbyte && (cc = (*mb_char2len)(c)) > 1) {
+  if ((cc = utf_char2len(c)) > 1) {
     char_u buf[MB_MAXBYTES + 1];
 
-    (*mb_char2bytes)(c, buf);
+    utf_char2bytes(c, buf);
     buf[cc] = NUL;
     ins_char_bytes(buf, cc);
   } else {
@@ -5334,10 +5330,10 @@ insertchar (
   } else {
     int cc;
 
-    if (has_mbyte && (cc = (*mb_char2len)(c)) > 1) {
+    if ((cc = utf_char2len(c)) > 1) {
       char_u buf[MB_MAXBYTES + 1];
 
-      (*mb_char2bytes)(c, buf);
+      utf_char2bytes(c, buf);
       buf[cc] = NUL;
       ins_char_bytes(buf, cc);
       AppendCharToRedobuff(c);
@@ -8660,12 +8656,7 @@ static char_u *do_insert_char_pre(int c)
   if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
-  if (has_mbyte) {
-    buf[(*mb_char2bytes)(c, (char_u *) buf)] = NUL;
-  } else {
-    buf[0] = c;
-    buf[1] = NUL;
-  }
+  buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
 
   // Lock the text to avoid weird things from happening.
   textlock++;

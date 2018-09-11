@@ -1762,14 +1762,9 @@ static int command_line_handle_key(CommandLineState *s)
   if (IS_SPECIAL(s->c) || mod_mask != 0) {
     put_on_cmdline(get_special_key_name(s->c, mod_mask), -1, true);
   } else {
-    if (has_mbyte) {
-      s->j = (*mb_char2bytes)(s->c, IObuff);
-      IObuff[s->j] = NUL;                // exclude composing chars
-      put_on_cmdline(IObuff, s->j, true);
-    } else {
-      IObuff[0] = s->c;
-      put_on_cmdline(IObuff, 1, true);
-    }
+    s->j = utf_char2bytes(s->c, IObuff);
+    IObuff[s->j] = NUL;                // exclude composing chars
+    put_on_cmdline(IObuff, s->j, true);
   }
   return command_line_changed(s);
 }
@@ -2372,16 +2367,11 @@ redraw:
     if (IS_SPECIAL(c1)) {
       c1 = '?';
     }
-    if (has_mbyte) {
-      len = (*mb_char2bytes)(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
-    } else {
-      len = 1;
-      ((char_u *)line_ga.ga_data)[line_ga.ga_len] = c1;
-    }
-    if (c1 == '\n')
+    len = utf_char2bytes(c1, (char_u *)line_ga.ga_data + line_ga.ga_len);
+    if (c1 == '\n') {
       msg_putchar('\n');
-    else if (c1 == TAB) {
-      /* Don't use chartabsize(), 'ts' can be different */
+    } else if (c1 == TAB) {
+      // Don't use chartabsize(), 'ts' can be different.
       do {
         msg_putchar(' ');
       } while (++vcol % 8);
@@ -2897,12 +2887,12 @@ static void draw_cmdline(int start, int len)
 
         u8c = arabic_shape(u8c, NULL, &u8cc[0], pc, pc1, nc);
 
-        newlen += (*mb_char2bytes)(u8c, arshape_buf + newlen);
+        newlen += utf_char2bytes(u8c, arshape_buf + newlen);
         if (u8cc[0] != 0) {
-          newlen += (*mb_char2bytes)(u8cc[0], arshape_buf + newlen);
-          if (u8cc[1] != 0)
-            newlen += (*mb_char2bytes)(u8cc[1],
-                                       arshape_buf + newlen);
+          newlen += utf_char2bytes(u8cc[0], arshape_buf + newlen);
+          if (u8cc[1] != 0) {
+            newlen += utf_char2bytes(u8cc[1], arshape_buf + newlen);
+          }
         }
       } else {
         prev_c = u8c;

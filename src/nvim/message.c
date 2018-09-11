@@ -1121,7 +1121,7 @@ void msg_putchar_attr(int c, int attr)
     buf[2] = (char)K_THIRD(c);
     buf[3] = NUL;
   } else {
-    buf[(*mb_char2bytes)(c, (char_u *)buf)] = NUL;
+    buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
   }
   msg_puts_attr(buf, attr);
 }
