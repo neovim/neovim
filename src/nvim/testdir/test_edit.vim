@@ -314,6 +314,33 @@ func! Test_edit_11()
   bw!
 endfunc
 
+func! Test_edit_11_indentexpr()
+  " Test that indenting kicks in
+  new
+  " Use indentexpr instead of cindenting
+  func! Do_Indent()
+    let pline=prevnonblank(v:lnum)
+    if empty(getline(v:lnum))
+      if getline(pline) =~ 'if\|then'
+        return shiftwidth()
+      else
+        return 0
+      endif
+    else
+        return 0
+    endif
+  endfunc
+  setl indentexpr=Do_Indent() indentkeys+=0=then,0=fi
+  call setline(1, ['if [ $this ]'])
+  call cursor(1, 1)
+  call feedkeys("othen\<cr>that\<cr>fi", 'tnix')
+  call assert_equal(['if [ $this ]', "then", "\<tab>that", "fi"], getline(1, '$'))
+  set cinkeys&vim indentkeys&vim
+  set nocindent indentexpr=
+  delfu Do_Indent
+  bw!
+endfunc
+
 func! Test_edit_12()
   " Test changing indent in replace mode
   new
