@@ -96,16 +96,25 @@ static void comp_botline(win_T *wp)
   set_empty_rows(wp, done);
 }
 
-/*
-* Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is
-* set.
-*/
+static linenr_T last_cursorline = 0;
+
+// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 static void redraw_for_cursorline(win_T *wp)
 {
   if ((wp->w_p_rnu || wp->w_p_cul)
       && (wp->w_valid & VALID_CROW) == 0
       && !pum_visible()) {
-    redraw_win_later(wp, SOME_VALID);
+    if (!wp->w_p_rnu && wp->w_redr_type <= VALID && last_cursorline != 0) {
+      // "last_cursorline" may be set for another window, worst case we
+      // redraw too much.  This is optimized for moving the cursor around
+      // in the same window.
+      redrawWinline(wp, last_cursorline, false);
+      redrawWinline(wp, wp->w_cursor.lnum, false);
+      last_cursorline = wp->w_cursor.lnum;
+      redraw_win_later(wp, VALID);
+    } else {
+      redraw_win_later(wp, SOME_VALID);
+    }
   }
 }
 

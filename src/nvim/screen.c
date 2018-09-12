@@ -200,24 +200,28 @@ void redraw_buf_later(buf_T *buf, int type)
  * may become invalid and the whole window will have to be redrawn.
  */
 void
-redrawWinline (
+redrawWinline(
+    win_T *wp,
     linenr_T lnum,
     int invalid             /* window line height is invalid now */
 )
 {
   int i;
 
-  if (curwin->w_redraw_top == 0 || curwin->w_redraw_top > lnum)
-    curwin->w_redraw_top = lnum;
-  if (curwin->w_redraw_bot == 0 || curwin->w_redraw_bot < lnum)
-    curwin->w_redraw_bot = lnum;
-  redraw_later(VALID);
+    if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
+        wp->w_redraw_top = lnum;
+    }
+    if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
+        wp->w_redraw_bot = lnum;
+    }
+    redraw_win_later(wp, VALID);
 
   if (invalid) {
-    /* A w_lines[] entry for this lnum has become invalid. */
-    i = find_wl_entry(curwin, lnum);
-    if (i >= 0)
-      curwin->w_lines[i].wl_valid = FALSE;
+    // A w_lines[] entry for this lnum has become invalid.
+    i = find_wl_entry(wp, lnum);
+    if (i >= 0) {
+      wp->w_lines[i].wl_valid = false;
+    }
   }
 }
 
