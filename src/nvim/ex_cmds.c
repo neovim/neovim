@@ -1176,16 +1176,6 @@ static void do_filter(
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
   ui_cursor_goto((int)Rows - 1, 0);
 
-  /*
-   * When not redirecting the output the command can write anything to the
-   * screen. If 'shellredir' is equal to ">", screen may be messed up by
-   * stderr output of external command. Clear the screen later.
-   * If do_in is FALSE, this could be something like ":r !cat", which may
-   * also mess up the screen, clear it later.
-   */
-  if (!do_out || STRCMP(p_srr, ">") == 0 || !do_in)
-    redraw_later_clear();
-
   if (do_out) {
     if (u_save((linenr_T)(line2), (linenr_T)(line2 + 1)) == FAIL) {
       xfree(cmd_buf);
@@ -1195,19 +1185,8 @@ static void do_filter(
   }
   read_linecount = curbuf->b_ml.ml_line_count;
 
-  // When call_shell() fails wait_return() is called to give the user a chance
-  // to read the error messages. Otherwise errors are ignored, so you can see
-  // the error messages from the command that appear on stdout; use 'u' to fix
-  // the text.
   // Pass on the kShellOptDoOut flag when the output is being redirected.
-  if (call_shell(
-        cmd_buf,
-        kShellOptFilter | shell_flags,
-        NULL
-        )) {
-    redraw_later_clear();
-    wait_return(FALSE);
-  }
+  call_shell(cmd_buf, kShellOptFilter | shell_flags, NULL);
   xfree(cmd_buf);
 
   did_check_timestamps = FALSE;
@@ -1308,23 +1287,17 @@ filterend:
   xfree(otmp);
 }
 
-/*
- * Call a shell to execute a command.
- * When "cmd" is NULL start an interactive shell.
- */
+// Call a shell to execute a command.
+// When "cmd" is NULL start an interactive shell.
 void
 do_shell(
     char_u *cmd,
     int flags             // may be SHELL_DOOUT when output is redirected
 )
 {
-  int save_nwr;
-
-  /*
-   * Disallow shell commands in restricted mode (-Z)
-   * Disallow shell commands from .exrc and .vimrc in current directory for
-   * security reasons.
-   */
+  // Disallow shell commands in restricted mode (-Z)
+  // Disallow shell commands from .exrc and .vimrc in current directory for
+  // security reasons.
   if (check_restricted() || check_secure()) {
     msg_end();
     return;
@@ -1362,33 +1335,7 @@ do_shell(
   msg_row = Rows - 1;
   msg_col = 0;
 
-  if (autocmd_busy) {
-    if (msg_silent == 0)
-      redraw_later_clear();
-  } else {
-    /*
-     * For ":sh" there is no need to call wait_return(), just redraw.
-     * Also for the Win32 GUI (the output is in a console window).
-     * Otherwise there is probably text on the screen that the user wants
-     * to read before redrawing, so call wait_return().
-     */
-    if (cmd == NULL
-        ) {
-      if (msg_silent == 0)
-        redraw_later_clear();
-      need_wait_return = FALSE;
-    } else {
-      /*
-       * If we switch screens when starttermcap() is called, we really
-       * want to wait for "hit return to continue".
-       */
-      save_nwr = no_wait_return;
-      wait_return(msg_silent == 0);
-      no_wait_return = save_nwr;
-    }
-  }
-
-  /* display any error messages now */
+  // display any error messages now
   display_errors();
 
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);

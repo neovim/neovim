@@ -6342,9 +6342,7 @@ static void ex_hide(exarg_T *eap)
     }
 }
 
-/*
- * ":stop" and ":suspend": Suspend Vim.
- */
+/// ":stop" and ":suspend": Suspend Vim.
 static void ex_stop(exarg_T *eap)
 {
   // Disallow suspending in restricted mode (-Z)
@@ -6363,7 +6361,6 @@ static void ex_stop(exarg_T *eap)
     ui_flush();
     maketitle();
     resettitle();  // force updating the title
-    redraw_later_clear();
     ui_refresh();  // may have resized window
     apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
   }

@@ -101,6 +101,8 @@ void shell_free_argv(char **argv)
 /// @param cmd The command to execute, or NULL to run an interactive shell.
 /// @param opts Options that control how the shell will work.
 /// @param extra_args Extra arguments to the shell, or NULL.
+///
+/// @return shell command exit code
 int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;

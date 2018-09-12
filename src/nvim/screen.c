@@ -158,10 +158,7 @@ void redraw_win_later(win_T *wp, int type)
   }
 }
 
-/*
- * Force a complete redraw later.  Also resets the highlighting.  To be used
- * after executing a shell command that messes up the screen.
- */
+/// Forces a complete redraw later.  Also resets the highlighting.
 void redraw_later_clear(void)
 {
   redraw_all_later(CLEAR);

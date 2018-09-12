@@ -2707,8 +2707,10 @@ void fast_breakcheck(void)
   }
 }
 
-// os_call_shell wrapper. Handles 'verbose', :profile, and v:shell_error.
-// Invalidates cached tags.
+/// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
+/// Invalidates cached tags.
+///
+/// @return shell command exit code
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int retval;
