@@ -1338,6 +1338,14 @@ func! Test_edit_rightleft()
   bw!
 endfunc
 
+func Test_edit_backtick()
+  next a\`b c
+  call assert_equal('a`b', expand('%'))
+  next
+  call assert_equal('c', expand('%'))
+  call assert_equal('a\`b c', expand('##'))
+endfunc
+
 func Test_edit_quit()
   edit foo.txt
   split
@@ -1389,4 +1397,19 @@ func Test_edit_complete_very_long_name()
     exe 'winpos ' . winposx . ' ' . winposy
   endif
   set swapfile&
+endfunc
+
+func Test_edit_alt()
+  " Keeping the cursor line didn't happen when the first line has indent.
+  new
+  call setline(1, ['  one', 'two', 'three'])
+  w XAltFile
+  $
+  call assert_equal(3, line('.'))
+  e Xother
+  e #
+  call assert_equal(3, line('.'))
+
+  bwipe XAltFile
+  call delete('XAltFile')
 endfunc
