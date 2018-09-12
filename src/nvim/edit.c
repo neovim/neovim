@@ -298,7 +298,7 @@ static void insert_enter(InsertState *s)
 
   // Check if the cursor line needs redrawing before changing State. If
   // 'concealcursor' is "n" it needs to be redrawn without concealing.
-  conceal_check_cursur_line();
+  conceal_check_cursor_line();
 
   // When doing a paste with the middle mouse button, Insstart is set to
   // where the paste started.

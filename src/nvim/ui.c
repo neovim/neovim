@@ -393,7 +393,7 @@ void ui_cursor_shape(void)
     mode_idx = new_mode_idx;
     pending_mode_update = true;
   }
-  conceal_check_cursur_line();
+  conceal_check_cursor_line();
 }
 
 /// Returns true if `widget` is externalized.

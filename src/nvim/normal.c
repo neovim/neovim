@@ -6497,7 +6497,7 @@ void may_start_select(int c)
 static void n_start_visual_mode(int c)
 {
   /* Check for redraw before changing the state. */
-  conceal_check_cursur_line();
+  conceal_check_cursor_line();
 
   VIsual_mode = c;
   VIsual_active = true;
@@ -6515,7 +6515,7 @@ static void n_start_visual_mode(int c)
 
   setmouse();
   /* Check for redraw after changing the state. */
-  conceal_check_cursur_line();
+  conceal_check_cursor_line();
 
   if (p_smd && msg_silent == 0)
     redraw_cmdline = true;      /* show visual mode later */
