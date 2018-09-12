@@ -509,7 +509,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
         start_search_hl();
         prepare_search_hl(wp, lnum);
         update_window_hl(wp, false);
-        win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
+        win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false, false);
         end_search_hl();
         break;
       }
@@ -1233,15 +1233,13 @@ static void win_update(win_T *wp)
      * with.  It is used further down when the line doesn't fit. */
     srow = row;
 
-    /*
-     * Update a line when it is in an area that needs updating, when it
-     * has changes or w_lines[idx] is invalid.
-     * bot_start may be halfway through a wrapped line after using
-     * win_del_lines(), check if the current line includes it.
-     * When syntax folding is being used, the saved syntax states will
-     * already have been updated, we can't see where the syntax state is
-     * the same again, just update until the end of the window.
-     */
+    // Update a line when it is in an area that needs updating, when it
+    // has changes or w_lines[idx] is invalid.
+    // "bot_start" may be halfway a wrapped line after using
+    // win_del_lines(), check if the current line includes it.
+    // When syntax folding is being used, the saved syntax states will
+    // already have been updated, we can't see where the syntax state is
+    // the same again, just update until the end of the window.
     if (row < top_end
         || (row >= mid_start && row < mid_end)
         || top_to_mod
@@ -1439,7 +1437,7 @@ static void win_update(win_T *wp)
         /*
          * Display one line.
          */
-        row = win_line(wp, lnum, srow, wp->w_height, mod_top == 0);
+        row = win_line(wp, lnum, srow, wp->w_height, mod_top == 0, false);
 
         wp->w_lines[idx].wl_folded = FALSE;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1466,7 +1464,13 @@ static void win_update(win_T *wp)
       ++idx;
       lnum += fold_count + 1;
     } else {
-      /* This line does not need updating, advance to the next one */
+      if (wp->w_p_rnu) {
+        // 'relativenumber' set: The text doesn't need to be drawn, but
+        // the number column nearly always does.
+        (void)win_line(wp, lnum, srow, wp->w_height, true, true);
+      }
+
+      // This line does not need to be drawn, advance to the next one.
       row += wp->w_lines[idx++].wl_size;
       if (row > wp->w_height)           /* past end of screen */
         break;
@@ -2110,7 +2114,8 @@ win_line (
     linenr_T lnum,
     int startrow,
     int endrow,
-    bool nochange                    /* not updating for changed text */
+    bool nochange,                    // not updating for changed text
+    bool number_only                  // only update the number column
 )
 {
   unsigned off;                         // offset in ScreenLines/ScreenAttrs
@@ -2254,10 +2259,9 @@ win_line (
   row = startrow;
   screen_row = row + wp->w_winrow;
 
-  /*
-   * To speed up the loop below, set extra_check when there is linebreak,
-   * trailing white space and/or syntax processing to be done.
-   */
+  if (!number_only) {
+  // To speed up the loop below, set extra_check when there is linebreak,
+  // trailing white space and/or syntax processing to be done.
   extra_check = wp->w_p_lbr;
   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
     /* Prepare for syntax highlighting in this line.  When there is an
@@ -2404,6 +2408,7 @@ win_line (
     area_highlighting = true;
     attr = win_hl_attr(wp, HLF_I);
   }
+  }
 
   filler_lines = diff_check(wp, lnum);
   if (filler_lines < 0) {
@@ -2464,7 +2469,7 @@ win_line (
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
   ptr = line;
 
-  if (has_spell) {
+  if (has_spell && !number_only) {
     // For checking first word with a capital skip white space.
     if (cap_col == 0) {
       cap_col = (int)getwhitecols(line);
@@ -2517,7 +2522,7 @@ win_line (
     v = wp->w_skipcol;
   else
     v = wp->w_leftcol;
-  if (v > 0) {
+  if (v > 0 && !number_only) {
     char_u  *prev_ptr = ptr;
     while (vcol < v && *ptr != NUL) {
       c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
@@ -2626,7 +2631,7 @@ win_line (
    */
   cur = wp->w_match_head;
   shl_flag = false;
-  while (cur != NULL || !shl_flag) {
+  while ((cur != NULL || !shl_flag) && !number_only) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;
@@ -2895,11 +2900,11 @@ win_line (
       }
     }
 
-    /* When still displaying '$' of change command, stop at cursor */
-    if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
-        && filler_todo <= 0
-        ) {
+    // When still displaying '$' of change command, stop at cursor
+    if ((dollar_vcol >= 0 && wp == curwin
+         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
+         && filler_todo <= 0)
+        || (number_only && draw_state > WL_NR)) {
       screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp,
                   wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
