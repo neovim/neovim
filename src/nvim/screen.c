@@ -7090,11 +7090,12 @@ void screen_resize(int width, int height)
         update_topline();
         if (pum_drawn()) {
           redraw_later(NOT_VALID);
-          ins_compl_show_pum();           /* This includes the redraw. */
-        } else
-          update_screen(NOT_VALID);
-        if (redrawing())
+          ins_compl_show_pum();
+        }
+        update_screen(NOT_VALID);
+        if (redrawing()) {
           setcursor();
+        }
       }
     }
   }

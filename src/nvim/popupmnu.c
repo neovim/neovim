@@ -81,225 +81,224 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     pum_external = ui_is_external(kUIPopupmenu);
   }
 
-redo:
-  // Mark the pum as visible already here,
-  // to avoid that must_redraw is set when 'cursorcolumn' is on.
-  pum_is_visible = true;
-  validate_cursor_col();
-  above_row = 0;
-  below_row = cmdline_row;
+  do {
+    // Mark the pum as visible already here,
+    // to avoid that must_redraw is set when 'cursorcolumn' is on.
+    pum_is_visible = true;
+    validate_cursor_col();
+    above_row = 0;
+    below_row = cmdline_row;
 
-  // anchor position: the start of the completed word
-  row = curwin->w_wrow + curwin->w_winrow;
-  if (curwin->w_p_rl) {
-    col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
-  } else {
-    col = curwin->w_wincol + curwin->w_wcol;
-  }
+    // anchor position: the start of the completed word
+    row = curwin->w_wrow + curwin->w_winrow;
+    if (curwin->w_p_rl) {
+      col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
+    } else {
+      col = curwin->w_wincol + curwin->w_wcol;
+    }
 
-  if (pum_external) {
-    if (array_changed) {
-      Array arr = ARRAY_DICT_INIT;
-      for (i = 0; i < size; i++) {
-        Array item = ARRAY_DICT_INIT;
-        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
-        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
-        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_extra)));
-        ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
-        ADD(arr, ARRAY_OBJ(item));
+    if (pum_external) {
+      if (array_changed) {
+        Array arr = ARRAY_DICT_INIT;
+        for (i = 0; i < size; i++) {
+          Array item = ARRAY_DICT_INIT;
+          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
+          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
+          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_extra)));
+          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
+          ADD(arr, ARRAY_OBJ(item));
+        }
+        ui_call_popupmenu_show(arr, selected, row, col);
+      } else {
+        ui_call_popupmenu_select(selected);
       }
-      ui_call_popupmenu_show(arr, selected, row, col);
-    } else {
-      ui_call_popupmenu_select(selected);
-    }
-    return;
-  }
-
-  def_width = PUM_DEF_WIDTH;
-  max_width = 0;
-  kind_width = 0;
-  extra_width = 0;
-
-  win_T *pvwin = NULL;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_pvw) {
-      pvwin = wp;
-      break;
-    }
-  }
-
-  if (pvwin != NULL) {
-    if (pvwin->w_wrow < curwin->w_wrow) {
-      above_row = pvwin->w_wrow + pvwin->w_height;
-    } else if (pvwin->w_wrow > pvwin->w_wrow + curwin->w_height) {
-      below_row = pvwin->w_wrow;
-    }
-  }
-
-  // Figure out the size and position of the pum.
-  if (size < PUM_DEF_HEIGHT) {
-    pum_height = size;
-  } else {
-    pum_height = PUM_DEF_HEIGHT;
-  }
-
-  if ((p_ph > 0) && (pum_height > p_ph)) {
-    pum_height = (int)p_ph;
-  }
-
-  // Put the pum below "row" if possible.  If there are few lines decide on
-  // where there is more room.
-  if (row + 2 >= below_row - pum_height
-      && row - above_row > (below_row - above_row) / 2) {
-    // pum above "row"
-
-    // Leave two lines of context if possible
-    if (curwin->w_wrow - curwin->w_cline_row >= 2) {
-      context_lines = 2;
-    } else {
-      context_lines = curwin->w_wrow - curwin->w_cline_row;
+      return;
     }
 
-    if (row >= size + context_lines) {
-      pum_row = row - size - context_lines;
+    def_width = PUM_DEF_WIDTH;
+    max_width = 0;
+    kind_width = 0;
+    extra_width = 0;
+
+    win_T *pvwin = NULL;
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_p_pvw) {
+        pvwin = wp;
+        break;
+      }
+    }
+
+    if (pvwin != NULL) {
+      if (pvwin->w_winrow < curwin->w_winrow) {
+        above_row = pvwin->w_winrow + pvwin->w_height;
+      } else if (pvwin->w_winrow > curwin->w_winrow + curwin->w_height) {
+        below_row = pvwin->w_winrow;
+      }
+    }
+
+    // Figure out the size and position of the pum.
+    if (size < PUM_DEF_HEIGHT) {
       pum_height = size;
     } else {
-      pum_row = 0;
-      pum_height = row - context_lines;
-    }
-
-    if ((p_ph > 0) && (pum_height > p_ph)) {
-      pum_row += pum_height - (int)p_ph;
-      pum_height = (int)p_ph;
-    }
-  } else {
-    // pum below "row"
-
-    // Leave two lines of context if possible
-    if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
-      context_lines = 3;
-    } else {
-      context_lines = curwin->w_cline_row
-                      + curwin->w_cline_height - curwin->w_wrow;
-    }
-
-    pum_row = row + context_lines;
-    if (size > below_row - pum_row) {
-      pum_height = below_row - pum_row;
-    } else {
-      pum_height = size;
+      pum_height = PUM_DEF_HEIGHT;
     }
 
     if ((p_ph > 0) && (pum_height > p_ph)) {
       pum_height = (int)p_ph;
     }
-  }
 
-  // don't display when we only have room for one line
-  if ((pum_height < 1) || ((pum_height == 1) && (size > 1))) {
-    return;
-  }
+    // Put the pum below "row" if possible.  If there are few lines decide on
+    // where there is more room.
+    if (row + 2 >= below_row - pum_height
+        && row - above_row > (below_row - above_row) / 2) {
+      // pum above "row"
 
-  // If there is a preview window at the above avoid drawing over it.
-  if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
-    pum_row += above_row;
-    pum_height -= above_row;
-  }
-
-  // Compute the width of the widest match and the widest extra.
-  for (i = 0; i < size; ++i) {
-    w = vim_strsize(array[i].pum_text);
-
-    if (max_width < w) {
-      max_width = w;
-    }
-
-    if (array[i].pum_kind != NULL) {
-      w = vim_strsize(array[i].pum_kind) + 1;
-
-      if (kind_width < w) {
-        kind_width = w;
+      // Leave two lines of context if possible
+      if (curwin->w_wrow - curwin->w_cline_row >= 2) {
+        context_lines = 2;
+      } else {
+        context_lines = curwin->w_wrow - curwin->w_cline_row;
       }
-    }
 
-    if (array[i].pum_extra != NULL) {
-      w = vim_strsize(array[i].pum_extra) + 1;
-
-      if (extra_width < w) {
-        extra_width = w;
+      if (row >= size + context_lines) {
+        pum_row = row - size - context_lines;
+        pum_height = size;
+      } else {
+        pum_row = 0;
+        pum_height = row - context_lines;
       }
-    }
-  }
-  pum_base_width = max_width;
-  pum_kind_width = kind_width;
 
-  // if there are more items than room we need a scrollbar
-  if (pum_height < size) {
-    pum_scrollbar = 1;
-    max_width++;
-  } else {
-    pum_scrollbar = 0;
-  }
-
-  if (def_width < max_width) {
-    def_width = max_width;
-  }
-
-  if ((((col < Columns - PUM_DEF_WIDTH) || (col < Columns - max_width))
-       && !curwin->w_p_rl)
-      || (curwin->w_p_rl && ((col > PUM_DEF_WIDTH) || (col > max_width)))) {
-    // align pum column with "col"
-    pum_col = col;
-    if (curwin->w_p_rl) {
-      pum_width = pum_col - pum_scrollbar + 1;
+      if ((p_ph > 0) && (pum_height > p_ph)) {
+        pum_row += pum_height - (int)p_ph;
+        pum_height = (int)p_ph;
+      }
     } else {
-      assert(Columns - pum_col - pum_scrollbar >= INT_MIN
-             && Columns - pum_col - pum_scrollbar <= INT_MAX);
-      pum_width = (int)(Columns - pum_col - pum_scrollbar);
-    }
+      // pum below "row"
 
-    if ((pum_width > max_width + kind_width + extra_width + 1)
-        && (pum_width > PUM_DEF_WIDTH)) {
-      pum_width = max_width + kind_width + extra_width + 1;
+      // Leave two lines of context if possible
+      if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
+        context_lines = 3;
+      } else {
+        context_lines = curwin->w_cline_row
+          + curwin->w_cline_height - curwin->w_wrow;
+      }
 
-      if (pum_width < PUM_DEF_WIDTH) {
-        pum_width = PUM_DEF_WIDTH;
+      pum_row = row + context_lines;
+      if (size > below_row - pum_row) {
+        pum_height = below_row - pum_row;
+      } else {
+        pum_height = size;
+      }
+
+      if ((p_ph > 0) && (pum_height > p_ph)) {
+        pum_height = (int)p_ph;
       }
     }
-  } else if (Columns < def_width) {
-    // not enough room, will use what we have
-    if (curwin->w_p_rl) {
+
+    // don't display when we only have room for one line
+    if ((pum_height < 1) || ((pum_height == 1) && (size > 1))) {
+      return;
+    }
+
+    // If there is a preview window above, avoid drawing over it.
+    if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
+      pum_row += above_row;
+      pum_height -= above_row;
+    }
+
+    // Compute the width of the widest match and the widest extra.
+    for (i = 0; i < size; i++) {
+      w = vim_strsize(array[i].pum_text);
+
+      if (max_width < w) {
+        max_width = w;
+      }
+
+      if (array[i].pum_kind != NULL) {
+        w = vim_strsize(array[i].pum_kind) + 1;
+
+        if (kind_width < w) {
+          kind_width = w;
+        }
+      }
+
+      if (array[i].pum_extra != NULL) {
+        w = vim_strsize(array[i].pum_extra) + 1;
+
+        if (extra_width < w) {
+          extra_width = w;
+        }
+      }
+    }
+    pum_base_width = max_width;
+    pum_kind_width = kind_width;
+
+    // if there are more items than room we need a scrollbar
+    if (pum_height < size) {
+      pum_scrollbar = 1;
+      max_width++;
+    } else {
+      pum_scrollbar = 0;
+    }
+
+    if (def_width < max_width) {
+      def_width = max_width;
+    }
+
+    if ((((col < Columns - PUM_DEF_WIDTH) || (col < Columns - max_width))
+         && !curwin->w_p_rl)
+        || (curwin->w_p_rl && ((col > PUM_DEF_WIDTH) || (col > max_width)))) {
+      // align pum column with "col"
+      pum_col = col;
+      if (curwin->w_p_rl) {
+        pum_width = pum_col - pum_scrollbar + 1;
+      } else {
+        assert(Columns - pum_col - pum_scrollbar >= INT_MIN
+               && Columns - pum_col - pum_scrollbar <= INT_MAX);
+        pum_width = (int)(Columns - pum_col - pum_scrollbar);
+      }
+
+      if ((pum_width > max_width + kind_width + extra_width + 1)
+          && (pum_width > PUM_DEF_WIDTH)) {
+        pum_width = max_width + kind_width + extra_width + 1;
+
+        if (pum_width < PUM_DEF_WIDTH) {
+          pum_width = PUM_DEF_WIDTH;
+        }
+      }
+    } else if (Columns < def_width) {
+      // not enough room, will use what we have
+      if (curwin->w_p_rl) {
+        assert(Columns - 1 >= INT_MIN);
+        pum_col = (int)(Columns - 1);
+      } else {
+        pum_col = 0;
+      }
       assert(Columns - 1 >= INT_MIN);
-      pum_col = (int)(Columns - 1);
+      pum_width = (int)(Columns - 1);
     } else {
-      pum_col = 0;
-    }
-    assert(Columns - 1 >= INT_MIN);
-    pum_width = (int)(Columns - 1);
-  } else {
-    if (max_width > PUM_DEF_WIDTH) {
-      // truncate
-      max_width = PUM_DEF_WIDTH;
+      if (max_width > PUM_DEF_WIDTH) {
+        // truncate
+        max_width = PUM_DEF_WIDTH;
+      }
+
+      if (curwin->w_p_rl) {
+        pum_col = max_width - 1;
+      } else {
+        assert(Columns - max_width >= INT_MIN
+               && Columns - max_width <= INT_MAX);
+        pum_col = (int)(Columns - max_width);
+      }
+      pum_width = max_width - pum_scrollbar;
     }
 
-    if (curwin->w_p_rl) {
-      pum_col = max_width - 1;
-    } else {
-      assert(Columns - max_width >= INT_MIN && Columns - max_width <= INT_MAX);
-      pum_col = (int)(Columns - max_width);
-    }
-    pum_width = max_width - pum_scrollbar;
-  }
+    pum_array = array;
+    pum_size = size;
 
-  pum_array = array;
-  pum_size = size;
-
-  // Set selected item and redraw.  If the window size changed need to redo
-  // the positioning.  Limit this to two times, when there is not much
-  // room the window size will keep changing.
-  if (pum_set_selected(selected, redo_count) && (++redo_count <= 2)) {
-    goto redo;
-  }
+    // Set selected item and redraw.  If the window size changed need to redo
+    // the positioning.  Limit this to two times, when there is not much
+    // room the window size will keep changing.
+  } while (pum_set_selected(selected, redo_count) && (++redo_count <= 2));
 }
 
 /// Redraw the popup menu, using "pum_first" and "pum_selected".

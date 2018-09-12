@@ -1,5 +1,10 @@
 " Functions shared by several tests.
 
+" Only load this script once.
+if exists('*WaitFor')
+  finish
+endif
+
 " {Nvim}
 " Filepath captured from output may be truncated, like this:
 "   /home/va...estdir/Xtest-tmpdir/nvimxbXN4i/10
