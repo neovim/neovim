@@ -1912,6 +1912,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
         if ((opt_type == 1 && *op == '.')
             || (opt_type == 0 && *op != '.')) {
           EMSG2(_(e_letwrong), op);
+          s = NULL;  // don't set the value
         } else {
           if (opt_type == 1) {  // number
             if (*op == '+') {
