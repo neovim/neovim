@@ -1427,10 +1427,7 @@ static void win_update(win_T *wp)
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = true;
 
-      // Past end of the window or end of the screen. Note that after
-      // resizing wp->w_height may be end up too big. That's a problem
-      // elsewhere, but prevent a crash here.
-      if (row > wp->w_grid.Rows || row + wp->w_winrow >= Rows) {
+      if (row > wp->w_grid.Rows) {         // past end of grid
         // we may need the size of that too long line later on
         if (dollar_vcol == -1) {
           wp->w_lines[idx].wl_size = plines_win(wp, lnum, true);
@@ -2909,7 +2906,7 @@ win_line (
       if (wp->w_p_cuc) {
         row = wp->w_cline_row + wp->w_cline_height;
       } else {
-        row = wp->w_grid.Rows;
+        row = grid->Rows;
       }
       break;
     }
@@ -4246,11 +4243,21 @@ win_line (
       grid_put_linebuf(grid, row, 0, col - boguscols, grid->Columns, wp->w_p_rl,
                        wp, wp->w_hl_attr_normal, wrap);
       if (wrap) {
+        ScreenGrid *current_grid = grid;
+        int current_row = row;
+
+        // if we're not in ext_multigrid mode, grid has not been allocated; keep
+        // working on the default_grid.
+        if (!ui_is_external(kUIMultigrid)) {
+          current_row += grid->OffsetRow;
+          current_grid = &default_grid;
+        }
+
         // Force a redraw of the first column of the next line.
-        grid->ScreenAttrs[grid->LineOffset[row + 1]] = -1;
+        current_grid->ScreenAttrs[current_grid->LineOffset[current_row+1]] = -1;
 
         // Remember that the line wraps, used for modeless copy.
-        grid->LineWraps[row] = true;
+        current_grid->LineWraps[current_row] = true;
       }
 
       boguscols = 0;
