@@ -170,7 +170,37 @@ describe('popup placement', function()
       ]])
   end)
 
-  it('works with preview-window above and inverted', function()
+  it('works with preview-window above and tall and inverted', function()
+    feed(':ped<CR><c-w>8+')
+    feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
+    feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
+    feed('kk<cr>ll<cr>mm<cr>nn<cr>oo<cr>')
+    feed('<c-x><c-n>')
+    screen:expect([[
+      aa                              |
+      bb                              |
+      cc                              |
+      dd                              |
+      {s:aa             }{c: }{3:ew][+]          }|
+      {n:bb             }{c: }                |
+      {n:cc             }{c: }                |
+      {n:dd             }{c: }                |
+      {n:ee             }{c: }                |
+      {n:ff             }{c: }                |
+      {n:gg             }{c: }                |
+      {n:hh             }{c: }                |
+      {n:ii             }{c: }                |
+      {n:jj             }{c: }                |
+      {n:kk             }{c: }                |
+      {n:ll             }{s: }                |
+      {n:mm             }{s: }                |
+      aa^                              |
+      {4:[No Name] [+]                   }|
+      {2:-- }{5:match 1 of 15}                |
+    ]])
+  end)
+
+  it('works with preview-window above and short and inverted', function()
     feed(':ped<CR><c-w>4+')
     feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
     feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -183,16 +213,16 @@ describe('popup placement', function()
       ee                              |
       ff                              |
       gg                              |
-      hh                              |
-      {3:[No Name] [Preview][+]          }|
-      cc                              |
-      dd                              |
-      ee                              |
-      ff                              |
-      gg                              |
-      hh                              |
-      {s:aa             }{c: }                |
-      {n:bb             }{s: }                |
+      {s:aa             }                 |
+      {n:bb             }{3:iew][+]          }|
+      {n:cc             }                 |
+      {n:dd             }                 |
+      {n:ee             }                 |
+      {n:ff             }                 |
+      {n:gg             }                 |
+      {n:hh             }                 |
+      {n:ii             }                 |
+      {n:jj             }                 |
       aa^                              |
       {4:[No Name] [+]                   }|
       {2:-- }{5:match 1 of 10}                |
