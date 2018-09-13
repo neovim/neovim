@@ -496,7 +496,7 @@ typedef enum {
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
 
-static uint64_t last_timer_id = 0;
+static uint64_t last_timer_id = 1;
 static PMap(uint64_t) *timers = NULL;
 
 /// Dummy va_list for passing to vim_snprintf
