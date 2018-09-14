@@ -316,6 +316,12 @@ static void tui_terminal_after_startup(UI *ui)
 static void tui_terminal_stop(UI *ui)
 {
   TUIData *data = ui->data;
+  if (uv_is_closing(STRUCT_CAST(uv_handle_t, &data->output_handle))) {
+    // Race between SIGCONT (tui.c) and SIGHUP (os/signal.c)? #8075
+    ELOG("TUI already stopped (race?)");
+    ui->data = NULL;  // Flag UI as "stopped".
+    return;
+  }
   term_input_stop(&data->input);
   signal_watcher_stop(&data->winch_handle);
   terminfo_stop(ui);
@@ -325,8 +331,7 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  // Flag UI as "stopped".
-  ui->data = NULL;
+  ui->data = NULL;  // Flag UI as "stopped".
 }
 
 /// Returns true if UI `ui` is stopped.
