@@ -80,7 +80,7 @@ func Test_marks_cmd()
   w!
 
   b Xone
-  let a=split(execute('marks'), "\n")
+  let a = split(execute('marks'), "\n")
   call assert_equal(9, len(a))
   call assert_equal('mark line  col file/text', a[0])
   call assert_equal(" '      2    0 bbb", a[1])
@@ -93,7 +93,7 @@ func Test_marks_cmd()
   call assert_equal(' .      2    0 bbb', a[8])
 
   b Xtwo
-  let a=split(execute('marks'), "\n")
+  let a = split(execute('marks'), "\n")
   call assert_equal(9, len(a))
   call assert_equal('mark line  col file/text', a[0])
   call assert_equal(" '      1    0 ccc", a[1])
@@ -107,7 +107,7 @@ func Test_marks_cmd()
 
   b Xone
   delmarks aB
-  let a=split(execute('marks aBcD'), "\n")
+  let a = split(execute('marks aBcD'), "\n")
   call assert_equal(2, len(a))
   call assert_equal('mark line  col file/text', a[0])
   call assert_equal(' D      2    0 Xtwo', a[1])
@@ -119,4 +119,23 @@ func Test_marks_cmd()
   call delete('Xone')
   call delete('Xtwo')
   %bwipe
+endfunc
+
+func Test_marks_cmd_multibyte()
+  if !has('multi_byte')
+    return
+  endif
+  new Xone
+  call setline(1, ['ááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááá'])
+  norm! ma
+
+  let a = split(execute('marks a'), "\n")
+  call assert_equal(2, len(a))
+  let expected = ' a      1    0 '
+  while strwidth(expected) < &columns - 1
+    let expected .= 'á'
+  endwhile
+  call assert_equal(expected, a[1])
+
+  bwipe!
 endfunc

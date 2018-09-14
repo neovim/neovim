@@ -599,9 +599,10 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
   assert(Columns >= 0 && (size_t)Columns <= SIZE_MAX);
-  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns);
+  // Allow for up to 5 bytes per character.
+  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 
-  /* Truncate the line to fit it in the window */
+  // Truncate the line to fit it in the window
   len = 0;
   for (p = s; *p != NUL; MB_PTR_ADV(p)) {
     len += ptr2cells(p);
