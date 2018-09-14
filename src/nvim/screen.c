@@ -1764,7 +1764,6 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   int txtcol;
   int off;
   int ri;
-  ScreenGrid *grid = &wp->w_grid;
 
   /* Build the fold line:
    * 1. Add the cmdwin_type for the command-line window
@@ -1795,11 +1794,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     if (wp->w_p_rl) {
       int i;
 
-      copy_text_attr(off + wp->w_width - fdc - col, buf, fdc,
+      copy_text_attr(off + wp->w_grid.Columns - fdc - col, buf, fdc,
                      win_hl_attr(wp, HLF_FC));
       // reverse the fold column
       for (i = 0; i < fdc; i++) {
-        schar_from_ascii(linebuf_char[off + wp->w_width - i - 1 - col], buf[i]);
+        schar_from_ascii(linebuf_char[off + wp->w_grid.Columns - i - 1 - col], buf[i]);
       }
     } else {
       copy_text_attr(off + col, buf, fdc, win_hl_attr(wp, HLF_FC));
@@ -1809,18 +1808,18 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
 # define RL_MEMSET(p, v, l)  if (wp->w_p_rl) \
     for (ri = 0; ri < l; ++ri) \
-      linebuf_attr[off + (wp->w_width - (p) - (l)) + ri] = v; \
+      linebuf_attr[off + (wp->w_grid.Columns - (p) - (l)) + ri] = v; \
   else \
     for (ri = 0; ri < l; ++ri) \
       linebuf_attr[off + (p) + ri] = v
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
-  RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_width - col);
+  RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_grid.Columns - col);
 
   // If signs are being displayed, add spaces.
   if (signcolumn_on(wp)) {
-      len = wp->w_width - col;
+      len = wp->w_grid.Columns - col;
       if (len > 0) {
           int len_max = win_signcol_width(wp);
           if (len > len_max) {
@@ -1836,7 +1835,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * 3. Add the 'number' or 'relativenumber' column
    */
   if (wp->w_p_nu || wp->w_p_rnu) {
-    len = wp->w_width - col;
+    len = wp->w_grid.Columns - col;
     if (len > 0) {
       int w = number_width(wp);
       long num;
@@ -1862,7 +1861,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       snprintf((char *)buf, FOLD_TEXT_LEN, fmt, w, num);
       if (wp->w_p_rl) {
         // the line number isn't reversed
-        copy_text_attr(off + wp->w_width - len - col, buf, len,
+        copy_text_attr(off + wp->w_grid.Columns - len - col, buf, len,
                        win_hl_attr(wp, HLF_FL));
       } else {
         copy_text_attr(off + col, buf, len, win_hl_attr(wp, HLF_FL));
@@ -1896,7 +1895,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     // if(col + cells > wp->w_width - (wp->w_p_rl ? col : 0)) { break; }
     // This is obvious wrong. If Vim ever fixes this, solve for "cells" again
     // in the correct condition.
-    int maxcells = grid->Columns - col - (wp->w_p_rl ? col : 0);
+    int maxcells = wp->w_grid.Columns - col - (wp->w_p_rl ? col : 0);
     int cells = line_putchar(&s, &linebuf_char[idx], maxcells, wp->w_p_rl);
     if (cells == -1) {
       break;
@@ -1911,7 +1910,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
   schar_T sc;
   schar_from_char(sc, fill_fold);
-  while (col < wp->w_width
+  while (col < wp->w_grid.Columns
          - (wp->w_p_rl ? txtcol : 0)
          ) {
     schar_copy(linebuf_char[off+col++], sc);
@@ -1947,19 +1946,19 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
                                 FALSE))))))) {
       if (VIsual_mode == Ctrl_V) {
         /* Visual block mode: highlight the chars part of the block */
-        if (wp->w_old_cursor_fcol + txtcol < (colnr_T)wp->w_width) {
+        if (wp->w_old_cursor_fcol + txtcol < (colnr_T)wp->w_grid.Columns) {
           if (wp->w_old_cursor_lcol != MAXCOL
               && wp->w_old_cursor_lcol + txtcol
-              < (colnr_T)wp->w_width)
+              < (colnr_T)wp->w_grid.Columns)
             len = wp->w_old_cursor_lcol;
           else
-            len = wp->w_width - txtcol;
+            len = wp->w_grid.Columns - txtcol;
           RL_MEMSET(wp->w_old_cursor_fcol + txtcol, win_hl_attr(wp, HLF_V),
                     len - (int)wp->w_old_cursor_fcol);
         }
       } else {
         // Set all attributes of the text
-        RL_MEMSET(txtcol, win_hl_attr(wp, HLF_V), wp->w_width - txtcol);
+        RL_MEMSET(txtcol, win_hl_attr(wp, HLF_V), wp->w_grid.Columns - txtcol);
       }
     }
   }
@@ -1977,7 +1976,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       } else {
         txtcol -= wp->w_leftcol;
       }
-      if (txtcol >= 0 && txtcol < wp->w_width) {
+      if (txtcol >= 0 && txtcol < wp->w_grid.Columns) {
         linebuf_attr[off + txtcol] =
           hl_combine_attr(linebuf_attr[off + txtcol], win_hl_attr(wp, HLF_MC));
       }
@@ -1993,14 +1992,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       txtcol -= wp->w_skipcol;
     else
       txtcol -= wp->w_leftcol;
-    if (txtcol >= 0 && txtcol < wp->w_width) {
+    if (txtcol >= 0 && txtcol < wp->w_grid.Columns) {
       linebuf_attr[off + txtcol] = hl_combine_attr(
           linebuf_attr[off + txtcol], win_hl_attr(wp, HLF_CUC));
     }
   }
 
-  grid_put_linebuf(grid, row, 0, grid->Columns, grid->Columns, false, wp,
-                   wp->w_hl_attr_normal, false);
+  grid_put_linebuf(&wp->w_grid, row, 0, wp->w_grid.Columns, wp->w_grid.Columns,
+                   false, wp, wp->w_hl_attr_normal, false);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
