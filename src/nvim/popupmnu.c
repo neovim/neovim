@@ -202,7 +202,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
 
     // If there is a preview window above, avoid drawing over it.
     // Do keep at least 10 entries.
-    if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
+    if (pvwin != NULL && pum_row < above_row && pum_height > 10) {
       if (row - above_row < 10) {
         pum_row = row - 10;
         pum_height = 10;
