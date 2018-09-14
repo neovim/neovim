@@ -68,3 +68,71 @@ func Test_setpos()
   call win_gotoid(twowin)
   bwipe!
 endfunc
+
+func Test_marks_cmd()
+  new Xone
+  call setline(1, ['aaa', 'bbb'])
+  norm! maG$mB
+  w!
+  new Xtwo
+  call setline(1, ['ccc', 'ddd'])
+  norm! $mcGmD
+  w!
+
+  b Xone
+  let a = split(execute('marks'), "\n")
+  call assert_equal(9, len(a))
+  call assert_equal('mark line  col file/text', a[0])
+  call assert_equal(" '      2    0 bbb", a[1])
+  call assert_equal(' a      1    0 aaa', a[2])
+  call assert_equal(' B      2    2 bbb', a[3])
+  call assert_equal(' D      2    0 Xtwo', a[4])
+  call assert_equal(' "      1    0 aaa', a[5])
+  call assert_equal(' [      1    0 aaa', a[6])
+  call assert_equal(' ]      2    0 bbb', a[7])
+  call assert_equal(' .      2    0 bbb', a[8])
+
+  b Xtwo
+  let a = split(execute('marks'), "\n")
+  call assert_equal(9, len(a))
+  call assert_equal('mark line  col file/text', a[0])
+  call assert_equal(" '      1    0 ccc", a[1])
+  call assert_equal(' c      1    2 ccc', a[2])
+  call assert_equal(' B      2    2 Xone', a[3])
+  call assert_equal(' D      2    0 ddd', a[4])
+  call assert_equal(' "      2    0 ddd', a[5])
+  call assert_equal(' [      1    0 ccc', a[6])
+  call assert_equal(' ]      2    0 ddd', a[7])
+  call assert_equal(' .      2    0 ddd', a[8])
+
+  b Xone
+  delmarks aB
+  let a = split(execute('marks aBcD'), "\n")
+  call assert_equal(2, len(a))
+  call assert_equal('mark line  col file/text', a[0])
+  call assert_equal(' D      2    0 Xtwo', a[1])
+
+  b Xtwo
+  delmarks cD
+  call assert_fails('marks aBcD', 'E283:')
+
+  call delete('Xone')
+  call delete('Xtwo')
+  %bwipe
+endfunc
+
+func Test_marks_cmd_multibyte()
+  if !has('multi_byte')
+    return
+  endif
+  new Xone
+  call setline(1, [repeat('á', &columns)])
+  norm! ma
+
+  let a = split(execute('marks a'), "\n")
+  call assert_equal(2, len(a))
+  let expected = ' a      1    0 ' . repeat('á', &columns - 16)
+  call assert_equal(expected, a[1])
+
+  bwipe!
+endfunc
