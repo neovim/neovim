@@ -1759,7 +1759,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   win_T               *oldwin = curwin;
   int print_message = TRUE;
   int len;
-  int old_KeyTyped = KeyTyped;                   /* getting file may reset it */
+  const bool old_KeyTyped = KeyTyped;           // getting file may reset it
   int ok = OK;
   bool usable_win;
 
@@ -2932,7 +2932,7 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
   qfline_T    *qfp;
   buf_T       *errbuf;
   int len;
-  int old_KeyTyped = KeyTyped;
+  const bool old_KeyTyped = KeyTyped;
 
   if (old_last == NULL) {
     if (buf != curbuf) {

@@ -266,8 +266,8 @@ do_tag (
         goto end_do_tag;
       }
 
-      if (type == DT_POP) {             /* go to older position */
-        int old_KeyTyped = KeyTyped;
+      if (type == DT_POP) {             // go to older position
+        const bool old_KeyTyped = KeyTyped;
         if ((tagstackidx -= count) < 0) {
           EMSG(_(bottommsg));
           if (tagstackidx + count == 0) {
@@ -2333,7 +2333,7 @@ static int jumpto_tag(
   int save_no_hlsearch;
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
-  int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
+  const bool old_KeyTyped = KeyTyped;       // getting the file may reset it
   const int l_g_do_tagpreview = g_do_tagpreview;
   const size_t len = matching_line_len(lbuf_arg) + 1;
   char_u *lbuf = xmalloc(len);

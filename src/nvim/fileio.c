@@ -6707,6 +6707,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   proftime_T wait_time;
   bool did_save_redobuff = false;
   save_redo_T save_redo;
+  const bool save_KeyTyped = KeyTyped;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -6966,6 +6967,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
+  KeyTyped = save_KeyTyped;
   xfree(fname);
   xfree(sfname);
   --nesting;            /* see matching increment above */

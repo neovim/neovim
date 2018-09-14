@@ -1670,7 +1670,7 @@ static int vgetorpeek(int advance)
     }
     if (c != NUL && !got_int) {
       if (advance) {
-        // KeyTyped = FALSE;  When the command that stuffed something
+        // KeyTyped = false;  When the command that stuffed something
         // was typed, behave like the stuffed command was typed.
         // needed for CTRL-W CTRL-] to open a fold, for example.
         KeyStuffed = true;
