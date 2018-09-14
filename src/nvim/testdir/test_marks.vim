@@ -126,15 +126,12 @@ func Test_marks_cmd_multibyte()
     return
   endif
   new Xone
-  call setline(1, ['ááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááááá'])
+  call setline(1, [repeat('á', &columns)])
   norm! ma
 
   let a = split(execute('marks a'), "\n")
   call assert_equal(2, len(a))
-  let expected = ' a      1    0 '
-  while strwidth(expected) < &columns - 1
-    let expected .= 'á'
-  endwhile
+  let expected = ' a      1    0 ' . repeat('á', &columns - 16)
   call assert_equal(expected, a[1])
 
   bwipe!
