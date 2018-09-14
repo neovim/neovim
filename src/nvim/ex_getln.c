@@ -623,7 +623,7 @@ static int command_line_execute(VimState *state, int key)
     }
     s->wim_index = 0;
     if (p_wmnu && wild_menu_showing != 0) {
-      int skt = KeyTyped;
+      const bool skt = KeyTyped;
       int old_RedrawingDisabled = RedrawingDisabled;
 
       if (ccline.input_fn) {
@@ -6108,7 +6108,7 @@ static int open_cmdwin(void)
   RedrawingDisabled = i;
   restore_batch_count(save_count);
 
-  int save_KeyTyped = KeyTyped;
+  const bool save_KeyTyped = KeyTyped;
 
   /* Trigger CmdwinLeave autocommands. */
   apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);

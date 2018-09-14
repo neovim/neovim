@@ -4395,7 +4395,7 @@ void ex_help(exarg_T *eap)
   buf_T       *buf;
   int len;
   char_u      *lang;
-  int old_KeyTyped = KeyTyped;
+  const bool old_KeyTyped = KeyTyped;
 
   if (eap != NULL) {
     /*
