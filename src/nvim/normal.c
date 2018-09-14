@@ -5042,7 +5042,10 @@ static void nv_scroll(cmdarg_T *cap)
       curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   }
 
-  cursor_correct();     /* correct for 'so' */
+  // Correct for 'so', except when an operator is pending.
+  if (cap->oap->op_type == OP_NOP) {
+    cursor_correct();
+  }
   beginline(BL_SOL | BL_FIX);
 }
 

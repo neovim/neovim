@@ -1271,7 +1271,10 @@ the current line is included.  You can then use "%" to go to the matching line.
 H			To line [count] from top (Home) of window (default:
 			first line on the window) on the first non-blank
 			character |linewise|.  See also 'startofline' option.
-			Cursor is adjusted for 'scrolloff' option.
+			Cursor is adjusted for 'scrolloff' option, unless an
+			operator is pending, in which case the text may
+			scroll.  E.g. "yH" yanks from the first visible line
+			until the cursor line (inclusive).
 
 						*M*
 M			To Middle line of window, on the first non-blank
@@ -1281,7 +1284,10 @@ M			To Middle line of window, on the first non-blank
 L			To line [count] from bottom of window (default: Last
 			line on the window) on the first non-blank character
 			|linewise|.  See also 'startofline' option.
-			Cursor is adjusted for 'scrolloff' option.
+			Cursor is adjusted for 'scrolloff' option, unless an
+			operator is pending, in which case the text may
+			scroll.  E.g. "yL" yanks from the cursor to the last
+			visible line.
 
 <LeftMouse>		Moves to the position on the screen where the mouse
 			click is |exclusive|.  See also |<LeftMouse>|.  If the
