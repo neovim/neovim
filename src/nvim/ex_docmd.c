@@ -974,7 +974,7 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
   }
 
   KeyTyped = false;
-  ++cp->current_line;
+  cp->current_line++;
   wp = (wcmd_T *)(cp->lines_gap->ga_data) + cp->current_line;
   sourcing_lnum = wp->lnum;
   return vim_strsave(wp->line);

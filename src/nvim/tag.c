@@ -266,7 +266,7 @@ do_tag (
         goto end_do_tag;
       }
 
-      if (type == DT_POP) {             /* go to older position */
+      if (type == DT_POP) {             // go to older position
         const bool old_KeyTyped = KeyTyped;
         if ((tagstackidx -= count) < 0) {
           EMSG(_(bottommsg));
