@@ -769,17 +769,16 @@ void ml_recover(void)
   called_from_main = (curbuf->b_ml.ml_mfp == NULL);
   attr = HL_ATTR(HLF_E);
 
-  /*
-   * If the file name ends in ".s[uvw][a-z]" we assume this is the swap file.
-   * Otherwise a search is done to find the swap file(s).
-   */
+  // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
+  // Otherwise a search is done to find the swap file(s).
   fname = curbuf->b_fname;
   if (fname == NULL)                /* When there is no file name */
     fname = (char_u *)"";
   len = (int)STRLEN(fname);
   if (len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
-      && vim_strchr((char_u *)"UVWuvw", fname[len - 2]) != NULL
+      && vim_strchr((char_u *)"abcdefghijklmnopqrstuvw",
+                    TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = TRUE;
     fname_used = vim_strsave(fname);     /* make a copy for mf_open() */
