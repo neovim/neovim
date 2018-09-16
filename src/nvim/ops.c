@@ -4418,7 +4418,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
         length = (colnr_T)STRLEN(ml_get(pos.lnum));
       } else {
         // oap->motion_type == kMTCharWise
-        if (!oap->inclusive) {
+        if (pos.lnum == oap->start.lnum && !oap->inclusive) {
           dec(&(oap->end));
         }
         length = (colnr_T)STRLEN(ml_get(pos.lnum));
