@@ -735,55 +735,35 @@ void ml_recover(void)
 {
   buf_T       *buf = NULL;
   memfile_T   *mfp = NULL;
-  char_u      *fname;
   char_u      *fname_used = NULL;
   bhdr_T      *hp = NULL;
-  ZERO_BL     *b0p;
-  int b0_ff;
   char_u      *b0_fenc = NULL;
-  PTR_BL      *pp;
-  DATA_BL     *dp;
   infoptr_T   *ip;
-  blocknr_T bnum;
-  int page_count;
-  int len;
-  int directly;
-  linenr_T lnum;
-  char_u      *p;
+  bool directly;
   int i;
-  long error;
-  int cannot_open;
-  linenr_T line_count;
-  int has_error;
-  int idx;
-  int top;
-  int txt_start;
   off_T size;
-  int called_from_main;
-  int serious_error = TRUE;
-  long mtime;
-  int attr;
+  bool serious_error = true;
   int orig_file_status = NOTDONE;
 
   recoverymode = TRUE;
-  called_from_main = (curbuf->b_ml.ml_mfp == NULL);
-  attr = HL_ATTR(HLF_E);
+  const bool called_from_main = (curbuf->b_ml.ml_mfp == NULL);
+  const int attr = HL_ATTR(HLF_E);
 
   // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
   // Otherwise a search is done to find the swap file(s).
-  fname = curbuf->b_fname;
+  char_u *fname = curbuf->b_fname;
   if (fname == NULL)                /* When there is no file name */
     fname = (char_u *)"";
-  len = (int)STRLEN(fname);
+  int len = (int)STRLEN(fname);
   if (len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
       && vim_strchr((char_u *)"abcdefghijklmnopqrstuvw",
                     TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
-    directly = TRUE;
+    directly = true;
     fname_used = vim_strsave(fname);     /* make a copy for mf_open() */
   } else {
-    directly = FALSE;
+    directly = false;
 
     /* count the number of matching swap files */
     len = recover_names(fname, FALSE, 0, NULL);
@@ -831,8 +811,8 @@ void ml_recover(void)
   /*
    * open the memfile from the old swap file
    */
-  p = vim_strsave(fname_used);   /* save "fname_used" for the message:
-                                    mf_open() will consume "fname_used"! */
+  char_u *p = vim_strsave(fname_used);  // save "fname_used" for the message:
+                                        // mf_open() will consume "fname_used"!
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp->mf_fd < 0) {
@@ -862,7 +842,7 @@ void ml_recover(void)
     msg_end();
     goto theend;
   }
-  b0p = hp->bh_data;
+  ZERO_BL *b0p = hp->bh_data;
   if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
@@ -946,7 +926,7 @@ void ml_recover(void)
    */
   FileInfo org_file_info;
   FileInfo swp_file_info;
-  mtime = char_to_long(b0p->b0_mtime);
+  const long mtime = char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
       && os_fileinfo((char *)curbuf->b_ffname, &org_file_info)
       && ((os_fileinfo((char *)mfp->mf_fname, &swp_file_info)
@@ -958,7 +938,7 @@ void ml_recover(void)
   ui_flush();
 
   /* Get the 'fileformat' and 'fileencoding' from block zero. */
-  b0_ff = (b0p->b0_flags & B0_FF_MASK);
+  const int b0_ff = (b0p->b0_flags & B0_FF_MASK);
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
@@ -994,22 +974,19 @@ void ml_recover(void)
   }
   unchanged(curbuf, TRUE);
 
-  bnum = 1;             /* start with block 1 */
-  page_count = 1;       /* which is 1 page */
-  lnum = 0;             /* append after line 0 in curbuf */
-  line_count = 0;
-  idx = 0;              /* start with first index in block 1 */
-  error = 0;
+  blocknr_T bnum = 1;   // start with block 1
+  int page_count = 1;   // which is 1 page
+  linenr_T lnum = 0;    // append after line 0 in curbuf
+  linenr_T line_count = 0;
+  int idx = 0;          // start with first index in block 1
+  long error = 0;
   buf->b_ml.ml_stack_top = 0;
   buf->b_ml.ml_stack = NULL;
   buf->b_ml.ml_stack_size = 0;          /* no stack yet */
 
-  if (curbuf->b_ffname == NULL)
-    cannot_open = TRUE;
-  else
-    cannot_open = FALSE;
+  bool cannot_open = curbuf->b_ffname == NULL;
 
-  serious_error = FALSE;
+  serious_error = false;
   for (; !got_int; line_breakcheck()) {
     if (hp != NULL)
       mf_put(mfp, hp, false, false);            /* release previous block */
@@ -1026,7 +1003,7 @@ void ml_recover(void)
       ml_append(lnum++, (char_u *)_("???MANY LINES MISSING"),
           (colnr_T)0, TRUE);
     } else {          /* there is a block */
-      pp = hp->bh_data;
+      const PTR_BL *pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                /* it is a pointer block */
         /* check line count when using pointer block first time */
         if (idx == 0 && line_count != 0) {
@@ -1072,7 +1049,7 @@ void ml_recover(void)
           /*
            * going one block deeper in the tree
            */
-          top = ml_add_stack(buf);  // new entry in stack
+          const int top = ml_add_stack(buf);  // new entry in stack
           ip = &(buf->b_ml.ml_stack[top]);
           ip->ip_bnum = bnum;
           ip->ip_index = idx;
@@ -1084,7 +1061,7 @@ void ml_recover(void)
           continue;
         }
       } else {            /* not a pointer block */
-        dp = hp->bh_data;
+        DATA_BL *dp = hp->bh_data;
         if (dp->db_id != DATA_ID) {             /* block id wrong */
           if (bnum == 1) {
             EMSG2(_("E310: Block 1 ID wrong (%s not a .swp file?)"),
@@ -1099,7 +1076,7 @@ void ml_recover(void)
            * it is a data block
            * Append all the lines in this block
            */
-          has_error = FALSE;
+          bool has_error = false;
           /*
            * check length of block
            * if wrong, use length in pointer block
@@ -1109,7 +1086,7 @@ void ml_recover(void)
                 (char_u *)_("??? from here until ???END lines may be messed up"),
                 (colnr_T)0, TRUE);
             ++error;
-            has_error = TRUE;
+            has_error = true;
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
 
@@ -1126,11 +1103,11 @@ void ml_recover(void)
                     "??? from here until ???END lines may have been inserted/deleted"),
                 (colnr_T)0, TRUE);
             ++error;
-            has_error = TRUE;
+            has_error = true;
           }
 
           for (i = 0; i < dp->db_line_count; ++i) {
-            txt_start = (dp->db_index[i] & DB_INDEX_MASK);
+            const int txt_start = (dp->db_index[i] & DB_INDEX_MASK);
             if (txt_start <= (int)HEADER_SIZE
                 || txt_start >= (int)dp->db_txt_end) {
               p = (char_u *)"???";
