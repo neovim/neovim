@@ -963,7 +963,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'r':    // "-r" recovery mode
         case 'L': {  // "-L" recovery mode
-          recoverymode = 1;
+          recoverymode = true;
           break;
         }
         case 's': {

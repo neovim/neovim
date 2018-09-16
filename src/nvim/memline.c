@@ -745,7 +745,7 @@ void ml_recover(void)
   bool serious_error = true;
   int orig_file_status = NOTDONE;
 
-  recoverymode = TRUE;
+  recoverymode = true;
   const bool called_from_main = (curbuf->b_ml.ml_mfp == NULL);
   const int attr = HL_ATTR(HLF_E);
 
@@ -1172,7 +1172,7 @@ void ml_recover(void)
     ml_delete(curbuf->b_ml.ml_line_count, FALSE);
   curbuf->b_flags |= BF_RECOVERED;
 
-  recoverymode = FALSE;
+  recoverymode = false;
   if (got_int)
     EMSG(_("E311: Recovery Interrupted"));
   else if (error) {
@@ -1198,7 +1198,7 @@ void ml_recover(void)
 
 theend:
   xfree(fname_used);
-  recoverymode = FALSE;
+  recoverymode = false;
   if (mfp != NULL) {
     if (hp != NULL)
       mf_put(mfp, hp, false, false);
