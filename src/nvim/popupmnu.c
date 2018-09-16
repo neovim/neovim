@@ -201,9 +201,15 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     }
 
     // If there is a preview window above, avoid drawing over it.
-    if (pvwin != NULL && pum_row < above_row && pum_height > above_row) {
-      pum_row += above_row;
-      pum_height -= above_row;
+    // Do keep at least 10 entries.
+    if (pvwin != NULL && pum_row < above_row && pum_height > 10) {
+      if (row - above_row < 10) {
+        pum_row = row - 10;
+        pum_height = 10;
+      } else {
+        pum_row = above_row;
+        pum_height = row - above_row;
+      }
     }
 
     // Compute the width of the widest match and the widest extra.
