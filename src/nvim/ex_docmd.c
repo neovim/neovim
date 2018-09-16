@@ -6629,7 +6629,7 @@ static void ex_recover(exarg_T *eap)
           | CCGD_EXCMD)
 
       && (*eap->arg == NUL
-          || setfname(curbuf, eap->arg, NULL, TRUE) == OK))
+          || setfname(curbuf, eap->arg, NULL, true) == OK))
     ml_recover();
   recoverymode = false;
 }

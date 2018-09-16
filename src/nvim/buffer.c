@@ -2538,7 +2538,7 @@ setfname (
     buf_T *buf,
     char_u *ffname,
     char_u *sfname,
-    int message                    /* give message when buffer already exists */
+    bool message                  // give message when buffer already exists
 )
 {
   buf_T       *obuf = NULL;

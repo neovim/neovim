@@ -907,7 +907,7 @@ void ml_recover(void)
    */
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, NameBuff, NULL, TRUE) == FAIL)
+    if (setfname(curbuf, NameBuff, NULL, true) == FAIL)
       goto theend;
   }
 
