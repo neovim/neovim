@@ -64,6 +64,7 @@ Search for "highlight_init".
 If you think you have a color scheme that is good enough to be used by others,
 please check the following items:
 
+- Source the $VIMRUNTIME/tools/check_colors.vim script to check for common mistakes.
 - Does it work in a color terminal as well as in the GUI?
 - Is "g:colors_name" set to a meaningful value?  In case of doubt you can do
   it this way:
