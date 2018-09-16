@@ -11,6 +11,7 @@ set sidescroll=0
 set directory^=.
 set undodir^=.
 set backspace=
+set nrformats+=octal
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 set listchars=eol:$
 set fillchars=vert:\|,fold:-

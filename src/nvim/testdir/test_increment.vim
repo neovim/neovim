@@ -3,6 +3,7 @@
 func SetUp()
   new dummy
   set nrformats&vim
+  set nrformats+=octal
 endfunc
 
 func TearDown()
