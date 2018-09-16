@@ -1,7 +1,3 @@
 # multiqueue.h pointer arithmetic is not accepted by asan
 fun:multiqueue_node_data
 fun:tv_dict_watcher_node_data
-
-# Allocation in loop_schedule_deferred() is freed by loop_deferred_event(), but
-# this sometimes does not happen during teardown.
-fun:loop_schedule_deferred
