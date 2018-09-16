@@ -6621,7 +6621,7 @@ static void ex_preserve(exarg_T *eap)
 /// ":recover".
 static void ex_recover(exarg_T *eap)
 {
-  /* Set recoverymode right away to avoid the ATTENTION prompt. */
+  // Set recoverymode right away to avoid the ATTENTION prompt.
   recoverymode = true;
   if (!check_changed(curbuf, (p_awa ? CCGD_AW : 0)
           | CCGD_MULTWIN
@@ -6629,8 +6629,9 @@ static void ex_recover(exarg_T *eap)
           | CCGD_EXCMD)
 
       && (*eap->arg == NUL
-          || setfname(curbuf, eap->arg, NULL, true) == OK))
+          || setfname(curbuf, eap->arg, NULL, true) == OK)) {
     ml_recover();
+  }
   recoverymode = false;
 }
 

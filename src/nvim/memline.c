@@ -752,8 +752,9 @@ void ml_recover(void)
   // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
   // Otherwise a search is done to find the swap file(s).
   char_u *fname = curbuf->b_fname;
-  if (fname == NULL)                /* When there is no file name */
+  if (fname == NULL) {              // When there is no file name
     fname = (char_u *)"";
+  }
   int len = (int)STRLEN(fname);
   if (len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
@@ -761,7 +762,7 @@ void ml_recover(void)
                     TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = true;
-    fname_used = vim_strsave(fname);     /* make a copy for mf_open() */
+    fname_used = vim_strsave(fname);    // make a copy for mf_open()
   } else {
     directly = false;
 
@@ -907,8 +908,9 @@ void ml_recover(void)
    */
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, NameBuff, NULL, true) == FAIL)
+    if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
+    }
   }
 
   home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, TRUE);
@@ -937,7 +939,7 @@ void ml_recover(void)
   }
   ui_flush();
 
-  /* Get the 'fileformat' and 'fileencoding' from block zero. */
+  // Get the 'fileformat' and 'fileencoding' from block zero.
   const int b0_ff = (b0p->b0_flags & B0_FF_MASK);
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
@@ -1001,11 +1003,11 @@ void ml_recover(void)
       }
       ++error;
       ml_append(lnum++, (char_u *)_("???MANY LINES MISSING"),
-          (colnr_T)0, TRUE);
-    } else {          /* there is a block */
+                (colnr_T)0, TRUE);
+    } else {          // there is a block
       const PTR_BL *pp = hp->bh_data;
-      if (pp->pb_id == PTR_ID) {                /* it is a pointer block */
-        /* check line count when using pointer block first time */
+      if (pp->pb_id == PTR_ID) {                // it is a pointer block
+        // check line count when using pointer block first time
         if (idx == 0 && line_count != 0) {
           for (i = 0; i < (int)pp->pb_count; ++i)
             line_count -= pp->pb_pointer[i].pe_line_count;
@@ -1060,9 +1062,9 @@ void ml_recover(void)
           idx = 0;
           continue;
         }
-      } else {            /* not a pointer block */
+      } else {            // not a pointer block
         DATA_BL *dp = hp->bh_data;
-        if (dp->db_id != DATA_ID) {             /* block id wrong */
+        if (dp->db_id != DATA_ID) {             // block id wrong
           if (bnum == 1) {
             EMSG2(_("E310: Block 1 ID wrong (%s not a .swp file?)"),
                 mfp->mf_fname);
@@ -1077,15 +1079,15 @@ void ml_recover(void)
            * Append all the lines in this block
            */
           bool has_error = false;
-          /*
-           * check length of block
-           * if wrong, use length in pointer block
-           */
+
+          // check length of block
+          // if wrong, use length in pointer block
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {
             ml_append(lnum++,
-                (char_u *)_("??? from here until ???END lines may be messed up"),
-                (colnr_T)0, TRUE);
-            ++error;
+                      (char_u *)_("??? from here until ???END lines"
+                                  " may be messed up"),
+                      (colnr_T)0, TRUE);
+            error++;
             has_error = true;
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
@@ -1099,14 +1101,14 @@ void ml_recover(void)
            */
           if (line_count != dp->db_line_count) {
             ml_append(lnum++,
-                (char_u *)_(
-                    "??? from here until ???END lines may have been inserted/deleted"),
-                (colnr_T)0, TRUE);
-            ++error;
+                      (char_u *)_("??? from here until ???END lines"
+                                  " may have been inserted/deleted"),
+                      (colnr_T)0, TRUE);
+            error++;
             has_error = true;
           }
 
-          for (i = 0; i < dp->db_line_count; ++i) {
+          for (i = 0; i < dp->db_line_count; i++) {
             const int txt_start = (dp->db_index[i] & DB_INDEX_MASK);
             if (txt_start <= (int)HEADER_SIZE
                 || txt_start >= (int)dp->db_txt_end) {
@@ -1173,10 +1175,10 @@ void ml_recover(void)
   curbuf->b_flags |= BF_RECOVERED;
 
   recoverymode = false;
-  if (got_int)
+  if (got_int) {
     EMSG(_("E311: Recovery Interrupted"));
-  else if (error) {
-    ++no_wait_return;
+  } else if (error) {
+    no_wait_return++;
     MSG(">>>>>>>>>>>>>");
     EMSG(_(
             "E312: Errors detected while recovering; look for lines starting with ???"));
