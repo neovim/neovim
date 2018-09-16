@@ -3955,7 +3955,7 @@ load_dummy_buffer (
     aucmd_prepbuf(&aco, newbuf);
 
     /* Need to set the filename for autocommands. */
-    (void)setfname(curbuf, fname, NULL, FALSE);
+    (void)setfname(curbuf, fname, NULL, false);
 
     /* Create swap file now to avoid the ATTENTION message. */
     check_need_swap(TRUE);

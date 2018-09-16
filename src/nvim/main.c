@@ -963,7 +963,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'r':    // "-r" recovery mode
         case 'L': {  // "-L" recovery mode
-          recoverymode = 1;
+          recoverymode = true;
           break;
         }
         case 's': {
@@ -1511,7 +1511,7 @@ static void create_windows(mparm_T *parmp)
           /* We can't close the window, it would disturb what
            * happens next.  Clear the file name and set the arg
            * index to -1 to delete it later. */
-          setfname(curbuf, NULL, NULL, FALSE);
+          setfname(curbuf, NULL, NULL, false);
           curwin->w_arg_idx = -1;
           swap_exists_action = SEA_NONE;
         } else
