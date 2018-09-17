@@ -23,7 +23,10 @@ describe('Buffer highlighting', function()
       [7] = {bold = true},
       [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
       [9] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [10] = {foreground = Screen.colors.Red}
+      [10] = {foreground = Screen.colors.Red},
+      [11] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [12] = {foreground = Screen.colors.Blue1},
+      [13] = {background = Screen.colors.LightGrey},
     })
   end)
 
@@ -77,7 +80,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_hl(-1, 0 , -1)
+    clear_hl(-1, 0, -1)
     screen:expect([[
       these are some lines                    |
       ^                                        |
@@ -274,5 +277,141 @@ describe('Buffer highlighting', function()
       {1:~                                       }|
                                               |
     ]])
+  end)
+
+  it('supports virtual text annotations', function()
+    local set_virtual_text = curbufmeths.set_virtual_text
+    insert([[
+      1 + 2
+      3 +
+      x = 4]])
+    feed('O<esc>20A5, <esc>gg')
+    screen:expect([[
+      ^1 + 2                                   |
+      3 +                                     |
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,                     |
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    local id1 = set_virtual_text(0, 0, {{"=", "Statement"}, {" 3", "Number"}}, {})
+    set_virtual_text(id1, 1, {{"ERROR:", "ErrorMsg"}, {" invalid syntax"}}, {})
+    local id2 = set_virtual_text(0, 2, {{"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}}, {})
+    neq(id2, id1)
+
+    screen:expect([[
+      ^1 + 2 {3:=}{2: 3}                               |
+      3 + {11:ERROR:} invalid syntax               |
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    clear_hl(id1, 0, -1)
+    screen:expect([[
+      ^1 + 2                                   |
+      3 +                                     |
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    -- Handles doublewidth chars, leaving a space if truncating
+    -- in the middle of a char
+    set_virtual_text(id1, 1, {{"暗x事zz速野谷質結育副住新覚丸活解終事", "Comment"}}, {})
+    screen:expect([[
+      ^1 + 2                                   |
+      3 + {12:暗x事zz速野谷質結育副住新覚丸活解終 }|
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    feed("2Gx")
+    screen:expect([[
+      1 + 2                                   |
+      ^ + {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    -- visual selection doesn't highlight virtual text
+    feed("ggVG")
+    screen:expect([[
+      {13:1 + 2}                                   |
+      {13: +} {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
+      {13:5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
+      {13:, 5, 5, 5, 5, 5, 5, } Lorem ipsum dolor s|
+      ^x{13: = 4}                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {7:-- VISUAL LINE --}                       |
+    ]])
+
+    feed("<esc>")
+    screen:expect([[
+      1 + 2                                   |
+       + {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      ^x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    feed("2Gdd")
+    screen:expect([[
+      1 + 2                                   |
+      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    -- listchars=eol:- works, and doesn't shift virtual text
+    command("set list")
+    screen:expect([[
+      1 + 2                                   |
+      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,{1:-} Lorem ipsum dolor s|
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    clear_hl(-1, 0, -1)
+    screen:expect([[
+      1 + 2                                   |
+      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,{1:-}                    |
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
   end)
 end)

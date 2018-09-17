@@ -967,6 +967,85 @@ void nvim_buf_clear_highlight(Buffer buffer,
   bufhl_clear_line_range(buf, (int)src_id, (int)line_start+1, (int)line_end);
 }
 
+
+/// Set the virtual text (annotation) for a buffer line.
+///
+/// By default (and currently the only option) the text will be placed after
+/// the buffer text. Virtual text will never cause reflow, rather virtual
+/// text will be truncated at the end of the screen line. The virtual text will
+/// begin after one cell to the right of the ordinary text, this will contain
+/// the |lcs-eol| char if set, otherwise just be a space.
+///
+/// @param buffer     Buffer handle
+/// @param src_id     Source group to use or 0 to use a new group,
+///                   or -1 for a ungrouped annotation
+/// @param line       Line to annotate with virtual text (zero-indexed)
+/// @param chunks     A list of [text, hl_group] arrays, each representing a
+///                   text chunk with specified highlight. `hl_group` element
+///                   can be omitted for no highlight.
+/// @param opts       Optional parameters. Currently not used.
+/// @param[out] err   Error details, if any
+/// @return The src_id that was used
+Integer nvim_buf_set_virtual_text(Buffer buffer,
+                                  Integer src_id,
+                                  Integer line,
+                                  Array chunks,
+                                  Dictionary opts,
+                                  Error *err)
+  FUNC_API_SINCE(5)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (line < 0 || line >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = xstrdup(str.size > 0 ? str.data : "");
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  src_id = bufhl_add_virt_text(buf, (int)src_id, (linenr_T)line+1,
+                               virt_text);
+  return src_id;
+
+free_exit:
+  kv_destroy(virt_text);
+  return 0;
+}
+
 // Check if deleting lines made the cursor position invalid.
 // Changed the lines from "lo" to "hi" and added "extra" lines (negative if
 // deleted).
