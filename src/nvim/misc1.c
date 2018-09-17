@@ -1752,6 +1752,10 @@ del_lines (
 
 int gchar_pos(pos_T *pos)
 {
+  // When searching columns is sometimes put at the end of a line.
+  if (pos->col == MAXCOL) {
+    return NUL;
+  }
   return utf_ptr2char(ml_get_pos(pos));
 }
 

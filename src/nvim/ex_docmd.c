@@ -3664,17 +3664,18 @@ static linenr_T get_address(exarg_T *eap,
          */
         if (lnum != MAXLNUM)
           curwin->w_cursor.lnum = lnum;
-        /*
-         * Start a forward search at the end of the line.
-         * Start a backward search at the start of the line.
-         * This makes sure we never match in the current
-         * line, and can match anywhere in the
-         * next/previous line.
-         */
-        if (c == '/')
+
+        // Start a forward search at the end of the line (unless
+        // before the first line).
+        // Start a backward search at the start of the line.
+        // This makes sure we never match in the current
+        // line, and can match anywhere in the
+        // next/previous line.
+        if (c == '/' && curwin->w_cursor.lnum > 0) {
           curwin->w_cursor.col = MAXCOL;
-        else
+        } else {
           curwin->w_cursor.col = 0;
+        }
         searchcmdlen = 0;
         if (!do_search(NULL, c, cmd, 1L,
                 SEARCH_HIS | SEARCH_MSG, NULL)) {
