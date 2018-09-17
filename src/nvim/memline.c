@@ -4032,20 +4032,32 @@ int incl(pos_T *lp)
 int dec(pos_T *lp)
 {
   lp->coladd = 0;
-  if (lp->col > 0) {            // still within line
+  if (lp->col == MAXCOL) {
+    // past end of line
+    char_u *p = ml_get(lp->lnum);
+    lp->col = (colnr_T)STRLEN(p);
+    lp->col -= utf_head_off(p, p + lp->col);
+    return 0;
+  }
+
+  if (lp->col > 0) {
+    // still within line
     lp->col--;
     char_u *p = ml_get(lp->lnum);
     lp->col -= utf_head_off(p, p + lp->col);
     return 0;
   }
-  if (lp->lnum > 1) {           // there is a prior line
+  if (lp->lnum > 1) {
+    // there is a prior line
     lp->lnum--;
     char_u *p = ml_get(lp->lnum);
     lp->col = (colnr_T)STRLEN(p);
     lp->col -= utf_head_off(p, p + lp->col);
     return 1;
   }
-  return -1;                    // at start of file
+
+  // at start of file
+  return -1;
 }
 
 /// Same as dec(), but skip NUL at the end of non-empty lines.
