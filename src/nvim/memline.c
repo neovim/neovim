@@ -3999,18 +3999,15 @@ void goto_byte(long cnt)
 /// Return 0 otherwise.
 int inc(pos_T *lp)
 {
-  char_u  *p = ml_get_pos(lp);
-
-  if (*p != NUL) {      // still within line, move to next char (may be NUL)
-    if (has_mbyte) {
-      int l = (*mb_ptr2len)(p);
+  // when searching position may be set to end of a line
+  if (lp->col != MAXCOL) {
+    const char_u *const p = ml_get_pos(lp);
+    if (*p != NUL) {  // still within line, move to next char (may be NUL)
+      const int l = utfc_ptr2len(p);
 
       lp->col += l;
-      return (p[l] != NUL) ? 0 : 2;
+      return ((p[l] != NUL) ? 0 : 2);
     }
-    lp->col++;
-    lp->coladd = 0;
-    return (p[1] != NUL) ? 0 : 2;
   }
   if (lp->lnum != curbuf->b_ml.ml_line_count) {     // there is a next line
     lp->col = 0;

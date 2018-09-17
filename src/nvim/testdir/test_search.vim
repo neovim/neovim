@@ -480,3 +480,10 @@ func Test_look_behind()
   call search(getline("."))
   bwipe!
 endfunc
+
+func Test_search_sentence()
+  new
+  " this used to cause a crash
+  call assert_fails("/\\%'", 'E486')
+  call assert_fails("/", 'E486')
+endfunc
