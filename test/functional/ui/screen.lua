@@ -243,7 +243,7 @@ local ext_keys = {
 --              nothing is ignored.
 -- condition:   Function asserting some arbitrary condition. Return value is
 --              ignored, throw an error (use eq() or similar) to signal failure.
--- any:         A string that should be present on any line of the screen.
+-- any:         Lua pattern string expected to match a screen line.
 -- mode:        Expected mode as signaled by "mode_change" event
 --
 -- The following keys should be used to expect the state of various ext_

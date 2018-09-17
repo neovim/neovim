@@ -16471,13 +16471,12 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   if (p_verbose > 3) {
-    char buf[NUMBUFLEN];
-    const char * cmd = tv_get_string_buf(argvars, buf);
-
+    char *cmdstr = shell_argv_to_str(argv);
     verbose_enter_scroll();
-    smsg(_("Calling shell to execute: \"%s\""), cmd);
+    smsg(_("Executing command: \"%s\""), cmdstr);
     msg_puts("\n\n");
     verbose_leave_scroll();
+    xfree(cmdstr);
   }
 
   if (do_profiling == PROF_YES) {

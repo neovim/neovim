@@ -80,19 +80,51 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 void shell_free_argv(char **argv)
 {
   char **p = argv;
-
   if (p == NULL) {
     // Nothing was allocated, return
     return;
   }
-
   while (*p != NULL) {
     // Free each argument
     xfree(*p);
     p++;
   }
-
   xfree(argv);
+}
+
+/// Joins shell arguments from `argv` into a new string.
+/// If the result is too long it is truncated with ellipsis ("...").
+///
+/// @returns[allocated] `argv` joined to a string.
+char *shell_argv_to_str(char **const argv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t n = 0;
+  char **p = argv;
+  char *rv = xcalloc(256, sizeof(*rv));
+  const size_t maxsize = (256 * sizeof(*rv));
+  if (*p == NULL) {
+    return rv;
+  }
+  while (*p != NULL) {
+    xstrlcat(rv, "'", maxsize);
+    xstrlcat(rv, *p, maxsize);
+    n = xstrlcat(rv,  "' ", maxsize);
+    if (n >= maxsize) {
+      break;
+    }
+    p++;
+  }
+  if (n < maxsize) {
+    rv[n - 1] = '\0';
+  } else {
+    // Command too long, show ellipsis: "/bin/bash 'foo' 'bar'..."
+    rv[maxsize - 4] = '.';
+    rv[maxsize - 3] = '.';
+    rv[maxsize - 2] = '.';
+    rv[maxsize - 1] = '\0';
+  }
+  return rv;
 }
 
 /// Calls the user-configured 'shell' (p_sh) for running a command or wildcard
