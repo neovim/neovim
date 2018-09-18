@@ -124,7 +124,6 @@ describe('system()', function()
     local screen
 
     before_each(function()
-      clear()
       screen = Screen.new()
       screen:attach()
     end)
@@ -428,13 +427,12 @@ describe('systemlist()', function()
     local screen
 
     before_each(function()
-        clear()
-        screen = Screen.new()
-        screen:attach()
+      screen = Screen.new()
+      screen:attach()
     end)
 
     after_each(function()
-        screen:detach()
+      screen:detach()
     end)
 
     it('`echo` and waits for its return', function()
