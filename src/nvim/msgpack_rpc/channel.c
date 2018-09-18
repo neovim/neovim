@@ -68,7 +68,7 @@ void rpc_start(Channel *channel)
     Stream *out = channel_outstream(channel);
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
     Stream *in = channel_instream(channel);
-    DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
+    DLOG("RPC ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
 #endif
 
     rstream_start(out, receive_msgpack, channel);
@@ -206,6 +206,8 @@ void rpc_unsubscribe(uint64_t id, char *event)
   unsubscribe(channel, event);
 }
 
+/// Gets RPC messages (requests and responses sent by a client) from the
+/// underlying stream of a channel.
 static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
                             void *data, bool eof)
 {
@@ -225,18 +227,34 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
   DLOG("ch %" PRIu64 ": parsing %zu bytes from msgpack Stream: %p",
        channel->id, count, stream);
 
+  // Store part of the stream for error-reporting.
+  char buf[1024] = { 0 };
+  RBUFFER_EACH(rbuf, c, i) {
+    if (i >= (sizeof(buf) - 1)) {
+      break;
+    }
+    buf[i] = (c == '\0') ? '?' : c;
+  }
+
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->rpc.unpacker, count);
   rbuffer_read(rbuf, msgpack_unpacker_buffer(channel->rpc.unpacker), count);
   msgpack_unpacker_buffer_consumed(channel->rpc.unpacker, count);
 
-  parse_msgpack(channel);
+  if (!parse_msgpack(channel)) {
+    char *s = str2special_save(buf, false, false);
+    ELOG("RPC: ch %" PRIu64 ": got invalid message: %s", channel->id, s);
+  }
 
 end:
   channel_decref(channel);
 }
 
-static void parse_msgpack(Channel *channel)
+/// Parses RPC messages (requests and responses sent by a client) from the
+/// underlying stream of `channel`.
+///
+/// @return false if msgpack or msgpack-RPC validation failed; else true.
+static bool parse_msgpack(Channel *channel)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
@@ -246,25 +264,32 @@ static void parse_msgpack(Channel *channel)
   while ((result = msgpack_unpacker_next(channel->rpc.unpacker, &unpacked)) ==
          MSGPACK_UNPACK_SUCCESS) {
     bool is_response = is_rpc_response(&unpacked.data);
-    log_client_msg(channel->id, !is_response, unpacked.data);
+    log_client_msg(DEBUG_LOG_LEVEL, channel->id, !is_response,
+                   unpacked.data);
 
     if (is_response) {
-      if (is_valid_rpc_response(&unpacked.data, channel)) {
+      uint64_t response_id;
+      if (is_valid_rpc_response(&unpacked.data, channel, &response_id)) {
         complete_call(&unpacked.data, channel);
       } else {
         char buf[256];
         snprintf(buf, sizeof(buf),
-                 "ch %" PRIu64 " returned a response with an unknown request "
-                 "id. Ensure the client is properly synchronized",
-                 channel->id);
+                 "ch %" PRIu64 " got response for unknown request-id=%" PRIu64
+                 ". Ensure the client is synchronized",
+                 channel->id,
+                 response_id);
         call_set_error(channel, buf, ERROR_LOG_LEVEL);
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
-      return;
+      return true;
     }
 
-    handle_request(channel, &unpacked.data);
+    if (!handle_request(channel, &unpacked.data)) {
+      // Bail out from this event loop iteration
+      msgpack_unpacked_destroy(&unpacked);
+      return false;
+    }
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
@@ -275,27 +300,33 @@ static void parse_msgpack(Channel *channel)
   }
 
   if (result == MSGPACK_UNPACK_PARSE_ERROR) {
-    // See src/msgpack/unpack_template.h in msgpack source tree for
-    // causes for this error(search for 'goto _failed')
+    // See include/msgpack/unpack_template.h in msgpack source tree for
+    // causes for this error (search for "goto _failed").
     //
     // A not so uncommon cause for this might be deserializing objects with
     // a high nesting level: msgpack will break when its internal parse stack
     // size exceeds MSGPACK_EMBED_STACK_SIZE (defined as 32 by default)
-    send_error(channel, 0, "Invalid msgpack payload. "
-                           "This error can also happen when deserializing "
-                           "an object with high level of nesting");
+    send_error(channel, 0,
+               "Invalid msgpack payload. (This can also happen when "
+               "deserializing an object with a high level of nesting.)");
+    return false;
   }
+
+  return true;
 }
 
-static void handle_request(Channel *channel, msgpack_object *request)
+/// @return false if msgpack-RPC validation failed; true in all other cases,
+///         including failed API validation.
+static bool handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
   uint64_t request_id;
   Error error = ERROR_INIT;
-  msgpack_rpc_validate(&request_id, request, &error);
 
+  // msgpack-RPC validation
+  msgpack_rpc_validate(&request_id, request, &error);
   if (ERROR_SET(&error)) {
-    // Validation failed, send response with error
+    // Failed msgpack-RPC validation, send error-response.
     if (channel_write(channel,
                       serialize_response(channel->id,
                                          request_id,
@@ -304,12 +335,15 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                          &out_buffer))) {
       char buf[256];
       snprintf(buf, sizeof(buf),
-               "ch %" PRIu64 " sent an invalid message, closed.",
+               "ch %" PRIu64 ": got invalid message; closing",
                channel->id);
-      call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      bool closed = call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      if (!closed) {
+        ELOG("ch %" PRIu64 ": failed to close", channel->id);
+      }
     }
     api_clear_error(&error);
-    return;
+    return false;
   }
 
   MsgpackRpcRequestHandler handler;
@@ -318,7 +352,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                         method->via.bin.size,
                                         &error);
 
-  // check method arguments
+  // API validation: check method arguments.
   Array args = ARRAY_DICT_INIT;
   if (!ERROR_SET(&error)
       && !msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
@@ -329,7 +363,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
     send_error(channel, request_id, error.msg);
     api_clear_error(&error);
     api_free_array(args);
-    return;
+    return true;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
@@ -351,6 +385,8 @@ static void handle_request(Channel *channel, msgpack_object *request)
   } else {
     multiqueue_put(channel->events, on_request_event, 1, evdata);
   }
+
+  return true;
 }
 
 static void on_request_event(void **argv)
@@ -573,16 +609,17 @@ static bool is_rpc_response(msgpack_object *obj)
       && obj->via.array.ptr[1].type == MSGPACK_OBJECT_POSITIVE_INTEGER;
 }
 
-static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
+static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel,
+                                  uint64_t *response_id)
 {
-  uint64_t response_id = obj->via.array.ptr[1].via.u64;
+  *response_id = obj->via.array.ptr[1].via.u64;
   if (kv_size(channel->rpc.call_stack) == 0) {
     return false;
   }
 
   // Must be equal to the frame at the stack's bottom
   ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
-  return response_id == frame->request_id;
+  return *response_id == frame->request_id;
 }
 
 static void complete_call(msgpack_object *obj, Channel *channel)
@@ -598,9 +635,9 @@ static void complete_call(msgpack_object *obj, Channel *channel)
   }
 }
 
-static void call_set_error(Channel *channel, char *msg, int loglevel)
+static bool call_set_error(Channel *channel, char *msg, int loglevel)
 {
-  LOG(loglevel, "RPC: %s", msg);
+  LOG(loglevel, true, "RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
@@ -609,7 +646,7 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
-  channel_close(channel->id, kChannelPartRpc, NULL);
+  return channel_close(channel->id, kChannelPartRpc, NULL);
 }
 
 static WBuffer *serialize_request(uint64_t channel_id,
@@ -723,11 +760,15 @@ static void log_server_msg(uint64_t channel_id,
   }
 }
 
-static void log_client_msg(uint64_t channel_id,
+static void log_client_msg(int loglevel,
+                           uint64_t channel_id,
                            bool is_request,
                            msgpack_object msg)
 {
-  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
+  if (loglevel < MIN_LOG_LEVEL) {
+    return;
+  }
+  LOG(loglevel, false, "RPC <-ch %" PRIu64 ": ", channel_id);
   log_lock();
   FILE *f = open_log_file();
   fprintf(f, is_request ? REQ : RES);
@@ -736,7 +777,7 @@ static void log_client_msg(uint64_t channel_id,
 
 static void log_msg_close(FILE *f, msgpack_object msg)
 {
-  msgpack_object_print(f, msg);
+  msgpack_object_print(f, msg);  // Dump the entire message contents.
   fputc('\n', f);
   fflush(f);
   fclose(f);

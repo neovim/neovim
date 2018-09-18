@@ -37,28 +37,35 @@ void rbuffer_free(RBuffer *buf)
   xfree(buf);
 }
 
-size_t rbuffer_size(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_size(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   return buf->size;
 }
 
-size_t rbuffer_capacity(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_capacity(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   return (size_t)(buf->end_ptr - buf->start_ptr);
 }
 
-size_t rbuffer_space(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_space(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   return rbuffer_capacity(buf) - buf->size;
 }
 
-/// Return a pointer to a raw buffer containing the first empty slot available
-/// for writing. The second argument is a pointer to the maximum number of
-/// bytes that could be written.
+/// Returns a pointer into the raw storage for `buf`, at the first empty slot
+/// available for writing.
 ///
-/// It is necessary to call this function twice to ensure all empty space was
-/// used. See RBUFFER_UNTIL_FULL for a macro that simplifies this task.
-char *rbuffer_write_ptr(RBuffer *buf, size_t *write_count) FUNC_ATTR_NONNULL_ALL
+/// Call this function TWICE to fill the RBuffer completely.
+/// The RBUFFER_UNTIL_FULL macro simplifies that task.
+///
+/// @param buf  RBuffer
+/// @param[out] write_count  Bytes available for writing
+/// @return pointer to raw storage
+char *rbuffer_write_ptr(RBuffer *buf, size_t *write_count)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (buf->size == rbuffer_capacity(buf)) {
     *write_count = 0;
@@ -111,13 +118,17 @@ void rbuffer_produced(RBuffer *buf, size_t count) FUNC_ATTR_NONNULL_ALL
   }
 }
 
-/// Return a pointer to a raw buffer containing the first byte available
-/// for reading. The second argument is a pointer to the maximum number of
-/// bytes that could be read.
+/// Returns a pointer into the raw storage for `buf`, at the first byte
+/// available for reading.
 ///
-/// It is necessary to call this function twice to ensure all available bytes
-/// were read. See RBUFFER_UNTIL_EMPTY for a macro that simplifies this task.
-char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
+/// Call this function TWICE to read the entire RBuffer.
+/// The RBUFFER_UNTIL_EMPTY macro simplifies that task.
+///
+/// @param buf  RBuffer
+/// @param[out] read_count  Bytes available for reading
+/// @return pointer to raw storage
+char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!buf->size) {
     *read_count = 0;
@@ -133,9 +144,9 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
   return buf->read_ptr;
 }
 
-/// Adjust `rbuffer` read pointer to reflect consumed data. This is called
+/// Adjust `buf` read-pointer to reflect consumed data. This is called
 /// automatically by `rbuffer_read`, but when using `rbuffer_read_ptr`
-/// directly, this needs to called after the data was copied from the internal
+/// directly, this must be called after the data was copied from the internal
 /// buffer. The read pointer will be wrapped if required.
 void rbuffer_consumed(RBuffer *buf, size_t count)
   FUNC_ATTR_NONNULL_ALL
@@ -154,8 +165,7 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
   }
 }
 
-// Higher level functions for copying from/to RBuffer instances and data
-// pointers
+/// Copies data from `src` to `buf`.
 size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -164,6 +174,7 @@ size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
   RBUFFER_UNTIL_FULL(buf, wptr, wcnt) {
     size_t copy_count = MIN(src_size, wcnt);
     memcpy(wptr, src, copy_count);
+    // Must call this to avoid infinite loop.
     rbuffer_produced(buf, copy_count);
 
     if (!(src_size -= copy_count)) {
@@ -176,6 +187,7 @@ size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
   return size - src_size;
 }
 
+/// Copies data from `buf` to `dst`.
 size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -184,6 +196,7 @@ size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
   RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) {
     size_t copy_count = MIN(dst_size, rcnt);
     memcpy(dst, rptr, copy_count);
+    // Must call this to avoid infinite loop.
     rbuffer_consumed(buf, copy_count);
 
     if (!(dst_size -= copy_count)) {
@@ -196,6 +209,10 @@ size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
   return size - dst_size;
 }
 
+/// Returns a pointer into `buf` at offset `index`.
+///
+/// @see RBUFFER_EACH
+/// @see rbuffer_read_ptr
 char *rbuffer_get(RBuffer *buf, size_t index)
     FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
@@ -207,6 +224,7 @@ char *rbuffer_get(RBuffer *buf, size_t index)
   return rptr;
 }
 
+/// Compares `str` to the next `count` bytes of `buf`.
 int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
   FUNC_ATTR_NONNULL_ALL
 {

@@ -1,3 +1,5 @@
+local global_helpers = require('test.helpers')
+local read_file = global_helpers.read_file
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, next_msg, ok, source = helpers.clear, helpers.eq,
@@ -6,6 +8,7 @@ local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
 local sleep = helpers.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
+local matches = helpers.matches
 local nvim_prog = helpers.nvim_prog
 local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
@@ -277,5 +280,23 @@ describe('channels', function()
 
     -- works correctly with no output
     eq({"notification", "exit", {id, 1, {''}}}, next_msg())
+  end)
+end)
+
+describe('channels', function()
+  teardown(function()
+    os.remove('Xchansend_test_log')
+  end)
+
+  it('foo', function()
+    clear({env={NVIM_LOG_FILE='Xchansend_test_log'}})
+    local c = funcs.sockconnect('pipe', eval('v:servername'), {rpc=false})
+    funcs.chansend(c, 'nonsense\10\18\126')
+    local logtext = read_file('Xchansend_test_log')
+    helpers.retry(nil, 2000, function()
+      matches('RPC: ch %d: got invalid message: nonsense<NL><C%-R>~',
+              logtext)
+    end)
+    command('qall!')
   end)
 end)

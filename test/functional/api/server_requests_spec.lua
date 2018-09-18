@@ -338,7 +338,7 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('connecting to its own pipe address', function()
+  describe('connecting to its own ("loopback") pipe address', function()
     it('does not deadlock', function()
       if not os.getenv("TRAVIS") and helpers.os_name() == "osx" then
         -- It does, in fact, deadlock on QuickBuild. #6851

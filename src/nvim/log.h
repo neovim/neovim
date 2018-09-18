@@ -22,8 +22,8 @@
 #  define MIN_LOG_LEVEL INFO_LOG_LEVEL
 #endif
 
-#define LOG(level, ...) do_log((level), NULL, __func__, __LINE__, true, \
-                               __VA_ARGS__)
+#define LOG(level, eol, ...) do_log((level), NULL, __func__, __LINE__, eol, \
+                                    __VA_ARGS__)
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 # undef DLOG
