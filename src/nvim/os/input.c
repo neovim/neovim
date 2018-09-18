@@ -351,6 +351,8 @@ static bool input_poll(int ms)
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
+  DLOG("blocking... events_enabled=%d events_pending=%d", events_enabled,
+       !multiqueue_empty(main_loop.events));
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
   blocking = false;
 

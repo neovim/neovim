@@ -64,6 +64,12 @@ getkey:
       may_sync_undo();
     }
 
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+    char *keyname = key == K_EVENT
+                    ? "K_EVENT" : (char *)get_special_key_name(key, mod_mask);
+    DLOG("input: %s", keyname);
+#endif
+
     int execute_result = s->execute(s, key);
     if (!execute_result) {
       break;

@@ -153,6 +153,7 @@ void mch_exit(int r)
   free_all_mem();
 #endif
 
+  ILOG("Nvim exit: %d", r);
   exit(r);
 }
 
