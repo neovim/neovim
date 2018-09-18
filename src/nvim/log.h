@@ -22,42 +22,42 @@
 #  define MIN_LOG_LEVEL INFO_LOG_LEVEL
 #endif
 
-#define LOG(level, ...) do_log((level), NULL, __func__, __LINE__, true, \
+#define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, \
                                __VA_ARGS__)
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 # undef DLOG
 # undef DLOGN
-# define DLOG(...) do_log(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, true, \
+# define DLOG(...) logmsg(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, true, \
                           __VA_ARGS__)
-# define DLOGN(...) do_log(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, false, \
+# define DLOGN(...) logmsg(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, false, \
                            __VA_ARGS__)
 #endif
 
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
 # undef ILOG
 # undef ILOGN
-# define ILOG(...) do_log(INFO_LOG_LEVEL, NULL, __func__, __LINE__, true, \
+# define ILOG(...) logmsg(INFO_LOG_LEVEL, NULL, __func__, __LINE__, true, \
                           __VA_ARGS__)
-# define ILOGN(...) do_log(INFO_LOG_LEVEL, NULL, __func__, __LINE__, false, \
+# define ILOGN(...) logmsg(INFO_LOG_LEVEL, NULL, __func__, __LINE__, false, \
                            __VA_ARGS__)
 #endif
 
 #if MIN_LOG_LEVEL <= WARN_LOG_LEVEL
 # undef WLOG
 # undef WLOGN
-# define WLOG(...) do_log(WARN_LOG_LEVEL, NULL, __func__, __LINE__, true, \
+# define WLOG(...) logmsg(WARN_LOG_LEVEL, NULL, __func__, __LINE__, true, \
                           __VA_ARGS__)
-# define WLOGN(...) do_log(WARN_LOG_LEVEL, NULL, __func__, __LINE__, false, \
+# define WLOGN(...) logmsg(WARN_LOG_LEVEL, NULL, __func__, __LINE__, false, \
                            __VA_ARGS__)
 #endif
 
 #if MIN_LOG_LEVEL <= ERROR_LOG_LEVEL
 # undef ELOG
 # undef ELOGN
-# define ELOG(...) do_log(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true, \
+# define ELOG(...) logmsg(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true, \
                           __VA_ARGS__)
-# define ELOGN(...) do_log(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, false, \
+# define ELOGN(...) logmsg(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, false, \
                            __VA_ARGS__)
 #endif
 

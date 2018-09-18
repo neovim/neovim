@@ -69,10 +69,10 @@ static char uilog_last_event[1024] = { 0 };
       uilog_seen++; \
     } else { \
       if (uilog_seen > 0) { \
-        do_log(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, \
+        logmsg(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, \
                "%s (+%zu times...)", uilog_last_event, uilog_seen); \
       } \
-      do_log(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, STR(funname)); \
+      logmsg(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, STR(funname)); \
       uilog_seen = 0; \
       xstrlcpy(uilog_last_event, STR(funname), sizeof(uilog_last_event)); \
     } \
