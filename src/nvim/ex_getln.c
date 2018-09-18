@@ -1787,7 +1787,7 @@ static int command_line_not_changed(CommandLineState *s)
 /// as a trailing \|, which can happen while typing a pattern.
 static int empty_pattern(char_u *p)
 {
-  int n = STRLEN(p);
+  size_t n = STRLEN(p);
 
   // remove trailing \v and the like
   while (n >= 2 && p[n - 2] == '\\'
