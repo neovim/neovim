@@ -349,7 +349,16 @@ argument.
 							*--embed*
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
 		embed and control Nvim via the |rpc-api|.  Implies |--headless|.
-		Equivalent to: >
+
+		Nvim will wait for a single request before sourcing startup
+		files and reading buffers. This is mainly so that UIs can call
+		`nvim_ui_attach` so that the UI can show startup messages
+		and possible swap file dialog for the first loaded file. In
+		addition, a `nvim_get_api_info` call before the `nvim_ui_attach`
+		call is also allowed, so that UI features can be safely
+		detected by the UI.
+
+		To avoid this behavior, this alterative could be used instead: >
 			nvim --headless --cmd "call stdioopen({'rpc': v:true})"
 <
 		See also |channel-stdio|.

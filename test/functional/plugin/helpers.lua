@@ -3,6 +3,7 @@ local paths = require('test.config.paths')
 local helpers = require('test.functional.helpers')(nil)
 local spawn, set_session, nvim_prog, merge_args =
   helpers.spawn, helpers.set_session, helpers.nvim_prog, helpers.merge_args
+local request = helpers.request
 
 local additional_cmd = ''
 
@@ -29,6 +30,7 @@ local function reset(...)
   end
   session = spawn(nvim_argv(...))
   set_session(session)
+  request('nvim_eval', "0")
 end
 
 local function set_additional_cmd(s)
