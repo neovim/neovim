@@ -1901,7 +1901,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
   // When "target" is 0; Back to origin.
   if (target == 0) {
-    goto found;
+    mark = lastmark;  // avoid that GCC complains
+    goto target_zero;
   }
 
   /*
@@ -2020,7 +2021,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     }
   }
 
-found:
+target_zero:
   // If we found it: Follow the path to go to where we want to be.
   if (uhp != NULL || target == 0) {
     // First go up the tree as much as needed.
