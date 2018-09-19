@@ -190,6 +190,9 @@ for i = 1, #functions do
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
     output:write('\n{')
+    output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL')
+    output:write('\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "invoke '..fn.name..'");')
+    output:write('\n#endif')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments
     for j = 1, #fn.parameters do

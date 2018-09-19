@@ -101,7 +101,7 @@ void log_unlock(void)
 /// @param context    description of a shared context or subsystem
 /// @param func_name  function name, or NULL
 /// @param line_num   source line number, or -1
-bool do_log(int log_level, const char *context, const char *func_name,
+bool logmsg(int log_level, const char *context, const char *func_name,
             int line_num, bool eol, const char *fmt, ...)
   FUNC_ATTR_UNUSED
 {
