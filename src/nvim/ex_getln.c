@@ -3354,9 +3354,6 @@ void cmdline_paste_str(char_u *s, int literally)
       }
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
-#ifdef UNIX
-          || c == intr_char
-#endif
           || (c == Ctrl_BSL && *s == Ctrl_N)) {
         stuffcharReadbuff(Ctrl_V);
       }

@@ -3632,12 +3632,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               }
             }
 
-            need_wait_return = FALSE;             /* no hit-return prompt */
-            if (typed == 'q' || typed == ESC || typed == Ctrl_C
-#ifdef UNIX
-                || typed == intr_char
-#endif
-                ) {
+            need_wait_return = false;             // no hit-return prompt
+            if (typed == 'q' || typed == ESC || typed == Ctrl_C) {
               got_quit = true;
               break;
             }

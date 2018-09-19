@@ -2398,10 +2398,6 @@ int get_keystroke(void)
     }
     buf[len >= buflen ? buflen - 1 : len] = NUL;
     n = utf_ptr2char(buf);
-#ifdef UNIX
-    if (n == intr_char)
-      n = ESC;
-#endif
     break;
   }
   xfree(buf);
