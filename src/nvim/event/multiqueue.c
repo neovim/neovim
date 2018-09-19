@@ -196,12 +196,14 @@ static Event multiqueueitem_get_event(MultiQueueItem *item, bool remove)
     // remove the child node
     if (remove) {
       QUEUE_REMOVE(&child->node);
+      linked->size--;
       xfree(child);
     }
   } else {
     // remove the corresponding link node in the parent queue
     if (remove && item->data.item.parent_item) {
       QUEUE_REMOVE(&item->data.item.parent_item->node);
+      item->data.item.parent_item->data.queue->size--;
       xfree(item->data.item.parent_item);
       item->data.item.parent_item = NULL;
     }
