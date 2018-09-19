@@ -133,7 +133,7 @@ if s:line1 =~# "^#!"
     set ft=ruby
 
     " JavaScript
-  elseif s:name =~# 'node\(js\)\=\>' || s:name =~# 'rhino\>'
+  elseif s:name =~# 'node\(js\)\=\>\|js\>' || s:name =~# 'rhino\>'
     set ft=javascript
 
     " BC calculator
