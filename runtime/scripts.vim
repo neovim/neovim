@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2017 Nov 11
+" Last change:	2018 Feb 03
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -100,6 +100,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'make\>'
     set ft=make
 
+    " Pike
+  elseif s:name =~# '^pike\%(\>\|[0-9]\)'
+    set ft=pike
+
     " Lua
   elseif s:name =~# 'lua'
     set ft=lua
@@ -171,6 +175,10 @@ if s:line1 =~# "^#!"
     " Scala
   elseif s:name =~# 'scala\>'
     set ft=scala
+
+    " Clojure
+  elseif s:name =~# 'clojure'
+    set ft=clojure
 
   endif
   unlet s:name
