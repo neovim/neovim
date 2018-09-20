@@ -191,12 +191,12 @@ minutes](http://learnxinyminutes.com/docs/lua/).
 
 ## Checklist for migrating legacy tests
 
-**Note:** Only "old style" (`src/testdir/*.in`) legacy tests should be
-converted. Please _do not_ convert "new style" Vim tests (`src/testdir/*.vim`).
+**Note:** Only "old style" (`src/nvim/testdir/*.in`) legacy tests should be
+converted. Please _do not_ convert "new style" Vim tests
+(`src/nvim/testdir/*.vim`).
 The "new style" Vim tests are faster than the old ones, and converting them
 takes time and effort better spent elsewhere.
 
-- Remove the test from the Makefile (`src/nvim/testdir/Makefile`).
 - Remove the associated `test.in`, `test.out`, and `test.ok` files from
   `src/nvim/testdir/`.
 - Make sure the lua test ends in `_spec.lua`.
