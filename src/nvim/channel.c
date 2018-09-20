@@ -432,7 +432,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
                             const char **error)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!headless_mode) {
+  if (!headless_mode && !embedded_mode) {
     *error = _("can only be opened in headless mode");
     return 0;
   }

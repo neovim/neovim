@@ -65,6 +65,7 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/api/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
@@ -304,6 +305,7 @@ int main(int argc, char **argv)
   // Read ex-commands if invoked with "-es".
   //
   bool reading_tty = !headless_mode
+                     && !embedded_mode
                      && !silent_mode
                      && (params.input_isatty || params.output_isatty
                          || params.err_isatty);
@@ -348,18 +350,16 @@ int main(int argc, char **argv)
   // startup. This allows an external UI to show messages and prompts from
   // --cmd and buffer loading (e.g. swap files)
   bool early_ui = false;
-  if (embedded_mode) {
+  if (embedded_mode && !headless_mode) {
     TIME_MSG("waiting for embedder to make request");
-    rpc_wait_for_request();
+    remote_ui_wait_for_attach();
     TIME_MSG("done waiting for embedder");
 
-    if (ui_active()) {
-      // prepare screen now, so external UIs can display messages
-      starting = NO_BUFFERS;
-      screenclear();
-      early_ui = true;
-      TIME_MSG("initialized screen early for embedder");
-    }
+    // prepare screen now, so external UIs can display messages
+    starting = NO_BUFFERS;
+    screenclear();
+    early_ui = true;
+    TIME_MSG("initialized screen early for embedder");
   }
 
   // Execute --cmd arguments.
@@ -467,7 +467,7 @@ int main(int argc, char **argv)
     wait_return(true);
   }
 
-  if (!headless_mode && !silent_mode) {
+  if (!headless_mode && !embedded_mode && !silent_mode) {
     input_stop();  // Stop reading input, let the UI take over.
     ui_builtin_start();
   }
@@ -848,7 +848,6 @@ static void command_line_scan(mparm_T *parmp)
             headless_mode = true;
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
-            headless_mode = true;
             const char *err;
             if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
               abort();

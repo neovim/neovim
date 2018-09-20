@@ -3,18 +3,12 @@ local Screen = require('test.functional.ui.screen')
 
 local feed = helpers.feed
 local eq = helpers.eq
-local spawn, set_session = helpers.spawn, helpers.set_session
-local nvim_prog, nvim_set = helpers.nvim_prog, helpers.nvim_set
-local merge_args, prepend_argv = helpers.merge_args, helpers.prepend_argv
+local clear = helpers.clear
 
 local function test_embed(ext_newgrid)
-  local session, screen
+  local screen
   local function startup(...)
-    local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE',
-                       '--cmd', nvim_set, '--embed'}
-    nvim_argv = merge_args(prepend_argv, nvim_argv, {...})
-    session = spawn(nvim_argv)
-    set_session(session)
+    clear{headless=false, args={...}}
 
     -- attach immediately after startup, for early UI
     screen = Screen.new(60, 8)
@@ -25,10 +19,6 @@ local function test_embed(ext_newgrid)
       [3] = {bold = true, foreground = Screen.colors.Blue1},
     })
   end
-
-  after_each(function()
-    session:close()
-  end)
 
   it('can display errors', function()
     startup('--cmd', 'echoerr invalid+')

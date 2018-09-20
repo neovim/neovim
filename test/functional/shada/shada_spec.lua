@@ -137,7 +137,7 @@ describe('ShaDa support code', function()
 
   it('does not write NONE file', function()
     local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
-                           '--cmd', 'qall'}, true)
+                           '--headless', '--cmd', 'qall'}, true)
     session:close()
     eq(nil, lfs.attributes('NONE'))
     eq(nil, lfs.attributes('NONE.tmp.a'))
@@ -145,8 +145,8 @@ describe('ShaDa support code', function()
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
-                          true)
+    local session = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed',
+                           '--headless'}, true)
     set_session(session)
     eq('', funcs.getreg('a'))
     session:close()

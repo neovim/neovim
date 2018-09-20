@@ -224,7 +224,7 @@ describe('ShaDa support code', function()
   it('does not create incorrect file for non-existent buffers when writing from -c',
   function()
     add_argv('--cmd', 'silent edit ' .. non_existent_testfilename, '-c', 'qall')
-    local argv = nvim_argv(nil, '--headless')
+    local argv = nvim_argv(nil, false) -- no --embed
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
   end)
@@ -233,7 +233,7 @@ describe('ShaDa support code', function()
   function()
     add_argv('-c', 'silent edit ' .. non_existent_testfilename,
              '-c', 'autocmd VimEnter * qall')
-    local argv = nvim_argv(nil, '--headless')
+    local argv = nvim_argv(nil, false) -- no --embed
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
   end)

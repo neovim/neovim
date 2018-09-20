@@ -9,7 +9,7 @@ local eval = helpers.eval
 local shada_file = 'Xtest.shada'
 
 local function _clear()
-  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE',
+  set_session(spawn({nvim_prog, '--embed', '--headless', '-u', 'NONE',
                      -- Need shada for these tests.
                      '-i', shada_file,
                      '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
