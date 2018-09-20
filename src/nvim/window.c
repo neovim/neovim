@@ -367,7 +367,7 @@ newwindow:
       g_do_tagpreview = Prenum;
     else
       g_do_tagpreview = p_pvh;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case ']':
   case Ctrl_RSB:
     CHECK_CMDWIN
@@ -465,7 +465,7 @@ wingotofile:
         g_do_tagpreview = Prenum;
       else
         g_do_tagpreview = p_pvh;
-    /*FALLTHROUGH*/
+      FALLTHROUGH;
     case ']':
     case Ctrl_RSB:
       // Keep visual mode, can select words to use as a tag.

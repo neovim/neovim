@@ -775,7 +775,7 @@ static int insert_handle_key(InsertState *s)
     if (echeck_abbr(ESC + ABBR_OFF)) {
       break;
     }
-  // FALLTHROUGH
+    FALLTHROUGH;
 
   case Ctrl_C:        // End input mode
     if (s->c == Ctrl_C && cmdwin_type != 0) {
@@ -4967,16 +4967,16 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
       if (ctrl_x_mode == CTRL_X_DICTIONARY
           || ctrl_x_mode == CTRL_X_THESAURUS)
         break;
-      // fallthrough
+      FALLTHROUGH;
     case '~':
       if (!p_magic)             /* quote these only if magic is set */
         break;
-      // fallthrough
+      FALLTHROUGH;
     case '\\':
       if (ctrl_x_mode == CTRL_X_DICTIONARY
           || ctrl_x_mode == CTRL_X_THESAURUS)
         break;
-      // fallthrough
+      FALLTHROUGH;
     case '^':                   // currently it's not needed.
     case '$':
       m++;

@@ -1806,7 +1806,7 @@ static char_u *regatom(int *flagp)
       goto collection;
 
   /* "\_x" is character class plus newline */
-  /*FALLTHROUGH*/
+  FALLTHROUGH;
 
   /*
    * Character classes.
@@ -5155,7 +5155,7 @@ regrepeat (
   case IDENT:
   case IDENT + ADD_NL:
     testval = TRUE;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
@@ -5182,7 +5182,7 @@ regrepeat (
   case KWORD:
   case KWORD + ADD_NL:
     testval = TRUE;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case SKWORD:
   case SKWORD + ADD_NL:
     while (count < maxcount) {
@@ -5211,7 +5211,7 @@ regrepeat (
   case FNAME:
   case FNAME + ADD_NL:
     testval = TRUE;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
@@ -5239,7 +5239,7 @@ regrepeat (
   case PRINT:
   case PRINT + ADD_NL:
     testval = TRUE;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case SPRINT:
   case SPRINT + ADD_NL:
     while (count < maxcount) {
@@ -5418,7 +5418,7 @@ do_class:
   case ANYOF:
   case ANYOF + ADD_NL:
     testval = TRUE;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
 
   case ANYBUT:
   case ANYBUT + ADD_NL:

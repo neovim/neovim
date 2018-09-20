@@ -1221,7 +1221,7 @@ static int nfa_regatom(void)
       goto collection;
 
   /* "\_x" is character class plus newline */
-  /*FALLTHROUGH*/
+  FALLTHROUGH;
 
   /*
    * Character classes.
@@ -4209,7 +4209,7 @@ skip_add:
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
-    // fallthrough
+    FALLTHROUGH;
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:

@@ -3723,7 +3723,7 @@ int build_stl_str_hl(
 
     case STL_OFFSET_X:
       base = kNumBaseHexadecimal;
-      // fallthrough
+      FALLTHROUGH;
     case STL_OFFSET:
     {
       long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
@@ -3734,7 +3734,7 @@ int build_stl_str_hl(
     }
     case STL_BYTEVAL_X:
       base = kNumBaseHexadecimal;
-      // fallthrough
+      FALLTHROUGH;
     case STL_BYTEVAL:
       num = byteval;
       if (num == NL)

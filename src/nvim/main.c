@@ -1045,7 +1045,8 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx = -1;
             break;
           }
-        } // FALLTHROUGH
+          FALLTHROUGH;
+        }
         case 'S':    // "-S {file}" execute Vim script
         case 'i':    // "-i {shada}" use for ShaDa file
         case 'u':    // "-u {vimrc}" vim inits file
@@ -1189,7 +1190,8 @@ scripterror:
               argv_idx = -1;
               break;
             }
-          } // FALLTHROUGH
+            FALLTHROUGH;
+          }
           case 'W': {  // "-W {scriptout}" overwrite script file
             if (scriptout != NULL) {
               goto scripterror;
