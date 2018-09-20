@@ -4531,48 +4531,83 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get2c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  const int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  const int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 3 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get3c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 4 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get4c(FILE *fd)
 {
   // Use unsigned rather than int otherwise result is undefined
   // when left-shift sets the MSB.
   unsigned n;
 
-  n = (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
   return (int)n;
 }
 
 /// Read 8 bytes from `fd` and turn them into a time_t, MSB first.
+/// Returns -1 when encountering EOF.
 time_t get8ctime(FILE *fd)
 {
   time_t n = 0;
-  int i;
 
-  for (i = 0; i < 8; i++) {
-    n = (n << 8) + getc(fd);
+  for (int i = 0; i < 8; i++) {
+    const int c = getc(fd);
+    if (c == EOF) {
+      return -1;
+    }
+    n = (n << 8) + c;
   }
   return n;
 }
