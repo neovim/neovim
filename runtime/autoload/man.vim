@@ -149,8 +149,10 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:get_page(path) abort
-  " Respect $MANWIDTH or default to window width.
-  let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
+  " Set $MANWIDTH to a really high value so lines will be wrapped will be
+  " soft through Vim's `set wrap` and `set breakindent` and not hard wraps by
+  " the man program itself which uses internally nroff(1)
+  let manwidth = 10000000
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
