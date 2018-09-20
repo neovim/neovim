@@ -183,7 +183,7 @@ end
 
 function Screen:attach(options)
   if options == nil then
-    options = {rgb=true}
+    options = {}
   end
   if options.ext_newgrid == nil then
     options.ext_newgrid = true
@@ -191,6 +191,11 @@ function Screen:attach(options)
   self._options = options
   self._clear_attrs = (options.ext_newgrid and {{},{}}) or {}
   uimeths.attach(self._width, self._height, options)
+  if self._options.rgb == nil then
+    -- nvim defaults to rgb=true internally,
+    -- simplify test code by doing the same.
+    self._options.rgb = true
+  end
 end
 
 function Screen:detach()
@@ -641,7 +646,14 @@ function Screen:_handle_visual_bell()
   self.visual_bell = true
 end
 
-function Screen:_handle_default_colors_set()
+function Screen:_handle_default_colors_set(rgb_fg, rgb_bg, rgb_sp, cterm_fg, cterm_bg)
+  self.default_colors = {
+    rgb_fg=rgb_fg,
+    rgb_bg=rgb_bg,
+    rgb_sp=rgb_sp,
+    cterm_fg=cterm_fg,
+    cterm_bg=cterm_bg
+  }
 end
 
 function Screen:_handle_update_fg(fg)
