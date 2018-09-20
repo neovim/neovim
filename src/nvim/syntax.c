@@ -6884,7 +6884,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // "fg", which have been changed now.
       highlight_attr_set_all();
 
-      if (!ui_is_external(kUINewgrid) && starting != NO_SCREEN) {
+      if (!ui_is_external(kUINewgrid) && starting == 0) {
         // Older UIs assume that we clear the screen after normal group is
         // changed
         ui_refresh();
