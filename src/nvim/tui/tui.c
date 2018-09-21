@@ -1449,7 +1449,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool true_xterm = xterm && !!xterm_version;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
   bool conemu_ansi = false;
-#ifdef WIN32
+#if defined(WIN32) && defined(NVIM_UV_HAS_GUESS_TTY)
   conemu_ansi = uv_guess_tty(data->out_fd) & UV_TTY_CONEMU;
 #endif
 
