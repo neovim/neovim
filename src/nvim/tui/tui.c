@@ -204,8 +204,8 @@ static void terminfo_start(UI *ui)
   data->out_isatty = os_isatty(data->out_fd);
 
   // Set up unibilium/terminfo.
+  const char *term = os_getenv("TERM");
 #ifdef WIN32
-  char *term = os_getenv("TERM");
   if (term == NULL) {
     int tty_type = uv_guess_tty(data->out_fd);
     if (tty_type & UV_TTY_VTP || tty_type & UV_TTY_CONEMU) {
@@ -214,8 +214,6 @@ static void terminfo_start(UI *ui)
       term = "cygwin";
     }
   }
-#else
-  const char *term = os_getenv("TERM");
 #endif
   data->ut = unibi_from_env();
   char *termname = NULL;
