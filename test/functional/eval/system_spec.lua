@@ -203,23 +203,13 @@ describe('system()', function()
     end)
 
     it('prints verbose information', function()
+      screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
-      screen:expect([[
-                                                             |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-        ~                                                    |
-                                                             |
-        Calling shell to execute: "echo hi"                  |
-                                                             |
-        hi                                                   |
-                                                             |
-        Press ENTER or type command to continue^              |
-      ]])
+      if iswin() then
+        screen:expect{any=[[Executing command: "'cmd.exe' '/s' '/c' '"echo hi"'"]]}
+      else
+        screen:expect{any=[[Executing command: "'/[^']*sh' '%-c' 'echo hi'"]]}
+      end
       feed('<cr>')
     end)
 

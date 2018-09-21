@@ -2632,7 +2632,7 @@ static const char *const str_errors[] = {
 
 #undef FUNC_ERROR
 
-/// Check that given value is a string or can be converted to it
+/// Check that given value is a VimL String or can be "cast" to it.
 ///
 /// Error messages are compatible with tv_get_string_chk() previously used for
 /// the same purpose.
@@ -2805,7 +2805,7 @@ float_T tv_get_float(const typval_T *const tv)
   return 0;
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @param[in]  tv  Object to get value of.
 /// @param  buf  Buffer used to hold numbers and special variables converted to
@@ -2847,7 +2847,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   return NULL;
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to get_tv_string may reuse it. Use
@@ -2866,7 +2866,7 @@ const char *tv_get_string_chk(const typval_T *const tv)
   return tv_get_string_buf_chk(tv, mybuf);
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
 ///          may be used only once, next call to get_tv_string may reuse it. Use
@@ -2888,7 +2888,7 @@ const char *tv_get_string(const typval_T *const tv)
   return tv_get_string_buf((typval_T *)tv, mybuf);
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but
 ///       return NULL on error.
