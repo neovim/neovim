@@ -52,17 +52,5 @@ if get(g:, 'ft_man_folding_enable', 0)
   setlocal foldnestmax=1
 endif
 
-if !get(g:, 'ft_man_wrap_disable', 0)
-  setlocal wrap
-endif
-
-if ! get(g:, 'ft_man_linebreak_disable', 0)
-  setlocal wrap
-endif
-
-if ! get(g:, 'ft_man_breakindnet_disable', 0)
-  setlocal breakindent
-endif
-
 let b:undo_ftplugin = ''
 " vim: set sw=2:
