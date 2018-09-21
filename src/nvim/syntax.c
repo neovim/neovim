@@ -61,6 +61,7 @@ struct hl_group {
   scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
+                                ///< (combination of \ref HlAttrFlags)
   int sg_cterm_fg;              ///< terminal fg color number + 1
   int sg_cterm_bg;              ///< terminal bg color number + 1
   bool sg_cterm_bold;           ///< bold attr was set for light color
