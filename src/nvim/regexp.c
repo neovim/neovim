@@ -1805,8 +1805,8 @@ static char_u *regatom(int *flagp)
     if (c == '[')
       goto collection;
 
-  /* "\_x" is character class plus newline */
-  /*FALLTHROUGH*/
+  // "\_x" is character class plus newline
+  FALLTHROUGH;
 
   /*
    * Character classes.
@@ -2420,7 +2420,7 @@ collection:
       } else if (reg_strict)
         EMSG2_RET_NULL(_(e_missingbracket), reg_magic > MAGIC_OFF);
     }
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   default:
   {
@@ -5154,8 +5154,8 @@ regrepeat (
 
   case IDENT:
   case IDENT + ADD_NL:
-    testval = TRUE;
-  /*FALLTHROUGH*/
+    testval = 1;
+    FALLTHROUGH;
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
@@ -5181,8 +5181,8 @@ regrepeat (
 
   case KWORD:
   case KWORD + ADD_NL:
-    testval = TRUE;
-  /*FALLTHROUGH*/
+    testval = 1;
+    FALLTHROUGH;
   case SKWORD:
   case SKWORD + ADD_NL:
     while (count < maxcount) {
@@ -5210,8 +5210,8 @@ regrepeat (
 
   case FNAME:
   case FNAME + ADD_NL:
-    testval = TRUE;
-  /*FALLTHROUGH*/
+    testval = 1;
+    FALLTHROUGH;
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
@@ -5238,8 +5238,8 @@ regrepeat (
 
   case PRINT:
   case PRINT + ADD_NL:
-    testval = TRUE;
-  /*FALLTHROUGH*/
+    testval = 1;
+    FALLTHROUGH;
   case SPRINT:
   case SPRINT + ADD_NL:
     while (count < maxcount) {
@@ -5417,8 +5417,8 @@ do_class:
 
   case ANYOF:
   case ANYOF + ADD_NL:
-    testval = TRUE;
-  /*FALLTHROUGH*/
+    testval = 1;
+    FALLTHROUGH;
 
   case ANYBUT:
   case ANYBUT + ADD_NL:

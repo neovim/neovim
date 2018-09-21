@@ -3290,7 +3290,7 @@ const char * set_one_cmd_context(
     while ((xp->xp_pattern = (char_u *)strchr(arg, ' ')) != NULL) {
       arg = (const char *)xp->xp_pattern + 1;
     }
-  // FALLTHROUGH
+    FALLTHROUGH;
   case CMD_buffer:
   case CMD_sbuffer:
   case CMD_checktime:

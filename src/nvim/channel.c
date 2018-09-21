@@ -791,7 +791,7 @@ Dictionary channel_info(uint64_t id)
 
     case kChannelStreamInternal:
        PUT(info, "internal", BOOLEAN_OBJ(true));
-      // FALLTHROUGH
+      FALLTHROUGH;
 
     case kChannelStreamSocket:
       stream_desc = "socket";

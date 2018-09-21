@@ -2030,7 +2030,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           }
         }
       }
-    /* FALLTHROUGH */
+      FALLTHROUGH;
 
     default:
       /*

@@ -2255,8 +2255,8 @@ static int do_more_prompt(int typed_char)
         skip_redraw = TRUE;                     /* skip redraw once */
         need_wait_return = FALSE;               /* don't wait in main() */
       }
-    /*FALLTHROUGH*/
-    case 'q':                   /* quit */
+      FALLTHROUGH;
+    case 'q':                   // quit
     case Ctrl_C:
     case ESC:
       if (confirm_msg_used) {
