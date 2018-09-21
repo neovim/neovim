@@ -112,7 +112,7 @@ retnomove:
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
       && default_grid.ScreenLines != NULL) {
     mouse_char = default_grid.ScreenLines[default_grid.LineOffset[row]
-                 + (unsigned)col][0];
+                                          + (unsigned)col][0];
   } else {
     mouse_char = ' ';
   }

@@ -9194,10 +9194,10 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       /* restore height when not full height */
       if (wp->w_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
-                  "exe '%dresize ' . ((&lines * %" PRId64
-                  " + %" PRId64 ") / %" PRId64 ")",
-                  n, (int64_t)wp->w_grid.Rows,
-                  (int64_t)(Rows / 2), (int64_t)Rows) < 0
+                      "exe '%dresize ' . ((&lines * %" PRId64
+                      " + %" PRId64 ") / %" PRId64 ")",
+                      n, (int64_t)wp->w_grid.Rows,
+                      (int64_t)(Rows / 2), (int64_t)Rows) < 0
               || put_eol(fd) == FAIL))
         return FAIL;
 

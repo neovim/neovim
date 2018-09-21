@@ -423,8 +423,8 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&default_grid, rt, (int)STRLEN(rt), row, col - size + 1,
-                              attr);
+              grid_puts_len(&default_grid, rt, (int)STRLEN(rt), row,
+                            col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               col -= width;
@@ -440,7 +440,8 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (curwin->w_p_rl) {
-              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col - 1, attr);
+              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col - 1,
+                            attr);
               col -= 2;
             } else {
               grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col, attr);
@@ -475,32 +476,33 @@ void pum_redraw(void)
 
       if (curwin->w_p_rl) {
         grid_fill(&default_grid, row, row + 1, pum_col - pum_base_width - n + 1,
-                    col + 1, ' ', ' ', attr);
+                  col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
       } else {
-        grid_fill(&default_grid, row, row + 1, col, pum_col + pum_base_width + n,
-                    ' ', ' ', attr);
+        grid_fill(&default_grid, row, row + 1, col,
+                  pum_col + pum_base_width + n, ' ', ' ', attr);
         col = pum_col + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (curwin->w_p_rl) {
-      grid_fill(&default_grid, row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
-                  attr);
+      grid_fill(&default_grid, row, row + 1, pum_col - pum_width + 1, col + 1,
+                ' ', ' ', attr);
     } else {
-      grid_fill(&default_grid, row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
+      grid_fill(&default_grid, row, row + 1, col, pum_col + pum_width, ' ', ' ',
+                attr);
     }
 
     if (pum_scrollbar > 0) {
       if (curwin->w_p_rl) {
         grid_putchar(&default_grid, ' ', row, pum_col - pum_width,
-                       i >= thumb_pos && i < thumb_pos + thumb_heigth
-                       ? attr_thumb : attr_scroll);
+                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     ? attr_thumb : attr_scroll);
       } else {
         grid_putchar(&default_grid, ' ', row, pum_col + pum_width,
-                       i >= thumb_pos && i < thumb_pos + thumb_heigth
-                       ? attr_thumb : attr_scroll);
+                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     ? attr_thumb : attr_scroll);
       }
     }
     grid_puts_line_flush(&default_grid, false);

@@ -248,8 +248,8 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
 /// Sets the inner "width" and "height" of the window grid identified by
 /// "grid" handle. If the grid does not exist, set error.
 void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
-                          Integer height, Error *error)
-  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+                             Integer height, Error *error)
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
     api_set_error(error, kErrorTypeException,

@@ -1546,10 +1546,8 @@ void msg_prt_line(char_u *s, int list)
   msg_clr_eos();
 }
 
-/*
- * Use grid_puts() to output one multi-byte character.
- * Return the pointer "s" advanced to the next character.
- */
+// Use grid_puts() to output one multi-byte character.
+// Return the pointer "s" advanced to the next character.
 static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
 {
   int cw;
@@ -2097,7 +2095,8 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
 {
   // Output postponed text.
   msg_didout = true;  // Remember that line is not empty.
-  grid_puts_len(&default_grid, (char_u *)t_s, (int)(s - t_s), msg_row, msg_col, attr);
+  grid_puts_len(&default_grid, (char_u *)t_s, (int)(s - t_s), msg_row, msg_col,
+                attr);
   msg_col += *t_col;
   *t_col = 0;
   /* If the string starts with a composing character don't increment the
@@ -2314,7 +2313,7 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1
               && grid_ins_lines(&default_grid, 0, 1, (int)Rows,
-                                  0, (int)Columns) == OK) {
+                                0, (int)Columns) == OK) {
             grid_fill(&default_grid, 0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);
@@ -2335,17 +2334,17 @@ static int do_more_prompt(int typed_char)
           msg_scroll_up();
           inc_msg_scrolled();
           grid_fill(&default_grid, (int)Rows - 2, (int)Rows - 1, 0,
-              (int)Columns, ' ', ' ', 0);
+                    (int)Columns, ' ', ' ', 0);
           mp_last = disp_sb_line((int)Rows - 2, mp_last);
           --toscroll;
         }
       }
 
       if (toscroll <= 0) {
-        /* displayed the requested text, more prompt again */
+        // displayed the requested text, more prompt again
         grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
-        msg_moremsg(FALSE);
+                  (int)Columns, ' ', ' ', 0);
+        msg_moremsg(false);
         continue;
       }
 
@@ -2356,8 +2355,9 @@ static int do_more_prompt(int typed_char)
     break;
   }
 
-  /* clear the --more-- message */
-  grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+  // clear the --more-- message
+  grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ',
+            0);
   State = oldState;
   setmouse();
   if (quit_more) {
@@ -2477,8 +2477,8 @@ void msg_moremsg(int full)
   grid_puts(&default_grid, s, (int)Rows - 1, 0, attr);
   if (full) {
     grid_puts(&default_grid, (char_u *)
-                _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-                (int)Rows - 1, vim_strsize(s), attr);
+              _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
+              (int)Rows - 1, vim_strsize(s), attr);
   }
 }
 
@@ -2527,13 +2527,13 @@ void msg_clr_eos(void)
  */
 void msg_clr_eos_force(void)
 {
-  if (cmdmsg_rl) {
-    grid_fill(&default_grid, msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-    grid_fill(&default_grid, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  } else {
-    grid_fill(&default_grid, msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
-    grid_fill(&default_grid, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  }
+  int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
+  int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : (int)Columns;
+
+  grid_fill(&default_grid, msg_row, msg_row + 1, msg_startcol, msg_endcol, ' ',
+            ' ', 0);
+  grid_fill(&default_grid, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ',
+            0);
 }
 
 /*

@@ -3478,7 +3478,7 @@ static void display_showcmd(void)
    * spaces
    */
   grid_puts(&default_grid, (char_u *)"          " + len, (int)Rows - 1,
-              sc_col + len, 0);
+            sc_col + len, 0);
 
   setcursor();              /* put cursor back where it belongs */
 }
@@ -3914,10 +3914,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   }
 
   if (curwin->w_grid.Columns != 0) {
-    /*
-     * Instead of sticking at the last character of the buffer line we
-     * try to stick in the last column of the screen.
-     */
+    // Instead of sticking at the last character of the buffer line we
+    // try to stick in the last column of the screen.
     if (curwin->w_curswant == MAXCOL) {
       atend = true;
       validate_virtcol();
@@ -4271,7 +4269,7 @@ dozet:
     }
     break;
 
-  /* "zL" - scroll screen left half-page */
+  // "zL" - scroll screen left half-page
   case 'L':   cap->count1 *= curwin->w_grid.Columns / 2;
     FALLTHROUGH;
 
@@ -4309,10 +4307,11 @@ dozet:
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       n = curwin->w_grid.Columns - curwin_col_off();
-      if (col + l_p_siso < n)
+      if (col + l_p_siso < n) {
         col = 0;
-      else
+      } else {
         col = col + l_p_siso - n + 1;
+      }
       if (curwin->w_leftcol != col) {
         curwin->w_leftcol = col;
         redraw_later(NOT_VALID);
@@ -5017,11 +5016,11 @@ static void nv_scroll(cmdarg_T *cap)
       /* Don't count filler lines above the window. */
       used -= diff_check_fill(curwin, curwin->w_topline)
               - curwin->w_topfill;
-      validate_botline();           /* make sure w_empty_rows is valid */
+      validate_botline();  // make sure w_empty_rows is valid
       half = (curwin->w_grid.Rows - curwin->w_empty_rows + 1) / 2;
-      for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; ++n) {
-        /* Count half he number of filler lines to be "below this
-         * line" and half to be "above the next line". */
+      for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
+        // Count half he number of filler lines to be "below this
+        // line" and half to be "above the next line".
         if (n > 0 && used + diff_check_fill(curwin, curwin->w_topline
                 + n) / 2 >= half) {
           --n;
@@ -5033,9 +5032,10 @@ static void nv_scroll(cmdarg_T *cap)
         if (hasFolding(curwin->w_topline + n, NULL, &lnum))
           n = lnum - curwin->w_topline;
       }
-      if (n > 0 && used > curwin->w_grid.Rows)
-        --n;
-    } else { /* (cap->cmdchar == 'H') */
+      if (n > 0 && used > curwin->w_grid.Rows) {
+        n--;
+      }
+    } else {  // (cap->cmdchar == 'H')
       n = cap->count1 - 1;
       if (hasAnyFolding(curwin)) {
         /* Count a fold for one screen line. */
@@ -6762,10 +6762,11 @@ static void nv_g_cmd(cmdarg_T *cap)
     /* Go to the middle of the screen line.  When 'number' or
      * 'relativenumber' is on and lines are wrapping the middle can be more
      * to the left. */
-    if (cap->nchar == 'm')
+    if (cap->nchar == 'm') {
       i += (curwin->w_grid.Columns - curwin_col_off()
             + ((curwin->w_p_wrap && i > 0)
                ? curwin_col_off2() : 0)) / 2;
+    }
     coladvance((colnr_T)i);
     if (flag) {
       do

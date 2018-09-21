@@ -1104,7 +1104,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
         if (size + sbrlen + numberwidth > (colnr_T)wp->w_grid.Columns) {
           // Calculate effective window width.
           int width = (colnr_T)wp->w_grid.Columns - sbrlen - numberwidth;
-          int prev_width = col ? ((colnr_T)wp->w_grid.Columns - (sbrlen + col)) : 0;
+          int prev_width = col ? ((colnr_T)wp->w_grid.Columns - (sbrlen + col))
+                               : 0;
           if (width == 0) {
             width = (colnr_T)wp->w_grid.Columns;
           }

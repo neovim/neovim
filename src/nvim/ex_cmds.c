@@ -256,10 +256,12 @@ void ex_align(exarg_T *eap)
      */
     if (width <= 0)
       width = curbuf->b_p_tw;
-    if (width == 0 && curbuf->b_p_wm > 0)
+    if (width == 0 && curbuf->b_p_wm > 0) {
       width = curwin->w_grid.Columns - curbuf->b_p_wm;
-    if (width <= 0)
+    }
+    if (width <= 0) {
       width = 80;
+    }
   }
 
   if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL)

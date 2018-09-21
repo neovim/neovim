@@ -349,7 +349,8 @@ void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
 {
   new_row += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow;
   new_col += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn;
-  int handle = ui_is_external(kUIMultigrid) ? grid->handle : DEFAULT_GRID_HANDLE;
+  int handle = ui_is_external(kUIMultigrid) ? grid->handle
+                                            : DEFAULT_GRID_HANDLE;
 
   if (new_row == row && new_col == col && handle == cursor_grid_handle) {
     return;
@@ -451,7 +452,8 @@ void ui_grid_resize(GridHandle grid_handle, int width, int height, Error *error)
 
   win_T *wp = get_win_by_grid_handle(grid_handle);
   if (wp == NULL) {
-    api_set_error(error, kErrorTypeValidation, "No window with the given handle");
+    api_set_error(error, kErrorTypeValidation,
+                  "No window with the given handle");
     return;
   }
 

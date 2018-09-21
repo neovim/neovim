@@ -2129,7 +2129,7 @@ static int vgetorpeek(int advance)
                 col = curwin->w_cursor.col - 1;
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
-              --curwin->w_wrow;
+              curwin->w_wrow--;
               curwin->w_wcol = curwin->w_grid.Columns - 1;
               col = curwin->w_cursor.col - 1;
             }

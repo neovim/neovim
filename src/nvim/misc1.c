@@ -1318,8 +1318,9 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (!wp->w_p_wrap)
     return lines + 1;
 
-  if (wp->w_grid.Columns == 0)
+  if (wp->w_grid.Columns == 0) {
     return lines + 1;
+  }
 
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
   char_u *s = line;

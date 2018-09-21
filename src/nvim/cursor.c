@@ -223,9 +223,10 @@ static int coladvance2(
     } else {
       int b = (int)wcol - (int)col;
 
-      /* The difference between wcol and col is used to set coladd. */
-      if (b > 0 && b < (MAXCOL - 2 * curwin->w_grid.Columns))
+      // The difference between wcol and col is used to set coladd.
+      if (b > 0 && b < (MAXCOL - 2 * curwin->w_grid.Columns)) {
         pos->coladd = b;
+      }
 
       col += b;
     }

@@ -4230,7 +4230,7 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       wp->w_winrow = *row;
       wp->w_wincol = *col;
       redraw_win_later(wp, NOT_VALID);
-      wp->w_redr_status = TRUE;
+      wp->w_redr_status = true;
       wp->w_pos_changed = true;
     }
     *row += wp->w_height + wp->w_status_height;
@@ -4285,8 +4285,9 @@ void win_setheight_win(int height, win_T *win)
    * If there is extra space created between the last window and the command
    * line, clear it.
    */
-  if (full_screen && msg_scrolled == 0 && row < cmdline_row)
+  if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
     grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  }
   cmdline_row = row;
   msg_row = row;
   msg_col = 0;
@@ -5086,10 +5087,11 @@ void command_height(void)
       /* Recompute window positions. */
       (void)win_comp_pos();
 
-      /* clear the lines added to cmdline */
-      if (full_screen)
-        grid_fill(&default_grid, cmdline_row, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
+      // clear the lines added to cmdline
+      if (full_screen) {
+        grid_fill(&default_grid, cmdline_row, (int)Rows, 0, (int)Columns, ' ',
+                  ' ', 0);
+      }
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;
       return;
@@ -6073,7 +6075,7 @@ void win_ui_flush(void)
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if(wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
+    if (wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
       ui_call_win_position(wp->handle, wp->w_grid.handle, wp->w_winrow,
                            wp->w_wincol, wp->w_width, wp->w_height);
       wp->w_pos_changed = false;

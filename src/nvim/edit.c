@@ -1495,7 +1495,7 @@ void edit_putchar(int c, int highlight)
   int attr;
 
   if (default_grid.ScreenLines != NULL) {
-    update_topline();           /* just in case w_topline isn't valid */
+    update_topline();  // just in case w_topline isn't valid
     validate_cursor();
     if (highlight) {
       attr = HL_ATTR(HLF_8);
@@ -1518,8 +1518,9 @@ void edit_putchar(int c, int highlight)
       }
     } else {
       pc_col += curwin->w_wcol;
-      if (grid_lefthalve(&curwin->w_grid, pc_row, pc_col))
+      if (grid_lefthalve(&curwin->w_grid, pc_row, pc_col)) {
         pc_status = PC_STATUS_LEFT;
+      }
     }
 
     /* save the character to be able to put it back */
@@ -1568,7 +1569,7 @@ void display_dollar(colnr_T col)
   curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(false);              // Recompute w_wrow and w_wcol
   if (curwin->w_wcol < curwin->w_grid.Columns) {
-    edit_putchar('$', FALSE);
+    edit_putchar('$', false);
     dollar_vcol = curwin->w_virtcol;
   }
   curwin->w_cursor.col = save_col;
@@ -5842,8 +5843,9 @@ comp_textwidth (
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
     textwidth = curwin->w_grid.Columns - curbuf->b_p_wm;
-    if (cmdwin_type != 0)
+    if (cmdwin_type != 0) {
       textwidth -= 1;
+    }
     textwidth -= curwin->w_p_fdc;
 
     if (signcolumn_on(curwin)) {
@@ -5857,8 +5859,9 @@ comp_textwidth (
     textwidth = 0;
   if (ff && textwidth == 0) {
     textwidth = curwin->w_grid.Columns - 1;
-    if (textwidth > 79)
+    if (textwidth > 79) {
       textwidth = 79;
+    }
   }
   return textwidth;
 }
