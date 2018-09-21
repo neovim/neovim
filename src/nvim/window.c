@@ -420,7 +420,7 @@ wingotofile:
   case 'i':                         /* Go to any match */
   case Ctrl_I:
     type = FIND_ANY;
-  /* FALLTHROUGH */
+    FALLTHROUGH;
   case 'd':                         /* Go to definition, using 'define' */
   case Ctrl_D:
     CHECK_CMDWIN

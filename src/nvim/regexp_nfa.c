@@ -1801,7 +1801,7 @@ collection:
 
     if (reg_strict)
       EMSG_RET_FAIL(_(e_missingbracket));
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   default:
   {
@@ -3257,7 +3257,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
     }
 
     case NFA_COMPOSING:         /* char with composing char */
-    /* FALLTHROUGH */
+      FALLTHROUGH;
 
     case NFA_MOPEN:     /* \( \) Submatch */
     case NFA_MOPEN1:
@@ -3986,7 +3986,7 @@ addstate (
             || !REG_MULTI
             || reglnum == nfa_endp->se_u.pos.lnum))
       goto skip_add;
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   case NFA_MOPEN1:
   case NFA_MOPEN2:

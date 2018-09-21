@@ -1469,7 +1469,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (s->ignore_drag_release) {
       return command_line_not_changed(s);
     }
-  // FALLTHROUGH
+    FALLTHROUGH;
   case K_LEFTMOUSE:
   case K_RIGHTMOUSE:
     if (s->c == K_LEFTRELEASE || s->c == K_RIGHTRELEASE) {

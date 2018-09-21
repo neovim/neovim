@@ -2420,7 +2420,7 @@ collection:
       } else if (reg_strict)
         EMSG2_RET_NULL(_(e_missingbracket), reg_magic > MAGIC_OFF);
     }
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   default:
   {

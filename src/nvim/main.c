@@ -930,7 +930,8 @@ static void command_line_scan(mparm_T *parmp)
         }
         case 'M': {  // "-M"  no changes or writing of files
           reset_modifiable();
-        } // FALLTHROUGH
+          FALLTHROUGH;
+        }
         case 'm': {  // "-m"  no writing of files
           p_write = false;
           break;
