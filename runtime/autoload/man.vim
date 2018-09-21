@@ -167,6 +167,10 @@ function! s:put_page(page) abort
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
+  " XXX: nroff justifies text by filling it with whitespace.  That interacts
+  " badly with our use of $MANWIDTH=9999.  Hack around this by using a fixed
+  " size for those whitespace regions.
+  silent! keeppatterns keepjumps %s/\s\{999,}/\=repeat(' ', 10)/g
   lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
