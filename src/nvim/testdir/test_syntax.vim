@@ -450,11 +450,35 @@ func Test_bg_detection()
   hi Normal ctermbg=15
   call assert_equal('light', &bg)
 
-  " manually-set &bg takes precendence over auto-detection
+  " manually-set &bg takes precedence over auto-detection
   set bg=light
   hi Normal ctermbg=4
   call assert_equal('light', &bg)
   set bg=dark
   hi Normal ctermbg=12
   call assert_equal('dark', &bg)
+endfunc
+
+fun Test_synstack_synIDtrans()
+  new
+  setfiletype c
+  syntax on
+  call setline(1, ' /* A comment with a TODO */')
+
+  call assert_equal([], synstack(1, 1))
+
+  norm f/
+  call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Comment'],        map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fA
+  call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment'],  map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fT
+  call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  syn clear
+  bw!
 endfunc
