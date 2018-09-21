@@ -1805,7 +1805,7 @@ static char_u *regatom(int *flagp)
     if (c == '[')
       goto collection;
 
-  /* "\_x" is character class plus newline */
+  // "\_x" is character class plus newline
   FALLTHROUGH;
 
   /*
@@ -5154,7 +5154,7 @@ regrepeat (
 
   case IDENT:
   case IDENT + ADD_NL:
-    testval = TRUE;
+    testval = 1;
     FALLTHROUGH;
   case SIDENT:
   case SIDENT + ADD_NL:
@@ -5181,7 +5181,7 @@ regrepeat (
 
   case KWORD:
   case KWORD + ADD_NL:
-    testval = TRUE;
+    testval = 1;
     FALLTHROUGH;
   case SKWORD:
   case SKWORD + ADD_NL:
@@ -5210,7 +5210,7 @@ regrepeat (
 
   case FNAME:
   case FNAME + ADD_NL:
-    testval = TRUE;
+    testval = 1;
     FALLTHROUGH;
   case SFNAME:
   case SFNAME + ADD_NL:
@@ -5238,7 +5238,7 @@ regrepeat (
 
   case PRINT:
   case PRINT + ADD_NL:
-    testval = TRUE;
+    testval = 1;
     FALLTHROUGH;
   case SPRINT:
   case SPRINT + ADD_NL:
@@ -5417,7 +5417,7 @@ do_class:
 
   case ANYOF:
   case ANYOF + ADD_NL:
-    testval = TRUE;
+    testval = 1;
     FALLTHROUGH;
 
   case ANYBUT:

@@ -2256,7 +2256,7 @@ static int do_more_prompt(int typed_char)
         need_wait_return = FALSE;               /* don't wait in main() */
       }
       FALLTHROUGH;
-    case 'q':                   /* quit */
+    case 'q':                   // quit
     case Ctrl_C:
     case ESC:
       if (confirm_msg_used) {

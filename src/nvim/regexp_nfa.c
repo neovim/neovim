@@ -1220,7 +1220,7 @@ static int nfa_regatom(void)
     if (c == '[')
       goto collection;
 
-  /* "\_x" is character class plus newline */
+  // "\_x" is character class plus newline
   FALLTHROUGH;
 
   /*
@@ -3256,7 +3256,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       break;
     }
 
-    case NFA_COMPOSING:         /* char with composing char */
+    case NFA_COMPOSING:         // char with composing char
       FALLTHROUGH;
 
     case NFA_MOPEN:     /* \( \) Submatch */

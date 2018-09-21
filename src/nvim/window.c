@@ -421,7 +421,7 @@ wingotofile:
   case Ctrl_I:
     type = FIND_ANY;
     FALLTHROUGH;
-  case 'd':                         /* Go to definition, using 'define' */
+  case 'd':                         // Go to definition, using 'define'
   case Ctrl_D:
     CHECK_CMDWIN
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
