@@ -367,7 +367,7 @@ newwindow:
       g_do_tagpreview = Prenum;
     else
       g_do_tagpreview = p_pvh;
-  /*FALLTHROUGH*/
+    FALLTHROUGH;
   case ']':
   case Ctrl_RSB:
     CHECK_CMDWIN
@@ -420,8 +420,8 @@ wingotofile:
   case 'i':                         /* Go to any match */
   case Ctrl_I:
     type = FIND_ANY;
-  /* FALLTHROUGH */
-  case 'd':                         /* Go to definition, using 'define' */
+    FALLTHROUGH;
+  case 'd':                         // Go to definition, using 'define'
   case Ctrl_D:
     CHECK_CMDWIN
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
@@ -465,7 +465,7 @@ wingotofile:
         g_do_tagpreview = Prenum;
       else
         g_do_tagpreview = p_pvh;
-    /*FALLTHROUGH*/
+      FALLTHROUGH;
     case ']':
     case Ctrl_RSB:
       // Keep visual mode, can select words to use as a tag.

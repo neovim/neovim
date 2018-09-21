@@ -1220,8 +1220,8 @@ static int nfa_regatom(void)
     if (c == '[')
       goto collection;
 
-  /* "\_x" is character class plus newline */
-  /*FALLTHROUGH*/
+  // "\_x" is character class plus newline
+  FALLTHROUGH;
 
   /*
    * Character classes.
@@ -1801,7 +1801,7 @@ collection:
 
     if (reg_strict)
       EMSG_RET_FAIL(_(e_missingbracket));
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   default:
   {
@@ -3256,8 +3256,8 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       break;
     }
 
-    case NFA_COMPOSING:         /* char with composing char */
-    /* FALLTHROUGH */
+    case NFA_COMPOSING:         // char with composing char
+      FALLTHROUGH;
 
     case NFA_MOPEN:     /* \( \) Submatch */
     case NFA_MOPEN1:
@@ -3986,7 +3986,7 @@ addstate (
             || !REG_MULTI
             || reglnum == nfa_endp->se_u.pos.lnum))
       goto skip_add;
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   case NFA_MOPEN1:
   case NFA_MOPEN2:
@@ -4209,7 +4209,7 @@ skip_add:
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
-    // fallthrough
+    FALLTHROUGH;
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:

@@ -22,6 +22,8 @@ setlocal noexpandtab
 setlocal tabstop=8
 setlocal softtabstop=8
 setlocal shiftwidth=8
+setlocal wrap
+setlocal breakindent
 
 setlocal nonumber
 setlocal norelativenumber
@@ -31,6 +33,8 @@ setlocal nolist
 setlocal nofoldenable
 
 if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
+  nnoremap <silent> <buffer> j          gj
+  nnoremap <silent> <buffer> k          gk
   nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
   nnoremap <silent> <buffer> <C-]>      :Man<CR>
   nnoremap <silent> <buffer> K          :Man<CR>

@@ -1186,7 +1186,7 @@ get_menu_cmd_modes(
       modes = MENU_NORMAL_MODE;
       break;
     }
-  /* FALLTHROUGH */
+    FALLTHROUGH;
   default:
     cmd--;
     if (forceit) {

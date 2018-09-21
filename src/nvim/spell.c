@@ -4204,7 +4204,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
       PROF_STORE(sp->ts_state)
       sp->ts_state = STATE_PLAIN;
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_PLAIN:
       // Go over all possible bytes at this node, add each to tword[]
@@ -4386,7 +4386,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         break;
       }
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_INS_PREP:
       if (sp->ts_flags & TSF_DIDDEL) {
@@ -4416,7 +4416,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
       break;
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_INS:
       // Insert one byte.  Repeat this for each possible byte at this
@@ -4552,7 +4552,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       memmove(p + MB_PTR2LEN(p + n), p, n);
       utf_char2bytes(c, p);
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_SWAP3:
       // Swap two bytes, skipping one: "123" -> "321".  We change
@@ -4695,7 +4695,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       memmove(p, p + tl, n);
       utf_char2bytes(c, p + n);
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_REP_INI:
       // Check if matching with REP items from the .aff file would work.
@@ -4726,7 +4726,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       PROF_STORE(sp->ts_state)
       sp->ts_state = STATE_REP;
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_REP:
       // Try matching with REP items from the .aff file.  For each match
