@@ -359,6 +359,8 @@ endfunc
 func Test_shortmess_F2()
   e file1
   e file2
+  " Accommodate Nvim default.
+  set shortmess-=F
   call assert_match('file1', execute('bn', ''))
   call assert_match('file2', execute('bn', ''))
   set shortmess+=F
@@ -370,7 +372,8 @@ func Test_shortmess_F2()
   set nohidden
   call assert_true(empty(execute('bn', '')))
   call assert_true(empty(execute('bn', '')))
-  set shortmess&
+  " Accommodate Nvim default.
+  set shortmess-=F
   call assert_match('file1', execute('bn', ''))
   call assert_match('file2', execute('bn', ''))
   bwipe
