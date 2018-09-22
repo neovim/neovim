@@ -356,6 +356,24 @@ func Test_shortmess_F()
   bwipe
 endfunc
 
+func Test_set_all()
+  set tw=75
+  set iskeyword=a-z,A-Z
+  set nosplitbelow
+  let out = execute('set all')
+  call assert_match('textwidth=75', out)
+  call assert_match('iskeyword=a-z,A-Z', out)
+  call assert_match('nosplitbelow', out)
+  set tw& iskeyword& splitbelow&
+endfunc
+
+func Test_set_values()
+  " The file is only generated when running "make test" in the src directory.
+  if filereadable('opt_test.vim')
+    source opt_test.vim
+  endif
+endfunc
+
 func Test_shortmess_F2()
   e file1
   e file2
