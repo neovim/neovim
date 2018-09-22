@@ -40,8 +40,6 @@
 static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
 
-static bool got_stdio_request = false;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.c.generated.h"
 #endif
@@ -331,9 +329,6 @@ static void handle_request(Channel *channel, msgpack_object *request)
     send_error(channel, request_id, error.msg);
     api_clear_error(&error);
     api_free_array(args);
-    if (channel->id == CHAN_STDIO) {
-      got_stdio_request = true;
-    }
     return;
   }
 
@@ -349,9 +344,6 @@ static void handle_request(Channel *channel, msgpack_object *request)
     if (is_get_mode && !input_blocking()) {
       // Defer the event to a special queue used by os/input.c. #6247
       multiqueue_put(ch_before_blocking_events, on_request_event, 1, evdata);
-      if (channel->id == CHAN_STDIO) {
-        got_stdio_request = true;
-      }
     } else {
       // Invoke immediately.
       on_request_event((void **)&evdata);
@@ -387,11 +379,6 @@ static void on_request_event(void **argv)
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);
-  bool is_api_info = handler.fn == handle_nvim_get_api_info;
-  // api info is used to initiate client library, ignore it
-  if (channel->id == CHAN_STDIO && !is_api_info) {
-    got_stdio_request = true;
-  }
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -757,17 +744,3 @@ static void log_msg_close(FILE *f, msgpack_object msg)
   log_unlock();
 }
 #endif
-
-/// Wait until embedder has done a request
-void rpc_wait_for_request(void)
-{
-  Channel *channel = find_rpc_channel(CHAN_STDIO);
-  if (!channel) {
-    // this function should only be called in --embed mode, stdio channel
-    // can be assumed.
-    abort();
-  }
-
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, got_stdio_request);
-}
-

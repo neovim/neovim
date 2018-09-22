@@ -330,6 +330,7 @@ local function clear(...)
   local new_args
   local env = nil
   local opts = select(1, ...)
+  local headless = true
   if type(opts) == 'table' then
     if opts.env then
       local env_tbl = {}
@@ -355,15 +356,19 @@ local function clear(...)
       end
     end
     new_args = opts.args or {}
+    if opts.headless == false then
+      headless = false
+    end
   else
     new_args = {...}
+  end
+  if headless then
+    table.insert(args, '--headless')
   end
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
   set_session(spawn(args, nil, env))
-  -- Dummy request so that --embed continues past UI initialization
-  session:request('nvim_eval', "0")
 end
 
 local function insert(...)

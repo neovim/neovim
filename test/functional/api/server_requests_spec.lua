@@ -9,7 +9,7 @@ local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.fu
 local source, next_msg = helpers.source, helpers.next_msg
 local ok = helpers.ok
 local meths = helpers.meths
-local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
+local spawn, merge_args = helpers.spawn, helpers.merge_args
 local set_session = helpers.set_session
 local expect_err = helpers.expect_err
 
@@ -23,7 +23,7 @@ describe('server -> client', function()
 
   it('handles unexpected closed stream while preparing RPC response', function()
     source([[
-      let g:_nvim_args = [v:progpath, '--embed', '-n', '-u', 'NONE', '-i', 'NONE', ]
+      let g:_nvim_args = [v:progpath, '--embed', '--headless', '-n', '-u', 'NONE', '-i', 'NONE', ]
       let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
       let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
       call rpcnotify(ch1, 'nvim_eval', 'rpcrequest('.child1_ch.', "nvim_get_api_info")')
@@ -189,7 +189,7 @@ describe('server -> client', function()
     end
 
     before_each(function()
-      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
+      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])")
       neq(0, eval('vim'))
     end)
 
@@ -268,6 +268,7 @@ describe('server -> client', function()
   end)
 
   describe('connecting to another (peer) nvim', function()
+    local nvim_argv = merge_args(helpers.nvim_argv, {'--headless'})
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
       local client = spawn(nvim_argv)
