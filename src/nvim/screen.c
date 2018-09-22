@@ -2872,9 +2872,9 @@ win_line (
                 rl_mirror(extra);
               }
               p_extra = extra;
+              c_extra = NUL;
             }
 
-            c_extra = NUL;
           }
 
           char_attr = win_hl_attr(wp, HLF_N);
