@@ -1637,7 +1637,7 @@ int win_signcol_width(win_T *wp)
 /// Return the total byte length of the output.
 int draw_sign(char_u **pp_extra_free, int text_sign, int width, int pad)
 {
-  char *text = sign_get_text(text_sign);
+  char_u *text = sign_get_text(text_sign);
   int symbol_blen = (int)STRLEN(text);
   int n_extra = 0;
   if (text != NULL) {
