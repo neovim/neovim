@@ -304,7 +304,7 @@ static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
-static char *(p_scl_values[]) =       { "yes", "no", "auto", NULL };
+static char *(p_scl_values[]) =       { "yes", "no", "auto", "number", "number_hl", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
