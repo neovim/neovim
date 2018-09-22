@@ -529,7 +529,7 @@ int cursor_valid(void)
  */
 void validate_cursor(void)
 {
-  win_grid_alloc(curwin, true);  // we need to have w_grid.Rows/Columns updated
+  win_grid_alloc(curwin, false);  // we need to have w_grid.Rows/Columns updated
   check_cursor_moved(curwin);
   if ((curwin->w_valid & (VALID_WCOL|VALID_WROW)) != (VALID_WCOL|VALID_WROW))
     curs_columns(true);
