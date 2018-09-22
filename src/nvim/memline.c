@@ -528,17 +528,19 @@ void ml_open_file(buf_T *buf)
   buf->b_may_swap = false;
 }
 
-/*
- * If still need to create a swap file, and starting to edit a not-readonly
- * file, or reading into an existing buffer, create a swap file now.
- */
-void 
-check_need_swap (
-    int newfile                    /* reading file into new buffer */
-)
+/// If still need to create a swap file, and starting to edit a not-readonly
+/// file, or reading into an existing buffer, create a swap file now.
+///
+/// @param newfile reading file into new buffer
+void check_need_swap(int newfile)
 {
-  if (curbuf->b_may_swap && (!curbuf->b_p_ro || !newfile))
+  int old_msg_silent = msg_silent;  // might be reset by an E325 message
+
+  if (curbuf->b_may_swap && (!curbuf->b_p_ro || !newfile)) {
     ml_open_file(curbuf);
+  }
+
+  msg_silent = old_msg_silent;
 }
 
 /*

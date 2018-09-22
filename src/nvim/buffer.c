@@ -884,7 +884,15 @@ void handle_swap_exists(bufref_T *old_curbuf)
       buf = old_curbuf->br_buf;
     }
     if (buf != NULL) {
+      int old_msg_silent = msg_silent;
+
+      if (shortmess(SHM_FILEINFO)) {
+        msg_silent = 1;  // prevent fileinfo message
+      }
       enter_buffer(buf);
+      // restore msg_silent, so that the command line will be shown
+      msg_silent = old_msg_silent;
+
       if (old_tw != curbuf->b_p_tw) {
         check_colorcolumn(curwin);
       }
