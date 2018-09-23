@@ -96,6 +96,7 @@ let test_values = {
       \ 'guifontwide': [['', 'fixedsys'], []],
       \ 'helplang': [['', 'de', 'de,it'], ['xxx']],
       \ 'highlight': [['', 'e:Error'], ['xxx']],
+      \ 'imactivatekey': [['', 'S-space'], ['xxx']],
       \ 'isfname': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'isident': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'iskeyword': [['', '@', '@,48-52'], ['xxx', '@48']],
