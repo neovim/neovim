@@ -99,6 +99,10 @@
 # undef FUNC_ATTR_NO_SANITIZE_UNDEFINED
 #endif
 
+#ifdef FUNC_ATTR_PRINTF
+# undef FUNC_ATTR_PRINTF
+#endif
+
 #ifndef DID_REAL_ATTR
 # define DID_REAL_ATTR
 # ifdef __GNUC__
@@ -117,6 +121,7 @@
 #  define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 #  define REAL_FATTR_NORETURN __attribute__((noreturn))
+#  define REAL_FATTR_PRINTF(x, y) __attribute__((format (printf, x, y)))
 
 #  if NVIM_HAS_ATTRIBUTE(returns_nonnull)
 #   define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
@@ -193,6 +198,10 @@
 # ifndef REAL_FATTR_NO_SANITIZE_UNDEFINED
 #  define REAL_FATTR_NO_SANITIZE_UNDEFINED
 # endif
+
+# ifndef REAL_FATTR_PRINTF
+#  define REAL_FATTR_PRINTF(x, y)
+# endif
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES
@@ -215,6 +224,7 @@
 # define FUNC_ATTR_NONNULL_RET REAL_FATTR_NONNULL_RET
 # define FUNC_ATTR_NORETURN REAL_FATTR_NORETURN
 # define FUNC_ATTR_NO_SANITIZE_UNDEFINED REAL_FATTR_NO_SANITIZE_UNDEFINED
+# define FUNC_ATTR_PRINTF(x, y) REAL_FATTR_PRINTF(x, y)
 #elif !defined(DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
 # define FUNC_ATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x)
@@ -230,4 +240,5 @@
 # define FUNC_ATTR_NONNULL_RET
 # define FUNC_ATTR_NORETURN
 # define FUNC_ATTR_NO_SANITIZE_UNDEFINED
+# define FUNC_ATTR_PRINTF(x, y)
 #endif

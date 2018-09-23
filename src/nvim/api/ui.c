@@ -222,9 +222,8 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
     if (strequal(name.data, ui_ext_names[i])
         || (i == kUIPopupmenu && is_popupmenu)) {
       if (value.type != kObjectTypeBoolean) {
-        snprintf((char *)IObuff, IOSIZE, "%s must be a Boolean",
-                 name.data);
-        api_set_error(error, kErrorTypeValidation, (char *)IObuff);
+        api_set_error(error, kErrorTypeValidation, "%s must be a Boolean",
+                      name.data);
         return;
       }
       bool boolval = value.data.boolean;
