@@ -693,6 +693,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
 ///
 /// @see vim_vsnprintf().
 int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   const size_t len = strlen(str);
   size_t space;
@@ -718,6 +719,7 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
 /// @return Number of bytes excluding NUL byte that would be written to the
 ///         string if str_m was greater or equal to the return value.
 int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   va_list ap;
   va_start(ap, fmt);

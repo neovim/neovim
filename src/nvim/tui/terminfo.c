@@ -144,7 +144,7 @@ void terminfo_info_msg(const unibi_term *const ut)
   for (enum unibi_numeric i = unibi_numeric_begin_ + 1;
        i < unibi_numeric_end_; i++) {
     int n = unibi_get_num(ut, i);  // -1 means "empty"
-    msg_printf_attr(0, "  %-25s %-10s = %hd\n", unibi_name_num(i),
+    msg_printf_attr(0, "  %-25s %-10s = %d\n", unibi_name_num(i),
                     unibi_short_name_num(i), n);
   }
 
@@ -173,7 +173,7 @@ void terminfo_info_msg(const unibi_term *const ut)
   if (unibi_count_ext_num(ut)) {
     msg_puts("Extended numeric capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_num(ut); i++) {
-      msg_printf_attr(0, "  %-25s = %hd\n",
+      msg_printf_attr(0, "  %-25s = %d\n",
                       unibi_get_ext_num_name(ut, i),
                       unibi_get_ext_num(ut, i));
     }

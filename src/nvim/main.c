@@ -828,11 +828,11 @@ static void command_line_scan(mparm_T *parmp)
             msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
 
             if (fof_ret != 0) {
-              emsgf(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
+              EMSG2(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
             }
 
             if (p == NULL) {
-              emsgf(_(e_outofmem));
+              EMSG(_(e_outofmem));
             }
 
             Object md = DICTIONARY_OBJ(api_metadata());

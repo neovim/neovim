@@ -331,6 +331,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
  */
 
 int smsg(char *s, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list arglist;
 
@@ -341,6 +342,7 @@ int smsg(char *s, ...)
 }
 
 int smsg_attr(int attr, char *s, ...)
+  FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
 
@@ -581,6 +583,7 @@ void emsg_invreg(int name)
 
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   bool ret;
 
@@ -644,6 +647,7 @@ static void msg_emsgf_event(void **argv)
 }
 
 void msg_schedule_emsgf(const char *const fmt, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -1672,7 +1676,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
 /// @param[in]  attr  Highlight attributes.
 /// @param[in]  fmt  Format string.
 void msg_printf_attr(const int attr, const char *const fmt, ...)
-  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PRINTF(2, 3)
 {
   static char msgbuf[IOSIZE];
 

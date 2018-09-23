@@ -1940,10 +1940,10 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
   } else if (*arg == '@') {
     arg++;
     if (op != NULL && (*op == '+' || *op == '-')) {
-      emsgf(_(e_letwrong), op);
+      EMSG2(_(e_letwrong), op);
     } else if (endchars != NULL
                && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL) {
-      emsgf(_(e_letunexp));
+      EMSG(_(e_letunexp));
     } else {
       char_u      *s;
 
@@ -2083,7 +2083,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
                (flags & GLV_READ_ONLY) ? NULL : &ht,
                flags & GLV_NO_AUTOLOAD);
   if (v == NULL && !quiet) {
-    emsgf(_("E121: Undefined variable: %.*s"),
+    EMSG3(_("E121: Undefined variable: %.*s"),
           (int)lp->ll_name_len, lp->ll_name);
   }
   if (v == NULL) {
@@ -2152,7 +2152,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         if (rettv != NULL && (rettv->v_type != VAR_LIST
                               || rettv->vval.v_list == NULL)) {
           if (!quiet) {
-            emsgf(_("E709: [:] requires a List value"));
+            EMSG(_("E709: [:] requires a List value"));
           }
           tv_clear(&var1);
           return NULL;
@@ -2179,7 +2179,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
 
       if (*p != ']') {
         if (!quiet) {
-          emsgf(_(e_missbrac));
+          EMSG(_(e_missbrac));
         }
         tv_clear(&var1);
         tv_clear(&var2);
@@ -2234,7 +2234,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         /* Key does not exist in dict: may need to add it. */
         if (*p == '[' || *p == '.' || unlet) {
           if (!quiet) {
-            emsgf(_(e_dictkey), key);
+            EMSG2(_(e_dictkey), key);
           }
           tv_clear(&var1);
           return NULL;
@@ -3036,7 +3036,7 @@ static int do_lock_var(lval_T *lp, char_u *const name_end, const int deep,
                && di->di_tv.v_type != VAR_LIST) {
       // For historical reasons this error is not given for Lists and
       // Dictionaries. E.g. b: dictionary may be locked/unlocked.
-      emsgf(_("E940: Cannot lock or unlock variable %s"), lp->ll_name);
+      EMSG2(_("E940: Cannot lock or unlock variable %s"), lp->ll_name);
     } else {
       if (lock) {
         di->di_flags |= DI_FLAGS_LOCK;
@@ -3254,7 +3254,7 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
     // been cancelled due to an aborting error, an interrupt, or an
     // exception.
     if (!aborting()) {
-      emsgf(_(e_invexpr2), arg);
+      EMSG2(_(e_invexpr2), arg);
     }
     ret = FAIL;
   }
@@ -3313,7 +3313,7 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
      * Check for the ":".
      */
     if ((*arg)[0] != ':') {
-      emsgf(_("E109: Missing ':' after '?'"));
+      EMSG(_("E109: Missing ':' after '?'"));
       if (evaluate && result) {
         tv_clear(rettv);
       }
@@ -4421,7 +4421,7 @@ eval_index(
     /* Check for the ']'. */
     if (**arg != ']') {
       if (verbose) {
-        emsgf(_(e_missbrac));
+        EMSG(_(e_missbrac));
       }
       tv_clear(&var1);
       if (range) {
@@ -4533,7 +4533,7 @@ eval_index(
       case VAR_DICT: {
         if (range) {
           if (verbose) {
-            emsgf(_(e_dictrange));
+            EMSG(_(e_dictrange));
           }
           if (len == -1) {
             tv_clear(&var1);
@@ -4553,7 +4553,7 @@ eval_index(
                                               (const char *)key, len);
 
         if (item == NULL && verbose) {
-          emsgf(_(e_dictkey), key);
+          EMSG2(_(e_dictkey), key);
         }
         if (len == -1) {
           tv_clear(&var1);
@@ -4890,14 +4890,14 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
       break;
     }
     if (**arg != ',') {
-      emsgf(_("E696: Missing comma in List: %s"), *arg);
+      EMSG2(_("E696: Missing comma in List: %s"), *arg);
       goto failret;
     }
     *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != ']') {
-    emsgf(_("E697: Missing end of List ']': %s"), *arg);
+    EMSG2(_("E697: Missing end of List ']': %s"), *arg);
 failret:
     if (evaluate) {
       tv_list_free(l);
@@ -7783,7 +7783,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     noref = tv_get_number_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
-    emsgf(_(e_invarg));
+    EMSG(_(e_invarg));
   } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
@@ -7835,17 +7835,17 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_DICT) {
-    emsgf(_(e_invarg2), "dict");
+    EMSG2(_(e_invarg2), "dict");
     return;
   } else if (argvars[0].vval.v_dict == NULL) {
     const char *const arg_errmsg = _("dictwatcheradd() argument");
     const size_t arg_errmsg_len = strlen(arg_errmsg);
-    emsgf(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
+    EMSG3(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
     return;
   }
 
   if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
-    emsgf(_(e_invarg2), "key");
+    EMSG2(_(e_invarg2), "key");
     return;
   }
 
@@ -7857,7 +7857,7 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Callback callback;
   if (!callback_from_typval(&callback, &argvars[2])) {
-    emsgf(_(e_invarg2), "funcref");
+    EMSG2(_(e_invarg2), "funcref");
     return;
   }
 
@@ -7873,12 +7873,12 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_DICT) {
-    emsgf(_(e_invarg2), "dict");
+    EMSG2(_(e_invarg2), "dict");
     return;
   }
 
   if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
-    emsgf(_(e_invarg2), "funcref");
+    EMSG2(_(e_invarg2), "funcref");
     return;
   }
 
@@ -8643,7 +8643,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
     }
 
     if (*s != NUL) {  // check for trailing chars after expr
-      emsgf(_(e_invexpr2), s);
+      EMSG2(_(e_invexpr2), s);
       goto theend;
     }
   }
@@ -8944,7 +8944,7 @@ static void common_function(typval_T *argvars, typval_T *rettv,
   }
   if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))
       || (is_funcref && trans_name == NULL)) {
-    emsgf(_(e_invarg2), (use_string
+    EMSG2(_(e_invarg2), (use_string
                          ? tv_get_string(&argvars[0])
                          : (const char *)s));
     // Don't check an autoload name for existence here.
@@ -11178,7 +11178,7 @@ void get_user_input(const typval_T *const argvars,
   char def[1] = { 0 };
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      emsgf(_("E5050: {opts} must be the only argument"));
+      EMSG(_("E5050: {opts} must be the only argument"));
       return;
     }
     dict_T *const dict = argvars[0].vval.v_dict;
@@ -11487,7 +11487,7 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
                       const DictListType what)
 {
   if (tv->v_type != VAR_DICT) {
-    emsgf(_(e_dictreq));
+    EMSG(_(e_dictreq));
     return;
   }
   if (tv->vval.v_dict == NULL) {
@@ -11917,7 +11917,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (json_decode_string(s, len, rettv) == FAIL) {
-    emsgf(_("E474: Failed to parse %.*s"), (int) len, s);
+    EMSG3(_("E474: Failed to parse %.*s"), (int) len, s);
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   }
@@ -12907,11 +12907,11 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (num < 0) {
-    emsgf(_("E5070: Character number must not be less than zero"));
+    EMSG(_("E5070: Character number must not be less than zero"));
     return;
   }
   if (num > INT_MAX) {
-    emsgf(_("E5071: Character number must not be greater than INT_MAX (%i)"),
+    EMSG2(_("E5071: Character number must not be greater than INT_MAX (%i)"),
           INT_MAX);
     return;
   }
@@ -13053,9 +13053,9 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;  // Type error; errmsg already given.
   }
   if (stride == 0) {
-    emsgf(_("E726: Stride is zero"));
+    EMSG(_("E726: Stride is zero"));
   } else if (stride > 0 ? end + 1 < start : end - 1 > start) {
-    emsgf(_("E727: Start past end"));
+    EMSG(_("E727: Start past end"));
   } else {
     tv_list_alloc_ret(rettv, (end - start) / stride);
     for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
@@ -13392,7 +13392,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             }
           }
           if (li == NULL) {  // Didn't find "item2" after "item".
-            emsgf(_(e_invrange));
+            EMSG(_(e_invrange));
           } else {
             tv_list_move_items(l, item, item2, tv_list_alloc_ret(rettv, cnt),
                                cnt);
@@ -13683,7 +13683,7 @@ static int get_search_arg(typval_T *varp, int *flagsp)
             }
           }
           if (mask == 0) {
-            emsgf(_(e_invarg2), flags);
+            EMSG2(_(e_invarg2), flags);
             dir = 0;
           } else {
             *flagsp |= mask;
@@ -13934,7 +13934,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     int i = 0;
     TV_LIST_ITER_CONST(args, arg, {
       if (TV_LIST_ITEM_TV(arg)->v_type != VAR_STRING) {
-        emsgf(_("E5010: List item %d of the second argument is not a string"),
+        EMSG2(_("E5010: List item %d of the second argument is not a string"),
               i);
         return;
       }
@@ -14703,7 +14703,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   } else if (title_arg->v_type == VAR_DICT) {
     d = title_arg->vval.v_dict;
   } else {
-    emsgf(_(e_dictreq));
+    EMSG(_(e_dictreq));
     return;
   }
 
@@ -14753,7 +14753,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   TV_LIST_ITER_CONST(l, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
         || (d = TV_LIST_ITEM_TV(li)->vval.v_dict) == NULL) {
-      emsgf(_("E474: List item %d is either not a dictionary "
+      EMSG2(_("E474: List item %d is either not a dictionary "
               "or an empty one"), i);
       return;
     }
@@ -14762,7 +14762,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
               || tv_dict_find(d, S_LEN("pos1")) != NULL)
           && tv_dict_find(d, S_LEN("priority")) != NULL
           && tv_dict_find(d, S_LEN("id")) != NULL)) {
-      emsgf(_("E474: List item %d is missing one of the required keys"), i);
+      EMSG2(_("E474: List item %d is missing one of the required keys"), i);
       return;
     }
     i++;
@@ -16199,7 +16199,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (no < 0 || no >= NSUBEXP) {
-    EMSGN(_("E935: invalid submatch number: %d"), no);
+    EMSG2(_("E935: invalid submatch number: %ld"), no);
     return;
   }
   int retList = 0;
@@ -17563,7 +17563,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_DICT
       || (dict = argvars[0].vval.v_dict) == NULL) {
-    emsgf(_(e_invarg));
+    EMSG(_(e_invarg));
   } else {
     dictitem_T *di;
     if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
@@ -17680,7 +17680,7 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
   }
   return true;
 write_list_error:
-  emsgf(_("E80: Error while writing: %s"), os_strerror(error));
+  EMSG2(_("E80: Error while writing: %s"), os_strerror(error));
   return false;
 }
 
@@ -17829,7 +17829,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         case 'S': { do_fsync = false; break; }
         default: {
           // Using %s, p and not %c, *p to preserve multibyte characters
-          emsgf(_("E5060: Unknown flag: %s"), p);
+          EMSG2(_("E5060: Unknown flag: %s"), p);
           return;
         }
       }
@@ -17848,14 +17848,14 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if ((error = file_open(&fp, fname,
                                 ((append ? kFileAppend : kFileTruncate)
                                  | kFileCreate), 0666)) != 0) {
-    emsgf(_("E482: Can't open file %s for writing: %s"),
+    EMSG3(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
   } else {
     if (write_list(&fp, list, binary)) {
       rettv->vval.v_number = 0;
     }
     if ((error = file_close(&fp, do_fsync)) != 0) {
-      emsgf(_("E80: Error when closing file %s: %s"),
+      EMSG3(_("E80: Error when closing file %s: %s"),
             fname, os_strerror(error));
     }
   }
@@ -18588,7 +18588,7 @@ static int get_var_tv(
 
   if (tv == NULL) {
     if (rettv != NULL && verbose) {
-      emsgf(_("E121: Undefined variable: %.*s"), len, name);
+      EMSG3(_("E121: Undefined variable: %.*s"), len, name);
     }
     ret = FAIL;
   } else if (rettv != NULL) {
@@ -19236,7 +19236,7 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
   } else {  // Add a new variable.
     // Can't add "v:" variable.
     if (ht == &vimvarht) {
-      emsgf(_(e_illvar), name);
+      EMSG2(_(e_illvar), name);
       return;
     }
 
@@ -19315,7 +19315,7 @@ bool var_check_ro(const int flags, const char *name,
     name_len = strlen(name);
   }
 
-  emsgf(_(error_message), (int)name_len, name);
+  EMSG3(_(error_message), (int)name_len, name);
 
   return true;
 }
@@ -19349,7 +19349,7 @@ static bool var_check_fixed(const int flags, const char *name,
     } else if (name_len == TV_CSTRING) {
       name_len = strlen(name);
     }
-    emsgf(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
+    EMSG3(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
     return true;
   }
   return false;
@@ -19400,7 +19400,7 @@ bool valid_varname(const char *varname)
     if (!eval_isnamec1((int)(uint8_t)(*p))
         && (p == varname || !ascii_isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
-      emsgf(_(e_illvar), varname);
+      EMSG2(_(e_illvar), varname);
       return false;
     }
   }
@@ -19958,7 +19958,7 @@ void ex_function(exarg_T *eap)
   if (*p == '\n') {
     line_arg = p + 1;
   } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
-    emsgf(_(e_trailing));
+    EMSG(_(e_trailing));
   }
 
   /*
@@ -20378,7 +20378,7 @@ trans_function_name(
      */
     if (!aborting()) {
       if (end != NULL) {
-        emsgf(_(e_invarg2), start);
+        EMSG2(_(e_invarg2), start);
       }
     } else {
       *pp = (char_u *)find_name_end(start, NULL, NULL, FNE_INCL_BR);
