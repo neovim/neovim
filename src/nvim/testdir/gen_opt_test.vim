@@ -1,6 +1,6 @@
 " Script to generate testdir/opt_test.vim from option.c
 
-set cpo=&vim
+set cpo&vim
 
 " Only do this when build with the +eval feature.
 if 1
