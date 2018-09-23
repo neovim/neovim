@@ -40,24 +40,24 @@ describe('highlight: `:syntax manual`', function()
   end)
 
   it("works with buffer switch and 'hidden'", function()
-    feed_command('e tmp1.vim')
-    feed_command('e Xtest-functional-ui-highlight.tmp.vim')
-    feed_command('filetype on')
-    feed_command('syntax manual')
-    feed_command('set ft=vim')
-    feed_command('set syntax=ON')
+    command('e tmp1.vim')
+    command('e Xtest-functional-ui-highlight.tmp.vim')
+    command('filetype on')
+    command('syntax manual')
+    command('set ft=vim')
+    command('set syntax=ON')
     feed('iecho 1<esc>0')
 
-    feed_command('set hidden')
-    feed_command('w')
-    feed_command('bn')
+    command('set hidden')
+    command('w')
+    command('bn')
     feed_command('bp')
     screen:expect([[
       {1:^echo} 1              |
       {0:~                   }|
       {0:~                   }|
       {0:~                   }|
-      <f 1 --100%-- col 1 |
+      :bp                 |
     ]])
   end)
 
@@ -919,7 +919,7 @@ describe("'winhighlight' highlight", function()
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
-      <f 1 --100%-- col 1 |
+                          |
     ]])
   end)
 
