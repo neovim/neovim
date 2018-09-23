@@ -7,10 +7,13 @@ if 1
 
 set nomore
 
+" The terminal size is restored at the end.
+" Clear out t_WS, we don't want to resize the actual terminal.
 let script = [
       \ 'let save_columns = &columns',
       \ 'let save_lines = &lines',
       \ 'let save_term = &term',
+      \ 'set t_WS=',
       \ ]
 
 /#define p_term
