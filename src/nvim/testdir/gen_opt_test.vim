@@ -13,7 +13,6 @@ let script = [
       \ 'let save_term = &term',
       \ ]
 
-edit
 /#define p_term
 let end = line('.')
 
@@ -30,6 +29,7 @@ let test_values = {
       \ 'iminsert': [[0, 1], [-1, 3, 999]],
       \ 'imsearch': [[-1, 0, 1], [-2, 3, 999]],
       \ 'lines': [[2, 24], [-1, 0, 1]],
+      \ 'linespace': [[0, 2, 4], ['']],
       \ 'numberwidth': [[1, 4, 8, 10], [-1, 0, 11]],
       \ 'regexpengine': [[0, 1, 2], [-1, 3, 999]],
       \ 'report': [[0, 1, 2, 9999], [-1]],
@@ -59,7 +59,7 @@ let test_values = {
       \ 'backupext': [['xxx'], ['']],
       \ 'belloff': [['', 'all', 'copy,error'], ['xxx']],
       \ 'breakindentopt': [['', 'min:3', 'sbr'], ['xxx', 'min', 'min:x']],
-      \ 'browsedir': [['', 'last', '/tmp/'], ['xxx']],
+      \ 'browsedir': [['', 'last', '/'], ['xxx']],
       \ 'bufhidden': [['', 'hide', 'wipe'], ['xxx', 'hide,wipe']],
       \ 'buftype': [['', 'help', 'nofile'], ['xxx', 'help,nofile']],
       \ 'casemap': [['', 'internal'], ['xxx']],
@@ -89,6 +89,8 @@ let test_values = {
       \ 'foldmarker': [['((,))'], ['', 'xxx']],
       \ 'formatoptions': [['', 'vt', 'v,t'], ['xxx']],
       \ 'guicursor': [['', 'n:block-Cursor'], ['xxx']],
+      \ 'guifont': [['', 'fixedsys'], []],
+      \ 'guifontwide': [['', 'fixedsys'], []],
       \ 'helplang': [['', 'de', 'de,it'], ['xxx']],
       \ 'highlight': [['', 'e:Error'], ['xxx']],
       \ 'isfname': [['', '@', '@,48-52'], ['xxx', '@48']],
@@ -108,6 +110,7 @@ let test_values = {
       \ 'printmbfont': [['', 'r:some', 'b:Bold,c:yes'], ['xxx']],
       \ 'printoptions': [['', 'header:0', 'left:10pc,top:5pc'], ['xxx']],
       \ 'scrollopt': [['', 'ver', 'ver,hor'], ['xxx']],
+      \ 'renderoptions': [['', 'type:directx'], ['xxx']],
       \ 'selection': [['old', 'inclusive'], ['', 'xxx']],
       \ 'selectmode': [['', 'mouse', 'key,cmd'], ['xxx']],
       \ 'sessionoptions': [['', 'blank', 'help,options,slash'], ['xxx']],
@@ -116,11 +119,11 @@ let test_values = {
       \ 'spellsuggest': [['', 'best', 'double,33'], ['xxx']],
       \ 'switchbuf': [['', 'useopen', 'split,newtab'], ['xxx']],
       \ 'tagcase': [['smart', 'match'], ['', 'xxx', 'smart,match']],
-      \ 'term': [['ansi'], ['', 'gui']],
+      \ 'term': [[], []],
       \ 'toolbar': [['', 'icons', 'text'], ['xxx']],
       \ 'toolbariconsize': [['', 'tiny', 'huge'], ['xxx']],
       \ 'ttymouse': [['', 'xterm'], ['xxx']],
-      \ 'ttytype': [['ansi'], ['', 'gui']],
+      \ 'ttytype': [[], []],
       \ 'viewoptions': [['', 'cursor', 'unix,slash'], ['xxx']],
       \ 'viminfo': [['', '''50', '"30'], ['xxx']],
       \ 'virtualedit': [['', 'all', 'all,block'], ['xxx']],
@@ -189,6 +192,8 @@ while 1
 
     if name == 'more'
       call add(script, 'set nomore')
+    elseif name == 'lines'
+      call add(script, 'let &lines = save_lines')
     endif
   endif
 endwhile
