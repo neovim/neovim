@@ -535,6 +535,7 @@ void ml_open_file(buf_T *buf)
 void check_need_swap(int newfile)
 {
   int old_msg_silent = msg_silent;  // might be reset by an E325 message
+  msg_silent = 0;  // If swap dialog prompts for input, user needs to see it!
 
   if (curbuf->b_may_swap && (!curbuf->b_p_ro || !newfile)) {
     ml_open_file(curbuf);

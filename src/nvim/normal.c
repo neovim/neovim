@@ -1269,7 +1269,8 @@ static void normal_redraw(NormalState *s)
     xfree(p);
   }
 
-  if (need_fileinfo) {  // show file info after redraw
+  // show fileinfo after redraw
+  if (need_fileinfo && !shortmess(SHM_FILEINFO)) {
     fileinfo(false, true, false);
     need_fileinfo = false;
   }
