@@ -89,3 +89,15 @@ function Test_GetCwd()
 	call assert_equal("y Xdir2 1", GetCwdInfo(2, tp_nr))
 	call assert_equal("z Xdir3 1", GetCwdInfo(1, tp_nr))
 endfunc
+
+function Test_GetCwd_lcd_shellslash()
+	new
+	let root = fnamemodify('/', ':p')
+	exe 'lcd '.root
+	let cwd = getcwd()
+	if !exists('+shellslash') || &shellslash
+		call assert_equal(cwd[-1:], '/')
+	else
+		call assert_equal(cwd[-1:], '\')
+	endif
+endfunc
