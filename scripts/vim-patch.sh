@@ -399,7 +399,7 @@ show_vimpatches() {
   printf "\nVim patches missing from Neovim:\n"
 
   list_missing_vimpatches | while read vim_commit; do
-    if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+    if [[ "$(git -C "$VIM_SOURCE_DIR" diff-tree --no-commit-id --name-only  "v${vim_commit}" -- runtime)" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
       printf '  • %s\n' "${vim_commit}"
