@@ -9777,6 +9777,19 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   slash_adjust(rettv->vval.v_string);
 #endif
 
+  // DEBUG: assert return value is the same as with :pwd (ex_pwd).
+  if (scope == MIN_CD_SCOPE && win == curwin) {
+      if (os_dirname(NameBuff, MAXPATHL) == OK) {
+#ifdef BACKSLASH_IN_FILENAME
+          slash_adjust(NameBuff);
+#endif
+          if(STRCMP(rettv->vval.v_string, NameBuff) != 0) {
+              EMSG3(_("EXXX: unexpected pwd (%s != %s)."),
+                    rettv->vval.v_string, NameBuff);
+          };
+      }
+  }
+
   xfree(cwd);
 }
 
