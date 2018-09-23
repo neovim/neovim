@@ -1,13 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local command = helpers.command
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-
-if helpers.pending_win32(pending) then return end
 
 describe("'shortmess'", function()
   local screen
