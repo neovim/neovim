@@ -29,6 +29,19 @@ function! Test_isfname()
   set isfname&
 endfunction
 
+function Test_wildchar()
+  " Empty 'wildchar' used to access invalid memory.
+  call assert_fails('set wildchar=', 'E521:')
+  call assert_fails('set wildchar=abc', 'E521:')
+  set wildchar=<Esc>
+  let a=execute('set wildchar?')
+  call assert_equal("\n  wildchar=<Esc>", a)
+  set wildchar=27
+  let a=execute('set wildchar?')
+  call assert_equal("\n  wildchar=<Esc>", a)
+  set wildchar&
+endfunction
+
 function! Test_options()
   let caught = 'ok'
   try
