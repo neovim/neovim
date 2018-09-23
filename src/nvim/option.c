@@ -1434,7 +1434,7 @@ do_set (
                         || (long *)varp == &p_wcm)
                        && (*arg == '<'
                            || *arg == '^'
-                           || ((!arg[1] || ascii_iswhite(arg[1]))
+                           || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
                                && !ascii_isdigit(*arg)))) {
               value = string_to_key(arg);
               if (value == 0 && (long *)varp != &p_wcm) {
@@ -4019,7 +4019,8 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
 
   options[opt_idx].flags |= P_WAS_SET;
 
-  if (!starting) {
+  // Don't do this while starting up or recursively.
+  if (!starting && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
     char buf_old[2];
     char buf_new[2];
     char buf_type[7];
@@ -4393,7 +4394,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 
   options[opt_idx].flags |= P_WAS_SET;
 
-  if (!starting && errmsg == NULL) {
+  // Don't do this while starting up, failure or recursively.
+  if (!starting && errmsg == NULL && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
     char buf_old[NUMBUFLEN];
     char buf_new[NUMBUFLEN];
     char buf_type[7];
@@ -4426,7 +4428,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 static void trigger_optionsset_string(int opt_idx, int opt_flags,
                                       char *oldval, char *newval)
 {
-  if (oldval != NULL && newval != NULL) {
+  // Don't do this recursively.
+  if (oldval != NULL
+      && newval != NULL
+      && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
     char buf_type[7];
 
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
