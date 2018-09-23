@@ -222,7 +222,7 @@ return {
     pathshorten={args=1},
     pow={args=2},
     prevnonblank={args=1},
-    printf={args=varargs(2)},
+    printf={args=varargs(1)},
     pumvisible={},
     py3eval={args=1},
     pyeval={args=1},
