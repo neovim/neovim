@@ -35,6 +35,7 @@ tags
 /src/nvim/testdir/test.log
 /src/nvim/testdir/messages
 /src/nvim/testdir/viminfo
+/src/nvim/testdir/opt_test.vim
 /src/nvim/testdir/test.ok
 /src/nvim/testdir/*.failed
 /src/nvim/testdir/X*

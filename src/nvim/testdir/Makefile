@@ -115,6 +115,7 @@ clean:
 	        *.rej          \
 	        *.orig         \
 	        *.tlog         \
+	        opt_test.vim   \
 	        test.log       \
 	        messages       \
 	        $(RM_ON_RUN)   \
@@ -166,3 +167,6 @@ newtestssilent: $(NEW_TESTS)
 	@echo "[OLDTEST] Running" $*
 	@mkdir -p $(TMPDIR)
 	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+
+opt_test.vim: ../option.c gen_opt_test.vim
+	$(NVIM_PRG) -u gen_opt_test.vim --noplugin
