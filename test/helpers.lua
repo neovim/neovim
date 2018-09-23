@@ -645,8 +645,38 @@ local function hexdump(str)
   return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
 end
 
-local function read_file(name)
-  local file = io.open(name, 'r')
+-- Reads text lines from `filename` into a table.
+--
+-- filename: path to file
+-- start: start line (1-indexed), negative means "lines before end" (tail)
+local function read_file_list(filename, start)
+  local lnum = (start ~= nil and type(start) == 'number') and start or 1
+  local tail = (lnum < 0)
+  local maxlines = tail and math.abs(lnum) or nil
+  local file = io.open(filename, 'r')
+  if not file then
+    return nil
+  end
+  local lines = {}
+  local i = 1
+  for line in file:lines() do
+    if i >= start then
+      table.insert(lines, line)
+      if #lines > maxlines then
+        table.remove(lines, 1)
+      end
+    end
+    i = i + 1
+  end
+  file:close()
+  return lines
+end
+
+-- Reads the entire contents of `filename` into a string.
+--
+-- filename: path to file
+local function read_file(filename)
+  local file = io.open(filename, 'r')
   if not file then
     return nil
   end
@@ -684,18 +714,13 @@ end
 -- Also removes the file, if the current environment looks like CI.
 local function read_nvim_log()
   local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local logtext = read_file(logfile)
-  local lines = {}
-  for l in string.gmatch(logtext or '', "[^\n]+") do  -- Split at newlines.
-    table.insert(lines, l)
-  end
+  local keep = isCI() and 999 or 10
+  local lines = read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'
     ..string.format('$NVIM_LOG_FILE: %s\n', logfile)
-    ..(logtext and (isCI() and '' or '(last 10 lines)\n') or '(empty)\n'))
-  local keep = (isCI() and #lines or math.min(10, #lines))
-  local startidx = math.max(1, #lines - keep + 1)
-  for i = startidx, (startidx + keep - 1) do
-    log = log..lines[i]..'\n'
+    ..(#lines > 0 and '(last '..tostring(keep)..' lines)\n' or '(empty)\n'))
+  for _,line in ipairs(lines) do
+    log = log..line..'\n'
   end
   log = log..('-'):rep(78)..'\n'
   if isCI() then
@@ -733,6 +758,7 @@ local module = {
   popen_r = popen_r,
   popen_w = popen_w,
   read_file = read_file,
+  read_file_list = read_file_list,
   read_nvim_log = read_nvim_log,
   repeated_read_cmd = repeated_read_cmd,
   shallowcopy = shallowcopy,
