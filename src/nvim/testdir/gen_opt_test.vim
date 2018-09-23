@@ -13,7 +13,7 @@ let script = [
       \ 'let save_term = &term',
       \ ]
 
-edit option.c
+edit
 /#define p_term
 let end = line('.')
 
@@ -197,7 +197,7 @@ call add(script, 'let &term = save_term')
 call add(script, 'let &columns = save_columns')
 call add(script, 'let &lines = save_lines')
 
-call writefile(script, 'testdir/opt_test.vim')
+call writefile(script, 'opt_test.vim')
 
 endif
 

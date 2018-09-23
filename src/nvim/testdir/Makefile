@@ -169,4 +169,4 @@ newtestssilent: $(NEW_TESTS)
 	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
 
 opt_test.vim: ../option.c gen_opt_test.vim
-	$(NVIM_PRG) -u gen_opt_test.vim --noplugin
+	$(NVIM_PRG) -u gen_opt_test.vim --noplugin ../option.c

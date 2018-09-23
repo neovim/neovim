@@ -381,9 +381,10 @@ func Test_set_all()
 endfunc
 
 func Test_set_values()
-  " The file is only generated when running "make test" in the src directory.
   if filereadable('opt_test.vim')
     source opt_test.vim
+  else
+    throw 'Skipped: opt_test.vim does not exist'
   endif
 endfunc
 
