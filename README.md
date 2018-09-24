@@ -59,7 +59,7 @@ To list all targets:
 
     cmake --build build --target help
 
-To skip "bundled" dependencies define `USE_BUNDLED_DEPS=NO` (CMake option: `USE_BUNDLED=NO`).
+To skip "bundled" (`third-party/*`) dependencies define `USE_BUNDLED=NO`.
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
