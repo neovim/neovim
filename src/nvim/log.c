@@ -109,6 +109,12 @@ bool logmsg(int log_level, const char *context, const char *func_name,
     return false;
   }
 
+#ifdef EXITFREE
+  // Logging after we've already started freeing all our memory will only cause
+  // pain.  We need access to VV_PROGPATH, homedir, etc.
+  assert(!entered_free_all_mem);
+#endif
+
   log_lock();
   bool ret = false;
   FILE *log_file = open_log_file();
