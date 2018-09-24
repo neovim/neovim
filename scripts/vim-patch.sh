@@ -366,7 +366,7 @@ list_vimpatch_numbers() {
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
 list_missing_vimpatches() {
-  local token vim_commit vim_commits vim_tag patch_number
+  local token vim_commit vim_tag patch_number
   declare -A tokens
 
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
@@ -375,8 +375,7 @@ list_missing_vimpatches() {
   done
 
   # Get missing Vim commits
-  vim_commits="$(list_vim_commits)"
-  for vim_commit in ${vim_commits}; do
+  for vim_commit in $(list_vim_commits); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
