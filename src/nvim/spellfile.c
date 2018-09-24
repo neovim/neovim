@@ -3096,8 +3096,8 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     if (spin->si_verbose && spin->si_msg_count > 10000) {
       spin->si_msg_count = 0;
       vim_snprintf((char *)message, sizeof(message),
-          _("line %6d, word %6ld - %s"),
-          lnum, spin->si_foldwcount + spin->si_keepwcount, w);
+                   _("line %6d, word %6ld - %s"),
+                   lnum, spin->si_foldwcount + spin->si_keepwcount, w);
       msg_start();
       msg_puts_long_attr(message, 0);
       msg_clr_eos();
@@ -3583,13 +3583,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     if (*line == '/') {
       ++line;
       if (STRNCMP(line, "encoding=", 9) == 0) {
-        if (spin->si_conv.vc_type != CONV_NONE)
+        if (spin->si_conv.vc_type != CONV_NONE) {
           smsg(_("Duplicate /encoding= line ignored in %s line %ld: %s"),
                fname, lnum, line - 1);
-        else if (did_word)
+        } else if (did_word) {
           smsg(_("/encoding= line after word ignored in %s line %ld: %s"),
                fname, lnum, line - 1);
-        else {
+        } else {
           char_u      *enc;
 
           // Setup for conversion to 'encoding'.
@@ -3607,10 +3607,10 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
       }
 
       if (STRNCMP(line, "regions=", 8) == 0) {
-        if (spin->si_region_count > 1)
+        if (spin->si_region_count > 1) {
           smsg(_("Duplicate /regions= line ignored in %s line %ld: %s"),
                fname, lnum, line);
-        else {
+        } else {
           line += 8;
           if (STRLEN(line) > MAXREGIONS * 2) {
             smsg(_("Too many regions in %s line %ld: %s"),

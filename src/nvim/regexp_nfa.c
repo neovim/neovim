@@ -1385,7 +1385,7 @@ static int nfa_regatom(void)
       break;
     default:
       EMSG2(_("E867: (NFA) Unknown operator '\\z%c'"),
-          no_Magic(c));
+            no_Magic(c));
       return FAIL;
     }
     break;
@@ -1525,7 +1525,7 @@ static int nfa_regatom(void)
       }
     }
       EMSG2(_("E867: (NFA) Unknown operator '\\%%%c'"),
-          no_Magic(c));
+            no_Magic(c));
       return FAIL;
     }
     break;

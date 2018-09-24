@@ -2504,7 +2504,7 @@ void ex_undolist(exarg_T *eap)
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ",
-          uhp->uh_seq, changes);
+                   uhp->uh_seq, changes);
       u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
           uhp->uh_time);
       if (uhp->uh_save_nr > 0) {

@@ -2091,7 +2091,7 @@ static const char *shada_format_entry(const ShadaEntry entry)
           entry.data.filemark.mark.lnum, \
           entry.data.filemark.mark.col, \
           entry.data.filemark.mark.coladd, \
-          (void*)entry.data.filemark.additional_data, \
+          (void *)entry.data.filemark.additional_data, \
           ad_len, \
           ad); \
     } while (0)

@@ -239,7 +239,7 @@ end:
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
                            const char *func_name, int line_num, bool eol,
-                           const char* fmt, ...)
+                           const char *fmt, ...)
   FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;

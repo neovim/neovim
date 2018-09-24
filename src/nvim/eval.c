@@ -11917,7 +11917,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (json_decode_string(s, len, rettv) == FAIL) {
-    EMSG3(_("E474: Failed to parse %.*s"), (int) len, s);
+    EMSG3(_("E474: Failed to parse %.*s"), (int)len, s);
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   }
