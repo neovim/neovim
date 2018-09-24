@@ -1447,6 +1447,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     || terminfo_is_term_family(term, "iterm2")
     || terminfo_is_term_family(term, "iTerm.app")
     || terminfo_is_term_family(term, "iTerm2.app");
+  bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool konsole_pretending_xterm = xterm && konsole;
@@ -1641,6 +1642,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             // per analysis of VT100Terminal.m
             || iterm || iterm_pretending_xterm
             || teraterm    // per TeraTerm "Supported Control Functions" doco
+            || alacritty  // https://github.com/jwilm/alacritty/pull/608
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt
