@@ -16199,7 +16199,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (no < 0 || no >= NSUBEXP) {
-    EMSG2(_("E935: invalid submatch number: %ld"), no);
+    EMSG2(_("E935: invalid submatch number: %d"), no);
     return;
   }
   int retList = 0;
