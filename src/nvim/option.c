@@ -304,8 +304,7 @@ static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
-static char *(p_scl_values[]) =       { "yes", "no", "auto", "number",
-                                        "number_hl", NULL };
+static char *(p_scl_values[]) =       { "yes", "no", "auto", "number", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -7085,6 +7084,7 @@ int csh_like_shell(void)
 bool signcolumn_on(win_T *wp)
 {
     if (*wp->w_p_scl == 'n') {
+      // This captures both 'no' and 'number'.
       return false;
     }
     if (*wp->w_p_scl == 'y') {
