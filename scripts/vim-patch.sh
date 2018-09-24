@@ -392,8 +392,7 @@ list_missing_vimpatches() {
     if [[ "${tokens[$patch_number]-}" ]]; then
       continue
     fi
-    vim_commit="${vim_tag#v}"
-    echo "${vim_commit}"
+    echo "${vim_tag}"
   done
 }
 
@@ -403,7 +402,7 @@ show_vimpatches() {
   printf "\nVim patches missing from Neovim:\n"
 
   list_missing_vimpatches | while read vim_commit; do
-    if [[ "$(git -C "$VIM_SOURCE_DIR" diff-tree --no-commit-id --name-only  "v${vim_commit}" -- runtime)" ]]; then
+    if [[ "$(git -C "$VIM_SOURCE_DIR" diff-tree --no-commit-id --name-only  "${vim_commit}" -- runtime)" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
       printf '  • %s\n' "${vim_commit}"
