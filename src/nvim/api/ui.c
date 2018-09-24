@@ -157,6 +157,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 
   if (ui->ui_ext[kUIWindows]) {
     if (ext_win_ui == NULL) {
+      ui_set_ext_win_channel(channel_id);
       ext_win_ui = ui;
     }
     ui->ui_ext[kUIMultigrid] = true;
@@ -791,45 +792,4 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
 {
   UIData *data = ui->data;
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
-}
-
-Integer ui_win_move_cursor(Integer direction, Integer count)
-{
-  UI *ui = ext_win_ui;
-  Array args = ARRAY_DICT_INIT;
-  UIData *data;
-  Error error = ERROR_INIT;
-  typval_T rettv;
-
-  if (!ui_is_external(kUIWindows) || ui == NULL) {
-    abort();  // this should never happen
-  }
-  data = ui->data;
-
-  ADD(args, INTEGER_OBJ(direction));
-  ADD(args, INTEGER_OBJ(count));
-
-  Object result = rpc_send_call(data->channel_id, "win_move_cursor", args,
-                                &error);
-
-  if (ERROR_SET(&error)) {
-    EMSG2(_("Error invoking win_move_cursor: %s"), error.msg);
-    api_clear_error(&error);
-    api_free_object(result);
-    return 0;
-  }
-
-  if (result.type != kObjectTypeInteger) {
-    api_set_error(&error, kErrorTypeValidation,
-                  "Error converting the call result: %s", error.msg);
-    api_clear_error(&error);
-    api_free_object(result);
-    return 0;
-  }
-
-  if (rettv.v_type == VAR_NUMBER) {
-    return (Integer)rettv.vval.v_number;
-  } else {
-    return 0;
-  }
 }
