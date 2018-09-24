@@ -1638,10 +1638,16 @@ int win_signcol_width(win_T *wp)
 int draw_sign(char_u **pp_extra_free, int text_sign, int width, int pad)
 {
   char_u *text = sign_get_text(text_sign);
-  int symbol_blen = (int)STRLEN(text);
   int n_extra = 0;
   if (text != NULL) {
+		int symbol_blen = (int)STRLEN(text);
     int cell_size = mb_string2cells(text);
+		while (pad > 0 && cell_size > width) {
+			// Eat into the padding if width is not large enough.
+			// This will have to be adjusted when variable width signs are introduced.
+			pad--;
+			width++;
+		}
     // symbol(s) bytes + (filling spaces) (one byte each)
     n_extra = symbol_blen + width + pad - cell_size;
     xfree(*pp_extra_free);
@@ -2874,7 +2880,6 @@ win_line (
               p_extra = extra;
               c_extra = NUL;
             }
-
           }
 
           char_attr = win_hl_attr(wp, HLF_N);
