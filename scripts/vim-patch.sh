@@ -366,30 +366,35 @@ list_vimpatch_numbers() {
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
 list_missing_vimpatches() {
-  local tokens vim_commit vim_commits is_missing vim_tag patch_number
+  local token vim_commit vim_commits vim_tag patch_number
+  declare -A tokens
 
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
-  tokens="$(list_vimpatch_tokens)"
+  for token in $(list_vimpatch_tokens); do
+    tokens[$token]=1
+  done
 
   # Get missing Vim commits
   vim_commits="$(list_vim_commits)"
   for vim_commit in ${vim_commits}; do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
-    is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${vim_commit:0:7}" && echo false || echo true)"
-
-    if ! [ "$is_missing" = "false" ] \
-      && vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)"
-    then
-      # Vim version number (not commit hash).
-      # Check for vim-patch:<tag> (not commit hash).
-      patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
-      is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${patch_number}" && echo false || echo true)"
-      vim_commit="${vim_tag#v}"
+    token="vim-patch:${vim_commit:0:7}"
+    if [[ "${tokens[$token]-}" ]]; then
+      continue
     fi
 
-    if ! [ "$is_missing" = "false" ]; then
-      echo "${vim_commit}"
+    if ! vim_tag="$(git -C "${VIM_SOURCE_DIR}" describe --tags --exact-match "${vim_commit}" 2>/dev/null)"; then
+      # Skip commits without tag, i.e. not a Vim patch.
+      continue
     fi
+
+    # Check for vim-patch:<tag> (not commit hash).
+    patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
+    if [[ "${tokens[$patch_number]-}" ]]; then
+      continue
+    fi
+    vim_commit="${vim_tag#v}"
+    echo "${vim_commit}"
   done
 }
 
