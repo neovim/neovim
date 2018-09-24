@@ -1629,25 +1629,24 @@ int win_signcol_width(win_T *wp)
   return 2;
 }
 
-
-
 /// Writes the specified sign into a newly allocated string at *pp_extra_free.
 /// The total cell width of the output is width + pad, with the sign being
 /// offset by pad from the right.
 /// Return the total byte length of the output.
-int draw_sign(char_u **pp_extra_free, int text_sign, int width, int pad)
+static inline int draw_sign(char_u **pp_extra_free, int text_sign,
+                            int width, int pad)
 {
   char_u *text = sign_get_text(text_sign);
   int n_extra = 0;
   if (text != NULL) {
-		int symbol_blen = (int)STRLEN(text);
+    int symbol_blen = (int)STRLEN(text);
     int cell_size = mb_string2cells(text);
-		while (pad > 0 && cell_size > width) {
-			// Eat into the padding if width is not large enough.
-			// This will have to be adjusted when variable width signs are introduced.
-			pad--;
-			width++;
-		}
+    while (pad > 0 && cell_size > width) {
+      // Eat into the padding if width is not large enough.
+      // This will have to be adjusted when variable width signs are introduced.
+      pad--;
+      width++;
+    }
     // symbol(s) bytes + (filling spaces) (one byte each)
     n_extra = symbol_blen + width + pad - cell_size;
     xfree(*pp_extra_free);
@@ -2835,13 +2834,16 @@ win_line (
                 || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
           c_extra = ' ';
           n_extra = number_width(wp) + 1;
+
+          bool signcolumn_number = (wp->w_p_scl[0] == 'n'
+                                    && wp->w_p_scl[1] == 'u');
           int text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
 
           // Draw the line number (empty space after wrapping).
           if (row == startrow
               + filler_lines
               ) {
-            if (text_sign != 0 && strcmp((char *)wp->w_p_scl, "number") == 0) {
+            if (text_sign != 0 && signcolumn_number) {
               // Draw the sign instead of the number.
               int len = draw_sign(&p_extra_free, text_sign,
                                   number_width(wp), 1);
@@ -2884,9 +2886,9 @@ win_line (
 
           char_attr = win_hl_attr(wp, HLF_N);
 
-          if (text_sign != 0 && strstr((char *)wp->w_p_scl, "number") != NULL) {
+          if (text_sign != 0 && signcolumn_number) {
             // If there is a sign on the current line and 'signcolumn' is set to
-            // 'number' or 'number_hl', highlight according to the sign.
+            // 'number', highlight according to the sign.
             char_attr = sign_get_attr(text_sign, false);
           } else if ((wp->w_p_cul || wp->w_p_rnu)
                      && lnum == wp->w_cursor.lnum) {
