@@ -4593,8 +4593,14 @@ void status_redraw_all(void)
  */
 void status_redraw_curbuf(void)
 {
+  status_redraw_buf(curbuf);
+}
+
+// mark all status lines of the specified buffer for redraw
+void status_redraw_buf(buf_T *buf)
+{
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
+    if (wp->w_status_height != 0 && wp->w_buffer == buf) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
     }
