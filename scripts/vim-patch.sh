@@ -345,14 +345,13 @@ list_vim_commits() { (
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
+# Commit hashes (xxx not starting with "\d\.") are shortened to 7 characters.
 list_vimpatch_tokens() {
-  local tokens
-  # Find all "vim-patch:xxx" tokens in the Nvim git log.
-  tokens="$(cd "${NVIM_SOURCE_DIR}" && git log -E --grep='vim-patch:[^ ]+' | grep 'vim-patch')"
-  echo "$tokens" | grep -E 'vim-patch:[^ ,{]{7,}' \
-    | sed 's/.*\(vim-patch:[.0-9a-z]\+\).*/\1/' \
+  git -C "${NVIM_SOURCE_DIR}" log -E --grep='vim-patch:[^ ,{]{7,}' \
+    | grep -oE 'vim-patch:[^ ,{:]{7,}' \
     | sort \
-    | uniq
+    | uniq \
+    | sed -nE 's/^(vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7})).*/\1/p'
 }
 
 # Prints all patch-numbers (for the current v:version) for which there is
