@@ -381,17 +381,16 @@ list_missing_vimpatches() {
       continue
     fi
 
-    if ! vim_tag="$(git -C "${VIM_SOURCE_DIR}" describe --tags --exact-match "${vim_commit}" 2>/dev/null)"; then
-      # Skip commits without tag, i.e. not a Vim patch.
-      continue
+    if vim_tag="$(git -C "${VIM_SOURCE_DIR}" describe --tags --exact-match "${vim_commit}" 2>/dev/null)"; then
+      # Check for vim-patch:<tag> (not commit hash).
+      patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
+      if [[ "${tokens[$patch_number]-}" ]]; then
+        continue
+      fi
+      echo "$vim_tag"
+    else
+      echo "$vim_commit"
     fi
-
-    # Check for vim-patch:<tag> (not commit hash).
-    patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
-    if [[ "${tokens[$patch_number]-}" ]]; then
-      continue
-    fi
-    echo "${vim_tag}"
   done
 }
 
