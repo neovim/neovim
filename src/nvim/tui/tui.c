@@ -205,7 +205,7 @@ static void terminfo_start(UI *ui)
 
   // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
-#ifdef WIN32
+#if defined(WIN32) && defined(NVIM_UV_HAS_GUESS_TTY)
   if (term == NULL) {
     int tty_type = uv_guess_tty(data->out_fd);
     if (tty_type & UV_TTY_VTP || tty_type & UV_TTY_CONEMU) {
