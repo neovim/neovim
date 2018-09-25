@@ -4665,8 +4665,8 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	If running in a terminal, "undercurl" acts as an alias for "underline".
-	It is set using |highlight-guisp|.
+	"undercurl" falls back to "underline" in a terminal that does not
+	support it.  The color is set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4799,7 +4799,8 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	These give the foreground (guifg), background (guibg) and special
-	(guisp) color to use in the GUI.  "guisp" is used for undercurl.
+	(guisp) color to use in the GUI.  "guisp" is used for undercurl
+	and underline.
 	There are a few special names:
 		NONE		no color (transparent)
 		bg		use normal background color

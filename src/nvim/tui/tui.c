@@ -118,6 +118,7 @@ typedef struct {
     int resize_screen;
     int reset_scroll_region;
     int set_cursor_style, reset_cursor_style;
+    int enter_undercurl_mode, exit_undercurl_mode, set_underline_color;
   } unibi_ext;
 } TUIData;
 
@@ -438,15 +439,16 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 static bool attrs_differ(HlAttrs a1, HlAttrs a2, bool rgb)
 {
   if (rgb) {
-    // TODO(bfredl): when we start to support special color,
-    // rgb_sp_color must be added here
     return a1.rgb_fg_color != a2.rgb_fg_color
       || a1.rgb_bg_color != a2.rgb_bg_color
-      || a1.rgb_ae_attr != a2.rgb_ae_attr;
+      || a1.rgb_ae_attr != a2.rgb_ae_attr
+      || a1.rgb_sp_color != a2.rgb_sp_color;
   } else {
     return a1.cterm_fg_color != a2.cterm_fg_color
       || a1.cterm_bg_color != a2.cterm_bg_color
-      || a1.cterm_ae_attr != a2.cterm_ae_attr;
+      || a1.cterm_ae_attr != a2.cterm_ae_attr
+      || (a1.cterm_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)
+          && a1.rgb_sp_color != a2.rgb_sp_color);
   }
 }
 
@@ -483,13 +485,21 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   bool italic = attr & HL_ITALIC;
   bool reverse = attr & HL_INVERSE;
   bool standout = attr & HL_STANDOUT;
-  bool underline = attr & HL_UNDERLINE;
-  bool undercurl = attr & HL_UNDERCURL;
+
+  bool underline;
+  bool undercurl;
+  if (data->unibi_ext.enter_undercurl_mode) {
+    underline = attr & HL_UNDERLINE;
+    undercurl = attr & HL_UNDERCURL;
+  } else {
+    underline = (attr & HL_UNDERLINE) || (attr & HL_UNDERCURL);
+    undercurl = false;
+  }
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
-    if (bold || reverse || underline || undercurl || standout) {
+    if (bold || reverse || underline || standout) {
       UNIBI_SET_NUM_VAR(data->params[0], standout);
-      UNIBI_SET_NUM_VAR(data->params[1], underline || undercurl);
+      UNIBI_SET_NUM_VAR(data->params[1], underline);
       UNIBI_SET_NUM_VAR(data->params[2], reverse);
       UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
       UNIBI_SET_NUM_VAR(data->params[4], 0);   // dim
@@ -508,7 +518,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
     if (bold) {
       unibi_out(ui, unibi_enter_bold_mode);
     }
-    if (underline || undercurl) {
+    if (underline) {
       unibi_out(ui, unibi_enter_underline_mode);
     }
     if (standout) {
@@ -520,6 +530,18 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
   if (italic) {
     unibi_out(ui, unibi_enter_italics_mode);
+  }
+  if (undercurl && data->unibi_ext.enter_undercurl_mode) {
+    unibi_out_ext(ui, data->unibi_ext.enter_undercurl_mode);
+  }
+  if ((undercurl || underline) && data->unibi_ext.set_underline_color) {
+    int color = attrs.rgb_sp_color;
+    if (color != -1) {
+        UNIBI_SET_NUM_VAR(data->params[0], (color >> 16) & 0xff);  // red
+        UNIBI_SET_NUM_VAR(data->params[1], (color >> 8) & 0xff);   // green
+        UNIBI_SET_NUM_VAR(data->params[2], color & 0xff);          // blue
+        unibi_out_ext(ui, data->unibi_ext.set_underline_color);
+    }
   }
   if (ui->rgb) {
     if (fg != -1) {
@@ -1817,6 +1839,20 @@ static void augment_terminfo(TUIData *data, const char *term,
       ut, "ext.enable_mouse", "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
       ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
+
+  if ((int)unibi_add_ext_bool(ut, "Su", 0)) {
+      data->unibi_ext.enter_undercurl_mode = (int)unibi_add_ext_str(
+          ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
+      data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
+          ut, "ext.exit_underline_mode", "\x1b[4:0m");
+      if (has_colon_rgb) {
+          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
+              ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
+      } else {
+          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
+              ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
+      }
+  }
 }
 
 static void flush_buf(UI *ui)
