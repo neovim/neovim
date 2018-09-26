@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: neovim-builder
+    networks:
+      - neovim
+    volumes:
+      - .:/src/github.com/neovim:Z
+    tty: true
+
+networks:
+  neovim:
