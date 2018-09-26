@@ -793,9 +793,11 @@ static int command_line_execute(VimState *state, int key)
     no_mapping--;
     // CTRL-\ e doesn't work when obtaining an expression, unless it
     // is in a mapping.
-    if (s->c != Ctrl_N && s->c != Ctrl_G && (s->c != 'e'
-                                             || (ccline.cmdfirstc == '='
-                                                 && KeyTyped))) {
+    if (s->c != Ctrl_N
+        && s->c != Ctrl_G
+        && (s->c != 'e'
+            || (ccline.cmdfirstc == '=' && KeyTyped)
+            || cmdline_star)) {
       vungetc(s->c);
       s->c = Ctrl_BSL;
     } else if (s->c == 'e') {
@@ -1350,7 +1352,8 @@ static int command_line_handle_key(CommandLineState *s)
     // a new one...
     new_cmdpos = -1;
     if (s->c == '=') {
-      if (ccline.cmdfirstc == '=') {          // can't do this recursively
+      if (ccline.cmdfirstc == '='   // can't do this recursively
+          || cmdline_star) {        // or when typing a password
         beep_flush();
         s->c = ESC;
       } else {
