@@ -22,26 +22,27 @@ function! s:is_minimum_version(version, min_major, min_minor) abort
     \         && str2nr(v_list[1]) >= str2nr(a:min_minor)))
 endfunction
 
-function! s:find_node_client(package_manager) abort
-  if !executable(a:package_manager)
-    return ''
-  endif
-  let is_yarn = a:package_manager ==# 'yarn'
-  let cmd = is_yarn ? 'yarn global dir' : 'npm --loglevel silent root -g'
-  let global_modules_dir = get(split(system(cmd), "\n"), 0, '')
-  if v:shell_error || !isdirectory(global_modules_dir)
-    return ''
-  endif
-  " `yarn global dir` returns the parent of '/node_modules'.
-  let global_modules_dir = is_yarn ? global_modules_dir . '/node_modules' : global_modules_dir
-  if !isdirectory(global_modules_dir)
-    return ''
-  endif
-  let entry_point = global_modules_dir . '/neovim/bin/cli.js'
-  if !filereadable(entry_point)
-    return ''
-  endif
-  return entry_point
+let s:NodeHandler = {}
+let s:NodeHandler.result = ''
+function! s:NodeHandler.on_stdout(job_id, data, event)
+    let self.data += a:data
+endfunction
+
+function! s:NodeHandler.on_exit(job_id, data, event)
+    let bin_dir = join(self.data, '')
+    let entry_point = bin_dir . self.entry_point
+    if filereadable(entry_point)
+        let self.result = entry_point
+    else
+        let self.result = ''
+    end
+endfunction
+
+function! s:NodeHandler.new()
+    let obj = copy(s:NodeHandler)
+    let obj.data = []
+
+    return obj
 endfunction
 
 " Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
@@ -59,6 +60,7 @@ function! provider#node#can_inspect() abort
     \ || s:is_minimum_version(ver, 7, 6)
 endfunction
 
+
 function! provider#node#Detect() abort
   if exists('g:node_host_prog')
     return g:node_host_prog
@@ -66,9 +68,26 @@ function! provider#node#Detect() abort
   if !s:is_minimum_version(v:null, 6, 0)
     return ''
   endif
-  let entry_point = s:find_node_client('npm')
-  let entry_point = !empty(entry_point) ? entry_point : s:find_node_client('yarn')
-  return entry_point
+
+  " try both npm and yarn simultaneously
+  let yarn_opts = s:NodeHandler.new()
+  let yarn_opts.entry_point = '/node_modules/neovim/bin/cli.js'
+  let yarn_opts.job_id = jobstart(['yarn', 'global', 'dir'], yarn_opts)
+  let npm_opts = s:NodeHandler.new()
+  let npm_opts.entry_point = '/neovim/bin/cli.js'
+  let npm_opts.job_id = jobstart(['npm', '--loglevel', 'silent', 'root', '-g'], npm_opts)
+
+  let result = jobwait([yarn_opts.job_id])
+  if yarn_opts.result != ''
+      return yarn_opts.result
+  endif
+
+  let result = jobwait([npm_opts.job_id])
+  if npm_opts.result != ''
+      return npm_opts.result
+  endif
+
+  return ''
 endfunction
 
 function! provider#node#Prog() abort
