@@ -574,7 +574,7 @@ static void print_cell(UI *ui, UCell *ptr)
     // Printing the next character finally advances the cursor.
     final_column_wrap(ui);
   }
-  update_attrs(ui, ptr->attrs);
+  update_attrs(ui, kv_A(data->attrs, ptr->attr));
   out(ui, ptr->data, strlen(ptr->data));
   grid->col++;
   if (data->immediate_wrap_after_last_column) {
@@ -590,7 +590,8 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
   UCell *cell = grid->cells[row] + col;
   while (next) {
     next--;
-    if (attrs_differ(cell->attrs, data->print_attrs, ui->rgb)) {
+    if (attrs_differ(kv_A(data->attrs, cell->attr),
+                     data->print_attrs, ui->rgb)) {
       if (data->default_attr) {
         return false;
       }
@@ -1221,7 +1222,8 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
   UGrid *grid = &data->grid;
   for (Integer c = startcol; c < endcol; c++) {
     memcpy(grid->cells[linerow][c].data, chunk[c-startcol], sizeof(schar_T));
-    grid->cells[linerow][c].attrs = kv_A(data->attrs, attrs[c-startcol]);
+    assert((size_t)attrs[c-startcol] < kv_size(data->attrs));
+    grid->cells[linerow][c].attr = attrs[c-startcol];
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)linerow, (int)startcol,
                      (int)endcol-1, {
@@ -1232,7 +1234,7 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
   if (clearcol > endcol) {
     HlAttrs cl_attrs = kv_A(data->attrs, (size_t)clearattr);
     ugrid_clear_chunk(grid, (int)linerow, (int)endcol, (int)clearcol,
-                      cl_attrs);
+                      (sattr_T)clearattr);
     clear_region(ui, (int)linerow, (int)linerow, (int)endcol, (int)clearcol-1,
                  cl_attrs);
   }

@@ -11,14 +11,13 @@ typedef struct ugrid UGrid;
 
 struct ucell {
   char data[CELLBYTES + 1];
-  HlAttrs attrs;
+  sattr_T attr;
 };
 
 struct ugrid {
   int top, bot, left, right;
   int row, col;
   int width, height;
-  HlAttrs attrs;
   UCell **cells;
 };
 
