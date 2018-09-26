@@ -765,43 +765,31 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
   cursor_goto(ui, data->row, data->col);
 }
 
-static bool can_use_scroll(UI * ui)
+static void set_scroll_region(UI *ui, int top, int bot, int left, int right)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
 
-  return data->scroll_region_is_full_screen
-    || (data->can_change_scroll_region
-        && ((grid->left == 0 && grid->right == ui->width - 1)
-            || data->can_set_lr_margin
-            || data->can_set_left_right_margin));
-}
-
-static void set_scroll_region(UI *ui)
-{
-  TUIData *data = ui->data;
-  UGrid *grid = &data->grid;
-
-  UNIBI_SET_NUM_VAR(data->params[0], grid->top);
-  UNIBI_SET_NUM_VAR(data->params[1], grid->bot);
+  UNIBI_SET_NUM_VAR(data->params[0], top);
+  UNIBI_SET_NUM_VAR(data->params[1], bot);
   unibi_out(ui, unibi_change_scroll_region);
-  if (grid->left != 0 || grid->right != ui->width - 1) {
+  if (left != 0 || right != ui->width - 1) {
     unibi_out_ext(ui, data->unibi_ext.enable_lr_margin);
     if (data->can_set_lr_margin) {
-      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
-      UNIBI_SET_NUM_VAR(data->params[1], grid->right);
+      UNIBI_SET_NUM_VAR(data->params[0], left);
+      UNIBI_SET_NUM_VAR(data->params[1], right);
       unibi_out(ui, unibi_set_lr_margin);
     } else {
-      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
+      UNIBI_SET_NUM_VAR(data->params[0], left);
       unibi_out(ui, unibi_set_left_margin_parm);
-      UNIBI_SET_NUM_VAR(data->params[0], grid->right);
+      UNIBI_SET_NUM_VAR(data->params[0], right);
       unibi_out(ui, unibi_set_right_margin_parm);
     }
   }
   unibi_goto(ui, grid->row, grid->col);
 }
 
-static void reset_scroll_region(UI *ui)
+static void reset_scroll_region(UI *ui, bool fullwidth)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
@@ -813,7 +801,7 @@ static void reset_scroll_region(UI *ui)
     UNIBI_SET_NUM_VAR(data->params[1], ui->height - 1);
     unibi_out(ui, unibi_change_scroll_region);
   }
-  if (grid->left != 0 || grid->right != ui->width - 1) {
+  if (!fullwidth) {
     if (data->can_set_lr_margin) {
       UNIBI_SET_NUM_VAR(data->params[0], 0);
       UNIBI_SET_NUM_VAR(data->params[1], ui->width - 1);
@@ -850,7 +838,7 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
     unibi_out_ext(ui, data->unibi_ext.resize_screen);
     // DECSLPP does not reset the scroll region.
     if (data->scroll_region_is_full_screen) {
-      reset_scroll_region(ui);
+      reset_scroll_region(ui, ui->width == grid->width);
     }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
@@ -1008,28 +996,35 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
   data->showing_mode = (ModeShape)mode_idx;
 }
 
-static void tui_grid_scroll(UI *ui, Integer g, Integer top, Integer bot,
-                            Integer left, Integer right,
+static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
+                            Integer startcol, Integer endcol,
                             Integer rows, Integer cols)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  ugrid_set_scroll_region(&data->grid, (int)top, (int)bot-1,
-                          (int)left, (int)right-1);
+  int top = (int)startrow, bot = (int)endrow-1;
+  int left = (int)startcol, right = (int)endcol-1;
 
-  data->scroll_region_is_full_screen =
-    left == 0 && right == ui->width
-    && top == 0 && bot == ui->height;
+  bool fullwidth = left == 0 && right == ui->width-1;
+  data->scroll_region_is_full_screen = fullwidth
+        && top == 0 && bot == ui->height-1;
 
   int clear_top, clear_bot;
-  ugrid_scroll(grid, (int)rows, &clear_top, &clear_bot);
+  ugrid_scroll(grid, top, bot, left, right, (int)rows,
+               &clear_top, &clear_bot);
 
-  if (can_use_scroll(ui)) {
+  bool can_scroll = data->scroll_region_is_full_screen
+                    || (data->can_change_scroll_region
+                        && ((left == 0 && right == ui->width - 1)
+                            || data->can_set_lr_margin
+                            || data->can_set_left_right_margin));
+
+  if (can_scroll) {
     // Change terminal scroll region and move cursor to the top
     if (!data->scroll_region_is_full_screen) {
-      set_scroll_region(ui);
+      set_scroll_region(ui, top, bot, left, right);
     }
-    cursor_goto(ui, grid->top, grid->left);
+    cursor_goto(ui, top, left);
     // also set default color attributes or some terminals can become funny
     update_attrs(ui, data->clear_attrs);
 
@@ -1051,19 +1046,19 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer top, Integer bot,
 
     // Restore terminal scroll region and cursor
     if (!data->scroll_region_is_full_screen) {
-      reset_scroll_region(ui);
+      reset_scroll_region(ui, fullwidth);
     }
     cursor_goto(ui, data->row, data->col);
 
     if (!(data->bce || no_bg(ui, data->clear_attrs))) {
       // Scrolling will leave wrong background in the cleared area on non-BCE
       // terminals. Update the cleared area.
-      clear_region(ui, clear_top, clear_bot, grid->left, grid->right,
+      clear_region(ui, clear_top, clear_bot, left, right,
                    data->clear_attrs);
     }
   } else {
     // Mark the entire scroll region as invalid for redrawing later
-    invalidate(ui, grid->top, grid->bot, grid->left, grid->right);
+    invalidate(ui, top, bot, left, right);
   }
 }
 

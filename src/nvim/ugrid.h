@@ -15,7 +15,6 @@ struct ucell {
 };
 
 struct ugrid {
-  int top, bot, left, right;
   int row, col;
   int width, height;
   UCell **cells;

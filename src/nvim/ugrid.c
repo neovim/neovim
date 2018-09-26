@@ -32,10 +32,6 @@ void ugrid_resize(UGrid *grid, int width, int height)
     grid->cells[i] = xcalloc((size_t)width, sizeof(UCell));
   }
 
-  grid->top = 0;
-  grid->bot = height - 1;
-  grid->left = 0;
-  grid->right = width - 1;
   grid->row = grid->col = 0;
   grid->width = width;
   grid->height = height;
@@ -57,25 +53,18 @@ void ugrid_goto(UGrid *grid, int row, int col)
   grid->col = col;
 }
 
-void ugrid_set_scroll_region(UGrid *grid, int top, int bot, int left, int right)
-{
-  grid->top = top;
-  grid->bot = bot;
-  grid->left = left;
-  grid->right = right;
-}
-
-void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
+void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right,
+                  int count, int *clear_top, int *clear_bot)
 {
   // Compute start/stop/step for the loop below
   int start, stop, step;
   if (count > 0) {
-    start = grid->top;
-    stop = grid->bot - count + 1;
+    start = top;
+    stop = bot - count + 1;
     step = 1;
   } else {
-    start = grid->bot;
-    stop = grid->top - count - 1;
+    start = bot;
+    stop = top - count - 1;
     step = -1;
   }
 
@@ -83,10 +72,10 @@ void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
 
   // Copy cell data
   for (i = start; i != stop; i += step) {
-    UCell *target_row = grid->cells[i] + grid->left;
-    UCell *source_row = grid->cells[i + count] + grid->left;
+    UCell *target_row = grid->cells[i] + left;
+    UCell *source_row = grid->cells[i + count] + left;
     memcpy(target_row, source_row,
-        sizeof(UCell) * (size_t)(grid->right - grid->left + 1));
+           sizeof(UCell) * (size_t)(right - left + 1));
   }
 
   // clear cells in the emptied region,
@@ -97,7 +86,7 @@ void ugrid_scroll(UGrid *grid, int count, int *clear_top, int *clear_bot)
     *clear_bot = stop;
     *clear_top = stop + count + 1;
   }
-  clear_region(grid, *clear_top, *clear_bot, grid->left, grid->right, 0);
+  clear_region(grid, *clear_top, *clear_bot, left, right, 0);
 }
 
 static void clear_region(UGrid *grid, int top, int bot, int left, int right,
