@@ -1,13 +1,13 @@
-" Test sort()
+" Tests for the "sort()" function and for the ":sort" command.
 
-:func Compare1(a, b) abort
+func Compare1(a, b) abort
     call sort(range(3), 'Compare2')
     return a:a - a:b
-:endfunc
+endfunc
 
-:func Compare2(a, b) abort
+func Compare2(a, b) abort
     return a:a - a:b
-:endfunc
+endfunc
 
 func Test_sort_strings()
   " numbers compared as strings
@@ -45,7 +45,7 @@ func Test_sort_default()
   call assert_fails('call sort([3.3, 1, "2"], 3)', "E474")
 endfunc
 
-" Tests for the :sort command
+" Tests for the ":sort" command.
 func Test_sort_cmd()
   let tests = [
 	\ {
@@ -1167,15 +1167,54 @@ func Test_sort_cmd()
 	\	'1.234',
 	\	'123.456'
 	\    ]
-	\ }
+	\ },
+	\ {
+	\    'name' : 'alphabetical, sorted input',
+	\    'cmd' : 'sort',
+	\    'input' : [
+	\	'a',
+	\	'b',
+	\	'c',
+	\    ],
+	\    'expected' : [
+	\	'a',
+	\	'b',
+	\	'c',
+	\    ]
+	\ },
+	\ {
+	\    'name' : 'alphabetical, sorted input, unique at end',
+	\    'cmd' : 'sort u',
+	\    'input' : [
+	\	'aa',
+	\	'bb',
+	\	'cc',
+	\	'cc',
+	\    ],
+	\    'expected' : [
+	\	'aa',
+	\	'bb',
+	\	'cc',
+	\    ]
+	\ },
 	\ ]
 
   for t in tests
     enew!
     call append(0, t.input)
     $delete _
-    exe t.cmd
+    setlocal nomodified
+    execute t.cmd
+
     call assert_equal(t.expected, getline(1, '$'), t.name)
+
+    " Previously, the ":sort" command would set 'modified' even if the buffer
+    " contents did not change.  Here, we check that this problem is fixed.
+    if t.input == t.expected
+      call assert_false(&modified, t.name . ': &mod is not correct')
+    else
+      call assert_true(&modified, t.name . ': &mod is not correct')
+    endif
   endfor
 
   call assert_fails('sort no', 'E474')
