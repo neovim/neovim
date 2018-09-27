@@ -585,7 +585,7 @@ void ex_sort(exarg_T *eap)
 
   // Insert the lines in the sorted order below the last one.
   lnum = eap->line2;
-  for (i = 0; i < count; ++i) {
+  for (i = 0; i < count; i++) {
     const linenr_T get_lnum = nrs[eap->forceit ? count - i - 1 : i].lnum;
 
     // If the original line number of the line being placed is not the same
