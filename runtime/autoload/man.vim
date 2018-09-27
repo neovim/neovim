@@ -171,6 +171,7 @@ function! s:put_page(page) abort
   " badly with our use of $MANWIDTH=9999.  Hack around this by using a fixed
   " size for those whitespace regions.
   silent! keeppatterns keepjumps %s/\s\{999,}/\=repeat(' ', 10)/g
+  1
   lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
