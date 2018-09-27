@@ -1,6 +1,7 @@
 local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
+local relpath = require('pl.path').relpath
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
@@ -244,7 +245,7 @@ local function check_cores(app, force)
   -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
   -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
   local local_tmpdir = (tmpdir_is_local(tmpdir_get())
-    and tmpdir_get():gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
+    and relpath(tmpdir_get()):gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
     or nil)
   local db_cmd
   if hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
