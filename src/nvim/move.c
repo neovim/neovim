@@ -98,6 +98,11 @@ static void comp_botline(win_T *wp)
 
 static linenr_T last_cursorline = 0;
 
+void reset_cursorline(void)
+{
+  last_cursorline = 0;
+}
+
 // Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 static void redraw_for_cursorline(win_T *wp)
 {
