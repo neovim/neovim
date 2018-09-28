@@ -16,10 +16,12 @@ RPC API. The UI model consists of a terminal-like grid with a single,
 monospace font size. Some elements (UI "widgets") can be drawn separately from
 the grid ("externalized").
 
+
 								  *ui-options*
-After connecting to Nvim (usually a spawned, embedded instance) use the
-|nvim_ui_attach()| API method to tell Nvim that your program wants to draw the
-Nvim screen grid with a size of width × height cells. `options` must be
+The |nvim_ui_attach()| API method is used to tell Nvim that your program wants to draw the
+Nvim screen grid with a size of width × height cells. This is typically done
+by  an embedder, see |ui-startup| below for details, but an UI can also
+connect to a running nvim instance and invoke this method. `options` must be
 a dictionary with these (optional) keys:
 	`rgb`			Decides the color format. *ui-rgb*
 				Set true (default) for 24-bit RGB colors.
@@ -67,6 +69,39 @@ those elements itself; Nvim will not draw those elements on the grid.
 Future versions of Nvim may add new update kinds and may append new parameters
 to existing update kinds. Clients must be prepared to ignore such extensions,
 for forward-compatibility. |api-contract|
+
+==============================================================================
+UI startup							   *ui-startup*
+
+Nvim defines a standard procedure for how an embedding UI should interact with
+the startup phase of Nvim. When spawning the nvim process, use the |--embed| flag
+but not the |--headless| flag. Nvim will now pause before loading startup
+files and reading buffers, and give the UI a chance to invoke requests to do
+early initialization. As soon as the UI invokes |nvim_ui_attach()|, the startup
+will continue.
+
+A simple UI only need to do a single |nvim_ui_attach()| request and then
+be prepared to handle any UI event. A more featureful UI, which might do
+additional configuration of the nvim process, should use the following startup
+procedure:
+
+1. Invoke |nvim_get_api_info()|, if this is needed to setup the client library
+   and/or to get the list of supported UI extensions.
+2. At this time, any configuration that should be happen before init.vim
+   loading should be done. Buffers and windows are not available at this
+   point, but this could be used to set |g:| variables visible to init.vim
+3. If the UI wants to do additional setup after the init.vim file was loaded
+   register an autocmd for VimEnter at this point: >
+
+    nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
+
+<4.  Now invoke |nvim_ui_attach()|. The UI will need to handle keyboard input
+    at this point, as sourcing init.vim and loading buffers might lead to
+    blocking prompts.
+5.  If step 3 was used, nvim will send a blocking "vimenter" request to the
+    UI. Inside this request handler, the UI can safely do any initialization
+    before entering normal mode, for instance reading variables set by
+    init.vim.
 
 ==============================================================================
 Global Events							    *ui-global*
@@ -144,15 +179,15 @@ Global Events							    *ui-global*
 	would conflict with other usages of the mouse. It is safe for a client
 	to ignore this and always send mouse events.
 
-["busy_on"]
-["busy_off"]
+["busy_start"]
+["busy_stop"]
 	Nvim started or stopped being busy, and possibly not responsive to
 	user input. This could be indicated to the user by hiding the cursor.
 
 ["suspend"]
-	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or other
-	client where it makes sense) could suspend itself.  Other clients can
-	safely ignore it.
+	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or
+	another client where it makes sense) could suspend itself.  Other
+	clients can safely ignore it.
 
 ["update_menu"]
 	The menu mappings changed.

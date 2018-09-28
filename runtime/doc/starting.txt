@@ -358,6 +358,8 @@ argument.
 		instance a `nvim_get_api_info` call so that UI features can be
 		safely detected by the UI before attaching.
 
+		See |ui-startup| for more information about UI startup.
+
 		To embed nvim without using the UI protocol, `--headless` should
 		be supplied together with `--embed`. Then initialization is
 		performed without waiting for an UI. This is also equivalent
