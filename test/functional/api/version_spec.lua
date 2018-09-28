@@ -156,6 +156,6 @@ describe("ui_options in metadata", function()
     local api = helpers.call('api_info')
     local options = api.ui_options
     eq({'rgb', 'ext_cmdline', 'ext_popupmenu',
-        'ext_tabline', 'ext_wildmenu', 'ext_newgrid', 'ext_hlstate'}, options)
+        'ext_tabline', 'ext_wildmenu', 'ext_linegrid', 'ext_hlstate'}, options)
   end)
 end)

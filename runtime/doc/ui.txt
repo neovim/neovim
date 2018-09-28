@@ -31,7 +31,7 @@ a dictionary with these (optional) keys:
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 	`ext_wildmenu`		Externalize the wildmenu. |ui-wildmenu|
-	`ext_newgrid`		Use new revision of the grid events. |ui-newgrid|
+	`ext_linegrid`		Use new revision of the grid events. |ui-linegrid|
 	`ext_hlstate`		Use detailed highlight state. |ui-hlstate|
 
 Specifying a non-existent option is an error. UIs can check the |api-metadata|
@@ -55,12 +55,12 @@ intermediate state after processing only part of the array).
 
 By default, Nvim sends |ui-global| and |ui-grid-old| events; these suffice to
 implement a terminal-like interface. However there are two revisions of the
-grid part of the protocol. The newer revision |ui-newgrid|, enabled by
-`ext_newgrid` option, has some improvements, such as a more efficient
-representation of highlighted text, simplified events and room for futher
-enhancements that will use multiple grids. The older revision is available and
-used by default only for backwards compatibility reasons. New UIs are strongly
-recommended to use |ui-newgrid|, as further protocol extensions will require it.
+grid part of the protocol. The newer revision |ui-linegrid|, enabled by
+`ext_linegrid` option, has a more effecient representation of text (especially
+highlighted text), and room for futher enhancements that will use
+multiple grids. The older revision is available and used by default only for
+backwards compatibility reasons. New UIs are strongly recommended to use
+|ui-linegrid|, as further protocol extensions will require it.
 
 Nvim optionally sends screen elements "semantically" as structured events
 instead of raw grid-lines, controlled by |ui-ext-options|. The UI must present
@@ -75,10 +75,10 @@ UI startup							   *ui-startup*
 
 Nvim defines a standard procedure for how an embedding UI should interact with
 the startup phase of Nvim. When spawning the nvim process, use the |--embed| flag
-but not the |--headless| flag. Nvim will now pause before loading startup
-files and reading buffers, and give the UI a chance to invoke requests to do
-early initialization. As soon as the UI invokes |nvim_ui_attach()|, the startup
-will continue.
+but not the |--headless| flag. The started Nvim process will pause before loading
+startup files and reading buffers, and give the UI a chance to invoke requests
+to do early initialization. As soon as the UI invokes |nvim_ui_attach()|, the
+startup will continue.
 
 A simple UI only need to do a single |nvim_ui_attach()| request and then
 be prepared to handle any UI event. A more featureful UI, which might do
@@ -105,6 +105,9 @@ procedure:
 
 ==============================================================================
 Global Events							    *ui-global*
+
+The following events will always be available, and describe global state of
+the editor.
 
 ["set_title", title]
 ["set_icon", icon]
@@ -197,15 +200,18 @@ Global Events							    *ui-global*
 	Notify the user with an audible or visual bell, respectively.
 
 ==============================================================================
-Grid Events (new revision)					  *ui-newgrid*
+Grid Events (line-based)					  *ui-linegrid*
 
-These events are used if `ext_newgrid` option is set (recommended for all new
-UIs).
+These events are used if `ext_linegrid` option is set (recommended for all new
+UIs). The biggest change compared to previous revision is to use a single
+event `grid_line` to update the contents of a screen line (where the old
+protocol used a combination of cursor, highlight and text events)
 
 Most of these events take a `grid` index as first parameter.  Grid 1 is the
 global grid used by default for the entire editor screen state. Grids other
-than that will be defined by future extensions. Just activating the `ext_newgrid`
-option by itself will never cause any additional grids to be created.
+than that will be defined by future extensions. Just activating the
+`ext_linegrid` option by itself will never cause any additional grids to be
+created.
 
 Highlight attribute groups are predefined. UIs should maintain a table to map
 numerical highlight `id`:s to the actual attributes.
@@ -334,10 +340,10 @@ numerical highlight `id`:s to the actual attributes.
 	from `set_scroll_region` which was end-inclusive.
 
 ==============================================================================
-Grid Events (first revision)					   *ui-grid-old*
+Legacy Grid Events (cell based)					   *ui-grid-old*
 
-This is an older representation of the screen grid, used if `ext_newgrid`
-option is not set.
+This is an older representation of the screen grid, used if `ext_linegrid`
+option is not set. New UIs should use |ui-linegrid|.
 
 ["resize", width, height]
 	The grid is resized to `width` and `height` cells.
@@ -424,9 +430,8 @@ option is not set.
 ==============================================================================
 Detailed highlight state Extension 				  *ui-hlstate*
 
-
 Only sent if `ext_hlstate` option is set in |ui-options|. `ext_hlstate` implies
-`ext_newgrid`.
+`ext_linegrid`.
 
 By default, nvim will only describe grid cells using the final calculated
 higlight attributes, as described by the dict keys in |ui-event-highlight_set|.

@@ -4,13 +4,13 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 
-local function test_cmdline(newgrid)
+local function test_cmdline(linegrid)
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_cmdline=true, ext_newgrid=newgrid})
+    screen:attach({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {reverse = true},
@@ -608,7 +608,7 @@ local function test_cmdline(newgrid)
   end)
 end
 
--- the representation of cmdline and cmdline_block contents changed with ext_newgrid
+-- the representation of cmdline and cmdline_block contents changed with ext_linegrid
 -- (which uses indexed highlights) so make sure to test both
 describe('ui/ext_cmdline', function() test_cmdline(true) end)
 describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)

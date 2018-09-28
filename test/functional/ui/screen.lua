@@ -185,11 +185,11 @@ function Screen:attach(options)
   if options == nil then
     options = {}
   end
-  if options.ext_newgrid == nil then
-    options.ext_newgrid = true
+  if options.ext_linegrid == nil then
+    options.ext_linegrid = true
   end
   self._options = options
-  self._clear_attrs = (options.ext_newgrid and {{},{}}) or {}
+  self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
   uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
     -- nvim defaults to rgb=true internally,
@@ -609,6 +609,7 @@ function Screen:_handle_highlight_set(attrs)
 end
 
 function Screen:_handle_put(str)
+  assert(not self._options.ext_linegrid)
   local cell = self._rows[self._cursor.row][self._cursor.col]
   cell.text = str
   cell.attrs = self._attrs
@@ -617,6 +618,7 @@ function Screen:_handle_put(str)
 end
 
 function Screen:_handle_grid_line(grid, row, col, items)
+  assert(self._options.ext_linegrid)
   assert(grid == 1)
   local line = self._rows[row+1]
   local colpos = col+1
@@ -764,7 +766,7 @@ function Screen:_row_repr(row, attr_state)
   local current_attr_id
   for i = 1, self._width do
     local attrs = row[i].attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = attrs[(self._options.rgb and 1) or 2]
     end
     local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
@@ -820,7 +822,7 @@ function Screen:_chunks_repr(chunks, attr_state)
   for i, chunk in ipairs(chunks) do
     local hl, text = unpack(chunk)
     local attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = self._attr_table[hl][1]
     else
       attrs = hl

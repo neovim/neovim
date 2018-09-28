@@ -30,15 +30,15 @@ describe('ui receives option updates', function()
     ext_popupmenu=false,
     ext_tabline=false,
     ext_wildmenu=false,
-    ext_newgrid=false,
+    ext_linegrid=false,
     ext_hlstate=false,
   }
 
   it("for defaults", function()
     screen:attach()
-    -- NB: UI test suite can be run in both "newgrid" and legacy grid mode.
+    -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
     -- In both cases check that the received value is the one requested.
-    defaults.ext_newgrid = screen._options.ext_newgrid or false
+    defaults.ext_linegrid = screen._options.ext_linegrid or false
     screen:expect(function()
       eq(defaults, screen.options)
     end)
@@ -46,7 +46,7 @@ describe('ui receives option updates', function()
 
   it("when setting options", function()
     screen:attach()
-    defaults.ext_newgrid = screen._options.ext_newgrid or false
+    defaults.ext_linegrid = screen._options.ext_linegrid or false
     local changed = {}
     for k,v in pairs(defaults) do
       changed[k] = v
@@ -95,7 +95,7 @@ describe('ui receives option updates', function()
     end
 
     screen:attach({ext_cmdline=true, ext_wildmenu=true})
-    defaults.ext_newgrid = screen._options.ext_newgrid or false
+    defaults.ext_linegrid = screen._options.ext_linegrid or false
     changed.ext_cmdline = true
     changed.ext_wildmenu = true
     screen:expect(function()

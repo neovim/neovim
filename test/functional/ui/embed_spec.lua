@@ -5,14 +5,14 @@ local feed = helpers.feed
 local eq = helpers.eq
 local clear = helpers.clear
 
-local function test_embed(ext_newgrid)
+local function test_embed(ext_linegrid)
   local screen
   local function startup(...)
     clear{headless=false, args={...}}
 
     -- attach immediately after startup, for early UI
     screen = Screen.new(60, 8)
-    screen:attach{ext_newgrid=ext_newgrid}
+    screen:attach{ext_linegrid=ext_linegrid}
     screen:set_default_attr_ids({
       [1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [2] = {bold = true, foreground = Screen.colors.SeaGreen4},
@@ -77,5 +77,5 @@ local function test_embed(ext_newgrid)
   end)
 end
 
-describe('--embed UI on startup (ext_newgrid=true)', function() test_embed(true) end)
-describe('--embed UI on startup (ext_newgrid=false)', function() test_embed(false) end)
+describe('--embed UI on startup (ext_linegrid=true)', function() test_embed(true) end)
+describe('--embed UI on startup (ext_linegrid=false)', function() test_embed(false) end)
