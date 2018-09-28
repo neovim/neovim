@@ -1221,3 +1221,33 @@ func Test_sort_cmd()
 
   enew!
 endfunc
+
+func Test_sort_cmd_report()
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setlocal nomodified
+    let res = execute('%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    call assert_match("6 fewer lines", res)
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setlocal nomodified report=10
+    let res = execute('%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    call assert_equal("", res)
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setl report&vim
+    setlocal nomodified
+    let res = execute('1g/^/%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    " the output comes from the :g command, not from the :sort
+    call assert_match("6 fewer lines", res)
+    enew!
+  endfunc

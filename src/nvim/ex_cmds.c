@@ -623,6 +623,7 @@ void ex_sort(exarg_T *eap)
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
                 false);
+    msgmore(-deleted);
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
   }
