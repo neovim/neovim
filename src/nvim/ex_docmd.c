@@ -6568,7 +6568,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
   }
 
   if (al == &global_alist)
-    arg_had_last = FALSE;
+    arg_had_last = false;
 
   recursive--;
 }
