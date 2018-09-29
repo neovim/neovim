@@ -1929,6 +1929,7 @@ int win_close(win_T *win, bool free_buf)
     }
     win->w_closing = true;
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_WINCLOSED, NULL, NULL, FALSE, curbuf);
     if (!win_valid(win))
       return FAIL;
     win->w_closing = false;

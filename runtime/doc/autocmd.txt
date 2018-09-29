@@ -308,6 +308,7 @@ Name			triggered by ~
 |WinNew|		after creating a new window
 |WinEnter|		after entering another window
 |WinLeave|		before leaving a window
+|WinClosed|		before closing a window
 |TabEnter|		after entering another tab page
 |TabLeave|		before leaving a tab page
 |TabNew|		when creating a new tab page
@@ -1053,7 +1054,9 @@ WinLeave			Before leaving a window.  If the window to be
 				executes the BufLeave autocommands before the
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
-
+							*WinClosed*
+WinClosed			Before closing a window.  Just after WinLeave
+				and BufWinLeave.
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
