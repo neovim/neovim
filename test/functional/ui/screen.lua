@@ -386,9 +386,13 @@ function Screen:wait(check, timeout)
   local err, checked = false
   local success_seen = false
   local failure_after_success = false
+  local did_flush = true
   local function notification_cb(method, args)
     assert(method == 'redraw')
-    self:_redraw(args)
+    did_flush = self:_redraw(args)
+    if not did_flush then
+      return
+    end
     err = check()
     checked = true
     if not err then
@@ -402,7 +406,9 @@ function Screen:wait(check, timeout)
     return true
   end
   run(nil, notification_cb, nil, timeout or self.timeout)
-  if not checked then
+  if not did_flush then
+    err = "no flush received"
+  elseif not checked then
     err = check()
   end
 
@@ -431,7 +437,8 @@ function Screen:sleep(ms)
 end
 
 function Screen:_redraw(updates)
-  for _, update in ipairs(updates) do
+  local did_flush = false
+  for k, update in ipairs(updates) do
     -- print('--')
     -- print(require('inspect')(update))
     local method = update[1]
@@ -446,7 +453,11 @@ function Screen:_redraw(updates)
         self._on_event(method, update[i])
       end
     end
+    if k == #updates and method == "flush" then
+      did_flush = true
+    end
   end
+  return did_flush
 end
 
 function Screen:set_on_event_handler(callback)
@@ -471,6 +482,10 @@ function Screen:_handle_resize(width, height)
     top = 1, bot = height, left = 1, right = width
   }
 end
+
+function Screen:_handle_flush()
+end
+
 
 function Screen:_handle_grid_resize(grid, width, height)
   assert(grid == 1)

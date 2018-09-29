@@ -18,9 +18,9 @@ the grid ("externalized").
 
 
 								  *ui-options*
-The |nvim_ui_attach()| API method is used to tell Nvim that your program wants to draw the
-Nvim screen grid with a size of width × height cells. This is typically done
-by  an embedder, see |ui-startup| below for details, but an UI can also
+The |nvim_ui_attach()| API method is used to tell Nvim that your program wants to
+draw the Nvim screen grid with a size of width × height cells. This is typically
+done by an embedder, see |ui-startup| below for details, but an UI can also
 connect to a running nvim instance and invoke this method. `options` must be
 a dictionary with these (optional) keys:
 	`rgb`			Decides the color format. *ui-rgb*
@@ -45,13 +45,17 @@ Nvim sends msgpack-rpc notifications to all attached UIs, with method name
 Each update event is itself an array whose first element is the event name and
 remaining elements are event-parameter tuples. This allows multiple events of
 the same kind to be sent in a row without the event name being repeated. This
-batching is mostly used for "put", because each "put" event puts contents in
-one screen cell, but clients must be prepared for multiple argument sets being
-batched for all event kinds.
+batching is mostly used for "grid_line", because each "grid_line" event puts
+contents in one screen line, but clients must be prepared for multiple argument
+sets being batched for all event kinds.
 
-Events must be handled in-order. The user should only see the updated screen
-state after all events in the same "redraw" batch are processed (not any
-intermediate state after processing only part of the array).
+Events must be handled in-order. A "flush" event is sent when nvim is done
+redrawing the entire screen (so that all windows have a consistent view of
+buffer state, options etc). Clients should be prepared that several "redraw"
+batches are sent before the entire screen has been redrawn, and only the last
+batch will end in "flush". The user should only see the final state when
+"flush" is sent, and not any intermediate state after processing only part of
+the batch array, nor after a batch not ending with "flush".
 
 By default, Nvim sends |ui-global| and |ui-grid-old| events; these suffice to
 implement a terminal-like interface. However there are two revisions of the
@@ -81,7 +85,7 @@ to do early initialization. As soon as the UI invokes |nvim_ui_attach()|, the
 startup will continue.
 
 A simple UI only need to do a single |nvim_ui_attach()| request and then
-be prepared to handle any UI event. A more featureful UI, which might do
+be prepared to handle any UI event. A more featureful UI, which might need
 additional configuration of the nvim process, should use the following startup
 procedure:
 
@@ -198,6 +202,11 @@ the editor.
 ["bell"]
 ["visual_bell"]
 	Notify the user with an audible or visual bell, respectively.
+
+["flush"]
+	Nvim is done redrawing the screen. For an implementation that renders
+	to an internal buffer, this is the time to display the redrawn parts
+	to the user.
 
 ==============================================================================
 Grid Events (line-based)					  *ui-linegrid*

@@ -511,6 +511,7 @@ static void remote_ui_flush(UI *ui)
     if (!ui->ui_ext[kUILinegrid]) {
       remote_ui_cursor_goto(ui, data->cursor_row, data->cursor_col);
     }
+    push_call(ui, "flush", (Array)ARRAY_DICT_INIT);
     rpc_send_event(data->channel_id, "redraw", data->buffer);
     data->buffer = (Array)ARRAY_DICT_INIT;
   }
