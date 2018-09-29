@@ -159,6 +159,7 @@ Events:
   |UILeave|
   |VimResume|
   |VimSuspend|
+  |WinClosed|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified

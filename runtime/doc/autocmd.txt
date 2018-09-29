@@ -317,6 +317,7 @@ Name			triggered by ~
 |CursorMoved|		the cursor was moved in Normal mode
 |CursorMovedI|		the cursor was moved in Insert mode
 
+|WinClosed|		after closing a window
 |WinNew|		after creating a new window
 |WinEnter|		after entering another window
 |WinLeave|		before leaving a window
@@ -1131,6 +1132,8 @@ VimResized			After the Vim window was resized, thus 'lines'
 VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
+							*WinClosed*
+WinClosed			After closing a window.
 							*WinEnter*
 WinEnter			After entering another window.  Not done for
 				the first window, when Vim has just started.
@@ -1148,7 +1151,6 @@ WinLeave			Before leaving a window.  If the window to be
 				executes the BufLeave autocommands before the
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
-
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
