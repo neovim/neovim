@@ -17,6 +17,7 @@ describe('Signs', function()
       [3] = {background = Screen.colors.Gray90},
       [4] = {bold = true, reverse = true},
       [5] = {reverse = true},
+      [6] = {foreground = Screen.colors.Brown},
     } )
   end)
 
@@ -75,6 +76,85 @@ describe('Signs', function()
         {2:  }                                                   |
         {2:  }{0:~                                                  }|
         {5:[No Name] [+]                                        }|
+                                                             |
+      ]])
+    end)
+  end)
+
+  describe('signcolumn=number', function()
+    it('show sign in number column', function()
+      feed('ia<cr>b<cr>c<cr>d<cr><esc>')
+      command('sign define piet text=>> texthl=Search')
+      command('sign define pietx text=𠆤 texthl=Search')
+      command('sign define pietxx text=X texthl=Search')
+      command('sign place 1 line=1 name=piet buffer=1')
+      command('sign place 2 line=3 name=pietx buffer=1')
+      command('sign place 3 line=5 name=pietxx buffer=1')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {2:  }b                                                  |
+        {1:𠆤}c                                                  |
+        {2:  }d                                                  |
+        {1:X }^                                                   |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+                                                             |
+      ]])
+      command('set number')
+      screen:expect([[
+        {1:>>}{6:  1 }a                                              |
+        {2:  }{6:  2 }b                                              |
+        {1:𠆤}{6:  3 }c                                              |
+        {2:  }{6:  4 }d                                              |
+        {1:X }{6:  5 }^                                               |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+                                                             |
+      ]])
+      command('set signcolumn=number')
+      screen:expect([[
+        {1: >> }a                                                |
+        {6:  2 }b                                                |
+        {1: 𠆤 }c                                                |
+        {6:  4 }d                                                |
+        {1: X  }^                                                 |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      command('set numberwidth=2')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {6:2 }b                                                  |
+        {1:𠆤}c                                                  |
+        {6:4 }d                                                  |
+        {1:X }^                                                   |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
                                                              |
       ]])
     end)
