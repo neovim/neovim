@@ -3237,20 +3237,28 @@ did_set_string_option (
      */
     /* When 'syntax' is set, load the syntax of that name */
     if (varp == &(curbuf->b_p_syn)) {
-      // Only pass true for "force" when the value changed, to avoid
-      // endless recurrence.
-      apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
-                     curbuf->b_fname, value_changed, curbuf);
+      static int syn_recursive = 0;
+
+      syn_recursive++;
+      // Only pass true for "force" when the value changed or not used
+      // recursively, to avoid endless recurrence.
+      apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname,
+                     value_changed || syn_recursive == 1, curbuf);
+      syn_recursive--;
     } else if (varp == &(curbuf->b_p_ft)) {
       // 'filetype' is set, trigger the FileType autocommand
       // Skip this when called from a modeline and the filetype was
       // already set to this value.
-      // Only pass true for "force" when the value changed, to avoid
-      // endless recurrence.
       if (!(opt_flags & OPT_MODELINE) || value_changed) {
+        static int ft_recursive = 0;
+
+        ft_recursive++;
         did_filetype = true;
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
-                       curbuf->b_fname, value_changed, curbuf);
+        // Only pass true for "force" when the value changed or not
+        // used recursively, to avoid endless recurrence.
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
+                       value_changed || ft_recursive == 1, curbuf);
+        ft_recursive--;
         // Just in case the old "curbuf" is now invalid
         if (varp != &(curbuf->b_p_ft)) {
           varp = NULL;
