@@ -209,7 +209,7 @@ static void terminfo_start(UI *ui)
 
   // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
-  data->ut = unibi_from_env();
+  data->ut = unibi_from_term(term);
   char *termname = NULL;
   if (!term || !data->ut) {
     data->ut = terminfo_from_builtin(term, &termname);
