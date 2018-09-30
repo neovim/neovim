@@ -1624,9 +1624,10 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
         win_close(curwin, true);
         advance = false;
       }
-      if (arg_idx == GARGCOUNT - 1)
+      if (arg_idx == GARGCOUNT - 1) {
         arg_had_last = true;
-      ++arg_idx;
+      }
+      arg_idx++;
     }
     os_breakcheck();
     if (got_int) {

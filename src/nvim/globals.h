@@ -528,8 +528,8 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
  */
 EXTERN alist_T global_alist;    /* global argument list */
 EXTERN int max_alist_id INIT(= 0);     ///< the previous argument list id
-EXTERN bool arg_had_last INIT(= false);      /* accessed last file in
-                                               global_alist */
+EXTERN bool arg_had_last INIT(= false);     // accessed last file in
+                                            // global_alist
 
 EXTERN int ru_col;              /* column for ruler */
 EXTERN int ru_wid;              /* 'rulerfmt' width of ruler when non-zero */
