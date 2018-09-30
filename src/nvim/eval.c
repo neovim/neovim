@@ -14664,12 +14664,16 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   static char *e_invact = N_("E927: Invalid action: '%s'");
   const char *title = NULL;
   int action = ' ';
+  static int recursive = 0;
   rettv->vval.v_number = -1;
   dict_T *d = NULL;
 
   typval_T *list_arg = &args[0];
   if (list_arg->v_type != VAR_LIST) {
     EMSG(_(e_listreq));
+    return;
+  } else if (recursive != 0) {
+    EMSG(_(e_au_recursive));
     return;
   }
 
@@ -14712,10 +14716,12 @@ skip_args:
     title = (wp ? "setloclist()" : "setqflist()");
   }
 
+  recursive++;
   list_T *const l = list_arg->vval.v_list;
   if (set_errorlist(wp, l, action, (char_u *)title, d) == OK) {
     rettv->vval.v_number = 0;
   }
+  recursive--;
 }
 
 /*

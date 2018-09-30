@@ -4533,9 +4533,10 @@ do_arg_all (
     use_firstwin = true;
   }
 
-  for (i = 0; i < count && i < opened_len && !got_int; ++i) {
-    if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1)
-      arg_had_last = TRUE;
+  for (i = 0; i < count && i < opened_len && !got_int; i++) {
+    if (alist == &global_alist && i == global_alist.al_ga.ga_len - 1) {
+      arg_had_last = true;
+    }
     if (opened[i] > 0) {
       /* Move the already present window to below the current window */
       if (curwin->w_arg_idx != i) {

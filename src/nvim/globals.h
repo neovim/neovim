@@ -528,8 +528,8 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
  */
 EXTERN alist_T global_alist;    /* global argument list */
 EXTERN int max_alist_id INIT(= 0);     ///< the previous argument list id
-EXTERN int arg_had_last INIT(= FALSE);      /* accessed last file in
-                                               global_alist */
+EXTERN bool arg_had_last INIT(= false);     // accessed last file in
+                                            // global_alist
 
 EXTERN int ru_col;              /* column for ruler */
 EXTERN int ru_wid;              /* 'rulerfmt' width of ruler when non-zero */
@@ -1099,6 +1099,8 @@ EXTERN char_u e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
+EXTERN char_u e_au_recursive[] INIT(= N_(
+    "E952: Autocommand caused recursive behavior"));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
