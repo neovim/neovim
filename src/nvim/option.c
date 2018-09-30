@@ -2434,7 +2434,7 @@ did_set_string_option (
   int did_chartab = FALSE;
   char_u      **gvarp;
   bool free_oldval = (options[opt_idx].flags & P_ALLOCED);
-  int ft_changed = false;
+  bool value_changed = false;
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -3155,11 +3155,13 @@ did_set_string_option (
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
-      ft_changed = STRCMP(oldval, *varp) != 0;
+      value_changed = STRCMP(oldval, *varp) != 0;
     }
   } else if (gvarp == &p_syn) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
+    } else {
+      value_changed = STRCMP(oldval, *varp) != 0;
     }
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
@@ -3235,14 +3237,20 @@ did_set_string_option (
      */
     /* When 'syntax' is set, load the syntax of that name */
     if (varp == &(curbuf->b_p_syn)) {
+      // Only pass true for "force" when the value changed, to avoid
+      // endless recurrence.
       apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
-          curbuf->b_fname, TRUE, curbuf);
+                     curbuf->b_fname, value_changed, curbuf);
     } else if (varp == &(curbuf->b_p_ft)) {
       // 'filetype' is set, trigger the FileType autocommand
-      if (!(opt_flags & OPT_MODELINE) || ft_changed) {
+      // Skip this when called from a modeline and the filetype was
+      // already set to this value.
+      // Only pass true for "force" when the value changed, to avoid
+      // endless recurrence.
+      if (!(opt_flags & OPT_MODELINE) || value_changed) {
         did_filetype = true;
         apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft,
-                       curbuf->b_fname, true, curbuf);
+                       curbuf->b_fname, value_changed, curbuf);
         // Just in case the old "curbuf" is now invalid
         if (varp != &(curbuf->b_p_ft)) {
           varp = NULL;
