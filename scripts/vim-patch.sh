@@ -93,7 +93,7 @@ get_vim_sources() {
       exit 1
     fi
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
-    git pull &&
+    git pull --ff &&
       msg_ok "Updated Vim sources." ||
       msg_err "Could not update Vim sources; ignoring error."
   fi
