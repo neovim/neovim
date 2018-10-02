@@ -63,7 +63,7 @@ void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)
 void scroll(Integer count)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-// Second revison of the grid protocol, used with ext_newgrid ui option
+// Second revison of the grid protocol, used with ext_linegrid ui option
 void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
                         Integer cterm_fg, Integer cterm_bg)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;

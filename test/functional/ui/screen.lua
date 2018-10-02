@@ -185,11 +185,11 @@ function Screen:attach(options)
   if options == nil then
     options = {}
   end
-  if options.ext_newgrid == nil then
-    options.ext_newgrid = true
+  if options.ext_linegrid == nil then
+    options.ext_linegrid = true
   end
   self._options = options
-  self._clear_attrs = (options.ext_newgrid and {{},{}}) or {}
+  self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
   uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
     -- nvim defaults to rgb=true internally,
@@ -386,9 +386,13 @@ function Screen:wait(check, timeout)
   local err, checked = false
   local success_seen = false
   local failure_after_success = false
+  local did_flush = true
   local function notification_cb(method, args)
     assert(method == 'redraw')
-    self:_redraw(args)
+    did_flush = self:_redraw(args)
+    if not did_flush then
+      return
+    end
     err = check()
     checked = true
     if not err then
@@ -402,7 +406,9 @@ function Screen:wait(check, timeout)
     return true
   end
   run(nil, notification_cb, nil, timeout or self.timeout)
-  if not checked then
+  if not did_flush then
+    err = "no flush received"
+  elseif not checked then
     err = check()
   end
 
@@ -431,7 +437,8 @@ function Screen:sleep(ms)
 end
 
 function Screen:_redraw(updates)
-  for _, update in ipairs(updates) do
+  local did_flush = false
+  for k, update in ipairs(updates) do
     -- print('--')
     -- print(require('inspect')(update))
     local method = update[1]
@@ -446,7 +453,11 @@ function Screen:_redraw(updates)
         self._on_event(method, update[i])
       end
     end
+    if k == #updates and method == "flush" then
+      did_flush = true
+    end
   end
+  return did_flush
 end
 
 function Screen:set_on_event_handler(callback)
@@ -471,6 +482,10 @@ function Screen:_handle_resize(width, height)
     top = 1, bot = height, left = 1, right = width
   }
 end
+
+function Screen:_handle_flush()
+end
+
 
 function Screen:_handle_grid_resize(grid, width, height)
   assert(grid == 1)
@@ -609,6 +624,7 @@ function Screen:_handle_highlight_set(attrs)
 end
 
 function Screen:_handle_put(str)
+  assert(not self._options.ext_linegrid)
   local cell = self._rows[self._cursor.row][self._cursor.col]
   cell.text = str
   cell.attrs = self._attrs
@@ -617,6 +633,7 @@ function Screen:_handle_put(str)
 end
 
 function Screen:_handle_grid_line(grid, row, col, items)
+  assert(self._options.ext_linegrid)
   assert(grid == 1)
   local line = self._rows[row+1]
   local colpos = col+1
@@ -764,7 +781,7 @@ function Screen:_row_repr(row, attr_state)
   local current_attr_id
   for i = 1, self._width do
     local attrs = row[i].attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = attrs[(self._options.rgb and 1) or 2]
     end
     local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
@@ -820,7 +837,7 @@ function Screen:_chunks_repr(chunks, attr_state)
   for i, chunk in ipairs(chunks) do
     local hl, text = unpack(chunk)
     local attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = self._attr_table[hl][1]
     else
       attrs = hl
