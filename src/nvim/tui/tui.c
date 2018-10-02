@@ -1439,6 +1439,18 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   return -1;
 }
 
+static int unibi_find_ext_bool(unibi_term *ut, const char *name)
+{
+  size_t max = unibi_count_ext_bool(ut);
+  for (size_t i = 0; i < max; i++) {
+    const char * n = unibi_get_ext_bool_name(ut, i);
+    if (n && 0 == strcmp(n, name)) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
 /// Patches the terminfo records after loading from system or built-in db.
 /// Several entries in terminfo are known to be deficient or outright wrong;
 /// and several terminal emulators falsely announce incorrect terminal types.
@@ -1840,7 +1852,8 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
       ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 
-  if ((int)unibi_add_ext_bool(ut, "Su", 0)) {
+  int ext_bool_Su = unibi_find_ext_bool(ut, "Su");
+  if (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su)) {
       data->unibi_ext.enter_undercurl_mode = (int)unibi_add_ext_str(
           ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
       data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
