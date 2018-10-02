@@ -2818,6 +2818,18 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep)
   lval_T lv;
 
   do {
+    if (*arg == '$') {
+      const char *name = (char *)++arg;
+
+      if (get_env_len((const char_u **)&arg) == 0) {
+        EMSG2(_(e_invarg2), name - 1);
+        return;
+      }
+      os_unsetenv(name);
+      arg = skipwhite(arg);
+      continue;
+    }
+
     // Parse the name and find the end.
     char_u *const name_end = (char_u *)get_lval(arg, NULL, &lv, true,
                                                 eap->skip || error,
