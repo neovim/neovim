@@ -52,3 +52,13 @@ func Test_unlet_env()
 
   unlet $MUST_NOT_BE_AN_ERROR
 endfunc
+
+func Test_unlet_complete()
+  let g:FOOBAR = 1
+  call feedkeys(":unlet g:FOO\t\n", 'tx')
+  call assert_true(!exists('g:FOOBAR'))
+
+  let $FOOBAR = 1
+  call feedkeys(":unlet $FOO\t\n", 'tx')
+  call assert_true(!exists('$FOOBAR') || empty($FOOBAR))
+endfunc
