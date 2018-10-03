@@ -1,0 +1,11 @@
+commit a449a7c6b986b8f5b28c61b8f628e69ed43ca030
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Tue Aug 28 23:09:07 2018 +0200
+
+    patch 8.1.0332: get Gdk-Critical error on first balloon show
+    
+    Problem:    Get Gdk-Critical error on first balloon show.
+    Solution:   Get screen geometry using the draw area widget. (Davit Samvelyan,
+                closes #3386)
+
+,
