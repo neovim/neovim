@@ -588,3 +588,30 @@ func Test_diff_lastline()
   bwipe!
   bwipe!
 endfunc
+
+func Test_diff_with_cursorline()
+  if !CanRunVimInTerminal()
+    return
+  endif
+
+  call writefile([
+	\ 'hi CursorLine ctermbg=red ctermfg=white',
+	\ 'set cursorline',
+	\ 'call setline(1, ["foo","foo","foo","bar"])',
+	\ 'vnew',
+	\ 'call setline(1, ["bee","foo","foo","baz"])',
+	\ 'windo diffthis',
+	\ '2wincmd w',
+	\ ], 'Xtest_diff_cursorline')
+  let buf = RunVimInTerminal('-S Xtest_diff_cursorline', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_01', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_02', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cursorline')
+endfunc
