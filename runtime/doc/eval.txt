@@ -9136,6 +9136,14 @@ This does NOT work: >
 			variables are automatically deleted when the function
 			ends.
 
+:unl[et] ${env-name} ...			*:unlet-environment* *:unlet-$*
+			Remove environment variable {env-name}.
+			Can mix {name} and ${env-name} in one :unlet command.
+			No error message is given for a non-existing
+			variable, also without !.
+			If the system does not support deleting an environment
+			variable, it is made emtpy.
+
 :lockv[ar][!] [depth] {name} ...			*:lockvar* *:lockv*
 			Lock the internal variable {name}.  Locking means that
 			it can no longer be changed (until it is unlocked).
