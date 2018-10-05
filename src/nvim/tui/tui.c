@@ -1852,8 +1852,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
       ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 
-  int ext_bool_Su = unibi_find_ext_bool(ut, "Su");
-  if (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su)) {
+  int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
+  if (vte_version >= 5102
+      || (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
       data->unibi_ext.enter_undercurl_mode = (int)unibi_add_ext_str(
           ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
       data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
