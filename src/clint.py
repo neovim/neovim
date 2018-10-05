@@ -49,6 +49,7 @@ from __future__ import unicode_literals
 
 import codecs
 import copy
+import fileinput
 import getopt
 import math  # for log
 import os
@@ -3456,10 +3457,10 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
         # is processed.
 
         if filename == '-':
-            lines = codecs.StreamReaderWriter(sys.stdin,
-                                              codecs.getreader('utf8'),
-                                              codecs.getwriter('utf8'),
-                                              'replace').read().split('\n')
+            stdin = sys.stdin.read()
+            if sys.version_info < (3, 0):
+                stdin = stdin.decode('utf8')
+            lines = stdin.split('\n')
         else:
             lines = codecs.open(
                 filename, 'r', 'utf8', 'replace').read().split('\n')
