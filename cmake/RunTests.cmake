@@ -50,5 +50,5 @@ file(REMOVE_RECURSE ${WORKING_DIR}/Xtest-tmpdir)
 
 if(NOT res EQUAL 0)
   message(STATUS "Output to stderr:\n${err}")
-  message(FATAL_ERROR "Running ${TEST_TYPE} tests failed with error: ${res}.")
+  message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
 endif()
