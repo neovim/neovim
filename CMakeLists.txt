@@ -96,8 +96,8 @@ endif()
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Debug'.")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Debug'")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build" FORCE)
 endif()
 
 # Set available build types for CMake GUIs.
@@ -137,7 +137,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Default to -O2 on release builds.
 if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
-  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2.")
+  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
@@ -205,12 +205,12 @@ main(void)
 " HAS_ACCEPTABLE_FORTIFY)
 
 if(NOT HAS_ACCEPTABLE_FORTIFY)
-  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1.")
+  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1")
   # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
   STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
   STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
   if(NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
-    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}.")
+    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}")
   endif()
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
@@ -222,7 +222,7 @@ endif()
 if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
    CMAKE_SHARED_LINKER_FLAGS MATCHES "--sort-common" OR
    CMAKE_MODULE_LINKER_FLAGS MATCHES "--sort-common")
-  message(STATUS "Removing --sort-common from linker flags.")
+  message(STATUS "Removing --sort-common from linker flags")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
@@ -309,10 +309,10 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/QuickBuild CI. Extra flags will be set." OFF)
+option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/QuickBuild CI build enabled.")
+  message(STATUS "Travis/QuickBuild CI build enabled")
   add_definitions(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
@@ -433,11 +433,11 @@ option(CLANG_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 if((CLANG_ASAN_UBSAN AND CLANG_MSAN)
     OR (CLANG_ASAN_UBSAN AND CLANG_TSAN)
     OR (CLANG_MSAN AND CLANG_TSAN))
-  message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously.")
+  message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously")
 endif()
 
 if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-  message(FATAL_ERROR "Sanitizers are only supported for Clang.")
+  message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD|Windows")  # see #5318
@@ -449,7 +449,7 @@ endif()
 
 if(ENABLE_JEMALLOC)
   if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
-    message(STATUS "Sanitizers have been enabled; don't use jemalloc.")
+    message(STATUS "Sanitizers enabled; disabling jemalloc")
   else()
     find_package(JeMalloc REQUIRED)
     include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
@@ -505,10 +505,10 @@ else()
 endif()
 
 if(NOT LUA_PRG_WORKS)
-  message(FATAL_ERROR "A suitable Lua interpreter was not found.")
+  message(FATAL_ERROR "Failed to find a Lua 5.1-compatible interpreter")
 endif()
 
-message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
+message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
