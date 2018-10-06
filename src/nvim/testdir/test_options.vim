@@ -262,7 +262,7 @@ func Test_set_ttytype()
     " in travis on some builds. Why?  Catch both for now
     try
       set ttytype=
-      call assert_report('set ttype= did not fail')
+      call assert_report('set ttytype= did not fail')
     catch /E529\|E522/
     endtry
 
@@ -270,7 +270,7 @@ func Test_set_ttytype()
     " check for failure of finding the entry and for missing 'cm' entry.
     try
       set ttytype=xxx
-      call assert_report('set ttype=xxx did not fail')
+      call assert_report('set ttytype=xxx did not fail')
     catch /E522\|E437/
     endtry
 
