@@ -49,6 +49,7 @@ from __future__ import unicode_literals
 
 import codecs
 import copy
+import fileinput
 import getopt
 import math  # for log
 import os
@@ -65,7 +66,7 @@ _USAGE = """
 Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
                  [--counting=total|toplevel|detailed] [--root=subdir]
                  [--linelength=digits] [--record-errors=file]
-                 [--suppress-errors=file]
+                 [--suppress-errors=file] [--stdin-filename=filename]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
@@ -167,6 +168,9 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
 
     suppress-errors=file
       Errors listed in the given file will not be reported.
+
+    stdin-filename=filename
+      Use specified filename when reading from stdin (file "-").
 """
 
 # We categorize each error message we print.  Here are the categories.
@@ -3456,10 +3460,12 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
         # is processed.
 
         if filename == '-':
-            lines = codecs.StreamReaderWriter(sys.stdin,
-                                              codecs.getreader('utf8'),
-                                              codecs.getwriter('utf8'),
-                                              'replace').read().split('\n')
+            stdin = sys.stdin.read()
+            if sys.version_info < (3, 0):
+                stdin = stdin.decode('utf8')
+            lines = stdin.split('\n')
+            if _cpplint_state.stdin_filename is not None:
+                filename = _cpplint_state.stdin_filename
         else:
             lines = codecs.open(
                 filename, 'r', 'utf8', 'replace').read().split('\n')
@@ -3540,7 +3546,9 @@ def ParseArguments(args):
                                                      'linelength=',
                                                      'extensions=',
                                                      'record-errors=',
-                                                     'suppress-errors='])
+                                                     'suppress-errors=',
+                                                     'stdin-filename=',
+                                                     ])
     except getopt.GetoptError:
         PrintUsage('Invalid arguments.')
 
@@ -3550,6 +3558,7 @@ def ParseArguments(args):
     counting_style = ''
     record_errors_file = None
     suppress_errors_file = None
+    stdin_filename = None
 
     for (opt, val) in opts:
         if opt == '--help':
@@ -3586,6 +3595,8 @@ def ParseArguments(args):
             record_errors_file = val
         elif opt == '--suppress-errors':
             suppress_errors_file = val
+        elif opt == '--stdin-filename':
+            stdin_filename = val
 
     if not filenames:
         PrintUsage('No files were specified.')
@@ -3596,6 +3607,7 @@ def ParseArguments(args):
     _SetCountingStyle(counting_style)
     _SuppressErrorsFrom(suppress_errors_file)
     _RecordErrorsTo(record_errors_file)
+    _cpplint_state.stdin_filename = stdin_filename
 
     return filenames
 
