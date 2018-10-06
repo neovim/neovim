@@ -471,12 +471,6 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
       EMSG(_(e_auabort));
       return;
     }
-    if (apply_autocmds(EVENT_WINCLOSED, buf->b_fname, buf->b_fname, false,
-                       buf) && !bufref_valid(&bufref)) {
-      // Autocommands deleted the buffer.
-      EMSG(_(e_auabort));
-      return;
-    }
     buf->b_locked--;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */

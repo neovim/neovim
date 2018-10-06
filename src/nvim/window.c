@@ -1929,7 +1929,6 @@ int win_close(win_T *win, bool free_buf)
     }
     win->w_closing = true;
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_WINCLOSED, NULL, NULL, false, curbuf);
 
     if (!win_valid(win)) {
       return FAIL;
@@ -1983,6 +1982,7 @@ int win_close(win_T *win, bool free_buf)
     win_close_othertab(win, false, prev_curtab);
     return FAIL;
   }
+
   // Autocommands may have closed the window already, or closed the only
   // other window or moved to another tab page.
   if (!win_valid(win) || last_window()
@@ -1992,6 +1992,12 @@ int win_close(win_T *win, bool free_buf)
 
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
+
+  // fire WinClose event just before freeing memory associated with window
+  if (has_event(EVENT_WINCLOSED)) {
+    apply_autocmds(EVENT_WINCLOSED, NULL, NULL, false, curbuf);
+  }
+
   /* Free the memory used for the window and get the window that received
    * the screen space. */
   wp = win_free_mem(win, &dir, NULL);
@@ -2136,6 +2142,11 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     if (has_event(EVENT_TABCLOSED)) {
       apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
     }
+  }
+
+  // fire WinClose event just before freeing memory associated with window
+  if (has_event(EVENT_WINCLOSED)) {
+    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, win->w_buffer->b_fname, false, win->w_buffer);
   }
 
   /* Free the memory used for the window. */
