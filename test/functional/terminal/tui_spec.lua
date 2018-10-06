@@ -17,7 +17,6 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
-local wait = helpers.wait
 
 if helpers.pending_win32(pending) then return end
 
@@ -473,14 +472,24 @@ describe("tui 't_Co' (terminal colors)", function()
       nvim_prog,
       nvim_set))
 
-    feed_data(":echo &t_Co\n")
-    wait()
     local tline
     if maxcolors == 8 or maxcolors == 16 then
       tline = "~                                                 "
     else
       tline = "{4:~                                                 }"
     end
+
+    screen:expect(string.format([[
+      {1: }                                                 |
+      %s|
+      %s|
+      %s|
+      %s|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], tline, tline, tline, tline))
+
+    feed_data(":echo &t_Co\n")
     screen:expect(string.format([[
       {1: }                                                 |
       %s|
