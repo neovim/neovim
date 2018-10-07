@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Sep 07
+" Last Change:	2017 Nov 06
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -24,6 +24,9 @@ setlocal fo-=t fo+=croql
 " To allow tag lookup via CTRL-] for autoload functions, '#' must be a
 " keyword character.  E.g., for netrw#Nread().
 setlocal isk+=#
+
+" Use :help to lookup the keyword under the cursor with K.
+setlocal keywordprg=:help
 
 " Set 'comments' to format dashed lists in comments
 setlocal com=sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"
