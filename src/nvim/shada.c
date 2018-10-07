@@ -884,7 +884,7 @@ static int shada_read_file(const char *const file, const int flags)
 
   if (p_verbose > 0) {
     verbose_enter();
-    smsg(_("Reading ShaDa file \"%s\"%s%s%s"),
+    smsg(_("Reading ShaDa file \"%s\"%s%s%s%s"),
          fname,
          (flags & kShaDaWantInfo) ? _(" info") : "",
          (flags & kShaDaWantMarks) ? _(" marks") : "",
@@ -2033,7 +2033,7 @@ static const char *shada_format_entry(const ShadaEntry entry)
 {
   static char ret[1024];
   ret[0] = 0;
-  vim_snprintf(S_LEN(ret), "[ ] ts=%" PRIu64 " ");
+  vim_snprintf(S_LEN(ret), "%s", "[ ] ts=%" PRIu64 " ");
   //                         ^ Space for `can_free_entry`
   switch (entry.type) {
     case kSDItemMissing: {
@@ -2091,7 +2091,7 @@ static const char *shada_format_entry(const ShadaEntry entry)
           entry.data.filemark.mark.lnum, \
           entry.data.filemark.mark.col, \
           entry.data.filemark.mark.coladd, \
-          entry.data.filemark.additional_data, \
+          (void *)entry.data.filemark.additional_data, \
           ad_len, \
           ad); \
     } while (0)

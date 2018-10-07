@@ -840,7 +840,7 @@ static void command_line_scan(mparm_T *parmp)
             }
 
             if (p == NULL) {
-              emsgf(_(e_outofmem));
+              EMSG(_(e_outofmem));
             }
 
             Object md = DICTIONARY_OBJ(api_metadata());

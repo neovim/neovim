@@ -3686,7 +3686,7 @@ nofail:
     } else if (errmsgarg != 0) {
       emsgf(errmsg, os_strerror(errmsgarg));
     } else {
-      emsgf(errmsg);
+      EMSG(errmsg);
     }
     if (errmsg_allocated) {
       xfree(errmsg);
@@ -6216,8 +6216,8 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         /* refuse to add buffer-local ap if buffer number is invalid */
         if (is_buflocal && (buflocal_nr == 0
                             || buflist_findnr(buflocal_nr) == NULL)) {
-          EMSGN(_("E680: <buffer=%d>: invalid buffer number "),
-              buflocal_nr);
+          emsgf(_("E680: <buffer=%d>: invalid buffer number "),
+                buflocal_nr);
           return FAIL;
         }
 

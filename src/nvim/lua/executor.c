@@ -291,7 +291,7 @@ static int nlua_print(lua_State *const lstate)
   return 0;
 nlua_print_error:
   emsgf(_("E5114: Error while converting print argument #%i: %.*s"),
-        curargidx, errmsg_len, errmsg);
+        curargidx, (int)errmsg_len, errmsg);
   ga_clear(&msg_ga);
   lua_pop(lstate, lua_gettop(lstate));
   return 0;

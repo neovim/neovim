@@ -2696,7 +2696,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     }
     const list_T *const l = TV_LIST_ITEM_TV(li)->vval.v_list;
     if (tv_list_len(l) != 3) {
-      PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %li /= 3"),
+      PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %d /= 3"),
                    i, tv_list_len(l));
       goto color_cmdline_error;
     }

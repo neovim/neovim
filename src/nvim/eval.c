@@ -1943,7 +1943,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
       emsgf(_(e_letwrong), op);
     } else if (endchars != NULL
                && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL) {
-      emsgf(_(e_letunexp));
+      EMSG(_(e_letunexp));
     } else {
       char_u      *s;
 
@@ -2152,7 +2152,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         if (rettv != NULL && (rettv->v_type != VAR_LIST
                               || rettv->vval.v_list == NULL)) {
           if (!quiet) {
-            emsgf(_("E709: [:] requires a List value"));
+            EMSG(_("E709: [:] requires a List value"));
           }
           tv_clear(&var1);
           return NULL;
@@ -2179,7 +2179,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
 
       if (*p != ']') {
         if (!quiet) {
-          emsgf(_(e_missbrac));
+          EMSG(_(e_missbrac));
         }
         tv_clear(&var1);
         tv_clear(&var2);
@@ -3325,7 +3325,7 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
      * Check for the ":".
      */
     if ((*arg)[0] != ':') {
-      emsgf(_("E109: Missing ':' after '?'"));
+      EMSG(_("E109: Missing ':' after '?'"));
       if (evaluate && result) {
         tv_clear(rettv);
       }
@@ -4433,7 +4433,7 @@ eval_index(
     /* Check for the ']'. */
     if (**arg != ']') {
       if (verbose) {
-        emsgf(_(e_missbrac));
+        EMSG(_(e_missbrac));
       }
       tv_clear(&var1);
       if (range) {
@@ -4545,7 +4545,7 @@ eval_index(
       case VAR_DICT: {
         if (range) {
           if (verbose) {
-            emsgf(_(e_dictrange));
+            EMSG(_(e_dictrange));
           }
           if (len == -1) {
             tv_clear(&var1);
@@ -7795,7 +7795,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     noref = tv_get_number_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
-    emsgf(_(e_invarg));
+    EMSG(_(e_invarg));
   } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
@@ -7835,7 +7835,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // delete a directory recursively
     rettv->vval.v_number = delete_recursive(name);
   } else {
-    EMSG2(_(e_invexpr2), flags);
+    emsgf(_(e_invexpr2), flags);
   }
 }
 
@@ -8963,7 +8963,7 @@ static void common_function(typval_T *argvars, typval_T *rettv,
   } else if (trans_name != NULL
              && (is_funcref ? find_func(trans_name) == NULL
                  : !translated_function_exists((const char *)trans_name))) {
-    EMSG2(_("E700: Unknown function: %s"), s);
+    emsgf(_("E700: Unknown function: %s"), s);
   } else {
     int dict_idx = 0;
     int arg_idx = 0;
@@ -11190,7 +11190,7 @@ void get_user_input(const typval_T *const argvars,
   char def[1] = { 0 };
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      emsgf(_("E5050: {opts} must be the only argument"));
+      EMSG(_("E5050: {opts} must be the only argument"));
       return;
     }
     dict_T *const dict = argvars[0].vval.v_dict;
@@ -11499,7 +11499,7 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
                       const DictListType what)
 {
   if (tv->v_type != VAR_DICT) {
-    emsgf(_(e_dictreq));
+    EMSG(_(e_dictreq));
     return;
   }
   if (tv->vval.v_dict == NULL) {
@@ -11929,7 +11929,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (json_decode_string(s, len, rettv) == FAIL) {
-    emsgf(_("E474: Failed to parse %.*s"), (int) len, s);
+    emsgf(_("E474: Failed to parse %.*s"), (int)len, s);
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   }
@@ -12919,7 +12919,7 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (num < 0) {
-    emsgf(_("E5070: Character number must not be less than zero"));
+    EMSG(_("E5070: Character number must not be less than zero"));
     return;
   }
   if (num > INT_MAX) {
@@ -13065,9 +13065,9 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;  // Type error; errmsg already given.
   }
   if (stride == 0) {
-    emsgf(_("E726: Stride is zero"));
+    EMSG(_("E726: Stride is zero"));
   } else if (stride > 0 ? end + 1 < start : end - 1 > start) {
-    emsgf(_("E727: Start past end"));
+    EMSG(_("E727: Start past end"));
   } else {
     tv_list_alloc_ret(rettv, (end - start) / stride);
     for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
@@ -13404,7 +13404,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             }
           }
           if (li == NULL) {  // Didn't find "item2" after "item".
-            emsgf(_(e_invrange));
+            EMSG(_(e_invrange));
           } else {
             tv_list_move_items(l, item, item2, tv_list_alloc_ret(rettv, cnt),
                                cnt);
@@ -14719,7 +14719,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   } else if (title_arg->v_type == VAR_DICT) {
     d = title_arg->vval.v_dict;
   } else {
-    emsgf(_(e_dictreq));
+    EMSG(_(e_dictreq));
     return;
   }
 
@@ -16217,7 +16217,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (no < 0 || no >= NSUBEXP) {
-    EMSGN(_("E935: invalid submatch number: %d"), no);
+    emsgf(_("E935: invalid submatch number: %d"), no);
     return;
   }
   int retList = 0;
@@ -17581,7 +17581,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_DICT
       || (dict = argvars[0].vval.v_dict) == NULL) {
-    emsgf(_(e_invarg));
+    EMSG(_(e_invarg));
   } else {
     dictitem_T *di;
     if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
@@ -19367,7 +19367,7 @@ static bool var_check_fixed(const int flags, const char *name,
     } else if (name_len == TV_CSTRING) {
       name_len = strlen(name);
     }
-    emsgf(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
+    EMSG3(_("E795: Cannot delete variable %.*s"), (int)name_len, name);
     return true;
   }
   return false;
@@ -19976,7 +19976,7 @@ void ex_function(exarg_T *eap)
   if (*p == '\n') {
     line_arg = p + 1;
   } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
-    emsgf(_(e_trailing));
+    EMSG(_(e_trailing));
   }
 
   /*
