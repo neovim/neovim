@@ -61,7 +61,7 @@ void list_write_log(const char *const fname)
   FileDescriptor fp;
   const int fo_ret = file_open(&fp, fname, kFileCreate|kFileAppend, 0600);
   if (fo_ret != 0) {
-    EMSG3(_("E5142: Failed to open file %s: %s"), fname, os_strerror(fo_ret));
+    emsgf(_("E5142: Failed to open file %s: %s"), fname, os_strerror(fo_ret));
     return;
   }
   for (ListLog *chunk = list_log_first; chunk != NULL;) {
@@ -83,7 +83,7 @@ void list_write_log(const char *const fname)
                   sizeof(chunk->entries[0]) * (chunk->size - i));
           chunk->size -= i;
         }
-        EMSG3(_("E5143: Failed to write to file %s: %s"),
+        emsgf(_("E5143: Failed to write to file %s: %s"),
               fname, os_strerror((int)fw_ret));
         return;
       }
@@ -94,7 +94,7 @@ void list_write_log(const char *const fname)
   }
   const int fc_ret = file_close(&fp, true);
   if (fc_ret != 0) {
-    EMSG3(_("E5144: Failed to close file %s: %s"), fname, os_strerror(fc_ret));
+    emsgf(_("E5144: Failed to close file %s: %s"), fname, os_strerror(fc_ret));
   }
 }
 
@@ -1286,7 +1286,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 {
   hashitem_T *const hi = hash_find(&dict->dv_hashtab, item->di_key);
   if (HASHITEM_EMPTY(hi)) {
-    EMSG2(_(e_intern2), "tv_dict_item_remove()");
+    emsgf(_(e_intern2), "tv_dict_item_remove()");
   } else {
     hash_remove(&dict->dv_hashtab, hi);
   }
@@ -1759,7 +1759,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2,
                                NULL);
       }
     } else if (*action == 'e') {
-      EMSG2(_("E737: Key already exists: %s"), di2->di_key);
+      emsgf(_("E737: Key already exists: %s"), di2->di_key);
       break;
     } else if (*action == 'f' && di2 != di1) {
       typval_T oldtv;
@@ -2278,7 +2278,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_copy(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_copy(UNKNOWN)");
       break;
     }
   }
@@ -2426,7 +2426,7 @@ bool tv_check_lock(const VarLockStatus lock, const char *name,
     name_len = strlen(name);
   }
 
-  EMSG3(_(error_message), (int)name_len, name);
+  emsgf(_(error_message), (int)name_len, name);
 
   return true;
 }
@@ -2728,7 +2728,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_get_number(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
       break;
     }
   }
@@ -2798,7 +2798,7 @@ float_T tv_get_float(const typval_T *const tv)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_get_float(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
       break;
     }
   }

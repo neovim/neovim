@@ -1384,7 +1384,7 @@ static int nfa_regatom(void)
       re_has_z = REX_SET;
       break;
     default:
-      EMSG2(_("E867: (NFA) Unknown operator '\\z%c'"),
+      emsgf(_("E867: (NFA) Unknown operator '\\z%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1524,7 +1524,7 @@ static int nfa_regatom(void)
         break;
       }
     }
-      EMSG2(_("E867: (NFA) Unknown operator '\\%%%c'"),
+      emsgf(_("E867: (NFA) Unknown operator '\\%%%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1937,7 +1937,7 @@ static int nfa_regpiece(void)
       break;
     }
     if (i == 0) {
-      EMSG2(_("E869: (NFA) Unknown operator '\\@%c'"), op);
+      emsgf(_("E869: (NFA) Unknown operator '\\@%c'"), op);
       return FAIL;
     }
     EMIT(i);

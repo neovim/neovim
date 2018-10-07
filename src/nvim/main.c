@@ -828,7 +828,7 @@ static void command_line_scan(mparm_T *parmp)
             msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
 
             if (fof_ret != 0) {
-              EMSG2(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
+              emsgf(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
             }
 
             if (p == NULL) {

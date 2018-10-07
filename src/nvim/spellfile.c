@@ -5136,7 +5136,7 @@ mkspell (
   } else if (vim_strchr(path_tail(wfname), '_') != NULL) {
     EMSG(_("E751: Output file name must not have region name"));
   } else if (incount > MAXREGIONS) {
-    EMSG2(_("E754: Only up to %d regions supported"), MAXREGIONS);
+    emsgf(_("E754: Only up to %d regions supported"), MAXREGIONS);
   } else {
     // Check for overwriting before doing things that may take a lot of
     // time.

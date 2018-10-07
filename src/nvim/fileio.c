@@ -6216,7 +6216,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         /* refuse to add buffer-local ap if buffer number is invalid */
         if (is_buflocal && (buflocal_nr == 0
                             || buflist_findnr(buflocal_nr) == NULL)) {
-          EMSG2(_("E680: <buffer=%d>: invalid buffer number "),
+          emsgf(_("E680: <buffer=%d>: invalid buffer number "),
                 buflocal_nr);
           return FAIL;
         }
