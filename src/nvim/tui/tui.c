@@ -122,8 +122,9 @@ typedef struct {
     int reset_scroll_region;
     int set_cursor_style, reset_cursor_style;
     int save_title, restore_title;
-    int enter_undercurl_mode, exit_undercurl_mode, set_underline_color;
     int get_bg;
+    int set_underline_style;
+    int set_underline_color;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -215,6 +216,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.set_cursor_style = -1;
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
+  data->unibi_ext.set_underline_color = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
 
@@ -532,7 +534,7 @@ static void update_attrs(UI *ui, int attr_id)
 
   bool underline;
   bool undercurl;
-  if (data->unibi_ext.enter_undercurl_mode) {
+  if (data->unibi_ext.set_underline_style != -1) {
     underline = attr & HL_UNDERLINE;
     undercurl = attr & HL_UNDERCURL;
   } else {
@@ -575,10 +577,11 @@ static void update_attrs(UI *ui, int attr_id)
   if (italic) {
     unibi_out(ui, unibi_enter_italics_mode);
   }
-  if (undercurl && data->unibi_ext.enter_undercurl_mode) {
-    unibi_out_ext(ui, data->unibi_ext.enter_undercurl_mode);
+  if (undercurl && data->unibi_ext.set_underline_style != -1) {
+    UNIBI_SET_NUM_VAR(data->params[0], 3);
+    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
   }
-  if ((undercurl || underline) && data->unibi_ext.set_underline_color) {
+  if ((undercurl || underline) && data->unibi_ext.set_underline_color != -1) {
     int color = attrs.rgb_sp_color;
     if (color != -1) {
         UNIBI_SET_NUM_VAR(data->params[0], (color >> 16) & 0xff);  // red
@@ -1908,13 +1911,19 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(
       ut, "ext.disable_mouse", "\x1b[?1002l\x1b[?1006l");
 
-  int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
-  if (vte_version >= 5102
-      || (ext_bool_Su != -1 && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
-      data->unibi_ext.enter_undercurl_mode = (int)unibi_add_ext_str(
-          ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
-      data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
-          ut, "ext.exit_undercurl_mode", "\x1b[4:0m");
+  // Extended underline.
+  // terminfo will have Smulx for this (but no support for colors yet).
+  data->unibi_ext.set_underline_style = unibi_find_ext_str(ut, "Smulx");
+  if (data->unibi_ext.set_underline_style == -1) {
+      int ext_bool_Su = unibi_find_ext_bool(ut, "Su");  // used by kitty
+      if (vte_version >= 5102
+          || (ext_bool_Su != -1
+              && unibi_get_ext_bool(ut, (size_t)ext_bool_Su))) {
+          data->unibi_ext.set_underline_style = (int)unibi_add_ext_str(
+              ut, "ext.set_underline_style", "\x1b[4:%p1%dm");
+      }
+  }
+  if (data->unibi_ext.set_underline_style != -1) {
       // Only support colon syntax. #9270
       data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
           ut, "ext.set_underline_color", "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
