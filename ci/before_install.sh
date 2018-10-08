@@ -8,9 +8,9 @@ if [[ "${CI_TARGET}" == lint ]]; then
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  brew update
+  >/dev/null brew update
   echo "Upgrade Python 3"
-  brew upgrade python
+  >/dev/null brew upgrade python
 fi
 
 echo 'python info:'
