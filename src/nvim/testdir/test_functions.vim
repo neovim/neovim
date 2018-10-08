@@ -873,7 +873,7 @@ func Test_Executable()
     call assert_equal(1, executable('win.ini'))
   elseif has('unix')
     call assert_equal(1, executable('cat'))
-    call assert_equal(0, executable('dog'))
+    call assert_equal(0, executable('nodogshere'))
   endif
 endfunc
 
