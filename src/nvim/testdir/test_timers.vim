@@ -20,9 +20,9 @@ func Test_oneshot()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 100, slept)
+    call assert_inrange(40, 120, slept)
   else
-    call assert_inrange(20, 100, slept)
+    call assert_inrange(20, 120, slept)
   endif
 endfunc
 
@@ -39,6 +39,7 @@ func Test_repeat_three()
 endfunc
 
 func Test_repeat_many()
+  call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
   sleep 200m
@@ -89,6 +90,7 @@ func Test_info()
 endfunc
 
 func Test_stopall()
+  call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
   let info = timer_info()
@@ -161,6 +163,7 @@ func StopTimerAll(timer)
 endfunc
 
 func Test_stop_all_in_callback()
+  call timer_stopall()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
   call assert_equal(1, len(info))
