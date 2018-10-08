@@ -49,6 +49,7 @@
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
+#include "nvim/getchar.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/main.h"
@@ -3358,12 +3359,16 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             choice = do_swapexists(buf, (char_u *) fname);
 
           if (choice == 0) {
-            /* Show info about the existing swap file. */
+            // Show info about the existing swap file.
             attention_message(buf, (char_u *) fname);
 
-            /* We don't want a 'q' typed at the more-prompt
-             * interrupt loading a file. */
+            // We don't want a 'q' typed at the more-prompt
+            // interrupt loading a file.
             got_int = FALSE;
+
+            // If vimrc has "simalt ~x" we don't want it to
+            // interfere with the prompt here.
+            flush_buffers(TRUE);
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
