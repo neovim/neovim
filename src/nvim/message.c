@@ -552,7 +552,7 @@ int emsg(const char_u *s_)
     if (p_eb) {
       beep_flush();           // also includes flush_buffers()
     } else {
-      flush_buffers(false);   // flush internal buffers
+      flush_buffers(FLUSH_MINIMAL);  // flush internal buffers
     }
     did_emsg = true;          // flag for DoOneCmd()
   }
