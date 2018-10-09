@@ -32,7 +32,6 @@ void ugrid_resize(UGrid *grid, int width, int height)
     grid->cells[i] = xcalloc((size_t)width, sizeof(UCell));
   }
 
-  grid->row = grid->col = 0;
   grid->width = width;
   grid->height = height;
 }
