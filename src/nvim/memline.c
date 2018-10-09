@@ -3360,15 +3360,15 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
 
           if (choice == 0) {
             // Show info about the existing swap file.
-            attention_message(buf, (char_u *) fname);
+            attention_message(buf, (char_u *)fname);
 
             // We don't want a 'q' typed at the more-prompt
             // interrupt loading a file.
-            got_int = FALSE;
+            got_int = false;
 
             // If vimrc has "simalt ~x" we don't want it to
             // interfere with the prompt here.
-            flush_buffers(TRUE);
+            flush_buffers(FLUSH_TYPEAHEAD);
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
