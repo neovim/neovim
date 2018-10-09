@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local global_helpers = require('test.helpers')
 local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
@@ -11,6 +12,7 @@ local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
+local expect_err = global_helpers.expect_err
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -52,7 +54,12 @@ describe('api/win', function()
       neq(window('get_buf', windows[2]), window('get_buf', windows[1]))
       window('set_buf', windows[2], window('get_buf', windows[1]))
       eq(window('get_buf', windows[2]), window('get_buf', windows[1]))
-	end)
+    end)
+
+    it('fails on unknown ID', function()
+    	expect_err('Invalid buffer id$', window, 'set_buf', nvim('get_current_win'), 23)
+    	expect_err('Invalid window id$', window, 'set_buf', 23, nvim('get_current_buf'))
+    end)
   end)
 
   describe('{get,set}_cursor', function()
