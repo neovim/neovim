@@ -420,7 +420,7 @@ void typeahead_noflush(int c)
  * typeahead buffer (used in case of an error).  If "flush_typeahead" is true,
  * flush all typeahead characters (used when interrupted by a CTRL-C).
  */
-void flush_buffers(int flush_typeahead)
+void flush_buffers(flush_buffers_T flush_typeahead)
 {
   init_typebuf();
 
@@ -428,22 +428,24 @@ void flush_buffers(int flush_typeahead)
   while (read_readbuffers(TRUE) != NUL) {
   }
 
-  if (flush_typeahead) {            /* remove all typeahead */
-    /*
-     * We have to get all characters, because we may delete the first part
-     * of an escape sequence.
-     * In an xterm we get one char at a time and we have to get them all.
-     */
-    while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L) != 0) {
+  if (flush_typeahead == FLUSH_MINIMAL) {
+    // remove mapped characters at the start only
+    typebuf.tb_off += typebuf.tb_maplen;
+    typebuf.tb_len -= typebuf.tb_maplen;
+  } else {
+    // remove typeahead
+    if (flush_typeahead == FLUSH_INPUT) {
+      // We have to get all characters, because we may delete the first
+      // part of an escape sequence.  In an xterm we get one char at a
+      // time and we have to get them all.
+      while (inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 10L) != 0) {
+      }
     }
     typebuf.tb_off = MAXMAPLEN;
     typebuf.tb_len = 0;
     // Reset the flag that text received from a client or from feedkeys()
     // was inserted in the typeahead buffer.
     typebuf_was_filled = false;
-  } else {                // remove mapped characters at the start only
-    typebuf.tb_off += typebuf.tb_maplen;
-    typebuf.tb_len -= typebuf.tb_maplen;
   }
   typebuf.tb_maplen = 0;
   typebuf.tb_silent = 0;
@@ -1538,6 +1540,7 @@ int plain_vgetc(void)
  * Check if a character is available, such that vgetc() will not block.
  * If the next character is a special character or multi-byte, the returned
  * character is not valid!.
+ * Returns NUL if no character is available.
  */
 int vpeekc(void)
 {
@@ -1602,7 +1605,8 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
 /// if "advance" is FALSE (vpeekc()):
-///    just look whether there is a character available.
+///    Just look whether there is a character available.
+///    Return NUL if not.
 ///
 /// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
@@ -1709,7 +1713,7 @@ static int vgetorpeek(int advance)
           } else {
             c = Ctrl_C;
           }
-          flush_buffers(true);                  // flush all typeahead
+          flush_buffers(FLUSH_INPUT);  // flush all typeahead
 
           if (advance) {
             /* Also record this character, it might be needed to
@@ -1970,8 +1974,8 @@ static int vgetorpeek(int advance)
                 redrawcmdline();
               else
                 setcursor();
-              flush_buffers(FALSE);
-              mapdepth = 0;                     /* for next one */
+              flush_buffers(FLUSH_MINIMAL);
+              mapdepth = 0;                     // for next one
               c = -1;
               break;
             }
