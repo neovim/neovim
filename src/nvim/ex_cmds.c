@@ -1353,6 +1353,25 @@ do_shell(
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
 }
 
+#if !defined(UNIX)
+static char *find_pipe(const char *cmd)
+{
+  bool inquote = false;
+
+  for (const char *p = cmd; *p != NUL; p++) {
+    if (!inquote && *p == '|') {
+      return p;
+    }
+    if (*p == '"') {
+      inquote = !inquote;
+    } else if (rem_backslash((const char_u *)p)) {
+      p++;
+    }
+  }
+  return NULL;
+}
+#endif
+
 /// Create a shell command from a command string, input redirection file and
 /// output redirection file.
 ///
@@ -1406,7 +1425,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     // Don't do this when 'shellquote' is not empty, otherwise the
     // redirection would be inside the quotes.
     if (*p_shq == NUL) {
-      char *const p = strchr(buf, '|');
+      char *const p = find_pipe(buf);
       if (p != NULL) {
         *p = NUL;
       }
@@ -1414,7 +1433,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     xstrlcat(buf, " < ", len);
     xstrlcat(buf, (const char *)itmp, len);
     if (*p_shq == NUL) {
-      const char *const p = strchr((const char *)cmd, '|');
+      const char *const p = find_pipe((const char *)cmd);
       if (p != NULL) {
         xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
         xstrlcat(buf, p, len - 1);
