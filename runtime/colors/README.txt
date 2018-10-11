@@ -42,7 +42,16 @@ this autocmd might be useful:
 Replace "blue_sky" with the name of the colorscheme.
 
 In case you want to tweak a colorscheme after it was loaded, check out the
-ColorScheme autocmd event.
+ColorScheme autocommand event.
+
+To clean up just before loading another colorscheme, use the ColorSchemePre
+autocommand event.  For example:
+	let g:term_ansi_colors = ...
+	augroup MyColorscheme
+	  au!
+	  au ColorSchemePre * unlet g:term_ansi_colors
+	  au ColorSchemePre * au! MyColorscheme
+	augroup END
 
 To customize a colorscheme use another name, e.g.  "~/.vim/colors/mine.vim",
 and use `:runtime` to load the original colorscheme:

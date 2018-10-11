@@ -6779,7 +6779,9 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET) {
+    if (event == EVENT_COLORSCHEME
+        || event == EVENT_COLORSCHEMEPRE
+        || event == EVENT_OPTIONSET) {
       autocmd_fname = NULL;
     } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
@@ -6830,6 +6832,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     sfname = vim_strsave(fname);
     // Don't try expanding the following events.
     if (event == EVENT_COLORSCHEME
+        || event == EVENT_COLORSCHEMEPRE
         || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
