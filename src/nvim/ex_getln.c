@@ -3524,8 +3524,9 @@ static int ccheck_abbr(int c)
 {
   int spos = 0;
 
-  if (p_paste || no_abbr)           /* no abbreviations or in paste mode */
-    return FALSE;
+  if (p_paste || no_abbr) {         // no abbreviations or in paste mode
+    return false;
+  }
 
   // Do not consider '<,'> be part of the mapping, skip leading whitespace.
   // Actually accepts any mark.
