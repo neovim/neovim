@@ -198,3 +198,19 @@ func Test_map_timeout()
   set timeoutlen&
   delfunc ExitInsert
 endfunc
+
+func Test_cabbr_visual_mode()
+  cabbr s su
+  call feedkeys(":s \<c-B>\"\<CR>", 'itx')
+  call assert_equal('"su ', getreg(':'))
+  call feedkeys(":'<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":  '<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"  '. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":'a,'bs \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'a,'bsu "
+  call assert_equal(expected, getreg(':'))
+  cunabbr s
+endfunc
