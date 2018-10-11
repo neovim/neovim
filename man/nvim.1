@@ -20,14 +20,17 @@
 .Sh DESCRIPTION
 .Nm
 is a text editor based on Vim.
-To enter commands in
-.Nm ,
-type a colon
-.Pq Sq \&:
-which is also used in this manual to denote commands.
-For more information, consult the online help with the
-.Ic :help
-command.
+Commands in this program start with colon
+.Pq Sq \&: .
+Use the :help command to get help, for example ":help quickref"
+is a condensed overview of almost all commands.
+.Pp
+If you are new to Vim/Nvim, start with the 30-minute tutorial:
+.Dl :Tutor
+.Pp
+After installing/updating Nvim, it's a good idea to run the self-check:
+.Dl :checkhealth
+.Pp
 .Bl -tag -width Fl
 .It Ar file ...
 File(s) to edit.
@@ -42,7 +45,7 @@ commands.
 Read text from standard input until
 .Dv EOF ,
 then open a buffer with that text.
-Commands are read from standard error, which should be a terminal.
+User input is read from standard error, which should be a terminal.
 .It Fl t Ar tag
 The file to edit and the initial cursor position depends on a
 tag, a sort of goto label.
@@ -53,8 +56,7 @@ If
 .Ar tag
 is a function name, the file containing that function is opened
 with the cursor positioned at the start of the function.
-See
-.Ic ":help tag-commands" .
+.Ic ":help tag-commands"
 .It Fl q Op Ar errorfile
 QuickFix mode.
 Display the first error in
@@ -66,31 +68,29 @@ is omitted, the value of the 'errorfile' option is used (defaults to
 Further errors can be jumped to with the
 .Ic :cnext
 command.
-See
-.Ic ":help quickfix" .
+.Ic ":help quickfix"
 .It There are a number of other options:
 .It Fl -
-Interpret all further arguments as files.
-Can be used to edit files starting with a hyphen
+End of options.
+Remaining arguments are treated as literal file names, including filenames starting with hyphen
 .Pq Sq - .
 .It Fl e
-Ex mode.  Reads stdin as Ex commands.
-See
-.Ic ":help Ex-mode" .
+Ex mode, reading stdin as Ex commands.
+.Ic ":help Ex-mode"
 .It Fl E
-Ex mode.  Reads stdin as text.
-See
-.Ic :help gQ .
+Ex mode, reading stdin as text.
+.Ic :help Ex-mode
 .It Fl es
-Silent (batch) mode.  Reads stdin as Ex commands.
+Silent/batch mode, reading stdin as Ex commands.
+.Ic :help silent-mode
 .It Fl \&Es
-Silent (batch) mode.  Reads stdin as text.
+Silent/batch mode, reading stdin as text.
+.Ic :help silent-mode
 .It Fl d
 Diff mode.
 Show the difference between two to four files, similar to
 .Xr sdiff 1 .
-See
-.Ic ":help diff" .
+.Ic ":help diff"
 .It Fl R
 Read-only mode.
 Sets the 'readonly' option.
@@ -100,8 +100,7 @@ Buffers can still be edited, but cannot be written to disk if already
 associated with a file.
 To overwrite a file, add an exclamation mark to the relevant Ex command, such as
 .Ic :w! .
-See
-.Ic ":help 'readonly'" .
+.Ic ":help 'readonly'"
 .It Fl Z
 Restricted mode.
 Disable commands that make use of an external shell.
@@ -113,8 +112,7 @@ Resets the 'write' and 'modifiable' options, to disable file and buffer
 modifications.
 .It Fl b
 Binary mode.
-See
-.Ic ":help edit-binary" .
+.Ic ":help edit-binary"
 .It Fl l
 Lisp mode.
 Sets the 'lisp' and 'showmatch' options.
@@ -126,19 +124,20 @@ Hebrew mode.
 Sets the 'hkmap' and 'rightleft' options.
 .It Fl V Ns Oo Ar N Oc Ns Op Ar file
 Verbose mode.
-Print messages about which files are being sourced and for reading and
-writing a ShaDa file.
+Prints debug messages.
 .Ar N
-is the 'verbose' level; defaults to
-.Cm 10.
+is the 'verbose' level, defaults to
+.Cm 10 .
 If
 .Ar file
 is specified, append messages to
 .Ar file
 instead of printing them.
+.Ic ":help 'verbose'"
 .It Fl D
-Debugging mode.
+Debug mode for VimL (Vim script).
 Started when executing the first command from a script.
+:help debug-mode
 .It Fl n
 Disable the use of swap files.
 Sets the 'updatecount' option to
@@ -156,8 +155,7 @@ is used to recover a crashed session.
 The swap file has the same name as the file it's associated with, but with
 .Sq .swp
 appended.
-See
-.Ic ":help recovery" .
+.Ic ":help recovery"
 .It Fl L Op Ar file
 Alias for
 .Fl r .
@@ -177,8 +175,7 @@ If
 is
 .Cm NONE ,
 loading plugins is also skipped.
-See
-.Ic ":help initialization" .
+.Ic ":help initialization"
 .It Fl i Ar shada
 Use
 .Ar shada
@@ -189,8 +186,7 @@ If
 is
 .Cm NONE ,
 do not read or write a ShaDa file.
-See
-.Ic ":help shada" .
+.Ic ":help shada"
 .It Fl -noplugin
 Skip loading plugins.
 Implied by
@@ -243,17 +239,12 @@ and
 .Ic :/foo
 inside
 .Nm .
-See
-.Ic ":help search-pattern" .
-.It Fl c Ar command
+.Ic ":help search-pattern"
+.It \fB\+\fR\fI\,command\/\fR , Fl c Ar command
 Execute
 .Ar command
 after reading the first file.
-Up to 10 instances of
-.Fl c
-or
-.Cm +
-can be used.
+Up to 10 instances allowed.
 .Qq Cm +foo
 and
 .Cm -c \(dqfoo\(dq
@@ -280,8 +271,7 @@ If
 is omitted then
 .Pa Session.vim
 is used, if found.
-See
-.Ic ":help session-file" .
+.Ic ":help session-file"
 .It Fl s Ar scriptin
 Read normal mode commands from
 .Ar scriptin .
@@ -310,10 +300,12 @@ Can be used to diagnose slow startup times.
 Dump API metadata serialized to msgpack and exit.
 .It Fl -embed
 Use standard input and standard output as a msgpack-rpc channel.
-Implies
-.Fl -headless .
+:help --embed
 .It Fl -headless
-Do not start a user interface.
+Do not start a UI.
+When supplied with --embed this implies that the embedding application does not intend to (immediately) start a UI.
+Also useful for "scraping" messages in a pipe.
+:help --headless
 .It Fl -listen Ar address
 Start RPC server on this pipe or TCP socket.
 .It Fl h , -help
@@ -324,11 +316,12 @@ Print version information and exit.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev NVIM_LOG_FILE
-Low-level log file, usually found at ~/.local/share/nvim/log. See :help
-$NVIM_LOG_FILE.
+Low-level log file, usually found at ~/.local/share/nvim/log.
+:help $NVIM_LOG_FILE
 .It Ev VIM
 Used to locate user files, such as init.vim.
-System-dependent, see :help $VIM.
+System-dependent.
+:help $VIM
 .It Ev VIMRUNTIME
 Used to locate runtime files (documentation, syntax highlighting, etc.).
 .It Ev XDG_CONFIG_HOME
@@ -336,7 +329,7 @@ Path to the user-local configuration directory, see
 .Sx FILES .
 Defaults to
 .Pa ~/.config .
-See :help xdg.
+:help xdg
 .It Ev XDG_DATA_HOME
 Like
 .Ev XDG_CONFIG_HOME ,
@@ -344,19 +337,10 @@ but used to store data not generally edited by the user,
 namely swap, backup, and ShaDa files.
 Defaults to
 .Pa ~/.local/share .
-See :help xdg.
+:help xdg
 .It Ev VIMINIT
 Ex commands to be executed at startup.
-For example, the command to quit is
-.Ic :q ,
-so to have
-.Nm
-quit immediately after starting, set
-.Ev VIMINIT
-to
-.Cm q .
-See
-.Ic ":help VIMINIT" .
+.Ic ":help VIMINIT"
 .It Ev SHELL
 Used to initialize the 'shell' option, which decides the default shell used by
 features like
@@ -391,10 +375,9 @@ Nvim was started by
 Most of Vim was written by
 .An -nosplit
 .An Bram Moolenaar .
-See
-.Ic ":help credits" .
 Vim is based on Stevie, worked on by
 .An Tim Thompson ,
 .An Tony Andrews ,
 and
 .An G.R. (Fred) Walter .
+.Ic ":help credits"
