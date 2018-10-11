@@ -8360,10 +8360,10 @@ static bool ins_tab(void)
 static bool ins_eol(int c)
 {
   if (echeck_abbr(c + ABBR_OFF)) {
-    return false;
+    return true;
   }
   if (stop_arrow() == FAIL) {
-    return true;
+    return false;
   }
   undisplay_dollar();
 
