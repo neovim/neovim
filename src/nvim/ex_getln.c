@@ -3522,10 +3522,28 @@ void gotocmdline(int clr)
  */
 static int ccheck_abbr(int c)
 {
-  if (p_paste || no_abbr)           /* no abbreviations or in paste mode */
-    return FALSE;
+  int spos = 0;
 
-  return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, 0);
+  if (p_paste || no_abbr) {         // no abbreviations or in paste mode
+    return false;
+  }
+
+  // Do not consider '<,'> be part of the mapping, skip leading whitespace.
+  // Actually accepts any mark.
+  while (ascii_iswhite(ccline.cmdbuff[spos]) && spos < ccline.cmdlen) {
+    spos++;
+  }
+  if (ccline.cmdlen - spos > 5
+      && ccline.cmdbuff[spos] == '\''
+      && ccline.cmdbuff[spos + 2] == ','
+      && ccline.cmdbuff[spos + 3] == '\'') {
+    spos += 5;
+  } else {
+    // check abbreviation from the beginning of the commandline
+    spos = 0;
+  }
+
+  return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, spos);
 }
 
 static int sort_func_compare(const void *s1, const void *s2)
