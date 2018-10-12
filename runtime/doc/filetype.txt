@@ -152,8 +152,8 @@ file.  It will be overwritten when installing a new version of Vim.
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
-   means there can be many files.  The advantage is that you can simply drop
-   this file in the right directory to make it work.
+   there can be many files.  The advantage is that you can simply drop this 
+   file in the right directory to make it work.
 							*ftdetect*
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Then create the directory "ftdetect"

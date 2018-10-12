@@ -205,18 +205,7 @@ certain features removed/added at compile-time. |feature-compile|
 If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously. See |provider-python|.
 
-|:!| does not support "interactive" commands. Use |:terminal| instead.
-(GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
-
-:!start is not special-cased on Windows.
-
-|system()| does not support writing/reading "backgrounded" commands. |E5677|
-
 |:redir| nested in |execute()| works.
-
-Nvim may throttle (skip) messages from shell commands (|:!|, |:grep|, |:make|)
-if there is too much output. No data is lost, this only affects display and
-makes things faster. |:terminal| output is never throttled.
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
@@ -322,6 +311,22 @@ Normal commands:
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
+
+Shell:
+  Shell output (|:!|, |:make|, …) is always routed through the UI, so it
+  cannot "mess up" the screen. (You can still use "chansend(v:stderr,…)" if
+  you want to mess up the screen :)
+
+  Nvim throttles (skips) messages from shell commands (|:!|, |:grep|, |:make|)
+  if there is too much output. No data is lost, this only affects display and
+  improves performance. |:terminal| output is never throttled.
+
+  |:!| does not support "interactive" commands. Use |:terminal| instead.
+  (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
+
+  :!start is not special-cased on Windows.
+
+  |system()| does not support writing/reading "backgrounded" commands. |E5677|
 
 Startup:
   |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.

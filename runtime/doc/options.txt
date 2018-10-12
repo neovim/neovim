@@ -4036,9 +4036,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 'mouse'			string	(default "")
 			global
 
-	Enable the use of the mouse.  Only works for certain terminals.
-	For using the mouse in the GUI, see |gui-mouse|.  The mouse can be
-	enabled for different modes:
+	Enables mouse support. For example, to enable the mouse in Normal mode
+	and Visual mode: >
+		:set mouse=nv
+<
+	To temporarily disable mouse support, hold the shift key while using
+	the mouse.
+
+	Mouse support can be enabled for different modes:
 		n	Normal mode
 		v	Visual mode
 		i	Insert mode
@@ -4046,17 +4051,42 @@ A jump table for the options with a short description can be found at |Q_op|.
 		h	all previous modes when editing a help file
 		a	all previous modes
 		r	for |hit-enter| and |more-prompt| prompt
-	Normally you would enable the mouse in all four modes with: >
-		:set mouse=a
-<	When the mouse is not enabled, the GUI will still use the mouse for
-	modeless selection.  This doesn't move the text cursor.
 
-	See |mouse-using|.  Also see |'clipboard'|.
+	Left-click anywhere in a text buffer to place the cursor there.  This
+	works with operators too, e.g. type |d| then left-click to delete text
+	from the current cursor position to the position where you clicked.
+
+	Drag the |status-line| or vertical separator of a window to resize it.
+
+	If enabled for "v" (Visual mode) then double-click selects word-wise,
+	triple-click makes it line-wise, and quadruple-click makes it
+	rectangular block-wise.
+
+	For scrolling with a mouse wheel see |scroll-mouse-wheel|.
 
 	Note: When enabling the mouse in a terminal, copy/paste will use the
-	"* register if there is access to an X-server.  The xterm handling of
-	the mouse buttons can still be used by keeping the shift key pressed.
-	Also see the 'clipboard' option.
+	"* register if possible. See also 'clipboard'.
+
+	Related options:
+	'mousefocus'	window focus follows mouse pointer
+	'mousemodel'	what mouse button does which action
+	'mousehide'	hide mouse pointer while typing text
+	'selectmode'	whether to start Select mode or Visual mode
+
+	The :behave command provides some "profiles" for mouse behavior.
+								*:behave* *:be*
+	:be[have] {model}	Set behavior for mouse and selection.  Valid
+				arguments are:
+				   mswin	MS-Windows behavior
+				   xterm	Xterm behavior
+
+				Using ":behave" changes these options:
+				option		mswin			xterm	~
+				'selectmode'	"mouse,key"		""
+				'mousemodel'	"popup"			"extend"
+				'keymodel'	"startsel,stopsel"	""
+				'selection'	"exclusive"		"inclusive"
+
 
 			*'mousefocus'* *'mousef'* *'nomousefocus'* *'nomousef'*
 'mousefocus' 'mousef'	boolean	(default off)
@@ -4076,7 +4106,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The mouse pointer is restored when the mouse is moved.
 
 						*'mousemodel'* *'mousem'*
-'mousemodel' 'mousem'	string	(default "extend", "popup" for Windows)
+'mousemodel' 'mousem'	string	(default "extend")
 			global
 	Sets the model to use for the mouse.  The name mostly specifies what
 	the right mouse button is used for:
@@ -4105,8 +4135,26 @@ A jump table for the options with a short description can be found at |Q_op|.
 	You need to define this first, see |popup-menu|.
 
 	Note that you can further refine the meaning of buttons with mappings.
-	See |gui-mouse-mapping|.  But mappings are NOT used for modeless
-	selection (because that's handled in the GUI code directly).
+	See |mouse-overview|.  But mappings are NOT used for modeless selection.
+
+	Example: >
+	   :map <S-LeftMouse>     <RightMouse>
+	   :map <S-LeftDrag>      <RightDrag>
+	   :map <S-LeftRelease>   <RightRelease>
+	   :map <2-S-LeftMouse>   <2-RightMouse>
+	   :map <2-S-LeftDrag>    <2-RightDrag>
+	   :map <2-S-LeftRelease> <2-RightRelease>
+	   :map <3-S-LeftMouse>   <3-RightMouse>
+	   :map <3-S-LeftDrag>    <3-RightDrag>
+	   :map <3-S-LeftRelease> <3-RightRelease>
+	   :map <4-S-LeftMouse>   <4-RightMouse>
+	   :map <4-S-LeftDrag>    <4-RightDrag>
+	   :map <4-S-LeftRelease> <4-RightRelease>
+<
+	Mouse commands requiring the CTRL modifier can be simulated by typing
+	the "g" key before using the mouse:
+	    "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
+	    "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
 	The 'mousemodel' option is set by the |:behave| command.
 

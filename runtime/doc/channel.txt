@@ -32,8 +32,13 @@ Channels support multiple modes or protocols. In the most basic
 mode of operation, raw bytes are read and written to the channel.
 The |rpc| protocol, based on the msgpack-rpc standard, enables nvim and the
 process at the other end to send remote calls and events to each other.
-Additionally, the builtin |terminal-emulator|, is implemented on top of PTY
-channels.
+The builtin |terminal-emulator| is also implemented on top of PTY channels.
+
+Channel Id						*channel-id*
+
+Each channel is identified by an integer id, unique for the life of the
+current Nvim session. Functions like |stdioopen()| return channel ids;
+functions like |chansend()| consume channel ids.
 
 ==============================================================================
 2. Reading and writing raw bytes			      *channel-bytes*
@@ -64,8 +69,8 @@ be raised.
 
 - The arguments passed to the callback function are:
 
-  0: The channel id
-  1: the raw data read from the channel, formatted as a |readfile()|-style
+  0: |channel-id|
+  1: Raw data read from the channel, formatted as a |readfile()|-style
      list. If EOF occured, a single empty string `['']` will be passed in.
      Note that the items in this list do not directly correspond to actual
      lines in the output. See |channel-lines|
@@ -150,9 +155,8 @@ Nvim uses stdin/stdout to interact with the user over the terminal interface
 (TUI). If Nvim is |--headless| the TUI is not started and stdin/stdout can be
 used as a channel. See also |--embed|.
 
-Call |stdioopen()| during |startup| to open the stdio channel as channel-id 1.
-Nvim's stderr is always available as channel-id 2 (|v:stderr| to be explicit),
-a write-only bytes channel.
+Call |stdioopen()| during |startup| to open the stdio channel as |channel-id| 1.
+Nvim's stderr is always available as |v:stderr|, a write-only bytes channel.
 
 Example: >
     func! OnEvent(id, data, event)

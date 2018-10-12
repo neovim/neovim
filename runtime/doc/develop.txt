@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Development of Nvim.					*development*
+Development of Nvim					*development*
 
 Nvim is open source software.  Everybody is encouraged to contribute.
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
@@ -23,37 +23,17 @@ Note that some items conflict; this is intentional.  A balance must be found.
 
 NVIM IS... IMPROVED					*design-improved*
 
-The IMproved bits of Vim should make it a better Vi, without becoming a
-completely different editor.  Extensions are done with a "Vi spirit".
-- Use the keyboard as much as feasible.  The mouse requires a third hand,
-  which we don't have.  Many terminals don't have a mouse.
-- When the mouse is used anyway, avoid the need to switch back to the
-  keyboard.  Avoid mixing mouse and keyboard handling.
-- Add commands and options in a consistent way.  Otherwise people will have a
-  hard time finding and remembering them.  Keep in mind that more commands and
-  options will be added later.
+The Neo bits of Nvim should make it a better Vim, without becoming a
+completely different editor.
+- In matters of taste, prefer Vim/Unix tradition. If there is no relevant
+  Vim/Unix tradition, consider the "common case".
 - A feature that people do not know about is a useless feature.  Don't add
   obscure features, or at least add hints in documentation that they exist.
-- Minimize using CTRL and other modifiers, they are more difficult to type.
-- There are many first-time and inexperienced Vim users.  Make it easy for
-  them to start using Vim and learn more over time.
 - There is no limit to the features that can be added.  Selecting new features
   is based on (1) what users ask for, (2) how much effort it takes to
   implement and (3) someone actually implementing it.
-
-
-NVIM IS... MULTI PLATFORM				*design-multi-platform*
-
-Vim tries to help as many users on as many platforms as possible.
-- Support many kinds of terminals.  The minimal demands are cursor positioning
-  and clear-screen.  Commands should only use key strokes that most keyboards
-  have.  Support all the keys on the keyboard for mapping.
-- Support many platforms.  A condition is that there is someone willing to do
-  Vim development on that platform, and it doesn't mean messing up the code.
-- Support many compilers and libraries.  Not everybody is able or allowed to
-  install another compiler or GUI library.
-- People switch from one platform to another, and from GUI to terminal
-  version.  Features should be present in all versions.
+- Backwards compatibility is a feature.  The RPC API in particular should
+  never break.
 
 
 NVIM IS... WELL DOCUMENTED				*design-documented*
@@ -88,15 +68,6 @@ NVIM IS... MAINTAINABLE					*design-maintain*
   too much platform-independent code.
 - Use the object-oriented spirit: Put data and code together.  Minimize the
   knowledge spread to other parts of the code.
-
-
-NVIM IS... FLEXIBLE					*design-flexible*
-
-Vim should make it easy for users to work in their preferred styles rather
-than coercing its users into particular patterns of work.  This can be for
-items with a large impact or for details.  The defaults are carefully chosen
-such that most users will enjoy using Vim as it is.  Commands and options can
-be used to adjust Vim to the desire of the user and its environment.
 
 
 NVIM IS... NOT						*design-not*
@@ -239,7 +210,14 @@ Example: `nvim_buf_changedtick_event`.
 
 API-CLIENT						*dev-api-client*
 
+Standard Features ~
+
+- Clients should call |nvim_set_client_info()| after connecting, so users and
+  plugins can detect the client by handling the |ChanInfo| event. This
+  avoids the need for special variables or other client hints.
+
 Package Naming ~
+
 API client packages should NOT be named something ambiguous like "neovim" or
 "python-client".  Use "nvim" as a prefix/suffix to some other identifier
 following ecosystem conventions.
@@ -255,10 +233,11 @@ Examples of API-client package names:
         BAD:  neovim
 
 Implementation ~
-Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
-small, efficient, and C89-compatible. It can be easily inlined in your
-C project source, too.  https://github.com/libmpack/libmpack/
 
+Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
+small (can be inlined into your C/C++ project) and efficient (no allocations).
+It also implements msgpack-RPC.
+https://github.com/libmpack/libmpack/
 
 EXTERNAL UI 						*dev-ui*
 
@@ -267,7 +246,13 @@ versions of Nvim may add new items to existing events. The API is strongly
 backwards-compatible, but clients must not break if new (optional) fields are
 added to existing events.
 
+Standard Features ~
+
 External UIs are expected to implement these common features:
+
+- Call |nvim_set_client_info()| after connecting, so users and plugins can
+  detect the UI by handling the |ChanInfo| event. This avoids the need for
+  special variables and UI-specific config files (gvimrc, macvimrc, …).
 - Cursor style (shape, color) should conform to the 'guicursor' properties
   delivered with the mode_info_set UI event.
 - Send the ALT/META ("Option" on macOS) key as a |<M-| chord.
