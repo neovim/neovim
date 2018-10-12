@@ -2,7 +2,7 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2017 Apr 22
+" Last Change: 2017 Oct 28
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debsources.vim
 
 " Standard syntax initialization
@@ -23,18 +23,18 @@ let s:cpo = &cpo
 set cpo-=C
 let s:supported = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental',
-      \ 'squeeze', 'wheezy', 'jessie', 'stretch', 'sid', 'rc-buggy',
+      \ 'wheezy', 'jessie', 'stretch', 'sid', 'rc-buggy',
       \
-      \ 'trusty', 'xenial', 'yakkety', 'zesty', 'artful', 'devel'
+      \ 'trusty', 'xenial', 'zesty', 'artful', 'bionic', 'devel'
       \ ]
 let s:unsupported = [
       \ 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',
-      \ 'woody', 'sarge', 'etch', 'lenny',
+      \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze',
       \
       \ 'warty', 'hoary', 'breezy', 'dapper', 'edgy', 'feisty',
       \ 'gutsy', 'hardy', 'intrepid', 'jaunty', 'karmic', 'lucid',
       \ 'maverick', 'natty', 'oneiric', 'precise', 'quantal', 'raring', 'saucy',
-      \ 'utopic', 'vivid', 'wily'
+      \ 'utopic', 'vivid', 'wily', 'yakkety'
       \ ]
 let &cpo=s:cpo
 

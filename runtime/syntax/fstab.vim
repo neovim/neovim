@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/fstab.vim
-" Last Change: 2013 May 21
-" Version: 1.0
+" Last Change: 2017 Nov 09
+" Version: 1.2
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -38,10 +38,14 @@ syn match fsDeviceError /\%([^a-zA-Z0-9_\/#@:\.-]\|^\w\{-}\ze\W\)/ contained
 syn keyword fsDeviceKeyword contained none proc linproc tmpfs devpts devtmpfs sysfs usbfs
 syn keyword fsDeviceKeyword contained LABEL nextgroup=fsDeviceLabel
 syn keyword fsDeviceKeyword contained UUID nextgroup=fsDeviceUUID
+syn keyword fsDeviceKeyword contained PARTLABEL nextgroup=fsDevicePARTLABEL
+syn keyword fsDeviceKeyword contained PARTUUID nextgroup=fsDevicePARTUUID
 syn keyword fsDeviceKeyword contained sshfs nextgroup=fsDeviceSshfs
 syn match fsDeviceKeyword contained /^[a-zA-Z0-9.\-]\+\ze:/
 syn match fsDeviceLabel contained /=[^ \t]\+/hs=s+1 contains=fsOperator
 syn match fsDeviceUUID contained /=[^ \t]\+/hs=s+1 contains=fsOperator
+syn match fsDevicePARTLABEL contained /=[^ \t]\+/hs=s+1 contains=fsOperator
+syn match fsDevicePARTUUID contained /=[^ \t]\+/hs=s+1 contains=fsOperator
 syn match fsDeviceSshfs contained /#[_=[:alnum:]\.\/+-]\+@[a-z0-9._-]\+\a\{2}:[^ \t]\+/hs=s+1 contains=fsOperator
 
 " Mount Point
@@ -64,7 +68,7 @@ syn match fsOptionsString /[a-zA-Z0-9_-]\+/
 syn keyword fsOptionsYesNo yes no
 syn cluster fsOptionsCheckCluster contains=fsOptionsExt2Check,fsOptionsFatCheck
 syn keyword fsOptionsSize 512 1024 2048
-syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand nosuid nosymfollow nouser owner rbind rdonly remount ro rq rw suid suiddir supermount sw sync union update user users xx
+syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand norelatime nosuid nosymfollow nouser owner rbind rdonly relatime remount ro rq rw suid suiddir supermount sw sync union update user users wxallowed xx
 syn match fsOptionsGeneral /_netdev/
 
 " Options: adfs
@@ -137,7 +141,7 @@ syn match fsOptionsKeywords contained /\<\%(dir\|file\|\)_umask=/ nextgroup=fsOp
 syn match fsOptionsKeywords contained /\<\%(session\|part\)=/ nextgroup=fsOptionsNumber
 
 " Options: ffs
-syn keyword fsOptionsKeyWords contained softdep
+syn keyword fsOptionsKeyWords contained noperm softdep
 
 " Options: hpfs
 syn match fsOptionsKeywords contained /\<case=/ nextgroup=fsOptionsHpfsCase
@@ -228,7 +232,6 @@ syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster 
 " Whole line comments
 syn match fsCommentLine /^#.*$/ contains=@Spell
 
-
 hi def link fsOperator Operator
 hi def link fsComment Comment
 hi def link fsCommentLine Comment
@@ -237,15 +240,17 @@ hi def link fsTypeKeyword Type
 hi def link fsDeviceKeyword Identifier
 hi def link fsDeviceLabel String
 hi def link fsDeviceUUID String
+hi def link fsDevicePARTLABEL String
+hi def link fsDevicePARTUUID String
 hi def link fsDeviceSshfs String
 hi def link fsFreqPassNumber Number
 
 if exists('fstab_unknown_fs_errors') && fstab_unknown_fs_errors == 1
-hi def link fsTypeUnknown Error
+	hi def link fsTypeUnknown Error
 endif
 
 if !exists('fstab_unknown_device_errors') || fstab_unknown_device_errors == 1
-hi def link fsDeviceError Error
+	hi def link fsDeviceError Error
 endif
 
 hi def link fsMountPointError Error
@@ -277,7 +282,6 @@ hi def link fsOptionsUfsType String
 hi def link fsOptionsUfsError String
 
 hi def link fsOptionsVfatShortname String
-
 
 let b:current_syntax = "fstab"
 
