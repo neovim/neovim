@@ -37,6 +37,7 @@ function SetUp()
 	new
 	call mkdir('Xtopdir')
 	cd Xtopdir
+	let g:topdir = getcwd()
 	call mkdir('Xdir1')
 	call mkdir('Xdir2')
 	call mkdir('Xdir3')
@@ -56,38 +57,46 @@ function Test_GetCwd()
 	3wincmd w
 	lcd Xdir1
 	call assert_equal("a Xdir1 1", GetCwdInfo(0, 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	wincmd W
 	call assert_equal("b Xtopdir 0", GetCwdInfo(0, 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	wincmd W
 	lcd Xdir3
 	call assert_equal("c Xdir3 1", GetCwdInfo(0, 0))
 	call assert_equal("a Xdir1 1", GetCwdInfo(bufwinnr("a"), 0))
 	call assert_equal("b Xtopdir 0", GetCwdInfo(bufwinnr("b"), 0))
 	call assert_equal("c Xdir3 1", GetCwdInfo(bufwinnr("c"), 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	wincmd W
 	call assert_equal("a Xdir1 1", GetCwdInfo(bufwinnr("a"), tabpagenr()))
 	call assert_equal("b Xtopdir 0", GetCwdInfo(bufwinnr("b"), tabpagenr()))
 	call assert_equal("c Xdir3 1", GetCwdInfo(bufwinnr("c"), tabpagenr()))
+	call assert_equal(g:topdir, getcwd(-1))
 
 	tabnew x
 	new y
 	new z
 	3wincmd w
 	call assert_equal("x Xtopdir 0", GetCwdInfo(0, 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	wincmd W
 	lcd Xdir2
 	call assert_equal("y Xdir2 1", GetCwdInfo(0, 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	wincmd W
 	lcd Xdir3
 	call assert_equal("z Xdir3 1", GetCwdInfo(0, 0))
 	call assert_equal("x Xtopdir 0", GetCwdInfo(bufwinnr("x"), 0))
 	call assert_equal("y Xdir2 1", GetCwdInfo(bufwinnr("y"), 0))
 	call assert_equal("z Xdir3 1", GetCwdInfo(bufwinnr("z"), 0))
+	call assert_equal(g:topdir, getcwd(-1))
 	let tp_nr = tabpagenr()
 	tabrewind
 	call assert_equal("x Xtopdir 0", GetCwdInfo(3, tp_nr))
 	call assert_equal("y Xdir2 1", GetCwdInfo(2, tp_nr))
 	call assert_equal("z Xdir3 1", GetCwdInfo(1, tp_nr))
+	call assert_equal(g:topdir, getcwd(-1))
 endfunc
 
 function Test_GetCwd_lcd_shellslash()
