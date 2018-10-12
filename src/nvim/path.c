@@ -64,6 +64,19 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2,
   expand_env(s1, exp1, MAXPATHL);
   bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
   bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
+  void remove_spaces (char* restrict str_trimmed, const char* restrict str_untrimmed)
+{
+  while (*str_untrimmed != '\0')
+  {
+    if(!isspace(*str_untrimmed))
+    {
+      *str_trimmed = *str_untrimmed;
+      str_trimmed++;
+    }
+    str_untrimmed++;
+  }
+  *str_trimmed = '\0';
+}
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {

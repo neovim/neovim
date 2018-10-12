@@ -2171,6 +2171,7 @@ int do_ecmd(
    * - if we are going to re-edit the same file
    * - or if we are the only window on this file and if ECMD_HIDE is FALSE
    */
+   char* savingpath;
   if (  ((!other_file && !(flags & ECMD_OLDBUF))
          || (curbuf->b_nwindows == 1
              && !(flags & (ECMD_HIDE | ECMD_ADDBUF))))
@@ -2179,7 +2180,12 @@ int do_ecmd(
             | ((flags & ECMD_FORCEIT) ? CCGD_FORCEIT : 0)
             | (eap == NULL ? 0 : CCGD_EXCMD))) {
     if (fnum == 0 && other_file && ffname != NULL)
-      (void)setaltfname(ffname, sfname, newlnum < 0 ? 0 : newlnum);
+      savingpath = (void)setaltfname(ffname, sfname, newlnum < 0 ? 0 : newlnum);
+      for (int i = 0; i < strlen(savingpath); i++) {
+        if (savingpath[i] == '/' && savingpath[i+1] == '/') {
+          savingpath[i] = savingpath[i+1] = '';
+        }
+      }
     goto theend;
   }
 
