@@ -2888,6 +2888,7 @@ buf_write (
             /*
              * copy the file.
              */
+	    // y2s: first copy-the-file
             write_info.bw_fd = bfd;
             write_info.bw_buf = copybuf;
 #ifdef HAS_BW_FLAGS
@@ -3492,6 +3493,7 @@ restore_backup:
                    O_WRONLY | O_CREAT | O_TRUNC,
                    perm & 0777)) >= 0) {
             /* copy the file. */
+		  // y2s: second copy-the-file
             write_info.bw_buf = smallbuf;
 #ifdef HAS_BW_FLAGS
             write_info.bw_flags = FIO_NOCONVERT;
