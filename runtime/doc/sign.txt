@@ -93,6 +93,10 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 	texthl={group}
 		Highlighting group used for the text item.
 
+	numhl={group}
+		Highlighting group used for the line number on the line where
+		the sign is placed.
+
 
 DELETING A SIGN						*:sign-undefine* *E155*
 
