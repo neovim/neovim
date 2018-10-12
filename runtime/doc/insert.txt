@@ -1275,7 +1275,8 @@ it here: http://ctags.sourceforge.net/  Version 5.6 or later is recommended.
 For version 5.5.4 you should add a patch that adds the "typename:" field:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 A compiled .exe for MS-Windows can be found at:
-	http://georgevreilly.com/vim/ctags.html
+	http://ctags.sourceforge.net/
+	https://github.com/universal-ctags/ctags-win32
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
