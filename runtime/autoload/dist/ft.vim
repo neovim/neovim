@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Nov 11
+" Last Change:	2017 Dec 05
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -618,7 +618,11 @@ func dist#ft#FTperl()
     setf perl
     return 1
   endif
-  if search('^use\s\s*\k', 'nc', 30)
+  let save_cursor = getpos('.')
+  call cursor(1,1)
+  let has_use = search('^use\s\s*\k', 'c', 30)
+  call setpos('.', save_cursor)
+  if has_use
     setf perl
     return 1
   endif

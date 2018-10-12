@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Oct 12, 2017
-" Version:	105
+" Last Change:	Dec 11, 2017
+" Version:	107
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -396,8 +396,8 @@ endif
 
 " Bad Math (mismatched): {{{1
 if !exists("g:tex_no_math") && !s:tex_no_error
- syn match texBadMath		"\\end\s*{\s*\(array\|gathered\|bBpvV]matrix\|split\|subequations\|smallmatrix\|xxalignat\)\s*}"
- syn match texBadMath		"\\end\s*{\s*\(align\|alignat\|displaymath\|displaymath\|eqnarray\|equation\|flalign\|gather\|math\|multline\|xalignat\)\*\=\s*}"
+ syn match texBadMath		"\\end\s*{\s*\(array\|bBpvV]matrix\|split\|smallmatrix\)\s*}"
+ syn match texBadMath		"\\end\s*{\s*\(displaymath\|equation\|eqnarray\|math\)\*\=\s*}"
  syn match texBadMath		"\\[\])]"
 endif
 
@@ -436,17 +436,10 @@ if !exists("g:tex_no_math")
  endfun
 
  " Standard Math Zones: {{{2
- call TexNewMathZone("A","align",1)
- call TexNewMathZone("B","alignat",1)
- call TexNewMathZone("C","displaymath",1)
- call TexNewMathZone("D","eqnarray",1)
- call TexNewMathZone("E","equation",1)
- call TexNewMathZone("F","flalign",1)
- call TexNewMathZone("G","gather",1)
- call TexNewMathZone("H","math",1)
- call TexNewMathZone("I","multline",1)
- call TexNewMathZone("J","xalignat",1)
- call TexNewMathZone("K","xxalignat",0)
+ call TexNewMathZone("A","displaymath",1)
+ call TexNewMathZone("B","eqnarray",1)
+ call TexNewMathZone("C","equation",1)
+ call TexNewMathZone("D","math",1)
 
  " Inline Math Zones: {{{2
  if s:tex_fast =~# 'M'
