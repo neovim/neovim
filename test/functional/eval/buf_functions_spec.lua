@@ -228,9 +228,9 @@ describe('getbufvar() function', function()
     eq(0, funcs.getbufvar(1, '&g:number'))
     command('new')
     -- But with window-local options it probably does not what you expect
-    curwinmeths.set_option('number', true)
+    command("setl number")
     -- (note that current window’s buffer is 2, but getbufvar() receives 1)
-    eq(2, bufmeths.get_number(curwinmeths.get_buf()))
+    eq({id=2}, curwinmeths.get_buf())
     eq(1, funcs.getbufvar(1, '&number'))
     eq(1, funcs.getbufvar(1, '&l:number'))
     -- You can get global value though, if you find this useful.

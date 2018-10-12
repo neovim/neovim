@@ -212,10 +212,18 @@ describe('API/win', function()
     it('works', function()
       curwin('set_option', 'colorcolumn', '4,3')
       eq('4,3', curwin('get_option', 'colorcolumn'))
+      command("set modified hidden")
+      command("enew") -- edit new buffer, window option is preserved
+      eq('4,3', curwin('get_option', 'colorcolumn'))
+
       -- global-local option
       curwin('set_option', 'statusline', 'window-status')
       eq('window-status', curwin('get_option', 'statusline'))
       eq('', nvim('get_option', 'statusline'))
+      command("set modified")
+      command("enew") -- global-local: not preserved in new buffer
+      eq({false, "Failed to get value for option 'statusline'"}, meth_pcall(curwin, 'get_option', 'statusline'))
+      eq('', eval('&l:statusline')) -- confirm local value was not copied
     end)
   end)
 
