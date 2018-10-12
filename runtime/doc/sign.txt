@@ -85,6 +85,10 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 		Highlighting group used for the whole line the sign is placed
 		in.  Most useful is defining a background color.
 
+	numhl={group}
+		Highlighting group used for the line number on the line where
+		the sign is placed.
+
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the
 		GUI is not being used.  Only printable characters are allowed
@@ -92,10 +96,6 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 
 	texthl={group}
 		Highlighting group used for the text item.
-
-	numhl={group}
-		Highlighting group used for the line number on the line where
-		the sign is placed.
 
 
 DELETING A SIGN						*:sign-undefine* *E155*
