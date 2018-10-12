@@ -3316,8 +3316,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
 	The |hl-IncSearch| highlight group determines the highlighting.
-	When 'hlsearch' is on, all matched strings are highlighted too while typing
-	a search command. See also: 'hlsearch'.
+	When 'hlsearch' is on, all matched strings are highlighted too while
+	typing a search command. See also: 'hlsearch'.
 	If you don't want turn 'hlsearch' on, but want to highlight all matches
 	while searching, you can turn on and off 'hlsearch' with autocmd.
 	Example: >

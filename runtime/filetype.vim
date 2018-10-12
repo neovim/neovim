@@ -1877,8 +1877,8 @@ au BufNewFile,BufRead *.yy,*.yxx,*.y++		setf yacc
 " Yacc or racc
 au BufNewFile,BufRead *.y			call dist#ft#FTy()
 
-" Yaml
-au BufNewFile,BufRead *.yaml,*.yml		setf yaml
+" Yaml or Raml
+au BufNewFile,BufRead *.yaml,*.yml,*.raml	setf yaml
 
 " yum conf (close enough to dosini)
 au BufNewFile,BufRead */etc/yum.conf		setf dosini
