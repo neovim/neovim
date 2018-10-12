@@ -5937,7 +5937,7 @@ static void sign_undefine(sign_T *sp, sign_T *sp_prev)
  * Gets the highlight corresponding to "type", which should be
  * SIGN_TEXT, SIGN_LINEHL or SIGN_NUMHL.
  */
-int sign_get_attr(int typenr, int type)
+int sign_get_attr(int typenr, SignType type)
 {
   sign_T  *sp;
   int sign_hl = 0;

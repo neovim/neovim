@@ -5092,7 +5092,7 @@ linenr_T buf_change_sign_type(
 /// @param type The type of sign to look for. One of
 ///             SIGN_ANY, SIGN_ICON, SIGN_TEXT, SIGN_LINEHL, SIGN_NUMHL
 /// @return The identifier of the first matching sign, or 0
-int buf_getsigntype(buf_T *buf, linenr_T lnum, int type)
+int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type)
 {
     signlist_T  *sign;  // a sign in a b_signlist
 
