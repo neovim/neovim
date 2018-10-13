@@ -5942,7 +5942,7 @@ int sign_get_attr(int typenr, SignType type)
   sign_T  *sp;
   int sign_hl = 0;
 
-  for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
     if (sp->sn_typenr == typenr) {
       switch (type) {
         case SIGN_TEXT:
@@ -5954,12 +5954,15 @@ int sign_get_attr(int typenr, SignType type)
         case SIGN_NUMHL:
           sign_hl = sp->sn_num_hl;
           break;
+        default:
+          break;
       }
       if (sign_hl > 0) {
         return syn_id2attr(sign_hl);
       }
       break;
     }
+  }
   return 0;
 }
 
