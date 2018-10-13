@@ -179,6 +179,10 @@ preprocess_patch() {
   # Rename path to matchit plugin.
   LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/\(plugin/matchit.vim\)@\1/\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename test_urls.vim to check_urls.vim
+  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls.vim\)@\1/scripts/check\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 
 get_vimpatch() {
