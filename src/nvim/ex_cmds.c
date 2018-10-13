@@ -5955,7 +5955,7 @@ int sign_get_attr(int typenr, SignType type)
           sign_hl = sp->sn_num_hl;
           break;
         default:
-          break;
+          abort();
       }
       if (sign_hl > 0) {
         return syn_id2attr(sign_hl);
