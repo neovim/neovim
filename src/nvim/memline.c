@@ -1527,7 +1527,7 @@ static time_t swapfile_info(char_u *fname)
           msg_outnum(char_to_long(b0.b0_pid));
 #if defined(UNIX)
           if (kill((pid_t)char_to_long(b0.b0_pid), 0) == 0) {
-            MSG_PUTS(_(" (still running)"));
+            MSG_PUTS(_(" (STILL RUNNING)"));
             process_still_running = TRUE;
           }
 #endif
@@ -3150,7 +3150,9 @@ attention_message (
   msg_outtrans(buf->b_fname);
   MSG_PUTS("\"\n");
   FileInfo file_info;
-  if (os_fileinfo((char *)buf->b_fname, &file_info)) {
+  if (!os_fileinfo((char *)buf->b_fname, &file_info)) {
+    MSG_PUTS(_("      CANNOT BE FOUND"));
+  } else {
     MSG_PUTS(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;
     p = ctime(&x);  // includes '\n'
