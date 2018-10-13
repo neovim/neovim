@@ -85,6 +85,10 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 		Highlighting group used for the whole line the sign is placed
 		in.  Most useful is defining a background color.
 
+	numhl={group}
+                Highlighting group used for 'number' column at the associated
+                line.  Overrides |hl-LineNr|, |hl-CursorLineNr|.
+
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the
 		GUI is not being used.  Only printable characters are allowed

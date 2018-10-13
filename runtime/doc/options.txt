@@ -4256,12 +4256,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Print the line number in front of each line.  When the 'n' option is
 	excluded from 'cpoptions' a wrapped line will not use the column of
 	line numbers.
-	The 'numberwidth' option can be used to set the room used for the line
-	number.
+	Use the 'numberwidth' option to adjust the room for the line number.
 	When a long, wrapped line doesn't start with the first character, '-'
 	characters are put before the number.
-	See |hl-LineNr|  and |hl-CursorLineNr| for the highlighting used for
-	the number.
+	For highlighting see |hl-LineNr|, |hl-CursorLineNr|, and the
+	|:sign-define| "numhl" argument.
 						*number_relativenumber*
 	The 'relativenumber' option changes the displayed number to be
 	relative to the cursor.  Together with 'number' there are these
