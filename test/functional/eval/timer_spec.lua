@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
+local feed, eq, eval = helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local curbufmeths = helpers.curbufmeths
@@ -72,7 +72,8 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("<cr>")
     local diff = eval("g:val") - count
-    ok(0 <= diff and diff <= 4)
+    assert(0 <= diff and diff <= 4,
+           'expected (0 <= diff <= 4), got: '..tostring(diff))
   end)
 
   it('are triggered in blocking getchar() call', function()
@@ -81,7 +82,7 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("c")
     local count = eval("g:val")
-    ok(count >= 4)
+    assert(count >= 4, 'expected count >= 4, got: '..tostring(count))
     eq(99, eval("g:c"))
   end)
 
@@ -142,9 +143,10 @@ describe('timers', function()
     local count = eval("g:val")
     run(nil, nil, nil, 300)
     local count2 = eval("g:val")
-    ok(4 <= count and count <= 7)
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
+    assert(4 <= count and count <= 7,
+           'expected (4 <= count <= 7), got: '..tostring(count))
   end)
 
   it('can be stopped from the handler', function()
