@@ -13,6 +13,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -933,7 +934,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   return src_id;
 }
 
-/// Clears highlights from a given source group and a range of lines
+/// Clears highlights and virtual text from a given source id and range of lines
 ///
 /// To clear a source group in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
@@ -975,6 +976,10 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// text will be truncated at the end of the screen line. The virtual text will
 /// begin after one cell to the right of the ordinary text, this will contain
 /// the |lcs-eol| char if set, otherwise just be a space.
+///
+/// The same src_id can be used for both virtual text and highlights added by
+/// nvim_buf_add_highlight. Virtual text is cleared using
+/// nvim_buf_clear_highlight.
 ///
 /// @param buffer     Buffer handle
 /// @param src_id     Source group to use or 0 to use a new group,
@@ -1025,7 +1030,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     }
 
     String str = chunk.items[0].data.string;
-    char *text = xstrdup(str.size > 0 ? str.data : "");
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
 
     int hl_id = 0;
     if (chunk.size == 2) {
