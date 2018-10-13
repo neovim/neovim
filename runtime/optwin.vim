@@ -510,6 +510,10 @@ if has("terminal")
   call append("$", "termkey\tkey that precedes Vim commands in a terminal window")
   call append("$", "\t(local to window)")
   call <SID>OptionL("tk")
+  if exists("&winptydll")
+    call append("$", "winptydll\tname of the winpty dynamic library")
+    call <SID>OptionG("winptydll", &winptydll)
+  endif
 endif
 
 
