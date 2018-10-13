@@ -413,5 +413,16 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
+    set_virtual_text(0, 0, {{"x\tx\ny\ry", "Statement"}, {"aa\000bb", "Number"}}, {})
+    screen:expect([[
+      1 + 2 {3:x^Ix^@y^My}{2:aa}                      |
+      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      , 5, 5, 5, 5, 5, 5,{1:-}                    |
+      x = 4                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
   end)
 end)
