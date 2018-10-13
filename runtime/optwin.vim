@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Oct 19
+" Last Change:	2018 May 15
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -122,11 +122,13 @@ fun! <SID>Update(lnum, line, local, thiswin)
 endfun
 
 " Reset 'title' and 'icon' to make it work faster.
+" Reset 'undolevels' to avoid undo'ing until the buffer is empty.
 let s:old_title = &title
 let s:old_icon = &icon
 let s:old_sc = &sc
 let s:old_ru = &ru
-set notitle noicon nosc noru
+let s:old_ul = &ul
+set notitle noicon nosc noru ul=-1
 
 " If the current window is a help window, try finding a non-help window.
 " Relies on syntax highlighting to be switched on.
@@ -323,7 +325,8 @@ call <SID>OptionL("scr")
 call append("$", "scrolloff\tnumber of screen lines to show around the cursor")
 call append("$", " \tset so=" . &so)
 call append("$", "wrap\tlong lines wrap")
-call <SID>BinOptionG("wrap", &wrap)
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("wrap")
 call append("$", "linebreak\twrap long lines at a character in 'breakat'")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("lbr")
@@ -710,7 +713,7 @@ call <SID>OptionG("km", &km)
 call <SID>Header("editing text")
 call append("$", "undolevels\tmaximum number of changes that can be undone")
 call append("$", "\t(global or local to buffer)")
-call append("$", " \tset ul=" . &ul)
+call append("$", " \tset ul=" . s:old_ul)
 call append("$", "undofile\tautomatically save and restore undo history")
 call <SID>BinOptionG("udf", &udf)
 call append("$", "undodir\tlist of directories for undo files")
@@ -1315,6 +1318,7 @@ let &icon = s:old_icon
 let &ru = s:old_ru
 let &sc = s:old_sc
 let &cpo = s:cpo_save
-unlet s:old_title s:old_icon s:old_ru s:old_sc s:cpo_save s:idx s:lnum
+let &ul = s:old_ul
+unlet s:old_title s:old_icon s:old_ru s:old_sc s:cpo_save s:idx s:lnum s:old_ul
 
 " vim: ts=8 sw=2 sts=2
