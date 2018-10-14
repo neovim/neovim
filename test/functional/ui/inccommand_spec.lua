@@ -1503,7 +1503,7 @@ describe("'inccommand' and :cnoremap", function()
       end
   end)
 
-  it('does not work with a failing mapping', function()
+  it('does work with a failing mapping', function()
     for _, case in pairs(cases) do
       refresh(case)
       feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
@@ -1512,7 +1512,10 @@ describe("'inccommand' and :cnoremap", function()
 
       -- error thrown b/c of the mapping
       neq(nil, eval('v:errmsg'):find('^E523:'))
-      expect(default_text)
+      expect([[
+      Inc substitution on
+      toxo lines
+      ]])
     end
   end)
 
