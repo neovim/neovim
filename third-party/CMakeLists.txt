@@ -98,6 +98,10 @@ else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
 endif()
 
+if(CMAKE_OSX_SYSROOT)
+  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+endif()
+
 # Cross compiling: use these for dependencies built for the
 # HOST system, when not crosscompiling these should be the
 # same as DEPS_*. Except when targeting Unix in which case
