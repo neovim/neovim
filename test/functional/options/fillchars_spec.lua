@@ -36,6 +36,13 @@ describe("'fillchars'", function()
       ]])
     end)
     it('supports whitespace', function()
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]])
       command('set fillchars=eob:\\ ')
       screen:expect([[
         ^                         |

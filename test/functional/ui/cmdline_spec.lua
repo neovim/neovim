@@ -253,9 +253,6 @@ local function test_cmdline(linegrid)
     ]], cmdline=expectation}
 
     -- erase information, so we check if it is retransmitted
-    -- TODO(bfredl): when we add a flag to screen:expect{}
-    -- to explicitly check redraw!, it should also do this
-    screen.cmdline = {}
     command("redraw!")
     screen:expect{grid=[[
       ^                         |
@@ -263,7 +260,7 @@ local function test_cmdline(linegrid)
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], cmdline=expectation}
+    ]], cmdline=expectation, reset=true}
 
 
     feed('<cr>')
@@ -323,7 +320,6 @@ local function test_cmdline(linegrid)
       {{'  line1'}},
     }}
 
-    screen.cmdline_block = {}
     command("redraw!")
     screen:expect{grid=[[
       ^                         |
@@ -339,7 +335,7 @@ local function test_cmdline(linegrid)
     }}, cmdline_block = {
       {{'function Foo()'}},
       {{'  line1'}},
-    }}
+    }, reset=true}
 
     feed('endfunction<cr>')
     screen:expect{grid=[[
@@ -415,7 +411,6 @@ local function test_cmdline(linegrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
     command("redraw!")
     screen:expect{grid=[[
                                |
@@ -427,7 +422,7 @@ local function test_cmdline(linegrid)
       firstc = ":",
       content = {{"yank"}},
       pos = 4,
-    }}}
+    }}, reset=true}
 
     feed("<c-c>")
     screen:expect{grid=[[
