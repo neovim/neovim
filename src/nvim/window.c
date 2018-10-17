@@ -1941,6 +1941,10 @@ int win_close(win_T *win, bool free_buf)
       return FAIL;
   }
 
+  // fire WinClosed event just before starting freeing memory associated with window
+  if (has_event(EVENT_WINCLOSED)) {
+    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, win->w_buffer->b_fname, false, win->w_buffer);
+  }
 
   /* Free independent synblock before the buffer is freed. */
   if (win->w_buffer != NULL)
@@ -1992,11 +1996,6 @@ int win_close(win_T *win, bool free_buf)
 
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
-
-  // fire WinClosed event just before freeing memory associated with window
-  if (has_event(EVENT_WINCLOSED)) {
-    apply_autocmds(EVENT_WINCLOSED, NULL, NULL, false, curbuf);
-  }
 
   /* Free the memory used for the window and get the window that received
    * the screen space. */

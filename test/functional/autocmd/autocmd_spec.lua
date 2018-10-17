@@ -33,13 +33,22 @@ describe('autocmds:', function()
     command('tabnew')
     assert.same(expected, eval('g:foo'))
   end)
-
+  
   it(':close triggers WinClosed event', function()
     command('let g:triggered = 0')
     command('new')
     command('autocmd WinClosed <buffer> :let g:triggered+=1')
     assert.same(0, eval('g:triggered'))
     command('close')
+    assert.same(1, eval('g:triggered'))
+  end)
+
+  it(':bdelete triggers WinClosed event', function()
+    command('let g:triggered = 0')
+    command('autocmd WinClosed <buffer> :let g:triggered+=1')
+    local first_buffer = eval('bufnr(\'%\')')
+    command('new')
+    command('bdelete ' .. first_buffer )
     assert.same(1, eval('g:triggered'))
   end)
 
