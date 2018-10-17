@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local neq = helpers.neq
 local eq = helpers.eq
 local eval = helpers.eval
 local clear = helpers.clear
@@ -59,6 +60,20 @@ describe('autocmds:', function()
     command('tabnew')
     command('bdelete ' .. current_buffer)
     assert.same(1, eval('g:triggered'))
+  end)
+
+  it(':WinClosed events are not recursive', function()
+    command('let g:triggered = 0')
+    local first_buffer = eval('bufnr(\'%\')')
+    command('autocmd WinClosed <buffer> :let g:triggered+=1')
+    command('new')
+    local second_buffer = eval('bufnr(\'%\')')
+    command('autocmd WinClosed <buffer> :bdelete ' .. first_buffer)
+    command('new')
+    neq(-1, eval('bufwinnr(' .. first_buffer .. ')'))
+    command('bdelete ' .. second_buffer )
+    eq(-1, eval('bufwinnr(' .. first_buffer .. ')'))
+    eq(0, eval('g:triggered'))
   end)
 
   it('v:vim_did_enter is 1 after VimEnter', function()
