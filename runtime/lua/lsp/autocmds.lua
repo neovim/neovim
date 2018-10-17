@@ -167,7 +167,6 @@ local export_autocmds = function(autocmd_table, autocmd_pattern)
 
   for request_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
-      print(request_name, autocmd_item, autocmd_pattern)
       nvim_enable_autocmd(request_name, autocmd_item, autocmd_pattern)
     end
   end

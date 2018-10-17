@@ -4,6 +4,7 @@ local json = require('lsp.json')
 local util = require('neovim.util')
 
 local Enum = require('neovim.meta').Enum
+local EmptyDictionary = require('neovim.meta').EmptyDictionary
 
 local message = require('lsp.message')
 local initialize_filetype_autocmds = require('lsp.autocmds').initialize_filetype_autocmds
@@ -26,43 +27,39 @@ local error_level = Enum:new({
 })
 
 
-local active_jobs = {}
+local ActiveJobs = {}
 
-active_jobs.add = function(id, obj)
-  active_jobs[id] = obj
+ActiveJobs.add = function(id, obj)
+  ActiveJobs[id] = obj
 end
 
-active_jobs.remove = function(id)
-  active_jobs[id] = nil
+ActiveJobs.remove = function(id)
+  ActiveJobs[id] = nil
 end
-
-local mt_capabilities = {
-  __index = function(self, key)
-    if rawget(self, key) ~= nil then
-      return rawget(self, key)
-    end
-
-    return {}
-  end,
-}
 
 local client = {}
 client.__index = client
 
 client.job_stdout = function(id, data)
-  if active_jobs[id] == nil then
+  if ActiveJobs[id] == nil then
     return
   end
 
-  active_jobs[id]:on_stdout(data)
+  ActiveJobs[id]:on_stdout(data)
+end
+
+client.job_exit = function(id, data)
+  if ActiveJobs[id] == nil then
+    return
+  end
+
+  ActiveJobs[id]:on_exit(data)
 end
 
 client.new = function(name, ft, cmd)
   log.debug('Starting new client: ', name, cmd)
 
-  -- TODO: I'm a little concerned about the milliseconds after starting up the job.
-  -- Not sure if we'll register ourselves faster than we will get stdin or out that we want...
-  local job_id = vim.api.nvim_call_function('lsp#job#start', { cmd })
+  local job_id = vim.api.nvim_call_function('lsp#__jobstart', { cmd })
 
   assert(job_id)
   assert(job_id > 0)
@@ -82,7 +79,7 @@ client.new = function(name, ft, cmd)
     _current_header = {},
 
     -- Capabilities sent by server
-    capabilities = setmetatable({}, mt_capabilities),
+    capabilities = EmptyDictionary:new(),
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -95,7 +92,7 @@ client.new = function(name, ft, cmd)
     __data__ = {},
   }, client)
 
-  active_jobs.add(job_id, self)
+  ActiveJobs.add(job_id, self)
 
   return self
 end
@@ -106,7 +103,7 @@ client.initialize = function(self)
   initialize_filetype_autocmds(self.ft)
 
   local result = self:request_async('initialize', nil, function(_, data)
-    self.capabilities = setmetatable(data.capabilities, mt_capabilities)
+    self.capabilities =  EmptyDictionary:new(data.capabilities)
     return data.capabilities
   end)
 
@@ -368,6 +365,12 @@ client.on_error = function(self, level, err_message)
   if level <= error_level.info then
     log.warn(err_message)
   end
+end
+
+client.on_exit = function(self, data)
+  log.info('Exiting job id: ', self.job_id, 'with data:', data)
+
+  ActiveJobs.remove(self.job_id)
 end
 
 client.reset_state = function(self)

@@ -1,3 +1,6 @@
+" TODO:
+"   Simplify "request", "request_async", and "notify"
+
 try
   " Try and load the LSP API.
   lua require('lsp.api')
@@ -5,17 +8,6 @@ catch
   echom 'Language Server Protocol is currently not able to run.'
   finish
 endtry
-
-" TODO: Should make it easer to use the API without returning the result and
-" writing hard strings
-function! lsp#api_exec(method_format, ...) abort
-  let printf_arguments = []
-  if a:0 > 0
-    let printf_arguments = a:000
-  endif
-
-  echo function('printf', ['lua vim.lsp.' . a:method_format] + printf_arguments)()
-endfunction
 
 let s:client_string = "require('lsp.plugin').client"
 
@@ -82,3 +74,49 @@ function! lsp#handle(request, data, ...) abort abort
         \ 'default_only': default_only,
         \ })
 endfunction
+
+
+""
+" Private functions to manage language server.
+"   Easier to configure on the viml side, since you can pass callbacks to the
+"   API, which -- at the time -- isn't possible with lua {{{
+let s:LspClient = {}
+
+function s:LspClient.on_stdout(job_id, data, event) abort
+  call luaeval("require('lsp.client').job_stdout(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
+endfunction
+
+function s:LspClient.on_exit(job_id, data, event) abort
+  call luaeval("require('lsp.client').job_exit(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
+endfunction
+
+function lsp#__jobstart(cmd) abort
+  let to_execute = ''
+  if type(a:cmd) == v:t_string
+    let to_execute = split(a:cmd, ' ', 0)[0]
+  elseif type(a:cmd) == v:t_list && len(a:cmd) > 0
+    let to_execute = a:cmd[0]
+  else
+    echoerr 'Invalid command arguments for LSP'
+    throw LSP/BadConfig
+  endif
+
+  if !executable(to_execute)
+    echoerr '"' to_execute '" is not a valid executable'
+    throw LSP/BadConfig
+  endif
+
+
+  let job_id = jobstart(a:cmd, s:LspClient)
+
+  if job_id == 0
+    echoerr 'Invalid arguments for LSP'
+    throw LSP/failed
+  elseif job_id == -1
+    echoerr 'Not a valid executable: ' . string(a:cmd)
+    throw LSP/failed
+  endif
+
+  return job_id
+endfunction
+" }}}

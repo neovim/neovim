@@ -60,7 +60,7 @@ lsp#server#add({ftype}, {cmd}, {configuration}):
   call lsp#server#add('typescript', {
       \ 'name': 'ts', ....
       \ 'callbacks': {
-        \ 'root_uri': { server -> lsp#util#find_root_uri('tsconfig.json') }
+        \ 'root_uri': { server -> RootFinderFromPlugin() }
       \ }})
 
 ================================================================================
