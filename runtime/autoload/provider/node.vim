@@ -23,13 +23,9 @@ function! s:is_minimum_version(version, min_major, min_minor) abort
 endfunction
 
 let s:NodeHandler = {}
-let s:NodeHandler.result = ''
-function! s:NodeHandler.on_stdout(job_id, data, event)
-    let self.data += a:data
-endfunction
 
 function! s:NodeHandler.on_exit(job_id, data, event)
-    let bin_dir = join(self.data, '')
+    let bin_dir = join(self.stdout, '')
     let entry_point = bin_dir . self.entry_point
     if filereadable(entry_point)
         let self.result = entry_point
@@ -40,7 +36,8 @@ endfunction
 
 function! s:NodeHandler.new()
     let obj = copy(s:NodeHandler)
-    let obj.data = []
+    let obj.stdout_buffered = v:true
+    let obj.result = ''
 
     return obj
 endfunction
@@ -59,7 +56,6 @@ function! provider#node#can_inspect() abort
   return (ver[1] ==# '6' && s:is_minimum_version(ver, 6, 12))
     \ || s:is_minimum_version(ver, 7, 6)
 endfunction
-
 
 function! provider#node#Detect() abort
   if exists('g:node_host_prog')
