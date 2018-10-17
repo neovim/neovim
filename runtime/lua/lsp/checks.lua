@@ -1,7 +1,7 @@
 -- add_check('textDocument/completion', false)
 -- add_check('textDocument/
 
-local util = require('neovim.util')
+local util = require('nvim.util')
 
 local checks_table = {}
 

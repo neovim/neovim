@@ -1,7 +1,7 @@
 -- Thanks to: github.com/rxi/log.lua
 -- For the inspiration for a lot of the base of this file
 
-local Enum = require('neovim.meta').Enum
+local Enum = require('nvim.meta').Enum
 
 local log = {}
 log.__index = log
@@ -54,7 +54,7 @@ log.create_functions = function(new_log, new_logger)
 
         local message = ''
         for _, arg in ipairs({...}) do
-          message = message .. require('neovim.util').tostring(arg)
+          message = message .. require('nvim.util').tostring(arg)
         end
 
         local info = debug.getinfo(2, "Sl")

@@ -1,4 +1,4 @@
-local util = require('neovim.util')
+local util = require('nvim.util')
 
 local lsp_util = {}
 

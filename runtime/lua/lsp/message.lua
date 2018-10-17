@@ -2,7 +2,7 @@
 --  Do the decoding from the message class?
 
 local json = require('lsp.json')
-local util = require('neovim.util')
+local util = require('nvim.util')
 
 local log = require('lsp.log')
 local get_request_function = require('lsp.request').get_request_function
