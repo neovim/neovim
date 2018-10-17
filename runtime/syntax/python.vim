@@ -128,7 +128,7 @@ syn match   pythonMatrixMultiply
       \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
       \ transparent
 
-syn match   pythonFunction	"\h\w*" display contained
+syn match   pythonFunction	"[A-Za-z_\u0100-\uFFFF][0-9A-Za-z_\u0100-\uFFFF]*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
