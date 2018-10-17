@@ -16,6 +16,14 @@ end
 -- Structure definitions
 local structures = {}
 
+structures.EOL = function()
+  if vim.api.nvim_buf_get_option(0, 'eol') then
+    return "\n"
+  else
+    return ''
+  end
+end
+
 structures.DocumentUri = function(args)
   return args
     or 'file://' .. vim.api.nvim_buf_get_name(0)
@@ -114,7 +122,7 @@ structures.DidSaveTextDocumentParams = function(args)
 
   return {
     textDocument = structures.TextDocumentItem(args.textDocument),
-    text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"),
+    text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") .. structures.EOL(),
   }
 end
 
@@ -135,7 +143,7 @@ structures.DidChangeTextDocumentParams = function(args)
   return {
     textDocument = structures.VersionedTextDocumentIdentifier(args.textDocument),
     contentChanges = {
-      { text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") },
+      { text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") .. structures.EOL() },
     },
   }
 end
