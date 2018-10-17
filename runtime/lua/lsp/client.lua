@@ -1,10 +1,10 @@
 -- luacheck: globals vim
 
 local json = require('lsp.json')
-local util = require('neovim.util')
+local util = require('nvim.util')
 
-local Enum = require('neovim.meta').Enum
-local EmptyDictionary = require('neovim.meta').EmptyDictionary
+local Enum = require('nvim.meta').Enum
+local EmptyDictionary = require('nvim.meta').EmptyDictionary
 
 local message = require('lsp.message')
 local initialize_filetype_autocmds = require('lsp.autocmds').initialize_filetype_autocmds

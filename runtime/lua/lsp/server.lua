@@ -1,5 +1,5 @@
 
-local util = require('neovim.util')
+local util = require('nvim.util')
 
 local log = require('lsp.log')
 local lsp_util = require('lsp.util')

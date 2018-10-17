@@ -28,7 +28,7 @@
 --  TODO: documentLink/resolve
 
 local log = require('lsp.log')
-local util = require('neovim.util')
+local util = require('nvim.util')
 local lsp_util = require('lsp.util')
 
 local protocol = require('lsp.protocol')
@@ -62,8 +62,8 @@ CallbackObject.__index = function(self, key)
 end
 
 CallbackObject.__call = function(self, success, data, default_only, filetype)
-  if self.name ~= 'neovim/error_callback' and not success then
-    method_to_callback_object('neovim/error_callback').default(self, data)
+  if self.name ~= 'nvim/error_callback' and not success then
+    method_to_callback_object('nvim/error_callback').default(self, data)
   end
 
   if util.table.is_empty(self.default) then
@@ -174,8 +174,8 @@ local add_default_callback = function(name, callback, options)
   CallbackMapping[name] = CallbackObject.new(name, callback, options)
 end
 
--- 3 neovim/error_callback
-add_default_callback('neovim/error_callback', function(original, error_message)
+-- 3 nvim/error_callback
+add_default_callback('nvim/error_callback', function(original, error_message)
   local message = ''
   if error_message.message ~= nil and type(error_message.message) == 'string' then
     message = error_message.message

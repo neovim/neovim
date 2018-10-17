@@ -3,8 +3,8 @@
 --  Maybe even make a few vimL wrapper functions.
 --  Maybe make a remote function
 
-local neovim_log = require('neovim.log')
-local log = neovim_log:new('LSP')
+local nvim_log = require('nvim.log')
+local log = nvim_log:new('LSP')
 
 log:set_console_level('warn')
 log:set_file_level('bad_level')

@@ -18,7 +18,7 @@
 --
 --          @returns (table): The resulting params for the request
 
-local nvim_util = require('neovim.util')
+local nvim_util = require('nvim.util')
 
 local server_config = require('lsp.server')
 local structures = require('lsp.structures')

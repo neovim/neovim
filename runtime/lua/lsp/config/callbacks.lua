@@ -5,7 +5,7 @@ local configure = {}
 --- Configure the error callback used to print or display errors
 -- @param new_error_cb  (required)  The function reference to call instead of the default error_callback
 configure.error_callback = function(new_error_cb)
-  callbacks.set_default_callback('neovim/error_callback', new_error_cb)
+  callbacks.set_default_callback('nvim/error_callback', new_error_cb)
 end
 
 --- Add a callback that will be called whenever method is handled

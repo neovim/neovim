@@ -2,7 +2,7 @@
 
 local protocol = {}
 
-local Enum = require('neovim.meta').Enum
+local Enum = require('nvim.meta').Enum
 
 protocol.DiagnosticSeverity = Enum:new({
   Error = 1,

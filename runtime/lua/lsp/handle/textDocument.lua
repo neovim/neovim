@@ -1,5 +1,5 @@
 
-local util = require('neovim.util')
+local util = require('nvim.util')
 
 local textDocument = {}
 

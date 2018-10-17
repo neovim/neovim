@@ -7,9 +7,9 @@
 -- }
 
 local log = require('lsp.log')
-local util = require('neovim.util')
+local util = require('nvim.util')
 
-local Enum = require('neovim.meta').Enum
+local Enum = require('nvim.meta').Enum
 
 local AutocmdEnum = Enum:new({
   AuGroup = 'LanguageServerProtocol',
