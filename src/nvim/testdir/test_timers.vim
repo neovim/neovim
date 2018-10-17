@@ -172,6 +172,41 @@ func Test_stop_all_in_callback()
   call assert_equal(0, len(info))
 endfunc
 
+func FeedkeysCb(timer)
+  call feedkeys("hello\<CR>", 'nt')
+endfunc
+
+func InputCb(timer)
+  call timer_start(10, 'FeedkeysCb')
+  let g:val = input('?')
+  call Resume()
+endfunc
+
+func Test_input_in_timer()
+  let g:val = ''
+  call timer_start(10, 'InputCb')
+  call Standby(1000)
+  call assert_equal('hello', g:val)
+endfunc
+
+func FuncWithCaughtError(timer)
+  let g:call_count += 1
+  try
+    doesnotexist
+  catch
+    " nop
+  endtry
+endfunc
+
+func Test_timer_catch_error()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithCaughtError', {'repeat': 4})
+  " Timer will not be stopped.
+  call WaitFor('g:call_count == 4')
+  sleep 50m
+  call assert_equal(4, g:call_count)
+endfunc
+
 func FeedAndPeek(timer)
   call test_feedinput('a')
   call getchar(1)
