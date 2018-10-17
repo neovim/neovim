@@ -69,22 +69,31 @@ function! provider#node#Detect() abort
     return ''
   endif
 
+  let yarn_subpath = '/node_modules/neovim/bin/cli.js'
+  let npm_subpath = '/neovim/bin/cli.js'
+
+  " `yarn global dir` is slow (> 250ms), try the default path first
+  if filereadable('$HOME/.config/yarn/global' . yarn_subpath)
+      return '$HOME/.config/yarn/global' . yarn_subpath
+  end
+
   " try both npm and yarn simultaneously
   let yarn_opts = s:NodeHandler.new()
-  let yarn_opts.entry_point = '/node_modules/neovim/bin/cli.js'
+  let yarn_opts.entry_point = yarn_subpath
   let yarn_opts.job_id = jobstart(['yarn', 'global', 'dir'], yarn_opts)
   let npm_opts = s:NodeHandler.new()
-  let npm_opts.entry_point = '/neovim/bin/cli.js'
+  let npm_opts.entry_point = npm_subpath
   let npm_opts.job_id = jobstart(['npm', '--loglevel', 'silent', 'root', '-g'], npm_opts)
+
+  " npm returns the directory faster, so let's check that first
+  let result = jobwait([npm_opts.job_id])
+  if npm_opts.result != ''
+      return npm_opts.result
+  endif
 
   let result = jobwait([yarn_opts.job_id])
   if yarn_opts.result != ''
       return yarn_opts.result
-  endif
-
-  let result = jobwait([npm_opts.job_id])
-  if npm_opts.result != ''
-      return npm_opts.result
   endif
 
   return ''
