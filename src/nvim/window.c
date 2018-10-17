@@ -1941,9 +1941,10 @@ int win_close(win_T *win, bool free_buf)
       return FAIL;
   }
 
-  // fire WinClosed event just before starting freeing memory associated with window
+  // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
-    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, win->w_buffer->b_fname, false, win->w_buffer);
+    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
+        win->w_buffer->b_fname, false, win->w_buffer);
   }
 
   /* Free independent synblock before the buffer is freed. */
@@ -2145,7 +2146,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
-    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, win->w_buffer->b_fname, false, win->w_buffer);
+    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, 
+        win->w_buffer->b_fname, false, win->w_buffer);
   }
 
   /* Free the memory used for the window. */
