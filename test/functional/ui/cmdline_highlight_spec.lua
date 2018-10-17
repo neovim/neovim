@@ -755,7 +755,7 @@ describe('Command-line coloring', function()
     eq(1, meths.eval('1'))
   end)
 end)
-describe('Ex commands coloring support', function()
+describe('Ex commands coloring', function()
   it('works', function()
     meths.set_var('Nvim_color_cmdline', 'RainBowParens')
     feed(':echo (((1)))')
@@ -831,7 +831,7 @@ describe('Ex commands coloring support', function()
                                               |
     ]])
   end)
-  it('does not prevent mapping error from cancelling prompt', function()
+  it('mapping error does not cancel prompt', function()
     command("cnoremap <expr> x execute('throw 42')[-1]")
     feed(':#x')
     screen:expect([[
@@ -846,16 +846,17 @@ describe('Ex commands coloring support', function()
     ]])
     feed('<CR>')
     screen:expect([[
-      ^                                        |
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-                                              |
+      :#                                      |
+      {ERR:Error detected while processing :}       |
+      {ERR:E605: Exception not caught: 42}          |
+      {ERR:E749: empty buffer}                      |
+      {PE:Press ENTER or type command to continue}^ |
     ]])
-    eq('Error detected while processing :\nE605: Exception not caught: 42',
+    feed('<CR>')
+    eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: empty buffer',
        meths.command_output('messages'))
   end)
   it('errors out when failing to get callback', function()

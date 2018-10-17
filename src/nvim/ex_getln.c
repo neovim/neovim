@@ -510,6 +510,10 @@ static int command_line_check(VimState *state)
   // completion may switch it on.
   quit_more = false;       // reset after CTRL-D which had a more-prompt
 
+  did_emsg = false;        // There can't really be a reason why an error
+                           // that occurs while typing a command should
+                           // cause the command not to be executed.
+
   cursorcmd();             // set the cursor on the right spot
   ui_cursor_shape();
   return 1;
