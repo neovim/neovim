@@ -51,7 +51,6 @@ lsp#server#add({ftype}, {cmd}, {configuration}):
                 parameter in the initialize request for a server.
 
                 Example:~
-                TODO:  Update this example
 >
   " Python example
   call lsp#server#add('python', 'pyls')
@@ -173,6 +172,19 @@ in an idiomatic vim fashion.
   textDocument/references~
 
 ================================================================================
+                                                         *lsp-common-behavior*
+
+Many of the Language Server Protocol messages are similar to common commandds
+in nvim. Here are some example configurations that could integrate LSP into
+your daily workflow.
+
+  textDocument/definition~
+    This is essentially "go-to definition". Since this is generally done
+    through tags, the following mapping might be considered idiomatic.
+
+    nnoremap <buffer> <C-]> :call lsp#request_async('textDocument/definition')
+
+================================================================================
                                                                  *lsp-autocmds*
 
 The language server implementation in Neovim will fire |autocmd-User| events
@@ -231,10 +243,11 @@ require('lsp.checks').add_check({request}, {cb})
         `false` as the callback.
 
 >
-    :lua require('lsp.checks').add_check('textDocument/hover', false)
+    :lua require('lsp.config').callbacks.disable('textDocument/hover')
 <
 
 
+TODO: This should be changed to the Lua API
 lsp#configure#file_log_level({level})
     Configure the level of logging to a file.
 
