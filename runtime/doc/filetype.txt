@@ -512,7 +512,7 @@ View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
 To use Nvim as a manpager: >
-     export MANPAGER="nvim -c 'set ft=man' -"
+     export MANPAGER="nvim +Man!"
 
 man.vim will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
@@ -522,13 +522,14 @@ The case sensitivity of completion is controlled by 'fileignorecase'.
 Commands:
 Man {name}                Display the manpage for {name}.
 Man {sect} {name}         Display the manpage for {name} and section {sect}.
-Man {name}({sect})        Alternate syntax which completes the section.
+Man {name}({sect})        Same as above.
 Man {sect} {name}({sect}) Used during completion to show the real section of
                           when the provided section is a prefix, e.g. 1m vs 1.
-Man {path}                Open the manpage specified by path. Prepend "./" if
-                          page is in the current directory.
+Man {path}                Open the manpage at {path}. Prepend "./" if {path}
+                          is relative to the current directory.
 Man                       Open the manpage for the <cWORD> (man buffers)
                           or <cword> (non-man buffers) under the cursor.
+Man!                      Display the current buffer contents as a manpage.
 
 |:Man| accepts command modifiers. For example, to use a vertical split: >
      :vertical Man printf
