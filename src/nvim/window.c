@@ -3118,6 +3118,10 @@ int win_new_tabpage(int after, char_u *filename)
 
     redraw_all_later(NOT_VALID);
 
+    if (ui_is_external(kUIMultigrid)) {
+        tabpage_check_windows(tp);
+    }
+
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
@@ -3309,10 +3313,15 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   int old_off = tp->tp_firstwin->w_winrow;
   win_T       *next_prevwin = tp->tp_prevwin;
 
+  tabpage_T *old_curtab = curtab;
   curtab = tp;
   firstwin = tp->tp_firstwin;
   lastwin = tp->tp_lastwin;
   topframe = tp->tp_topframe;
+
+  if (old_curtab != curtab && ui_is_external(kUIMultigrid)) {
+     tabpage_check_windows(old_curtab);
+  }
 
   /* We would like doing the TabEnter event first, but we don't have a
    * valid current window yet, which may break some commands.
@@ -3347,6 +3356,20 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
 
   redraw_all_later(NOT_VALID);
   must_redraw = NOT_VALID;
+}
+
+/// called when changing current tabpage from old_curtab to curtab
+static void tabpage_check_windows(tabpage_T *old_curtab)
+{
+  win_T *next_wp;
+  for (win_T *wp = old_curtab->tp_firstwin; wp; wp = next_wp) {
+    next_wp = wp->w_next;
+    wp->w_pos_changed = true;
+  }
+
+  for (win_T *wp = firstwin; wp; wp = wp->w_next) {
+    wp->w_pos_changed = true;
+  }
 }
 
 /*
@@ -6074,10 +6097,14 @@ void win_ui_flush(void)
     return;
   }
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
-      ui_call_win_position(wp->handle, wp->w_grid.handle, wp->w_winrow,
-                           wp->w_wincol, wp->w_width, wp->w_height);
+      if (tp == curtab) {
+        ui_call_win_position(wp->handle, wp->w_grid.handle, wp->w_winrow,
+                             wp->w_wincol, wp->w_width, wp->w_height);
+      } else {
+        ui_call_win_hide(wp->handle, wp->w_grid.handle);
+      }
       wp->w_pos_changed = false;
     }
   }
