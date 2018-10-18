@@ -1944,7 +1944,7 @@ int win_close(win_T *win, bool free_buf)
   // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
     apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
-        win->w_buffer->b_fname, false, win->w_buffer);
+                    win->w_buffer->b_fname, false, win->w_buffer);
   }
 
   /* Free independent synblock before the buffer is freed. */
@@ -1998,8 +1998,8 @@ int win_close(win_T *win, bool free_buf)
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
 
-  /* Free the memory used for the window and get the window that received
-   * the screen space. */
+  // Free the memory used for the window and get the window that received
+  // the screen space. 
   wp = win_free_mem(win, &dir, NULL);
 
   if (help_window) {
@@ -2146,8 +2146,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
-    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname, 
-        win->w_buffer->b_fname, false, win->w_buffer);
+    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
+                    win->w_buffer->b_fname, false, win->w_buffer);
   }
 
   /* Free the memory used for the window. */
