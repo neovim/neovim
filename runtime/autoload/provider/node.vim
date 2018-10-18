@@ -22,26 +22,24 @@ function! s:is_minimum_version(version, min_major, min_minor) abort
     \         && str2nr(v_list[1]) >= str2nr(a:min_minor)))
 endfunction
 
-function! s:find_node_client(package_manager) abort
-  if !executable(a:package_manager)
-    return ''
-  endif
-  let is_yarn = a:package_manager ==# 'yarn'
-  let cmd = is_yarn ? 'yarn global dir' : 'npm --loglevel silent root -g'
-  let global_modules_dir = get(split(system(cmd), "\n"), 0, '')
-  if v:shell_error || !isdirectory(global_modules_dir)
-    return ''
-  endif
-  " `yarn global dir` returns the parent of '/node_modules'.
-  let global_modules_dir = is_yarn ? global_modules_dir . '/node_modules' : global_modules_dir
-  if !isdirectory(global_modules_dir)
-    return ''
-  endif
-  let entry_point = global_modules_dir . '/neovim/bin/cli.js'
-  if !filereadable(entry_point)
-    return ''
-  endif
-  return entry_point
+let s:NodeHandler = {}
+
+function! s:NodeHandler.on_exit(job_id, data, event)
+    let bin_dir = join(self.stdout, '')
+    let entry_point = bin_dir . self.entry_point
+    if filereadable(entry_point)
+        let self.result = entry_point
+    else
+        let self.result = ''
+    end
+endfunction
+
+function! s:NodeHandler.new()
+    let obj = copy(s:NodeHandler)
+    let obj.stdout_buffered = v:true
+    let obj.result = ''
+
+    return obj
 endfunction
 
 " Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
@@ -66,9 +64,35 @@ function! provider#node#Detect() abort
   if !s:is_minimum_version(v:null, 6, 0)
     return ''
   endif
-  let entry_point = s:find_node_client('npm')
-  let entry_point = !empty(entry_point) ? entry_point : s:find_node_client('yarn')
-  return entry_point
+
+  let yarn_subpath = '/node_modules/neovim/bin/cli.js'
+  let npm_subpath = '/neovim/bin/cli.js'
+
+  " `yarn global dir` is slow (> 250ms), try the default path first
+  if filereadable('$HOME/.config/yarn/global' . yarn_subpath)
+      return '$HOME/.config/yarn/global' . yarn_subpath
+  end
+
+  " try both npm and yarn simultaneously
+  let yarn_opts = s:NodeHandler.new()
+  let yarn_opts.entry_point = yarn_subpath
+  let yarn_opts.job_id = jobstart(['yarn', 'global', 'dir'], yarn_opts)
+  let npm_opts = s:NodeHandler.new()
+  let npm_opts.entry_point = npm_subpath
+  let npm_opts.job_id = jobstart(['npm', '--loglevel', 'silent', 'root', '-g'], npm_opts)
+
+  " npm returns the directory faster, so let's check that first
+  let result = jobwait([npm_opts.job_id])
+  if result[0] == 0 && npm_opts.result != ''
+      return npm_opts.result
+  endif
+
+  let result = jobwait([yarn_opts.job_id])
+  if result[0] == 0 && yarn_opts.result != ''
+      return yarn_opts.result
+  endif
+
+  return ''
 endfunction
 
 function! provider#node#Prog() abort
