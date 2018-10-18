@@ -83,12 +83,12 @@ function! provider#node#Detect() abort
 
   " npm returns the directory faster, so let's check that first
   let result = jobwait([npm_opts.job_id])
-  if npm_opts.result != ''
+  if result[0] == 0 && npm_opts.result != ''
       return npm_opts.result
   endif
 
   let result = jobwait([yarn_opts.job_id])
-  if yarn_opts.result != ''
+  if result[0] == 0 && yarn_opts.result != ''
       return yarn_opts.result
   endif
 
