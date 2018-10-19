@@ -1250,9 +1250,9 @@ au BufNewFile,BufRead */etc/protocols		setf protocols
 " Pyrex
 au BufNewFile,BufRead *.pyx,*.pxd		setf pyrex
 
-" Python, Python Shell Startup Files
+" Python, Python Shell Startup and Python Stub Files
 " Quixote (Python-based web framework)
-au BufNewFile,BufRead *.py,*.pyw,.pythonstartup,.pythonrc,*.ptl  setf python
+au BufNewFile,BufRead *.py,*.pyw,.pythonstartup,.pythonrc,*.ptl,*.pyi  setf python
 
 " Radiance
 au BufNewFile,BufRead *.rad,*.mat		setf radiance
@@ -1401,8 +1401,8 @@ au BufNewFile,BufRead *.sdl,*.pr		setf sdl
 " sed
 au BufNewFile,BufRead *.sed			setf sed
 
-" Sieve (RFC 3028)
-au BufNewFile,BufRead *.siv			setf sieve
+" Sieve (RFC 3028, 5228)
+au BufNewFile,BufRead *.siv,*.sieve		setf sieve
 
 " Sendmail
 au BufNewFile,BufRead sendmail.cf		setf sm
