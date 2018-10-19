@@ -1,4 +1,5 @@
-Set-PSDebug -Trace 1
+$ErrorActionPreference = 'stop'
+Set-PSDebug -Strict -Trace 1
 
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
@@ -12,6 +13,7 @@ $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
 }
+$uploadToCodeCov = $false
 
 # For pull requests, skip some build configurations to save time.
 if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
@@ -20,6 +22,7 @@ if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSV
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
+    Set-PSDebug -Off
     exit $LastExitCode
   }
 }
@@ -72,18 +75,20 @@ python  -c "import neovim; print(str(neovim))" ; exitIfFailed
 python3 -c "import neovim; print(str(neovim))" ; exitIfFailed
 
 $env:PATH = "C:\Ruby24\bin;$env:PATH"
-cmd /c gem.cmd install neovim ; exitIfFailed
-where.exe neovim-ruby-host.bat ; exitIfFailed
+gem.cmd install neovim
+Get-Command -CommandType Application neovim-ruby-host.bat
 
-cmd /c npm.cmd install -g neovim ; exitIfFailed
-where.exe neovim-node-host.cmd ; exitIfFailed
-cmd /c npm link neovim
+npm.cmd install -g neovim
+Get-Command -CommandType Application neovim-node-host.cmd
+npm.cmd link neovim
 
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-mkdir .deps
+if (-Not (Test-Path -PathType container .deps)) {
+  mkdir .deps
+}
 cd .deps
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
@@ -104,10 +109,10 @@ Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
     $_ -match 'functional tests failed with error'; $_ }
-Set-PSDebug -Trace 1
 if ($failed) {
   exit $LastExitCode
 }
+Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
