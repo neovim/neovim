@@ -18,6 +18,7 @@ build_script:
 - powershell ci\build.ps1
 cache:
 - C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
+- .deps -> ci\build.ps1
 - .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
