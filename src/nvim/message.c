@@ -1884,6 +1884,9 @@ int msg_scrollsize(void)
  */
 static void msg_scroll_up(void)
 {
+  if (msg_scrolled == 0) {
+    ui_call_win_scroll_over_start();
+  }
   if (dy_flags & DY_MSGSEP) {
     if (msg_scrolled == 0) {
       grid_fill(&default_grid, Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,

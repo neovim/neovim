@@ -646,6 +646,12 @@ function Screen:_handle_grid_resize(grid, width, height)
   }
 end
 
+function Screen:_handle_msg_scroll_start()
+end
+
+function Screen:_handle_msg_scroll_reset()
+end
+
 function Screen:_handle_flush()
 end
 

@@ -292,6 +292,7 @@ void update_screen(int type)
    * if the screen was scrolled up when displaying a message, scroll it down
    */
   if (msg_scrolled) {
+    ui_call_win_scroll_over_reset();
     clear_cmdline = true;
     if (dy_flags & DY_MSGSEP) {
       int valid = MAX(Rows - msg_scrollsize(), 0);
