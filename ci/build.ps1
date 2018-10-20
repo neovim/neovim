@@ -103,7 +103,7 @@ $failed = $false
 Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
-    $_ -match 'Running functional tests failed with error'; $_ }
+    $_ -match 'functional tests failed with error'; $_ }
 Set-PSDebug -Trace 1
 if ($failed) {
   exit $LastExitCode
