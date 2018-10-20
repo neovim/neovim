@@ -1602,7 +1602,7 @@ static void conv_to_pvim(void)
   do_cmdline_cmd("%s/\201\231/\370\334/ge");
 
   // Assume the screen has been messed up: clear it and redraw.
-  redraw_later(CLEAR);
+  redraw_later(NOT_VALID);
   MSG_ATTR((const char *)farsi_text_1, HL_ATTR(HLF_S));
 }
 
@@ -1623,7 +1623,7 @@ static void conv_to_pstd(void)
   }
 
   // Assume the screen has been messed up: clear it and redraw.
-  redraw_later(CLEAR);
+  redraw_later(NOT_VALID);
   msg_attr((const char *)farsi_text_2, HL_ATTR(HLF_S));
 }
 

@@ -122,7 +122,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     -- navigate to verify that the attributes are properly moved
     feed('<c-w>j')
@@ -140,7 +140,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {1:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     -- note that when moving to a window with small width nvim will increase
     -- the width of the new active window at the expense of a inactive window
@@ -160,7 +160,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<c-w>l')
     screen:expect([[
@@ -177,7 +177,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<c-w>h<c-w>h')
     screen:expect([[
@@ -194,7 +194,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
   end)
 

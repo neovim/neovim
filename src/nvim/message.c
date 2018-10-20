@@ -832,12 +832,11 @@ void msg_end_prompt(void)
   lines_left = -1;
 }
 
-/*
- * wait for the user to hit a key (normally a return)
- * if 'redraw' is TRUE, clear and redraw the screen
- * if 'redraw' is FALSE, just redraw the screen
- * if 'redraw' is -1, don't redraw at all
- */
+/// wait for the user to hit a key (normally a return)
+///
+/// if 'redraw' is true, redraw the entire screen NOT_VALID
+/// if 'redraw' is false, do a normal redraw
+/// if 'redraw' is -1, don't redraw at all
 void wait_return(int redraw)
 {
   int c;
@@ -847,8 +846,9 @@ void wait_return(int redraw)
   int save_Recording;
   FILE        *save_scriptout;
 
-  if (redraw == TRUE)
-    must_redraw = CLEAR;
+  if (redraw == true) {
+    redraw_all_later(NOT_VALID);
+  }
 
   /* If using ":silent cmd", don't wait for a return.  Also don't set
    * need_wait_return to do it later. */

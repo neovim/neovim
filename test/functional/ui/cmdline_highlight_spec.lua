@@ -32,7 +32,7 @@ before_each(function()
     highlight RBP4 guibg=Blue
     let g:NUM_LVLS = 4
     function Redraw()
-      redraw!
+      mode
       return ''
     endfunction
     let g:id = ''

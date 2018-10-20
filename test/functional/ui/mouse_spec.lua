@@ -530,7 +530,7 @@ describe('ui/mouse/input', function()
       mouse                    |
       support and selectio^n    |
       {0:~                        }|
-                               |
+      :tabprevious             |
     ]])
     feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
     helpers.wait()
@@ -540,7 +540,7 @@ describe('ui/mouse/input', function()
       ^this is bar              |
       {0:~                        }|
       {0:~                        }|
-                               |
+      :tabprevious             |
     ]])
     feed('<LeftDrag><4,1>')
     screen:expect([[
