@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local funcs = helpers.funcs
 local neq = helpers.neq
 local eq = helpers.eq
 local eval = helpers.eval
@@ -70,9 +71,9 @@ describe('autocmds:', function()
     local second_buffer = eval('bufnr(\'%\')')
     command('autocmd WinClosed <buffer> :bdelete ' .. first_buffer)
     command('new')
-    neq(-1, eval('bufwinnr(' .. first_buffer .. ')'))
+    neq(-1, funcs.bufwinnr(first_buffer))
     command('bdelete ' .. second_buffer )
-    eq(-1, eval('bufwinnr(' .. first_buffer .. ')'))
+    eq(-1, funcs.bufwinnr(first_buffer))
     eq(0, eval('g:triggered'))
   end)
 
@@ -81,10 +82,10 @@ describe('autocmds:', function()
     command('new')
     local second_buffer = eval('bufnr(\'%\')')
     command('autocmd WinClosed <buffer> :let g:triggered+=1 | bdelete ' .. second_buffer)
-    neq(-1, eval('bufwinnr(' .. second_buffer .. ')'))
+    neq(-1, funcs.bufwinnr(second_buffer))
     eq(0, eval('g:triggered'))
     command('bdelete ' .. second_buffer )
-    eq(-1, eval('bufwinnr(' .. second_buffer .. ')'))
+    eq(-1, funcs.bufwinnr(second_buffer))
     eq(1, eval('g:triggered'))
   end)
 
