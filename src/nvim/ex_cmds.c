@@ -3299,7 +3299,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub_joining_lines(eap, pat, sub, cmd, !preview)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !preview)) {
     return NULL;
   }
 
