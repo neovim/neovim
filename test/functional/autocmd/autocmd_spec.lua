@@ -35,7 +35,7 @@ describe('autocmds:', function()
     command('tabnew')
     assert.same(expected, eval('g:foo'))
   end)
-  
+
   it(':close triggers WinClosed event', function()
     command('let g:triggered = 0')
     command('new')
