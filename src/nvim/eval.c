@@ -16461,6 +16461,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
                                        bool retlist)
 {
   proftime_T wait_time;
+  bool profiling = do_profiling == PROF_YES;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -16497,7 +16498,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     xfree(cmdstr);
   }
 
-  if (do_profiling == PROF_YES) {
+  if (profiling) {
     prof_child_enter(&wait_time);
   }
 
@@ -16506,7 +16507,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   char *res = NULL;
   int status = os_system(argv, input, input_len, &res, &nread);
 
-  if (do_profiling == PROF_YES) {
+  if (profiling) {
     prof_child_exit(&wait_time);
   }
 

@@ -741,6 +741,7 @@ typval_encode_stop_converting_one_item:
       case kMPConvPartial: {
         partial_T *const pt = cur_mpsv->data.p.pt;
         tv = cur_mpsv->tv;
+        (void)tv;
         switch (cur_mpsv->data.p.stage) {
           case kMPConvPartialArgs: {
             TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv,

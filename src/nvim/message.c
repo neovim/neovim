@@ -1475,11 +1475,13 @@ void msg_prt_line(char_u *s, int list)
 
   while (!got_int) {
     if (n_extra > 0) {
-      --n_extra;
-      if (c_extra)
+      n_extra--;
+      if (c_extra) {
         c = c_extra;
-      else
+      } else {
+        assert(p_extra != NULL);
         c = *p_extra++;
+      }
     } else if ((l = utfc_ptr2len(s)) > 1) {
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];

@@ -2175,11 +2175,11 @@ win_line (
 
   int n_skip = 0;                       /* nr of chars to skip for 'nowrap' */
 
-  int fromcol, tocol;                   /* start/end of inverting */
-  int fromcol_prev = -2;                /* start of inverting after cursor */
-  int noinvcur = FALSE;                 /* don't invert the cursor */
-  pos_T       *top, *bot;
-  int lnum_in_visual_area = FALSE;
+  int fromcol = 0, tocol = 0;           // start/end of inverting
+  int fromcol_prev = -2;                // start of inverting after cursor
+  int noinvcur = false;                 // don't invert the cursor
+  pos_T *top, *bot;
+  int lnum_in_visual_area = false;
   pos_T pos;
   long v;
 
