@@ -1873,6 +1873,11 @@ int win_close(win_T *win, bool free_buf)
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = win->w_frame->fr_parent;
+  static bool recursive = false;
+
+  if (recursive) {
+    return FAIL;
+  }
 
   if (last_window()) {
     EMSG(_("E444: Cannot close last window"));
@@ -1943,13 +1948,12 @@ int win_close(win_T *win, bool free_buf)
 
   // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
+    recursive = true;
+
     apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
                    win->w_buffer->b_fname, false, win->w_buffer);
 
-    // If autocommands closed the window, there's nothing else to do
-    if (!win_valid(win)) {
-      return FAIL;
-    }
+    recursive = false;
   }
 
   /* Free independent synblock before the buffer is freed. */
@@ -2088,6 +2092,11 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   int dir;
   tabpage_T   *ptp = NULL;
   int free_tp = FALSE;
+  static bool recursive = false;
+
+  if (recursive) {
+    return;
+  }
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
@@ -2151,13 +2160,12 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // fire WinClosed event just before freeing memory associated with window
   if (has_event(EVENT_WINCLOSED)) {
+    recursive = true;
+
     apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
                    win->w_buffer->b_fname, false, win->w_buffer);
 
-    // If autocommands closed the window, there's nothing else to do
-    if (!win_valid_any_tab(win)) {
-      return;
-    }
+    recursive = false;
   }
 
   /* Free the memory used for the window. */
