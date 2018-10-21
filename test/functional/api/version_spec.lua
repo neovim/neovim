@@ -46,12 +46,12 @@ end)
 describe("api functions", function()
   before_each(clear)
 
-  local function func_table(metadata)
-    local functions = {}
-    for _,f in ipairs(metadata.functions) do
-      functions[f.name] = f
+  local function name_table(entries)
+    local by_name = {}
+    for _,e in ipairs(entries) do
+      by_name[e.name] = e
     end
-    return functions
+    return by_name
   end
 
   -- Remove metadata that is not essential to backwards-compatibility.
@@ -65,6 +65,15 @@ describe("api functions", function()
       f.method = nil
     end
     return f
+  end
+
+  local function check_ui_event_compatible(old_e, new_e)
+    -- check types of existing params are the same
+    -- adding parameters is ok, but removing params is not (gives nil error)
+    eq(old_e.since, new_e.since, old_e.name)
+    for i,p in ipairs(old_e.parameters) do
+      eq(new_e.parameters[i][1], p[1], old_e.name)
+    end
   end
 
   -- Level 0 represents methods from 0.1.5 and earlier, when 'since' was not
@@ -89,8 +98,10 @@ describe("api functions", function()
       stable = api_level
     end
 
-    local funcs_new = func_table(api)
+    local funcs_new = name_table(api.functions)
+    local ui_events_new = name_table(api.ui_events)
     local funcs_compat = {}
+    local ui_events_compat = {}
     for level = compat, stable do
       local path = ('test/functional/fixtures/api_level_'..
                    tostring(level)..'.mpack')
@@ -119,8 +130,18 @@ describe("api functions", function()
              filter_function_metadata(funcs_new[f.name]))
         end
       end
+      funcs_compat[level] = name_table(old_api.functions)
 
-      funcs_compat[level] = func_table(old_api)
+      -- UI events were formalized in level 3
+      if level >= 3 then
+        for _,e in ipairs(old_api.ui_events) do
+          local new_e = ui_events_new[e.name]
+          if new_e ~= nil then
+            check_ui_event_compatible(e, new_e)
+          end
+        end
+        ui_events_compat[level] = name_table(old_api.ui_events)
+      end
     end
 
     for _,f in ipairs(api.functions) do
@@ -140,9 +161,38 @@ describe("api functions", function()
           end
         end
       elseif f.since > api_level then
-        error("function "..f.name.." has since value > api_level. "..
-             "Please bump NVIM_API_CURRENT and set "..
-             "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
+        if api.version.api_prerelease then
+          error("New function "..f.name.." should use since value "..
+               api_level)
+        else
+          error("function "..f.name.." has since value > api_level. "..
+               "Bump NVIM_API_CURRENT and set "..
+               "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
+        end
+      end
+    end
+
+    for _,e in ipairs(api.ui_events) do
+      if e.since <= stable then
+        local e_old = ui_events_compat[e.since][e.name]
+        if e_old == nil then
+          local errstr = ("UI event "..e.name.." has too low since value. "..
+                          "For new events set it to "..(stable+1)..".")
+          if not api.version.api_prerelease then
+            errstr = (errstr.." Also bump NVIM_API_CURRENT and set "..
+                      "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
+          end
+          error(errstr)
+        end
+      elseif e.since > api_level then
+        if api.version.api_prerelease then
+          error("New UI event "..e.name.." should use since value "..
+               api_level)
+        else
+          error("UI event "..e.name.." has since value > api_level. "..
+               "Bump NVIM_API_CURRENT and set "..
+               "NVIM_API_PRERELEASE to true in CMakeLists.txt.")
+        end
       end
     end
   end)
