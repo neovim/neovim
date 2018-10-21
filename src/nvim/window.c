@@ -1945,6 +1945,11 @@ int win_close(win_T *win, bool free_buf)
   if (has_event(EVENT_WINCLOSED)) {
     apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
                    win->w_buffer->b_fname, false, win->w_buffer);
+
+    // If autocommands closed the window, there's nothing else to do
+    if (!win_valid(win)) {
+      return FAIL;
+    }
   }
 
   /* Free independent synblock before the buffer is freed. */
