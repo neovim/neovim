@@ -2153,6 +2153,11 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (has_event(EVENT_WINCLOSED)) {
     apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
                    win->w_buffer->b_fname, false, win->w_buffer);
+
+    // If autocommands closed the window, there's nothing else to do
+    if (!win_valid_any_tab(win)) {
+      return;
+    }
   }
 
   /* Free the memory used for the window. */
