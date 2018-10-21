@@ -10048,6 +10048,7 @@ bool cmd_can_preview(char_u *cmd)
   }
 
   exarg_T ea;
+  memset(&ea, 0, sizeof(ea));
   // parse the command line
   ea.cmd = skip_range(cmd, NULL);
   if (*ea.cmd == '*') {
