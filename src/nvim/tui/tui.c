@@ -1857,7 +1857,7 @@ static void augment_terminfo(TUIData *data, const char *term,
               ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
       } else {
           data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
-              ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
+              ut, "ext.set_underline_color", "\x1b[58;2;%p1%d;%p2%d;%p3%dm");
       }
   }
 }

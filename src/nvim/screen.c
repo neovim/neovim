@@ -2474,7 +2474,7 @@ win_line (
     if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
       line_attr_lowprio = cul_attr;
     } else {
-      if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
+      if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
           && qf_current_entry(wp) == lnum) {
         line_attr = hl_combine_attr(cul_attr, line_attr);
       } else {
@@ -5949,7 +5949,6 @@ void screenalloc(bool doclear)
   int new_row, old_row;
   int len;
   static bool entered = false;  // avoid recursiveness
-  static bool done_outofmem_msg = false;
   int retry_count = 0;
 
 retry:
@@ -6019,67 +6018,39 @@ retry:
     win_alloc_lines(aucmd_win);
   }
 
-  if (new_ScreenLines == NULL
-      || new_ScreenAttrs == NULL
-      || new_LineOffset == NULL
-      || new_LineWraps == NULL
-      || new_tab_page_click_defs == NULL) {
-    if (ScreenLines != NULL || !done_outofmem_msg) {
-      // Guess the size.
-      do_outofmem_msg((Rows + 1) * Columns);
+  for (new_row = 0; new_row < Rows; new_row++) {
+    new_LineOffset[new_row] = new_row * Columns;
+    new_LineWraps[new_row] = false;
 
-      // Remember we did this to avoid getting outofmem messages over
-      // and over again.
-      done_outofmem_msg = true;
-    }
-    xfree(new_ScreenLines);
-    new_ScreenLines = NULL;
-    xfree(new_ScreenAttrs);
-    new_ScreenAttrs = NULL;
-    xfree(new_LineOffset);
-    new_LineOffset = NULL;
-    xfree(new_LineWraps);
-    new_LineWraps = NULL;
-    xfree(new_tab_page_click_defs);
-    new_tab_page_click_defs = NULL;
-  } else {
-    done_outofmem_msg = FALSE;
-
-    for (new_row = 0; new_row < Rows; ++new_row) {
-      new_LineOffset[new_row] = new_row * Columns;
-      new_LineWraps[new_row] = FALSE;
-
-      /*
-       * If the screen is not going to be cleared, copy as much as
-       * possible from the old screen to the new one and clear the rest
-       * (used when resizing the window at the "--more--" prompt or when
-       * executing an external command, for the GUI).
-       */
-      if (!doclear) {
-        for (int col = 0; col < Columns; col++) {
-          schar_from_ascii(new_ScreenLines[new_row * Columns + col], ' ');
+    // If the screen is not going to be cleared, copy as much as
+    // possible from the old screen to the new one and clear the rest
+    // (used when resizing the window at the "--more--" prompt or when
+    // executing an external command, for the GUI).
+    if (!doclear) {
+      for (int col = 0; col < Columns; col++) {
+        schar_from_ascii(new_ScreenLines[new_row * Columns + col], ' ');
+      }
+      memset(new_ScreenAttrs + new_row * Columns,
+             0, (size_t)Columns * sizeof(*new_ScreenAttrs));
+      old_row = new_row + (screen_Rows - Rows);
+      if (old_row >= 0 && ScreenLines != NULL) {
+        if (screen_Columns < Columns) {
+          len = screen_Columns;
+        } else {
+          len = Columns;
         }
-        memset(new_ScreenAttrs + new_row * Columns,
-               0, (size_t)Columns * sizeof(*new_ScreenAttrs));
-        old_row = new_row + (screen_Rows - Rows);
-        if (old_row >= 0 && ScreenLines != NULL) {
-          if (screen_Columns < Columns)
-            len = screen_Columns;
-          else
-            len = Columns;
 
-          memmove(new_ScreenLines + new_LineOffset[new_row],
-                  ScreenLines + LineOffset[old_row],
-                  (size_t)len * sizeof(schar_T));
-          memmove(new_ScreenAttrs + new_LineOffset[new_row],
-                  ScreenAttrs + LineOffset[old_row],
-                  (size_t)len * sizeof(new_ScreenAttrs[0]));
-        }
+        memmove(new_ScreenLines + new_LineOffset[new_row],
+                ScreenLines + LineOffset[old_row],
+                (size_t)len * sizeof(schar_T));
+        memmove(new_ScreenAttrs + new_LineOffset[new_row],
+                ScreenAttrs + LineOffset[old_row],
+                (size_t)len * sizeof(new_ScreenAttrs[0]));
       }
     }
-    /* Use the last line of the screen for the current line. */
-    current_ScreenLine = new_ScreenLines + Rows * Columns;
   }
+  // Use the last line of the screen for the current line.
+  current_ScreenLine = new_ScreenLines + Rows * Columns;
 
   free_screenlines();
 
