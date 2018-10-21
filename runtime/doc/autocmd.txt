@@ -1055,8 +1055,7 @@ WinLeave			Before leaving a window.  If the window to be
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
 							*WinClosed*
-WinClosed			After closing a window.  Just before freeing
-				window's resources.
+WinClosed			After closing a window.
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
