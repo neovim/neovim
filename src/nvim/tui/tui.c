@@ -296,9 +296,10 @@ static void terminfo_start(UI *ui)
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
   data->immediate_wrap_after_last_column =
-    terminfo_is_term_family(term, "cygwin")
+    conemu_ansi
+    || terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "win32con")
-    || terminfo_is_term_family(term, "interix") || conemu_ansi;
+    || terminfo_is_term_family(term, "interix");
   data->bce = unibi_get_bool(data->ut, unibi_back_color_erase);
   data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
                                     data->norm, sizeof data->norm);
