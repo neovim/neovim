@@ -191,8 +191,6 @@ EXTERN int cmdline_star INIT(= FALSE);          /* cmdline is crypted */
 
 EXTERN int exec_from_reg INIT(= FALSE);         /* executing register */
 
-EXTERN TriState screen_cleared INIT(= kFalse);  // screen has been cleared
-
 /*
  * When '$' is included in 'cpoptions' option set:
  * When a change command is given that deletes only part of a line, a dollar

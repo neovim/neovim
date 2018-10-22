@@ -68,7 +68,7 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
 
       varname='p_arshape',
       defaults={if_true={vi=true}}
@@ -92,7 +92,7 @@ return {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -133,7 +133,7 @@ return {
       full_name='background', abbreviation='bg',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'all_windows'},
       varname='p_bg',
       defaults={if_true={vi="light"}}
     },
@@ -662,7 +662,7 @@ return {
       full_name='emoji', abbreviation='emo',
       type='bool', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_emoji',
       defaults={if_true={vi=true}}
     },
@@ -671,7 +671,6 @@ return {
       type='string', scope={'global'},
       deny_in_modelines=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_enc',
       defaults={if_true={vi=macros('ENC_DFLT')}}
     },
@@ -1023,7 +1022,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guifont',
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       defaults={if_true={vi=""}}
     },
     {
@@ -1031,7 +1030,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_guifontset',
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       defaults={if_true={vi=""}}
     },
     {
@@ -1039,7 +1038,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       varname='p_guifontwide',
       defaults={if_true={vi=""}}
     },
@@ -1099,7 +1098,6 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_hl',
       defaults={if_true={vi=macros('HIGHLIGHT_INIT')}}
     },
@@ -1195,7 +1193,7 @@ return {
       full_name='inccommand', abbreviation='icm',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'all_windows'},
       varname='p_icm',
       defaults={if_true={vi=""}}
     },
@@ -1399,7 +1397,7 @@ return {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       varname='p_linespace',
       defaults={if_true={vi=0}}
     },
@@ -2428,7 +2426,6 @@ return {
       full_name='termencoding', abbreviation='tenc',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
       defaults={if_true={vi=""}}
     },
     {

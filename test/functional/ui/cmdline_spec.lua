@@ -253,7 +253,7 @@ local function test_cmdline(linegrid)
     ]], cmdline=expectation}
 
     -- erase information, so we check if it is retransmitted
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -320,7 +320,7 @@ local function test_cmdline(linegrid)
       {{'  line1'}},
     }}
 
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -411,7 +411,7 @@ local function test_cmdline(linegrid)
       pos = 4,
     }}}
 
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
@@ -435,9 +435,9 @@ local function test_cmdline(linegrid)
 
     feed("<c-c>")
     screen:expect{grid=[[
-                               |
+      ^                         |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}make                    |
       {3:[Command Line]           }|
                                |
     ]], cmdline={{
@@ -446,7 +446,6 @@ local function test_cmdline(linegrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
     command("redraw!")
     screen:expect{grid=[[
       ^                         |

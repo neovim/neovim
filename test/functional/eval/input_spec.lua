@@ -149,7 +149,7 @@ describe('input()', function()
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
     ]])
-    command('redraw!')
+    command('mode')
     screen:expect{grid=[[
                                |
       {EOB:~                        }|
@@ -165,7 +165,7 @@ describe('input()', function()
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
     ]])
-    command('redraw!')
+    command('mode')
     screen:expect{grid=[[
                                |
       {EOB:~                        }|
@@ -347,7 +347,7 @@ describe('inputdialog()', function()
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
     ]])
-    command('redraw!')
+    command('mode')
     screen:expect{grid=[[
                                |
       {EOB:~                        }|
@@ -363,7 +363,7 @@ describe('inputdialog()', function()
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
     ]])
-    command('redraw!')
+    command('mode')
     screen:expect{grid=[[
                                |
       {EOB:~                        }|

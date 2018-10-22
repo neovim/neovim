@@ -65,7 +65,7 @@ describe("folded lines", function()
       {1:~                                            }|
       {1:~                                            }|
       {1:~                                            }|
-                                                   |
+      :set noarabicshape                           |
     ]])
 
     feed_command("set number foldcolumn=2")
@@ -114,7 +114,7 @@ describe("folded lines", function()
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
-                                                   |
+      :set arabicshape                             |
     ]])
 
     feed('zo')
@@ -126,7 +126,7 @@ describe("folded lines", function()
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
-                                                   |
+      :set arabicshape                             |
     ]])
 
     feed_command('set noarabicshape')
@@ -138,7 +138,7 @@ describe("folded lines", function()
       {1:                                            ~}|
       {1:                                            ~}|
       {1:                                            ~}|
-                                                   |
+      :set noarabicshape                           |
     ]])
 
   end)

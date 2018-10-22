@@ -1645,9 +1645,6 @@ void listdigraphs(void)
     os_breakcheck();
     dp++;
   }
-  // clear screen, because some digraphs may be wrong, in which case we messed
-  // up ScreenLines
-  must_redraw = CLEAR;
 }
 
 static void printdigraph(digr_T *dp)

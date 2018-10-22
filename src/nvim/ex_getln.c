@@ -214,8 +214,6 @@ static int hislen = 0;                  /* actual length of history tables */
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
-static bool need_cursor_update = false;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -3020,8 +3018,6 @@ void cmdline_screen_cleared(void)
     }
     line = line->prev_ccline;
   }
-
-  need_cursor_update = true;
 }
 
 /// called by ui_flush, do what redraws neccessary to keep cmdline updated.
@@ -3481,10 +3477,7 @@ static void cursorcmd(void)
     if (ccline.redraw_state < kCmdRedrawPos) {
       ccline.redraw_state = kCmdRedrawPos;
     }
-    if (need_cursor_update) {
-      need_cursor_update = false;
-      setcursor();
-    }
+    setcursor();
     return;
   }
 
