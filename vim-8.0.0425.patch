@@ -1,0 +1,107 @@
+commit a6c07603ca2fa98a4184f5fd5ab021adcf5156b2
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sun Mar 5 21:18:27 2017 +0100
+
+    patch 8.0.0425: build errors when building without folding
+    
+    Problem:    Build errors when building without folding.
+    Solution:   Add #ifdefs. (John Marriott)
+
+diff --git a/src/diff.c b/src/diff.c
+index 8d7421dd7..b64b45ce9 100644
+--- a/src/diff.c
++++ b/src/diff.c
+@@ -2616,7 +2616,6 @@ diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1)
+     return lnum;
+ }
+ 
+-#if defined(FEAT_FOLDING) || defined(PROTO)
+ /*
+  * For line "lnum" in the current window find the equivalent lnum in window
+  * "wp", compensating for inserted/deleted lines.
+@@ -2656,6 +2655,5 @@ diff_lnum_win(linenr_T lnum, win_T *wp)
+ 	n = dp->df_lnum[i] + dp->df_count[i];
+     return n;
+ }
+-#endif
+ 
+ #endif	/* FEAT_DIFF */
+diff --git a/src/edit.c b/src/edit.c
+index 25896f3d3..6621515b5 100644
+--- a/src/edit.c
++++ b/src/edit.c
+@@ -541,8 +541,8 @@ edit(
+ 
+     /*
+      * Handle restarting Insert mode.
+-     * Don't do this for "CTRL-O ." (repeat an insert): we get here with
+-     * restart_edit non-zero, and something in the stuff buffer.
++     * Don't do this for "CTRL-O ." (repeat an insert): In that case we get
++     * here with something in the stuff buffer.
+      */
+     if (restart_edit != 0 && stuff_empty())
+     {
+@@ -1453,10 +1453,14 @@ doESCkey:
+ 
+ docomplete:
+ 	    compl_busy = TRUE;
++#ifdef FEAT_FOLDING
+ 	    disable_fold_update++;  /* don't redraw folds here */
++#endif
+ 	    if (ins_complete(c, TRUE) == FAIL)
+ 		compl_cont_status = 0;
++#ifdef FEAT_FOLDING
+ 	    disable_fold_update--;
++#endif
+ 	    compl_busy = FALSE;
+ 	    break;
+ #endif /* FEAT_INS_EXPAND */
+diff --git a/src/option.c b/src/option.c
+index d4e760b89..b0baf5018 100644
+--- a/src/option.c
++++ b/src/option.c
+@@ -4535,8 +4535,11 @@ do_set(
+ 		 * "wrap" gets set. */
+ 		if (curwin->w_p_diff
+ 			&& opt_idx >= 0  /* shut up coverity warning */
+-			&& (options[opt_idx].indir == PV_FDM
+-			    || options[opt_idx].indir == PV_WRAP))
++			&& (
++#ifdef FEAT_FOLDING
++			    options[opt_idx].indir == PV_FDM ||
++#endif
++			    options[opt_idx].indir == PV_WRAP))
+ 		    goto skip;
+ #endif
+ 	    }
+diff --git a/src/syntax.c b/src/syntax.c
+index 0d9cd2ced..11f679c0c 100644
+--- a/src/syntax.c
++++ b/src/syntax.c
+@@ -1183,11 +1183,12 @@ syn_stack_free_block(synblock_T *block)
+     void
+ syn_stack_free_all(synblock_T *block)
+ {
++#ifdef FEAT_FOLDING
+     win_T	*wp;
++#endif
+ 
+     syn_stack_free_block(block);
+ 
+-
+ #ifdef FEAT_FOLDING
+     /* When using "syntax" fold method, must update all folds. */
+     FOR_ALL_WINDOWS(wp)
+diff --git a/src/version.c b/src/version.c
+index b9d3d1e89..b5af6be70 100644
+--- a/src/version.c
++++ b/src/version.c
+@@ -764,6 +764,8 @@ static char *(features[]) =
+ 
+ static int included_patches[] =
+ {   /* Add new patch number below this line */
++/**/
++    425,
+ /**/
+     424,
+ /**/
