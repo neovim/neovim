@@ -9,8 +9,6 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   >/dev/null brew update
-  echo "Upgrade Python 3"
-  >/dev/null brew upgrade python
 fi
 
 echo 'python info:'
@@ -27,7 +25,7 @@ echo 'python info:'
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Python 3 pip"
-  pip3 -q install --user --upgrade pip
+  python3 -m pip -q install --user --upgrade pip
 else
   echo "Upgrade Python 2 pip"
   python2.7 -m pip -q install --user --upgrade pip
