@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
-local curbufmeths = helpers.curbufmeths
+local curbufmeths, eq = helpers.curbufmeths, helpers.eq
 
 describe('Buffer highlighting', function()
   local screen
@@ -27,6 +27,9 @@ describe('Buffer highlighting', function()
       [11] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [12] = {foreground = Screen.colors.Blue1},
       [13] = {background = Screen.colors.LightGrey},
+      [14] = {background = Screen.colors.Gray90},
+      [15] = {background = Screen.colors.Gray90, bold = true, foreground = Screen.colors.Brown},
+      [16] = {foreground = Screen.colors.Magenta, background = Screen.colors.Gray90},
     })
   end)
 
@@ -279,150 +282,225 @@ describe('Buffer highlighting', function()
     ]])
   end)
 
-  it('supports virtual text annotations', function()
+  describe('virtual text annotations', function()
     local set_virtual_text = curbufmeths.set_virtual_text
-    insert([[
-      1 + 2
-      3 +
-      x = 4]])
-    feed('O<esc>20A5, <esc>gg')
-    screen:expect([[
-      ^1 + 2                                   |
-      3 +                                     |
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,                     |
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+    local id1, id2
+    before_each(function()
+      insert([[
+        1 + 2
+        3 +
+        x = 4]])
+      feed('O<esc>20A5, <esc>gg')
+      screen:expect([[
+        ^1 + 2                                   |
+        3 +                                     |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,                     |
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    local id1 = set_virtual_text(0, 0, {{"=", "Statement"}, {" 3", "Number"}}, {})
-    set_virtual_text(id1, 1, {{"ERROR:", "ErrorMsg"}, {" invalid syntax"}}, {})
-    local id2 = set_virtual_text(0, 2, {{"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}}, {})
-    neq(id2, id1)
+      id1 = set_virtual_text(0, 0, {{"=", "Statement"}, {" 3", "Number"}}, {})
+      set_virtual_text(id1, 1, {{"ERROR:", "ErrorMsg"}, {" invalid syntax"}}, {})
+      id2 = set_virtual_text(0, 2, {{"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}}, {})
+      neq(id2, id1)
 
-    screen:expect([[
-      ^1 + 2 {3:=}{2: 3}                               |
-      3 + {11:ERROR:} invalid syntax               |
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+    end)
 
-    clear_hl(id1, 0, -1)
-    screen:expect([[
-      ^1 + 2                                   |
-      3 +                                     |
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+    it('works', function()
+      screen:expect([[
+        ^1 + 2 {3:=}{2: 3}                               |
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    -- Handles doublewidth chars, leaving a space if truncating
-    -- in the middle of a char
-    set_virtual_text(id1, 1, {{"暗x事zz速野谷質結育副住新覚丸活解終事", "Comment"}}, {})
-    screen:expect([[
-      ^1 + 2                                   |
-      3 + {12:暗x事zz速野谷質結育副住新覚丸活解終 }|
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      clear_hl(id1, 0, -1)
+      screen:expect([[
+        ^1 + 2                                   |
+        3 +                                     |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    feed("2Gx")
-    screen:expect([[
-      1 + 2                                   |
-      ^ + {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      -- Handles doublewidth chars, leaving a space if truncating
+      -- in the middle of a char
+      eq(-1, set_virtual_text(-1, 1, {{"暗x事zz速野谷質結育副住新覚丸活解終事", "Comment"}}, {}))
+      screen:expect([[
+        ^1 + 2                                   |
+        3 + {12:暗x事zz速野谷質結育副住新覚丸活解終 }|
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    -- visual selection doesn't highlight virtual text
-    feed("ggVG")
-    screen:expect([[
-      {13:1 + 2}                                   |
-      {13: +} {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
-      {13:5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
-      {13:, 5, 5, 5, 5, 5, 5, } Lorem ipsum dolor s|
-      ^x{13: = 4}                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {7:-- VISUAL LINE --}                       |
-    ]])
+      feed("2Gx")
+      screen:expect([[
+        1 + 2                                   |
+        ^ + {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    feed("<esc>")
-    screen:expect([[
-      1 + 2                                   |
-       + {12:暗x事zz速野谷質結育副住新覚丸活解終事}|
-      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      ^x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      feed("2Gdd")
+      screen:expect([[
+        1 + 2                                   |
+        ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
 
-    feed("2Gdd")
-    screen:expect([[
-      1 + 2                                   |
-      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+    it('is not highlighted by visual selection', function()
+      feed("ggVG")
+      screen:expect([[
+        {13:1 + 2} {3:=}{2: 3}                               |
+        {13:3 +} {11:ERROR:} invalid syntax               |
+        {13:5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
+        {13:, 5, 5, 5, 5, 5, 5, } Lorem ipsum dolor s|
+        ^x{13: = 4}                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- VISUAL LINE --}                       |
+      ]])
 
-    -- listchars=eol:- works, and doesn't shift virtual text
-    command("set list")
-    screen:expect([[
-      1 + 2                                   |
-      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,{1:-} Lorem ipsum dolor s|
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      feed("<esc>")
+      screen:expect([[
+        1 + 2 {3:=}{2: 3}                               |
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        ^x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    clear_hl(-1, 0, -1)
-    screen:expect([[
-      1 + 2                                   |
-      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,{1:-}                    |
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      -- special case: empty line has extra eol highlight
+      feed("ggd$")
+      screen:expect([[
+        ^ {3:=}{2: 3}                                    |
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
 
-    set_virtual_text(0, 0, {{"x\tx\ny\ry", "Statement"}, {"aa\000bb", "Number"}}, {})
-    screen:expect([[
-      1 + 2 {3:x^Ix^@y^My}{2:aa}                      |
-      ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-      , 5, 5, 5, 5, 5, 5,{1:-}                    |
-      x = 4                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
+      feed("jvk")
+      screen:expect([[
+        ^ {3:=}{2: 3}                                    |
+        {13:3} + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- VISUAL --}                            |
+      ]])
+
+      feed("o")
+      screen:expect([[
+        {13: }{3:=}{2: 3}                                    |
+        ^3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- VISUAL --}                            |
+      ]])
+    end)
+
+
+    it('works with listchars', function()
+      command("set list listchars+=eol:$")
+      screen:expect([[
+        ^1 + 2{1:$}{3:=}{2: 3}                               |
+        3 +{1:$}{11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,{1:-$}Lorem ipsum dolor s|
+        x = 4{1:$}                                  |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+
+      clear_hl(-1, 0, -1)
+      screen:expect([[
+        ^1 + 2{1:$}                                  |
+        3 +{1:$}                                    |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,{1:-$}                   |
+        x = 4{1:$}                                  |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
+
+    it('works with cursorline', function()
+      command("set cursorline")
+
+      screen:expect([[
+        {14:^1 + 2 }{15:=}{16: 3}{14:                               }|
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+
+      feed('j')
+      screen:expect([[
+        1 + 2 {3:=}{2: 3}                               |
+        {14:^3 + }{11:ERROR:}{14: invalid syntax               }|
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+
+
+      feed('j')
+      screen:expect([[
+        1 + 2 {3:=}{2: 3}                               |
+        3 + {11:ERROR:} invalid syntax               |
+        {14:^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
+        {14:, 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s}|
+        x = 4                                   |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
   end)
+
 end)
