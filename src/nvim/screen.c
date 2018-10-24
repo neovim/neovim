@@ -2835,7 +2835,7 @@ win_line (
         // if need_showbreak is set, breakindent also applies
         if (wp->w_p_bri && (row != startrow || need_showbreak)
             && filler_lines == 0) {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
@@ -2895,7 +2895,7 @@ win_line (
           p_extra = saved_p_extra;
           char_attr = saved_char_attr;
         } else {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
       }
     }
@@ -3079,7 +3079,7 @@ win_line (
         if (has_syntax) {
           char_attr = syntax_attr;
         } else {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
       }
     }
@@ -3342,7 +3342,7 @@ win_line (
           else
             syntax_flags = get_syntax_info(&syntax_seqnr);
         } else if (!attr_pri) {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
 
         /* Check spelling (unless at the end of the line).
