@@ -242,15 +242,17 @@ static void terminfo_start(UI *ui)
     }
   } else {
     // If it is running under winpty ignore the TERM environment variable and
-    // force it to be cygwin.
-    term = "cygwin";
+    // force it to be win32con.
+    term = "win32con";
   }
 
   if (term == NULL) {
-    if (vtp || conemu_ansi) {
-      term = "xterm-256color";
+    if (vtp) {
+      term = "vtpcon";
+    } else if (conemu_ansi) {
+      term = "conemu";
     } else {
-      term = "cygwin";
+      term = "win32con";
     }
   }
 
@@ -284,8 +286,7 @@ static void terminfo_start(UI *ui)
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
 
-  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env,
-                      conemu_ansi);
+  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);
   augment_terminfo(data, term, colorterm, vte_version, konsole, iterm_env);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
@@ -296,7 +297,8 @@ static void terminfo_start(UI *ui)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
-    || terminfo_is_term_family(term, "interix");
+    || terminfo_is_term_family(term, "win32con")
+    || terminfo_is_term_family(term, "interix") || conemu_ansi;
   data->bce = unibi_get_bool(data->ut, unibi_back_color_erase);
   data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
                                     data->norm, sizeof data->norm);
@@ -1504,7 +1506,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                bool konsole, bool iterm_env, bool conemu_ansi)
+                                bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   const char * xterm_version = os_getenv("XTERM_VERSION");
@@ -1536,6 +1538,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
+  bool conemu = terminfo_is_term_family(term, "conemu");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1575,6 +1578,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_bool(ut, unibi_back_color_erase, false);
   }
 
+  if (conemu) {
+    unibi_set_bool(ut, unibi_back_color_erase, true);
+  }
+
   if (xterm) {
     // Termit, LXTerminal, GTKTerm2, GNOME Terminal, MATE Terminal, roxterm,
     // and EvilVTE falsely claim to be xterm and do not support important xterm
@@ -1603,11 +1610,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // genuine Xterm and three false claimants have them.
       unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
       unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
-    }
-    if (conemu_ansi) {
-      unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, "\x1b[38;5;%p1%dm");
-      unibi_set_str(ut, unibi_set_a_background,  "\x1b[48;5;%p1%dm");
     }
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
@@ -1728,7 +1730,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || teraterm    // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
             || cygwin
-            || conemu_ansi
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt

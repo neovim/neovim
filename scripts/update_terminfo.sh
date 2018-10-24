@@ -27,6 +27,9 @@ readonly -A entries=(
   [vte-256color]=vte_256colour_terminfo
   [xterm-256color]=xterm_256colour_terminfo
   [cygwin]=cygwin_terminfo
+  [win32con]=win32con_terminfo
+  [conemu]=conemu_terminfo
+  [vtpcon]=vtpcon_terminfo
 )
 
 db="$(mktemp -du)"
@@ -48,7 +51,7 @@ gunzip -f terminfo.src.gz
 # Build terminfo database
 #
 print_bold '[*] Build terminfo database\n'
-tic -x -o "$db" terminfo.src
+cat terminfo.src scripts/windows.ti | tic -x -o "$db" -
 rm -f terminfo.src
 
 #
