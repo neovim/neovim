@@ -143,7 +143,6 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
 
   it('FilterReadPre, FilterReadPost', function()
-    if helpers.pending_win32(pending) then return end
     -- Write a special input file for this test block.
     write_file('test.out', dedent([[
       startstart
