@@ -400,7 +400,9 @@ function! man#init_pager() abort
   catch
     let b:man_sect = ''
   endtry
-  execute 'silent file man://'.fnameescape(ref)
+  if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
+    execute 'silent file man://'.fnameescape(ref)
+  endif
 endfunction
 
 call s:init()
