@@ -2199,7 +2199,6 @@ win_line (
                                         // of the matches
   int prev_c = 0;                       // previous Arabic character
   int prev_c1 = 0;                      // first composing char for prev_c
-  int did_line_attr = 0;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
   BufhlLineInfo bufhl_info;             // bufhl data for this line
@@ -2836,7 +2835,7 @@ win_line (
         // if need_showbreak is set, breakindent also applies
         if (wp->w_p_bri && (row != startrow || need_showbreak)
             && filler_lines == 0) {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
@@ -2896,7 +2895,7 @@ win_line (
           p_extra = saved_p_extra;
           char_attr = saved_char_attr;
         } else {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
       }
     }
@@ -3041,8 +3040,7 @@ win_line (
         }
         // Only highlight one character after the last column.
         if (*ptr == NUL
-            && (did_line_attr >= 1
-                || (wp->w_p_list && lcs_eol_one == -1))) {
+            && (wp->w_p_list && lcs_eol_one == -1)) {
           search_attr = 0;
         }
       }
@@ -3081,7 +3079,7 @@ win_line (
         if (has_syntax) {
           char_attr = syntax_attr;
         } else {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
       }
     }
@@ -3344,7 +3342,7 @@ win_line (
           else
             syntax_flags = get_syntax_info(&syntax_seqnr);
         } else if (!attr_pri) {
-          char_attr = wp->w_hl_attr_normal;
+          char_attr = 0;
         }
 
         /* Check spelling (unless at the end of the line).
@@ -3680,34 +3678,6 @@ win_line (
                      (col < wp->w_width))) {
           c = ' ';
           ptr--;  // put it back at the NUL
-        } else if ((diff_hlf != (hlf_T)0 || line_attr_lowprio || line_attr)
-                   && (wp->w_p_rl
-                       ? (col >= 0)
-                       : (col - boguscols < wp->w_width))) {
-          // Highlight until the right side of the window
-          c = ' ';
-          ptr--;  // put it back at the NUL
-
-          // Remember we do the char for line highlighting.
-          did_line_attr++;
-
-          // don't do search HL for the rest of the line
-          if ((line_attr_lowprio || line_attr)
-              && char_attr == search_attr
-              && (did_line_attr > 1
-                  || (wp->w_p_list && lcs_eol > 0))) {
-            char_attr = line_attr;
-          }
-          if (diff_hlf == HLF_TXD) {
-            diff_hlf = HLF_CHD;
-            if (attr == 0 || char_attr != attr) {
-              char_attr = win_hl_attr(wp, diff_hlf);
-              if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-                char_attr = hl_combine_attr(char_attr,
-                                            win_hl_attr(wp, HLF_CUL));
-              }
-            }
-          }
         }
       }
 
@@ -3824,7 +3794,7 @@ win_line (
     /*
      * At end of the text line or just after the last character.
      */
-    if (c == NUL || did_line_attr == 1) {
+    if (c == NUL) {
       long prevcol = (long)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
@@ -3855,11 +3825,7 @@ win_line (
                    || lnum == curwin->w_cursor.lnum)
                && c == NUL)
               // highlight 'hlsearch' match at end of line
-              || (prevcol_hl_flag
-                  && !(wp->w_p_cul && lnum == wp->w_cursor.lnum
-                       && !(wp == curwin && VIsual_active))
-                  && diff_hlf == (hlf_T)0
-                  && did_line_attr <= 1))) {
+              || prevcol_hl_flag)) {
         int n = 0;
 
         if (wp->w_p_rl) {
@@ -3903,10 +3869,11 @@ win_line (
           }
         }
 
-        if (wp->w_hl_attr_normal != 0) {
-          char_attr = hl_combine_attr(wp->w_hl_attr_normal, char_attr);
+        int eol_attr = char_attr;
+        if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          eol_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), eol_attr);
         }
-        ScreenAttrs[off] = char_attr;
+        ScreenAttrs[off] = eol_attr;
         if (wp->w_p_rl) {
           --col;
           --off;
@@ -3917,12 +3884,6 @@ win_line (
         ++vcol;
         eol_hl_off = 1;
       }
-    }
-
-    //
-    // At end of the text line.
-    //
-    if (c == NUL) {
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
         v = wp->w_skipcol;
@@ -3946,8 +3907,8 @@ win_line (
             && (int)wp->w_virtcol <
             wp->w_width * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
-           || draw_color_col || do_virttext)
-          && !wp->w_p_rl) {
+           || draw_color_col || line_attr_lowprio || line_attr
+           || diff_hlf != (hlf_T)0 || do_virttext)) {
         int rightmost_vcol = 0;
         int i;
 
@@ -3959,7 +3920,7 @@ win_line (
 
         // Make sure alignment is the same regardless
         // if listchars=eol:X is used or not.
-        bool delay_virttext = lcs_eol <= 0;
+        bool delay_virttext = lcs_eol == lcs_eol_one && eol_hl_off == 0;
 
         if (wp->w_p_cuc) {
           rightmost_vcol = wp->w_virtcol;
@@ -3977,7 +3938,22 @@ win_line (
         int cuc_attr = win_hl_attr(wp, HLF_CUC);
         int mc_attr = win_hl_attr(wp, HLF_MC);
 
-        while (col < wp->w_width) {
+        int diff_attr = 0;
+        if (diff_hlf == HLF_TXD) {
+          diff_hlf = HLF_CHD;
+        }
+        if (diff_hlf != 0) {
+          diff_attr = win_hl_attr(wp, diff_hlf);
+        }
+
+        int base_attr = hl_combine_attr(line_attr_lowprio, diff_attr);
+        if (base_attr || line_attr) {
+          rightmost_vcol = INT_MAX;
+        }
+
+        int col_stride = wp->w_p_rl ? -1 : 1;
+
+        while (wp->w_p_rl ? col >= 0 : col < wp->w_width) {
           int cells = -1;
           if (do_virttext && !delay_virttext) {
             if (*s.p == NUL) {
@@ -4001,12 +3977,13 @@ win_line (
             schar_from_ascii(ScreenLines[off], ' ');
             cells = 1;
           }
-          col += cells;
+          col += cells * col_stride;
           if (draw_color_col) {
             draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
           }
 
-          int attr = 0;
+          int attr = base_attr;
+
           if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
             attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
@@ -4017,11 +3994,13 @@ win_line (
             attr = hl_combine_attr(attr, virt_attr);
           }
 
+          attr = hl_combine_attr(attr, line_attr);
+
           ScreenAttrs[off] = attr;
           if (cells == 2) {
             ScreenAttrs[off+1] = attr;
           }
-          off += cells;
+          off += cells * col_stride;
 
           if (VCOL_HLC >= rightmost_vcol && *s.p == NUL
               && virt_pos >= virt_text.size) {
