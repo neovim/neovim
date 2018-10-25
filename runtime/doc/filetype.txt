@@ -512,7 +512,7 @@ View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
 To use Nvim as a manpager: >
-     export MANPAGER="nvim +Man!"
+     export MANPAGER='nvim +Man!'
 
 man.vim will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
