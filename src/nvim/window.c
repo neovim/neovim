@@ -3336,6 +3336,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   }
 
   redraw_all_later(NOT_VALID);
+  must_redraw = NOT_VALID;
 }
 
 /*

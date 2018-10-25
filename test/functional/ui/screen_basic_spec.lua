@@ -449,6 +449,46 @@ local function screen_tests(linegrid)
                                                              |
       ]])
     end)
+
+    it('redraws unvisited tab #9152', function()
+      insert('hello')
+      -- create a tab without visiting it
+      command('tabnew|tabnext')
+      screen:expect([[
+        {2: + [No Name] }{4: [No Name] }{3:                            }{4:X}|
+        hell^o                                                |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed('gT')
+      screen:expect([[
+        {4: + [No Name] }{2: [No Name] }{3:                            }{4:X}|
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
   end)
 
   describe('insert mode', function()
