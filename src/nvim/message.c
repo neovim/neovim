@@ -745,6 +745,7 @@ static void add_msg_hist(const char *s, int len, int attr)
   if (first_msg_hist == NULL)
     first_msg_hist = last_msg_hist;
   ++msg_hist_len;
+  apply_autocmds(EVENT_MESSAGEADD, NULL, NULL, FALSE, curbuf);
 }
 
 /*

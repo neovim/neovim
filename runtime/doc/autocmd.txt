@@ -346,6 +346,8 @@ Name			triggered by ~
 
 |User|			to be used in combination with ":doautocmd"
 
+|MessageAdd|		after a message was added to |message-history|
+
 
 The alphabetical list of autocommand events:		*autocmd-events-abc*
 
@@ -818,6 +820,9 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
+
+							*MessageAdd*
+MessageAdd			After a message is added to |message-history|.
 							*OptionSet*
 OptionSet			After setting an option.  The pattern is
 				matched against the long option name.

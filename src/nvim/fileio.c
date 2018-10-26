@@ -6873,6 +6873,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
         || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
+        || event == EVENT_MESSAGEADD
         || event == EVENT_OPTIONSET
         || event == EVENT_QUICKFIXCMDPOST
         || event == EVENT_QUICKFIXCMDPRE
