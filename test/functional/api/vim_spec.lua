@@ -841,10 +841,6 @@ describe('API', function()
     end)
 
     it('works for job channel', function()
-      if iswin() and os.getenv('APPVEYOR') ~= nil then
-        pending("jobstart(['cat']) unreliable on appveyor")
-        return
-      end
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
       local info = {
         stream='job',
