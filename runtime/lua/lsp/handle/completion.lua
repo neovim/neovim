@@ -36,7 +36,7 @@ end
 
 completion.map_CompletionItemKind_to_vim = function(item_kind)
   if item_kind == nil then
-    return nil
+    return ''
   end
 
   if item_kind == CompletionItemKind.Variable then
@@ -53,6 +53,7 @@ completion.map_CompletionItemKind_to_vim = function(item_kind)
     return 'm'
   end
 
+  return ''
 end
 
 
