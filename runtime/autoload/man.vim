@@ -117,35 +117,41 @@ endfunction
 
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
-  let opts = {
-        \ 'stdout': '',
-        \ 'stderr': '',
-        \ 'exit_code': 0,
-        \ 'on_stdout': function('s:system_handler'),
-        \ 'on_stderr': function('s:system_handler'),
-        \ 'on_exit': function('s:system_handler'),
-        \ }
-  let jobid = jobstart(a:cmd, opts)
+  let mansect_save = $MANSECT
+  try
+    let $MANSECT = ''
+    let opts = {
+          \ 'stdout': '',
+          \ 'stderr': '',
+          \ 'exit_code': 0,
+          \ 'on_stdout': function('s:system_handler'),
+          \ 'on_stderr': function('s:system_handler'),
+          \ 'on_exit': function('s:system_handler'),
+          \ }
+    let jobid = jobstart(a:cmd, opts)
 
-  if jobid < 1
-    throw printf('command error %d: %s', jobid, join(a:cmd))
-  endif
+    if jobid < 1
+      throw printf('command error %d: %s', jobid, join(a:cmd))
+    endif
 
-  let res = jobwait([jobid], 30000)
-  if res[0] == -1
-    try
-      call jobstop(jobid)
-      throw printf('command timed out: %s', join(a:cmd))
-    catch /^Vim(call):E900:/
-    endtry
-  elseif res[0] == -2
-    throw printf('command interrupted: %s', join(a:cmd))
-  endif
-  if opts.exit_code != 0
-    throw printf("command error (%d) %s: %s", jobid, join(a:cmd), substitute(opts.stderr, '\_s\+$', '', &gdefault ? '' : 'g'))
-  endif
+    let res = jobwait([jobid], 30000)
+    if res[0] == -1
+      try
+        call jobstop(jobid)
+        throw printf('command timed out: %s', join(a:cmd))
+      catch /^Vim(call):E900:/
+      endtry
+    elseif res[0] == -2
+      throw printf('command interrupted: %s', join(a:cmd))
+    endif
+    if opts.exit_code != 0
+      throw printf("command error (%d) %s: %s", jobid, join(a:cmd), substitute(opts.stderr, '\_s\+$', '', &gdefault ? '' : 'g'))
+    endif
 
-  return opts.stdout
+    return opts.stdout
+  finally
+    let $MANSECT = mansect_save
+  endtry
 endfunction
 
 function! s:get_page(path) abort
