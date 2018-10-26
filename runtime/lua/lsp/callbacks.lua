@@ -6,7 +6,10 @@
 --  TODO: textDocument/willSaveWaitUntil
 --  notification: textDocument/didSave
 --  notification: textDocument/didClose
+
 --  IN PROGRESS: textDocument/completion
+--  TODO: completionItem/resolve
+
 --  textDocument/hover
 --  TODO: textDocument/signatureHelp
 --  textDocument/references
@@ -21,7 +24,6 @@
 --  TODO: textDocument/documentLink
 --  TODO: textDocument/rename
 --
---  TODO: completionItem/resolve
 --
 --  TODO: codeLens/resolve
 --
@@ -30,6 +32,9 @@
 local log = require('lsp.log')
 local util = require('nvim.util')
 local lsp_util = require('lsp.util')
+
+local QuickFix = require('nvim.quickfix_list')
+local LocationList = require('nvim.location_list')
 
 local protocol = require('lsp.protocol')
 local errorCodes = protocol.errorCodes
@@ -52,6 +57,27 @@ local method_to_callback_object = function(method, create_new)
   return CallbackMapping[method]
 end
 
+local call_callbacks = function(callback_list, success, params)
+  local results = {}
+
+  for key, callback in ipairs(callback_list) do
+    results[key] = callback(success, params)
+  end
+
+  return unpack(results)
+end
+
+local call_callbacks_for_method = function(method, success, data, default_only, filetype)
+  local cb = method_to_callback_object(method, false)
+
+  if cb == nil then
+    log.debug('Unsupported method:', method)
+    return
+  end
+
+  return cb(success, data, default_only, filetype)
+end
+
 
 CallbackObject.__index = function(self, key)
   if CallbackObject[key] ~= nil then
@@ -63,7 +89,7 @@ end
 
 CallbackObject.__call = function(self, success, data, default_only, filetype)
   if self.name ~= 'nvim/error_callback' and not success then
-    method_to_callback_object('nvim/error_callback').default(self, data)
+    call_callbacks_for_method('nvim/error_callback', false, data)
   end
 
   if util.table.is_empty(self.default) then
@@ -192,7 +218,12 @@ end)
 
 -- 3 textDocument/publishDiagnostics
 add_default_callback('textDocument/publishDiagnostics', function(self, data)
-  local qflist = {}
+  local diagnostic_list
+  if self.options.use_quickfix then
+    diagnostic_list = QuickFix:new('Language Server Diagnostics')
+  else
+    diagnostic_list = LocationList:new('Language Server Diagnostics')
+  end
 
   for _, diagnostic in ipairs(data.diagnostics) do
     local range = diagnostic.range
@@ -211,28 +242,28 @@ add_default_callback('textDocument/publishDiagnostics', function(self, data)
     local source = diagnostic.source or 'lsp'
     local message = diagnostic.message
 
-    table.insert(qflist, {
-      lnum = range.start.line + 1,
-      col = range.start.character + 1,
-      text = '[' .. source .. ']' .. message,
-      filename = lsp_util.get_filename(data.uri),
-      ['type'] = message_type,
-    })
+    diagnostic_list:add(
+      range.start.line + 1,
+      range.start.character + 1,
+      '[' .. source .. ']' .. message,
+      lsp_util.get_filename(data.uri),
+      message_type
+    )
   end
 
-  vim.api.nvim_call_function('setqflist', {qflist, ' ', 'Language Server Diagnostics'})
+  diagnostic_list:set()
 
-  if #qflist == 0  then
-    vim.api.nvim_command('cclose')
-  elseif self.options.auto_quickfix_list then
-    if not util.is_quickfix_open() then
-      vim.api.nvim_command('copen')
-      vim.api.nvim_command('wincmd p')
-    end
+  if diagnostic_list:len() == 0 then
+    diagnostic_list:close()
+  elseif self.options.auto_list then
+    diagnostic_list:open()
   end
 
   return
-end, { auto_quickfix_list = false, })
+end, {
+  auto_list = false,
+  use_quickfix = false,
+})
 
 -- 3 textDocument/completion
 add_default_callback('textDocument/completion', function(self, data)
@@ -460,27 +491,6 @@ local get_list_of_callbacks = function(method, callback_parameter, default_only,
   if cb == nil then return {} end
 
   return cb:get_list_of_callbacks(default_only, filetype)
-end
-
-local call_callbacks = function(callback_list, success, params)
-  local results = {}
-
-  for key, callback in ipairs(callback_list) do
-    results[key] = callback(success, params)
-  end
-
-  return unpack(results)
-end
-
-local call_callbacks_for_method = function(method, success, data, default_only, filetype)
-  local cb = method_to_callback_object(method, false)
-
-  if cb == nil then
-    log.debug('Unsupported method:', method)
-    return
-  end
-
-  return cb(success, data, default_only, filetype)
 end
 
 local set_default_callback = function(method, new_default_callback)
