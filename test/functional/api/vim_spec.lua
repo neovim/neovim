@@ -1269,4 +1269,65 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_log', function()
+    -- choose a file for our logs to go to
+    templog = 'Xnvim-log'
+
+    before_each(function()
+      os.remove(templog)
+      clear({env={
+          NVIM_LOG_FILE=templog,
+      }})
+    end)
+
+    after_each(function()
+      clear()
+      os.remove(templog)
+    end)
+
+    function file_contains(path, pattern)
+      local file = io.open(path, 'r')
+      if not file then
+        error(string.format('file_contains(): %s could not be read', path))
+      end
+
+      local data = file:read('*a')
+      file:close()
+
+      if nil ~= string.match(data, pattern) then
+        return
+      end
+
+      error(string.format("%s does not contain pattern '%s'. File contents:\n%s", path, pattern, data))
+    end
+
+    it('writes lines to $NVIM_LOG_FILE', function()
+      command(string.format("let $NVIM_LOG_FILE = '%s'", templog))
+      nvim('log', 'INFO', {'Info line A', 'Info line B'}, {})
+      file_contains(templog, 'INFO  Info line A')
+      file_contains(templog, 'INFO  Info line B')
+
+      -- test that calling nvim_log() with different log levels results in the expected error messages
+      nvim('log', 'DEBUG', {'A debug line'}, {})
+      file_contains(templog, 'DEBUG  A debug line')
+
+      -- test that nvim_log() includes the owner name
+      nvim('log', 'WARN', {'A warning line'}, {who='nvim_spec.lua'})
+      file_contains(templog, 'WARN nvim_spec.lua A warning line')
+
+      -- test an invalid type / empty opt.who
+      nvim('log', 'INFO', {'Info line C'}, {who=555})
+      file_contains(templog, 'INFO  Info line C')
+      file_contains(templog, 'ERROR nvim_log%(%): opt%[who%] must be a string')
+      nvim('log', 'INFO', {'Info line D'}, {who=""})
+      file_contains(templog, 'INFO  Info line D')
+
+      -- test invalid/empty log line items
+      nvim('log', 'INFO', {'valid line 1', 555, false, 'valid line 2'}, {who="nvim_spec.lua"})
+      file_contains(templog, 'ERROR nvim_spec.lua nvim_log%(%): lines%[1%] should be a string; got integer instead')
+      file_contains(templog, 'ERROR nvim_spec.lua nvim_log%(%): lines%[2%] should be a string; got boolean instead')
+      file_contains(templog, 'INFO nvim_spec.lua valid line 1')
+      file_contains(templog, 'INFO nvim_spec.lua valid line 2')
+    end)
+  end)
 end)
