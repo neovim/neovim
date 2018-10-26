@@ -1,6 +1,7 @@
 
 local util = {
   table = {},
+  quickfix = {},
 }
 
 vim = vim or {}
