@@ -10,7 +10,7 @@ function! lsp#completion#omni(findstart, base) abort
     return a:findstart ? -1 : []
   endif
 
-  if a:findstart
+  if a:findstart == 1
     let s:last_location =  col('.')
 
     let line_to_cursor = strpart(getline('.'), 0, col('.') - 1)
@@ -18,25 +18,16 @@ function! lsp#completion#omni(findstart, base) abort
     let length = end_position - start_position
 
     return len(line_to_cursor) - length
-  else
-    let g:__lsp_location = {
-          \ 'position': {
-            \ 'character': col('.') + len(a:base),
-            \ 'line': line('.') - 1,
-          \ },
-        \ }
+  elseif a:findstart == 0
+    let params = luaeval("require('lsp.structures').CompletionParams("
+                         \ . "{ position = { character = _A }})",
+                         \  col('.') + len(a:base))
+    let results = lsp#request('textDocument/completion', params)
 
-    let results = lsp#request('textDocument/completion', g:__lsp_location)
-
-    let g:__debug = {
-          \ 'findstart': a:findstart,
-          \ 'col': col('.'),
-          \ 'base': a:base,
-          \ 'location': g:__lsp_location,
-          \ 'results': results
-          \ }
-
+    call filter(results, {_, match -> match['word'] =~ '^' . a:base})
     return results
+  else
+    throw "LSP/omnifunc bad a:findstart" a:findstart
   endif
 
 endfunction
@@ -48,7 +39,6 @@ function! lsp#completion#complete() abort
   let [string_result, start_position, end_position] = matchstrpos(line_to_cursor, '\k\+$')
 
   let results = lsp#request('textDocument/completion')
-
   call complete(col('.') - (end_position - start_position), results)
 
   return ''
