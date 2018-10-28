@@ -901,6 +901,7 @@ Vim server:					*server-functions*
 Window size and position:			*window-size-functions*
 	winheight()		get height of a specific window
 	winwidth()		get width of a specific window
+	win_screenpos()		get screen position of a window
 	winrestcmd()		return command to restore window sizes
 	winsaveview()		get view of current window
 	winrestview()		restore saved view of current window

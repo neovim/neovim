@@ -3,8 +3,8 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2017 Sep 30
-" included patch from Christian Brabandt to make use of the strikethrough attributes
+" Last Change:          2017 Dec 16
+" Included patch from Jorge Maldonado Ventura to add the dialog element
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -100,11 +100,11 @@ syn keyword htmlArg contained summary tabindex valuetype version
 " html 5 arg names
 syn keyword htmlArg contained allowfullscreen async autocomplete autofocus
 syn keyword htmlArg contained autoplay challenge contenteditable contextmenu
-syn keyword htmlArg contained controls crossorigin default dirname download
-syn keyword htmlArg contained draggable dropzone form formaction formenctype
-syn keyword htmlArg contained formmethod formnovalidate formtarget hidden
-syn keyword htmlArg contained high icon inputmode keytype kind list loop low
-syn keyword htmlArg contained max min minlength muted nonce novalidate open
+syn keyword htmlArg contained controls crossorigin default dialog dirname
+syn keyword htmlArg contained download draggable dropzone form formaction
+syn keyword htmlArg contained formenctype formmethod formnovalidate formtarget
+syn keyword htmlArg contained hidden high icon inputmode keytype kind list loop
+syn keyword htmlArg contained low max min minlength muted nonce novalidate open
 syn keyword htmlArg contained optimum pattern placeholder poster preload
 syn keyword htmlArg contained radiogroup required reversed sandbox spellcheck
 syn keyword htmlArg contained sizes srcset srcdoc srclang step title translate
