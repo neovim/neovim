@@ -570,7 +570,7 @@ By default the following options are set, in accordance with PEP8: >
 	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
 
 To disable this behaviour, set the following variable in your vimrc: >
-	
+
 	let g:python_recommended_style = 0
 
 

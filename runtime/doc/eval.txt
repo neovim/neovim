@@ -5569,8 +5569,6 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 <		Matches added by |matchaddpos()| are returned by
 		|getmatches()| with an entry "pos1", "pos2", etc., with the
 		value a list like the {pos} item.
-		These matches cannot be set via |setmatches()|, however they
-		can still be deleted by |clearmatches()|.
 
 matcharg({nr})							*matcharg()*
 		Selects the {nr} match item, as set with a |:match|,

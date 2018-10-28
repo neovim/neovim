@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:     Debian sources.list
-" Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
+" Maintainer:   Debian Vim Maintainers
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2017 Oct 28
-" URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debsources.vim
+" Last Change: 2018 Jan 06
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debsources.vim
 
 " Standard syntax initialization
 if exists("b:current_syntax")
