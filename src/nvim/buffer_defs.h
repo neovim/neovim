@@ -508,9 +508,9 @@ struct file_buffer {
   int b_changed;                // 'modified': Set to true if something in the
                                 // file has been changed and not written out.
 
-  /// Change identifier incremented for each change, including undo
+  /// Change-identifier incremented for each change, including undo.
   ///
-  /// This is a dictionary item used to store in b:changedtick.
+  /// This is a dictionary item used to store b:changedtick.
   ChangedtickDictItem changedtick_di;
 
   varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or

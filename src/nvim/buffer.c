@@ -757,6 +757,8 @@ static void free_buffer(buf_T *buf)
   handle_unregister_buffer(buf);
   buf_free_count++;
   free_buffer_stuff(buf, true);
+  // b:changedtick uses an item in buf_T, remove it now.
+  tv_dict_item_remove(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
   tv_dict_unref(buf->additional_data);
