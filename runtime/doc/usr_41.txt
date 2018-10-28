@@ -885,6 +885,7 @@ GUI:						*gui-functions*
 	getwinposx()		X position of the GUI Vim window
 	getwinposy()		Y position of the GUI Vim window
 	balloon_show()		set the balloon content
+	balloon_split()		split a message for a balloon
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
