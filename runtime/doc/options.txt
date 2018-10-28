@@ -4422,11 +4422,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	copy of the original file will be kept.  The name of the copy is the
 	name of the original file with the string in the 'patchmode' option
 	appended.  This option should start with a dot.  Use a string like
-	".org".  'backupdir' must not be empty for this to work (Detail: The
-	backup file is renamed to the patchmode file after the new file has
-	been successfully written, that's why it must be possible to write a
-	backup file).  If there was no file to be backed up, an empty file is
-	created.
+	".orig" or ".org".  'backupdir' must not be empty for this to work
+	(Detail: The backup file is renamed to the patchmode file after the
+	new file has been successfully written, that's why it must be possible
+	to write a backup file).  If there was no file to be backed up, an
+	empty file is created.
 	When the 'backupskip' pattern matches, a patchmode file is not made.
 	Using 'patchmode' for compressed files appends the extension at the
 	end (e.g., "file.gz.orig"), thus the resulting name isn't always
