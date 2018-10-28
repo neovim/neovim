@@ -3,7 +3,7 @@
 " Maintainer:	Tom Picton <tom@tompicton.co.uk>
 " Previous Maintainer: James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Change:	Thur, 09 November 2017
+" Last Change:	Wed, 20 December 2017
 " https://github.com/tpict/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
@@ -20,6 +20,9 @@ setlocal comments=b:#,fb:-
 setlocal commentstring=#\ %s
 
 setlocal omnifunc=pythoncomplete#Complete
+if has('python3')
+       setlocal omnifunc=python3complete#Complete
+endif
 
 set wildignore+=*.pyc
 

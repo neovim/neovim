@@ -13,6 +13,14 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
+" Optional embedded Autodoc parsing
+" To enable it add: let g:c_autodoc = 1
+" to your .vimrc
+if exists("c_autodoc")
+  syn include @cAutodoc <sfile>:p:h/autodoc.vim
+  unlet b:current_syntax
+endif
+
 " A bunch of useful C keywords
 syn keyword	cStatement	goto break return continue asm
 syn keyword	cLabel		case default
@@ -376,6 +384,13 @@ syn match	cInclude	display "^\s*\zs\(%:\|#\)\s*include\>\s*["<]" contains=cInclu
 syn cluster	cPreProcGroup	contains=cPreCondit,cIncluded,cInclude,cDefine,cErrInParen,cErrInBracket,cUserLabel,cSpecial,cOctalZero,cCppOutWrapper,cCppInWrapper,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cString,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cParen,cBracket,cMulti,cBadBlock
 syn region	cDefine		start="^\s*\zs\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=ALLBUT,@cPreProcGroup,@Spell
 syn region	cPreProc	start="^\s*\zs\(%:\|#\)\s*\(pragma\>\|line\>\|warning\>\|warn\>\|error\>\)" skip="\\$" end="$" keepend contains=ALLBUT,@cPreProcGroup,@Spell
+
+" Optional embedded Autodoc parsing
+if exists("c_autodoc")
+  syn match cAutodocReal display contained "\%(//\|[/ \t\v]\*\|^\*\)\@2<=!.*" contains=@cAutodoc containedin=cComment,cCommentL
+  syn cluster cCommentGroup add=cAutodocReal
+  syn cluster cPreProcGroup add=cAutodocReal
+endif
 
 " Highlight User Labels
 syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserCont,cUserLabel,cBitField,cOctalZero,cCppOutWrapper,cCppInWrapper,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cCppParen,cCppBracket,cCppString

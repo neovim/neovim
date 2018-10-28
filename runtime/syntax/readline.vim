@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:             readline(3) configuration file
+" Maintainer:           Daniel Moch <daniel@danielmoch.com>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2017-06-25
+" Latest Revision:      2017-12-25
 "   readline_has_bash - if defined add support for bash specific
 "                       settings/functions
 
@@ -152,6 +153,9 @@ syn keyword readlineVariable    contained
                               \ skipwhite
                               \ comment-begin
                               \ isearch-terminators
+                              \ vi-cmd-mode-string
+                              \ vi-ins-mode-string
+                              \ emacs-mode-string
 
 syn keyword readlineVariable    contained
                               \ nextgroup=readlineNumber

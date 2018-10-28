@@ -235,6 +235,7 @@ endif
 
 " C or lpc
 au BufNewFile,BufRead *.c			call dist#ft#FTlpc()
+au BufNewFile,BufRead *.lpc,*.ulpc		setf lpc
 
 " Calendar
 au BufNewFile,BufRead calendar			setf calendar
@@ -374,7 +375,7 @@ au BufNewFile,BufRead *.cfm,*.cfi,*.cfc		setf cf
 au BufNewFile,BufRead configure.in,configure.ac setf config
 
 " CUDA  Cumpute Unified Device Architecture
-au BufNewFile,BufRead *.cu			setf cuda
+au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
 " Dockerfile
 au BufNewFile,BufRead Dockerfile,*.Dockerfile	setf dockerfile
@@ -1148,8 +1149,9 @@ au BufNewFile,BufRead *.pod6			setf pod6
 " Also .ctp for Cake template file
 au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp	setf php
 
-" Pike
-au BufNewFile,BufRead *.pike,*.lpc,*.ulpc,*.pmod setf pike
+" Pike and Cmod
+au BufNewFile,BufRead *.pike,*.pmod		setf pike
+au BufNewFile,BufRead *.cmod			setf cmod
 
 " Pinfo config
 au BufNewFile,BufRead */etc/pinforc,*/.pinforc	setf pinfo
