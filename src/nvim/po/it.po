@@ -1417,6 +1417,11 @@ msgstr "E904: l'ultimo argomento per espressione/chiamata dev'essere numerico"
 msgid "E904: third argument for call must be a list"
 msgstr "E904: il terzo argomento della chiamata dev'essere una Lista"
 
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld riga: "
+msgstr[1] "+-%s%3ld righe: "
+
 #, c-format
 msgid "E905: received unknown command: %s"
 msgstr "E905: recevuto comando non conosciuto: %s"
@@ -1428,6 +1433,13 @@ msgstr "E630: %s(): scrittura in mancanza di connessione"
 #, c-format
 msgid "E631: %s(): write failed"
 msgstr "E631: %s(): scrittura non riuscita"
+
+msgid "Oldval = \"%s\""
+msgstr "Vecchioval = \"%s\""
+
+#, c-format
+msgid "Newval = \"%s\""
+msgstr "Nuovoval = \"%s\""
 
 #, c-format
 msgid "frame at highest level: %d"
@@ -4839,6 +4851,9 @@ msgstr ""
 "\n"
 "Non posso impostare il contesto di sicurezza per "
 
+msgid "E954: 24-bit colors are not supported on this environment"
+msgstr "E954: colori a 24-bit non supportati in questo ambiente"
+
 #, c-format
 msgid "E151: No match: %s"
 msgstr "E151: Nessuna corrispondenza: %s"
@@ -5390,6 +5405,9 @@ msgstr "E944: Intervallo invertito nella classe di caratteri"
 
 msgid "E945: Range too large in character class"
 msgstr "E945: Intervallo troppo ampio nella classe di caratteri"
+
+msgid "E926: Current location list was changed"
+msgstr "E926: La lista delle locazioni corrente è stata cambiata"
 
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"

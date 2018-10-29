@@ -4,12 +4,13 @@
 " Repository:   https://github.com/chrisbra/vim-sqloracle-syntax
 " License:      Vim
 " Previous Maintainer:	Paul Moore
-" Last Change:	2016 Jul 22
+" Last Change:	2018 May 13
 
 " Changes:
 " 02.04.2016: Support for when keyword
 " 03.04.2016: Support for join related keywords
 " 22.07.2016: Support Oracle Q-Quote-Syntax
+" 25.07.2016: Support for Oracle N'-Quote syntax
 
 if exists("b:current_syntax")
   finish
@@ -53,8 +54,8 @@ syn keyword sqlType	boolean char character date float integer long
 syn keyword sqlType	mlslabel number raw rowid varchar varchar2 varray
 
 " Strings:
-syn region sqlString	matchgroup=Quote start=+"+  skip=+\\\\\|\\"+  end=+"+
-syn region sqlString	matchgroup=Quote start=+'+  skip=+\\\\\|\\'+  end=+'+
+syn region sqlString	matchgroup=Quote start=+n\?"+  skip=+\\\\\|\\"+  end=+"+
+syn region sqlString	matchgroup=Quote start=+n\?'+  skip=+\\\\\|\\'+  end=+'+
 syn region sqlString	matchgroup=Quote start=+n\?q'\z([^[(<{]\)+    end=+\z1'+
 syn region sqlString	matchgroup=Quote start=+n\?q'<+   end=+>'+
 syn region sqlString	matchgroup=Quote start=+n\?q'{+   end=+}'+

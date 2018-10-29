@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:		NSIS script, for version of NSIS 3.02 and later
+" Language:		NSIS script, for version of NSIS 3.03 and later
 " Maintainer:		Ken Takata
 " URL:			https://github.com/k-takata/vim-nsis
 " Previous Maintainer:	Alex Jakushev <Alex.Jakushev@kemek.lt>
-" Last Change:		2018-01-26
+" Last Change:		2018-02-07
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -395,7 +395,8 @@ syn keyword nsisFileAttrib	contained FILE_ATTRIBUTE_TEMPORARY
 syn keyword nsisInstruction	contained Abort Call ClearErrors GetCurrentAddress
 syn keyword nsisInstruction	contained GetFunctionAddress GetLabelAddress Goto
 syn keyword nsisInstruction	contained IfAbort IfErrors IfFileExists IfRebootFlag IfSilent
-syn keyword nsisInstruction	contained IntCmp IntCmpU Return Quit SetErrors StrCmp StrCmpS
+syn keyword nsisInstruction	contained IntCmp IntCmpU Int64Cmp Int64CmpU IntPtrCmp IntPtrCmpU
+syn keyword nsisInstruction	contained Return Quit SetErrors StrCmp StrCmpS
 
 syn keyword nsisInstruction	contained MessageBox nextgroup=nsisMessageBoxOpt skipwhite
 syn region nsisMessageBoxOpt	contained start="" end="$" transparent keepend contains=@nsisAnyOpt,nsisMessageBox
@@ -434,7 +435,7 @@ syn keyword nsisInstruction	contained StrCpy StrLen
 syn keyword nsisInstruction	contained Exch Push Pop
 
 "FUNCTIONS - Integer manipulation support (4.9.10)
-syn keyword nsisInstruction	contained IntOp IntFmt
+syn keyword nsisInstruction	contained IntFmt Int64Fmt IntOp IntPtrOp
 
 "FUNCTIONS - Rebooting support (4.9.11)
 syn keyword nsisInstruction	contained Reboot SetRebootFlag
@@ -541,6 +542,7 @@ syn match nsisSystem		contained "!finalize\>"
 syn match nsisSystem		contained "!system\>"
 syn match nsisSystem		contained "!tempfile\>"
 syn match nsisSystem		contained "!getdllversion\>"
+syn match nsisSystem		contained "!gettlbversion\>"
 syn match nsisSystem		contained "!warning\>"
 
 syn match nsisSystem		contained "!pragma\>" nextgroup=nsisPragmaOpt skipwhite

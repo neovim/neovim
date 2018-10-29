@@ -1,12 +1,15 @@
 " Vim indent file
 " Language:            Shell Script
 " Maintainer:          Christian Brabandt <cb@256bit.org>
-" Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:     2018-05-12
+" Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
+" Latest Revision:     2018-03-26
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20180326  - better support for line continuation
+"          20180325  - better detection of function definitions
+"          20180127  - better support for zsh complex commands
 "          20170808: - better indent of line continuation
 "          20170502: - get rid of buffer-shiftwidth function
 "          20160912: - preserve indentation of here-doc blocks
