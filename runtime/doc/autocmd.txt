@@ -856,6 +856,9 @@ OptionSet			After setting an option.  The pattern is
 				plugin. You can always use `:noa` to prevent
 				triggering this autocommand.
 
+				When using |:set| in the autocommand the event
+				is not triggered again.
+
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:lmake|, |:grep|, |:lgrep|, |:grepadd|,

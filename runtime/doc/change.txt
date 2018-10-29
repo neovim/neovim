@@ -667,6 +667,7 @@ The flags that you can use for the substitute commands:
 	    CTRL-E  to scroll the screen up
 	    CTRL-Y  to scroll the screen down
 
+							*:s_e*
 [e]     When the search pattern fails, do not issue an error message and, in
 	particular, continue in maps as if no error occurred.  This is most
 	useful to prevent the "No match" error from breaking a mapping.  Vim
@@ -677,29 +678,34 @@ The flags that you can use for the substitute commands:
 		Trailing characters
 		Interrupted
 
+							*:s_g*
 [g]	Replace all occurrences in the line.  Without this argument,
 	replacement occurs only for the first occurrence in each line.  If the
 	'gdefault' option is on, this flag is on by default and the [g]
 	argument switches it off.
 
+							*:s_i*
 [i]	Ignore case for the pattern.  The 'ignorecase' and 'smartcase' options
 	are not used.
 
+							*:s_I*
 [I]	Don't ignore case for the pattern.  The 'ignorecase' and 'smartcase'
 	options are not used.
 
+							*:s_n*
 [n]	Report the number of matches, do not actually substitute.  The [c]
 	flag is ignored.  The matches are reported as if 'report' is zero.
 	Useful to |count-items|.
 	If \= |sub-replace-expression| is used, the expression will be
 	evaluated in the |sandbox| at every match.
 
-[p]	Print the line containing the last substitute.
+[p]	Print the line containing the last substitute.  *:s_p*
 
-[#]	Like [p] and prepend the line number.
+[#]	Like [p] and prepend the line number.  *:s_#*
 
-[l]	Like [p] but print the text like |:list|.
+[l]	Like [p] but print the text like |:list|.  *:s_l*
 
+							*:s_r*
 [r]	Only useful in combination with `:&` or `:s` without arguments.  `:&r`
 	works the same way as `:~`:  When the search pattern is empty, use the
 	previously used search pattern instead of the search pattern from the

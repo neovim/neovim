@@ -2230,7 +2230,6 @@ remote_read({serverid} [, {timeout}])
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
 remote_startserver({name})	none	become server {name}
-				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
@@ -2423,10 +2422,10 @@ and({expr}, {expr})					*and()*
 api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
 
-append({lnum}, {expr})					*append()*
-		When {expr} is a |List|: Append each item of the |List| as a
+append({lnum}, {text})					*append()*
+		When {text} is a |List|: Append each item of the |List| as a
 		text line below line {lnum} in the current buffer.
-		Otherwise append {expr} as one text line below line {lnum} in
+		Otherwise append {text} as one text line below line {lnum} in
 		the current buffer.
 		{lnum} can be zero to insert a line before the first one.
 		Returns 1 for failure ({lnum} out of range or out of memory),
@@ -4058,6 +4057,8 @@ getcmdline()						*getcmdline()*
 		Example: >
 			:cmap <F7> <C-\>eescape(getcmdline(), ' \')<CR>
 <		Also see |getcmdtype()|, |getcmdpos()| and |setcmdpos()|.
+		Returns an empty string when entering a password or using
+		|inputsecret()|.
 
 getcmdpos()						*getcmdpos()*
 		Return the position of the cursor in the command line as a
@@ -5452,11 +5453,14 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		When {expr} is a |List| then this returns the index of the
 		first item where {pat} matches.  Each item is used as a
 		String, |Lists| and |Dictionaries| are used as echoed.
+
 		Otherwise, {expr} is used as a String.	The result is a
 		Number, which gives the index (byte offset) in {expr} where
 		{pat} matches.
+
 		A match at the first character or |List| item returns zero.
 		If there is no match -1 is returned.
+
 		For getting submatches see |matchlist()|.
 		Example: >
 			:echo match("testing", "ing")	" results in 4
@@ -7718,7 +7722,7 @@ synconcealed({lnum}, {col})				*synconcealed()*
 		   concealable region if there are two consecutive regions
 		   with the same replacement character.  For an example, if
 		   the text is "123456" and both "23" and "45" are concealed
-		   and replace by the character "X", then:
+		   and replaced by the character "X", then:
 			call			returns ~
 		   	synconcealed(lnum, 1)   [0, '', 0]
 		   	synconcealed(lnum, 2)   [1, 'X', 1]

@@ -42,8 +42,9 @@ Example: >
 	endfunction
 
 To see what version of Python you have: >
-	:python import sys
 	:python print(sys.version)
+
+There is no need to import sys, it's done by default.
 
 Note: Python is very sensitive to the indenting.  Make sure the "class" line
 and "EOF" do not have any indent.
@@ -91,7 +92,6 @@ Python commands cannot be used in the |sandbox|.
 
 To pass arguments you need to set sys.argv[] explicitly.  Example: >
 
-	:python import sys
 	:python sys.argv = ["foo", "bar"]
 	:pyfile myscript.py
 
