@@ -14,8 +14,28 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< isk< com< tw< commentstring< keywordprg<"
-	\ . "| unlet! b:match_ignorecase b:match_words b:match_skip"
+if !exists('*VimFtpluginUndo')
+  func VimFtpluginUndo()
+    setl fo< isk< com< tw< commentstring< keywordprg<
+    if exists(b:did_add_maps)
+      silent! nunmap <buffer> [['
+      silent! vunmap <buffer> [['
+      silent! nunmap <buffer> ]]'
+      silent! vunmap <buffer> ]]'
+      silent! nunmap <buffer> []'
+      silent! vunmap <buffer> []'
+      silent! nunmap <buffer> ]['
+      silent! vunmap <buffer> ]['
+      silent! nunmap <buffer> ]"'
+      silent! vunmap <buffer> ]"'
+      silent! nunmap <buffer> ["'
+      silent! vunmap <buffer> ["'
+    endif
+    unlet! b:match_ignorecase b:match_words b:match_skip b:did_add_maps
+  endfunc
+endif
+
+let b:undo_ftplugin = "call VimFtpluginUndo()"
 
 " Set 'formatoptions' to break comment lines but not other lines,
 " and insert the comment leader when hitting <CR> or using "o".
@@ -43,6 +63,8 @@ setlocal commentstring=\"%s
 setlocal keywordprg=:help
 
 if !exists("no_plugin_maps") && !exists("no_vim_maps")
+  let b:did_add_maps = 1
+
   " Move around functions.
   nnoremap <silent><buffer> [[ m':call search('^\s*fu\%[nction]\>', "bW")<CR>
   vnoremap <silent><buffer> [[ m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "bW")<CR>

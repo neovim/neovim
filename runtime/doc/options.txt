@@ -675,7 +675,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global or local to buffer |global-local|
 	When a file has been detected to have been changed outside of Vim and
 	it has not been changed inside of Vim, automatically read it again.
-	When the file has been deleted this is not done.  |timestamp|
+	When the file has been deleted this is not done, so you have the text
+	from before it was deleted.  When it appears again then it is read.
+	|timestamp|
 	If this option has a local value, use this command to switch back to
 	using the global value: >
 		:set autoread<
@@ -3809,7 +3811,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Running into the limit often means that the pattern is very
 	inefficient or too complex.  This may already happen with the pattern
 	"\(.\)*" on a very long line.  ".*" works much better.
-	Vim may run out of memory before hitting the 'maxmempattern' limit.
+	Might also happen on redraw, when syntax rules try to match a complex
+	text structure.
+	Vim may run out of memory before hitting the 'maxmempattern' limit, in
+	which case you get an "Out of memory" error instead.
 
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	number	(default 25)
