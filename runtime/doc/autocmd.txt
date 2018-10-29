@@ -666,7 +666,10 @@ FileChangedRO			Before making the first change to a read-only
 ExitPre				When using `:quit`, `:wq` in a way it makes
 				Vim exit, or using `:qall`, just after
 				|QuitPre|.  Can be used to close any
-				non-essential window.
+				non-essential window.  Exiting may still be
+				cancelled if there is a modified buffer that
+				isn't automatically saved, use |VimLeavePre|
+				for really exiting.
 							*FileChangedShell*
 FileChangedShell		When Vim notices that the modification time of
 				a file has changed since editing started.
@@ -1377,7 +1380,7 @@ Careful: '[ and '] change when using commands that change the buffer.
 In commands which expect a file name, you can use "<afile>" for the file name
 that is being read |:<afile>| (you can also use "%" for the current file
 name).  "<abuf>" can be used for the buffer number of the currently effective
-buffer.  This also works for buffers that doesn't have a name.  But it doesn't
+buffer.  This also works for buffers that don't have a name.  But it doesn't
 work for files without a buffer (e.g., with ":r file").
 
 							*gzip-example*

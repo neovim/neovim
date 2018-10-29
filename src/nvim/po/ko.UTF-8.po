@@ -5282,7 +5282,7 @@ msgstr "E770: spell 파일에 지원되지 않는 섹션"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "affix 파일 %s 읽는 중"
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
@@ -5445,7 +5445,7 @@ msgstr "%s 값이 다른 .aff 파일에서 사용된 것과 다릅니다"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "사전 파일 %s 읽는 중 ..."
 
 #: ../spell.c:5611
@@ -5480,7 +5480,7 @@ msgstr "무시된 %d개의 아스키문자열이 아닌 단어가 %s에 있습�
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
+msgid "Reading word file %s..."
 msgstr "단어 파일 %s 읽는 중 ..."
 
 #: ../spell.c:6155
@@ -5550,7 +5550,7 @@ msgstr "총 단어 수: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "%s 제안 파일을 쓰는 중 ..."
 
 #: ../spell.c:7707 ../spell.c:7927
@@ -5577,7 +5577,7 @@ msgstr "경고: compound와 NOBREAK 둘 다 명시됨"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "spell 파일 %s 쓰는 중 ..."
 
 #: ../spell.c:7925

@@ -3,8 +3,8 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2017 Dec 16
-" Included patch from Jorge Maldonado Ventura to add the dialog element
+" Last Change:          2018 May 31
+" Included patch from Jay Sitter to add WAI-ARIA htmlArg keywords
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -76,6 +76,29 @@ syn keyword htmlArg contained rel rev rows rowspan scrolling selected shape
 syn keyword htmlArg contained size src start target text type url
 syn keyword htmlArg contained usemap ismap valign value vlink vspace width wrap
 syn match   htmlArg contained "\<\(http-equiv\|href\|title\)="me=e-1
+
+" aria attributes
+syn match htmlArg contained "\<\(aria-activedescendant\|aria-atomic\)\>"
+syn match htmlArg contained "\<\(aria-autocomplete\|aria-busy\|aria-checked\)\>"
+syn match htmlArg contained "\<\(aria-colcount\|aria-colindex\|aria-colspan\)\>"
+syn match htmlArg contained "\<\(aria-controls\|aria-current\)\>"
+syn match htmlArg contained "\<\(aria-describedby\|aria-details\)\>"
+syn match htmlArg contained "\<\(aria-disabled\|aria-dropeffect\)\>"
+syn match htmlArg contained "\<\(aria-errormessage\|aria-expanded\)\>"
+syn match htmlArg contained "\<\(aria-flowto\|aria-grabbed\|aria-haspopup\)\>"
+syn match htmlArg contained "\<\(aria-hidden\|aria-invalid\)\>"
+syn match htmlArg contained "\<\(aria-keyshortcuts\|aria-label\)\>"
+syn match htmlArg contained "\<\(aria-labelledby\|aria-level\|aria-live\)\>"
+syn match htmlArg contained "\<\(aria-modal\|aria-multiline\)\>"
+syn match htmlArg contained "\<\(aria-multiselectable\|aria-orientation\)\>"
+syn match htmlArg contained "\<\(aria-owns\|aria-placeholder\|aria-posinset\)\>"
+syn match htmlArg contained "\<\(aria-pressed\|aria-readonly\|aria-relevant\)\>"
+syn match htmlArg contained "\<\(aria-required\|aria-roledescription\)\>"
+syn match htmlArg contained "\<\(aria-rowcount\|aria-rowindex\|aria-rowspan\)\>"
+syn match htmlArg contained "\<\(aria-selected\|aria-setsize\|aria-sort\)\>"
+syn match htmlArg contained "\<\(aria-valuemax\|aria-valuemin\)\>"
+syn match htmlArg contained "\<\(aria-valuenow\|aria-valuetext\)\>"
+syn keyword htmlArg contained role
 
 " Netscape extensions
 syn keyword htmlTagName contained frame noframes frameset nobr blink

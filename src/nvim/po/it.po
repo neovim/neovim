@@ -5166,9 +5166,9 @@ msgstr "E876: (NFA regexp) Non c'è spazio per immagazzinare l'intero NFA "
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
-"Non posso aprire il file temporaneo per la scrittura, mostro su stderr ... "
+"Non posso aprire il file temporaneo per la scrittura, mostro su stderr... "
 
 #: ../regexp_nfa.c:4840
 #, c-format
@@ -5415,8 +5415,8 @@ msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Lettura file affissi %s ..."
+msgid "Reading affix file %s..."
+msgstr "Lettura file affissi %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5578,8 +5578,8 @@ msgstr "Il valore di %s è diverso da quello usato in un altro file .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Lettura file dizionario %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Lettura file dizionario %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5613,8 +5613,8 @@ msgstr "%d parole con caratteri non-ASCII ignorate in %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lettura file parole %s ..."
+msgid "Reading word file %s..."
+msgstr "Lettura file parole %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5683,8 +5683,8 @@ msgstr "Conteggio totale delle parole: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Scrivo file di suggerimenti %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Scrivo file di suggerimenti %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5710,8 +5710,8 @@ msgstr "Avviso: specificati sia composizione sia NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Scrivo file ortografico %s ..."
+msgid "Writing spell file %s..."
+msgstr "Scrivo file ortografico %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

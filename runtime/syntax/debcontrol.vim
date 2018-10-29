@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2018 Jan 28
+" Last Change: 2018 May 31
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -40,8 +40,8 @@ let s:pairs = [
 
 " Define some common expressions we can use later on
 syn keyword debcontrolArchitecture contained all any
-exe 'syn keyword debcontrolArchitecture contained '. join(map(s:kernels, {k,v -> v .'-any'}))
-exe 'syn keyword debcontrolArchitecture contained '. join(map(s:archs, {k,v -> 'any-'.v}))
+exe 'syn keyword debcontrolArchitecture contained '. join(map(copy(s:kernels), {k,v -> v .'-any'}))
+exe 'syn keyword debcontrolArchitecture contained '. join(map(copy(s:archs), {k,v -> 'any-'.v}))
 exe 'syn keyword debcontrolArchitecture contained '. join(s:archs)
 exe 'syn keyword debcontrolArchitecture contained '. join(s:pairs)
 

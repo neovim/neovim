@@ -3054,7 +3054,7 @@ msgstr "-f\t\t\tウィンドウを開くのに newcli を使用しない"
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <device>\t\tI/Oに <device> を使用する"
 
-msgid "-A\t\t\tstart in Arabic mode"
+msgid "-A\t\t\tStart in Arabic mode"
 msgstr "-A\t\t\tアラビア語モードで起動する"
 
 msgid "-H\t\t\tStart in Hebrew mode"
@@ -4882,7 +4882,7 @@ msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) 現在横断中のブランチに十分なメモリを割り当てられません!"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "NFA正規表現エンジン用のログファイルを書込用として開けません。ログは標準出力に"
 "出力します。"
@@ -5114,7 +5114,7 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: .sug ファイルの読込中にエラーが発生しました: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "affix ファイル %s を読込中..."
 
 #, c-format
@@ -5251,7 +5251,7 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "値 %s は他の .aff ファイルで使用されたのと異なります"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "辞書ファイル %s をスキャン中..."
 
 #, c-format
@@ -5279,8 +5279,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "非ASCII文字を含む %d 個の単語を無視しました (%s 内)"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "標準入力から読込み中 %s ..."
+msgid "Reading word file %s..."
+msgstr "標準入力から読込み中 %s..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5336,7 +5336,7 @@ msgid "Total number of words: %d"
 msgstr "総単語数: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "修正候補ファイル \"%s\" を書込み中..."
 
 #, c-format
@@ -5358,7 +5358,7 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "警告: 複合フラグと NOBREAK が両方とも指定されました"
 
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "スペルファイル %s を書込み中..."
 
 msgid "Done!"

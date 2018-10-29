@@ -3071,8 +3071,8 @@ msgstr "-f\t\t\tNá húsáid newcli chun fuinneog a oscailt"
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <gléas>\t\tBain úsáid as <gléas> do I/A"
 
-msgid "-A\t\t\tstart in Arabic mode"
-msgstr "-A\t\t\ttosaigh sa mhód Araibise"
+msgid "-A\t\t\tStart in Arabic mode"
+msgstr "-A\t\t\tTosaigh sa mhód Araibise"
 
 msgid "-H\t\t\tStart in Hebrew mode"
 msgstr "-H\t\t\tTosaigh sa mhód Eabhraise"
@@ -4943,7 +4943,7 @@ msgstr ""
 "thrasnaíl!"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Níorbh fhéidir logchomhad sealadach a oscailt le scríobh ann, á thaispeáint "
 "ar stderr..."
@@ -5178,7 +5178,7 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: earráid agus comhad .sug á léamh: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Comhad foircinn %s á léamh..."
 
 #, c-format
@@ -5314,8 +5314,8 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "Tá difear idir luach %s agus an luach i gcomhad .aff eile"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Foclóir %s á léamh ..."
+msgid "Reading dictionary file %s..."
+msgstr "Foclóir %s á léamh..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5342,8 +5342,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "Rinneadh neamhshuim ar %d focal le carachtair neamh-ASCII i %s"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Comhad focail %s á léamh ..."
+msgid "Reading word file %s..."
+msgstr "Comhad focail %s á léamh..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5404,8 +5404,8 @@ msgid "Total number of words: %d"
 msgstr "Líon iomlán na bhfocal: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Comhad moltaí %s á scríobh ..."
+msgid "Writing suggestion file %s..."
+msgstr "Comhad moltaí %s á scríobh..."
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5425,8 +5425,8 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Rabhadh: sonraíodh comhfhocail agus NOBREAK araon"
 
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Comhad litrithe %s á scríobh ..."
+msgid "Writing spell file %s..."
+msgstr "Comhad litrithe %s á scríobh..."
 
 msgid "Done!"
 msgstr "Críochnaithe!"

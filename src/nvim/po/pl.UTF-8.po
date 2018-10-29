@@ -5279,8 +5279,8 @@ msgstr "Ostrzeżenie: region %s nie jest wspierany"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Czytam plik afiksów %s ..."
+msgid "Reading affix file %s..."
+msgstr "Czytam plik afiksów %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5442,8 +5442,8 @@ msgstr "Wartość %s różni się od tej użytej w innym pliku .aff"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Czytam plik słownika %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Czytam plik słownika %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5480,8 +5480,8 @@ msgstr "Zignorowałem %d słów ze znakami nie ASCII w %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Odczytuję plik wyrazów %s ..."
+msgid "Reading word file %s..."
+msgstr "Odczytuję plik wyrazów %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5550,8 +5550,8 @@ msgstr "Całkowita liczba słów: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Zapisuję plik sugestii %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Zapisuję plik sugestii %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5577,8 +5577,8 @@ msgstr "Ostrzeżenie: określono zarówno złożenia jak i NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Zapisuję plik sprawdzania pisowni %s ..."
+msgid "Writing spell file %s..."
+msgstr "Zapisuję plik sprawdzania pisowni %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

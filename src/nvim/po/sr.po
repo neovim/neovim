@@ -3075,7 +3075,7 @@ msgstr "-f\t\t\tНемој да користиш нов cli да отвориш 
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <уређај>\t\tКористи <уређај> за У/И"
 
-msgid "-A\t\t\tstart in Arabic mode"
+msgid "-A\t\t\tStart in Arabic mode"
 msgstr "-A\t\t\tПокрени у Арапском режиму"
 
 msgid "-H\t\t\tStart in Hebrew mode"
@@ -4908,10 +4908,10 @@ msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) Није могла да се алоцира меморија за обилазак грана!"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Привремена лог датотека није могла да се отвори за упис, приказује се на "
-"stderr ... "
+"stderr... "
 
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
@@ -5141,8 +5141,8 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: грешка приликом читања .sug датотеке: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Читање датотеке наставака %s ..."
+msgid "Reading affix file %s..."
+msgstr "Читање датотеке наставака %s..."
 
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -5280,8 +5280,8 @@ msgstr ""
 "%s вредност се разликује од онога што је коришћено у другој .aff датотеци"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Читање датотеке речника %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Читање датотеке речника %s..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5308,8 +5308,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "Игнорисана/о %d реч(и) са не-ASCII карактерима у %s"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Читање датотеке речи %s ..."
+msgid "Reading word file %s..."
+msgstr "Читање датотеке речи %s..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5365,8 +5365,8 @@ msgid "Total number of words: %d"
 msgstr "Укупан број речи: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Уписивање датотеке предлога %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Уписивање датотеке предлога %s..."
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5387,8 +5387,8 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Упозорење: наведени су и слагање и NOBREAK"
 
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Уписивање правописне датотеке %s ..."
+msgid "Writing spell file %s..."
+msgstr "Уписивање правописне датотеке %s..."
 
 msgid "Done!"
 msgstr "Завршено!"

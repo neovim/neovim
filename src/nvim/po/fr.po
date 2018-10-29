@@ -3283,7 +3283,7 @@ msgstr "-f\t\tNe pas utiliser newcli pour l'ouverture des fenêtres"
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <périph>\tUtiliser <périphérique> pour les E/S"
 
-msgid "-A\t\t\tstart in Arabic mode"
+msgid "-A\t\t\tStart in Arabic mode"
 msgstr "-A\t\tDémarrer en mode arabe"
 
 msgid "-H\t\t\tStart in Hebrew mode"
@@ -5147,10 +5147,10 @@ msgstr ""
 "E878: (NFA) Impossible d'allouer la mémoire pour parcourir les branches !"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Impossible d'ouvrir le fichier de log temporaire en écriture, affichage sur "
-"stderr ... "
+"stderr... "
 
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
@@ -5378,7 +5378,7 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: Erreur lors de la lecture de fichier de suggestions : %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Lecture du fichier d'affixes %s..."
 
 #, c-format
@@ -5518,7 +5518,7 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "La valeur de %s est différente de celle d'un autre fichier .aff"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "Lecture du fichier orthographique %s..."
 
 #, c-format
@@ -5546,7 +5546,7 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "%d mot(s) ignoré(s) avec des caractères non-ASCII dans %s"
 
 #, c-format
-msgid "Reading word file %s ..."
+msgid "Reading word file %s..."
 msgstr "Lecture de la liste de mots %s..."
 
 #, c-format
@@ -5603,7 +5603,7 @@ msgid "Total number of words: %d"
 msgstr "Nombre total de mots : %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "Écriture du fichier de suggestions %s..."
 
 #, c-format
@@ -5625,7 +5625,7 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Alerte : la composition et NOBREAK sont tous les deux spécifiés"
 
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "Écriture du fichier orthographique %s..."
 
 msgid "Done!"

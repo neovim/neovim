@@ -3039,7 +3039,7 @@ msgstr "-f\t\t\tNe uzi newcli por malfermi fenestrojn"
 msgid "-dev <device>\t\tUse <device> for I/O"
 msgstr "-dev <aparatdosiero>\t\tUzi <aparatdosiero>-n por eneligo"
 
-msgid "-A\t\t\tstart in Arabic mode"
+msgid "-A\t\t\tStart in Arabic mode"
 msgstr "-A\t\t\tKomenci en araba reĝimo"
 
 msgid "-H\t\t\tStart in Hebrew mode"
@@ -4875,10 +4875,10 @@ msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) Ne povis asigni memoron por traigi branĉojn!"
 
 msgid ""
-"Could not open temporary log file for writing, displaying on stderr ... "
+"Could not open temporary log file for writing, displaying on stderr... "
 msgstr ""
 "Ne povis malfermi provizoran protokolan dosieron por skribi, nun montras sur "
-"stderr ..."
+"stderr..."
 
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
@@ -5104,8 +5104,8 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: eraro dum legado de dosiero .sug: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Legado de afiksa dosiero %s ..."
+msgid "Reading affix file %s..."
+msgstr "Legado de afiksa dosiero %s..."
 
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -5240,8 +5240,8 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "Valoro de %s malsamas ol tiu en alia dosiero .aff"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Legado de vortardosiero %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Legado de vortardosiero %s..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5268,8 +5268,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "%d ignorita(j) vorto(j) kun neaskiaj signoj en %s"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Legado de dosiero de vortoj %s ..."
+msgid "Reading word file %s..."
+msgstr "Legado de dosiero de vortoj %s..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5325,8 +5325,8 @@ msgid "Total number of words: %d"
 msgstr "Totala nombro de vortoj: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Skribado de dosiero de sugesto %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Skribado de dosiero de sugesto %s..."
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5346,8 +5346,8 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Averto: ambaŭ NOBREAK kaj NOBREAK specifitaj"
 
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Skribado de literuma dosiero %s ..."
+msgid "Writing spell file %s..."
+msgstr "Skribado de literuma dosiero %s..."
 
 msgid "Done!"
 msgstr "Farita!"

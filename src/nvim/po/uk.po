@@ -4826,8 +4826,8 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: Помилка читання файлу .sug: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Читається файл афіксів %s ..."
+msgid "Reading affix file %s..."
+msgstr "Читається файл афіксів %s..."
 
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
@@ -4959,8 +4959,8 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "Значення %s відрізняється від того, що вжито у іншому файлі .aff"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Зчитується словниковий файл %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Зчитується словниковий файл %s..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -4987,8 +4987,8 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "Пропущено %d слів(~) із не-ASCII символами у %s"
 
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Читається файл слів %s ..."
+msgid "Reading word file %s..."
+msgstr "Читається файл слів %s..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -5043,8 +5043,8 @@ msgid "Total number of words: %d"
 msgstr "Повна кількість слів: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Записується файл припущень %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Записується файл припущень %s..."
 
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
@@ -5064,8 +5064,8 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Застереження: зазначено обидва `складні слова' і NOBREAK"
 
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Записується файл орфографії %s ..."
+msgid "Writing spell file %s..."
+msgstr "Записується файл орфографії %s..."
 
 msgid "Done!"
 msgstr "Зроблено!"

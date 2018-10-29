@@ -1,4 +1,6 @@
-*ft_rust.txt*      Filetype plugin for Rust
+*ft_rust.txt*	For Vim version 8.1.  Last change: 2017 Nov 02
+
+This is documentation for the Rust filetype plugin.
 
 ==============================================================================
 CONTENTS                                                      *rust*

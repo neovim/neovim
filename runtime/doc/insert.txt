@@ -411,11 +411,11 @@ An example for using CTRL-G U: >
 
 This makes it possible to use the cursor keys in Insert mode, without breaking
 the undo sequence and therefore using |.| (redo) will work as expected.
-Also entering a text like (with the "(" mapping from above): >
+Also entering a text like (with the "(" mapping from above):
 
    Lorem ipsum (dolor
 
-will be repeatable by the |.|to the expected
+will be repeatable by using |.| to the expected
 
    Lorem ipsum (dolor)
 
