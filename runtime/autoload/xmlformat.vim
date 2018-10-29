@@ -2,9 +2,8 @@
 " Last Change: Thu, 22 May 2018 21:26:55 +0100
 " Version: 0.1
 " Author: Christian Brabandt <cb@256bit.org>
-" Script:  http://www.vim.org/scripts/script.php?script_id=
+" Repository:   https://github.com/chrisbra/vim-xml-ftplugin
 " License: VIM License
-" GetLatestVimScripts: ???? 18 :AutoInstall: xmlformat.vim
 " Documentation: see :h xmlformat.txt (TODO!)
 " ---------------------------------------------------------------------
 " Load Once: {{{1

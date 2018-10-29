@@ -1295,4 +1295,4 @@ L			To line [count] from bottom of window (default: Last
 			position is in a status line, that window is made the
 			active window and the cursor is not moved.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

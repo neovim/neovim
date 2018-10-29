@@ -5,7 +5,7 @@
 # Do ":help credits" in Vim to see a list of people who contributed.
 #
 # Copyright (C) 2001-2018 MURAOKA Taro <koron.kaoriya@gmail.com>,
-# 			  vim-jp (http://vim-jp.org/)
+# 			  vim-jp <http://vim-jp.org/>
 #
 # THIS FILE IS DISTRIBUTED UNDER THE VIM LICENSE.
 #
@@ -15,14 +15,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-01 10:46+0900\n"
+"POT-Creation-Date: 2018-07-18 00:43+0900\n"
 "PO-Revision-Date: 2017-05-18 00:45+0900\n"
 "Last-Translator: MURAOKA Taro <koron.kaoriya@gmail.com>\n"
-"Language-Team: vim-jp (https://github.com/vim-jp/lang-ja)\n"
-"Language: Japanese\n"
+"Language-Team: Japanese <https://github.com/vim-jp/lang-ja>\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8-bit\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "E831: bf_key_init() called with empty password"
@@ -205,6 +205,9 @@ msgstr ""
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: 'buftype' オプションが設定されているので書込めません"
 
+msgid "[Prompt]"
+msgstr "[プロンプト]"
+
 msgid "[Scratch]"
 msgstr "[下書き]"
 
@@ -259,10 +262,10 @@ msgstr "E917: %s() にコールバックは使えません"
 
 msgid "E912: cannot use ch_evalexpr()/ch_sendexpr() with a raw or nl channel"
 msgstr ""
-"E912: raw や nl モードのチャンネルに ch_evalexpr()/ch_sendexpr() は使えません"
+"E912: raw や nl モードのチャネルに ch_evalexpr()/ch_sendexpr() は使えません"
 
 msgid "E906: not an open channel"
-msgstr "E906: 開いていないチャンネルです"
+msgstr "E906: 開いていないチャネルです"
 
 msgid "E920: _io file requires _name to be set"
 msgstr "E920: _io ファイルは _name の設定が必要です"
@@ -522,7 +525,6 @@ msgstr "E710: リスト型変数にターゲットよりも多い要素があり
 msgid "E711: List value has not enough items"
 msgstr "E711: リスト型変数に十分な数の要素がありません"
 
-#
 msgid "E690: Missing \"in\" after :for"
 msgstr "E690: :for の後に \"in\" がありません"
 
@@ -591,7 +593,7 @@ msgid "E910: Using a Job as a Number"
 msgstr "E910: ジョブを数値として扱っています"
 
 msgid "E913: Using a Channel as a Number"
-msgstr "E913: チャンネルを数値として扱っています"
+msgstr "E913: チャネルを数値として扱っています"
 
 msgid "E891: Using a Funcref as a Float"
 msgstr "E891: 関数参照型を浮動小数点数として扱っています"
@@ -612,7 +614,7 @@ msgid "E911: Using a Job as a Float"
 msgstr "E911: ジョブを浮動小数点数として扱っています"
 
 msgid "E914: Using a Channel as a Float"
-msgstr "E914: チャンネルを浮動小数点数として扱っています"
+msgstr "E914: チャネルを浮動小数点数として扱っています"
 
 msgid "E729: using Funcref as a String"
 msgstr "E729: 関数参照型を文字列として扱っています"
@@ -1424,6 +1426,9 @@ msgstr "E784: 最後のタブページを閉じることはできません"
 
 msgid "Already only one tab page"
 msgstr "既にタブページは1つしかありません"
+
+msgid "Edit File in new tab page"
+msgstr "新しいタブページでファイルを編集します"
 
 msgid "Edit File in new window"
 msgstr "新しいウィンドウでファイルを編集します"
@@ -2285,10 +2290,10 @@ msgstr "アンドゥ(&U)"
 msgid "Open tab..."
 msgstr "タブページを開く"
 
-msgid "Find string (use '\\\\' to find  a '\\')"
+msgid "Find string (use '\\\\' to find a '\\')"
 msgstr "検索文字列 ('\\' を検索するには '\\\\')"
 
-msgid "Find & Replace (use '\\\\' to find  a '\\')"
+msgid "Find & Replace (use '\\\\' to find a '\\')"
 msgstr "検索・置換 ('\\' を検索するには '\\\\')"
 
 msgid "Not Used"
@@ -2705,6 +2710,19 @@ msgstr "範囲外の行番号です"
 
 msgid "not allowed in the Vim sandbox"
 msgstr "サンドボックスでは許されません"
+
+#, c-format
+msgid "E370: Could not load library %s"
+msgstr "E370: ライブラリ %s をロードできませんでした"
+
+msgid "Sorry, this command is disabled: the Perl library could not be loaded."
+msgstr ""
+"このコマンドは無効です、ごめんなさい: Perlライブラリをロードできませんでした."
+
+msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+msgstr ""
+"E299: サンドボックスでは Safe モジュールを使用しないPerlスクリプトは禁じられ"
+"ています"
 
 msgid "E836: This Vim cannot execute :python after using :py3"
 msgstr "E836: このVimでは :py3 を使った後に :python を使えません"
@@ -4704,7 +4722,6 @@ msgstr "E777: 文字列かリストが必要です"
 msgid "E369: invalid item in %s%%[]"
 msgstr "E369: 無効な項目です: %s%%[]"
 
-#
 #, c-format
 msgid "E769: Missing ] after %s["
 msgstr "E769: %s[ の後に ] がありません"
@@ -4727,15 +4744,12 @@ msgstr "E54: %s( が釣り合っていません"
 msgid "E55: Unmatched %s)"
 msgstr "E55: %s) が釣り合っていません"
 
-#
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( はココでは許可されていません"
 
-#
 msgid "E67: \\z1 - \\z9 not allowed here"
-msgstr "E67: \\z1 その他はココでは許可されていません"
+msgstr "E67: \\z1 - \\z9 はココでは許可されていません"
 
-#
 #, c-format
 msgid "E69: Missing ] after %s%%["
 msgstr "E69: %s%%[ の後に ] がありません"
@@ -4744,7 +4758,9 @@ msgstr "E69: %s%%[ の後に ] がありません"
 msgid "E70: Empty %s%%[]"
 msgstr "E70: %s%%[] が空です"
 
-#
+msgid "E956: Cannot use pattern recursively"
+msgstr "E956: パターンを再帰的に使うことはできません"
+
 msgid "E65: Illegal back reference"
 msgstr "E65: 不正な後方参照です"
 
@@ -4777,7 +4793,6 @@ msgstr "E61:%s* が入れ子になっています"
 msgid "E62: Nested %s%c"
 msgstr "E62:%s%c が入れ子になっています"
 
-#
 msgid "E63: invalid use of \\_"
 msgstr "E63: \\_ の無効な使用方法です"
 
@@ -4785,16 +4800,13 @@ msgstr "E63: \\_ の無効な使用方法です"
 msgid "E64: %s%c follows nothing"
 msgstr "E64:%s%c の後になにもありません"
 
-#
 msgid "E68: Invalid character after \\z"
 msgstr "E68: \\z の後に不正な文字がありました"
 
-#
 #, c-format
 msgid "E678: Invalid character after %s%%[dxouU]"
 msgstr "E678: %s%%[dxouU] の後に不正な文字がありました"
 
-#
 #, c-format
 msgid "E71: Invalid character after %s%%"
 msgstr "E71: %s%% の後に不正な文字がありました"
@@ -4827,7 +4839,6 @@ msgstr "E865: (NFA) 期待より早く正規表現の終端に到達しました
 msgid "E866: (NFA regexp) Misplaced %c"
 msgstr "E866: (NFA 正規表現) 位置が誤っています: %c"
 
-#
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %ld"
 msgstr "E877: (NFA 正規表現) 無効な文字クラス: %ld"
@@ -4865,6 +4876,11 @@ msgstr "E879: (NFA 正規表現) \\z( が多過ぎます"
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (NFA 正規表現) 終端記号がありません"
 
+msgid "Could not open temporary log file for writing, displaying on stderr... "
+msgstr ""
+"NFA正規表現エンジン用のログファイルを書込用として開けません。ログは標準エラー"
+"出力に出力します。"
+
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (NFA) スタックをポップできません!"
 
@@ -4880,19 +4896,6 @@ msgstr "E876: (NFA 正規表現) NFA全体を保存するには空きスペー�
 
 msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) 現在横断中のブランチに十分なメモリを割り当てられません!"
-
-msgid ""
-"Could not open temporary log file for writing, displaying on stderr... "
-msgstr ""
-"NFA正規表現エンジン用のログファイルを書込用として開けません。ログは標準出力に"
-"出力します。"
-
-#, c-format
-msgid "(NFA) COULD NOT OPEN %s !"
-msgstr "(NFA) ログファイル %s を開けません!"
-
-msgid "Could not open temporary log file for writing "
-msgstr "NFA正規表現エンジン用のログファイルを書込用として開けません。"
 
 msgid " VREPLACE"
 msgstr " 仮想置換"
@@ -4984,7 +4987,7 @@ msgstr "インクルードされたファイルをスキャン中: %s"
 
 #, c-format
 msgid "Searching included file %s"
-msgstr "インクルードされたファイルをスキャン中 %s"
+msgstr "インクルードされたファイルを検索中 %s"
 
 msgid "E387: Match is on current line"
 msgstr "E387: 現在行に該当があります"
@@ -5252,7 +5255,7 @@ msgstr "値 %s は他の .aff ファイルで使用されたのと異なりま�
 
 #, c-format
 msgid "Reading dictionary file %s..."
-msgstr "辞書ファイル %s をスキャン中..."
+msgstr "辞書ファイル %s を読込み中..."
 
 #, c-format
 msgid "E760: No word count in %s"
@@ -5280,7 +5283,7 @@ msgstr "非ASCII文字を含む %d 個の単語を無視しました (%s 内)"
 
 #, c-format
 msgid "Reading word file %s..."
-msgstr "標準入力から読込み中 %s..."
+msgstr "単語ファイル %s を読込み中..."
 
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
@@ -6031,6 +6034,10 @@ msgstr "E133: 関数外に :return がありました"
 msgid "E107: Missing parentheses: %s"
 msgstr "E107: カッコ '(' がありません: %s"
 
+#, c-format
+msgid "%s (%s, compiled %s)"
+msgstr "%s (%s, compiled %s)"
+
 msgid ""
 "\n"
 "MS-Windows 64-bit GUI version"
@@ -6353,19 +6360,6 @@ msgstr "E802: 無効な ID: %ld (1 以上でなければなりません)"
 #, c-format
 msgid "E803: ID not found: %ld"
 msgstr "E803: ID はありません: %ld"
-
-#, c-format
-msgid "E370: Could not load library %s"
-msgstr "E370: ライブラリ %s をロードできませんでした"
-
-msgid "Sorry, this command is disabled: the Perl library could not be loaded."
-msgstr ""
-"このコマンドは無効です、ごめんなさい: Perlライブラリをロードできませんでした."
-
-msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
-msgstr ""
-"E299: サンドボックスでは Safe モジュールを使用しないPerlスクリプトは禁じられ"
-"ています"
 
 msgid "Edit with &multiple Vims"
 msgstr "複数のVimで編集する (&M)"

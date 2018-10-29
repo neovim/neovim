@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Java
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/java.vim
-" Last Change:	2015 March 01
+" URL:          https://github.com/fleiner/vim/blob/master/runtime/syntax/java.vim
+" Last Change:	2018 July 26
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -29,8 +29,6 @@ syn match javaOK "\.\.\."
 syn match   javaError2 "#\|=<"
 hi def link javaError2 javaError
 
-
-
 " keyword definitions
 syn keyword javaExternal	native package
 syn match javaExternal		"\<import\>\(\s\+static\>\)\?"
@@ -40,7 +38,7 @@ syn keyword javaRepeat		while for do
 syn keyword javaBoolean		true false
 syn keyword javaConstant	null
 syn keyword javaTypedef		this super
-syn keyword javaOperator	new instanceof
+syn keyword javaOperator	var new instanceof
 syn keyword javaType		boolean char byte short int long float double
 syn keyword javaType		void
 syn keyword javaStatement	return
@@ -54,17 +52,25 @@ syn match   javaTypedef		"\.\s*\<class\>"ms=s+1
 syn keyword javaClassDecl	enum
 syn match   javaClassDecl	"^class\>"
 syn match   javaClassDecl	"[^.]\s*\<class\>"ms=s+1
-syn match   javaAnnotation	"@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>\(([^)]*)\)\=" contains=javaString
+syn match   javaAnnotation	"@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>" contains=javaString
 syn match   javaClassDecl	"@interface\>"
 syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
 syn match   javaVarArg		"\.\.\."
 syn keyword javaScopeDecl	public protected private abstract
 
+" Java Modules(Since Java 9, for "module-info.java" file)
+if fnamemodify(bufname("%"), ":t") == "module-info.java"
+    syn keyword javaModuleStorageClass	module transitive
+    syn keyword javaModuleStmt		open requires exports opens uses provides
+    syn keyword javaModuleExternal	to with
+    syn cluster javaTop add=javaModuleStorageClass,javaModuleStmt,javaModuleExternal
+endif
+
 if exists("java_highlight_java_lang_ids")
   let java_highlight_all=1
 endif
-if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("java_highlight_java_lang") 
+if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("java_highlight_java_lang")
   " java.lang.*
   syn match javaLangClass "\<System\>"
   syn keyword javaR_JavaLang NegativeArraySizeException ArrayStoreException IllegalStateException RuntimeException IndexOutOfBoundsException UnsupportedOperationException ArrayIndexOutOfBoundsException ArithmeticException ClassCastException EnumConstantNotPresentException StringIndexOutOfBoundsException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException NumberFormatException NullPointerException TypeNotPresentException SecurityException
@@ -296,6 +302,7 @@ hi def link javaStorageClass		StorageClass
 hi def link javaMethodDecl		javaStorageClass
 hi def link javaClassDecl		javaStorageClass
 hi def link javaScopeDecl		javaStorageClass
+
 hi def link javaBoolean		Boolean
 hi def link javaSpecial		Special
 hi def link javaSpecialError		Error
@@ -328,6 +335,12 @@ hi def link javaExternal		Include
 hi def link htmlComment		Special
 hi def link htmlCommentPart		Special
 hi def link javaSpaceError		Error
+
+if fnamemodify(bufname("%"), ":t") == "module-info.java"
+    hi def link javaModuleStorageClass	StorageClass
+    hi def link javaModuleStmt		Statement
+    hi def link javaModuleExternal	Include
+endif
 
 let b:current_syntax = "java"
 

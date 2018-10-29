@@ -732,4 +732,4 @@ This also tells you whether Python is dynamically loaded, which will fail if
 the runtime library cannot be found.
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

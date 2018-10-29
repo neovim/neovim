@@ -191,4 +191,4 @@ When using gvim, the --remote-wait only works properly this way: >
 
 	start /w gvim --remote-wait file.txt
 <
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
