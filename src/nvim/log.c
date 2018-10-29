@@ -32,6 +32,25 @@ static uv_mutex_t mutex;
 # include <execinfo.h>
 #endif
 
+#define LOCAL_TIME_STRING_LEN 20
+
+void get_local_time_string(char out[LOCAL_TIME_STRING_LEN])
+{
+  // Populate 'out' with the current date/time. If this fails we don't get a
+  // meaningful error so we just use a blank timestamp to avoid interruptting
+  // the logging features.
+
+  struct tm local_time;
+  if (os_localtime(&local_time) != NULL) {
+    if (strftime(out, LOCAL_TIME_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &local_time) != 0) {
+      return; // success
+    }
+  }
+
+  // couldn't get or format local time - use "0000-00-00 00:00:00"
+  strcpy(out, "0000-00-00T00:00:00");
+}
+
 static bool log_try_create(char *fname)
 {
   if (fname == NULL || fname[0] == '\0') {
@@ -270,16 +289,9 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
-  // Format the timestamp.
-  struct tm local_time;
-  if (os_localtime(&local_time) == NULL) {
-    return false;
-  }
-  char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
-               &local_time) == 0) {
-    return false;
-  }
+  // format current timestamp in local time
+  char date_time[LOCAL_TIME_STRING_LEN];
+  get_local_time_string(date_time);
 
   int millis = 0;
 #if !defined(WIN32)
