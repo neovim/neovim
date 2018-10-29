@@ -203,7 +203,8 @@ gT		Go to the previous tab page.  Wraps around from the first one
 :tabN[ext] {count}
 {count}<C-PageUp>
 {count}gT	Go {count} tab pages back.  Wraps around from the first one
-		to the last one.
+		to the last one.  Note that the use of {count} is different
+		from |:tabnext|, where it is used as the tab page number.
 
 :tabr[ewind]			*:tabfir* *:tabfirst* *:tabr* *:tabrewind*
 :tabfir[st]	Go to the first tab page.

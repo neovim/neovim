@@ -1,5 +1,5 @@
 " This script tests a color scheme for some errors. Load the scheme and source
-" this script. e.g. :e colors/desert.vim | :so test_colors.vim
+" this script. e.g. :e colors/desert.vim | :so check_colors.vim
 " Will output possible errors.
 
 let s:save_cpo= &cpo

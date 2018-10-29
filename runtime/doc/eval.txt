@@ -5358,7 +5358,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		listing.
 
 		When there is no mapping for {name}, an empty String is
-		returned.
+		returned.  When the mapping for {name} is empty, then "<Nop>"
+		is returned.
 
 		The {name} can have special key names, like in the ":map"
 		command.
@@ -5425,9 +5426,10 @@ mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 		mapping that matches with {name}, while maparg() only finds a
 		mapping for {name} exactly.
 		When there is no mapping that starts with {name}, an empty
-		String is returned.  If there is one, the rhs of that mapping
+		String is returned.  If there is one, the RHS of that mapping
 		is returned.  If there are several mappings that start with
-		{name}, the rhs of one of them is returned.
+		{name}, the RHS of one of them is returned.  This will be
+		"<Nop>" if the RHS is empty.
 		The mappings local to the current buffer are checked first,
 		then the global mappings.
 		This function can be used to check if a mapping can be added

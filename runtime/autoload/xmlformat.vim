@@ -1,5 +1,5 @@
 " Vim plugin for formatting XML
-" Last Change: Thu, 15 Jan 2015 21:26:55 +0100
+" Last Change: Thu, 22 May 2018 21:26:55 +0100
 " Version: 0.1
 " Author: Christian Brabandt <cb@256bit.org>
 " Script:  http://www.vim.org/scripts/script.php?script_id=
@@ -30,7 +30,7 @@ func! xmlformat#Format()
   let lastitem = prev ? getline(prev) : ''
   let is_xml_decl = 0
   " split on `<`, but don't split on very first opening <
-  for item in split(getline(v:lnum), '.\@<=[>]\zs')
+  for item in split(join(getline(v:lnum, (v:lnum + v:count - 1))), '.\@<=[>]\zs')
     if s:EndTag(item)
       let s:indent = s:DecreaseIndent()
       call add(result, s:Indent(item))
