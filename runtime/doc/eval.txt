@@ -2339,7 +2339,7 @@ tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
 					to chars in {tostr}
-trim({text}[, {mask}]) 		String	trim characters in {mask} from {text}
+trim({text}[, {mask}])		String	trim characters in {mask} from {text}
 trunc({expr})			Float	truncate Float {expr}
 type({name})			Number	type of variable {name}
 undofile({name})		String	undo file name for {name}
@@ -5882,31 +5882,6 @@ nvim_...({...})						*nvim_...()* *eval-api*
 		expecting an object (buffer, window or tabpage) can
 		also take the numerical value 0 to indicate the current
 		(focused) object.
-
-option_restore({list})					*option_restore()*
-		Restore options previously saved by option_save().
-		When buffer-local options have been saved, this function must
-		be called when the same buffer is the current buffer.
-		When window-local options have been saved, this function must
-		be called when the same window is the current window.
-		When in the wrong buffer and/or window an error is given and
-		the local options won't be restored.
-		NOT IMPLEMENTED YET!
-
-option_save({list})					*option_save()*
-		Saves the options named in {list}.  The returned value can be
-		passed to option_restore().  Example: >
-			let s:saved_options = option_save([
-			    \ 'ignorecase',
-			    \ 'iskeyword',
-			    \ ])
-			 au <buffer> BufLeave *
-			    \ call option_restore(s:saved_options)
-<		The advantage over using `:let` is that global and local
-		values are handled and the script ID is restored, so that
-		`:verbose set` will show where the option was originally set,
-		not where it was restored.
-		NOT IMPLEMENTED YET!
 
 or({expr}, {expr})					*or()*
 		Bitwise OR on the two arguments.  The arguments are converted

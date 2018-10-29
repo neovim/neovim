@@ -1217,7 +1217,7 @@ msgid "continuing in %s"
 msgstr "наставља се у %s"
 
 msgid "modeline"
-msgstr "режимска лнија (modeline)"
+msgstr "режимска линија (modeline)"
 
 msgid "--cmd argument"
 msgstr "--cmd аргумент"
@@ -4942,7 +4942,7 @@ msgstr "Упозорење: Листа речи \"%s_%s.spl\" или \"%s_ascii.
 
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
-msgstr "Упозорење: Лста речи \"%s.%s.spl\" или \"%s.ascii.spl\" не може да се пронађе"
+msgstr "Упозорење: Листа речи \"%s.%s.spl\" или \"%s.ascii.spl\" не може да се пронађе"
 
 msgid "E797: SpellFileMissing autocommand deleted buffer"
 msgstr "E797: SpellFileMissing аутокоманда је обрисала бафер"

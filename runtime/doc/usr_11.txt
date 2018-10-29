@@ -234,7 +234,7 @@ that file, be prepared to redo your last changes.
 
 WHAT TO DO?					*swap-exists-choices*
 
-If dialogs are supported you will be asked to select one of five choices:
+If dialogs are supported you will be asked to select one of six choices:
 
   Swap file ".main.c.swp" already exists! ~
   [O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort, (D)elete it: ~

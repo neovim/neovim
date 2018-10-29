@@ -501,6 +501,7 @@ If the 'shiftround' option is on, the indent is rounded to a multiple of
 If the 'smartindent' option is on, or 'cindent' is on and 'cinkeys' contains
 '#' with a zero value, shift right does not affect lines starting with '#'
 (these are supposed to be C preprocessor lines that must stay in column 1).
+This can be changed with the 'cino' option, see |cino-#|.
 
 When the 'expandtab' option is off (this is the default) Vim uses <Tab>s as
 much as possible to make the indent.  You can use ">><<" to replace an indent
