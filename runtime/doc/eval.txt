@@ -8044,12 +8044,12 @@ trim({text}[, {mask}])						*trim()*
 		This code deals with multibyte characters properly.
 
 		Examples: >
-			echo trim("  \r\t\t\r RESERVE \t \t\n\x0B\x0B")."_TAIL"
+			echo trim("   some text ")
+<		returns "some text" >
+			echo trim("  \r\t\t\r RESERVE \t\n\x0B\xA0") . "_TAIL"
 <		returns "RESERVE_TAIL" >
-			echo trim("needrmvRESERVEnnneeedddrrmmmmvv", "ednmrv")
-<		returns "RESERVE" >
-			echo trim("rm<blob1><blob2><any_chars>rrmm<blob1><blob2><blob2>", "rm<blob1><blob2>")
-<		returns "any_chas"
+			echo trim("rm<Xrm<>X>rrm", "rm<>")
+<		returns "Xrm<>X" (characters in the middle are not removed)
 
 trunc({expr})							*trunc()*
 		Return the largest integral value with magnitude less than or
