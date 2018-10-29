@@ -59,6 +59,11 @@ enum bfa_values {
   BFA_KEEP_UNDO = 4, // do not free undo information
 };
 
+typedef struct {
+  uint32_t row;
+  uint32_t column;
+} TSPoint;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.h.generated.h"
 #endif

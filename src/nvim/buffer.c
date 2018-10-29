@@ -5738,3 +5738,38 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }
+
+
+/*
+typedef struct {
+  uint32_t row;
+  uint32_t column;
+} TSPoint;
+*/
+
+void *nvim_ts_read_payload(int bufnr)
+{
+  buf_T *bp = handle_get_buffer(bufnr);
+  return bp;
+}
+
+const char *nvim_ts_read_cb(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read) {
+   buf_T *bp  = payload;
+   static char buf[200];
+   if (position.row >= bp->b_ml.ml_line_count) {
+     *bytes_read = 0;
+     return "";
+   }
+   char_u *line = ml_get_buf(bp, position.row+1, false);
+   size_t len = STRLEN(line);
+   size_t tocopy = MIN(len-position.column,200);
+   
+   // TODO: translate embedded \n to \000
+   memcpy(buf, line+position.column, tocopy);
+   *bytes_read = (uint32_t)tocopy;
+   if (tocopy < 200) {
+     buf[tocopy] = '\n';
+     (*bytes_read)++;
+   }
+   return buf;
+ }
