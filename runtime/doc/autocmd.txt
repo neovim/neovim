@@ -287,6 +287,7 @@ Name			triggered by ~
 |VimSuspend|		before Nvim is suspended
 
 	Various
+|DiffUpdated|		after diffs have been updated
 |DirChanged|		after the |current-directory| was changed
 
 |FileChangedShell|	Vim notices that a file changed since editing started

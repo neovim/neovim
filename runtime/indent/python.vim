@@ -53,6 +53,11 @@ function GetPythonIndent(lnum)
     return 0
   endif
 
+  " searchpair() can be slow sometimes, limit the time to 100 msec or what is
+  " put in g:pyindent_searchpair_timeout
+  let searchpair_stopline = 0
+  let searchpair_timeout = get(g:, 'pyindent_searchpair_timeout', 150)
+
   " If the previous line is inside parenthesis, use the indent of the starting
   " line.
   " Trick: use the non-existing "dummy" variable to break out of the loop when
@@ -61,7 +66,8 @@ function GetPythonIndent(lnum)
   let parlnum = searchpair('(\|{\|\[', '', ')\|}\|\]', 'nbW',
 	  \ "line('.') < " . (plnum - s:maxoff) . " ? dummy :"
 	  \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'")
+	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
+	  \ searchpair_stopline, searchpair_timeout)
   if parlnum > 0
     let plindent = indent(parlnum)
     let plnumstart = parlnum
@@ -80,14 +86,16 @@ function GetPythonIndent(lnum)
   let p = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
 	  \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
 	  \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'")
+	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
+	  \ searchpair_stopline, searchpair_timeout)
   if p > 0
     if p == plnum
       " When the start is inside parenthesis, only indent one 'shiftwidth'.
       let pp = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
 	  \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
 	  \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'")
+	  \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
+	  \ searchpair_stopline, searchpair_timeout)
       if pp > 0
 	return indent(plnum) + (exists("g:pyindent_nested_paren") ? eval(g:pyindent_nested_paren) : shiftwidth())
       endif

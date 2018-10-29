@@ -937,6 +937,11 @@ Indent after a nested paren: >
 Indent for a continuation line: >
 	let g:pyindent_continue = '&sw * 2'
 
+The method uses searchpair() to look back for unclosed parenthesis.  This can
+sometimes be slow, thus it timeouts after 150 msec.  If you notice the
+indenting isn't correct, you can set a larger timeout in msec: >
+	let g:pyindent_searchpair_timeout = 500
+
 
 R								*ft-r-indent*
 

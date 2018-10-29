@@ -3,7 +3,7 @@
 " Maintainer:		Ken Takata
 " URL:			https://github.com/k-takata/vim-nsis
 " Previous Maintainer:	Alex Jakushev <Alex.Jakushev@kemek.lt>
-" Last Change:		2018-02-07
+" Last Change:		2018-10-02
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -104,8 +104,8 @@ syn match nsisSysVar		"$\$"
 syn match nsisSysVar		"$\\["'`]"
 
 "LABELS (4.3)
-syn match nsisLocalLabel	contained "[^-+!$0-9;#. \t/*][^ \t:;#]*:\ze\%($\|[ \t;#]\|\/\*\)"
-syn match nsisGlobalLabel	contained "\.[^-+!$0-9;# \t/*][^ \t:;#]*:\ze\%($\|[ \t;#]\|\/\*\)"
+syn match nsisLocalLabel	contained "[^-+!$0-9;"'#. \t/*][^ \t:;#]*:\ze\%($\|[ \t;#]\|\/\*\)"
+syn match nsisGlobalLabel	contained "\.[^-+!$0-9;"'# \t/*][^ \t:;#]*:\ze\%($\|[ \t;#]\|\/\*\)"
 
 "CONSTANTS
 syn keyword nsisBoolean		contained true false
