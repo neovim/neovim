@@ -3,7 +3,7 @@
 " Maintainer:	Tom Picton <tom@tompicton.co.uk>
 " Previous Maintainer: James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Change:	Wed, 20 December 2017
+" Last Change:	Sun, 18 March 2018
 " https://github.com/tpict/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
@@ -14,7 +14,25 @@ set cpo&vim
 setlocal cinkeys-=0#
 setlocal indentkeys-=0#
 setlocal include=^\\s*\\(from\\\|import\\)
-setlocal includeexpr=substitute(v:fname,'\\.','/','g')
+
+" For imports with leading .., append / and replace additional .s with ../
+let b:grandparent_match = '^\(.\.\)\(\.*\)'
+let b:grandparent_sub = '\=submatch(1)."/".repeat("../",strlen(submatch(2)))'
+
+" For imports with a single leading ., replace it with ./
+let b:parent_match = '^\.\(\.\)\@!'
+let b:parent_sub = './'
+
+" Replace any . sandwiched between word characters with /
+let b:child_match = '\(\w\)\.\(\w\)'
+let b:child_sub = '\1/\2'
+
+setlocal includeexpr=substitute(substitute(substitute(
+      \v:fname,
+      \b:grandparent_match,b:grandparent_sub,''),
+      \b:parent_match,b:parent_sub,''),
+      \b:child_match,b:child_sub,'g')
+
 setlocal suffixesadd=.py
 setlocal comments=b:#,fb:-
 setlocal commentstring=#\ %s

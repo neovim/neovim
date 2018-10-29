@@ -44,6 +44,8 @@ effects.  Be careful not to destroy your text.
 			Add {cmd} to the list of commands that Vim will
 			execute automatically on {event} for a file matching
 			{pat} |autocmd-patterns|.
+			Note: A quote character is seen as argument to the
+			:autocmd and won't start a comment.
 			Vim always adds the {cmd} after existing autocommands,
 			so that the autocommands execute in the order in which
 			they were given.  See |autocmd-nested| for [nested].
@@ -79,7 +81,8 @@ will appear twice.  To avoid this, define your autocommands in a group, so
 that you can easily clear them: >
 
 	augroup vimrc
-	  autocmd!	" Remove all vimrc autocommands
+	  " Remove all vimrc autocommands
+	  autocmd!
 	  au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 	augroup END
 
@@ -133,6 +136,8 @@ prompt.  When one command outputs two messages this can happen anyway.
 			plugins, syntax highlighting, etc.
 
 :au[tocmd]! [group]	Remove ALL autocommands.
+			Note: a quote will be seen as argument to the :autocmd
+			and won't start a comment.
 			Warning: You should normally not do this without a
 			group, it breaks plugins, syntax highlighting, etc.
 
@@ -313,14 +318,11 @@ Name			triggered by ~
 |TabNew|		when creating a new tab page
 |TabNewEntered|		after entering a new tab page
 |TabClosed|		after closing a tab page
+|CmdlineChanged|	after a change was made to the command-line text
 |CmdlineEnter|		after entering cmdline mode
 |CmdlineLeave|		before leaving cmdline mode
 |CmdwinEnter|		after entering the command-line window
 |CmdwinLeave|		before leaving the command-line window
-
-|CmdlineChanged|	after a change was made to the command-line text
-|CmdlineEnter|		after the cursor moves to the command line
-|CmdlineLeave|		before the cursor leaves the command line
 
 |InsertEnter|		starting Insert mode
 |InsertChange|		when typing <Insert> while in Insert or Replace mode

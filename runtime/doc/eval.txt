@@ -2101,6 +2101,7 @@ gettabvar({nr}, {varname} [, {def}])
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
 getwininfo([{winid}])		List	list of windows
+getwinpos([{timeout}])		List	X and Y coord in pixels of the Vim window
 getwinposx()			Number	X coord in pixels of GUI Vim window
 getwinposy()			Number	Y coord in pixels of GUI Vim window
 getwinvar({nr}, {varname} [, {def}])
@@ -8572,6 +8573,8 @@ visual			Compiled with Visual mode.
 visualextra		Compiled with extra Visual mode commands.
 			|blockwise-operators|.
 vreplace		Compiled with |gR| and |gr| commands.
+vtp			Compiled for vcon support |+vtp| (check vcon to find
+			out if it works in the current console)).
 wildignore		Compiled with 'wildignore' option.
 wildmenu		Compiled with 'wildmenu' option.
 win32			Windows version of Vim (32 or 64 bit).
@@ -8796,8 +8799,7 @@ may be larger.
 It is also possible to define a function without any arguments.  You must
 still supply the () then.
 
-It is allowed to define another function inside a function
-body.
+It is allowed to define another function inside a function body.
 
 							*local-variables*
 Inside a function local variables can be used.  These will disappear when the

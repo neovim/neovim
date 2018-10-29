@@ -1148,7 +1148,8 @@ x	A single character, with no special meaning, matches itself
 	- Matching with a collection can be slow, because each character in
 	  the text has to be compared with each character in the collection.
 	  Use one of the other atoms above when possible.  Example: "\d" is
-	  much faster than "[0-9]" and matches the same characters.
+	  much faster than "[0-9]" and matches the same characters.  However,
+	  the new |NFA| regexp engine deals with this better than the old one.
 
 						*/\%[]* *E69* *E70* *E369*
 \%[]	A sequence of optionally matched atoms.  This always matches.
