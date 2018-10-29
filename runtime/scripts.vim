@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2017 Nov 11
+" Last change:	2018 Feb 03
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -133,7 +133,7 @@ if s:line1 =~# "^#!"
     set ft=ruby
 
     " JavaScript
-  elseif s:name =~# 'node\(js\)\=\>' || s:name =~# 'rhino\>'
+  elseif s:name =~# 'node\(js\)\=\>\|js\>' || s:name =~# 'rhino\>'
     set ft=javascript
 
     " BC calculator
@@ -175,6 +175,10 @@ if s:line1 =~# "^#!"
     " Scala
   elseif s:name =~# 'scala\>'
     set ft=scala
+
+    " Clojure
+  elseif s:name =~# 'clojure'
+    set ft=clojure
 
   endif
   unlet s:name
