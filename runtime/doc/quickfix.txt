@@ -1240,7 +1240,7 @@ or >
 to indicate the column of the error.  This is to be used in a multi-line error
 message.  See |errorformat-javac| for a  useful example.
 
-The "%s" conversion specifies the text to search for to locate the error line.
+The "%s" conversion specifies the text to search for, to locate the error line.
 The text is used as a literal string.  The anchors "^" and "$" are added to
 the text to locate the error line exactly matching the search text and the
 text is prefixed with the "\V" atom to make it "very nomagic".  The "%s"

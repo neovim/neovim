@@ -3,11 +3,11 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2018 Jan 06
+" Last Change: 2018 May 03
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debchangelog.vim
 
 " Standard syntax initialization
-if exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
@@ -21,7 +21,7 @@ let s:binNMU='binary-only=yes'
 syn match debchangelogName	contained "^[[:alnum:]][[:alnum:].+-]\+ "
 exe 'syn match debchangelogFirstKV	contained "; \('.s:urgency.'\|'.s:binNMU.'\)"'
 exe 'syn match debchangelogOtherKV	contained ", \('.s:urgency.'\|'.s:binNMU.'\)"'
-syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|squeeze-%(backports%(-sloppy)=|volatile|lts|security)|%(wheezy|jessie)%(-backports%(-sloppy)=|-security)=|stretch%(-backports|-security)=|%(devel|precise|trusty|vivid|wily|xenial|yakkety|zesty|artful|bionic)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
+syn match debchangelogTarget	contained "\v %(frozen|unstable|sid|%(testing|%(old)=stable)%(-proposed-updates|-security)=|experimental|squeeze-%(backports%(-sloppy)=|volatile|lts|security)|%(wheezy|jessie)%(-backports%(-sloppy)=|-security)=|stretch%(-backports|-security)=|%(devel|precise|trusty|vivid|wily|xenial|yakkety|zesty|artful|bionic|cosmic)%(-%(security|proposed|updates|backports|commercial|partner))=)+"
 syn match debchangelogVersion	contained "(.\{-})"
 syn match debchangelogCloses	contained "closes:\_s*\(bug\)\=#\=\_s\=\d\+\(,\_s*\(bug\)\=#\=\_s\=\d\+\)*"
 syn match debchangelogLP	contained "\clp:\s\+#\d\+\(,\s*#\d\+\)*"
@@ -46,6 +46,6 @@ hi def link debchangelogVersion Identifier
 hi def link debchangelogTarget  Identifier
 hi def link debchangelogEmail   Special
 
-let b:current_syntax = "debchangelog"
+let b:current_syntax = 'debchangelog'
 
 " vim: ts=8 sw=2

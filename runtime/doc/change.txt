@@ -99,7 +99,7 @@ is an error when 'cpoptions' includes the 'E' flag.
 J			Join [count] lines, with a minimum of two lines.
 			Remove the indent and insert up to two spaces (see
 			below).  Fails when on the last line of the buffer.
-			If [count] is too big it is reduce to the number of
+			If [count] is too big it is reduced to the number of
 			lines available.
 
 							*v_J*
@@ -416,7 +416,7 @@ This depends on the 'nrformats' option:
 
 For decimals a leading negative sign is considered for incrementing or
 decrementing, for binary, octal and hex values, it won't be considered.  To
-ignore the sign Visually select the number before using CTRL-A or CTRL-X. 
+ignore the sign Visually select the number before using CTRL-A or CTRL-X.
 
 For numbers with leading zeros (including all octal and hexadecimal numbers),
 Vim preserves the number of characters in the number when possible.  CTRL-A on

@@ -425,6 +425,13 @@ au BufNewFile,BufRead control
 	\|   setf debcontrol
 	\| endif
 
+" Debian Copyright
+au BufNewFile,BufRead */debian/copyright	setf debcopyright
+au BufNewFile,BufRead copyright
+	\  if getline(1) =~ '^Format:'
+	\|   setf debcopyright
+	\| endif
+
 " Debian Sources.list
 au BufNewFile,BufRead */etc/apt/sources.list		setf debsources
 au BufNewFile,BufRead */etc/apt/sources.list.d/*.list	setf debsources

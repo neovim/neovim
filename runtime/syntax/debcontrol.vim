@@ -3,11 +3,11 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2018 Jan 06
+" Last Change: 2018 Jan 28
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debcontrol.vim
 
 " Standard syntax initialization
-if exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
@@ -135,7 +135,7 @@ hi def link debcontrolR3            Identifier
 hi def link debcontrolComment       Comment
 hi def link debcontrolElse          Special
 
-let b:current_syntax = "debcontrol"
+let b:current_syntax = 'debcontrol'
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
