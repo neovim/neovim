@@ -1,5 +1,4 @@
-# translation of pl.po to Polish
-# Polish Translation for Vim
+# Polish translation for Vim
 #
 # updated 2013 for vim-7.4
 #

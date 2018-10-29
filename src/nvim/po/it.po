@@ -1,8 +1,8 @@
 # Italian translation for Vim
 #
-# FIRST AUTHOR Antonio Colombo <azc100@gmail.com>, 2000
-# Vlad Sandrini <vlad.gently@gmail.com>
-# Luciano Montanaro <mikelima@cirulla.net>
+# Antonio Colombo <azc100@gmail.com>, 2000
+# Vlad Sandrini <vlad.gently@gmail.com>, 2002
+# Luciano Montanaro <mikelima@cirulla.net>, 2006
 #
 # Ogni commento è benvenuto...
 # Every remark is very welcome...
@@ -886,7 +886,6 @@ msgstr "E730: uso di Lista come Stringa"
 msgid "E731: using Dictionary as a String"
 msgstr "E731: uso di Dizionario come Stringa"
 
-# nuovo
 msgid "E908: using an invalid value as a String"
 msgstr "E908: uso di un valore non valido come Stringa"
 
@@ -2534,7 +2533,7 @@ msgid ""
 "--- Auto-Commands ---"
 msgstr ""
 "\n"
-"--- Auto-Comandi ---"
+"--- Autocomandi ---"
 
 #: ../fileio.c:6293
 #, c-format
@@ -3455,7 +3454,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"  uso:"
+"  Uso:"
 
 #: ../main.c:2189
 msgid " vim [arguments] "

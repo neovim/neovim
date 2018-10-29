@@ -1510,7 +1510,7 @@ phpFunctions.
 
 If you wish non-filetype syntax items to also be included, you can use a
 regular expression syntax (added in version 13.0 of
-autoload\syntaxcomplete.vim) to add items.  Looking at the output from
+autoload/syntaxcomplete.vim) to add items.  Looking at the output from
 ":syntax list" while editing a PHP file I can see some of these entries: >
     htmlArg,htmlTag,htmlTagName,javaScriptStatement,javaScriptGlobalObjects
 

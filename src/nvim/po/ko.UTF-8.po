@@ -4772,6 +4772,9 @@ msgstr "E447: path에서 \"%s\" 파일을 찾을 수 없습니다"
 msgid "shell returned %d"
 msgstr "쉘이 %d을(를) 돌려주었습니다"
 
+msgid "E926: Current location list was changed"
+msgstr "E926: 현재의 location list가 바뀌었습니다"
+
 #, c-format
 msgid "E372: Too many %%%c in format string"
 msgstr "E372: 형식 문자열에 %%%c이(가) 너무 많습니다"
@@ -5455,8 +5458,8 @@ msgstr "E760: %s에 단어 카운트가 없습니다"
 
 #: ../spell.c:5669
 #, c-format
-msgid "line %6d, word %6d - %s"
-msgstr "라인 %6d, 단어 %6d - %s"
+msgid "line %6d, word %6ld - %s"
+msgstr "라인 %6d, 단어 %6ld - %s"
 
 #: ../spell.c:5691
 #, c-format
