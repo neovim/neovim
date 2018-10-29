@@ -61,6 +61,32 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
+/// Writes an array of lines to the log file (see $NVIM_LOG_FILE)
+///
+/// @param log_level A valid log level. I.e., "DEBUG", "INFO", "WARNING", or "ERROR"
+/// @param lines An array of strings which will be written to the log file, with
+///              a newline after each. If lines is empty, no log entries will be
+///              written.
+/// @param opt Additional options. Currently the only supported key is "who".
+///            Use this to make it clear which script or plugin is generating
+///            log messages. E.g.,
+///
+///                nvim_log(..., {"who": "my-cool-plugin"})
+/// @return void
+/// @see $NVIM_LOG_FILE
+void nvim_log(String log_level, Array lines, Dictionary opt, Error *err)
+  FUNC_API_SINCE(5)
+{
+  // nothing to do when lines is empty
+  if (lines.size < 1) {
+    return;
+  }
+
+  if (!do_log_array(log_level.data, lines, opt)) {
+    api_set_error(err, kErrorTypeException, "Could not write to log file");
+  }
+}
+
 /// Gets a highlight definition by name.
 ///
 /// @param name Highlight group name
