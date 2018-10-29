@@ -986,12 +986,13 @@ These commands are not marks themselves, but jump to a mark:
 ==============================================================================
 8. Jumps					*jump-motions*
 
-A "jump" is one of the following commands: "'", "`", "G", "/", "?", "n",
-"N", "%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and
-the commands that start editing a new file.  If you make the cursor "jump"
-with one of these commands, the position of the cursor before the jump is
+A "jump" is a command that normally moves the cursor several lines away.  If
+you make the cursor "jump" the position of the cursor before the jump is
 remembered.  You can return to that position with the "''" and "``" command,
-unless the line containing that position was changed or deleted.
+unless the line containing that position was changed or deleted.  The
+following commands are "jump" commands: "'", "`", "G", "/", "?", "n", "N",
+"%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and the
+commands that start editing a new file. 
 
 							*CTRL-O*
 CTRL-O			Go to [count] Older cursor position in jump list

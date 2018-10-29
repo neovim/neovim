@@ -1,4 +1,4 @@
-# Serbian Cyrillic Translation for Vim
+# Serbian Cyrillic translation for Vim
 #
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
@@ -13,7 +13,8 @@ msgstr ""
 "POT-Creation-Date: 2018-05-15 11:55+0400\n"
 "PO-Revision-Date: 2018-05-15 10:50+0400\n"
 "Last-Translator: Ivan Pešić <ivan.pesic@gmail.com>\n"
-"Language-Team: Serbian <LL@li.org>\n"
+"Language-Team: Serbian\n"
+"Language: sr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2027,7 +2028,7 @@ msgid ""
 "--- Autocommands ---"
 msgstr ""
 "\n"
-"--- Ауто-Команде ---"
+"--- Аутокоманде ---"
 
 #, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
@@ -2040,11 +2041,11 @@ msgid "No matching autocommands"
 msgstr "Нема подударајућих аутокоманди"
 
 msgid "E218: autocommand nesting too deep"
-msgstr "E218: Угњшждавање аутокоманде је сувише дубоко"
+msgstr "E218: Угњеждавање аутокоманде је сувише дубоко"
 
 #, c-format
 msgid "%s Autocommands for \"%s\""
-msgstr "%s Ауто команде за \"%s\""
+msgstr "%s Аутокоманде за \"%s\""
 
 #, c-format
 msgid "Executing %s"
@@ -2962,7 +2963,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"употреба:"
+"Употреба:"
 
 msgid " vim [arguments] "
 msgstr " vim [аргументи] "
@@ -4765,7 +4766,7 @@ msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( овде није дозвољено"
 
 msgid "E67: \\z1 - \\z9 not allowed here"
-msgstr "E67: \\z1 и остали онвде нису дозвољени"
+msgstr "E67: \\z1 - \\z9 овде нису дозвољени"
 
 #, c-format
 msgid "E69: Missing ] after %s%%["
@@ -4891,7 +4892,7 @@ msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (NFA regexp) грешка правилне терминације"
 
 msgid "E874: (NFA) Could not pop the stack!"
-msgstr "E874: (NFA) Скидање са стека није успело !"
+msgstr "E874: (NFA) Скидање са стека није успело!"
 
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "

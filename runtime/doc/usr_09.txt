@@ -5,9 +5,10 @@
 				Using the GUI
 
 
-Vim works in an ordinary terminal.  GVim can do the same things and a few
-more.  The GUI offers menus, a toolbar, scrollbars and other items.  This
-chapter is about these extra things that the GUI offers.
+Vim works in an ordinary terminal, while gVim has a Graphical User Interface
+(GUI).  It can do the same things and a few more.  The GUI offers menus, a
+toolbar, scrollbars and other items.  This chapter is about these extra things
+that the GUI offers.
 
 |09.1|	Parts of the GUI
 |09.2|	Using the mouse
