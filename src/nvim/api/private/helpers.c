@@ -876,6 +876,25 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
+// NOTE: be sure to keep this in sync with the ObjectType enum
+char *object_type_names[] = {
+  [kObjectTypeNil] = "null",
+  [kObjectTypeBoolean] = "boolean",
+  [kObjectTypeInteger] = "integer",
+  [kObjectTypeFloat] = "float",
+  [kObjectTypeString] = "string",
+  [kObjectTypeArray] = "list",
+  [kObjectTypeDictionary] = "dictionary",
+  [kObjectTypeBuffer] = "buffer",
+  [kObjectTypeWindow] = "window",
+  [kObjectTypeTabpage] = "tabpage",
+};
+
+char *get_object_type_name(ObjectType type) {
+  return object_type_names[type];
+}
+
+
 void api_free_string(String value)
 {
   if (!value.data) {
