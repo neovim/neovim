@@ -1,8 +1,14 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+# include  <unibilium.h>
+#endif
 
 #include "nvim/tui/input.h"
+#ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+# include "nvim/tui/terminfo.h"
+#endif
 #include "nvim/vim.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
@@ -17,12 +23,21 @@
 #ifdef WIN32
 # include "nvim/os/os_win_console.h"
 #endif
+#include "nvim/os/tty.h"
 #include "nvim/event/rstream.h"
 
 #define KEY_BUFFER_SIZE 0xfff
 
+#if defined(WIN32) && !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+# define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.c.generated.h"
+#endif
+
+#ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+static char *saved_termname = NULL;
 #endif
 
 void tinput_init(TermInput *input, Loop *loop)
@@ -50,6 +65,15 @@ void tinput_init(TermInput *input, Loop *loop)
   input_global_fd_init(input->in_fd);
 
   const char *term = os_getenv("TERM");
+#ifdef WIN32
+  os_tty_guess_term(&term, fileno(stdout));
+  os_setenv("TERM", term, 1);
+# ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+  // libtermkey uses unibi_from_term internally,  need to registr a fallback
+  // function that returns the builtin terminfo instead of NULL.
+  unibi_set_fallback(unibi_fallback);
+# endif
+#endif
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
@@ -92,6 +116,24 @@ void tinput_stop(TermInput *input)
   rstream_stop(&input->read_stream);
   time_watcher_stop(&input->timer_handle);
 }
+
+#ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+bool tinput_termname(char **termname)
+{
+  if (saved_termname) {
+    *termname = xstrdup(saved_termname);
+    return true;
+  }
+  return false;
+}
+
+static unibi_term *unibi_fallback(const char *term)
+{
+  xfree(saved_termname);
+  saved_termname = NULL;
+  return terminfo_from_builtin(term, &saved_termname);
+}
+#endif
 
 static void tinput_done_event(void **argv)
 {

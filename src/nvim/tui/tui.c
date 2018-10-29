@@ -31,7 +31,6 @@
 #include "nvim/event/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
@@ -225,15 +224,17 @@ static void terminfo_start(UI *ui)
   data->out_isatty = os_isatty(data->out_fd);
 
   const char *term = os_getenv("TERM");
-#ifdef WIN32
-  os_tty_guess_term(&term, data->out_fd);
-  os_setenv("TERM", term, 1);
-  // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
-  term = os_getenv("TERM");
-#endif
 
   // Set up unibilium/terminfo.
   char *termname = NULL;
+#ifdef NVIM_UNIBI_HAS_SET_FALLBACK
+  data->ut = unibi_from_term(term);
+  if (!data->ut) {
+    data->ut = terminfo_from_builtin(term, &termname);
+  } else if (!tinput_termname(&termname)) {
+    termname = xstrdup(term);
+  }
+#else
   if (term) {
     os_env_var_lock();
     data->ut = unibi_from_term(term);
@@ -245,6 +246,7 @@ static void terminfo_start(UI *ui)
   if (!data->ut) {
     data->ut = terminfo_from_builtin(term, &termname);
   }
+#endif
   // Update 'term' option.
   loop_schedule_deferred(&main_loop,
                          event_create(termname_set_event, 1, termname));

@@ -423,11 +423,27 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
-  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
-  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
+
+  if(WIN32)
+    check_c_source_compiles("
+    #include <unibilium.h>
+
+    int
+    main(void)
+    {
+    unibi_set_fallback(NULL);
+    return 0;
+    }
+    " UNIBI_HAS_SET_FALLBACK)
+    if(UNIBI_HAS_SET_FALLBACK)
+      add_definitions(-DNVIM_UNIBI_HAS_SET_FALLBACK)
+    endif()
+  endif()
+  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
+  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
 
   find_package(LibTermkey 0.18 REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
