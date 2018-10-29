@@ -632,7 +632,7 @@ endfunc
 " Choose context, plaintex, or tex (LaTeX) based on these rules:
 " 1. Check the first line of the file for "%&<format>".
 " 2. Check the first 1000 non-comment lines for LaTeX or ConTeXt keywords.
-" 3. Default to "latex" or to g:tex_flavor, can be set in user's vimrc.
+" 3. Default to "plain" or to g:tex_flavor, can be set in user's vimrc.
 func dist#ft#FTtex()
   let firstline = getline(1)
   if firstline =~ '^%&\s*\a\+'

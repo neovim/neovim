@@ -11,15 +11,15 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Vim(Français)\n"
+"Project-Id-Version: Vim 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-08 09:00+0200\n"
-"PO-Revision-Date: 2018-05-08 09:17+0200\n"
+"POT-Creation-Date: 2018-09-01 14:20+0200\n"
+"PO-Revision-Date: 2018-09-01 17:15+0200\n"
 "Last-Translator: Dominique Pellé <dominique.pelle@gmail.com>\n"
-"Language-Team: \n"
+"Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO_8859-15\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
@@ -74,26 +74,23 @@ msgstr "E516: Aucun tampon n'a été effacé"
 msgid "E517: No buffers were wiped out"
 msgstr "E517: Aucun tampon n'a été détruit"
 
-msgid "1 buffer unloaded"
-msgstr "1 tampon a été déchargé"
+#, c-format
+msgid "%d buffer unloaded"
+msgid_plural "%d buffers unloaded"
+msgstr[0] "%d tampon a été déchargé"
+msgstr[1] "%d tampons ont été déchargés"
 
 #, c-format
-msgid "%d buffers unloaded"
-msgstr "%d tampons ont été déchargés"
-
-msgid "1 buffer deleted"
-msgstr "1 tampon a été effacé"
-
-#, c-format
-msgid "%d buffers deleted"
-msgstr "%d tampons ont été effacés"
-
-msgid "1 buffer wiped out"
-msgstr "1 tampon a été détruit"
+msgid "%d buffer deleted"
+msgid_plural "%d buffers deleted"
+msgstr[0] "%d tampon a été effacé"
+msgstr[1] "%d tampons ont été effacés"
 
 #, c-format
-msgid "%d buffers wiped out"
-msgstr "%d tampons ont été détruits"
+msgid "%d buffer wiped out"
+msgid_plural "%d buffers wiped out"
+msgstr[0] "%d tampon a été détruit"
+msgstr[1] "%d tampons ont été détruits"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Impossible de décharger le dernier tampon"
@@ -177,12 +174,10 @@ msgid "[readonly]"
 msgstr "[lecture-seule]"
 
 #, c-format
-msgid "1 line --%d%%--"
-msgstr "1 ligne --%d%%--"
-
-#, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld lignes --%d%%--"
+msgid "%ld line --%d%%--"
+msgid_plural "%ld lines --%d%%--"
+msgstr[0] "%ld ligne --%d%%--"
+msgstr[1] "%ld lignes --%d%%--"
 
 # AB - Faut-il remplacer "sur" par "de" ?
 # DB - Mon avis : oui.
@@ -228,6 +223,9 @@ msgstr ""
 
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: Écriture impossible, l'option 'buftype' est activée"
+
+msgid "[Prompt]"
+msgstr "[Invite]"
 
 msgid "[Scratch]"
 msgstr "[Brouillon]"
@@ -821,6 +819,9 @@ msgstr "E916: tâche invalide"
 msgid "E701: Invalid type for len()"
 msgstr "E701: Type invalide avec len()"
 
+msgid "E957: Invalid window number"
+msgstr "E957: numéro de fenêtre invalide"
+
 #, c-format
 msgid "E798: ID is reserved for \":match\": %ld"
 msgstr "E798: ID est réservé pour \":match\": %ld"
@@ -922,12 +923,11 @@ msgstr "> %d, Hexa %08x, Octal %o"
 msgid "E134: Move lines into themselves"
 msgstr "E134: La destination est dans la plage d'origine"
 
-msgid "1 line moved"
-msgstr "1 ligne déplacée"
-
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld lignes déplacées"
+msgid "%ld line moved"
+msgid_plural "%ld lines moved"
+msgstr[0] "%ld ligne déplacée"
+msgstr[1] "%ld lignes déplacées"
 
 #, c-format
 msgid "%ld lines filtered"
@@ -1135,26 +1135,29 @@ msgstr "remplacer par %s (y/n/a/q/l/^E/^Y)?"
 msgid "(Interrupted) "
 msgstr "(Interrompu) "
 
-msgid "1 match"
-msgstr "1 correspondance"
-
-msgid "1 substitution"
-msgstr "1 substitution"
+#, c-format
+msgid "%ld match on %ld line"
+msgid_plural "%ld matches on %ld line"
+msgstr[0] "%ld correspondance sur %ld ligne"
+msgstr[1] "%ld correspondances sur %ld ligne"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld correspondances"
+msgid "%ld substitution on %ld line"
+msgid_plural "%ld substitutions on %ld line"
+msgstr[0] "%ld substitution sur %ld ligne"
+msgstr[1] "%ld substitutions sur %ld ligne"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld substitutions"
-
-msgid " on 1 line"
-msgstr " sur 1 ligne"
+msgid "%ld match on %ld lines"
+msgid_plural "%ld matches on %ld lines"
+msgstr[0] "%ld correspondance sur %ld lignes"
+msgstr[1] "%ld correspondances sur %ld lignes"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " sur %ld lignes"
+msgid "%ld substitution on %ld lines"
+msgid_plural "%ld substitutions on %ld lines"
+msgstr[0] "%ld substitution sur %ld lignes"
+msgstr[1] "%ld substitutions sur %ld lignes"
 
 # AB - Il faut respecter l'esprit plus que la lettre.
 # AB - Ce message devrait contenir une référence à :vglobal.
@@ -1504,19 +1507,17 @@ msgstr ""
 msgid "E319: Sorry, the command is not available in this version"
 msgstr "E319: Désolé, cette commande n'est pas disponible dans cette version"
 
-msgid "1 more file to edit.  Quit anyway?"
-msgstr "Encore 1 fichier à éditer. Quitter tout de même ?"
+#, c-format
+msgid "%d more file to edit.  Quit anyway?"
+msgid_plural "%d more files to edit.  Quit anyway?"
+msgstr[0] "Encore %d fichier à éditer. Quitter tout de même ?"
+msgstr[1] "Encore %d fichiers à éditer. Quitter tout de même ?"
 
 #, c-format
-msgid "%d more files to edit.  Quit anyway?"
-msgstr "Encore %d fichiers à éditer. Quitter tout de même ?"
-
-msgid "E173: 1 more file to edit"
-msgstr "E173: encore 1 fichier à éditer"
-
-#, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: encore %ld fichiers à éditer"
+msgid "E173: %ld more file to edit"
+msgid_plural "E173: %ld more files to edit"
+msgstr[0] "E173: encore %ld fichier à éditer"
+msgstr[1] "E173: encore %ld fichiers à éditer"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: La commande existe déjà : ajoutez ! pour la redéfinir"
@@ -1596,6 +1597,9 @@ msgstr "E784: Impossible de fermer le dernier onglet"
 
 msgid "Already only one tab page"
 msgstr "Il ne reste déjà plus qu'un seul onglet"
+
+msgid "Edit File in new tab page"
+msgstr "Ouvrir un fichier dans un nouvel onglet"
 
 msgid "Edit File in new window"
 msgstr "Ouvrir un fichier dans une nouvelle fenêtre - Vim"
@@ -1904,9 +1908,6 @@ msgstr "Lecture de stdin..."
 msgid "E202: Conversion made file unreadable!"
 msgstr "E202: La conversion a rendu le fichier illisible !"
 
-msgid "[fifo/socket]"
-msgstr "[fifo/socket]"
-
 msgid "[fifo]"
 msgstr "[fifo]"
 
@@ -2091,19 +2092,17 @@ msgstr "[unix]"
 msgid "[unix format]"
 msgstr "[format unix]"
 
-msgid "1 line, "
-msgstr "1 ligne, "
+#, c-format
+msgid "%ld line, "
+msgid_plural "%ld lines, "
+msgstr[0] "%ld ligne, "
+msgstr[1] "%ld lignes, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld lignes, "
-
-msgid "1 character"
-msgstr "1 caractère"
-
-#, c-format
-msgid "%lld characters"
-msgstr "%lld caractères"
+msgid "%lld character"
+msgid_plural "%lld characters"
+msgstr[0] "%lld caractère"
+msgstr[1] "%lld caractères"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -2489,11 +2488,11 @@ msgstr "Ann&uler"
 msgid "Open tab..."
 msgstr "Ouvrir dans un onglet..."
 
-msgid "Find string (use '\\\\' to find  a '\\')"
-msgstr "Chercher une chaîne (utilisez '\\\\' pour chercher un '\\')"
+msgid "Find string"
+msgstr "Trouver une chaîne"
 
-msgid "Find & Replace (use '\\\\' to find  a '\\')"
-msgstr "Chercher et remplacer (utilisez '\\\\' pour trouver un '\\')"
+msgid "Find & Replace"
+msgstr "Trouver & remplacer"
 
 # DB - Traduction non indispensable puisque le code indique qu'il s'agit d'un
 #      paramétrage bidon afin de sélectionner un répertoire plutôt qu'un
@@ -4202,19 +4201,17 @@ msgstr "Tapez un nombre et <Entrée> ou cliquez avec la souris (rien annule) :"
 msgid "Type number and <Enter> (empty cancels): "
 msgstr "Tapez un nombre et <Entrée> (rien annule) :"
 
-msgid "1 more line"
-msgstr "1 ligne en plus"
-
-msgid "1 line less"
-msgstr "1 ligne en moins"
+#, c-format
+msgid "%ld more line"
+msgid_plural "%ld more lines"
+msgstr[0] "%ld ligne en plus"
+msgstr[1] "%ld lignes en plus"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld lignes en plus"
-
-#, c-format
-msgid "%ld fewer lines"
-msgstr "%ld lignes en moins"
+msgid "%ld line less"
+msgid_plural "%ld fewer lines"
+msgstr[0] "%ld ligne en moins"
+msgstr[1] "%ld lignes en moins"
 
 msgid " (Interrupted)"
 msgstr " (Interrompu)"
@@ -4352,31 +4349,26 @@ msgstr ""
 "Vim"
 
 #, c-format
-msgid "1 line %sed 1 time"
-msgstr "1 ligne %sée 1 fois"
+msgid "%ld line %sed %d time"
+msgid_plural "%ld line %sed %d times"
+msgstr[0] "%ld lignes %sées %d fois"
+msgstr[1] "%ld lignes %sées %d fois"
 
 #, c-format
-msgid "1 line %sed %d times"
-msgstr "1 ligne %sée %d fois"
-
-#, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld lignes %sées 1 fois"
-
-#, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld lignes %sées %d fois"
+msgid "%ld lines %sed %d time"
+msgid_plural "%ld lines %sed %d times"
+msgstr[0] "%ld lignes %sées %d fois"
+msgstr[1] "%ld lignes %sées %d fois"
 
 #, c-format
 msgid "%ld lines to indent... "
 msgstr "%ld lignes à indenter... "
 
-msgid "1 line indented "
-msgstr "1 ligne indentée "
-
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld lignes indentées "
+msgid "%ld line indented "
+msgid_plural "%ld lines indented "
+msgstr[0] "%ld ligne indentée "
+msgstr[1] "%ld lignes indentées "
 
 msgid "E748: No previously used register"
 msgstr "E748: Aucun registre n'a été précédemment utilisé"
@@ -4385,12 +4377,11 @@ msgstr "E748: Aucun registre n'a été précédemment utilisé"
 msgid "cannot yank; delete anyway"
 msgstr "impossible de réaliser une copie ; effacer tout de même"
 
-msgid "1 line changed"
-msgstr "1 ligne modifiée"
-
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld lignes modifiées"
+msgid "%ld line changed"
+msgid_plural "%ld lines changed"
+msgstr[0] "%ld ligne modifiée"
+msgstr[1] "%ld lignes modifiées"
 
 #, c-format
 msgid "freeing %ld lines"
@@ -4401,20 +4392,16 @@ msgid " into \"%c"
 msgstr " dans \"%c"
 
 #, c-format
-msgid "block of 1 line yanked%s"
-msgstr "bloc de 1 ligne copié%s"
+msgid "block of %ld line yanked%s"
+msgid_plural "block of %ld lines yanked%s"
+msgstr[0] "bloc de %ld ligne copié%s"
+msgstr[1] "bloc de %ld lignes copié%s"
 
 #, c-format
-msgid "1 line yanked%s"
-msgstr "1 ligne copiée%s"
-
-#, c-format
-msgid "block of %ld lines yanked%s"
-msgstr "bloc de %ld lignes copié%s"
-
-#, c-format
-msgid "%ld lines yanked%s"
-msgstr "%ld lignes copiées%s"
+msgid "%ld line yanked%s"
+msgid_plural "%ld lines yanked%s"
+msgstr[0] "%ld ligne copiée%s"
+msgstr[1] "%ld lignes copiées%s"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -5014,6 +5001,9 @@ msgstr "E69: ']' manquant après %s%%["
 msgid "E70: Empty %s%%[]"
 msgstr "E70: %s%%[] vide"
 
+msgid "E956: Cannot use pattern recursively"
+msgstr "E956: Impossible d'utiliser le motif récursivement"
+
 msgid "E65: Illegal back reference"
 msgstr "E65: post-référence invalide"
 
@@ -5129,6 +5119,11 @@ msgstr "E879: (regexp NFA) Trop de \\z("
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (NFA regexp) erreur de terminaison"
 
+msgid "Could not open temporary log file for writing, displaying on stderr... "
+msgstr ""
+"Impossible d'ouvrir le fichier de log temporaire en écriture, affichage sur "
+"stderr... "
+
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (NFA) Impossible de dépiler !"
 
@@ -5145,19 +5140,6 @@ msgstr "E876: (regexp NFA) Pas assez de mémoire pour stocker le NFA"
 msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr ""
 "E878: (NFA) Impossible d'allouer la mémoire pour parcourir les branches !"
-
-msgid ""
-"Could not open temporary log file for writing, displaying on stderr... "
-msgstr ""
-"Impossible d'ouvrir le fichier de log temporaire en écriture, affichage sur "
-"stderr... "
-
-#, c-format
-msgid "(NFA) COULD NOT OPEN %s !"
-msgstr "(NFA) IMPOSSIBLE D'OUVRIR %s !"
-
-msgid "Could not open temporary log file for writing "
-msgstr "Impossible d'ouvrir le fichier de log en écriture"
 
 msgid " VREPLACE"
 msgstr " VREMPLACEMENT"
@@ -5654,6 +5636,9 @@ msgstr "E783: caractère dupliqué dans l'entrée MAP"
 msgid "No Syntax items defined for this buffer"
 msgstr "Aucun élément de syntaxe défini pour ce tampon"
 
+msgid "'redrawtime' exceeded, syntax highlighting disabled"
+msgstr "'redrawtime' écoulé, surbrillance de syntaxe désactivée"
+
 msgid "syntax conceal on"
 msgstr "\"syntax conceal\" activée"
 
@@ -5683,6 +5668,9 @@ msgstr ""
 
 msgid "syntax iskeyword "
 msgstr "syntaxe iskeyword "
+
+msgid "syntax iskeyword not set"
+msgstr "iskeyword n'est pas activé"
 
 #, c-format
 msgid "E391: No such syntax cluster: %s"
@@ -6175,8 +6163,10 @@ msgid "number changes  when               saved"
 msgstr "numéro modif.   instant            enregistré"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "il y a %ld secondes"
+msgid "%ld second ago"
+msgid_plural "%ld seconds ago"
+msgstr[0] "il y a %ld seconde"
+msgstr[1] "il y a %ld secondes"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undojoin n'est pas autorisé après une annulation"
@@ -6333,6 +6323,10 @@ msgstr "E133: :return en dehors d'une fonction"
 #, c-format
 msgid "E107: Missing parentheses: %s"
 msgstr "E107: Parenthèses manquantes : %s"
+
+#, c-format
+msgid "%s (%s, compiled %s)"
+msgstr "%s (%s, compilé %s)"
 
 msgid ""
 "\n"
