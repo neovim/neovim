@@ -64,6 +64,13 @@ static bool log_try_create(char *fname)
   return true;
 }
 
+static char *log_levels[] = {
+  [DEBUG_LOG_LEVEL]   = "DEBUG",
+  [INFO_LOG_LEVEL]    = "INFO ",
+  [WARN_LOG_LEVEL]    = "WARN ",
+  [ERROR_LOG_LEVEL]   = "ERROR",
+};
+
 /// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
 ///
 /// Tries $NVIM_LOG_FILE, or falls back to $XDG_DATA_HOME/nvim/log. Path to log
@@ -203,10 +210,27 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
     }
   }
 
+  // work out whether the provided log level is valid; if not, use 'ERROR'
+  char *log_level_str;
+  bool log_level_valid = false;
+
+  if (log_level != NULL) {
+      log_level_valid = (0 == strcmp(log_level, "ERROR")
+                         || 0 == strcmp(log_level, "WARN")
+                         || 0 == strcmp(log_level, "INFO")
+                         || 0 == strcmp(log_level, "DEBUG"));
+  }
+  if (log_level_valid) {
+    log_level_str = log_level;
+  } else {
+    log_level_str = log_levels[ERROR_LOG_LEVEL];
+    fprintf(log_file, "%s invalid log level '%s'\n",  err_prefix, log_level);
+  }
+
   for (size_t i = 0; i < lines.size; i++) {
     Object item = lines.items[i];
     if (item.type == kObjectTypeString) {
-      fprintf(log_file, "%s %s %s %s\n", date_time, log_level, who, item.data.string.data);
+      fprintf(log_file, "%s %s %s %s\n", date_time, log_level_str, who, item.data.string.data);
     } else {
       // issue a generic error message for invalid line items
       fprintf(log_file, "%s lines[%d] should be a string; got %s instead\n",
@@ -350,12 +374,6 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
                              int line_num, bool eol, const char *fmt,
                              va_list args)
 {
-  static const char *log_levels[] = {
-    [DEBUG_LOG_LEVEL]   = "DEBUG",
-    [INFO_LOG_LEVEL]    = "INFO ",
-    [WARN_LOG_LEVEL]    = "WARN ",
-    [ERROR_LOG_LEVEL]   = "ERROR",
-  };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
   // format current timestamp in local time

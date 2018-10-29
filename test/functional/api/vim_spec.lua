@@ -1322,6 +1322,11 @@ describe('API', function()
       nvim('log', 'INFO', {'Info line D'}, {who=""})
       file_contains(templog, 'INFO  Info line D')
 
+      -- test an invalid log level
+      nvim('log', 'CRITICAL', {'Critical line'}, {who="nvim_spec.lua"})
+      file_contains(templog, "ERROR nvim_spec.lua nvim_log%(%): invalid log level 'CRITICAL'")
+      file_contains(templog, 'ERROR nvim_spec.lua Critical line')
+
       -- test invalid/empty log line items
       nvim('log', 'INFO', {'valid line 1', 555, false, 'valid line 2'}, {who="nvim_spec.lua"})
       file_contains(templog, 'ERROR nvim_spec.lua nvim_log%(%): lines%[1%] should be a string; got integer instead')
