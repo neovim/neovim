@@ -410,10 +410,10 @@ The examples below assume a 'shiftwidth' of 4.
 							*cino-(*
 	(N    When in unclosed parentheses, indent N characters from the line
 	      with the unclosed parentheses.  Add a 'shiftwidth' for every
-	      unclosed parentheses.  When N is 0 or the unclosed parentheses
-	      is the first non-white character in its line, line up with the
-	      next non-white character after the unclosed parentheses.
-	      (default 'shiftwidth' * 2).
+	      extra unclosed parentheses.  When N is 0 or the unclosed
+	      parentheses is the first non-white character in its line, line
+	      up with the next non-white character after the unclosed
+	      parentheses.  (default 'shiftwidth' * 2).
 
 		cino=			  cino=(0 >
 		  if (c1 && (c2 ||	    if (c1 && (c2 ||
@@ -424,7 +424,8 @@ The examples below assume a 'shiftwidth' of 4.
 		     {			       {
 <
 							*cino-u*
-	uN    Same as (N, but for one level deeper.  (default 'shiftwidth').
+	uN    Same as (N, but for one nesting level deeper.
+	      (default 'shiftwidth').
 
 		cino=			  cino=u2 >
 		  if (c123456789	    if (c123456789
