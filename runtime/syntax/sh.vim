@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Jul 31, 2018
-" Version:		179
+" Last Change:		Sep 04, 2018
+" Version:		182
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -151,6 +151,7 @@ syn cluster shPPSRightList	contains=shComment,shDeref,shDerefSimple,shEscape,shP
 syn cluster shSubShList	contains=@shCommandSubList,shCommandSubBQ,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator
 syn cluster shTestList	contains=shCharClass,shCommandSub,shCommandSubBQ,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shSpecialDQ,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
 syn cluster shNoZSList	contains=shSpecialNoZS
+syn cluster shForList	contains=shTestOpr,shNumber,shDerefSimple,shDeref,shCommandSub,shCommandSubBQ,shArithmetic
 
 " Echo: {{{1
 " ====
@@ -243,7 +244,7 @@ syn match   shCharClass	contained	"\[:\(backspace\|escape\|return\|xdigit\|alnum
 ShFoldIfDoFor syn region shDo	transparent	matchgroup=shConditional start="\<do\>" matchgroup=shConditional end="\<done\>"			contains=@shLoopList
 ShFoldIfDoFor syn region shIf	transparent	matchgroup=shConditional start="\<if\_s" matchgroup=shConditional skip=+-fi\>+ end="\<;\_s*then\>" end="\<fi\>"	contains=@shIfList
 ShFoldIfDoFor syn region shFor		matchgroup=shLoop start="\<for\ze\_s\s*\%(((\)\@!" end="\<in\>" end="\<do\>"me=e-2			contains=@shLoopList,shDblParen skipwhite nextgroup=shCurlyIn
-ShFoldIfDoFor syn region shForPP	matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=shTestOpr
+ShFoldIfDoFor syn region shForPP	matchgroup=shLoop start='\<for\>\_s*((' end='))' contains=@shForList
 
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
  syn cluster shCaseList	add=shRepeat
@@ -290,7 +291,7 @@ endif
 " Misc: {{{1
 "======
 syn match   shWrapLineOperator "\\$"
-syn region  shCommandSubBQ   	start="`" skip="\\\\\|\\." end="`"	contains=@shCommandSubList
+syn region  shCommandSubBQ   	start="`" skip="\\\\\|\\." end="`"	contains=shBQComment,@shCommandSubList
 syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'	nextgroup=shSingleQuote,shDoubleQuote,shComment
 
 " $() and $(()): {{{1
@@ -374,6 +375,7 @@ syn match	shComment		"^\s*\zs#.*$"	contains=@shCommentGroup
 syn match	shComment		"\s\zs#.*$"	contains=@shCommentGroup
 syn match	shComment	contained	"#.*$"	contains=@shCommentGroup
 syn match	shQuickComment	contained	"#.*$"
+syn match	shBQComment	contained	"#.\{-}\ze`"	contains=@shCommentGroup
 
 " Here Documents: {{{1
 " =========================================
@@ -525,8 +527,8 @@ if exists("b:is_bash")
  syn region shDerefPPSright	contained	start='.'	skip=@\%(\\\\\)\+@		end='\ze}'	contains=@shPPSRightList
 
  " bash : ${parameter/#substring/replacement}
- syn match  shDerefPSR	contained	'/#'	nextgroup=shDerefPSRleft
- syn region shDerefPSRleft	contained	start='.'	skip=@\%(\\\\\)*\\/@ matchgroup=shDerefOp	end='/' end='\ze}' nextgroup=shDerefPSRright
+ syn match  shDerefPSR	contained	'/#'	nextgroup=shDerefPSRleft,shDoubleQuote,shSingleQuote
+ syn region shDerefPSRleft	contained	start='[^"']'	skip=@\%(\\\\\)*\\/@ matchgroup=shDerefOp	end='/' end='\ze}' nextgroup=shDerefPSRright
  syn region shDerefPSRright	contained	start='.'	skip=@\%(\\\\\)\+@		end='\ze}'
 endif
 
@@ -534,7 +536,7 @@ endif
 "syn region shParen matchgroup=shArithRegion start='[^$]\zs(\%(\ze[^(]\|$\)' end=')' contains=@shArithParenList
 syn region shParen matchgroup=shArithRegion start='\$\@!(\%(\ze[^(]\|$\)' end=')' contains=@shArithParenList
 
-" Useful sh Keywords: {{{1
+" Additional sh Keywords: {{{1
 " ===================
 syn keyword shStatement break cd chdir continue eval exec exit kill newgrp pwd read readonly return shift test trap ulimit umask wait
 syn keyword shConditional contained elif else then
@@ -542,20 +544,22 @@ if !exists("g:sh_no_error")
  syn keyword shCondError elif else then
 endif
 
-" Useful ksh Keywords: {{{1
-" ====================
+" Additional ksh Keywords and Aliases: {{{1
+" ===================================
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
- syn keyword shStatement autoload bg false fc fg functions getopts hash history integer jobs let nohup printf r stop suspend times true type unalias whence
+ syn keyword shStatement bg builtin disown enum export false fg getconf getopts hist jobs let printf sleep true typeset unalias unset whence
+ syn keyword shStatement autoload compound fc float functions hash history integer nameref nohup r redirect source stop suspend times type
  if exists("b:is_posix")
   syn keyword shStatement command
  else
   syn keyword shStatement time
  endif
 
-" Useful bash Keywords: {{{1
+" Additional bash Keywords: {{{1
 " =====================
  if exists("b:is_bash")
-  syn keyword shStatement bind builtin dirs disown enable help logout popd pushd shopt source
+"  syn keyword shStatement bind builtin dirs disown enable help logout popd pushd shopt source
+syn keyword shStatement bind builtin caller compopt declare dirs disown enable export help local logout mapfile popd pushd readarray shopt source typeset unset
  else
   syn keyword shStatement login newgrp
  endif
@@ -637,6 +641,7 @@ if !exists("skip_sh_syntax_inits")
  hi def link shParen	shArithmetic
  hi def link shPosnParm	shShellVariables
  hi def link shQuickComment	shComment
+ hi def link shBQComment	shComment
  hi def link shRange	shOperator
  hi def link shRedir	shOperator
  hi def link shSetListDelim	shOperator

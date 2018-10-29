@@ -3180,6 +3180,12 @@ by syntax/tex.vim.  Please consider uploading any extensions that you write,
 which typically would go in $HOME/after/syntax/tex/[pkgname].vim, to
 http://vim.sf.net/.
 
+I've included some support for various popular packages on my website: >
+
+	http://www.drchip.org/astronaut/vim/index.html#LATEXPKGS
+<
+The syntax files there go into your .../after/syntax/tex/ directory.
+
 					*tex-error* *g:tex_no_error*
  Tex: Excessive Error Highlighting? ~
 
