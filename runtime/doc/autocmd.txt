@@ -338,6 +338,7 @@ Name			triggered by ~
 |TextChangedP|		after a change was made to the text in Insert mode
 			when popup menu visible
 
+|ColorSchemePre|	before loading a color scheme
 |ColorScheme|		after loading a color scheme
 
 |RemoteReply|		a reply from a server Vim was received
@@ -569,6 +570,10 @@ ColorScheme			After loading a color scheme. |:colorscheme|
 				set, and <amatch> for the new colorscheme
 				name.
 
+							*ColorSchemePre*
+ColorSchemePre			Before loading a color scheme. |:colorscheme|
+				Useful to setup removing things added by a
+				color scheme, before another one is loaded.
 
 							*CompleteDone*
 CompleteDone			After Insert mode completion is done.  Either
