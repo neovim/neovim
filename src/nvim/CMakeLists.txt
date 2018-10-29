@@ -74,6 +74,8 @@ include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
+include_directories(${LIBUTF8PROC_INCLUDE_DIRS})
+
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
@@ -84,6 +86,10 @@ file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
+
+# when LIBUTF8PROC build is fixed, don't use lib.c with amalgamated utf8proc.c
+#file(GLOB TS_SOURCES tree_sitter/*.c)
+file(GLOB TS_SOURCES ../tree_sitter/lib.c)
 
 foreach(subdir
         os
@@ -141,6 +147,7 @@ set(CONV_SOURCES
   ex_cmds.c
   ex_docmd.c
   fileio.c
+  lua/tree_sitter.c
   mbyte.c
   memline.c
   message.c
@@ -158,7 +165,7 @@ foreach(sfile ${CONV_SOURCES})
   endif()
 endforeach()
 # xdiff: inlined external project, we don't maintain it. #9306
-list(APPEND CONV_SOURCES ${XDIFF_SOURCES})
+list(APPEND CONV_SOURCES ${XDIFF_SOURCES} ${TS_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
@@ -414,7 +421,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TS_SOURCES})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -500,7 +507,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TS_SOURCES}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -525,7 +532,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TS_SOURCES}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

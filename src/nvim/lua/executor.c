@@ -31,6 +31,7 @@
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/tree_sitter.h"
 
 #include "luv/luv.h"
 
@@ -310,7 +311,11 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "luv");
   lua_pop(lstate, 3);
 
+  // internal vim._treesitter... API
+  nlua_add_treesitter(lstate);
+
   lua_setglobal(lstate, "vim");
+
   return 0;
 }
 
@@ -815,4 +820,41 @@ void ex_luafile(exarg_T *const eap)
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return;
   }
+}
+
+static int unsafe_ptr_to_ts_tree(lua_State *L)
+{
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  TSTree *const *ptr = lua_topointer(L,1);
+  tslua_push_tree(L, *ptr);
+  return 1;
+}
+
+static int create_tslua_parser(lua_State *L)
+{
+  TSLanguage *tree_sitter_c(void), *tree_sitter_javascript(void);
+
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  char *str = lua_tostring(L,1);
+
+  TSLanguage *lang = tree_sitter_c();
+  if (str && striequal(str, "javascript")) {
+    lang = tree_sitter_javascript();
+  }
+  tslua_push_parser(L, lang);
+  return 1;
+}
+
+static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  tslua_init(lstate);
+  lua_pushcfunction(lstate, unsafe_ptr_to_ts_tree);
+  lua_setfield(lstate, -2, "unsafe_ts_tree");
+
+  lua_pushcfunction(lstate, create_tslua_parser);
+  lua_setfield(lstate, -2, "ts_parser");
 }
