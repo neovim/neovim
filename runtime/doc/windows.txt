@@ -1273,4 +1273,4 @@ unlisted	The buffer is not in the buffer list.  It is not used for
 			:setlocal nobuflisted
 <
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

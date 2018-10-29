@@ -231,8 +231,10 @@ REORDERING TAB PAGES:
 :tabm[ove] [N]						*:tabm* *:tabmove*
 :[N]tabm[ove]
 		Move the current tab page to after tab page N.  Use zero to
-		make the current tab page the first one.  Without N the tab
-		page is made the last one. >
+		make the current tab page the first one.  N is counted before
+		the move, thus if the second tab is the current one,
+		`:tabmove 1` and `:tabmove 2`  have no effect.
+		Without N the tab page is made the last one. >
 		    :.tabmove   " do nothing
 		    :-tabmove   " move the tab page to the left
 		    :+tabmove   " move the tab page to the right

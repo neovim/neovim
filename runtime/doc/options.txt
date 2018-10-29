@@ -3201,6 +3201,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	so far, matches.  The matched string is highlighted.  If the pattern
 	is invalid or not found, nothing is shown.  The screen will be updated
 	often, this is only useful on fast terminals.
+	Also applies to the `:s`, `:g` and `:v` commands.
 	Note that the match will be shown, but the cursor will return to its
 	original position when no match is found and when pressing <Esc>.  You
 	still need to finish the search command with <Enter> to move the
@@ -3213,9 +3214,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The |hl-IncSearch| highlight group determines the highlighting.
 	When 'hlsearch' is on, all matched strings are highlighted too while
 	typing a search command. See also: 'hlsearch'.
-	If you don't want turn 'hlsearch' on, but want to highlight all matches
-	while searching, you can turn on and off 'hlsearch' with autocmd.
-	Example: >
+	If you don't want to turn 'hlsearch' on, but want to highlight all
+	matches while searching, you can turn on and off 'hlsearch' with
+	autocmd.  Example: >
 		augroup vimrc-incsearch-highlight
 		  autocmd!
 		  autocmd CmdlineEnter /,\? :set hlsearch
@@ -4863,7 +4864,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   tabpages	all tab pages; without this only the current tab page
 			is restored, so that you can make a session for each
 			tab page separately
-	   terminal	include terminal windows where the command can be restored
+	   terminal	include terminal windows where the command can be
+			restored
 	   unix		with Unix end-of-line format (single <NL>), even when
 			on Windows or DOS
 	   winpos	position of the whole Vim window
@@ -5747,7 +5749,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	line is displayed.  The current buffer and current window will be set
 	temporarily to that of the window (and buffer) whose statusline is
 	currently being drawn.  The expression will evaluate in this context.
-	The variable "actual_curbuf" is set to the 'bufnr()' number of the
+	The variable "g:actual_curbuf" is set to the `bufnr()` number of the
 	real current buffer.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from

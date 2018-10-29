@@ -610,4 +610,4 @@ This does mean there is less room to edit text, thus it's a compromise.
 
 Next chapter: |usr_06.txt|  Using syntax highlighting
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

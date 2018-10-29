@@ -109,4 +109,4 @@ donate part of the profit to help AIDS victims in Uganda.  See |iccf|.
 
 Next chapter: |usr_02.txt|  The first steps in Vim
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -36,6 +36,8 @@ Note: If you have problems printing with |:hardcopy|, an alternative is to use
 			'printexpr' through |v:cmdarg|.  Otherwise [arguments]
 			is ignored.  'printoptions' can be used to specify
 			paper size, duplex, etc.
+			Note: If you want PDF, there are tools such as
+			"ps2pdf" that can convert the PostScript to PDF.
 
 :[range]ha[rdcopy][!] >{filename}
 			As above, but write the resulting PostScript in file

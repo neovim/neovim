@@ -1373,7 +1373,7 @@ to the name of an external program for Vim to use for text formatting.  The
 program.
 
                                                         *format-formatexpr*
-The 'formatexpr' option can be set to a Vim Script function that performs
+The 'formatexpr' option can be set to a Vim script function that performs
 reformatting of the buffer.  This should usually happen in an |ftplugin|,
 since formatting is highly dependent on the type of file.  It makes
 sense to use an |autoload| script, so the corresponding script is only loaded
@@ -1407,7 +1407,7 @@ text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
 
 You can then enable the formatting by executing: >
   setlocal formatexpr=format#Format()
->
+
 Note: this function explicitly returns non-zero when called from insert mode
 (which basically means, text is inserted beyond the 'textwidth' limit).  This
 causes Vim to fall back to reformat the text by using the internal formatter.

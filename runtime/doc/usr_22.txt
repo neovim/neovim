@@ -397,4 +397,4 @@ can't be editing nothing!
 
 Next chapter: |usr_23.txt|  Editing other files
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:
