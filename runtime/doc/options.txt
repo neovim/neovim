@@ -4471,6 +4471,30 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Insert mode completion.  When zero as much space as available is used.
 	|ins-completion-menu|.
 
+						*'pyxversion'* *'pyx'*
+'pyxversion' 'pyx'	number	(default depends on the build)
+			global
+	Specifies the python version used for pyx* functions and commands
+	|python_x|.  The default value is as follows:
+
+		|provider| installed	    Default ~
+		|+python| and |+python3|	0
+		only |+python|			2
+		only |+python3|			3
+
+	Available values are 0, 2 and 3.
+	If 'pyxversion' is 0, it is set to 2 or 3 after the first execution of
+	any python2/3 commands or functions.  E.g. `:py` sets to 2, and `:py3`
+	sets to 3. `:pyx` sets it to 3 if Python 3 is available, otherwise sets
+	to 2 if Python 2 is available.
+	See also: |has-pythonx|
+
+	If only |+python| or |+python3| are available,
+	'pyxversion' has no effect. The pyx* functions and commands are
+	always the same as the installed version.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 						*'quoteescape'* *'qe'*
 'quoteescape' 'qe'	string	(default "\")

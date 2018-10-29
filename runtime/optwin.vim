@@ -905,7 +905,7 @@ if has("folding")
   call append("$", "foldmarker\tmarkers used when 'foldmethod' is \"marker\"")
   call append("$", "\t(local to window)")
   call <SID>OptionL("fmr")
-  call append("$", "foldnestmax\tmaximum fold depth for when 'foldmethod is \"indent\" or \"syntax\"")
+  call append("$", "foldnestmax\tmaximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\"")
   call append("$", "\t(local to window)")
   call <SID>OptionL("fdn")
 endif
@@ -1294,6 +1294,10 @@ if exists("&mzschemedll")
   call <SID>OptionG("mzschemedll", &mzschemedll)
   call append("$", "mzschemegcdll\tname of the Tcl GC dynamic library")
   call <SID>OptionG("mzschemegcdll", &mzschemegcdll)
+endif
+if has('pythonx')
+  call append("$", "pyxversion\twhether to use Python 2 or 3")
+  call append("$", " \tset pyx=" . &wd)
 endif
 
 " Install autocommands to enable mappings in option-window

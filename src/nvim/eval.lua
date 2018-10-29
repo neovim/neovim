@@ -226,6 +226,7 @@ return {
     pumvisible={},
     py3eval={args=1},
     pyeval={args=1},
+    pyxeval={args=1},
     range={args={1, 3}},
     readfile={args={1, 3}},
     reltime={args={0, 2}},
