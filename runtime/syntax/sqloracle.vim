@@ -4,13 +4,15 @@
 " Repository:   https://github.com/chrisbra/vim-sqloracle-syntax
 " License:      Vim
 " Previous Maintainer:	Paul Moore
-" Last Change:	2018 May 13
+" Last Change:	2018 June 24
 
 " Changes:
 " 02.04.2016: Support for when keyword
 " 03.04.2016: Support for join related keywords
 " 22.07.2016: Support Oracle Q-Quote-Syntax
 " 25.07.2016: Support for Oracle N'-Quote syntax
+" 22.06.2018: Remove skip part for sqlString (do not escape strings)
+" (https://web.archive.org/web/20150922065035/https://mariadb.com/kb/en/sql-99/character-string-literals/)
 
 if exists("b:current_syntax")
   finish
@@ -50,12 +52,14 @@ syn keyword sqlStatement truncate
 " next ones are contained, so folding works.
 syn keyword sqlStatement create update alter select insert contained
 
-syn keyword sqlType	boolean char character date float integer long
-syn keyword sqlType	mlslabel number raw rowid varchar varchar2 varray
+syn keyword sqlType	bfile blob boolean char character clob date datetime
+syn keyword sqlType	dec decimal float int integer long mlslabel nchar
+syn keyword sqlType	nclob number numeric nvarchar2 precision raw rowid
+syn keyword sqlType	smallint real timestamp urowid varchar varchar2 varray
 
 " Strings:
-syn region sqlString	matchgroup=Quote start=+n\?"+  skip=+\\\\\|\\"+  end=+"+
-syn region sqlString	matchgroup=Quote start=+n\?'+  skip=+\\\\\|\\'+  end=+'+
+syn region sqlString	matchgroup=Quote start=+n\?"+     end=+"+
+syn region sqlString	matchgroup=Quote start=+n\?'+     end=+'+
 syn region sqlString	matchgroup=Quote start=+n\?q'\z([^[(<{]\)+    end=+\z1'+
 syn region sqlString	matchgroup=Quote start=+n\?q'<+   end=+>'+
 syn region sqlString	matchgroup=Quote start=+n\?q'{+   end=+}'+
@@ -68,6 +72,7 @@ syn match sqlNumber	"-\=\<\d*\.\=[0-9_]\>"
 " Comments:
 syn region sqlComment	start="/\*"  end="\*/" contains=sqlTodo,@Spell fold 
 syn match sqlComment	"--.*$" contains=sqlTodo,@Spell
+syn match sqlComment "^rem.*$" contains=sqlTodo,@Spell
 
 " Setup Folding:
 " this is a hack, to get certain statements folded.
@@ -129,15 +134,15 @@ syn keyword sqlFunction	xmlparse xmlpatch xmlpi xmlquery xmlroot xmlsequence xml
 syn keyword sqlTodo TODO FIXME XXX DEBUG NOTE contained
 
 " Define the default highlighting.
-hi def link Quote            Special
-hi def link sqlComment	Comment
-hi def link sqlFunction	Function
-hi def link sqlKeyword	sqlSpecial
-hi def link sqlNumber	Number
-hi def link sqlOperator	sqlStatement
-hi def link sqlSpecial	Special
+hi def link Quote		Special
+hi def link sqlComment		Comment
+hi def link sqlFunction		Function
+hi def link sqlKeyword		sqlSpecial
+hi def link sqlNumber		Number
+hi def link sqlOperator		sqlStatement
+hi def link sqlSpecial		Special
 hi def link sqlStatement	Statement
-hi def link sqlString	String
+hi def link sqlString		String
 hi def link sqlType		Type
 hi def link sqlTodo		Todo
 

@@ -2458,7 +2458,7 @@ msgstr "E216: Несуществующая группа или событие: %
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Автокоманды ---"
@@ -2482,7 +2482,7 @@ msgstr "E218: слишком глубоко вложенные автокома�
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Автокоманды для \"%s\""
 
 #: ../fileio.c:7149
@@ -3382,7 +3382,7 @@ msgstr ""
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

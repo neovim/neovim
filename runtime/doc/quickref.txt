@@ -908,6 +908,8 @@ Short explanation of each option:		*option-list*
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file
 'updatetime'	  'ut'	    after this many milliseconds flush swap file
+'varsofttabstop'  'vsts'    a list of number of spaces when typing <Tab>
+'vartabstop'	  'vts'	    a list of number of spaces for <Tab>s
 'verbose'	  'vbs'     give informative messages
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview

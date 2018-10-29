@@ -2461,7 +2461,7 @@ msgstr "E216: 无此组或事件: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- 自动命令 ---"
@@ -2485,7 +2485,7 @@ msgstr "E218: 自动命令嵌套层数过深"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s 自动命令 \"%s\""
 
 #: ../fileio.c:7149
@@ -3367,7 +3367,7 @@ msgstr "-q [errorfile]  编辑第一个出错处的文件"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

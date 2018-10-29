@@ -1918,7 +1918,7 @@ msgstr "E216: Keine solche Gruppe oder Ereignis: %s"
 #: ../fileio.c:5993
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandos ---"
@@ -1942,7 +1942,7 @@ msgstr "E218: Autokommandos zu tief verschachtelt"
 
 #: ../fileio.c:7042
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandos für \"%s\""
 
 #: ../fileio.c:7048
@@ -2835,7 +2835,7 @@ msgstr "-q [Fehler-Datei]  öffne Datei mit erstem Fehler"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

@@ -2472,7 +2472,7 @@ msgstr "E216: Udalos» alebo skupina %s neexistuje"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Automatické príkazy ---"
@@ -2496,7 +2496,7 @@ msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Automatické príkazy pre \"%s\""
 
 #: ../fileio.c:7149
@@ -3390,7 +3390,7 @@ msgstr "-q [chybový súbor]  upravi» súbor na mieste výskytu prvej chyby"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

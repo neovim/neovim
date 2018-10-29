@@ -1,6 +1,8 @@
-# Italian Translation for Vim
+# Italian translation for Vim
 #
 # FIRST AUTHOR Antonio Colombo <azc100@gmail.com>, 2000
+# Vlad Sandrini <vlad.gently@gmail.com>
+# Luciano Montanaro <mikelima@cirulla.net>
 #
 # Ogni commento è benvenuto...
 # Every remark is very welcome...
@@ -3449,7 +3451,7 @@ msgstr "-q [errorfile]  apri file col primo errore"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

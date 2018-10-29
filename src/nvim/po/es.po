@@ -2525,7 +2525,7 @@ msgstr "E216: No existe tal grupo o evento: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Auto-órdenes ---"
@@ -2549,7 +2549,7 @@ msgstr "E218: La auto-orden se anida en exceso"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Auto-órdenes para \"%s\""
 
 #: ../fileio.c:7149
@@ -3464,7 +3464,7 @@ msgstr "-q [fich. err.] Editar el archivo con el primer error"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

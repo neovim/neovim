@@ -2473,7 +2473,7 @@ msgstr "E216: Ryhmää tai eventtiä ei ole: %s"
 
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autocommandit ---"
@@ -2492,7 +2492,7 @@ msgid "E218: autocommand nesting too deep"
 msgstr "E218: liian monta tasoa autocommandissa"
 
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autocommands kohteelle %s"
 
 #, c-format
@@ -4420,7 +4420,7 @@ msgstr "E55: Pariton %s)"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( ei ole sallittu tässä"
 
-msgid "E67: \\z1 et al. not allowed here"
+msgid "E67: \\z1 - \\z9 not allowed here"
 msgstr "E67: \\z1 jne. ei ole sallittu tässä"
 
 #, c-format

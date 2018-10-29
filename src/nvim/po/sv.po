@@ -818,7 +818,7 @@ msgstr "E216: Ingen sådan grupp eller händelse: %s"
 #: ../fileio.c:5994
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandon ---"
@@ -842,7 +842,7 @@ msgstr "E218: autokommando nästlad för djupt"
 
 #: ../fileio.c:7043
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandon för \"%s\""
 
 #: ../fileio.c:7049
@@ -5675,7 +5675,7 @@ msgstr "-q [felfil]    redigera fil med första fel"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

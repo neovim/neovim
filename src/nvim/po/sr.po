@@ -2024,7 +2024,7 @@ msgstr "E216: Нема такве групе или догађаја: %s"
 
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Ауто-Команде ---"
@@ -2043,7 +2043,7 @@ msgid "E218: autocommand nesting too deep"
 msgstr "E218: Угњшждавање аутокоманде је сувише дубоко"
 
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Ауто команде за \"%s\""
 
 #, c-format
@@ -2958,7 +2958,7 @@ msgstr "-q [дат.грешке]     уређуј датотеку са прво
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4764,7 +4764,7 @@ msgstr "E55: Неупарена %s)"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( овде није дозвољено"
 
-msgid "E67: \\z1 et al. not allowed here"
+msgid "E67: \\z1 - \\z9 not allowed here"
 msgstr "E67: \\z1 и остали онвде нису дозвољени"
 
 #, c-format
@@ -4878,8 +4878,8 @@ msgstr "E869: (NFA) Непознати оператор '\\@%c'"
 msgid "E870: (NFA regexp) Error reading repetition limits"
 msgstr "E870: (NFA regexp) Грешка при читању граница понављања"
 
-msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr "E871: (NFA regexp) Мулти не може следи иза мулти !"
+msgid "E871: (NFA regexp) Can't have a multi follow a multi"
+msgstr "E871: (NFA regexp) Мулти не може следи иза мулти"
 
 msgid "E872: (NFA regexp) Too many '('"
 msgstr "E872: (NFA regexp) Превише '('"
@@ -4890,7 +4890,7 @@ msgstr "E879: (NFA regexp) Превише \\z("
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (NFA regexp) грешка правилне терминације"
 
-msgid "E874: (NFA) Could not pop the stack !"
+msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (NFA) Скидање са стека није успело !"
 
 msgid ""

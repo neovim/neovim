@@ -6612,6 +6612,8 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 		When {skip} is omitted or empty, every match is accepted.
 		When evaluating {skip} causes an error the search is aborted
 		and -1 returned.
+ 		{skip} can be a string, a lambda, a funcref or a partial.
+		Anything else makes the function fail.
 
 		For {stopline} and {timeout} see |search()|.
 

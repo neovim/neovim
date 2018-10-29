@@ -2021,10 +2021,10 @@ msgstr "E216: そのようなグループもしくはイベントはありませ
 
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 
 #, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
@@ -2040,8 +2040,8 @@ msgid "E218: autocommand nesting too deep"
 msgstr "E218: autocommandの入れ子が深過ぎます"
 
 #, c-format
-msgid "%s Auto commands for \"%s\""
-msgstr "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
+msgstr "%s Autocommands for \"%s\""
 
 #, c-format
 msgid "Executing %s"
@@ -2938,7 +2938,7 @@ msgstr "-q [errorfile]  最初のエラーで編集する"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4732,7 +4732,7 @@ msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( はココでは許可されていません"
 
 #
-msgid "E67: \\z1 et al. not allowed here"
+msgid "E67: \\z1 - \\z9 not allowed here"
 msgstr "E67: \\z1 その他はココでは許可されていません"
 
 #
@@ -4853,8 +4853,8 @@ msgstr "E869: (NFA) 未知のオペレータです: '\\@%c'"
 msgid "E870: (NFA regexp) Error reading repetition limits"
 msgstr "E870: (NFA 正規表現) 繰り返しの制限回数を読込中にエラー"
 
-msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr "E871: (NFA 正規表現) 繰り返し の後に 繰り返し はできません!"
+msgid "E871: (NFA regexp) Can't have a multi follow a multi"
+msgstr "E871: (NFA 正規表現) 繰り返し の後に 繰り返し はできません"
 
 msgid "E872: (NFA regexp) Too many '('"
 msgstr "E872: (NFA 正規表現) '(' が多過ぎます"
@@ -4865,7 +4865,7 @@ msgstr "E879: (NFA 正規表現) \\z( が多過ぎます"
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (NFA 正規表現) 終端記号がありません"
 
-msgid "E874: (NFA) Could not pop the stack !"
+msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (NFA) スタックをポップできません!"
 
 msgid ""

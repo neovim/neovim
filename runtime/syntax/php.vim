@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: php PHP 3/4/5/7
 " Maintainer: Jason Woofenden <jason@jasonwoof.com>
-" Last Change: Jul 14, 2017
+" Last Change: Jun 20, 2018
 " URL: https://jasonwoof.com/gitweb/?p=vim-syntax.git;a=blob;f=php.vim;hb=HEAD
 " Former Maintainers: Peter Hodge <toomuchphp-vim@yahoo.com>
 "         Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
@@ -446,7 +446,7 @@ if exists("php_folding") && php_folding==1
   syn match phpException "\(\s\|^\)catch\(\s\+.*}\)\@=" contained
   syn match phpException "\(\s\|^\)finally\(\s\+.*}\)\@=" contained
 
-  set foldmethod=syntax
+  setlocal foldmethod=syntax
   syn region phpFoldHtmlInside matchgroup=Delimiter start="?>" end="<?\(php\)\=" contained transparent contains=@htmlTop
   syn region phpFoldFunction matchgroup=Storageclass start="^\z(\s*\)\(abstract\s\+\|final\s\+\|private\s\+\|protected\s\+\|public\s\+\|static\s\+\)*function\s\([^};]*$\)\@="rs=e-9 matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldHtmlInside,phpFCKeyword contained transparent fold extend
   syn region phpFoldFunction matchgroup=Define start="^function\s\([^};]*$\)\@=" matchgroup=Delimiter end="^}" contains=@phpClFunction,phpFoldHtmlInside contained transparent fold extend
@@ -460,7 +460,7 @@ else
   syn keyword phpException catch throw try finally contained
   syn keyword phpStorageClass final global private protected public static contained
   if exists("php_folding") && php_folding==2
-    set foldmethod=syntax
+    setlocal foldmethod=syntax
     syn region phpFoldHtmlInside matchgroup=Delimiter start="?>" end="<?\(php\)\=" contained transparent contains=@htmlTop
     syn region phpParent matchgroup=Delimiter start="{" end="}" contained contains=@phpClFunction,phpFoldHtmlInside transparent fold
   endif
