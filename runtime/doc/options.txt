@@ -1534,10 +1534,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			See also |map_bar|.
 								*cpo-B*
 		B	A backslash has no special meaning in mappings,
-			abbreviations and the "to" part of the menu commands.
-			Remove this flag to be able to use a backslash like a
-			CTRL-V.  For example, the command ":map X \<Esc>"
-			results in X being mapped to:
+			abbreviations, user commands and the "to" part of the
+			menu commands.  Remove this flag to be able to use a
+			backslash like a CTRL-V.  For example, the command
+			":map X \<Esc>" results in X being mapped to:
 				'B' included:	"\^["	 (^[ is a real <Esc>)
 				'B' excluded:	"<Esc>"  (5 characters)
 								*cpo-c*

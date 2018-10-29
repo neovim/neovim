@@ -1118,7 +1118,7 @@ remembered.
 							*:changes*
 :changes		Print the change list.  A ">" character indicates the
 			current position.  Just after a change it is below the
-			newest entry, indicating that "g;" takes you to the
+			newest entry, indicating that `g;` takes you to the
 			newest entry position.  The first column indicates the
 			count needed to take you to this position.  Example:
 
@@ -1128,8 +1128,8 @@ remembered.
 				    1    14   54 the latest changed line
 				>
 
-			The "3g;" command takes you to line 9.  Then the
-			output of ":changes is:
+			The `3g;` command takes you to line 9.  Then the
+			output of `:changes` is:
 
 				change line  col text ~
 				>   0     9    8 bla bla bla
