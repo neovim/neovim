@@ -1994,7 +1994,7 @@ msgstr "E223: rekursive Zuordnung"
 #: ../getchar.c:2835
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: Globale Abkürzung für %s existiert bereits"
+msgstr "E224: Globale Kurzform für %s existiert bereits"
 
 #: ../getchar.c:2838
 #, c-format
@@ -2162,7 +2162,7 @@ msgstr "E23: Keine alternative Datei"
 
 #: ../globals.h:1031
 msgid "E24: No such abbreviation"
-msgstr "E24: Keine Abkürzung gefunden"
+msgstr "E24: Diese Kurzform nicht gefunden"
 
 #: ../globals.h:1032
 msgid "E477: No ! allowed"

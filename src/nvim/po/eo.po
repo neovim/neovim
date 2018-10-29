@@ -61,7 +61,7 @@ msgid "E931: Buffer cannot be registered"
 msgstr "E931: Bufro ne povas esti registrita"
 
 msgid "E937: Attempt to delete a buffer that is in use"
-msgstr "E937: Provo de forviŝo de bufro, kiu estas uzanta"
+msgstr "E937: Provo de forviŝo de bufro, kiu estas en uzo"
 
 msgid "E515: No buffers were unloaded"
 msgstr "E515: Neniu bufro estis malŝargita"
@@ -649,7 +649,7 @@ msgstr "E795: Ne eblas forviŝi variablon %s"
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
-msgstr "E704: Nomo de variablo Funcref devas finiĝi per majusklo: %s"
+msgstr "E704: Nomo de variablo Funcref devas eki per majusklo: %s"
 
 #, c-format
 msgid "E705: Variable name conflicts with existing function: %s"
@@ -2560,7 +2560,7 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
-"       a: Trovi valirizojn al tiu simbolo\n"
+"       a: Trovi valorizojn al tiu simbolo\n"
 "       c: Trovi funkciojn, kiuj alvokas tiun funkcion\n"
 "       d: Trovi funkciojn alvokataj de tiu funkcio\n"
 "       e: Trovi tiun egrep-ŝablonon\n"
@@ -3441,7 +3441,7 @@ msgstr ""
 #, c-format
 msgid ""
 "E833: %s is encrypted and this version of Vim does not support encryption"
-msgstr "E833: %s estas ĉifrata kaj tiu versio de Vim ne subtenas ĉifradon"
+msgstr "E833: %s estas ĉifrita kaj tiu versio de Vim ne subtenas ĉifradon"
 
 msgid " has been damaged (page size is smaller than minimum value).\n"
 msgstr " difektiĝis (paĝa grando pli malgranda ol minimuma valoro).\n"
@@ -3459,7 +3459,7 @@ msgstr "E308: Averto: Originala dosiero eble ŝanĝiĝis"
 
 #, c-format
 msgid "Swap file is encrypted: \"%s\""
-msgstr "Perumutodosiero .swp estas ĉifrata: \"%s\""
+msgstr "Permutodosiero .swp estas ĉifrita: \"%s\""
 
 msgid ""
 "\n"
@@ -3488,7 +3488,7 @@ msgid ""
 "to use the same key for text file and swap file"
 msgstr ""
 "\n"
-"por uzi la saman ŝlosilon por la teksta dosiero kaj permuto dosiero .swp"
+"por uzi la saman ŝlosilon por la teksta dosiero kaj permutodosiero .swp"
 
 #, c-format
 msgid "E309: Unable to read block 1 from %s"
@@ -3561,7 +3561,7 @@ msgstr ""
 
 msgid "Using crypt key from swap file for the text file.\n"
 msgstr ""
-"Uzas ŝlosilon de ĉifrado el permuto dosiero .swp por la teksta dosiero.\n"
+"Uzas ŝlosilon de ĉifrado el permutodosiero .swp por la teksta dosiero.\n"
 
 msgid "Swap files found:"
 msgstr "Permutodosiero .swp trovita:"
@@ -4514,7 +4514,7 @@ msgstr "Ne povis ŝalti kuntekston de sekureco %s por %s"
 #, c-format
 msgid "Could not get security context %s for %s. Removing it!"
 msgstr ""
-"Ne povis akiri kuntekston de sekureco %s por %s. Gi nun estas forigata!"
+"Ne povis akiri kuntekston de sekureco %s por %s. Ĝi nun estas forigata!"
 
 msgid ""
 "\n"
@@ -4813,7 +4813,7 @@ msgstr ""
 "regulesprimo estos uzata "
 
 msgid "Switching to backtracking RE engine for pattern: "
-msgstr "Ŝangota al malavanca motoro de regulesprimo por ŝablono: "
+msgstr "Ŝanĝas al malavanca motoro de regulesprimo por ŝablono: "
 
 msgid "E865: (NFA) Regexp end encountered prematurely"
 msgstr "E865: (NFA) Trovis finon de regulesprimo tro frue"
@@ -5801,7 +5801,7 @@ msgstr "E823: Ne estas malfara dosiero: %s"
 
 #, c-format
 msgid "E832: Non-encrypted file has encrypted undo file: %s"
-msgstr "E832: Ne ĉifrata dosiero havas ĉifratan malfaran dosieron: %s"
+msgstr "E832: Ne ĉifrita dosiero havas ĉifritan malfaran dosieron: %s"
 
 #, c-format
 msgid "E826: Undo file decryption failed: %s"
@@ -5809,7 +5809,7 @@ msgstr "E826: Malĉifrado de malfara dosiero malsukcesis: %s"
 
 #, c-format
 msgid "E827: Undo file is encrypted: %s"
-msgstr "E827: Malfara dosiero estas ĉifrata: %s"
+msgstr "E827: Malfara dosiero estas ĉifrita: %s"
 
 #, c-format
 msgid "E824: Incompatible undo file: %s"
