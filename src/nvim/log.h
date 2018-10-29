@@ -66,6 +66,8 @@
 # define LOG_CALLSTACK_TO_FILE(fp) log_callstack_to_file(fp, __func__, __LINE__)
 #endif
 
+#include "nvim/api/private/defs.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.h.generated.h"
 #endif

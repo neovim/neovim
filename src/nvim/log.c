@@ -156,6 +156,75 @@ end:
   return ret;
 }
 
+/// Log an array of lines to $NVIM_LOG_FILE. The only failure condition is that
+/// the log file can't be opened. Any other errors are written to the log file.
+bool do_log_array(char *log_level, Array lines, Dictionary opt)
+{
+  bool success = true;
+
+  log_lock();
+
+  FILE *log_file = open_log_file();
+
+  if (log_file == NULL) {
+    success = false;
+    goto unlock;
+  }
+
+  // get the current time
+  char date_time[LOCAL_TIME_STRING_LEN];
+  get_local_time_string(date_time);
+
+  // make an err_prefix for error lines that already contains the date and error
+  // level. We make it a generous size because we'll populate it with opt[who]
+  // further down and we can't know how big that will be.
+  size_t error_max = 1000;
+  char *err_prefix = malloc(sizeof(char) * error_max);
+  snprintf(err_prefix, error_max, "%s %s nvim_log():",
+           date_time, log_levels[ERROR_LOG_LEVEL]);
+
+  // extract char *who
+  char *who = "";
+  for (size_t i = 0; i < opt.size; i++) {
+    String k = opt.items[i].key;
+    Object v = opt.items[i].value;
+    if (strequal("who", k.data)) {
+      if (v.type == kObjectTypeString) {
+        who = v.data.string.data;
+
+        // also rewrite our err_prefix to include *who
+        snprintf(err_prefix, error_max, "%s %s %s nvim_log():",
+                date_time, log_levels[ERROR_LOG_LEVEL], who);
+      } else {
+        fprintf(log_file, "%s opt[who] must be a string\n", err_prefix);
+      }
+    } else {
+      fprintf(log_file, "%s unexpected key: opt[%s]\n", err_prefix, k.data);
+    }
+  }
+
+  for (size_t i = 0; i < lines.size; i++) {
+    Object item = lines.items[i];
+    if (item.type == kObjectTypeString) {
+      fprintf(log_file, "%s %s %s %s\n", date_time, log_level, who, item.data.string.data);
+    } else {
+      // issue a generic error message for invalid line items
+      fprintf(log_file, "%s lines[%d] should be a string; got %s instead\n",
+              err_prefix, (int)i, get_object_type_name(item.type));
+    }
+  }
+
+  if (log_file != stderr && log_file != stdout) {
+    fclose(log_file);
+  }
+
+  free(err_prefix);
+unlock:
+  log_unlock();
+
+  return success;
+}
+
 void log_uv_handles(void *loop)
 {
   uv_loop_t *l = loop;
