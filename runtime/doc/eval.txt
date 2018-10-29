@@ -921,6 +921,13 @@ These three can be repeated and mixed.	Examples:
 
 expr8							*expr8*
 -----
+This expression is either |expr9| or a sequence of the alternatives below,
+in any order.  E.g., these are all possible:
+	expr9[expr1].name
+	expr9.name[expr1]
+	expr9(expr1, ...)[expr1].name
+
+
 expr8[expr1]		item of String or |List|	*expr-[]* *E111*
 							*subscript*
 

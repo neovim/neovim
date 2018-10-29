@@ -974,6 +974,11 @@ Below is an example of indentation with and without this option enabled:
        paste(x)                                      paste(x)
    }                                             }
 <
+The code will be indented after lines that match the pattern
+`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`. If you want indentation after
+lines that match a different pattern, you should set the appropriate value of
+`r_indent_op_pattern` in your |vimrc|.
+
 
 SHELL							*ft-sh-indent*
 

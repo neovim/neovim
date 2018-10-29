@@ -1243,7 +1243,7 @@ doxygen_javadoc_autobrief	1	Set to 0 to disable javadoc autobrief
 doxygen_end_punctuation		'[.]'	Set to regexp match for the ending
 					punctuation of brief
 
-There are also some hilight groups worth mentioning as they can be useful in
+There are also some highlight groups worth mentioning as they can be useful in
 configuration.
 
 Highlight			Effect ~
@@ -2608,6 +2608,48 @@ set to highlight commands only available in Quake 3 Arena: >
 
 Any combination of these three variables is legal, but might highlight more
 commands than are actually available to you by the game.
+
+
+R							*r.vim* *ft-r-syntax*
+
+The parsing of R code for syntax highlight starts 40 lines backwards, but you
+can set a different value in your |vimrc|. Example: >
+	let r_syntax_minlines = 60
+
+You can also turn off syntax highlighting of ROxygen: >
+	let r_syntax_hl_roxygen = 0
+
+enable folding of code delimited by parentheses, square brackets and curly
+braces: >
+	let r_syntax_folding = 1
+
+and highlight as functions all keywords followed by an opening parenthesis: >
+	let r_syntax_fun_pattern = 1
+
+
+R MARKDOWN					*rmd.vim* *ft-rmd-syntax*
+
+To disable syntax highlight of YAML header, add to your |vimrc|: >
+	let rmd_syn_hl_yaml = 0
+
+To disable syntax highlighting of citation keys: >
+	let rmd_syn_hl_citations = 0
+
+To highlight R code in knitr chunk headers: >
+	let rmd_syn_hl_chunk = 1
+
+By default, chunks of R code will be highlighted following the rules of R
+language. If you want proper syntax highlighting of chunks of other languages,
+you should add them to either `markdown_fenced_languages` or
+`rmd_fenced_languages`. For example to properly highlight both R and Python,
+you may add this to your |vimrc|: >
+	let rmd_fenced_languages = ['r', 'python']
+
+
+R RESTRUCTURED TEXT				*rrst.vim* *ft-rrst-syntax*
+
+To highlight R code in knitr chunk headers, add to your |vimrc|: >
+	let rrst_syn_hl_chunk = 1
 
 
 READLINE				*readline.vim* *ft-readline-syntax*

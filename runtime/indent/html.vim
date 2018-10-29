@@ -663,7 +663,7 @@ func! s:CSSIndent()
     else
       let cur_hasfield = curtext =~ '^\s*[a-zA-Z0-9-]\+:'
       let prev_unfinished = s:CssUnfinished(prev_text)
-      if !cur_hasfield && (prev_hasfield || prev_unfinished)
+      if prev_unfinished
         " Continuation line has extra indent if the previous line was not a
         " continuation line.
         let extra = shiftwidth()
@@ -716,9 +716,13 @@ func! s:CSSIndent()
 endfunc "}}}
 
 " Inside <style>: Whether a line is unfinished.
+" 	tag:
+" 	tag: blah
+" 	tag: blah &&
+" 	tag: blah ||
 func! s:CssUnfinished(text)
   "{{{
-  return a:text =~ '\s\(||\|&&\|:\)\s*$'
+  return a:text =~ '\(||\|&&\|:\|\k\)\s*$'
 endfunc "}}}
 
 " Search back for the first unfinished line above "lnum".

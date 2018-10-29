@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:             sudoers(5) configuration files
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2018-07-19
+" Latest Revision:      2018-08-18
 " Recent Changes:	Support for #include and #includedir.
+" 			Added many new options (Samuel D. Leslie)
 
 if exists("b:current_syntax")
   finish
@@ -152,77 +153,120 @@ syn match   sudoersDefaultTypeGreaterThan contained '>' nextgroup=@sudoersUser s
 " TODO: could also deal with special characters here
 syn match   sudoersBooleanParameter contained '!' nextgroup=sudoersBooleanParameter skipwhite skipnl
 syn keyword sudoersBooleanParameter contained skipwhite skipnl
+                                  \ always_query_group_plugin
                                   \ always_set_home
                                   \ authenticate
                                   \ closefrom_override
+                                  \ compress_io
                                   \ env_editor
                                   \ env_reset
+                                  \ exec_background
+                                  \ fast_glob
                                   \ fqdn
+                                  \ ignore_audit_errors
                                   \ ignore_dot
+                                  \ ignore_iolog_errors
                                   \ ignore_local_sudoers
+                                  \ ignore_logfile_errors
+                                  \ ignore_unknown_defaults
                                   \ insults
                                   \ log_host
+                                  \ log_input
+                                  \ log_output
                                   \ log_year
                                   \ long_otp_prompt
+                                  \ mail_all_cmnds
                                   \ mail_always
                                   \ mail_badpass
                                   \ mail_no_host
                                   \ mail_no_perms
                                   \ mail_no_user
+                                  \ match_group_by_gid
+                                  \ netgroup_tuple
                                   \ noexec
-                                  \ path_info
+                                  \ pam_session
+                                  \ pam_setcred
                                   \ passprompt_override
+                                  \ path_info
                                   \ preserve_groups
+                                  \ pwfeedback
                                   \ requiretty
                                   \ root_sudo
                                   \ rootpw
                                   \ runaspw
                                   \ set_home
                                   \ set_logname
+                                  \ set_utmp
                                   \ setenv
                                   \ shell_noargs
                                   \ stay_setuid
+                                  \ sudoedit_checkdir
+                                  \ sudoedit_fellow
+                                  \ syslog_pid
                                   \ targetpw
                                   \ tty_tickets
+                                  \ umask_override
+                                  \ use_netgroups
+                                  \ use_pty
+                                  \ user_command_timeouts
+                                  \ utmp_runas
                                   \ visiblepw
 
 syn keyword sudoersIntegerParameter contained
                                   \ nextgroup=sudoersIntegerParameterEquals
                                   \ skipwhite skipnl
                                   \ closefrom
-                                  \ passwd_tries
+                                  \ command_timeout
                                   \ loglinelen
+                                  \ maxseq
                                   \ passwd_timeout
+                                  \ passwd_tries
+                                  \ syslog_maxlen
                                   \ timestamp_timeout
                                   \ umask
 
 syn keyword sudoersStringParameter  contained
                                   \ nextgroup=sudoersStringParameterEquals
                                   \ skipwhite skipnl
+                                  \ askpass
                                   \ badpass_message
                                   \ editor
-                                  \ mailsub
-                                  \ noexec_file
-                                  \ passprompt
-                                  \ runas_default
-                                  \ syslog_badpri
-                                  \ syslog_goodpri
-                                  \ sudoers_locale
-                                  \ timestampdir
-                                  \ timestampowner
-                                  \ askpass
                                   \ env_file
                                   \ exempt_group
+                                  \ fdexec
+                                  \ group_plugin
+                                  \ iolog_dir
+                                  \ iolog_file
+                                  \ iolog_flush
+                                  \ iolog_group
+                                  \ iolog_mode
+                                  \ iolog_user
                                   \ lecture
                                   \ lecture_file
+                                  \ lecture_status_dir
                                   \ listpw
                                   \ logfile
                                   \ mailerflags
                                   \ mailerpath
                                   \ mailfrom
+                                  \ mailsub
                                   \ mailto
+                                  \ noexec_file
+                                  \ pam_login_service
+                                  \ pam_service
+                                  \ passprompt
+                                  \ restricted_env_file
+                                  \ role
+                                  \ runas_default
                                   \ secure_path
+                                  \ sudoers_locale
                                   \ syslog
+                                  \ syslog_badpri
+                                  \ syslog_goodpri
+                                  \ timestamp_type
+                                  \ timestampdir
+                                  \ timestampowner
+                                  \ type
                                   \ verifypw
 
 syn keyword sudoersListParameter    contained

@@ -2,7 +2,7 @@
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage:     https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Thu Feb 18, 2016  06:32AM
+" Last Change:	Sun Aug 19, 2018  09:13PM
 
 
 " Only load this indent file when no other was loaded.
@@ -19,22 +19,16 @@ if exists("*GetRIndent")
   finish
 endif
 
+let s:cpo_save = &cpo
+set cpo&vim
+
 " Options to make the indentation more similar to Emacs/ESS:
-if !exists("g:r_indent_align_args")
-  let g:r_indent_align_args = 1
-endif
-if !exists("g:r_indent_ess_comments")
-  let g:r_indent_ess_comments = 0
-endif
-if !exists("g:r_indent_comment_column")
-  let g:r_indent_comment_column = 40
-endif
-if ! exists("g:r_indent_ess_compatible")
-  let g:r_indent_ess_compatible = 0
-endif
-if ! exists("g:r_indent_op_pattern")
-  let g:r_indent_op_pattern = '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'
-endif
+let g:r_indent_align_args     = get(g:, 'r_indent_align_args',      1)
+let g:r_indent_ess_comments   = get(g:, 'r_indent_ess_comments',    0)
+let g:r_indent_comment_column = get(g:, 'r_indent_comment_column', 40)
+let g:r_indent_ess_compatible = get(g:, 'r_indent_ess_compatible',  0)
+let g:r_indent_op_pattern     = get(g:, 'r_indent_op_pattern',
+      \ '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$')
 
 function s:RDelete_quotes(line)
   let i = 0
@@ -231,7 +225,7 @@ function GetRIndent()
 
   let cline = SanitizeRLine(cline)
 
-  if cline =~ '^\s*}' || cline =~ '^\s*}\s*)$'
+  if cline =~ '^\s*}'
     let indline = s:Get_matching_brace(clnum, '{', '}', 1)
     if indline > 0 && indline != clnum
       let iline = SanitizeRLine(getline(indline))
@@ -242,6 +236,11 @@ function GetRIndent()
         return indent(indline)
       endif
     endif
+  endif
+
+  if cline =~ '^\s*)$'
+    let indline = s:Get_matching_brace(clnum, '(', ')', 1)
+    return indent(indline)
   endif
 
   " Find the first non blank line above the current line
@@ -515,7 +514,9 @@ function GetRIndent()
   endwhile
 
   return ind
-
 endfunction
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim: sw=2

@@ -573,9 +573,29 @@ By default the following options are set, in accordance with PEP8: >
 
 	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
 
-To disable this behaviour, set the following variable in your vimrc: >
+To disable this behavior, set the following variable in your vimrc: >
 
 	let g:python_recommended_style = 0
+
+
+R MARKDOWN						*ft-rmd-plugin*
+
+By default ftplugin/html.vim is not sourced. If you want it sourced, add to
+your |vimrc|: >
+	let rmd_include_html = 1
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for Markdown code. If you prefer that 'formatexpr' is not set, add to your
+|vimrc|: >
+	let rmd_dynamic_comments = 0
+
+
+R RESTRUCTURED TEXT					*ft-rrst-plugin*
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for ReStructured text. If you prefer that 'formatexpr' is not set, add to
+your |vimrc|: >
+	let rrst_dynamic_comments = 0
 
 
 RPM SPEC						*ft-spec-plugin*

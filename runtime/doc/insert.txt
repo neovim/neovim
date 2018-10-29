@@ -1026,13 +1026,13 @@ The function must return the column where the completion starts.  It must be a
 number between zero and the cursor column "col('.')".  This involves looking
 at the characters just before the cursor and including those characters that
 could be part of the completed item.  The text between this column and the
-cursor column will be replaced with the matches.
+cursor column will be replaced with the matches.  If the returned value is
+larger than the cursor column, the cursor column is used.
 
-Special return values:
-   -1 If no completion can be done, the completion will be cancelled with an
-      error message.
-   -2 To cancel silently and stay in completion mode.
-   -3 To cancel silently and leave completion mode.
+Negative return values:
+   -2 	To cancel silently and stay in completion mode.
+   -3 	To cancel silently and leave completion mode.
+   Another negative value: completion starts at the cursor column
 
 On the second invocation the arguments are:
    a:findstart  0
