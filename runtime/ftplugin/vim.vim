@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Nov 06
+" Last Change:	2018 Aug 07
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -14,8 +14,28 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< isk< com< tw< commentstring< keywordprg<"
-	\ . "| unlet! b:match_ignorecase b:match_words b:match_skip"
+if !exists('*VimFtpluginUndo')
+  func VimFtpluginUndo()
+    setl fo< isk< com< tw< commentstring< keywordprg<
+    if exists('b:did_add_maps')
+      silent! nunmap <buffer> [[
+      silent! vunmap <buffer> [[
+      silent! nunmap <buffer> ]]
+      silent! vunmap <buffer> ]]
+      silent! nunmap <buffer> []
+      silent! vunmap <buffer> []
+      silent! nunmap <buffer> ][
+      silent! vunmap <buffer> ][
+      silent! nunmap <buffer> ]"
+      silent! vunmap <buffer> ]"
+      silent! nunmap <buffer> ["
+      silent! vunmap <buffer> ["
+     endif
+    unlet! b:match_ignorecase b:match_words b:match_skip b:did_add_maps
+  endfunc
+endif
+
+let b:undo_ftplugin = "call VimFtpluginUndo()"
 
 " Set 'formatoptions' to break comment lines but not other lines,
 " and insert the comment leader when hitting <CR> or using "o".
@@ -42,21 +62,25 @@ setlocal commentstring=\"%s
 " Prefer Vim help instead of manpages.
 setlocal keywordprg=:help
 
-" Move around functions.
-nnoremap <silent><buffer> [[ m':call search('^\s*fu\%[nction]\>', "bW")<CR>
-vnoremap <silent><buffer> [[ m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "bW")<CR>
-nnoremap <silent><buffer> ]] m':call search('^\s*fu\%[nction]\>', "W")<CR>
-vnoremap <silent><buffer> ]] m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "W")<CR>
-nnoremap <silent><buffer> [] m':call search('^\s*endf*\%[unction]\>', "bW")<CR>
-vnoremap <silent><buffer> [] m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf*\%[unction]\>', "bW")<CR>
-nnoremap <silent><buffer> ][ m':call search('^\s*endf*\%[unction]\>', "W")<CR>
-vnoremap <silent><buffer> ][ m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf*\%[unction]\>', "W")<CR>
+if !exists("no_plugin_maps") && !exists("no_vim_maps")
+  let b:did_add_maps = 1
 
-" Move around comments
-nnoremap <silent><buffer> ]" :call search('^\(\s*".*\n\)\@<!\(\s*"\)', "W")<CR>
-vnoremap <silent><buffer> ]" :<C-U>exe "normal! gv"<Bar>call search('^\(\s*".*\n\)\@<!\(\s*"\)', "W")<CR>
-nnoremap <silent><buffer> [" :call search('\%(^\s*".*\n\)\%(^\s*"\)\@!', "bW")<CR>
-vnoremap <silent><buffer> [" :<C-U>exe "normal! gv"<Bar>call search('\%(^\s*".*\n\)\%(^\s*"\)\@!', "bW")<CR>
+  " Move around functions.
+  nnoremap <silent><buffer> [[ m':call search('^\s*fu\%[nction]\>', "bW")<CR>
+  vnoremap <silent><buffer> [[ m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "bW")<CR>
+  nnoremap <silent><buffer> ]] m':call search('^\s*fu\%[nction]\>', "W")<CR>
+  vnoremap <silent><buffer> ]] m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "W")<CR>
+  nnoremap <silent><buffer> [] m':call search('^\s*endf*\%[unction]\>', "bW")<CR>
+  vnoremap <silent><buffer> [] m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf*\%[unction]\>', "bW")<CR>
+  nnoremap <silent><buffer> ][ m':call search('^\s*endf*\%[unction]\>', "W")<CR>
+  vnoremap <silent><buffer> ][ m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf*\%[unction]\>', "W")<CR>
+
+  " Move around comments
+  nnoremap <silent><buffer> ]" :call search('^\(\s*".*\n\)\@<!\(\s*"\)', "W")<CR>
+  vnoremap <silent><buffer> ]" :<C-U>exe "normal! gv"<Bar>call search('^\(\s*".*\n\)\@<!\(\s*"\)', "W")<CR>
+  nnoremap <silent><buffer> [" :call search('\%(^\s*".*\n\)\%(^\s*"\)\@!', "bW")<CR>
+  vnoremap <silent><buffer> [" :<C-U>exe "normal! gv"<Bar>call search('\%(^\s*".*\n\)\%(^\s*"\)\@!', "bW")<CR>
+endif
 
 " Let the matchit plugin know what items can be matched.
 if exists("loaded_matchit")

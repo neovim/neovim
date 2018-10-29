@@ -273,6 +273,10 @@ then Vim will load all plugins in these directories and below:
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
 
+Note that when using a plugin manager or |packages| many directories will be
+added to 'runtimepath'.  These plugins each require their own directory, don't
+put them directly in ~/.vim/plugin.
+
 What if it looks like your plugin is not being loaded?  You can find out what
 happens when Vim starts up by using the |-V| argument: >
 
@@ -570,7 +574,7 @@ By default the following options are set, in accordance with PEP8: >
 	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
 
 To disable this behaviour, set the following variable in your vimrc: >
-	
+
 	let g:python_recommended_style = 0
 
 
@@ -750,4 +754,23 @@ You can change the default by defining the variable g:tex_flavor to the format
 Currently no other formats are recognized.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+VIM							*ft-vim-plugin*
+
+The Vim filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].  Move around comments with ]" and [".
+
+The mappings can be disabled with: >
+	let g:no_vim_maps = 1
+
+
+ZIMBU							*ft-zimbu-plugin*
+
+The Zimbu filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].
+
+The mappings can be disabled with: >
+	let g:no_zimbu_maps = 1
+<
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

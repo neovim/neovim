@@ -944,7 +944,7 @@ tag		command	      note action in Visual mode	~
 |v_i{|		i{		   same as iB
 |v_i}|		i}		   same as iB
 |v_o|		o		   move cursor to other corner of area
-|v_r|		r		2  delete highlighted area and start insert
+|v_r|		r		2  replace highlighted area with a character
 |v_s|		s		2  delete highlighted area and start insert
 |v_u|		u		2  make highlighted area lowercase
 |v_v|		v		   make Visual mode characterwise or stop
@@ -1615,4 +1615,4 @@ tag	      command	      action ~
 |:~|		:~		repeat last ":substitute"
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

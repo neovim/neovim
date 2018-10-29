@@ -2500,7 +2500,7 @@ msgstr "E216: Nhóm hoặc sự kiện không có thật: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Câu lệnh tự động ---"
@@ -2524,7 +2524,7 @@ msgstr "E218: câu lệnh tự động xếp lồng vào nhau quá xâu"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s câu lệnh tự động cho \"%s\""
 
 #: ../fileio.c:7149
@@ -3419,7 +3419,7 @@ msgstr "-q [tập tin lỗi] soạn thảo tập tin với lỗi đầu tiên"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

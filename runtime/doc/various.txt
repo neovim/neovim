@@ -381,6 +381,7 @@ N  *+virtualedit*	|'virtualedit'|
 S  *+visual*		Visual mode |Visual-mode| Always enabled since 7.4.200.
 N  *+visualextra*	extra Visual mode commands |blockwise-operators|
 N  *+vreplace*		|gR| and |gr|
+   *+vtp*		on MS-Windows console: support for 'termguicolors'
 N  *+wildignore*	|'wildignore'|
 N  *+wildmenu*		|'wildmenu'|
    *+windows*		more than one window

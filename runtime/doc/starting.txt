@@ -1101,6 +1101,8 @@ SHADA FILE NAME						*shada-file-name*
 - The "-i" Vim argument can be used to set another file name, |-i|.  When the
   file name given is "NONE" (all uppercase), no ShaDa file is ever read or
   written.  Also not for the commands below!
+- The 'viminfofile' option can be used like the "-i" argument.  In fact, the
+  value form the "-i" argument is stored in the 'viminfofile' option.
 - For the commands below, another file name can be given, overriding the
   default and the name given with 'shada' or "-i" (unless it's NONE).
 

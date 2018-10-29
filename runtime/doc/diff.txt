@@ -372,11 +372,15 @@ Example (this does almost the same as 'diffexpr' being empty): >
 	   endif
 	   silent execute "!diff -a --binary " . opt . v:fname_in . " " . v:fname_new .
 		\  " > " . v:fname_out
+	   redraw!
 	endfunction
 
 The "-a" argument is used to force comparing the files as text, comparing as
 binaries isn't useful.  The "--binary" argument makes the files read in binary
 mode, so that a CTRL-Z doesn't end the text on DOS.
+
+The `redraw!` command may not be needed, depending on whether executing a
+shell command shows something on the display or not.
 
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
@@ -429,4 +433,4 @@ evaluating 'patchexpr'.  This hopefully avoids that files in the current
 directory are accidentally patched.  Vim will also delete files starting with
 v:fname_in and ending in ".rej" and ".orig".
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

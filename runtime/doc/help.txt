@@ -182,4 +182,4 @@ will try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
 ------------------------------------------------------------------------------
- vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
+ vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:

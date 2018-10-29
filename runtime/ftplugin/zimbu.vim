@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Zimbu
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Sep 08
+" Last Change:	2017 Dec 05
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -135,8 +135,10 @@ iabbr <buffer> <expr> until GCUpperSpace("until")
 iabbr <buffer> <expr> while GCUpperSpace("while")
 iabbr <buffer> <expr> repeat GCUpper("repeat")
 
-nnoremap <silent> <buffer> [[ m`:call ZimbuGoStartBlock()<CR>
-nnoremap <silent> <buffer> ]] m`:call ZimbuGoEndBlock()<CR>
+if !exists("no_plugin_maps") && !exists("no_zimbu_maps")
+  nnoremap <silent> <buffer> [[ m`:call ZimbuGoStartBlock()<CR>
+  nnoremap <silent> <buffer> ]] m`:call ZimbuGoEndBlock()<CR>
+endif
 
 " Using a function makes sure the search pattern is restored
 func! ZimbuGoStartBlock()

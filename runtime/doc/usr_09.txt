@@ -5,9 +5,10 @@
 				Using the GUI
 
 
-Vim works in an ordinary terminal.  GVim can do the same things and a few
-more.  The GUI offers menus, a toolbar, scrollbars and other items.  This
-chapter is about these extra things that the GUI offers.
+Vim works in an ordinary terminal, while gVim has a Graphical User Interface
+(GUI).  It can do the same things and a few more.  The GUI offers menus, a
+toolbar, scrollbars and other items.  This chapter is about these extra things
+that the GUI offers.
 
 |09.1|	Parts of the GUI
 |09.2|	Using the mouse
@@ -282,4 +283,4 @@ You can tune the way Select mode works with the 'selectmode' option.
 
 Next chapter: |usr_10.txt|  Making big changes
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

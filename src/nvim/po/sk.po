@@ -2472,7 +2472,7 @@ msgstr "E216: Udalos» alebo skupina %s neexistuje"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Automatické príkazy ---"
@@ -2496,7 +2496,7 @@ msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Automatické príkazy pre \"%s\""
 
 #: ../fileio.c:7149
@@ -3390,7 +3390,7 @@ msgstr "-q [chybový súbor]  upravi» súbor na mieste výskytu prvej chyby"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5314,8 +5314,8 @@ msgstr "Varovanie: región %s nie je podporovaný"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Naèítavam súbor s príponami %s ..."
+msgid "Reading affix file %s..."
+msgstr "Naèítavam súbor s príponami %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5473,8 +5473,8 @@ msgstr "Hodnota %s sa odli¹uje od hodnoty pou¾itej v inom .aff súbore"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Naèítavam slovník %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Naèítavam slovník %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5508,8 +5508,8 @@ msgstr "Ignorovaných %d slov s nepísmennými znakmi v %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Naèítavam súbor so slovami %s ..."
+msgid "Reading word file %s..."
+msgstr "Naèítavam súbor so slovami %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5606,8 +5606,8 @@ msgstr "Varovanie: ¹pecifikované spájanie a nezalamovanie"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Ukládám slovníkový súbor %s ..."
+msgid "Writing spell file %s..."
+msgstr "Ukládám slovníkový súbor %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

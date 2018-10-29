@@ -2473,7 +2473,7 @@ msgstr "E216: Ryhmää tai eventtiä ei ole: %s"
 
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autocommandit ---"
@@ -2492,7 +2492,7 @@ msgid "E218: autocommand nesting too deep"
 msgstr "E218: liian monta tasoa autocommandissa"
 
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autocommands kohteelle %s"
 
 #, c-format
@@ -4420,7 +4420,7 @@ msgstr "E55: Pariton %s)"
 msgid "E66: \\z( not allowed here"
 msgstr "E66: \\z( ei ole sallittu tässä"
 
-msgid "E67: \\z1 et al. not allowed here"
+msgid "E67: \\z1 - \\z9 not allowed here"
 msgstr "E67: \\z1 jne. ei ole sallittu tässä"
 
 #, c-format
@@ -4901,7 +4901,7 @@ msgid "E782: error while reading .sug file: %s"
 msgstr "E782: virhe luettaessa .sug-tiedostoa: %s"
 
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "Luetaan affiksitiedostoa %s..."
 
 #, c-format
@@ -5034,7 +5034,7 @@ msgid "%s value differs from what is used in another .aff file"
 msgstr "%s-arvo eroaa toisessa .aff-tiedostossa olevasta"
 
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "Luetaan sanakirjatiedostoa %s"
 
 #, c-format
@@ -5062,7 +5062,7 @@ msgid "Ignored %d word(s) with non-ASCII characters in %s"
 msgstr "Ei-ASCII-merkkien takia ohitettuja sanoja %d kohteessa %s"
 
 #, c-format
-msgid "Reading word file %s ..."
+msgid "Reading word file %s..."
 msgstr "Luetaan sanatiedostoa %s..."
 
 #, c-format
@@ -5118,7 +5118,7 @@ msgid "Total number of words: %d"
 msgstr "Sanoja yhteensä: %d"
 
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "Kirjoitetaan ehdotustiedostoa %s..."
 
 #, c-format
@@ -5139,7 +5139,7 @@ msgid "Warning: both compounding and NOBREAK specified"
 msgstr "Varoitus: sekä yhdyssanamuodostus että NOBREAK käytössä"
 
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "Kirjoitetaan oikaisulukutiedostoa %s..."
 
 msgid "Done!"

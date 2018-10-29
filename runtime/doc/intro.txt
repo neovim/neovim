@@ -559,9 +559,9 @@ Virtual Replace mode	Virtual Replace mode is similar to Replace mode, but
 			If the 'showmode' option is on "-- VREPLACE --" is
 			shown at the bottom of the window.
 
-Insert Normal mode	Entered when CTRL-O given in Insert mode.  This is
-			like Normal mode, but after executing one command Vim
-			returns to Insert mode.
+Insert Normal mode	Entered when CTRL-O is typed in Insert mode (see
+			|i_CTRL-O|).  This is like Normal mode, but after
+			executing one command Vim returns to Insert mode.
 			If the 'showmode' option is on "-- (insert) --" is
 			shown at the bottom of the window.
 
@@ -838,4 +838,4 @@ buffer lines	logical lines	window lines	screen lines ~
 				6. ~ 
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,16 +1,16 @@
 " ninja build file syntax.
 " Language: ninja build file as described at
-"           http://martine.github.com/ninja/manual.html
-" Version: 1.4
-" Last Change: 2014/05/13
+"           http://ninja-build.org/manual.html
+" Version: 1.5
+" Last Change: 2018/04/05
 " Maintainer: Nicolas Weber <nicolasweber@gmx.de>
-" Version 1.4 of this script is in the upstream vim repository and will be
+" Version 1.5 of this script is in the upstream vim repository and will be
 " included in the next vim release. If you change this, please send your change
 " upstream.
 
 " ninja lexer and parser are at
-" https://github.com/martine/ninja/blob/master/src/lexer.in.cc
-" https://github.com/martine/ninja/blob/master/src/manifest_parser.cc
+" https://github.com/ninja-build/ninja/blob/master/src/lexer.in.cc
+" https://github.com/ninja-build/ninja/blob/master/src/manifest_parser.cc
 
 if exists("b:current_syntax")
   finish
@@ -21,7 +21,10 @@ set cpo&vim
 
 syn case match
 
-syn match ninjaComment /#.*/  contains=@Spell
+" Comments are only matched when the # is at the beginning of the line (with
+" optional whitespace), as long as the prior line didn't end with a $
+" continuation.
+syn match ninjaComment /\(\$\n\)\@<!\_^\s*#.*$/  contains=@Spell
 
 " Toplevel statements are the ones listed here and
 " toplevel variable assignments (ident '=' value).
@@ -38,12 +41,13 @@ syn match ninjaKeyword "^subninja\>"
 " limited set of magic variables, 'build' allows general
 " let assignments.
 " manifest_parser.cc, ParseRule()
-syn region ninjaRule start="^rule" end="^\ze\S" contains=ALL transparent
-syn keyword ninjaRuleCommand contained command deps depfile description generator
+syn region ninjaRule start="^rule" end="^\ze\S" contains=TOP transparent
+syn keyword ninjaRuleCommand contained containedin=ninjaRule command
+                                     \ deps depfile description generator
                                      \ pool restat rspfile rspfile_content
 
-syn region ninjaPool start="^pool" end="^\ze\S" contains=ALL transparent
-syn keyword ninjaPoolCommand contained depth
+syn region ninjaPool start="^pool" end="^\ze\S" contains=TOP transparent
+syn keyword ninjaPoolCommand contained containedin=ninjaPool  depth
 
 " Strings are parsed as follows:
 " lexer.in.cc, ReadEvalString()

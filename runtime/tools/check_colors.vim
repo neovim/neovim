@@ -1,5 +1,5 @@
 " This script tests a color scheme for some errors. Load the scheme and source
-" this script. e.g. :e colors/desert.vim | :so test_colors.vim
+" this script. e.g. :e colors/desert.vim | :so check_colors.vim
 " Will output possible errors.
 
 let s:save_cpo= &cpo
@@ -90,7 +90,7 @@ func! Test_check_colors()
     let err['background'] = 'Should not issue :syn on'
   endif
 
-  " 7) Does not define filetype specfic groups like vimCommand, htmlTag,
+  " 7) Does not define filetype specific groups like vimCommand, htmlTag,
   let hi_groups = ['vim', 'html', 'python', 'sh', 'ruby']
   for group in hi_groups
     let pat='\Chi\%[ghlight]\s*\zs'.group.'\w\+\>'

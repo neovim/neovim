@@ -1,45 +1,57 @@
-" Vim filetype plugin
-" Language:      Scheme
-" Maintainer:    Sergey Khorev <sergey.khorev@gmail.com>
-" URL:		 http://sites.google.com/site/khorser/opensource/vim
-" Original author:    Dorai Sitaram <ds26@gte.com>
-" Original URL:		 http://www.ccs.neu.edu/~dorai/vimplugins/vimplugins.html
-" Last Change:   Oct 23, 2013
+" Vim filetype plugin file
+" Language: Scheme (R7RS)
+" Last Change: 2018-03-05
+" Author: Evan Hanson <evhan@foldling.org>
+" Maintainer: Evan Hanson <evhan@foldling.org>
+" Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
+" URL: https://foldling.org/vim/ftplugin/scheme.vim
 
-" Only do this when not done yet for this buffer
-if exists("b:did_ftplugin")
+if exists('b:did_ftplugin')
   finish
 endif
 
-" Don't load another plugin for this buffer
-let b:did_ftplugin = 1
+let s:cpo = &cpo
+set cpo&vim
 
-" Copy-paste from ftplugin/lisp.vim
-setl comments=:;
-setl define=^\\s*(def\\k*
-setl formatoptions-=t
-setl iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94
 setl lisp
+setl comments=:;;;;,:;;;,:;;,:;,sr:#\|,mb:\|,ex:\|#
 setl commentstring=;%s
+setl define=^\\s*(def\\k*
+setl iskeyword=33,35-39,42-43,45-58,60-90,94,95,97-122,126
 
-setl comments^=:;;;,:;;,sr:#\|,mb:\|,ex:\|#
+let b:undo_ftplugin = 'setl lisp< comments< commentstring< define< iskeyword<'
 
-" Scheme-specific settings
-if exists("b:is_mzscheme") || exists("is_mzscheme")
-    " improve indenting
-    setl iskeyword+=#,%,^
-    setl lispwords+=module,parameterize,let-values,let*-values,letrec-values
-    setl lispwords+=define-values,opt-lambda,case-lambda,syntax-rules,with-syntax,syntax-case
-    setl lispwords+=define-signature,unit,unit/sig,compund-unit/sig,define-values/invoke-unit/sig
+setl lispwords=case
+setl lispwords+=define
+setl lispwords+=define-record-type
+setl lispwords+=define-syntax
+setl lispwords+=define-values
+setl lispwords+=do
+setl lispwords+=guard
+setl lispwords+=lambda
+setl lispwords+=let
+setl lispwords+=let*
+setl lispwords+=let*-values
+setl lispwords+=let-syntax
+setl lispwords+=let-values
+setl lispwords+=letrec
+setl lispwords+=letrec*
+setl lispwords+=letrec-syntax
+setl lispwords+=parameterize
+setl lispwords+=set!
+setl lispwords+=syntax-rules
+setl lispwords+=unless
+setl lispwords+=when
+
+let b:undo_ftplugin = b:undo_ftplugin . ' lispwords<'
+
+let b:did_scheme_ftplugin = 1
+
+if exists('b:is_chicken') || exists('g:is_chicken')
+  exe 'ru! ftplugin/chicken.vim'
 endif
 
-if exists("b:is_chicken") || exists("is_chicken")
-    " improve indenting
-    setl iskeyword+=#,%,^
-    setl lispwords+=let-optionals,let-optionals*,declare
-    setl lispwords+=let-values,let*-values,letrec-values
-    setl lispwords+=define-values,opt-lambda,case-lambda,syntax-rules,with-syntax,syntax-case
-    setl lispwords+=cond-expand,and-let*,foreign-lambda,foreign-lambda*
-endif
-
-let b:undo_ftplugin = "setlocal comments< define< formatoptions< iskeyword< lispwords< lisp< commentstring<"
+unlet b:did_scheme_ftplugin
+let b:did_ftplugin = 1
+let &cpo = s:cpo
+unlet s:cpo

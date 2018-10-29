@@ -317,8 +317,9 @@ when you use Vim.  There are only two steps for adding a global plugin:
 GETTING A GLOBAL PLUGIN
 
 Where can you find plugins?
+- Some are always loaded, you can see them in the directory $VIMRUNTIME/plugin.
 - Some come with Vim.  You can find them in the directory $VIMRUNTIME/macros
-  and its sub-directories.
+  and its sub-directories and under $VIM/vimfiles/pack/dist/opt/.
 - Download from the net.  There is a large collection on http://www.vim.org.
 - They are sometimes posted in a Vim |maillist|.
 - You could write one yourself, see |write-plugin|.
@@ -609,4 +610,4 @@ This does mean there is less room to edit text, thus it's a compromise.
 
 Next chapter: |usr_06.txt|  Using syntax highlighting
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

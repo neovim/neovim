@@ -392,4 +392,4 @@ Don't type the spaces.  See |i_CTRL-V_digit| for the details.
 
 ==============================================================================
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

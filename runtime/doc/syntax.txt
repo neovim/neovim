@@ -1947,7 +1947,7 @@ set "lite_minlines" to the value you desire.  Example: >
 
 LPC						*lpc.vim* *ft-lpc-syntax*
 
-LPC stands for a simple, memory-efficient language: Lars Pensj| C.  The
+LPC stands for a simple, memory-efficient language: Lars Pensjö C.  The
 file name of LPC is usually *.c.  Recognizing these files as LPC would bother
 users writing only C programs.	If you want to use LPC syntax in Vim, you
 should set a variable in your vimrc file: >
@@ -2748,13 +2748,10 @@ Ruby syntax will perform spellchecking of strings if you define
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
 
-By default only R5RS keywords are highlighted and properly indented.
+By default only R7RS keywords are highlighted and properly indented.
 
-MzScheme-specific stuff will be used if b:is_mzscheme or g:is_mzscheme
-variables are defined.
-
-Also scheme.vim supports keywords of the Chicken Scheme->C compiler.  Define
-b:is_chicken or g:is_chicken, if you need them.
+scheme.vim also supports extensions of the CHICKEN Scheme->C compiler.
+Define b:is_chicken or g:is_chicken, if you need them.
 
 
 SDL						*sdl.vim* *ft-sdl-syntax*
@@ -2848,17 +2845,17 @@ This covers syntax highlighting for the older Unix (Bourne) sh, and newer
 shells such as bash, dash, posix, and the Korn shells.
 
 Vim attempts to determine which shell type is in use by specifying that
-various filenames are of specific types: >
+various filenames are of specific types, e.g.: >
 
     ksh : .kshrc* *.ksh
     bash: .bashrc* bashrc bash.bashrc .bash_profile* *.bash
 <
-If none of these cases pertain, then the first line of the file is examined
-(ex. looking for /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a
-shelltype, then that shelltype is used.  However some files (ex. .profile) are
-known to be shell files but the type is not apparent.  Furthermore, on many
-systems sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh"
-(Posix).
+See $VIMRUNTIME/filetype.vim for the full list of patterns.  If none of these
+cases pertain, then the first line of the file is examined (ex. looking for
+/bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
+that shelltype is used.  However some files (ex. .profile) are known to be
+shell files but the type is not apparent.  Furthermore, on many systems sh is
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
@@ -4585,7 +4582,9 @@ in their own color.
 				runtime colors/evening.vim
 				hi Statement ctermfg=Blue guifg=Blue
 
-<			After the color scheme has been loaded the
+<			Before the color scheme will be loaded the
+			|ColorSchemePre| autocommand event is triggered.
+			After the color scheme has been loaded the
 			|ColorScheme| autocommand event is triggered.
 			For info about writing a colorscheme file: >
 				:edit $VIMRUNTIME/colors/README.txt
@@ -4947,6 +4946,11 @@ StatusLine	status line of current window
 StatusLineNC	status lines of not-current windows
 		Note: if this is equal to "StatusLine" Vim will use "^^^" in
 		the status line of the current window.
+							*hl-StatusLineTerm*
+StatusLineTerm	status line of current window, if it is a |terminal| window.
+							*hl-StatusLineTermNC*
+StatusLineTermNC   status lines of not-current windows that is a |terminal|
+		window.
 							*hl-TabLine*
 TabLine		tab pages line, not active tab page label
 							*hl-TabLineFill*
@@ -5250,4 +5254,4 @@ literal text specify the size of that text (in bytes):
 "<\@1<=span"	Matches the same, but only tries one byte before "span".
 
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
