@@ -71,7 +71,7 @@ and only the first one that is found is read.
 :winp[os]
 		Display current position of the top left corner of the GUI vim
 		window in pixels.  Does not work in all versions.
-		Also see |getwinposx()| and |getwinposy()|.
+		Also see |getwinpos()|, |getwinposx()| and |getwinposy()|.
 
 :winp[os] {X} {Y}							*E466*
 		Put the GUI vim window at the given {X} and {Y} coordinates.

@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Scheme (CHICKEN)
-" Last Change: 2018 Jan 31
+" Last Change: 2018-02-05
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
 " URL: https://foldling.org/vim/syntax/chicken.vim
@@ -14,7 +14,7 @@ if !exists('b:did_scheme_syntax')
 endif
 
 " Lighten parentheses.
-hi def link schemeParentheses Comment
+hi! def link schemeParentheses Comment
 
 " foo#bar
 syn match schemeExtraSyntax /[^ #'`\t\n()\[\]"|;]\+#[^ '`\t\n()\[\]"|;]\+/

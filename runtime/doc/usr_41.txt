@@ -882,8 +882,9 @@ Interactive:					*interactive-functions*
 
 GUI:						*gui-functions*
 	getfontname()		get name of current font being used
-	getwinposx()		X position of the GUI Vim window
-	getwinposy()		Y position of the GUI Vim window
+	getwinpos()		position of the Vim window
+	getwinposx()		X position of the Vim window
+	getwinposy()		Y position of the Vim window
 	balloon_show()		set the balloon content
 	balloon_split()		split a message for a balloon
 

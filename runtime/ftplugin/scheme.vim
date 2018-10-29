@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 " Language: Scheme (R7RS)
-" Last Change: 2018-01-20
+" Last Change: 2018-03-05
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
 " Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
@@ -14,25 +14,20 @@ let s:cpo = &cpo
 set cpo&vim
 
 setl lisp
-setl comments=:;;;;,:;;;,:;;,:;,sr:#\|,ex:\|#
+setl comments=:;;;;,:;;;,:;;,:;,sr:#\|,mb:\|,ex:\|#
 setl commentstring=;%s
 setl define=^\\s*(def\\k*
 setl iskeyword=33,35-39,42-43,45-58,60-90,94,95,97-122,126
 
 let b:undo_ftplugin = 'setl lisp< comments< commentstring< define< iskeyword<'
 
-setl lispwords=begin
-setl lispwords+=case
-setl lispwords+=case-lambda
-setl lispwords+=cond
-setl lispwords+=cond-expand
+setl lispwords=case
 setl lispwords+=define
 setl lispwords+=define-record-type
 setl lispwords+=define-syntax
 setl lispwords+=define-values
 setl lispwords+=do
 setl lispwords+=guard
-setl lispwords+=import
 setl lispwords+=lambda
 setl lispwords+=let
 setl lispwords+=let*
