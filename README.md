@@ -34,13 +34,13 @@ Features
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
 - [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  access from any language including clojure, lisp, go, haskell, lua,
-  javascript, perl, python, ruby, rust.
+  access from any language including Clojure, Lisp, Go, Haskell, Lua,
+  JavaScript, Perl, Python, Ruby, and Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
-- Compatible with most Vim plugins, including Ruby and Python plugins.
+- Compatible with most Vim plugins, including Ruby and Python plugins
 
 See [`:help nvim-features`][nvim-features] for the full list!
 
@@ -59,14 +59,14 @@ To list all targets:
 
     cmake --build build --target help
 
-To skip "bundled" (`third-party/*`) dependencies define `USE_BUNDLED=NO`.
+To skip "bundled" (`third-party/*`) dependencies, define `USE_BUNDLED=NO`.
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
 Install from package
 --------------------
 
-Pre-built packages for Windows, macOS, and Linux are found at the
+Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
 Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
