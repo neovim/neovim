@@ -93,7 +93,7 @@ Project layout
     │  ├─ msgpack_rpc/  RPC subsystem
     │  ├─ os/           low-level platform code
     │  └─ tui/          built-in UI
-    ├─ third-party/     cmake subproject to build dependencies
+    ├─ third-party/     CMake subproject to build dependencies
     └─ test/            tests (see test/README.md)
 
 License
