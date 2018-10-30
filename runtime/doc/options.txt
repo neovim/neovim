@@ -100,17 +100,17 @@ and the following arguments will be ignored.
 When 'verbose' is non-zero, displaying an option value will also tell where it
 was last set.  Example: >
 	:verbose set shiftwidth cindent?
-<	  shiftwidth=4 ~
-		  Last set from modeline ~
-	  cindent ~
-		  Last set from /usr/local/share/vim/vim60/ftplugin/c.vim ~
+<  shiftwidth=4 ~
+	  Last set from modeline line 1 ~
+  cindent ~
+	  Last set from /usr/local/share/vim/vim60/ftplugin/c.vim line 30 ~
 This is only done when specific option values are requested, not for ":verbose
 set all" or ":verbose set" without an argument.
 When the option was set by hand there is no "Last set" message.
 When the option was set while executing a function, user command or
 autocommand, the script in which it was defined is reported.
 A few special texts:
-	Last set from modeline ~
+	Last set from modeline line 1 ~
 		Option was set in a |modeline|.
 	Last set from --cmd argument ~
 		Option was set with command line argument |--cmd| or +.
@@ -691,6 +691,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'{A-Z0-9}, or `{A-Z0-9} command takes one to another file.
 	Note that for some commands the 'autowrite' option is not used, see
 	'autowriteall' for that.
+	Some buffers will not be written, specifically when 'buftype' is
+	"nowrite", "nofile", "terminal" or "prompt".
 
 			 *'autowriteall'* *'awa'* *'noautowriteall'* *'noawa'*
 'autowriteall' 'awa'	boolean	(default off)
@@ -1456,8 +1458,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed.  E.g., when moving vertically it may change column.
 
 
-'conceallevel' 'cole'		*'conceallevel'* *'cole'*
-			number (default 0)
+						*'conceallevel'* *'cole'*
+'conceallevel' 'cole'	number (default 0)
 			local to window
 	Determine how text with the "conceal" syntax attribute |:syn-conceal|
 	is shown:
@@ -1902,6 +1904,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 				When omitted a context of six lines is used.
 				See |fold-diff|.
 
+		iblank		Ignore changes where lines are all blank.  Adds
+				the "-B" flag to the "diff" command if
+				'diffexpr' is empty.  Check the documentation
+				of the "diff" command for what this does
+				exactly.
+				NOTE: the diff windows will get out of sync,
+				because no differences between blank lines are
+				taken into account.
+
 		icase		Ignore changes in case of text.  "a" and "A"
 				are considered the same.  Adds the "-i" flag
 				to the "diff" command if 'diffexpr' is empty.
@@ -1912,6 +1923,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 				of the "diff" command for what this does
 				exactly.  It should ignore adding trailing
 				white space, but not leading white space.
+
+		iwhiteall	Ignore all white space changes.  Adds
+				the "-w" flag to the "diff" command if
+				'diffexpr' is empty.  Check the documentation
+				of the "diff" command for what this does
+				exactly.
+
+		iwhiteeol	Ignore white space changes at end of line.
+				Adds the "-Z" flag to the "diff" command if
+				'diffexpr' is empty.  Check the documentation
+				of the "diff" command for what this does
+				exactly.
 
 		horizontal	Start diff mode with horizontal splits (unless
 				explicitly specified otherwise).
@@ -3201,8 +3224,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	so far, matches.  The matched string is highlighted.  If the pattern
 	is invalid or not found, nothing is shown.  The screen will be updated
 	often, this is only useful on fast terminals.
-	Also applies to the `:s`, `:g` and `:v` commands.
-	Note that the match will be shown, but the cursor will return to its
+<	Note that the match will be shown, but the cursor will return to its
 	original position when no match is found and when pressing <Esc>.  You
 	still need to finish the search command with <Enter> to move the
 	cursor to the match.
@@ -3369,7 +3391,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Identifiers are used in recognizing environment variables and after a
 	match of the 'define' option.  It is also used for "\i" in a
 	|pattern|.  See 'isfname' for a description of the format of this
-	option.
+	option.  For '@' only characters up to 255 are used.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
 	expand "$HOME/.local/share/nvim/shada/main.shada".  Maybe you should 
@@ -3381,8 +3403,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	Keywords are used in searching and recognizing with many commands:
 	"w", "*", "[i", etc.  It is also used for "\k" in a |pattern|.  See
-	'isfname' for a description of the format of this option.  For C
-	programs you could use "a-z,A-Z,48-57,_,.,-,>".
+	'isfname' for a description of the format of this option.  For '@'
+	characters above 255 check the "word" character class.
+	For C programs you could use "a-z,A-Z,48-57,_,.,-,>".
 	For a help file it is set to all non-blank printable characters except
 	'*', '"' and '|' (so that CTRL-] on a command finds the help for that
 	command).
@@ -4397,13 +4420,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'printencoding'* *'penc'*
-'printencoding' 'penc'	String	(default empty, except for some systems)
+'printencoding' 'penc'	string	(default empty, except for some systems)
 			global
 	Sets the character encoding used when printing.
 	See |penc-option|.
 
 						*'printexpr'* *'pexpr'*
-'printexpr' 'pexpr'	String	(default: see below)
+'printexpr' 'pexpr'	string	(default: see below)
 			global
 	Expression used to print the PostScript produced with |:hardcopy|.
 	See |pexpr-option|.

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:    R noweb Files
 " Maintainer:  Johannes Ranke <jranke@uni-bremen.de>
-" Last Change: Sat Feb 06, 2016  06:47AM
+" Last Change: Thu Apr 05, 2018  11:06PM
 " Version:     0.9.1
 " Remarks:     - This file is inspired by the proposal of 
 "                Fernando Henrique Ferraz Pereira da Rosa <feferraz@ime.usp.br>
@@ -16,7 +16,7 @@ syn case match
 
 " Extension of Tex clusters {{{1
 runtime syntax/tex.vim
-unlet b:current_syntax
+unlet! b:current_syntax
 
 syn cluster texMatchGroup add=@rnoweb
 syn cluster texMathMatchGroup add=rnowebSexpr

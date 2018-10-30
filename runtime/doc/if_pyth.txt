@@ -42,8 +42,9 @@ Example: >
 	endfunction
 
 To see what version of Python you have: >
-	:python import sys
 	:python print(sys.version)
+
+There is no need to import sys, it's done by default.
 
 Note: Python is very sensitive to the indenting.  Make sure the "class" line
 and "EOF" do not have any indent.
@@ -63,6 +64,18 @@ Examples:
 	:pydo return "%s\t%d" % (line[::-1], len(line))
 	:pydo if line: return "%4d: %s" % (linenr, line)
 <
+One can use `:pydo` in possible conjunction with `:py` to filter a range using
+python. For example: >
+
+	:py3 << EOF
+	needle = vim.eval('@a')
+	replacement = vim.eval('@b')
+
+	def py_vim_string_replace(str):
+		return str.replace(needle, replacement)
+	EOF
+	:'<,'>py3do return py_vim_string_replace(line)
+<
 							*:pyfile* *:pyf*
 :[range]pyf[ile] {file}
 			Execute the Python script in {file}.  The whole
@@ -79,7 +92,6 @@ Python commands cannot be used in the |sandbox|.
 
 To pass arguments you need to set sys.argv[] explicitly.  Example: >
 
-	:python import sys
 	:python sys.argv = ["foo", "bar"]
 	:pyfile myscript.py
 

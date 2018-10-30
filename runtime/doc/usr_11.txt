@@ -283,6 +283,8 @@ machines.  Therefore, don't rely on Vim always warning you.
 If you really don't want to see this message, you can add the 'A' flag to the
 'shortmess' option.  But it's very unusual that you need this.
 
+For programatic access to the swap file, see |swapinfo()|.
+
 ==============================================================================
 *11.4*	Further reading
 

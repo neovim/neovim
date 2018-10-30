@@ -27,6 +27,9 @@ You can see the name of the current swap file being used with the command:
 
 	:sw[apname]					*:sw* *:swapname*
 
+Or you can use the |swapname()| function, which also allows for seeing the
+swap file name of other buffers.
+
 The name of the swap file is normally the same as the file you are editing,
 with the extension ".swp".
 - On Unix, a '.' is prepended to swap file names in the same directory as the
