@@ -48,7 +48,7 @@ NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
   test_listlbr \
   test_largefile \
 
-NEW_TESTS = $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
+NEW_TESTS ?= $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
 
 SCRIPTS_GUI := test16.out
 
@@ -153,7 +153,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
