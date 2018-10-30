@@ -89,7 +89,7 @@ Project layout
     │  ├─ event/        event-loop subsystem
     │  ├─ generators/   code generation (pre-compilation)
     │  ├─ lib/          generic data structures
-    │  ├─ lua/          lua subsystem
+    │  ├─ lua/          Lua subsystem
     │  ├─ msgpack_rpc/  RPC subsystem
     │  ├─ os/           low-level platform code
     │  └─ tui/          built-in UI
