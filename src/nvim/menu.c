@@ -1520,7 +1520,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   char_u              *dname;
 
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
+    if (STRNICMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
     }
   }
@@ -1531,7 +1531,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   dname = menu_text(name, NULL, NULL);
   name[len] = c;
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRCMP(dname, tp[i].from_noamp) == 0) {
+    if (STRICMP(dname, tp[i].from_noamp) == 0) {
       xfree(dname);
       return tp[i].to;
     }
