@@ -129,7 +129,7 @@ See `LICENSE` for details.
 [Homebrew]: https://github.com/neovim/homebrew-neovim#installation
 [Debian]: https://packages.debian.org/testing/neovim
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
-[Fedora]: https://admin.fedoraproject.org/pkgdb/package/rpms/neovim
+[Fedora]: https://apps.fedoraproject.org/packages/neovim
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
 
