@@ -6,6 +6,7 @@ local feed_command = helpers.feed_command
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local iswin = helpers.iswin
 
 describe('terminal', function()
   local screen
@@ -68,6 +69,15 @@ describe('terminal', function()
   it('forwards resize request to the program', function()
     feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
     screen:try_resize(screen._width - 3, screen._height - 2)
+
+    if iswin() then
+      -- win: less-precise test, SIGWINCH is noisy there. #7506
+      screen:expect{any='rows: 7, cols: 47'}
+      screen:try_resize(screen._width - 6, screen._height - 3)
+      screen:expect{any='rows: 4, cols: 41'}
+      return
+    end
+
     screen:expect([[
       tty ready                                      |
       rows: 7, cols: 47                              |
