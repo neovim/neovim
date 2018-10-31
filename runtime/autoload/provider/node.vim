@@ -26,8 +26,8 @@ let s:NodeHandler = {
 \ 'stdout_buffered': v:true,
 \ 'result': ''
 \ }
-function! s:NodeHandler.on_exit(job_id, data, event)
-  let bin_dir = join(self.stdout, '')
+function! s:NodeHandler.on_exit(job_id, data, event) abort
+  let bin_dir = join(get(self, 'stdout', []), '')
   let entry_point = bin_dir . self.entry_point
   let self.result = filereadable(entry_point) ? entry_point : ''
 endfunction
