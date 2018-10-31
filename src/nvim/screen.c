@@ -3052,9 +3052,13 @@ win_line (
           diff_hlf = HLF_CHD;                   // changed line
         }
         line_attr = win_hl_attr(wp, diff_hlf);
-        // Overlay CursorLine onto diff highlight, unless it's low-priority.
-        if (!line_attr_lowprio && wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-          line_attr = hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
+        // Overlay CursorLine onto diff-mode highlight.
+        if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          line_attr = 0 != line_attr_lowprio  // Low-priority CursorLine
+            ? hl_combine_attr(hl_combine_attr(win_hl_attr(wp, HLF_CUL),
+                                              line_attr),
+                              hl_get_underline())
+            : hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
         }
       }
 
