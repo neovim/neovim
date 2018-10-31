@@ -32,7 +32,7 @@ for more information.
 Features
 --------
 
-- Modern [GUI clients](https://github.com/neovim/neovim/wiki/Related-projects#gui-clients)
+- Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
 - [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
   access from any language including Clojure, Lisp, Go, Haskell, Lua,
   JavaScript, Perl, Python, Ruby, and Rust
