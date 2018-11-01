@@ -7232,7 +7232,7 @@ static void f_byte2line(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = -1;
   } else {
     rettv->vval.v_number = (varnumber_T)ml_find_line_or_offset(curbuf, 0,
-                                                               &boff);
+                                                               &boff, false);
   }
 }
 
@@ -12084,7 +12084,7 @@ static void f_line2byte(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = ml_find_line_or_offset(curbuf, lnum, NULL);
+    rettv->vval.v_number = ml_find_line_or_offset(curbuf, lnum, NULL, false);
   }
   if (rettv->vval.v_number >= 0) {
     rettv->vval.v_number++;

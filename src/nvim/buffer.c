@@ -3734,7 +3734,8 @@ int build_stl_str_hl(
       FALLTHROUGH;
     case STL_OFFSET:
     {
-      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
+      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
+                                      false);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
             0L : l + 1 + (!(State & INSERT) && empty_line ?
                           0 : (int)wp->w_cursor.col);

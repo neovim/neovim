@@ -3850,13 +3850,17 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   ml_upd_lastcurix = curix;
 }
 
-/*
- * Find offset for line or line with offset.
- * Find line with offset if "lnum" is 0; return remaining offset in offp
- * Find offset of line if "lnum" > 0
- * return -1 if information is not available
- */
-long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
+/// Find offset for line or line with offset.
+///
+/// @param buf buffer to use
+/// @param lnum if > 0, find offset of lnum, store offset in offp
+///             if == 0, return line with offset *offp
+/// @param offp Location where offset of line is stored, or to read offset to
+///             use to find line. In the later case, store remaining offset.
+/// @param no_ff ignore 'fileformat' option, always use one byte for NL.
+///
+/// @return -1 if information is not available
+long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
 {
   linenr_T curline;
   int curix;
@@ -3869,7 +3873,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
   int text_end;
   long offset;
   int len;
-  int ffdos = (get_fileformat(buf) == EOL_DOS);
+  int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
   /* take care of cached line first */
@@ -3983,7 +3987,7 @@ void goto_byte(long cnt)
   if (boff) {
     boff--;
   }
-  lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff);
+  lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff, false);
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;
