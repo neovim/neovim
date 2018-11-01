@@ -538,10 +538,6 @@ describe('API: buffer events:', function()
   end)
 
   it('works with :diffput and :diffget', function()
-    if os.getenv("APPVEYOR") then
-      pending("Fails on appveyor for some reason.", function() end)
-    end
-
     local b1, tick1 = editoriginal(true, {"AAA", "BBB"})
     local channel = nvim('get_api_info')[1]
     command('diffthis')
