@@ -731,7 +731,7 @@ describe('jobs', function()
     local children
     retry(nil, nil, function()
       children = meths.get_proc_children(ppid)
-      eq(3, #children)
+      eq((iswin() and 4 or 3), #children)
     end)
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
