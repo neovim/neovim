@@ -3709,9 +3709,9 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
          curix++) {
       curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     }
-  } else if (line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines
-             && curix < buf->b_ml.ml_usedchunks - 1) {
-    /* Adjust cached curix & curline */
+  } else if (curix < buf->b_ml.ml_usedchunks - 1
+             && line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines) {
+    // Adjust cached curix & curline
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     curix++;
   }
