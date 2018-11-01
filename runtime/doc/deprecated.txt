@@ -42,10 +42,11 @@ Functions ~
 *last_buffer_nr()*	Obsolete name for bufnr("$").
 
 Modifiers ~
+*cpo-<*
 *:menu-<special>*
-*:menu-special*		<> notation is always enabled. |cpo-<|
+*:menu-special*		<> notation is always enabled.
 *:map-<special>*
-*:map-special*		<> notation is always enabled. |cpo-<|
+*:map-special*		<> notation is always enabled.
 
 Normal commands ~
 *]f*
