@@ -13,13 +13,16 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 install(FILES
-  include/tree.h
   include/uv.h
-  include/uv-version.h
-  include/uv-errno.h
-  include/uv-threadpool.h
-  include/uv-win.h
   DESTINATION include)
+
+install(FILES
+  include/uv/errno.h
+  include/uv/threadpool.h
+  include/uv/tree.h
+  include/uv/version.h
+  include/uv/win.h
+  DESTINATION include/uv)
 
 include(GNUInstallDirs)
 install(TARGETS uv
