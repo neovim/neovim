@@ -1814,14 +1814,16 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-  } else if (xterm || (vte_version != 0) || rxvt) {
-    // This seems to be supported for a long time in VTE
-    // urxvt also supports this
+  } else if ((xterm || rxvt) && (vte_version == 0 || vte_version >= 3900)) {
+    // Supported in urxvt, newer VTE.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, "ext.set_cursor_color", "\033]12;#%p1%06x\007");
   }
-  data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(
-      ut, "ext.reset_cursor_color", "\x1b]112\x07");
+
+  if (-1 != data->unibi_ext.set_cursor_color) {
+    data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(
+        ut, "ext.reset_cursor_color", "\x1b]112\x07");
+  }
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
