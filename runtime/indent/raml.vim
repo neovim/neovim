@@ -1,5 +1,5 @@
 " Vim indent file
-" Language:             Yaml
+" Language:             Raml
 " Maintainer:           mucheng <leisurelicht@gmail.com>
 " Latest Revision:      2018-11-03
 
