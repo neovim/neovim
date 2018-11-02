@@ -286,6 +286,7 @@ static const struct key_name_entry {
   { K_PLUG,            "Plug" },
   { K_PASTE,           "Paste" },
   { K_COMMAND,         "Cmd" },
+  { K_SHIFT,           "Shift" },
   { 0,                 NULL }
   // NOTE: When adding a long name update MAX_KEY_NAME_LEN.
 };

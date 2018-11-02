@@ -248,6 +248,7 @@ enum key_extra {
   , KE_PASTE = 103            // special key to toggle the 'paste' option.
                               // sent only by UIs
   , KE_COMMAND = 104          // <Cmd> special key
+  , KE_SHIFT = 105            // Shift key
 };
 
 /*
@@ -437,6 +438,7 @@ enum key_extra {
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
+#define K_SHIFT         TERMCAP2KEY(KS_EXTRA, KE_SHIFT)
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */
