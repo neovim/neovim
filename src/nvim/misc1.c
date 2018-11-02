@@ -98,7 +98,7 @@ open_line (
   colnr_T newcol = 0;             // new cursor column
   int newindent = 0;              // auto-indent of the new line
   bool trunc_line = false;        // truncate current line afterwards
-  bool retval = false;            // return value, default is false
+  bool retval = false;            // return value
   int extra_len = 0;              // length of p_extra string
   int lead_len;                   // length of comment leader
   char_u *lead_flags;             // position in 'comments' for comment leader
@@ -922,7 +922,7 @@ open_line (
     next_line = NULL;
   }
 
-  retval = TRUE;                /* success! */
+  retval = true;                // success!
 theend:
   curbuf->b_p_pi = saved_pi;
   xfree(saved_line);
