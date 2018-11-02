@@ -493,11 +493,10 @@ end:
 
 /// Return the byte offset for a line.
 //
-/// This includes the end-of-line character, depending on the 'fileformat'
-/// option for the current buffer. The first line returns 0. UTF-8 encoding is
-/// used, 'fileencoding' is ignored. Sending in the index just below the last
-/// line gives the total byte count for the entire file. A final newline is
-/// included if it would be written, see 'eol'.
+/// The first line returns 0. UTF-8 bytes are counted, and EOL counts as one
+/// byte. 'fileformat' and 'fileencoding' are ignored. Sending in the index
+/// just below the last line gives the total byte count for the entire buffer.
+/// A final EOL is included if it would be written, see 'eol'.
 ///
 /// Unlike |line2byte()|, throws error for out-of-bounds indexing.
 /// Returns -1 for unloaded buffer.
@@ -506,7 +505,7 @@ end:
 /// @param index      Line index
 /// @param[out] err   Error details, if any
 /// @return Integer   Byte offset
-Integer nvim_buf_get_offset_for_line(Buffer buffer, Integer index, Error *err)
+Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
   FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -524,7 +523,7 @@ Integer nvim_buf_get_offset_for_line(Buffer buffer, Integer index, Error *err)
     return 0;
   }
 
-  return ml_find_line_or_offset(buf, (int)index+1, NULL);
+  return ml_find_line_or_offset(buf, (int)index+1, NULL, true);
 }
 
 /// Gets a buffer-scoped (b:) variable.
