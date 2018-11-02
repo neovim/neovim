@@ -214,3 +214,19 @@ func Test_cabbr_visual_mode()
   call assert_equal(expected, getreg(':'))
   cunabbr s
 endfunc
+
+func Test_abbreviation_CR()
+  new
+  func Eatchar(pat)
+    let c = nr2char(getchar(0))
+    return (c =~ a:pat) ? '' : c
+  endfunc
+  iabbrev <buffer><silent> ~~7 <c-r>=repeat('~', 7)<CR><c-r>=Eatchar('\s')<cr>
+  call feedkeys("GA~~7 \<esc>", 'xt')
+  call assert_equal('~~~~~~~', getline('$'))
+  %d
+  call feedkeys("GA~~7\<cr>\<esc>", 'xt')
+  call assert_equal(['~~~~~~~', ''], getline(1,'$'))
+  delfunc Eatchar
+  bw!
+endfunc
