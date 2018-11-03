@@ -1413,3 +1413,33 @@ func Test_edit_alt()
   bwipe XAltFile
   call delete('XAltFile')
 endfunc
+
+func Test_leave_insert_autocmd()
+  new
+  au InsertLeave * let g:did_au = 1
+  let g:did_au = 0
+  call feedkeys("afoo\<Esc>", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('foo', getline(1))
+
+  let g:did_au = 0
+  call feedkeys("Sbar\<C-C>", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bar', getline(1))
+
+  inoremap x xx<Esc>
+  let g:did_au = 0
+  call feedkeys("Saax", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('aaxx', getline(1))
+
+  inoremap x xx<C-C>
+  let g:did_au = 0
+  call feedkeys("Sbbx", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bbxx', getline(1))
+
+  bwipe!
+  au! InsertLeave
+  iunmap x
+endfunc

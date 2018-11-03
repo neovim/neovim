@@ -468,7 +468,10 @@ static void insert_enter(InsertState *s)
   }
 
   foldUpdateAfterInsert();
-  if (s->cmdchar != 'r' && s->cmdchar != 'v') {
+  // When CTRL-C was typed got_int will be set, with the result
+  // that the autocommands won't be executed. When mapped got_int
+  // is not set, but let's keep the behavior the same.
+  if (s->cmdchar != 'r' && s->cmdchar != 'v' && s->c != Ctrl_C) {
     ins_apply_autocmds(EVENT_INSERTLEAVE);
   }
   did_cursorhold = false;
