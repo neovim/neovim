@@ -94,6 +94,7 @@ typedef struct {
   bool can_change_scroll_region;
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
+  bool can_erase_chars;
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
@@ -119,6 +120,7 @@ typedef struct {
     int set_cursor_style, reset_cursor_style;
     int enter_undercurl_mode, exit_undercurl_mode, set_underline_color;
   } unibi_ext;
+  char *space_buf;
 } TUIData;
 
 static bool volatile got_winch = false;
@@ -239,6 +241,7 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
+  data->can_erase_chars = !!unibi_get_str(data->ut, unibi_erase_chars);
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
@@ -401,6 +404,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   loop_close(&tui_loop, false);
   kv_destroy(data->invalid_regions);
   kv_destroy(data->attrs);
+  xfree(data->space_buf);
   xfree(data);
 }
 
@@ -662,7 +666,7 @@ static void cursor_goto(UI *ui, int row, int col)
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2)
           && cheap_to_print(ui, grid->row, grid->col, n)) {
-        UGRID_FOREACH_CELL(grid, grid->row, grid->row, grid->col, col - 1, {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->col, col, {
           print_cell(ui, cell);
         });
       }
@@ -734,49 +738,47 @@ safe_move:
 }
 
 static void clear_region(UI *ui, int top, int bot, int left, int right,
-                         HlAttrs attrs)
+                         int attr_id)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
 
-  bool cleared = false;
+  HlAttrs attrs = kv_A(data->attrs, (size_t)attr_id);
+  update_attrs(ui, attrs);
 
   // non-BCE terminals can't clear with non-default background color
   bool can_clear = data->bce || no_bg(ui, attrs);
 
-  if (can_clear && right == ui->width -1) {
-    // Background is set to the default color and the right edge matches the
-    // screen end, try to use terminal codes for clearing the requested area.
-    update_attrs(ui, attrs);
-    if (left == 0) {
-      if (bot == ui->height - 1) {
-        if (top == 0) {
-          unibi_out(ui, unibi_clear_screen);
-          ugrid_goto(&data->grid, top, left);
-        } else {
-          cursor_goto(ui, top, 0);
-          unibi_out(ui, unibi_clr_eos);
-        }
-        cleared = true;
-      }
+  // Background is set to the default color and the right edge matches the
+  // screen end, try to use terminal codes for clearing the requested area.
+  if (can_clear && left == 0 && right == ui->width && bot == ui->height) {
+    if (top == 0) {
+      unibi_out(ui, unibi_clear_screen);
+      ugrid_goto(&data->grid, top, left);
+    } else {
+      cursor_goto(ui, top, 0);
+      unibi_out(ui, unibi_clr_eos);
     }
+  } else {
+    int width = right-left;
 
-    if (!cleared) {
-      // iterate through each line and clear with clr_eol
-      for (int row = top; row <= bot; row++) {
-        cursor_goto(ui, row, left);
+    // iterate through each line and clear
+    for (int row = top; row < bot; row++) {
+      cursor_goto(ui, row, left);
+      if (can_clear && right == ui->width) {
         unibi_out(ui, unibi_clr_eol);
+      } else if (data->can_erase_chars && can_clear && width >= 5) {
+        UNIBI_SET_NUM_VAR(data->params[0], width);
+        unibi_out(ui, unibi_erase_chars);
+      } else {
+        out(ui, data->space_buf, (size_t)width);
+        grid->col += width;
+        if (data->immediate_wrap_after_last_column) {
+          // Printing at the right margin immediately advances the cursor.
+          final_column_wrap(ui);
+        }
       }
-      cleared = true;
     }
-  }
-
-  if (!cleared) {
-    // could not clear using faster terminal codes, refresh the whole region
-    UGRID_FOREACH_CELL(grid, top, bot, left, right, {
-      cursor_goto(ui, row, col);
-      print_cell(ui, cell);
-    });
   }
 }
 
@@ -838,12 +840,16 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
   UGrid *grid = &data->grid;
   ugrid_resize(grid, (int)width, (int)height);
 
+  xfree(data->space_buf);
+  data->space_buf = xmalloc((size_t)width * sizeof(*data->space_buf));
+  memset(data->space_buf, ' ', (size_t)width);
+
   // resize might not always be followed by a clear before flush
   // so clip the invalid region
   for (size_t i = 0; i < kv_size(data->invalid_regions); i++) {
     Rect *r = &kv_A(data->invalid_regions, i);
-    r->bot = MIN(r->bot, grid->height-1);
-    r->right = MIN(r->right, grid->width-1);
+    r->bot = MIN(r->bot, grid->height);
+    r->right = MIN(r->right, grid->width);
   }
 
   if (!got_winch) {  // Try to resize the terminal window.
@@ -866,8 +872,7 @@ static void tui_grid_clear(UI *ui, Integer g)
   UGrid *grid = &data->grid;
   ugrid_clear(grid);
   kv_size(data->invalid_regions) = 0;
-  clear_region(ui, 0, grid->height-1, 0, grid->width-1,
-               data->clear_attrs);
+  clear_region(ui, 0, grid->height, 0, grid->width, 0);
 }
 
 static void tui_grid_cursor_goto(UI *ui, Integer grid, Integer row, Integer col)
@@ -1025,9 +1030,7 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
   data->scroll_region_is_full_screen = fullwidth
         && top == 0 && bot == ui->height-1;
 
-  int clear_top, clear_bot;
-  ugrid_scroll(grid, top, bot, left, right, (int)rows,
-               &clear_top, &clear_bot);
+  ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
   bool can_scroll = data->scroll_region_is_full_screen
                     || (data->can_change_scroll_region
@@ -1041,8 +1044,6 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
       set_scroll_region(ui, top, bot, left, right);
     }
     cursor_goto(ui, top, left);
-    // also set default color attributes or some terminals can become funny
-    update_attrs(ui, data->clear_attrs);
 
     if (rows > 0) {
       if (rows == 1) {
@@ -1064,16 +1065,14 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
     if (!data->scroll_region_is_full_screen) {
       reset_scroll_region(ui, fullwidth);
     }
-
-    if (!(data->bce || no_bg(ui, data->clear_attrs))) {
-      // Scrolling will leave wrong background in the cleared area on non-BCE
-      // terminals. Update the cleared area.
-      clear_region(ui, clear_top, clear_bot, left, right,
-                   data->clear_attrs);
-    }
   } else {
-    // Mark the entire scroll region as invalid for redrawing later
-    invalidate(ui, top, bot, left, right);
+    // Mark the moved region as invalid for redrawing later
+    if (rows > 0) {
+      endrow = endrow - rows;
+    } else {
+      startrow = startrow - rows;
+    }
+    invalidate(ui, (int)startrow, (int)endrow, (int)startcol, (int)endcol);
   }
 }
 
@@ -1107,7 +1106,7 @@ static void tui_default_colors_set(UI *ui, Integer rgb_fg, Integer rgb_bg,
   data->clear_attrs.cterm_bg_color = (int)cterm_bg;
 
   data->print_attrs = HLATTRS_INVALID;
-  invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
+  invalidate(ui, 0, data->grid.height, 0, data->grid.width);
 }
 
 static void tui_flush(UI *ui)
@@ -1129,11 +1128,27 @@ static void tui_flush(UI *ui)
 
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
-    assert(r.bot < grid->height && r.right < grid->width);
-    UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
-      cursor_goto(ui, row, col);
-      print_cell(ui, cell);
-    });
+    assert(r.bot <= grid->height && r.right <= grid->width);
+
+    for (int row = r.top; row < r.bot; row++) {
+      int clear_attr = grid->cells[row][r.right-1].attr;
+      int clear_col;
+      for (clear_col = r.right; clear_col > 0; clear_col--) {
+        UCell *cell = &grid->cells[row][clear_col-1];
+        if (!(cell->data[0] == ' ' && cell->data[1] == NUL
+              && cell->attr == clear_attr)) {
+          break;
+        }
+      }
+
+      UGRID_FOREACH_CELL(grid, row, r.left, clear_col, {
+        cursor_goto(ui, row, col);
+        print_cell(ui, cell);
+      });
+      if (clear_col < r.right) {
+        clear_region(ui, row, row+1, clear_col, r.right, clear_attr);
+      }
+    }
   }
 
   cursor_goto(ui, data->row, data->col);
@@ -1219,7 +1234,7 @@ static void tui_option_set(UI *ui, String name, Object value)
     ui->rgb = value.data.boolean;
 
     data->print_attrs = HLATTRS_INVALID;
-    invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
+    invalidate(ui, 0, data->grid.height, 0, data->grid.width);
   }
 }
 
@@ -1235,18 +1250,16 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     assert((size_t)attrs[c-startcol] < kv_size(data->attrs));
     grid->cells[linerow][c].attr = attrs[c-startcol];
   }
-  UGRID_FOREACH_CELL(grid, (int)linerow, (int)linerow, (int)startcol,
-                     (int)endcol-1, {
-    cursor_goto(ui, row, col);
+  UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
+    cursor_goto(ui, (int)linerow, col);
     print_cell(ui, cell);
   });
 
   if (clearcol > endcol) {
-    HlAttrs cl_attrs = kv_A(data->attrs, (size_t)clearattr);
     ugrid_clear_chunk(grid, (int)linerow, (int)endcol, (int)clearcol,
                       (sattr_T)clearattr);
-    clear_region(ui, (int)linerow, (int)linerow, (int)endcol, (int)clearcol-1,
-                 cl_attrs);
+    clear_region(ui, (int)linerow, (int)linerow+1, (int)endcol, (int)clearcol,
+                 (int)clearattr);
   }
 
   if (wrap && ui->width == grid->width && linerow + 1 < grid->height) {
@@ -1269,26 +1282,16 @@ static void invalidate(UI *ui, int top, int bot, int left, int right)
 {
   TUIData *data = ui->data;
   Rect *intersects = NULL;
-  // Increase dimensions before comparing to ensure adjacent regions are
-  // treated as intersecting
-  --top;
-  ++bot;
-  --left;
-  ++right;
 
   for (size_t i = 0; i < kv_size(data->invalid_regions); i++) {
     Rect *r = &kv_A(data->invalid_regions, i);
-    if (!(top > r->bot || bot < r->top
-          || left > r->right || right < r->left)) {
+    // adjacent regions are treated as overlapping
+    if (!(top > r->bot || bot < r->top)
+        && !(left > r->right || right < r->left)) {
       intersects = r;
       break;
     }
   }
-
-  ++top;
-  --bot;
-  ++left;
-  --right;
 
   if (intersects) {
     // If top/bot/left/right intersects with a invalid rect, we replace it

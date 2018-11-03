@@ -1896,6 +1896,9 @@ static void msg_scroll_up(void)
   } else {
     screen_del_lines(0, 1, (int)Rows, 0, Columns);
   }
+  // TODO(bfredl): when msgsep display is properly batched, this fill should be
+  // eliminated.
+  screen_fill(Rows-1, Rows, 0, (int)Columns, ' ', ' ', 0);
 }
 
 /*
@@ -2311,6 +2314,7 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1
               && screen_ins_lines(0, 1, (int)Rows, 0, (int)Columns) == OK) {
+            screen_fill(0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {
