@@ -1125,7 +1125,7 @@ au BufNewFile,BufRead *.dpr			setf pascal
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
 
-" PCMK - HAE - crm configure edit 
+" PCMK - HAE - crm configure edit
 au BufNewFile,BufRead *.pcmk 			setf pcmk
 
 " Perl
@@ -1892,8 +1892,11 @@ au BufNewFile,BufRead *.yy,*.yxx,*.y++		setf yacc
 " Yacc or racc
 au BufNewFile,BufRead *.y			call dist#ft#FTy()
 
-" Yaml or Raml
-au BufNewFile,BufRead *.yaml,*.yml,*.raml	setf yaml
+" Yaml
+au BufNewFile,BufRead *.yaml,*.yml		setf yaml
+
+" Raml
+au BufNewFile,BufRead *.raml			setf raml
 
 " yum conf (close enough to dosini)
 au BufNewFile,BufRead */etc/yum.conf		setf dosini
