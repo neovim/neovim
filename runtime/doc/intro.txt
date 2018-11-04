@@ -1,7 +1,7 @@
 *intro.txt*     Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+			    NVIM REFERENCE MANUAL
 
 
 Introduction to Vim					*ref* *reference*
@@ -9,7 +9,7 @@ Introduction to Vim					*ref* *reference*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction						*intro*
+Introduction						*intro*
 
 Vim stands for Vi IMproved.  It used to be Vi IMitation, but there are so many
 improvements that a name change was appropriate.  Vim is a text editor which
@@ -28,8 +28,8 @@ is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
 							*pronounce*
-Vim is pronounced as one word, like Jim, not vi-ai-em.  It's written with a
-capital, since it's a name, again like Jim.
+Vim is pronounced as one word, like Jim.  Nvim is pronounced as N-vim, or,
+continuing with the Jim simile, N-Jim, which sounds like Ninja.
 
 This manual is a reference for all the Vim commands and options.  This is not
 an introduction to the use of Vi or Vim, it gets a bit complicated here and
@@ -37,134 +37,67 @@ there.  For beginners, there is a hands-on |tutor|.  To learn using Vim, read
 the user manual |usr_toc.txt|.
 
 							*book*
-There are many books on Vi that contain a section for beginners.  There are
-two books I can recommend:
+There are many books on Vi and Vim.  We recommend these books:
+
+	"Practical Vim" by Drew Neil
+	"Modern Vim" by Drew Neil
+	https://vimcasts.org/publications/
+
+"Practical Vim" is a popular because of its focus on quickly learning common
+editing tasks with Vim.  "Modern Vim" explores new features introduced by Nvim
+and Vim 8.
 
 	"Vim - Vi Improved" by Steve Oualline
 
-This is the very first book completely dedicated to Vim.  It is very good for
-beginners.  The most often used commands are explained with pictures and
-examples.  The less often used commands are also explained, the more advanced
-features are summarized.  There is a comprehensive index and a quick
-reference.  Parts of this book have been included in the user manual
-|frombook|.
-Published by New Riders Publishing.  ISBN: 0735710015
+This is the first book dedicated to Vim.  Parts of it were included in the
+user manual. |frombook|  ISBN: 0735710015
 For more information try one of these:
-	http://iccf-holland.org/click5.html
-	http://www.vim.org/iccf/click5.html
-
-	"Learning the Vi editor" by Linda Lamb and Arnold Robbins
-
-This is a book about Vi that includes a chapter on Vim (in the sixth edition).
-The first steps in Vi are explained very well.  The commands that Vim adds are
-only briefly mentioned.  There is also a German translation.
-Published by O'Reilly.  ISBN: 1-56592-426-6.
+	https://iccf-holland.org/click5.html
+	https://www.vim.org/iccf/click5.html
 
 ==============================================================================
-2. Vim on the internet					*internet*
+Nvim on the interwebs					*internet*
 
 			*www* *WWW*  *faq* *FAQ* *distribution* *download*
-The Vim pages contain the most recent information about Vim.  They also
-contain links to the most recent version of Vim.  The FAQ is a list of
-Frequently Asked Questions.  Read this if you have problems.
 
-	Vim home page:	  http://www.vim.org/
-	Vim FAQ:	  http://vimdoc.sf.net/
-	Downloading:	  ftp://ftp.vim.org/pub/vim/MIRRORS
-
-
-Usenet News group where Vim is discussed:		*news* *usenet*
-	comp.editors
-This group is also for other editors.  If you write about Vim, don't forget to
-mention that.
-
-						*mail-list* *maillist*
-There are several mailing lists for Vim:
-<vim@vim.org>					*vim-use* *vim_use*
-	For discussions about using existing versions of Vim: Useful mappings,
-	questions, answers, where to get a specific version, etc.  There are
-	quite a few people watching this list and answering questions, also
-	for beginners.  Don't hesitate to ask your question here.
-<vim-dev@vim.org>				*vim-dev* *vim_dev* *vimdev*
-	For discussions about changing Vim: New features, porting, patches,
-	beta-test versions, etc.
-<vim-announce@vim.org>				*vim-announce* *vim_announce*
-	Announcements about new versions of Vim; also for beta-test versions
-	and ports to different systems.  This is a read-only list.
-<vim-mac@vim.org>				*vim-mac* *vim_mac*
-	For discussions about using and improving the Macintosh version of
-	Vim.
-
-See http://www.vim.org/maillist.php for the latest information.
-
-NOTE:
-- You can only send messages to these lists if you have subscribed!
-- You need to send the messages from the same location as where you subscribed
-  from (to avoid spam mail).
-- Maximum message size is 40000 characters.
-
-						*subscribe-maillist*
-If you want to join, send a message to
-	<vim-subscribe@vim.org>
-Make sure that your "From:" address is correct.  Then the list server will
-give you help on how to subscribe.
-
-						*maillist-archive*
-For more information and archives look on the Vim maillist page:
-http://www.vim.org/maillist.php
+	Nvim home page:	  https://neovim.io/
+	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
+	Downloads:	  https://github.com/neovim/neovim/releases
+	Vim FAQ:	  https://vimhelp.appspot.com/vim_faq.txt.html
+	Vim home page:	  https://www.vim.org/
 
 
 Bug reports:				*bugs* *bug-reports* *bugreport.vim*
 
 Report bugs on GitHub: https://github.com/neovim/neovim/issues
 
-Please be brief; all the time that is spent on answering mail is subtracted
-from the time that is spent on improving Vim!  Always give a reproducible
-example and try to find out which settings or other things trigger the bug.
+Be brief, yet complete.  Always give a reproducible example and try to find
+out which settings or other things trigger the bug.
 
-Preferably start Vim with: >
-	vim --clean -u reproduce.vim
-Where reproduce.vim is a script that reproduces the problem.  Try different
-machines, if relevant (is this an MS-Windows specific bug perhaps?).
-
-Send me patches if you can!
-
-It will help to include information about the version of Vim you are using and
-your setup.  You can get the information with this command: >
-   :so $VIMRUNTIME/bugreport.vim
-This will create a file "bugreport.txt" in the current directory, with a lot
-of information of your environment.  Before sending this out, check if it
-doesn't contain any confidential information!
-
-If Vim crashes, please try to find out where.  You can find help on this here:
-|debug.txt|.
-
-In case of doubt or when you wonder if the problem has already been fixed but
-you can't find a fix for it, become a member of the vim-dev maillist and ask
-your question there. |maillist|
-
-							*year-2000* *Y2K*
-Since Vim internally doesn't use dates for editing, there is no year 2000
-problem to worry about.  Vim does use the time in the form of seconds since
-January 1st 1970.  It is used for a time-stamp check of the edited file and
-the swap file, which is not critical and should only cause warning messages.
-
-There might be a year 2038 problem, when the seconds don't fit in a 32 bit int
-anymore.  This depends on the compiler, libraries and operating system.
-Specifically, time_t and the ctime() function are used.  And the time_t is
-stored in four bytes in the swap file.  But that's only used for printing a
-file date/time for recovery, it will never affect normal editing.
-
-The Vim strftime() function directly uses the strftime() system function.
-localtime() uses the time() system function.  getftime() uses the time
-returned by the stat() system function.  If your system libraries are year
-2000 compliant, Vim is too.
-
-The user may create scripts for Vim that use external commands.  These might
-introduce Y2K problems, but those are not really part of Vim itself.
+If Nvim crashes, try to get a backtrace.  See |debug.txt|.
 
 ==============================================================================
-3. Credits				*credits* *author* *Bram* *Moolenaar*
+Sponsor Vim/Nvim development				*sponsor* *register*
+
+Fixing bugs and adding new features takes a lot of time and effort.  To show
+your appreciation for the work and motivate Bram and others to continue
+working on Vim please send a donation.
+
+Since Bram is back to a paid job the money will now be used to help children
+in Uganda.  See |uganda|.  But at the same time donations increase Bram's
+motivation to keep working on Vim!
+
+For the most recent information about sponsoring look on the Vim web site:
+
+	https://www.vim.org/sponsor/
+
+
+Neovim development is funded separately from Vim:
+
+	https://neovim.io/sponsors/
+
+==============================================================================
+Credits				*credits* *author* *Bram* *Moolenaar*
 
 Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
 
@@ -273,7 +206,7 @@ Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
 	freely available.
 
 ==============================================================================
-4. Notation						*notation*
+Notation						*notation*
 
 When syntax highlighting is used to read this, text that is not typed
 literally is often highlighted with the Special group.  These are items in [],
@@ -494,7 +427,7 @@ examples and use them directly.  Or type them literally, including the '<' and
 ":autocmd"!
 
 ==============================================================================
-5. Modes, introduction				*vim-modes-intro* *vim-modes*
+Modes, introduction				*vim-modes-intro* *vim-modes*
 
 Vim has seven BASIC modes:
 
@@ -579,7 +512,7 @@ Insert Select mode	Entered when starting Select mode from Insert mode.
 			is shown at the bottom of the window.
 
 ==============================================================================
-6. Switching from mode to mode				*mode-switching*
+Switching from mode to mode				*mode-switching*
 
 If for any reason you do not know which mode you are in, you can always get
 back to Normal mode by typing <Esc> twice.  This doesn't work for Ex mode
@@ -650,7 +583,7 @@ Q or gQ			Switch to Ex mode.  This is like typing ":" commands
 			Use the ":vi" command |:visual| to exit this mode.
 
 ==============================================================================
-7. The window contents					*window-contents*
+The window contents					*window-contents*
 
 In Normal mode and Insert/Replace mode the screen window will show the current
 contents of the buffer: What You See Is What You Get.  There are two
@@ -773,7 +706,7 @@ On most Unix systems, resizing the window is recognized and handled correctly
 by Vim.
 
 ==============================================================================
-8. Definitions						*definitions*
+Definitions						*definitions*
 
   buffer		Contains lines of text, usually read from a file.
   screen		The whole area that Vim uses to work in.  This can be
