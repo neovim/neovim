@@ -494,6 +494,7 @@ let s:filename_checks = {
     \ 'xslt': ['file.xsl', 'file.xslt'],
     \ 'yacc': ['file.yy', 'file.yxx', 'file.y++'],
     \ 'yaml': ['file.yaml', 'file.yml'],
+    \ 'raml': ['file.raml'],
     \ 'z8a': ['file.z8a'],
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
