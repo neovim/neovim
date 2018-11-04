@@ -43,7 +43,11 @@ if ($compiler -eq 'MINGW') {
 
   # Add MinGW to the PATH
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
-
+  
+  # Pacman may complain that the directory does not exist, which fails the build. Therefore, create it.
+  # See e.g. https://github.com/open62541/open62541/issues/2068
+  C:\msys64\usr\bin\bash -lc "mkdir -p /var/cache/pacman/pkg"
+  
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-$arch-cmake mingw-w64-$arch-perl mingw-w64-$arch-diffutils mingw-w64-$arch-unibilium" ; exitIfFailed
