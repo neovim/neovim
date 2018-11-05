@@ -97,7 +97,7 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
 
   When {changedtick} is |v:null| this means the screen lines (display) changed
   but not the buffer contents. {linedata} contains the changed screen lines.
-  This happens when |inccommand| shows a buffer preview.
+  This happens when 'inccommand' shows a buffer preview.
 
   Properties:~
     {buf} API buffer handle (buffer number)
@@ -138,7 +138,7 @@ nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
 nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
 
   When buffer is detached (i.e. updates are disabled). Triggered explicitly by
-  |nvim_buf_detach| or implicitly in these cases:
+  |nvim_buf_detach()| or implicitly in these cases:
   - Buffer was |abandon|ed and 'hidden' is not set.
   - Buffer was reloaded, e.g. with |:edit| or an external change triggered
     |:checktime| or 'autoread'.
@@ -638,7 +638,7 @@ nvim_set_client_info({name}, {version}, {type}, {methods},
                                   Clients might define their own keys, but the
                                   following are suggested:   "website" Website
                                   of client (for instance github repository)
-                                  "license" Informal descripton of the
+                                  "license" Informal description of the
                                   license, such as "Apache 2", "GPLv3" or
                                   "MIT"  "logo" URI or path to image,
                                   preferably small logo or icon. .png or .svg
@@ -862,8 +862,7 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     {buffer}  Buffer handle
 
                 Return: ~
-                    Line count, or `0` if the buffer has been unloaded (see
-                    |api-buffer|).
+                    Line count, or 0 for unloaded buffer. |api-buffer|
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activate updates from this buffer to the current channel.
@@ -912,8 +911,7 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
                                        error.
 
                 Return: ~
-                    Array of lines. If the buffer has been unloaded then an
-                    empty array will be returned instead. (See |api-buffer|.)
+                    Array of lines, or empty array for unloaded buffer.
 
                                                         *nvim_buf_set_lines()*
 nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
@@ -939,6 +937,25 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
                     {strict_indexing}  Whether out-of-bounds should be an
                                        error.
                     {replacement}      Array of lines to use as replacement
+
+nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
+                Returns the byte offset for a line.
+
+                Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is
+                one byte. 'fileformat' and 'fileencoding' are ignored. The
+                line index just after the last line gives the total byte-count
+                of the buffer. A final EOL byte is counted if it would be
+                written, see 'eol'.
+
+                Unlike |line2byte()|, throws error for out-of-bounds indexing.
+                Returns -1 for unloaded buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle
+                    {index}   Line index
+
+                Return: ~
+                    Integer byte offset, or -1 for unloaded buffer.
 
 nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Gets a buffer-scoped (b:) variable.
@@ -1106,8 +1123,8 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
 
                                                   *nvim_buf_clear_highlight()*
 nvim_buf_clear_highlight({buffer}, {src_id}, {line_start}, {line_end})
-                Clears highlights from a given source group and a range of
-                lines
+                Clears highlights and virtual text from a given source id and
+                range of lines
 
                 To clear a source group in the entire buffer, pass in 0 and -1
                 to line_start and line_end respectively.
@@ -1131,6 +1148,10 @@ nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
                 the screen line. The virtual text will begin after one cell to
                 the right of the ordinary text, this will contain the |lcs-
                 eol| char if set, otherwise just be a space.
+
+                The same src_id can be used for both virtual text and
+                highlights added by nvim_buf_add_highlight. Virtual text is
+                cleared using nvim_buf_clear_highlight.
 
                 Parameters: ~
                     {buffer}  Buffer handle

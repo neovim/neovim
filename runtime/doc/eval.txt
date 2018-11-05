@@ -2925,7 +2925,7 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		made.  It returns the number of the choice.  For the first
 		choice this is 1.
 
-		{msg} is displayed in a |dialog| with {choices} as the
+		{msg} is displayed in a dialog with {choices} as the
 		alternatives.  When {choices} is missing or empty, "&OK" is
 		used (and translated).
 		{msg} is a String, use '\n' to include a newline.  Only on
@@ -8560,7 +8560,7 @@ tag_old_static		Compiled with support for old static tags
 			|tag-old-static|.
 tag_any_white		Compiled with support for any white characters in tags
 			files |tag-any-white|.
-termresponse		Compiled with support for |t_RV| and |v:termresponse|.
+termresponse		Compiled with support for t_RV and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.
 timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.

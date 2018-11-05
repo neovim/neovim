@@ -1028,7 +1028,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 /// @param attributes Informal attributes describing the client. Clients might
 ///                   define their own keys, but the following are suggested:
 ///     - "website" Website of client (for instance github repository)
-///     - "license" Informal descripton of the license, such as "Apache 2",
+///     - "license" Informal description of the license, such as "Apache 2",
 ///                 "GPLv3" or "MIT"
 ///     - "logo"    URI or path to image, preferably small logo or icon.
 ///                 .png or .svg format is preferred.

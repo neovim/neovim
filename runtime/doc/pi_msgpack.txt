@@ -1,4 +1,4 @@
-*pi_msgpack.txt*	Nvim
+*pi_msgpack.txt*   msgpack utilities
 
 Author:  Nikolay Pavlov <kp-pav@yandex.ru>
 Copyright: (c) 2015 by Nikolay Pavlov

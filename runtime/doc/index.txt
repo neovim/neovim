@@ -1472,7 +1472,6 @@ tag	      command	      action ~
 |:sfind|	:sf[ind]	split current window and edit file in 'path'
 |:sfirst|	:sfir[st]	split window and go to first file in the
 				argument list
-|:simalt|	:sim[alt]	Win32 GUI: simulate Windows ALT key
 |:sign|		:sig[n]		manipulate signs
 |:silent|	:sil[ent]	run a command silently
 |:sleep|	:sl[eep]	do nothing for a few seconds

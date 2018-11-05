@@ -20,10 +20,21 @@
 .Sh DESCRIPTION
 .Nm
 is a text editor based on Vim.
-Commands in this program start with colon
+Start
+.Nm
+followed by any number of options and/or files:
+.Pp
+.Dl nvim [options] [filelist]
+.Pp
+Commands in
+.Nm
+begin with colon
 .Pq Sq \&: .
-Use the :help command to get help, for example ":help quickref"
-is a condensed overview of almost all commands.
+Type ":help subject" to get help on a specific subject.
+Use <Tab> and CTRL-D to complete subjects (":help cmdline\-completion").
+.Pp
+The "quickref" help section is a condensed reference of editor features:
+.Dl :help quickref
 .Pp
 If you are new to Vim/Nvim, start with the 30-minute tutorial:
 .Dl :Tutor
@@ -34,28 +45,25 @@ After installing/updating Nvim, it's a good idea to run the self-check:
 .Bl -tag -width Fl
 .It Ar file ...
 File(s) to edit.
-If none are specified, open an empty buffer.
-If multiple files are specified, open one buffer for each file.
+Opens one buffer per file.
 To switch between buffers, use the
 .Ic :next
 and
 .Ic :previous
 commands.
 .It Fl
-Read text from standard input until
+Reads text from standard input until
 .Dv EOF ,
-then open a buffer with that text.
+then opens a buffer with that text.
 User input is read from standard error, which should be a terminal.
+.Sh OPTIONS
+.Bl -tag -width Fl
 .It Fl t Ar tag
-The file to edit and the initial cursor position depends on a
-tag, a sort of goto label.
+Finds
 .Ar tag
-is looked up in the tags file, the associated file becomes the current
+in the tags file, the associated file becomes the current
 file and the associated command is executed.
-If
-.Ar tag
-is a function name, the file containing that function is opened
-with the cursor positioned at the start of the function.
+Cursor is positioned at the tag location in the file.
 .Ic ":help tag-commands"
 .It Fl q Op Ar errorfile
 QuickFix mode.
@@ -69,7 +77,6 @@ Further errors can be jumped to with the
 .Ic :cnext
 command.
 .Ic ":help quickfix"
-.It There are a number of other options:
 .It Fl -
 End of options.
 Remaining arguments are treated as literal file names, including filenames starting with hyphen

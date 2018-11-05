@@ -51,8 +51,7 @@
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
-/// @return Line count, or \`0` if the buffer has been unloaded (see
-///         |api-buffer|).
+/// @return Line count, or 0 for unloaded buffer. |api-buffer|
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -227,8 +226,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
-/// @return Array of lines. If the buffer has been unloaded then an empty array
-///                         will be returned instead. (See |api-buffer|.)
+/// @return Array of lines, or empty array for unloaded buffer.
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buffer,
                                    Integer start,
@@ -491,12 +489,12 @@ end:
   try_end(err);
 }
 
-/// Return the byte offset for a line.
-//
-/// The first line returns 0. UTF-8 bytes are counted, and EOL counts as one
-/// byte. 'fileformat' and 'fileencoding' are ignored. Sending in the index
-/// just below the last line gives the total byte count for the entire buffer.
-/// A final EOL is included if it would be written, see 'eol'.
+/// Returns the byte offset for a line.
+///
+/// Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is one byte.
+/// 'fileformat' and 'fileencoding' are ignored. The line index just after the
+/// last line gives the total byte-count of the buffer. A final EOL byte is
+/// counted if it would be written, see 'eol'.
 ///
 /// Unlike |line2byte()|, throws error for out-of-bounds indexing.
 /// Returns -1 for unloaded buffer.
@@ -504,7 +502,7 @@ end:
 /// @param buffer     Buffer handle
 /// @param index      Line index
 /// @param[out] err   Error details, if any
-/// @return Integer   Byte offset
+/// @return Integer byte offset, or -1 for unloaded buffer.
 Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
   FUNC_API_SINCE(5)
 {

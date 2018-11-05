@@ -79,7 +79,6 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 		will cause redraw problems.
 			toolkit		supports ~
 			Win32		.bmp, .ico, .cur
-					pixmap (.xpm) |+xpm_w32|
 
 	linehl={group}
 		Highlighting group used for the whole line the sign is placed
