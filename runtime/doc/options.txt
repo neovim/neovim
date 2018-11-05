@@ -1485,7 +1485,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When 'confirm' is on, certain operations that would normally
 	fail because of unsaved changes to a buffer, e.g. ":q" and ":e",
-	instead raise a |dialog| asking if you wish to save the current
+	instead raise a dialog asking if you wish to save the current
 	file(s).  You can still use a ! to unconditionally |abandon| a buffer.
 	If 'confirm' is off you can still activate confirmation for one
 	command only (this is most useful in mappings) with the |:confirm|
@@ -2803,8 +2803,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set guifont=*
 <	will bring up a font requester, where you can pick the font you want.
 
-	The font name depends on the GUI used.  See |setting-guifont| for a
-	way to set 'guifont' for various systems.
+	The font name depends on the GUI used.
 
 	For Mac OSX you can use something like this: >
 	    :set guifont=Monaco:h10
@@ -6586,8 +6585,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	menu.  This conflicts with the use of the ALT key for mappings and
 	entering special characters.  This option tells what to do:
 	  no	Don't use ALT keys for menus.  ALT key combinations can be
-		mapped, but there is no automatic handling.  This can then be
-		done with the |:simalt| command.
+		mapped, but there is no automatic handling.
 	  yes	ALT key handling is done by the windowing system.  ALT key
 		combinations cannot be mapped.
 	  menu	Using ALT in combination with a character that is a menu

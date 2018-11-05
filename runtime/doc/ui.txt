@@ -167,7 +167,7 @@ the editor.
 	mouse support is active. Some options like 'ambiwidth' have already
 	taken effect on the grid, where appropriate empty cells are added,
 	however a UI might still use such options when rendering raw text
-	sent from Nvim, like for |ui-ext-cmdline|.
+	sent from Nvim, like for |ui-cmdline|.
 
 ["mode_change", mode, mode_idx]
 	The mode changed.  The first parameter `mode` is a string representing

@@ -278,7 +278,7 @@ Name			triggered by ~
 |VimEnter|		after doing all the startup stuff
 |GUIEnter|		after starting the GUI successfully
 |GUIFailed|		after starting the GUI failed
-|TermResponse|		after the terminal response to |t_RV| is received
+|TermResponse|		after the terminal response to t_RV is received
 |QuitPre|		when using `:quit`, before deciding whether to exit
 |ExitPre|		when using a command that may make Vim exit
 |VimLeavePre|		before exiting Nvim, before writing the shada file
@@ -989,7 +989,7 @@ TermClose			When a |terminal| job ends.
 TermOpen			When a |terminal| job is starting.  Can be
 				used to configure the terminal buffer.
 							*TermResponse*
-TermResponse			After the response to |t_RV| is received from
+TermResponse			After the response to t_RV is received from
 				the terminal.  The value of |v:termresponse|
 				can be used to do things depending on the
 				terminal version.  Note that this event may be

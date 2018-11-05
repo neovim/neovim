@@ -212,7 +212,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 
 							*c_CTRL-Y*
 CTRL-Y		When there is a modeless selection, copy the selection into
-		the clipboard. |modeless-selection|
+		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*

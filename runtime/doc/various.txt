@@ -381,7 +381,7 @@ T  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
 B  *+termguicolors*	24-bit color in xterm-compatible terminals support
-N  *+termresponse*	support for |t_RV| and |v:termresponse|
+N  *+termresponse*	support for t_RV and |v:termresponse|
 N  *+textobjects*	|text-objects| selection
 N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'

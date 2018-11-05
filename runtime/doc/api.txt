@@ -97,7 +97,7 @@ nvim_buf_lines_event[{buf}, {changedtick}, {firstline}, {lastline}, {linedata}, 
 
   When {changedtick} is |v:null| this means the screen lines (display) changed
   but not the buffer contents. {linedata} contains the changed screen lines.
-  This happens when |inccommand| shows a buffer preview.
+  This happens when 'inccommand' shows a buffer preview.
 
   Properties:~
     {buf} API buffer handle (buffer number)
@@ -138,7 +138,7 @@ nvim_buf_changedtick_event[{buf}, {changedtick}]  *nvim_buf_changedtick_event*
 nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
 
   When buffer is detached (i.e. updates are disabled). Triggered explicitly by
-  |nvim_buf_detach| or implicitly in these cases:
+  |nvim_buf_detach()| or implicitly in these cases:
   - Buffer was |abandon|ed and 'hidden' is not set.
   - Buffer was reloaded, e.g. with |:edit| or an external change triggered
     |:checktime| or 'autoread'.
