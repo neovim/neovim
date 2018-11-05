@@ -71,7 +71,7 @@ describe('terminal', function()
     feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
 
     if iswin() then
-      retry(3, nil, function()
+      retry(3, 30000, function()
         -- win: SIGWINCH is unreliable. #7506
         screen:try_resize(screen._width - 3, screen._height - 2)
         screen:expect{any='rows: 7, cols: 47'}
