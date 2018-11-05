@@ -59,7 +59,10 @@ To list all targets:
 
     cmake --build build --target help
 
-To skip "bundled" (`third-party/*`) dependencies, define `USE_BUNDLED=NO`.
+To skip "bundled" dependencies (`third-party/*`) define `USE_BUNDLED=NO`:
+
+    sudo apt install gperf libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
+    make USE_BUNDLED=NO
 
 See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
 

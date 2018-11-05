@@ -44,7 +44,7 @@ func Test_repeat_many()
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange(2, 4, g:val)
+  call assert_inrange((has('mac') ? 1 : 2), 4, g:val)
 endfunc
 
 func Test_with_partial_callback()
@@ -167,6 +167,9 @@ func Test_stop_all_in_callback()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
   call assert_equal(1, len(info))
+  if has('mac')
+    sleep 100m
+  endif
   sleep 40m
   let info = timer_info()
   call assert_equal(0, len(info))

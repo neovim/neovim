@@ -82,7 +82,7 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("c")
     local count = eval("g:val")
-    assert(count >= 4, 'expected count >= 4, got: '..tostring(count))
+    assert(count >= 3, 'expected count >= 3, got: '..tostring(count))
     eq(99, eval("g:c"))
   end)
 
@@ -144,8 +144,8 @@ describe('timers', function()
     local count2 = eval("g:val")
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
-    assert(4 <= count and count <= 7,
-           'expected (4 <= count <= 7), got: '..tostring(count))
+    assert(3 <= count and count <= 7,
+           'expected (3 <= count <= 7), got: '..tostring(count))
   end)
 
   it('can be stopped from the handler', function()
