@@ -98,6 +98,7 @@ typedef struct {
   bool can_change_scroll_region;
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
+  bool can_scroll;
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
@@ -295,6 +296,11 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
+  data->can_scroll =
+    !!unibi_get_str(data->ut, unibi_delete_line)
+    && !!unibi_get_str(data->ut, unibi_parm_delete_line)
+    && !!unibi_get_str(data->ut, unibi_insert_line)
+    && !!unibi_get_str(data->ut, unibi_parm_insert_line);
   data->immediate_wrap_after_last_column =
     conemu_ansi
     || terminfo_is_term_family(term, "cygwin")
@@ -1087,11 +1093,12 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
   ugrid_scroll(grid, top, bot, left, right, (int)rows,
                &clear_top, &clear_bot);
 
-  bool can_scroll = data->scroll_region_is_full_screen
-                    || (data->can_change_scroll_region
-                        && ((left == 0 && right == ui->width - 1)
-                            || data->can_set_lr_margin
-                            || data->can_set_left_right_margin));
+  bool can_scroll = data->can_scroll
+    && (data->scroll_region_is_full_screen
+        || (data->can_change_scroll_region
+            && ((left == 0 && right == ui->width - 1)
+                || data->can_set_lr_margin
+                || data->can_set_left_right_margin)));
 
   if (can_scroll) {
     // Change terminal scroll region and move cursor to the top
