@@ -1018,3 +1018,22 @@ func Test_trim()
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> nr2char(n)}), '')
   call assert_equal("x", trim(chars . "x" . chars))
 endfunc
+
+func EditAnotherFile()
+  let word = expand('<cword>')
+  edit Xfuncrange2
+endfunc
+
+func Test_func_range_with_edit()
+  " Define a function that edits another buffer, then call it with a range that
+  " is invalid in that buffer.
+  call writefile(['just one line'], 'Xfuncrange2')
+  new
+  call setline(1, range(10))
+  write Xfuncrange1
+  call assert_fails('5,8call EditAnotherFile()', 'E16:')
+
+  call delete('Xfuncrange1')
+  call delete('Xfuncrange2')
+  bwipe!
+endfunc

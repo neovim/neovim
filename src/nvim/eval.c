@@ -2728,6 +2728,12 @@ void ex_call(exarg_T *eap)
   lnum = eap->line1;
   for (; lnum <= eap->line2; lnum++) {
     if (eap->addr_count > 0) {  // -V560
+      if (lnum > curbuf->b_ml.ml_line_count) {
+        // If the function deleted lines or switched to another buffer
+        // the line number may become invalid.
+        EMSG(_(e_invrange));
+        break;
+      }
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
