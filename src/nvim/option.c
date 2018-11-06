@@ -1068,6 +1068,10 @@ void set_helplang_default(const char *lang)
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
       p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
+    } else if (STRLEN(p_hlg) >= 1 && *p_hlg == 'C') {
+      // any C like setting, such as C.UTF-8, becomes "en"
+      p_hlg[0] = 'e';
+      p_hlg[1] = 'n';
     }
     p_hlg[2] = NUL;
     options[idx].flags |= P_ALLOCED;
