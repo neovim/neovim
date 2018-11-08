@@ -2235,6 +2235,35 @@ func Test_cclose_in_autocmd()
   " call test_override('starting', 0)
 endfunc
 
+" Check that ":file" without an argument is possible even when "curbuf_lock"
+" is set.
+func Test_file_from_copen()
+  " Works without argument.
+  augroup QF_Test
+    au!
+    au FileType qf file
+  augroup END
+  copen
+
+  augroup QF_Test
+    au!
+  augroup END
+  cclose
+
+  " Fails with argument.
+  augroup QF_Test
+    au!
+    au FileType qf call assert_fails(':file foo', 'E788')
+  augroup END
+  copen
+  augroup QF_Test
+    au!
+  augroup END
+  cclose
+
+  augroup! QF_Test
+endfunction
+
 func Test_resize_from_copen()
     augroup QF_Test
 	au!
