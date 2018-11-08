@@ -1,85 +1,85 @@
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local shallowcopy = global_helpers.shallowcopy
 
 describe('ui receives option updates', function()
   local screen
 
-  before_each(function()
-    clear()
+  local function reset(opts, ...)
+    local defaults = {
+      ambiwidth='single',
+      arabicshape=true,
+      emoji=true,
+      guifont='',
+      guifontset='',
+      guifontwide='',
+      linespace=0,
+      showtabline=1,
+      termguicolors=false,
+      ext_cmdline=false,
+      ext_popupmenu=false,
+      ext_tabline=false,
+      ext_wildmenu=false,
+      ext_linegrid=false,
+      ext_hlstate=false,
+    }
+
+    clear(...)
     screen = Screen.new(20,5)
-  end)
+    screen:attach(opts)
+    -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
+    -- In both cases check that the received value is the one requested.
+    defaults.ext_linegrid = screen._options.ext_linegrid or false
+    return defaults
+  end
 
   after_each(function()
     screen:detach()
   end)
 
-  local defaults = {
-    ambiwidth='single',
-    arabicshape=true,
-    emoji=true,
-    guifont='',
-    guifontset='',
-    guifontwide='',
-    linespace=0,
-    showtabline=1,
-    termguicolors=false,
-    ext_cmdline=false,
-    ext_popupmenu=false,
-    ext_tabline=false,
-    ext_wildmenu=false,
-    ext_linegrid=false,
-    ext_hlstate=false,
-  }
-
   it("for defaults", function()
-    screen:attach()
-    -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
-    -- In both cases check that the received value is the one requested.
-    defaults.ext_linegrid = screen._options.ext_linegrid or false
+    local expected = reset()
     screen:expect(function()
-      eq(defaults, screen.options)
+      eq(expected, screen.options)
     end)
   end)
 
   it("when setting options", function()
-    screen:attach()
-    defaults.ext_linegrid = screen._options.ext_linegrid or false
-    local changed = {}
-    for k,v in pairs(defaults) do
-      changed[k] = v
-    end
+    local expected = reset()
+    local defaults = shallowcopy(expected)
 
     command("set termguicolors")
-    changed.termguicolors = true
+    expected.termguicolors = true
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     command("set guifont=Comic\\ Sans")
-    changed.guifont = "Comic Sans"
+    expected.guifont = "Comic Sans"
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     command("set showtabline=0")
-    changed.showtabline = 0
+    expected.showtabline = 0
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     command("set linespace=13")
-    changed.linespace = 13
+    expected.linespace = 13
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     command("set linespace=-11")
-    changed.linespace = -11
+    expected.linespace = -11
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     command("set all&")
@@ -89,29 +89,35 @@ describe('ui receives option updates', function()
   end)
 
   it('with UI extensions', function()
-    local changed = {}
-    for k,v in pairs(defaults) do
-      changed[k] = v
-    end
+    local expected = reset({ext_cmdline=true, ext_wildmenu=true})
 
-    screen:attach({ext_cmdline=true, ext_wildmenu=true})
-    defaults.ext_linegrid = screen._options.ext_linegrid or false
-    changed.ext_cmdline = true
-    changed.ext_wildmenu = true
+    expected.ext_cmdline = true
+    expected.ext_wildmenu = true
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     screen:set_option('ext_popupmenu', true)
-    changed.ext_popupmenu = true
+    expected.ext_popupmenu = true
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
 
     screen:set_option('ext_wildmenu', false)
-    changed.ext_wildmenu = false
+    expected.ext_wildmenu = false
     screen:expect(function()
-      eq(changed, screen.options)
+      eq(expected, screen.options)
     end)
   end)
+
+  local function startup_test(headless)
+    local expected = reset(nil,{headless=headless,args={'--cmd', 'set guifont=Comic\\ Sans\\ 12'}})
+    expected.guifont = "Comic Sans 12"
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+  end
+
+  it('from startup options with --headless', function() startup_test(true) end)
+  it('from startup options with --embed', function() startup_test(false) end)
 end)
