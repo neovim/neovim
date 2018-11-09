@@ -186,7 +186,12 @@ function module.expect_msg_seq(...)
     if status then
       return result
     end
-    final_error = cat_err(final_error, result)
+    local message = result
+    if type(result) == "table" then
+      -- 'eq' returns several things
+      message = result.message
+    end
+    final_error = cat_err(final_error, message)
   end
   error(final_error)
 end
