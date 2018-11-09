@@ -5451,6 +5451,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
+		  env      : A dict of strings to append (or replace see
+		             |clear_env|) to the current environment.
+		  clear_env: If set, use the exact values passed in |env|
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     with the job over stdin and stdout. "on_stdout" is
 			     then ignored, but "on_stderr" can still be used.

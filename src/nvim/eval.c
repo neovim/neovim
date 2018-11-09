@@ -12577,6 +12577,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool executable = true;
   char **argv = tv_to_argv(&argvars[0], NULL, &executable);
+  char **env = NULL;
   if (!argv) {
     rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
@@ -12594,6 +12595,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool detach = false;
   bool rpc = false;
   bool pty = false;
+  bool clear_env = false;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -12604,6 +12606,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     detach = tv_dict_get_number(job_opts, "detach") != 0;
     rpc = tv_dict_get_number(job_opts, "rpc") != 0;
     pty = tv_dict_get_number(job_opts, "pty") != 0;
+    clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     if (pty && rpc) {
       EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
       shell_free_argv(argv);
@@ -12620,6 +12623,47 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
       }
     }
+    dictitem_T *item;
+    item = tv_dict_find(job_opts, S_LEN("env"));
+    if (item) {
+      size_t custom_env_size = (size_t)tv_dict_len(item->di_tv.vval.v_dict);
+      size_t i = 0;
+      size_t env_size = 0;
+      if (item->di_tv.v_type != VAR_DICT) {
+        EMSG2(_(e_invarg2), "env");
+        return;
+      }
+
+      if (clear_env) {
+        // + 1 for last null entry
+        env = xmalloc((custom_env_size + 1) * sizeof(*env));
+        env_size = 0;
+      } else {
+        char **genv = os_getfullenv();
+        for (env = genv; *env; env++) {
+          env_size++;
+        }
+        env = xmalloc((custom_env_size + env_size + 1) * sizeof(*env));
+
+        for (i = 0; i < env_size; i++) {
+            env[i] = xstrdup(genv[i]);
+        }
+      }
+      assert(env);  // env must be allocated at this point
+
+      TV_DICT_ITER(item->di_tv.vval.v_dict, var, {
+        const char *str = tv_get_string(&var->di_tv);
+        assert(str);
+        size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
+        env[i] = xmalloc(len);
+        snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
+        i++;
+      });
+
+      // must be null terminated
+      env[env_size + custom_env_size] = NULL;
+    }
+
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
@@ -12637,8 +12681,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, detach, cwd, width, height, term_name,
-                                    &rettv->vval.v_number);
+                                    rpc, detach, cwd, width, height,
+                                    term_name, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -14933,7 +14977,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, NULL, 0, 0, NULL,
+                                    false, true, false, NULL, 0, 0, NULL, NULL,
                                     &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
@@ -18320,7 +18364,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     true, false, false, cwd,
                                     term_width, curwin->w_height_inner,
-                                    xstrdup("xterm-256color"),
+                                    xstrdup("xterm-256color"), NULL,
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;
