@@ -68,7 +68,7 @@ describe('terminal', function()
   end)
 
   it('forwards resize request to the program', function()
-    feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
+    feed([[<C-\><C-N>G:]])  -- Go to cmdline-mode, so cursor is at bottom.
     local w1, h1 = screen._width - 3, screen._height - 2
     local w2, h2 = w1 - 6, h1 - 3
 

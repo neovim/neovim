@@ -300,8 +300,10 @@ end
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 local function retry(max, max_ms, fn)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
-  local timeout = (max_ms and max_ms > 0) and max_ms or 10000
+  local timeout = (max_ms and max_ms or 10000)
   local start_time = luv.now()
   while true do
     local status, result = pcall(fn)
