@@ -37,17 +37,6 @@ typedef struct attr_entry {
   .cterm_bg_color = 0, \
 }
 
-// sentinel value that compares unequal to any valid highlight
-#define HLATTRS_INVALID (HlAttrs) { \
-  .rgb_ae_attr = -1, \
-  .cterm_ae_attr = -1, \
-  .rgb_fg_color = -1, \
-  .rgb_bg_color = -1, \
-  .rgb_sp_color = -1, \
-  .cterm_fg_color = 0, \
-  .cterm_bg_color = 0, \
-}
-
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names below!
 typedef enum {
