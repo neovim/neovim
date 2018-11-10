@@ -185,11 +185,31 @@ hl_map = {
   struct="Type",
   typedef="Type",
   enum="Type",
+  static="Type",
+  ["if"]="Statement",
+  ["for"]="Statement",
+  ["while"]="Statement",
+  ["return"]="Statement",
+  number_literal="Number",
+  string_literal="String",
+  comment="Comment",
+  ["#include"]="PreProc",
+  ["#define"]="PreProc",
+  ["#ifdef"]="PreProc",
+  ["#else"]="PreProc",
+  ["#endif"]="PreProc",
 }
 
-function ts_line(line,endl)
-  if endl == nil then endl = line end
-  a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl+1)
+id_map = {}
+for k,v in pairs(hl_map) do
+  id_map[k] = a.nvim__syn_attr(v)
+end
+
+function ts_line(line,endl,drawing)
+  if endl == nil then endl = line+1 end
+  if not drawing then
+    a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl)
+  end
   tree = parse_tree(theparser)
   root = l.ts_tree_root_node(tree)
   --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
@@ -202,20 +222,27 @@ function ts_line(line,endl)
   while continue do
     --print(inspect_node(node))
     local name = ffi.string(l.ts_node_type(node))
-    local hl = hl_map[name]
+    local map = (drawing and id_map) or hl_map
+    local hl = map[name]
     if hl then
-      print(inspect_node(node))
-      print(hl)
+      if not drawing then
+        print(inspect_node(node))
+        print(hl)
+      end
       local start = l.ts_node_start_point(node)
       local endp = l.ts_node_end_point(node)
       if start.row == endp.row then
-        a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start.row, start.column, endp.column)
+        if drawing then
+          a.nvim__put_attr(hl, start.column, endp.column)
+        else
+          a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start.row, start.column, endp.column)
+        end
       end
     end
     if ts_forward(cursor,startbyte) then
       node = l.ts_tree_cursor_current_node(cursor)
       local start = l.ts_node_start_point(node)
-      if start.row > endl then
+      if start.row >= endl then
         continue = false
       end
     else
@@ -230,3 +257,11 @@ if false then
   ts_line(0,300)
 end
 
+
+function ts_on_winhl(win, buf, lnum)
+  ts_line(lnum, lnum+1, true)
+end
+
+function ts_syntax()
+  a.nvim_buf_set_luahl(theparser.bufnr, "return ts_on_winhl(...)")
+end
