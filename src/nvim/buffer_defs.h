@@ -804,6 +804,8 @@ struct file_buffer {
   kvec_t(uint64_t) update_channels;
   kvec_t(BufUpdateCallbacks) update_callbacks;
 
+  char *b_luahl;
+
   int b_diff_failed;    // internal diff failed for this buffer
 };
 
