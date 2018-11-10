@@ -33,12 +33,13 @@ end
 --ffi.load(path..'/../utf8proc/libutf8proc.so',true)
 --l = ffi.load(path..'/../tree-sitter/build/libtreesitter_rt.so')
 l = ffi.C
+local l = ffi.C
 
 function inspect_node(node)
-  node = root
-  start = l.ts_node_start_point(node)
-  endpos = l.ts_node_start_point(node)
-  print(start.row)
+  local start = l.ts_node_start_point(node)
+  local endp = l.ts_node_end_point(node)
+  local name = ffi.string(l.ts_node_type(node))
+  return (name.."(["..start.row..", "..start.column.."], ["..endp.row..", "..endp.column.."])")
 end
 
 TSInput = ffi.typeof("TSInput")
@@ -153,5 +154,53 @@ end
 function ts_cursor()
   row, col = unpack(a.nvim_win_get_cursor(0))
   ts_inspect_pos(row-1, col)
+end
+
+function ts_forward(c,startbyte)
+  while true do
+    if l.ts_tree_cursor_goto_first_child_for_byte(c,startbyte) ~= -1 then
+      print("child")
+      return true
+    elseif l.ts_tree_cursor_goto_next_sibling(c) then
+      print("sibling")
+      return true
+    elseif not l.ts_tree_cursor_goto_parent(c) then
+      return false
+    elseif not l.ts_tree_cursor_goto_next_sibling(c) then
+      return false
+    end
+    print("parent")
+  end
+end
+
+function ts_line(line,endl)
+  if endl == nil then endl = line end
+  tree = parse_tree(theparser)
+  root = l.ts_tree_root_node(tree)
+  --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
+  --local cursor = l.ts_tree_cursor_new(node)
+  local cursor = l.ts_tree_cursor_new(root)
+  local startbyte = a.nvim_buf_get_offset(theparser.bufnr, line)
+  local node = l.ts_tree_cursor_current_node(cursor)
+  local continue = true
+  local i = 20
+  while continue do
+    print(inspect_node(node))
+    if ts_forward(cursor,startbyte) then
+      node = l.ts_tree_cursor_current_node(cursor)
+      local start = l.ts_node_start_point(node)
+      if start.row > endl then
+        continue = false
+      end
+    else
+      continue = false
+    end
+    i = i - 1
+    if i == 0 then continue = false end
+  end
+end
+
+if false then
+  ts_line(30)
 end
 
