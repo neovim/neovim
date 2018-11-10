@@ -31,11 +31,11 @@ function! Test_lambda_with_timer()
   endfunction
 
   call s:Foo()
-  sleep 200ms
+  sleep 210ms
   " do not collect lambda
   call garbagecollect()
   let m = s:n
-  sleep 200ms
+  sleep 210ms
   call timer_stop(s:timer_id)
   call assert_true(m > 1)
   call assert_true(s:n > m + 1)

@@ -172,8 +172,8 @@ describe('timers', function()
         let g:val2 += 1
       endfunc
     ]])
-    command("call timer_start(50,  'MyHandler', {'repeat': 3})")
-    command("call timer_start(100, 'MyHandler2', {'repeat': 2})")
+    command("call timer_start(20, 'MyHandler',  {'repeat': 3})")
+    command("call timer_start(40, 'MyHandler2', {'repeat': 2})")
     run(nil, nil, nil, 300)
     eq(3,eval("g:val"))
     eq(2,eval("g:val2"))
