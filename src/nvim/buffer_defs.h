@@ -832,6 +832,9 @@ struct file_buffer {
   // The number for times the current line has been flushed in the memline.
   int flush_count;
 
+  // TODO(bfredl): this should be luaref!
+  char *b_luahl;
+
   int b_diff_failed;    // internal diff failed for this buffer
 };
 

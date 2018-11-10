@@ -231,6 +231,23 @@ Boolean nvim_buf_detach(uint64_t channel_id,
   return true;
 }
 
+/// TODO: use ref
+void nvim_buf_set_luahl(Buffer buffer, String cb, Error *err)
+  FUNC_API_SINCE(5)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return;
+  }
+  xfree(buf->b_luahl);
+  if (cb.size > 0) {
+    buf->b_luahl = xstrdup(cb.data);
+  } else {
+    buf->b_luahl = NULL;
+  }
+}
+
 /// Sets a buffer line
 ///
 /// @deprecated use nvim_buf_set_lines instead.
