@@ -6,8 +6,10 @@ local data = io.open(path..'/treesitter_rt_ffi.h'):read('*all')
 
 if __treesitter_rt_ns == nil then
     __treesitter_rt_ns = a.nvim_buf_add_highlight(0, 0, "", 0, 0, 0)
+    __treesitter_rt_syn_ns = a.nvim_buf_add_highlight(0, 0, "", 0, 0, 0)
 end
 local my_ns = __treesitter_rt_ns
+local my_syn_ns = __treesitter_rt_syn_ns
 
 --luadev = require'luadev'
 --i = require'inspect'
@@ -157,24 +159,37 @@ function ts_cursor()
 end
 
 function ts_forward(c,startbyte)
+  if l.ts_tree_cursor_goto_first_child_for_byte(c,startbyte) ~= -1 then
+    --print("child")
+    return true
+  elseif l.ts_tree_cursor_goto_next_sibling(c) then
+    --print("sibling")
+    return true
+  end
   while true do
-    if l.ts_tree_cursor_goto_first_child_for_byte(c,startbyte) ~= -1 then
-      print("child")
-      return true
-    elseif l.ts_tree_cursor_goto_next_sibling(c) then
-      print("sibling")
-      return true
-    elseif not l.ts_tree_cursor_goto_parent(c) then
-      return false
-    elseif not l.ts_tree_cursor_goto_next_sibling(c) then
+    if not l.ts_tree_cursor_goto_parent(c) then
       return false
     end
-    print("parent")
+    --print("parent")
+    if l.ts_tree_cursor_goto_next_sibling(c) then
+      --print("sibling")
+      return true
+    end
   end
 end
 
+hl_map = {
+  primitive_type="Type",
+  type_identifier="Identifier",
+  const="Type",
+  struct="Type",
+  typedef="Type",
+  enum="Type",
+}
+
 function ts_line(line,endl)
   if endl == nil then endl = line end
+  a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl+1)
   tree = parse_tree(theparser)
   root = l.ts_tree_root_node(tree)
   --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
@@ -183,9 +198,20 @@ function ts_line(line,endl)
   local startbyte = a.nvim_buf_get_offset(theparser.bufnr, line)
   local node = l.ts_tree_cursor_current_node(cursor)
   local continue = true
-  local i = 20
+  local i = 500
   while continue do
-    print(inspect_node(node))
+    --print(inspect_node(node))
+    local name = ffi.string(l.ts_node_type(node))
+    local hl = hl_map[name]
+    if hl then
+      print(inspect_node(node))
+      print(hl)
+      local start = l.ts_node_start_point(node)
+      local endp = l.ts_node_end_point(node)
+      if start.row == endp.row then
+        a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start.row, start.column, endp.column)
+      end
+    end
     if ts_forward(cursor,startbyte) then
       node = l.ts_tree_cursor_current_node(cursor)
       local start = l.ts_node_start_point(node)
@@ -201,6 +227,6 @@ function ts_line(line,endl)
 end
 
 if false then
-  ts_line(30)
+  ts_line(0,300)
 end
 
