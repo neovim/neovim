@@ -6100,10 +6100,10 @@ void win_ui_flush(void)
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
       if (tp == curtab) {
-        ui_call_win_position(wp->handle, wp->w_grid.handle, wp->w_winrow,
-                             wp->w_wincol, wp->w_width, wp->w_height);
+        ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,
+                        wp->w_wincol, wp->w_width, wp->w_height);
       } else {
-        ui_call_win_hide(wp->handle, wp->w_grid.handle);
+        ui_call_win_hide(wp->w_grid.handle);
       }
       wp->w_pos_changed = false;
     }

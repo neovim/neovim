@@ -157,6 +157,7 @@ function Screen.new(width, height)
     cmdline_block = {},
     wildmenu_items = nil,
     wildmenu_selected = nil,
+    win_position = nil,
     _session = nil,
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
@@ -801,10 +802,7 @@ function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
   self._new_attrs = true
 end
 
-function Screen:_handle_win_position(win, grid, startrow, startcol, width, height)
-    if self.win_position == nil then
-        self.win_position = {}
-    end
+function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
     self.win_position[grid] = {
         win = win,
         startrow = startrow,
@@ -813,6 +811,10 @@ function Screen:_handle_win_position(win, grid, startrow, startcol, width, heigh
         height = height
     }
     -- TODO(utkarshme): Take apt action
+end
+
+function Screen:_handle_win_hide(grid)
+  self.win_position[grid] = nil
 end
 
 function Screen:get_hl(val)

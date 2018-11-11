@@ -84,10 +84,10 @@ void grid_scroll(Integer grid, Integer top, Integer bot,
 void grid_destroy(Integer grid)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
 
-void win_position(Integer win, Integer grid, Integer startrow,
-                  Integer startcol, Integer width, Integer height)
+void win_pos(Integer grid, Integer win, Integer startrow,
+             Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
-void win_hide(Integer win, Integer grid)
+void win_hide(Integer grid)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
 void win_scroll_over_start(void)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
