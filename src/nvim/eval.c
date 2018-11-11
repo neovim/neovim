@@ -11708,6 +11708,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
+  char *label = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -11729,6 +11730,11 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         shell_free_argv(argv);
         return;
       }
+    }
+
+    char *new_label = tv_dict_get_string(job_opts, "label", false);
+    if (new_label && strlen(new_label) > 0) {
+      label = new_label;
     }
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
@@ -16731,6 +16737,7 @@ static void f_tempname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 // "termopen(cmd[, cwd])" function
+// TODO: this needs to support opts.label as well
 static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (check_restricted() || check_secure()) {

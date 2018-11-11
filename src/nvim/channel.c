@@ -278,6 +278,8 @@ static void close_cb(Stream *stream, void *data)
   channel_decref(data);
 }
 
+// TODO: review all uses of channel_job_start and attach a label to the
+// channel's process
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool detach, const char *cwd,
@@ -314,6 +316,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     chan->stream.uv = libuv_process_init(&main_loop, chan);
   }
 
+  // TODO: how does this work? we're casting all the different process types
+  // from the `stream` union into `Process`?
   Process *proc = (Process *)&chan->stream.proc;
   proc->argv = argv;
   proc->cb = channel_process_exit_cb;

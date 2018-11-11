@@ -82,6 +82,9 @@ void nvim_log(String log_level, Array lines, Dictionary opt, Error *err)
     return;
   }
 
+  // TODO: pass channel info along to do_log_array() so that it can put
+  // "channel[<id>]" on the front of log messages
+
   if (!do_log_array(log_level.data, lines, opt)) {
     api_set_error(err, kErrorTypeException, "Could not write to log file");
   }
@@ -1197,6 +1200,9 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     if (ERROR_SET(&nested_error)) {
       break;
     }
+
+    // TODO: pass channel info here
+
     Object result = handler.fn(channel_id, args, &nested_error);
     if (ERROR_SET(&nested_error)) {
       // error handled after loop
