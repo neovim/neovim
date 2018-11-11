@@ -52,8 +52,7 @@ void ugrid_goto(UGrid *grid, int row, int col)
   grid->col = col;
 }
 
-void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right,
-                  int count, int *clear_top, int *clear_bot)
+void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
 {
   // Compute start/stop/step for the loop below
   int start, stop, step;
@@ -76,26 +75,18 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right,
     memcpy(target_row, source_row,
            sizeof(UCell) * (size_t)(right - left + 1));
   }
-
-  // clear cells in the emptied region,
-  if (count > 0) {
-    *clear_top = stop;
-    *clear_bot = stop + count - 1;
-  } else {
-    *clear_bot = stop;
-    *clear_top = stop + count + 1;
-  }
-  clear_region(grid, *clear_top, *clear_bot, left, right, 0);
 }
 
 static void clear_region(UGrid *grid, int top, int bot, int left, int right,
                          sattr_T attr)
 {
-  UGRID_FOREACH_CELL(grid, top, bot, left, right, {
-    cell->data[0] = ' ';
-    cell->data[1] = 0;
-    cell->attr = attr;
-  });
+  for (int row = top; row <= bot; row++) {
+    UGRID_FOREACH_CELL(grid, row, left, right+1, {
+      cell->data[0] = ' ';
+      cell->data[1] = 0;
+      cell->attr = attr;
+    });
+  }
 }
 
 static void destroy_cells(UGrid *grid)
