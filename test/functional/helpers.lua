@@ -347,6 +347,7 @@ local function clear(...)
         'LD_LIBRARY_PATH', 'PATH',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
+        'VIMRUNTIME',
       }) do
         if not env_tbl[k] then
           env_tbl[k] = os.getenv(k)
