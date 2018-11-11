@@ -816,8 +816,21 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   linenr_T last_line;  // Last line in file after adding new text
 
   if (dest >= line1 && dest < line2) {
-    EMSG(_("E134: Move lines into themselves"));
+    EMSG(_("E134: Cannot move a range of lines into itself"));
     return FAIL;
+  }
+
+  // Do nothing if we are not actually moving any lines.  This will prevent
+  // the 'modified' flag from being set without cause.
+  if (dest == line1 - 1 || dest == line2) {
+    // Move the cursor as if lines were moved (see below) to be backwards
+    // compatible.
+    if (dest >= line1) {
+      curwin->w_cursor.lnum = dest;
+    } else {
+      curwin->w_cursor.lnum = dest + (line2 - line1) + 1;
+    }
+    return OK;
   }
 
   num_lines = line2 - line1 + 1;
