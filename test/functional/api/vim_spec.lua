@@ -1313,26 +1313,26 @@ describe('API', function()
 
       -- test that nvim_log() includes the owner name
       nvim('log', 'WARN', {'A warning line'}, {who='nvim_spec.lua'})
-      file_contains(templog, 'WARN nvim_spec.lua A warning line')
+      file_contains(templog, 'WARN %[nvim_spec.lua%] A warning line')
 
       -- test an invalid type / empty opt.who
       nvim('log', 'INFO', {'Info line C'}, {who=555})
       file_contains(templog, 'INFO  Info line C')
       file_contains(templog, 'ERROR nvim_log%(%): opt%[who%] must be a string')
       nvim('log', 'INFO', {'Info line D'}, {who=""})
-      file_contains(templog, 'INFO  Info line D')
+      file_contains(templog, 'INFO %[%] Info line D')
 
       -- test an invalid log level
       nvim('log', 'CRITICAL', {'Critical line'}, {who="nvim_spec.lua"})
-      file_contains(templog, "ERROR nvim_spec.lua nvim_log%(%): invalid log level 'CRITICAL'")
-      file_contains(templog, 'ERROR nvim_spec.lua Critical line')
+      file_contains(templog, "ERROR %[nvim_spec.lua%] nvim_log%(%): invalid log level 'CRITICAL'")
+      file_contains(templog, 'ERROR %[nvim_spec.lua%] Critical line')
 
       -- test invalid/empty log line items
       nvim('log', 'INFO', {'valid line 1', 555, false, 'valid line 2'}, {who="nvim_spec.lua"})
-      file_contains(templog, 'ERROR nvim_spec.lua nvim_log%(%): lines%[1%] should be a string; got integer instead')
-      file_contains(templog, 'ERROR nvim_spec.lua nvim_log%(%): lines%[2%] should be a string; got boolean instead')
-      file_contains(templog, 'INFO nvim_spec.lua valid line 1')
-      file_contains(templog, 'INFO nvim_spec.lua valid line 2')
+      file_contains(templog, 'ERROR %[nvim_spec.lua%] nvim_log%(%): lines%[1%] should be a string; got integer instead')
+      file_contains(templog, 'ERROR %[nvim_spec.lua%] nvim_log%(%): lines%[2%] should be a string; got boolean instead')
+      file_contains(templog, 'INFO %[nvim_spec.lua%] valid line 1')
+      file_contains(templog, 'INFO %[nvim_spec.lua%] valid line 2')
     end)
   end)
 end)

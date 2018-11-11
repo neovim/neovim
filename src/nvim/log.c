@@ -197,7 +197,9 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
     Object v = opt.items[i].value;
     if (strequal("who", k.data)) {
       if (v.type == kObjectTypeString) {
-        who = v.data.string.data;
+        size_t who_len = v.data.string.size + 3;
+        who = malloc(who_len);
+        snprintf(who, who_len, "[%s]", v.data.string.data);
 
         // also rewrite our err_prefix to include *who
         snprintf(err_prefix, error_max, "%s %s %s nvim_log():",
