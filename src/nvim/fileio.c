@@ -4531,48 +4531,83 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get2c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  const int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  const int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 3 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get3c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 4 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get4c(FILE *fd)
 {
   // Use unsigned rather than int otherwise result is undefined
   // when left-shift sets the MSB.
   unsigned n;
 
-  n = (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
   return (int)n;
 }
 
 /// Read 8 bytes from `fd` and turn them into a time_t, MSB first.
+/// Returns -1 when encountering EOF.
 time_t get8ctime(FILE *fd)
 {
   time_t n = 0;
-  int i;
 
-  for (i = 0; i < 8; i++) {
-    n = (n << 8) + getc(fd);
+  for (int i = 0; i < 8; i++) {
+    const int c = getc(fd);
+    if (c == EOF) {
+      return -1;
+    }
+    n = (n << 8) + c;
   }
   return n;
 }
@@ -5932,19 +5967,19 @@ void au_event_restore(char_u *old_ei)
  *				    will be automatically executed for <event>
  *				    when editing a file matching <pat>, in
  *				    the current group.
- * :autocmd <event> <pat>	    Show the auto-commands associated with
+ * :autocmd <event> <pat>	    Show the autocommands associated with
  *				    <event> and <pat>.
- * :autocmd <event>		    Show the auto-commands associated with
+ * :autocmd <event>		    Show the autocommands associated with
  *				    <event>.
- * :autocmd			    Show all auto-commands.
- * :autocmd! <event> <pat> <cmd>    Remove all auto-commands associated with
+ * :autocmd			    Show all autocommands.
+ * :autocmd! <event> <pat> <cmd>    Remove all autocommands associated with
  *				    <event> and <pat>, and add the command
  *				    <cmd>, for the current group.
- * :autocmd! <event> <pat>	    Remove all auto-commands associated with
+ * :autocmd! <event> <pat>	    Remove all autocommands associated with
  *				    <event> and <pat> for the current group.
- * :autocmd! <event>		    Remove all auto-commands associated with
+ * :autocmd! <event>		    Remove all autocommands associated with
  *				    <event> for the current group.
- * :autocmd!			    Remove ALL auto-commands for the current
+ * :autocmd!			    Remove ALL autocommands for the current
  *				    group.
  *
  *  Multiple events and patterns may be given separated by commas.  Here are
@@ -6037,8 +6072,8 @@ void do_autocmd(char_u *arg_in, int forceit)
    * Print header when showing autocommands.
    */
   if (!forceit && *cmd == NUL) {
-    /* Highlight title */
-    MSG_PUTS_TITLE(_("\n--- Auto-Commands ---"));
+    // Highlight title
+    MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
   }
 
   /*
@@ -6907,8 +6942,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   autocmd_match = fname;
 
 
-  /* Don't redraw while doing auto commands. */
-  ++RedrawingDisabled;
+  // Don't redraw while doing autocommands.
+  RedrawingDisabled++;
   save_sourcing_name = sourcing_name;
   sourcing_name = NULL;         /* don't free this one */
   save_sourcing_lnum = sourcing_lnum;
@@ -7119,7 +7154,7 @@ auto_next_pat (
                            apc->tail, ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         const char *const name = event_nr2name(apc->event);
-        s = _("%s Auto commands for \"%s\"");
+        s = _("%s Autocommands for \"%s\"");
         const size_t sourcing_name_len = (STRLEN(s) + strlen(name) + ap->patlen
                                           + 1);
         sourcing_name = xmalloc(sourcing_name_len);
