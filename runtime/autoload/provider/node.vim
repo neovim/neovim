@@ -114,7 +114,7 @@ function! provider#node#Require(host) abort
 
   call add(args, provider#node#Prog())
 
-  return provider#Poll(args, a:host.orig_name, '$NVIM_NODE_LOG_FILE')
+  return provider#Poll(args, a:host.long_name, '$NVIM_NODE_LOG_FILE')
 endfunction
 
 function! provider#node#Call(method, args) abort

@@ -3,8 +3,13 @@ let s:plugin_patterns = {}
 let s:plugins_for_host = {}
 
 " Register a host by associating it with a factory(funcref)
-function! remote#host#Register(name, pattern, factory) abort
-  let s:hosts[a:name] = {'factory': a:factory, 'channel': 0, 'initialized': 0}
+function! remote#host#Register(name, pattern, long_name, factory) abort
+  let s:hosts[a:name] = {
+        \ 'factory': a:factory,
+        \ 'channel': 0,
+        \ 'initialized': 0,
+        \ 'long_name': a:long_name
+        \ }
   let s:plugin_patterns[a:name] = a:pattern
   if type(a:factory) == type(1) && a:factory
     " Passed a channel directly
@@ -16,7 +21,7 @@ endfunction
 " as `source`, but it will run as a different process. This can be used by
 " plugins that should run isolated from other plugins created for the same host
 " type
-function! remote#host#RegisterClone(name, orig_name) abort
+function! remote#host#RegisterClone(name, orig_name, long_name) abort
   if !has_key(s:hosts, a:orig_name)
     throw 'No host named "'.a:orig_name.'" is registered'
   endif
@@ -25,7 +30,8 @@ function! remote#host#RegisterClone(name, orig_name) abort
         \ 'factory': Factory,
         \ 'channel': 0,
         \ 'initialized': 0,
-        \ 'orig_name': a:orig_name
+        \ 'orig_name': a:orig_name,
+        \ 'long_name': a:long_name
         \ }
 endfunction
 
@@ -38,7 +44,8 @@ function! remote#host#Require(name) abort
   if !host.channel && !host.initialized
     let host_info = {
           \ 'name': a:name,
-          \ 'orig_name': get(host, 'orig_name', a:name)
+          \ 'orig_name': get(host, 'orig_name', a:name),
+          \ 'long_name': host.long_name
           \ }
     let host.channel = call(host.factory, [host_info])
     let host.initialized = 1
@@ -112,7 +119,7 @@ endfunction
 function! s:RegistrationCommands(host) abort
   " Register a temporary host clone for discovering specs
   let host_id = a:host.'-registration-clone'
-  call remote#host#RegisterClone(host_id, a:host)
+  call remote#host#RegisterClone(host_id, a:host, host_id)
   let pattern = s:plugin_patterns[a:host]
   let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 1, 1)
   let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
@@ -184,15 +191,15 @@ endfunction
 " Registration of standard hosts
 
 " Python/Python3
-call remote#host#Register('python', '*',
+call remote#host#Register('python', '*', 'python rplugin host',
       \ function('provider#pythonx#Require'))
-call remote#host#Register('python3', '*',
+call remote#host#Register('python3', '*', 'python3 rplugin host',
       \ function('provider#pythonx#Require'))
 
 " Ruby
-call remote#host#Register('ruby', '*.rb',
+call remote#host#Register('ruby', '*.rb', 'ruby rplugin host',
       \ function('provider#ruby#Require'))
 
 " nodejs
-call remote#host#Register('node', '*',
+call remote#host#Register('node', '*', 'node rplugin host',
       \ function('provider#node#Require'))

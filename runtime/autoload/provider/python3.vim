@@ -26,7 +26,7 @@ endif
 
 " The Python3 provider plugin will run in a separate instance of the Python3
 " host.
-call remote#host#RegisterClone('legacy-python3-provider', 'python3')
+call remote#host#RegisterClone('legacy-python3-provider', 'python3', 'legacy python3 provider')
 call remote#host#RegisterPlugin('legacy-python3-provider', 'script_host.py', [])
 
 function! provider#python3#Call(method, args) abort

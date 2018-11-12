@@ -18,7 +18,7 @@ function! provider#pythonx#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  return provider#Poll(args, a:host.orig_name, '$NVIM_PYTHON_LOG_FILE')
+  return provider#Poll(args, a:host.long_name, '$NVIM_PYTHON_LOG_FILE')
 endfunction
 
 function! provider#pythonx#Detect(major_ver) abort
