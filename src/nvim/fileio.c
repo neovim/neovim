@@ -5967,19 +5967,19 @@ void au_event_restore(char_u *old_ei)
  *				    will be automatically executed for <event>
  *				    when editing a file matching <pat>, in
  *				    the current group.
- * :autocmd <event> <pat>	    Show the auto-commands associated with
+ * :autocmd <event> <pat>	    Show the autocommands associated with
  *				    <event> and <pat>.
- * :autocmd <event>		    Show the auto-commands associated with
+ * :autocmd <event>		    Show the autocommands associated with
  *				    <event>.
- * :autocmd			    Show all auto-commands.
- * :autocmd! <event> <pat> <cmd>    Remove all auto-commands associated with
+ * :autocmd			    Show all autocommands.
+ * :autocmd! <event> <pat> <cmd>    Remove all autocommands associated with
  *				    <event> and <pat>, and add the command
  *				    <cmd>, for the current group.
- * :autocmd! <event> <pat>	    Remove all auto-commands associated with
+ * :autocmd! <event> <pat>	    Remove all autocommands associated with
  *				    <event> and <pat> for the current group.
- * :autocmd! <event>		    Remove all auto-commands associated with
+ * :autocmd! <event>		    Remove all autocommands associated with
  *				    <event> for the current group.
- * :autocmd!			    Remove ALL auto-commands for the current
+ * :autocmd!			    Remove ALL autocommands for the current
  *				    group.
  *
  *  Multiple events and patterns may be given separated by commas.  Here are
@@ -6073,7 +6073,7 @@ void do_autocmd(char_u *arg_in, int forceit)
    */
   if (!forceit && *cmd == NUL) {
     /* Highlight title */
-    MSG_PUTS_TITLE(_("\n--- Auto-Commands ---"));
+    MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
   }
 
   /*
@@ -6942,7 +6942,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   autocmd_match = fname;
 
 
-  /* Don't redraw while doing auto commands. */
+  // Don't redraw while doing autocommands.
   ++RedrawingDisabled;
   save_sourcing_name = sourcing_name;
   sourcing_name = NULL;         /* don't free this one */
@@ -7154,7 +7154,7 @@ auto_next_pat (
                            apc->tail, ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         const char *const name = event_nr2name(apc->event);
-        s = _("%s Auto commands for \"%s\"");
+        s = _("%s Autocommands for \"%s\"");
         const size_t sourcing_name_len = (STRLEN(s) + strlen(name) + ap->patlen
                                           + 1);
         sourcing_name = xmalloc(sourcing_name_len);
