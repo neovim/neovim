@@ -6072,7 +6072,7 @@ void do_autocmd(char_u *arg_in, int forceit)
    * Print header when showing autocommands.
    */
   if (!forceit && *cmd == NUL) {
-    /* Highlight title */
+    // Highlight title
     MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
   }
 
@@ -6943,7 +6943,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
 
 
   // Don't redraw while doing autocommands.
-  ++RedrawingDisabled;
+  RedrawingDisabled++;
   save_sourcing_name = sourcing_name;
   sourcing_name = NULL;         /* don't free this one */
   save_sourcing_lnum = sourcing_lnum;
