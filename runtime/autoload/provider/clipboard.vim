@@ -71,6 +71,12 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
     return 'pbcopy'
+  elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
+    let s:copy['+'] = 'wl-copy --foreground'
+    let s:paste['+'] = 'wl-paste --no-newline'
+    let s:copy['*'] = 'wl-copy --foreground --primary'
+    let s:paste['*'] = 'wl-paste --no-newline --primary'
+    return 'wl-copy'
   elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = 'xsel --nodetach -i -b'
     let s:paste['+'] = 'xsel -o -b'
