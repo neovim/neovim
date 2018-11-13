@@ -83,6 +83,12 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = 'xclip -quiet -i -selection primary'
     let s:paste['*'] = 'xclip -o -selection primary'
     return 'xclip'
+  elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
+    let s:copy['+'] = 'wl-copy --no-newline'
+    let s:paste['+'] = 'wl-paste --no-newline'
+    let s:copy['*'] = 'wl-copy --no-newline --primary'
+    let s:paste['*'] = 'wl-paste --no-newline --primary'
+    return 'wl-copy'
   elseif executable('lemonade')
     let s:copy['+'] = 'lemonade copy'
     let s:paste['+'] = 'lemonade paste'
