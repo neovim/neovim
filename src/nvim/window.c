@@ -1873,11 +1873,6 @@ int win_close(win_T *win, bool free_buf)
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = win->w_frame->fr_parent;
-  static bool recursive = false;
-
-  if (recursive) {
-    return FAIL;
-  }
 
   if (last_window()) {
     EMSG(_("E444: Cannot close last window"));
@@ -1947,14 +1942,7 @@ int win_close(win_T *win, bool free_buf)
   }
 
   // fire WinClosed event just before freeing memory associated with window
-  if (has_event(EVENT_WINCLOSED)) {
-    recursive = true;
-
-    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
-                   win->w_buffer->b_fname, false, win->w_buffer);
-
-    recursive = false;
-  }
+  do_autocmd_winclosed(win);
 
   /* Free independent synblock before the buffer is freed. */
   if (win->w_buffer != NULL)
@@ -2080,6 +2068,24 @@ int win_close(win_T *win, bool free_buf)
   return OK;
 }
 
+static void do_autocmd_winclosed(win_T *win)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static bool recursive = false;
+  if (!has_event(EVENT_WINCLOSED)) {
+    return;
+  }
+
+  if (recursive) {
+    return;  // disallow recursion
+  }
+
+  recursive = true;
+  apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
+                 win->w_buffer->b_fname, false, win->w_buffer);
+  recursive = false;
+}
+
 /*
  * Close window "win" in tab page "tp", which is not the current tab page.
  * This may be the last window in that tab page and result in closing the tab,
@@ -2092,11 +2098,6 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   int dir;
   tabpage_T   *ptp = NULL;
   int free_tp = FALSE;
-  static bool recursive = false;
-
-  if (recursive) {
-    return;
-  }
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
@@ -2159,14 +2160,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   }
 
   // fire WinClosed event just before freeing memory associated with window
-  if (has_event(EVENT_WINCLOSED)) {
-    recursive = true;
-
-    apply_autocmds(EVENT_WINCLOSED, win->w_buffer->b_fname,
-                   win->w_buffer->b_fname, false, win->w_buffer);
-
-    recursive = false;
-  }
+  do_autocmd_winclosed(win);
 
   /* Free the memory used for the window. */
   win_free_mem(win, &dir, tp);
