@@ -266,6 +266,21 @@ else
   cimportstr = _cimportstr
 end
 
+local function pagealloc(size)
+  local m = cimport('./src/nvim/memory.h')
+  local pagesize = m.mem_pagesize()
+  local num_pages = 1
+  while num_pages * pagesize < size do
+    num_pages = num_pages + 1
+  end
+  local mem = ffi.gc(m.mem_pagealloc(num_pages), nil)
+  local start = ffi.cast('char*', mem) + ((num_pages * pagesize) - size)
+  local free = function(_)
+    m.mem_pagefree(mem, num_pages)
+  end
+  return ffi.gc(start, free), free
+end
+
 local function alloc_log_new()
   local log = {
     log={},
@@ -531,7 +546,7 @@ local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 
 
 local tracehelp = dedent([[
   Trace: either in the format described below or custom debug output starting
-  with `>`. Latter lines still have the same width in byte.
+  with `>`. Latter lines still have the same width in bytes.
 
   ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
   │             _t_ail return, _C_ount (should not actually appear),
@@ -694,42 +709,43 @@ local function check_child_err(rd)
     end
   end
   local res = sc.read(rd, 2)
-  if #res == 2 then
-    local err = ''
-    if res ~= '+\n' then
-      eq('-\n', res)
+  local err = ''
+  if res ~= '+\n' then
+    if res ~= '-\n' then
+      err = '\nTest crashed without proper end marker.\n'
+    else
       local len_s = sc.read(rd, 5)
       local len = tonumber(len_s)
       neq(0, len)
       if os.getenv('NVIM_TEST_TRACE_ON_ERROR') == '1' and #trace ~= 0 then
-        err = '\nTest failed, trace:\n' .. tracehelp
+        err = err .. '\nTest failed, trace:\n' .. tracehelp
         for _, traceline in ipairs(trace) do
           err = err .. traceline
         end
       end
       err = err .. sc.read(rd, len + 1)
     end
-    local eres = sc.read(rd, 2)
-    if eres ~= '$\n' then
-      if #trace == 0 then
-        err = '\nTest crashed, no trace available\n'
-      else
-        err = '\nTest crashed, trace:\n' .. tracehelp
-        for i = 1, #trace do
-          err = err .. trace[i]
-        end
-      end
-      if not did_traceline then
-        err = err .. '\nNo end of trace occurred'
-      end
-      local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
-      if not cc_err then
-        err = err .. '\ncheck_cores failed: ' .. cc_emsg
+  end
+  local eres = (#res == 2 and sc.read(rd, 2) or '')
+  if eres ~= '$\n' then
+    if #trace == 0 then
+      err = err .. '\nTest crashed, no trace available.\n'
+    else
+      err = err .. '\nTest crashed, trace:\n' .. tracehelp
+      for i = 1, #trace do
+        err = err .. trace[i]
       end
     end
-    if err ~= '' then
-      assert.just_fail(err)
+    if not did_traceline then
+      err = err .. '\nNo end of trace occurred'
     end
+    local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
+    if not cc_err then
+      err = err .. '\ncheck_cores failed: ' .. cc_emsg
+    end
+  end
+  if err ~= '' then
+    assert.just_fail(err)
   end
 end
 
@@ -868,6 +884,7 @@ local module = {
   ptr2addr = ptr2addr,
   ptr2key = ptr2key,
   debug_log = debug_log,
+  pagealloc = pagealloc,
 }
 return function()
   return module

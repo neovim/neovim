@@ -471,7 +471,7 @@ describe('Expressions parser', function()
         end
         alloc_log:check({})
 
-        local pstate = new_pstate({str})
+        local pstate = new_pstate({str}, opts.pagealloc)
         local east = lib.viml_pexpr_parse(pstate, flags)
         local ast = east2lua(str, pstate, east)
         local hls = phl2lua(pstate)

@@ -50,6 +50,7 @@
 #include "nvim/misc1.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/macros.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
@@ -1552,6 +1553,21 @@ void mb_copy_char(const char_u **const fp, char_u **const tp)
   memmove(*tp, *fp, l);
   *tp += l;
   *fp += l;
+}
+
+/// Copy a single codepoint, advancing the pointers
+///
+/// @param[in,out]  fp  Source of the character to copy.
+/// @param[in,out]  tp  Destination to copy to.
+/// @param[in]  f_size  Length of the source.
+void mb_copy_len(const char **const fp, char **const tp, const size_t f_size)
+{
+  const size_t l = (size_t)utf_ptr2len_len((const char_u *)(*fp), f_size);
+  const size_t adv = MIN(l, f_size);
+
+  memmove(*tp, *fp, adv);
+  *tp += adv;
+  *fp += adv;
 }
 
 /*

@@ -553,7 +553,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
   const char_u *end_of_name;
   const char_u *src;
   const char_u *bp;
-  const char_u *const end = *srcp + src_len - 1;
+  const char_u *const end = *srcp + src_len;
   int modifiers;
   int bit;
   int key;
@@ -571,23 +571,23 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
 
   // Find end of modifier list
   last_dash = src;
-  for (bp = src + 1; bp <= end && (*bp == '-' || ascii_isident(*bp)); bp++) {
+  for (bp = src + 1; bp < end && (*bp == '-' || ascii_isident(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
-      if (bp + 1 <= end) {
-        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
+      if (bp + 1 < end) {
+        l = utfc_ptr2len_len(bp + 1, (int)(end - (bp + 1)));
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[2] == '>') {
+        if (end - bp > 2 && !(in_string && bp[1] == '"') && bp[2] == '>') {
           bp += l;
-        } else if (end - bp > 2 && in_string && bp[1] == '\\'
+        } else if (end - bp > 3 && in_string && bp[1] == '\\'
                    && bp[2] == '"' && bp[3] == '>') {
           bp += 2;
         }
       }
     }
-    if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
+    if (end - bp > 2 && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
       vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0);
@@ -596,7 +596,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
     }
   }
 
-  if (bp <= end && *bp == '>') {  // found matching '>'
+  if (end - bp > 0 && *bp == '>') {  // found matching '>'
     end_of_name = bp + 1;
 
     /* Which modifiers are given? */

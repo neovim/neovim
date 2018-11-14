@@ -256,11 +256,12 @@ int utfc_ptr2len(const char_u *const p)
   }
 }
 
-void mb_copy_char(const char_u **fp, char_u **tp)
+void mb_copy_len(const char **const fp, char **const tp, const size_t f_size)
 {
-  const size_t l = utfc_ptr2len(*fp);
+  const size_t l = (size_t)utf_ptr2len_len((const char_u *)*fp, f_size);
+  const size_t adv = MIN(l, f_size);
 
-  memmove(*tp, *fp, (size_t)l);
-  *tp += l;
-  *fp += l;
+  memmove(*tp, *fp, adv);
+  *tp += adv;
+  *fp += adv;
 }

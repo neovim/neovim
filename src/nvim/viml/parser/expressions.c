@@ -112,6 +112,7 @@ typedef enum {
   kEOpLvlColon,
   kEOpLvlTernaryValue,
   kEOpLvlTernary,
+  kEOpLvlOpMissing,  ///< Missing operator.
   kEOpLvlOr,
   kEOpLvlAnd,
   kEOpLvlComparison,
@@ -1101,7 +1102,7 @@ static struct {
   ExprOpAssociativity ass;
 } node_type_to_node_props[] = {
   [kExprNodeMissing] = { kEOpLvlInvalid, kEOpAssNo, },
-  [kExprNodeOpMissing] = { kEOpLvlMultiplication, kEOpAssNo },
+  [kExprNodeOpMissing] = { kEOpLvlOpMissing, kEOpAssNo },
 
   [kExprNodeNested] = { kEOpLvlParens, kEOpAssNo },
   // Note: below nodes are kEOpLvlSubscript for “binary operator” itself, but
@@ -1777,13 +1778,13 @@ static void parse_quoted_string(ParserState *const pstate,
               v_p += special_len;
             } else {
               is_unknown = true;
-              mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+              mb_copy_len(&p, &v_p, (size_t)(e - p));
             }
             break;
           }
           default: {
             is_unknown = true;
-            mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+            mb_copy_len(&p, &v_p, (size_t)(e - p));
             break;
           }
         }
@@ -2383,68 +2384,79 @@ viml_pexpr_parse_valid_colon:
 #undef EXP_VAL_COLON
       case kExprLexBracket: {
         if (cur_token.data.brc.closing) {
-          ExprASTNode **new_top_node_p = NULL;
-          // Always drop the topmost value:
-          //
-          // 1. When want_node != kENodeValue topmost item on stack is
-          //    a *finished* left operand, which may as well be "{@a}" which
-          //    needs not be finished again.
-          // 2. Otherwise it is pointing to NULL what nobody wants.
-          kv_drop(ast_stack, 1);
-          if (!kv_size(ast_stack)) {
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
-            cur_node->len = 0;
-            if (want_node != kENodeValue) {
-              cur_node->children = *top_node_p;
-            }
-            *top_node_p = cur_node;
-            goto viml_pexpr_parse_bracket_closing_error;
-          }
+#define OPENING_NODE(node) \
+          ((node) != NULL \
+           && ((node)->type == kExprNodeListLiteral \
+               || (node)->type == kExprNodeSubscript))
           if (want_node == kENodeValue) {
-            // It is OK to want value if
-            //
-            // 1. It is empty list literal, in which case top node will be
-            //    ListLiteral.
-            // 2. It is list literal with trailing comma, in which case top node
-            //    will be that comma.
-            // 3. It is subscript with colon, but without one of the values:
-            //    e.g. "a[:]", "a[1:]", top node will be colon in this case.
-            if ((*kv_last(ast_stack))->type != kExprNodeListLiteral
-                && (*kv_last(ast_stack))->type != kExprNodeComma
-                && (*kv_last(ast_stack))->type != kExprNodeColon) {
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token,
-                  _("E15: Expected value, got closing bracket: %.*s"));
-            }
-          }
-          do {
-            new_top_node_p = kv_pop(ast_stack);
-          } while (kv_size(ast_stack)
-                   && (new_top_node_p == NULL
-                       || ((*new_top_node_p)->type != kExprNodeListLiteral
-                           && (*new_top_node_p)->type != kExprNodeSubscript)));
-          ExprASTNode *new_top_node = *new_top_node_p;
-          switch (new_top_node->type) {
-            case kExprNodeListLiteral: {
-              if (pt_is_assignment(cur_pt) && new_top_node->children == NULL) {
-                ERROR_FROM_TOKEN_AND_MSG(
-                    cur_token, _("E475: Unable to assign to empty list: %.*s"));
+            if (kv_size(ast_stack) > 1) {
+              const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
+              if (prev_top_node->type == kExprNodeListLiteral
+                  || prev_top_node->type == kExprNodeComma
+                  || prev_top_node->type == kExprNodeColon) {
+                // Allowed:
+                // - Empty list literals.
+                // - Trailing commas inside a list.
+                // - Trailing colons inside a subscript.
+                kv_drop(ast_stack, 1);
+                goto viml_pexpr_parse_bracket_up;
               }
-              HL_CUR_TOKEN(List);
-              break;
             }
-            case kExprNodeSubscript: {
-              HL_CUR_TOKEN(SubscriptBracket);
-              break;
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Expected value, got closing bracket: %.*s"));
+          } else {
+            // Always drop the topmost value: when want_node != kENodeValue
+            // topmost item on stack is a *finished* left operand, which may as
+            // well be "[@a]" which needs not be finished again.
+            kv_drop(ast_stack, 1);
+          }
+viml_pexpr_parse_bracket_up: {}
+          ExprASTNode **new_top_node_p = NULL;
+          while (kv_size(ast_stack)
+                 && (new_top_node_p == NULL
+                     || !OPENING_NODE(*new_top_node_p))) {
+            new_top_node_p = kv_pop(ast_stack);
+          }
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
+            ExprASTNode *const new_top_node = *new_top_node_p;
+            switch (new_top_node->type) {
+              case kExprNodeListLiteral: {
+                if (pt_is_assignment(cur_pt)
+                    && new_top_node->children == NULL) {
+                  ERROR_FROM_TOKEN_AND_MSG(
+                      cur_token,
+                      _("E475: Unable to assign to empty list: %.*s"));
+                }
+                HL_CUR_TOKEN(List);
+                break;
+              }
+              case kExprNodeSubscript: {
+                HL_CUR_TOKEN(SubscriptBracket);
+                break;
+              }
+              default: {
+                assert(false);
+              }
             }
-            default: {
-viml_pexpr_parse_bracket_closing_error:
-              assert(!kv_size(ast_stack));
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token, _("E15: Unexpected closing figure brace: %.*s"));
-              HL_CUR_TOKEN(List);
-              break;
+          } else {
+            // “Always drop the topmost value” branch has got rid of the single
+            // value stack had, so there is nothing known to enclose. Correct
+            // this.
+            if (new_top_node_p == NULL) {
+              new_top_node_p = top_node_p;
             }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Unexpected closing bracket: %.*s"));
+            HL_CUR_TOKEN(List);
+            cur_node = NEW_NODE(kExprNodeListLiteral);
+            cur_node->start = cur_token.start;
+            cur_node->len = 0;
+            // Unexpected closing parenthesis, assume that it was wanted to
+            // enclose everything in [].
+            cur_node->children = *new_top_node_p;
+            *new_top_node_p = cur_node;
+            assert(cur_node->next == NULL);
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
@@ -2462,6 +2474,7 @@ viml_pexpr_parse_bracket_closing_error:
           if (cur_pt == kEPTSingleAssignment && kv_size(ast_stack) == 1) {
             kv_drop(pt_stack, 1);
           }
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             // Value means list literal or list assignment.
@@ -2500,96 +2513,110 @@ viml_pexpr_parse_bracket_closing_error:
       }
       case kExprLexFigureBrace: {
         if (cur_token.data.brc.closing) {
+#define OPENING_NODE(node) \
+          ((node) != NULL \
+           && ((node)->type == kExprNodeUnknownFigure \
+               || (node)->type == kExprNodeDictLiteral \
+               || (node)->type == kExprNodeCurlyBracesIdentifier \
+               || (node)->type == kExprNodeLambda))
+          if (want_node == kENodeValue) {
+            if (kv_size(ast_stack) > 1) {
+              const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
+              if ((prev_top_node->type == kExprNodeUnknownFigure
+                   && prev_top_node->data.fig.type_guesses.allow_dict)
+                  || prev_top_node->type == kExprNodeDictLiteral
+                  || prev_top_node->type == kExprNodeComma) {
+                // Empty dictionary literals, as well as trailing commas are
+                // allowed.
+                kv_drop(ast_stack, 1);
+                goto viml_pexpr_parse_figure_up;
+              }
+            }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Expected value, got closing figure brace: %.*s"));
+          } else {
+            // Always drop the topmost value: when want_node != kENodeValue
+            // topmost item on stack is a *finished* left operand, which may as
+            // well be "{@a}" which needs not be finished again.
+            kv_drop(ast_stack, 1);
+          }
+viml_pexpr_parse_figure_up: {}
           ExprASTNode **new_top_node_p = NULL;
-          // Always drop the topmost value:
-          //
-          // 1. When want_node != kENodeValue topmost item on stack is
-          //    a *finished* left operand, which may as well be "{@a}" which
-          //    needs not be finished again.
-          // 2. Otherwise it is pointing to NULL what nobody wants.
-          kv_drop(ast_stack, 1);
-          if (!kv_size(ast_stack)) {
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnknownFigure);
+          while (kv_size(ast_stack)
+                 && (new_top_node_p == NULL
+                     || !OPENING_NODE(*new_top_node_p))) {
+            new_top_node_p = kv_pop(ast_stack);
+          }
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
+            ExprASTNode *const new_top_node = *new_top_node_p;
+            switch (new_top_node->type) {
+              case kExprNodeUnknownFigure: {
+                if (new_top_node->children == NULL) {
+                  // No children of curly braces node indicates empty
+                  // dictionary.
+                  assert(want_node == kENodeValue);
+                  assert(new_top_node->data.fig.type_guesses.allow_dict);
+                  SELECT_FIGURE_BRACE_TYPE(new_top_node, DictLiteral, Dict);
+                  HL_CUR_TOKEN(Dict);
+                } else if (new_top_node->data.fig.type_guesses.allow_ident) {
+                  SELECT_FIGURE_BRACE_TYPE(new_top_node, CurlyBracesIdentifier,
+                                           Curly);
+                  HL_CUR_TOKEN(Curly);
+                } else {
+                  // If by this time type of the node has not already been
+                  // guessed, but it definitely is not a curly braces name then
+                  // it is invalid for sure.
+                  ERROR_FROM_NODE_AND_MSG(
+                      new_top_node,
+                      _("E15: Don't know what figure brace means: %.*s"));
+                  if (pstate->colors) {
+                    // Will reset to NvimInvalidFigureBrace.
+                    kv_A(*pstate->colors,
+                         new_top_node->data.fig.opening_hl_idx).group = (
+                             HL(FigureBrace));
+                  }
+                  HL_CUR_TOKEN(FigureBrace);
+                }
+                break;
+              }
+              case kExprNodeDictLiteral: {
+                HL_CUR_TOKEN(Dict);
+                break;
+              }
+              case kExprNodeCurlyBracesIdentifier: {
+                HL_CUR_TOKEN(Curly);
+                break;
+              }
+              case kExprNodeLambda: {
+                HL_CUR_TOKEN(Lambda);
+                break;
+              }
+              default: {
+                assert(false);
+              }
+            }
+          } else {
+            // “Always drop the topmost value” branch has got rid of the single
+            // value stack had, so there is nothing known to enclose. Correct
+            // this.
+            if (new_top_node_p == NULL) {
+              new_top_node_p = top_node_p;
+            }
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Unexpected closing figure brace: %.*s"));
+            HL_CUR_TOKEN(FigureBrace);
+            cur_node = NEW_NODE(kExprNodeUnknownFigure);
+            cur_node->start = cur_token.start;
+            cur_node->len = 0;
             cur_node->data.fig.type_guesses.allow_lambda = false;
             cur_node->data.fig.type_guesses.allow_dict = false;
             cur_node->data.fig.type_guesses.allow_ident = false;
-            cur_node->len = 0;
-            if (want_node != kENodeValue) {
-              cur_node->children = *top_node_p;
-            }
-            *top_node_p = cur_node;
-            new_top_node_p = top_node_p;
-            goto viml_pexpr_parse_figure_brace_closing_error;
-          }
-          if (want_node == kENodeValue) {
-            if ((*kv_last(ast_stack))->type != kExprNodeUnknownFigure
-                && (*kv_last(ast_stack))->type != kExprNodeComma) {
-              // kv_last being UnknownFigure may occur for empty dictionary
-              // literal, while Comma is expected in case of non-empty one.
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token,
-                  _("E15: Expected value, got closing figure brace: %.*s"));
-            }
-          }
-          do {
-            new_top_node_p = kv_pop(ast_stack);
-          } while (kv_size(ast_stack)
-                   && (new_top_node_p == NULL
-                       || ((*new_top_node_p)->type != kExprNodeUnknownFigure
-                           && (*new_top_node_p)->type != kExprNodeDictLiteral
-                           && ((*new_top_node_p)->type
-                               != kExprNodeCurlyBracesIdentifier)
-                           && (*new_top_node_p)->type != kExprNodeLambda)));
-          ExprASTNode *new_top_node = *new_top_node_p;
-          switch (new_top_node->type) {
-            case kExprNodeUnknownFigure: {
-              if (new_top_node->children == NULL) {
-                // No children of curly braces node indicates empty dictionary.
-                assert(want_node == kENodeValue);
-                assert(new_top_node->data.fig.type_guesses.allow_dict);
-                SELECT_FIGURE_BRACE_TYPE(new_top_node, DictLiteral, Dict);
-                HL_CUR_TOKEN(Dict);
-              } else if (new_top_node->data.fig.type_guesses.allow_ident) {
-                SELECT_FIGURE_BRACE_TYPE(new_top_node, CurlyBracesIdentifier,
-                                         Curly);
-                HL_CUR_TOKEN(Curly);
-              } else {
-                // If by this time type of the node has not already been
-                // guessed, but it definitely is not a curly braces name then
-                // it is invalid for sure.
-                ERROR_FROM_NODE_AND_MSG(
-                    new_top_node,
-                    _("E15: Don't know what figure brace means: %.*s"));
-                if (pstate->colors) {
-                  // Will reset to NvimInvalidFigureBrace.
-                  kv_A(*pstate->colors,
-                       new_top_node->data.fig.opening_hl_idx).group = (
-                           HL(FigureBrace));
-                }
-                HL_CUR_TOKEN(FigureBrace);
-              }
-              break;
-            }
-            case kExprNodeDictLiteral: {
-              HL_CUR_TOKEN(Dict);
-              break;
-            }
-            case kExprNodeCurlyBracesIdentifier: {
-              HL_CUR_TOKEN(Curly);
-              break;
-            }
-            case kExprNodeLambda: {
-              HL_CUR_TOKEN(Lambda);
-              break;
-            }
-            default: {
-viml_pexpr_parse_figure_brace_closing_error:
-              assert(!kv_size(ast_stack));
-              ERROR_FROM_TOKEN_AND_MSG(
-                  cur_token, _("E15: Unexpected closing figure brace: %.*s"));
-              HL_CUR_TOKEN(FigureBrace);
-              break;
-            }
+            // Unexpected closing parenthesis, assume that it was wanted to
+            // enclose everything in {}.
+            cur_node->children = *new_top_node_p;
+            *new_top_node_p = cur_node;
+            assert(cur_node->next == NULL);
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
@@ -2602,6 +2629,7 @@ viml_pexpr_parse_figure_brace_closing_error:
               asgn_level = 0;
             }
           }
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             HL_CUR_TOKEN(FigureBrace);
@@ -2786,14 +2814,20 @@ viml_pexpr_parse_figure_brace_closing_error:
       }
       case kExprLexParenthesis: {
         if (cur_token.data.brc.closing) {
+#define OPENING_NODE(node) \
+          ((node)->type == kExprNodeNested || (node)->type == kExprNodeCall)
           if (want_node == kENodeValue) {
             if (kv_size(ast_stack) > 1) {
               const ExprASTNode *const prev_top_node = *kv_Z(ast_stack, 1);
-              if (prev_top_node->type == kExprNodeCall) {
-                // Function call without arguments, this is not an error.
-                // But further code does not expect NULL nodes.
+              if (prev_top_node->type == kExprNodeCall
+                  || prev_top_node->type == kExprNodeComma) {
+                // These are not errors:
+                // - Function call without arguments.
+                // - Trailing comma in a function call.
+                // Still drop one stack entry as further code does not expect
+                // NULL nodes.
                 kv_drop(ast_stack, 1);
-                goto viml_pexpr_parse_no_paren_closing_error;
+                goto viml_pexpr_parse_paren_up;
               }
             }
             ERROR_FROM_TOKEN_AND_MSG(
@@ -2807,17 +2841,14 @@ viml_pexpr_parse_figure_brace_closing_error:
             // well be "(@a)" which needs not be finished again.
             kv_drop(ast_stack, 1);
           }
-viml_pexpr_parse_no_paren_closing_error: {}
+viml_pexpr_parse_paren_up: {}
           ExprASTNode **new_top_node_p = NULL;
           while (kv_size(ast_stack)
                  && (new_top_node_p == NULL
-                     || ((*new_top_node_p)->type != kExprNodeNested
-                         && (*new_top_node_p)->type != kExprNodeCall))) {
+                     || !OPENING_NODE(*new_top_node_p))) {
             new_top_node_p = kv_pop(ast_stack);
           }
-          if (new_top_node_p != NULL
-              && ((*new_top_node_p)->type == kExprNodeNested
-                  || (*new_top_node_p)->type == kExprNodeCall)) {
+          if (new_top_node_p != NULL && OPENING_NODE(*new_top_node_p)) {
             if ((*new_top_node_p)->type == kExprNodeNested) {
               HL_CUR_TOKEN(NestingParenthesis);
             } else {
@@ -2844,6 +2875,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
+#undef OPENING_NODE
         } else {
           if (want_node == kENodeValue) {
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeNested);
