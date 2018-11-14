@@ -92,6 +92,7 @@ describe('search cmdline', function()
           9 {inc:the}se           |
         /the^                |
       ]])
+      screen.bell = false
       feed('<C-G>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
@@ -100,11 +101,13 @@ describe('search cmdline', function()
           /the^                |
         ]])
       else
-        screen:expect([[
+        screen:expect{grid=[[
             8 them            |
             9 {inc:the}se           |
           /the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
         feed('<CR>')
         eq({0, 0, 0, 0}, funcs.getpos('"'))
       end
@@ -120,6 +123,7 @@ describe('search cmdline', function()
          10 foobar          |
         ?the^                |
       ]])
+      screen.bell = false
       if wrapscan == 'wrapscan' then
         feed('<C-G>')
         screen:expect([[
@@ -135,11 +139,13 @@ describe('search cmdline', function()
         ]])
       else
         feed('<C-G>')
-        screen:expect([[
+        screen:expect{grid=[[
             9 {inc:the}se           |
            10 foobar          |
           ?the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
         feed('<CR>')
         screen:expect([[
             9 ^these           |
@@ -173,6 +179,7 @@ describe('search cmdline', function()
           3 the             |
         ?the^                |
       ]])
+      screen.bell = false
       feed('<C-T>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
@@ -181,11 +188,13 @@ describe('search cmdline', function()
           ?the^                |
         ]])
       else
-        screen:expect([[
+        screen:expect{grid=[[
             2 {inc:the}se           |
             3 the             |
           ?the^                |
-        ]])
+        ]], condition=function()
+          eq(true, screen.bell)
+        end}
       end
     end
 

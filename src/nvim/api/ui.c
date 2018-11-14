@@ -127,7 +127,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   }
 
   if (ui->ui_ext[kUIHlState]) {
-    ui->ui_ext[kUINewgrid] = true;
+    ui->ui_ext[kUILinegrid] = true;
   }
 
   UIData *data = xmalloc(sizeof(UIData));
@@ -227,11 +227,11 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
         return;
       }
       bool boolval = value.data.boolean;
-      if (!init && i == kUINewgrid && boolval != ui->ui_ext[i]) {
+      if (!init && i == kUILinegrid && boolval != ui->ui_ext[i]) {
         // There shouldn't be a reason for an UI to do this ever
         // so explicitly don't support this.
         api_set_error(error, kErrorTypeValidation,
-                      "ext_newgrid option cannot be changed");
+                      "ext_linegrid option cannot be changed");
       }
       ui->ui_ext[i] = boolval;
       if (!init) {
@@ -271,10 +271,10 @@ static void push_call(UI *ui, const char *name, Array args)
 static void remote_ui_grid_clear(UI *ui, Integer grid)
 {
   Array args = ARRAY_DICT_INIT;
-  if (ui->ui_ext[kUINewgrid]) {
+  if (ui->ui_ext[kUILinegrid]) {
     ADD(args, INTEGER_OBJ(grid));
   }
-  const char *name = ui->ui_ext[kUINewgrid] ? "grid_clear" : "clear";
+  const char *name = ui->ui_ext[kUILinegrid] ? "grid_clear" : "clear";
   push_call(ui, name, args);
 }
 
@@ -282,12 +282,12 @@ static void remote_ui_grid_resize(UI *ui, Integer grid,
                                   Integer width, Integer height)
 {
   Array args = ARRAY_DICT_INIT;
-  if (ui->ui_ext[kUINewgrid]) {
+  if (ui->ui_ext[kUILinegrid]) {
     ADD(args, INTEGER_OBJ(grid));
   }
   ADD(args, INTEGER_OBJ(width));
   ADD(args, INTEGER_OBJ(height));
-  const char *name = ui->ui_ext[kUINewgrid] ? "grid_resize" : "resize";
+  const char *name = ui->ui_ext[kUILinegrid] ? "grid_resize" : "resize";
   push_call(ui, name, args);
 }
 
@@ -295,7 +295,7 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top,
                                   Integer bot, Integer left, Integer right,
                                   Integer rows, Integer cols)
 {
-  if (ui->ui_ext[kUINewgrid]) {
+  if (ui->ui_ext[kUILinegrid]) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(grid));
     ADD(args, INTEGER_OBJ(top));
@@ -341,7 +341,7 @@ static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
   push_call(ui, "default_colors_set", args);
 
   // Deprecated
-  if (!ui->ui_ext[kUINewgrid]) {
+  if (!ui->ui_ext[kUILinegrid]) {
     args = (Array)ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(ui->rgb ? rgb_fg : cterm_fg - 1));
     push_call(ui, "update_fg", args);
@@ -359,7 +359,7 @@ static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
 static void remote_ui_hl_attr_define(UI *ui, Integer id, HlAttrs rgb_attrs,
                                      HlAttrs cterm_attrs, Array info)
 {
-  if (!ui->ui_ext[kUINewgrid]) {
+  if (!ui->ui_ext[kUILinegrid]) {
     return;
   }
   Array args = ARRAY_DICT_INIT;
@@ -397,7 +397,7 @@ static void remote_ui_highlight_set(UI *ui, int id)
 static void remote_ui_grid_cursor_goto(UI *ui, Integer grid, Integer row,
                                        Integer col)
 {
-  if (ui->ui_ext[kUINewgrid]) {
+  if (ui->ui_ext[kUILinegrid]) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(grid));
     ADD(args, INTEGER_OBJ(row));
@@ -442,7 +442,7 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
                                const sattr_T *attrs)
 {
   UIData *data = ui->data;
-  if (ui->ui_ext[kUINewgrid]) {
+  if (ui->ui_ext[kUILinegrid]) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(grid));
     ADD(args, INTEGER_OBJ(row));
@@ -508,9 +508,10 @@ static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
   if (data->buffer.size > 0) {
-    if (!ui->ui_ext[kUINewgrid]) {
+    if (!ui->ui_ext[kUILinegrid]) {
       remote_ui_cursor_goto(ui, data->cursor_row, data->cursor_col);
     }
+    push_call(ui, "flush", (Array)ARRAY_DICT_INIT);
     rpc_send_event(data->channel_id, "redraw", data->buffer);
     data->buffer = (Array)ARRAY_DICT_INIT;
   }
@@ -549,7 +550,7 @@ static Array translate_firstarg(UI *ui, Array args)
 
 static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
-  if (!ui->ui_ext[kUINewgrid]) {
+  if (!ui->ui_ext[kUILinegrid]) {
     // the representation of highlights in cmdline changed, translate back
     // never consumes args
     if (strequal(name, "cmdline_show")) {

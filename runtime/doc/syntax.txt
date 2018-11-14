@@ -1243,7 +1243,7 @@ doxygen_javadoc_autobrief	1	Set to 0 to disable javadoc autobrief
 doxygen_end_punctuation		'[.]'	Set to regexp match for the ending
 					punctuation of brief
 
-There are also some hilight groups worth mentioning as they can be useful in
+There are also some highlight groups worth mentioning as they can be useful in
 configuration.
 
 Highlight			Effect ~
@@ -1947,7 +1947,7 @@ set "lite_minlines" to the value you desire.  Example: >
 
 LPC						*lpc.vim* *ft-lpc-syntax*
 
-LPC stands for a simple, memory-efficient language: Lars Pensj| C.  The
+LPC stands for a simple, memory-efficient language: Lars Pensjö C.  The
 file name of LPC is usually *.c.  Recognizing these files as LPC would bother
 users writing only C programs.	If you want to use LPC syntax in Vim, you
 should set a variable in your vimrc file: >
@@ -2610,6 +2610,48 @@ Any combination of these three variables is legal, but might highlight more
 commands than are actually available to you by the game.
 
 
+R							*r.vim* *ft-r-syntax*
+
+The parsing of R code for syntax highlight starts 40 lines backwards, but you
+can set a different value in your |vimrc|. Example: >
+	let r_syntax_minlines = 60
+
+You can also turn off syntax highlighting of ROxygen: >
+	let r_syntax_hl_roxygen = 0
+
+enable folding of code delimited by parentheses, square brackets and curly
+braces: >
+	let r_syntax_folding = 1
+
+and highlight as functions all keywords followed by an opening parenthesis: >
+	let r_syntax_fun_pattern = 1
+
+
+R MARKDOWN					*rmd.vim* *ft-rmd-syntax*
+
+To disable syntax highlight of YAML header, add to your |vimrc|: >
+	let rmd_syn_hl_yaml = 0
+
+To disable syntax highlighting of citation keys: >
+	let rmd_syn_hl_citations = 0
+
+To highlight R code in knitr chunk headers: >
+	let rmd_syn_hl_chunk = 1
+
+By default, chunks of R code will be highlighted following the rules of R
+language. If you want proper syntax highlighting of chunks of other languages,
+you should add them to either `markdown_fenced_languages` or
+`rmd_fenced_languages`. For example to properly highlight both R and Python,
+you may add this to your |vimrc|: >
+	let rmd_fenced_languages = ['r', 'python']
+
+
+R RESTRUCTURED TEXT				*rrst.vim* *ft-rrst-syntax*
+
+To highlight R code in knitr chunk headers, add to your |vimrc|: >
+	let rrst_syn_hl_chunk = 1
+
+
 READLINE				*readline.vim* *ft-readline-syntax*
 
 The readline library is primarily used by the BASH shell, which adds quite a
@@ -2748,13 +2790,10 @@ Ruby syntax will perform spellchecking of strings if you define
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
 
-By default only R5RS keywords are highlighted and properly indented.
+By default only R7RS keywords are highlighted and properly indented.
 
-MzScheme-specific stuff will be used if b:is_mzscheme or g:is_mzscheme
-variables are defined.
-
-Also scheme.vim supports keywords of the Chicken Scheme->C compiler.  Define
-b:is_chicken or g:is_chicken, if you need them.
+scheme.vim also supports extensions of the CHICKEN Scheme->C compiler.
+Define b:is_chicken or g:is_chicken, if you need them.
 
 
 SDL						*sdl.vim* *ft-sdl-syntax*
@@ -2848,17 +2887,17 @@ This covers syntax highlighting for the older Unix (Bourne) sh, and newer
 shells such as bash, dash, posix, and the Korn shells.
 
 Vim attempts to determine which shell type is in use by specifying that
-various filenames are of specific types: >
+various filenames are of specific types, e.g.: >
 
     ksh : .kshrc* *.ksh
     bash: .bashrc* bashrc bash.bashrc .bash_profile* *.bash
 <
-If none of these cases pertain, then the first line of the file is examined
-(ex. looking for /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a
-shelltype, then that shelltype is used.  However some files (ex. .profile) are
-known to be shell files but the type is not apparent.  Furthermore, on many
-systems sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh"
-(Posix).
+See $VIMRUNTIME/filetype.vim for the full list of patterns.  If none of these
+cases pertain, then the first line of the file is examined (ex. looking for
+/bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
+that shelltype is used.  However some files (ex. .profile) are known to be
+shell files but the type is not apparent.  Furthermore, on many systems sh is
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
@@ -3140,6 +3179,12 @@ techniques in |mysyntaxfile-add| to extend or modify the highlighting provided
 by syntax/tex.vim.  Please consider uploading any extensions that you write,
 which typically would go in $HOME/after/syntax/tex/[pkgname].vim, to
 http://vim.sf.net/.
+
+I've included some support for various popular packages on my website: >
+
+	http://www.drchip.org/astronaut/vim/index.html#LATEXPKGS
+<
+The syntax files there go into your .../after/syntax/tex/ directory.
 
 					*tex-error* *g:tex_no_error*
  Tex: Excessive Error Highlighting? ~
@@ -4585,7 +4630,9 @@ in their own color.
 				runtime colors/evening.vim
 				hi Statement ctermfg=Blue guifg=Blue
 
-<			After the color scheme has been loaded the
+<			Before the color scheme will be loaded the
+			|ColorSchemePre| autocommand event is triggered.
+			After the color scheme has been loaded the
 			|ColorScheme| autocommand event is triggered.
 			For info about writing a colorscheme file: >
 				:edit $VIMRUNTIME/colors/README.txt
@@ -4665,8 +4712,8 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	If running in a terminal, "undercurl" acts as an alias for "underline".
-	It is set using |highlight-guisp|.
+	"undercurl" falls back to "underline" in a terminal that does not
+	support it.  The color is set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4799,7 +4846,8 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	These give the foreground (guifg), background (guibg) and special
-	(guisp) color to use in the GUI.  "guisp" is used for undercurl.
+	(guisp) color to use in the GUI.  "guisp" is used for undercurl
+	and underline.
 	There are a few special names:
 		NONE		no color (transparent)
 		bg		use normal background color
@@ -4946,6 +4994,11 @@ StatusLine	status line of current window
 StatusLineNC	status lines of not-current windows
 		Note: if this is equal to "StatusLine" Vim will use "^^^" in
 		the status line of the current window.
+							*hl-StatusLineTerm*
+StatusLineTerm	status line of current window, if it is a |terminal| window.
+							*hl-StatusLineTermNC*
+StatusLineTermNC   status lines of not-current windows that is a |terminal|
+		window.
 							*hl-TabLine*
 TabLine		tab pages line, not active tab page label
 							*hl-TabLineFill*
@@ -5249,4 +5302,4 @@ literal text specify the size of that text (in bytes):
 "<\@1<=span"	Matches the same, but only tries one byte before "span".
 
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

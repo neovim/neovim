@@ -1,8 +1,10 @@
 " Vim filetype plugin file
 " Language:	xml
-" Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
-" Last Changed: 20 Jan 2009
-" URL:		http://dwsharp.users.sourceforge.net/vim/ftplugin
+" Maintainer:	Christian Brabandt <cb@256bit.org>
+" Last Changed: May 08th, 2018
+" Repository: https://github.com/chrisbra/vim-xml-ftplugin
+" Previous Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+"          URL:		      http://dwsharp.users.sourceforge.net/vim/ftplugin
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -10,16 +12,16 @@ let b:did_ftplugin = 1
 " Make sure the continuation lines below do not cause problems in
 " compatibility mode.
 let s:save_cpo = &cpo
-set cpo-=C
+set cpo&vim
 
 setlocal commentstring=<!--%s-->
-setlocal comments=s:<!--,m:\ \ \ \ \ ,e:-->
+" Remove the middlepart from the comments section, as this causes problems:
+" https://groups.google.com/d/msg/vim_dev/x4GT-nqa0Kg/jvtRnEbtAnMJ
+setlocal comments=s:<!--,e:-->
 
 setlocal formatoptions-=t
-if !exists("g:ft_xml_autocomment") || (g:ft_xml_autocomment == 1)
-    setlocal formatoptions+=croql
-endif
-
+setlocal formatoptions+=croql
+setlocal formatexpr=xmlformat#Format()
 
 " XML:  thanks to Johannes Zellner and Akbar Ibrahim
 " - case sensitive
@@ -39,7 +41,6 @@ if exists("loaded_matchit")
      \  '<\@<=\%([^ \t>/]\+\)\%(\s\+[^/>]*\|$\):/>'
 endif
 
-"
 " For Omni completion, by Mikolaj Machowski.
 if exists('&ofu')
   setlocal ofu=xmlcomplete#CompleteTags
@@ -47,17 +48,17 @@ endif
 command! -nargs=+ XMLns call xmlcomplete#CreateConnection(<f-args>)
 command! -nargs=? XMLent call xmlcomplete#CreateEntConnection(<f-args>)
 
-
 " Change the :browse e filter to primarily show xml-related files.
-if has("gui_win32")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let  b:browsefilter="XML Files (*.xml)\t*.xml\n" .
-		\	"DTD Files (*.dtd)\t*.dtd\n" .
-		\	"All Files (*.*)\t*.*\n"
+    \ "DTD Files (*.dtd)\t*.dtd\n" .
+    \ "XSD Files (*.xsd)\t*.xsd\n" .
+    \ "All Files (*.*)\t*.*\n"
 endif
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions<" .
-		\     " | unlet! b:match_ignorecase b:match_words b:browsefilter"
+let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions< formatexpr< " .
+    \     " | unlet! b:match_ignorecase b:match_words b:browsefilter"
 
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo

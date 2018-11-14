@@ -891,7 +891,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0) {
+    if (len == 0 || len == EOF) {
       break;
     }
     int what = undo_read_byte(bi);
@@ -2503,8 +2503,8 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7ld  ",
-          uhp->uh_seq, changes);
+      vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ",
+                   uhp->uh_seq, changes);
       u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
           uhp->uh_time);
       if (uhp->uh_save_nr > 0) {

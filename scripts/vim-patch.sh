@@ -93,7 +93,7 @@ get_vim_sources() {
       exit 1
     fi
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
-    git pull &&
+    git pull --ff &&
       msg_ok "Updated Vim sources." ||
       msg_err "Could not update Vim sources; ignoring error."
   fi
@@ -149,15 +149,15 @@ preprocess_patch() {
   local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
-  # Remove channel.txt, netbeans.txt, os_*.txt, term.txt, todo.txt, version*.txt, tags
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|tags'
+  # Remove unwanted Vim doc files.
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|sponsor\.txt\|intro\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove some testdir/Make_*.mak files
-  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
+  # Remove screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
@@ -178,6 +178,16 @@ preprocess_patch() {
 
   # Rename path to matchit plugin.
   LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/\(plugin/matchit.vim\)@\1/\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/doc/\(matchit.txt\)@\1/doc/pi_\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename test_urls.vim to check_urls.vim
+  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls.vim\)@\1/scripts/check\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename path to check_colors.vim
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/colors/\(tools/check_colors.vim\)@\1/\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 

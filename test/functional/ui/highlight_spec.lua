@@ -122,7 +122,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     -- navigate to verify that the attributes are properly moved
     feed('<c-w>j')
@@ -140,7 +140,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {1:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     -- note that when moving to a window with small width nvim will increase
     -- the width of the new active window at the expense of a inactive window
@@ -160,7 +160,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<c-w>l')
     screen:expect([[
@@ -177,7 +177,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<c-w>h<c-w>h')
     screen:expect([[
@@ -194,7 +194,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {2:[No Name]                                            }|
-                                                           |
+      :vsp                                                 |
     ]])
   end)
 
@@ -677,6 +677,7 @@ end)
 
 describe('CursorLine highlight', function()
   before_each(clear)
+
   it('overridden by Error, ColorColumn if fg not set', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
@@ -690,9 +691,9 @@ describe('CursorLine highlight', function()
     })
     screen:attach()
 
-    feed_command('filetype on')
-    feed_command('syntax on')
-    feed_command('set cursorline ft=json')
+    command('filetype on')
+    command('syntax on')
+    command('set cursorline ft=json')
     feed('i{<cr>"a" : abc // 10;<cr>}<cr><esc>')
     screen:expect([[
       {1:{}                                                 |
@@ -702,13 +703,69 @@ describe('CursorLine highlight', function()
                                                         |
     ]])
 
-    feed_command('set colorcolumn=3')
+    command('set colorcolumn=3')
     feed('i  <esc>')
     screen:expect([[
       {1:{} {7: }                                               |
       "{2:a}{7:"} : {3:abc} {3:// 10;}                                  |
       {1:}} {7: }                                               |
       {5: ^ }{7: }{5:                                               }|
+                                                        |
+    ]])
+  end)
+
+  it('with split-windows in diff-mode', function()
+    local screen = Screen.new(50,12)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [2] = {bold = true, background = Screen.colors.Red},
+      [3] = {background = Screen.colors.LightMagenta},
+      [4] = {reverse = true},
+      [5] = {background = Screen.colors.LightBlue},
+      [6] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+      [7] = {background = Screen.colors.Red, foreground = Screen.colors.White},
+      [8] = {bold = true, foreground = Screen.colors.Blue1},
+      [9] = {bold = true, reverse = true},
+      [10] = {bold = true},
+    })
+    screen:attach()
+
+    command('hi CursorLine ctermbg=red ctermfg=white guibg=red guifg=white')
+    command('set cursorline')
+    feed('iline 1 some text<cr>line 2 more text<cr>extra line!<cr>extra line!<cr>last line ...<cr>')
+    feed('<esc>gg')
+    command('vsplit')
+    command('enew')
+    feed('iline 1 some text<cr>line 2 moRe text!<cr>extra line!<cr>extra line!<cr>extra line!<cr>last line ...<cr>')
+    feed('<esc>gg')
+    command('windo diffthis')
+    screen:expect([[
+      {1:  }{7:line 1 some text       }{4:│}{1:  }{7:^line 1 some text      }|
+      {1:  }{3:line 2 mo}{2:Re text!}{3:      }{4:│}{1:  }{3:line 2 mo}{2:re text}{3:      }|
+      {1:  }{5:extra line!            }{4:│}{1:  }{6:----------------------}|
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }last line ...          {4:│}{1:  }last line ...         |
+      {1:  }                       {4:│}{1:  }                      |
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {4:[No Name] [+]             }{9:[No Name] [+]           }|
+                                                        |
+    ]])
+    feed('jjjjj')
+    screen:expect([[
+      {1:  }line 1 some text       {4:│}{1:  }line 1 some text      |
+      {1:  }{3:line 2 mo}{2:Re text!}{3:      }{4:│}{1:  }{3:line 2 mo}{2:re text}{3:      }|
+      {1:  }{5:extra line!            }{4:│}{1:  }{6:----------------------}|
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }last line ...          {4:│}{1:  }last line ...         |
+      {1:  }{7:                       }{4:│}{1:  }{7:^                      }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
     ]])
   end)
@@ -870,7 +927,7 @@ describe("'winhighlight' highlight", function()
     eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy',
        exc_exec("set winhl=xxx:yyy"))
     eq('Normal:Background1', eval('&winhl'))
-    screen:expect([[
+    screen:expect{grid=[[
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
@@ -879,7 +936,7 @@ describe("'winhighlight' highlight", function()
       {2:~                   }|
       {2:~                   }|
                           |
-    ]])
+    ]], unchanged=true}
   end)
 
 

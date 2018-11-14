@@ -227,14 +227,15 @@ au BufNewFile,BufRead *.bl			setf blank
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " Bazel (http://bazel.io)
-autocmd BufRead,BufNewFile *.bzl,WORKSPACE 	setf bzl
+autocmd BufRead,BufNewFile *.bzl,WORKSPACE,BUILD.bazel 	setf bzl
 if has("fname_case")
   " There is another check for BUILD further below.
-  autocmd BufRead,BufNewFile BUILD		setf bzl
+  autocmd BufRead,BufNewFile BUILD			setf bzl
 endif
 
 " C or lpc
 au BufNewFile,BufRead *.c			call dist#ft#FTlpc()
+au BufNewFile,BufRead *.lpc,*.ulpc		setf lpc
 
 " Calendar
 au BufNewFile,BufRead calendar			setf calendar
@@ -374,7 +375,7 @@ au BufNewFile,BufRead *.cfm,*.cfi,*.cfc		setf cf
 au BufNewFile,BufRead configure.in,configure.ac setf config
 
 " CUDA  Cumpute Unified Device Architecture
-au BufNewFile,BufRead *.cu			setf cuda
+au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
 " Dockerfile
 au BufNewFile,BufRead Dockerfile,*.Dockerfile	setf dockerfile
@@ -422,6 +423,13 @@ au BufNewFile,BufRead */debian/control		setf debcontrol
 au BufNewFile,BufRead control
 	\  if getline(1) =~ '^Source:'
 	\|   setf debcontrol
+	\| endif
+
+" Debian Copyright
+au BufNewFile,BufRead */debian/copyright	setf debcopyright
+au BufNewFile,BufRead copyright
+	\  if getline(1) =~ '^Format:'
+	\|   setf debcopyright
 	\| endif
 
 " Debian Sources.list
@@ -574,7 +582,7 @@ au BufNewFile,BufRead auto.master		setf conf
 au BufNewFile,BufRead *.mas,*.master		setf master
 
 " Forth
-au BufNewFile,BufRead *.fs,*.ft			setf forth
+au BufNewFile,BufRead *.fs,*.ft,*.fth		setf forth
 
 " Reva Forth
 au BufNewFile,BufRead *.frt			setf reva
@@ -601,12 +609,12 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
 " Git
-au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG setf gitcommit
-au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
-au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
-au BufNewFile,BufRead */.config/git/config	setf gitconfig
+au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG 	setf gitcommit
+au BufNewFile,BufRead *.git/config,.gitconfig,/etc/gitconfig 	setf gitconfig
+au BufNewFile,BufRead */.config/git/config			setf gitconfig
+au BufNewFile,BufRead .gitmodules,*.git/modules/*/config	setf gitconfig
 if !empty($XDG_CONFIG_HOME)
-  au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config	setf gitconfig
+  au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config		setf gitconfig
 endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
 au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
@@ -1117,7 +1125,7 @@ au BufNewFile,BufRead *.dpr			setf pascal
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
 
-" PCMK - HAE - crm configure edit 
+" PCMK - HAE - crm configure edit
 au BufNewFile,BufRead *.pcmk 			setf pcmk
 
 " Perl
@@ -1148,8 +1156,9 @@ au BufNewFile,BufRead *.pod6			setf pod6
 " Also .ctp for Cake template file
 au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp	setf php
 
-" Pike
-au BufNewFile,BufRead *.pike,*.lpc,*.ulpc,*.pmod setf pike
+" Pike and Cmod
+au BufNewFile,BufRead *.pike,*.pmod		setf pike
+au BufNewFile,BufRead *.cmod			setf cmod
 
 " Pinfo config
 au BufNewFile,BufRead */etc/pinforc,*/.pinforc	setf pinfo
@@ -1250,9 +1259,9 @@ au BufNewFile,BufRead */etc/protocols		setf protocols
 " Pyrex
 au BufNewFile,BufRead *.pyx,*.pxd		setf pyrex
 
-" Python, Python Shell Startup Files
+" Python, Python Shell Startup and Python Stub Files
 " Quixote (Python-based web framework)
-au BufNewFile,BufRead *.py,*.pyw,.pythonstartup,.pythonrc,*.ptl  setf python
+au BufNewFile,BufRead *.py,*.pyw,.pythonstartup,.pythonrc,*.ptl,*.pyi  setf python
 
 " Radiance
 au BufNewFile,BufRead *.rad,*.mat		setf radiance
@@ -1401,8 +1410,8 @@ au BufNewFile,BufRead *.sdl,*.pr		setf sdl
 " sed
 au BufNewFile,BufRead *.sed			setf sed
 
-" Sieve (RFC 3028)
-au BufNewFile,BufRead *.siv			setf sieve
+" Sieve (RFC 3028, 5228)
+au BufNewFile,BufRead *.siv,*.sieve		setf sieve
 
 " Sendmail
 au BufNewFile,BufRead sendmail.cf		setf sm
@@ -1449,7 +1458,7 @@ au BufNewFile,BufRead sgml.catalog*		call s:StarSetf('catalog')
 
 " Shell scripts (sh, ksh, bash, bash2, csh); Allow .profile_foo etc.
 " Gentoo ebuilds and Arch Linux PKGBUILDs are actually bash scripts
-au BufNewFile,BufRead .bashrc*,bashrc,bash.bashrc,.bash[_-]profile*,.bash[_-]logout*,.bash[_-]aliases*,*.bash,*/{,.}bash[_-]completion{,.d,.sh}{,/*},*.ebuild,*.eclass,PKGBUILD* call dist#ft#SetFileTypeSH("bash")
+au BufNewFile,BufRead .bashrc*,bashrc,bash.bashrc,.bash[_-]profile*,.bash[_-]logout*,.bash[_-]aliases*,bash-fc[-.]*,*.bash,*/{,.}bash[_-]completion{,.d,.sh}{,/*},*.ebuild,*.eclass,PKGBUILD* call dist#ft#SetFileTypeSH("bash")
 au BufNewFile,BufRead .kshrc*,*.ksh call dist#ft#SetFileTypeSH("ksh")
 au BufNewFile,BufRead */etc/profile,.profile*,*.sh,*.env call dist#ft#SetFileTypeSH(getline(1))
 
@@ -1756,6 +1765,9 @@ au BufNewFile,BufRead *.vroom			setf vroom
 " Webmacro
 au BufNewFile,BufRead *.wm			setf webmacro
 
+" WebAssembly
+au BufNewFile,BufRead *.wast,*.wat		setf wast
+
 " Wget config
 au BufNewFile,BufRead .wgetrc,wgetrc		setf wget
 
@@ -1852,6 +1864,9 @@ au BufNewFile,BufRead */etc/xdg/menus/*.menu	setf xml
 " ATI graphics driver configuration
 au BufNewFile,BufRead fglrxrc			setf xml
 
+" Web Services Description Language (WSDL)
+au BufNewFile,BufRead *.wsdl			setf xml
+
 " XLIFF (XML Localisation Interchange File Format) is also XML
 au BufNewFile,BufRead *.xlf			setf xml
 au BufNewFile,BufRead *.xliff			setf xml
@@ -1879,6 +1894,9 @@ au BufNewFile,BufRead *.y			call dist#ft#FTy()
 
 " Yaml
 au BufNewFile,BufRead *.yaml,*.yml		setf yaml
+
+" Raml
+au BufNewFile,BufRead *.raml			setf raml
 
 " yum conf (close enough to dosini)
 au BufNewFile,BufRead */etc/yum.conf		setf dosini
@@ -1923,6 +1941,9 @@ au StdinReadPost * if !did_filetype() | runtime! scripts.vim | endif
 " script file.
 " Most of these should call s:StarSetf() to avoid names ending in .gz and the
 " like are used.
+
+" More Apache style config files
+au BufNewFile,BufRead */etc/proftpd/*.conf*,*/etc/proftpd/conf.*/*	call s:StarSetf('apachestyle')
 
 " More Apache config files
 au BufNewFile,BufRead access.conf*,apache.conf*,apache2.conf*,httpd.conf*,srm.conf*	call s:StarSetf('apache')

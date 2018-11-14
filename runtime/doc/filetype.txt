@@ -152,8 +152,8 @@ file.  It will be overwritten when installing a new version of Vim.
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
-   means there can be many files.  The advantage is that you can simply drop
-   this file in the right directory to make it work.
+   there can be many files.  The advantage is that you can simply drop this 
+   file in the right directory to make it work.
 							*ftdetect*
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Then create the directory "ftdetect"
@@ -272,6 +272,10 @@ then Vim will load all plugins in these directories and below:
 	/usr/local/share/vim/vim60/plugin/  ~
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
+
+Note that when using a plugin manager or |packages| many directories will be
+added to 'runtimepath'.  These plugins each require their own directory, don't
+put them directly in ~/.vim/plugin.
 
 What if it looks like your plugin is not being loaded?  You can find out what
 happens when Vim starts up by using the |-V| argument: >
@@ -512,7 +516,7 @@ View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
 To use Nvim as a manpager: >
-     export MANPAGER="nvim -c 'set ft=man' -"
+     export MANPAGER='nvim +Man!'
 
 man.vim will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
@@ -522,13 +526,14 @@ The case sensitivity of completion is controlled by 'fileignorecase'.
 Commands:
 Man {name}                Display the manpage for {name}.
 Man {sect} {name}         Display the manpage for {name} and section {sect}.
-Man {name}({sect})        Alternate syntax which completes the section.
+Man {name}({sect})        Same as above.
 Man {sect} {name}({sect}) Used during completion to show the real section of
                           when the provided section is a prefix, e.g. 1m vs 1.
-Man {path}                Open the manpage specified by path. Prepend "./" if
-                          page is in the current directory.
+Man {path}                Open the manpage at {path}. Prepend "./" if {path}
+                          is relative to the current directory.
 Man                       Open the manpage for the <cWORD> (man buffers)
                           or <cword> (non-man buffers) under the cursor.
+Man!                      Display the current buffer contents as a manpage.
 
 |:Man| accepts command modifiers. For example, to use a vertical split: >
      :vertical Man printf
@@ -568,9 +573,29 @@ By default the following options are set, in accordance with PEP8: >
 
 	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
 
-To disable this behaviour, set the following variable in your vimrc: >
-	
+To disable this behavior, set the following variable in your vimrc: >
+
 	let g:python_recommended_style = 0
+
+
+R MARKDOWN						*ft-rmd-plugin*
+
+By default ftplugin/html.vim is not sourced. If you want it sourced, add to
+your |vimrc|: >
+	let rmd_include_html = 1
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for Markdown code. If you prefer that 'formatexpr' is not set, add to your
+|vimrc|: >
+	let rmd_dynamic_comments = 0
+
+
+R RESTRUCTURED TEXT					*ft-rrst-plugin*
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for ReStructured text. If you prefer that 'formatexpr' is not set, add to
+your |vimrc|: >
+	let rrst_dynamic_comments = 0
 
 
 RPM SPEC						*ft-spec-plugin*
@@ -749,4 +774,23 @@ You can change the default by defining the variable g:tex_flavor to the format
 Currently no other formats are recognized.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+VIM							*ft-vim-plugin*
+
+The Vim filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].  Move around comments with ]" and [".
+
+The mappings can be disabled with: >
+	let g:no_vim_maps = 1
+
+
+ZIMBU							*ft-zimbu-plugin*
+
+The Zimbu filetype plugin defines mappings to move to the start and end of
+functions with [[ and ]].
+
+The mappings can be disabled with: >
+	let g:no_zimbu_maps = 1
+<
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

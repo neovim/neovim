@@ -468,7 +468,10 @@ static void insert_enter(InsertState *s)
   }
 
   foldUpdateAfterInsert();
-  if (s->cmdchar != 'r' && s->cmdchar != 'v') {
+  // When CTRL-C was typed got_int will be set, with the result
+  // that the autocommands won't be executed. When mapped got_int
+  // is not set, but let's keep the behavior the same.
+  if (s->cmdchar != 'r' && s->cmdchar != 'v' && s->c != Ctrl_C) {
     ins_apply_autocmds(EVENT_INSERTLEAVE);
   }
   did_cursorhold = false;
@@ -1096,7 +1099,7 @@ static int insert_handle_key(InsertState *s)
       cmdwin_result = CAR;
       return 0;
     }
-    if (ins_eol(s->c) && !p_im) {
+    if (!ins_eol(s->c) && !p_im) {
       return 0;  // out of memory
     }
     auto_format(false, false);
@@ -8356,14 +8359,14 @@ static bool ins_tab(void)
 
 /// Handle CR or NL in insert mode.
 ///
-/// @return true when it can't undo.
+/// @return false when it can't undo.
 static bool ins_eol(int c)
 {
   if (echeck_abbr(c + ABBR_OFF)) {
-    return false;
+    return true;
   }
   if (stop_arrow() == FAIL) {
-    return true;
+    return false;
   }
   undisplay_dollar();
 
@@ -8405,7 +8408,7 @@ static bool ins_eol(int c)
   // When inserting a line the cursor line must never be in a closed fold.
   foldOpenCursor();
 
-  return !i;
+  return i;
 }
 
 /*

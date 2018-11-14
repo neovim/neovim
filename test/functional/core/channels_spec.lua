@@ -192,7 +192,6 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode', function()
-    if helpers.pending_win32(pending) then return end
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -225,7 +224,6 @@ describe('channels', function()
   end)
 
   it('can use buffered output mode with no stream callback', function()
-    if helpers.pending_win32(pending) then return end
     source([[
       function! OnEvent(id, data, event) dict
         call rpcnotify(1, a:event, a:id, a:data, self.stdout)

@@ -22,26 +22,14 @@ function! s:is_minimum_version(version, min_major, min_minor) abort
     \         && str2nr(v_list[1]) >= str2nr(a:min_minor)))
 endfunction
 
-function! s:find_node_client(package_manager) abort
-  if !executable(a:package_manager)
-    return ''
-  endif
-  let is_yarn = a:package_manager ==# 'yarn'
-  let cmd = is_yarn ? 'yarn global dir' : 'npm --loglevel silent root -g'
-  let global_modules_dir = get(split(system(cmd), "\n"), 0, '')
-  if v:shell_error || !isdirectory(global_modules_dir)
-    return ''
-  endif
-  " `yarn global dir` returns the parent of '/node_modules'.
-  let global_modules_dir = is_yarn ? global_modules_dir . '/node_modules' : global_modules_dir
-  if !isdirectory(global_modules_dir)
-    return ''
-  endif
-  let entry_point = global_modules_dir . '/neovim/bin/cli.js'
-  if !filereadable(entry_point)
-    return ''
-  endif
-  return entry_point
+let s:NodeHandler = {
+\ 'stdout_buffered': v:true,
+\ 'result': ''
+\ }
+function! s:NodeHandler.on_exit(job_id, data, event) abort
+  let bin_dir = join(get(self, 'stdout', []), '')
+  let entry_point = bin_dir . self.entry_point
+  let self.result = filereadable(entry_point) ? entry_point : ''
 endfunction
 
 " Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
@@ -66,9 +54,46 @@ function! provider#node#Detect() abort
   if !s:is_minimum_version(v:null, 6, 0)
     return ''
   endif
-  let entry_point = s:find_node_client('npm')
-  let entry_point = !empty(entry_point) ? entry_point : s:find_node_client('yarn')
-  return entry_point
+
+  let npm_opts = {}
+  if executable('npm')
+    let npm_opts = deepcopy(s:NodeHandler)
+    let npm_opts.entry_point = '/neovim/bin/cli.js'
+    let npm_opts.job_id = jobstart('npm --loglevel silent root -g', npm_opts)
+  endif
+
+  let yarn_opts = {}
+  if executable('yarn')
+    let yarn_opts = deepcopy(s:NodeHandler)
+    let yarn_opts.entry_point = '/node_modules/neovim/bin/cli.js'
+    " `yarn global dir` is slow (> 250ms), try the default path first
+    " XXX: The following code is not portable
+    " https://github.com/yarnpkg/yarn/issues/2049#issuecomment-263183768
+    if has('unix')
+      let yarn_default_path = $HOME . '/.config/yarn/global/' . yarn_opts.entry_point
+      if filereadable(yarn_default_path)
+        return yarn_default_path
+      endif
+    endif
+    let yarn_opts.job_id = jobstart('yarn global dir', yarn_opts)
+  endif
+
+  " npm returns the directory faster, so let's check that first
+  if !empty(npm_opts)
+    let result = jobwait([npm_opts.job_id])
+    if result[0] == 0 && npm_opts.result != ''
+      return npm_opts.result
+    endif
+  endif
+
+  if !empty(yarn_opts)
+    let result = jobwait([yarn_opts.job_id])
+    if result[0] == 0 && yarn_opts.result != ''
+      return yarn_opts.result
+    endif
+  endif
+
+  return ''
 endfunction
 
 function! provider#node#Prog() abort

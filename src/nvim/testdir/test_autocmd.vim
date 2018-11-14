@@ -251,6 +251,7 @@ func Test_augroup_warning()
 endfunc
 
 func Test_BufReadCmdHelp()
+  helptags ALL
   " This used to cause access to free memory
   au BufReadCmd * e +h
   help

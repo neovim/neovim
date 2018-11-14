@@ -27,6 +27,7 @@ seen):
 
 							*CTRL-E*
 CTRL-E			Scroll window [count] lines downwards in the buffer.
+			The text moves upwards on the screen.
 			Mnemonic: Extra lines.
 
 							*CTRL-D*
@@ -65,6 +66,7 @@ seen):
 
 							*CTRL-Y*
 CTRL-Y			Scroll window [count] lines upwards in the buffer.
+			The text moves downwards on the screen.
 			Note: When using the MS-Windows key bindings CTRL-Y is
 			remapped to redo.
 
@@ -248,4 +250,4 @@ the scroll wheel move one line or half a page in Normal mode: >
    :map <S-ScrollWheelDown> <C-D>
 You can also use Alt and Ctrl modifiers.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

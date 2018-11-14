@@ -258,6 +258,14 @@ int main(int argc, char **argv)
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
+
+  if (embedded_mode) {
+    const char *err;
+    if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
+      abort();
+    }
+  }
+
   server_init(params.listen_addr);
 
   if (GARGCOUNT > 0) {
@@ -832,7 +840,7 @@ static void command_line_scan(mparm_T *parmp)
             }
 
             if (p == NULL) {
-              emsgf(_(e_outofmem));
+              EMSG(_(e_outofmem));
             }
 
             Object md = DICTIONARY_OBJ(api_metadata());
@@ -848,10 +856,6 @@ static void command_line_scan(mparm_T *parmp)
             headless_mode = true;
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
-            const char *err;
-            if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
-              abort();
-            }
           } else if (STRNICMP(argv[0] + argv_idx, "listen", 6) == 0) {
             want_argument = true;
             argv_idx += 6;
@@ -1624,9 +1628,10 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
         win_close(curwin, true);
         advance = false;
       }
-      if (arg_idx == GARGCOUNT - 1)
-        arg_had_last = TRUE;
-      ++arg_idx;
+      if (arg_idx == GARGCOUNT - 1) {
+        arg_had_last = true;
+      }
+      arg_idx++;
     }
     os_breakcheck();
     if (got_int) {

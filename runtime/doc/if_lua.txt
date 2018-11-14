@@ -229,8 +229,7 @@ shared between command calls. All Lua default libraries are available. In
 addition, Lua "print" function has its output redirected to the Nvim message
 area, with arguments separated by a white space instead of a tab.
 
-Lua uses the "vim" module (see |lua-vim|) to issue commands to Nvim
-and manage buffers (|lua-buffer|) and windows (|lua-window|). However,
+Lua uses the "vim" module (see |lua-vim|) to issue commands to Nvim. However,
 procedures that alter buffer content, open new buffers, and change cursor
 position are restricted when the command is executed in the |sandbox|.
 
@@ -261,7 +260,7 @@ vim.stricmp(a, b)					*lua-vim.stricmp*
 	greater then b or a is lesser then b respectively.
 
 vim.type_idx						*lua-vim.type_idx*
-	Type index for use in |lua-special-tables|.  Specifying one of the 
+	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |lua-vim.types| allows typing the empty table (it is 
 	unclear whether empty lua table represents empty list or empty array) 
 	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 

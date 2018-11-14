@@ -42,8 +42,9 @@ Example: >
 	endfunction
 
 To see what version of Python you have: >
-	:python import sys
 	:python print(sys.version)
+
+There is no need to import sys, it's done by default.
 
 Note: Python is very sensitive to the indenting.  Make sure the "class" line
 and "EOF" do not have any indent.
@@ -63,6 +64,18 @@ Examples:
 	:pydo return "%s\t%d" % (line[::-1], len(line))
 	:pydo if line: return "%4d: %s" % (linenr, line)
 <
+One can use `:pydo` in possible conjunction with `:py` to filter a range using
+python. For example: >
+
+	:py3 << EOF
+	needle = vim.eval('@a')
+	replacement = vim.eval('@b')
+
+	def py_vim_string_replace(str):
+		return str.replace(needle, replacement)
+	EOF
+	:'<,'>py3do return py_vim_string_replace(line)
+<
 							*:pyfile* *:pyf*
 :[range]pyf[ile] {file}
 			Execute the Python script in {file}.  The whole
@@ -79,7 +92,6 @@ Python commands cannot be used in the |sandbox|.
 
 To pass arguments you need to set sys.argv[] explicitly.  Example: >
 
-	:python import sys
 	:python sys.argv = ["foo", "bar"]
 	:pyfile myscript.py
 
@@ -118,7 +130,7 @@ Instead, put the Python command in a function and call that function:
 Note that "EOF" must be at the start of the line.
 
 ==============================================================================
-2. The vim module					*python-vim*
+2. The vim module					*python-vim* *python2*
 
 Python code gets all of its access to vim (with one exception - see
 |python-output| below) via the "vim" module.  The vim module implements two
@@ -705,12 +717,31 @@ Raising SystemExit exception in python isn't endorsed way to quit vim, use: >
 You can test what Python version is available with: >
 	if has('python')
 	  echo 'there is Python 2.x'
-  	elseif has('python3')
+	endif
+  	if has('python3')
 	  echo 'there is Python 3.x'
 	endif
 
 Note however, that if Python 2 and 3 are both available, but not loaded,
 these has() calls will try to load them.
 
+To avoid loading the dynamic library, only check if Vim was compiled with
+python support: >
+	if has('python_compiled')
+	  echo 'compiled with Python 2.x support'
+	  if has('python_dynamic')
+	    echo 'Python 2.x dynamically loaded'
+	  endif
+	endif
+  	if has('python3_compiled')
+	  echo 'compiled with Python 3.x support'
+	  if has('python3_dynamic')
+	    echo 'Python 3.x dynamically loaded'
+	  endif
+	endif
+
+This also tells you whether Python is dynamically loaded, which will fail if
+the runtime library cannot be found.
+
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

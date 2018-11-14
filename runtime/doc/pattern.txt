@@ -282,6 +282,14 @@ the "#" is under your left hand middle finger (search to the left and up) and
 the "*" is under your right hand middle finger (search to the right and down).
 (this depends on your keyboard layout though).
 
+								*E956*
+In very rare cases a regular expression is used recursively.  This can happen
+when executing a pattern takes a long time and when checkig for messages on
+channels a callback is invoked that also uses a pattern or an autocommand is
+triggered.  In most cases this should be fine, but if a pattern is in use when
+it's used again it fails.  Usually this means there is something wrong with
+the pattern.
+
 ==============================================================================
 2. The definition of a pattern		*search-pattern* *pattern* *[pattern]*
 					*regular-expression* *regexp* *Pattern*
@@ -888,7 +896,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	becomes invalid.  Vim doesn't automatically update the matches.
 	Similar to moving the cursor for "\%#" |/\%#|.
 
-						*/\%l* */\%>l* */\%<l*
+						*/\%l* */\%>l* */\%<l* *E951*
 \%23l	Matches in a specific line.
 \%<23l	Matches above a specific line (lower line number).
 \%>23l	Matches below a specific line (higher line number).
@@ -1148,7 +1156,8 @@ x	A single character, with no special meaning, matches itself
 	- Matching with a collection can be slow, because each character in
 	  the text has to be compared with each character in the collection.
 	  Use one of the other atoms above when possible.  Example: "\d" is
-	  much faster than "[0-9]" and matches the same characters.
+	  much faster than "[0-9]" and matches the same characters.  However,
+	  the new |NFA| regexp engine deals with this better than the old one.
 
 						*/\%[]* *E69* *E70* *E369*
 \%[]	A sequence of optionally matched atoms.  This always matches.
@@ -1390,4 +1399,4 @@ Finally, these constructs are unique to Perl:
 		":2match" for another plugin.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

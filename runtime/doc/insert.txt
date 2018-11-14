@@ -410,12 +410,12 @@ An example for using CTRL-G U: >
 	inoremap ( ()<C-G>U<Left>
 
 This makes it possible to use the cursor keys in Insert mode, without breaking
-the undo sequence and therefore using |.| (redo) will work as expected. 
-Also entering a text like (with the "(" mapping from above): >
+the undo sequence and therefore using |.| (redo) will work as expected.
+Also entering a text like (with the "(" mapping from above):
 
    Lorem ipsum (dolor
 
-will be repeatable by the |.|to the expected
+will be repeatable by using |.| to the expected
 
    Lorem ipsum (dolor)
 
@@ -1026,13 +1026,13 @@ The function must return the column where the completion starts.  It must be a
 number between zero and the cursor column "col('.')".  This involves looking
 at the characters just before the cursor and including those characters that
 could be part of the completed item.  The text between this column and the
-cursor column will be replaced with the matches.
+cursor column will be replaced with the matches.  If the returned value is
+larger than the cursor column, the cursor column is used.
 
-Special return values:
-   -1 If no completion can be done, the completion will be cancelled with an
-      error message.
-   -2 To cancel silently and stay in completion mode.
-   -3 To cancel silently and leave completion mode.
+Negative return values:
+   -2 	To cancel silently and stay in completion mode.
+   -3 	To cancel silently and leave completion mode.
+   Another negative value: completion starts at the cursor column
 
 On the second invocation the arguments are:
    a:findstart  0
@@ -1275,7 +1275,8 @@ it here: http://ctags.sourceforge.net/  Version 5.6 or later is recommended.
 For version 5.5.4 you should add a patch that adds the "typename:" field:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 A compiled .exe for MS-Windows can be found at:
-	http://georgevreilly.com/vim/ctags.html
+	http://ctags.sourceforge.net/
+	https://github.com/universal-ctags/ctags-win32
 
 If you want to complete system functions you can do something like this.  Use
 ctags to generate a tags file for all the system header files: >
@@ -1507,15 +1508,15 @@ that begin with the filetype, "php", in this case.  For example these syntax
 groups are included by default with the PHP: phpEnvVar, phpIntVar,
 phpFunctions.
 
-If you wish non-filetype syntax items to also be included, you can use a 
-regular expression syntax (added in version 13.0 of autoload\syntaxcomplete.vim)
-to add items.  Looking at the output from ":syntax list" while editing a PHP file 
-I can see some of these entries: >
+If you wish non-filetype syntax items to also be included, you can use a
+regular expression syntax (added in version 13.0 of
+autoload/syntaxcomplete.vim) to add items.  Looking at the output from
+":syntax list" while editing a PHP file I can see some of these entries: >
     htmlArg,htmlTag,htmlTagName,javaScriptStatement,javaScriptGlobalObjects
 
 To pick up any JavaScript and HTML keyword syntax groups while editing a PHP
-file, you can use 3 different regexs, one for each language.  Or you can 
-simply restrict the include groups to a particular value, without using 
+file, you can use 3 different regexs, one for each language.  Or you can
+simply restrict the include groups to a particular value, without using
 a regex string: >
     let g:omni_syntax_group_include_php = 'php\w\+,javaScript\w\+,html\w\+'
     let g:omni_syntax_group_include_php = 'phpFunctions,phpMethods'
@@ -1528,9 +1529,9 @@ highlight.  These items will be available within the omni completion list.
 
 Some people may find this list unwieldy or are only interested in certain
 items.  There are two ways to prune this list (if necessary).  If you find
-certain syntax groups you do not wish displayed you can use two different 
-methods to identify these groups.  The first specifically lists the syntax 
-groups by name.  The second uses a regular expression to identify both 
+certain syntax groups you do not wish displayed you can use two different
+methods to identify these groups.  The first specifically lists the syntax
+groups by name.  The second uses a regular expression to identify both
 syntax groups.  Simply add one the following to your vimrc: >
     let g:omni_syntax_group_exclude_php = 'phpCoreConstant,phpConstant'
     let g:omni_syntax_group_exclude_php = 'php\w*Constant'
@@ -1553,22 +1554,22 @@ vimrc: >
 
 For plugin developers, the plugin exposes a public function OmniSyntaxList.
 This function can be used to request a List of syntax items.  When editing a
-SQL file (:e syntax.sql) you can use the ":syntax list" command to see the 
+SQL file (:e syntax.sql) you can use the ":syntax list" command to see the
 various groups and syntax items.  For example: >
-    syntax list 
+    syntax list
 
-Yields data similar to this: >
-    sqlOperator    xxx some prior all like and any escape exists in is not 
-                       or intersect minus between distinct
-                       links to Operator
-    sqlType        xxx varbit varchar nvarchar bigint int uniqueidentifier 
-                       date money long tinyint unsigned xml text smalldate 
-                       double datetime nchar smallint numeric time bit char 
-                       varbinary binary smallmoney
-                       image float integer timestamp real decimal
+Yields data similar to this:
+    sqlOperator    xxx some prior all like and any escape exists in is not ~
+                       or intersect minus between distinct ~
+                       links to Operator ~
+    sqlType        xxx varbit varchar nvarchar bigint int uniqueidentifier ~
+                       date money long tinyint unsigned xml text smalldate ~
+                       double datetime nchar smallint numeric time bit char ~
+                       varbinary binary smallmoney ~
+                       image float integer timestamp real decimal ~
 
 There are two syntax groups listed here: sqlOperator and sqlType.  To retrieve
-a List of syntax items you can call OmniSyntaxList a number of different 
+a List of syntax items you can call OmniSyntaxList a number of different
 ways.  To retrieve all syntax items regardless of syntax group:  >
     echo OmniSyntaxList( [] )
 
@@ -1585,7 +1586,6 @@ From within a plugin, you would typically assign the output to a List: >
     let myKeywords = []
     let myKeywords = OmniSyntaxList( ['sqlKeyword'] )
 
-    
 
 SQL							*ft-sql-omni*
 
@@ -1972,4 +1972,4 @@ self explanatory.  Using the long or the short version depends on the
 	[READ ERRORS]			not all of the file could be read
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

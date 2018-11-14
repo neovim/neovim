@@ -68,9 +68,9 @@ foreach(DF ${DOCFILES})
 endforeach()
 
 add_custom_target(helptags
-  COMMAND ${CMAKE_COMMAND} -E remove ${GENERATED_RUNTIME_DIR}/doc/*
+  COMMAND ${CMAKE_COMMAND} -E remove doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_SOURCE_DIR}/runtime/doc ${GENERATED_RUNTIME_DIR}/doc
+    ${PROJECT_SOURCE_DIR}/runtime/doc doc
   COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
     -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
   DEPENDS
@@ -87,7 +87,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
 add_custom_target(doc_html
   COMMAND make html
   DEPENDS
-    ${GENERATED_HELP_TAGS}
+    helptags
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 

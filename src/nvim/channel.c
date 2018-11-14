@@ -284,6 +284,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            uint16_t pty_width, uint16_t pty_height,
                            char *term_name, varnumber_T *status_out)
 {
+  assert(cwd == NULL || os_isdir_executable(cwd));
+
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_stdout = on_stdout;
   chan->on_stderr = on_stderr;
@@ -605,12 +607,15 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   }
 
   rbuffer_consumed(buf, count);
-  // if buffer wasn't consumed, a pending callback is stalled. Aggregate the
-  // received data and avoid a "burst" of multiple callbacks.
-  bool buffer_set = reader->buffer.ga_len > 0;
-  ga_concat_len(&reader->buffer, ptr, count);
-  if (!reader->buffered && !buffer_set && callback_reader_set(*reader)) {
-    process_channel_event(chan, &reader->cb, type, reader, 0);
+
+  if (callback_reader_set(*reader) || reader->buffered) {
+    // if buffer wasn't consumed, a pending callback is stalled. Aggregate the
+    // received data and avoid a "burst" of multiple callbacks.
+    bool buffer_set = reader->buffer.ga_len > 0;
+    ga_concat_len(&reader->buffer, ptr, count);
+    if (callback_reader_set(*reader) && !reader->buffered && !buffer_set) {
+      process_channel_event(chan, &reader->cb, type, reader, 0);
+    }
   }
 }
 

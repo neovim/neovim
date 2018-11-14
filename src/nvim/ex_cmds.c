@@ -114,6 +114,7 @@ typedef struct {
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
 {
+  char_u *dig;
   int cc[MAX_MCO];
   int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
@@ -141,10 +142,22 @@ void do_ascii(const exarg_T *const eap)
     }
     char buf2[20];
     buf2[0] = NUL;
-    iobuff_len += (
-        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
-                     _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-                     transchar(c), buf1, buf2, cval, cval, cval));
+
+    dig = get_digraph_for_char(cval);
+    if (dig != NULL) {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
+                         transchar(c), buf1, buf2, cval, cval, cval, dig));
+    } else {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                         transchar(c), buf1, buf2, cval, cval, cval));
+    }
+
     c = cc[ci++];
   }
 
@@ -179,11 +192,25 @@ void do_ascii(const exarg_T *const eap)
       IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
     }
     iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
-    iobuff_len += (
-        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
-                     (c < 0x10000
-                      ? _("> %d, Hex %04x, Octal %o")
-                      : _("> %d, Hex %08x, Octal %o")), c, c, c));
+
+    dig = get_digraph_for_char(c);
+    if (dig != NULL) {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         (c < 0x10000
+                          ? _("> %d, Hex %04x, Oct %o, Digr %s")
+                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
+                         c, c, c, dig));
+    } else {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         (c < 0x10000
+                          ? _("> %d, Hex %04x, Octal %o")
+                          : _("> %d, Hex %08x, Octal %o")),
+                         c, c, c));
+    }
     if (ci == MAX_MCO) {
       break;
     }
@@ -789,8 +816,21 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   linenr_T last_line;  // Last line in file after adding new text
 
   if (dest >= line1 && dest < line2) {
-    EMSG(_("E134: Move lines into themselves"));
+    EMSG(_("E134: Cannot move a range of lines into itself"));
     return FAIL;
+  }
+
+  // Do nothing if we are not actually moving any lines.  This will prevent
+  // the 'modified' flag from being set without cause.
+  if (dest == line1 - 1 || dest == line2) {
+    // Move the cursor as if lines were moved (see below) to be backwards
+    // compatible.
+    if (dest >= line1) {
+      curwin->w_cursor.lnum = dest;
+    } else {
+      curwin->w_cursor.lnum = dest + (line2 - line1) + 1;
+    }
+    return OK;
   }
 
   num_lines = line2 - line1 + 1;
@@ -1353,6 +1393,25 @@ do_shell(
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
 }
 
+#if !defined(UNIX)
+static char *find_pipe(const char *cmd)
+{
+  bool inquote = false;
+
+  for (const char *p = cmd; *p != NUL; p++) {
+    if (!inquote && *p == '|') {
+      return p;
+    }
+    if (*p == '"') {
+      inquote = !inquote;
+    } else if (rem_backslash((const char_u *)p)) {
+      p++;
+    }
+  }
+  return NULL;
+}
+#endif
+
 /// Create a shell command from a command string, input redirection file and
 /// output redirection file.
 ///
@@ -1406,7 +1465,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     // Don't do this when 'shellquote' is not empty, otherwise the
     // redirection would be inside the quotes.
     if (*p_shq == NUL) {
-      char *const p = strchr(buf, '|');
+      char *const p = find_pipe(buf);
       if (p != NULL) {
         *p = NUL;
       }
@@ -1414,7 +1473,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     xstrlcat(buf, " < ", len);
     xstrlcat(buf, (const char *)itmp, len);
     if (*p_shq == NUL) {
-      const char *const p = strchr((const char *)cmd, '|');
+      const char *const p = find_pipe((const char *)cmd);
       if (p != NULL) {
         xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
         xstrlcat(buf, p, len - 1);
@@ -3280,7 +3339,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub_joining_lines(eap, pat, sub, cmd, !preview)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !preview)) {
     return NULL;
   }
 
@@ -5452,13 +5511,14 @@ void ex_helptags(exarg_T *eap)
 
 struct sign
 {
-    sign_T      *sn_next;       /* next sign in list */
-    int         sn_typenr;      /* type number of sign */
-    char_u      *sn_name;       /* name of sign */
-    char_u      *sn_icon;       /* name of pixmap */
-    char_u      *sn_text;       /* text used instead of pixmap */
-    int         sn_line_hl;     /* highlight ID for line */
-    int         sn_text_hl;     /* highlight ID for text */
+    sign_T      *sn_next;       // next sign in list
+    int         sn_typenr;      // type number of sign
+    char_u      *sn_name;       // name of sign
+    char_u      *sn_icon;       // name of pixmap
+    char_u      *sn_text;       // text used instead of pixmap
+    int         sn_line_hl;     // highlight ID for line
+    int         sn_text_hl;     // highlight ID for text
+    int         sn_num_hl;      // highlight ID for line number
 };
 
 static sign_T   *first_sign = NULL;
@@ -5656,6 +5716,9 @@ void ex_sign(exarg_T *eap)
           } else if (STRNCMP(arg, "texthl=", 7) == 0) {
             arg += 7;
             sp->sn_text_hl = syn_check_group(arg, (int)(p - arg));
+          } else if (STRNCMP(arg, "numhl=", 6) == 0) {
+            arg += 6;
+            sp->sn_num_hl = syn_check_group(arg, (int)(p - arg));
           } else {
             EMSG2(_(e_invarg2), arg);
             return;
@@ -5882,6 +5945,16 @@ static void sign_list_defined(sign_T *sp)
       msg_puts(p);
     }
   }
+  if (sp->sn_num_hl > 0) {
+    msg_puts(" numhl=");
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_num_hl - 1, false);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
+      msg_puts(p);
+    }
+  }
 }
 
 /*
@@ -5899,25 +5972,33 @@ static void sign_undefine(sign_T *sp, sign_T *sp_prev)
   xfree(sp);
 }
 
-/*
- * Get highlighting attribute for sign "typenr".
- * If "line" is TRUE: line highl, if FALSE: text highl.
- */
-int sign_get_attr(int typenr, int line)
+/// Gets highlighting attribute for sign "typenr" corresponding to "type".
+int sign_get_attr(int typenr, SignType type)
 {
   sign_T  *sp;
+  int sign_hl = 0;
 
-  for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
     if (sp->sn_typenr == typenr) {
-      if (line) {
-        if (sp->sn_line_hl > 0)
-          return syn_id2attr(sp->sn_line_hl);
-      } else {
-        if (sp->sn_text_hl > 0)
-          return syn_id2attr(sp->sn_text_hl);
+      switch (type) {
+        case SIGN_TEXT:
+          sign_hl = sp->sn_text_hl;
+          break;
+        case SIGN_LINEHL:
+          sign_hl = sp->sn_line_hl;
+          break;
+        case SIGN_NUMHL:
+          sign_hl = sp->sn_num_hl;
+          break;
+        default:
+          abort();
+      }
+      if (sign_hl > 0) {
+        return syn_id2attr(sign_hl);
       }
       break;
     }
+  }
   return 0;
 }
 
@@ -5978,7 +6059,8 @@ char_u * get_sign_name(expand_T *xp, int idx)
     case EXP_SUBCMD:
       return (char_u *)cmds[idx];
     case EXP_DEFINE: {
-        char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", NULL };
+        char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", "numhl=",
+                               NULL };
         return (char_u *)define_arg[idx];
       }
     case EXP_PLACE: {
@@ -6101,7 +6183,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     {
       case SIGNCMD_DEFINE:
         if (STRNCMP(last, "texthl", p - last) == 0
-            || STRNCMP(last, "linehl", p - last) == 0) {
+            || STRNCMP(last, "linehl", p - last) == 0
+            || STRNCMP(last, "numhl", p - last) == 0) {
           xp->xp_context = EXPAND_HIGHLIGHT;
         } else if (STRNCMP(last, "icon", p - last) == 0) {
           xp->xp_context = EXPAND_FILES;

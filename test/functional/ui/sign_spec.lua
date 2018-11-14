@@ -17,6 +17,9 @@ describe('Signs', function()
       [3] = {background = Screen.colors.Gray90},
       [4] = {bold = true, reverse = true},
       [5] = {reverse = true},
+      [6] = {foreground = Screen.colors.Brown},
+      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
+      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     } )
   end)
 
@@ -75,6 +78,36 @@ describe('Signs', function()
         {2:  }                                                   |
         {2:  }{0:~                                                  }|
         {5:[No Name] [+]                                        }|
+                                                             |
+      ]])
+    end)
+
+    it('can combine text, linehl and numhl', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number')
+      command('sign define piet text=>> texthl=Search')
+      command('sign define pietx linehl=ErrorMsg')
+      command('sign define pietxx numhl=Folded')
+      command('sign place 1 line=1 name=piet buffer=1')
+      command('sign place 2 line=2 name=pietx buffer=1')
+      command('sign place 3 line=3 name=pietxx buffer=1')
+      command('sign place 4 line=4 name=piet buffer=1')
+      command('sign place 5 line=4 name=pietx buffer=1')
+      command('sign place 6 line=4 name=pietxx buffer=1')
+      screen:expect([[
+        {1:>>}{6:  1 }a                                              |
+        {2:  }{6:  2 }{8:b                                              }|
+        {2:  }{7:  3 }c                                              |
+        {1:>>}{7:  4 }{8:^                                               }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
                                                              |
       ]])
     end)

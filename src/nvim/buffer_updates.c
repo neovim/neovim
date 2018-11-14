@@ -180,7 +180,7 @@ void buf_updates_send_changes(buf_T *buf,
   // change notifications are so frequent that many dead channels will be
   // cleared up quickly.
   if (badchannelid != 0) {
-    ELOG("Disabling buffer updates for dead channel %llu", badchannelid);
+    ELOG("Disabling buffer updates for dead channel %"PRIu64, badchannelid);
     buf_updates_unregister(buf, badchannelid);
   }
 }

@@ -225,9 +225,9 @@ specify a line offset, this can cause trouble.  For example: >
 	/const/-2
 
 This finds the next word "const" and then moves two lines up.  If you
-use "n" to search again, Vim could start at the current position and find the same
-"const" match.  Then using the offset again, you would be back where you started.
-You would be stuck!
+use "n" to search again, Vim could start at the current position and find the
+same "const" match.  Then using the offset again, you would be back where you
+started.  You would be stuck!
    It could be worse: Suppose there is another match with "const" in the next
 line.  Then repeating the forward search would find this match and move two
 lines up.  Thus you would actually move the cursor back!
@@ -560,4 +560,4 @@ and "\w" for "[0-9A-Za-z_]".
 
 Next chapter: |usr_28.txt|  Folding
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

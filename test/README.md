@@ -64,9 +64,9 @@ To run a *specific* functional test:
 
     TEST_FILE=test/functional/foo.lua make functionaltest
 
-To *repeat* a test many times:
+To *repeat* a test:
 
-    .deps/usr/bin/busted --filter 'foo' --repeat 1000 test/functional/ui/foo_spec.lua
+    .deps/usr/bin/busted --lpath='build/?.lua' --filter 'foo' --repeat 1000 test/functional/ui/foo_spec.lua
 
 ### Filter by tag
 

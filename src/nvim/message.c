@@ -331,6 +331,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
  */
 
 int smsg(char *s, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list arglist;
 
@@ -341,6 +342,7 @@ int smsg(char *s, ...)
 }
 
 int smsg_attr(int attr, char *s, ...)
+  FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
 
@@ -550,7 +552,7 @@ int emsg(const char_u *s_)
     if (p_eb) {
       beep_flush();           // also includes flush_buffers()
     } else {
-      flush_buffers(false);   // flush internal buffers
+      flush_buffers(FLUSH_MINIMAL);  // flush internal buffers
     }
     did_emsg = true;          // flag for DoOneCmd()
   }
@@ -581,6 +583,7 @@ void emsg_invreg(int name)
 
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   bool ret;
 
@@ -644,6 +647,7 @@ static void msg_emsgf_event(void **argv)
 }
 
 void msg_schedule_emsgf(const char *const fmt, ...)
+  FUNC_ATTR_PRINTF(1, 2)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -828,12 +832,11 @@ void msg_end_prompt(void)
   lines_left = -1;
 }
 
-/*
- * wait for the user to hit a key (normally a return)
- * if 'redraw' is TRUE, clear and redraw the screen
- * if 'redraw' is FALSE, just redraw the screen
- * if 'redraw' is -1, don't redraw at all
- */
+/// wait for the user to hit a key (normally a return)
+///
+/// if 'redraw' is true, redraw the entire screen NOT_VALID
+/// if 'redraw' is false, do a normal redraw
+/// if 'redraw' is -1, don't redraw at all
 void wait_return(int redraw)
 {
   int c;
@@ -843,8 +846,9 @@ void wait_return(int redraw)
   int save_Recording;
   FILE        *save_scriptout;
 
-  if (redraw == TRUE)
-    must_redraw = CLEAR;
+  if (redraw == true) {
+    redraw_all_later(NOT_VALID);
+  }
 
   /* If using ":silent cmd", don't wait for a return.  Also don't set
    * need_wait_return to do it later. */
@@ -1471,11 +1475,13 @@ void msg_prt_line(char_u *s, int list)
 
   while (!got_int) {
     if (n_extra > 0) {
-      --n_extra;
-      if (c_extra)
+      n_extra--;
+      if (c_extra) {
         c = c_extra;
-      else
+      } else {
+        assert(p_extra != NULL);
         c = *p_extra++;
+      }
     } else if ((l = utfc_ptr2len(s)) > 1) {
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
@@ -1672,7 +1678,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
 /// @param[in]  attr  Highlight attributes.
 /// @param[in]  fmt  Format string.
 void msg_printf_attr(const int attr, const char *const fmt, ...)
-  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PRINTF(2, 3)
 {
   static char msgbuf[IOSIZE];
 
@@ -1890,6 +1896,9 @@ static void msg_scroll_up(void)
   } else {
     screen_del_lines(0, 1, (int)Rows, 0, Columns);
   }
+  // TODO(bfredl): when msgsep display is properly batched, this fill should be
+  // eliminated.
+  screen_fill(Rows-1, Rows, 0, (int)Columns, ' ', ' ', 0);
 }
 
 /*
@@ -2305,6 +2314,7 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1
               && screen_ins_lines(0, 1, (int)Rows, 0, (int)Columns) == OK) {
+            screen_fill(0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {

@@ -986,12 +986,13 @@ These commands are not marks themselves, but jump to a mark:
 ==============================================================================
 8. Jumps					*jump-motions*
 
-A "jump" is one of the following commands: "'", "`", "G", "/", "?", "n",
-"N", "%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and
-the commands that start editing a new file.  If you make the cursor "jump"
-with one of these commands, the position of the cursor before the jump is
+A "jump" is a command that normally moves the cursor several lines away.  If
+you make the cursor "jump" the position of the cursor before the jump is
 remembered.  You can return to that position with the "''" and "``" command,
-unless the line containing that position was changed or deleted.
+unless the line containing that position was changed or deleted.  The
+following commands are "jump" commands: "'", "`", "G", "/", "?", "n", "N",
+"%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and the
+commands that start editing a new file. 
 
 							*CTRL-O*
 CTRL-O			Go to [count] Older cursor position in jump list
@@ -1117,7 +1118,7 @@ remembered.
 							*:changes*
 :changes		Print the change list.  A ">" character indicates the
 			current position.  Just after a change it is below the
-			newest entry, indicating that "g;" takes you to the
+			newest entry, indicating that `g;` takes you to the
 			newest entry position.  The first column indicates the
 			count needed to take you to this position.  Example:
 
@@ -1127,8 +1128,8 @@ remembered.
 				    1    14   54 the latest changed line
 				>
 
-			The "3g;" command takes you to line 9.  Then the
-			output of ":changes is:
+			The `3g;` command takes you to line 9.  Then the
+			output of `:changes` is:
 
 				change line  col text ~
 				>   0     9    8 bla bla bla
@@ -1294,4 +1295,4 @@ L			To line [count] from bottom of window (default: Last
 			position is in a status line, that window is made the
 			active window and the cursor is not moved.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

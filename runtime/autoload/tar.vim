@@ -152,13 +152,16 @@ fun! tar#Browse(tarfile)
    " assuming cygwin
    let tarfile=substitute(system("cygpath -u ".shellescape(tarfile,0)),'\n$','','e')
   endif
+
+  let gzip_command = s:get_gzip_command(tarfile)
+
   let curlast= line("$")
   if tarfile =~# '\.\(gz\|tgz\)$'
 "   call Decho("1: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
-   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+   exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.lrp'
 "   call Decho("2: exe silent r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - ")
-   exe "sil! r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
+   exe "sil! r! cat -- ".shellescape(tarfile,1)."|" . gzip_command . " -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(bz2\|tbz\|tb2\)$'
 "   call Decho("3: exe silent r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
@@ -287,15 +290,18 @@ fun! tar#Read(fname,mode)
   else
    let tar_secure= " "
   endif
+
+  let gzip_command = s:get_gzip_command(tarfile)
+
   if tarfile =~# '\.bz2$'
 "   call Decho("7: exe silent r! bzip2 -d -c ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.\(gz\|tgz\)$'
 "   call Decho("5: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd.' -'.g:tar_readoptions.' - '.tar_secure.shellescape(fname,1))
-   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.lrp$'
 "   call Decho("6: exe silent r! cat ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
-   exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "sil! r! cat -- ".shellescape(tarfile,1)." | " . gzip_command . " -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.lzma$'
 "   call Decho("7: exe silent r! lzma -d -c ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
@@ -389,6 +395,8 @@ fun! tar#Write(fname)
   let tarfile = substitute(b:tarfile,'tarfile:\(.\{-}\)::.*$','\1','')
   let fname   = substitute(b:tarfile,'tarfile:.\{-}::\(.*\)$','\1','')
 
+  let gzip_command = s:get_gzip_command(tarfile)
+
   " handle compressed archives
   if tarfile =~# '\.bz2'
    call system("bzip2 -d -- ".shellescape(tarfile,0))
@@ -396,12 +404,12 @@ fun! tar#Write(fname)
    let compress= "bzip2 -- ".shellescape(tarfile,0)
 "   call Decho("compress<".compress.">")
   elseif tarfile =~# '\.gz'
-   call system("gzip -d -- ".shellescape(tarfile,0))
+   call system(gzip_command . " -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.gz','','e')
    let compress= "gzip -- ".shellescape(tarfile,0)
 "   call Decho("compress<".compress.">")
   elseif tarfile =~# '\.tgz'
-   call system("gzip -d -- ".shellescape(tarfile,0))
+   call system(gzip_command . " -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.tgz','.tar','e')
    let compress= "gzip -- ".shellescape(tarfile,0)
    let tgz     = 1
@@ -581,7 +589,9 @@ fun! tar#Vimuntar(...)
 
   " if necessary, decompress the tarball; then, extract it
   if tartail =~ '\.tgz'
-   if executable("gunzip")
+   if executable("bzip2")
+    silent exe "!bzip2 -d ".shellescape(tartail)
+   elseif executable("gunzip")
     silent exe "!gunzip ".shellescape(tartail)
    elseif executable("gzip")
     silent exe "!gzip -d ".shellescape(tartail)
@@ -618,6 +628,15 @@ fun! tar#Vimuntar(...)
 
 "  call Dret("tar#Vimuntar")
 endfun
+
+func s:get_gzip_command(file)
+  if a:file =~# 'z$' && executable('bzip2')
+    " Some .tgz files are actually compressed with bzip2.  Since bzip2 can
+    " handle the format from gzip, use it if the command exists.
+    return 'bzip2'
+  endif
+  return 'gzip'
+endfunc
 
 " =====================================================================
 " Modelines And Restoration: {{{1

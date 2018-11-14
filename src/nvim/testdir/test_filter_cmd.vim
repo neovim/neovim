@@ -74,3 +74,16 @@ func Test_filter_cmd_completion()
   call assert_equal('filter /pat/ print', s:complete_filter_cmd('filter /pat/ pri'))
   call assert_equal('filter #pat# print', s:complete_filter_cmd('filter #pat# pri'))
 endfunc
+
+func Test_filter_cmd_with_filter()
+  new
+  set shelltemp
+  %!echo "a|b"
+  let out = getline(1)
+  bw!
+  if has('win32')
+    let out = trim(out, '" ')
+  endif
+  call assert_equal('a|b', out)
+  set shelltemp&
+endfunction

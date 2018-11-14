@@ -103,7 +103,7 @@ void log_unlock(void)
 /// @param line_num   source line number, or -1
 bool logmsg(int log_level, const char *context, const char *func_name,
             int line_num, bool eol, const char *fmt, ...)
-  FUNC_ATTR_UNUSED
+  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
   if (log_level < MIN_LOG_LEVEL) {
     return false;
@@ -245,7 +245,8 @@ end:
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
                            const char *func_name, int line_num, bool eol,
-                           const char* fmt, ...)
+                           const char *fmt, ...)
+  FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;
   va_start(args, fmt);

@@ -18,6 +18,7 @@ local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
 local iswin = helpers.iswin
+local read_file = helpers.read_file
 
 local function has_gzip()
   local null = iswin() and 'nul' or '/dev/null'
@@ -60,7 +61,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     os.remove('test.out')
   end)
 
-  if iswin() or not has_gzip() then
+  if not has_gzip() then
     pending('skipped (missing `gzip` utility)', function() end)
   else
 
@@ -77,7 +78,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
 
     it('BufReadPre, BufReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
-      local gzip_data = io.open('Xtestfile.gz'):read('*all')
+      local gzip_data = read_file('Xtestfile.gz')
       feed_command('let $GZIP = ""')
       -- Setup autocommands to decompress before reading and re-compress afterwards.
       feed_command("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
@@ -91,7 +92,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       -- Expect the decompressed file in the buffer.
       expect(text1)
       -- Expect the original file to be unchanged.
-      eq(gzip_data, io.open('Xtestfile.gz'):read('*all'))
+      eq(gzip_data, read_file('Xtestfile.gz'))
     end)
 
     -- luacheck: ignore 621 (Indentation)
@@ -142,7 +143,6 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
 
   it('FilterReadPre, FilterReadPost', function()
-    if helpers.pending_win32(pending) then return end
     -- Write a special input file for this test block.
     write_file('test.out', dedent([[
       startstart

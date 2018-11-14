@@ -49,6 +49,7 @@
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
+#include "nvim/getchar.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/main.h"
@@ -1448,7 +1449,7 @@ static char *make_percent_swname(const char *dir, char *name)
 }
 
 #ifdef UNIX
-static int process_still_running;
+static bool process_still_running;
 #endif
 
 /*
@@ -1526,8 +1527,8 @@ static time_t swapfile_info(char_u *fname)
           msg_outnum(char_to_long(b0.b0_pid));
 #if defined(UNIX)
           if (kill((pid_t)char_to_long(b0.b0_pid), 0) == 0) {
-            MSG_PUTS(_(" (still running)"));
-            process_still_running = TRUE;
+            MSG_PUTS(_(" (STILL RUNNING)"));
+            process_still_running = true;
           }
 #endif
         }
@@ -3149,7 +3150,9 @@ attention_message (
   msg_outtrans(buf->b_fname);
   MSG_PUTS("\"\n");
   FileInfo file_info;
-  if (os_fileinfo((char *)buf->b_fname, &file_info)) {
+  if (!os_fileinfo((char *)buf->b_fname, &file_info)) {
+    MSG_PUTS(_("      CANNOT BE FOUND"));
+  } else {
     MSG_PUTS(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;
     p = ctime(&x);  // includes '\n'
@@ -3346,7 +3349,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           int choice = 0;
 
 #ifdef UNIX
-          process_still_running = FALSE;
+          process_still_running = false;
 #endif
           /*
            * If there is a SwapExists autocommand and we can handle
@@ -3358,12 +3361,16 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             choice = do_swapexists(buf, (char_u *) fname);
 
           if (choice == 0) {
-            /* Show info about the existing swap file. */
-            attention_message(buf, (char_u *) fname);
+            // Show info about the existing swap file.
+            attention_message(buf, (char_u *)fname);
 
-            /* We don't want a 'q' typed at the more-prompt
-             * interrupt loading a file. */
-            got_int = FALSE;
+            // We don't want a 'q' typed at the more-prompt
+            // interrupt loading a file.
+            got_int = false;
+
+            // If vimrc has "simalt ~x" we don't want it to
+            // interfere with the prompt here.
+            flush_buffers(FLUSH_TYPEAHEAD);
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
@@ -3702,9 +3709,9 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
          curix++) {
       curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     }
-  } else if (line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines
-             && curix < buf->b_ml.ml_usedchunks - 1) {
-    /* Adjust cached curix & curline */
+  } else if (curix < buf->b_ml.ml_usedchunks - 1
+             && line >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines) {
+    // Adjust cached curix & curline
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     curix++;
   }
@@ -3843,13 +3850,17 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   ml_upd_lastcurix = curix;
 }
 
-/*
- * Find offset for line or line with offset.
- * Find line with offset if "lnum" is 0; return remaining offset in offp
- * Find offset of line if "lnum" > 0
- * return -1 if information is not available
- */
-long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
+/// Find offset for line or line with offset.
+///
+/// @param buf buffer to use
+/// @param lnum if > 0, find offset of lnum, store offset in offp
+///             if == 0, return line with offset *offp
+/// @param offp Location where offset of line is stored, or to read offset to
+///             use to find line. In the later case, store remaining offset.
+/// @param no_ff ignore 'fileformat' option, always use one byte for NL.
+///
+/// @return -1 if information is not available
+long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
 {
   linenr_T curline;
   int curix;
@@ -3862,7 +3873,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
   int text_end;
   long offset;
   int len;
-  int ffdos = (get_fileformat(buf) == EOL_DOS);
+  int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
   /* take care of cached line first */
@@ -3976,7 +3987,7 @@ void goto_byte(long cnt)
   if (boff) {
     boff--;
   }
-  lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff);
+  lnum = ml_find_line_or_offset(curbuf, (linenr_T)0, &boff, false);
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;

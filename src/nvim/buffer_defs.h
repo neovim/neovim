@@ -983,9 +983,11 @@ struct window_S {
                                        used to try to stay in the same column
                                        for up/down cursor motions. */
 
-  int w_set_curswant;               /* If set, then update w_curswant the next
-                                       time through cursupdate() to the
-                                       current virtual column */
+  int w_set_curswant;               // If set, then update w_curswant the next
+                                    // time through cursupdate() to the
+                                    // current virtual column
+
+  linenr_T w_last_cursorline;       ///< where last 'cursorline' was drawn
 
   // the next seven are used to update the visual part
   char w_old_visual_mode;           ///< last known VIsual_mode

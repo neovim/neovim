@@ -371,8 +371,9 @@ several modes.  In Vim you can use the ":nmap", ":vmap", ":omap", ":cmap" and
 
 							*omap-info*
 Operator-pending mappings can be used to define a movement command that can be
-used with any operator.  Simple example: ":omap { w" makes "y{" work like "yw"
-and "d{" like "dw".
+used with any operator.  Simple example: >
+	:omap { w
+makes "y{" work like "yw" and "d{" like "dw".
 
 To ignore the starting cursor position and select different text, you can have
 the omap start Visual mode to select the text to be operated upon.  Example
@@ -383,9 +384,11 @@ Normal mode commands find the first '(' character and select the first word
 before it.  That usually is the function name.
 
 To enter a mapping for Normal and Visual mode, but not Operator-pending mode,
-first define it for all three modes, then unmap it for Operator-pending mode:
+first define it for all three modes, then unmap it for
+Operator-pending mode: >
 	:map    xx something-difficult
 	:ounmap xx
+
 Likewise for a mapping for Visual and Operator-pending mode or Normal and
 Operator-pending mode.
 
@@ -866,7 +869,9 @@ an additional rule:
 full-id	  In front of the match is a non-keyword character, or this is where
 	  the line or insertion starts.  Exception: When the abbreviation is
 	  only one character, it is not recognized if there is a non-keyword
-	  character in front of it, other than a space or a tab.
+	  character in front of it, other than a space or a tab. However, for
+	  the command line "'<,'>" (or any other marks) is ignored, as if the
+	  command line starts after it.
 
 end-id	  In front of the match is a keyword character, or a space or a tab,
 	  or this is where the line or insertion starts.
@@ -1487,4 +1492,4 @@ local to the script and use mappings local to the script.  When the user
 invokes the user command, it will run in the context of the script it was
 defined in.  This matters if |<SID>| is used in a command.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

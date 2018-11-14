@@ -99,7 +99,7 @@ is an error when 'cpoptions' includes the 'E' flag.
 J			Join [count] lines, with a minimum of two lines.
 			Remove the indent and insert up to two spaces (see
 			below).  Fails when on the last line of the buffer.
-			If [count] is too big it is reduce to the number of
+			If [count] is too big it is reduced to the number of
 			lines available.
 
 							*v_J*
@@ -416,7 +416,7 @@ This depends on the 'nrformats' option:
 
 For decimals a leading negative sign is considered for incrementing or
 decrementing, for binary, octal and hex values, it won't be considered.  To
-ignore the sign Visually select the number before using CTRL-A or CTRL-X. 
+ignore the sign Visually select the number before using CTRL-A or CTRL-X.
 
 For numbers with leading zeros (including all octal and hexadecimal numbers),
 Vim preserves the number of characters in the number when possible.  CTRL-A on
@@ -501,6 +501,7 @@ If the 'shiftround' option is on, the indent is rounded to a multiple of
 If the 'smartindent' option is on, or 'cindent' is on and 'cinkeys' contains
 '#' with a zero value, shift right does not affect lines starting with '#'
 (these are supposed to be C preprocessor lines that must stay in column 1).
+This can be changed with the 'cino' option, see |cino-#|.
 
 When the 'expandtab' option is off (this is the default) Vim uses <Tab>s as
 much as possible to make the indent.  You can use ">><<" to replace an indent
@@ -666,6 +667,7 @@ The flags that you can use for the substitute commands:
 	    CTRL-E  to scroll the screen up
 	    CTRL-Y  to scroll the screen down
 
+							*:s_e*
 [e]     When the search pattern fails, do not issue an error message and, in
 	particular, continue in maps as if no error occurred.  This is most
 	useful to prevent the "No match" error from breaking a mapping.  Vim
@@ -676,29 +678,34 @@ The flags that you can use for the substitute commands:
 		Trailing characters
 		Interrupted
 
+							*:s_g*
 [g]	Replace all occurrences in the line.  Without this argument,
 	replacement occurs only for the first occurrence in each line.  If the
 	'gdefault' option is on, this flag is on by default and the [g]
 	argument switches it off.
 
+							*:s_i*
 [i]	Ignore case for the pattern.  The 'ignorecase' and 'smartcase' options
 	are not used.
 
+							*:s_I*
 [I]	Don't ignore case for the pattern.  The 'ignorecase' and 'smartcase'
 	options are not used.
 
+							*:s_n*
 [n]	Report the number of matches, do not actually substitute.  The [c]
 	flag is ignored.  The matches are reported as if 'report' is zero.
 	Useful to |count-items|.
 	If \= |sub-replace-expression| is used, the expression will be
 	evaluated in the |sandbox| at every match.
 
-[p]	Print the line containing the last substitute.
+[p]	Print the line containing the last substitute.  *:s_p*
 
-[#]	Like [p] and prepend the line number.
+[#]	Like [p] and prepend the line number.  *:s_#*
 
-[l]	Like [p] but print the text like |:list|.
+[l]	Like [p] but print the text like |:list|.  *:s_l*
 
+							*:s_r*
 [r]	Only useful in combination with `:&` or `:s` without arguments.  `:&r`
 	works the same way as `:~`:  When the search pattern is empty, use the
 	previously used search pattern instead of the search pattern from the
@@ -1371,6 +1378,55 @@ to the name of an external program for Vim to use for text formatting.  The
 'textwidth' and other options have no effect on formatting by an external
 program.
 
+                                                        *format-formatexpr*
+The 'formatexpr' option can be set to a Vim script function that performs
+reformatting of the buffer.  This should usually happen in an |ftplugin|,
+since formatting is highly dependent on the type of file.  It makes
+sense to use an |autoload| script, so the corresponding script is only loaded
+when actually needed and the script should be called <filetype>format.vim.
+
+For example, the XML filetype plugin distributed with Vim in the $VIMRUNTIME
+directory, sets the 'formatexpr' option to: >
+
+   setlocal formatexpr=xmlformat#Format()
+
+That means, you will find the corresponding script, defining the
+xmlformat#Format() function, in the directory:
+`$VIMRUNTIME/autoload/xmlformat.vim`
+
+Here is an example script that removes trailing whitespace from the selected
+text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
+
+  func! format#Format()
+    " only reformat on explicit gq command
+    if mode() != 'n'
+      " fall back to Vims internal reformatting
+      return 1
+    endif
+    let lines = getline(v:lnum, v:lnum + v:count - 1)
+    call map(lines, {key, val -> substitute(val, '\s\+$', '', 'g')})
+    call setline('.', lines)
+
+    " do not run internal formatter!
+    return 0
+  endfunc
+
+You can then enable the formatting by executing: >
+  setlocal formatexpr=format#Format()
+
+Note: this function explicitly returns non-zero when called from insert mode
+(which basically means, text is inserted beyond the 'textwidth' limit).  This
+causes Vim to fall back to reformat the text by using the internal formatter.
+
+However, if the |gq| command is used to reformat the text, the function
+will receive the selected lines, trim trailing whitespace from those lines and
+put them back in place.  If you are going to split single lines into multiple
+lines, be careful not to overwrite anything.
+
+If you want to allow reformatting of text from insert or replace mode, one has
+to be very careful, because the function might be called recursively.  For
+debugging it helps to set the 'debug' option.
+
 							*right-justify*
 There is no command in Vim to right justify text.  You can do it with
 an external command, like "par" (e.g.: "!}par" to format until the end of the
@@ -1753,4 +1809,4 @@ The sorting can be interrupted, but if you interrupt it too late in the
 process you may end up with duplicated lines.  This also depends on the system
 library function used.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

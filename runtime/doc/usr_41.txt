@@ -882,9 +882,11 @@ Interactive:					*interactive-functions*
 
 GUI:						*gui-functions*
 	getfontname()		get name of current font being used
-	getwinposx()		X position of the GUI Vim window
-	getwinposy()		Y position of the GUI Vim window
+	getwinpos()		position of the Vim window
+	getwinposx()		X position of the Vim window
+	getwinposy()		Y position of the Vim window
 	balloon_show()		set the balloon content
+	balloon_split()		split a message for a balloon
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
@@ -900,6 +902,7 @@ Vim server:					*server-functions*
 Window size and position:			*window-size-functions*
 	winheight()		get height of a specific window
 	winwidth()		get width of a specific window
+	win_screenpos()		get screen position of a window
 	winrestcmd()		return command to restore window sizes
 	winsaveview()		get view of current window
 	winrestview()		restore saved view of current window
@@ -919,7 +922,8 @@ Testing:				    *test-functions*
 	assert_false()		assert that an expression is false
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception
-	assert_fails()		assert that a function call fails
+	assert_beeps()		assert that a command beeps
+	assert_fails()		assert that a command fails
 
 Timers:						*timer-functions*
 	timer_start()		create a timer
@@ -2510,4 +2514,4 @@ utility is recommended.
 
 Next chapter: |usr_42.txt|  Add new menus
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

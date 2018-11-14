@@ -257,90 +257,14 @@ effect on some UIs.
 ==============================================================================
 Using the mouse						*mouse-using*
 
-This section is about using the mouse on a terminal or a terminal window.  How
-to use the mouse in a GUI window is explained in |gui-mouse|.  For scrolling
-with a mouse wheel see |scroll-mouse-wheel|.
-
-These characters in the 'mouse' option tell in which situations the mouse will
-be used by Vim:
-		n	Normal mode
-		v	Visual mode
-		i	Insert mode
-		c	Command-line mode
-		h	all previous modes when in a help file
-		a	all previous modes
-		r	for |hit-enter| prompt
-
-If you only want to use the mouse in a few modes or also want to use it for
-the two questions you will have to concatenate the letters for those modes.
-For example: >
-	:set mouse=nv
-Will make the mouse work in Normal mode and Visual mode. >
-	:set mouse=h
-Will make the mouse work in help files only (so you can use "g<LeftMouse>" to
-jump to tags).
-
-Whether the selection that is started with the mouse is in Visual mode or
-Select mode depends on whether "mouse" is included in the 'selectmode'
-option.
-
-In an xterm, with the currently active mode included in the 'mouse' option,
-normal mouse clicks are used by Vim, mouse clicks with the shift or ctrl key
-pressed go to the xterm.  With the currently active mode not included in
-'mouse' all mouse clicks go to the xterm.
-
-							*xterm-clipboard*
-The middle mouse button will insert the unnamed register.  In that case, here
-is how you copy and paste a piece of text:
-
-Copy/paste with the mouse and Visual mode ('mouse' option must be set, see
-above):
-1. Press left mouse button on first letter of text, move mouse pointer to last
-   letter of the text and release the button.  This will start Visual mode and
-   highlight the selected area.
-2. Press "y" to yank the Visual text in the unnamed register.
-3. Click the left mouse button at the insert position.
-4. Click the middle mouse button.
-
-Shortcut: If the insert position is on the screen at the same time as the
-Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
-at the insert position.
-
-							*xterm-copy-paste*
-NOTE: In some (older) xterms, it's not possible to move the cursor past column
-95 or 223.  This is an xterm problem, not Vim's.  Get a newer xterm
-|color-xterm|.
-
-Copy/paste in xterm with (current mode NOT included in 'mouse'):
-1. Press left mouse button on first letter of text, move mouse pointer to last
-   letter of the text and release the button.
-2. Use normal Vim commands to put the cursor at the insert position.
-3. Press "a" to start Insert mode.
-4. Click the middle mouse button.
-5. Press ESC to end Insert mode.
-(The same can be done with anything in 'mouse' if you keep the shift key
-pressed while using the mouse.)
-
-Note: if you lose the 8th bit when pasting (special characters are translated
-into other characters), you may have to do "stty cs8 -istrip -parenb" in your
-shell before starting Vim.
-
-Thus in an xterm the shift and ctrl keys cannot be used with the mouse.  Mouse
-commands requiring the CTRL modifier can be simulated by typing the "g" key
-before using the mouse:
-	"g<LeftMouse>"	is "<C-LeftMouse>	(jump to tag under mouse click)
-	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
-
 							*bracketed-paste-mode*
-Bracketed paste mode allows terminal applications to distinguish between typed
-text and pasted text. Thus you can paste text without Nvim trying to format or
-indent the text. See also https://cirw.in/blog/bracketed-paste
-
-Nvim enables bracketed paste by default. If it does not work in your terminal,
-try the 'paste' option instead.
+Nvim enables bracketed paste by default. Bracketed paste mode allows terminal
+applications to distinguish between typed text and pasted text. Thus you can
+paste text without Nvim trying to format or indent the text.
+See also https://cirw.in/blog/bracketed-paste
 
 					*mouse-mode-table* *mouse-overview*
-A short overview of what the mouse buttons do, when 'mousemodel' is "extend":
+Overview of what the mouse buttons do, when 'mousemodel' is "extend":
 
 Normal Mode:
 event	      position	   selection	  change  action	~
@@ -451,14 +375,6 @@ In Insert mode, when a selection is started, Vim goes into Normal mode
 temporarily.  When Visual or Select mode ends, it returns to Insert mode.
 This is like using CTRL-O in Insert mode.  Select mode is used when the
 'selectmode' option contains "mouse".
-							*drag-status-line*
-When working with several windows, the size of the windows can be changed by
-dragging the status line with the mouse.  Point the mouse at a status line,
-press the left button, move the mouse to the new position of the status line,
-release the button.  Just clicking the mouse in a status line makes that window
-the current window, without moving the cursor.  If by selecting a window it
-will change position or size, the dragging of the status line will look
-confusing, but it will work (just try it).
 
 					*<MiddleRelease>* *<MiddleDrag>*
 Mouse clicks can be mapped.  The codes for mouse clicks are:

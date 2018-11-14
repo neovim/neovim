@@ -757,7 +757,7 @@ describe('completion', function()
 
     eval('1 + 1')
     -- popupmenu still visible
-    screen:expect([[
+    screen:expect{grid=[[
       foobar fooegg                                               |
       fooegg^                                                      |
       {1:foobar         }{0:                                             }|
@@ -766,7 +766,7 @@ describe('completion', function()
       {0:~                                                           }|
       {0:~                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
-    ]])
+    ]], unchanged=true}
 
     feed('<c-p>')
     -- Didn't restart completion: old matches still used

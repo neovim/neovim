@@ -13,6 +13,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -50,8 +51,7 @@
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
-/// @return Line count, or \`0` if the buffer has been unloaded (see
-///         |api-buffer|).
+/// @return Line count, or 0 for unloaded buffer. |api-buffer|
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -226,8 +226,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
-/// @return Array of lines. If the buffer has been unloaded then an empty array
-///                         will be returned instead. (See |api-buffer|.)
+/// @return Array of lines, or empty array for unloaded buffer.
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buffer,
                                    Integer start,
@@ -488,6 +487,41 @@ end:
   xfree(lines);
   restore_win_for_buf(save_curwin, save_curtab, &save_curbuf);
   try_end(err);
+}
+
+/// Returns the byte offset for a line.
+///
+/// Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is one byte.
+/// 'fileformat' and 'fileencoding' are ignored. The line index just after the
+/// last line gives the total byte-count of the buffer. A final EOL byte is
+/// counted if it would be written, see 'eol'.
+///
+/// Unlike |line2byte()|, throws error for out-of-bounds indexing.
+/// Returns -1 for unloaded buffer.
+///
+/// @param buffer     Buffer handle
+/// @param index      Line index
+/// @param[out] err   Error details, if any
+/// @return Integer byte offset, or -1 for unloaded buffer.
+Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
+  FUNC_API_SINCE(5)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    return -1;
+  }
+
+  if (index < 0 || index > buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
+    return 0;
+  }
+
+  return ml_find_line_or_offset(buf, (int)index+1, NULL, true);
 }
 
 /// Gets a buffer-scoped (b:) variable.
@@ -933,7 +967,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   return src_id;
 }
 
-/// Clears highlights from a given source group and a range of lines
+/// Clears highlights and virtual text from a given source id and range of lines
 ///
 /// To clear a source group in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
@@ -975,6 +1009,10 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// text will be truncated at the end of the screen line. The virtual text will
 /// begin after one cell to the right of the ordinary text, this will contain
 /// the |lcs-eol| char if set, otherwise just be a space.
+///
+/// The same src_id can be used for both virtual text and highlights added by
+/// nvim_buf_add_highlight. Virtual text is cleared using
+/// nvim_buf_clear_highlight.
 ///
 /// @param buffer     Buffer handle
 /// @param src_id     Source group to use or 0 to use a new group,
@@ -1025,7 +1063,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     }
 
     String str = chunk.items[0].data.string;
-    char *text = xstrdup(str.size > 0 ? str.data : "");
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
 
     int hl_id = 0;
     if (chunk.size == 2) {

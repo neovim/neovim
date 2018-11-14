@@ -3,7 +3,7 @@
 " Maintainer:		Daniel Kho <daniel.kho@tauhop.com>
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:		Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
-" Last Changed:		2016 Mar 05 by Daniel Kho
+" Last Changed:		2018 May 06 by Daniel Kho
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -43,6 +43,8 @@ syn keyword 	vhdlStatement	sequence strong
 syn keyword 	vhdlStatement	then to transport type
 syn keyword 	vhdlStatement	unaffected units until use
 syn keyword 	vhdlStatement	variable
+" VHDL-2017 interface
+syn keyword 	vhdlStatement	view
 syn keyword 	vhdlStatement	vmode vprop vunit
 syn keyword 	vhdlStatement	wait when while with
 syn keyword 	vhdlStatement	note warning error failure
@@ -69,9 +71,7 @@ syn match	vhdlType	"\<time_vector\>\'\="
 
 syn match	vhdlType	"\<character\>\'\="
 syn match	vhdlType	"\<string\>\'\="
-"syn keyword	vhdlType	severity_level
-syn keyword	vhdlType	line
-syn keyword	vhdlType	text
+syn keyword	vhdlType	line text side width
 
 " Predefined standard IEEE VHDL types
 syn match	vhdlType	"\<std_ulogic\>\'\="
@@ -124,6 +124,8 @@ syn match   	vhdlAttribute	"\'succ"
 syn match   	vhdlAttribute	"\'val"
 syn match   	vhdlAttribute	"\'image"
 syn match   	vhdlAttribute	"\'value"
+" VHDL-2017 interface attribute
+syn match   	vhdlAttribute	"\'converse"
 
 syn keyword	vhdlBoolean	true false
 
@@ -165,6 +167,9 @@ syn match	vhdlOperator	"=\|\/=\|>\|<\|>="
 syn match	vhdlOperator	"<=\|:="
 syn match	vhdlOperator	"=>"
 
+" VHDL-2017 concurrent signal association (spaceship) operator
+syn match	vhdlOperator	"<=>"
+
 " VHDL-2008 conversion, matching equality/non-equality operators
 syn match	vhdlOperator	"??\|?=\|?\/=\|?<\|?<=\|?>\|?>="
 
@@ -183,8 +188,11 @@ syn match	vhdlError	"\(<\)[&+\-\/\\]\+"
 syn match	vhdlError	"[>=&+\-\/\\]\+\(<\)"
 " Covers most operators
 " support negative sign after operators. E.g. q<=-b;
-syn match	vhdlError	"\(&\|+\|\-\|\*\*\|\/=\|??\|?=\|?\/=\|?<=\|?>=\|>=\|<=\|:=\|=>\)[<>=&+\*\\?:]\+"
-syn match	vhdlError	"[<>=&+\-\*\\:]\+\(&\|+\|\*\*\|\/=\|??\|?=\|?\/=\|?<\|?<=\|?>\|?>=\|>=\|<=\|:=\|=>\)"
+" Supports VHDL-2017 spaceship (concurrent simple signal association).
+syn match	vhdlError	"\(<=\)[<=&+\*\\?:]\+"
+syn match	vhdlError	"[>=&+\-\*\\:]\+\(=>\)"
+syn match	vhdlError	"\(&\|+\|\-\|\*\*\|\/=\|??\|?=\|?\/=\|?<=\|?>=\|>=\|:=\|=>\)[<>=&+\*\\?:]\+"
+syn match	vhdlError	"[<>=&+\-\*\\:]\+\(&\|+\|\*\*\|\/=\|??\|?=\|?\/=\|?<\|?<=\|?>\|?>=\|>=\|<=\|:=\)"
 syn match	vhdlError	"\(?<\|?>\)[<>&+\*\/\\?:]\+"
 syn match	vhdlError	"\(<<\|>>\)[<>&+\*\/\\?:]\+"
 

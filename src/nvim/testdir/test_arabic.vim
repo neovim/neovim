@@ -16,9 +16,9 @@ func s:get_chars(lnum)
   let numchars = strchars(getline('.'), 1)
   for i in range(1, numchars)
     exe 'norm ' i . '|'
-    let c=execute('ascii')
-    let c=substitute(c, '\n\?<.\{-}Hex\s*', 'U+', 'g')
-    let c=substitute(c, ',\s*Octal\s*\d*', '', 'g')
+    let c = execute('ascii')
+    let c = substitute(c, '\n\?<.\{-}Hex\s*', 'U+', 'g')
+    let c = substitute(c, ',\s*Oct\(al\)\=\s\d*\(, Digr ..\)\=', '', 'g')
     call add(chars, c)
   endfor
   return chars

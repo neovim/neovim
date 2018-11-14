@@ -89,14 +89,16 @@ Screen.__index = Screen
 
 local debug_screen
 
-local default_screen_timeout = 3500
+local default_timeout_factor = 1
 if os.getenv('VALGRIND') then
-  default_screen_timeout = default_screen_timeout * 3
+  default_timeout_factor = default_timeout_factor * 3
 end
 
 if os.getenv('CI') then
-  default_screen_timeout = default_screen_timeout * 3
+  default_timeout_factor = default_timeout_factor * 3
 end
+
+local default_screen_timeout = default_timeout_factor * 3500
 
 do
   local spawn, nvim_prog = helpers.spawn, helpers.nvim_prog
@@ -160,12 +162,13 @@ function Screen.new(width, height)
     _attr_table = {[0]={{},{}}},
     _clear_attrs = {},
     _new_attrs = false,
+    _width = width,
+    _height = height,
     _cursor = {
       row = 1, col = 1
     },
     _busy = false
   }, Screen)
-  self:_handle_resize(width, height)
   return self
 end
 
@@ -185,11 +188,12 @@ function Screen:attach(options)
   if options == nil then
     options = {}
   end
-  if options.ext_newgrid == nil then
-    options.ext_newgrid = true
+  if options.ext_linegrid == nil then
+    options.ext_linegrid = true
   end
   self._options = options
-  self._clear_attrs = (options.ext_newgrid and {{},{}}) or {}
+  self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
+  self:_handle_resize(self._width, self._height)
   uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
     -- nvim defaults to rgb=true internally,
@@ -243,8 +247,27 @@ local ext_keys = {
 --              nothing is ignored.
 -- condition:   Function asserting some arbitrary condition. Return value is
 --              ignored, throw an error (use eq() or similar) to signal failure.
--- any:         Lua pattern string expected to match a screen line.
+-- any:         Lua pattern string expected to match a screen line. NB: the
+--              following chars are magic characters
+--                 ( ) . % + - * ? [ ^ $
+--              and must be escaped with a preceding % for a literal match.
 -- mode:        Expected mode as signaled by "mode_change" event
+-- unchanged:   Test that the screen state is unchanged since the previous
+--              expect(...). Any flush event resulting in a different state is
+--              considered an error. Not observing any events until timeout
+--              is acceptable.
+-- intermediate:Test that the final state is the same as the previous expect,
+--              but expect an intermediate state that is different. If possible
+--              it is better to use an explicit screen:expect(...) for this
+--              intermediate state.
+-- reset:       Reset the state internal to the test Screen before starting to
+--              receive updates. This should be used after command("redraw!")
+--              or some other mechanism that will invoke "redraw!", to check
+--              that all screen state is transmitted again. This includes
+--              state related to ext_ features as mentioned below.
+-- timeout:     maximum time that will be waited until the expected state is
+--              seen (or maximum time to observe an incorrect change when
+--              `unchanged` flag is used)
 --
 -- The following keys should be used to expect the state of various ext_
 -- features. Note that an absent key will assert that the item is currently
@@ -262,7 +285,8 @@ function Screen:expect(expected, attr_ids, attr_ignore)
   if type(expected) == "table" then
     assert(not (attr_ids ~= nil or attr_ignore ~= nil))
     local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
-                    any=true, mode=true}
+                    any=true, mode=true, unchanged=true, intermediate=true,
+                    reset=true, timeout=true}
     for _, v in ipairs(ext_keys) do
       is_key[v] = true
     end
@@ -304,7 +328,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
   end
   self._new_attrs = false
-  self:wait(function()
+  self:_wait(function()
     if condition ~= nil then
       local status, res = pcall(condition)
       if not status then
@@ -361,7 +385,7 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     -- Extension features. The default expectations should cover the case of
     -- the ext_ feature being disabled, or the feature currently not activated
     -- (for instance no external cmdline visible). Some extensions require
-    -- preprocessing to prepresent highlights in a reproducible way.
+    -- preprocessing to represent highlights in a reproducible way.
     local extstate = self:_extstate_repr(attr_state)
 
     -- convert assertion errors into invalid screen state descriptions
@@ -379,21 +403,65 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     if not status then
       return tostring(res)
     end
-  end)
+  end, expected)
 end
 
-function Screen:wait(check, timeout)
-  local err, checked = false
+function Screen:_wait(check, flags)
+  local err, checked = false, false
   local success_seen = false
   local failure_after_success = false
+  local did_flush = true
+  local warn_immediate = not (flags.unchanged or flags.intermediate)
+
+  if flags.intermediate and flags.unchanged then
+    error("Choose only one of 'intermediate' and 'unchanged', not both")
+  end
+
+  if flags.reset then
+    -- throw away all state, we expect it to be retransmitted
+    self:_reset()
+  end
+
+  -- Maximum timeout, after which a incorrect state will be regarded as a
+  -- failure
+  local timeout = flags.timeout or self.timeout
+
+  -- Minimal timeout before the loop is allowed to be stopped so we
+  -- always do some check for failure after success.
+  local minimal_timeout = default_timeout_factor * 2
+
+  local immediate_seen, intermediate_seen = false, false
+  if not check() then
+    minimal_timeout = default_timeout_factor * 20
+    immediate_seen = true
+  end
+
+  -- for an unchanged test, flags.timeout means the time during the state is
+  -- expected to be unchanged, so always wait this full time.
+  if (flags.unchanged or flags.intermediate) and flags.timeout ~= nil then
+    minimal_timeout = timeout
+  end
+
+  assert(timeout >= minimal_timeout)
+  local did_miminal_timeout = false
+
   local function notification_cb(method, args)
     assert(method == 'redraw')
-    self:_redraw(args)
+    did_flush = self:_redraw(args)
+    if not did_flush then
+      return
+    end
     err = check()
     checked = true
+    if err and immediate_seen then
+      intermediate_seen = true
+    end
+
     if not err then
       success_seen = true
-      helpers.stop()
+      if did_miminal_timeout then
+        helpers.stop()
+      end
     elseif success_seen and #args > 0 then
       failure_after_success = true
       --print(require('inspect')(args))
@@ -401,37 +469,88 @@ function Screen:wait(check, timeout)
 
     return true
   end
-  run(nil, notification_cb, nil, timeout or self.timeout)
-  if not checked then
+  run(nil, notification_cb, nil, minimal_timeout)
+  if not did_flush then
+    err = "no flush received"
+  elseif not checked then
     err = check()
+    if not err and flags.unchanged then
+      -- expecting NO screen change: use a shorter timout
+      success_seen = true
+    end
+  end
+
+  if not success_seen then
+    did_miminal_timeout = true
+    run(nil, notification_cb, nil, timeout-minimal_timeout)
+  end
+
+  local did_warn = false
+  if warn_immediate and immediate_seen then
+     print([[
+
+Warning: A screen test has immediate success. Try to avoid this unless the
+purpose of the test really requires it.]])
+    if intermediate_seen then
+      print([[
+There are intermediate states between the two identical expects.
+Use screen:snapshot_util() or screen:redraw_debug() to find them, and add them
+to the test if they make sense.
+]])
+    else
+      print([[If necessary, silence this warning by
+supplying the 'unchanged' argument to screen:expect.]])
+    end
+    did_warn = true
   end
 
   if failure_after_success then
     print([[
 
 Warning: Screen changes were received after the expected state. This indicates
-indeterminism in the test. Try adding wait() (or screen:expect(...)) between
+indeterminism in the test. Try adding screen:expect(...) (or wait()) between
 asynchronous (feed(), nvim_input()) and synchronous API calls.
-  - Use Screen:redraw_debug() to investigate the problem.
+  - Use Screen:redraw_debug() to investigate the problem. It might find
+    relevant intermediate states that should be added to the test to make it
+    more robust.
+  - If the point of the test is to assert the state after some user input
+    sent with feed(...), also adding an screen:expect(...) before the feed(...)
+    will help ensure the input is sent to nvim when nvim is in a predictable
+    state. This is preferable to using wait(), as it is more closely emulates
+    real user interaction.
   - wait() can trigger redraws and consequently generate more indeterminism.
     In that case try removing every wait().
       ]])
+    did_warn = true
+  end
+
+
+  if err then
+    assert(false, err)
+  elseif did_warn then
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
     print(string.sub(tb,1,index))
   end
 
-  if err then
-    assert(false, err)
+  if flags.intermediate then
+    assert(intermediate_seen, "expected intermediate screen state before final screen state")
+  elseif flags.unchanged then
+    assert(not intermediate_seen, "expected screen state to be unchanged")
   end
 end
 
 function Screen:sleep(ms)
-  pcall(function() self:wait(function() return "error" end, ms) end)
+  local function notification_cb(method, args)
+    assert(method == 'redraw')
+    self:_redraw(args)
+  end
+  run(nil, notification_cb, nil, ms)
 end
 
 function Screen:_redraw(updates)
-  for _, update in ipairs(updates) do
+  local did_flush = false
+  for k, update in ipairs(updates) do
     -- print('--')
     -- print(require('inspect')(update))
     local method = update[1]
@@ -446,7 +565,11 @@ function Screen:_redraw(updates)
         self._on_event(method, update[i])
       end
     end
+    if k == #updates and method == "flush" then
+      did_flush = true
+    end
   end
+  return did_flush
 end
 
 function Screen:set_on_event_handler(callback)
@@ -472,9 +595,24 @@ function Screen:_handle_resize(width, height)
   }
 end
 
+function Screen:_handle_flush()
+end
+
 function Screen:_handle_grid_resize(grid, width, height)
   assert(grid == 1)
   self:_handle_resize(width, height)
+end
+
+function Screen:_reset()
+  -- TODO: generalize to multigrid later
+  self:_handle_grid_clear(1)
+
+  -- TODO: share with initialization, so it generalizes?
+  self.popupmenu = nil
+  self.cmdline = {}
+  self.cmdline_block = {}
+  self.wildmenu_items = nil
+  self.wildmenu_pos = nil
 end
 
 
@@ -609,6 +747,7 @@ function Screen:_handle_highlight_set(attrs)
 end
 
 function Screen:_handle_put(str)
+  assert(not self._options.ext_linegrid)
   local cell = self._rows[self._cursor.row][self._cursor.col]
   cell.text = str
   cell.attrs = self._attrs
@@ -617,6 +756,7 @@ function Screen:_handle_put(str)
 end
 
 function Screen:_handle_grid_line(grid, row, col, items)
+  assert(self._options.ext_linegrid)
   assert(grid == 1)
   local line = self._rows[row+1]
   local colpos = col+1
@@ -764,7 +904,7 @@ function Screen:_row_repr(row, attr_state)
   local current_attr_id
   for i = 1, self._width do
     local attrs = row[i].attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = attrs[(self._options.rgb and 1) or 2]
     end
     local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
@@ -820,7 +960,7 @@ function Screen:_chunks_repr(chunks, attr_state)
   for i, chunk in ipairs(chunks) do
     local hl, text = unpack(chunk)
     local attrs
-    if self._options.ext_newgrid then
+    if self._options.ext_linegrid then
       attrs = self._attr_table[hl][1]
     else
       attrs = hl

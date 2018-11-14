@@ -212,7 +212,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 
 							*c_CTRL-Y*
 CTRL-Y		When there is a modeless selection, copy the selection into
-		the clipboard. |modeless-selection|
+		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
@@ -378,10 +378,13 @@ CTRL-D		List names that match the pattern in front of the cursor.
 		match is inserted.  After the last match, the first is used
 		again (wrap around).
 		The behavior can be changed with the 'wildmode' option.
+							*c_<S-Tab>*
+<S-Tab>		Like 'wildchar' or <Tab>, but begin with the last match and
+		then go to the previous match.
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
 		match.  Otherwise recall more recent command-line from history.
-<S-Tab>							*c_CTRL-P* *c_<S-Tab>*
+							*c_CTRL-P*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
 		history.
@@ -492,8 +495,46 @@ after a command causes the rest of the line to be ignored.  This can be used
 to add comments.  Example: >
 	:set ai		"set 'autoindent' option
 It is not possible to add a comment to a shell command ":!cmd" or to the
-":map" command and a few others, because they see the '"' as part of their
-argument.  This is mentioned where the command is explained.
+":map" command and a few others (mainly commands that expect expressions)
+that see the '"' as part of their argument:
+
+    :argdo
+    :autocmd
+    :bufdo
+    :cexpr (and the like)
+    :call
+    :cdo (and the like)
+    :command
+    :cscope (and the like)
+    :debug
+    :display
+    :echo (and the like)
+    :elseif
+    :execute
+    :folddoopen
+    :folddoclosed
+    :for
+    :grep (and the like)
+    :help (and the like)
+    :if
+    :let
+    :make
+    :map (and the like including :abbrev commands)
+    :menu (and the like)
+    :mkspell
+    :normal
+    :ownsyntax
+    :popup
+    :promptfind (and the like)
+    :registers
+    :return
+    :sort
+    :syntax
+    :tabdo
+    :tearoff
+    :vimgrep (and the like)
+    :while
+    :windo
 
 							*:bar* *:\bar*
 '|' can be used to separate commands, so you can give multiple commands in one
@@ -841,7 +882,8 @@ These modifiers can be given, in this order:
 		directory.
 	:.	Reduce file name to be relative to current directory, if
 		possible.  File name is unmodified if it is not below the
-		current directory.
+		current directory, but on MS-Windows the drive is removed if
+		it is the current drive.
 		For maximum shortness, use ":~:.".
 	:h	Head of the file name (the last component and any separators
 		removed).  Cannot be used with :e, :r or :t.
@@ -1105,4 +1147,4 @@ The character used for the pattern indicates the type of command-line:
 	@	string for |input()|
 	-	text for |:insert| or |:append|
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

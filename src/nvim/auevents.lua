@@ -19,14 +19,15 @@ return {
     'BufWriteCmd',            -- write buffer using command
     'BufWritePost',           -- after writing a buffer
     'BufWritePre',            -- before writing a buffer
-    'ChanOpen',               -- channel was opened
     'ChanInfo',               -- info was received about channel
+    'ChanOpen',               -- channel was opened
     'CmdLineEnter',           -- after entering cmdline mode
     'CmdLineLeave',           -- before leaving cmdline mode
     'CmdUndefined',           -- command undefined
     'CmdWinEnter',            -- after entering the cmdline window
     'CmdWinLeave',            -- before leaving the cmdline window
     'ColorScheme',            -- after loading a colorscheme
+    'ColorSchemePre',         -- before loading a colorscheme
     'CompleteDone',           -- after finishing insert complete
     'CursorHold',             -- cursor in same position for a while
     'CursorHoldI',            -- idem, in Insert mode
@@ -98,10 +99,10 @@ return {
     'VimResized',             -- after Vim window was resized
     'VimResume',              -- after Nvim is resumed
     'VimSuspend',             -- before Nvim is suspended
-    'WinNew',                 -- when entering a new window
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
     'WinClosed',              -- after closing a window
+    'WinNew',                 -- when entering a new window
   },
   aliases = {
     BufCreate = 'BufAdd',
@@ -109,9 +110,9 @@ return {
     BufWrite = 'BufWritePre',
     FileEncoding = 'EncodingChanged',
   },
-  -- List of neovim-specific events or aliases for the purpose of generating 
+  -- List of nvim-specific events or aliases for the purpose of generating
   -- syntax file
-  neovim_specific = {
+  nvim_specific = {
     DirChanged=true,
     TabClosed=true,
     TabNew=true,

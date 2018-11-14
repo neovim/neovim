@@ -214,8 +214,6 @@ static int hislen = 0;                  /* actual length of history tables */
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
-static bool need_cursor_update = false;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -509,6 +507,10 @@ static int command_line_check(VimState *state)
   // Repeated, because a ":redir" inside
   // completion may switch it on.
   quit_more = false;       // reset after CTRL-D which had a more-prompt
+
+  did_emsg = false;        // There can't really be a reason why an error
+                           // that occurs while typing a command should
+                           // cause the command not to be executed.
 
   cursorcmd();             // set the cursor on the right spot
   ui_cursor_shape();
@@ -2696,7 +2698,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     }
     const list_T *const l = TV_LIST_ITEM_TV(li)->vval.v_list;
     if (tv_list_len(l) != 3) {
-      PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %li /= 3"),
+      PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %d /= 3"),
                    i, tv_list_len(l));
       goto color_cmdline_error;
     }
@@ -3016,8 +3018,6 @@ void cmdline_screen_cleared(void)
     }
     line = line->prev_ccline;
   }
-
-  need_cursor_update = true;
 }
 
 /// called by ui_flush, do what redraws neccessary to keep cmdline updated.
@@ -3477,10 +3477,7 @@ static void cursorcmd(void)
     if (ccline.redraw_state < kCmdRedrawPos) {
       ccline.redraw_state = kCmdRedrawPos;
     }
-    if (need_cursor_update) {
-      need_cursor_update = false;
-      setcursor();
-    }
+    setcursor();
     return;
   }
 
@@ -3522,10 +3519,28 @@ void gotocmdline(int clr)
  */
 static int ccheck_abbr(int c)
 {
-  if (p_paste || no_abbr)           /* no abbreviations or in paste mode */
-    return FALSE;
+  int spos = 0;
 
-  return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, 0);
+  if (p_paste || no_abbr) {         // no abbreviations or in paste mode
+    return false;
+  }
+
+  // Do not consider '<,'> be part of the mapping, skip leading whitespace.
+  // Actually accepts any mark.
+  while (ascii_iswhite(ccline.cmdbuff[spos]) && spos < ccline.cmdlen) {
+    spos++;
+  }
+  if (ccline.cmdlen - spos > 5
+      && ccline.cmdbuff[spos] == '\''
+      && ccline.cmdbuff[spos + 2] == ','
+      && ccline.cmdbuff[spos + 3] == '\'') {
+    spos += 5;
+  } else {
+    // check abbreviation from the beginning of the commandline
+    spos = 0;
+  }
+
+  return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, spos);
 }
 
 static int sort_func_compare(const void *s1, const void *s2)

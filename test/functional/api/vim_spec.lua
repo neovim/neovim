@@ -841,10 +841,6 @@ describe('API', function()
     end)
 
     it('works for job channel', function()
-      if iswin() and os.getenv('APPVEYOR') ~= nil then
-        pending("jobstart(['cat']) unreliable on appveyor")
-        return
-      end
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
       local info = {
         stream='job',
@@ -1254,7 +1250,7 @@ describe('API', function()
           ext_popupmenu = false,
           ext_tabline = false,
           ext_wildmenu = false,
-          ext_newgrid = screen._options.ext_newgrid or false,
+          ext_linegrid = screen._options.ext_linegrid or false,
           ext_hlstate=false,
           height = 4,
           rgb = true,

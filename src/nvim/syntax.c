@@ -6326,6 +6326,7 @@ int load_colors(char_u *name)
   recursive = true;
   size_t buflen = STRLEN(name) + 12;
   buf = xmalloc(buflen);
+  apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
   snprintf((char *)buf, buflen, "colors/%s.vim", name);
   retval = source_runtime(buf, DIP_START + DIP_OPT);
   xfree(buf);
@@ -6565,7 +6566,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
       init_highlight(true, true);
       highlight_changed();
-      redraw_later_clear();
+      redraw_all_later(NOT_VALID);
       return;
     }
     name_end = (const char *)skiptowhite((const char_u *)line);
@@ -6884,7 +6885,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // "fg", which have been changed now.
       highlight_attr_set_all();
 
-      if (!ui_is_external(kUINewgrid) && starting == 0) {
+      if (!ui_is_external(kUILinegrid) && starting == 0) {
         // Older UIs assume that we clear the screen after normal group is
         // changed
         ui_refresh();

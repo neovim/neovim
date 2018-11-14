@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
@@ -195,6 +196,11 @@ describe('startup', function()
     eq('  encoding=utf-8\n',
        funcs.system({nvim_prog, '-n', '-es' },
                     { 'set encoding', '' }))
+  end)
+
+  it('does not crash if --embed is given twice', function()
+    clear{args={'--embed'}}
+    eq(2, eval('1+1'))
   end)
 end)
 

@@ -160,6 +160,9 @@ Versions ~
 						*standard-plugin-list*
 Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
+|pi_health.txt|    Healthcheck framework
+|pi_matchit.txt|   Extended "%" matching
+|pi_msgpack.txt|   msgpack utilities
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens
 |pi_spec.txt|      Filetype plugin to work with rpm spec files
@@ -182,4 +185,4 @@ will try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
 ------------------------------------------------------------------------------
- vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
+ vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:

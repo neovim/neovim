@@ -8,7 +8,7 @@ else()
     HELPTAGS_WORKING_DIRECTORY)
 endif()
 
-message(STATUS "Generating helptags in ${HELPTAGS_WORKING_DIRECTORY}.")
+message(STATUS "Generating helptags in ${HELPTAGS_WORKING_DIRECTORY}")
 if(EXISTS ${HELPTAGS_WORKING_DIRECTORY}/)
   message(STATUS "${HELPTAGS_WORKING_DIRECTORY} already exists")
   # If the doc directory already exists, helptags could fail due to duplicate

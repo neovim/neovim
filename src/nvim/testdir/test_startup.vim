@@ -248,7 +248,7 @@ func Test_silent_ex_mode()
   endif
 
   " This caused an ml_get error.
-  let out = system(GetVimCommand() . '-u NONE -es -c''set verbose=1|h|exe "%norm\<c-y>\<c-d>"'' -c cq')
+  let out = system(GetVimCommand() . ' -u NONE -es -c''set verbose=1|h|exe "%norm\<c-y>\<c-d>"'' -c cq')
   call assert_notmatch('E315:', out)
 endfunc
 

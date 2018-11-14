@@ -16,6 +16,13 @@ enum {
   REMAP_SKIP = -3,  ///< No remapping for first char.
 } RemapValues;
 
+// Argument for flush_buffers().
+typedef enum {
+  FLUSH_MINIMAL,
+  FLUSH_TYPEAHEAD,  // flush current typebuf contents
+  FLUSH_INPUT       // flush typebuf and inchar() input
+} flush_buffers_T;
+
 #define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
 #define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */

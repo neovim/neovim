@@ -6,12 +6,12 @@
 [Community](https://neovim.io/community/) |
 [Gitter **Chat**](https://gitter.im/neovim/neovim)
 
-[![Travis Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
-[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
-[![codecov](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
-[![Coverity Scan Build](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
-[![Clang Scan Build](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
-[![PVS-studio Check](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
+[![Travis build status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
+[![Codecov coverage](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
+[![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
+[![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
+[![PVS-Studio analysis](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs/PVS-studio.html.d)
 
 [![Packages](https://repology.org/badge/tiny-repos/neovim.svg)](https://repology.org/metapackage/neovim)
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
@@ -24,7 +24,7 @@ Neovim is a project that seeks to aggressively refactor Vim in order to:
 - Enable [advanced UIs] without modifications to the core
 - Maximize [extensibility](https://github.com/neovim/neovim/wiki/Plugin-UI-architecture)
 
-See [the wiki](https://github.com/neovim/neovim/wiki/Introduction) and [Roadmap]
+See the [Introduction](https://github.com/neovim/neovim/wiki/Introduction) wiki page and [Roadmap]
 for more information.
 
 [![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
@@ -34,13 +34,13 @@ Features
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
 - [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  access from any language including clojure, lisp, go, haskell, lua,
-  javascript, perl, python, ruby, rust.
+  access from any language including Clojure, Lisp, Go, Haskell, Lua,
+  JavaScript, Perl, Python, Ruby, and Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
 - [XDG base directories](https://github.com/neovim/neovim/pull/3470) support
-- Compatible with most Vim plugins, including Ruby and Python plugins.
+- Compatible with most Vim plugins, including Ruby and Python plugins
 
 See [`:help nvim-features`][nvim-features] for the full list!
 
@@ -59,14 +59,17 @@ To list all targets:
 
     cmake --build build --target help
 
-To skip "bundled" (`third-party/*`) dependencies define `USE_BUNDLED=NO`.
+To skip "bundled" dependencies (`third-party/*`) define `USE_BUNDLED=NO`:
 
-See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
+    sudo apt install gperf libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
+    make USE_BUNDLED=NO
+
+See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
 
 Install from package
 --------------------
 
-Pre-built packages for Windows, macOS, and Linux are found at the
+Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
 Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
@@ -89,11 +92,11 @@ Project layout
     │  ├─ event/        event-loop subsystem
     │  ├─ generators/   code generation (pre-compilation)
     │  ├─ lib/          generic data structures
-    │  ├─ lua/          lua subsystem
+    │  ├─ lua/          Lua subsystem
     │  ├─ msgpack_rpc/  RPC subsystem
     │  ├─ os/           low-level platform code
     │  └─ tui/          built-in UI
-    ├─ third-party/     cmake subproject to build dependencies
+    ├─ third-party/     CMake subproject to build dependencies
     └─ test/            tests (see test/README.md)
 
 License
@@ -129,7 +132,7 @@ See `LICENSE` for details.
 [Homebrew]: https://github.com/neovim/homebrew-neovim#installation
 [Debian]: https://packages.debian.org/testing/neovim
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
-[Fedora]: https://admin.fedoraproject.org/pkgdb/package/rpms/neovim
+[Fedora]: https://apps.fedoraproject.org/packages/neovim
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
 

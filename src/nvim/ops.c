@@ -2159,9 +2159,17 @@ void op_insert(oparg_T *oap, long count1)
      * Subsequent calls to ml_get() flush the firstline data - take a
      * copy of the required string.
      */
-    firstline = ml_get(oap->start.lnum) + bd.textcol;
-    if (oap->op_type == OP_APPEND)
-      firstline += bd.textlen;
+    firstline = ml_get(oap->start.lnum);
+    const size_t len = STRLEN(firstline);
+    colnr_T add = bd.textcol;
+    if (oap->op_type == OP_APPEND) {
+      add += bd.textlen;
+    }
+    if ((size_t)add > len) {
+      firstline += len;  // short line, point to the NUL
+    } else {
+      firstline += add;
+    }
     ins_len = (long)STRLEN(firstline) - pre_textlen;
     if (pre_textlen >= 0 && ins_len > 0) {
       ins_text = vim_strnsave(firstline, (size_t)ins_len);

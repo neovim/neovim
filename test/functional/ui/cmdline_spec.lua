@@ -4,13 +4,13 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 
-local function test_cmdline(newgrid)
+local function test_cmdline(linegrid)
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_cmdline=true, ext_newgrid=newgrid})
+    screen:attach({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {reverse = true},
@@ -253,17 +253,14 @@ local function test_cmdline(newgrid)
     ]], cmdline=expectation}
 
     -- erase information, so we check if it is retransmitted
-    -- TODO(bfredl): when we add a flag to screen:expect{}
-    -- to explicitly check redraw!, it should also do this
-    screen.cmdline = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], cmdline=expectation}
+    ]], cmdline=expectation, reset=true}
 
 
     feed('<cr>')
@@ -323,8 +320,7 @@ local function test_cmdline(newgrid)
       {{'  line1'}},
     }}
 
-    screen.cmdline_block = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -339,7 +335,7 @@ local function test_cmdline(newgrid)
     }}, cmdline_block = {
       {{'function Foo()'}},
       {{'  line1'}},
-    }}
+    }, reset=true}
 
     feed('endfunction<cr>')
     screen:expect{grid=[[
@@ -415,8 +411,7 @@ local function test_cmdline(newgrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
@@ -427,7 +422,7 @@ local function test_cmdline(newgrid)
       firstc = ":",
       content = {{"yank"}},
       pos = 4,
-    }}}
+    }}, reset=true}
 
     feed("<c-c>")
     screen:expect{grid=[[
@@ -440,9 +435,9 @@ local function test_cmdline(newgrid)
 
     feed("<c-c>")
     screen:expect{grid=[[
-                               |
+      ^                         |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}make                    |
       {3:[Command Line]           }|
                                |
     ]], cmdline={{
@@ -451,7 +446,6 @@ local function test_cmdline(newgrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
     command("redraw!")
     screen:expect{grid=[[
       ^                         |
@@ -608,7 +602,7 @@ local function test_cmdline(newgrid)
   end)
 end
 
--- the representation of cmdline and cmdline_block contents changed with ext_newgrid
+-- the representation of cmdline and cmdline_block contents changed with ext_linegrid
 -- (which uses indexed highlights) so make sure to test both
 describe('ui/ext_cmdline', function() test_cmdline(true) end)
 describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)

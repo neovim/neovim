@@ -7,7 +7,7 @@ describe('sign', function()
     describe('without specifying buffer', function()
       it('deletes the sign from all buffers', function()
         -- place a sign with id 34 to first buffer
-        nvim('command', 'sign define Foo text=+ texthl=Delimiter linehl=Comment')
+        nvim('command', 'sign define Foo text=+ texthl=Delimiter linehl=Comment numhl=Number')
         local buf1 = nvim('eval', 'bufnr("%")')
         nvim('command', 'sign place 34 line=3 name=Foo buffer='..buf1)
         -- create a second buffer and place the sign on it as well

@@ -106,6 +106,43 @@ func Test_list_range_assign()
   call assert_equal([1, 2], l)
 endfunc
 
+" Test removing items in list
+func Test_list_func_remove()
+  " Test removing 1 element
+  let l = [1, 2, 3, 4]
+  call assert_equal(1, remove(l, 0))
+  call assert_equal([2, 3, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal(2, remove(l, 1))
+  call assert_equal([1, 3, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal(4, remove(l, -1))
+  call assert_equal([1, 2, 3], l)
+
+  " Test removing range of element(s)
+  let l = [1, 2, 3, 4]
+  call assert_equal([3], remove(l, 2, 2))
+  call assert_equal([1, 2, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal([2, 3], remove(l, 1, 2))
+  call assert_equal([1, 4], l)
+
+  let l = [1, 2, 3, 4]
+  call assert_equal([2, 3], remove(l, -3, -2))
+  call assert_equal([1, 4], l)
+
+  " Test invalid cases
+  let l = [1, 2, 3, 4]
+  call assert_fails("call remove(l, 5)", 'E684:')
+  call assert_fails("call remove(l, 1, 5)", 'E684:')
+  call assert_fails("call remove(l, 3, 2)", 'E16:')
+  call assert_fails("call remove(1, 0)", 'E712:')
+  call assert_fails("call remove(l, l)", 'E745:')
+endfunc
+
 " Tests for Dictionary type
 
 func Test_dict()
@@ -220,6 +257,17 @@ func Test_script_local_dict_func()
   call insert(g:dict.foo, function('strlen'))
   call assert_equal('g:dict.func-4', g:dict.func())
   unlet g:dict
+endfunc
+
+" Test removing items in la dictionary
+func Test_dict_func_remove()
+  let d = {1:'a', 2:'b', 3:'c'}
+  call assert_equal('b', remove(d, 2))
+  call assert_equal({1:'a', 3:'c'}, d)
+
+  call assert_fails("call remove(d, 1, 2)", 'E118:')
+  call assert_fails("call remove(d, 'a')", 'E716:')
+  call assert_fails("call remove(d, [])", 'E730:')
 endfunc
 
 " Nasty: remove func from Dict that's being called (works)

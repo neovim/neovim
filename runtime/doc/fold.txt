@@ -595,4 +595,4 @@ used.  Otherwise the values from the window where the buffer was edited last
 are used.
 
 ==============================================================================
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

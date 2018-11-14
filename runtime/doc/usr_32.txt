@@ -177,4 +177,4 @@ use the |undotree()| function.  To see what it returns: >
 
 Next chapter: |usr_40.txt|  Make new commands
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:
