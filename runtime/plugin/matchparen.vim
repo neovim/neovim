@@ -114,7 +114,7 @@ function! s:Highlight_Matching_Pair()
   " within those syntax types (i.e., not skip).  Otherwise, the cursor is
   " outside of the syntax types and s_skip should keep its value so we skip any
   " matching pair inside the syntax types.
-  execute 'if' s_skip '| let s_skip = 0 | endif'
+  execute 'if' s_skip '| let s_skip = "0" | endif'
 
   " Limit the search to lines visible in the window.
   let stoplinebottom = line('w$')
