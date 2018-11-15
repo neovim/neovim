@@ -171,9 +171,8 @@ bool hasFoldingWin(
   int low_level = 0;
 
   checkupdate(win);
-  /*
-   * Return quickly when there is no folding at all in this window.
-   */
+
+  // Return quickly when there is no folding at all in this window.
   if (!hasAnyFolding(win)) {
     if (infop != NULL)
       infop->fi_level = 0;
@@ -2851,8 +2850,9 @@ static void foldlevelIndent(fline_T *flp)
       flp->lvl = 0;
     else
       flp->lvl = -1;
-  } else
-    flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(curbuf);
+  } else {
+    flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(buf);
+  }
   if (flp->lvl > flp->wp->w_p_fdn) {
     flp->lvl = (int) MAX(0, flp->wp->w_p_fdn);
   }
