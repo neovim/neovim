@@ -494,7 +494,7 @@ function Screen:_wait(check, flags)
   if warn_immediate and immediate_seen then
      print([[
 
-Warning: A screen test has immediate success. Try to avoid this unless the
+warning: Screen test succeeded immediately. Try to avoid this unless the
 purpose of the test really requires it.]])
     if intermediate_seen then
       print([[
@@ -503,8 +503,7 @@ Use screen:snapshot_util() or screen:redraw_debug() to find them, and add them
 to the test if they make sense.
 ]])
     else
-      print([[If necessary, silence this warning by
-supplying the 'unchanged' argument to screen:expect.]])
+      print([[If necessary, silence this warning with 'unchanged' argument of screen:expect.]])
     end
     did_warn = true
   end
@@ -512,19 +511,17 @@ supplying the 'unchanged' argument to screen:expect.]])
   if failure_after_success then
     print([[
 
-Warning: Screen changes were received after the expected state. This indicates
+warning: Screen changes were received after the expected state. This indicates
 indeterminism in the test. Try adding screen:expect(...) (or wait()) between
 asynchronous (feed(), nvim_input()) and synchronous API calls.
-  - Use Screen:redraw_debug() to investigate the problem. It might find
-    relevant intermediate states that should be added to the test to make it
-    more robust.
-  - If the point of the test is to assert the state after some user input
-    sent with feed(...), also adding an screen:expect(...) before the feed(...)
-    will help ensure the input is sent to nvim when nvim is in a predictable
-    state. This is preferable to using wait(), as it is more closely emulates
-    real user interaction.
+  - Use screen:redraw_debug() to investigate; it may find relevant intermediate
+    states that should be added to the test to make it more robust.
+  - If the purpose of the test is to assert state after some user input sent
+    with feed(), adding screen:expect() before the feed() will help to ensure
+    the input is sent when Nvim is in a predictable state. This is preferable
+    to wait(), for being closer to real user interaction.
   - wait() can trigger redraws and consequently generate more indeterminism.
-    In that case try removing every wait().
+    Try removing wait().
       ]])
     did_warn = true
   end

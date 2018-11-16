@@ -743,6 +743,9 @@ void nvim_err_writeln(String str)
 
 /// Gets the current list of buffer handles
 ///
+/// Includes unlisted (unloaded/deleted) buffers, like `:ls!`.
+/// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
+///
 /// @return List of buffer handles
 ArrayOf(Buffer) nvim_list_bufs(void)
   FUNC_API_SINCE(1)

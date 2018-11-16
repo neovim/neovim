@@ -1237,7 +1237,7 @@ describe('API', function()
 
   describe('nvim_list_uis', function()
     it('returns empty if --headless', function()
-      -- --embed implies --headless.
+      -- Test runner defaults to --headless.
       eq({}, nvim("list_uis"))
     end)
     it('returns attached UIs', function()
