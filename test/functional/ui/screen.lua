@@ -704,7 +704,7 @@ end
 
 function Screen:_handle_grid_destroy(grid)
   self._grids[grid] = nil
-  if self._multigrid then
+  if self._options.ext_multigrid then
     assert(self.win_position[grid])
     self.win_position[grid] = nil
   end
@@ -810,7 +810,6 @@ function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
         width = width,
         height = height
     }
-    -- TODO(utkarshme): Take apt action
 end
 
 function Screen:_handle_win_hide(grid)
@@ -981,31 +980,51 @@ function Screen:_clear_row_section(grid, rownum, startcol, stopcol)
   end
 end
 
-function Screen:_row_repr(row, attr_state, cursor)
+function Screen:_row_repr(gridnr, rownr, attr_state, cursor)
   local rv = {}
   local current_attr_id
-  for i = 1, #row do
-    local attrs = row[i].attrs
-    if self._options.ext_linegrid then
-      attrs = attrs[(self._options.rgb and 1) or 2]
+  local i = 1
+  local has_windows = self._options.ext_multigrid and gridnr == 1
+  local row = self._grids[gridnr].rows[rownr]
+  while i <= #row do
+    local did_window = false
+    if has_windows then
+      for id,pos in pairs(self.win_position) do
+        if i-1 == pos.startcol and pos.startrow <= rownr-1 and rownr-1 < pos.startrow + pos.height then
+          if current_attr_id then
+            -- close current attribute bracket
+            table.insert(rv, '}')
+            current_attr_id = nil
+          end
+          table.insert(rv, '['..id..':'..string.rep('-',pos.width)..']')
+          i = i + pos.width
+          did_window = true
+        end
+      end
     end
-    local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
-    if current_attr_id and attr_id ~= current_attr_id then
-      -- close current attribute bracket, add it before any whitespace
-      -- up to the current cell
-      -- table.insert(rv, backward_find_meaningful(rv, i), '}')
-      table.insert(rv, '}')
-      current_attr_id = nil
+
+    if not did_window then
+      local attrs = row[i].attrs
+      if self._options.ext_linegrid then
+        attrs = attrs[(self._options.rgb and 1) or 2]
+      end
+      local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
+      if current_attr_id and attr_id ~= current_attr_id then
+        -- close current attribute bracket
+        table.insert(rv, '}')
+        current_attr_id = nil
+      end
+      if not current_attr_id and attr_id then
+        -- open a new attribute bracket
+        table.insert(rv, '{' .. attr_id .. ':')
+        current_attr_id = attr_id
+      end
+      if not self._busy and cursor and self._cursor.col == i then
+        table.insert(rv, '^')
+      end
+      table.insert(rv, row[i].text)
+      i = i + 1
     end
-    if not current_attr_id and attr_id then
-      -- open a new attribute bracket
-      table.insert(rv, '{' .. attr_id .. ':')
-      current_attr_id = attr_id
-    end
-    if not self._busy and cursor and self._cursor.col == i then
-      table.insert(rv, '^')
-    end
-    table.insert(rv, row[i].text)
   end
   if current_attr_id then
     table.insert(rv, '}')
@@ -1090,7 +1109,7 @@ function Screen:render(headers, attr_state, preview)
     for i = 1, grid.height do
       local cursor = self._cursor.grid == igrid and self._cursor.row == i
       local prefix = (headers or preview) and "  " or ""
-      table.insert(rv, prefix..self:_row_repr(grid.rows[i], attr_state, cursor).."|")
+      table.insert(rv, prefix..self:_row_repr(igrid, i, attr_state, cursor).."|")
     end
   end
   return rv
