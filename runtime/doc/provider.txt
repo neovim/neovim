@@ -19,23 +19,23 @@ Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 
 PYTHON QUICKSTART ~
 
-Install the "neovim" Python package:
+Install the "pynvim" Python package:
 
 - Run |:checkhealth| to see if you already have the package (some package
-  managers install the "neovim" Python package with Nvim itself). 
+  managers install the "pynvim" Python package with Nvim itself).
 
 - For Python 2 plugins, make sure Python 2.7 is available in your $PATH, then
   install the package systemwide: >
-    sudo pip2 install --upgrade neovim
+    sudo pip2 install --upgrade pynvim
 <  or for the current user: >
-    pip2 install --user --upgrade neovim
+    pip2 install --user --upgrade pynvim
 <  If "pip2" is missing, try "pip".
 
 - For Python 3 plugins, make sure Python 3.4+ is available in your $PATH, then
   install the package systemwide: >
-    sudo pip3 install --upgrade neovim
+    sudo pip3 install --upgrade pynvim
 <  or for the current user: >
-    pip3 install --user --upgrade neovim
+    pip3 install --user --upgrade pynvim
 <  If "pip3" is missing, try "pip".
 
 - The `--upgrade` flag ensures you have the latest version even if a previous
@@ -64,14 +64,14 @@ PYTHON VIRTUALENVS ~
 
 If you plan to use per-project virtualenvs often, you should assign one
 virtualenv for Neovim and hard-code the interpreter path via
-|g:python3_host_prog| (or |g:python_host_prog|) so that the "neovim" package
+|g:python3_host_prog| (or |g:python_host_prog|) so that the "pynvim" package
 is not required for each virtualenv.
 
 Example using pyenv: >
     pyenv install 3.4.4
     pyenv virtualenv 3.4.4 py3nvim
     pyenv activate py3nvim
-    pip install neovim
+    pip install pynvim
     pyenv which python  # Note the path
 The last command reports the interpreter path, add it to your init.vim: >
     let g:python3_host_prog = '/path/to/py3nvim/bin/python'
