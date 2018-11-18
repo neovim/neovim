@@ -157,7 +157,7 @@ function Screen.new(width, height)
     cmdline_block = {},
     wildmenu_items = nil,
     wildmenu_selected = nil,
-    win_position = nil,
+    win_position = {},
     _session = nil,
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
@@ -647,10 +647,13 @@ function Screen:_handle_grid_resize(grid, width, height)
   }
 end
 
-function Screen:_handle_msg_scroll_start()
+function Screen:_handle_win_scroll_over_start()
+   self.scroll_over = true
+   self.scroll_over_pos = self._grids[1].height
 end
 
-function Screen:_handle_msg_scroll_reset()
+function Screen:_handle_win_scroll_over_reset()
+   self.scroll_over = false
 end
 
 function Screen:_handle_flush()
@@ -763,11 +766,16 @@ function Screen:_handle_scroll(count)
 end
 
 function Screen:_handle_grid_scroll(g, top, bot, left, right, rows, cols)
+  if self.scroll_over and g == 1 and top < self.scroll_over_pos then
+    self.scroll_over_pos = top
+  end
+
   top = top+1
   left = left+1
   assert(cols == 0)
   local grid = self._grids[g]
   local start, stop, step
+
 
   if rows > 0 then
     start = top
@@ -985,6 +993,9 @@ function Screen:_row_repr(gridnr, rownr, attr_state, cursor)
   local current_attr_id
   local i = 1
   local has_windows = self._options.ext_multigrid and gridnr == 1
+  if self.scroll_over and self.scroll_over_pos < rownr then
+    has_windows = false
+  end
   local row = self._grids[gridnr].rows[rownr]
   while i <= #row do
     local did_window = false
