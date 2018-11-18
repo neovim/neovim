@@ -152,10 +152,10 @@ function! s:check_clipboard() abort
   endif
 endfunction
 
-" Get the latest Neovim Python client version from PyPI.
+" Get the latest Neovim Python client (pynvim) version from PyPI.
 function! s:latest_pypi_version() abort
   let pypi_version = 'unable to get pypi response'
-  let pypi_response = s:download('https://pypi.python.org/pypi/neovim/json')
+  let pypi_response = s:download('https://pypi.python.org/pypi/pynvim/json')
   if !empty(pypi_response)
     try
       let pypi_data = json_decode(pypi_response)
@@ -192,9 +192,9 @@ function! s:version_info(python) abort
   let nvim_path = s:trim(s:system([
         \ a:python, '-c',
         \ 'import sys; sys.path.remove(""); ' .
-        \ 'import neovim; print(neovim.__file__)']))
+        \ 'import pynvim; print(pynvim.__file__)']))
   if s:shell_error || empty(nvim_path)
-    return [python_version, 'unable to load neovim Python module', pypi_version,
+    return [python_version, 'unable to load pynvim Python module', pypi_version,
           \ nvim_path]
   endif
 
@@ -206,13 +206,13 @@ function! s:version_info(python) abort
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
-  " Try to get neovim.VERSION (added in 0.1.11dev).
+  " Try to get pynvim.VERSION (added in 0.1.11dev).
   let nvim_version = s:system([a:python, '-c',
-        \ 'from neovim import VERSION as v; '.
+        \ 'from pynvim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
   if empty(nvim_version)
-    let nvim_version = 'unable to find neovim Python module version'
+    let nvim_version = 'unable to find pynvim Python module version'
     let base = fnamemodify(nvim_path, ':h')
     let metas = glob(base.'-*/METADATA', 1, 1)
           \ + glob(base.'-*/PKG-INFO', 1, 1)
@@ -293,7 +293,7 @@ function! s:check_python(version) abort
 
   let [pyname, pythonx_errs] = provider#pythonx#Detect(a:version)
   if empty(pyname)
-    call health#report_warn('No Python interpreter was found with the neovim '
+    call health#report_warn('No Python interpreter was found with the pynvim '
             \ . 'module.  Using the first available for diagnostics.')
   elseif exists('g:'.host_prog_var)
     let python_bin = pyname
@@ -352,7 +352,7 @@ function! s:check_python(version) abort
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
             \ . 'for Neovim using pyenv, and set `g:%s`.  This will avoid '
-            \ . 'the need to install the Neovim Python module in each '
+            \ . 'the need to install the pynvim module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
     elseif !empty(venv)
@@ -366,7 +366,7 @@ function! s:check_python(version) abort
         call health#report_warn('Your virtualenv is not set up optimally.', [
               \ printf('Create a virtualenv specifically '
               \ . 'for Neovim and use `g:%s`.  This will avoid '
-              \ . 'the need to install Neovim''s Python module in each '
+              \ . 'the need to install the pynvim module in each '
               \ . 'virtualenv.', host_prog_var)
               \ ])
       endif
@@ -420,7 +420,7 @@ function! s:check_python(version) abort
     if s:is_bad_response(current)
       call health#report_error(
         \ "Neovim Python client is not installed.\nError: ".current,
-        \ ['Run in shell: pip' . a:version . ' install neovim'])
+        \ ['Run in shell: pip' . a:version . ' install pynvim'])
     endif
 
     if s:is_bad_response(latest)

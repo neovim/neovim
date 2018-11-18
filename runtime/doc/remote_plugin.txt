@@ -42,15 +42,15 @@ what a Python plugin looks like. This plugin exports a command, a function, and
 an autocmd. The plugin is called 'Limit', and all it does is limit the number
 of requests made to it. Here's the plugin source code:
 >
-    import neovim
+    import pynvim
 
-    @neovim.plugin
+    @pynvim.plugin
     class Limit(object):
         def __init__(self, vim):
             self.vim = vim
             self.calls = 0
 
-        @neovim.command('Cmd', range='', nargs='*', sync=True)
+        @pynvim.command('Cmd', range='', nargs='*', sync=True)
         def command_handler(self, args, range):
             self._increment_calls()
             self.vim.current.line = (
@@ -58,14 +58,14 @@ of requests made to it. Here's the plugin source code:
                                                                    args,
                                                                    range))
 
-        @neovim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")',
+        @pynvim.autocmd('BufEnter', pattern='*.py', eval='expand("<afile>")',
                         sync=True)
         def autocmd_handler(self, filename):
             self._increment_calls()
             self.vim.current.line = (
                 'Autocmd: Called %s times, file: %s' % (self.calls, filename))
 
-        @neovim.function('Func')
+        @pynvim.function('Func')
         def function_handler(self, args):
             self._increment_calls()
             self.vim.current.line = (
