@@ -54,46 +54,52 @@ function! provider#pythonx#Detect(major_ver) abort
         \ . ":\n" .  join(errors, "\n")]
 endfunction
 
-function! s:check_interpreter(prog, major_ver) abort
+" Returns array: [interpreter_exitcode, interpreter_version]
+function! s:check_for_package(prog, package) abort
+  let prog_version = system([a:prog, '-c' , printf(
+        \ 'import sys; ' .
+        \ 'sys.path.remove(""); ' .
+        \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
+        \ 'import pkgutil; ' .
+        \ 'exit(2*int(pkgutil.get_loader("%s") is None))',
+        \ a:package)])
+  return [v:shell_error, prog_version]
+endfunction
+
+function! s:check_interpreter(prog, major_version) abort
   let prog_path = exepath(a:prog)
   if prog_path ==# ''
     return [0, a:prog . ' not found in search path or not executable.']
   endif
 
-  let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
+  let min_version = (a:major_version == 2) ? '2.6' : '3.3'
 
   " Try to load pynvim module, and output Python version.
-  " Return codes:
+  " Exit codes:
   "   0  pynvim module can be loaded.
   "   2  pynvim module cannot be loaded.
   "   Otherwise something else went wrong (e.g. 1 or 127).
-  let prog_ver = system([ a:prog , '-c' ,
-        \ 'import sys; ' .
-        \ 'sys.path.remove(""); ' .
-        \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
-        \ 'import pkgutil; ' .
-        \ 'exit(2*int(pkgutil.get_loader("pynvim") is None))'
-        \ ])
+  let [prog_exitcode, prog_version] = s:check_for_package(a:prog, 'pynvim')
 
-  if v:shell_error == 2 || v:shell_error == 0
+  if prog_exitcode == 2 || prog_exitcode == 0
     " Check version only for expected return codes.
-    if prog_ver !~ '^' . a:major_ver
-      return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python '
-            \ . a:major_ver . '.']
-    elseif prog_ver =~ '^' . a:major_ver && prog_ver < min_version
-      return [0, prog_path . ' is Python ' . prog_ver . ' and cannot provide Python >= '
+    if prog_version !~ '^' . a:major_version
+      return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python '
+            \ . a:major_version . '.']
+    elseif prog_version =~ '^' . a:major_version && prog_version < min_version
+      return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python >= '
             \ . min_version . '.']
     endif
   endif
 
-  if v:shell_error == 2
+  if prog_exitcode == 2
     return [0, prog_path.' does not have the "pynvim" module. :help provider-python']
-  elseif v:shell_error == 127
+  elseif prog_exitcode == 127
     " This can happen with pyenv's shims.
-    return [0, prog_path . ' does not exist: ' . prog_ver]
-  elseif v:shell_error
+    return [0, prog_path . ' does not exist: ' . prog_version]
+  elseif prog_exitcode
     return [0, 'Checking ' . prog_path . ' caused an unknown error. '
-          \ . '(' . v:shell_error . ', output: ' . prog_ver . ')'
+          \ . '(' . prog_exitcode . ', output: ' . prog_version . ')'
           \ . ' Report this at https://github.com/neovim/neovim']
   endif
 
