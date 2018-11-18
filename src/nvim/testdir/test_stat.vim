@@ -1,31 +1,33 @@
 " Tests for stat functions and checktime
 
 func CheckFileTime(doSleep)
-  let fname = 'Xtest.tmp'
+  let fnames = ['Xtest1.tmp', 'Xtest2.tmp', 'Xtest3.tmp']
+  let times = []
   let result = 0
 
-  let ts = localtime()
-  if a:doSleep
-    sleep 1
-  endif
+  " Use three files istead of localtim(), with a network filesystem the file
+  " times may differ at bit
   let fl = ['Hello World!']
-  call writefile(fl, fname)
-  let tf = getftime(fname)
-  if a:doSleep
-    sleep 1
-  endif
-  let te = localtime()
+  for fname in fnames
+    call writefile(fl, fname)
+    call add(times, getftime(fname))
+    if a:doSleep
+      sleep 1
+    endif
+  endfor
 
-  let time_correct = (ts <= tf && tf <= te)
+  let time_correct = (times[0] <= times[1] && times[1] <= times[2])
   if a:doSleep || time_correct
-    call assert_true(time_correct)
-    call assert_equal(strlen(fl[0] . "\n"), getfsize(fname))
-    call assert_equal('file', getftype(fname))
-    call assert_equal('rw-', getfperm(fname)[0:2])
+    call assert_true(time_correct, printf('Expected %s <= %s <= %s', times[0], times[1], times[2]))
+    call assert_equal(strlen(fl[0] . "\n"), getfsize(fnames[0]))
+    call assert_equal('file', getftype(fnames[0]))
+    call assert_equal('rw-', getfperm(fnames[0])[0:2])
     let result = 1
   endif
 
-  call delete(fname)
+  for fname in fnames
+    call delete(fname)
+  endfor
   return result
 endfunc
 
