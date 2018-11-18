@@ -2172,7 +2172,7 @@ win_line (
   static int cap_col = -1;              /* column to check for Cap word */
   static linenr_T capcol_lnum = 0;      /* line number where "cap_col" used */
   int cur_checked_col = 0;              /* checked column for current line */
-  int extra_check;                      /* has syntax or linebreak */
+  int extra_check = 0;                  // has syntax or linebreak
   int multi_attr = 0;                   /* attributes desired by multibyte */
   int mb_l = 1;                         /* multi-byte byte length */
   int mb_c = 0;                         /* decoded multi-byte character */
