@@ -141,17 +141,29 @@ func Test_getftype()
   endif
 
   for cdevfile in systemlist('find /dev -type c -maxdepth 2 2>/dev/null')
-    call assert_equal('cdev', getftype(cdevfile))
+    let type = getftype(cdevfile)
+    " ignore empty result, can happen if the file disappeared
+    if type != ''
+      call assert_equal('cdev', type)
+    endif
   endfor
 
   for bdevfile in systemlist('find /dev -type b -maxdepth 2 2>/dev/null')
-    call assert_equal('bdev', getftype(bdevfile))
+    let type = getftype(bdevfile)
+    " ignore empty result, can happen if the file disappeared
+    if type != ''
+      call assert_equal('bdev', type)
+    endif
   endfor
 
   " The /run/ directory typically contains socket files.
   " If it does not, test won't fail but will not test socket files.
   for socketfile in systemlist('find /run -type s -maxdepth 2 2>/dev/null')
-    call assert_equal('socket', getftype(socketfile))
+    let type = getftype(socketfile)
+    " ignore empty result, can happen if the file disappeared
+    if type != ''
+      call assert_equal('socket', type)
+    endif
   endfor
 
   " TODO: file type 'other' is not tested. How can we test it?
