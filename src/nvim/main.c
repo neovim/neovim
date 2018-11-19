@@ -270,7 +270,9 @@ int main(int argc, char **argv)
   }
 
   server_init(params.listen_addr);
-  client_init(params.remote, params.server_addr, argc, argv);
+  if(params.remote){
+    handle_remote_client(params.remote, params.server_addr, argc, argv);
+  }
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
@@ -760,17 +762,15 @@ static void init_locale(void)
 }
 #endif
 
-/// Initialize the client
-static bool client_init(int remote, char *server_addr, int argc, char **argv){
+/// Handle remote subcommands
+static void handle_remote_client(int remote_args, char *server_addr, int argc, char **argv){
 
-  // handle remote subcommands
-  if (remote) {
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
     uint64_t rc_id = server_addr == NULL ? 0 : channel_connect(false,
                      server_addr, true, on_data, 50, &error);
 
-    int t_argc = remote;
+    int t_argc = remote_args;
     Array args = ARRAY_DICT_INIT;
     String arg_s;
     for (;t_argc < argc; t_argc++) {
@@ -786,7 +786,6 @@ static bool client_init(int remote, char *server_addr, int argc, char **argv){
     executor_exec_lua_api(s, a, &err);
 
     mch_exit(0);
-  }
 }
 
 /// Decides whether text (as opposed to commands) will be read from stdin.
@@ -2007,7 +2006,7 @@ static void usage(void)
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
   mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --remote[-subcommand] Execute commands remotey on a server\n"));
-  mch_msg(_("  --server <address>    Specify RPC server to send commands to\n"));
+  mch_msg(_("  --server <address>    Specify RPC poop server to send commands to\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
