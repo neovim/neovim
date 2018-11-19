@@ -101,9 +101,9 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'doitclient'
-  elseif executable('win32yank')
-    let s:copy['+'] = 'win32yank -i --crlf'
-    let s:paste['+'] = 'win32yank -o --lf'
+  elseif executable('win32yank.exe')
+    let s:copy['+'] = 'win32yank.exe -i --crlf'
+    let s:paste['+'] = 'win32yank.exe -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
