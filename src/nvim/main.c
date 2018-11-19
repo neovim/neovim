@@ -783,7 +783,10 @@ static void handle_remote_client(int remote_args, char *server_addr, int argc, c
     ADD(a, INTEGER_OBJ((int)rc_id));
     ADD(a, ARRAY_OBJ(args));
     String s = cstr_to_string("return vim._cs_remote(...)");
-    executor_exec_lua_api(s, a, &err);
+    Object o = executor_exec_lua_api(s, a, &err);
+
+    // add some check with o.data.boolean
+    // to determine whether to exit or start a local instance
 
     mch_exit(0);
 }
