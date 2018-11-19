@@ -2006,7 +2006,7 @@ static void usage(void)
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
   mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --remote[-subcommand] Execute commands remotey on a server\n"));
-  mch_msg(_("  --server <address>    Specify RPC poop server to send commands to\n"));
+  mch_msg(_("  --server <address>    Specify RPC server to send commands to\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
