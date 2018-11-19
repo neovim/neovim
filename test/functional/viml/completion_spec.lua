@@ -3,7 +3,10 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local curbufmeths = helpers.curbufmeths
+local command = helpers.command
 local meths = helpers.meths
+local wait = helpers.wait
 
 describe('completion', function()
   local screen
@@ -754,7 +757,7 @@ describe('completion', function()
 
     eval('1 + 1')
     -- popupmenu still visible
-    screen:expect([[
+    screen:expect{grid=[[
       foobar fooegg                                               |
       fooegg^                                                      |
       {1:foobar         }{0:                                             }|
@@ -763,7 +766,7 @@ describe('completion', function()
       {0:~                                                           }|
       {0:~                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
-    ]])
+    ]], unchanged=true}
 
     feed('<c-p>')
     -- Didn't restart completion: old matches still used
@@ -870,105 +873,90 @@ describe('completion', function()
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 7}             |
     ]])
   end)
-end)
 
-describe('ui/ext_popupmenu', function()
-  local screen
-  local items, selected, anchor
-  before_each(function()
-    clear()
-    screen = Screen.new(60, 8)
-    screen:attach({rgb=true, ext_popupmenu=true})
-    screen:set_default_attr_ids({
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {bold = true},
-    })
-    screen:set_on_event_handler(function(name, data)
-      if name == "popupmenu_show" then
-        local row, col
-        items, selected, row, col = unpack(data)
-        anchor = {row, col}
-      elseif name == "popupmenu_select" then
-        selected = data[1]
-      elseif name == "popupmenu_hide" then
-        items = nil
-      end
-    end)
-  end)
-
-  it('works', function()
+  it('TextChangedP autocommand', function()
+    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar'})
     source([[
-      function! TestComplete() abort
-        call complete(1, ['foo', 'bar', 'spam'])
-        return ''
-      endfunction
+      set complete=. completeopt=menuone
+      let g:foo = []
+      autocmd! TextChanged * :call add(g:foo, "N")
+      autocmd! TextChangedI * :call add(g:foo, "I")
+      autocmd! TextChangedP * :call add(g:foo, "P")
+      call cursor(3, 1)
     ]])
-    local expected = {
-      {'foo', '', '', ''},
-      {'bar', '', '', ''},
-      {'spam', '', '', ''},
-    }
-    feed('o<C-r>=TestComplete()<CR>')
-    screen:expect([[
-                                                                  |
-      foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(0, selected)
-      eq({1,0}, anchor)
-    end)
 
-    feed('<c-p>')
-    screen:expect([[
-                                                                  |
-      ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(-1, selected)
-      eq({1,0}, anchor)
-    end)
+    command('let g:foo = []')
+    feed('o')
+    wait()
+    feed('<esc>')
+    eq({'I'}, eval('g:foo'))
 
-    -- down moves the selection in the menu, but does not insert anything
-    feed('<down><down>')
-    screen:expect([[
-                                                                  |
-      ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], nil, nil, function()
-      eq(expected, items)
-      eq(1, selected)
-      eq({1,0}, anchor)
-    end)
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    eq({'I', 'I'}, eval('g:foo'))
+    feed('<esc>')
 
-    feed('<cr>')
-    screen:expect([[
-                                                                  |
-      bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {2:-- INSERT --}                                                |
-    ]], nil, nil, function()
-      eq(nil, items) -- popupmenu was hidden
-    end)
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    eq({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    command('let g:foo = []')
+    feed('S')
+    wait()
+    feed('f')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    wait()
+    feed('<C-N>')
+    eq({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
+    feed('<esc>')
+
+    eq({'foo', 'bar', 'foobar', 'foo'}, eval('getline(1, "$")'))
+
+    source([[
+      au! TextChanged
+      au! TextChangedI
+      au! TextChangedP
+      set complete&vim completeopt&vim
+    ]])
   end)
 end)

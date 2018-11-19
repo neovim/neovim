@@ -563,10 +563,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
   p = start->out->out;     /* skip first char, it goes into regstart */
   s = ret;
   while (p->c > 0) {
-    if (has_mbyte)
-      s += (*mb_char2bytes)(p->c, s);
-    else
-      *s++ = p->c;
+    s += utf_char2bytes(p->c, s);
     p = p->out;
   }
   *s = NUL;
@@ -1223,8 +1220,8 @@ static int nfa_regatom(void)
     if (c == '[')
       goto collection;
 
-  /* "\_x" is character class plus newline */
-  /*FALLTHROUGH*/
+  // "\_x" is character class plus newline
+  FALLTHROUGH;
 
   /*
    * Character classes.
@@ -1323,7 +1320,7 @@ static int nfa_regatom(void)
       EMSG(_(e_nopresub));
       return FAIL;
     }
-    for (lp = reg_prev_sub; *lp != NUL; mb_cptr_adv(lp)) {
+    for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
       EMIT(PTR2CHAR(lp));
       if (lp != reg_prev_sub)
         EMIT(NFA_CONCAT);
@@ -1387,8 +1384,8 @@ static int nfa_regatom(void)
       re_has_z = REX_SET;
       break;
     default:
-      EMSGN(_("E867: (NFA) Unknown operator '\\z%c'"),
-          no_Magic(c));
+      emsgf(_("E867: (NFA) Unknown operator '\\z%c'"),
+            no_Magic(c));
       return FAIL;
     }
     break;
@@ -1409,7 +1406,7 @@ static int nfa_regatom(void)
     case 'u':               /* %uabcd hex 4 */
     case 'U':               /* %U1234abcd hex 8 */
     {
-      int nr;
+      int64_t nr;
 
       switch (c) {
       case 'd': nr = getdecchrs(); break;
@@ -1485,7 +1482,7 @@ static int nfa_regatom(void)
 
     default:
     {
-      int n = 0;
+      long n = 0;
       int cmp = c;
 
       if (c == '<' || c == '>')
@@ -1511,7 +1508,13 @@ static int nfa_regatom(void)
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
         }
-        EMIT(n);
+#if SIZEOF_INT < SIZEOF_LONG
+        if (n > INT_MAX) {
+          EMSG(_("E951: \\% value too large"));
+          return FAIL;
+        }
+#endif
+        EMIT((int)n);
         break;
       } else if (c == '\'' && n == 0) {
         /* \%'m  \%<'m  \%>'m  */
@@ -1521,8 +1524,8 @@ static int nfa_regatom(void)
         break;
       }
     }
-      EMSGN(_("E867: (NFA) Unknown operator '\\%%%c'"),
-          no_Magic(c));
+      emsgf(_("E867: (NFA) Unknown operator '\\%%%c'"),
+            no_Magic(c));
       return FAIL;
     }
     break;
@@ -1557,7 +1560,7 @@ collection:
         } else
           EMIT(result);
         regparse = endp;
-        mb_ptr_adv(regparse);
+        MB_PTR_ADV(regparse);
         return OK;
       }
       /*
@@ -1565,10 +1568,10 @@ collection:
        * version that turns [abc] into 'a' OR 'b' OR 'c'
        */
       startc = endc = oldstartc = -1;
-      negated = FALSE;
-      if (*regparse == '^') {                           /* negated range */
-        negated = TRUE;
-        mb_ptr_adv(regparse);
+      negated = false;
+      if (*regparse == '^') {                           // negated range
+        negated = true;
+        MB_PTR_ADV(regparse);
         EMIT(NFA_START_NEG_COLL);
       } else
         EMIT(NFA_START_COLL);
@@ -1576,7 +1579,7 @@ collection:
         startc = '-';
         EMIT(startc);
         EMIT(NFA_CONCAT);
-        mb_ptr_adv(regparse);
+        MB_PTR_ADV(regparse);
       }
       /* Emit the OR branches for each character in the [] */
       emit_range = FALSE;
@@ -1666,8 +1669,8 @@ collection:
         if (*regparse == '-' && oldstartc != -1) {
           emit_range = TRUE;
           startc = oldstartc;
-          mb_ptr_adv(regparse);
-          continue;                         /* reading the end of the range */
+          MB_PTR_ADV(regparse);
+          continue;                         // reading the end of the range
         }
 
         /* Now handle simple and escaped characters.
@@ -1683,7 +1686,7 @@ collection:
                     != NULL)
                 )
             ) {
-          mb_ptr_adv(regparse);
+          MB_PTR_ADV(regparse);
 
           if (*regparse == 'n')
             startc = reg_string ? NL : NFA_NEWL;
@@ -1695,8 +1698,8 @@ collection:
                     ) {
             /* TODO(RE) This needs more testing */
             startc = coll_get_char();
-            got_coll_char = TRUE;
-            mb_ptr_back(old_regparse, regparse);
+            got_coll_char = true;
+            MB_PTR_BACK(old_regparse, regparse);
           } else {
             /* \r,\t,\e,\b */
             startc = backslash_trans(*regparse);
@@ -1711,8 +1714,9 @@ collection:
         if (emit_range) {
           endc = startc;
           startc = oldstartc;
-          if (startc > endc)
-            EMSG_RET_FAIL(_(e_invrange));
+          if (startc > endc) {
+            EMSG_RET_FAIL(_(e_reverse_range));
+          }
 
           if (endc > startc + 2) {
             /* Emit a range instead of the sequence of
@@ -1767,18 +1771,18 @@ collection:
           }
         }
 
-        mb_ptr_adv(regparse);
-      }           /* while (p < endp) */
+        MB_PTR_ADV(regparse);
+      }           // while (p < endp)
 
-      mb_ptr_back(old_regparse, regparse);
-      if (*regparse == '-') {               /* if last, '-' is just a char */
+      MB_PTR_BACK(old_regparse, regparse);
+      if (*regparse == '-') {               // if last, '-' is just a char
         EMIT('-');
         EMIT(NFA_CONCAT);
       }
 
       /* skip the trailing ] */
       regparse = endp;
-      mb_ptr_adv(regparse);
+      MB_PTR_ADV(regparse);
 
       /* Mark end of the collection. */
       if (negated == TRUE)
@@ -1797,16 +1801,16 @@ collection:
 
     if (reg_strict)
       EMSG_RET_FAIL(_(e_missingbracket));
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   default:
   {
     int plen;
 
 nfa_do_multibyte:
-    /* plen is length of current char with composing chars */
+    // plen is length of current char with composing chars
     if (enc_utf8 && ((*mb_char2len)(c)
-                     != (plen = (*mb_ptr2len)(old_regparse))
+                     != (plen = utfc_ptr2len(old_regparse))
                      || utf_iscomposing(c))) {
       int i = 0;
 
@@ -1858,7 +1862,7 @@ static int nfa_regpiece(void)
   int greedy = TRUE;                /* Braces are prefixed with '-' ? */
   parse_state_T old_state;
   parse_state_T new_state;
-  int c2;
+  int64_t c2;
   int old_post_pos;
   int my_post_start;
   int quest;
@@ -1933,7 +1937,7 @@ static int nfa_regpiece(void)
       break;
     }
     if (i == 0) {
-      EMSGN(_("E869: (NFA) Unknown operator '\\@%c'"), op);
+      emsgf(_("E869: (NFA) Unknown operator '\\@%c'"), op);
       return FAIL;
     }
     EMIT(i);
@@ -2031,9 +2035,10 @@ static int nfa_regpiece(void)
     break;
   }     /* end switch */
 
-  if (re_multi_type(peekchr()) != NOT_MULTI)
-    /* Can't have a multi follow a multi. */
-    EMSG_RET_FAIL(_("E871: (NFA regexp) Can't have a multi follow a multi !"));
+  if (re_multi_type(peekchr()) != NOT_MULTI) {
+    // Can't have a multi follow a multi.
+    EMSG_RET_FAIL(_("E871: (NFA regexp) Can't have a multi follow a multi"));
+  }
 
   return OK;
 }
@@ -2123,7 +2128,6 @@ static int nfa_regconcat(void)
  */
 static int nfa_regbranch(void)
 {
-  int ch;
   int old_post_pos;
 
   old_post_pos = (int)(post_ptr - post_start);
@@ -2132,10 +2136,13 @@ static int nfa_regbranch(void)
   if (nfa_regconcat() == FAIL)
     return FAIL;
 
-  ch = peekchr();
-  /* Try next concats */
-  while (ch == Magic('&')) {
+  // Try next concats
+  while (peekchr() == Magic('&')) {
     skipchr();
+    // if concat is empty do emit a node
+    if (old_post_pos == (int)(post_ptr - post_start)) {
+      EMIT(NFA_EMPTY);
+    }
     EMIT(NFA_NOPEN);
     EMIT(NFA_PREV_ATOM_NO_WIDTH);
     old_post_pos = (int)(post_ptr - post_start);
@@ -2145,7 +2152,6 @@ static int nfa_regbranch(void)
     if (old_post_pos == (int)(post_ptr - post_start))
       EMIT(NFA_EMPTY);
     EMIT(NFA_CONCAT);
-    ch = peekchr();
   }
 
   /* if a branch is empty, emit one node for it */
@@ -2446,6 +2452,8 @@ static void nfa_set_code(int c)
 }
 
 static FILE *log_fd;
+static char_u e_log_open_failed[] = N_(
+    "Could not open temporary log file for writing, displaying on stderr... ");
 
 /*
  * Print the postfix notation of the current regexp.
@@ -2458,10 +2466,11 @@ static void nfa_postfix_dump(char_u *expr, int retval)
   f = fopen(NFA_REGEXP_DUMP_LOG, "a");
   if (f != NULL) {
     fprintf(f, "\n-------------------------\n");
-    if (retval == FAIL)
-      fprintf(f, ">>> NFA engine failed ... \n");
-    else if (retval == OK)
+    if (retval == FAIL) {
+      fprintf(f, ">>> NFA engine failed... \n");
+    } else if (retval == OK) {
       fprintf(f, ">>> NFA engine succeeded !\n");
+    }
     fprintf(f, "Regexp: \"%s\"\nPostfix notation (char): \"", expr);
     for (p = post_start; *p && p < post_ptr; p++) {
       nfa_set_code(*p);
@@ -2715,7 +2724,7 @@ static void st_error(int *postfix, int *end, int *p)
     fclose(df);
   }
 #endif
-  EMSG(_("E874: (NFA) Could not pop the stack !"));
+  EMSG(_("E874: (NFA) Could not pop the stack!"));
 }
 
 /*
@@ -3223,7 +3232,13 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (pattern) {
         /* NFA_ZEND -> NFA_END_PATTERN -> NFA_SKIP -> what follows. */
         skip = alloc_state(NFA_SKIP, NULL, NULL);
+        if (skip == NULL) {
+          goto theend;
+        }
         zend = alloc_state(NFA_ZEND, s1, NULL);
+        if (zend == NULL) {
+          goto theend;
+        }
         s1->out= skip;
         patch(e.out, zend);
         PUSH(frag(s, list1(&skip->out)));
@@ -3241,8 +3256,8 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       break;
     }
 
-    case NFA_COMPOSING:         /* char with composing char */
-    /* FALLTHROUGH */
+    case NFA_COMPOSING:         // char with composing char
+      FALLTHROUGH;
 
     case NFA_MOPEN:     /* \( \) Submatch */
     case NFA_MOPEN1:
@@ -3971,7 +3986,7 @@ addstate (
             || !REG_MULTI
             || reglnum == nfa_endp->se_u.pos.lnum))
       goto skip_add;
-  /* FALLTHROUGH */
+    FALLTHROUGH;
 
   case NFA_MOPEN1:
   case NFA_MOPEN2:
@@ -4194,7 +4209,7 @@ skip_add:
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
-    // fallthrough
+    FALLTHROUGH;
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:
@@ -4358,16 +4373,18 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_CNTRL:
-    if (c >= 1 && c <= 255 && iscntrl(c))
+    if (c >= 1 && c <= 127 && iscntrl(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_DIGIT:
     if (ascii_isdigit(c))
       return OK;
     break;
   case NFA_CLASS_GRAPH:
-    if (c >= 1 && c <= 255 && isgraph(c))
+    if (c >= 1 && c <= 127 && isgraph(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_LOWER:
     if (mb_islower(c) && c != 170 && c != 186) {
@@ -4619,10 +4636,10 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
       }
       if ((int)(reginput - regline) >= state->val) {
         reginput -= state->val;
-        if (has_mbyte)
-          reginput -= mb_head_off(regline, reginput);
-      } else
+        reginput -= utf_head_off(regline, reginput);
+      } else {
         reginput = regline;
+      }
     }
   }
 
@@ -4682,8 +4699,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     fprintf(log_fd, "MATCH = %s\n", !result ? "FALSE" : "OK");
     fprintf(log_fd, "****************************\n");
   } else {
-    EMSG(_(
-            "Could not open temporary log file for writing, displaying on stderr ... "));
+    EMSG(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -4949,7 +4965,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   FILE        *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
   if (debug == NULL) {
-    EMSG2(_("(NFA) COULD NOT OPEN %s !"), NFA_REGEXP_DEBUG_LOG);
+    EMSG2("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
     return false;
   }
 #endif
@@ -4987,8 +5003,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         abs(start->id), code);
     fprintf(log_fd, "**********************************\n");
   } else {
-    EMSG(_(
-            "Could not open temporary log file for writing, displaying on stderr ... "));
+    EMSG(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -5027,16 +5042,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
    * Run for each character.
    */
   for (;; ) {
-    int curc;
-    int clen;
-
-    if (has_mbyte) {
-      curc = (*mb_ptr2char)(reginput);
-      clen = (*mb_ptr2len)(reginput);
-    } else {
-      curc = *reginput;
-      clen = 1;
-    }
+    int curc = utf_ptr2char(reginput);
+    int clen = utfc_ptr2len(reginput);
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;
@@ -5061,8 +5068,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
     fprintf(log_fd, "------------------------------------------\n");
     fprintf(log_fd, ">>> Reginput is \"%s\"\n", reginput);
     fprintf(log_fd,
-        ">>> Advanced one character ... Current char is %c (code %d) \n", curc,
-        (int)curc);
+            ">>> Advanced one character... Current char is %c (code %d) \n",
+            curc,
+            (int)curc);
     fprintf(log_fd, ">>> Thislist has %d states available: ", thislist->n);
     {
       int i;
@@ -5094,16 +5102,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       {
         int col;
 
-        if (t->subs.norm.in_use <= 0)
+        if (t->subs.norm.in_use <= 0) {
           col = -1;
-        else if (REG_MULTI)
+        } else if (REG_MULTI) {
           col = t->subs.norm.list.multi[0].start_col;
-        else
+        } else {
           col = (int)(t->subs.norm.list.line[0].start - regline);
+        }
         nfa_set_code(t->state->c);
-        fprintf(log_fd, "(%d) char %d %s (start col %d)%s ... \n",
-            abs(t->state->id), (int)t->state->c, code, col,
-            pim_info(&t->pim));
+        fprintf(log_fd, "(%d) char %d %s (start col %d)%s... \n",
+                abs(t->state->id), (int)t->state->c, code, col,
+                pim_info(&t->pim));
       }
 #endif
 
@@ -5498,7 +5507,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // We don't care about the order of composing characters.
           // Get them into cchars[] first.
           while (len < clen) {
-            mc = mb_ptr2char(reginput + len);
+            mc = utf_ptr2char(reginput + len);
             cchars[ccount++] = mc;
             len += mb_char2len(mc);
             if (ccount == MAX_MCO)
@@ -6257,8 +6266,9 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm)
     nfa_print_state(f, start);
     fprintf(f, "\n\n");
     fclose(f);
-  } else
-    EMSG(_("Could not open temporary log file for writing "));
+  } else {
+    EMSG("Could not open temporary log file for writing");
+  }
 #endif
 
   clear_sub(&subs.norm);
@@ -6484,10 +6494,10 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
     FILE *f = fopen(NFA_REGEXP_RUN_LOG, "a");
 
     if (f != NULL) {
-      fprintf(
-          f,
-          "\n*****************************\n\n\n\n\tCompiling regexp \"%s\" ... hold on !\n",
-          expr);
+      fprintf(f,
+              "\n*****************************\n\n\n\n\t"
+              "Compiling regexp \"%s\"... hold on !\n",
+              expr);
       fclose(f);
     }
   }

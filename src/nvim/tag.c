@@ -266,8 +266,8 @@ do_tag (
         goto end_do_tag;
       }
 
-      if (type == DT_POP) {             /* go to older position */
-        int old_KeyTyped = KeyTyped;
+      if (type == DT_POP) {             // go to older position
+        const bool old_KeyTyped = KeyTyped;
         if ((tagstackidx -= count) < 0) {
           EMSG(_(bottommsg));
           if (tagstackidx + count == 0) {
@@ -512,10 +512,10 @@ do_tag (
         if (msg_col == 0)
           msg_didout = FALSE;           /* overwrite previous message */
         msg_start();
-        MSG_PUTS_ATTR(_("  # pri kind tag"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("  # pri kind tag"), HL_ATTR(HLF_T));
         msg_clr_eos();
         taglen_advance(taglen);
-        MSG_PUTS_ATTR(_("file\n"), hl_attr(HLF_T));
+        MSG_PUTS_ATTR(_("file\n"), HL_ATTR(HLF_T));
 
         for (i = 0; i < num_matches && !got_int; i++) {
           parse_match(matches[i], &tagp);
@@ -535,15 +535,15 @@ do_tag (
           }
           msg_advance(13);
           msg_outtrans_len_attr(tagp.tagname,
-              (int)(tagp.tagname_end - tagp.tagname),
-              hl_attr(HLF_T));
+                                (int)(tagp.tagname_end - tagp.tagname),
+                                HL_ATTR(HLF_T));
           msg_putchar(' ');
           taglen_advance(taglen);
 
           /* Find out the actual file name. If it is long, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
-          msg_puts_long_attr(p, hl_attr(HLF_D));
+          msg_puts_long_attr(p, HL_ATTR(HLF_D));
           xfree(p);
 
           if (msg_col > 0)
@@ -573,8 +573,8 @@ do_tag (
                 p = tagp.tagkind_end;
                 continue;
               }
-              /* print all other extra fields */
-              attr = hl_attr(HLF_CM);
+              // print all other extra fields
+              attr = HL_ATTR(HLF_CM);
               while (*p && *p != '\r' && *p != '\n') {
                 if (msg_col + ptr2cells(p) >= Columns) {
                   msg_putchar('\n');
@@ -849,7 +849,7 @@ do_tag (
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
           if (ic) {
-            msg_attr((const char *)IObuff, hl_attr(HLF_W));
+            msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
           } else {
             msg(IObuff);
           }
@@ -952,15 +952,15 @@ void do_tags(exarg_T *eap)
         continue;
 
       msg_putchar('\n');
-      sprintf((char *)IObuff, "%c%2d %2d %-15s %5ld  ",
-          i == tagstackidx ? '>' : ' ',
-          i + 1,
-          tagstack[i].cur_match + 1,
-          tagstack[i].tagname,
-          tagstack[i].fmark.mark.lnum);
+      vim_snprintf((char *)IObuff, IOSIZE, "%c%2d %2d %-15s %5ld  ",
+                   i == tagstackidx ? '>' : ' ',
+                   i + 1,
+                   tagstack[i].cur_match + 1,
+                   tagstack[i].tagname,
+                   tagstack[i].fmark.mark.lnum);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
-          ? hl_attr(HLF_D) : 0);
+                        ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
     ui_flush();                    /* show one line at a time */
@@ -2217,6 +2217,16 @@ static bool test_for_static(tagptrs_T *tagp)
   return FALSE;
 }
 
+// Returns the length of a matching tag line.
+static size_t matching_line_len(const char_u *const lbuf)
+{
+  const char_u *p = lbuf + 1;
+
+  // does the same thing as parse_match()
+  p += STRLEN(p) + 1;
+  return (p - lbuf) + STRLEN(p);
+}
+
 /*
  * Parse a line from a matching tag.  Does not change the line itself.
  *
@@ -2289,7 +2299,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 {
   int c = *tagp->fname_end;
   *tagp->fname_end = NUL;
-  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
+  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, false);
   *tagp->fname_end = c;
 
   return fullname;
@@ -2300,11 +2310,10 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
  *
  * returns OK for success, NOTAGFILE when file not found, FAIL otherwise.
  */
-static int 
-jumpto_tag (
-    char_u *lbuf,              /* line from the tags file for this tag */
-    int forceit,                    /* :ta with ! */
-    int keep_help                  /* keep help flag (FALSE for cscope) */
+static int jumpto_tag(
+    const char_u *lbuf_arg,   // line from the tags file for this tag
+    int forceit,              // :ta with !
+    int keep_help             // keep help flag (FALSE for cscope)
 )
 {
   int save_secure;
@@ -2312,7 +2321,6 @@ jumpto_tag (
   bool save_p_ws;
   int save_p_scs, save_p_ic;
   linenr_T save_lnum;
-  int csave = 0;
   char_u      *str;
   char_u      *pbuf;                    /* search pattern buffer */
   char_u      *pbuf_end;
@@ -2320,13 +2328,16 @@ jumpto_tag (
   char_u      *fname;
   tagptrs_T tagp;
   int retval = FAIL;
-  int getfile_result;
+  int getfile_result = GETFILE_UNUSED;
   int search_options;
   int save_no_hlsearch;
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
-  int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
+  const bool old_KeyTyped = KeyTyped;       // getting the file may reset it
   const int l_g_do_tagpreview = g_do_tagpreview;
+  const size_t len = matching_line_len(lbuf_arg) + 1;
+  char_u *lbuf = xmalloc(len);
+  memmove(lbuf, lbuf_arg, len);
 
   pbuf = xmalloc(LSIZE);
 
@@ -2336,8 +2347,7 @@ jumpto_tag (
     goto erret;
   }
 
-  /* truncate the file name, so it can be used as a string */
-  csave = *tagp.fname_end;
+  // truncate the file name, so it can be used as a string
   *tagp.fname_end = NUL;
   fname = tagp.fname;
 
@@ -2363,8 +2373,8 @@ jumpto_tag (
    * Expand file name, when needed (for environment variables).
    * If 'tagrelative' option set, may change file name.
    */
-  fname = expand_tag_fname(fname, tagp.tag_fname, TRUE);
-  tofree_fname = fname;         /* free() it later */
+  fname = expand_tag_fname(fname, tagp.tag_fname, true);
+  tofree_fname = fname;         // free() it later
 
   /*
    * Check if the file with the tag exists before abandoning the current
@@ -2404,11 +2414,38 @@ jumpto_tag (
     }
   }
 
-  /* If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
-   * open a new tab page. */
-  if (postponed_split || cmdmod.tab != 0) {
-    win_split(postponed_split > 0 ? postponed_split : 0,
-        postponed_split_flags);
+  // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
+  // open a new tab page.
+  if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
+    buf_T *const existing_buf = buflist_findname_exp(fname);
+
+    if (existing_buf != NULL) {
+      const win_T *wp = NULL;
+
+      if (swb_flags & SWB_USEOPEN) {
+        wp = buf_jump_open_win(existing_buf);
+      }
+
+      // If 'switchbuf' contains "usetab": jump to first window in any tab
+      // page containing "existing_buf" if one exists
+      if (wp == NULL && (swb_flags & SWB_USETAB)) {
+        wp = buf_jump_open_tab(existing_buf);
+      }
+
+      // We've switched to the buffer, the usual loading of the file must
+      // be skipped.
+      if (wp != NULL) {
+        getfile_result = GETFILE_SAME_FILE;
+      }
+    }
+  }
+  if (getfile_result == GETFILE_UNUSED
+      && (postponed_split || cmdmod.tab != 0)) {
+    if (win_split(postponed_split > 0 ? postponed_split : 0,
+                  postponed_split_flags) == FAIL) {
+      RedrawingDisabled--;
+      goto erret;
+    }
     RESET_BINDING(curwin);
   }
 
@@ -2420,11 +2457,16 @@ jumpto_tag (
     else
       keep_help_flag = curbuf->b_help;
   }
-  getfile_result = getfile(0, fname, NULL, TRUE, (linenr_T)0, forceit);
-  keep_help_flag = FALSE;
 
-  if (getfile_result <= 0) {            /* got to the right file */
-    curwin->w_set_curswant = TRUE;
+  if (getfile_result == GETFILE_UNUSED) {
+    // Careful: getfile() may trigger autocommands and call jumpto_tag()
+    // recursively.
+    getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
+  }
+  keep_help_flag = false;
+
+  if (GETFILE_SUCCESS(getfile_result)) {    // got to the right file
+    curwin->w_set_curswant = true;
     postponed_split = 0;
 
     save_secure = secure;
@@ -2542,9 +2584,10 @@ jumpto_tag (
       SET_NO_HLSEARCH(save_no_hlsearch);
     }
 
-    /* Return OK if jumped to another file (at least we found the file!). */
-    if (getfile_result == -1)
+    // Return OK if jumped to another file (at least we found the file!).
+    if (getfile_result == GETFILE_OPEN_OTHER) {
       retval = OK;
+    }
 
     if (retval == OK) {
       /*
@@ -2565,19 +2608,18 @@ jumpto_tag (
       win_enter(curwin_save, true);
     }
 
-    --RedrawingDisabled;
+    RedrawingDisabled--;
   } else {
-    --RedrawingDisabled;
-    if (postponed_split) {              /* close the window */
-      win_close(curwin, FALSE);
+    RedrawingDisabled--;
+    if (postponed_split) {              // close the window
+      win_close(curwin, false);
       postponed_split = 0;
     }
   }
 
 erret:
-  g_do_tagpreview = 0;   /* For next time */
-  if (tagp.fname_end != NULL)
-    *tagp.fname_end = csave;
+  g_do_tagpreview = 0;  // For next time
+  xfree(lbuf);
   xfree(pbuf);
   xfree(tofree_fname);
   xfree(full_fname);
@@ -2585,13 +2627,12 @@ erret:
   return retval;
 }
 
-/*
- * If "expand" is TRUE, expand wildcards in fname.
- * If 'tagrelative' option set, change fname (name of file containing tag)
- * according to tag_fname (name of tag file containing fname).
- * Returns a pointer to allocated memory.
- */
-static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
+// If "expand" is true, expand wildcards in fname.
+// If 'tagrelative' option set, change fname (name of file containing tag)
+// according to tag_fname (name of tag file containing fname).
+// Returns a pointer to allocated memory.
+static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname,
+                                const bool expand)
 {
   char_u      *p;
   char_u      *expanded_fname = NULL;
@@ -2646,8 +2687,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       c = *fname_end;
       *fname_end = NUL;
     }
-    fullname = expand_tag_fname(fname, tag_fname, TRUE);
-    retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
+    fullname = expand_tag_fname(fname, tag_fname, true);
+    retval = (path_full_compare(fullname, buf_ffname, true) & kEqualFiles);
     xfree(fullname);
     *fname_end = c;
   }

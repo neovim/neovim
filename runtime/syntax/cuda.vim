@@ -1,15 +1,15 @@
 " Vim syntax file
 " Language:	CUDA (NVIDIA Compute Unified Device Architecture)
 " Maintainer:	Timothy B. Terriberry <tterribe@users.sourceforge.net>
-" Last Change:	2007 Oct 13
+" Last Change:	2018 Feb 06
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
 
-" Read the C syntax to start with
-runtime! syntax/c.vim
+" Read the C++ syntax to start with
+runtime! syntax/cpp.vim
 
 " CUDA extentions
 syn keyword cudaStorageClass	__device__ __global__ __host__

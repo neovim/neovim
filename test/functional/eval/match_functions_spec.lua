@@ -6,6 +6,7 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local expect_err = helpers.expect_err
 
 before_each(clear)
 
@@ -40,9 +41,11 @@ describe('setmatches()', function()
   end)
 
   it('fails with -1 if highlight group is not defined', function()
-    eq(-1, funcs.setmatches({{group=1, pattern=2, id=3, priority=4}}))
+    expect_err('E28: No such highlight group name: 1', funcs.setmatches,
+               {{group=1, pattern=2, id=3, priority=4}})
     eq({}, funcs.getmatches())
-    eq(-1, funcs.setmatches({{group=1, pos1={2}, pos2={6}, id=3, priority=4, conceal=5}}))
+    expect_err('E28: No such highlight group name: 1', funcs.setmatches,
+               {{group=1, pos1={2}, pos2={6}, id=3, priority=4, conceal=5}})
     eq({}, funcs.getmatches())
   end)
 end)

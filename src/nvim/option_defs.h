@@ -3,6 +3,7 @@
 
 #include "nvim/types.h"
 #include "nvim/macros.h"  // For EXTERN
+#include "eval/typval.h"  // For scid_T
 
 // option_defs.h: definition of global variables for settable options
 
@@ -313,9 +314,10 @@ static char *(p_bkc_values[]) =
 # define BKC_NO                 0x004
 # define BKC_BREAKSYMLINK       0x008
 # define BKC_BREAKHARDLINK      0x010
-EXTERN char_u   *p_bdir;        /* 'backupdir' */
-EXTERN char_u   *p_bex;         /* 'backupext' */
-EXTERN char_u   *p_bo;          // 'belloff'
+EXTERN char_u *p_bdir;            // 'backupdir'
+EXTERN char_u *p_bex;             // 'backupext'
+EXTERN char_u *p_bo;              // 'belloff'
+EXTERN char breakat_flags[256];   // which characters are in 'breakat'
 EXTERN unsigned bo_flags;
 # ifdef IN_OPTION_C
 static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
@@ -498,9 +500,7 @@ EXTERN long p_mat;              // 'matchtime'
 EXTERN long p_mco;              // 'maxcombine'
 EXTERN long p_mfd;              // 'maxfuncdepth'
 EXTERN long p_mmd;              // 'maxmapdepth'
-EXTERN long p_mm;               // 'maxmem'
 EXTERN long p_mmp;              // 'maxmempattern'
-EXTERN long p_mmt;              // 'maxmemtot'
 EXTERN long p_mis;              // 'menuitems'
 EXTERN char_u   *p_msm;         // 'mkspellmem'
 EXTERN long p_mls;              // 'modelines'
@@ -820,5 +820,11 @@ enum {
 #define NO_LOCAL_UNDOLEVEL -123456
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
+
+/// Stores an identifier of a script or channel that last set an option.
+typedef struct {
+  scid_T script_id;        /// Script ID or one of SID_* special values.
+  uint64_t channel_id;     /// Only used when script_id is SID_API_CLIENT.
+} LastSet;
 
 #endif // NVIM_OPTION_DEFS_H

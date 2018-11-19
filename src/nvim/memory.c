@@ -10,6 +10,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/eval.h"
+#include "nvim/highlight.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -66,7 +67,7 @@ void try_to_free_memory(void)
   trying_to_free = true;
 
   // free any scrollback text
-  clear_sb_text();
+  clear_sb_text(true);
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
 
@@ -618,7 +619,6 @@ void free_all_mem(void)
 
   /* Obviously named calls. */
   free_all_autocmds();
-  free_all_options();
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
@@ -633,7 +633,7 @@ void free_all_mem(void)
   free_signs();
   set_expr_line(NULL);
   diff_clear(curtab);
-  clear_sb_text();            /* free any scrollback text */
+  clear_sb_text(true);            // free any scrollback text
 
   /* Free some global vars. */
   xfree(last_cmdline);
@@ -655,6 +655,9 @@ void free_all_mem(void)
 
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
+
+  // Free all option values.  Must come after closing windows.
+  free_all_options();
 
   free_cmdline_buf();
 
@@ -696,7 +699,7 @@ void free_all_mem(void)
   /* screenlines (can't display anything now!) */
   free_screenlines();
 
-  clear_hl_tables();
+  clear_hl_tables(false);
   list_free_log();
 }
 

@@ -1380,15 +1380,15 @@ retry:
             }
           } else if (fio_flags & FIO_UCS4) {
             if (fio_flags & FIO_ENDIAN_L) {
-              u8c = (*--p << 24);
-              u8c += (*--p << 16);
-              u8c += (*--p << 8);
+              u8c = (unsigned)(*--p) << 24;
+              u8c += (unsigned)(*--p) << 16;
+              u8c += (unsigned)(*--p) << 8;
               u8c += *--p;
             } else {          /* big endian */
               u8c = *--p;
-              u8c += (*--p << 8);
-              u8c += (*--p << 16);
-              u8c += (*--p << 24);
+              u8c += (unsigned)(*--p) << 8;
+              u8c += (unsigned)(*--p) << 16;
+              u8c += (unsigned)(*--p) << 24;
             }
           } else {        /* UTF-8 */
             if (*--p < 0x80)
@@ -2267,15 +2267,16 @@ buf_write (
   char_u smallbuf[SMBUFSIZE];
   char_u          *backup_ext;
   int bufsize;
-  long perm;                                /* file permissions */
+  long perm;                                // file permissions
   int retval = OK;
-  int newfile = FALSE;                      /* TRUE if file doesn't exist yet */
+  int newfile = false;                      // TRUE if file doesn't exist yet
   int msg_save = msg_scroll;
-  int overwriting;                          /* TRUE if writing over original */
-  int no_eol = FALSE;                       /* no end-of-line written */
-  int device = FALSE;                       /* writing to a device */
+  int overwriting;                          // TRUE if writing over original
+  int no_eol = false;                       // no end-of-line written
+  int device = false;                       // writing to a device
   int prev_got_int = got_int;
-  bool file_readonly = false;               /* overwritten file is read-only */
+  int checking_conversion;
+  bool file_readonly = false;               // overwritten file is read-only
   static char     *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
 #if defined(UNIX)
@@ -3156,298 +3157,328 @@ nobackup:
     notconverted = TRUE;
   }
 
-  /*
-   * Open the file "wfname" for writing.
-   * We may try to open the file twice: If we can't write to the
-   * file and forceit is TRUE we delete the existing file and try to create
-   * a new one. If this still fails we may have lost the original file!
-   * (this may happen when the user reached his quotum for number of files).
-   * Appending will fail if the file does not exist and forceit is FALSE.
-   */
-  while ((fd = os_open((char *)wfname, O_WRONLY | (append
-                                                              ? (forceit ? (
-                                                                   O_APPEND |
-                                                                   O_CREAT) :
-                                                                 O_APPEND)
-                                                              : (O_CREAT |
-                                                                 O_TRUNC))
-              , perm < 0 ? 0666 : (perm & 0777))) < 0) {
-    /*
-     * A forced write will try to create a new file if the old one is
-     * still readonly. This may also happen when the directory is
-     * read-only. In that case the os_remove() will fail.
-     */
-    if (errmsg == NULL) {
-#ifdef UNIX
-      FileInfo file_info;
+  // If conversion is taking place, we may first pretend to write and check
+  // for conversion errors.  Then loop again to write for real.
+  // When not doing conversion this writes for real right away.
+  for (checking_conversion = true; ; checking_conversion = false) {
+    // There is no need to check conversion when:
+    // - there is no conversion
+    // - we make a backup file, that can be restored in case of conversion
+    // failure.
+    if (!converted || dobackup) {
+      checking_conversion = false;
+    }
 
-      // Don't delete the file when it's a hard or symbolic link.
-      if ((!newfile && os_fileinfo_hardlinks(&file_info_old) > 1)
-          || (os_fileinfo_link((char *)fname, &file_info)
-              && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
-        SET_ERRMSG(_("E166: Can't open linked file for writing"));
-      } else {
-#endif
-        SET_ERRMSG_ARG(_("E212: Can't open file for writing: %s"), fd);
-        if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL
-            && perm >= 0) {
+    if (checking_conversion) {
+      // Make sure we don't write anything.
+      fd = -1;
+      write_info.bw_fd = fd;
+    } else {
+      // Open the file "wfname" for writing.
+      // We may try to open the file twice: If we can't write to the file
+      // and forceit is TRUE we delete the existing file and try to
+      // create a new one. If this still fails we may have lost the
+      // original file!  (this may happen when the user reached his
+      // quotum for number of files).
+      // Appending will fail if the file does not exist and forceit is
+      // FALSE.
+      while ((fd = os_open((char *)wfname,
+                           O_WRONLY |
+                           (append ?
+                            (forceit ? (O_APPEND | O_CREAT) : O_APPEND)
+                            : (O_CREAT | O_TRUNC))
+                           , perm < 0 ? 0666 : (perm & 0777))) < 0) {
+        // A forced write will try to create a new file if the old one
+        // is still readonly. This may also happen when the directory
+        // is read-only. In that case the mch_remove() will fail.
+        if (errmsg == NULL) {
 #ifdef UNIX
-          /* we write to the file, thus it should be marked
-             writable after all */
-          if (!(perm & 0200))
-            made_writable = TRUE;
-          perm |= 0200;
-          if (file_info_old.stat.st_uid != getuid()
-              || file_info_old.stat.st_gid != getgid()) {
-            perm &= 0777;
+          FileInfo file_info;
+
+          // Don't delete the file when it's a hard or symbolic link.
+          if ((!newfile && os_fileinfo_hardlinks(&file_info_old) > 1)
+              || (os_fileinfo_link((char *)fname, &file_info)
+                  && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
+            SET_ERRMSG(_("E166: Can't open linked file for writing"));
+          } else {
+#endif
+            SET_ERRMSG_ARG(_("E212: Can't open file for writing: %s"), fd);
+            if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL
+                && perm >= 0) {
+#ifdef UNIX
+              // we write to the file, thus it should be marked
+              // writable after all
+              if (!(perm & 0200)) {
+                made_writable = true;
+              }
+              perm |= 0200;
+              if (file_info_old.stat.st_uid != getuid()
+                  || file_info_old.stat.st_gid != getgid()) {
+                perm &= 0777;
+              }
+#endif
+              if (!append) {                    // don't remove when appending
+                os_remove((char *)wfname);
+              }
+              continue;
+            }
+#ifdef UNIX
           }
 #endif
-          if (!append)                      /* don't remove when appending */
-            os_remove((char *)wfname);
-          continue;
         }
-#ifdef UNIX
-      }
-#endif
-    }
 
 restore_backup:
-    {
-      /*
-       * If we failed to open the file, we don't need a backup. Throw it
-       * away.  If we moved or removed the original file try to put the
-       * backup in its place.
-       */
-      if (backup != NULL && wfname == fname) {
-        if (backup_copy) {
-          /*
-           * There is a small chance that we removed the original,
-           * try to move the copy in its place.
-           * This may not work if the vim_rename() fails.
-           * In that case we leave the copy around.
-           */
-          // If file does not exist, put the copy in its place
-          if (!os_path_exists(fname)) {
-            vim_rename(backup, fname);
+        {
+          // If we failed to open the file, we don't need a backup. Throw it
+          // away.  If we moved or removed the original file try to put the
+          // backup in its place.
+          if (backup != NULL && wfname == fname) {
+            if (backup_copy) {
+              // There is a small chance that we removed the original,
+              // try to move the copy in its place.
+              // This may not work if the vim_rename() fails.
+              // In that case we leave the copy around.
+              // If file does not exist, put the copy in its place
+              if (!os_path_exists(fname)) {
+                vim_rename(backup, fname);
+              }
+              // if original file does exist throw away the copy
+              if (os_path_exists(fname)) {
+                os_remove((char *)backup);
+              }
+            } else {
+              // try to put the original file back
+              vim_rename(backup, fname);
+            }
           }
-          // if original file does exist throw away the copy
-          if (os_path_exists(fname)) {
-            os_remove((char *)backup);
+
+          // if original file no longer exists give an extra warning
+          if (!newfile && !os_path_exists(fname)) {
+            end = 0;
           }
+        }
+
+        if (wfname != fname) {
+          xfree(wfname);
+        }
+        goto fail;
+      }
+      write_info.bw_fd = fd;
+    }
+    SET_ERRMSG(NULL);
+
+    write_info.bw_buf = buffer;
+    nchars = 0;
+
+    // use "++bin", "++nobin" or 'binary'
+    if (eap != NULL && eap->force_bin != 0) {
+      write_bin = (eap->force_bin == FORCE_BIN);
+    } else {
+      write_bin = buf->b_p_bin;
+    }
+
+    // Skip the BOM when appending and the file already existed, the BOM
+    // only makes sense at the start of the file.
+    if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
+      write_info.bw_len = make_bom(buffer, fenc);
+      if (write_info.bw_len > 0) {
+        // don't convert
+        write_info.bw_flags = FIO_NOCONVERT | wb_flags;
+        if (buf_write_bytes(&write_info) == FAIL) {
+          end = 0;
         } else {
-          /* try to put the original file back */
-          vim_rename(backup, fname);
+          nchars += write_info.bw_len;
         }
       }
+    }
+    write_info.bw_start_lnum = start;
 
-      // if original file no longer exists give an extra warning
-      if (!newfile && !os_path_exists(fname)) {
-        end = 0;
-      }
+    write_undo_file = (buf->b_p_udf && overwriting && !append
+                       && !filtering && reset_changed && !checking_conversion);
+    if (write_undo_file) {
+      // Prepare for computing the hash value of the text.
+      sha256_start(&sha_ctx);
     }
 
-    if (wfname != fname)
-      xfree(wfname);
-    goto fail;
-  }
-  SET_ERRMSG(NULL);
-
-
-  write_info.bw_fd = fd;
-  write_info.bw_buf = buffer;
-  nchars = 0;
-
-  /* use "++bin", "++nobin" or 'binary' */
-  if (eap != NULL && eap->force_bin != 0)
-    write_bin = (eap->force_bin == FORCE_BIN);
-  else
-    write_bin = buf->b_p_bin;
-
-  /*
-   * Skip the BOM when appending and the file already existed, the BOM 
-   * only makes sense at the start of the file.
-   */
-  if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
-    write_info.bw_len = make_bom(buffer, fenc);
-    if (write_info.bw_len > 0) {
-      /* don't convert */
-      write_info.bw_flags = FIO_NOCONVERT | wb_flags;
-      if (buf_write_bytes(&write_info) == FAIL)
-        end = 0;
-      else
-        nchars += write_info.bw_len;
-    }
-  }
-  write_info.bw_start_lnum = start;
-
-  write_undo_file = (buf->b_p_udf && overwriting && !append
-                     && !filtering && reset_changed);
-  if (write_undo_file)
-    /* Prepare for computing the hash value of the text. */
-    sha256_start(&sha_ctx);
-
-  write_info.bw_len = bufsize;
+    write_info.bw_len = bufsize;
 #ifdef HAS_BW_FLAGS
-  write_info.bw_flags = wb_flags;
+    write_info.bw_flags = wb_flags;
 #endif
-  fileformat = get_fileformat_force(buf, eap);
-  s = buffer;
-  len = 0;
-  for (lnum = start; lnum <= end; ++lnum) {
-    /*
-     * The next while loop is done once for each character written.
-     * Keep it fast!
-     */
-    ptr = ml_get_buf(buf, lnum, FALSE) - 1;
-    if (write_undo_file)
-      sha256_update(&sha_ctx, ptr + 1, (uint32_t)(STRLEN(ptr + 1) + 1));
-    while ((c = *++ptr) != NUL) {
-      if (c == NL)
-        *s = NUL;                       /* replace newlines with NULs */
-      else if (c == CAR && fileformat == EOL_MAC)
-        *s = NL;                        /* Mac: replace CRs with NLs */
-      else
-        *s = c;
-      ++s;
-      if (++len != bufsize)
-        continue;
-      if (buf_write_bytes(&write_info) == FAIL) {
-        end = 0;                        /* write error: break loop */
-        break;
+    fileformat = get_fileformat_force(buf, eap);
+    s = buffer;
+    len = 0;
+    for (lnum = start; lnum <= end; lnum++) {
+      // The next while loop is done once for each character written.
+      // Keep it fast!
+      ptr = ml_get_buf(buf, lnum, false) - 1;
+      if (write_undo_file) {
+        sha256_update(&sha_ctx, ptr + 1, (uint32_t)(STRLEN(ptr + 1) + 1));
       }
-      nchars += bufsize;
-      s = buffer;
-      len = 0;
-      write_info.bw_start_lnum = lnum;
-    }
-    /* write failed or last line has no EOL: stop here */
-    if (end == 0
-        || (lnum == end
-            && (write_bin || !buf->b_p_fixeol)
-            && (lnum == buf->b_no_eol_lnum
-                || (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol)))) {
-      ++lnum;                           /* written the line, count it */
-      no_eol = TRUE;
-      break;
-    }
-    if (fileformat == EOL_UNIX)
-      *s++ = NL;
-    else {
-      *s++ = CAR;                       /* EOL_MAC or EOL_DOS: write CR */
-      if (fileformat == EOL_DOS) {      /* write CR-NL */
-        if (++len == bufsize) {
-          if (buf_write_bytes(&write_info) == FAIL) {
-            end = 0;                    /* write error: break loop */
-            break;
-          }
-          nchars += bufsize;
-          s = buffer;
-          len = 0;
+      while ((c = *++ptr) != NUL) {
+        if (c == NL) {
+          *s = NUL;                       // replace newlines with NULs
+        } else if (c == CAR && fileformat == EOL_MAC) {
+          *s = NL;                        // Mac: replace CRs with NLs
+        } else {
+          *s = c;
         }
+        s++;
+        if (++len != bufsize) {
+          continue;
+        }
+        if (buf_write_bytes(&write_info) == FAIL) {
+          end = 0;                        // write error: break loop
+          break;
+        }
+        nchars += bufsize;
+        s = buffer;
+        len = 0;
+        write_info.bw_start_lnum = lnum;
+      }
+      // write failed or last line has no EOL: stop here
+      if (end == 0
+          || (lnum == end
+              && (write_bin || !buf->b_p_fixeol)
+              && (lnum == buf->b_no_eol_lnum
+                  || (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol)))) {
+        lnum++;                           // written the line, count it
+        no_eol = true;
+        break;
+      }
+      if (fileformat == EOL_UNIX) {
         *s++ = NL;
+      } else {
+        *s++ = CAR;                       // EOL_MAC or EOL_DOS: write CR
+        if (fileformat == EOL_DOS) {      // write CR-NL
+          if (++len == bufsize) {
+            if (buf_write_bytes(&write_info) == FAIL) {
+              end = 0;                    // write error: break loop
+              break;
+            }
+            nchars += bufsize;
+            s = buffer;
+            len = 0;
+          }
+          *s++ = NL;
+        }
+      }
+      if (++len == bufsize) {
+        if (buf_write_bytes(&write_info) == FAIL) {
+          end = 0;  // Write error: break loop.
+          break;
+        }
+        nchars += bufsize;
+        s = buffer;
+        len = 0;
+
+        os_breakcheck();
+        if (got_int) {
+          end = 0;  // Interrupted, break loop.
+          break;
+        }
       }
     }
-    if (++len == bufsize) {
+    if (len > 0 && end > 0) {
+      write_info.bw_len = len;
       if (buf_write_bytes(&write_info) == FAIL) {
-        end = 0;  // Write error: break loop.
-        break;
+        end = 0;                      // write error
       }
-      nchars += bufsize;
-      s = buffer;
-      len = 0;
-
-      os_breakcheck();
-      if (got_int) {
-        end = 0;  // Interrupted, break loop.
-        break;
-      }
+      nchars += len;
     }
-  }
-  if (len > 0 && end > 0) {
-    write_info.bw_len = len;
-    if (buf_write_bytes(&write_info) == FAIL)
-      end = 0;                      /* write error */
-    nchars += len;
+
+    // Stop when writing done or an error was encountered.
+    if (!checking_conversion || end == 0) {
+        break;
+    }
+
+    // If no error happened until now, writing should be ok, so loop to
+    // really write the buffer.
   }
 
-  // On many journalling file systems there is a bug that causes both the
-  // original and the backup file to be lost when halting the system right
-  // after writing the file.  That's because only the meta-data is
-  // journalled.  Syncing the file slows down the system, but assures it has
-  // been written to disk and we don't lose it.
-  // For a device do try the fsync() but don't complain if it does not work
-  // (could be a pipe).
-  // If the 'fsync' option is FALSE, don't fsync().  Useful for laptops.
-  int error;
-  if (p_fs && (error = os_fsync(fd)) != 0 && !device) {
-    SET_ERRMSG_ARG(_("E667: Fsync failed: %s"), error);
-    end = 0;
-  }
+  // If we started writing, finish writing. Also when an error was
+  // encountered.
+  if (!checking_conversion) {
+    // On many journalling file systems there is a bug that causes both the
+    // original and the backup file to be lost when halting the system right
+    // after writing the file.  That's because only the meta-data is
+    // journalled.  Syncing the file slows down the system, but assures it has
+    // been written to disk and we don't lose it.
+    // For a device do try the fsync() but don't complain if it does not work
+    // (could be a pipe).
+    // If the 'fsync' option is FALSE, don't fsync().  Useful for laptops.
+    int error;
+    if (p_fs && (error = os_fsync(fd)) != 0 && !device) {
+      SET_ERRMSG_ARG(_("E667: Fsync failed: %s"), error);
+      end = 0;
+    }
 
 #ifdef HAVE_SELINUX
-  /* Probably need to set the security context. */
-  if (!backup_copy)
-    mch_copy_sec(backup, wfname);
-#endif
-
-#ifdef UNIX
-  /* When creating a new file, set its owner/group to that of the original
-   * file.  Get the new device and inode number. */
-  if (backup != NULL && !backup_copy) {
-    /* don't change the owner when it's already OK, some systems remove
-     * permission or ACL stuff */
-    FileInfo file_info;
-    if (!os_fileinfo((char *)wfname, &file_info)
-        || file_info.stat.st_uid != file_info_old.stat.st_uid
-        || file_info.stat.st_gid != file_info_old.stat.st_gid) {
-      os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
-      if (perm >= 0) {  // Set permission again, may have changed.
-        (void)os_setperm((const char *)wfname, perm);
-      }
+    // Probably need to set the security context.
+    if (!backup_copy) {
+      mch_copy_sec(backup, wfname);
     }
-    buf_set_file_id(buf);
-  } else if (!buf->file_id_valid) {
-    // Set the file_id when creating a new file.
-    buf_set_file_id(buf);
-  }
 #endif
-
-  if ((error = os_close(fd)) != 0) {
-    SET_ERRMSG_ARG(_("E512: Close failed: %s"), error);
-    end = 0;
-  }
 
 #ifdef UNIX
-  if (made_writable)
-    perm &= ~0200;              /* reset 'w' bit for security reasons */
+    // When creating a new file, set its owner/group to that of the original
+    // file.  Get the new device and inode number.
+    if (backup != NULL && !backup_copy) {
+      // don't change the owner when it's already OK, some systems remove
+      // permission or ACL stuff
+      FileInfo file_info;
+      if (!os_fileinfo((char *)wfname, &file_info)
+          || file_info.stat.st_uid != file_info_old.stat.st_uid
+          || file_info.stat.st_gid != file_info_old.stat.st_gid) {
+        os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
+        if (perm >= 0) {  // Set permission again, may have changed.
+          (void)os_setperm((const char *)wfname, perm);
+        }
+      }
+      buf_set_file_id(buf);
+    } else if (!buf->file_id_valid) {
+      // Set the file_id when creating a new file.
+      buf_set_file_id(buf);
+    }
 #endif
-  if (perm >= 0) {  // Set perm. of new file same as old file.
-    (void)os_setperm((const char *)wfname, perm);
-  }
+
+    if ((error = os_close(fd)) != 0) {
+      SET_ERRMSG_ARG(_("E512: Close failed: %s"), error);
+      end = 0;
+    }
+
+#ifdef UNIX
+    if (made_writable) {
+      perm &= ~0200;              // reset 'w' bit for security reasons
+    }
+#endif
+    if (perm >= 0) {  // Set perm. of new file same as old file.
+      (void)os_setperm((const char *)wfname, perm);
+    }
 #ifdef HAVE_ACL
-  /* Probably need to set the ACL before changing the user (can't set the
-   * ACL on a file the user doesn't own). */
-  if (!backup_copy)
-    mch_set_acl(wfname, acl);
+    // Probably need to set the ACL before changing the user (can't set the
+    // ACL on a file the user doesn't own).
+    if (!backup_copy) {
+      mch_set_acl(wfname, acl);
+    }
 #endif
 
-  if (wfname != fname) {
-    /*
-     * The file was written to a temp file, now it needs to be converted
-     * with 'charconvert' to (overwrite) the output file.
-     */
-    if (end != 0) {
-      if (eval_charconvert(enc_utf8 ? "utf-8" : (char *) p_enc, (char *) fenc,
-                           (char *) wfname, (char *) fname) == FAIL) {
-        write_info.bw_conv_error = true;
-        end = 0;
+    if (wfname != fname) {
+      // The file was written to a temp file, now it needs to be converted
+      // with 'charconvert' to (overwrite) the output file.
+      if (end != 0) {
+        if (eval_charconvert(enc_utf8 ? "utf-8" : (char *)p_enc, (char *)fenc,
+                             (char *)wfname, (char *)fname) == FAIL) {
+          write_info.bw_conv_error = true;
+          end = 0;
+        }
       }
+      os_remove((char *)wfname);
+      xfree(wfname);
     }
-    os_remove((char *)wfname);
-    xfree(wfname);
   }
 
   if (end == 0) {
+    // Error encountered.
     if (errmsg == NULL) {
       if (write_info.bw_conv_error) {
         if (write_info.bw_conv_error_lnum == 0) {
@@ -3470,46 +3501,48 @@ restore_backup:
       }
     }
 
-    /*
-     * If we have a backup file, try to put it in place of the new file,
-     * because the new file is probably corrupt.  This avoids losing the
-     * original file when trying to make a backup when writing the file a
-     * second time.
-     * When "backup_copy" is set we need to copy the backup over the new
-     * file.  Otherwise rename the backup file.
-     * If this is OK, don't give the extra warning message.
-     */
+    // If we have a backup file, try to put it in place of the new file,
+    // because the new file is probably corrupt.  This avoids losing the
+    // original file when trying to make a backup when writing the file a
+    // second time.
+    // When "backup_copy" is set we need to copy the backup over the new
+    // file.  Otherwise rename the backup file.
+    // If this is OK, don't give the extra warning message.
     if (backup != NULL) {
       if (backup_copy) {
-        /* This may take a while, if we were interrupted let the user
-         * know we got the message. */
+        // This may take a while, if we were interrupted let the user
+        // know we got the message.
         if (got_int) {
           MSG(_(e_interr));
           ui_flush();
         }
         if ((fd = os_open((char *)backup, O_RDONLY, 0)) >= 0) {
           if ((write_info.bw_fd = os_open((char *)fname,
-                   O_WRONLY | O_CREAT | O_TRUNC,
-                   perm & 0777)) >= 0) {
-            /* copy the file. */
+                                          O_WRONLY | O_CREAT | O_TRUNC,
+                                          perm & 0777)) >= 0) {
+            // copy the file.
             write_info.bw_buf = smallbuf;
 #ifdef HAS_BW_FLAGS
             write_info.bw_flags = FIO_NOCONVERT;
 #endif
             while ((write_info.bw_len = read_eintr(fd, smallbuf,
-                        SMBUFSIZE)) > 0)
-              if (buf_write_bytes(&write_info) == FAIL)
+                                                   SMBUFSIZE)) > 0) {
+              if (buf_write_bytes(&write_info) == FAIL) {
                 break;
+              }
+            }
 
             if (close(write_info.bw_fd) >= 0
-                && write_info.bw_len == 0)
-              end = 1;                          /* success */
+                && write_info.bw_len == 0) {
+              end = 1;                          // success
+            }
           }
-          close(fd);            /* ignore errors for closing read file */
+          close(fd);            // ignore errors for closing read file
         }
       } else {
-        if (vim_rename(backup, fname) == 0)
+        if (vim_rename(backup, fname) == 0) {
           end = 1;
+        }
       }
     }
     goto fail;
@@ -3566,14 +3599,13 @@ restore_backup:
    * writing to the original file and '+' is not in 'cpoptions'. */
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
-      && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)
-      ) {
-    unchanged(buf, TRUE);
-    /* buf->b_changedtick is always incremented in unchanged() but that
-     * should not trigger a TextChanged event. */
-    if (last_changedtick + 1 == buf->b_changedtick
-        && last_changedtick_buf == buf) {
-      last_changedtick = buf->b_changedtick;
+      && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
+    unchanged(buf, true);
+    const varnumber_T changedtick = buf_get_changedtick(buf);
+    if (buf->b_last_changedtick + 1 == changedtick) {
+      // changedtick is always incremented in unchanged() but that
+      // should not trigger a TextChanged event.
+      buf->b_last_changedtick = changedtick;
     }
     u_unchanged(buf);
     u_update_save_nr(buf);
@@ -3687,7 +3719,7 @@ nofail:
     } else if (errmsgarg != 0) {
       emsgf(errmsg, os_strerror(errmsgarg));
     } else {
-      emsgf(errmsg);
+      EMSG(errmsg);
     }
     if (errmsg_allocated) {
       xfree(errmsg);
@@ -3695,7 +3727,7 @@ nofail:
 
     retval = FAIL;
     if (end == 0) {
-      const int attr = hl_attr(HLF_E);  // Set highlight for error messages.
+      const int attr = HL_ATTR(HLF_E);  // Set highlight for error messages.
       MSG_PUTS_ATTR(_("\nWARNING: Original file may be lost or damaged\n"),
                     attr | MSG_HIST);
       MSG_PUTS_ATTR(_(
@@ -3902,7 +3934,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
     msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-             hl_attr(HLF_E));
+             HL_ATTR(HLF_E));
     if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
     }
@@ -4100,6 +4132,10 @@ static int buf_write_bytes(struct bw_info *ip)
 # endif
   }
 
+  if (ip->bw_fd < 0) {
+    // Only checking conversion, which is OK if we get here.
+    return OK;
+  }
   wlen = write_eintr(ip->bw_fd, buf, len);
   return (wlen < len) ? FAIL : OK;
 }
@@ -4312,38 +4348,46 @@ static int make_bom(char_u *buf, char_u *name)
   return (int)(p - buf);
 }
 
+/// Shorten filename of a buffer.
+/// When "force" is TRUE: Use full path from now on for files currently being
+/// edited, both for file name and swap file name.  Try to shorten the file
+/// names a bit, if safe to do so.
+/// When "force" is FALSE: Only try to shorten absolute file names.
+/// For buffers that have buftype "nofile" or "scratch": never change the file
+/// name.
+void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
+{
+  char_u      *p;
+
+  if (buf->b_fname != NULL
+      && !bt_nofile(buf)
+      && !path_with_url((char *)buf->b_fname)
+      && (force
+          || buf->b_sfname == NULL
+          || path_is_absolute(buf->b_sfname))) {
+    xfree(buf->b_sfname);
+    buf->b_sfname = NULL;
+    p = path_shorten_fname(buf->b_ffname, dirname);
+    if (p != NULL) {
+      buf->b_sfname = vim_strsave(p);
+      buf->b_fname = buf->b_sfname;
+    }
+    if (p == NULL || buf->b_fname == NULL) {
+      buf->b_fname = buf->b_ffname;
+    }
+  }
+}
+
 /*
  * Shorten filenames for all buffers.
- * When "force" is TRUE: Use full path from now on for files currently being
- * edited, both for file name and swap file name.  Try to shorten the file
- * names a bit, if safe to do so.
- * When "force" is FALSE: Only try to shorten absolute file names.
- * For buffers that have buftype "nofile" or "scratch": never change the file
- * name.
  */
 void shorten_fnames(int force)
 {
   char_u dirname[MAXPATHL];
-  char_u      *p;
 
   os_dirname(dirname, MAXPATHL);
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_fname != NULL
-        && !bt_nofile(buf)
-        && !path_with_url((char *)buf->b_fname)
-        && (force
-            || buf->b_sfname == NULL
-            || path_is_absolute(buf->b_sfname))) {
-      xfree(buf->b_sfname);
-      buf->b_sfname = NULL;
-      p = path_shorten_fname(buf->b_ffname, dirname);
-      if (p != NULL) {
-        buf->b_sfname = vim_strsave(p);
-        buf->b_fname = buf->b_sfname;
-      }
-      if (p == NULL || buf->b_fname == NULL)
-        buf->b_fname = buf->b_ffname;
-    }
+      shorten_buf_fname(buf, dirname, force);
 
     /* Always make the swap file name a full path, a "nofile" buffer may
      * also have a swap file. */
@@ -4405,7 +4449,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   // Search backwards until we hit a '/', '\' or ':'.
   // Then truncate what is after the '/', '\' or ':' to BASENAMELEN characters.
   char *ptr = NULL;
-  for (ptr = retval + fnamelen; ptr > retval; mb_ptr_back(retval, ptr)) {
+  for (ptr = retval + fnamelen; ptr > retval; MB_PTR_BACK(retval, ptr)) {
     if (vim_ispathsep(*ptr)) {
       ptr++;
       break;
@@ -4487,48 +4531,83 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get2c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  const int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  const int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 3 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get3c(FILE *fd)
 {
-  int n;
-
-  n = getc(fd);
-  n = (n << 8) + getc(fd);
-  n = (n << 8) + getc(fd);
-  return n;
+  int n = getc(fd);
+  if (n == EOF) {
+    return -1;
+  }
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  return (n << 8) + c;
 }
 
 /// Read 4 bytes from "fd" and turn them into an int, MSB first.
+/// Returns -1 when encountering EOF.
 int get4c(FILE *fd)
 {
   // Use unsigned rather than int otherwise result is undefined
   // when left-shift sets the MSB.
   unsigned n;
 
-  n = (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
-  n = (n << 8) + (unsigned)getc(fd);
+  int c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
+  c = getc(fd);
+  if (c == EOF) {
+    return -1;
+  }
+  n = (n << 8) + (unsigned)c;
   return (int)n;
 }
 
 /// Read 8 bytes from `fd` and turn them into a time_t, MSB first.
+/// Returns -1 when encountering EOF.
 time_t get8ctime(FILE *fd)
 {
   time_t n = 0;
-  int i;
 
-  for (i = 0; i < 8; i++) {
-    n = (n << 8) + getc(fd);
+  for (int i = 0; i < 8; i++) {
+    const int c = getc(fd);
+    if (c == EOF) {
+      return -1;
+    }
+    n = (n << 8) + c;
   }
   return n;
 }
@@ -4893,10 +4972,12 @@ buf_check_timestamp (
           )) {
     retval = 1;
 
-    /* set b_mtime to stop further warnings (e.g., when executing
-     * FileChangedShell autocmd) */
+    // set b_mtime to stop further warnings (e.g., when executing
+    // FileChangedShell autocmd)
     if (!file_info_ok) {
-      buf->b_mtime = 0;
+      // When 'autoread' is set we'll check the file again to see if it
+      // re-appears.
+      buf->b_mtime = buf->b_p_ar;
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     } else {
@@ -5021,9 +5102,9 @@ buf_check_timestamp (
     } else {
       if (!autocmd_busy) {
         msg_start();
-        msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
+        msg_puts_attr(tbuf, HL_ATTR(HLF_E) + MSG_HIST);
         if (*mesg2 != NUL) {
-          msg_puts_attr(mesg2, hl_attr(HLF_W) + MSG_HIST);
+          msg_puts_attr(mesg2, HL_ATTR(HLF_W) + MSG_HIST);
         }
         msg_clr_eos();
         (void)msg_end();
@@ -5446,13 +5527,13 @@ static void show_autocmd(AutoPat *ap, event_T event)
   if (event != last_event || ap->group != last_group) {
     if (ap->group != AUGROUP_DEFAULT) {
       if (AUGROUP_NAME(ap->group) == NULL) {
-        msg_puts_attr(get_deleted_augroup(), hl_attr(HLF_E));
+        msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
       } else {
-        msg_puts_attr(AUGROUP_NAME(ap->group), hl_attr(HLF_T));
+        msg_puts_attr(AUGROUP_NAME(ap->group), HL_ATTR(HLF_T));
       }
       msg_puts("  ");
     }
-    msg_puts_attr(event_nr2name(event), hl_attr(HLF_T));
+    msg_puts_attr(event_nr2name(event), HL_ATTR(HLF_T));
     last_event = event;
     last_group = ap->group;
     msg_putchar('\n');
@@ -5886,19 +5967,19 @@ void au_event_restore(char_u *old_ei)
  *				    will be automatically executed for <event>
  *				    when editing a file matching <pat>, in
  *				    the current group.
- * :autocmd <event> <pat>	    Show the auto-commands associated with
+ * :autocmd <event> <pat>	    Show the autocommands associated with
  *				    <event> and <pat>.
- * :autocmd <event>		    Show the auto-commands associated with
+ * :autocmd <event>		    Show the autocommands associated with
  *				    <event>.
- * :autocmd			    Show all auto-commands.
- * :autocmd! <event> <pat> <cmd>    Remove all auto-commands associated with
+ * :autocmd			    Show all autocommands.
+ * :autocmd! <event> <pat> <cmd>    Remove all autocommands associated with
  *				    <event> and <pat>, and add the command
  *				    <cmd>, for the current group.
- * :autocmd! <event> <pat>	    Remove all auto-commands associated with
+ * :autocmd! <event> <pat>	    Remove all autocommands associated with
  *				    <event> and <pat> for the current group.
- * :autocmd! <event>		    Remove all auto-commands associated with
+ * :autocmd! <event>		    Remove all autocommands associated with
  *				    <event> for the current group.
- * :autocmd!			    Remove ALL auto-commands for the current
+ * :autocmd!			    Remove ALL autocommands for the current
  *				    group.
  *
  *  Multiple events and patterns may be given separated by commas.  Here are
@@ -5991,8 +6072,8 @@ void do_autocmd(char_u *arg_in, int forceit)
    * Print header when showing autocommands.
    */
   if (!forceit && *cmd == NUL) {
-    /* Highlight title */
-    MSG_PUTS_TITLE(_("\n--- Auto-Commands ---"));
+    // Highlight title
+    MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
   }
 
   /*
@@ -6207,8 +6288,8 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         /* refuse to add buffer-local ap if buffer number is invalid */
         if (is_buflocal && (buflocal_nr == 0
                             || buflist_findnr(buflocal_nr) == NULL)) {
-          EMSGN(_("E680: <buffer=%d>: invalid buffer number "),
-              buflocal_nr);
+          emsgf(_("E680: <buffer=%d>: invalid buffer number "),
+                buflocal_nr);
           return FAIL;
         }
 
@@ -6654,7 +6735,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// Return true if "event" autocommand is defined.
 ///
 /// @param event the autocommand to check
-bool has_event(int event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+bool has_event(event_T event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return first_autopat[event] != NULL;
 }
@@ -6697,6 +6778,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   static int filechangeshell_busy = FALSE;
   proftime_T wait_time;
   bool did_save_redobuff = false;
+  save_redo_T save_redo;
+  const bool save_KeyTyped = KeyTyped;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -6768,7 +6851,9 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
    * invalid.
    */
   if (fname_io == NULL) {
-    if (event == EVENT_COLORSCHEME || event == EVENT_OPTIONSET) {
+    if (event == EVENT_COLORSCHEME
+        || event == EVENT_COLORSCHEMEPRE
+        || event == EVENT_OPTIONSET) {
       autocmd_fname = NULL;
     } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
@@ -6819,6 +6904,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     sfname = vim_strsave(fname);
     // Don't try expanding the following events.
     if (event == EVENT_COLORSCHEME
+        || event == EVENT_COLORSCHEMEPRE
         || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE
         || event == EVENT_FUNCUNDEFINED
@@ -6856,8 +6942,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   autocmd_match = fname;
 
 
-  /* Don't redraw while doing auto commands. */
-  ++RedrawingDisabled;
+  // Don't redraw while doing autocommands.
+  RedrawingDisabled++;
   save_sourcing_name = sourcing_name;
   sourcing_name = NULL;         /* don't free this one */
   save_sourcing_lnum = sourcing_lnum;
@@ -6877,7 +6963,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   if (!autocmd_busy) {
     save_search_patterns();
     if (!ins_compl_active()) {
-      saveRedobuff();
+      saveRedobuff(&save_redo);
       did_save_redobuff = true;
     }
     did_filetype = keep_filetype;
@@ -6956,6 +7042,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
+  KeyTyped = save_KeyTyped;
   xfree(fname);
   xfree(sfname);
   --nesting;            /* see matching increment above */
@@ -6966,7 +7053,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   if (!autocmd_busy) {
     restore_search_patterns();
     if (did_save_redobuff) {
-      restoreRedobuff();
+      restoreRedobuff(&save_redo);
     }
     did_filetype = FALSE;
     while (au_pending_free_buf != NULL) {
@@ -7067,7 +7154,7 @@ auto_next_pat (
                            apc->tail, ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         const char *const name = event_nr2name(apc->event);
-        s = _("%s Auto commands for \"%s\"");
+        s = _("%s Autocommands for \"%s\"");
         const size_t sourcing_name_len = (STRLEN(s) + strlen(name) + ap->patlen
                                           + 1);
         sourcing_name = xmalloc(sourcing_name_len);

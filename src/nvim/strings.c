@@ -207,7 +207,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
 
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
-  for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
+  for (const char_u *p = string; *p != NUL; MB_PTR_ADV(p)) {
 #ifdef WIN32
     if (!p_ssl) {
       if (*p == '"') {
@@ -344,14 +344,17 @@ char *strcase_save(const char *const orig, bool upper)
 
   char *p = res;
   while (*p != NUL) {
-    int l;
-
     int c = utf_ptr2char((const char_u *)p);
+    int l = utf_ptr2len((const char_u *)p);
+    if (c == 0) {
+      // overlong sequence, use only the first byte
+      c = *p;
+      l = 1;
+    }
     int uc = upper ? mb_toupper(c) : mb_tolower(c);
 
     // Reallocate string when byte count changes.  This is rare,
     // thus it's OK to do another malloc()/free().
-    l = utf_ptr2len((const char_u *)p);
     int newl = utf_char2len(uc);
     if (newl != l) {
       // TODO(philix): use xrealloc() in strup_save()
@@ -453,25 +456,6 @@ char_u *vim_strchr(const char_u *const string, const int c)
     u8char[len] = NUL;
     return (char_u *)strstr((const char *)string, u8char);
   }
-}
-
-/*
- * Search for last occurrence of "c" in "string".
- * Return NULL if not found.
- * Does not handle multi-byte char for "c"!
- */
-char_u *vim_strrchr(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *retval = NULL;
-  const char_u *p = string;
-
-  while (*p) {
-    if (*p == c)
-      retval = p;
-    mb_ptr_adv(p);
-  }
-  return (char_u *) retval;
 }
 
 /*
@@ -709,6 +693,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
 ///
 /// @see vim_vsnprintf().
 int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   const size_t len = strlen(str);
   size_t space;
@@ -734,6 +719,7 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
 /// @return Number of bytes excluding NUL byte that would be written to the
 ///         string if str_m was greater or equal to the return value.
 int vim_snprintf(char *str, size_t str_m, const char *fmt, ...)
+  FUNC_ATTR_PRINTF(3, 4)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -1233,6 +1219,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               str_arg_l = 3;
               zero_padding = 0;
             } else {
+              // Regular float number
               format[0] = '%';
               size_t l = 1;
               if (force_sign) {
@@ -1253,11 +1240,10 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               }
 
               // Cast to char to avoid a conversion warning on Ubuntu 12.04.
+              assert(l + 1 < sizeof(format));
               format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
-              // Regular float number
-              assert(l + 1 < sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
               assert(str_arg_l < sizeof(tmp));
 

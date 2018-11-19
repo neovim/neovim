@@ -23,14 +23,18 @@ Logs
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-You can use `LOG_CALLSTACK();` anywhere in the source to log the current
-stacktrace. To log in an alternate file, e.g. stderr, use
-`LOG_CALLSTACK_TO_FILE(FILE*)`. (Currently Linux-only.)
+Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
+alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`.
 
-UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
+UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
     make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+
+Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
+filter the log, e.g. at DEBUG level you might want to exclude UI messages:
+
+    tail -F ~/.local/share/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
 
 Build with ASAN
 ---------------
@@ -276,3 +280,25 @@ Since Nvim inherited its code from Vim, the states are not prepared to receive
 "arbitrary events", so we use a special key to represent those (When a state
 receives an "arbitrary event", it normally doesn't do anything other update the
 screen).
+
+Main loop
+---------
+
+The `Loop` structure (which describes `main_loop`) abstracts multiple queues
+into one loop:
+
+    uv_loop_t uv;
+    MultiQueue *events;
+    MultiQueue *thread_events;
+    MultiQueue *fast_events;
+
+`loop_poll_events` checks `Loop.uv` and `Loop.fast_events` whenever Nvim is
+idle, and also at `os_breakcheck` intervals.
+
+MultiQueue is cool because you can attach throw-away "child queues" trivially.
+For example `do_os_system()` does this (for every spawned process!) to
+automatically route events onto the `main_loop`:
+
+    Process *proc = &uvproc.process;
+    MultiQueue *events = multiqueue_new_child(main_loop.events);
+    proc->events = events;

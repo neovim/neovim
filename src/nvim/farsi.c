@@ -1081,7 +1081,7 @@ int fkmap(int c)
 
       if (gchar_cursor() == _LAM) {
         chg_l_toXor_X();
-        del_char(FALSE);
+        del_char(false);
         AppendCharToRedobuff(K_BS);
 
         if (!p_ri) {
@@ -1580,7 +1580,7 @@ static void conv_to_pvim(void)
         ptr[i] = toF_leading(ptr[i]);
         i++;
 
-        while (canF_Rjoin(ptr[i]) && i < llen) {
+        while (i < llen && canF_Rjoin(ptr[i])) {
           ptr[i] = toF_Rjoin(ptr[i]);
           if (F_isterm(ptr[i]) || !F_isalpha(ptr[i])) {
             break;
@@ -1602,8 +1602,8 @@ static void conv_to_pvim(void)
   do_cmdline_cmd("%s/\201\231/\370\334/ge");
 
   // Assume the screen has been messed up: clear it and redraw.
-  redraw_later(CLEAR);
-  MSG_ATTR((const char *)farsi_text_1, hl_attr(HLF_S));
+  redraw_later(NOT_VALID);
+  MSG_ATTR((const char *)farsi_text_1, HL_ATTR(HLF_S));
 }
 
 /// Convert the Farsi VIM into Farsi 3342 standard.
@@ -1623,8 +1623,8 @@ static void conv_to_pstd(void)
   }
 
   // Assume the screen has been messed up: clear it and redraw.
-  redraw_later(CLEAR);
-  msg_attr((const char *)farsi_text_2, hl_attr(HLF_S));
+  redraw_later(NOT_VALID);
+  msg_attr((const char *)farsi_text_2, HL_ATTR(HLF_S));
 }
 
 /// left-right swap the characters in buf[len].

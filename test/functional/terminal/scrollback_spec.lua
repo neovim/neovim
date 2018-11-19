@@ -396,19 +396,18 @@ describe("'scrollback' option", function()
   it('set to 0 behaves as 1', function()
     local screen
     if iswin() then
-      screen = thelpers.screen_setup(nil,
-      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
+      screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
     curbufmeths.set_option('scrollback', 0)
     if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
+      feed_data('for /L %I in (1,1,30) do @(echo line%I)\r')
     else
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
-    screen:expect('line30                        ', nil, nil, nil, true)
+    screen:expect{any='line30                        '}
     retry(nil, nil, function() expect_lines(7) end)
 
     screen:detach()
@@ -417,8 +416,8 @@ describe("'scrollback' option", function()
   it('deletes lines (only) if necessary', function()
     local screen
     if iswin() then
-      screen = thelpers.screen_setup(nil,
-      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
+      command([[let $PROMPT='$$']])
+      screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
@@ -426,16 +425,15 @@ describe("'scrollback' option", function()
     curbufmeths.set_option('scrollback', 200)
 
     -- Wait for prompt.
-    screen:expect('$', nil, nil, nil, true)
+    screen:expect{any='%$'}
 
-    wait()
     if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
+      feed_data('for /L %I in (1,1,30) do @(echo line%I)\r')
     else
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
 
-    screen:expect('line30                        ', nil, nil, nil, true)
+    screen:expect{any='line30                        '}
 
     retry(nil, nil, function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
@@ -447,17 +445,17 @@ describe("'scrollback' option", function()
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
     if iswin() then
-      feed_data('for($i=1;$i -le 40;$i++){Write-Host \"line$i\"}\r')
+      feed_data('for /L %I in (1,1,40) do @(echo line%I)\r')
     else
       feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
     end
 
-    screen:expect('line40                        ', nil, nil, nil, true)
+    screen:expect{any='line40                        '}
 
     retry(nil, nil, function() expect_lines(58) end)
     -- Verify off-screen state
-    eq('line35', eval("getline(line('w0') - 1)"))
-    eq('line26', eval("getline(line('w0') - 10)"))
+    eq((iswin() and 'line36' or 'line35'), eval("getline(line('w0') - 1)"))
+    eq((iswin() and 'line27' or 'line26'), eval("getline(line('w0') - 10)"))
 
     screen:detach()
   end)

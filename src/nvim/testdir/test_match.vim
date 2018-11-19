@@ -1,5 +1,5 @@
 " Test for :match, :2match, :3match, clearmatches(), getmatches(), matchadd(),
-" matchaddpos(), matcharg(), matchdelete(), matchstrpos() and setmatches().
+" matchaddpos(), matcharg(), matchdelete(), and setmatches().
 
 function Test_match()
   highlight MyGroup1 term=bold ctermbg=red guibg=red
@@ -148,18 +148,6 @@ function Test_match()
   highlight MyGroup1 NONE
   highlight MyGroup2 NONE
   highlight MyGroup3 NONE
-endfunc
-
-func Test_matchstrpos()
-  call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing'))
-
-  call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing', 2))
-
-  call assert_equal(['', -1, -1], matchstrpos('testing', 'ing', 5))
-
-  call assert_equal(['ing', 1, 4, 7], matchstrpos(['vim', 'testing', 'execute'], 'ing'))
-
-  call assert_equal(['', -1, -1, -1], matchstrpos(['vim', 'testing', 'execute'], 'img'))
 endfunc
 
 func Test_matchaddpos()

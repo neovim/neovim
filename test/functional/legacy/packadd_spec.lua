@@ -15,7 +15,7 @@ describe('packadd', function()
 
     source([=[
       func SetUp()
-        let s:topdir = expand(expand('%:p:h') . '/Xdir')
+        let s:topdir = expand(getcwd() . '/Xdir')
         exe 'set packpath=' . s:topdir
         let s:plugdir = expand(s:topdir . '/pack/mine/opt/mytest')
       endfunc
@@ -56,6 +56,24 @@ describe('packadd', function()
         " Check exception
         call assert_fails("packadd directorynotfound", 'E919:')
         call assert_fails("packadd", 'E471:')
+      endfunc
+
+      func Test_packadd_start()
+        let plugdir = expand(s:topdir . '/pack/mine/start/other')
+        call mkdir(plugdir . '/plugin', 'p')
+        set rtp&
+        let rtp = &rtp
+        filetype on
+
+        exe 'split ' . plugdir . '/plugin/test.vim'
+        call setline(1, 'let g:plugin_works = 24')
+        wq
+
+        packadd other
+
+        call assert_equal(24, g:plugin_works)
+        call assert_true(len(&rtp) > len(rtp))
+        call assert_true(&rtp =~ (escape(plugdir, '\') . '\($\|,\)'))
       endfunc
 
       func Test_packadd_noload()
@@ -283,6 +301,11 @@ describe('packadd', function()
 
   it('works with :runtime [what]', function()
     call('Test_runtime')
+    expected_empty()
+  end)
+
+  it('loads packages from "start" directory', function()
+    call('Test_packadd_start')
     expected_empty()
   end)
 

@@ -28,22 +28,21 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_eval.c.generated.h"
 #endif
-/*
- * Exception handling terms:
- *
- *	:try		":try" command		\
- *	    ...		try block		|
- *	:catch RE	":catch" command	|
- *	    ...		catch clause		|- try conditional
- *	:finally	":finally" command	|
- *	    ...		finally clause		|
- *	:endtry		":endtry" command	/
- *
- * The try conditional may have any number of catch clauses and at most one
- * finally clause.  A ":throw" command can be inside the try block, a catch
- * clause, the finally clause, or in a function called or script sourced from
- * there or even outside the try conditional.  Try conditionals may be nested.
- */
+
+// Exception handling terms:
+//
+//      :try            ":try" command         ─┐
+//          ...         try block               │
+//      :catch RE       ":catch" command        │
+//          ...         catch clause            ├─ try conditional
+//      :finally        ":finally" command      │
+//          ...         finally clause          │
+//      :endtry         ":endtry" command      ─┘
+//
+// The try conditional may have any number of catch clauses and at most one
+// finally clause.  A ":throw" command can be inside the try block, a catch
+// clause, the finally clause, or in a function called or script sourced from
+// there or even outside the try conditional.  Try conditionals may be nested.
 
 // Configuration whether an exception is thrown on error or interrupt.  When
 // the preprocessor macros below evaluate to FALSE, an error (did_emsg) or

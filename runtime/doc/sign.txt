@@ -79,11 +79,14 @@ DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
 		will cause redraw problems.
 			toolkit		supports ~
 			Win32		.bmp, .ico, .cur
-					pixmap (.xpm) |+xpm_w32|
 
 	linehl={group}
 		Highlighting group used for the whole line the sign is placed
 		in.  Most useful is defining a background color.
+
+	numhl={group}
+                Highlighting group used for 'number' column at the associated
+                line.  Overrides |hl-LineNr|, |hl-CursorLineNr|.
 
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the
@@ -192,4 +195,4 @@ JUMPING TO A SIGN					*:sign-jump* *E157*
 		have a name.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

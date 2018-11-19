@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2012 Jun 20
+" Last Change:	2018 Aug 20
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -72,8 +72,10 @@ function! ccomplete#Complete(findstart, base)
   " Split item in words, keep empty word after "." or "->".
   " "aa" -> ['aa'], "aa." -> ['aa', ''], "aa.bb" -> ['aa', 'bb'], etc.
   " We can't use split, because we need to skip nested [...].
+  " "aa[...]" -> ['aa', '[...]'], "aa.bb[...]" -> ['aa', 'bb', '[...]'], etc.
   let items = []
   let s = 0
+  let arrays = 0
   while 1
     let e = match(base, '\.\|->\|\[', s)
     if e < 0
@@ -107,6 +109,7 @@ function! ccomplete#Complete(findstart, base)
       endwhile
       let e += 1
       call add(items, strpart(base, s, e - s))
+      let arrays += 1
       let s = e
     endif
   endwhile
@@ -161,15 +164,26 @@ function! ccomplete#Complete(findstart, base)
 	endif
       endif
       let res = [{'match': match, 'tagline' : '', 'kind' : kind, 'info' : line}]
+    elseif len(items) == arrays + 1
+      " Completing one word and it's a local array variable: build tagline
+      " from declaration line
+      let match = items[0]
+      let kind = 'v'
+      let tagline = "\t/^" . line . '$/'
+      let res = [{'match': match, 'tagline' : tagline, 'kind' : kind, 'info' : line}]
     else
       " Completing "var.", "var.something", etc.
       let res = s:Nextitem(strpart(line, 0, col), items[1:], 0, 1)
     endif
   endif
 
-  if len(items) == 1
+  if len(items) == 1 || len(items) == arrays + 1
     " Only one part, no "." or "->": complete from tags file.
-    let tags = taglist('^' . base)
+    if len(items) == 1
+      let tags = taglist('^' . base)
+    else
+      let tags = taglist('^' . items[0] . '$')
+    endif
 
     " Remove members, these can't appear without something in front.
     call filter(tags, 'has_key(v:val, "kind") ? v:val["kind"] != "m" : 1')
@@ -516,11 +530,24 @@ function! s:StructMembers(typename, items, all)
     endif
   endif
 
+  " Skip over [...] items
+  let idx = 0
+  while 1
+    if idx >= len(a:items)
+      let target = ''		" No further items, matching all members
+      break
+    endif
+    if a:items[idx][0] != '['
+      let target = a:items[idx]
+      break
+    endif
+    let idx += 1
+  endwhile
   " Put matching members in matches[].
   let matches = []
   for l in qflist
     let memb = matchstr(l['text'], '[^\t]*')
-    if memb =~ '^' . a:items[0]
+    if memb =~ '^' . target
       " Skip matches local to another file.
       if match(l['text'], "\tfile:") < 0 || bufnr('%') == bufnr(matchstr(l['text'], '\t\zs[^\t]*'))
 	let item = {'match': memb, 'tagline': l['text']}
@@ -540,8 +567,8 @@ function! s:StructMembers(typename, items, all)
   endfor
 
   if len(matches) > 0
-    " Skip over [...] items
-    let idx = 1
+    " Skip over next [...] items
+    let idx += 1
     while 1
       if idx >= len(a:items)
 	return matches		" No further items, return the result.

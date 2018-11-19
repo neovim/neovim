@@ -279,13 +279,13 @@ func Test_diffopt_icase()
   set diffopt=icase,foldcolumn:0
 
   e one
-  call setline(1, ['One', 'Two', 'Three', 'Four'])
+  call setline(1, ['One', 'Two', 'Three', 'Four', 'Fi#ve'])
   redraw
   let normattr = screenattr(1, 1)
   diffthis
 
   botright vert new two
-  call setline(1, ['one', 'TWO', 'Three ', 'Four'])
+  call setline(1, ['one', 'TWO', 'Three ', 'Four', 'fI=VE'])
   diffthis
 
   redraw
@@ -293,6 +293,10 @@ func Test_diffopt_icase()
   call assert_equal(normattr, screenattr(2, 1))
   call assert_notequal(normattr, screenattr(3, 1))
   call assert_equal(normattr, screenattr(4, 1))
+
+  let dtextattr = screenattr(5, 3)
+  call assert_notequal(dtextattr, screenattr(5, 1))
+  call assert_notequal(dtextattr, screenattr(5, 5))
 
   diffoff!
   %bwipe!
@@ -369,6 +373,29 @@ func Test_diffopt_vertical()
   set diffopt&
   diffoff!
   %bwipe
+endfunc
+
+func Test_diffopt_hiddenoff()
+  set diffopt=filler,foldcolumn:0,hiddenoff
+  e! one
+  call setline(1, ['Two', 'Three'])
+  redraw
+  let normattr = screenattr(1, 1)
+  diffthis
+  botright vert new two
+  call setline(1, ['One', 'Four'])
+  diffthis
+  redraw
+  call assert_notequal(normattr, screenattr(1, 1))
+  set hidden
+  close
+  redraw
+  " should not diffing with hidden buffer two while 'hiddenoff' is enabled
+  call assert_equal(normattr, screenattr(1, 1))
+
+  bwipe!
+  bwipe!
+  set hidden& diffopt&
 endfunc
 
 func Test_diffoff_hidden()
@@ -560,4 +587,31 @@ func Test_diff_lastline()
   call assert_equal(w2lines, w1lines)
   bwipe!
   bwipe!
+endfunc
+
+func Test_diff_with_cursorline()
+  if !CanRunVimInTerminal()
+    return
+  endif
+
+  call writefile([
+	\ 'hi CursorLine ctermbg=red ctermfg=white',
+	\ 'set cursorline',
+	\ 'call setline(1, ["foo","foo","foo","bar"])',
+	\ 'vnew',
+	\ 'call setline(1, ["bee","foo","foo","baz"])',
+	\ 'windo diffthis',
+	\ '2wincmd w',
+	\ ], 'Xtest_diff_cursorline')
+  let buf = RunVimInTerminal('-S Xtest_diff_cursorline', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_01', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_02', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cursorline')
 endfunc

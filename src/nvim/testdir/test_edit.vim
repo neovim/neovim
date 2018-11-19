@@ -314,6 +314,33 @@ func! Test_edit_11()
   bw!
 endfunc
 
+func! Test_edit_11_indentexpr()
+  " Test that indenting kicks in
+  new
+  " Use indentexpr instead of cindenting
+  func! Do_Indent()
+    let pline=prevnonblank(v:lnum)
+    if empty(getline(v:lnum))
+      if getline(pline) =~ 'if\|then'
+        return shiftwidth()
+      else
+        return 0
+      endif
+    else
+        return 0
+    endif
+  endfunc
+  setl indentexpr=Do_Indent() indentkeys+=0=then,0=fi
+  call setline(1, ['if [ $this ]'])
+  call cursor(1, 1)
+  call feedkeys("othen\<cr>that\<cr>fi", 'tnix')
+  call assert_equal(['if [ $this ]', "then", "\<tab>that", "fi"], getline(1, '$'))
+  set cinkeys&vim indentkeys&vim
+  set nocindent indentexpr=
+  delfu Do_Indent
+  bw!
+endfunc
+
 func! Test_edit_12()
   " Test changing indent in replace mode
   new
@@ -1311,6 +1338,14 @@ func! Test_edit_rightleft()
   bw!
 endfunc
 
+func Test_edit_backtick()
+  next a\`b c
+  call assert_equal('a`b', expand('%'))
+  next
+  call assert_equal('c', expand('%'))
+  call assert_equal('a\`b c', expand('##'))
+endfunc
+
 func Test_edit_quit()
   edit foo.txt
   split
@@ -1323,3 +1358,88 @@ func Test_edit_quit()
   only
 endfunc
 
+func Test_edit_complete_very_long_name()
+  if !has('unix')
+    " Long directory names only work on Unix.
+    return
+  endif
+
+  let dirname = getcwd() . "/Xdir"
+  let longdirname = dirname . repeat('/' . repeat('d', 255), 4)
+  try
+    call mkdir(longdirname, 'p')
+  catch /E739:/
+    " Long directory name probably not supported.
+    call delete(dirname, 'rf')
+    return
+  endtry
+
+  " Try to get the Vim window position before setting 'columns'.
+  let winposx = getwinposx()
+  let winposy = getwinposy()
+  let save_columns = &columns
+  " Need at least about 1100 columns to reproduce the problem.
+  set columns=2000
+  call assert_equal(2000, &columns)
+  set noswapfile
+
+  let longfilename = longdirname . '/' . repeat('a', 255)
+  call writefile(['Totum', 'Table'], longfilename)
+  new
+  exe "next Xfile " . longfilename
+  exe "normal iT\<C-N>"
+
+  bwipe!
+  exe 'bwipe! ' . longfilename
+  call delete(dirname, 'rf')
+  let &columns = save_columns
+  if winposx >= 0 && winposy >= 0
+    exe 'winpos ' . winposx . ' ' . winposy
+  endif
+  set swapfile&
+endfunc
+
+func Test_edit_alt()
+  " Keeping the cursor line didn't happen when the first line has indent.
+  new
+  call setline(1, ['  one', 'two', 'three'])
+  w XAltFile
+  $
+  call assert_equal(3, line('.'))
+  e Xother
+  e #
+  call assert_equal(3, line('.'))
+
+  bwipe XAltFile
+  call delete('XAltFile')
+endfunc
+
+func Test_leave_insert_autocmd()
+  new
+  au InsertLeave * let g:did_au = 1
+  let g:did_au = 0
+  call feedkeys("afoo\<Esc>", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('foo', getline(1))
+
+  let g:did_au = 0
+  call feedkeys("Sbar\<C-C>", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bar', getline(1))
+
+  inoremap x xx<Esc>
+  let g:did_au = 0
+  call feedkeys("Saax", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('aaxx', getline(1))
+
+  inoremap x xx<C-C>
+  let g:did_au = 0
+  call feedkeys("Sbbx", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bbxx', getline(1))
+
+  bwipe!
+  au! InsertLeave
+  iunmap x
+endfunc

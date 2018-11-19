@@ -37,11 +37,11 @@ usage() {
 }
 
 msg_ok() {
-  printf "\e[32m✔\e[0m $@\n"
+  printf '\e[32m✔\e[0m %s\n' "$@"
 }
 
 msg_err() {
-  printf "\e[31m✘\e[0m $@\n"
+  printf '\e[31m✘\e[0m %s\n' "$@"
 }
 
 # Checks if a program is in the user's PATH, and is executable.
@@ -85,14 +85,15 @@ get_vim_sources() {
     git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
   else
-    if [[ ! -d "${VIM_SOURCE_DIR}/.git" ]]; then
+    cd "${VIM_SOURCE_DIR}"
+    if ! [ -d ".git" ] \
+        && ! [ "$(git rev-parse --show-toplevel)" = "${VIM_SOURCE_DIR}" ]; then
       msg_err "${VIM_SOURCE_DIR} does not appear to be a git repository."
       echo "  Please remove it and try again."
       exit 1
     fi
-    cd "${VIM_SOURCE_DIR}"
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
-    git pull &&
+    git pull --ff &&
       msg_ok "Updated Vim sources." ||
       msg_err "Could not update Vim sources; ignoring error."
   fi
@@ -131,7 +132,7 @@ assign_commit_details() {
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(cd "${VIM_SOURCE_DIR}" \
     && git log -1 --pretty='format:%B' "${vim_commit}" \
-      | sed -e 's/\(#[0-9]*\)/vim\/vim\1/g')"
+      | sed -e 's/\(#[0-9]\{1,\}\)/vim\/vim\1/g')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1s/^patch /vim-patch:/')"
@@ -148,15 +149,15 @@ preprocess_patch() {
   local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
-  # Remove channel.txt, netbeans.txt, os_*.txt, term.txt, todo.txt, version*.txt, tags
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|tags'
+  # Remove unwanted Vim doc files.
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|sponsor\.txt\|intro\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove some testdir/Make_*.mak files
-  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
+  # Remove screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
@@ -177,6 +178,16 @@ preprocess_patch() {
 
   # Rename path to matchit plugin.
   LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/\(plugin/matchit.vim\)@\1/\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/pack/dist/opt/matchit/doc/\(matchit.txt\)@\1/doc/pi_\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename test_urls.vim to check_urls.vim
+  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls.vim\)@\1/scripts/check\2@g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename path to check_colors.vim
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/colors/\(tools/check_colors.vim\)@\1/\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 
@@ -202,7 +213,7 @@ get_vimpatch() {
   printf "Pre-processing patch...\n"
   preprocess_patch "${NVIM_SOURCE_DIR}/${patch_file}"
 
-  msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'.\n"
+  msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
 }
 
 stage_patch() {
@@ -218,7 +229,7 @@ stage_patch() {
     msg_ok "Current branch '${checked_out_branch}' seems to be a vim-patch"
     echo "  branch; not creating a new branch."
   else
-    printf "\nFetching '${git_remote}/master'.\n"
+    printf '\nFetching "%s/master".\n' "${git_remote}"
     output="$(git fetch "${git_remote}" master 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
@@ -244,25 +255,26 @@ stage_patch() {
     else
       printf "\nApplying patch...\n"
       patch -p1 < "${patch_file}" || true
-      find -name '*.orig' -type f -delete
+      find . -name '*.orig' -type f -delete
     fi
     printf "\nInstructions:\n  Proceed to port the patch.\n"
   else
-    printf "\nInstructions:\n  Proceed to port the patch.\n  Try the 'patch' command (or use '${BASENAME} -P ...' next time):\n    patch -p1 < ${patch_file}\n"
+    printf '\nInstructions:\n  Proceed to port the patch.\n  Try the "patch" command (or use "%s -P ..." next time):\n    patch -p1 < %s\n' "${BASENAME}" "${patch_file}"
   fi
 
-  printf "
-  Stage your changes ('git add ...'), then use 'git commit --amend' to commit.
+  printf '
+  Stage your changes ("git add ..."), then use "git commit --amend" to commit.
 
-  To port more patches (if any) related to ${vim_version},
-  run '${BASENAME}' again.
+  To port more patches (if any) related to %s,
+  run "%s" again.
     * Do this only for _related_ patches (otherwise it increases the
       size of the pull request, making it harder to review)
 
-  When you're done, try '${BASENAME} -s' to create the pull request.
+  When you are done, try "%s -s" to create the pull request.
 
   See the wiki for more information:
-    * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim\n"
+    * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
+' "${vim_version}" "${BASENAME}" "${BASENAME}"
 }
 
 hub_pr() {
@@ -398,24 +410,24 @@ show_vimpatches() {
 
   list_missing_vimpatches | while read vim_commit; do
     if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
-      printf "  • ${vim_commit} (+runtime)\n"
+      printf '  • %s (+runtime)\n' "${vim_commit}"
     else
-      printf "  • ${vim_commit}\n"
+      printf '  • %s\n' "${vim_commit}"
     fi
   done
 
-  echo
-  echo "Instructions:"
-  echo
-  echo "  To port one of the above patches to Neovim, execute"
-  echo "  this script with the patch revision as argument and"
-  echo "  follow the instructions."
-  echo
-  echo "  Examples: '${BASENAME} -p 7.4.487'"
-  echo "            '${BASENAME} -p 1e8ebf870720e7b671f98f22d653009826304c4f'"
-  echo
-  echo "  NOTE: Please port the _oldest_ patch if you possibly can."
-  echo "        Out-of-order patches increase the possibility of bugs."
+  printf "Instructions:
+
+  To port one of the above patches to Neovim, execute
+  this script with the patch revision as argument and
+  follow the instructions.
+
+  Examples: '%s -p 7.4.487'
+            '%s -p 1e8ebf870720e7b671f98f22d653009826304c4f'
+
+  NOTE: Please port the _oldest_ patch if you possibly can.
+        Out-of-order patches increase the possibility of bugs.
+" "${BASENAME}" "${BASENAME}"
 }
 
 review_commit() {
@@ -426,7 +438,7 @@ review_commit() {
   local nvim_patch
   nvim_patch="$(curl -Ssf "${nvim_patch_url}")"
   local vim_version
-  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n "s/${git_patch_prefix}vim-patch:\([a-z0-9.]*\)$/\1/p")"
+  vim_version="$(head -n 4 <<< "${nvim_patch}" | sed -n 's/'"${git_patch_prefix}"'vim-patch:\([a-z0-9.]*\)\(:.*\)\{0,1\}$/\1/p')"
 
   echo
   if [[ -n "${vim_version}" ]]; then
@@ -436,7 +448,7 @@ review_commit() {
     echo "  This script assumes that the PR contains only commits"
     echo "  with 'vim-patch:XXX' in their title."
     echo
-    printf -- "$(head -n 4 <<< "${nvim_patch}")\n\n"
+    printf -- '%s\n\n' "$(head -n 4 <<< "${nvim_patch}")"
     local reply
     read -p "Continue reviewing (y/N)? " -n 1 -r reply
     if [[ "${reply}" == y ]]; then
@@ -448,12 +460,21 @@ review_commit() {
 
   assign_commit_details "${vim_version}"
 
+  echo
+  echo "Creating files."
+  echo "${nvim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
+  msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
+  CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
+
+  local nvim="nvim -u NORC -n -i NONE --headless"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'1,/^$/g/^ /-1join' +w +q "${NVIM_SOURCE_DIR}/n${patch_file}"
+
   local expected_commit_message
   expected_commit_message="$(commit_message)"
   local message_length
   message_length="$(wc -l <<< "${expected_commit_message}")"
   local commit_message
-  commit_message="$(tail -n +4 <<< "${nvim_patch}" | head -n "${message_length}")"
+  commit_message="$(tail -n +4 "${NVIM_SOURCE_DIR}/n${patch_file}" | head -n "${message_length}")"
   if [[ "${commit_message#${git_patch_prefix}}" == "${expected_commit_message}" ]]; then
     msg_ok "Found expected commit message."
   else
@@ -463,12 +484,6 @@ review_commit() {
     echo "  Actual:"
     echo "${commit_message#${git_patch_prefix}}"
   fi
-
-  echo
-  echo "Creating files."
-  echo "${nvim_patch}" > "${NVIM_SOURCE_DIR}/n${patch_file}"
-  msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
-  CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
   get_vimpatch "${vim_version}"
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/${patch_file}")

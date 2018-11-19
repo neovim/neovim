@@ -122,3 +122,39 @@ func Test_winbuf_close()
   call delete('Xtest2')
   call delete('Xtest3')
 endfunc
+
+" Test that ":close" will respect 'winfixheight' when possible.
+func Test_winfixheight_on_close()
+  set nosplitbelow nosplitright
+
+  split | split | vsplit
+
+  $wincmd w
+  setlocal winfixheight
+  let l:height = winheight(0)
+
+  3close
+
+  call assert_equal(l:height, winheight(0))
+
+  %bwipeout!
+  setlocal nowinfixheight splitbelow& splitright&
+endfunc
+
+" Test that ":close" will respect 'winfixwidth' when possible.
+func Test_winfixwidth_on_close()
+  set nosplitbelow nosplitright
+
+  vsplit | vsplit | split
+
+  $wincmd w
+  setlocal winfixwidth
+  let l:width = winwidth(0)
+
+  3close
+
+  call assert_equal(l:width, winwidth(0))
+
+  %bwipeout!
+  setlocal nowinfixwidth splitbelow& splitright&
+endfunction

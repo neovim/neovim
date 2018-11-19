@@ -30,7 +30,7 @@
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"
-
+#include "nvim/cursor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.c.generated.h"
@@ -331,14 +331,14 @@ size_t transstr_len(const char *const s)
   while (*p) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         len += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];
           len += transchar_hex(hexbuf, pcc[i]);
         }
       }
@@ -370,20 +370,20 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
   while (*p != NUL && buf_p < buf_e) {
     const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
     if (l > 1) {
-      if (buf_p + l >= buf_e) {
-        break;
+      if (buf_p + l > buf_e) {
+        break;  // Exceeded `buf` size.
       }
-      int pcc[MAX_MCO + 2];
+      int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         memmove(buf_p, p, l);
         buf_p += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc); i++) {
-          char hexbuf[11];
+        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+          char hexbuf[9];  // <up to 6 bytes>NUL
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
-          if (buf_p + hexlen >= buf_e) {
+          if (buf_p + hexlen > buf_e) {
             break;
           }
           memmove(buf_p, hexbuf, hexlen);
@@ -394,6 +394,9 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
     } else {
       const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
+      if (buf_p + tb_len > buf_e) {
+        break;  // Exceeded `buf` size.
+      }
       memmove(buf_p, tb, tb_len);
       buf_p += tb_len;
     }
@@ -804,7 +807,7 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 
   for (char_u *s = line;
        *s != NUL && (len == MAXCOL || s < line + len);
-       mb_ptr_adv(s)) {
+       MB_PTR_ADV(s)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
   }
 
@@ -826,7 +829,7 @@ bool vim_isIDc(int c)
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
 /// @param  c  character to check
-bool vim_iswordc(int c)
+bool vim_iswordc(const int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return vim_iswordc_buf(c, curbuf);
@@ -842,7 +845,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return (c >= 0x100
-          ? (utf_class(c) >= 2)
+          ? (utf_class_tab(c, chartab) >= 2)
           : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
 }
 
@@ -852,7 +855,7 @@ bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
 ///
 /// @param  c    character to check
 /// @param  buf  buffer whose keywords to use
-bool vim_iswordc_buf(int c, buf_T *buf)
+bool vim_iswordc_buf(const int c, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
   return vim_iswordc_tab(c, buf->b_chartab);
@@ -863,13 +866,10 @@ bool vim_iswordc_buf(int c, buf_T *buf)
 /// @param  p  pointer to the multi-byte character
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp(char_u *p)
+bool vim_iswordp(const char_u *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
-  }
-  return GET_CHARTAB(curbuf, *p) != 0;
+  return vim_iswordp_buf(p, curbuf);
 }
 
 /// Just like vim_iswordc_buf() but uses a pointer to the (multi-byte)
@@ -879,13 +879,15 @@ bool vim_iswordp(char_u *p)
 /// @param  buf  buffer whose keywords to use
 ///
 /// @return true if "p" points to a keyword character.
-bool vim_iswordp_buf(char_u *p, buf_T *buf)
+bool vim_iswordp_buf(const char_u *const p, buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (MB_BYTE2LEN(*p) > 1) {
-    return mb_get_class(p) >= 2;
+  int c = *p;
+
+  if (MB_BYTE2LEN(c) > 1) {
+    c = utf_ptr2char(p);
   }
-  return GET_CHARTAB(buf, *p) != 0;
+  return vim_iswordc_buf(c, buf);
 }
 
 /// Check that "c" is a valid file-name character.
@@ -971,7 +973,7 @@ int lbr_chartabsize_adv(char_u *line, char_u **s, colnr_T col)
   int retval;
 
   retval = lbr_chartabsize(line, *s, col);
-  mb_ptr_adv(*s);
+  MB_PTR_ADV(*s);
   return retval;
 }
 
@@ -1018,7 +1020,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // needs a break here
   if (wp->w_p_lbr
       && vim_isbreak(c)
-      && !vim_isbreak(s[1])
+      && !vim_isbreak((int)s[1])
       && wp->w_p_wrap
       && (wp->w_width != 0)) {
     // Count all characters from first non-blank after a blank up to next
@@ -1038,11 +1040,11 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
     for (;;) {
       ps = s;
-      mb_ptr_adv(s);
+      MB_PTR_ADV(s);
       c = *s;
 
       if (!(c != NUL
-            && (vim_isbreak(c) || col2 == col || !vim_isbreak(*ps)))) {
+            && (vim_isbreak(c) || col2 == col || !vim_isbreak((int)(*ps))))) {
         break;
       }
 
@@ -1283,7 +1285,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   } else {
     for (;;) {
@@ -1304,7 +1306,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       }
 
       vcol += incr;
-      mb_ptr_adv(ptr);
+      MB_PTR_ADV(ptr);
     }
   }
 
@@ -1342,7 +1344,11 @@ colnr_T getvcol_nolist(pos_T *posp)
   colnr_T vcol;
 
   curwin->w_p_list = false;
-  getvcol(curwin, posp, NULL, &vcol, NULL);
+  if (posp->coladd) {
+    getvvcol(curwin, posp, NULL, &vcol, NULL);
+  } else {
+    getvcol(curwin, posp, NULL, &vcol, NULL);
+  }
   curwin->w_p_list = list_save;
   return vcol;
 }
@@ -1373,7 +1379,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
     ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
-      int c = (*mb_ptr2char)(ptr + pos->col);
+      int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
         if (coladd > endadd) {
@@ -1457,6 +1463,18 @@ char_u *skipwhite(const char_u *q)
     p++;
   }
   return (char_u *)p;
+}
+
+// getwhitecols: return the number of whitespace
+// columns (bytes) at the start of a given line
+intptr_t getwhitecols_curline(void)
+{
+  return getwhitecols(get_cursor_line_ptr());
+}
+
+intptr_t getwhitecols(const char_u *p)
+{
+  return skipwhite(p) - p;
 }
 
 /// Skip over digits

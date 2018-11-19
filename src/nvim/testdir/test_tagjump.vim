@@ -65,6 +65,48 @@ func Test_duplicate_tagjump()
   call delete('Xfile1')
 endfunc
 
+func Test_tagjump_switchbuf()
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "second\tXfile1\t2",
+        \ "third\tXfile1\t3",],
+        \ 'Xtags')
+  call writefile(['first', 'second', 'third'], 'Xfile1')
+
+  enew | only
+  set switchbuf=
+  stag second
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, line('.'))
+  stag third
+  call assert_equal(3, winnr('$'))
+  call assert_equal(3, line('.'))
+
+  enew | only
+  set switchbuf=useopen
+  stag second
+  call assert_equal(2, winnr('$'))
+  call assert_equal(2, line('.'))
+  stag third
+  call assert_equal(2, winnr('$'))
+  call assert_equal(3, line('.'))
+
+  enew | only
+  set switchbuf=usetab
+  tab stag second
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(2, line('.'))
+  1tabnext | stag third
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(3, line('.'))
+
+  tabclose!
+  enew | only
+  call delete('Xfile1')
+  call delete('Xtags')
+  set switchbuf&vim
+endfunc
+
 " Tests for [ CTRL-I and CTRL-W CTRL-I commands
 function Test_keyword_jump()
   call writefile(["#include Xinclude", "",
@@ -130,6 +172,90 @@ func Test_tag_symbolic()
   call delete('Xtest.c')
   call delete("Xtest.dir", "rf")
   %bwipe!
+endfunc
+
+" Tests for tag search with !_TAG_FILE_ENCODING.
+" Depends on the test83-tags2 and test83-tags3 files.
+func Test_tag_file_encoding()
+  throw 'skipped: Nvim removed test83-tags2, test83-tags3'
+  if has('vms')
+    return
+  endif
+
+  if !has('iconv') || iconv("\x82\x60", "cp932", "utf-8") != "\uff21"
+    return
+  endif
+
+  let save_enc = &encoding
+  set encoding=utf8
+
+  let content = ['text for tags1', 'abcdefghijklmnopqrs']
+  call writefile(content, 'Xtags1.txt')
+  let content = ['text for tags2', 'ＡＢＣ']
+  call writefile(content, 'Xtags2.txt')
+  let content = ['text for tags3', 'ＡＢＣ']
+  call writefile(content, 'Xtags3.txt')
+  let content = ['!_TAG_FILE_ENCODING	utf-8	//', 'abcdefghijklmnopqrs	Xtags1.txt	/abcdefghijklmnopqrs']
+  call writefile(content, 'Xtags1')
+
+  " case1:
+  new
+  set tags=Xtags1
+  tag abcdefghijklmnopqrs
+  call assert_equal('Xtags1.txt', expand('%:t'))
+  call assert_equal('abcdefghijklmnopqrs', getline('.'))
+  close
+
+  " case2:
+  new
+  set tags=test83-tags2
+  tag /.ＢＣ
+  call assert_equal('Xtags2.txt', expand('%:t'))
+  call assert_equal('ＡＢＣ', getline('.'))
+  close
+
+  " case3:
+  new
+  set tags=test83-tags3
+  tag abc50
+  call assert_equal('Xtags3.txt', expand('%:t'))
+  call assert_equal('ＡＢＣ', getline('.'))
+  close
+
+  set tags&
+  let &encoding = save_enc
+  call delete('Xtags1.txt')
+  call delete('Xtags2.txt')
+  call delete('Xtags3.txt')
+  call delete('Xtags1')
+endfunc
+
+func Test_tagjump_etags()
+  if !has('emacs_tags')
+    return
+  endif
+  call writefile([
+        \ "void foo() {}",
+        \ "int main(int argc, char **argv)",
+        \ "{",
+        \ "\tfoo();",
+        \ "\treturn 0;",
+        \ "}",
+        \ ], 'Xmain.c')
+
+  call writefile([
+	\ "\x0c",
+        \ "Xmain.c,64",
+        \ "void foo() {}\x7ffoo\x011,0",
+        \ "int main(int argc, char **argv)\x7fmain\x012,14",
+	\ ], 'Xtags')
+  set tags=Xtags
+  ta foo
+  call assert_equal('void foo() {}', getline('.'))
+
+  call delete('Xtags')
+  call delete('Xmain.c')
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

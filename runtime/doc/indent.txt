@@ -410,10 +410,10 @@ The examples below assume a 'shiftwidth' of 4.
 							*cino-(*
 	(N    When in unclosed parentheses, indent N characters from the line
 	      with the unclosed parentheses.  Add a 'shiftwidth' for every
-	      unclosed parentheses.  When N is 0 or the unclosed parentheses
-	      is the first non-white character in its line, line up with the
-	      next non-white character after the unclosed parentheses.
-	      (default 'shiftwidth' * 2).
+	      extra unclosed parentheses.  When N is 0 or the unclosed
+	      parentheses is the first non-white character in its line, line
+	      up with the next non-white character after the unclosed
+	      parentheses.  (default 'shiftwidth' * 2).
 
 		cino=			  cino=(0 >
 		  if (c1 && (c2 ||	    if (c1 && (c2 ||
@@ -424,7 +424,8 @@ The examples below assume a 'shiftwidth' of 4.
 		     {			       {
 <
 							*cino-u*
-	uN    Same as (N, but for one level deeper.  (default 'shiftwidth').
+	uN    Same as (N, but for one nesting level deeper.
+	      (default 'shiftwidth').
 
 		cino=			  cino=u2 >
 		  if (c123456789	    if (c123456789
@@ -902,6 +903,25 @@ In PHP braces are not required inside 'case/default' blocks therefore 'case:'
 and 'default:' are indented at the same level than the 'switch()' to avoid
 meaningless indentation. You can use the above option to return to the
 traditional way.
+-------------
+
+							*PHP_noArrowMatching*
+By default the indent script will indent multi-line chained calls by matching
+the position of the '->': >
+
+    $user_name_very_long->name()
+                        ->age()
+                        ->info();
+
+You can revert to the classic way of indenting by setting this option to 1: >
+    :let g:PHP_noArrowMatching = 1
+
+You will obtain the following result: >
+
+    $user_name_very_long->name()
+        ->age()
+        ->info();
+
 
 
 PYTHON							*ft-python-indent*
@@ -916,6 +936,11 @@ Indent after a nested paren: >
 	let g:pyindent_nested_paren = '&sw'
 Indent for a continuation line: >
 	let g:pyindent_continue = '&sw * 2'
+
+The method uses searchpair() to look back for unclosed parenthesis.  This can
+sometimes be slow, thus it timeouts after 150 msec.  If you notice the
+indenting isn't correct, you can set a larger timeout in msec: >
+	let g:pyindent_searchpair_timeout = 500
 
 
 R								*ft-r-indent*
@@ -954,6 +979,11 @@ Below is an example of indentation with and without this option enabled:
        paste(x)                                      paste(x)
    }                                             }
 <
+The code will be indented after lines that match the pattern
+`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`. If you want indentation after
+lines that match a different pattern, you should set the appropriate value of
+`r_indent_op_pattern` in your |vimrc|.
+
 
 SHELL							*ft-sh-indent*
 
@@ -1132,4 +1162,4 @@ indent for a continuation line, a line that starts with a backslash: >
 Three times shiftwidth is the default value.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

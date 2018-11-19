@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
+local feed, eq, eval = helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local curbufmeths = helpers.curbufmeths
@@ -72,7 +72,8 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("<cr>")
     local diff = eval("g:val") - count
-    ok(0 <= diff and diff <= 4)
+    assert(0 <= diff and diff <= 4,
+           'expected (0 <= diff <= 4), got: '..tostring(diff))
   end)
 
   it('are triggered in blocking getchar() call', function()
@@ -81,7 +82,7 @@ describe('timers', function()
     run(nil, nil, nil, 300)
     feed("c")
     local count = eval("g:val")
-    ok(count >= 4)
+    assert(count >= 3, 'expected count >= 3, got: '..tostring(count))
     eq(99, eval("g:c"))
   end)
 
@@ -96,6 +97,7 @@ describe('timers', function()
     source([[
       func! AddItem(timer)
         call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
+        call getchar(1)
         redraw
       endfunc
       call timer_start(200, 'AddItem')
@@ -111,7 +113,6 @@ describe('timers', function()
       ^                                        |
     ]])
 
-    screen:sleep(200)
     screen:expect([[
       ITEM 1                                  |
       ITEM 2                                  |
@@ -141,9 +142,10 @@ describe('timers', function()
     local count = eval("g:val")
     run(nil, nil, nil, 300)
     local count2 = eval("g:val")
-    ok(4 <= count and count <= 7)
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
+    assert(3 <= count and count <= 7,
+           'expected (3 <= count <= 7), got: '..tostring(count))
   end)
 
   it('can be stopped from the handler', function()
@@ -170,8 +172,8 @@ describe('timers', function()
         let g:val2 += 1
       endfunc
     ]])
-    command("call timer_start(50,  'MyHandler', {'repeat': 3})")
-    command("call timer_start(100, 'MyHandler2', {'repeat': 2})")
+    command("call timer_start(20, 'MyHandler',  {'repeat': 3})")
+    command("call timer_start(40, 'MyHandler2', {'repeat': 2})")
     run(nil, nil, nil, 300)
     eq(3,eval("g:val"))
     eq(2,eval("g:val2"))
@@ -197,13 +199,14 @@ describe('timers', function()
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
+      let g:val = 0
       func! MyHandler(timer)
         echo "evil"
+        let g:val = 1
       endfunc
     ]])
     command("call timer_start(100,  'MyHandler', {'repeat': 1})")
     feed(":good")
-    screen:sleep(200)
     screen:expect([[
                                               |
       {0:~                                       }|
@@ -212,6 +215,17 @@ describe('timers', function()
       {0:~                                       }|
       :good^                                   |
     ]])
+
+    screen:expect{grid=[[
+                                              |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      :good^                                   |
+    ]], intermediate=true, timeout=200}
+
+    eq(1, eval('g:val'))
   end)
 
 end)

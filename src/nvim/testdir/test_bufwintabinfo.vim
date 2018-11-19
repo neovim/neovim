@@ -39,17 +39,35 @@ function Test_getbufwintabinfo()
     let w2_id = win_getid()
     tabnew | let w3_id = win_getid()
     new | let w4_id = win_getid()
-    new | let w5_id = win_getid()
+    vert new | let w5_id = win_getid()
     call setwinvar(0, 'signal', 'green')
     tabfirst
     let winlist = getwininfo()
     call assert_equal(5, len(winlist))
+    call assert_equal(winwidth(1), winlist[0].width)
+    call assert_equal(0, winlist[0].wincol)
+    let tablineheight = winlist[0].winrow == 1 ? 1 : 0
+    call assert_equal(tablineheight, winlist[0].winrow)  " tabline adds one
+
     call assert_equal(winbufnr(2), winlist[1].bufnr)
     call assert_equal(winheight(2), winlist[1].height)
+    call assert_equal(0, winlist[1].wincol)
+    call assert_equal(tablineheight + winheight(1) + 1, winlist[1].winrow)
+
     call assert_equal(1, winlist[2].winnr)
+    call assert_equal(tablineheight, winlist[2].winrow)
+    call assert_equal(0, winlist[2].wincol)
+
+    call assert_equal(winlist[2].width + 1, winlist[3].wincol)
+    call assert_equal(0, winlist[4].wincol)
+
+    call assert_equal(1, winlist[0].tabnr)
+    call assert_equal(1, winlist[1].tabnr)
+    call assert_equal(2, winlist[2].tabnr)
     call assert_equal(2, winlist[3].tabnr)
+    call assert_equal(2, winlist[4].tabnr)
+
     call assert_equal('green', winlist[2].variables.signal)
-    call assert_equal(winwidth(1), winlist[0].width)
     call assert_equal(w4_id, winlist[3].winid)
     let winfo = getwininfo(w5_id)[0]
     call assert_equal(2, winfo.tabnr)

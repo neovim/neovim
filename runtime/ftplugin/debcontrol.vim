@@ -1,18 +1,18 @@
 " Vim filetype plugin file (GUI menu and folding)
 " Language:     Debian control files
-" Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
+" Maintainer:   Debian Vim Maintainers
 " Former Maintainer:    Pierre Habouzit <madcoder@debian.org>
-" Last Change:  2008-03-08
-" URL:          http://hg.debian.org/hg/pkg-vim/vim/raw-file/tip/runtime/ftplugin/debcontrol.vim
+" Last Change:  2018-01-28
+" URL:          https://salsa.debian.org/vim-team/vim-debian/blob/master/ftplugin/debcontrol.vim
 
 " Do these settings once per buffer
-if exists("b:did_ftplugin")
+if exists('b:did_ftplugin')
   finish
 endif
 let b:did_ftplugin=1
 
 " {{{1 Local settings (do on every load)
-if exists("g:debcontrol_fold_enable")
+if exists('g:debcontrol_fold_enable')
   setlocal foldmethod=expr
   setlocal foldexpr=DebControlFold(v:lnum)
   setlocal foldtext=DebControlFoldText()
@@ -20,7 +20,7 @@ endif
 setlocal textwidth=0
 
 " Clean unloading
-let b:undo_ftplugin = "setlocal tw< foldmethod< foldexpr< foldtext<"
+let b:undo_ftplugin = 'setlocal tw< foldmethod< foldexpr< foldtext<'
 
 " }}}1
 
@@ -32,7 +32,7 @@ function! s:getField(f, lnum)
   while line !~ '^'.a:f.':'
     let fwdsteps += 1
     let line = getline(a:lnum + fwdsteps)
-    if line == ''
+    if line ==# ''
       return 'unknown'
     endif
   endwhile
@@ -40,9 +40,9 @@ function! s:getField(f, lnum)
 endfunction
 
 function! DebControlFoldText()
-  if v:folddashes == '-'  " debcontrol entry fold
+  if v:folddashes ==# '-'  " debcontrol entry fold
     let type = substitute(getline(v:foldstart), ':.*', '', '')
-    if type == 'Source'
+    if type ==# 'Source'
       let ftext = substitute(foldtext(), ' *Source: *', ' ', '')
       return ftext . ' -- ' . s:getField('Maintainer', v:foldstart) . ' '
     endif
@@ -56,11 +56,11 @@ endfunction
 function! DebControlFold(l)
 
   " This is for not merging blank lines around folds to them
-  if getline(a:l) =~ '^Source:'
+  if getline(a:l) =~# '^Source:'
     return '>1'
   endif
 
-  if getline(a:l) =~ '^Package:'
+  if getline(a:l) =~# '^Package:'
     return '>1'
   endif
 

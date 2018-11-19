@@ -123,7 +123,7 @@ void do_debug(char_u *cmd)
   int save_msg_scroll = msg_scroll;
   int save_State = State;
   int save_did_emsg = did_emsg;
-  int save_cmd_silent = cmd_silent;
+  const bool save_cmd_silent = cmd_silent;
   int save_msg_silent = msg_silent;
   int save_emsg_silent = emsg_silent;
   int save_redir_off = redir_off;
@@ -1209,7 +1209,7 @@ int autowrite(buf_T *buf, int forceit)
   return r;
 }
 
-/// flush all buffers, except the ones that are readonly
+/// Flush all buffers, except the ones that are readonly or are never written.
 void autowrite_all(void)
 {
   if (!(p_aw || p_awa) || !p_write) {
@@ -1217,7 +1217,7 @@ void autowrite_all(void)
   }
 
   FOR_ALL_BUFFERS(buf) {
-    if (bufIsChanged(buf) && !buf->b_p_ro) {
+    if (bufIsChanged(buf) && !buf->b_p_ro && !bt_dontwrite(buf)) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
       (void)buf_write_all(buf, false);
@@ -1279,15 +1279,13 @@ bool check_changed(buf_T *buf, int flags)
 ///
 /// @param buf
 /// @param checkall may abandon all changed buffers
-void dialog_changed(buf_T *buf, int checkall)
+void dialog_changed(buf_T *buf, bool checkall)
 {
   char_u buff[DIALOG_MSG_SIZE];
   int ret;
   exarg_T ea;
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"),
-             (buf->b_fname != NULL) ?
-             buf->b_fname : (char_u *)_("Untitled"));
+  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
@@ -1337,6 +1335,22 @@ void dialog_changed(buf_T *buf, int checkall)
       unchanged(buf2, true);
     }
   }
+}
+
+/// Ask the user whether to close the terminal buffer or not.
+///
+/// @param buf The terminal buffer.
+/// @return bool Whether to close the buffer or not.
+bool dialog_close_terminal(buf_T *buf)
+{
+  char_u buff[DIALOG_MSG_SIZE];
+
+  dialog_msg(buff, _("Close \"%s\"?"),
+             (buf->b_fname != NULL) ? buf->b_fname : (char_u *)"?");
+
+  int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
+
+  return (ret == VIM_YES) ? true : false;
 }
 
 /// Return true if the buffer "buf" can be abandoned, either by making it
@@ -1512,7 +1526,7 @@ int buf_write_all(buf_T *buf, int forceit)
                       (linenr_T)1, buf->b_ml.ml_line_count, NULL,
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
-    msg_source(hl_attr(HLF_W));
+    msg_source(HL_ATTR(HLF_W));
     MSG(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
   }
   return retval;
@@ -2238,6 +2252,15 @@ static int alist_add_list(int count, char_u **files, int after)
   }
 }
 
+// Function given to ExpandGeneric() to obtain the possible arguments of the
+// argedit and argdelete commands.
+char_u *get_arglist_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx >= ARGCOUNT) {
+    return NULL;
+  }
+  return alist_name(&ARGLIST[idx]);
+}
 
 /// ":compiler[!] {name}"
 void ex_compiler(exarg_T *eap)
@@ -2532,7 +2555,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
     // directory is not yet in 'runtimepath', add it
     p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
-    for (p = p1; *p; mb_ptr_adv(p)) {
+    for (p = p1; *p; MB_PTR_ADV(p)) {
       if (vim_ispathsep_nocolon(*p)) {
         p4 = p3; p3 = p2; p2 = p1; p1 = p;
       }
@@ -2677,19 +2700,33 @@ void ex_packloadall(exarg_T *eap)
 /// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
-  static const char *plugpat = "pack/*/opt/%s";  // NOLINT
+  static const char *plugpat = "pack/*/%s/%s";    // NOLINT
+  int res = OK;
 
-  size_t len = STRLEN(plugpat) + STRLEN(eap->arg);
-  char *pat = (char *)xmallocz(len);
-  vim_snprintf(pat, len, plugpat, eap->arg);
-  do_in_path(p_pp, (char_u *)pat, DIP_ALL + DIP_DIR + DIP_ERR, add_pack_plugin,
-             eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
-  xfree(pat);
+  // Round 1: use "start", round 2: use "opt".
+  for (int round = 1; round <= 2; round++) {
+    // Only look under "start" when loading packages wasn't done yet.
+    if (round == 1 && did_source_packages) {
+      continue;
+    }
+
+    const size_t len = STRLEN(plugpat) + STRLEN(eap->arg) + 5;
+    char *pat = xmallocz(len);
+    vim_snprintf(pat, len, plugpat, round == 1 ? "start" : "opt", eap->arg);
+    // The first round don't give a "not found" error, in the second round
+    // only when nothing was found in the first round.
+    res = do_in_path(p_pp, (char_u *)pat,
+                     DIP_ALL + DIP_DIR
+                     + (round == 2 && res == FAIL ? DIP_ERR : 0),
+                     add_pack_plugin, eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
+    xfree(pat);
+  }
 }
 
 /// ":options"
 void ex_options(exarg_T *eap)
 {
+  vim_setenv("OPTWIN_CMD", cmdmod.tab ? "tab" : "");
   cmd_source((char_u *)SYS_OPTWIN_FILE, NULL);
 }
 
@@ -3055,24 +3092,32 @@ void scriptnames_slash_adjust(void)
 # endif
 
 /// Get a pointer to a script name.  Used for ":verbose set".
-char_u *get_scriptname(scid_T id)
+char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
-  if (id == SID_MODELINE) {
-    return (char_u *)_("modeline");
+  *should_free = false;
+
+  switch (last_set.script_id) {
+    case SID_MODELINE:
+      return (char_u *)_("modeline");
+    case SID_CMDARG:
+      return (char_u *)_("--cmd argument");
+    case SID_CARG:
+      return (char_u *)_("-c argument");
+    case SID_ENV:
+      return (char_u *)_("environment variable");
+    case SID_ERROR:
+      return (char_u *)_("error handler");
+    case SID_LUA:
+      return (char_u *)_("Lua");
+    case SID_API_CLIENT:
+      vim_snprintf((char *)IObuff, IOSIZE,
+                   _("API client (channel id %" PRIu64 ")"),
+                   last_set.channel_id);
+      return IObuff;
+    default:
+      *should_free = true;
+      return home_replace_save(NULL, SCRIPT_ITEM(last_set.script_id).sn_name);
   }
-  if (id == SID_CMDARG) {
-    return (char_u *)_("--cmd argument");
-  }
-  if (id == SID_CARG) {
-    return (char_u *)_("-c argument");
-  }
-  if (id == SID_ENV) {
-    return (char_u *)_("environment variable");
-  }
-  if (id == SID_ERROR) {
-    return (char_u *)_("error handler");
-  }
-  return SCRIPT_ITEM(id).sn_name;
 }
 
 # if defined(EXITFREE)
@@ -3250,7 +3295,7 @@ retry:
           ga.ga_len--;
         } else {          // lines like ":map xx yy^M" will have failed
           if (!sp->error) {
-            msg_source(hl_attr(HLF_W));
+            msg_source(HL_ATTR(HLF_W));
             EMSG(_("W15: Warning: Wrong line separator, ^M may be missing"));
           }
           sp->error = true;
@@ -3461,7 +3506,12 @@ static char *get_locale_val(int what)
 }
 #endif
 
-
+// Return true when "lang" starts with a valid language name.
+// Rejects NULL, empty string, "C", "C.UTF-8" and others.
+static bool is_valid_mess_lang(char *lang)
+{
+  return lang != NULL && ASCII_ISALPHA(lang[0]) && ASCII_ISALPHA(lang[1]);
+}
 
 /// Obtain the current messages language.  Used to set the default for
 /// 'helplang'.  May return NULL or an empty string.
@@ -3481,14 +3531,14 @@ char *get_mess_lang(void)
 #  endif
 # else
   p = os_getenv("LC_ALL");
-  if (p == NULL) {
+  if (!is_valid_mess_lang(p)) {
     p = os_getenv("LC_MESSAGES");
-    if (p == NULL) {
+    if (!is_valid_mess_lang(p)) {
       p = os_getenv("LANG");
     }
   }
 # endif
-  return p;
+  return is_valid_mess_lang(p) ? p : NULL;
 }
 
 // Complicated #if; matches with where get_mess_env() is used below.

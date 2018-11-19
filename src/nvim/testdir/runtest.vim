@@ -67,7 +67,7 @@ lang mess C
 let v:testing = 1
 
 " Support function: get the alloc ID by name.
-function GetAllocId(name)
+func GetAllocId(name)
   exe 'split ' . s:srcdir . '/alloc.h'
   let top = search('typedef enum')
   if top == 0
@@ -79,6 +79,11 @@ function GetAllocId(name)
   endif
   close
   return lnum - top - 1
+endfunc
+
+func CanRunVimInTerminal()
+  " Nvim: always false, we use Lua screen-tests instead.
+  return 0
 endfunc
 
 func RunTheTest(test)
@@ -173,6 +178,9 @@ func FinishTesting()
   " Don't write viminfo on exit.
   set viminfo=
 
+  " Clean up files created by setup.vim
+  call delete('XfakeHOME', 'rf')
+
   if s:fail == 0
     " Success, create the .res file so that make knows it's done.
     exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
@@ -237,8 +245,11 @@ let s:flaky = [
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',
+      \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
+      \ 'Test_quotestar()',
       \ 'Test_reltime()',
+      \ 'Test_repeat_three()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',

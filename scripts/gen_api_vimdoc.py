@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Parses Doxygen XML output to generate Neovim's API documentation.
 
 This would be easier using lxml and XSLT, but:
@@ -188,7 +188,7 @@ def parse_params(parent, width=62):
             desc = parse_parblock(desc_node, width=None)
         items.append((name.strip(), desc.strip()))
 
-    out = 'Parameters:~\n'
+    out = 'Parameters: ~\n'
     for name, desc in items:
         name = '    %s' % name.ljust(name_length)
         out += doc_wrap(desc, prefix=name, width=width) + '\n'
@@ -229,7 +229,7 @@ def parse_para(parent, width=62):
                                           prefix='    ',
                                           width=width))
                 elif kind == 'return':
-                    lines.append('%s:~' % kind.title())
+                    lines.append('%s: ~' % kind.title())
                     lines.append(doc_wrap(parse_para(child),
                                           prefix='    ',
                                           width=width))
@@ -361,16 +361,16 @@ def parse_source_xml(filename):
 
         annotations = '\n'.join(annotations)
         if annotations:
-            annotations = ('\n\nAttributes:~\n' +
+            annotations = ('\n\nAttributes: ~\n' +
                            textwrap.indent(annotations, '    '))
-            i = doc.rfind('Parameters:~')
+            i = doc.rfind('Parameters: ~')
             if i == -1:
                 doc += annotations
             else:
                 doc = doc[:i] + annotations + '\n\n' + doc[i:]
 
         if 'INCLUDE_C_DECL' in os.environ:
-            doc += '\n\nC Declaration:~\n>\n'
+            doc += '\n\nC Declaration: ~\n>\n'
             doc += c_decl
             doc += '\n<'
 
@@ -413,10 +413,26 @@ def gen_docs(config):
         sys.exit(p.returncode)
 
     sections = {}
+    intros = {}
     sep = '=' * text_width
 
     base = os.path.join(out_dir, 'xml')
     dom = minidom.parse(os.path.join(base, 'index.xml'))
+
+    # generate docs for section intros
+    for compound in dom.getElementsByTagName('compound'):
+        if compound.getAttribute('kind') != 'group':
+            continue
+
+        groupname = get_text(find_first(compound, 'name'))
+        groupxml = os.path.join(base, '%s.xml' % compound.getAttribute('refid'))
+
+        desc = find_first(minidom.parse(groupxml), 'detaileddescription')
+        if desc:
+            doc = parse_parblock(desc)
+            if doc:
+                intros[groupname] = doc
+
     for compound in dom.getElementsByTagName('compound'):
         if compound.getAttribute('kind') != 'file':
             continue
@@ -437,11 +453,16 @@ def gen_docs(config):
                     name = name.title()
 
                 doc = ''
+
+                intro = intros.get('api-%s' % name.lower())
+                if intro:
+                    doc += '\n\n' + intro
+
                 if functions:
                     doc += '\n\n' + functions
 
                 if 'INCLUDE_DEPRECATED' in os.environ and deprecated:
-                    doc += '\n\n\nDeprecated %s Functions:~\n\n' % name
+                    doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
                     doc += deprecated
 
                 if doc:

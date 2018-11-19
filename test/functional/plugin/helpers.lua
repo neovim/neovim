@@ -13,7 +13,7 @@ local function nvim_argv(shada_file)
                      '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
                      '--cmd', 'let &runtimepath=' .. rtp_value,
                      '--cmd', additional_cmd,
-                     '--embed'}
+                     '--embed', '--headless'}
   if helpers.prepend_argv then
     return merge_args(helpers.prepend_argv, nvim_args)
   else

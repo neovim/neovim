@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	BIND configuration file
 " Maintainer:	Nick Hibma <nick@van-laarhoven.org>
-" Last change:	2007-01-30
+" Last Change:	2007-01-30
 " Filenames:	named.conf, rndc.conf
 " Location:	http://www.van-laarhoven.org/vim/syntax/named.vim
 "

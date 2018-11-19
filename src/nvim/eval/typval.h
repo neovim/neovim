@@ -162,19 +162,20 @@ struct listwatch_S {
 };
 
 /// Structure to hold info about a list
+/// Order of members is optimized to reduce padding.
 struct listvar_S {
   listitem_T *lv_first;  ///< First item, NULL if none.
   listitem_T *lv_last;  ///< Last item, NULL if none.
-  int lv_refcount;  ///< Reference count.
-  int lv_len;  ///< Number of items.
   listwatch_T *lv_watch;  ///< First watcher, NULL if none.
-  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
   listitem_T *lv_idx_item;  ///< When not NULL item at index "lv_idx".
-  int lv_copyID;  ///< ID used by deepcopy().
   list_T *lv_copylist;  ///< Copied list used by deepcopy().
-  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
   list_T *lv_used_next;  ///< next list in used lists list.
   list_T *lv_used_prev;  ///< Previous list in used lists list.
+  int lv_refcount;  ///< Reference count.
+  int lv_len;  ///< Number of items.
+  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
+  int lv_copyID;  ///< ID used by deepcopy().
+  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
 };
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.
@@ -413,17 +414,34 @@ static inline void list_log(const list_T *const l,
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
+static inline void tv_list_ref(list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE;
+
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
 ///
-/// @param[in]  l  List to modify.
+/// @param[in,out]  l  List to modify.
 static inline void tv_list_ref(list_T *const l)
 {
   if (l == NULL) {
     return;
   }
   l->lv_refcount++;
+}
+
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a list as the return value
+///
+/// @param[out]  tv  Object to receive the list
+/// @param[in,out]  l  List to pass to the object
+static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+{
+  tv->v_type = VAR_LIST;
+  tv->vval.v_list = l;
+  tv_list_ref(l);
 }
 
 static inline VarLockStatus tv_list_locked(const list_T *const l)
@@ -586,6 +604,22 @@ static inline listitem_T *tv_list_last(const list_T *const l)
   }
   list_log(l, l->lv_last, NULL, "last");
   return l->lv_last;
+}
+
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
+
+/// Set a dictionary as the return value
+///
+/// @param[out]  tv  Object to receive the dictionary
+/// @param[in,out]  d  Dictionary to pass to the object
+static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+{
+  tv->v_type = VAR_DICT;
+  tv->vval.v_dict = d;
+  if (d != NULL) {
+    d->dv_refcount++;
+  }
 }
 
 static inline long tv_dict_len(const dict_T *const d)

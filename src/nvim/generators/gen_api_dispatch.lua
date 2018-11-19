@@ -190,6 +190,9 @@ for i = 1, #functions do
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
     output:write('\n{')
+    output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL')
+    output:write('\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "invoke '..fn.name..'");')
+    output:write('\n#endif')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments
     for j = 1, #fn.parameters do
@@ -222,6 +225,11 @@ for i = 1, #functions do
           -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
           output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
+        end
+        -- accept empty lua tables as empty dictionarys
+        if rt:match('^Dictionary') then
+          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {')
+          output:write('\n    '..converted..' = (Dictionary)ARRAY_DICT_INIT;')
         end
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')

@@ -2483,7 +2483,7 @@ msgstr "E216: Gruppen eller handlingen finnes ikke: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandoer ---"
@@ -2507,7 +2507,7 @@ msgstr "E218: Nøsting av autokommandoer for dyp"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandoer for \"%s\""
 
 #: ../fileio.c:7149
@@ -3392,7 +3392,7 @@ msgstr "-q [feilfil]    rediger fil med første feil"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5302,8 +5302,8 @@ msgstr "Advarsel: Region %s ikke støttet"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Leser affiksfil %s ..."
+msgid "Reading affix file %s..."
+msgstr "Leser affiksfil %s..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
@@ -5462,8 +5462,8 @@ msgstr "%s-verdi er forskjellig fra det som er bruk i en annen .aff-fil"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Leser ordlistefil %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Leser ordlistefil %s..."
 
 #: ../spell.c:5611
 #, c-format
@@ -5497,8 +5497,8 @@ msgstr "Ignorerte %d ord med ikke-ASCII-tegn i %s"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Leser ordfil %s ..."
+msgid "Reading word file %s..."
+msgstr "Leser ordfil %s..."
 
 #: ../spell.c:6155
 #, c-format
@@ -5568,8 +5568,8 @@ msgstr "Totalt antall ord: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Skriver forslagsfil %s ..."
+msgid "Writing suggestion file %s..."
+msgstr "Skriver forslagsfil %s..."
 
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
@@ -5595,8 +5595,8 @@ msgstr ""
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Lagrer stavefil %s ..."
+msgid "Writing spell file %s..."
+msgstr "Lagrer stavefil %s..."
 
 #: ../spell.c:7925
 msgid "Done!"

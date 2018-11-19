@@ -14,6 +14,9 @@ rm -f "${HOME}/.cache/pip/selfcheck.json"
 echo "before_cache.sh: cache size"
 du -d 2 "${HOME}/.cache" | sort -n
 
+echo "before_cache.sh: ccache stats"
+ccache -s 2>/dev/null || true
+
 # Update the third-party dependency cache only if the build was successful.
 if ended_successfully; then
   rm -rf "${HOME}/.cache/nvim-deps"

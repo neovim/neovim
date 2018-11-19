@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2017 Jun 13
+" Last Change:	2018 Mar 28
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -55,6 +55,9 @@ endif
 let s:cpo_save = &cpo
 set cpo-=C
 "}}}
+
+" Pattern to match the name of a tag, including custom elements.
+let s:tagname = '\w\+\(-\w\+\)*'
 
 " Check and process settings from b:html_indent and g:html_indent... variables.
 " Prefer using buffer-local settings over global settings, so that there can
@@ -213,7 +216,8 @@ endfunc "}}}
 " Add known tag pairs.
 " Self-closing tags and tags that are sometimes {{{
 " self-closing (e.g., <p>) are not here (when encountering </p> we can find
-" the matching <p>, but not the other way around).
+" the matching <p>, but not the other way around).  Known self-closing tags:
+" 'p', 'img', 'source'.
 " Old HTML tags:
 call s:AddITags(s:indent_tags, [
     \ 'a', 'abbr', 'acronym', 'address', 'b', 'bdo', 'big',
@@ -230,9 +234,9 @@ call s:AddITags(s:indent_tags, [
 call s:AddITags(s:indent_tags, [
     \ 'area', 'article', 'aside', 'audio', 'bdi', 'canvas',
     \ 'command', 'data', 'datalist', 'details', 'embed', 'figcaption',
-    \ 'figure', 'footer', 'header', 'keygen', 'mark', 'meter', 'nav', 'output',
-    \ 'progress', 'rp', 'rt', 'ruby', 'section', 'source', 'summary', 'svg', 
-    \ 'time', 'track', 'video', 'wbr'])
+    \ 'figure', 'footer', 'header', 'keygen', 'main', 'mark', 'meter',
+    \ 'nav', 'output', 'picture', 'progress', 'rp', 'rt', 'ruby', 'section',
+    \ 'summary', 'svg', 'time', 'track', 'video', 'wbr'])
 
 " Tags added for web components:
 call s:AddITags(s:indent_tags, [
@@ -280,7 +284,7 @@ func! s:CountITags(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
   let s:block = 0		" assume starting outside of a block
   let s:countonly = 1	" don't change state
-  call substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  call substitute(a:text, '<\zs/\=' . s:tagname . '\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   let s:countonly = 0
 endfunc "}}}
 
@@ -292,7 +296,7 @@ func! s:CountTagsAndState(text)
   let s:nextrel = 0  " relative indent steps for next line [unit &sw]:
 
   let s:block = b:hi_newstate.block
-  let tmp = substitute(a:text, '<\zs/\=\w\+\(-\w\+\)*\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
+  let tmp = substitute(a:text, '<\zs/\=' . s:tagname . '\>\|<!--\[\|\[endif\]-->\|<!--\|-->', '\=s:CheckTag(submatch(0))', 'g')
   if s:block == 3
     let b:hi_newstate.scripttype = s:GetScriptType(matchstr(tmp, '\C.*<SCRIPT\>\zs[^>]*'))
   endif
@@ -530,7 +534,7 @@ func! s:FreshState(lnum)
   let swendtag = match(text, '^\s*</') >= 0
 
   " If previous line ended in a closing tag, line up with the opening tag.
-  if !swendtag && text =~ '</\w\+\s*>\s*$'
+  if !swendtag && text =~ '</' . s:tagname . '\s*>\s*$'
     call cursor(state.lnum, 99999)
     normal! F<
     let start_lnum = HtmlIndent_FindStartTag()
@@ -659,7 +663,7 @@ func! s:CSSIndent()
     else
       let cur_hasfield = curtext =~ '^\s*[a-zA-Z0-9-]\+:'
       let prev_unfinished = s:CssUnfinished(prev_text)
-      if !cur_hasfield && (prev_hasfield || prev_unfinished)
+      if prev_unfinished
         " Continuation line has extra indent if the previous line was not a
         " continuation line.
         let extra = shiftwidth()
@@ -712,9 +716,13 @@ func! s:CSSIndent()
 endfunc "}}}
 
 " Inside <style>: Whether a line is unfinished.
+" 	tag:
+" 	tag: blah
+" 	tag: blah &&
+" 	tag: blah ||
 func! s:CssUnfinished(text)
   "{{{
-  return a:text =~ '\s\(||\|&&\|:\)\s*$'
+  return a:text =~ '\(||\|&&\|:\|\k\)\s*$'
 endfunc "}}}
 
 " Search back for the first unfinished line above "lnum".
@@ -860,7 +868,7 @@ func! HtmlIndent_FindStartTag()
   " The cursor must be on or before a closing tag.
   " If found, positions the cursor at the match and returns the line number.
   " Otherwise returns 0.
-  let tagname = matchstr(getline('.')[col('.') - 1:], '</\zs\w\+\ze')
+  let tagname = matchstr(getline('.')[col('.') - 1:], '</\zs' . s:tagname . '\ze')
   let start_lnum = searchpair('<' . tagname . '\>', '', '</' . tagname . '\>', 'bW')
   if start_lnum > 0
     return start_lnum
@@ -876,7 +884,7 @@ func! HtmlIndent_FindTagEnd()
   " a self-closing tag, to the matching ">".
   " Limited to look up to b:html_indent_line_limit lines away.
   let text = getline('.')
-  let tagname = matchstr(text, '\w\+\|!--', col('.'))
+  let tagname = matchstr(text, s:tagname . '\|!--', col('.'))
   if tagname == '!--'
     call search('--\zs>')
   elseif s:get_tag('/' . tagname) != 0
@@ -921,9 +929,22 @@ func! s:InsideTag(foundHtmlString)
     else
       let idx = match(text, '\s\zs[_a-zA-Z0-9-]\+="')
     endif
+    if idx == -1
+      " try <tag attr
+      let idx = match(text, '<' . s:tagname . '\s\+\zs\w')
+    endif
+    if idx == -1
+      " after just <tag indent one level more
+      let idx = match(text, '<' . s:tagname . '$')
+      if idx >= 0
+	call cursor(lnum, idx)
+	return virtcol('.') + shiftwidth()
+      endif
+    endif
     if idx > 0
-      " Found the attribute.  TODO: assumes spaces, no Tabs.
-      return idx
+      " Found the attribute to align with.
+      call cursor(lnum, idx)
+      return virtcol('.')
     endif
   endwhile
   return -1

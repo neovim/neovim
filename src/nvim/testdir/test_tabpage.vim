@@ -1,5 +1,6 @@
 " Tests for tabpage
 
+
 function Test_tabpage()
   bw!
   " Simple test for opening and closing a tab page
@@ -41,40 +42,38 @@ function Test_tabpage()
   call assert_true(t:val_num == 100 && t:val_str == 'SetTabVar test'  && t:val_list == ['red', 'blue', 'green'])
   tabclose
 
-  if has('nvim') || has('gui') || has('clientserver')
-    " Test for ":tab drop exist-file" to keep current window.
-    sp test1
-    tab drop test1
-    call assert_true(tabpagenr('$') == 1 && winnr('$') == 2 && winnr() == 1)
-    close
-    "
-    "
-    " Test for ":tab drop new-file" to keep current window of tabpage 1.
-    split
-    tab drop newfile
-    call assert_true(tabpagenr('$') == 2 && tabpagewinnr(1, '$') == 2 && tabpagewinnr(1) == 1)
-    tabclose
-    q
-    "
-    "
-    " Test for ":tab drop multi-opend-file" to keep current tabpage and window.
-    new test1
-    tabnew
-    new test1
-    tab drop test1
-    call assert_true(tabpagenr() == 2 && tabpagewinnr(2, '$') == 2 && tabpagewinnr(2) == 1)
-    tabclose
-    q
-    "
-    "
-    " Test for ":tab drop vertical-split-window" to jump test1 buffer
-    tabedit test1
-    vnew
-    tabfirst
-    tab drop test1
-    call assert_equal([2, 2, 2, 2], [tabpagenr('$'), tabpagenr(), tabpagewinnr(2, '$'), tabpagewinnr(2)])
-    1tabonly
-  endif
+  " Test for ":tab drop exist-file" to keep current window.
+  sp test1
+  tab drop test1
+  call assert_true(tabpagenr('$') == 1 && winnr('$') == 2 && winnr() == 1)
+  close
+  "
+  "
+  " Test for ":tab drop new-file" to keep current window of tabpage 1.
+  split
+  tab drop newfile
+  call assert_true(tabpagenr('$') == 2 && tabpagewinnr(1, '$') == 2 && tabpagewinnr(1) == 1)
+  tabclose
+  q
+  "
+  "
+  " Test for ":tab drop multi-opend-file" to keep current tabpage and window.
+  new test1
+  tabnew
+  new test1
+  tab drop test1
+  call assert_true(tabpagenr() == 2 && tabpagewinnr(2, '$') == 2 && tabpagewinnr(2) == 1)
+  tabclose
+  q
+  "
+  "
+  " Test for ":tab drop vertical-split-window" to jump test1 buffer
+  tabedit test1
+  vnew
+  tabfirst
+  tab drop test1
+  call assert_equal([2, 2, 2, 2], [tabpagenr('$'), tabpagenr(), tabpagewinnr(2, '$'), tabpagewinnr(2)])
+  1tabonly
   "
   "
   for i in range(9) | tabnew | endfor
@@ -106,6 +105,19 @@ function Test_tabpage()
   call assert_equal(4, tabpagenr())
   7tabmove 5
   call assert_equal(5, tabpagenr())
+
+  " The following are a no-op
+  norm! 2gt
+  call assert_equal(2, tabpagenr())
+  tabmove 2
+  call assert_equal(2, tabpagenr())
+  2tabmove
+  call assert_equal(2, tabpagenr())
+  tabmove 1
+  call assert_equal(2, tabpagenr())
+  1tabmove
+  call assert_equal(2, tabpagenr())
+
   call assert_fails("99tabmove", 'E16:')
   call assert_fails("+99tabmove", 'E16:')
   call assert_fails("-99tabmove", 'E16:')
@@ -319,6 +331,34 @@ function s:reconstruct_tabpage_for_test(nr)
   endfor
 endfunc
 
+func Test_tabpage_ctrl_pgup_pgdown()
+  enew!
+  tabnew tab1
+  tabnew tab2
+
+  call assert_equal(3, tabpagenr())
+  exe "norm! \<C-PageUp>"
+  call assert_equal(2, tabpagenr())
+  exe "norm! \<C-PageDown>"
+  call assert_equal(3, tabpagenr())
+
+  " Check wrapping at last or first page.
+  exe "norm! \<C-PageDown>"
+  call assert_equal(1, tabpagenr())
+  exe "norm! \<C-PageUp>"
+  call assert_equal(3, tabpagenr())
+
+ " With a count, <C-PageUp> and <C-PageDown> are not symmetrical somehow:
+ " - {count}<C-PageUp> goes {count} pages downward (relative count)
+ " - {count}<C-PageDown> goes to page number {count} (absolute count)
+  exe "norm! 2\<C-PageUp>"
+  call assert_equal(1, tabpagenr())
+  exe "norm! 2\<C-PageDown>"
+  call assert_equal(2, tabpagenr())
+
+  1tabonly!
+endfunc
+
 " Test for [count] of tabclose
 function Test_tabpage_with_tabclose()
 
@@ -491,6 +531,20 @@ func Test_close_on_quitpre()
     bwipe!
   endwhile
   buf Xtest
+endfunc
+
+func Test_tabs()
+  enew!
+  tabnew tab1
+  norm ixxx
+  let a=split(execute(':tabs'), "\n")
+  call assert_equal(['Tab page 1',
+      \              '    [No Name]',
+      \              'Tab page 2',
+      \              '> + tab1'], a)
+
+  1tabonly!
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

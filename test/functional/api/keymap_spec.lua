@@ -11,7 +11,7 @@ local source = helpers.source
 
 local shallowcopy = global_helpers.shallowcopy
 
-describe('get_keymap', function()
+describe('nvim_get_keymap', function()
   before_each(clear)
 
   -- Basic mapping and table to be used to describe results

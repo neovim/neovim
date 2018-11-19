@@ -16,7 +16,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/move.h"
 #include "nvim/charset.h"
@@ -97,16 +96,34 @@ static void comp_botline(win_T *wp)
   set_empty_rows(wp, done);
 }
 
-/*
-* Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is
-* set.
-*/
+void reset_cursorline(void)
+{
+  curwin->w_last_cursorline = 0;
+}
+
+// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 static void redraw_for_cursorline(win_T *wp)
 {
   if ((wp->w_p_rnu || wp->w_p_cul)
       && (wp->w_valid & VALID_CROW) == 0
       && !pum_visible()) {
-    redraw_win_later(wp, SOME_VALID);
+    if (wp->w_p_rnu) {
+      // win_line() will redraw the number column only.
+      redraw_win_later(wp, VALID);
+    }
+    if (wp->w_p_cul) {
+      if (wp->w_redr_type <= VALID && wp->w_last_cursorline != 0) {
+        // "w_last_cursorline" may be outdated, worst case we redraw
+        // too much.  This is optimized for moving the cursor around in
+        // the current window.
+        redrawWinline(wp, wp->w_last_cursorline, false);
+        redrawWinline(wp, wp->w_cursor.lnum, false);
+        redraw_win_later(wp, VALID);
+      } else {
+        redraw_win_later(wp, SOME_VALID);
+      }
+      wp->w_last_cursorline = wp->w_cursor.lnum;
+    }
   }
 }
 
@@ -132,11 +149,9 @@ void update_topline(void)
   bool check_botline = false;
   long save_so = p_so;
 
-  if (!screen_valid(true))
-    return;
-
-  // If the window height is zero, just use the cursor line.
-  if (curwin->w_height == 0) {
+  // If there is no valid screen and when the window height is zero just use
+  // the cursor line.
+  if (!screen_valid(true) || curwin->w_height == 0) {
     curwin->w_topline = curwin->w_cursor.lnum;
     curwin->w_botline = curwin->w_topline;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
@@ -903,9 +918,9 @@ void curs_columns(
 
     extra = ((int)prev_skipcol - (int)curwin->w_skipcol) / width;
     if (extra > 0) {
-      win_ins_lines(curwin, 0, extra, false, false);
+      win_ins_lines(curwin, 0, extra);
     } else if (extra < 0) {
-      win_del_lines(curwin, 0, -extra, false, false);
+      win_del_lines(curwin, 0, -extra);
     }
   } else {
     curwin->w_skipcol = 0;
@@ -1728,7 +1743,7 @@ void cursor_correct(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int onepage(int dir, long count)
+int onepage(Direction dir, long count)
 {
   long n;
   int retval = OK;
@@ -1886,16 +1901,18 @@ int onepage(int dir, long count)
   }
   curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|VALID_VIRTCOL);
 
-  /*
-   * Avoid the screen jumping up and down when 'scrolloff' is non-zero.
-   * But make sure we scroll at least one line (happens with mix of long
-   * wrapping lines and non-wrapping line).
-   */
-  if (retval == OK && dir == FORWARD && check_top_offset()) {
-    scroll_cursor_top(1, false);
-    if (curwin->w_topline <= old_topline
-        && old_topline < curbuf->b_ml.ml_line_count) {
-      curwin->w_topline = old_topline + 1;
+  if (retval == OK && dir == FORWARD) {
+    // Avoid the screen jumping up and down when 'scrolloff' is non-zero.
+    // But make sure we scroll at least one line (happens with mix of long
+    // wrapping lines and non-wrapping line).
+    if (check_top_offset()) {
+      scroll_cursor_top(1, false);
+      if (curwin->w_topline <= old_topline
+          && old_topline < curbuf->b_ml.ml_line_count) {
+        curwin->w_topline = old_topline + 1;
+        (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+      }
+    } else if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
       (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
     }
   }
@@ -1979,6 +1996,7 @@ void halfpage(bool flag, linenr_T Prenum)
   int n = curwin->w_p_scr <= curwin->w_height ? (int)curwin->w_p_scr
                                               : curwin->w_height;
 
+  update_topline();
   validate_botline();
   int room = curwin->w_empty_rows + curwin->w_filler_rows;
   if (flag) {
@@ -2167,9 +2185,7 @@ void do_check_cursorbind(void)
         restart_edit = restart_edit_save;
       }
       // Correct cursor for multi-byte character.
-      if (has_mbyte) {
-        mb_adjust_cursor();
-      }
+      mb_adjust_cursor();
       redraw_later(VALID);
 
       // Only scroll when 'scrollbind' hasn't done this.

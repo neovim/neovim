@@ -138,8 +138,8 @@ void mch_exit(int r)
 {
   exiting = true;
 
-  ui_builtin_stop();
   ui_flush();
+  ui_builtin_stop();
   ml_close_all(true);           // remove all memfiles
 
   if (!event_teardown() && r == 0) {
@@ -148,6 +148,8 @@ void mch_exit(int r)
   if (input_global_fd() >= 0) {
     stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
   }
+
+  ILOG("Nvim exit: %d", r);
 
 #ifdef EXITFREE
   free_all_mem();
@@ -419,7 +421,6 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     xfree(tempname);
     // With interactive completion, the error message is not printed.
     if (!(flags & EW_SILENT)) {
-      redraw_later_clear();             // probably messed up screen
       msg_putchar('\n');                // clear bottom line quickly
 #if SIZEOF_LONG > SIZEOF_INT
       assert(Rows <= (long)INT_MAX + 1);

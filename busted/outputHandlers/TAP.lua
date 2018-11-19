@@ -1,7 +1,8 @@
--- TODO(jkeyes): remove this and use the upstream version as soon as it is
--- available in a release of busted.
+-- TODO(jkeyes): Use the upstream version when busted releases it. (But how to
+-- inject our call to global_helpers.read_nvim_log() ?)
 
 local pretty = require 'pl.pretty'
+local global_helpers = require('test.helpers')
 
 return function(options)
   local busted = require 'busted'
@@ -18,6 +19,7 @@ return function(options)
   end
 
   handler.suiteEnd = function()
+    io.write(global_helpers.read_nvim_log())
     print('1..' .. counter)
     io.flush()
     return nil, true

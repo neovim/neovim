@@ -1243,7 +1243,7 @@ doxygen_javadoc_autobrief	1	Set to 0 to disable javadoc autobrief
 doxygen_end_punctuation		'[.]'	Set to regexp match for the ending
 					punctuation of brief
 
-There are also some hilight groups worth mentioning as they can be useful in
+There are also some highlight groups worth mentioning as they can be useful in
 configuration.
 
 Highlight			Effect ~
@@ -1727,7 +1727,7 @@ Functions and variable names are the same color by default, because VIM
 doesn't specify different colors for Functions and Identifiers.  To change
 this (which is recommended if you want function names to be recognizable in a
 different color) you need to add the following line to your vimrc: >
-  :hi Function term=underline cterm=bold ctermfg=LightGray
+  :hi Function cterm=bold ctermfg=LightGray
 
 Of course, the ctermfg can be a different color if you choose.
 
@@ -1947,7 +1947,7 @@ set "lite_minlines" to the value you desire.  Example: >
 
 LPC						*lpc.vim* *ft-lpc-syntax*
 
-LPC stands for a simple, memory-efficient language: Lars Pensj| C.  The
+LPC stands for a simple, memory-efficient language: Lars Pensjö C.  The
 file name of LPC is usually *.c.  Recognizing these files as LPC would bother
 users writing only C programs.	If you want to use LPC syntax in Vim, you
 should set a variable in your vimrc file: >
@@ -2183,9 +2183,8 @@ with the correct typesetting of your file, is to define an eye-catching
 highlighting definition for the syntax groups "nroffDefinition" and
 "nroffDefSpecial" in your configuration files.  For example: >
 
-  hi def nroffDefinition term=italic cterm=italic gui=reverse
-  hi def nroffDefSpecial term=italic,bold cterm=italic,bold
-			 \ gui=reverse,bold
+  hi def nroffDefinition cterm=italic gui=reverse
+  hi def nroffDefSpecial cterm=italic,bold gui=reverse,bold
 
 If you want to navigate preprocessor entries in your source file as easily as
 with section markers, you can activate the following option in your vimrc
@@ -2611,6 +2610,48 @@ Any combination of these three variables is legal, but might highlight more
 commands than are actually available to you by the game.
 
 
+R							*r.vim* *ft-r-syntax*
+
+The parsing of R code for syntax highlight starts 40 lines backwards, but you
+can set a different value in your |vimrc|. Example: >
+	let r_syntax_minlines = 60
+
+You can also turn off syntax highlighting of ROxygen: >
+	let r_syntax_hl_roxygen = 0
+
+enable folding of code delimited by parentheses, square brackets and curly
+braces: >
+	let r_syntax_folding = 1
+
+and highlight as functions all keywords followed by an opening parenthesis: >
+	let r_syntax_fun_pattern = 1
+
+
+R MARKDOWN					*rmd.vim* *ft-rmd-syntax*
+
+To disable syntax highlight of YAML header, add to your |vimrc|: >
+	let rmd_syn_hl_yaml = 0
+
+To disable syntax highlighting of citation keys: >
+	let rmd_syn_hl_citations = 0
+
+To highlight R code in knitr chunk headers: >
+	let rmd_syn_hl_chunk = 1
+
+By default, chunks of R code will be highlighted following the rules of R
+language. If you want proper syntax highlighting of chunks of other languages,
+you should add them to either `markdown_fenced_languages` or
+`rmd_fenced_languages`. For example to properly highlight both R and Python,
+you may add this to your |vimrc|: >
+	let rmd_fenced_languages = ['r', 'python']
+
+
+R RESTRUCTURED TEXT				*rrst.vim* *ft-rrst-syntax*
+
+To highlight R code in knitr chunk headers, add to your |vimrc|: >
+	let rrst_syn_hl_chunk = 1
+
+
 READLINE				*readline.vim* *ft-readline-syntax*
 
 The readline library is primarily used by the BASH shell, which adds quite a
@@ -2749,13 +2790,10 @@ Ruby syntax will perform spellchecking of strings if you define
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
 
-By default only R5RS keywords are highlighted and properly indented.
+By default only R7RS keywords are highlighted and properly indented.
 
-MzScheme-specific stuff will be used if b:is_mzscheme or g:is_mzscheme
-variables are defined.
-
-Also scheme.vim supports keywords of the Chicken Scheme->C compiler.  Define
-b:is_chicken or g:is_chicken, if you need them.
+scheme.vim also supports extensions of the CHICKEN Scheme->C compiler.
+Define b:is_chicken or g:is_chicken, if you need them.
 
 
 SDL						*sdl.vim* *ft-sdl-syntax*
@@ -2849,17 +2887,17 @@ This covers syntax highlighting for the older Unix (Bourne) sh, and newer
 shells such as bash, dash, posix, and the Korn shells.
 
 Vim attempts to determine which shell type is in use by specifying that
-various filenames are of specific types: >
+various filenames are of specific types, e.g.: >
 
     ksh : .kshrc* *.ksh
     bash: .bashrc* bashrc bash.bashrc .bash_profile* *.bash
 <
-If none of these cases pertain, then the first line of the file is examined
-(ex. looking for /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a
-shelltype, then that shelltype is used.  However some files (ex. .profile) are
-known to be shell files but the type is not apparent.  Furthermore, on many
-systems sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh"
-(Posix).
+See $VIMRUNTIME/filetype.vim for the full list of patterns.  If none of these
+cases pertain, then the first line of the file is examined (ex. looking for
+/bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
+that shelltype is used.  However some files (ex. .profile) are known to be
+shell files but the type is not apparent.  Furthermore, on many systems sh is
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
@@ -3141,6 +3179,12 @@ techniques in |mysyntaxfile-add| to extend or modify the highlighting provided
 by syntax/tex.vim.  Please consider uploading any extensions that you write,
 which typically would go in $HOME/after/syntax/tex/[pkgname].vim, to
 http://vim.sf.net/.
+
+I've included some support for various popular packages on my website: >
+
+	http://www.drchip.org/astronaut/vim/index.html#LATEXPKGS
+<
+The syntax files there go into your .../after/syntax/tex/ directory.
 
 					*tex-error* *g:tex_no_error*
  Tex: Excessive Error Highlighting? ~
@@ -4586,7 +4630,9 @@ in their own color.
 				runtime colors/evening.vim
 				hi Statement ctermfg=Blue guifg=Blue
 
-<			After the color scheme has been loaded the
+<			Before the color scheme will be loaded the
+			|ColorSchemePre| autocommand event is triggered.
+			After the color scheme has been loaded the
 			|ColorScheme| autocommand event is triggered.
 			For info about writing a colorscheme file: >
 				:edit $VIMRUNTIME/colors/README.txt
@@ -4628,37 +4674,36 @@ a file with ":highlight" commands such as this: >
 Note that all settings that are not included remain the same, only the
 specified field is used, and settings are merged with previous ones.  So, the
 result is like this single command has been used: >
-   :hi Comment	term=bold ctermfg=Cyan guifg=#80a0ff gui=bold
+   :hi Comment	ctermfg=Cyan guifg=#80a0ff gui=bold
 <
 							*:highlight-verbose*
 When listing a highlight group and 'verbose' is non-zero, the listing will
 also tell where it was last set.  Example: >
 	:verbose hi Comment
-<	Comment        xxx term=bold ctermfg=4 guifg=Blue ~
+<	Comment        xxx ctermfg=4 guifg=Blue ~
 	   Last set from /home/mool/vim/vim7/runtime/syntax/syncolor.vim ~
 
 When ":hi clear" is used then the script where this command is used will be
 mentioned for the default values. See |:verbose-cmd| for more information.
 
 					*highlight-args* *E416* *E417* *E423*
-There are three types of terminals for highlighting:
-term	a normal terminal (vt100, xterm)
-cterm	a color terminal (Windows console, color-xterm)
-gui	the GUI
+There are two types of UIs for highlighting:
+cterm	terminal UI (|TUI|)
+gui	GUI or RGB-capable TUI ('termguicolors')
 
 For each type the highlighting can be given.  This makes it possible to use
-the same syntax file on all terminals, and use the optimal highlighting.
+the same syntax file on all UIs.
 
-1. highlight arguments for normal terminals
+1. TUI highlight arguments
 
 					*bold* *underline* *undercurl*
 					*inverse* *italic* *standout*
-term={attr-list}			*attr-list* *highlight-term* *E418*
+cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
-		undercurl	a curly underline
+		undercurl	curly underline
 		reverse
 		inverse		same as reverse
 		italic
@@ -4667,8 +4712,8 @@ term={attr-list}			*attr-list* *highlight-term* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	If running in a terminal, "undercurl" acts as an alias for "underline".
-	It is set using |highlight-guisp|.
+	"undercurl" falls back to "underline" in a terminal that does not
+	support it.  The color is set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -4689,17 +4734,6 @@ stop={term-list}				*term-list* *highlight-stop*
         like "<Esc>" and "<Space>".  Example:
 		start=<Esc>[27h;<Esc>[<Space>r;
 
-
-2. highlight arguments for color terminals
-
-cterm={attr-list}					*highlight-cterm*
-	See above for the description of {attr-list} |attr-list|.
-	The "cterm" argument is likely to be different from "term", when
-	colors are used.  For example, in a normal terminal comments could
-	be underlined, in a color terminal they can be made Blue.
-	Note: Many terminals (e.g., DOS console) can't mix these attributes
-	with coloring.	Use only one of "cterm=" OR "ctermfg=" OR "ctermbg=".
-
 ctermfg={color-nr}				*highlight-ctermfg* *E421*
 ctermbg={color-nr}				*highlight-ctermbg*
 	The {color-nr} argument is a color number.  Its range is zero to
@@ -4709,7 +4743,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"cterm".  For example, on some systems "cterm=bold ctermfg=3" gives
 	another color, on others you just get color 3.
 
-	The following names are recognized, with the color number used:
+	The following (case-insensitive) names are recognized:
 
 							*cterm-colors*
 	    NR-16   NR-8    COLOR NAME ~
@@ -4740,7 +4774,6 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"cterm=" argument AFTER the "ctermfg=" or "ctermbg=" argument.	Or use
 	a number instead of a color name.
 
-	The case of the color names is ignored.
 	Note that for 16 color ansi style terminals (including xterms), the
 	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that Blue
 	is 12, DarkGray is 8 etc.
@@ -4779,7 +4812,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"fg" and "bg" colors will not be adjusted.
 
 
-3. highlight arguments for the GUI
+2. GUI highlight arguments
 
 gui={attr-list}						*highlight-gui*
 	These give the attributes to use in the GUI mode.
@@ -4813,7 +4846,8 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	These give the foreground (guifg), background (guibg) and special
-	(guisp) color to use in the GUI.  "guisp" is used for undercurl.
+	(guisp) color to use in the GUI.  "guisp" is used for undercurl
+	and underline.
 	There are a few special names:
 		NONE		no color (transparent)
 		bg		use normal background color
@@ -4855,15 +4889,14 @@ ColorColumn	used for the columns set with 'colorcolumn'
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
 							*hl-Cursor*
-Cursor		the character under the cursor
+Cursor		character under the cursor
 							*hl-CursorIM*
 CursorIM	like Cursor, but used when in IME mode |CursorIM|
 							*hl-CursorColumn*
-CursorColumn	the screen column that the cursor is in when 'cursorcolumn' is
-		set
+CursorColumn	Screen-column at the cursor, when 'cursorcolumn' is set.
 							*hl-CursorLine*
-CursorLine	the screen line that the cursor is in when 'cursorline' is
-		set
+CursorLine	Screen-line at the cursor, when 'cursorline' is set.
+		Low-priority if foreground (ctermfg OR guifg) is not set.
 							*hl-Directory*
 Directory	directory names (and other special names in listings)
 							*hl-DiffAdd*
@@ -4961,6 +4994,11 @@ StatusLine	status line of current window
 StatusLineNC	status lines of not-current windows
 		Note: if this is equal to "StatusLine" Vim will use "^^^" in
 		the status line of the current window.
+							*hl-StatusLineTerm*
+StatusLineTerm	status line of current window, if it is a |terminal| window.
+							*hl-StatusLineTermNC*
+StatusLineTermNC   status lines of not-current windows that is a |terminal|
+		window.
 							*hl-TabLine*
 TabLine		tab pages line, not active tab page label
 							*hl-TabLineFill*
@@ -5204,7 +5242,7 @@ To test your color setup, a file has been included in the Vim distribution.
 To use it, execute this command: >
    :runtime syntax/colortest.vim
 
-Nvim uses |256-color| and |true-color| terminal capabilities whereever possible.
+Nvim uses 256-color and |true-color| terminal capabilities whereever possible.
 
 ==============================================================================
 18. When syntax is slow						*:syntime*
@@ -5264,4 +5302,4 @@ literal text specify the size of that text (in bytes):
 "<\@1<=span"	Matches the same, but only tries one byte before "span".
 
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

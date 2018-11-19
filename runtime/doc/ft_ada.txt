@@ -249,7 +249,7 @@ g:decada.Make_Command	string
 		External command used for |g:decada.Make()| (|'makeprg'|).
 
 						       *g:decada.Error_Format*
-g:decada.Error_Format|	string
+g:decada.Error_Format	string
 		Error format (|'errorformat'|).
 
 ==============================================================================

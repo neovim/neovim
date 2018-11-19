@@ -108,12 +108,13 @@ retnomove:
     goto retnomove;                             // ugly goto...
 
   // Remember the character under the mouse, it might be a '-' or '+' in the
-  // fold column.
+  // fold column. NB: only works for ASCII chars!
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && ScreenLines != NULL)
-    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col];
-  else
+      && ScreenLines != NULL) {
+    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col][0];
+  } else {
     mouse_char = ' ';
+  }
 
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;
@@ -124,6 +125,9 @@ retnomove:
 
     // find the window where the row is in
     wp = mouse_find_win(&row, &col);
+    if (wp == NULL) {
+      return IN_UNKNOWN;
+    }
     dragwin = NULL;
     // winpos and height may change in win_enter()!
     if (row >= wp->w_height) {                  // In (or below) status line
@@ -426,6 +430,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
 // Find the window at screen position "*rowp" and "*colp".  The positions are
 // updated to become relative to the top-left of the window.
+// Returns NULL when something is wrong.
 win_T *mouse_find_win(int *rowp, int *colp)
 {
   frame_T     *fp;
@@ -449,7 +454,14 @@ win_T *mouse_find_win(int *rowp, int *colp)
       }
     }
   }
-  return fp->fr_win;
+  // When using a timer that closes a window the window might not actually
+  // exist.
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp == fp->fr_win) {
+      return wp;
+    }
+  }
+  return NULL;
 }
 
 /*
@@ -525,7 +537,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   if (*line != NUL) {
     for (;;) {
       int numchar = chartabsize(line, col);
-      mb_ptr_adv(line);
+      MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character
         break;
       }

@@ -104,7 +104,7 @@ func Test_map_langmap()
   imap a c
   call feedkeys("Go\<C-R>a\<Esc>", "xt")
   call assert_equal('bbbb', getline('$'))
- 
+
   " langmap should not apply in Command-line mode
   set langmap=+{ nolangremap
   call feedkeys(":call append(line('$'), '+')\<CR>", "xt")
@@ -159,4 +159,74 @@ func Test_map_meta_quotes()
   call assert_equal("-foo-", getline('$'))
   set nomodified
   iunmap <M-">
+endfunc
+
+func Test_abbr_after_line_join()
+  new
+  abbr foo bar
+  set backspace=indent,eol,start
+  exe "normal o\<BS>foo "
+  call assert_equal("bar ", getline(1))
+  bwipe!
+  unabbr foo
+  set backspace&
+endfunc
+
+func Test_map_timeout()
+  nnoremap aaaa :let got_aaaa = 1<CR>
+  nnoremap bb :let got_bb = 1<CR>
+  nmap b aaa
+  new
+  func ExitInsert(timer)
+    let g:line = getline(1)
+    call feedkeys("\<Esc>", "t")
+  endfunc
+  set timeout timeoutlen=200
+  call timer_start(300, 'ExitInsert')
+  " After the 'b' Vim waits for another character to see if it matches 'bb'.
+  " When it times out it is expanded to "aaa", but there is no wait for
+  " "aaaa".  Can't check that reliably though.
+  call feedkeys("b", "xt!")
+  call assert_equal("aa", g:line)
+  call assert_false(exists('got_aaa'))
+  call assert_false(exists('got_bb'))
+
+  bwipe!
+  nunmap aaaa
+  nunmap bb
+  nunmap b
+  set timeoutlen&
+  delfunc ExitInsert
+endfunc
+
+func Test_cabbr_visual_mode()
+  cabbr s su
+  call feedkeys(":s \<c-B>\"\<CR>", 'itx')
+  call assert_equal('"su ', getreg(':'))
+  call feedkeys(":'<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":  '<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"  '. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":'a,'bs \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'a,'bsu "
+  call assert_equal(expected, getreg(':'))
+  cunabbr s
+endfunc
+
+func Test_abbreviation_CR()
+  new
+  func Eatchar(pat)
+    let c = nr2char(getchar(0))
+    return (c =~ a:pat) ? '' : c
+  endfunc
+  iabbrev <buffer><silent> ~~7 <c-r>=repeat('~', 7)<CR><c-r>=Eatchar('\s')<cr>
+  call feedkeys("GA~~7 \<esc>", 'xt')
+  call assert_equal('~~~~~~~', getline('$'))
+  %d
+  call feedkeys("GA~~7\<cr>\<esc>", 'xt')
+  call assert_equal(['~~~~~~~', ''], getline(1,'$'))
+  delfunc Eatchar
+  bw!
 endfunc

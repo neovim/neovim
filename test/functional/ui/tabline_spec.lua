@@ -28,27 +28,27 @@ describe('ui/ext_tabline', function()
       {tab = { id = 1 }, name = '[No Name]'},
       {tab = { id = 2 }, name = 'another-tab'},
     }
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
                                |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({ id = 2 }, event_curtab)
       eq(expected_tabs, event_tabs)
-    end)
+    end}
 
     command("tabNext")
-    screen:expect([[
+    screen:expect{grid=[[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
                                |
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({ id = 1 }, event_curtab)
       eq(expected_tabs, event_tabs)
-    end)
+    end}
   end)
 end)

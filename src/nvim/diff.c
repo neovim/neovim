@@ -44,13 +44,14 @@ static int diff_busy = FALSE;    // ex_diffgetput() is busy
 #define DIFF_IWHITE     4        // ignore change in white space
 #define DIFF_HORIZONTAL 8        // horizontal splits
 #define DIFF_VERTICAL   16       // vertical splits
+#define DIFF_HIDDEN_OFF 32       // diffoff when hidden
 static int diff_flags = DIFF_FILLER;
 
 #define LBUFLEN 50               // length of line in diff file
 
-// TRUE when "diff -a" works, FALSE when it doesn't work, MAYBE when not
-// checked yet
-static int diff_a_works = MAYBE;
+// kTrue when "diff -a" works, kFalse when it doesn't work,
+// kNone when not checked yet
+static TriState diff_a_works = kNone;
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -686,9 +687,9 @@ void ex_diffupdate(exarg_T *eap)
   // there are differences.
   // May try twice, first with "-a" and then without.
   int io_error = false;
-  bool ok = false;
+  TriState ok = kFalse;
   for (;;) {
-    ok = false;
+    ok = kFalse;
     FILE *fd = mch_fopen(tmp_orig, "w");
 
     if (fd == NULL) {
@@ -722,7 +723,7 @@ void ex_diffupdate(exarg_T *eap)
             }
 
             if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = TRUE;
+              ok = kTrue;
             }
           }
           fclose(fd);
@@ -739,7 +740,7 @@ void ex_diffupdate(exarg_T *eap)
     }
 
     // If we checked if "-a" works already, break here.
-    if (diff_a_works != MAYBE) {
+    if (diff_a_works != kNone) {
       break;
     }
     diff_a_works = ok;
@@ -755,7 +756,7 @@ void ex_diffupdate(exarg_T *eap)
       EMSG(_("E810: Cannot read or write temp files"));
     }
     EMSG(_("E97: Cannot create diffs"));
-    diff_a_works = MAYBE;
+    diff_a_works = kNone;
     goto theend;
   }
 
@@ -830,7 +831,7 @@ static void diff_file(const char *const tmp_orig, const char *const tmp_new,
      * differences are of no use.  Ignore errors, diff returns
      * non-zero when differences have been found. */
     vim_snprintf(cmd, len, "diff %s%s%s%s%s %s",
-                 diff_a_works ? "-a " : "",
+                 diff_a_works == kFalse ? "" : "-a ",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
@@ -1486,7 +1487,7 @@ int diff_check(win_T *wp, linenr_T lnum)
   }
 
   // A closed fold never has filler lines.
-  if (hasFoldingWin(wp, lnum, NULL, NULL, TRUE, NULL)) {
+  if (hasFoldingWin(wp, lnum, NULL, NULL, true, NULL)) {
     return 0;
   }
 
@@ -1597,6 +1598,34 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
   return true;
 }
 
+// Compare the characters at "p1" and "p2".  If they are equal (possibly
+// ignoring case) return true and set "len" to the number of bytes.
+static bool diff_equal_char(const char_u *const p1, const char_u *const p2,
+                            int *const len)
+{
+  const int l = utfc_ptr2len(p1);
+
+  if (l != utfc_ptr2len(p2)) {
+    return false;
+  }
+  if (l > 1) {
+    if (STRNCMP(p1, p2, l) != 0
+        && (!(diff_flags & DIFF_ICASE)
+            || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
+      return false;
+    }
+    *len = l;
+  } else {
+    if ((*p1 != *p2)
+        && (!(diff_flags & DIFF_ICASE)
+            || TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2))) {
+      return false;
+    }
+    *len = 1;
+  }
+  return true;
+}
+
 /// Compare strings "s1" and "s2" according to 'diffopt'.
 /// Return non-zero when they are different.
 ///
@@ -1623,30 +1652,12 @@ static int diff_cmp(char_u *s1, char_u *s2)
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
-      int l  = (*mb_ptr2len)(p1);
-      if (l != (*mb_ptr2len)(p2)) {
+      int l;
+      if (!diff_equal_char(p1, p2, &l)) {
         break;
       }
-
-      if (l > 1) {
-        if ((STRNCMP(p1, p2, l) != 0)
-            && (!enc_utf8
-                || !(diff_flags & DIFF_ICASE)
-                || (utf_fold(utf_ptr2char(p1))
-                    != utf_fold(utf_ptr2char(p2))))) {
-          break;
-        }
-        p1 += l;
-        p2 += l;
-      } else {
-        if ((*p1 != *p2)
-            && (!(diff_flags & DIFF_ICASE)
-                || (TOLOWER_LOC(*p1) != TOLOWER_LOC(*p2)))) {
-          break;
-        }
-        ++p1;
-        ++p2;
-      }
+      p1 += l;
+      p2 += l;
     }
   }
 
@@ -1793,7 +1804,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
   check_topfill(towin, false);
   (void)hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
-                      NULL, TRUE, NULL);
+                      NULL, true, NULL);
 }
 
 /// This is called when 'diffopt' is changed.
@@ -1828,6 +1839,9 @@ int diffopt_changed(void)
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
       diff_foldcolumn_new = getdigits_int(&p);
+    } else if (STRNCMP(p, "hiddenoff", 9) == 0) {
+      p += 9;
+      diff_flags_new |= DIFF_HIDDEN_OFF;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -1870,6 +1884,12 @@ bool diffopt_horizontal(void)
   return (diff_flags & DIFF_HORIZONTAL) != 0;
 }
 
+// Return true if 'diffopt' contains "hiddenoff".
+bool diffopt_hiddenoff(void)
+{
+  return (diff_flags & DIFF_HIDDEN_OFF) != 0;
+}
+
 /// Find the difference within a changed line.
 ///
 /// @param  wp      window whose current buffer to check
@@ -1887,6 +1907,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   int ei_org;
   int ei_new;
   bool added = true;
+  int l;
 
   // Make a copy of the line, the next ml_get() will invalidate it.
   char_u *line_org = vim_strsave(ml_get_buf(wp->w_buffer, lnum, FALSE));
@@ -1933,20 +1954,18 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
-          if (line_org[si_org] != line_new[si_new]) {
+          if (!diff_equal_char(line_org + si_org, line_new + si_new, &l)) {
             break;
           }
-          ++si_org;
-          ++si_new;
+          si_org += l;
+          si_new += l;
         }
       }
 
-      if (has_mbyte) {
-        // Move back to first byte of character in both lines (may
-        // have "nn^" in line_org and "n^ in line_new).
-        si_org -= (*mb_head_off)(line_org, line_org + si_org);
-        si_new -= (*mb_head_off)(line_new, line_new + si_new);
-      }
+      // Move back to first byte of character in both lines (may
+      // have "nn^" in line_org and "n^ in line_new).
+      si_org -= utf_head_off(line_org, line_org + si_org);
+      si_new -= utf_head_off(line_new, line_new + si_new);
 
       if (*startp > si_org) {
         *startp = si_org;
@@ -1972,11 +1991,17 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
               ei_new--;
             }
           } else {
-            if (line_org[ei_org] != line_new[ei_new]) {
+            const char_u *p1 = line_org + ei_org;
+            const char_u *p2 = line_new + ei_new;
+
+            p1 -= utf_head_off(line_org, p1);
+            p2 -= utf_head_off(line_new, p2);
+
+            if (!diff_equal_char(p1, p2, &l)) {
               break;
             }
-            ei_org--;
-            ei_new--;
+            ei_org -= l;
+            ei_new -= l;
           }
         }
 
@@ -2344,7 +2369,7 @@ void ex_diffgetput(exarg_T *eap)
           }
         }
       }
-      changed_lines(lnum, 0, lnum + count, (long)added);
+      changed_lines(lnum, 0, lnum + count, (long)added, true);
 
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.

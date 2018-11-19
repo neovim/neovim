@@ -3,7 +3,9 @@ Tests
 
 Tests are run by `/cmake/RunTests.cmake` file, using `busted`.
 
-For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight. 
+
+Depending on the presence of binaries (e.g., `xclip`) some tests will be ignored. You must compile with libintl to prevent `E319: The command is not available in this version` errors.
 
 ---
 
@@ -16,11 +18,6 @@ For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 
 Running tests
 -------------
-
-Neovim uses third-party tooling to execute tests. So be sure, from the
-repository directory, to build the tools before testing:
-
-    make cmake
 
 ## Executing Tests
 
@@ -67,9 +64,9 @@ To run a *specific* functional test:
 
     TEST_FILE=test/functional/foo.lua make functionaltest
 
-To *repeat* a test many times:
+To *repeat* a test:
 
-    .deps/usr/bin/busted --filter 'foo' --repeat 1000 test/functional/ui/foo_spec.lua
+    .deps/usr/bin/busted --lpath='build/?.lua' --filter 'foo' --repeat 1000 test/functional/ui/foo_spec.lua
 
 ### Filter by tag
 
@@ -89,6 +86,7 @@ To run only the tagged tests:
     TEST_TAG=foo make functionaltest
 
 **NOTES**:
+
 * Tags are mainly used for testing issues (ex: `#1234`), so use the following
   method.
 * `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The
@@ -193,12 +191,12 @@ minutes](http://learnxinyminutes.com/docs/lua/).
 
 ## Checklist for migrating legacy tests
 
-**Note:** Only "old style" (`src/testdir/*.in`) legacy tests should be
-converted. Please _do not_ convert "new style" Vim tests (`src/testdir/*.vim`).
+**Note:** Only "old style" (`src/nvim/testdir/*.in`) legacy tests should be
+converted. Please _do not_ convert "new style" Vim tests
+(`src/nvim/testdir/*.vim`).
 The "new style" Vim tests are faster than the old ones, and converting them
 takes time and effort better spent elsewhere.
 
-- Remove the test from the Makefile (`src/nvim/testdir/Makefile`).
 - Remove the associated `test.in`, `test.out`, and `test.ok` files from
   `src/nvim/testdir/`.
 - Make sure the lua test ends in `_spec.lua`.

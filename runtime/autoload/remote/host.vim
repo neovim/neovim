@@ -114,7 +114,7 @@ function! s:RegistrationCommands(host) abort
   let host_id = a:host.'-registration-clone'
   call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
-  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
+  let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 1, 1)
   let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
   let paths = uniq(sort(paths))
   if empty(paths)

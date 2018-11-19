@@ -50,8 +50,17 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 install)
 
 if(UNIX)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # Set MACOSX_DEPLOYMENT_TARGET (else luajit defaults to 10.4). #9050
+    # https://github.com/LuaJIT/LuaJIT/blob/b025b01c5b9d23f6218c7d72b7aafa3f1ab1e08a/src/Makefile#L301-L303
+    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  else()
+    set(DEPLOYMENT_TARGET "")
+  endif()
+
   BuildLuaJit(INSTALL_COMMAND ${INSTALLCMD_UNIX}
-    CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR})
+    CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
+    ${DEPLOYMENT_TARGET})
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
@@ -78,8 +87,12 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
 elseif(MINGW)
 
-
-	BuildLuaJit(BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} CC=${DEPS_C_COMPILER}
+  if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(LUAJIT_MAKE_PRG ${MAKE_PRG})
+  else()
+    set(LUAJIT_MAKE_PRG ${CMAKE_MAKE_PROGRAM})
+  endif()
+  BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
@@ -87,7 +100,7 @@ elseif(MINGW)
                                 CCDEBUG+=-g
                                 BUILDMODE=static
                       # Build a DLL too
-                      COMMAND ${CMAKE_MAKE_PROGRAM} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
+                      COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
 
           INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin

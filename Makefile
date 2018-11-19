@@ -44,10 +44,11 @@ BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 DEPS_CMAKE_FLAGS ?=
-USE_BUNDLED_DEPS ?=
+# Back-compat: USE_BUNDLED_DEPS was the old name.
+USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
 
-ifneq (,$(USE_BUNDLED_DEPS))
-  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
+ifneq (,$(USE_BUNDLED))
+  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
 endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
@@ -76,12 +77,12 @@ build/.ran-cmake: | deps
 	touch $@
 
 deps: | build/.ran-third-party-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
+ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_CMD) -C $(DEPS_BUILD_DIR)
 endif
 
 build/.ran-third-party-cmake:
-ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
+ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	mkdir -p $(DEPS_BUILD_DIR)
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
@@ -101,6 +102,10 @@ endif
 
 helptags: | nvim
 	+$(BUILD_CMD) -C build helptags
+
+# Builds help HTML _and_ checks for invalid help tags.
+helphtml: | nvim helptags
+	+$(BUILD_CMD) -C build doc_html
 
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
@@ -141,6 +146,9 @@ clint-full: build/.ran-cmake
 
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
+
+generated-sources: build/.ran-cmake
+	+$(BUILD_CMD) -C build generated-sources
 
 appimage:
 	bash scripts/genappimage.sh

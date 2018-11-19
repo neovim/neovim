@@ -2535,7 +2535,7 @@ msgstr "E216: Událost %s neexistuje"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Automatické pøíkazy ---"
@@ -2559,7 +2559,7 @@ msgstr "E218: vnoøení automatického pøíkazu pøíli¹ hluboká"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s automatické pøíkazy pro \"%s\""
 
 #: ../fileio.c:7149
@@ -3486,7 +3486,7 @@ msgstr "-q [chybový soubor]  editovat soubor na místì výskytu první chyby"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"

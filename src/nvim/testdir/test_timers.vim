@@ -20,9 +20,9 @@ func Test_oneshot()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 100, slept)
+    call assert_inrange(40, 120, slept)
   else
-    call assert_inrange(20, 100, slept)
+    call assert_inrange(20, 120, slept)
   endif
 endfunc
 
@@ -39,11 +39,12 @@ func Test_repeat_three()
 endfunc
 
 func Test_repeat_many()
+  call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange(2, 4, g:val)
+  call assert_inrange((has('mac') ? 1 : 2), 4, g:val)
 endfunc
 
 func Test_with_partial_callback()
@@ -89,6 +90,7 @@ func Test_info()
 endfunc
 
 func Test_stopall()
+  call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
   let info = timer_info()
@@ -161,13 +163,72 @@ func StopTimerAll(timer)
 endfunc
 
 func Test_stop_all_in_callback()
+  call timer_stopall()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
   call assert_equal(1, len(info))
+  if has('mac')
+    sleep 100m
+  endif
   sleep 40m
   let info = timer_info()
   call assert_equal(0, len(info))
 endfunc
 
+func FeedkeysCb(timer)
+  call feedkeys("hello\<CR>", 'nt')
+endfunc
+
+func InputCb(timer)
+  call timer_start(10, 'FeedkeysCb')
+  let g:val = input('?')
+  call Resume()
+endfunc
+
+func Test_input_in_timer()
+  let g:val = ''
+  call timer_start(10, 'InputCb')
+  call Standby(1000)
+  call assert_equal('hello', g:val)
+endfunc
+
+func FuncWithCaughtError(timer)
+  let g:call_count += 1
+  try
+    doesnotexist
+  catch
+    " nop
+  endtry
+endfunc
+
+func Test_timer_catch_error()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithCaughtError', {'repeat': 4})
+  " Timer will not be stopped.
+  call WaitFor('g:call_count == 4')
+  sleep 50m
+  call assert_equal(4, g:call_count)
+endfunc
+
+func FeedAndPeek(timer)
+  call test_feedinput('a')
+  call getchar(1)
+endfunc
+
+func Interrupt(timer)
+  call test_feedinput("\<C-C>")
+endfunc
+
+func Test_peek_and_get_char()
+  throw 'skipped: Nvim does not support test_feedinput()'
+  if !has('unix') && !has('gui_running')
+    return
+  endif
+  call timer_start(0, 'FeedAndPeek')
+  let intr = timer_start(100, 'Interrupt')
+  let c = getchar()
+  call assert_equal(char2nr('a'), c)
+  call timer_stop(intr)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

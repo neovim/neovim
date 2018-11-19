@@ -1,5 +1,10 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
+if exists('s:loaded_man')
+  finish
+endif
+let s:loaded_man = 1
+
 let s:find_arg = '-w'
 let s:localfile_arg = v:true  " Always use -l if possible. #6683
 let s:section_arg = '-s'
@@ -19,7 +24,7 @@ function! s:init() abort
       let s:find_arg = '-l'
     endif
     " Check for -l support.
-    call s:get_page(s:get_path('', 'man')[0:-2])
+    call s:get_page(s:get_path('', 'man'))
   catch /E145:/
     " Ignore the error in restricted mode
   catch /command error .*/
@@ -144,8 +149,9 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:get_page(path) abort
-  " Respect $MANWIDTH or default to window width.
-  let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
+  " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
+  " We use soft wrap: ftplugin/man.vim sets wrap/breakindent/….
+  let manwidth = 999
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
@@ -161,6 +167,11 @@ function! s:put_page(page) abort
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
+  " XXX: nroff justifies text by filling it with whitespace.  That interacts
+  " badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
+  " size for those whitespace regions.
+  silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
+  1
   lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
@@ -212,15 +223,17 @@ function! man#extract_sect_and_name_ref(ref) abort
 endfunction
 
 function! s:get_path(sect, name) abort
+  " Some man implementations (OpenBSD) return all available paths from the
+  " search command, so we get() the first one. #8341
   if empty(a:sect)
-    return s:system(['man', s:find_arg, a:name])
+    return substitute(get(split(s:system(['man', s:find_arg, a:name])), 0, ''), '\n\+$', '', '')
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])
+  return substitute(get(split(s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])), 0, ''), '\n\+$', '', '')
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -233,13 +246,10 @@ function! s:verify_exists(sect, name) abort
       let path = s:get_path('', a:name)
     endtry
   endtry
-  " We need to extract the section from the path because sometimes
-  " the actual section of the manpage is more specific than the section
-  " we provided to `man`. Try ':Man 3 App::CLI'.
-  " Also on linux, it seems that the name is case insensitive. So if one does
-  " ':Man PRIntf', we still want the name of the buffer to be 'printf' or
-  " whatever the correct capitilization is.
-  let path = path[:len(path)-2]
+  " Extract the section from the path, because sometimes the actual section is
+  " more specific than what we provided to `man` (try `:Man 3 App::CLI`).
+  " Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
+  " still want the name of the buffer to be 'printf'.
   return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
@@ -382,15 +392,17 @@ function! man#init_pager() abort
     keepjumps 1
   endif
   lua require("man").highlight_man_page()
-  " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
-  " all caps it is impossible to tell what the original capitilization was.
+  " Guess the ref from the heading (which is usually uppercase, so we cannot
+  " know the correct casing, cf. `man glDrawArraysInstanced`).
   let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
   try
     let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
   catch
     let b:man_sect = ''
   endtry
-  execute 'silent file man://'.fnameescape(ref)
+  if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
+    execute 'silent file man://'.tolower(fnameescape(ref))
+  endif
 endfunction
 
 call s:init()

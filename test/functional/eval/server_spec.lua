@@ -5,6 +5,7 @@ local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
+local expect_err = helpers.expect_err
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -86,22 +87,23 @@ describe('server', function()
 
     local expected = {}
     local v4 = '127.0.0.1:12345'
-    s = funcs.serverstart(v4)
-    if #s > 0 then
+    local status, _ = pcall(funcs.serverstart, v4)
+    if status then
       table.insert(expected, v4)
-      funcs.serverstart(v4)  -- exists already; ignore
+      pcall(funcs.serverstart, v4)  -- exists already; ignore
     end
 
     local v6 = '::1:12345'
-    s = funcs.serverstart(v6)
-    if #s > 0 then
+    status, _ = pcall(funcs.serverstart, v6)
+    if status then
       table.insert(expected, v6)
-      funcs.serverstart(v6)  -- exists already; ignore
+      pcall(funcs.serverstart, v6)  -- exists already; ignore
     end
     eq(expected, funcs.serverlist())
     clear_serverlist()
 
-    funcs.serverstart('127.0.0.1:65536')  -- invalid port
+    expect_err('Failed to start server: invalid argument',
+               funcs.serverstart, '127.0.0.1:65536')  -- invalid port
     eq({}, funcs.serverlist())
   end)
 

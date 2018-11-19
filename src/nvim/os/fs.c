@@ -110,7 +110,7 @@ bool os_isrealdir(const char *name)
 
 /// Check if the given path is a directory or not.
 ///
-/// @return `true` if `fname` is a directory.
+/// @return `true` if `name` is a directory.
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -124,6 +124,25 @@ bool os_isdir(const char_u *name)
   }
 
   return true;
+}
+
+/// Check if the given path is a directory and is executable.
+/// Gives the same results as `os_isdir()` on Windows.
+///
+/// @return `true` if `name` is a directory and executable.
+bool os_isdir_executable(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int32_t mode = os_getperm((const char *)name);
+  if (mode < 0) {
+    return false;
+  }
+
+#ifdef WIN32
+  return (S_ISDIR(mode));
+#else
+  return (S_ISDIR(mode) && (S_IXUSR & mode));
+#endif
 }
 
 /// Check what `name` is:
@@ -1052,7 +1071,7 @@ char *os_resolve_shortcut(const char *fname)
   hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
-    WCHAR *p;
+    wchar_t *p;
     const int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
       EMSG2("utf8_to_utf16 failed: %d", conversion_result);
@@ -1080,7 +1099,7 @@ char *os_resolve_shortcut(const char *fname)
 #  endif
 
       // Get the path to the link target.
-      ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
+      ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
         const int conversion_result = utf16_to_utf8(wsz, &rfname);

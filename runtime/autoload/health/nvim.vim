@@ -4,6 +4,14 @@ function! s:check_config() abort
   let ok = v:true
   call health#report_start('Configuration')
 
+  let vimrc = empty($MYVIMRC) ? stdpath('config').'/init.vim' : $MYVIMRC
+  if !filereadable(vimrc)
+    let ok = v:false
+    let has_vim = filereadable(expand('~/.vimrc'))
+    call health#report_warn('Missing user config file: '.vimrc,
+          \[ has_vim ? ':help nvim-from-vim' : ':help init.vim' ])
+  endif
+
   " If $VIM is empty we don't care. Else make sure it is valid.
   if !empty($VIM) && !filereadable($VIM.'/runtime/doc/nvim.txt')
     let ok = v:false

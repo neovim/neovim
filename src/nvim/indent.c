@@ -21,6 +21,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
+#include "nvim/buffer.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -454,11 +455,13 @@ int get_number_indent(linenr_T lnum)
  * parameters into account. Window must be specified, since it is not
  * necessarily always the current one.
  */
-int get_breakindent_win(win_T *wp, char_u *line) {
-  static int prev_indent = 0;  /* cached indent value */
-  static long prev_ts = 0; /* cached tabstop value */
-  static char_u *prev_line = NULL; /* cached pointer to line */
-  static int prev_tick = 0;  // changedtick of cached value
+int get_breakindent_win(win_T *wp, char_u *line)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  static int prev_indent = 0;  // Cached indent value.
+  static long prev_ts = 0;  // Cached tabstop value.
+  static char_u *prev_line = NULL;  // cached pointer to line.
+  static varnumber_T prev_tick = 0;  // Changedtick of cached value.
   int bri = 0;
   /* window width minus window margin space, i.e. what rests for text */
   const int eff_wwidth = wp->w_width
@@ -468,12 +471,11 @@ int get_breakindent_win(win_T *wp, char_u *line) {
 
   /* used cached indent, unless pointer or 'tabstop' changed */
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
-      || prev_tick != wp->w_buffer->b_changedtick) {
+      || prev_tick != buf_get_changedtick(wp->w_buffer)) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
-    prev_tick = (int)wp->w_buffer->b_changedtick;
-    prev_indent = get_indent_str(line,
-            (int)wp->w_buffer->b_p_ts, wp->w_p_list);
+    prev_tick = buf_get_changedtick(wp->w_buffer);
+    prev_indent = get_indent_str(line, (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
   bri = prev_indent + wp->w_p_brishift;
 
@@ -520,7 +522,7 @@ int inindent(int extra)
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int indent;
+  int indent = -1;
   pos_T save_pos;
   colnr_T save_curswant;
   int save_set_curswant;
@@ -538,7 +540,14 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
-  indent = (int)eval_to_number(curbuf->b_p_inde);
+
+  // Need to make a copy, the 'indentexpr' option could be changed while
+  // evaluating it.
+  char_u *inde_copy = vim_strsave(curbuf->b_p_inde);
+  if (inde_copy != NULL) {
+    indent = (int)eval_to_number(inde_copy);
+    xfree(inde_copy);
+  }
 
   if (use_sandbox) {
     sandbox--;

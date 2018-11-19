@@ -10,7 +10,7 @@ function! provider#pythonx#Require(host) abort
 
   " Python host arguments
   let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
-  let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path.remove(""); import pynvim; pynvim.start_host()']
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)
@@ -62,17 +62,17 @@ function! s:check_interpreter(prog, major_ver) abort
 
   let min_version = (a:major_ver == 2) ? '2.6' : '3.3'
 
-  " Try to load neovim module, and output Python version.
+  " Try to load pynvim module, and output Python version.
   " Return codes:
-  "   0  Neovim module can be loaded.
-  "   2  Neovim module cannot be loaded.
+  "   0  pynvim module can be loaded.
+  "   2  pynvim module cannot be loaded.
   "   Otherwise something else went wrong (e.g. 1 or 127).
   let prog_ver = system([ a:prog , '-c' ,
         \ 'import sys; ' .
         \ 'sys.path.remove(""); ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'import pkgutil; ' .
-        \ 'exit(2*int(pkgutil.get_loader("neovim") is None))'
+        \ 'exit(2*int(pkgutil.get_loader("pynvim") is None))'
         \ ])
 
   if v:shell_error == 2 || v:shell_error == 0
@@ -87,7 +87,7 @@ function! s:check_interpreter(prog, major_ver) abort
   endif
 
   if v:shell_error == 2
-    return [0, prog_path.' does not have the "neovim" module. :help provider-python']
+    return [0, prog_path.' does not have the "pynvim" module. :help provider-python']
   elseif v:shell_error == 127
     " This can happen with pyenv's shims.
     return [0, prog_path . ' does not exist: ' . prog_ver]

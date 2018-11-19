@@ -18,6 +18,7 @@ local expect_err = global_helpers.expect_err
 local filter = global_helpers.filter
 local map = global_helpers.map
 local matches = global_helpers.matches
+local near = global_helpers.near
 local neq = global_helpers.neq
 local ok = global_helpers.ok
 local read_file = global_helpers.read_file
@@ -299,8 +300,10 @@ end
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 local function retry(max, max_ms, fn)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
-  local timeout = (max_ms and max_ms > 0) and max_ms or 10000
+  local timeout = (max_ms and max_ms or 10000)
   local start_time = luv.now()
   while true do
     local status, result = pcall(fn)
@@ -316,11 +319,20 @@ local function retry(max, max_ms, fn)
   end
 end
 
+-- Starts a new global Nvim session.
+-- Parameters are interpreted as startup args, OR a map with these keys:
+--    args: Merged with the default `nvim_argv` set.
+--    env : Defines the environment of the new session.
+--
+-- Example:
+--    clear('-e')
+--    clear({args={'-e'}, env={TERM=term}})
 local function clear(...)
   local args = {unpack(nvim_argv)}
   local new_args
   local env = nil
   local opts = select(1, ...)
+  local headless = true
   if type(opts) == 'table' then
     if opts.env then
       local env_tbl = {}
@@ -346,8 +358,14 @@ local function clear(...)
       end
     end
     new_args = opts.args or {}
+    if opts.headless == false then
+      headless = false
+    end
   else
     new_args = {...}
+  end
+  if headless then
+    table.insert(args, '--headless')
   end
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
@@ -691,6 +709,7 @@ local module = {
   meths = meths,
   missing_provider = missing_provider,
   mkdir = lfs.mkdir,
+  near = near,
   neq = neq,
   new_pipename = new_pipename,
   next_msg = next_msg,

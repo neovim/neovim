@@ -56,7 +56,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
   char *envbuf = xmalloc(envbuflen);
   snprintf(envbuf, envbuflen, "%s=%s", name, value);
 
-  WCHAR *p;
+  wchar_t *p;
   utf8_to_utf16(envbuf, &p);
   xfree(envbuf);
   if (p == NULL) {
@@ -146,7 +146,7 @@ void os_get_hostname(char *hostname, size_t size)
     xstrlcpy(hostname, vutsname.nodename, size);
   }
 #elif defined(WIN32)
-  WCHAR host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
+  wchar_t host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
   DWORD host_wsize = sizeof(host_utf16) / sizeof(host_utf16[0]);
   if (GetComputerNameW(host_utf16, &host_wsize) == 0) {
     *hostname = '\0';
@@ -196,15 +196,18 @@ void init_homedir(void)
     const char *homedrive = os_getenv("HOMEDRIVE");
     const char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
-        homepath = "\\";
+      homepath = "\\";
     }
-    if (homedrive != NULL && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
+    if (homedrive != NULL
+        && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
       snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
         var = os_buf;
-        vim_setenv("HOME", os_buf);
       }
     }
+  }
+  if (var == NULL) {
+    var = os_getenv("USERPROFILE");
   }
 #endif
 
@@ -373,11 +376,10 @@ void expand_env_esc(char_u *restrict srcp,
           *var++ = *tail++;
         }
         *var = NUL;
-        // Use os_get_user_directory() to get the user directory.
-        // If this function fails, the shell is used to
-        // expand ~user. This is slower and may fail if the shell
-        // does not support ~user (old versions of /bin/sh).
-        var = (char_u *)os_get_user_directory((char *)dst + 1);
+        // Get the user directory. If this fails the shell is used to expand
+        // ~user, which is slower and may fail on old versions of /bin/sh.
+        var = (*dst == NUL) ? NULL
+                            : (char_u *)os_get_user_directory((char *)dst + 1);
         mustfree = true;
         if (var == NULL) {
           expand_T xpc;
@@ -455,12 +457,15 @@ void expand_env_esc(char_u *restrict srcp,
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }
-      *dst++ = *src++;
-      --dstlen;
+      if (dstlen > 0) {
+        *dst++ = *src++;
+        dstlen--;
 
-      if (prefix != NULL && src - prefix_len >= srcp
-          && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
-        at_start = true;
+        if (prefix != NULL
+            && src - prefix_len >= srcp
+            && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
+          at_start = true;
+        }
       }
     }
   }
@@ -608,6 +613,12 @@ char *vim_getenv(const char *name)
   if (kos_env_path != NULL) {
     return xstrdup(kos_env_path);
   }
+
+#ifdef WIN32
+  if (strcmp(name, "HOME") == 0) {
+    return xstrdup(homedir);
+  }
+#endif
 
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
   if (!vimruntime && strcmp(name, "VIM") != 0) {
@@ -759,7 +770,12 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
     dirlen = strlen(homedir);
   }
 
-  const char *const homedir_env = os_getenv("HOME");
+  const char *homedir_env = os_getenv("HOME");
+#ifdef WIN32
+  if (homedir_env == NULL) {
+    homedir_env = os_getenv("USERPROFILE");
+  }
+#endif
   char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 

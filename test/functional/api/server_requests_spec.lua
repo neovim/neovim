@@ -9,8 +9,9 @@ local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.fu
 local source, next_msg = helpers.source, helpers.next_msg
 local ok = helpers.ok
 local meths = helpers.meths
-local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
+local spawn, merge_args = helpers.spawn, helpers.merge_args
 local set_session = helpers.set_session
+local expect_err = helpers.expect_err
 
 describe('server -> client', function()
   local cid
@@ -22,7 +23,7 @@ describe('server -> client', function()
 
   it('handles unexpected closed stream while preparing RPC response', function()
     source([[
-      let g:_nvim_args = [v:progpath, '--embed', '-n', '-u', 'NONE', '-i', 'NONE', ]
+      let g:_nvim_args = [v:progpath, '--embed', '--headless', '-n', '-u', 'NONE', '-i', 'NONE', ]
       let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
       let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
       call rpcnotify(ch1, 'nvim_eval', 'rpcrequest('.child1_ch.', "nvim_get_api_info")')
@@ -188,7 +189,7 @@ describe('server -> client', function()
     end
 
     before_each(function()
-      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed'])")
+      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])")
       neq(0, eval('vim'))
     end)
 
@@ -221,9 +222,8 @@ describe('server -> client', function()
     end)
 
     it('returns an error if the request failed', function()
-      local status, err = pcall(eval, "rpcrequest(vim, 'does-not-exist')")
-      eq(false, status)
-      ok(nil ~= string.match(err, 'Failed to evaluate expression'))
+      expect_err('Vim:Invalid method: does%-not%-exist',
+                 eval, "rpcrequest(vim, 'does-not-exist')")
     end)
   end)
 
@@ -250,7 +250,7 @@ describe('server -> client', function()
     end)
 
     after_each(function()
-      funcs.jobstop(jobid)
+      pcall(funcs.jobstop, jobid)
     end)
 
     if helpers.pending_win32(pending) then return end
@@ -261,13 +261,14 @@ describe('server -> client', function()
       eq({'notification', 'pong', {}}, next_msg())
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
       eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_msg())
-      funcs.rpcrequest(jobid, "exit")
+      pcall(funcs.rpcrequest, jobid, "exit")
       eq({'notification', 'stderr', {0, {''}}}, next_msg())
       eq({'notification', 'exit', {0, 0}}, next_msg())
     end)
   end)
 
   describe('connecting to another (peer) nvim', function()
+    local nvim_argv = merge_args(helpers.nvim_argv, {'--headless'})
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
       local client = spawn(nvim_argv)
@@ -308,8 +309,8 @@ describe('server -> client', function()
     it('via ipv4 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local address = funcs.serverstart("127.0.0.1:")
-      if #address == 0 then
+      local status, address = pcall(funcs.serverstart, "127.0.0.1:")
+      if not status then
         pending('no ipv4 stack', function() end)
         return
       end
@@ -320,8 +321,8 @@ describe('server -> client', function()
     it('via ipv6 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local address = funcs.serverstart('::1:')
-      if #address == 0 then
+      local status, address = pcall(funcs.serverstart, '::1:')
+      if not status then
         pending('no ipv6 stack', function() end)
         return
       end

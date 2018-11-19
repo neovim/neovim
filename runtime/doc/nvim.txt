@@ -8,7 +8,9 @@ Nvim							   *nvim* *nvim-intro*
 
 Nvim is based on Vim by Bram Moolenaar.
 
-If you are new to Vim see |help.txt|, or type ":Tutor".
+If you are new to Vim, try the 30-minute tutorial: >
+    :Tutor<Enter>
+
 If you already use Vim see |nvim-from-vim| for a quickstart.
 
 Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim is
@@ -20,29 +22,24 @@ differences from Vim.
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*
 
-To start the transition, create init.vim in the correct directory for your
-platform.
+1. To start the transition, create your |init.vim| (user config) file: >
 
-For Linux, macOS and other Unixes, create the file at ~/.config/nvim/init.vim.
+    :call mkdir(stdpath('config'), 'p')
+    :exe 'edit '.stdpath('config').'/init.vim'
 
-For Windows, create the file at %LOCALAPPDATA%\nvim\init.vim. `%LOCALAPPDATA%`
-usually expands to `C:\Users\<username>\AppData\Local`.
+2. Add these contents to the file: >
 
-Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`
-or `%LOCALAPPDATA%` in the paths above. Nvim follows the XDG |base-directories|
-convention.
-
-Next, add these contents to the file:
->
     set runtimepath^=~/.vim runtimepath+=~/.vim/after
     let &packpath = &runtimepath
     source ~/.vimrc
-<
+
+3. Restart Nvim, your existing Vim config will be loaded.
+
 See |provider-python| and |provider-clipboard| for additional software you
 might need to use some features.
 
-Your Vim configuration might not be entirely compatible with Nvim. For a
-full list of differences between Vim and Nvim see |vim-differences|.
+Your Vim configuration might not be entirely Nvim-compatible.
+See |vim-differences| for the full list of changes.
 
 The |'ttymouse'| option, for example, was removed from Nvim (mouse support
 should work without it). If you use the same |vimrc| for Vim and Nvim,

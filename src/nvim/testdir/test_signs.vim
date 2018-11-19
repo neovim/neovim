@@ -14,7 +14,7 @@ func Test_sign()
   " the icon name when listing signs.
   sign define Sign1 text=x
   try
-    sign define Sign2 text=xy texthl=Title linehl=Error icon=../../pixmaps/stock_vim_find_help.png
+    sign define Sign2 text=xy texthl=Title linehl=Error numhl=Number icon=../../pixmaps/stock_vim_find_help.png
   catch /E255:/
     " ignore error: E255: Couldn't read in sign data!
     " This error can happen when running in gui.
@@ -23,7 +23,7 @@ func Test_sign()
 
   " Test listing signs.
   let a=execute('sign list')
-  call assert_match("^\nsign Sign1 text=x \nsign Sign2 icon=../../pixmaps/stock_vim_find_help.png .*text=xy linehl=Error texthl=Title$", a)
+  call assert_match("^\nsign Sign1 text=x \nsign Sign2 icon=../../pixmaps/stock_vim_find_help.png .*text=xy linehl=Error texthl=Title numhl=Number$", a)
 
   let a=execute('sign list Sign1')
   call assert_equal("\nsign Sign1 text=x ", a)
@@ -140,7 +140,7 @@ func Test_sign_completion()
   call assert_equal('"sign define jump list place undefine unplace', @:)
 
   call feedkeys(":sign define Sign \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign icon= linehl= text= texthl=', @:)
+  call assert_equal('"sign define Sign icon= linehl= numhl= text= texthl=', @:)
 
   call feedkeys(":sign define Sign linehl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign define Sign linehl=SpellBad SpellCap SpellLocal SpellRare', @:)

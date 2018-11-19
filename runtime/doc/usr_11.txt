@@ -234,7 +234,7 @@ that file, be prepared to redo your last changes.
 
 WHAT TO DO?					*swap-exists-choices*
 
-If dialogs are supported you will be asked to select one of five choices:
+If dialogs are supported you will be asked to select one of six choices:
 
   Swap file ".main.c.swp" already exists! ~
   [O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort, (D)elete it: ~
@@ -283,6 +283,8 @@ machines.  Therefore, don't rely on Vim always warning you.
 If you really don't want to see this message, you can add the 'A' flag to the
 'shortmess' option.  But it's very unusual that you need this.
 
+For programatic access to the swap file, see |swapinfo()|.
+
 ==============================================================================
 *11.4*	Further reading
 
@@ -294,11 +296,9 @@ If you really don't want to see this message, you can add the 'A' flag to the
 		disk.
 'updatetime'	Timeout after which the swap file is flushed to disk.
 'directory'	List of directory names where to store the swap file.
-'maxmem'	Limit for memory usage before writing text to the swap file.
-'maxmemtot'	Same, but for all files in total.
 
 ==============================================================================
 
 Next chapter: |usr_12.txt|  Clever tricks
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

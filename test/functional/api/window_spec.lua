@@ -108,6 +108,29 @@ describe('api/win', function()
       neq(win, curwin())
     end)
 
+    it('remembers what column it wants to be in', function()
+      insert("first line")
+      feed('o<esc>')
+      insert("second line")
+
+      feed('gg')
+      wait() -- let nvim process the 'gg' command
+
+      -- cursor position is at beginning
+      local win = curwin()
+      eq({1, 0}, window('get_cursor', win))
+
+      -- move cursor to column 5
+      window('set_cursor', win, {1, 5})
+
+      -- move down a line
+      feed('j')
+      wait() -- let nvim process the 'j' command
+
+      -- cursor is still in column 5
+      eq({2, 5}, window('get_cursor', win))
+    end)
+
   end)
 
   describe('{get,set}_height', function()
@@ -146,7 +169,7 @@ describe('api/win', function()
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
-      eq({false, 'Key does not exist: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      eq({false, 'Key not found: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
       curwinmeths.set_var('lua', 1)
       command('lockvar w:lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))

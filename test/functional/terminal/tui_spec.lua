@@ -17,7 +17,6 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
-local wait = helpers.wait
 
 if helpers.pending_win32(pending) then return end
 
@@ -207,7 +206,7 @@ describe('tui', function()
     screen:set_default_attr_ids({
       [1] = {reverse = true},
       [2] = {foreground = 13, special = Screen.colors.Grey0},
-      [3] = {special = Screen.colors.Grey0, bold = true, reverse = true},
+      [3] = {bold = true, reverse = true, special = Screen.colors.Grey0},
       [4] = {bold = true},
       [5] = {special = Screen.colors.Grey0, reverse = true, foreground = 4},
       [6] = {foreground = 4, special = Screen.colors.Grey0},
@@ -252,6 +251,19 @@ describe('tui', function()
       :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('shows up in nvim_list_uis', function()
+    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(v))})\013')
+    screen:expect([=[
+      [[['ext_cmdline', v:false], ['ext_hlstate', v:fals|
+      e], ['ext_linegrid', v:true], ['ext_popupmenu', v:|
+      false], ['ext_tabline', v:false], ['ext_wildmenu',|
+       v:false], ['height', 6], ['rgb', v:false], ['widt|
+      h', 50]]]                                         |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]=])
   end)
 end)
 
@@ -358,7 +370,7 @@ describe('tui FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[O')
-    screen:expect([[
+    screen:expect{grid=[[
                                                         |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -366,7 +378,7 @@ describe('tui FocusGained/FocusLost', function()
       {5:[No Name]                                         }|
       :{1: }                                                |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]], unchanged=true}
   end)
 
   it('in cmdline-mode', function()
@@ -387,7 +399,7 @@ describe('tui FocusGained/FocusLost', function()
       -- Exit cmdline-mode. Redraws from timers/events are blocked during
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
-      screen:expect('lost'..(' '):rep(46)..'\ngained', nil, nil, nil, true)
+      screen:expect{any='lost'..(' '):rep(46)..'\ngained'}
     end)
   end)
 
@@ -460,14 +472,24 @@ describe("tui 't_Co' (terminal colors)", function()
       nvim_prog,
       nvim_set))
 
-    feed_data(":echo &t_Co\n")
-    wait()
     local tline
     if maxcolors == 8 or maxcolors == 16 then
       tline = "~                                                 "
     else
       tline = "{4:~                                                 }"
     end
+
+    screen:expect(string.format([[
+      {1: }                                                 |
+      %s|
+      %s|
+      %s|
+      %s|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], tline, tline, tline, tline))
+
+    feed_data(":echo &t_Co\n")
     screen:expect(string.format([[
       {1: }                                                 |
       %s|
@@ -727,7 +749,7 @@ describe("tui 'term' option", function()
     screen.timeout = 250  -- We want screen:expect() to fail quickly.
     retry(nil, 2 * full_timeout, function()  -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
-      screen:expect('term='..term_expected, nil, nil, nil, true)
+      screen:expect{any='term='..term_expected}
     end)
   end
 

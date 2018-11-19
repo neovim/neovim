@@ -495,6 +495,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+        ^                    |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+                            |
+      ]])
       feed_command("set undolevels=1")
 
       feed("1G0")
@@ -745,20 +757,35 @@ describe(":substitute, inccommand=split", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect([[two lines]], nil, nil, nil, true)
-    feed('<Esc>')
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :silent tabedit %s/tw/to^      |
+    ]])
   end)
 
   it('shows split window when typing the pattern', function()
@@ -866,7 +893,6 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
-    screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -1222,20 +1248,30 @@ describe("inccommand=nosplit", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
+    screen:expect{any=[[{12:to}o lines]]}
     feed('<Esc>')
-    screen:expect([[two lines]], nil, nil, nil, true)
+    screen:expect{any=[[two lines]]}
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect([[two lines]], nil, nil, nil, true)
-    feed('<Esc>')
+    screen:expect([[
+      two lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :silent tabedit %s/t|
+      w/to^                |
+    ]])
   end)
 
   it("does not show window after toggling :set inccommand", function()
@@ -1503,7 +1539,7 @@ describe("'inccommand' and :cnoremap", function()
       end
   end)
 
-  it('does not work with a failing mapping', function()
+  it('still works with a broken mapping', function()
     for _, case in pairs(cases) do
       refresh(case)
       feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
@@ -1512,7 +1548,10 @@ describe("'inccommand' and :cnoremap", function()
 
       -- error thrown b/c of the mapping
       neq(nil, eval('v:errmsg'):find('^E523:'))
-      expect(default_text)
+      expect([[
+      Inc substitution on
+      toxo lines
+      ]])
     end
   end)
 
@@ -1846,8 +1885,7 @@ describe("'inccommand' with 'gdefault'", function()
 end)
 
 describe(":substitute", function()
-  local screen =  Screen.new(30,15)
-
+  local screen = Screen.new(30,15)
   before_each(function()
     clear()
   end)
@@ -2471,8 +2509,13 @@ describe(":substitute", function()
       :%s/some\(thing\)\@!/every/^   |
     ]])
   end)
+end)
 
-  it('with inccommand during :terminal activity', function()
+it(':substitute with inccommand during :terminal activity', function()
+  retry(2, 40000, function()
+    local screen = Screen.new(30,15)
+    clear()
+
     command("set cmdwinheight=3")
     if iswin() then
       feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
@@ -2484,7 +2527,7 @@ describe(":substitute", function()
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
     command('wincmd =')
 
-    -- Allow some terminal output.
+    -- Wait for terminal output.
     screen:expect([[
       bar baz fox                   |
       bar foo ba^z                   |
@@ -2505,7 +2548,7 @@ describe(":substitute", function()
 
     feed('gg')
     feed(':%s/foo/ZZZ')
-    sleep(50)  -- Allow some terminal activity.
+    sleep(20)  -- Allow some terminal activity.
     screen:expect([[
       {12:ZZZ} bar baz                   |
       bar baz fox                   |
@@ -2523,5 +2566,6 @@ describe(":substitute", function()
       {10:[Preview]                     }|
       :%s/foo/ZZZ^                   |
     ]])
+
   end)
 end)

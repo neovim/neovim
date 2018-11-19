@@ -17,6 +17,7 @@ local pathroot = helpers.pathroot
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
+local expect_err = helpers.expect_err
 local Screen = require('test.functional.ui.screen')
 
 -- Kill process with given pid
@@ -113,6 +114,17 @@ describe('jobs', function()
       end
     end)
     ok(string.find(err, "E475: Invalid argument: expected valid directory$") ~= nil)
+  end)
+
+  it('produces error when using non-executable `cwd`', function()
+    if iswin() then return end  -- N/A for Windows
+
+    local dir = 'Xtest_not_executable_dir'
+    mkdir(dir)
+    funcs.setfperm(dir, 'rw-------')
+    expect_err('E475: Invalid argument: expected valid directory$', nvim,
+               'command', "call jobstart('pwd', {'cwd': '" .. dir .. "'})")
+    rmdir(dir)
   end)
 
   it('returns 0 when it fails to start', function()
@@ -417,7 +429,7 @@ describe('jobs', function()
         \ })
     ]])
 
-    screen:expect("{2:E120: Using <SID> not in a script context: s:OnEvent}",nil,nil,nil,true)
+    screen:expect{any="{2:E120: Using <SID> not in a script context: s:OnEvent}"}
   end)
 
   it('does not repeat output with slow output handlers', function()
@@ -433,9 +445,25 @@ describe('jobs', function()
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
       call jobwait([jobstart(cmd, d)])
-      call rpcnotify(g:channel, 'data', d.data)
     ]])
-    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}}}}, next_msg())
+
+    local expected = {'1', '2', '3', '4', '5', ''}
+    local chunks = eval('d.data')
+    local received = {''}
+    for i, chunk in ipairs(chunks) do
+      if i < #chunks then
+        -- if chunks got joined, a spurious [''] callback was not sent
+        neq({''}, chunk)
+      else
+        -- but EOF callback is still sent
+        eq({''}, chunk)
+      end
+      received[#received] = received[#received]..chunk[1]
+      for j = 2, #chunk do
+        received[#received+1] = chunk[j]
+      end
+    end
+    eq(expected, received)
   end)
 
   it('jobstart() works with partial functions', function()
@@ -647,7 +675,7 @@ describe('jobs', function()
         call rpcnotify(g:channel, 'wait', jobwait([
         \  jobstart('exit 4'),
         \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
-        \  ], has('win32') ? 3000 : 100))
+        \  ], has('win32') ? 6000 : 100))
         ]])
         eq({'notification', 'wait', {{4, -1}}}, next_msg())
       end)
@@ -715,7 +743,7 @@ describe('jobs', function()
     local children
     retry(nil, nil, function()
       children = meths.get_proc_children(ppid)
-      eq(3, #children)
+      eq((iswin() and 4 or 3), #children)
     end)
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do

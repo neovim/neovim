@@ -68,7 +68,7 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
 
       varname='p_arshape',
       defaults={if_true={vi=true}}
@@ -92,7 +92,7 @@ return {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -133,7 +133,7 @@ return {
       full_name='background', abbreviation='bg',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'all_windows'},
       varname='p_bg',
       defaults={if_true={vi="light"}}
     },
@@ -662,7 +662,7 @@ return {
       full_name='emoji', abbreviation='emo',
       type='bool', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_emoji',
       defaults={if_true={vi=true}}
     },
@@ -671,7 +671,6 @@ return {
       type='string', scope={'global'},
       deny_in_modelines=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_enc',
       defaults={if_true={vi=macros('ENC_DFLT')}}
     },
@@ -1023,7 +1022,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guifont',
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       defaults={if_true={vi=""}}
     },
     {
@@ -1031,7 +1030,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_guifontset',
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       defaults={if_true={vi=""}}
     },
     {
@@ -1039,7 +1038,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       varname='p_guifontwide',
       defaults={if_true={vi=""}}
     },
@@ -1099,7 +1098,6 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
       varname='p_hl',
       defaults={if_true={vi=macros('HIGHLIGHT_INIT')}}
     },
@@ -1195,7 +1193,7 @@ return {
       full_name='inccommand', abbreviation='icm',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'all_windows'},
       varname='p_icm',
       defaults={if_true={vi=""}}
     },
@@ -1399,7 +1397,7 @@ return {
       full_name='linespace', abbreviation='lsp',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'everything', 'ui_option'},
+      redraw={'ui_option'},
       varname='p_linespace',
       defaults={if_true={vi=0}}
     },
@@ -1493,9 +1491,8 @@ return {
       full_name='maxcombine', abbreviation='mco',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'curswant'},
       varname='p_mco',
-      defaults={if_true={vi=2}}
+      defaults={if_true={vi=6}}
     },
     {
       full_name='maxfuncdepth', abbreviation='mfd',
@@ -1512,25 +1509,11 @@ return {
       defaults={if_true={vi=1000}}
     },
     {
-      full_name='maxmem', abbreviation='mm',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mm',
-      defaults={if_true={vi=macros('DFLT_MAXMEM')}}
-    },
-    {
       full_name='maxmempattern', abbreviation='mmp',
       type='number', scope={'global'},
       vi_def=true,
       varname='p_mmp',
       defaults={if_true={vi=1000}}
-    },
-    {
-      full_name='maxmemtot', abbreviation='mmt',
-      type='number', scope={'global'},
-      vi_def=true,
-      varname='p_mmt',
-      defaults={if_true={vi=macros('DFLT_MAXMEMTOT')}}
     },
     {
       full_name='menuitems', abbreviation='mis',
@@ -1786,10 +1769,9 @@ return {
     {
       full_name='printheader', abbreviation='pheader',
       type='string', scope={'global'},
-      gettext=true,
       vi_def=true,
       varname='p_header',
-      defaults={if_true={vi=N_("%<%f%h%m%=Page %N")}}
+      defaults={if_true={vi="%<%f%h%m%=Page %N"}}
     },
     {
       full_name='printmbcharset', abbreviation='pmbcs',
@@ -1936,7 +1918,7 @@ return {
       no_mkrc=true,
       vi_def=true,
       pv_name='p_scroll',
-      defaults={if_true={vi=12}}
+      defaults={if_true={vi=0}}
     },
     {
       full_name='scrollback', abbreviation='scbk',
@@ -2059,9 +2041,9 @@ return {
       vi_def=true,
       varname='p_sp',
       defaults={
-        condition='UNIX',
-        if_true={vi="| tee"},
-        if_false={vi=">"},
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi="| tee"},
       }
     },
     {
@@ -2138,7 +2120,7 @@ return {
       type='string', list='flags', scope={'global'},
       vim=true,
       varname='p_shm',
-      defaults={if_true={vi="", vim="filnxtToO"}}
+      defaults={if_true={vi="", vim="filnxtToOF"}}
     },
     {
       full_name='showbreak', abbreviation='sbr',
@@ -2444,7 +2426,6 @@ return {
       full_name='termencoding', abbreviation='tenc',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
       defaults={if_true={vi=""}}
     },
     {

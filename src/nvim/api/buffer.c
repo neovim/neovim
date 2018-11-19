@@ -13,6 +13,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -24,22 +25,44 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/undo.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/buffer_updates.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
 #endif
 
+
+/// \defgroup api-buffer
+///
+/// Unloaded Buffers:~
+///
+/// Buffers may be unloaded by the |:bunload| command or the buffer's
+/// |'bufhidden'| option. When a buffer is unloaded its file contents are freed
+/// from memory and vim cannot operate on the buffer lines until it is reloaded
+/// (usually by opening the buffer again in a new window). API methods such as
+/// |nvim_buf_get_lines()| and |nvim_buf_line_count()| will be affected.
+///
+/// You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()| to check
+/// whether a buffer is loaded.
+
+
 /// Gets the buffer line count
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
-/// @return Line count
+/// @return Line count, or 0 for unloaded buffer. |api-buffer|
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return 0;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
     return 0;
   }
 
@@ -72,6 +95,59 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   xfree(slice.items);
 
   return rv;
+}
+
+/// Activate updates from this buffer to the current channel.
+///
+/// @param buffer The buffer handle
+/// @param send_buffer Set to true if the initial notification should contain
+///        the whole buffer. If so, the first notification will be a
+///        `nvim_buf_lines_event`. Otherwise, the first notification will be
+///        a `nvim_buf_changedtick_event`
+/// @param  opts  Optional parameters. Currently not used.
+/// @param[out] err Details of an error that may have occurred
+/// @return False when updates couldn't be enabled because the buffer isn't
+///         loaded or `opts` contained an invalid key; otherwise True.
+Boolean nvim_buf_attach(uint64_t channel_id,
+                        Buffer buffer,
+                        Boolean send_buffer,
+                        Dictionary opts,
+                        Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  if (opts.size > 0) {
+      api_set_error(err, kErrorTypeValidation, "dict isn't empty");
+      return false;
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+
+  return buf_updates_register(buf, channel_id, send_buffer);
+}
+//
+/// Deactivate updates from this buffer to the current channel.
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return False when updates couldn't be disabled because the buffer
+///         isn't loaded; otherwise True.
+Boolean nvim_buf_detach(uint64_t channel_id,
+                        Buffer buffer,
+                        Error *err)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return false;
+  }
+
+  buf_updates_unregister(buf, channel_id);
+  return true;
 }
 
 /// Sets a buffer line
@@ -136,11 +212,11 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
   return nvim_buf_get_lines(0, buffer, start , end, false, err);
 }
 
-/// Retrieves a line range from the buffer
+/// Gets a line-range from the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
-/// as length+1+index, i e -1 refers to the index past the end. So to get the
-/// last element set start=-2 and end=-1.
+/// as length+1+index: -1 refers to the index past the end. So to get the
+/// last element use start=-2 and end=-1.
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
@@ -150,7 +226,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
-/// @return Array of lines
+/// @return Array of lines, or empty array for unloaded buffer.
 ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Buffer buffer,
                                    Integer start,
@@ -163,6 +239,11 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return rv;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
     return rv;
   }
 
@@ -183,23 +264,9 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   rv.size = (size_t)(end - start);
   rv.items = xcalloc(sizeof(Object), rv.size);
 
-  for (size_t i = 0; i < rv.size; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    if (lnum >= MAXLNUM) {
-      api_set_error(err, kErrorTypeValidation, "Line index is too high");
-      goto end;
-    }
-
-    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
-    Object str = STRING_OBJ(cstr_to_string(bufstr));
-
-    // Vim represents NULs as NLs, but this may confuse clients.
-    if (channel_id != VIML_INTERNAL_CALL) {
-      strchrsub(str.data.string.data, '\n', '\0');
-    }
-
-    rv.items[i] = str;
+  if (!buf_collect_lines(buf, rv.size, start,
+                         (channel_id != VIML_INTERNAL_CALL), &rv, err)) {
+    goto end;
   }
 
 end:
@@ -245,14 +312,14 @@ void buffer_set_line_slice(Buffer buffer,
 }
 
 
-/// Replaces line range on the buffer
+/// Sets (replaces) a line-range in the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
-/// as length+1+index, i e -1 refers to the index past the end. So to change
-/// or delete the last element set start=-2 and end=-1.
+/// as length+1+index: -1 refers to the index past the end. So to change
+/// or delete the last element use start=-2 and end=-1.
 ///
-/// To insert lines at a given index, set both start and end to the same index.
-/// To delete a range of lines, set replacement to an empty array.
+/// To insert lines at a given index, set `start` and `end` to the same index.
+/// To delete a range of lines, set `replacement` to an empty array.
 ///
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
@@ -406,7 +473,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
                 false);
   }
 
-  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
 
   if (save_curbuf.br_buf == NULL) {
     fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
@@ -420,6 +487,41 @@ end:
   xfree(lines);
   restore_win_for_buf(save_curwin, save_curtab, &save_curbuf);
   try_end(err);
+}
+
+/// Returns the byte offset for a line.
+///
+/// Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is one byte.
+/// 'fileformat' and 'fileencoding' are ignored. The line index just after the
+/// last line gives the total byte-count of the buffer. A final EOL byte is
+/// counted if it would be written, see 'eol'.
+///
+/// Unlike |line2byte()|, throws error for out-of-bounds indexing.
+/// Returns -1 for unloaded buffer.
+///
+/// @param buffer     Buffer handle
+/// @param index      Line index
+/// @param[out] err   Error details, if any
+/// @return Integer byte offset, or -1 for unloaded buffer.
+Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
+  FUNC_API_SINCE(5)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    return -1;
+  }
+
+  if (index < 0 || index > buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
+    return 0;
+  }
+
+  return ml_find_line_or_offset(buf, (int)index+1, NULL, true);
 }
 
 /// Gets a buffer-scoped (b:) variable.
@@ -455,19 +557,18 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
     return -1;
   }
 
-  return buf->b_changedtick;
+  return buf_get_changedtick(buf);
 }
 
-/// Gets a list of dictionaries describing buffer-local mappings.
-/// The "buffer" key in the returned dictionary reflects the buffer
-/// handle where the mapping is present.
+/// Gets a list of buffer-local |mapping| definitions.
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param  buffer     Buffer handle
 /// @param[out]  err   Error details, if any
-/// @returns Array of maparg()-like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings.
+///          The "buffer" key holds the associated buffer handle.
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
-    FUNC_API_SINCE(3)
+  FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -476,6 +577,46 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   }
 
   return keymap_array(mode, buf);
+}
+
+/// Gets a map of buffer-local |user-commands|.
+///
+/// @param  buffer  Buffer handle.
+/// @param  opts  Optional parameters. Currently not used.
+/// @param[out]  err   Error details, if any.
+///
+/// @returns Map of maps describing commands.
+Dictionary nvim_buf_get_commands(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(4)
+{
+  bool global = (buffer == -1);
+  bool builtin = false;
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+    if (!strequal("builtin", k.data)) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+    if (strequal("builtin", k.data)) {
+      builtin = v.data.boolean;
+    }
+  }
+
+  if (global) {
+    if (builtin) {
+      api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+    return commands_array(NULL);
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (builtin || !buf) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+  return commands_array(buf);
 }
 
 /// Sets a buffer-scoped (b:) variable
@@ -581,7 +722,8 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 /// @param name       Option name
 /// @param value      Option value
 /// @param[out] err   Error details, if any
-void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
+void nvim_buf_set_option(uint64_t channel_id, Buffer buffer,
+                         String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -590,7 +732,7 @@ void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
-  set_option_to(buf, SREQ_BUF, name, value, err);
+  set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
 }
 
 /// Gets the buffer number
@@ -664,10 +806,27 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   }
 }
 
-/// Checks if a buffer is valid
+/// Checks if a buffer is valid and loaded. See |api-buffer| for more info
+/// about unloaded buffers.
 ///
 /// @param buffer Buffer handle
-/// @return true if the buffer is valid, false otherwise
+/// @return true if the buffer is valid and loaded, false otherwise.
+Boolean nvim_buf_is_loaded(Buffer buffer)
+  FUNC_API_SINCE(5)
+{
+  Error stub = ERROR_INIT;
+  buf_T *buf = find_buffer_by_handle(buffer, &stub);
+  api_clear_error(&stub);
+  return buf && buf->b_ml.ml_mfp != NULL;
+}
+
+/// Checks if a buffer is valid.
+///
+/// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
+/// for more info about unloaded buffers.
+///
+/// @param buffer Buffer handle
+/// @return true if the buffer is valid, false otherwise.
 Boolean nvim_buf_is_valid(Buffer buffer)
   FUNC_API_SINCE(1)
 {
@@ -808,7 +967,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   return src_id;
 }
 
-/// Clears highlights from a given source group and a range of lines
+/// Clears highlights and virtual text from a given source id and range of lines
 ///
 /// To clear a source group in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
@@ -840,6 +999,89 @@ void nvim_buf_clear_highlight(Buffer buffer,
   }
 
   bufhl_clear_line_range(buf, (int)src_id, (int)line_start+1, (int)line_end);
+}
+
+
+/// Set the virtual text (annotation) for a buffer line.
+///
+/// By default (and currently the only option) the text will be placed after
+/// the buffer text. Virtual text will never cause reflow, rather virtual
+/// text will be truncated at the end of the screen line. The virtual text will
+/// begin after one cell to the right of the ordinary text, this will contain
+/// the |lcs-eol| char if set, otherwise just be a space.
+///
+/// The same src_id can be used for both virtual text and highlights added by
+/// nvim_buf_add_highlight. Virtual text is cleared using
+/// nvim_buf_clear_highlight.
+///
+/// @param buffer     Buffer handle
+/// @param src_id     Source group to use or 0 to use a new group,
+///                   or -1 for a ungrouped annotation
+/// @param line       Line to annotate with virtual text (zero-indexed)
+/// @param chunks     A list of [text, hl_group] arrays, each representing a
+///                   text chunk with specified highlight. `hl_group` element
+///                   can be omitted for no highlight.
+/// @param opts       Optional parameters. Currently not used.
+/// @param[out] err   Error details, if any
+/// @return The src_id that was used
+Integer nvim_buf_set_virtual_text(Buffer buffer,
+                                  Integer src_id,
+                                  Integer line,
+                                  Array chunks,
+                                  Dictionary opts,
+                                  Error *err)
+  FUNC_API_SINCE(5)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (line < 0 || line >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  src_id = bufhl_add_virt_text(buf, (int)src_id, (linenr_T)line+1,
+                               virt_text);
+  return src_id;
+
+free_exit:
+  kv_destroy(virt_text);
+  return 0;
 }
 
 // Check if deleting lines made the cursor position invalid.

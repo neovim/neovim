@@ -37,7 +37,7 @@ typedef struct growarray {
 static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
 {
   if ((int)item_size != gap->ga_itemsize) {
-    WLOG("wrong item size (%d), should be %d", item_size, gap->ga_itemsize);
+    WLOG("wrong item size (%zu), should be %d", item_size, gap->ga_itemsize);
   }
   ga_grow(gap, 1);
   return ((char *)gap->ga_data) + (item_size * (size_t)gap->ga_len++);

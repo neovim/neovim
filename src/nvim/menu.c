@@ -63,8 +63,8 @@ ex_menu(exarg_T *eap)
   char_u      *p;
   int i;
   long pri_tab[MENUDEPTH + 1];
-  int enable = MAYBE;               /* TRUE for "menu enable", FALSE for "menu
-                                     * disable */
+  TriState enable = kNone;        // kTrue for "menu enable",
+                                  // kFalse for "menu disable
   vimmenu_T menuarg;
 
   modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
@@ -97,7 +97,7 @@ ex_menu(exarg_T *eap)
     while (*arg != NUL && *arg != ' ') {
       if (*arg == '\\')
         STRMOVE(arg, arg + 1);
-      mb_ptr_adv(arg);
+      MB_PTR_ADV(arg);
     }
     if (*arg != NUL) {
       *arg++ = NUL;
@@ -133,10 +133,10 @@ ex_menu(exarg_T *eap)
    * Check for "disable" or "enable" argument.
    */
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
-    enable = TRUE;
+    enable = kTrue;
     arg = skipwhite(arg + 6);
   } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
-    enable = FALSE;
+    enable = kFalse;
     arg = skipwhite(arg + 7);
   }
 
@@ -160,22 +160,21 @@ ex_menu(exarg_T *eap)
   /*
    * If there is only a menu name, display menus with that name.
    */
-  if (*map_to == NUL && !unmenu && enable == MAYBE) {
+  if (*map_to == NUL && !unmenu && enable == kNone) {
     show_menus(menu_path, modes);
     goto theend;
-  } else if (*map_to != NUL && (unmenu || enable != MAYBE)) {
+  } else if (*map_to != NUL && (unmenu || enable != kNone)) {
     EMSG(_(e_trailing));
     goto theend;
   }
 
-  if (enable != MAYBE) {
-    /*
-     * Change sensitivity of the menu.
-     * For the PopUp menu, remove a menu for each mode separately.
-     * Careful: menu_nable_recurse() changes menu_path.
-     */
-    if (STRCMP(menu_path, "*") == 0)            /* meaning: do all menus */
+  if (enable != kNone) {
+    // Change sensitivity of the menu.
+    // For the PopUp menu, remove a menu for each mode separately.
+    // Careful: menu_nable_recurse() changes menu_path.
+    if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
       menu_path = (char_u *)"";
+    }
 
     if (menu_is_popup(menu_path)) {
       for (i = 0; i < MENU_INDEX_TIP; ++i)
@@ -825,8 +824,8 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
       msg_outnum((long)menu->priority);
       MSG_PUTS(" ");
     }
-    /* Same highlighting as for directories!? */
-    msg_outtrans_attr(menu->name, hl_attr(HLF_D));
+    // Same highlighting as for directories!?
+    msg_outtrans_attr(menu->name, HL_ATTR(HLF_D));
   }
 
   if (menu != NULL && menu->children == NULL) {
@@ -854,7 +853,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
           msg_putchar(' ');
         MSG_PUTS(" ");
         if (*menu->strings[bit] == NUL) {
-          msg_puts_attr("<Nop>", hl_attr(HLF_8));
+          msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
         } else {
           msg_outtrans_special(menu->strings[bit], false);
         }
@@ -1099,7 +1098,7 @@ char_u *menu_name_skip(char_u *const name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p)) {
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
     if (*p == '\\' || *p == Ctrl_V) {
       STRMOVE(p, p + 1);
       if (*p == NUL)
@@ -1187,7 +1186,7 @@ get_menu_cmd_modes(
       modes = MENU_NORMAL_MODE;
       break;
     }
-  /* FALLTHROUGH */
+    FALLTHROUGH;
   default:
     cmd--;
     if (forceit) {
@@ -1549,9 +1548,11 @@ static void menu_unescape_name(char_u *name)
 {
   char_u  *p;
 
-  for (p = name; *p && *p != '.'; mb_ptr_adv(p))
-    if (*p == '\\')
+  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
+    if (*p == '\\') {
       STRMOVE(p, p + 1);
+    }
+  }
 }
 
 /*

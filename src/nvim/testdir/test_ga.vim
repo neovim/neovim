@@ -11,13 +11,13 @@ func Test_ga_command()
   new
   set display=uhex
   call assert_equal("\nNUL",                            Do_ga(''))
-  call assert_equal("\n<<01>>  1,  Hex 01,  Octal 001", Do_ga("\x01"))
-  call assert_equal("\n<<09>>  9,  Hex 09,  Octal 011", Do_ga("\t"))
+  call assert_equal("\n<<01>>  1,  Hex 01,  Oct 001, Digr SH", Do_ga("\x01"))
+  call assert_equal("\n<<09>>  9,  Hex 09,  Oct 011, Digr HT", Do_ga("\t"))
 
   set display=
   call assert_equal("\nNUL",                             Do_ga(''))
-  call assert_equal("\n<^A>  1,  Hex 01,  Octal 001",    Do_ga("\x01"))
-  call assert_equal("\n<^I>  9,  Hex 09,  Octal 011",    Do_ga("\t"))
+  call assert_equal("\n<^A>  1,  Hex 01,  Oct 001, Digr SH",    Do_ga("\x01"))
+  call assert_equal("\n<^I>  9,  Hex 09,  Oct 011, Digr HT",    Do_ga("\t"))
 
   call assert_equal("\n<e>  101,  Hex 65,  Octal 145",   Do_ga('e'))
 
@@ -26,8 +26,8 @@ func Test_ga_command()
   endif
 
   " Test a few multi-bytes characters.
-  call assert_equal("\n<é> 233, Hex 00e9, Octal 351",    Do_ga('é'))
-  call assert_equal("\n<ẻ> 7867, Hex 1ebb, Octal 17273", Do_ga('ẻ'))
+  call assert_equal("\n<é> 233, Hex 00e9, Oct 351, Digr e'",    Do_ga('é'))
+  call assert_equal("\n<ẻ> 7867, Hex 1ebb, Oct 17273, Digr e2", Do_ga('ẻ'))
 
   " Test with combining characters.
   call assert_equal("\n<e>  101,  Hex 65,  Octal 145 < ́> 769, Hex 0301, Octal 1401", Do_ga("e\u0301"))

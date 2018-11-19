@@ -201,6 +201,28 @@ describe('terminal buffer', function()
     feed([[<C-\><C-n>]])
     feed_command('bdelete!')
   end)
+
+  describe('handles confirmations', function()
+    it('with :confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('confirm bdelete')
+      screen:expect{any='Close "term://', attr_ignore=true}
+    end)
+
+    it('with &confirm', function()
+      feed_command('terminal')
+      feed('<c-\\><c-n>')
+      feed_command('bdelete')
+      screen:expect{any='E89', attr_ignore=true}
+      feed('<cr>')
+      eq('terminal', eval('&buftype'))
+      feed_command('set confirm | bdelete')
+      screen:expect{any='Close "term://', attr_ignore=true}
+      feed('y')
+      neq('terminal', eval('&buftype'))
+    end)
+  end)
 end)
 
 describe('No heap-buffer-overflow when using', function()
@@ -220,7 +242,7 @@ describe('No heap-buffer-overflow when using', function()
     feed('$')
     -- Let termopen() modify the buffer
     feed_command('call termopen("echo")')
-    wait()
+    eq(2, eval('1+1')) -- check nvim still running
     feed_command('bdelete!')
   end)
 end)

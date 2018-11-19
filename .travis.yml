@@ -41,6 +41,10 @@ env:
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
+    # Environment variables for ccache
+    - CCACHE_COMPRESS=1
+    - CCACHE_SLOPPINESS=time_macros,file_macro
+    - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
 
 jobs:
   include:
@@ -49,6 +53,7 @@ jobs:
       compiler: clang
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
+        # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
       sudo: true
     - os: linux
@@ -60,14 +65,14 @@ jobs:
     - os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
-      compiler: gcc -m32
+      compiler: gcc
       env: BUILD_32BIT=ON
     - os: osx
       compiler: clang
-      osx_image: xcode7.3  # macOS 10.11
+      osx_image: xcode9.4  # macOS 10.13
     - os: osx
       compiler: gcc
-      osx_image: xcode7.3  # macOS 10.11
+      osx_image: xcode9.4  # macOS 10.13
     - os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
@@ -87,7 +92,6 @@ install:        ci/install.sh
 before_script:  ci/before_script.sh
 script:         ci/script.sh
 before_cache:   ci/before_cache.sh
-after_success:  ci/after_success.sh
 
 addons:
   apt:
@@ -118,6 +122,7 @@ branches:
 
 cache:
   apt: true
+  ccache: true
   directories:
     - "$HOME/.cache/pip"
     - "$HOME/.cache/nvim-deps"

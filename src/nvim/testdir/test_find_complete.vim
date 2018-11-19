@@ -88,6 +88,12 @@ func Test_find_complete()
   call feedkeys(":find f\t\n", "xt")
   call assert_equal('Holy Grail', getline(1))
 
+  " Test that find completion on directory appends a slash
+  call feedkeys(":find in/pa\tfile.txt\n", "xt")
+  call assert_equal('E.T.', getline(1))
+  call feedkeys(":find ./i\tstuff.txt\n", "xt")
+  call assert_equal('Another Holy Grail', getline(1))
+
   " Test shortening of
   "
   "    foo/x/bar/voyager.txt

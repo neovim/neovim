@@ -27,7 +27,7 @@ cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
 cppimport('sys/stat.h')
 cppimport('fcntl.h')
-cppimport('uv-errno.h')
+cppimport('uv.h')
 
 local s = ''
 for i = 0, 255 do

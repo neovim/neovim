@@ -16,6 +16,7 @@
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -120,9 +121,7 @@ bool try_end(Error *err)
   // try_enter/try_leave.
   trylevel--;
 
-  // Without this it stops processing all subsequent VimL commands and
-  // generates strange error messages if I e.g. try calling Test() in a
-  // cycle
+  // Set by emsg(), affects aborting().  See also enter_cleanup().
   did_emsg = false;
 
   if (got_int) {
@@ -163,7 +162,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key '%s' not found", key.data);
+    api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     return (Object)OBJECT_INIT;
   }
 
@@ -192,13 +191,12 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
   }
 
   if (key.size == 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Empty variable names aren't allowed");
+    api_set_error(err, kErrorTypeValidation, "Key name is empty");
     return rv;
   }
 
   if (key.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "Key length is too high");
+    api_set_error(err, kErrorTypeValidation, "Key name is too long");
     return rv;
   }
 
@@ -221,7 +219,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key does not exist: %s",
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
                     key.data);
     } else {
       // Return the old value
@@ -285,9 +283,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
                                       type, from);
 
   if (!flags) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
                   name.data);
     return rv;
   }
@@ -304,15 +300,14 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.data = stringval;
       rv.data.string.size = strlen(stringval);
     } else {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to get value for option \"%s\"",
+      api_set_error(err, kErrorTypeException,
+                    "Failed to get value for option '%s'",
                     name.data);
     }
   } else {
     api_set_error(err,
                   kErrorTypeException,
-                  "Unknown type for option \"%s\"",
+                  "Unknown type for option '%s'",
                   name.data);
   }
 
@@ -326,7 +321,8 @@ Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(void *to, int type, String name, Object value, Error *err)
+void set_option_to(uint64_t channel_id, void *to, int type,
+                   String name, Object value, Error *err)
 {
   if (name.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Empty option name");
@@ -336,24 +332,20 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid option name \"%s\"",
+    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
                   name.data);
     return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Unable to unset option \"%s\"",
+      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'",
                     name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
       api_set_error(err,
                     kErrorTypeException,
-                    "Cannot unset option \"%s\" "
+                    "Cannot unset option '%s' "
                     "because it doesn't have a global value",
                     name.data);
       return;
@@ -363,50 +355,55 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     }
   }
 
-  int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  int numval = 0;
+  char *stringval = NULL;
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "Option \"%s\" requires a boolean value",
+                    "Option '%s' requires a Boolean value",
                     name.data);
       return;
     }
 
-    bool val = value.data.boolean;
-    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
+    numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires an integer value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires an integer value",
                     name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Value for option \"%s\" is outside range",
+      api_set_error(err, kErrorTypeValidation,
+                    "Value for option '%s' is out of range",
                     name.data);
       return;
     }
 
-    int val = (int) value.data.integer;
-    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
+    numval = (int)value.data.integer;
   } else {
     if (value.type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option \"%s\" requires a string value",
+      api_set_error(err, kErrorTypeValidation,
+                    "Option '%s' requires a string value",
                     name.data);
       return;
     }
 
-    set_option_value_for(name.data, 0, value.data.string.data,
-            opt_flags, type, to, err);
+    stringval = (char *)value.data.string.data;
   }
+
+  const scid_T save_current_SID = current_SID;
+  current_SID = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  current_channel_id = channel_id;
+
+  const int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  set_option_value_for(name.data, numval, stringval,
+                       opt_flags, type, to, err);
+
+  current_SID = save_current_SID;
 }
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
@@ -678,7 +675,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 String cchar_to_string(char c)
 {
   char buf[] = { c, NUL };
-  return (String) {
+  return (String){
     .data = xmemdupz(buf, 1),
     .size = (c != NUL) ? 1 : 0
   };
@@ -694,13 +691,13 @@ String cchar_to_string(char c)
 String cstr_to_string(const char *str)
 {
     if (str == NULL) {
-        return (String) STRING_INIT;
+      return (String)STRING_INIT;
     }
 
     size_t len = strlen(str);
-    return (String) {
-        .data = xmemdupz(str, len),
-        .size = len
+    return (String){
+      .data = xmemdupz(str, len),
+      .size = len,
     };
 }
 
@@ -715,7 +712,7 @@ String cstr_to_string(const char *str)
 String cbuf_to_string(const char *buf, size_t size)
   FUNC_ATTR_NONNULL_ALL
 {
-  return (String) {
+  return (String){
     .data = xmemdupz(buf, size),
     .size = size
   };
@@ -730,9 +727,46 @@ String cbuf_to_string(const char *buf, size_t size)
 String cstr_as_string(char *str) FUNC_ATTR_PURE
 {
   if (str == NULL) {
-    return (String) STRING_INIT;
+    return (String)STRING_INIT;
   }
-  return (String) { .data = str, .size = strlen(str) };
+  return (String){ .data = str, .size = strlen(str) };
+}
+
+/// Collects `n` buffer lines into array `l`, optionally replacing newlines
+/// with NUL.
+///
+/// @param buf Buffer to get lines from
+/// @param n Number of lines to collect
+/// @param replace_nl Replace newlines ("\n") with NUL
+/// @param start Line number to start from
+/// @param[out] l Lines are copied here
+/// @param err[out] Error, if any
+/// @return true unless `err` was set
+bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl,
+                       Array *l, Error *err)
+{
+  for (size_t i = 0; i < n; i++) {
+    int64_t lnum = start + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      if (err != NULL) {
+        api_set_error(err, kErrorTypeValidation, "Line index is too high");
+      }
+      return false;
+    }
+
+    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    if (replace_nl) {
+      // Vim represents NULs as NLs, but this may confuse clients.
+      strchrsub(str.data.string.data, '\n', '\0');
+    }
+
+    l->items[i] = str;
+  }
+
+  return true;
 }
 
 /// Converts from type Object to a VimL value.
@@ -1023,6 +1057,16 @@ Array copy_array(Array array)
   return rv;
 }
 
+Dictionary copy_dictionary(Dictionary dict)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < dict.size; i++) {
+    KeyValuePair item = dict.items[i];
+    PUT(rv, item.key.data, copy_object(item.value));
+  }
+  return rv;
+}
+
 /// Creates a deep clone of an object
 Object copy_object(Object obj)
 {
@@ -1040,12 +1084,7 @@ Object copy_object(Object obj)
       return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
-      Dictionary rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.dictionary.size; i++) {
-        KeyValuePair item = obj.data.dictionary.items[i];
-        PUT(rv, item.key.data, copy_object(item.value));
-      }
-      return DICTIONARY_OBJ(rv);
+      return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
     }
     default:
       abort();
@@ -1118,7 +1157,7 @@ static void set_option_value_err(char *key,
 }
 
 void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;
@@ -1142,7 +1181,7 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
-/// @returns An array of maparg() like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 {
   Array mappings = ARRAY_DICT_INIT;

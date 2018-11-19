@@ -3,6 +3,7 @@
 func SetUp()
   new dummy
   set nrformats&vim
+  set nrformats+=octal
 endfunc
 
 func TearDown()
@@ -364,11 +365,25 @@ endfunc
 "     Expected:
 "     1) Ctrl-a on visually selected zero
 "     111
+"
+" Also: 019 with "01" selected increments to "029".
 func Test_visual_increment_15()
   call setline(1, ["101"])
   exec "norm! lv\<C-A>"
   call assert_equal(["111"], getline(1, '$'))
   call assert_equal([0, 1, 2, 0], getpos('.'))
+
+  call setline(1, ["019"])
+  exec "norm! 0vl\<C-A>"
+  call assert_equal("029", getline(1))
+
+  call setline(1, ["01239"])
+  exec "norm! 0vlll\<C-A>"
+  call assert_equal("01249", getline(1))
+
+  call setline(1, ["01299"])
+  exec "norm! 0vlll\<C-A>"
+  call assert_equal("1309", getline(1))
 endfunc
 
 " 16) increment right aligned numbers
@@ -756,5 +771,12 @@ func Test_normal_increment_03()
   call assert_equal([0, 3, 25, 0], getpos('.'))
 endfunc
 
+func Test_increment_empty_line()
+  new
+  call setline(1, ['0', '0', '0', '0', '0', '0', ''])
+  exe "normal Gvgg\<C-A>"
+  call assert_equal(['1', '1', '1', '1', '1', '1', ''], getline(1, 7))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

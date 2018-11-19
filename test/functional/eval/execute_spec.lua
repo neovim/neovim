@@ -161,13 +161,13 @@ describe('execute()', function()
       eq('42', eval('g:mes'))
 
       command('let g:mes = execute("echon 13", "silent")')
-      screen:expect([[
+      screen:expect{grid=[[
       ^                                        |
       ~                                       |
       ~                                       |
       ~                                       |
                                               |
-      ]])
+      ]], unchanged=true}
       eq('13', eval('g:mes'))
     end)
 

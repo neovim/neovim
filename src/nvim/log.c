@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#if !defined(WIN32)
+# include <sys/time.h>  // for gettimeofday()
+#endif
 #include <uv.h>
 
 #include "nvim/log.h"
@@ -98,13 +101,19 @@ void log_unlock(void)
 /// @param context    description of a shared context or subsystem
 /// @param func_name  function name, or NULL
 /// @param line_num   source line number, or -1
-bool do_log(int log_level, const char *context, const char *func_name,
+bool logmsg(int log_level, const char *context, const char *func_name,
             int line_num, bool eol, const char *fmt, ...)
-  FUNC_ATTR_UNUSED
+  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
   if (log_level < MIN_LOG_LEVEL) {
     return false;
   }
+
+#ifdef EXITFREE
+  // Logging after we've already started freeing all our memory will only cause
+  // pain.  We need access to VV_PROGPATH, homedir, etc.
+  assert(!entered_free_all_mem);
+#endif
 
   log_lock();
   bool ret = false;
@@ -195,7 +204,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name,
   }
   assert(24 + exepathlen < IOSIZE);  // Must fit in `cmdbuf` below.
 
-  char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace))];
+  char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace)) + MAXPATHL];
   snprintf(cmdbuf, sizeof(cmdbuf), "addr2line -e %s -f -p", exepath);
   for (int i = 1; i < trace_size; i++) {
     char buf[20];  // 64-bit pointer 0xNNNNNNNNNNNNNNNN with leading space.
@@ -236,7 +245,8 @@ end:
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
                            const char *func_name, int line_num, bool eol,
-                           const char* fmt, ...)
+                           const char *fmt, ...)
+  FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;
   va_start(args, fmt);
@@ -260,25 +270,33 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
-  // format current timestamp in local time
+  // Format the timestamp.
   struct tm local_time;
-  if (os_get_localtime(&local_time) == NULL) {
+  if (os_localtime(&local_time) == NULL) {
     return false;
   }
   char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%Y/%m/%d %H:%M:%S",
+  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
                &local_time) == 0) {
     return false;
   }
 
-  // print the log message prefixed by the current timestamp and pid
+  int millis = 0;
+#if !defined(WIN32)
+  struct timeval curtime;
+  if (gettimeofday(&curtime, NULL) == 0) {
+    millis = (int)curtime.tv_usec / 1000;
+  }
+#endif
+
+  // Print the log message.
   int64_t pid = os_get_pid();
   int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s %" PRId64 " %s", date_time,
-              log_levels[log_level], pid,
+    ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
+              log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "?:" : context))
-    : fprintf(log_file, "%s %s %" PRId64 " %s%s:%d: ", date_time,
-              log_levels[log_level], pid,
+    : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
+              log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "" : context),
               func_name, line_num);
   if (rv < 0) {

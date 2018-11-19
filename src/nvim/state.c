@@ -64,6 +64,12 @@ getkey:
       may_sync_undo();
     }
 
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+    char *keyname = key == K_EVENT
+                    ? "K_EVENT" : (char *)get_special_key_name(key, mod_mask);
+    DLOG("input: %s", keyname);
+#endif
+
     int execute_result = s->execute(s, key);
     if (!execute_result) {
       break;
@@ -73,13 +79,13 @@ getkey:
   }
 }
 
-/// Return TRUE if in the current mode we need to use virtual.
-int virtual_active(void)
+/// Return true if in the current mode we need to use virtual.
+bool virtual_active(void)
 {
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"
   // being used.
-  if (virtual_op != MAYBE) {
+  if (virtual_op != kNone) {
     return virtual_op;
   }
   return ve_flags == VE_ALL

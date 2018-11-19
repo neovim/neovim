@@ -61,6 +61,7 @@ void rpc_start(Channel *channel)
   rpc->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rpc->subscribed_events = pmap_new(cstr_t)();
   rpc->next_request_id = 1;
+  rpc->info = (Dictionary)ARRAY_DICT_INIT;
   kv_init(rpc->call_stack);
 
   if (channel->streamtype != kChannelStreamInternal) {
@@ -286,7 +287,6 @@ static void parse_msgpack(Channel *channel)
   }
 }
 
-
 static void handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -311,22 +311,25 @@ static void handle_request(Channel *channel, msgpack_object *request)
     api_clear_error(&error);
     return;
   }
-  // Retrieve the request handler
+
   MsgpackRpcRequestHandler handler;
   msgpack_object *method = msgpack_rpc_method(request);
+  handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
+                                        method->via.bin.size,
+                                        &error);
 
-  if (method) {
-    handler = msgpack_rpc_get_handler_for(method->via.bin.ptr,
-                                          method->via.bin.size);
-  } else {
-    handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
+  // check method arguments
+  Array args = ARRAY_DICT_INIT;
+  if (!ERROR_SET(&error)
+      && !msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
+    api_set_error(&error, kErrorTypeException, "Invalid method arguments");
   }
 
-  Array args = ARRAY_DICT_INIT;
-  if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
-    handler.fn = msgpack_rpc_handle_invalid_arguments;
-    handler.async = true;
+  if (ERROR_SET(&error)) {
+    send_error(channel, request_id, error.msg);
+    api_clear_error(&error);
+    api_free_array(args);
+    return;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
@@ -347,6 +350,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
     }
   } else {
     multiqueue_put(channel->events, on_request_event, 1, evdata);
+    DLOG("RPC: scheduled %.*s", method->via.bin.size, method->via.bin.ptr);
   }
 }
 
@@ -502,6 +506,11 @@ end:
 static void unsubscribe(Channel *channel, char *event)
 {
   char *event_string = pmap_get(cstr_t)(event_strings, event);
+  if (!event_string) {
+      WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
+           channel->id, event);
+      return;
+  }
   pmap_del(cstr_t)(channel->rpc.subscribed_events, event_string);
 
   map_foreach_value(channels, channel, {
@@ -553,6 +562,7 @@ void rpc_free(Channel *channel)
 
   pmap_free(cstr_t)(channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
+  api_free_dictionary(channel->rpc.info);
 }
 
 static bool is_rpc_response(msgpack_object *obj)
@@ -642,6 +652,23 @@ static WBuffer *serialize_response(uint64_t channel_id,
   return rv;
 }
 
+void rpc_set_client_info(uint64_t id, Dictionary info)
+{
+  Channel *chan = find_rpc_channel(id);
+  if (!chan) {
+    abort();
+  }
+
+  api_free_dictionary(chan->rpc.info);
+  chan->rpc.info = info;
+  channel_info_changed(chan, false);
+}
+
+Dictionary rpc_client_info(Channel *chan)
+{
+  return copy_dictionary(chan->rpc.info);
+}
+
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 #define REQ "[request]  "
 #define RES "[response] "
@@ -717,4 +744,3 @@ static void log_msg_close(FILE *f, msgpack_object msg)
   log_unlock();
 }
 #endif
-

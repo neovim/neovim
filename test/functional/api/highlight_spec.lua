@@ -5,7 +5,7 @@ local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
 local meths = helpers.meths
 
-describe('highlight api',function()
+describe('API: highlight',function()
   local expected_rgb = {
     background = Screen.colors.Yellow,
     foreground = Screen.colors.Red,

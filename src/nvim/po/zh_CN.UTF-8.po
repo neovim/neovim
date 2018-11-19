@@ -2461,7 +2461,7 @@ msgstr "E216: 无此组或事件: %s"
 #: ../fileio.c:6090
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- 自动命令 ---"
@@ -2485,7 +2485,7 @@ msgstr "E218: 自动命令嵌套层数过深"
 
 #: ../fileio.c:7143
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s 自动命令 \"%s\""
 
 #: ../fileio.c:7149
@@ -3367,7 +3367,7 @@ msgstr "-q [errorfile]  编辑第一个出错处的文件"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -5292,7 +5292,7 @@ msgstr "警告: 区域 %s 不支持"
 
 #: ../spell.c:4550
 #, c-format
-msgid "Reading affix file %s ..."
+msgid "Reading affix file %s..."
 msgstr "读取附加文件 %s ……"
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
@@ -5451,7 +5451,7 @@ msgstr "%s 的值与另一个 .aff 文件中使用的值不相同"
 
 #: ../spell.c:5602
 #, c-format
-msgid "Reading dictionary file %s ..."
+msgid "Reading dictionary file %s..."
 msgstr "读取字典文件 %s ……"
 
 #: ../spell.c:5611
@@ -5486,7 +5486,7 @@ msgstr "忽略了含有非 ASCII 字符的 %d 个单词，在 %s 中"
 
 #: ../spell.c:6115
 #, c-format
-msgid "Reading word file %s ..."
+msgid "Reading word file %s..."
 msgstr "读取单词文件 %s ……"
 
 #: ../spell.c:6155
@@ -5556,7 +5556,7 @@ msgstr "单词总数: %d"
 
 #: ../spell.c:7655
 #, c-format
-msgid "Writing suggestion file %s ..."
+msgid "Writing suggestion file %s..."
 msgstr "写入建议文件 %s ……"
 
 #: ../spell.c:7707 ../spell.c:7927
@@ -5583,7 +5583,7 @@ msgstr "警告: 同时指定了 compounding 和 NOBREAK"
 
 #: ../spell.c:7920
 #, c-format
-msgid "Writing spell file %s ..."
+msgid "Writing spell file %s..."
 msgstr "写入拼写文件 %s ……"
 
 #: ../spell.c:7925
