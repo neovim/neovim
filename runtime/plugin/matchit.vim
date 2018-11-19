@@ -716,7 +716,7 @@ fun! s:MultiMatch(spflag, mode)
       execute "if " . skip . "| let skip = '0' | endif"
     catch /^Vim\%((\a\+)\)\=:E363/
       " We won't find anything, so skip searching, should keep Vim responsive.
-      return
+      return {}
     endtry
   endif
   mark '
