@@ -68,7 +68,12 @@ describe("shell command :!", function()
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]], {
+      -- test/functional/helpers.lua defaults to background=light.
+      [1] = {reverse = true},
+      [3] = {bold = true},
+      [10] = {foreground = 2},
+    })
   end)
 end)
 

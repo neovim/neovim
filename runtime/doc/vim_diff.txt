@@ -27,6 +27,7 @@ a complete and centralized reference of those differences.
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
+- 'background' always defaults to "dark"
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
 - 'belloff' defaults to "all"

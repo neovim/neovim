@@ -72,6 +72,7 @@
 -- To debug screen tests, see Screen:redraw_debug().
 
 local global_helpers = require('test.helpers')
+local deepcopy = global_helpers.deepcopy
 local shallowcopy = global_helpers.shallowcopy
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
@@ -174,6 +175,10 @@ end
 
 function Screen:set_default_attr_ids(attr_ids)
   self._default_attr_ids = attr_ids
+end
+
+function Screen:get_default_attr_ids()
+  return deepcopy(self._default_attr_ids)
 end
 
 function Screen:set_default_attr_ignore(attr_ignore)

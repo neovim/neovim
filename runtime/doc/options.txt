@@ -703,47 +703,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 	been set.
 
 							*'background'* *'bg'*
-'background' 'bg'	string	(default "dark" or "light", see below)
+'background' 'bg'	string	(default "dark")
 			global
-	When set to "dark", Vim will try to use colors that look good on a
-	dark background.  When set to "light", Vim will try to use colors that
-	look good on a light background.  Any other value is illegal.
-	Vim tries to set the default value according to the terminal used.
-	This will not always be correct.
-	Setting this option does not change the background color, it tells Vim
-	what the background color looks like.  For changing the background
-	color, see |:hi-normal|.
+	When set to "dark" or "light", Nvim will adjust the default color
+	groups for a dark or light background, respectively.
 
-	When 'background' is set Vim will adjust the default color groups for
-	the new value.  But the colors used for syntax highlighting will not
-	change.					*g:colors_name*
+	This option does NOT change the background color, it tells Nvim what
+	the "inherited" (terminal/GUI) background looks like.
+	See |:hi-normal| if you want to set the background color explicitly.
+						*g:colors_name*
 	When a color scheme is loaded (the "g:colors_name" variable is set)
 	setting 'background' will cause the color scheme to be reloaded.  If
 	the color scheme adjusts to the value of 'background' this will work.
 	However, if the color scheme sets 'background' itself the effect may
 	be undone.  First delete the "g:colors_name" variable when needed.
 
-	When setting 'background' to the default value with: >
-		:set background&
-<	Vim will guess the value.  In the GUI this should work correctly,
-	in other cases Vim might not be able to guess the right value.
-
-	When starting the GUI, the default value for 'background' will be
-	"light".  When the value is not set in the gvimrc, and Vim detects
-	that the background is actually quite dark, 'background' is set to
-	"dark".  But this happens only AFTER the gvimrc file has been read
-	(because the window needs to be opened to find the actual background
-	color).  To get around this, force the GUI window to be opened by
-	putting a ":gui" command in the gvimrc file, before where the value
-	of 'background' is used (e.g., before ":syntax on").
-
-	For Windows the default is "dark". "dark" should be used if $COLORFGBG
-	suggests a dark	background (not yet implemented). Otherwise the default
-	is "light".
-
 	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
-		:if $TERM == "xterm"
+		:if $TERM ==# "xterm"
 		:  set background=dark
 		:endif
 <	When this option is set, the default settings for the highlight groups
