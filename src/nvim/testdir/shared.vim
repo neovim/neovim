@@ -145,15 +145,12 @@ func WaitFor(expr, ...)
     let slept = 0
   endif
   for i in range(timeout / 10)
-    try
-      if eval(a:expr)
-	if has('reltime')
-	  return float2nr(reltimefloat(reltime(start)) * 1000)
-	endif
-	return slept
+    if eval(a:expr)
+      if has('reltime')
+	return float2nr(reltimefloat(reltime(start)) * 1000)
       endif
-    catch
-    endtry
+      return slept
+    endif
     if !has('reltime')
       let slept += 10
     endif
