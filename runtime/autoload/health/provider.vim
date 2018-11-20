@@ -400,6 +400,8 @@ function! s:check_python(version) abort
     endfor
   endif
 
+  let pip = 'pip' . (a:version == 2 ? '' : '3')
+
   if !empty(python_bin)
     let [pyversion, current, latest, status] = s:version_info(python_bin)
     if a:version != str2nr(pyversion)
@@ -410,28 +412,35 @@ function! s:check_python(version) abort
       call health#report_warn('Python 3.3+ is recommended.')
     endif
 
-    call health#report_info('Python'.a:version.' version: ' . pyversion)
+    call health#report_info('Python version: ' . pyversion)
     if s:is_bad_response(status)
-      call health#report_info(printf('%s-neovim version: %s (%s)', pyname, current, status))
+      call health#report_info(printf('pynvim version: %s (%s)', current, status))
     else
-      call health#report_info(printf('%s-neovim version: %s', pyname, current))
+      call health#report_info(printf('pynvim version: %s', current))
+      let [module_found, _msg] = provider#pythonx#CheckForModule(python_bin,
+            \ 'neovim', a:version)
+      if !module_found
+        call health#report_error('Importing "neovim" failed.',
+              \ "Reinstall \"pynvim\" and optionally \"neovim\" packages.\n" .
+              \    pip ." uninstall pynvim neovim\n" .
+              \    pip ." install pynvim\n" .
+              \    pip ." install neovim # only if needed by third-party software")
+      endif
     endif
 
     if s:is_bad_response(current)
       call health#report_error(
-        \ "Neovim Python client is not installed.\nError: ".current,
-        \ ['Run in shell: pip' . a:version . ' install pynvim'])
+        \ "pynvim is not installed.\nError: ".current,
+        \ ['Run in shell: '. pip .' install pynvim'])
     endif
 
     if s:is_bad_response(latest)
       call health#report_warn('Could not contact PyPI to get latest version.')
       call health#report_error('HTTP request failed: '.latest)
     elseif s:is_bad_response(status)
-      call health#report_warn(printf('Latest %s-neovim is NOT installed: %s',
-            \ pyname, latest))
+      call health#report_warn(printf('Latest pynvim is NOT installed: %s', latest))
     elseif !s:is_bad_response(current)
-      call health#report_ok(printf('Latest %s-neovim is installed: %s',
-            \ pyname, latest))
+      call health#report_ok(printf('Latest pynvim is installed.'))
     endif
   endif
 
