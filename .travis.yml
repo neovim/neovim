@@ -1,5 +1,5 @@
-dist: trusty
-sudo: false
+dist: xenial
+
 language: c
 
 env:
@@ -96,9 +96,9 @@ before_cache:   ci/before_cache.sh
 addons:
   apt:
     packages:
+      - apport
       - autoconf
       - automake
-      - apport
       - build-essential
       - clang
       - cmake
@@ -108,7 +108,7 @@ addons:
       - gdb
       - language-pack-tr
       - libc6-dev-i386
-      - libtool
+      - libtool-bin
       - locales
       - ninja-build
       - pkg-config
