@@ -40,7 +40,7 @@ function! provider#pythonx#Detect(major_ver) abort
   let errors = []
 
   for prog in progs
-    let [result, err] = s:check_interpreter(prog, a:major_ver)
+    let [result, err] = provider#pythonx#CheckForModule(prog, 'pynvim', a:major_ver)
     if result
       return [prog, err]
     endif
@@ -54,19 +54,20 @@ function! provider#pythonx#Detect(major_ver) abort
         \ . ":\n" .  join(errors, "\n")]
 endfunction
 
-" Returns array: [interpreter_exitcode, interpreter_version]
-function! s:check_for_package(prog, package) abort
+" Returns array: [prog_exitcode, prog_version]
+function! s:import_module(prog, module) abort
   let prog_version = system([a:prog, '-c' , printf(
         \ 'import sys; ' .
         \ 'sys.path.remove(""); ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'import pkgutil; ' .
         \ 'exit(2*int(pkgutil.get_loader("%s") is None))',
-        \ a:package)])
+        \ a:module)])
   return [v:shell_error, prog_version]
 endfunction
 
-function! s:check_interpreter(prog, major_version) abort
+" Returns array: [was_success, error_message]
+function! provider#pythonx#CheckForModule(prog, module, major_version) abort
   let prog_path = exepath(a:prog)
   if prog_path ==# ''
     return [0, a:prog . ' not found in search path or not executable.']
@@ -79,7 +80,7 @@ function! s:check_interpreter(prog, major_version) abort
   "   0  pynvim module can be loaded.
   "   2  pynvim module cannot be loaded.
   "   Otherwise something else went wrong (e.g. 1 or 127).
-  let [prog_exitcode, prog_version] = s:check_for_package(a:prog, 'pynvim')
+  let [prog_exitcode, prog_version] = s:import_module(a:prog, 'pynvim')
 
   if prog_exitcode == 2 || prog_exitcode == 0
     " Check version only for expected return codes.

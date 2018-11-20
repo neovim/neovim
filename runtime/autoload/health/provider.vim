@@ -400,6 +400,8 @@ function! s:check_python(version) abort
     endfor
   endif
 
+  let pip = 'pip' . (a:version == 2 ? '' : '3')
+
   if !empty(python_bin)
     let [pyversion, current, latest, status] = s:version_info(python_bin)
     if a:version != str2nr(pyversion)
@@ -415,12 +417,21 @@ function! s:check_python(version) abort
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
     else
       call health#report_info(printf('pynvim version: %s', current))
+      let [module_found, _msg] = provider#pythonx#CheckForModule(python_bin,
+            \ 'neovim', a:version)
+      if !module_found
+        call health#report_error('Importing "neovim" failed.',
+              \ "Reinstall \"pynvim\" and optionally \"neovim\" packages.\n" .
+              \    pip ." uninstall pynvim neovim\n" .
+              \    pip ." install pynvim\n" .
+              \    pip ." install neovim # only if needed by third-party software")
+      endif
     endif
 
     if s:is_bad_response(current)
       call health#report_error(
         \ "pynvim is not installed.\nError: ".current,
-        \ ['Run in shell: pip' . a:version . ' install pynvim'])
+        \ ['Run in shell: '. pip .' install pynvim'])
     endif
 
     if s:is_bad_response(latest)
