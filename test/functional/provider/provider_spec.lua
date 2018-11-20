@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')
+local helpers = require('test.functional.helpers')(nil)
 local call = helpers.call
 local clear = helpers.clear
 local eq = helpers.eq
