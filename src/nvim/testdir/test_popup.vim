@@ -681,14 +681,15 @@ func Test_popup_and_window_resize()
   call term_wait(g:buf, 100)
   call term_sendkeys(g:buf, "\<c-v>")
   call term_wait(g:buf, 100)
+  call WaitFor('term_getline(g:buf, 1) =~ "^!"')
   call assert_match('^!\s*$', term_getline(g:buf, 1))
   exe 'resize +' . (h - 1)
   call term_wait(g:buf, 100)
   redraw!
-  call WaitFor('"" == term_getline(g:buf, 1)')
+  call WaitFor('term_getline(g:buf, 1) == ""')
   call assert_equal('', term_getline(g:buf, 1))
   sleep 100m
-  call WaitFor('"^!" =~ term_getline(g:buf, term_getcursor(g:buf)[0] + 1)')
+  call WaitFor('term_getline(g:buf, term_getcursor(g:buf)[0] + 1) =~ "^!"')
   call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0] + 1))
   bwipe!
 endfunc
