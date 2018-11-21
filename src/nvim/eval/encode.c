@@ -933,7 +933,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     do { \
-      if ((num)) { \
+      if (num) { \
         msgpack_pack_true(packer); \
       } else { \
         msgpack_pack_false(packer); \
