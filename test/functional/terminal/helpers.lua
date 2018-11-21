@@ -43,14 +43,14 @@ local function screen_setup(extra_rows, command, cols, opts)
 
   local screen = Screen.new(cols, 7 + extra_rows)
   screen:set_default_attr_ids({
-    [1] = {reverse = true},   -- focused cursor
-    [2] = {background = 11},  -- unfocused cursor
+    [1] = {reverse = true},   -- TermCursor
+    [2] = {background = 11},  -- TermCursorNC
     [3] = {bold = true},
     [4] = {foreground = 12},
     [5] = {bold = true, reverse = true},
     [6] = {background = 11},
-    [7] = {foreground = 130},
-    [8] = {foreground = 15, background = 1}, -- error message
+    [7] = {foreground = 11},
+    [8] = {foreground = 15, background = 1},  -- Error
     [9] = {foreground = 4},
     [10] = {foreground = 121},  -- "Press ENTER" in embedded :terminal session.
   })

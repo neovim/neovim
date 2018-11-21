@@ -752,7 +752,7 @@ describe('API', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-        [2] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, foreground = Screen.colors.Green},
         [3] = {bold = true, reverse = true},
       })
     end)

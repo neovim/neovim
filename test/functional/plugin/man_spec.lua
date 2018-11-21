@@ -17,7 +17,7 @@ describe(':Man', function()
     local screen
 
     before_each(function()
-      command('syntax off') -- Ignore syntax groups
+      command('syntax off')  -- Ignore syntax groups
       screen = Screen.new(52, 5)
       screen:set_default_attr_ids({
         b = { bold = true },
@@ -27,8 +27,8 @@ describe(':Man', function()
         biu = { bold = true, italic = true, underline = true },
       })
       screen:set_default_attr_ignore({
-        { foreground = Screen.colors.Blue }, -- control chars
-        { bold = true, foreground = Screen.colors.Blue } -- empty line '~'s
+        { foreground = Screen.colors.Cyan },  -- control chars
+        { bold = true, foreground = Screen.colors.Blue }  -- EndOfBuffer "~"
       })
       screen:attach()
     end)

@@ -18,9 +18,9 @@ describe("folded lines", function()
       [2] = {reverse = true},
       [3] = {bold = true, reverse = true},
       [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [6] = {background = Screen.colors.Yellow},
-      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [5] = {foreground = Screen.colors.Cyan, background = Screen.colors.DarkGray},
+      [6] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
+      [7] = {foreground = Screen.colors.Cyan, background = Screen.colors.WebGray},
     })
   end)
 

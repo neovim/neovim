@@ -12,7 +12,7 @@ describe(':debug', function()
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {bold = true, reverse = true},
       [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [4] = {bold = true, foreground = Screen.colors.Green},
     })
     screen:attach()
   end)

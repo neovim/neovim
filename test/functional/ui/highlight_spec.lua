@@ -30,7 +30,7 @@ describe('highlight: `:syntax manual`', function()
     --syntax highlight for vimcscripts "echo"
     screen:set_default_attr_ids( {
       [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {bold=true, foreground=Screen.colors.Brown}
+      [1] = {bold=true, foreground=tonumber('0xffff60')}  -- Statement
     } )
   end)
 
@@ -229,7 +229,7 @@ describe('highlight defaults', function()
         1 %a   "[No Name]"                    line 1       |
       {1:Press ENTER or type command to continue}^              |
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold = true, foreground = Screen.colors.SeaGreen}})
+    [1] = {bold = true, foreground = Screen.colors.Green}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
 
@@ -361,11 +361,12 @@ describe('highlight', function()
     screen = Screen.new(20,5)
     screen:attach()
     screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
+        [1] = {bold = true, foreground = Screen.colors.Blue1},  -- Special
         [2] = {standout = true, bold = true, underline = true,
-        background = Screen.colors.Gray90, foreground = Screen.colors.Blue1},
+               background = Screen.colors.Gray40,
+               foreground = Screen.colors.Blue1},
         [3] = {standout = true, underline = true,
-        background = Screen.colors.Gray90}
+               background = Screen.colors.Grey40}  -- CursorLine
     })
     feed_command('hi CursorLine cterm=standout,underline gui=standout,underline')
     feed_command('set cursorline')
@@ -442,8 +443,8 @@ describe("'listchars' highlight", function()
 
   it("'cursorline' and 'cursorcolumn'", function()
     screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background=Screen.colors.Grey90}
+      [0] = {bold=true, foreground=Screen.colors.Blue1},
+      [1] = {background=Screen.colors.Grey40}
     })
     feed_command('highlight clear ModeMsg')
     feed_command('set cursorline')
@@ -517,13 +518,13 @@ describe("'listchars' highlight", function()
 
   it("'cursorline' and with 'listchar' option: space, eol, tab, and trail", function()
     screen:set_default_attr_ids({
-      [1] = {background=Screen.colors.Grey90},
+      [1] = {background=Screen.colors.Grey40},
       [2] = {
         foreground=Screen.colors.Red,
-        background=Screen.colors.Grey90,
+        background=Screen.colors.Grey40,
       },
       [3] = {
-        background=Screen.colors.Grey90,
+        background=Screen.colors.Grey40,
         foreground=Screen.colors.Blue,
         bold=true,
       },
@@ -601,13 +602,13 @@ describe("'listchars' highlight", function()
 
   it("'listchar' in visual mode", function()
     screen:set_default_attr_ids({
-      [1] = {background=Screen.colors.Grey90},
+      [1] = {background=Screen.colors.Grey40},
       [2] = {
         foreground=Screen.colors.Red,
-        background=Screen.colors.Grey90,
+        background=Screen.colors.Grey40,
       },
       [3] = {
-        background=Screen.colors.Grey90,
+        background=Screen.colors.Grey40,
         foreground=Screen.colors.Blue,
         bold=true,
       },
@@ -619,14 +620,14 @@ describe("'listchars' highlight", function()
         foreground=Screen.colors.Red,
       },
       [6] = {
-        background=Screen.colors.LightGrey,
+        background=Screen.colors.DarkGrey,
       },
       [7] = {
-        background=Screen.colors.LightGrey,
+        background=Screen.colors.DarkGrey,
         foreground=Screen.colors.Red,
       },
       [8] = {
-        background=Screen.colors.LightGrey,
+        background=Screen.colors.DarkGrey,
         foreground=Screen.colors.Blue,
         bold=true,
       },
@@ -715,13 +716,13 @@ describe('CursorLine highlight', function()
   it('overridden by Error, ColorColumn if fg not set', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.SlateBlue},
-      [2] = {bold = true, foreground = Screen.colors.Brown},
+      [1] = {foreground = Screen.colors.Orange},
+      [2] = {bold = true, foreground = tonumber('0xffff60')},
       [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
-      [5] = {background = Screen.colors.Gray90},
+      [4] = {foreground = Screen.colors.Orange, background = Screen.colors.Gray40},
+      [5] = {background = Screen.colors.Gray40},
       [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.LightRed},
+      [7] = {background = Screen.colors.DarkRed},
     })
     screen:attach()
 
@@ -811,12 +812,12 @@ describe('CursorLine highlight', function()
   it('with split-windows in diff-mode', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [1] = {foreground = Screen.colors.Cyan, background = Screen.colors.WebGray},
       [2] = {bold = true, background = Screen.colors.Red},
-      [3] = {background = Screen.colors.LightMagenta},
+      [3] = {background = Screen.colors.Magenta4},
       [4] = {reverse = true},
-      [5] = {background = Screen.colors.LightBlue},
-      [6] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+      [5] = {background = Screen.colors.DarkBlue},
+      [6] = {background = Screen.colors.Cyan4, bold = true, foreground = Screen.colors.Blue1},
       [7] = {background = Screen.colors.Red, foreground = Screen.colors.White},
       [8] = {bold = true, foreground = Screen.colors.Blue1},
       [9] = {bold = true, reverse = true},
@@ -907,7 +908,7 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
       [2] = {bold=true, reverse=true},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [3] = {bold = true, foreground = Screen.colors.Green},
       [4] = {background = Screen.colors.Cyan, bold = true, reverse = true},
       [5] = {bold = true, background = Screen.colors.Magenta}
     })
@@ -978,7 +979,7 @@ describe("'winhighlight' highlight", function()
     screen = Screen.new(20,8)
     screen:attach()
     screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [0] = {bold=true, foreground=Screen.colors.Blue1},
       [1] = {background = Screen.colors.DarkBlue},
       [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1},
       [3] = {bold = true, reverse = true},
@@ -987,22 +988,22 @@ describe("'winhighlight' highlight", function()
       [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1},
       [7] = {background = Screen.colors.DarkMagenta},
       [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
-      [9] = {foreground = Screen.colors.Brown},
-      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
+      [9] = {foreground = Screen.colors.Yellow},
+      [10] = {foreground = Screen.colors.Yellow, background = Screen.colors.DarkBlue},
       [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true},
       [12] = {background = Screen.colors.DarkGreen, reverse = true},
       [13] = {background = Screen.colors.Magenta4, reverse = true},
-      [14] = {background = Screen.colors.DarkBlue, reverse = true},
+      [14] = {background = Screen.colors.Cyan, reverse = true},
       [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [16] = {foreground = Screen.colors.Blue1},
-      [17] = {background = Screen.colors.LightRed},
-      [18] = {background = Screen.colors.Gray90},
+      [16] = {foreground = Screen.colors.Cyan},
+      [17] = {background = Screen.colors.DarkRed},
+      [18] = {background = Screen.colors.Gray40},
       [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
-      [20] = {background = Screen.colors.LightGrey, underline = true},
+      [20] = {background = Screen.colors.DarkGrey, underline = true},
       [21] = {bold = true},
-      [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [23] = {background = Screen.colors.LightMagenta},
-      [24] = {background = Screen.colors.WebGray},
+      [22] = {bold = true, foreground = Screen.colors.Green},
+      [23] = {background = Screen.colors.Magenta},
+      [24] = {background = Screen.colors.DarkGrey},
       [25] = {bold = true, foreground = Screen.colors.Green1},
       [26] = {background = Screen.colors.Red},
       [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
