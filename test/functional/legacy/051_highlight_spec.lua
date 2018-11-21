@@ -22,8 +22,8 @@ describe(':highlight', function()
     -- is discarded resulting in test failure
     screen:expect([[
       :highlight                         |
-      SpecialKey     xxx ctermfg=4       |
-                         guifg=Blue      |
+      SpecialKey     xxx ctermfg=81      |
+                         guifg=Cyan      |
       EndOfBuffer    xxx links to NonText|
                                          |
       TermCursor     xxx cterm=reverse   |

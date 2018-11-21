@@ -454,7 +454,7 @@ describe('search cmdline', function()
     screen:set_default_attr_ids({
       inc = {reverse = true},
       err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      more = { bold = true, foreground = Screen.colors.Green },
     })
     tenlines()
     feed('0')

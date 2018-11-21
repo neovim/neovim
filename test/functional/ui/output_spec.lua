@@ -68,12 +68,7 @@ describe("shell command :!", function()
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]], {
-      -- test/functional/helpers.lua defaults to background=light.
-      [1] = {reverse = true},
-      [3] = {bold = true},
-      [10] = {foreground = 2},
-    })
+    ]])
   end)
 end)
 
@@ -152,8 +147,8 @@ describe("shell command :!", function()
       screen = Screen.new(53,10)
       screen:set_default_attr_ids({
         [1] = {bold = true, foreground = Screen.colors.Blue1},
-        [2] = {foreground = Screen.colors.Blue1},
-        [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+        [2] = {foreground = Screen.colors.Cyan},
+        [3] = {bold = true, foreground = Screen.colors.Green},
         [4] = {bold = true, reverse = true},
       })
       screen:attach()

@@ -10,7 +10,7 @@ local iswin = helpers.iswin
 describe('screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
+                     '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler',
                      '--embed'}
 
   before_each(function()
@@ -60,10 +60,10 @@ local function screen_tests(linegrid)
       [1] = {bold=true, reverse=true},
       [2] = {bold=true},
       [3] = {reverse=true},
-      [4] = {background = Screen.colors.LightGrey, underline = true},
-      [5] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia},
+      [4] = {background = Screen.colors.DarkGrey, underline = true},
+      [5] = {background = Screen.colors.DarkGrey, underline = true, bold = true, foreground = Screen.colors.Fuchsia},
       [6] = {bold = true, foreground = Screen.colors.Fuchsia},
-      [7] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [7] = {bold = true, foreground = Screen.colors.Green},
     } )
   end)
 
