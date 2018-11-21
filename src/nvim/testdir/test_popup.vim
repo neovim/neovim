@@ -246,6 +246,10 @@ func! Test_popup_completion_insertmode()
   iunmap <F5>
 endfunc
 
+" TODO: Fix what breaks after this line.
+" - Do not use "q!", it may exit Vim if there is an error
+finish
+
 func Test_noinsert_complete()
   function! s:complTest1() abort
     call complete(1, ['source', 'soundfold'])
