@@ -246,6 +246,10 @@ func! Test_popup_completion_insertmode()
   iunmap <F5>
 endfunc
 
+" TODO: Fix what breaks after this line.
+" - Do not use "q!", it may exit Vim if there is an error
+finish
+
 func Test_noinsert_complete()
   function! s:complTest1() abort
     call complete(1, ['source', 'soundfold'])
@@ -571,6 +575,15 @@ func Test_completion_clear_candidate_list()
   bw!
 endfunc
 
+func Test_popup_complete_backwards()
+  new
+  call setline(1, ['Post', 'Port', 'Po'])
+  let expected=['Post', 'Port', 'Port']
+  call cursor(3,2)
+  call feedkeys("A\<C-X>". repeat("\<C-P>", 3). "rt\<cr>", 'tx')
+  call assert_equal(expected, getline(1,'$'))
+  bwipe!
+endfunc
 
 func Test_popup_and_preview_autocommand()
   " This used to crash Vim
