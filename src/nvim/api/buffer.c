@@ -905,34 +905,34 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 ///
 /// Useful for plugins that dynamically generate highlights to a buffer
 /// (like a semantic highlighter or linter). The function adds a single
-/// highlight to a buffer. Unlike matchaddpos() highlights follow changes to
+/// highlight to a buffer. Unlike |matchaddpos()| highlights follow changes to
 /// line numbering (as lines are inserted/removed above the highlighted line),
 /// like signs and marks do.
 ///
-/// `src_id` is useful for batch deletion/updating of a set of highlights. When
-/// called with `src_id = 0`, an unique source id is generated and returned.
-/// Successive calls can pass that `src_id` to associate new highlights with
-/// the same source group. All highlights in the same group can be cleared
-/// with `nvim_buf_clear_highlight`. If the highlight never will be manually
-/// deleted, pass `src_id = -1`.
+/// Namespaces are used for batch deletion/updating of a set of highlights. To
+/// create a namespace, use |nvim_create_namespace| which returns a namespace
+/// id. Pass it in to this function as `ns_id` to add highlights to the
+/// namespace. All highlights in the same namespace can then be cleared with
+/// single call to |nvim_buf_clear_highlight|. If the highlight never will be
+/// deleted by an API call, pass `ns_id = -1`.
 ///
-/// If `hl_group` is the empty string no highlight is added, but a new `src_id`
-/// is still returned. This is useful for an external plugin to synchrounously
-/// request an unique `src_id` at initialization, and later asynchronously add
-/// and clear highlights in response to buffer changes.
+/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
+/// highlight, the allocated id is then returned. If `hl_group` is the empty
+/// string no highlight is added, but a new `ns_id` is still returned. This is
+/// supported for backwards compatibility, new code should use
+/// |nvim_create_namespace| to create a new empty namespace.
 ///
 /// @param buffer     Buffer handle
-/// @param src_id     Source group to use or 0 to use a new group,
-///                   or -1 for ungrouped highlight
+/// @param ns_id      namespace to use or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
 /// @param col_start  Start of (byte-indexed) column range to highlight
 /// @param col_end    End of (byte-indexed) column range to highlight,
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
-/// @return The src_id that was used
+/// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer src_id,
+                               Integer ns_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -962,9 +962,9 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
   }
 
-  src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
-                        (colnr_T)col_start+1, (colnr_T)col_end);
-  return src_id;
+  ns_id = bufhl_add_hl(buf, (int)ns_id, hlg_id, (linenr_T)line+1,
+                       (colnr_T)col_start+1, (colnr_T)col_end);
+  return ns_id;
 }
 
 /// Clears highlights and virtual text from a given source id and range of lines
@@ -973,13 +973,13 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 /// line_start and line_end respectively.
 ///
 /// @param buffer     Buffer handle
-/// @param src_id     Highlight source group to clear, or -1 to clear all.
+/// @param ns_id      Namespace to clear, or -1 to clear all.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
 ///                   to end of file.
 /// @param[out] err   Error details, if any
 void nvim_buf_clear_highlight(Buffer buffer,
-                              Integer src_id,
+                              Integer ns_id,
                               Integer line_start,
                               Integer line_end,
                               Error *err)
@@ -998,7 +998,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
     line_end = MAXLNUM;
   }
 
-  bufhl_clear_line_range(buf, (int)src_id, (int)line_start+1, (int)line_end);
+  bufhl_clear_line_range(buf, (int)ns_id, (int)line_start+1, (int)line_end);
 }
 
 
@@ -1010,12 +1010,18 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// begin after one cell to the right of the ordinary text, this will contain
 /// the |lcs-eol| char if set, otherwise just be a space.
 ///
-/// The same src_id can be used for both virtual text and highlights added by
-/// nvim_buf_add_highlight. Virtual text is cleared using
-/// nvim_buf_clear_highlight.
+/// Namespaces are used to support batch deletion/updating of virtual text.
+/// To create a namespace, use |nvim_create_namespace|. Virtual text is
+/// cleared using |nvim_buf_clear_highlight|. The same `ns_id` can be used for
+/// both virtual text and highlights added by |nvim_buf_add_highlight|, both
+/// can then be cleared with a single call to |nvim_buf_clear_highlight|. If the
+/// virtual text never will be cleared by an API call, pass `src_id = -1`.
+///
+/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
+/// virtual text, the allocated id is then returned.
 ///
 /// @param buffer     Buffer handle
-/// @param src_id     Source group to use or 0 to use a new group,
+/// @param ns_id      Namespace to use or 0 to create a namespace,
 ///                   or -1 for a ungrouped annotation
 /// @param line       Line to annotate with virtual text (zero-indexed)
 /// @param chunks     A list of [text, hl_group] arrays, each representing a
@@ -1023,9 +1029,9 @@ void nvim_buf_clear_highlight(Buffer buffer,
 ///                   can be omitted for no highlight.
 /// @param opts       Optional parameters. Currently not used.
 /// @param[out] err   Error details, if any
-/// @return The src_id that was used
+/// @return The ns_id that was used
 Integer nvim_buf_set_virtual_text(Buffer buffer,
-                                  Integer src_id,
+                                  Integer ns_id,
                                   Integer line,
                                   Array chunks,
                                   Dictionary opts,
@@ -1075,9 +1081,9 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
   }
 
-  src_id = bufhl_add_virt_text(buf, (int)src_id, (linenr_T)line+1,
-                               virt_text);
-  return src_id;
+  ns_id = bufhl_add_virt_text(buf, (int)ns_id, (linenr_T)line+1,
+                              virt_text);
+  return ns_id;
 
 free_exit:
   kv_destroy(virt_text);

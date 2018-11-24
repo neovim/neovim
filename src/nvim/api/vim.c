@@ -46,6 +46,24 @@
 # include "api/vim.c.generated.h"
 #endif
 
+void api_vim_init(void)
+  FUNC_API_NOEXPORT
+{
+  namespace_ids = map_new(String, handle_T)();
+}
+
+void api_vim_free_all_mem(void)
+  FUNC_API_NOEXPORT
+{
+  String name;
+  handle_T id;
+  map_foreach(namespace_ids, name, id, {
+    (void)id;
+    xfree(name.data);
+  })
+  map_free(String, handle_T)(namespace_ids);
+}
+
 /// Executes an ex-command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
@@ -882,6 +900,49 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
                   "Failed to switch to tabpage %d",
                   tabpage);
   }
+}
+
+/// create a new namespace, or get one with an exisiting name
+///
+/// Namespaces are currently used for buffer highlighting and virtual text, see
+/// |nvim_buf_add_highlight| and |nvim_buf_set_virtual_text|.
+///
+/// Namespaces can have a name of be anonymous. If `name` is a non-empty string,
+/// and a namespace already exists with that name,the existing namespace id is
+/// returned. If an empty string is used, a new anonymous namespace is returned.
+///
+/// @param name Name of the namespace or empty string
+/// @return the namespace id
+Integer nvim_create_namespace(String name)
+  FUNC_API_SINCE(5)
+{
+  handle_T id = map_get(String, handle_T)(namespace_ids, name);
+  if (id > 0) {
+    return id;
+  }
+  id = next_namespace_id++;
+  if (name.size > 0) {
+    String name_alloc = copy_string(name);
+    map_put(String, handle_T)(namespace_ids, name_alloc, id);
+  }
+  return (Integer)id;
+}
+
+/// Get existing named namespaces
+///
+/// @return dict that maps from names to namespace ids.
+Dictionary nvim_get_namespaces(void)
+  FUNC_API_SINCE(5)
+{
+  Dictionary retval = ARRAY_DICT_INIT;
+  String name;
+  handle_T id;
+
+  map_foreach(namespace_ids, name, id, {
+    PUT(retval, name.data, INTEGER_OBJ(id));
+  })
+
+  return retval;
 }
 
 /// Subscribes to event broadcasts

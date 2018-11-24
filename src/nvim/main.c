@@ -73,6 +73,7 @@
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
+#include "nvim/api/vim.h"
 
 // Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
@@ -150,6 +151,8 @@ void event_init(void)
   signal_init();
   // finish mspgack-rpc initialization
   channel_init();
+  remote_ui_init();
+  api_vim_init();
   terminal_init();
 }
 

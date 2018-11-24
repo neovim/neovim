@@ -26,6 +26,7 @@
 
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -5327,10 +5328,10 @@ int bufhl_add_hl(buf_T *buf,
                  int hl_id,
                  linenr_T lnum,
                  colnr_T col_start,
-                 colnr_T col_end) {
-  static int next_src_id = 1;
+                 colnr_T col_end)
+{
   if (src_id == 0) {
-    src_id = next_src_id++;
+    src_id = (int)nvim_create_namespace((String)STRING_INIT);
   }
   if (hl_id <= 0) {
       // no highlight group or invalid line, just return src_id
