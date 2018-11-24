@@ -588,6 +588,7 @@ int main(int argc, char **argv)
 
   TIME_MSG("before starting main loop");
   ILOG("starting main loop");
+  init_highlight(FALSE, FALSE);
 
   /*
    * Call the main command loop.  This never returns.
