@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 
   server_init(params.listen_addr);
   if(params.remote){
-    handle_remote_client(params.remote, params.server_addr, argc, argv);
+    handle_remote_client(&params, params.remote, params.server_addr, argc, argv);
   }
 
   if (GARGCOUNT > 0) {
@@ -763,8 +763,9 @@ static void init_locale(void)
 #endif
 
 /// Handle remote subcommands
-static void handle_remote_client(int remote_args, char *server_addr, int argc, char **argv){
+static void handle_remote_client(mparm_T *params, int remote_args, char *server_addr, int argc, char **argv){
 
+    Boolean should_exit;
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
     uint64_t rc_id = server_addr == NULL ? 0 : channel_connect(false,
@@ -778,17 +779,29 @@ static void handle_remote_client(int remote_args, char *server_addr, int argc, c
       ADD(args, STRING_OBJ(arg_s));
     }
 
-    Error err;
+    Error err = ERROR_INIT;
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ((int)rc_id));
     ADD(a, ARRAY_OBJ(args));
     String s = cstr_to_string("return vim._cs_remote(...)");
     Object o = executor_exec_lua_api(s, a, &err);
+    api_free_string(s);
+    api_free_array(a);
 
-    // add some check with o.data.boolean
-    // to determine whether to exit or start a local instance
+    if (o.type == kObjectTypeBoolean) {
+      should_exit = o.data.boolean;
+    } else if (!ERROR_SET(&err)) {
+      api_set_error(&err, kErrorTypeException, "Function returned unexpected value");
+    }
 
-    mch_exit(0);
+    if(should_exit){
+      mch_exit(0);
+    } else {
+      // lua function to return if tabbed or not
+      params->window_count = 3; // set this to number of files
+      params->window_layout = WIN_TABS;
+    }
+
 }
 
 /// Decides whether text (as opposed to commands) will be read from stdin.

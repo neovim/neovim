@@ -173,9 +173,8 @@ local function _cs_remote(rcid, args)
     return true
   end
 
-  -- launch a local instance if --remote-silent
-  -- and no server exists
   if f_silent and rcid == 0 then
+    print('Remote server does not exist. starting new server')
     return false
   end
 
