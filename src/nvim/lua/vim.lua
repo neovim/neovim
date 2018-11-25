@@ -127,6 +127,7 @@ local function _cs_remote(rcid, args)
   local f_silent = false
   local f_wait = false
   local f_tab = false
+  local should_exit = true
   local command = 'edit '
 
   local subcmd = string.sub(args[1],10)
@@ -153,38 +154,41 @@ local function _cs_remote(rcid, args)
     f_wait = true
     f_silent = true
   elseif subcmd == 'send' then
-    keys = args[2]
-    __rpcrequest(rcid, 'nvim_input', keys)
-    return
+    __rpcrequest(rcid, 'nvim_input', args[2])
+    return { should_exit = should_exit, tabbed = f_tab, files = 0 }
+    -- should we show warning if --server doesn't exist in --send and --expr?
   elseif subcmd == 'expr' then
-    expr = args[2]
-    res = __rpcrequest(rcid, 'vim_eval', expr)
+    local res = __rpcrequest(rcid, 'vim_eval', args[2])
     print(res)
-    return
+    return { should_exit = should_exit, tabbed = f_tab, files = 0 }
   else
     print('--remote subcommand not found')
-    return true
   end
 
   table.remove(args,1)
 
   if not f_silent and rcid == 0 then
     print('Remote server does not exist.')
-    return true
   end
 
   if f_silent and rcid == 0 then
     print('Remote server does not exist. starting new server')
-    return false
+    should_exit = false
   end
 
   if f_tab then command = 'tabedit ' end
 
-  for _, key in ipairs(args) do
-    __rpcrequest(rcid, 'nvim_command', command .. key)
+  if rcid ~= 0 then
+    for _, key in ipairs(args) do
+      __rpcrequest(rcid, 'nvim_command', command .. key)
+    end
   end
 
-  return true
+  return {
+    should_exit = should_exit,
+    tabbed = f_tab,
+    files = table.getn(args)
+  }
 end
 
 local module = {
