@@ -57,7 +57,6 @@ jobs:
         # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         ASAN_SYMBOLIZE=asan_symbolize-4.0
-      sudo: true
     - os: linux
       compiler: gcc
       env: >
