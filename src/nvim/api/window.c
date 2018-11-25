@@ -10,6 +10,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
+#include "nvim/buffer.h"
 #include "nvim/cursor.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"
@@ -31,6 +32,41 @@ Buffer nvim_win_get_buf(Window window, Error *err)
   }
 
   return win->w_buffer->handle;
+}
+
+/// Sets the current buffer in a window, without side-effects
+///
+/// @param window   Window handle
+/// @param buffer   Buffer handle
+/// @param[out] err Error details, if any
+void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
+  FUNC_API_SINCE(5)
+{
+  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
+
+  if (!win || !buf) {
+    return;
+  }
+
+  if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
+    api_set_error(err,
+                  kErrorTypeException,
+                  "Failed to switch to window %d",
+                  window);
+  }
+
+  try_start();
+  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+  if (!try_end(err) && result == FAIL) {
+    api_set_error(err,
+                  kErrorTypeException,
+                  "Failed to set buffer %d",
+                  buffer);
+  }
+
+  restore_win(save_curwin, save_curtab, false);
 }
 
 /// Gets the cursor position in the window
