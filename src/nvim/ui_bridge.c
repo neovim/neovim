@@ -117,6 +117,7 @@ static void ui_bridge_stop(UI *b)
     if (stopped) {  // -V547
       break;
     }
+    // TODO(justinmk): Remove this. Use a cond-wait above. #9274
     loop_poll_events(&main_loop, 10);  // Process one event.
   }
   uv_thread_join(&bridge->ui_thread);
