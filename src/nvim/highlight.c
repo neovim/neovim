@@ -178,7 +178,7 @@ void update_window_hl(win_T *wp, bool invalid)
 }
 
 /// Get attribute code for forwarded :terminal highlights.
-int get_term_attr_entry(HlAttrs *aep)
+int hl_get_term_attr(HlAttrs *aep)
 {
   return get_attr_entry((HlEntry){ .attr= *aep, .kind = kHlTerminal,
                                    .id1 = 0, .id2 = 0 });

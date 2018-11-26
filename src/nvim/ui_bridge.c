@@ -104,7 +104,7 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
-  // Detach brigde first, so that "stop" is the last event the TUI loop
+  // Detach bridge first, so that "stop" is the last event the TUI loop
   // receives from the main thread. #8041
   ui_detach_impl(b);
   UIBridgeData *bridge = (UIBridgeData *)b;
