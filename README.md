@@ -7,7 +7,7 @@ computer. I think the concept is well and truly proven and it is worth
 completing.
 
 If you are insanely curious and wish to try it out, it's probably best to find
-me in #vim or the YCM gitter channel. It's probably too early.
+me in #vim or the [vimspector gitter channel][gitter]. It's probably too early.
 
 In order to use it you have to currently:
 
@@ -295,3 +295,4 @@ Requires:
 Copyright © 2018 Ben Jackson
 
 [ycmd]: https://github.com/Valloric/ycmd
+[gitter]: https://gitter.im/vimspector/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
