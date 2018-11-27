@@ -52,6 +52,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/stream.h"
@@ -2653,6 +2654,8 @@ void preserve_exit(void)
   }
 
   really_exiting = true;
+  // Ignore SIGHUP while we are already exiting. #9274
+  signal_reject_deadly();
   mch_errmsg(IObuff);
   mch_errmsg("\n");
   ui_flush();
