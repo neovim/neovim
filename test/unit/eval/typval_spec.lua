@@ -2,6 +2,7 @@ local bit = require('bit')
 local helpers = require('test.unit.helpers')(after_each)
 local eval_helpers = require('test.unit.eval.helpers')
 local global_helpers = require('test.helpers')
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 local itp = helpers.gen_itp(it)
 

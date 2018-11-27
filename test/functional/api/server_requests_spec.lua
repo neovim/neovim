@@ -2,6 +2,7 @@
 -- `rpcrequest` calls we need the client event loop to be running.
 local helpers = require('test.functional.helpers')(after_each)
 local Paths = require('test.config.paths')
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop

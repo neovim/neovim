@@ -2,6 +2,7 @@ require('coxpcall')
 local luv = require('luv')
 local lfs = require('lfs')
 local global_helpers = require('test.helpers')
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 -- nvim client: Found in .deps/usr/share/lua/<version>/nvim/ if "bundled".
 local Session = require('nvim.session')

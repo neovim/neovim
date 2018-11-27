@@ -12,6 +12,7 @@ local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
 local expect_err = helpers.expect_err
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)

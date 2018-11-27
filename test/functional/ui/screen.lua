@@ -78,6 +78,7 @@ local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
 local eq = helpers.eq
 local dedent = helpers.dedent
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 local inspect = require('inspect')
 

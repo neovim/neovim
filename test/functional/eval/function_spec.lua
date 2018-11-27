@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 local clear = helpers.clear
 local eq = helpers.eq

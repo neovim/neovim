@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 describe('ui/ext_tabline', function()
   local screen

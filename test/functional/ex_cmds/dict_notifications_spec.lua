@@ -4,6 +4,7 @@ local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local eval = helpers.eval
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 
 describe('dictionary change notifications', function()

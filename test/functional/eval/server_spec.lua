@@ -6,6 +6,7 @@ local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
 local expect_err = helpers.expect_err
+local unpack = table.unpack or unpack -- luacheck: ignore
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
