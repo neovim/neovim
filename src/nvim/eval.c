@@ -10332,10 +10332,10 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tabnr++;
     int16_t winnr = 0;
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      winnr++;
       if (wparg != NULL && wp != wparg) {
         continue;
       }
-      winnr++;
       dict_T *const d = get_win_info(wp, tabnr, winnr);
       tv_list_append_dict(rettv->vval.v_list, d);
       if (wparg != NULL) {
