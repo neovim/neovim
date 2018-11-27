@@ -1866,13 +1866,9 @@ static void augment_terminfo(TUIData *data, const char *term,
           ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
       data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
           ut, "ext.exit_undercurl_mode", "\x1b[4:0m");
-      if (has_colon_rgb) {
-          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
-              ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
-      } else {
-          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
-              ut, "ext.set_underline_color", "\x1b[58;2;%p1%d;%p2%d;%p3%dm");
-      }
+      // Only support colon syntax. #9270
+      data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
+          ut, "ext.set_underline_color", "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
   }
 }
 
