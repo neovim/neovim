@@ -1172,8 +1172,8 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 placed after the buffer text. Virtual text will never cause
                 reflow, rather virtual text will be truncated at the end of
                 the screen line. The virtual text will begin after one cell to
-                the right of the ordinary text, this will contain the |lcs-
-                eol| char if set, otherwise just be a space.
+                the right of the ordinary text (after the |lcs-eol| char if
+                set and displayed, and a space otherwise)).
 
                 Namespaces are used to support batch deletion/updating of
                 virtual text. To create a namespace, use
