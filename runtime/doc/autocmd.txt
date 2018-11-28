@@ -526,20 +526,18 @@ CmdlineChanged			After a change was made to the text in the
 				command line.  Be careful not to mess up
 				the command line, it may cause Vim to lock up.
 							*CmdlineEnter*
-CmdlineEnter			After moving the cursor to the command line,
-				where the user can type a command or search
-				string.
-				<afile> is set to a single character,
-				indicating the type of command-line.
-				|cmdline-char|
+CmdlineEnter			After entering the command-line (including
+				non-interactive use of ":" in a mapping: use
+				|<Cmd>| instead to avoid this).
+				<afile> is set to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    cmdlevel
 				    cmdtype
 							*CmdlineLeave*
-CmdlineLeave			Before leaving the command line.
-				<afile> is set to a single character,
-				indicating the type of command-line.
-				|cmdline-char|
+CmdlineLeave			Before leaving the command-line (including
+				non-interactive use of ":" in a mapping: use
+				|<Cmd>| instead to avoid this).
+				<afile> is set to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    abort (mutable)
 				    cmdlevel

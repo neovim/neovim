@@ -52,9 +52,9 @@ jobs:
     - stage: normal builds
       os: linux
       compiler: clang-4.0
+      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
-        # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         ASAN_SYMBOLIZE=asan_symbolize-4.0
     - os: linux

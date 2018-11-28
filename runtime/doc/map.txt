@@ -286,6 +286,9 @@ current mode (instead of always going to normal-mode).  Visual-mode is
 preserved, so tricks with |gv| are not needed.  Commands can be invoked
 directly in cmdline-mode (which otherwise would require timer hacks).
 
+Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
+|CmdlineEnter| and |CmdlineLeave| events. This helps performance.
+
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
 command: it is executed as if an (unrestricted) |autocmd| was invoked or an
 async event event was processed.

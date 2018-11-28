@@ -94,7 +94,7 @@ For the most recent information about sponsoring look on the Vim web site:
 
 Neovim development is funded separately from Vim:
 
-	https://neovim.io/sponsors/
+	https://neovim.io/#sponsor
 
 ==============================================================================
 Credits				*credits* *author* *Bram* *Moolenaar*
@@ -702,18 +702,15 @@ window.  You may make the window as small as you like, but if it gets too
 small not a single line will fit in it.  Make it at least 40 characters wide
 to be able to read most messages on the last line.
 
-On most Unix systems, resizing the window is recognized and handled correctly
-by Vim.
-
 ==============================================================================
-Definitions						*definitions*
+Definitions						*definitions* *jargon*
 
-  buffer		Contains lines of text, usually read from a file.
-  screen		The whole area that Vim uses to work in.  This can be
-			a terminal emulator window.  Also called "the Vim
-			window".
+  buffer		Contains lines of text, usually from a file.
+  screen		The whole area that Nvim uses to display things.
   window		A view on a buffer.  There can be multiple windows for
 			one buffer.
+  frame			Windows are kept in a tree of frames.  Each frame
+			contains a column, row, or window ("leaf" frame).
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.
@@ -746,7 +743,7 @@ A difference is made between four types of lines:
 			lines with wrapping, line breaks, etc.  applied.  They
 			can only be as long as the width of the window allows,
 			longer lines are wrapped or truncated.
-  screen lines		The lines of the screen that Vim uses.  Consists of
+  screen lines		The lines of the screen that Nvim uses.  Consists of
 			the window lines of all windows, with status lines
 			and the command line added.  They can only be as long
 			as the width of the screen allows.  When the command
@@ -769,6 +766,28 @@ buffer lines	logical lines	window lines	screen lines ~
 4. ddd		4. ddd		4. cc		12. === status line ===
 				5. ddd		13. (command line)
 				6. ~ 
+
+
+API client ~
+All external UIs and remote plugins (as opposed to regular Vim plugins) are
+"clients" in general; but we call something an "API client" if its purpose is
+to abstract or wrap the RPC API for the convenience of other applications
+(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
+using an HTTP client like curl, but boto3 wraps that in a convenient python
+interface). For example, the Nvim lua-client is an API client:
+    https://github.com/neovim/lua-client
+
+
+Host ~
+A plugin "host" is both a client (of the Nvim API) and a server (of an
+external platform, e.g. python). It is a remote plugin that hosts other
+plugins.
+
+
+Remote plugin ~
+Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
+process and communicates with Nvim via the |api|.
+
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

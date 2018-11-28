@@ -2173,7 +2173,7 @@ void intro_message(int colon)
     N_(NVIM_VERSION_LONG),
     "",
     N_("Nvim is open source and freely distributable"),
-    N_("https://neovim.io/community"),
+    N_("https://neovim.io/#chat"),
     "",
     N_("type  :help nvim<Enter>       if you are new! "),
     N_("type  :checkhealth<Enter>     to optimize Nvim"),
