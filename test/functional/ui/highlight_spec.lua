@@ -797,8 +797,10 @@ describe('CursorLine highlight', function()
       [8] = {bold = true, foreground = Screen.colors.Blue1},
       [9] = {bold = true, reverse = true},
       [10] = {bold = true},
-      [11] = {special = Screen.colors.Grey0, underline = true, foreground = Screen.colors.Grey0, background = Screen.colors.Grey0},
-      [12] = {bold = true, special = Screen.colors.Grey0, background = Screen.colors.Grey0, foreground = Screen.colors.Grey0, underline = true},
+      [11] = {special = Screen.colors.Grey0, underline = true,
+              background = Screen.colors.LightMagenta},
+      [12] = {bold = true, underline = true, special = Screen.colors.Grey0,
+              background = Screen.colors.Red},
     })
   end)
 end)
