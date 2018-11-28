@@ -610,6 +610,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
         .rgb_ae_attr = (int16_t)hl_attrs,
         .rgb_fg_color = vt_fg,
         .rgb_bg_color = vt_bg,
+        .rgb_sp_color = -1,
       });
     }
 

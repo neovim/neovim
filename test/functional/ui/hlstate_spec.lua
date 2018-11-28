@@ -177,11 +177,11 @@ describe('ext_hlstate detailed highlights', function()
   it("work with :terminal", function()
     screen:set_default_attr_ids({
       [1] = {{}, {{hi_name = "TermCursorNC", ui_name = "TermCursorNC", kind = "ui"}}},
-      [2] = {{special = Screen.colors.Grey0, foreground = 52479}, {{kind = "term"}}},
-      [3] = {{special = Screen.colors.Grey0, bold = true, foreground = 52479}, {{kind = "term"}}},
-      [4] = {{special = Screen.colors.Grey0, foreground = 52479}, {2, 1}},
-      [5] = {{special = Screen.colors.Grey0, foreground = 4259839}, {{kind = "term"}}},
-      [6] = {{special = Screen.colors.Grey0, foreground = 4259839}, {5, 1}},
+      [2] = {{foreground = 52479}, {{kind = "term"}}},
+      [3] = {{bold = true, foreground = 52479}, {{kind = "term"}}},
+      [4] = {{foreground = 52479}, {2, 1}},
+      [5] = {{foreground = 4259839}, {{kind = "term"}}},
+      [6] = {{foreground = 4259839}, {5, 1}},
     })
     command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
     screen:expect([[
