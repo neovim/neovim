@@ -2894,6 +2894,13 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     pt = profile_start();
   }
 
+  if (rmp->regprog == NULL) {
+    // This can happen if a previous call to vim_regexec_multi() tried to
+    // use the NFA engine, which resulted in NFA_TOO_EXPENSIVE, and
+    // compiling the pattern with the other engine fails.
+    return false;
+  }
+
   rmp->rmm_maxcol = syn_buf->b_p_smc;
   r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL);
 

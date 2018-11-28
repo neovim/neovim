@@ -5603,6 +5603,7 @@ next_search_hl (
   linenr_T l;
   colnr_T matchcol;
   long nmatched = 0;
+  int save_called_emsg = called_emsg;
 
   if (shl->lnum != 0) {
     /* Check for three situations:
@@ -5695,6 +5696,9 @@ next_search_hl (
       shl->lnum += shl->rm.startpos[0].lnum;
       break;                            /* useful match found */
     }
+
+    // Restore called_emsg for assert_fails().
+    called_emsg = save_called_emsg;
   }
 }
 
