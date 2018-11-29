@@ -7108,16 +7108,26 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
-/// Return true when window "wp" has a column to draw signs in.
-bool signcolumn_on(win_T *wp)
+/// Return the number of requested sign columns, based on current
+/// buffer signs and on user configuration.
+int win_signcol_count(win_T *wp)
 {
     if (*wp->w_p_scl == 'n') {
-      return false;
+      return 0;
     }
     if (*wp->w_p_scl == 'y') {
-      return true;
+      return 1;
     }
-    return wp->w_buffer->b_signlist != NULL;
+    if (*wp->w_p_scl == '2') {
+      return 2;
+    }
+    if (*wp->w_p_scl == '3') {
+      return 3;
+    }
+    if (*wp->w_p_scl == '4') {
+      return 4;
+    }
+    return buf_get_needed_signcols(wp->w_buffer);
 }
 
 /// Get window or buffer local options

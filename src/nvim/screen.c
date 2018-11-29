@@ -1553,8 +1553,9 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                 wp->w_grid.Columns, ' ', ' ', win_hl_attr(wp, HLF_FC));
     }
 
-    if (signcolumn_on(wp)) {
-        int nn = n + win_signcol_width(wp);
+    int count = win_signcol_count(wp);
+    if (count > 0) {
+        int nn = n + win_signcol_width(wp) * count;
 
         // draw the sign column left of the fold column
         if (nn > wp->w_grid.Columns) {
@@ -1592,8 +1593,9 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       n = nn;
     }
 
-    if (signcolumn_on(wp)) {
-        int nn = n + win_signcol_width(wp);
+    int count = win_signcol_count(wp);
+    if (count > 0) {
+        int nn = n + win_signcol_width(wp) * count;
 
         // draw the sign column after the fold column
         if (nn > wp->w_grid.Columns) {
@@ -1758,10 +1760,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_grid.Columns - col);
 
   // If signs are being displayed, add spaces.
-  if (signcolumn_on(wp)) {
+  if (win_signcol_count(wp) > 0) {
       len = wp->w_grid.Columns - col;
       if (len > 0) {
-          int len_max = win_signcol_width(wp);
+          int len_max = win_signcol_width(wp) * win_signcol_count(wp);
           if (len > len_max) {
               len = len_max;
           }
@@ -2633,6 +2635,7 @@ win_line (
     extra_check = true;
   }
 
+  int sign_idx = 0;
   // Repeat for the whole displayed line.
   for (;; ) {
     has_match_conc = 0;
@@ -2671,7 +2674,8 @@ win_line (
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
            * buffer or when using Netbeans. */
-          if (signcolumn_on(wp)) {
+          int count = win_signcol_count(wp);
+          if (count > 0) {
               int text_sign;
               // Draw cells with the sign value or blank.
               c_extra = ' ';
@@ -2679,7 +2683,8 @@ win_line (
               n_extra = win_signcol_width(wp);
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
-                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
+                  text_sign = buf_getsigntype_ext(wp->w_buffer, lnum, SIGN_TEXT,
+                                                  sign_idx);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
                       int symbol_blen = (int)STRLEN(p_extra);
@@ -2694,6 +2699,11 @@ win_line (
                           p_extra[n_extra] = NUL;
                       }
                       char_attr = sign_get_attr(text_sign, SIGN_TEXT);
+                  }
+
+                  sign_idx++;
+                  if (sign_idx < count) {
+                      draw_state = WL_SIGN - 1;
                   }
               }
           }
