@@ -8,20 +8,12 @@ local Session = require('nvim.session')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
-local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local expect_err = global_helpers.expect_err
-local filter = global_helpers.filter
-local map = global_helpers.map
-local matches = global_helpers.matches
-local near = global_helpers.near
-local neq = global_helpers.neq
 local ok = global_helpers.ok
-local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
 local table_contains = global_helpers.table_contains
 local table_flatten = global_helpers.table_flatten
@@ -32,7 +24,7 @@ local start_dir = lfs.currentdir()
 local nvim_prog = (
   os.getenv('NVIM_PROG')
   or os.getenv('NVIM_PRG')
-  or Paths.test_build_dir .. '/bin/nvim'
+  or global_helpers.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
@@ -802,33 +794,25 @@ local module = {
   curtabmeths = curtabmeths,
   curwin = curwin,
   curwinmeths = curwinmeths,
-  dedent = dedent,
-  eq = eq,
   eval = nvim_eval,
   exc_exec = exc_exec,
   expect = expect,
   expect_any = expect_any,
-  expect_err = expect_err,
   expect_msg_seq = expect_msg_seq,
   expect_twostreams = expect_twostreams,
   feed = feed,
   feed_command = feed_command,
-  filter = filter,
   funcs = funcs,
   get_pathsep = get_pathsep,
   get_session = get_session,
   insert = insert,
   iswin = iswin,
-  map = map,
-  matches = matches,
   merge_args = merge_args,
   meth_pcall = meth_pcall,
   meths = meths,
   missing_provider = missing_provider,
   mkdir = lfs.mkdir,
   load_adjust = load_adjust,
-  near = near,
-  neq = neq,
   new_pipename = new_pipename,
   next_msg = next_msg,
   nvim = nvim,
@@ -838,13 +822,11 @@ local module = {
   nvim_prog = nvim_prog,
   nvim_prog_abs = nvim_prog_abs,
   nvim_set = nvim_set,
-  ok = ok,
   os_name = os_name,
   pathroot = pathroot,
   pending_win32 = pending_win32,
   prepend_argv = prepend_argv,
   rawfeed = rawfeed,
-  read_file = read_file,
   redir_exec = redir_exec,
   request = request,
   retry = retry,
@@ -854,20 +836,17 @@ local module = {
   set_session = set_session,
   set_shell_powershell = set_shell_powershell,
   skip_fragile = skip_fragile,
-  sleep = sleep,
   source = source,
   spawn = spawn,
   stop = stop,
-  table_flatten = table_flatten,
   tabmeths = tabmeths,
   tabpage = tabpage,
-  tmpname = tmpname,
   uimeths = uimeths,
   wait = wait,
   window = window,
   winmeths = winmeths,
-  write_file = write_file,
 }
+module = global_helpers.map_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then

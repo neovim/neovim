@@ -15,7 +15,6 @@ local dedent = global_helpers.dedent
 local neq = global_helpers.neq
 local map = global_helpers.map
 local eq = global_helpers.eq
-local ok = global_helpers.ok
 
 -- C constants.
 local NULL = ffi.cast('void*', 0)
@@ -842,9 +841,6 @@ local module = {
   cimport = cimport,
   cppimport = cppimport,
   internalize = internalize,
-  ok = ok,
-  eq = eq,
-  neq = neq,
   ffi = ffi,
   lib = lib,
   cstr = cstr,
@@ -869,6 +865,7 @@ local module = {
   ptr2key = ptr2key,
   debug_log = debug_log,
 }
+module = global_helpers.map_extend('error', module, global_helpers)
 return function()
   return module
 end

@@ -3,6 +3,7 @@ local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
+local Paths = require('test.config.paths')
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
@@ -420,6 +421,7 @@ local function updated(d, d2)
   return d
 end
 
+-- Concat list-like tables.
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -427,6 +429,34 @@ local function concat_tables(...)
     if tbl then
       for _, v in ipairs(tbl) do
         ret[#ret + 1] = v
+      end
+    end
+  end
+  return ret
+end
+
+-- Concat map-like tables.
+--
+-- behavior: Decides what to do if a key is found in more than one map:
+--           "error": raise an error
+--           "keep":  skip
+--           "force": set the item again
+local function map_extend(behavior, ...)
+  if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
+    error('invalid "behavior": '..tostring(behavior))
+  end
+  local ret = {}
+  for i = 1, select('#', ...) do
+    local tbl = select(i, ...)
+    if tbl then
+      for k, v in pairs(tbl) do
+        if behavior ~= 'force' and ret[k] ~= nil then
+          if behavior == 'error' then
+            error('key found in more than one map: '..k)
+          end  -- Else behavior is "keep".
+        else
+          ret[k] = v
+        end
       end
     end
   end
@@ -771,6 +801,7 @@ local module = {
   intchar2lua = intchar2lua,
   isCI = isCI,
   map = map,
+  map_extend = map_extend,
   matches = matches,
   mergedicts_copy = mergedicts_copy,
   near = near,
@@ -792,5 +823,6 @@ local module = {
   which = which,
   write_file = write_file,
 }
+module = map_extend('error', module, Paths)
 
 return module
