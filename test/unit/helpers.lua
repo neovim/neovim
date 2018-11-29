@@ -9,7 +9,6 @@ local say = require('say')
 
 local posix = nil
 local syscall = nil
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent

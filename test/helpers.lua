@@ -2,7 +2,6 @@ local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)

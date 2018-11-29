@@ -1,5 +1,6 @@
+require('vim.compat')
+
 local buf_hls = {}
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 local function highlight_line(line, linenr)
   local chars = {}

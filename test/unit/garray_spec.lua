@@ -13,7 +13,6 @@ local garray = cimport('./src/nvim/garray.h')
 
 local itemsize = 14
 local growsize = 95
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 -- define a basic interface to garray. We could make it a lot nicer by
 -- constructing a class wrapper around garray. It could for example associate

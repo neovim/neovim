@@ -5,7 +5,6 @@ local curbuf, buf = helpers.curbuf, helpers.bufmeths
 local curwin = helpers.curwin
 local redir_exec = helpers.redir_exec
 local source, command = helpers.source, helpers.command
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 local function declare_hook_function()
   source([[

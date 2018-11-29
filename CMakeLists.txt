@@ -688,7 +688,7 @@ if(LUACHECK_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
 
   add_custom_target(
-    blobcodelint
+    lintbuiltinlua
     COMMAND
       ${CMAKE_COMMAND}
         -DLUACHECK_PRG=${LUACHECK_PRG}
@@ -697,10 +697,21 @@ if(LUACHECK_PRG)
         -DREAD_GLOBALS=vim
         -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
   )
+  add_custom_target(
+    lintruntimelua
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
   # TODO(ZyX-I): Run linter for all lua code in src
   add_custom_target(
     lualint
-    DEPENDS blobcodelint
+    DEPENDS lintruntimelua
+    DEPENDS lintbuiltinlua
   )
 endif()
 

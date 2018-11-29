@@ -8,7 +8,6 @@ local request = helpers.request
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
-local unpack = table.unpack or unpack -- luacheck: ignore
 
 describe('api/tabpage', function()
   before_each(clear)
