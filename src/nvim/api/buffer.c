@@ -913,7 +913,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// create a namespace, use |nvim_create_namespace| which returns a namespace
 /// id. Pass it in to this function as `ns_id` to add highlights to the
 /// namespace. All highlights in the same namespace can then be cleared with
-/// single call to |nvim_buf_clear_highlight|. If the highlight never will be
+/// single call to |nvim_buf_clear_namespace|. If the highlight never will be
 /// deleted by an API call, pass `ns_id = -1`.
 ///
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
@@ -967,23 +967,23 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   return ns_id;
 }
 
-/// Clears highlights and virtual text from a given source id and range of lines
+/// Clears namespaced objects, highlights and virtual text, from a line range
 ///
-/// To clear a source group in the entire buffer, pass in 0 and -1 to
+/// To clear the namespace in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
 ///
 /// @param buffer     Buffer handle
-/// @param ns_id      Namespace to clear, or -1 to clear all.
+/// @param ns_id      Namespace to clear, or -1 to clear all namespaces.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
-///                   to end of file.
+///                   to end of buffer.
 /// @param[out] err   Error details, if any
-void nvim_buf_clear_highlight(Buffer buffer,
+void nvim_buf_clear_namespace(Buffer buffer,
                               Integer ns_id,
                               Integer line_start,
                               Integer line_end,
                               Error *err)
-  FUNC_API_SINCE(1)
+  FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1001,6 +1001,26 @@ void nvim_buf_clear_highlight(Buffer buffer,
   bufhl_clear_line_range(buf, (int)ns_id, (int)line_start+1, (int)line_end);
 }
 
+/// Clears highlights and virtual text from namespace and range of lines
+///
+/// @deprecated use |nvim_buf_clear_namespace|.
+///
+/// @param buffer     Buffer handle
+/// @param ns_id      Namespace to clear, or -1 to clear all.
+/// @param line_start Start of range of lines to clear
+/// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
+///                   to end of file.
+/// @param[out] err   Error details, if any
+void nvim_buf_clear_highlight(Buffer buffer,
+                              Integer ns_id,
+                              Integer line_start,
+                              Integer line_end,
+                              Error *err)
+  FUNC_API_SINCE(1)
+{
+  nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
+}
+
 
 /// Set the virtual text (annotation) for a buffer line.
 ///
@@ -1012,10 +1032,10 @@ void nvim_buf_clear_highlight(Buffer buffer,
 ///
 /// Namespaces are used to support batch deletion/updating of virtual text.
 /// To create a namespace, use |nvim_create_namespace|. Virtual text is
-/// cleared using |nvim_buf_clear_highlight|. The same `ns_id` can be used for
+/// cleared using |nvim_buf_clear_namespace|. The same `ns_id` can be used for
 /// both virtual text and highlights added by |nvim_buf_add_highlight|, both
-/// can then be cleared with a single call to |nvim_buf_clear_highlight|. If the
-/// virtual text never will be cleared by an API call, pass `src_id = -1`.
+/// can then be cleared with a single call to |nvim_buf_clear_namespace|. If the
+/// virtual text never will be cleared by an API call, pass `ns_id = -1`.
 ///
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
 /// virtual text, the allocated id is then returned.
