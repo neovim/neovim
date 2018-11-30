@@ -33,9 +33,9 @@ function! Test_lambda_with_timer()
   call s:Foo()
   sleep 210ms
   " do not collect lambda
-  call garbagecollect()
+  call test_garbagecollect_now()
   let m = s:n
-  sleep 210ms
+  sleep 230ms
   call timer_stop(s:timer_id)
   call assert_true(m > 1)
   call assert_true(s:n > m + 1)
