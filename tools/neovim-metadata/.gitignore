@@ -1,0 +1,5 @@
+# Ignore default building directory.
+/build
+
+# Ignore target binary.
+neovim-metadata.so
