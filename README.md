@@ -83,21 +83,21 @@ See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) 
 Project layout
 --------------
 
-    ├─ ci/              build automation
-    ├─ cmake/           build scripts
-    ├─ runtime/         user plugins/docs
-    ├─ src/             application source code (see src/nvim/README.md)
-    │  ├─ api/          API subsystem
-    │  ├─ eval/         VimL subsystem
-    │  ├─ event/        event-loop subsystem
-    │  ├─ generators/   code generation (pre-compilation)
-    │  ├─ lib/          generic data structures
-    │  ├─ lua/          Lua subsystem
-    │  ├─ msgpack_rpc/  RPC subsystem
-    │  ├─ os/           low-level platform code
-    │  └─ tui/          built-in UI
-    ├─ third-party/     CMake subproject to build dependencies
-    └─ test/            tests (see test/README.md)
+    ├── ci/                   build automation
+    ├── cmake/                build scripts
+    ├── runtime/              user plugins/docs
+    ├── src/                  application source code (see src/nvim/README.md)
+    │   └── nvim/             API subsystem
+    │       ├── api/          VimL subsystem
+    │       ├── eval/         event-loop subsystem
+    │       ├── event/        code generation (pre-compilation)
+    │       ├── generators/   generic data structures
+    │       ├── lib/          Lua subsystem
+    │       ├── lua/          RPC subsystem
+    │       ├── msgpack_rpc/  low-level platform code
+    │       ├── os/           built-in UI
+    │       ├── tui/          CMake subproject to build dependencies
+    └── test/                 tests (see test/README.md)
 
 License
 -------
