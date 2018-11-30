@@ -5342,19 +5342,26 @@ void sign_list_placed(buf_T *rbuf)
 void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
 {
     signlist_T *sign;  /* a sign in a b_signlist */
+    signlist_T *next;  /* the next sign in a b_signlist */
+    signlist_T **lastp; /* pointer to pointer to current sign */
 
     curbuf->b_max_signs_per_line = -1;
+    lastp = &curbuf->b_signlist;
 
-    for (sign = curbuf->b_signlist; sign != NULL; sign = sign->next) {
+    for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
+        next = sign->next;
         if (sign->lnum >= line1 && sign->lnum <= line2) {
             if (amount == MAXLNUM) {
-                sign->lnum = line1;
+                *lastp = next;
+                xfree(sign);
+                continue;
             } else {
                 sign->lnum += amount;
             }
         }
         else if (sign->lnum > line2)
             sign->lnum += amount_after;
+        lastp = &sign->next;
     }
 }
 
