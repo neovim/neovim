@@ -188,6 +188,7 @@ int hl_get_underline(void)
           .rgb_ae_attr = (int16_t)HL_UNDERLINE,
           .rgb_fg_color = -1,
           .rgb_bg_color = -1,
+          .rgb_sp_color = -1,
       },
       .kind = kHlUI,
       .id1 = 0,

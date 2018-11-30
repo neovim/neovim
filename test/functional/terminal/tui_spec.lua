@@ -207,14 +207,14 @@ describe('tui', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
       [1] = {reverse = true},
-      [2] = {foreground = 13, special = Screen.colors.Grey0},
-      [3] = {bold = true, reverse = true, special = Screen.colors.Grey0},
+      [2] = {foreground = 13},
+      [3] = {bold = true, reverse = true},
       [4] = {bold = true},
-      [5] = {special = Screen.colors.Grey0, reverse = true, foreground = 4},
-      [6] = {foreground = 4, special = Screen.colors.Grey0},
-      [7] = {special = Screen.colors.Grey0, reverse = true, foreground = Screen.colors.SeaGreen4},
-      [8] = {foreground = Screen.colors.SeaGreen4, special = Screen.colors.Grey0},
-      [9] = {special = Screen.colors.Grey0, bold = true, foreground = Screen.colors.Blue1},
+      [5] = {reverse = true, foreground = 4},
+      [6] = {foreground = 4},
+      [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
+      [8] = {foreground = Screen.colors.SeaGreen4},
+      [9] = {bold = true, foreground = Screen.colors.Blue1},
     })
 
     feed_data(':hi SpecialKey ctermfg=3 guifg=SeaGreen\n')
