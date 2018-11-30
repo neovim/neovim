@@ -19,7 +19,7 @@ describe(':debug', function()
   it('scrolls messages correctly', function()
     feed(':echoerr bork<cr>')
     screen:expect([[
-                                                        |
+      ^                                                  |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
@@ -29,10 +29,10 @@ describe(':debug', function()
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
-      {2:                                                  }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
       {3:E121: Undefined variable: bork}                    |
-      {3:E15: Invalid expression: bork}                     |
-      {4:Press ENTER or type command to continue}^           |
     ]])
 
     feed(':debug echo "aa"| echo "bb"<cr>')
@@ -45,9 +45,9 @@ describe(':debug', function()
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
       {2:                                                  }|
-      {3:E121: Undefined variable: bork}                    |
-      {3:E15: Invalid expression: bork}                     |
       Entering Debug mode.  Type "cont" to continue.    |
       cmd: echo "aa"| echo "bb"                         |
       >^                                                 |
@@ -60,9 +60,9 @@ describe(':debug', function()
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
       {2:                                                  }|
-      {3:E121: Undefined variable: bork}                    |
-      {3:E15: Invalid expression: bork}                     |
       Entering Debug mode.  Type "cont" to continue.    |
       cmd: echo "aa"| echo "bb"                         |
       >step                                             |
@@ -76,9 +76,9 @@ describe(':debug', function()
                                                         |
       {1:~                                                 }|
       {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
       {2:                                                  }|
-      {3:E121: Undefined variable: bork}                    |
-      {3:E15: Invalid expression: bork}                     |
       Entering Debug mode.  Type "cont" to continue.    |
       cmd: echo "aa"| echo "bb"                         |
       >step                                             |
