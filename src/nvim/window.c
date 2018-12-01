@@ -1947,7 +1947,7 @@ int win_close(win_T *win, bool free_buf)
   do_autocmd_winclosed(win);
 
   // autocmd may have freed the window already;
-  if (!win_valid(win)) {
+  if (!win_valid_any_tab(win)) {
     return OK;
   }
 
@@ -2118,7 +2118,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   do_autocmd_winclosed(win);
 
   // autocmd may have freed the window already;
-  if (!win_valid(win)) {
+  if (!win_valid_any_tab(win)) {
     return;
   }
 
