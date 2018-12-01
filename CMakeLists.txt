@@ -389,6 +389,7 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
+unset(CMAKE_REQUIRED_LIBRARIES)
 if(MSGPACK_HAS_FLOAT32)
   add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
@@ -410,6 +411,8 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
