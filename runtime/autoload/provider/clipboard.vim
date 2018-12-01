@@ -55,11 +55,22 @@ endfunction
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
     if type({}) isnot# type(g:clipboard)
-          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
-          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
       let s:err = 'clipboard: invalid g:clipboard'
       return ''
     endif
+
+    if type(get(g:clipboard, 'copy', v:null)) isnot# v:t_dict
+        \ && type(get(g:clipboard, 'copy', v:null)) isnot# v:t_func
+      let s:err = "clipboard: invalid g:clipboard['copy']"
+      return ''
+    endif
+
+    if type(get(g:clipboard, 'paste', v:null)) isnot# v:t_dict
+        \ && type(get(g:clipboard, 'paste', v:null)) isnot# v:t_func
+      let s:err = "clipboard: invalid g:clipboard['paste']"
+      return ''
+    endif
+
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
@@ -127,7 +138,9 @@ if empty(provider#clipboard#Executable())
 endif
 
 function! s:clipboard.get(reg) abort
-  if s:selections[a:reg].owner > 0
+  if type(s:paste[a:reg]) == v:t_func
+    return s:paste[a:reg]()
+  elseif s:selections[a:reg].owner > 0
     return s:selections[a:reg].data
   end
   return s:try_cmd(s:paste[a:reg])
@@ -141,6 +154,12 @@ function! s:clipboard.set(lines, regtype, reg) abort
     end
     return 0
   end
+
+  if type(s:copy[a:reg]) == v:t_func
+    call s:copy[a:reg](a:lines, a:regtype)
+    return 0
+  end
+
   if s:cache_enabled == 0
     call s:try_cmd(s:copy[a:reg], a:lines)
     return 0

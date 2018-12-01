@@ -160,7 +160,9 @@ registers. Nvim looks for these clipboard tools, in order of priority:
   - tmux (if $TMUX is set)
 
 								 *g:clipboard*
-To configure a custom clipboard tool, set `g:clipboard` to a dictionary: >
+To configure a custom clipboard tool, set g:clipboard to a dictionary.
+For example this configuration integrates the tmux clipboard: >
+
     let g:clipboard = {
           \   'name': 'myClipboard',
           \   'copy': {
@@ -174,9 +176,28 @@ To configure a custom clipboard tool, set `g:clipboard` to a dictionary: >
           \   'cache_enabled': 1,
           \ }
 
-If `cache_enabled` is |TRUE| then when a selection is copied, Nvim will cache
+If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
-process has not died, the cached selection is applied.
+process has not died the cached selection is applied.
+
+g:clipboard can also use functions (see |lambda|) instead of strings.
+For example this configuration uses the g:foo variable as a fake clipboard: >
+
+    let g:clipboard = {
+          \   'name': 'myClipboard',
+          \   'copy': {
+          \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+          \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+          \    },
+          \   'paste': {
+          \      '+': {-> get(g:, 'foo', [])},
+          \      '*': {-> get(g:, 'foo', [])},
+          \   },
+          \ }
+
+The "copy" function stores a list of lines and the register type. The "paste"
+function returns the clipboard as a `[lines, regtype]` list, where `lines` is
+a list of lines and `regtype` is a register type conforming to |setreg()|.
 
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*
