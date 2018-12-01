@@ -8,6 +8,7 @@ local clear = helpers.clear
 local source = helpers.source
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local nvim_async = helpers.nvim_async
 
 local screen
 
@@ -59,6 +60,7 @@ before_each(function()
     RBP3={background=Screen.colors.Green},
     RBP4={background=Screen.colors.Blue},
     SEP={bold = true, reverse = true},
+    CONFIRM={bold = true, foreground = Screen.colors.SeaGreen4},
   })
 end)
 
@@ -437,5 +439,45 @@ describe('inputdialog()', function()
       {EOB:~                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
+  end)
+end)
+
+describe('confirm()', function()
+  it("shows dialog even if :silent #8788", function()
+    command("autocmd BufNewFile * call confirm('test')")
+
+    local function check_and_clear(edit_line)
+      screen:expect([[
+                                 |
+        {SEP:                         }|
+        ]]..edit_line..[[
+        {CONFIRM:test}                     |
+        {CONFIRM:[O]k: }^                   |
+      ]])
+      feed('<cr>')
+      command('redraw')
+      command('bdelete!')
+    end
+
+    -- With shortmess-=F
+    command('set shortmess-=F')
+    feed(':edit foo<cr>')
+    check_and_clear('"foo" [New File]         |\n')
+
+    -- With shortmess+=F
+    command('set shortmess+=F')
+    feed(':edit foo<cr>')
+    check_and_clear(':edit foo                |\n')
+
+    -- With :silent
+    feed(':silent edit foo<cr>')
+    check_and_clear(':silent edit foo         |\n')
+
+    -- With API (via eval/VimL) call and shortmess+=F
+    feed(':call nvim_command("edit x")<cr>')
+    check_and_clear(':call nvim_command("edit |\n')
+
+    nvim_async('command', 'edit x')
+    check_and_clear('                         |\n')
   end)
 end)

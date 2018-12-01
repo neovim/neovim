@@ -2137,8 +2137,6 @@ index({list}, {expr} [, {start} [, {ic}]])
 				Number	index in {list} where {expr} appears
 input({prompt} [, {text} [, {completion}]])
 				String	get input from the user
-inputdialog({prompt} [, {text} [, {completion}]])
-				String  like input() but in a GUI dialog
 inputlist({textlist})		Number	let the user pick from a choice list
 inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
@@ -4914,20 +4912,6 @@ input({opts})
 			:  let g:Foo = input("enter search pattern: ")
 			:  call inputrestore()
 			:endfunction
-
-inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
-inputdialog({opts})
-		Like |input()|, but when the GUI is running and text dialogs
-		are supported, a dialog window pops up to input the text.
-		Example: >
-		   :let n = inputdialog("value for shiftwidth", shiftwidth())
-		   :if n != ""
-		   :  let &sw = n
-		   :endif
-<		When the dialog is cancelled {cancelreturn} is returned.  When
-		omitted an empty string is returned.
-		Hitting <Enter> works like pressing the OK button.  Hitting
-		<Esc> works like pressing the Cancel button.
 
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is

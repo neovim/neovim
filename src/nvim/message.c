@@ -2825,7 +2825,6 @@ do_dialog (
                                Ex command */
 )
 {
-  int oldState;
   int retval = 0;
   char_u      *hotkeys;
   int c;
@@ -2838,7 +2837,10 @@ do_dialog (
   }
 
 
-  oldState = State;
+  int save_msg_silent = msg_silent;
+  int oldState = State;
+
+  msg_silent = 0;  // If dialog prompts for input, user needs to see it! #8788
   State = CONFIRM;
   setmouse();
 
@@ -2891,6 +2893,7 @@ do_dialog (
 
   xfree(hotkeys);
 
+  msg_silent = save_msg_silent;
   State = oldState;
   setmouse();
   --no_wait_return;

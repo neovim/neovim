@@ -11,6 +11,7 @@ local ok = helpers.ok
 local rmdir = helpers.rmdir
 local set_session = helpers.set_session
 local spawn = helpers.spawn
+local nvim_async = helpers.nvim_async
 
 describe(':recover', function()
   before_each(clear)
@@ -150,5 +151,12 @@ describe('swapfile detection', function()
     feed('e')  -- Chose "Edit" at the swap dialog.
     feed('<c-c>')
     screen2:expect(expected_no_dialog)
+
+    -- With API call and shortmess+=F
+    nvim_async('command', 'edit %')
+    screen2:expect{any=[[Found a swap file by the name ".*]]
+                       ..[[Xtest_swapdialog_dir[/\].*]]..testfile..[[%.swp"]]}
+    feed('e')  -- Chose "Edit" at the swap dialog.
+    feed('<c-c>')
   end)
 end)
