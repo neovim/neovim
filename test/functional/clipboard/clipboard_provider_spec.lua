@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local feed_command, expect, eq, eval = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
+local feed_command, expect, eq, eval, source = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval, helpers.source
 local command = helpers.command
 local meths = helpers.meths
 
@@ -146,6 +146,42 @@ describe('clipboard', function()
     })
     eq('clippy!', eval('provider#clipboard#Executable()'))
     eq('', eval('provider#clipboard#Error()'))
+  end)
+
+  it('valid g:clipboard using vimscript functions', function()
+    -- implementes a clipboard provider that places data
+    -- in g:dummy_clipboard.
+	-- The cache_enabled should be ignored - setting as 1 should have no consequence
+    source([[let g:clipboard = {
+            \  'name': 'custom',
+            \  'copy': {
+            \     '+': {lines, regtype -> extend(g:, {'dummy_clipboard_plus': [lines, regtype]}) },
+            \     '*': {lines, regtype -> extend(g:, {'dummy_clipboard_star': [lines, regtype]}) },
+            \   },
+            \  'paste': {
+            \     '+': {-> get(g:, 'dummy_clipboard_plus', [])},
+            \     '*': {-> get(g:, 'dummy_clipboard_star', [])},
+            \  },
+            \  'cache_enabled': 1,
+            \}]])
+
+    eq('', eval('provider#clipboard#Error()'))
+    eq('custom', eval('provider#clipboard#Executable()'))
+
+    eq('', eval("getreg('*')"))
+    eq('', eval("getreg('+')"))
+
+    command('call setreg("*", "star")')
+    command('call setreg("+", "plus")')
+    eq('star', eval("getreg('*')"))
+    eq('plus', eval("getreg('+')"))
+
+    command('call setreg("*", "star", "v")')
+	eq({{'star'}, 'v'}, eval("g:dummy_clipboard_star"))
+    command('call setreg("*", "star", "V")')
+	eq({{'star', ''}, 'V'}, eval("g:dummy_clipboard_star"))
+    command('call setreg("*", "star", "b")')
+	eq({{'star', ''}, 'b'}, eval("g:dummy_clipboard_star"))
   end)
 end)
 

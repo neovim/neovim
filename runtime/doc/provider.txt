@@ -178,6 +178,20 @@ If `cache_enabled` is |TRUE| then when a selection is copied, Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
 process has not died, the cached selection is applied.
 
+Instead of using external tools the provider can also use vimscript functions
+>
+    let g:clipboard = {
+          \   'name': 'custom',
+          \   'copy': {
+          \      '+': {lines, regtype -> extend(g:, {'dummy_clipboard_plus': [lines, regtype]}) },
+          \      '*': {lines, regtype -> extend(g:, {'dummy_clipboard_star': [lines, regtype]}) },
+          \    },
+          \   'paste': {
+          \      '+': {-> get(g:, 'dummy_clipboard_plus', [])},
+          \      '*': {-> get(g:, 'dummy_clipboard_star', [])},
+          \   },
+          \ }
+
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*
 
