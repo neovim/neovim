@@ -757,6 +757,14 @@ return function(after_each)
       end
       check_logs()
       check_cores('build/bin/nvim')
+      if session then
+        local msg = session:next_message(0)
+        if msg then
+          if msg[1] == "notification" and msg[2] == "nvim_error_event" then
+            error(msg[3][2])
+          end
+        end
+      end
     end)
   end
   return module

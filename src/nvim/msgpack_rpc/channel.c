@@ -641,7 +641,16 @@ static WBuffer *serialize_response(uint64_t channel_id,
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
-  msgpack_rpc_serialize_response(response_id, err, arg, &pac);
+  if (ERROR_SET(err) && response_id == NO_RESPONSE) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ(err->type));
+    ADD(args, STRING_OBJ(cstr_to_string(err->msg)));
+    msgpack_rpc_serialize_request(0, cstr_as_string("nvim_error_event"),
+                                  args, &pac);
+    api_free_array(args);
+  } else {
+    msgpack_rpc_serialize_response(response_id, err, arg, &pac);
+  }
   log_server_msg(channel_id, sbuffer);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,

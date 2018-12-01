@@ -80,6 +80,19 @@ As Nvim evolves the API may change in compliance with this CONTRACT:
 - Deprecated functions will not be removed until Nvim version 2.0
 
 ==============================================================================
+Global events						    *api-global-events*
+
+When a client invokes an API request as an async notification, it is not
+possible for Nvim to send an error response. Instead, in case of error, the
+following notification will be sent to the client:
+
+                                                             *nvim_error_event*
+nvim_error_event[{type}, {message}]
+
+{type} is a numeric id as defined by `api_info().error_types`, and {message} is
+a string with the error message.
+
+==============================================================================
 Buffer update events					*api-buffer-updates*
 
 API clients can "attach" to Nvim buffers to subscribe to buffer update events.
@@ -206,7 +219,7 @@ Example using the Nvim python-client:
     buf.clear_highlight(src)
 <
 If the highlights don't need to be deleted or updated, just pass -1 as
-src_id (this is the default in python). Use |nvim_buf_clear_highlight()| to
+src_id (this is the default in python). Use |nvim_buf_clear_namespace()| to
 clear highlights from a specific source, in a specific line range or the
 entire buffer by passing in the line range 0, -1 (the latter is the default in
 python as used above).
@@ -218,7 +231,7 @@ An example of calling the api from vimscript: >
     call nvim_buf_add_highlight(0, src, "Identifier", 0, 5, -1)
 
     " later
-    call nvim_buf_clear_highlight(0, src, 0, -1)
+    call nvim_buf_clear_namespace(0, src, 0, -1)
 >
 ==============================================================================
 Global Functions                                                  *api-global*
