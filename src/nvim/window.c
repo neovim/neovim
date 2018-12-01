@@ -1946,6 +1946,11 @@ int win_close(win_T *win, bool free_buf)
   // associated with window
   do_autocmd_winclosed(win);
 
+  // autocmd may have freed the window already;
+  if (!win_valid(win)) {
+    return OK;
+  }
+
   /* Free independent synblock before the buffer is freed. */
   if (win->w_buffer != NULL)
     reset_synblock(win);
@@ -2111,6 +2116,11 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   // fire WinClosed event just before starting freeing resources
   // associated with window
   do_autocmd_winclosed(win);
+
+  // autocmd may have freed the window already;
+  if (!win_valid(win)) {
+    return;
+  }
 
   if (win->w_buffer != NULL) {
     // Close the link to the buffer.
