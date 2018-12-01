@@ -28,15 +28,15 @@ local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
 
-local ADDR_LINES            =  0
-local ADDR_WINDOWS          =  1
-local ADDR_ARGUMENTS        =  2
-local ADDR_LOADED_BUFFERS   =  3
-local ADDR_BUFFERS          =  4
-local ADDR_TABS             =  5
-local ADDR_TABS_RELATIVE    =  6
-local ADDR_QUICKFIX         =  7
-local ADDR_OTHER            =  99
+local ADDR_LINES            =  0    -- buffer line numbers
+local ADDR_WINDOWS          =  1    -- window number
+local ADDR_ARGUMENTS        =  2    -- argument number
+local ADDR_LOADED_BUFFERS   =  3    -- buffer number of loaded buffer
+local ADDR_BUFFERS          =  4    -- buffer number
+local ADDR_TABS             =  5    -- tab page number
+local ADDR_TABS_RELATIVE    =  6    -- Tab page that only relative
+local ADDR_QUICKFIX         =  7    -- quickfix list entry number
+local ADDR_OTHER            =  99   -- something else
 
 -- The following table is described in ex_cmds_defs.h file.
 return {
@@ -2326,8 +2326,8 @@ return {
   },
   {
     command='scriptnames',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, TRLBAR, CMDWIN),
+    addr_type=ADDR_OTHER,
     func='ex_scriptnames',
   },
   {
