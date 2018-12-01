@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
 if(POLICY CMP0059)
-  cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
+  # Needed for use of DEFINITIONS variable, which is used to collect the
+  # compilation flags for reporting in "nvim --version"
+  # https://github.com/neovim/neovim/pull/8558#issuecomment-398033140
+  cmake_policy(SET CMP0059 OLD)
 endif()
 
 # Point CMake at any custom modules we may ship
