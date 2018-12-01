@@ -3195,7 +3195,8 @@ static bool ins_compl_prep(int c)
 
   /* Ignore end of Select mode mapping and mouse scroll buttons. */
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
-      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT) {
+      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
+      || c == K_COMMAND) {
     return retval;
   }
 

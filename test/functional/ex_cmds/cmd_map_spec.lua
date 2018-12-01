@@ -29,6 +29,9 @@ describe('mappings with <Cmd>', function()
       [5] = {background = Screen.colors.LightGrey},
       [6] = {foreground = Screen.colors.Blue1},
       [7] = {bold = true, reverse = true},
+      [8] = {background = Screen.colors.WebGray},
+      [9] = {background = Screen.colors.LightMagenta},
+      [10] = {foreground = Screen.colors.Red},
     })
     screen:attach()
 
@@ -654,6 +657,37 @@ describe('mappings with <Cmd>', function()
     -- :stopinsert works
     feed('<F9>')
     eq('n', eval('mode(1)'))
+  end)
+
+  it('works in insert completion (Ctrl-X) mode', function()
+    feed('os<c-x><c-n>')
+    screen:expect([[
+      some short lines                                                 |
+      some^                                                             |
+      {8:some           }                                                  |
+      {9:short          }{1:                                                  }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {4:-- Keyword Local completion (^N^P) }{3:match 1 of 2}                  |
+    ]])
+
+    feed('<f3>')
+    eq('ic', eval('m'))
+
+    -- ensure a redraw, this would have moved the cursor
+    -- instead if CTRL-X mode was left.
+    feed('<up>')
+    screen:expect([[
+      some short lines                                                 |
+      some^                                                             |
+      {9:some           }                                                  |
+      {9:short          }{1:                                                  }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {4:-- Keyword Local completion (^N^P) }{10:Back at original}              |
+    ]])
   end)
 
   it('works in cmdline mode', function()
