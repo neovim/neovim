@@ -93,7 +93,6 @@ describe('autocmds:', function()
 
   it('WinClosed events are not recursive in different tab', function()
     command('let g:triggered = 0')
-    local first_buffer = eval("bufnr('%')")
     command('new')
     local second_buffer = eval("bufnr('%')")
     command('autocmd WinClosed <buffer> :let g:triggered+=1 | bdelete ' .. second_buffer)
