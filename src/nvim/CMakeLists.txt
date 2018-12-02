@@ -72,6 +72,10 @@ include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
+include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/include)
+include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/src)
+include_directories(${CMAKE_SOURCE_DIR}/../utf8proc/)
+
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
@@ -404,12 +408,7 @@ if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/include)
-include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/src)
-include_directories(${CMAKE_SOURCE_DIR}/../utf8proc/)
-
-file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/../tree-sitter/src/runtime/*.c)
-list(APPEND TS_SOURCES ${CMAKE_SOURCE_DIR}/../utf8proc/utf8proc.c)
+file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/../tree-sitter/src/runtime/runtime.c)
 list(APPEND TS_SOURCES ${CMAKE_SOURCE_DIR}/../tree-sitter-c/src/parser.c)
 list(APPEND NVIM_SOURCES ${TS_SOURCES})
 
