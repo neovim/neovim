@@ -121,7 +121,6 @@ describe('108', function()
       Error detected while processing function Foo[2]..Bar[2]..Bazz:
       line    3:
       E121: Undefined variable: var3
-      E15: Invalid expression: var3
       here var3 is defined with "another var":
       another var
 
@@ -129,7 +128,6 @@ describe('108', function()
       Error detected while processing function Foo[2]..Bar:
       line    3:
       E121: Undefined variable: var2
-      E15: Invalid expression: var2
       here var2 is defined with 10:
       10
 

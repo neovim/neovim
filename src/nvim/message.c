@@ -505,7 +505,7 @@ int emsg(const char_u *s_)
      */
     if (cause_errthrow((char_u *)s, severe, &ignore) == true) {
       if (!ignore) {
-        did_emsg = true;
+        did_emsg++;
       }
       return true;
     }
@@ -554,7 +554,7 @@ int emsg(const char_u *s_)
     } else {
       flush_buffers(FLUSH_MINIMAL);  // flush internal buffers
     }
-    did_emsg = true;          // flag for DoOneCmd()
+    did_emsg++;               // flag for DoOneCmd()
   }
 
   emsg_on_display = true;     // remember there is an error message

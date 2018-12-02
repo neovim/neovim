@@ -19538,6 +19538,7 @@ void ex_echo(exarg_T *eap)
   typval_T rettv;
   bool needclr = true;
   bool atstart = true;
+  const int did_emsg_before = did_emsg;
 
   if (eap->skip)
     ++emsg_skip;
@@ -19552,7 +19553,7 @@ void ex_echo(exarg_T *eap)
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.
-        if (!aborting()) {
+        if (!aborting() && did_emsg == did_emsg_before) {
           EMSG2(_(e_invexpr2), p);
         }
         need_clr_eos = false;
@@ -19641,7 +19642,7 @@ void ex_execute(exarg_T *eap)
   int ret = OK;
   char_u      *p;
   garray_T ga;
-  int save_did_emsg;
+  int save_did_emsg = did_emsg;
 
   ga_init(&ga, 1, 80);
 
@@ -19655,8 +19656,9 @@ void ex_execute(exarg_T *eap)
        * has been cancelled due to an aborting error, an interrupt, or an
        * exception.
        */
-      if (!aborting())
+      if (!aborting() && did_emsg == save_did_emsg) {
         EMSG2(_(e_invexpr2), p);
+      }
       ret = FAIL;
       break;
     }

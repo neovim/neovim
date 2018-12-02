@@ -28,9 +28,9 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
+                                                                  |
       Error detected while processing pre-vimrc command line:     |
       E121: Undefined variable: invalid                           |
-      E15: Invalid expression: invalid+                           |
       Press ENTER or type command to continue^                     |
     ]])
 
