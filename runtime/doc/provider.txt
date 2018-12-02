@@ -192,6 +192,16 @@ Instead of using external tools the provider can also use vimscript functions
           \   },
           \ }
 
+The copy function is meant to place a list of lines into the clipboard and
+store a register type specification (as seen in |setreg|, `"v"` for
+|characterwise|, `"V"` for |linewise| and `"b"` for |blockwise-visual|) along with the data.
+
+The paste function returns a list that contains the clipboard data as [lines,
+regtype], where lines is a list of lines and regtype is a register type
+specification as seen in |setreg|. If no data is available in the clipboard an
+empty list can be returned. If no regtype is available it can be omited from
+the return value.
+
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*
 

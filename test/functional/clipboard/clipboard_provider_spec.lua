@@ -183,6 +183,59 @@ describe('clipboard', function()
     command('call setreg("*", "star", "b")')
 	eq({{'star', ''}, 'b'}, eval("g:dummy_clipboard_star"))
   end)
+
+  describe('g:clipboard[paste] function', function()
+    it('can return empty list for empty clipboard', function()
+      source([[let g:dummy_clipboard = []
+	          let g:clipboard = {
+              \  'name': 'custom',
+              \  'copy': { '*': {lines, regtype ->  0} },
+              \  'paste': { '*': {-> g:dummy_clipboard} },
+              \}]])
+      eq('', eval('provider#clipboard#Error()'))
+      eq('custom', eval('provider#clipboard#Executable()'))
+      eq('', eval("getreg('*')"))
+    end)
+
+    it('can return a list with a single string', function()
+      source([=[let g:dummy_clipboard = ['hello']
+              let g:clipboard = {
+              \  'name': 'custom',
+              \  'copy': { '*': {lines, regtype ->  0} },
+              \  'paste': { '*': {-> g:dummy_clipboard} },
+              \}]=])
+      eq('', eval('provider#clipboard#Error()'))
+      eq('custom', eval('provider#clipboard#Executable()'))
+
+      eq('hello', eval("getreg('*')"))
+	  source([[let g:dummy_clipboard = [''] ]])
+      eq('', eval("getreg('*')"))
+    end)
+
+    it('can return a list of lines if a regtype is provided', function()
+      source([=[let g:dummy_clipboard = [['hello'], 'v']
+              let g:clipboard = {
+              \  'name': 'custom',
+              \  'copy': { '*': {lines, regtype ->  0} },
+              \  'paste': { '*': {-> g:dummy_clipboard} },
+              \}]=])
+      eq('', eval('provider#clipboard#Error()'))
+      eq('custom', eval('provider#clipboard#Executable()'))
+      eq('hello', eval("getreg('*')"))
+    end)
+
+    it('can return a list of lines instead of [lines, regtype]', function()
+      source([=[let g:dummy_clipboard = ['hello', 'v']
+              let g:clipboard = {
+              \  'name': 'custom',
+              \  'copy': { '*': {lines, regtype ->  0} },
+              \  'paste': { '*': {-> g:dummy_clipboard} },
+              \}]=])
+      eq('', eval('provider#clipboard#Error()'))
+      eq('custom', eval('provider#clipboard#Executable()'))
+      eq('hello\nv', eval("getreg('*')"))
+    end)
+  end)
 end)
 
 describe('clipboard', function()
