@@ -1,0 +1,4 @@
+#ifndef NVIM_LUA_TREE_SITTER_H
+#define NVIM_LUA_TREE_SITTER_H
+
+#endif  // NVIM_LUA_TREE_SITTER_H
