@@ -27,7 +27,9 @@ The second and following arguments may also be a directory name.  Vim will
 then append the file name of the first argument to the directory name to find
 the file.
 
-This only works when a standard "diff" command is available.  See 'diffexpr'.
+By default an internal diff library will be used.  When 'diffopt' or
+'diffexpr' has been set an external "diff" command will be used.  This only
+works when such a diff program is available.
 
 Diffs are local to the current tab page |tab-page|.  You can't see diffs with
 a window in another tab page.  This does make it possible to have several
@@ -332,8 +334,9 @@ between file1 and file2: >
 
 The ">" is replaced with the value of 'shellredir'.
 
-The output of "diff" must be a normal "ed" style diff.  Do NOT use a context
-diff.  This example explains the format that Vim expects: >
+The output of "diff" must be a normal "ed" style diff or a unified diff.  Do
+NOT use a context diff.  This example explains the format that Vim expects for
+the "ed" style diff: >
 
 	1a2
 	> bbb

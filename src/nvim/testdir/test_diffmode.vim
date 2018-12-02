@@ -33,6 +33,18 @@ func Test_diff_fold_sync()
 endfunc
 
 func Test_vert_split()
+  set diffopt=filler
+  call Common_vert_split()
+  set diffopt&
+endfunc
+
+func Test_vert_split_internal()
+  set diffopt=internal,filler
+  call Common_vert_split()
+  set diffopt&
+endfunc
+
+func Common_vert_split()
   " Disable the title to avoid xterm keeping the wrong one.
   set notitle noicon
   new
@@ -275,10 +287,8 @@ func Test_diffoff()
   bwipe!
 endfunc
 
-func Test_diffopt_icase()
-  set diffopt=icase,foldcolumn:0
-
-  e one
+func Common_icase_test()
+  edit one
   call setline(1, ['One', 'Two', 'Three', 'Four', 'Fi#ve'])
   redraw
   let normattr = screenattr(1, 1)
@@ -300,32 +310,54 @@ func Test_diffopt_icase()
 
   diffoff!
   %bwipe!
+endfunc
+
+func Test_diffopt_icase()
+  set diffopt=icase,foldcolumn:0
+  call Common_icase_test()
   set diffopt&
 endfunc
 
-func Test_diffopt_iwhite()
-  set diffopt=iwhite,foldcolumn:0
+func Test_diffopt_icase_internal()
+  set diffopt=icase,foldcolumn:0,internal
+  call Common_icase_test()
+  set diffopt&
+endfunc
 
-  e one
-  " Difference in trailing spaces should be ignored,
+func Common_iwhite_test()
+  edit one
+  " Difference in trailing spaces and amount of spaces should be ignored,
   " but not other space differences.
-  call setline(1, ["One \t", 'Two', 'Three', 'Four'])
+  call setline(1, ["One \t", 'Two', 'Three', 'one two', 'one two', 'Four'])
   redraw
   let normattr = screenattr(1, 1)
   diffthis
 
   botright vert new two
-  call setline(1, ["One\t ", "Two\t ", 'Three', ' Four'])
+  call setline(1, ["One\t ", "Two\t ", 'Three', 'one   two', 'onetwo', ' Four'])
   diffthis
 
   redraw
   call assert_equal(normattr, screenattr(1, 1))
   call assert_equal(normattr, screenattr(2, 1))
   call assert_equal(normattr, screenattr(3, 1))
-  call assert_notequal(normattr, screenattr(4, 1))
+  call assert_equal(normattr, screenattr(4, 1))
+  call assert_notequal(normattr, screenattr(5, 1))
+  call assert_notequal(normattr, screenattr(6, 1))
 
   diffoff!
   %bwipe!
+endfunc
+
+func Test_diffopt_iwhite()
+  set diffopt=iwhite,foldcolumn:0
+  call Common_iwhite_test()
+  set diffopt&
+endfunc
+
+func Test_diffopt_iwhite_internal()
+  set diffopt=internal,iwhite,foldcolumn:0
+  call Common_iwhite_test()
   set diffopt&
 endfunc
 
@@ -339,7 +371,12 @@ func Test_diffopt_context()
 
   set diffopt=context:2
   call assert_equal('+--  2 lines: 1', foldtextresult(1))
+  set diffopt=internal,context:2
+  call assert_equal('+--  2 lines: 1', foldtextresult(1))
+
   set diffopt=context:1
+  call assert_equal('+--  3 lines: 1', foldtextresult(1))
+  set diffopt=internal,context:1
   call assert_equal('+--  3 lines: 1', foldtextresult(1))
 
   diffoff!
@@ -348,7 +385,7 @@ func Test_diffopt_context()
 endfunc
 
 func Test_diffopt_horizontal()
-  set diffopt=horizontal
+  set diffopt=internal,horizontal
   diffsplit
 
   call assert_equal(&columns, winwidth(1))
@@ -362,7 +399,7 @@ func Test_diffopt_horizontal()
 endfunc
 
 func Test_diffopt_vertical()
-  set diffopt=vertical
+  set diffopt=internal,vertical
   diffsplit
 
   call assert_equal(&lines - 2, winheight(1))
@@ -376,7 +413,7 @@ func Test_diffopt_vertical()
 endfunc
 
 func Test_diffopt_hiddenoff()
-  set diffopt=filler,foldcolumn:0,hiddenoff
+  set diffopt=internal,filler,foldcolumn:0,hiddenoff
   e! one
   call setline(1, ['Two', 'Three'])
   redraw
@@ -399,7 +436,7 @@ func Test_diffopt_hiddenoff()
 endfunc
 
 func Test_diffoff_hidden()
-  set diffopt=filler,foldcolumn:0
+  set diffopt=internal,filler,foldcolumn:0
   e! one
   call setline(1, ['Two', 'Three'])
   redraw
@@ -523,7 +560,7 @@ func Test_diffpatch()
   3
 + 4
 .
-  saveas Xpatch
+  saveas! Xpatch
   bwipe!
   new
   call assert_fails('diffpatch Xpatch', 'E816:')
@@ -566,6 +603,22 @@ func Test_diff_nomodifiable()
   call assert_fails('norm dp', 'E793:')
   setl nomodifiable
   call assert_fails('norm do', 'E21:')
+  %bwipe!
+endfunc
+
+func Test_diff_filler()
+  new
+  call setline(1, [1, 2, 3, 'x', 4])
+  diffthis
+  vnew
+  call setline(1, [1, 2, 'y', 'y', 3, 4])
+  diffthis
+  redraw
+
+  call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'diff_filler(v:val)'))
+  wincmd w
+  call assert_equal([0, 0, 0, 0, 2, 0, 0, 0], map(range(-1, 6), 'diff_filler(v:val)'))
+
   %bwipe!
 endfunc
 
@@ -614,4 +667,24 @@ func Test_diff_with_cursorline()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_diff_cursorline')
+endfunc
+
+func Test_diff_of_diff()
+  if !CanRunVimInTerminal()
+    return
+  endif
+
+  call writefile([
+	\ 'call setline(1, ["aa","bb","cc","@@ -3,2 +5,7 @@","dd","ee","ff"])',
+	\ 'vnew',
+	\ 'call setline(1, ["aa","bb","cc"])',
+	\ 'windo diffthis',
+	\ ], 'Xtest_diff_diff')
+  let buf = RunVimInTerminal('-S Xtest_diff_diff', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_of_diff_01', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_diff')
 endfunc
