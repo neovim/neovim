@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
 if(POLICY CMP0059)
-  cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
+  # Needed for use of DEFINITIONS variable, which is used to collect the
+  # compilation flags for reporting in "nvim --version"
+  # https://github.com/neovim/neovim/pull/8558#issuecomment-398033140
+  cmake_policy(SET CMP0059 OLD)
 endif()
 
 # Point CMake at any custom modules we may ship
@@ -389,6 +392,7 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
+unset(CMAKE_REQUIRED_LIBRARIES)
 if(MSGPACK_HAS_FLOAT32)
   add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
@@ -410,6 +414,8 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
