@@ -55,19 +55,9 @@ endfunction
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
     if type({}) isnot# type(g:clipboard)
+          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
+          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
       let s:err = 'clipboard: invalid g:clipboard'
-      return ''
-    endif
-
-    if type(get(g:clipboard, 'copy', v:null)) isnot# v:t_dict
-        \ && type(get(g:clipboard, 'copy', v:null)) isnot# v:t_func
-      let s:err = "clipboard: invalid g:clipboard['copy']"
-      return ''
-    endif
-
-    if type(get(g:clipboard, 'paste', v:null)) isnot# v:t_dict
-        \ && type(get(g:clipboard, 'paste', v:null)) isnot# v:t_func
-      let s:err = "clipboard: invalid g:clipboard['paste']"
       return ''
     endif
 
