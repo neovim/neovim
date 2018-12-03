@@ -181,6 +181,8 @@ Standard Features ~
 - Clients should call |nvim_set_client_info()| after connecting, so users and
   plugins can detect the client by handling the |ChanInfo| event. This
   avoids the need for special variables or other client hints.
+- Clients should handle |nvim_error_event| notifications, which will be sent
+  if an async request to nvim was rejected or caused an error.
 
 Package Naming ~
 
