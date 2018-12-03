@@ -39,11 +39,11 @@ void build_meta(lua_State *L, const luaL_Reg *meta)
     lua_pushcfunction(L, meta[i].func);  // [env, target, func]
     lua_pushvalue(L, -3);  // [env, target, func, env]
     lua_setfenv(L, -2);  // [env, target, func]
-    lua_setfield(L, -2, meta[i].name); // [env, target]
+    lua_setfield(L, -2, meta[i].name);  // [env, target]
   }
 
   lua_pushvalue(L, -1);  // [env, target, target]
-  lua_setfield(L, -2, "__index"); // [env, target]
+  lua_setfield(L, -2, "__index");  // [env, target]
 }
 
 
@@ -125,7 +125,7 @@ static void push_node(lua_State *L, TSNode node)
   *ud = node;
   lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
   lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2); // [src, udata, reftable]
-  lua_setfenv(L, -2); // [src, udata]
+  lua_getfenv(L, -2);  // [src, udata, reftable]
+  lua_setfenv(L, -2);  // [src, udata]
 }
 

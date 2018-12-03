@@ -30,6 +30,7 @@
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/tree_sitter.h"
 
 typedef struct {
   Error err;
@@ -176,7 +177,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");
 
+  nlua_add_treesitter(lstate);
+
   lua_setglobal(lstate, "vim");
+
   return 0;
 }
 
@@ -651,4 +655,21 @@ void ex_luafile(exarg_T *const eap)
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return;
   }
+}
+
+static int unsafe_ptr_to_ts_tree(lua_State *L)
+{
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  TSTree *const *ptr = lua_topointer(L,1);
+  tslua_push_tree(L, *ptr);
+  return 1;
+}
+
+static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  tslua_init(lstate);
+  lua_pushcfunction(lstate, unsafe_ptr_to_ts_tree);
+  lua_setfield(lstate, -2, "unsafe_ts_tree");
 }
