@@ -3379,9 +3379,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 
 		If {list} is given and it is |TRUE|, a List will be returned.
 		Otherwise the result is a String and when there are several
-		matches, they are separated by <NL> characters.  [Note: in
-		version 5.0 a space was used, which caused problems when a
-		file name contains a space]
+		matches, they are separated by <NL> characters.
 
 		If the expansion fails, the result is an empty string.	A name
 		for a non-existing file is not included, unless {expr} does
@@ -3442,7 +3440,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		all "README" files in the current directory and below: >
 			:echo expand("**/README")
 <
-		Expand() can also be used to expand variables and environment
+		expand() can also be used to expand variables and environment
 		variables that are only known in a shell.  But this can be
 		slow, because a shell may be used to do the expansion.  See
 		|expr-env-expand|.
