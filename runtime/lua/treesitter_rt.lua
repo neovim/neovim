@@ -123,34 +123,35 @@ function create_parser(bufnr)
 end
 
 function ts_inspect_pos(row,col)
-  local tree = parse_tree(theparser)
-  local root = l.ts_tree_root_node(tree)
-  local node = l.ts_node_descendant_for_point_range(root, TSPoint(row,col), TSPoint(row,col))
+  local rawtree = parse_tree(theparser)
+  local tree = vim.unsafe_ts_tree(theparser.tree)
+  local root = tree:root()
+  local node = root:descendant_for_range(row,col,row,col)
   show_node(node)
 end
 
 function show_node(node)
-  if l.ts_node_is_null(node) then
+  if node == nil then
     return
   end
   a.nvim_buf_clear_highlight(0, my_ns, 0, -1)
   shown_node = node
-  print(ffi.string(l.ts_node_type(node)))
-  start = l.ts_node_start_point(node)
-  endp = l.ts_node_end_point(node)
-  a.nvim_buf_add_highlight(0, my_ns, "ErrorMsg", start.row, start.column, start.column+1)
-  if endp.column >= 1 then
-    endp.column = endp.column - 1
-  end
+  print(node:type())
+  local start_row, start_col, end_row, end_col = node:range()
 
-  a.nvim_buf_add_highlight(0, my_ns, "ErrorMsg", endp.row, endp.column, endp.column+1)
+  a.nvim_buf_add_highlight(0, my_ns, "ErrorMsg", start_row, start_col, start_col+1)
+
+  if end_col >= 1 then
+    end_col = end_col - 1
+  end
+  a.nvim_buf_add_highlight(0, my_ns, "ErrorMsg", end_row, end_col, end_col+1)
 end
 
 function ts_expand_node()
   if shown_node == nil then
     return
   end
-  parent = l.ts_node_parent(shown_node)
+  parent = shown_node:parent()
   show_node(parent)
 end
 
@@ -274,5 +275,5 @@ if false then
   c = root:child(50)
   print(require'inspect'{c:extent()})
   type(ctree.__tostring)
-  root.__tostring()
+  root:__tostring()
 end

@@ -31,9 +31,14 @@ static struct luaL_Reg tree_meta[] = {
 
 static struct luaL_Reg node_meta[] = {
   {"__tostring", node_tostring},
-  {"__len", node_len},
-  {"extent", node_extent},
+  {"__len", node_child_count},
+  {"range", node_range},
+  {"type", node_type},
+  {"symbol", node_symbol},
+  {"child_count", node_child_count},
   {"child", node_child},
+  {"descendant_for_range", node_descendant_for_point_range},
+  {"parent", node_parent},
   {NULL, NULL}
 };
 
@@ -156,7 +161,7 @@ static int node_tostring(lua_State *L)
   return 1;
 }
 
-static int node_extent(lua_State *L)
+static int node_range(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, &node)) {
@@ -171,7 +176,7 @@ static int node_extent(lua_State *L)
   return 4;
 }
 
-static int node_len(lua_State *L)
+static int node_child_count(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, &node)) {
@@ -179,6 +184,27 @@ static int node_len(lua_State *L)
   }
   uint32_t count = ts_node_child_count(node);
   lua_pushnumber(L, count);
+  return 1;
+}
+
+static int node_type(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  lua_pushstring(L, ts_node_type(node));
+  return 1;
+}
+
+static int node_symbol(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSSymbol symbol = ts_node_symbol(node);
+  lua_pushnumber(L, symbol);
   return 1;
 }
 
@@ -190,13 +216,35 @@ static int node_child(lua_State *L)
   }
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_child(node, (uint32_t)num);
-  if (ts_node_is_null(child)) {
-    return 0;
-  }
   push_node(L, child);
   return 1;
 }
 
+static int node_descendant_for_point_range(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSPoint start = {(uint32_t)lua_tointeger(L, 2),
+                   (uint32_t)lua_tointeger(L, 3)};
+  TSPoint end = {(uint32_t)lua_tointeger(L, 4),
+                 (uint32_t)lua_tointeger(L, 5)};
+  TSNode child = ts_node_descendant_for_point_range(node, start, end);
+  push_node(L, child);
+  return 1;
+}
+
+static int node_parent(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSNode parent = ts_node_parent(node);
+  push_node(L, parent);
+  return 1;
+}
 
 
 /// push node interface on lua stack
@@ -206,6 +254,10 @@ static int node_child(lua_State *L)
 /// cfunction with the tslua environment.
 static void push_node(lua_State *L, TSNode node)
 {
+  if (ts_node_is_null(node)) {
+    lua_pushnil(L); // [src, nil]
+    return;
+  }
   TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
   *ud = node;
   lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
