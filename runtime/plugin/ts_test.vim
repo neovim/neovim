@@ -22,7 +22,7 @@ endfunc
 
 func! TSSyntax()
   " disable matchparen
-  syntax off
+  set syntax=
   call TSTest()
   lua ts_syntax()
 endfunc

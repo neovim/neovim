@@ -79,6 +79,7 @@ function the_cb(tsstate, ev, ...)
     local stop_row = start_row + nlines
     local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
     local root = l.ts_tree_root_node(tsstate.tree)
+    -- TODO: add proper lookup function!
     local inode = l.ts_node_descendant_for_point_range(root, TSPoint(oldstopline+9000,0), TSPoint(oldstopline,0))
     local edit
     if l.ts_node_is_null(inode) then
@@ -122,9 +123,9 @@ function create_parser(bufnr)
 end
 
 function ts_inspect_pos(row,col)
-  tree = parse_tree(theparser)
-  root = l.ts_tree_root_node(tree)
-  node = l.ts_node_descendant_for_point_range(root, TSPoint(row,col), TSPoint(row,col))
+  local tree = parse_tree(theparser)
+  local root = l.ts_tree_root_node(tree)
+  local node = l.ts_node_descendant_for_point_range(root, TSPoint(row,col), TSPoint(row,col))
   show_node(node)
 end
 
@@ -154,7 +155,7 @@ function ts_expand_node()
 end
 
 function ts_cursor()
-  row, col = unpack(a.nvim_win_get_cursor(0))
+  local row, col = unpack(a.nvim_win_get_cursor(0))
   ts_inspect_pos(row-1, col)
 end
 
@@ -211,7 +212,7 @@ function ts_line(line,endl,drawing)
     a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl)
   end
   tree = parse_tree(theparser)
-  root = l.ts_tree_root_node(tree)
+  local root = l.ts_tree_root_node(tree)
   --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
   --local cursor = l.ts_tree_cursor_new(node)
   local cursor = l.ts_tree_cursor_new(root)
