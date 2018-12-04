@@ -114,6 +114,15 @@ func Test_syntime()
   bd
 endfunc
 
+func Test_syntime_completion()
+  if !has('profile')
+    return
+  endif
+
+  call feedkeys(":syntime \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clear off on report', @:)
+endfunc
+
 func Test_syntax_list()
   syntax on
   let a = execute('syntax list')
