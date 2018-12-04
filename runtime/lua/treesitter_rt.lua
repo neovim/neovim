@@ -267,7 +267,12 @@ function ts_syntax()
   a.nvim_buf_set_luahl(theparser.bufnr, "return ts_on_winhl(...)")
 end
 
-if false
+if false then
   ctree = vim.unsafe_ts_tree(theparser.tree)
   root = ctree:root()
+  print(#root)
+  c = root:child(50)
+  print(require'inspect'{c:extent()})
+  type(ctree.__tostring)
+  root.__tostring()
 end
