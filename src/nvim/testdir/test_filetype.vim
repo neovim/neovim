@@ -596,3 +596,7 @@ func Test_script_detection()
   filetype off
 endfunc
 
+func Test_setfiletype_completion()
+  call feedkeys(":setfiletype java\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"setfiletype java javacc javascript', @:)
+endfunc
