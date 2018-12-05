@@ -8125,6 +8125,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const int save_msg_silent = msg_silent;
   const int save_emsg_silent = emsg_silent;
   const bool save_emsg_noredir = emsg_noredir;
+  const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
 
   if (check_secure()) {
@@ -8152,6 +8153,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   garray_T capture_local;
   ga_init(&capture_local, (int)sizeof(char), 80);
   capture_ga = &capture_local;
+  redir_off = false;
 
   if (argvars[0].v_type != VAR_LIST) {
     do_cmdline_cmd(tv_get_string(&argvars[0]));
@@ -8169,6 +8171,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   msg_silent = save_msg_silent;
   emsg_silent = save_emsg_silent;
   emsg_noredir = save_emsg_noredir;
+  redir_off = save_redir_off;
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
