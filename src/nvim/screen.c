@@ -669,8 +669,8 @@ static void win_update(win_T *wp)
 
   type = wp->w_redr_type;
 
-  if (type == NOT_VALID) {
-    wp->w_redr_status = TRUE;
+  if (type >= NOT_VALID) {
+    wp->w_redr_status = true;
     wp->w_lines_valid = 0;
   }
 
