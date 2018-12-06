@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>nivm</id>
+  <metadata_license>Apache 2.0</metadata_license>
+  <project_license>Apache 2.0</project_license>
+  <name>neovim</name>
+  <summary>Neovim is a project that seeks to aggressively refactor Vim.</summary>
+  <description>
+    <p>Its main goal is to:</p>
+    <ul>
+      <li>Simplify maintenance and encourage contributions</li>
+      <li>Split the work between multiple developers</li>
+      <li>Enable advanced UIs without modifications to the core</li>
+      <li>Maximize extensibility</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">nvim.desktop</launchable>
+  <url type="homepage">https://github.com/neovim/neovim</url>
+  <provides>
+    <binary>nvim</binary>
+  </provides>
+</component>
