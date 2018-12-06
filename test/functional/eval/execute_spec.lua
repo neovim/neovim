@@ -125,9 +125,141 @@ describe('execute()', function()
     feed('<CR>')
   end)
 
+  it('places cursor correctly #6035', function()
+    local screen = Screen.new(40, 5)
+    screen:attach()
+    source([=[
+      " test 1
+      function! Test1a()
+        echo 12345678
+        let x = execute('echo 1234567890', '')
+        echon '1234'
+      endfunction
+
+      function! Test1b()
+        echo 12345678
+        echo 1234567890
+        echon '1234'
+      endfunction
+
+      " test 2
+      function! Test2a()
+        echo 12345678
+        let x = execute('echo 1234567890', 'silent')
+        echon '1234'
+      endfunction
+
+      function! Test2b()
+        echo 12345678
+        silent echo 1234567890
+        echon '1234'
+      endfunction
+
+      " test 3
+      function! Test3a()
+        echo 12345678
+        let x = execute('echoerr 1234567890', 'silent!')
+        echon '1234'
+      endfunction
+
+      function! Test3b()
+        echo 12345678
+        silent! echoerr 1234567890
+        echon '1234'
+      endfunction
+
+      " test 4
+      function! Test4a()
+        echo 12345678
+        let x = execute('echoerr 1234567890', 'silent')
+        echon '1234'
+      endfunction
+
+      function! Test4b()
+        echo 12345678
+        silent echoerr 1234567890
+        echon '1234'
+      endfunction
+    ]=])
+
+    feed([[:call Test1a()<cr>]])
+    screen:expect([[
+                                              |
+                                              |
+      12345678                                |
+      12345678901234                          |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test1b()<cr>]])
+    screen:expect([[
+      12345678                                |
+      12345678901234                          |
+      12345678                                |
+      12345678901234                          |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test2a()<cr>]])
+    screen:expect([[
+      12345678901234                          |
+      12345678                                |
+      12345678901234                          |
+      123456781234                            |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test2b()<cr>]])
+    screen:expect([[
+      12345678                                |
+      12345678901234                          |
+      123456781234                            |
+      123456781234                            |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test3a()<cr>]])
+    screen:expect([[
+      12345678901234                          |
+      123456781234                            |
+      123456781234                            |
+      123456781234                            |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test3b()<cr>]])
+    screen:expect([[
+      123456781234                            |
+      123456781234                            |
+      123456781234                            |
+      123456781234                            |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test4a()<cr>]])
+    screen:expect([[
+      Error detected while processing function|
+       Test4a:                                |
+      line    2:                              |
+      123456781234                            |
+      Press ENTER or type command to continue^ |
+    ]])
+
+    feed([[:call Test4b()<cr>]])
+    screen:expect([[
+      Error detected while processing function|
+       Test4b:                                |
+      line    2:                              |
+      12345678901234                          |
+      Press ENTER or type command to continue^ |
+    ]])
+
+
+  end)
+
   -- This deviates from vim behavior, but is consistent
   -- with how nvim currently displays the output.
-  it('does capture shell-command output', function()
+  it('captures shell-command output', function()
     local win_lf = iswin() and '\13' or ''
     eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
   end)

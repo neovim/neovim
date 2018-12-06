@@ -8124,6 +8124,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const int save_msg_silent = msg_silent;
   const int save_emsg_silent = emsg_silent;
+  const int save_msg_col = msg_col;
   const bool save_emsg_noredir = emsg_noredir;
   const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
@@ -8132,6 +8133,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  bool is_silent = false;
   if (argvars[1].v_type != VAR_UNKNOWN) {
     char buf[NUMBUFLEN];
     const char *const s = tv_get_string_buf_chk(&argvars[1], buf);
@@ -8141,6 +8143,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     if (strncmp(s, "silent", 6) == 0) {
       msg_silent++;
+      is_silent = true;
     }
     if (strcmp(s, "silent!") == 0) {
       emsg_silent = true;
@@ -8148,6 +8151,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else {
     msg_silent++;
+    is_silent = true;
   }
 
   garray_T capture_local;
@@ -8172,6 +8176,9 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   emsg_silent = save_emsg_silent;
   emsg_noredir = save_emsg_noredir;
   redir_off = save_redir_off;
+  if (is_silent) {
+    msg_col = save_msg_col;
+  }
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
