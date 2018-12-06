@@ -2700,11 +2700,11 @@ win_line (
                       }
                       char_attr = sign_get_attr(text_sign, SIGN_TEXT);
                   }
+              }
 
-                  sign_idx++;
-                  if (sign_idx < count) {
-                      draw_state = WL_SIGN - 1;
-                  }
+              sign_idx++;
+              if (sign_idx < count) {
+                  draw_state = WL_SIGN - 1;
               }
           }
       }
@@ -2834,6 +2834,7 @@ win_line (
       }
 
       if (draw_state == WL_LINE - 1 && n_extra == 0) {
+        sign_idx = 0;
         draw_state = WL_LINE;
         if (saved_n_extra) {
           /* Continue item from end of wrapped line. */
