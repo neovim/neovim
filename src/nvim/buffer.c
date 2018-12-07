@@ -5041,24 +5041,35 @@ static void insert_sign(
     }
 }
 
-static int linenr_compare(const void *s1, const void *s2)
+static int sign_compare(const void *a1, const void *a2)
 {
-    linenr_T l1 = *(linenr_T *)s1;
-    linenr_T l2 = *(linenr_T *)s2;
-    if (l1 > l2) {
-        return 1;
+    const signlist_T *s1 = *(const signlist_T **)a1;
+    const signlist_T *s2 = *(const signlist_T **)a2;
+
+    /* Sort by line number and the by id */
+
+    if (s1->lnum > s2->lnum) {
+	return 1;
     }
-    if (l1 < l2) {
-        return -1;
+    if (s1->lnum < s2->lnum) {
+	return -1;
     }
+    if (s1->id > s2->id) {
+	return 1;
+    }
+    if (s1->id < s2->id) {
+	return -1;
+    }
+
     return 0;
 }
 
-int buf_get_needed_signcols(buf_T *buf)
+static void buf_recalc_signs(buf_T *buf)
 {
     if (buf->b_max_signs_per_line == -1) {
         signlist_T *sign;  /* a sign in the signlist */
-        linenr_T *sign_line_numbers;
+        signlist_T **signs_array;
+        signlist_T **prev_sign;
         int nr_signs = 0, i = 0, same;
 
         /* Count the number of signs */
@@ -5066,22 +5077,22 @@ int buf_get_needed_signcols(buf_T *buf)
             nr_signs++;
         }
 
-        /* Make an array of all the line numbers of the signs */
-        sign_line_numbers = xcalloc((size_t)nr_signs, sizeof(linenr_T));
+        /* Make an array of all the signs */
+        signs_array = xcalloc((size_t)nr_signs, sizeof(*sign));
         for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
-            sign_line_numbers[i] = sign->lnum;
+            signs_array[i] = sign;
             i++;
         }
 
         /* Sort the array */
-        qsort(sign_line_numbers, (size_t)nr_signs, sizeof(linenr_T), linenr_compare);
+        qsort(signs_array, (size_t)nr_signs, sizeof(signlist_T *), sign_compare);
 
         /* Find the maximum amount of signs existing in a single line */
         buf->b_max_signs_per_line = 0;
 
         same = 1;
         for (i = 1; i < nr_signs; i++) {
-            if (sign_line_numbers[i - 1] != sign_line_numbers[i]) {
+            if (signs_array[i - 1]->lnum != signs_array[i]->lnum) {
                 if (buf->b_max_signs_per_line < same) {
                     buf->b_max_signs_per_line = same;
                 }
@@ -5095,12 +5106,32 @@ int buf_get_needed_signcols(buf_T *buf)
             buf->b_max_signs_per_line = same;
         }
 
-        xfree(sign_line_numbers);
+        /* Recreate the linked list with the sorted order of the array  */
+        buf->b_signlist = NULL;
+        prev_sign = &buf->b_signlist;
 
+        for (i = 0; i < nr_signs; i++) {
+            sign = signs_array[i];
+            sign->next = NULL;
+            *prev_sign = sign;
+
+            prev_sign = &sign->next;
+        }
+
+        xfree(signs_array);
+
+        /* Check if we need to redraw */
         if (buf->b_max_signs_per_line != buf->b_colsigns) {
             buf->b_colsigns = buf->b_max_signs_per_line;
             redraw_buf_later(buf, NOT_VALID);
         }
+    }
+}
+
+int buf_get_needed_signcols(buf_T *buf)
+{
+    if (buf->b_max_signs_per_line == -1) {
+        buf_recalc_signs(buf);
     }
 
     return buf->b_colsigns;
