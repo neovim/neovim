@@ -25,7 +25,7 @@ env:
                    -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=3"
-    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
+    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR -DUSE_BUNDLED_GPERF=OFF"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
                          -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
@@ -107,6 +107,7 @@ addons:
       - g++-multilib
       - gcc-multilib
       - gdb
+      - gperf
       - language-pack-tr
       - libc6-dev-i386
       - libtool-bin
