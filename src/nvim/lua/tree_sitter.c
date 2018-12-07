@@ -39,6 +39,15 @@ static struct luaL_Reg node_meta[] = {
   {"child", node_child},
   {"descendant_for_range", node_descendant_for_point_range},
   {"parent", node_parent},
+  {"to_cursor", node_to_cursor},
+  {NULL, NULL}
+};
+
+static struct luaL_Reg cursor_meta[] = {
+  // {"__gc", cursor_gc},
+  {"__tostring", cursor_tostring},
+  //{"node", cursor_node},
+  {"forward", cursor_forward},
   {NULL, NULL}
 };
 
@@ -73,6 +82,10 @@ void tslua_init(lua_State *L)
   lua_createtable(L, 0, 0);
   build_meta(L, node_meta);
   lua_setfield(L, -2, "node-meta");
+
+  lua_createtable(L, 0, 0);
+  build_meta(L, cursor_meta);
+  lua_setfield(L, -2, "cursor-meta");
 
   lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
 }
@@ -246,6 +259,17 @@ static int node_parent(lua_State *L)
   return 1;
 }
 
+static int node_to_cursor(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  push_cursor(L, node);
+  return 1;
+}
+
+
 
 /// push node interface on lua stack
 ///
@@ -265,4 +289,101 @@ static void push_node(lua_State *L, TSNode node)
   lua_getfenv(L, -2);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
 }
+
+// Cursor functions
+
+static TSTreeCursor *cursor_check(lua_State *L)
+{
+  if (!lua_gettop(L)) {
+    return NULL;
+  }
+  if (!lua_isuserdata(L, 1)) {
+    return NULL;
+  }
+  // TODO: typecheck!
+  TSTreeCursor *ud = lua_touserdata(L, 1);
+  return ud;
+}
+
+
+static int cursor_tostring(lua_State *L)
+{
+  TSTreeCursor *cursor = cursor_check(L);
+  if (!cursor) {
+    return 0;
+  }
+  TSNode node = ts_tree_cursor_current_node(cursor);
+  if (ts_node_is_null(node)) {
+    lua_pushstring(L, "<cursor nil>");
+    return 1;
+  }
+  lua_pushstring(L, "<cursor ");
+  lua_pushstring(L, ts_node_type(node));
+  lua_pushstring(L, ">");
+  lua_concat(L, 3);
+  return 1;
+}
+
+static int cursor_forward(lua_State *L)
+{
+  TSTreeCursor *cursor = cursor_check(L);
+  if (!cursor) {
+    return 0;
+  }
+
+  bool status = false;
+
+  int narg = lua_gettop(L);
+  if (narg >= 1) {
+    uint32_t byte_index = (uint32_t)lua_tointeger(L, 2);
+    status = ts_tree_cursor_goto_first_child_for_byte(cursor, byte_index) != -1;
+  } else {
+    status = ts_tree_cursor_goto_first_child(cursor);
+  }
+  if (status) {
+    goto ret;
+  }
+
+  while (true) {
+    status = ts_tree_cursor_goto_next_sibling(cursor);
+    if (status) {
+      break;
+    }
+
+    // Current node was last a child, look for sibling on higher
+    // level
+    status = ts_tree_cursor_goto_parent(cursor);
+    if (!status) { // past end of root node
+      break;
+    }
+  }
+
+ret:
+  if (status) {
+    push_node(L, ts_tree_cursor_current_node(cursor));
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+/// push cursor interface on lua stack, with node as starting point
+///
+/// top of stack must either be the this node or tree this node belongs to,
+/// or another node of the same tree! This value is not popped.
+/// Can only be called inside a cfunction with the tslua environment.
+static void push_cursor(lua_State *L, TSNode node)
+{
+  if (ts_node_is_null(node)) {
+    lua_pushnil(L); // [src, nil]
+    return;
+  }
+  TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [src, udata]
+  *ud = ts_tree_cursor_new(node);
+  lua_getfield(L, LUA_ENVIRONINDEX, "cursor-meta");  // [src, udata, meta]
+  lua_setmetatable(L, -2);  // [src, udata]
+  lua_getfenv(L, -2);  // [src, udata, reftable]
+  lua_setfenv(L, -2);  // [src, udata]
+}
+
 

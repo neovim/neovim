@@ -160,26 +160,6 @@ function ts_cursor()
   ts_inspect_pos(row-1, col)
 end
 
-function ts_forward(c,startbyte)
-  if l.ts_tree_cursor_goto_first_child_for_byte(c,startbyte) ~= -1 then
-    --print("child")
-    return true
-  elseif l.ts_tree_cursor_goto_next_sibling(c) then
-    --print("sibling")
-    return true
-  end
-  while true do
-    if not l.ts_tree_cursor_goto_parent(c) then
-      return false
-    end
-    --print("parent")
-    if l.ts_tree_cursor_goto_next_sibling(c) then
-      --print("sibling")
-      return true
-    end
-  end
-end
-
 hl_map = {
   primitive_type="Type",
   type_identifier="Identifier",
@@ -212,51 +192,51 @@ function ts_line(line,endl,drawing)
   if not drawing then
     a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl)
   end
-  tree = parse_tree(theparser)
-  local root = l.ts_tree_root_node(tree)
+  tree = vim.unsafe_ts_tree(parse_tree(theparser))
+  local root = tree:root()
   --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
   --local cursor = l.ts_tree_cursor_new(node)
-  local cursor = l.ts_tree_cursor_new(root)
+  local cursor = root:to_cursor()
   local startbyte = a.nvim_buf_get_offset(theparser.bufnr, line)
-  local node = l.ts_tree_cursor_current_node(cursor)
+  local node = root
   local continue = true
   local i = 500
   while continue do
     --print(inspect_node(node))
-    local name = ffi.string(l.ts_node_type(node))
+    local name = node:type()
     local map = (drawing and id_map) or hl_map
     local hl = map[name]
+    local start_row, start_col, end_row, end_col = node:range()
     if hl then
       if not drawing then
-        print(inspect_node(node))
+        --print(inspect_node(node))
         print(hl)
       end
-      local start = l.ts_node_start_point(node)
-      local endp = l.ts_node_end_point(node)
-      if start.row == endp.row then
+      if start_row == end_row then
         if drawing then
-          a.nvim__put_attr(hl, start.column, endp.column)
+          a.nvim__put_attr(hl, start_col, end_col)
         else
-          a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start.row, start.column, endp.column)
+          a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start_row, start_col, end_col)
         end
       end
     end
-    if ts_forward(cursor,startbyte) then
-      node = l.ts_tree_cursor_current_node(cursor)
-      local start = l.ts_node_start_point(node)
-      if start.row >= endl then
-        continue = false
-      end
-    else
+    if start_row >= endl then
       continue = false
     end
+    node = cursor:forward(startbyte)
+    if node == nil then
+      continue = false
+    end
+
     i = i - 1
-    if i == 0 then continue = false end
+    if i == 0 then
+      continue = false
+    end
   end
 end
 
 if false then
-  ts_line(0,300)
+  ts_line(0,500)
 end
 
 
@@ -271,6 +251,8 @@ end
 if false then
   ctree = vim.unsafe_ts_tree(theparser.tree)
   root = ctree:root()
+  cursor = root:to_cursor()
+  node = cursor:forward(5000) if true then return node end
   print(#root)
   c = root:child(50)
   print(require'inspect'{c:extent()})
