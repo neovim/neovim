@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
+local meths = helpers.meths
 local curbufmeths, eq = helpers.curbufmeths, helpers.eq
 
 describe('Buffer highlighting', function()
@@ -517,4 +518,13 @@ describe('Buffer highlighting', function()
     end)
   end)
 
+  it('and virtual text use the same namespace counter', function()
+    local set_virtual_text = curbufmeths.set_virtual_text
+    eq(1, add_highlight(0, "String", 0 , 0, -1))
+    eq(2, set_virtual_text(0, 0, {{"= text", "Comment"}}, {}))
+    eq(3, meths.create_namespace("my-ns"))
+    eq(4, add_highlight(0, "String", 0 , 0, -1))
+    eq(5, set_virtual_text(0, 0, {{"= text", "Comment"}}, {}))
+    eq(6, meths.create_namespace("other-ns"))
+  end)
 end)

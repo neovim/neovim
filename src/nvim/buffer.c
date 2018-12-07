@@ -5396,9 +5396,8 @@ int bufhl_add_virt_text(buf_T *buf,
                         linenr_T lnum,
                         VirtText virt_text)
 {
-  static int next_src_id = 1;
   if (src_id == 0) {
-    src_id = next_src_id++;
+    src_id = (int)nvim_create_namespace((String)STRING_INIT);
   }
 
   BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, true);
