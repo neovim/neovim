@@ -19253,7 +19253,7 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
-        internal_error("set_var()");
+        EMSG2(_("E963: setting %s to value with wrong type"), name);
       }
     }
 
