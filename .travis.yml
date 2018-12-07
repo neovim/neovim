@@ -77,8 +77,8 @@ jobs:
     - os: linux
       env: >
         CI_TARGET=lint
-        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED=OFF"
-      install: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gperf luajit libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
+        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED=OFF -DUSE_BUNDLED_MSGPACK=ON -DUSE_BUNDLED_LIBVTERM=ON"
+      install: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gperf luajit libuv1-dev libluajit-5.1-dev libunibilium-dev libtermkey-dev libjemalloc-dev
     - stage: Flaky builds
       os: linux
       compiler: gcc
