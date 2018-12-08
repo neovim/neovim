@@ -53,3 +53,15 @@ func Test_execute_list()
   call assert_equal("", execute([]))
   call assert_equal("", execute(v:_null_list))
 endfunc
+
+func Test_execute_does_not_change_col()
+  echo ''
+  echon 'abcd'
+  let x = execute('silent echo 234343')
+  echon 'xyz'
+  let text = ''
+  for col in range(1, 7)
+    let text .= nr2char(screenchar(&lines, col))
+  endfor
+  call assert_equal('abcdxyz', text)
+endfunc

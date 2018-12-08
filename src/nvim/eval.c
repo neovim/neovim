@@ -8331,6 +8331,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const bool save_emsg_noredir = emsg_noredir;
   const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
+  const int save_msg_col = msg_col;
 
   if (check_secure()) {
     return;
@@ -8358,6 +8359,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   ga_init(&capture_local, (int)sizeof(char), 80);
   capture_ga = &capture_local;
   redir_off = false;
+  msg_col = 0;  // prevent leading spaces
 
   if (argvars[0].v_type != VAR_LIST) {
     do_cmdline_cmd(tv_get_string(&argvars[0]));
@@ -8376,6 +8378,9 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   emsg_silent = save_emsg_silent;
   emsg_noredir = save_emsg_noredir;
   redir_off = save_redir_off;
+  // "silent reg" or "silent echo x" leaves msg_col somewhere in the line.
+  // Put it back where it was, since nothing should have been written.
+  msg_col = save_msg_col;
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
