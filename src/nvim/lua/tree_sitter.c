@@ -16,9 +16,6 @@
 
 #include <tree_sitter/runtime.h>
 
-// NOT state-safe, delete when GC is confimed working:
-static int debug_n_trees = 0, debug_n_cursors = 0;
-
 #define REG_KEY "tree_sitter-private"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -91,19 +88,7 @@ void tslua_init(lua_State *L)
   lua_setfield(L, -2, "cursor-meta");
 
   lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
-
-  lua_pushcfunction(L, tslua_debug);
-  lua_setglobal(L, "_tslua_debug");
 }
-
-static int tslua_debug(lua_State *L)
-{
-  lua_pushinteger(L, debug_n_trees);
-  lua_pushinteger(L, debug_n_cursors);
-  return 2;
-}
-
-
 
 // Tree methods
 
@@ -127,7 +112,6 @@ void tslua_push_tree(lua_State *L, TSTree *tree)
   lua_pushvalue(L, -2); // [udata, reftable, udata]
   lua_rawseti(L, -2, 1); // [udata, reftable]
   lua_setfenv(L, -2); // [udata]
-  debug_n_trees++;
 }
 
 static TSTree *tree_check(lua_State *L)
@@ -151,7 +135,6 @@ static int tree_gc(lua_State *L)
   }
 
   ts_tree_delete(tree);
-  debug_n_trees--;
   return 0;
 }
 
@@ -337,7 +320,6 @@ static void push_cursor(lua_State *L, TSNode node)
   lua_setmetatable(L, -2);  // [src, udata]
   lua_getfenv(L, -2);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
-  debug_n_cursors++;
 }
 
 
@@ -349,7 +331,6 @@ static int cursor_gc(lua_State *L)
   }
 
   ts_tree_cursor_delete(cursor);
-  debug_n_cursors--;
   return 0;
 }
 
