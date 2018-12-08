@@ -674,3 +674,20 @@ func Test_fold_last_line_with_pagedown()
   set fdm&
   enew!
 endfunc
+
+func Test_folds_marker_in_comment2()
+  new
+  call setline(1, ['Lorem ipsum dolor sit', 'Lorem ipsum dolor sit', 'Lorem ipsum dolor sit'])
+  setl fen fdm=marker
+  setl commentstring=<!--%s-->
+  setl comments=s:<!--,m:\ \ \ \ ,e:-->
+  norm! zf2j
+  setl nofen
+  :1y
+  call assert_equal(['Lorem ipsum dolor sit<!--{{{-->'], getreg(0,1,1))
+  :+2y
+  call assert_equal(['Lorem ipsum dolor sit<!--}}}-->'], getreg(0,1,1))
+
+  set foldmethod&
+  bwipe!
+endfunc

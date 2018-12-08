@@ -1099,6 +1099,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
     found_one = FALSE;
     for (list = curbuf->b_p_com; *list; ) {
       char_u *flags_save = list;
+      bool is_only_whitespace = false;
 
       /*
        * Get one option part into part_buf[].  Advance list to next one.
@@ -1122,8 +1123,12 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       if (ascii_iswhite(string[0])) {
         if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;
-        while (ascii_iswhite(string[0]))
-          ++string;
+        while (ascii_iswhite(*string)) {
+          string++;
+        }
+        if (*string == NUL) {
+          is_only_whitespace = true;
+        }
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
         /* do nothing */;
@@ -1137,6 +1142,17 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       if (vim_strchr(part_buf, COM_BLANK) != NULL
           && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
+      }
+
+      // For a middlepart comment that is only white space, only consider
+      // it to match if everything before the current position in the
+      // line is also whitespace.
+      if (is_only_whitespace && vim_strchr(part_buf, COM_MIDDLE) != NULL) {
+        for (j = 0; ascii_iswhite(line[j]) && j <= i; j++) {
+        }
+        if (j < i) {
+          continue;
+        }
       }
 
       /*
