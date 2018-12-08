@@ -14,7 +14,7 @@ package.path = nvimsrcdir .. '/?.lua;' .. package.path
 local lld = {}
 local syn_fd = io.open(syntax_file, 'w')
 lld.line_length = 0
-local w = function(s)
+local function w(s)
   syn_fd:write(s)
   if s:find('\n') then
     lld.line_length = #(s:gsub('.*\n', ''))
@@ -27,7 +27,7 @@ local options = require('options')
 local auevents = require('auevents')
 local ex_cmds = require('ex_cmds')
 
-local cmd_kw = function(prev_cmd, cmd)
+local function cmd_kw(prev_cmd, cmd)
   if not prev_cmd then
     return cmd:sub(1, 1) .. '[' .. cmd:sub(2) .. ']'
   else
@@ -43,6 +43,15 @@ local cmd_kw = function(prev_cmd, cmd)
   end
 end
 
+-- Exclude these from the vimCommand keyword list, they are handled specially
+-- in syntax/vim.vim (vimAugroupKey, vimAutoCmd). #9327
+local function is_autocmd_cmd(cmd)
+  return (cmd == 'augroup'
+          or cmd == 'autocmd'
+          or cmd == 'doautocmd'
+          or cmd == 'doautoall')
+end
+
 vimcmd_start = 'syn keyword vimCommand contained '
 w(vimcmd_start)
 local prev_cmd = nil
@@ -51,7 +60,7 @@ for _, cmd_desc in ipairs(ex_cmds) do
     w('\n' .. vimcmd_start)
   end
   local cmd = cmd_desc.command
-  if cmd:match('%w') and cmd ~= 'z' then
+  if cmd:match('%w') and cmd ~= 'z' and not is_autocmd_cmd(cmd) then
     w(' ' .. cmd_kw(prev_cmd, cmd))
   end
   prev_cmd = cmd
