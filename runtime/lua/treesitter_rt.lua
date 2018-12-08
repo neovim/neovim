@@ -62,11 +62,15 @@ function parse_tree(tsstate, force)
   if tsstate.valid and not force then
     return tsstate.tree
   end
-  local old_tree = (not force) and tsstate.tree or nil
+  local old_tree = (not force) and tsstate.rawtree or nil
   payload = ffi.C.nvim_ts_read_payload(tsstate.bufnr) -- check NULL!
   local input = TSInput(payload, ffi.C.nvim_ts_read_cb, "TSInputEncodingUTF8")
   --print(input.read)
-  tsstate.tree = l.ts_parser_parse(tsstate.parser, old_tree, input)
+  tsstate.rawtree = l.ts_parser_parse(tsstate.parser, old_tree, input)
+  tsstate.tree = vim.unsafe_ts_tree(l.ts_tree_copy(tsstate.rawtree))
+  if oldtree ~= nil then
+    l.ts_tree_delete(oldtree)
+  end
   tsstate.valid = true
   return tsstate.tree
 end
@@ -78,7 +82,7 @@ function the_cb(tsstate, ev, ...)
     local nlines = #lines
     local stop_row = start_row + nlines
     local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-    local root = l.ts_tree_root_node(tsstate.tree)
+    local root = l.ts_tree_root_node(tsstate.rawtree)
     -- TODO: add proper lookup function!
     local inode = l.ts_node_descendant_for_point_range(root, TSPoint(oldstopline+9000,0), TSPoint(oldstopline,0))
     local edit
@@ -93,7 +97,7 @@ function the_cb(tsstate, ev, ...)
       local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstoppoint.column
       edit = TSInputEdit(start_byte,fakebyteoldstop,fakebytestop,TSPoint(start_row,0),fakeoldstoppoint,TSPoint(fakestop,fakeoldstoppoint.column))
     end
-    l.ts_tree_edit(tsstate.tree,edit)
+    l.ts_tree_edit(tsstate.rawtree,edit)
     tsstate.valid = false
     --luadev.append_buf({i{edit.start_byte,edit.old_end_byte,edit.new_end_byte},
     --                   i{edit.start_point, edit.old_end_point, edit.new_end_point}})
@@ -123,8 +127,7 @@ function create_parser(bufnr)
 end
 
 function ts_inspect_pos(row,col)
-  local rawtree = parse_tree(theparser)
-  local tree = vim.unsafe_ts_tree(theparser.tree)
+  local tree = parse_tree(theparser)
   local root = tree:root()
   local node = root:descendant_for_range(row,col,row,col)
   show_node(node)
@@ -192,7 +195,7 @@ function ts_line(line,endl,drawing)
   if not drawing then
     a.nvim_buf_clear_highlight(0, my_syn_ns, line, endl)
   end
-  tree = vim.unsafe_ts_tree(parse_tree(theparser))
+  tree = parse_tree(theparser)
   local root = tree:root()
   --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
   --local cursor = l.ts_tree_cursor_new(node)
@@ -214,7 +217,9 @@ function ts_line(line,endl,drawing)
       end
       if start_row == end_row then
         if drawing then
-          a.nvim__put_attr(hl, start_col, end_col)
+          if start_row == line then
+            a.nvim__put_attr(hl, start_col, end_col)
+          end
         else
           a.nvim_buf_add_highlight(theparser.bufnr, my_syn_ns, hl, start_row, start_col, end_col)
         end
@@ -249,7 +254,7 @@ function ts_syntax()
 end
 
 if false then
-  ctree = vim.unsafe_ts_tree(theparser.tree)
+  ctree = theparser.tree
   root = ctree:root()
   cursor = root:to_cursor()
   node = cursor:forward(5000) if true then return node end
@@ -258,4 +263,5 @@ if false then
   print(require'inspect'{c:extent()})
   type(ctree.__tostring)
   root:__tostring()
+  print(_tslua_debug())
 end

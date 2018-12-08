@@ -16,6 +16,9 @@
 
 #include <tree_sitter/runtime.h>
 
+// NOT state-safe, delete when GC is confimed working:
+static int debug_n_trees = 0, debug_n_cursors = 0;
+
 #define REG_KEY "tree_sitter-private"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -23,7 +26,7 @@
 #endif
 
 static struct luaL_Reg tree_meta[] = {
-  // {"__gc", tree_gc},
+  {"__gc", tree_gc},
   {"__tostring", tree_tostring},
   {"root", tree_root},
   {NULL, NULL}
@@ -44,7 +47,7 @@ static struct luaL_Reg node_meta[] = {
 };
 
 static struct luaL_Reg cursor_meta[] = {
-  // {"__gc", cursor_gc},
+  {"__gc", cursor_gc},
   {"__tostring", cursor_tostring},
   //{"node", cursor_node},
   {"forward", cursor_forward},
@@ -88,7 +91,21 @@ void tslua_init(lua_State *L)
   lua_setfield(L, -2, "cursor-meta");
 
   lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
+
+  lua_pushcfunction(L, tslua_debug);
+  lua_setglobal(L, "_tslua_debug");
 }
+
+static int tslua_debug(lua_State *L)
+{
+  lua_pushinteger(L, debug_n_trees);
+  lua_pushinteger(L, debug_n_cursors);
+  return 2;
+}
+
+
+
+// Tree methods
 
 /// push tree interface on lua stack.
 ///
@@ -110,9 +127,8 @@ void tslua_push_tree(lua_State *L, TSTree *tree)
   lua_pushvalue(L, -2); // [udata, reftable, udata]
   lua_rawseti(L, -2, 1); // [udata, reftable]
   lua_setfenv(L, -2); // [udata]
+  debug_n_trees++;
 }
-
-// Tree methods
 
 static TSTree *tree_check(lua_State *L)
 {
@@ -125,6 +141,18 @@ static TSTree *tree_check(lua_State *L)
   // TODO: typecheck!
   TSTree **ud = lua_touserdata(L, 1);
   return *ud;
+}
+
+static int tree_gc(lua_State *L)
+{
+  TSTree *tree = tree_check(L);
+  if (!tree) {
+    return 0;
+  }
+
+  ts_tree_delete(tree);
+  debug_n_trees--;
+  return 0;
 }
 
 static int tree_tostring(lua_State *L)
@@ -145,6 +173,25 @@ static int tree_root(lua_State *L)
 }
 
 // Node methods
+
+/// push node interface on lua stack
+///
+/// top of stack must either be the tree this node belongs to or another node
+/// of the same tree! This value is not popped. Can only be called inside a
+/// cfunction with the tslua environment.
+static void push_node(lua_State *L, TSNode node)
+{
+  if (ts_node_is_null(node)) {
+    lua_pushnil(L); // [src, nil]
+    return;
+  }
+  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
+  *ud = node;
+  lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
+  lua_setmetatable(L, -2);  // [src, udata]
+  lua_getfenv(L, -2);  // [src, udata, reftable]
+  lua_setfenv(L, -2);  // [src, udata]
+}
 
 static bool node_check(lua_State *L, TSNode *res)
 {
@@ -271,26 +318,40 @@ static int node_to_cursor(lua_State *L)
 
 
 
-/// push node interface on lua stack
+// Cursor functions
+
+/// push cursor interface on lua stack, with node as starting point
 ///
-/// top of stack must either be the tree this node belongs to or another node
-/// of the same tree! This value is not popped. Can only be called inside a
-/// cfunction with the tslua environment.
-static void push_node(lua_State *L, TSNode node)
+/// top of stack must either be the this node or tree this node belongs to,
+/// or another node of the same tree! This value is not popped.
+/// Can only be called inside a cfunction with the tslua environment.
+static void push_cursor(lua_State *L, TSNode node)
 {
   if (ts_node_is_null(node)) {
     lua_pushnil(L); // [src, nil]
     return;
   }
-  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
-  *ud = node;
-  lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
+  TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [src, udata]
+  *ud = ts_tree_cursor_new(node);
+  lua_getfield(L, LUA_ENVIRONINDEX, "cursor-meta");  // [src, udata, meta]
   lua_setmetatable(L, -2);  // [src, udata]
   lua_getfenv(L, -2);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
+  debug_n_cursors++;
 }
 
-// Cursor functions
+
+static int cursor_gc(lua_State *L)
+{
+  TSTreeCursor *cursor = cursor_check(L);
+  if (!cursor) {
+    return 0;
+  }
+
+  ts_tree_cursor_delete(cursor);
+  debug_n_cursors--;
+  return 0;
+}
 
 static TSTreeCursor *cursor_check(lua_State *L)
 {
@@ -366,24 +427,4 @@ ret:
     return 0;
   }
 }
-
-/// push cursor interface on lua stack, with node as starting point
-///
-/// top of stack must either be the this node or tree this node belongs to,
-/// or another node of the same tree! This value is not popped.
-/// Can only be called inside a cfunction with the tslua environment.
-static void push_cursor(lua_State *L, TSNode node)
-{
-  if (ts_node_is_null(node)) {
-    lua_pushnil(L); // [src, nil]
-    return;
-  }
-  TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [src, udata]
-  *ud = ts_tree_cursor_new(node);
-  lua_getfield(L, LUA_ENVIRONINDEX, "cursor-meta");  // [src, udata, meta]
-  lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2);  // [src, udata, reftable]
-  lua_setfenv(L, -2);  // [src, udata]
-}
-
 
