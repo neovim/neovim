@@ -1,4 +1,5 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
+
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 /*
@@ -8158,6 +8159,8 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   ga_init(&capture_local, (int)sizeof(char), 80);
   capture_ga = &capture_local;
   redir_off = false;
+  const bool save_did_emsg = did_emsg;
+  did_emsg = false;
 
   if (argvars[0].v_type != VAR_LIST) {
     do_cmdline_cmd(tv_get_string(&argvars[0]));
@@ -8172,13 +8175,16 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT|DOCMD_KEYTYPED);
     tv_list_unref(list);
   }
+
+  if (is_silent && (emsg_silent || !did_emsg)) {
+    msg_col = save_msg_col;
+  }
+
+  did_emsg = did_emsg || save_did_emsg;
   msg_silent = save_msg_silent;
   emsg_silent = save_emsg_silent;
   emsg_noredir = save_emsg_noredir;
   redir_off = save_redir_off;
-  if (is_silent) {
-    msg_col = save_msg_col;
-  }
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
