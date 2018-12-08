@@ -126,135 +126,134 @@ describe('execute()', function()
   end)
 
   it('places cursor correctly #6035', function()
-    local screen = Screen.new(40, 5)
+    local screen = Screen.new(40, 6)
     screen:attach()
     source([=[
-      " test 1
-      function! Test1a()
-        echo 12345678
-        let x = execute('echo 1234567890', '')
-        echon '1234'
+      " test 1: non-silenced output goes as usual
+      function! Test1()
+        echo 1234
+        let x = execute('echon "abcdef"', '')
+        echon 'ABCD'
       endfunction
 
-      function! Test1b()
-        echo 12345678
-        echo 1234567890
-        echon '1234'
+      " test 2: silenced output does not affect ui
+      function! Test2()
+        echo 1234
+        let x = execute('echon "abcdef"', 'silent')
+        echon 'ABCD'
       endfunction
 
-      " test 2
-      function! Test2a()
-        echo 12345678
-        let x = execute('echo 1234567890', 'silent')
-        echon '1234'
+      " test 3: silenced! error does not affect ui
+      function! Test3()
+        echo 1234
+        let x = execute('echoerr "abcdef"', 'silent!')
+        echon 'ABCD'
       endfunction
 
-      function! Test2b()
-        echo 12345678
-        silent echo 1234567890
-        echon '1234'
+      " test 4: silenced echoerr goes as usual
+      " bug here
+      function! Test4()
+        echo 1234
+        let x = execute('echoerr "abcdef"', 'silent')
+        echon 'ABCD'
       endfunction
 
-      " test 3
-      function! Test3a()
-        echo 12345678
-        let x = execute('echoerr 1234567890', 'silent!')
-        echon '1234'
+      " test 5: silenced! echoerr does not affect ui
+      function! Test5()
+        echo 1234
+        let x = execute('echoerr "abcdef"', 'silent!')
+        echon 'ABCD'
       endfunction
 
-      function! Test3b()
-        echo 12345678
-        silent! echoerr 1234567890
-        echon '1234'
+      " test 6: silenced error goes as usual
+      function! Test6()
+        echo 1234
+        let x = execute('echo undefined', 'silent')
+        echon 'ABCD'
       endfunction
 
-      " test 4
-      function! Test4a()
-        echo 12345678
-        let x = execute('echoerr 1234567890', 'silent')
-        echon '1234'
-      endfunction
-
-      function! Test4b()
-        echo 12345678
-        silent echoerr 1234567890
-        echon '1234'
+      " test 7: existing error does not mess the result
+      function! Test7()
+        " display from Test6() is still visible
+        " why does the "abcdef" goes into a newline
+        let x = execute('echon "abcdef"', '')
+        echon 'ABCD'
       endfunction
     ]=])
 
-    feed([[:call Test1a()<cr>]])
+    feed([[:call Test1()<cr>]])
     screen:expect([[
-                                              |
-                                              |
-      12345678                                |
-      12345678901234                          |
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      1234abcdefABCD                          |
+    ]])
+
+    feed([[:call Test2()<cr>]])
+    screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      1234ABCD                                |
+    ]])
+
+    feed([[:call Test3()<cr>]])
+    screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      1234ABCD                                |
+    ]])
+
+    feed([[:call Test4()<cr>]])
+    -- unexpected: need to fix
+    -- echoerr does not set did_emsg
+    -- "ef" was overwritten since msg_col was recovered wrongly
+    screen:expect([[
+      1234                                    |
+      Error detected while processing function|
+       Test4:                                 |
+      line    2:                              |
+      abcdABCD                                |
       Press ENTER or type command to continue^ |
     ]])
 
-    feed([[:call Test1b()<cr>]])
+    feed([[<cr>]]) -- to clear screen
+    feed([[:call Test5()<cr>]])
     screen:expect([[
-      12345678                                |
-      12345678901234                          |
-      12345678                                |
-      12345678901234                          |
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      1234ABCD                                |
+    ]])
+
+    feed([[:call Test6()<cr>]])
+    screen:expect([[
+      1234                                    |
+      Error detected while processing function|
+       Test6:                                 |
+      line    2:                              |
+      E121: Undefined variable: undefinedABCD |
       Press ENTER or type command to continue^ |
     ]])
 
-    feed([[:call Test2a()<cr>]])
-    screen:expect([[
-      12345678901234                          |
-      12345678                                |
-      12345678901234                          |
-      123456781234                            |
-      Press ENTER or type command to continue^ |
-    ]])
-
-    feed([[:call Test2b()<cr>]])
-    screen:expect([[
-      12345678                                |
-      12345678901234                          |
-      123456781234                            |
-      123456781234                            |
-      Press ENTER or type command to continue^ |
-    ]])
-
-    feed([[:call Test3a()<cr>]])
-    screen:expect([[
-      12345678901234                          |
-      123456781234                            |
-      123456781234                            |
-      123456781234                            |
-      Press ENTER or type command to continue^ |
-    ]])
-
-    feed([[:call Test3b()<cr>]])
-    screen:expect([[
-      123456781234                            |
-      123456781234                            |
-      123456781234                            |
-      123456781234                            |
-      Press ENTER or type command to continue^ |
-    ]])
-
-    feed([[:call Test4a()<cr>]])
+    feed([[:call Test7()<cr>]])
     screen:expect([[
       Error detected while processing function|
-       Test4a:                                |
+       Test6:                                 |
       line    2:                              |
-      123456781234                            |
+      E121: Undefined variable: undefinedABCD |
+      abcdefABCD                              |
       Press ENTER or type command to continue^ |
     ]])
-
-    feed([[:call Test4b()<cr>]])
-    screen:expect([[
-      Error detected while processing function|
-       Test4b:                                |
-      line    2:                              |
-      12345678901234                          |
-      Press ENTER or type command to continue^ |
-    ]])
-
-
   end)
 
   -- This deviates from vim behavior, but is consistent
