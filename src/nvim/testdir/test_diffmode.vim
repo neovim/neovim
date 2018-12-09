@@ -275,6 +275,28 @@ func Test_dp_do_buffer()
   %bwipe!
 endfunc
 
+func Test_do_lastline()
+  e! one
+  call setline(1, ['1','2','3','4','5','6'])
+  diffthis
+
+  new two
+  call setline(1, ['2','4','5'])
+  diffthis
+
+  1
+  norm dp]c
+  norm dp]c
+  wincmd w
+  call assert_equal(4, line('$'))
+  norm G
+  norm do
+  call assert_equal(3, line('$'))
+
+  windo diffoff
+  %bwipe!
+endfunc
+
 func Test_diffoff()
   enew!
   call setline(1, ['Two', 'Three'])

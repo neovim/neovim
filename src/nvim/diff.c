@@ -2739,15 +2739,19 @@ void ex_diffgetput(exarg_T *eap)
 theend:
   diff_busy = false;
   if (diff_need_update) {
-    diff_need_update = false;
     ex_diffupdate(NULL);
-  } else {
-    // Check that the cursor is on a valid character and update it's
-    // position.  When there were filler lines the topline has become
-    // invalid.
-    check_cursor();
-    changed_line_abv_curs();
+  }
 
+  // Check that the cursor is on a valid character and update it's
+  // position.  When there were filler lines the topline has become
+  // invalid.
+  check_cursor();
+  changed_line_abv_curs();
+
+  if (diff_need_update) {
+    // redraw already done by ex_diffupdate()
+    diff_need_update = false;
+  } else {
     // Also need to redraw the other buffers.
     diff_redraw(false);
     apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
