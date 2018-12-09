@@ -1953,10 +1953,10 @@ changed_lines(
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
 
-  if (xtra == 0 && curwin->w_p_diff) {
-    /* When the number of lines doesn't change then mark_adjust() isn't
-     * called and other diff buffers still need to be marked for
-     * displaying. */
+  if (xtra == 0 && curwin->w_p_diff && !diff_internal()) {
+    // When the number of lines doesn't change then mark_adjust() isn't
+    // called and other diff buffers still need to be marked for
+    // displaying.
     linenr_T wlnum;
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2024,6 +2024,10 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* mark the buffer as modified */
   changed();
+
+  if (curwin->w_p_diff && diff_internal()) {
+    curtab->tp_diff_update = true;
+  }
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {

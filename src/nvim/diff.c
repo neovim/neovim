@@ -266,6 +266,15 @@ void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
 static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
                                 linenr_T line2, long amount, long amount_after)
 {
+  if (diff_internal()) {
+    // Will udpate diffs before redrawing.  Set _invalid to update the
+    // diffs themselves, set _update to also update folds properly just
+    // before redrawing.
+    tp->tp_diff_invalid = true;
+    tp->tp_diff_update = true;
+    return;
+  }
+
   int inserted;
   int deleted;
   if (line2 == MAXLNUM) {
@@ -840,7 +849,7 @@ theend:
 /// Note that if the internal diff failed for one of the buffers, the external
 /// diff will be used anyway.
 ///
-static int diff_internal(void)
+int diff_internal(void)
 {
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
@@ -864,9 +873,9 @@ static int diff_internal_failed(void)
 
 /// Completely update the diffs for the buffers involved.
 ///
-/// This uses the ordinary "diff" command.
-/// The buffers are written to a file, also for unmodified buffers (the file
-/// could have been produced by autocommands, e.g. the netrw plugin).
+/// When using the external "diff" command the buffers are written to a file,
+/// also for unmodified buffers (the file could have been produced by
+/// autocommands, e.g. the netrw plugin).
 ///
 /// @param eap can be NULL
 void ex_diffupdate(exarg_T *eap)

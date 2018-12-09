@@ -842,6 +842,7 @@ struct tabpage_S {
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;              ///< list of diffs is outdated
+  int tp_diff_update;               ///< update diffs before redrawing
   frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
   ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
   dict_T          *tp_vars;         ///< Internal variables, local to tab page.
