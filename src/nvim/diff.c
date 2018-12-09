@@ -42,7 +42,8 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
-static int diff_busy = false;    // ex_diffgetput() is busy
+static int diff_busy = false;         // using diff structs, don't change them
+static int diff_need_update = false;  // ex_diffupdate needs to be called
 
 // Flags obtained from the 'diffopt' option
 #define DIFF_FILLER     0x001   // display filler lines
@@ -880,6 +881,11 @@ static int diff_internal_failed(void)
 /// @param eap can be NULL
 void ex_diffupdate(exarg_T *eap)
 {
+  if (diff_busy) {
+    diff_need_update = true;
+    return;
+  }
+
   // Delete all diffblocks.
   diff_clear(curtab);
   curtab->tp_diff_invalid = false;
@@ -2558,7 +2564,7 @@ void ex_diffgetput(exarg_T *eap)
     change_warning(0);
     if (diff_buf_idx(curbuf) != idx_to) {
       EMSG(_("E787: Buffer changed unexpectedly"));
-      return;
+      goto theend;
     }
   }
 
@@ -2723,7 +2729,12 @@ void ex_diffgetput(exarg_T *eap)
     aucmd_restbuf(&aco);
   }
 
+theend:
   diff_busy = false;
+  if (diff_need_update) {
+    diff_need_update = false;
+    ex_diffupdate(NULL);
+  }
 
   // Check that the cursor is on a valid character and update it's position.
   // When there were filler lines the topline has become invalid.
