@@ -773,4 +773,163 @@ int main(int argc, char **argv)
       ]])
     end)
   end)
+
+  describe('diffopt+=iblank', function()
+    setup(function()
+      write_file(fname, 'a\n\n \ncd\nef\nxxx\n', false)
+      write_file(fname_2, 'a\ncd\n\nef\nyyy\n', false)
+      feed(':diffupdate!<cr>')
+    end)
+
+    it('generic', function()
+      reread()
+      feed(':set diffopt=internal,filler,iblank<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }{4:                  }{3:│}{1:  }{2:-----------------}|
+        {1:  }{4:                  }{3:│}{1:  }{2:-----------------}|
+        {1:  }cd                {3:│}{1:  }cd               |
+        {1:  }ef                {3:│}{1:  }                 |
+        {1:  }{8:xxx}{9:               }{3:│}{1:  }ef               |
+        {1:  }{6:~                 }{3:│}{1:  }{8:yyy}{9:              }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt=internal,filler,iblank     |
+      ]])
+    end)
+
+    it('diffopt+=iwhite', function()
+      reread()
+      feed(':set diffopt=internal,filler,iblank,iwhite<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }                  {3:│}{1:  }cd               |
+        {1:  }                  {3:│}{1:  }                 |
+        {1:  }cd                {3:│}{1:  }ef               |
+        {1:  }ef                {3:│}{1:  }{8:yyy}{9:              }|
+        {1:  }{8:xxx}{9:               }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
+
+    it('diffopt+=iwhiteall', function()
+      reread()
+      feed(':set diffopt=internal,filler,iblank,iwhiteall<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }                  {3:│}{1:  }cd               |
+        {1:  }                  {3:│}{1:  }                 |
+        {1:  }cd                {3:│}{1:  }ef               |
+        {1:  }ef                {3:│}{1:  }{8:yyy}{9:              }|
+        {1:  }{8:xxx}{9:               }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
+
+    it('diffopt+=iwhiteeol', function()
+      reread()
+      feed(':set diffopt=internal,filler,iblank,iwhiteeol<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }                  {3:│}{1:  }cd               |
+        {1:  }                  {3:│}{1:  }                 |
+        {1:  }cd                {3:│}{1:  }ef               |
+        {1:  }ef                {3:│}{1:  }{8:yyy}{9:              }|
+        {1:  }{8:xxx}{9:               }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
+  end)
+
+  describe('diffopt+=iwhite{eol,all}', function()
+    setup(function()
+      write_file(fname, 'a \nx\ncd\nef\nxx  xx\nfoo\nbar\n', false)
+      write_file(fname_2, 'a\nx\nc d\n ef\nxx xx\nfoo\n\nbar\n', false)
+      feed(':diffupdate!<cr>')
+    end)
+
+    it('diffopt+=iwhiteeol', function()
+      reread()
+      feed(':set diffopt=internal,filler,iwhiteeol<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }x                 {3:│}{1:  }x                |
+        {1:  }{9:cd                }{3:│}{1:  }{9:c}{8: }{9:d              }|
+        {1:  }{9:ef                }{3:│}{1:  }{8: }{9:ef              }|
+        {1:  }{9:xx }{8: }{9:xx            }{3:│}{1:  }{9:xx xx            }|
+        {1:  }foo               {3:│}{1:  }foo              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:                 }|
+        {1:  }bar               {3:│}{1:  }bar              |
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
+
+    it('diffopt+=iwhiteall', function()
+      reread()
+      feed(':set diffopt=internal,filler,iwhiteall<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^a                 {3:│}{1:  }a                |
+        {1:  }x                 {3:│}{1:  }x                |
+        {1:  }cd                {3:│}{1:  }c d              |
+        {1:  }ef                {3:│}{1:  } ef              |
+        {1:  }xx  xx            {3:│}{1:  }xx xx            |
+        {1:  }foo               {3:│}{1:  }foo              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:                 }|
+        {1:  }bar               {3:│}{1:  }bar              |
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
+  end)
 end)

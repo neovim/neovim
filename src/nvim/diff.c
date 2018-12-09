@@ -45,13 +45,17 @@
 static int diff_busy = false;    // ex_diffgetput() is busy
 
 // Flags obtained from the 'diffopt' option
-#define DIFF_FILLER     1   // display filler lines
-#define DIFF_ICASE      2   // ignore case
-#define DIFF_IWHITE     4   // ignore change in white space
-#define DIFF_HORIZONTAL 8   // horizontal splits
-#define DIFF_VERTICAL   16  // vertical splits
-#define DIFF_HIDDEN_OFF 32  // diffoff when hidden
-#define DIFF_INTERNAL   64  // use internal xdiff algorithm
+#define DIFF_FILLER     0x001   // display filler lines
+#define DIFF_IBLANK     0x002   // ignore empty lines
+#define DIFF_ICASE      0x004   // ignore case
+#define DIFF_IWHITE     0x008   // ignore change in white space
+#define DIFF_IWHITEALL  0x010   // ignore all white space changes
+#define DIFF_IWHITEEOL  0x020   // ignore change in white space at EOL
+#define DIFF_HORIZONTAL 0x040   // horizontal splits
+#define DIFF_VERTICAL   0x080   // vertical splits
+#define DIFF_HIDDEN_OFF 0x100   // diffoff when hidden
+#define DIFF_INTERNAL   0x200   // use internal xdiff algorithm
+#define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER;
 
 static long diff_algorithm = 0;
@@ -1017,6 +1021,15 @@ static int diff_file_internal(diffio_T *diffio)
   if (diff_flags & DIFF_IWHITE) {
     param.flags |= XDF_IGNORE_WHITESPACE_CHANGE;
   }
+  if (diff_flags & DIFF_IWHITEALL) {
+    param.flags |= XDF_IGNORE_WHITESPACE;
+  }
+  if (diff_flags & DIFF_IWHITEEOL) {
+    param.flags |= XDF_IGNORE_WHITESPACE_AT_EOL;
+  }
+  if (diff_flags & DIFF_IBLANK) {
+    param.flags |= XDF_IGNORE_BLANK_LINES;
+  }
 
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
@@ -1064,10 +1077,13 @@ static int diff_file(diffio_T *dio)
     // Build the diff command and execute it.  Always use -a, binary
     // differences are of no use.  Ignore errors, diff returns
     // non-zero when differences have been found.
-    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s %s",
+    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s%s%s%s %s",
                  diff_a_works == kFalse ? "" : "-a ",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
+                 (diff_flags & DIFF_IWHITEALL) ? "-w " : "",
+                 (diff_flags & DIFF_IWHITEEOL) ? "-Z " : "",
+                 (diff_flags & DIFF_IBLANK) ? "-B " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
     append_redir(cmd, len, (char *) p_srr, tmp_diff);
@@ -1881,20 +1897,28 @@ static bool diff_equal_char(const char_u *const p1, const char_u *const p2,
 /// @return on-zero if the two strings are different.
 static int diff_cmp(char_u *s1, char_u *s2)
 {
-  if ((diff_flags & (DIFF_ICASE | DIFF_IWHITE)) == 0) {
+  if ((diff_flags & DIFF_IBLANK)
+      && (*skipwhite(s1) == NUL || *skipwhite(s2) == NUL)) {
+    return 0;
+  }
+
+  if ((diff_flags & (DIFF_ICASE | ALL_WHITE_DIFF)) == 0) {
     return STRCMP(s1, s2);
   }
 
-  if ((diff_flags & DIFF_ICASE) && !(diff_flags & DIFF_IWHITE)) {
+  if ((diff_flags & DIFF_ICASE) && !(diff_flags & ALL_WHITE_DIFF)) {
     return mb_stricmp((const char *)s1, (const char *)s2);
   }
 
-  // Ignore white space changes and possibly ignore case.
   char_u *p1 = s1;
   char_u *p2 = s2;
 
+  // Ignore white space changes and possibly ignore case.
   while (*p1 != NUL && *p2 != NUL) {
-    if (ascii_iswhite(*p1) && ascii_iswhite(*p2)) {
+    if (((diff_flags & DIFF_IWHITE)
+         && ascii_iswhite(*p1) && ascii_iswhite(*p2))
+        || ((diff_flags & DIFF_IWHITEALL)
+            && (ascii_iswhite(*p1) || ascii_iswhite(*p2)))) {
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
     } else {
@@ -2071,9 +2095,18 @@ int diffopt_changed(void)
     } else if ((STRNCMP(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
       diff_context_new = getdigits_int(&p);
+    } else if (STRNCMP(p, "iblank", 6) == 0) {
+      p += 6;
+      diff_flags_new |= DIFF_IBLANK;
     } else if (STRNCMP(p, "icase", 5) == 0) {
       p += 5;
       diff_flags_new |= DIFF_ICASE;
+    } else if (STRNCMP(p, "iwhiteall", 9) == 0) {
+      p += 9;
+      diff_flags_new |= DIFF_IWHITEALL;
+    } else if (STRNCMP(p, "iwhiteeol", 9) == 0) {
+      p += 9;
+      diff_flags_new |= DIFF_IWHITEEOL;
     } else if (STRNCMP(p, "iwhite", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_IWHITE;
@@ -2217,9 +2250,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       si_org = si_new = 0;
 
       while (line_org[si_org] != NUL) {
-        if ((diff_flags & DIFF_IWHITE)
-            && ascii_iswhite(line_org[si_org])
-            && ascii_iswhite(line_new[si_new])) {
+        if (((diff_flags & DIFF_IWHITE)
+             && ascii_iswhite(line_org[si_org])
+             && ascii_iswhite(line_new[si_new]))
+            || ((diff_flags & DIFF_IWHITEALL)
+                && (ascii_iswhite(line_org[si_org])
+                    || ascii_iswhite(line_new[si_new])))) {
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
@@ -2249,9 +2285,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
                && ei_new >= si_new
                && ei_org >= 0
                && ei_new >= 0) {
-          if ((diff_flags & DIFF_IWHITE)
-              && ascii_iswhite(line_org[ei_org])
-              && ascii_iswhite(line_new[ei_new])) {
+          if (((diff_flags & DIFF_IWHITE)
+               && ascii_iswhite(line_org[ei_org])
+               && ascii_iswhite(line_new[ei_new]))
+              || ((diff_flags & DIFF_IWHITEALL)
+                  && (ascii_iswhite(line_org[ei_org])
+                      || ascii_iswhite(line_new[ei_new])))) {
             while (ei_org >= *startp && ascii_iswhite(line_org[ei_org])) {
               ei_org--;
             }
