@@ -1511,6 +1511,10 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
                  && (vim_fgets(linebuf, LBUFLEN, fd) == 0)
                  && (STRNCMP(line, "@@ ", 3) == 0)) {
         diffstyle = DIFF_UNIFIED;
+      } else {
+        // Format not recognized yet, skip over this line.  Cygwin diff
+        // may put a warning at the start of the file.
+        continue;
       }
     }
 
