@@ -2165,6 +2165,8 @@ int diffopt_changed(void)
       } else if (STRNCMP(p, "histogram", 9) == 0) {
         p += 9;
         diff_algorithm_new = XDF_HISTOGRAM_DIFF;
+      } else {
+        return FAIL;
       }
     }
 
