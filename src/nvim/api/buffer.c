@@ -1027,8 +1027,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// By default (and currently the only option) the text will be placed after
 /// the buffer text. Virtual text will never cause reflow, rather virtual
 /// text will be truncated at the end of the screen line. The virtual text will
-/// begin after one cell to the right of the ordinary text, this will contain
-/// the |lcs-eol| char if set, otherwise just be a space.
+/// begin one cell (|lcs-eol| or space) after the ordinary text.
 ///
 /// Namespaces are used to support batch deletion/updating of virtual text.
 /// To create a namespace, use |nvim_create_namespace|. Virtual text is

@@ -86,7 +86,7 @@ Project layout
     ├─ ci/              build automation
     ├─ cmake/           build scripts
     ├─ runtime/         user plugins/docs
-    ├─ src/             application source code (see src/nvim/README.md)
+    ├─ src/nvim/        application source code (see src/nvim/README.md)
     │  ├─ api/          API subsystem
     │  ├─ eval/         VimL subsystem
     │  ├─ event/        event-loop subsystem
