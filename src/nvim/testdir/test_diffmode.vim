@@ -219,6 +219,26 @@ func Test_diffget_diffput()
   %bwipe!
 endfunc
 
+" Test putting two changes from one buffer to another
+func Test_diffput_two()
+  new a
+  let win_a = win_getid()
+  call setline(1, range(1, 10))
+  diffthis
+  new b
+  let win_b = win_getid()
+  call setline(1, range(1, 10))
+  8del
+  5del
+  diffthis
+  call win_gotoid(win_a)
+  %diffput
+  call win_gotoid(win_b)
+  call assert_equal(map(range(1, 10), 'string(v:val)'), getline(1, '$'))
+  bwipe! a
+  bwipe! b
+endfunc
+
 func Test_dp_do_buffer()
   e! one
   let bn1=bufnr('%')
