@@ -578,6 +578,30 @@ int main(int argc, char **argv)
                                                 |
       ]])
     end)
+
+    it('indent-heuristic random order', function()
+      reread()
+      feed(':set diffopt=internal,filler,indent-heuristic,algorithm:patience<cr>')
+      feed(':<cr>')
+      screen:expect([[
+        {1:  }^def finalize(value{3:│}{1:  }def finalize(valu|
+        {1:  }                  {3:│}{1:  }                 |
+        {1:  }{2:------------------}{3:│}{1:  }{4:  values.each do }|
+        {1:  }{2:------------------}{3:│}{1:  }{4:    v.prepare    }|
+        {1:  }{2:------------------}{3:│}{1:  }{4:  end            }|
+        {1:  }{2:------------------}{3:│}{1:  }{4:                 }|
+        {1:  }  values.each do |{3:│}{1:  }  values.each do |
+        {1:  }    v.finalize    {3:│}{1:  }    v.finalize   |
+        {1:  }  end             {3:│}{1:  }  end            |
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {1:  }{6:~                 }{3:│}{1:  }{6:~                }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :                                       |
+      ]])
+    end)
   end)
 
   it('Diff the same file', function()
