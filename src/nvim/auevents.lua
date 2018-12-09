@@ -33,6 +33,7 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'DiffUpdated',            -- diffs have been updated
     'DirChanged',             -- directory changed
     'EncodingChanged',        -- after changing the 'encoding' option
     'ExitPre',                -- before exiting

@@ -1859,13 +1859,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'dex'* *'diffexpr'*
 'diffexpr' 'dex'	string	(default "")
 			global
-	Expression which is evaluated to obtain an ed-style diff file from two
-	versions of a file.  See |diff-diffexpr|.
+	Expression which is evaluated to obtain a diff file (either ed-style
+	or unified-style) from two versions of a file.  See |diff-diffexpr|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		string	(default "filler")
+'diffopt' 'dip'		string	(default "internal,filler")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -1925,11 +1925,31 @@ A jump table for the options with a short description can be found at |Q_op|.
 		foldcolumn:{n}	Set the 'foldcolumn' option to {n} when
 				starting diff mode.  Without this 2 is used.
 
-	Examples: >
+		internal	Use the internal diff library.  This is
+				ignored when 'diffexpr' is set.  *E960*
+				When running out of memory when writing a
+				buffer this item will be ignored for diffs
+				involving that buffer.  Set the 'verbose'
+				option to see when this happens.
 
-		:set diffopt=filler,context:4
+		indent-heuristic
+				Use the indent heuristic for the internal
+				diff library.
+
+                algorithm:{text} Use the specified diff algorithm with the
+				internal diff engine. Currently supported 
+				algorithms are:
+				myers      the default algorithm
+				minimal    spend extra time to generate the
+					   smallest possible diff
+				patience   patience diff algorithm
+				histogram  histogram diff algorithm
+
+	Examples: >
+		:set diffopt=internal,filler,context:4
 		:set diffopt=
-		:set diffopt=filler,foldcolumn:3
+		:set diffopt=internal,filler,foldcolumn:3
+		:set diffopt-=internal  " do NOT use the internal diff parser
 <
 				     *'digraph'* *'dg'* *'nodigraph'* *'nodg'*
 'digraph' 'dg'		boolean	(default off)

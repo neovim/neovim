@@ -1125,8 +1125,7 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  * can't do anything useful with the value.  Assign to this variable to avoid
  * the warning.
  */
-EXTERN int ignored;
-EXTERN char *ignoredp;
+EXTERN int vim_ignored;
 
 // Start a msgpack-rpc channel over stdin/stdout.
 EXTERN bool embedded_mode INIT(= false);
