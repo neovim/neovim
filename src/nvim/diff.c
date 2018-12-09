@@ -268,7 +268,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
                                 linenr_T line2, long amount, long amount_after)
 {
   if (diff_internal()) {
-    // Will udpate diffs before redrawing.  Set _invalid to update the
+    // Will update diffs before redrawing.  Set _invalid to update the
     // diffs themselves, set _update to also update folds properly just
     // before redrawing.
     tp->tp_diff_invalid = true;
@@ -886,6 +886,8 @@ void ex_diffupdate(exarg_T *eap)
     return;
   }
 
+  int had_diffs = curtab->tp_first_diff != NULL;
+
   // Delete all diffblocks.
   diff_clear(curtab);
   curtab->tp_diff_invalid = false;
@@ -899,7 +901,7 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   if (idx_orig == DB_COUNT) {
-    return;
+    goto theend;
   }
 
   // Only need to do something when there is another buffer.
@@ -911,7 +913,7 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   if (idx_new == DB_COUNT) {
-    return;
+    goto theend;
   }
 
   // Only use the internal method if it did not fail for one of the buffers.
@@ -929,9 +931,13 @@ void ex_diffupdate(exarg_T *eap)
   // force updating cursor position on screen
   curwin->w_valid_cursor.lnum = 0;
 
-  diff_redraw(true);
-
-  apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
+theend:
+  // A redraw is needed if there were diffs and they were cleared, or there
+  // are diffs now, which means they got updated.
+  if (had_diffs || curtab->tp_first_diff != NULL) {
+    diff_redraw(true);
+    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
+  }
 }
 
 ///
@@ -2176,7 +2182,8 @@ int diffopt_changed(void)
     return FAIL;
   }
 
-  // If "icase" or "iwhite" was added or removed, need to update the diff.
+  // If flags were added or removed, or the algorithm was changed, need to
+  // update the diff.
   if (diff_flags != diff_flags_new || diff_algorithm != diff_algorithm_new) {
     FOR_ALL_TABS(tp) {
       tp->tp_diff_invalid = true;
@@ -2734,15 +2741,17 @@ theend:
   if (diff_need_update) {
     diff_need_update = false;
     ex_diffupdate(NULL);
+  } else {
+    // Check that the cursor is on a valid character and update it's
+    // position.  When there were filler lines the topline has become
+    // invalid.
+    check_cursor();
+    changed_line_abv_curs();
+
+    // Also need to redraw the other buffers.
+    diff_redraw(false);
+    apply_autocmds(EVENT_DIFFUPDATED, NULL, NULL, false, curbuf);
   }
-
-  // Check that the cursor is on a valid character and update it's position.
-  // When there were filler lines the topline has become invalid.
-  check_cursor();
-  changed_line_abv_curs();
-
-  // Also need to redraw the other buffers.
-  diff_redraw(false);
 }
 
 /// Update folds for all diff buffers for entry "dp".
