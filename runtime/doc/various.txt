@@ -215,7 +215,7 @@ g8			Print the hex values of the bytes used in the
 			":normal" command without a range.
 
 						  *:sh* *:shell* *E371* *E360*
-:sh[ell]		Removed. |vim-differences| {Nvim}
+:sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
 :te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new

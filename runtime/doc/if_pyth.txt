@@ -6,7 +6,7 @@
 
 The Python Interface to Vim				*if_pyth* *python* *Python*
 
-See |provider-python| for more information. {Nvim}
+See |provider-python| for more information.
 
                                       Type |gO| to see the table of contents.
 

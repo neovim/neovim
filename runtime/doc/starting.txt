@@ -1025,7 +1025,7 @@ Use the "r" flag in 'shada' to specify for which files no marks should be
 remembered.
 
 MERGING							*shada-merging*
-									{Nvim}
+
 When writing ShaDa files with |:wshada| without bang or at regular exit 
 information in the existing ShaDa file is merged with information from current 
 Neovim instance.  For this purpose ShaDa files store timestamps associated 
@@ -1055,7 +1055,7 @@ with ShaDa entries.  Specifically the following is being done:
    Neovim instance which was last writing the file. |shada-%|
 
 COMPATIBILITY						*shada-compatibility*
-									{Nvim}
+
 ShaDa files are forward and backward compatible.  This means that
 
 1. Entries which have unknown type (i.e. that hold unidentified data) are 

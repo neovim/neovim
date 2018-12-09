@@ -1429,7 +1429,7 @@ automatically switch to HTML/CSS/JavaScript completion. Note: contrary to
 original HTML files completion of tags (and only tags) isn't context aware.
 
 
-RUBY						 *ft-ruby-omni* {Nvim}
+RUBY						 *ft-ruby-omni*
 
 NOTE: |compl-omni| for Ruby code requires |provider-ruby| to be installed.
 
