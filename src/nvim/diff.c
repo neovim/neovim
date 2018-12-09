@@ -3103,20 +3103,22 @@ static int parse_diff_unified(char_u        *line,
 static int xdiff_out(void *priv, mmbuffer_t *mb, int nbuf)
 {
   diffout_T *dout = (diffout_T *)priv;
-  int       i;
   char_u    *p;
 
-  for (i = 0; i < nbuf; i++) {
-    // We are only interested in the header lines, skip text lines.
-    if (STRNCMP(mb[i].ptr, "@@ ", 3)  != 0) {
-      continue;
-    }
-    ga_grow(&dout->dout_ga, 1);
-    p = vim_strnsave((char_u *)mb[i].ptr, mb[i].size);
-    if (p == NULL) {
-      return -1;
-    }
-    ((char_u **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
+  // The header line always comes by itself, text lines in at least two
+  // parts.  We drop the text part.
+  if (nbuf > 1) {
+    return 0;
   }
+
+  // sanity check
+  if (STRNCMP(mb[0].ptr, "@@ ", 3)  != 0) {
+    return 0;
+  }
+
+  ga_grow(&dout->dout_ga, 1);
+
+  p = vim_strnsave((char_u *)mb[0].ptr, mb[0].size);
+  ((char_u **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
   return 0;
 }
