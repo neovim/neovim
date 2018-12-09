@@ -44,6 +44,15 @@ Features
 
 See [`:help nvim-features`][nvim-features] for the full list!
 
+Install from package
+--------------------
+
+Pre-built packages for Windows, macOS, and Linux are found on the
+[Releases](https://github.com/neovim/neovim/releases/) page.
+
+Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
+and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
+
 Install from source
 -------------------
 
@@ -55,25 +64,35 @@ To install to a non-default location, set `CMAKE_INSTALL_PREFIX`:
     make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/full/path/"
     make install
 
-To list all targets:
+To skip bundled (`third-party/*`) dependencies:
 
-    cmake --build build --target help
+1. Install the dependencies using a package manager.
+   ```
+   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
+   sudo luarocks build mpack
+   sudo luarocks build lpeg
+   sudo luarocks build inspect
+   ```
+2. Build with `USE_BUNDLED=OFF`:
+   ```
+   make CMAKE_BUILD_TYPE=RelWithDebInfo USE_BUNDLED=OFF
+   sudo make install
+   ```
 
-To skip "bundled" dependencies (`third-party/*`) define `USE_BUNDLED=NO`:
+CMake features:
 
-    sudo apt install gperf libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
-    make USE_BUNDLED=NO
+- List all build targets:
+  ```
+  cmake --build build --target help
+  ```
+- Print all variable definitions:
+  ```
+  cmake -LAH
+  ```
+- `build/CMakeCache.txt` contains the resolved values of all CMake variables.
+- `build/compile_commands.json` shows the full compiler invocations for each translation unit.
 
 See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
-
-Install from package
---------------------
-
-Pre-built packages for Windows, macOS, and Linux are found on the
-[Releases](https://github.com/neovim/neovim/releases/) page.
-
-Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
-and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
 Transitioning from Vim
 --------------------

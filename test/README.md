@@ -205,7 +205,7 @@ Tests in `/test/unit` and `/test/functional` are divided into groups
 by the semantic component they are testing.
 
 - _Unit tests_
-  ([test/unit](https://github.com/neovim/neovim/tree/master/test/unit))  should
+  ([test/unit](https://github.com/neovim/neovim/tree/master/test/unit)) should
   match 1-to-1 with the structure of `src/nvim/`, because they are testing
   functions directly. E.g. unit-tests for `src/nvim/undo.c` should live in
   `test/unit/undo_spec.lua`.

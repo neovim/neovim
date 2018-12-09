@@ -1886,8 +1886,6 @@ v:termresponse	The escape sequence returned by the terminal for the DA
 
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
-		Also, when set certain error messages won't be shown for 2
-		seconds. (e.g. "'dictionary' option is empty")
 
 				*v:this_session* *this_session-variable*
 v:this_session	Full filename of the last loaded or saved session file.  See
@@ -3822,8 +3820,7 @@ garbagecollect([{atexit}])				*garbagecollect()*
 
 		The garbage collection is not done immediately but only when
 		it's safe to perform.  This is when waiting for the user to
-		type a character.  To force garbage collection immediately use
-		|test_garbagecollect_now()|.
+		type a character.
 
 get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
@@ -7904,7 +7901,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		See |terminal| for more information.
 
 test_garbagecollect_now()			 *test_garbagecollect_now()*
-		Like garbagecollect(), but executed right away.  This must
+		Like |garbagecollect()|, but executed right away.  This must
 		only be called directly to avoid any structure to exist
 		internally, and |v:testing| must have been set before calling
 		any function.
