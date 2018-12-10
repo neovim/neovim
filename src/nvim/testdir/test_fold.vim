@@ -514,6 +514,35 @@ func Test_fold_marker()
   enew!
 endfunc
 
+" test create fold markers with C filetype
+func Test_fold_create_marker_in_C()
+  enew!
+  set fdm=marker fdl=9
+  set filetype=c
+
+  let content = [
+	\ '/*',
+	\ ' * comment',
+	\ ' * ',
+	\ ' *',
+	\ ' */',
+	\ 'int f(int* p) {',
+	\ '    *p = 3;',
+	\ '    return 0;',
+	\ '}'
+	\]
+  for c in range(len(content) - 1)
+    bw!
+    call append(0, content)
+    call cursor(c + 1, 1)
+    norm! zfG
+    call assert_equal(content[c] . (c < 4 ? '{{{' : '/*{{{*/'), getline(c + 1))
+  endfor
+
+  set fdm& fdl&
+  enew!
+endfunc
+
 " test folding with indent
 func Test_fold_indent()
   enew!
