@@ -3828,7 +3828,12 @@ static void script_host_execute(char *name, exarg_T *eap)
     // current range
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
-    (void)eval_call_provider(name, "execute", args);
+
+    if (!eval_has_provider(name)) {
+      emsgf("No \"%s\" provider found. Run \":checkhealth provider\"", name);
+    } else {
+      (void)eval_call_provider(name, "execute", args);
+    }
   }
 }
 
