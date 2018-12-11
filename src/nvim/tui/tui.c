@@ -105,8 +105,8 @@ typedef struct {
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
   int print_attr_id;
-  bool has_bg;
   bool default_attr;
+  bool can_clear_attr;
   ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;
@@ -187,7 +187,7 @@ static void terminfo_start(UI *ui)
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->default_attr = false;
-  data->has_bg = false;
+  data->can_clear_attr = false;
   data->is_invisible = true;
   data->busy = false;
   data->cork = false;
@@ -489,8 +489,6 @@ static void update_attrs(UI *ui, int attr_id)
                  : (data->clear_attrs.cterm_bg_color - 1);
   }
 
-  data->has_bg = bg != -1;
-
   int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
   bool bold = attr & HL_BOLD;
   bool italic = attr & HL_ITALIC;
@@ -582,6 +580,12 @@ static void update_attrs(UI *ui, int attr_id)
 
   data->default_attr = fg == -1 && bg == -1
     && !bold && !italic && !underline && !undercurl && !reverse && !standout;
+
+  // Non-BCE terminals can't clear with non-default background color. Some BCE
+  // terminals don't support attributes either, so don't rely on it. But assume
+  // italic and bold has no effect if there is no text.
+  data->can_clear_attr = !reverse && !standout && !underline && !undercurl
+    && (data->bce || bg == -1);
 }
 
 static void final_column_wrap(UI *ui)
@@ -753,12 +757,10 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
 
   update_attrs(ui, attr_id);
 
-  // non-BCE terminals can't clear with non-default background color
-  bool can_clear = data->bce || !data->has_bg;
-
   // Background is set to the default color and the right edge matches the
   // screen end, try to use terminal codes for clearing the requested area.
-  if (can_clear && left == 0 && right == ui->width && bot == ui->height) {
+  if (data->can_clear_attr
+      && left == 0 && right == ui->width && bot == ui->height) {
     if (top == 0) {
       unibi_out(ui, unibi_clear_screen);
       ugrid_goto(&data->grid, top, left);
@@ -772,9 +774,9 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
     // iterate through each line and clear
     for (int row = top; row < bot; row++) {
       cursor_goto(ui, row, left);
-      if (can_clear && right == ui->width) {
+      if (data->can_clear_attr && right == ui->width) {
         unibi_out(ui, unibi_clr_eol);
-      } else if (data->can_erase_chars && can_clear && width >= 5) {
+      } else if (data->can_erase_chars && data->can_clear_attr && width >= 5) {
         UNIBI_SET_NUM_VAR(data->params[0], width);
         unibi_out(ui, unibi_erase_chars);
       } else {
