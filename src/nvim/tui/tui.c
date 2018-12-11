@@ -1755,7 +1755,9 @@ static void augment_terminfo(TUIData *data, const char *term,
                              long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  bool xterm = terminfo_is_term_family(term, "xterm");
+  bool xterm = terminfo_is_term_family(term, "xterm")
+    // Treat Terminal.app as generic xterm-like, for now.
+    || terminfo_is_term_family(term, "nsterm");
   bool bsdvt = terminfo_is_bsd_console(term);
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
