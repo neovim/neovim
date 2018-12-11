@@ -514,15 +514,6 @@ command.  The script can then again read another script.  This can continue
 for about 14 levels.  When more nesting is done, Vim assumes that there is a
 recursive loop somewhere and stops with this error message.
 
-							*E319*  >
-  The command is not available in this version
-
-You have used a command that is not present in the version of Vim you are
-using.  When compiling Vim, many different features can be enabled or
-disabled.  This depends on how big Vim has chosen to be and the operating
-system.  See |+feature-list| for when which feature is available.  The
-|:version| command shows which feature Vim was compiled with.
-
 							*E300*  >
   Swap file already exists (symlink attack?)
 

@@ -4,14 +4,21 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Providers	 						    *provider*
+Providers	 				*provider*
 
-Nvim delegates some features to dynamic "providers".
+Nvim delegates some features to dynamic "providers". This document describes
+the providers and how to install them.
+						*E319*
+Use of a feature requiring a missing provider is an error: >
+
+    E319: No "foo" provider found. Run ":checkhealth provider"
+
+Run the |:checkhealth| command, and review the sections below.
 
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
-Python integration		    	      *provider-python*
+Python integration				*provider-python*
 
 Nvim supports Python |remote-plugin|s and the Vim legacy |python2| and
 |python3| interfaces (which are implemented as remote-plugins).
