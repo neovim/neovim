@@ -1707,24 +1707,6 @@ return {
     func='ex_next',
   },
   {
-    command='nbkey',
-    flags=bit.bor(EXTRA, NOTADR, NEEDARG),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='nbclose',
-    flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='nbstart',
-    flags=bit.bor(WORD1, TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
     command='new',
     flags=bit.bor(BANG, FILE1, RANGE, NOTADR, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,
@@ -1957,18 +1939,6 @@ return {
     flags=bit.bor(EXTRA, RANGE, NOTADR, COUNT, BANG, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_previous',
-  },
-  {
-    command='promptfind',
-    flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
-  },
-  {
-    command='promptrepl',
-    flags=bit.bor(EXTRA, NOTRLCOM, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
   },
   {
     command='profile',
@@ -3115,12 +3085,6 @@ return {
     flags=bit.bor(BANG, FILE1, ARGOPT, DFLALL, TRLBAR),
     addr_type=ADDR_LINES,
     func='do_wqall',
-  },
-  {
-    command='wsverb',
-    flags=bit.bor(EXTRA, NOTADR, NEEDARG),
-    addr_type=ADDR_LINES,
-    func='ex_ni',
   },
   {
     command='wshada',
