@@ -114,7 +114,7 @@ describe('execute()', function()
       {1:~                                                                     }|
       {1:~                                                                     }|
       {2:                                                                      }|
-      :echo execute("hi ErrorMsg")                                          |
+                                                                            |
       ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
       {3:Press ENTER or type command to continue}^                               |
     ]], {
@@ -188,7 +188,7 @@ describe('execute()', function()
       ~                                       |
       ~                                       |
       ~                                       |
-      1234abcdefABCD                          |
+      ABCD                                    |
     ]])
 
     feed([[:call Test2()<cr>]])
@@ -237,11 +237,11 @@ describe('execute()', function()
 
     feed([[:call Test6()<cr>]])
     screen:expect([[
-      1234                                    |
+                                              |
       Error detected while processing function|
        Test6:                                 |
       line    2:                              |
-      E121: Undefined variable: undefinedABCD |
+      E121ABCD                                |
       Press ENTER or type command to continue^ |
     ]])
 
@@ -250,8 +250,8 @@ describe('execute()', function()
       Error detected while processing function|
        Test6:                                 |
       line    2:                              |
-      E121: Undefined variable: undefinedABCD |
-      abcdefABCD                              |
+      E121ABCD                                |
+      ABCD                                    |
       Press ENTER or type command to continue^ |
     ]])
   end)
