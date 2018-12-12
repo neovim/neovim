@@ -1804,6 +1804,37 @@ static int empty_pattern(char_u *p)
 
 static int command_line_changed(CommandLineState *s)
 {
+  // Trigger CmdlineChanged autocommands.
+  if (has_event(EVENT_CMDLINECHANGED)) {
+    TryState tstate;
+    Error err = ERROR_INIT;
+    bool tl_ret = true;
+    dict_T *dict = get_vim_var_dict(VV_EVENT);
+
+    char firstcbuf[2];
+    firstcbuf[0] = s->firstc > 0 ? s->firstc : '-';
+    firstcbuf[1] = 0;
+
+    // set v:event to a dictionary with information about the commandline
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    try_enter(&tstate);
+
+    apply_autocmds(EVENT_CMDLINECHANGED, (char_u *)firstcbuf,
+                   (char_u *)firstcbuf, false, curbuf);
+    tv_dict_clear(dict);
+
+    tl_ret = try_leave(&tstate, &err);
+    if (!tl_ret && ERROR_SET(&err)) {
+      msg_putchar('\n');
+      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      api_clear_error(&err);
+      redrawcmd();
+    }
+    tl_ret = true;
+  }
+
   // 'incsearch' highlighting.
   if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
     pos_T end_pos;
