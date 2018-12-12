@@ -10802,17 +10802,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     n = true;
   }
 
-  if (STRICMP(name, "ruby") == 0 && n == true) {
-    char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
-    if (rubyhost) {
-      if (*rubyhost == NUL) {
-        // Invalid rubyhost executable. Gem is probably not installed.
-        n = false;
-      }
-      xfree(rubyhost);
-    }
-  }
-
   rettv->vval.v_number = n;
 }
 
@@ -22770,7 +22759,18 @@ bool eval_has_provider(const char *name)
     CHECK_PROVIDER(python);
     return has_python;
   } else if (strequal(name, "ruby")) {
+    bool need_check_ruby = (has_ruby == -1);
     CHECK_PROVIDER(ruby);
+    if (need_check_ruby && has_ruby == 1) {
+      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
+      if (rubyhost) {
+        if (*rubyhost == NUL) {
+          // Invalid rubyhost executable. Gem is probably not installed.
+          has_ruby = 0;
+        }
+        xfree(rubyhost);
+      }
+    }
     return has_ruby;
   }
 
