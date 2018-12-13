@@ -6903,7 +6903,13 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   } else {
     sfname = vim_strsave(fname);
     // Don't try expanding the following events.
-    if (event == EVENT_COLORSCHEME
+    if (event == EVENT_CMDLINECHANGED
+        || event == EVENT_CMDLINEENTER
+        || event == EVENT_CMDLINELEAVE
+        || event == EVENT_CMDWINENTER
+        || event == EVENT_CMDWINLEAVE
+        || event == EVENT_CMDUNDEFINED
+        || event == EVENT_COLORSCHEME
         || event == EVENT_COLORSCHEMEPRE
         || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE
