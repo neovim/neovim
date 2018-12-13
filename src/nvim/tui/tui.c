@@ -228,14 +228,17 @@ static void terminfo_start(UI *ui)
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
   const char *vte_version_env = os_getenv("VTE_VERSION");
-  long vte_version = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
+  long vtev = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool konsole = terminfo_is_term_family(term, "konsole")
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
+  const char *konsolev_env = os_getenv("KONSOLE_VERSION");
+  long konsolev = konsolev_env ? strtol(konsolev_env, NULL, 10)
+                               : (konsole ? 1 : 0);
 
-  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);
-  augment_terminfo(data, term, colorterm, vte_version, konsole, iterm_env);
+  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env);
+  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -1461,7 +1464,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                bool konsole, bool iterm_env)
+                                long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   const char * xterm_version = os_getenv("XTERM_VERSION");
@@ -1488,7 +1491,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool konsole_pretending_xterm = xterm && konsole;
+  bool konsole_pretending_xterm = xterm && konsolev;
   bool gnome_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
@@ -1633,7 +1636,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
-    } else if (konsole || xterm || gnome || rxvt || st || putty
+    } else if (konsolev || xterm || gnome || rxvt || st || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
@@ -1654,7 +1657,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   }
 
   // Blacklist of terminals that cannot be trusted to report DECSCUSR support.
-  if (!(st || (vte_version != 0 && vte_version < 3900) || konsole)) {
+  if (!(st || (vte_version != 0 && vte_version < 3900)
+        || (konsolev > 0 && konsolev < 180770))) {
     data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
     data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
@@ -1663,15 +1667,15 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   // adding them to terminal types, that have such control sequences but lack
   // the correct terminfo entries, is a fixup, not an augmentation.
   if (-1 == data->unibi_ext.set_cursor_style) {
-    // DECSCUSR (cursor shape) sequence is widely supported by several terminal
-    // types.  https://github.com/gnachman/iTerm2/pull/92
-    // xterm extension: vertical bar
-    if (!konsole
+    // DECSCUSR (cursor shape) is widely supported.
+    // https://github.com/gnachman/iTerm2/pull/92
+    if ((!konsolev || konsolev >= 180770)
         && ((xterm && !vte_version)  // anything claiming xterm compat
             // per MinTTY 0.4.3-1 release notes from 2009
             || putty
             // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
             || (vte_version >= 3900)
+            || (konsolev >= 180770)  // #9364
             || tmux       // per tmux manual page
             // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
             || screen
@@ -1719,12 +1723,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
                                                                       "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          "\x1b[?c");
-    } else if (konsole) {
-      // Konsole uses an idiosyncratic escape code to set the cursor shape and
-      // does not support DECSCUSR.  This makes Konsole set up and apply a
-      // nonce profile, which has side-effects on temporary font resizing.
-      // In an ideal world, Konsole would just support DECSCUSR.
+                        "\x1b[?c");
+    } else if (konsolev > 0 && konsolev < 180770) {
+      // Konsole before version 18.07.70: set up a nonce profile. This has
+      // side-effects on temporary font resizing. #6798
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
@@ -1747,7 +1749,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
-    const char *colorterm, long vte_version, bool konsole, bool iterm_env)
+                             const char *colorterm, long vte_version,
+                             long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   bool xterm = terminfo_is_term_family(term, "xterm");
@@ -1771,7 +1774,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
       || xterm       // per xterm ctlseqs doco
-      || konsole     // per commentary in VT102Emulation.cpp
+      || konsolev    // per commentary in VT102Emulation.cpp
       || teraterm    // per TeraTerm "Supported Control Functions" doco
       || rxvt) {     // per command.C
     data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut,
