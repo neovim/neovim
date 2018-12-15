@@ -1279,9 +1279,10 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     // width and the line continuation is within the grid.
 
     if (endcol != grid->width) {
-      // Print the last cell of the row, if we haven't already done so.
-      cursor_goto(ui, (int)linerow, grid->width - 1);
-      print_cell(ui, &grid->cells[linerow][grid->width - 1]);
+      // Print the last char of the row, if we haven't already done so.
+      int size = grid->cells[linerow][grid->width - 1].data[0] == NUL ? 2 : 1;
+      cursor_goto(ui, (int)linerow, grid->width - size);
+      print_cell(ui, &grid->cells[linerow][grid->width - size]);
     }
 
     // Wrap the cursor over to the next line. The next line will be
