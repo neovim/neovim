@@ -1722,6 +1722,48 @@ static void exe_commands(mparm_T *parmp)
   TIME_MSG("executing command arguments");
 }
 
+/// Source system-wide vimrc if built with one defined
+///
+/// Does one of the following things, stops after whichever succeeds:
+///
+/// 1. Source system vimrc file from $XDG_CONFIG_DIRS/nvim/sysinit.vim
+/// 2. Source system vimrc file from $VIM
+static void do_system_initialization(void)
+{
+  char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+  if (config_dirs != NULL) {
+    const void *iter = NULL;
+    const char path_tail[] = {
+      'n', 'v', 'i', 'm', PATHSEP,
+      's', 'y', 's', 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL
+    };
+    do {
+      const char *dir;
+      size_t dir_len;
+      iter = vim_env_iter(':', config_dirs, iter, &dir, &dir_len);
+      if (dir == NULL || dir_len == 0) {
+        break;
+      }
+      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      memcpy(vimrc, dir, dir_len);
+      vimrc[dir_len] = PATHSEP;
+      memcpy(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      if (do_source((char_u  *)vimrc, false, DOSO_NONE) != FAIL) {
+        xfree(vimrc);
+        xfree(config_dirs);
+        return;
+      }
+      xfree(vimrc);
+    } while (iter != NULL);
+    xfree(config_dirs);
+  }
+
+#ifdef SYS_VIMRC_FILE
+  // Get system wide defaults, if the file name is defined.
+  (void)do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
+#endif
+}
+
 /// Source vimrc or do other user initialization
 ///
 /// Does one of the following things, stops after whichever succeeds:
@@ -1804,10 +1846,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
       }
     }
   } else if (!silent_mode) {
-#ifdef SYS_VIMRC_FILE
-    // Get system wide defaults, if the file name is defined.
-    (void) do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
-#endif
+    do_system_initialization();
 
     if (do_user_initialization()) {
       // Read initialization commands from ".vimrc" or ".exrc" in current

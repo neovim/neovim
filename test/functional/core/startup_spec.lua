@@ -7,12 +7,17 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
+local mkdir = helpers.mkdir
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
+local rmdir = helpers.rmdir
+local set_session = helpers.set_session
 local sleep = helpers.sleep
+local spawn = helpers.spawn
 local iswin = helpers.iswin
+local write_file = helpers.write_file
 
 describe('startup', function()
   before_each(function()
@@ -204,3 +209,57 @@ describe('startup', function()
   end)
 end)
 
+describe('sysinit', function()
+  local xdgdir = 'Xxdg'
+  local vimdir = 'Xvim'
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local argv = {
+    nvim_prog, '--headless', '--embed', '-i', 'NONE', '-n',
+    '--cmd', 'set nomore undodir=. directory=. belloff='
+  }
+
+  before_each(function()
+    rmdir(xdgdir)
+    rmdir(vimdir)
+    rmdir(xhome)
+
+    mkdir(xdgdir)
+    mkdir(xdgdir .. pathsep .. 'nvim')
+    write_file(table.concat({xdgdir, 'nvim', 'sysinit.vim'}, pathsep), [[
+      let g:loaded = get(g:, "loaded", 0) + 1
+      let g:xdg = 1
+    ]])
+
+    mkdir(vimdir)
+    write_file(table.concat({vimdir, 'sysinit.vim'}, pathsep), [[
+      let g:loaded = get(g:, "loaded", 0) + 1
+      let g:vim = 1
+    ]])
+
+    mkdir(xhome)
+  end)
+  after_each(function()
+    rmdir(xdgdir)
+    rmdir(vimdir)
+    rmdir(xhome)
+  end)
+
+  it('prefers XDG_CONFIG_DIRS over VIM', function()
+    set_session(spawn(argv, nil,
+                      { 'HOME='..xhome,
+                        'XDG_CONFIG_DIRS='..xdgdir,
+                        'VIM='..vimdir }))
+    eq('loaded 1 xdg 1 vim 0',
+       eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
+  end)
+
+  it('uses VIM if XDG_CONFIG_DIRS unset', function()
+    set_session(spawn(argv, nil,
+                      { 'HOME='..xhome,
+                        'XDG_CONFIG_DIRS=',
+                        'VIM='..vimdir }))
+    eq('loaded 1 xdg 0 vim 1',
+       eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
+  end)
+end)

@@ -436,10 +436,11 @@ accordingly.  Vim proceeds in this order:
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
-							*system-vimrc*
-     a. For Unix, MS-Windows, and Macintosh, the system vimrc file is read for
-	initializations.  The path of this file is shown with the
-	":version" command.  Mostly it's "$VIM/vimrc".
+						*system-vimrc* *sysinit.vim*
+     a. The system vimrc file is read for initializations.  If
+	nvim/sysinit.vim file exists in one of $XDG_CONFIG_DIRS, it will be
+	used.  Otherwise, the system vimrc file is used. The path of this file
+	is shown with the ":version" command.  Mostly it's "$VIM/sysinit.vim".
 
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists
