@@ -53,6 +53,7 @@ def SetUpHiddenBuffer( buf, name ):
   buf.options[ 'bufhidden' ] = 'hide'
   buf.name = name
 
+
 def SetUpPromptBuffer( buf, name, prompt, callback, hidden=False ):
   # This feature is _super_ new, so only enable when available
   if not int( vim.eval( "exists( '*prompt_setprompt' )" ) ):
@@ -176,7 +177,7 @@ def InputSave():
   vim.eval( 'inputsave()' )
   try:
     yield
-  except:
+  except Exception:
     vim.eval( 'inputrestore()' )
 
 
