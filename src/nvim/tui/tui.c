@@ -1468,7 +1468,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  const char * xterm_version = os_getenv("XTERM_VERSION");
+  const char *xterm_version = os_getenv("XTERM_VERSION");
 #if 0   // We don't need to identify this specifically, for now.
   bool roxterm = !!os_getenv("ROXTERM_ID");
 #endif
@@ -1477,6 +1477,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     || terminfo_is_term_family(term, "nsterm");
   bool kitty = terminfo_is_term_family(term, "xterm-kitty");
   bool linuxvt = terminfo_is_term_family(term, "linux");
+  bool bsdvt = terminfo_is_bsd_console(term);
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
@@ -1497,7 +1498,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
-  bool true_xterm = xterm && !!xterm_version;
+  bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1670,7 +1671,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (-1 == data->unibi_ext.set_cursor_style) {
     // DECSCUSR (cursor shape) is widely supported.
     // https://github.com/gnachman/iTerm2/pull/92
-    if ((!konsolev || konsolev >= 180770)
+    if ((!bsdvt && (!konsolev || konsolev >= 180770))
         && ((xterm && !vte_version)  // anything claiming xterm compat
             // per MinTTY 0.4.3-1 release notes from 2009
             || putty
@@ -1684,7 +1685,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || rxvt       // per command.C
             // per analysis of VT100Terminal.m
             || iterm || iterm_pretending_xterm
-            || teraterm    // per TeraTerm "Supported Control Functions" doco
+            || teraterm   // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
@@ -1754,7 +1755,10 @@ static void augment_terminfo(TUIData *data, const char *term,
                              long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  bool xterm = terminfo_is_term_family(term, "xterm");
+  bool xterm = terminfo_is_term_family(term, "xterm")
+    // Treat Terminal.app as generic xterm-like, for now.
+    || terminfo_is_term_family(term, "nsterm");
+  bool bsdvt = terminfo_is_bsd_console(term);
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
@@ -1769,8 +1773,8 @@ static void augment_terminfo(TUIData *data, const char *term,
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
-  const char * xterm_version = os_getenv("XTERM_VERSION");
-  bool true_xterm = xterm && !!xterm_version;
+  const char *xterm_version = os_getenv("XTERM_VERSION");
+  bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
