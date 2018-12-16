@@ -16,11 +16,14 @@
 from vimspector import utils
 
 import vim
+import json
 
 
 BUFFER_MAP = {
   'console': 'Console',
-  'stdout': 'Console'
+  'stdout': 'Console',
+  'stderr': 'Errors',
+  'telemetry': 'Telemetry',
 }
 
 
@@ -47,6 +50,11 @@ class OutputView( object ):
     buf = self._buffers[ category ]
     with utils.ModifiableScratchBuffer( buf ):
       utils.AppendToBuffer( buf, event[ 'output' ].splitlines() )
+      if 'data' in event:
+        utils.AppendToBuffer( buf,
+                              json.dumps( event[ 'data' ],
+                                          indent = 2 ).splitlines() )
+
 
     # Scroll the buffer
     with utils.RestoreCurrentWindow():
