@@ -204,7 +204,7 @@ class DebugSession( object ):
       self._variablesView.Reset()
       self._outputView.Reset()
       vim.current.tabpage = self._uiTab
-      vim.command( 'tabclose' )
+      vim.command( 'tabclose!' )
 
     vim.eval( 'vimspector#internal#job#Reset()' )
     vim.eval( 'vimspector#internal#state#Reset()' )
@@ -350,16 +350,20 @@ class DebugSession( object ):
       "vimspector#internal#job#StartDebugSession( {0} )".format(
         json.dumps( self._adapter ) ) )
 
-    self._connection = debug_adapter_connection.DebugAdapterConnection(
-      self,
-      channel_send_func )
+    if channel_send_func is None:
+      self._logger.error( "Unable to start debug server" )
+    else:
+      self._connection = debug_adapter_connection.DebugAdapterConnection(
+        self,
+        channel_send_func )
 
-    self._logger.info( 'Debug Adapter Started' )
+      self._logger.info( 'Debug Adapter Started' )
 
-    vim.command( 'augroup vimspector_cleanup' )
-    vim.command(   'autocmd!' )
-    vim.command(   'autocmd VimLeavePre * py3 _vimspector_session.CloseDown()' )
-    vim.command( 'augroup END' )
+      vim.command( 'augroup vimspector_cleanup' )
+      vim.command(   'autocmd!' )
+      vim.command(   'autocmd VimLeavePre * py3 '
+                     '_vimspector_session.CloseDown()' )
+      vim.command( 'augroup END' )
 
   def CloseDown( self ):
     # We have to use a dict because of python's scoping/assignment rules (state
