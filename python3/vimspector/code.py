@@ -165,3 +165,33 @@ class CodeView( object  ):
             'vimspectorBP' if breakpoint[ 'verified' ]
                            else 'vimspectorBPDisabled',
             file_name ) )
+
+
+  def LaunchTerminal( self, params ):
+    # kind = params.get( 'kind', 'integrated' )
+
+    # FIXME: We don't support external terminals, and only open in the
+    # integrated one.
+
+    cwd = params[ 'cwd' ]
+    args = params[ 'args' ]
+    env = params.get( 'env', {} )
+
+    options = {
+      'vertical': 1,
+      'norestore': 1,
+      'cwd': cwd,
+      'env': env,
+    }
+
+    with utils.TemporaryVimOptions( { 'splitright': True,
+                                      'equalalways': False } ):
+      with utils.RestoreCurrentWindow():
+        vim.current.window = self._window
+        # TODO/FIXME: Do something about closing this when we reset ?
+        vim_cmd =  'term_start( {}, {} )'.format( json.dumps( args ),
+                                                  json.dumps( options ) )
+
+        self._logger.debug( 'Start terminal: {}'.format( vim_cmd ) )
+
+        vim.eval( vim_cmd )

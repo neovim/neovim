@@ -166,3 +166,11 @@ class DebugAdapterConnection( object ):
       else:
         utils.UserMessage( 'Unhandled event: {0}'.format( message[ 'event' ] ),
                            persist = True )
+    elif message[ 'type' ] == 'request':
+      method = 'OnRequest_' + message[ 'command' ]
+      if method in dir( self._handler ):
+        getattr( self._handler, method )( message )
+      else:
+        utils.UserMessage(
+          'Unhandled request: {0}'.format( message[ 'command' ] ),
+          persist = True )

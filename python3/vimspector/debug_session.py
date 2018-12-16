@@ -481,6 +481,11 @@ class DebugSession( object ):
         'Unrecognised breakpoint event (undocumented): {0}'.format( reason ),
         persist = True )
 
+  def OnRequest_runInTerminal( self, message ):
+    params = message[ 'arguments' ]
+
+    self._codeView.LaunchTerminal( params )
+
   def Clear( self ):
     self._codeView.Clear()
     self._stackTraceView.Clear()
