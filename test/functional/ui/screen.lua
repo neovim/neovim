@@ -349,7 +349,6 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     -- value.
     grid = dedent(grid:gsub('\n[ ]+$', ''), 0)
     for row in grid:gmatch('[^\n]+') do
-      row = row:sub(1, #row - 1) -- Last char must be the screen delimiter.
       table.insert(expected_rows, row)
     end
   end
@@ -382,7 +381,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
         return (
           'Failed to match any screen lines.\n'
           .. 'Expected (anywhere): "' .. expected.any .. '"\n'
-          .. 'Actual:\n  |' .. table.concat(actual_rows, '|\n  |') .. '|\n\n')
+          .. 'Actual:\n  |' .. table.concat(actual_rows, '\n  |') .. '\n\n')
       end
     end
 
@@ -402,8 +401,8 @@ function Screen:expect(expected, attr_ids, attr_ignore)
           actual_rows[i] = '*' .. actual_rows[i]
           return (
             'Row ' .. tostring(i) .. ' did not match.\n'
-            ..'Expected:\n  |'..table.concat(msg_expected_rows, '|\n  |')..'|\n'
-            ..'Actual:\n  |'..table.concat(actual_rows, '|\n  |')..'|\n\n'..[[
+            ..'Expected:\n  |'..table.concat(msg_expected_rows, '\n  |')..'\n'
+            ..'Actual:\n  |'..table.concat(actual_rows, '\n  |')..'\n\n'..[[
 To print the expect() call that would assert the current screen state, use
 screen:snapshot_util(). In case of non-deterministic failures, use
 screen:redraw_debug() to show all intermediate screen states.  ]])
