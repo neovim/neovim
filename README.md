@@ -1,19 +1,44 @@
-# vimspector - A multi language debugger for Vim
+# vimspector - A multi language graphical debugger for Vim
 
 # Status
 
-The plugin is a capable, if basic, debugger for c++ and python on the author's
-computer. I think the concept is well and truly proven and it is worth
-completing.
+The plugin is a capable Vim graphical debugger for multiple languages.
+It's mostly tested for c++ and python, but in theory supports any 
+language that Visual Studio Code supports (but see caveats).
 
-If you are insanely curious and wish to try it out, it's probably best to find
-me in #vim or the [vimspector gitter channel][gitter]. It's probably too early.
+It supports:
+
+- breakpoints (function and line)
+- step in/out/over/up, stop, restart
+- launch and attach
+- locals and globals display
+- watches (expressions)
+- call stack and navigation
+- variable value display hover
+- interractive debug console
+- launch debugee within Vim's embedded terminal
+- logging/stdout display
+
+The author successfully uses it for debugging Vim code and YouCompletMe's
+core engine `ycmd` (a complex python application).
+
+It should work for any debug adapter that works in VSCode, but there are
+certain limitations (see FAQ). There are some bugs certainly, and 
+configuring it is a bit of a dark art at this stage.
+
+It is currently a work in progress, and any feedback/contributions are more
+than welcome.
+
+If you are insanely curious and wish to try it out, it's probably best to
+shout me in the [vimspector gitter channel][gitter]. I'd love to hear from
+you.
 
 In order to use it you have to currently:
 
 - Write an undocumented configuration file that contains essentially
   undocumented parameters.
 - Use an undocumented API via things like `:call vimsepctor#Launch()`.
+- Accept that it isn't complete yet
 - etc.
 
 # Background
