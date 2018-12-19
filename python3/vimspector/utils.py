@@ -227,17 +227,24 @@ def IsCurrent( window, buf ):
 
 
 def ExpandReferencesInDict( obj, mapping, **kwargs ):
-  def expand_refs( s ):
+  def expand_refs_in_string( s ):
     s = string.Template( s ).safe_substitute( mapping, **kwargs )
     s = os.path.expanduser( s )
     s = os.path.expandvars( s )
     return s
 
+  def expand_refs_in_object( obj ):
+    if isinstance( obj, dict ):
+      ExpandReferencesInDict( obj, mapping, **kwargs )
+    elif isinstance( obj, list ):
+      for i, _ in enumerate( obj ):
+        # FIXME: We are assuming that it is a list of string, but could be a
+        # list of list of a list of dict, etc.
+        obj[ i ] = expand_refs_in_object( obj[ i ] )
+    elif isinstance( obj, str ):
+      obj = expand_refs_in_string( obj )
+
+    return obj
+
   for k in obj.keys():
-    if isinstance( obj[ k ], dict ):
-      ExpandReferencesInDict( obj[ k ], mapping, **kwargs )
-    elif isinstance( obj[ k ], list ):
-      for i, _ in enumerate( obj[ k ] ):
-        obj[ k ][ i ] = expand_refs( obj[ k ][ i ] )
-    elif isinstance( obj[ k ], str ):
-      obj[ k ] = expand_refs( obj[ k ] )
+    obj[ k ] = expand_refs_in_object( obj[ k ] )
