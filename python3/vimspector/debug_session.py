@@ -168,6 +168,7 @@ class DebugSession( object ):
         # FIXME: Encapsulation
         self._stackTraceView._connection = self._connection
         self._variablesView._connection = self._connection
+        self._outputView._connection = self._connection
 
     if self._connection:
       self._StopDebugAdapter( start )

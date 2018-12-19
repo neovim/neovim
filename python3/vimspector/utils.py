@@ -201,7 +201,7 @@ def AskForInput( prompt ):
     return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
 
 
-def AppendToBuffer( buf, line_or_lines ):
+def AppendToBuffer( buf, line_or_lines, modified=False ):
   # After clearing the buffer (using buf[:] = None) there is always a single
   # empty line in the buffer object and no "is empty" method.
   if len( buf ) > 1 or buf[ 0 ]:
@@ -213,6 +213,9 @@ def AppendToBuffer( buf, line_or_lines ):
   else:
     line = 1
     buf[:] = line_or_lines
+
+  if not modified:
+    buf.options[ 'modified' ] = False
 
   # Return the first Vim line number (1-based) that we just set.
   return line

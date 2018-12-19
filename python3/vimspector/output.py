@@ -83,10 +83,13 @@ class OutputView( object ):
       return
 
     console = self._buffers[ 'Console' ]
-    utils.AppendToBuffer( console, expression )
+    utils.AppendToBuffer( console, 'Evaluating: ' + expression )
 
     def print_result( message ):
-      utils.AppendToBuffer( console, message[ 'body' ][ 'result' ] )
+      utils.AppendToBuffer( console,
+                            'Evaluated: ' + expression )
+      utils.AppendToBuffer( console,
+                            '  Result: ' + message[ 'body' ][ 'result' ] )
 
     self._connection.DoRequest( print_result, {
       'command': 'evaluate',
@@ -110,7 +113,7 @@ class OutputView( object ):
                                    'vimspector.Console',
                                    '> ',
                                    'vimspector#EvaluateConsole',
-                                   hidden = True )
+                                   hidden=True )
         else:
           utils.SetUpHiddenBuffer( self._buffers[ category ],
                                    'vimspector.Output:{0}'.format( category ) )
