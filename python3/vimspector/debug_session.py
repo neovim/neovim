@@ -488,7 +488,15 @@ class DebugSession( object ):
   def OnRequest_runInTerminal( self, message ):
     params = message[ 'arguments' ]
 
-    self._codeView.LaunchTerminal( params )
+    buffer_number = self._codeView.LaunchTerminal( params )
+
+    response = {
+      'processId': vim.eval( 'job_info( term_getjob( {} ) )'
+                             '.process'.format( buffer_number ) )
+    }
+
+    self._connection.DoResponse( message, None, response )
+
 
   def Clear( self ):
     self._codeView.Clear()

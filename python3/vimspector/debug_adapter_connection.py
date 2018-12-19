@@ -48,6 +48,24 @@ class DebugAdapterConnection( object ):
                                                             failure_handler )
     self._SendMessage( msg )
 
+  def DoResponse( self, request, error, response ):
+    this_id = self._next_message_id
+    self._next_message_id += 1
+
+    msg = {}
+    msg[ 'seq' ] = this_id
+    msg[ 'type' ] = 'response'
+    msg[ 'request_seq' ] = request[ 'seq' ]
+    msg[ 'command' ] = request[ 'command' ]
+    msg[ 'body' ] = response
+    if error:
+      msg[ 'success' ] = False
+      msg[ 'message' ] = error
+    else:
+      msg[ 'success' ] = True
+
+    self._SendMessage( msg )
+
   def Reset( self ):
     self._Write = None
     self._handler = None

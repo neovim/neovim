@@ -73,7 +73,8 @@ class CodeView( object  ):
     except vim.error as e:
       if 'E325' not in str( e ):
         self._logger.exception(
-          'Unexpected error from vim: {0}'.format( str( e ) ) )
+          'Unexpected error from vim: loading buffer {}'.format(
+            buffer_number ) )
         return False
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
@@ -184,6 +185,7 @@ class CodeView( object  ):
       'env': env,
     }
 
+    buffer_number = None
     with utils.TemporaryVimOptions( { 'splitright': True,
                                       'equalalways': False } ):
       with utils.RestoreCurrentWindow():
@@ -194,4 +196,10 @@ class CodeView( object  ):
 
         self._logger.debug( 'Start terminal: {}'.format( vim_cmd ) )
 
-        vim.eval( vim_cmd )
+        buffer_number = int( vim.eval( vim_cmd ) )
+
+    if buffer_number is None or buffer_number <= 0:
+      # TODO: Do something better like reject the request?
+      raise ValueError( "Unable to start terminal" )
+
+    return buffer_number
