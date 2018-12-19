@@ -1001,8 +1001,8 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             switch (length_modifier) {
               case '\0':
               case 'h': {
-                // char and short arguments are passed as int
-                arg = (tvs ? (int)tv_nr(tvs, &arg_idx) : va_arg(ap, int));
+                // char and short arguments are passed as int16_t
+                arg = (int16_t)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
                 break;
               }
               case 'l': {
@@ -1033,9 +1033,9 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
             switch (length_modifier) {
               case '\0':
               case 'h': {
-                uarg = (tvs
-                        ? (unsigned)tv_nr(tvs, &arg_idx)
-                        : va_arg(ap, unsigned));
+                uarg = (uint16_t)(tvs
+                                  ? tv_nr(tvs, &arg_idx)
+                                  : va_arg(ap, unsigned));
                 break;
               }
               case 'l': {
