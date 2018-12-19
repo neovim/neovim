@@ -108,8 +108,11 @@ breakpoint.
 
 ## Watches
 
-* Add watches to the variables window with
-`:call vimspector#AddWatch( '<expr>' )`
+The watches window is a prompt buffer. Enter insert mode to add a 
+new watch expression.
+
+* Add watches to the variables window by entering insert mode and
+  typing the expression. Commit with `<CR>`.
 * Expand result with `<CR>`.
 * Delete with `<DEL>`.
 
@@ -123,6 +126,17 @@ breakpoint.
 * In the outputs window use the WinBar to select the output channel.
 * The debugee prints to the stdout channel.
 * Other channels may be useful for debugging.
+
+### Console
+
+The console window is a prompt buffer and can be used as an interactive
+CLI for the debug adapter. Support for this varies amongt adapters.
+
+* Enter insert mode to enter a command to evaluate
+* Commit the request with `<CR>`
+* The request and subsequent result are printed.
+
+NOTE: See also [Watches][#watches] above.
 
 # Supported Languages
 
@@ -315,6 +329,9 @@ tested. It will almost certainly not work on Windows.
 Requires:
 
 - Vim 8.1 compiled with python 3 support.
+
+Note the plugin uses a lot of very new Vim features (like prompt buffers), so
+I would strongly recommend a very new build of Vim.
 
 # FAQ
 
