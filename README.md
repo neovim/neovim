@@ -41,6 +41,17 @@ In order to use it you have to currently:
 - Accept that it isn't complete yet
 - etc.
 
+## Experimental
+
+The plugin is currently _experimental_. That means that any part of it
+can (and probably will) change, including things like:
+
+- breaking changes to the configuration
+- keys, layout, functionatlity of the UI
+
+If a large number of people start using it then I will do my best to
+minimise this, or at least announce on Gitter.
+
 # Background
 
 The motivation is that debugging in Vim is a pretty horrible experience,
