@@ -1367,20 +1367,23 @@ static int nfa_regatom(void)
     case '7':
     case '8':
     case '9':
-      /* \z1...\z9 */
-      if (reg_do_extmatch != REX_USE)
+      // \z1...\z9
+      if ((reg_do_extmatch & REX_USE) == 0) {
         EMSG_RET_FAIL(_(e_z1_not_allowed));
+      }
       EMIT(NFA_ZREF1 + (no_Magic(c) - '1'));
       /* No need to set nfa_has_backref, the sub-matches don't
        * change when \z1 .. \z9 matches or not. */
       re_has_z = REX_USE;
       break;
     case '(':
-      /* \z(  */
-      if (reg_do_extmatch != REX_SET)
+      // \z(
+      if (reg_do_extmatch != REX_SET) {
         EMSG_RET_FAIL(_(e_z_not_allowed));
-      if (nfa_reg(REG_ZPAREN) == FAIL)
-        return FAIL;                        /* cascaded error */
+      }
+      if (nfa_reg(REG_ZPAREN) == FAIL) {
+        return FAIL;                        // cascaded error
+      }
       re_has_z = REX_SET;
       break;
     default:
@@ -5052,10 +5055,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
     /* swap lists */
     thislist = &list[flag];
     nextlist = &list[flag ^= 1];
-    nextlist->n = 0;                /* clear nextlist */
-    nextlist->has_pim = FALSE;
-    ++nfa_listid;
-    if (prog->re_engine == AUTOMATIC_ENGINE && nfa_listid >= NFA_MAX_STATES) {
+    nextlist->n = 0;                // clear nextlist
+    nextlist->has_pim = false;
+    nfa_listid++;
+    if (prog->re_engine == AUTOMATIC_ENGINE
+        && (nfa_listid >= NFA_MAX_STATES)) {
       // Too many states, retry with old engine.
       nfa_match = NFA_TOO_EXPENSIVE;
       goto theend;

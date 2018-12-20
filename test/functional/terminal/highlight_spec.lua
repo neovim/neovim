@@ -120,7 +120,7 @@ describe('terminal window highlighting with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = 1193046, special = Screen.colors.Black},
+      [1] = {foreground = tonumber('0x123456')},
       [2] = {foreground = 12},
       [3] = {bold = true, reverse = true},
       [5] = {background = 11},

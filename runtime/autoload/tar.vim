@@ -153,15 +153,14 @@ fun! tar#Browse(tarfile)
    let tarfile=substitute(system("cygpath -u ".shellescape(tarfile,0)),'\n$','','e')
   endif
 
-  let gzip_command = s:get_gzip_command(tarfile)
-
   let curlast= line("$")
   if tarfile =~# '\.\(gz\|tgz\)$'
+    let gzip_command = s:get_gzip_command(tarfile)
 "   call Decho("1: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.lrp'
 "   call Decho("2: exe silent r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - ")
-   exe "sil! r! cat -- ".shellescape(tarfile,1)."|" . gzip_command . " -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
+   exe "sil! r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(bz2\|tbz\|tb2\)$'
 "   call Decho("3: exe silent r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
@@ -291,17 +290,16 @@ fun! tar#Read(fname,mode)
    let tar_secure= " "
   endif
 
-  let gzip_command = s:get_gzip_command(tarfile)
-
   if tarfile =~# '\.bz2$'
 "   call Decho("7: exe silent r! bzip2 -d -c ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.\(gz\|tgz\)$'
+    let gzip_command = s:get_gzip_command(tarfile)
 "   call Decho("5: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd.' -'.g:tar_readoptions.' - '.tar_secure.shellescape(fname,1))
    exe "sil! r! " . gzip_command . " -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.lrp$'
 "   call Decho("6: exe silent r! cat ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
-   exe "sil! r! cat -- ".shellescape(tarfile,1)." | " . gzip_command . " -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
   elseif tarfile =~# '\.lzma$'
 "   call Decho("7: exe silent r! lzma -d -c ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp)
    exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
@@ -589,8 +587,9 @@ fun! tar#Vimuntar(...)
 
   " if necessary, decompress the tarball; then, extract it
   if tartail =~ '\.tgz'
-   if executable("bzip2")
-    silent exe "!bzip2 -d ".shellescape(tartail)
+   let gzip_command = s:get_gzip_command(tarfile)
+   if executable(gzip_command)
+    silent exe "!" . gzip_command . " -d ".shellescape(tartail)
    elseif executable("gunzip")
     silent exe "!gunzip ".shellescape(tartail)
    elseif executable("gzip")
@@ -630,10 +629,23 @@ fun! tar#Vimuntar(...)
 endfun
 
 func s:get_gzip_command(file)
-  if a:file =~# 'z$' && executable('bzip2')
-    " Some .tgz files are actually compressed with bzip2.  Since bzip2 can
-    " handle the format from gzip, use it if the command exists.
+  " Try using the "file" command to get the actual compression type, since
+  " there is no standard way for the naming: ".tgz", ".tbz", ".txz", etc.
+  " If the "file" command doesn't work fall back to just using the file name.
+  if a:file =~# 'z$'
+    let filetype = system('file ' . a:file)
+    if filetype =~ 'bzip2 compressed' && executable('bzip2')
+      return 'bzip2'
+    endif
+    if filetype =~ 'XZ compressed' && executable('xz')
+      return 'xz'
+    endif
+  endif
+  if a:file =~# 'bz2$'
     return 'bzip2'
+  endif
+  if a:file =~# 'xz$'
+    return 'xz'
   endif
   return 'gzip'
 endfunc

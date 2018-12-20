@@ -2137,8 +2137,6 @@ index({list}, {expr} [, {start} [, {ic}]])
 				Number	index in {list} where {expr} appears
 input({prompt} [, {text} [, {completion}]])
 				String	get input from the user
-inputdialog({prompt} [, {text} [, {completion}]])
-				String  like input() but in a GUI dialog
 inputlist({textlist})		Number	let the user pick from a choice list
 inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
@@ -3381,9 +3379,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 
 		If {list} is given and it is |TRUE|, a List will be returned.
 		Otherwise the result is a String and when there are several
-		matches, they are separated by <NL> characters.  [Note: in
-		version 5.0 a space was used, which caused problems when a
-		file name contains a space]
+		matches, they are separated by <NL> characters.
 
 		If the expansion fails, the result is an empty string.	A name
 		for a non-existing file is not included, unless {expr} does
@@ -3444,7 +3440,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		all "README" files in the current directory and below: >
 			:echo expand("**/README")
 <
-		Expand() can also be used to expand variables and environment
+		expand() can also be used to expand variables and environment
 		variables that are only known in a shell.  But this can be
 		slow, because a shell may be used to do the expansion.  See
 		|expr-env-expand|.
@@ -4914,20 +4910,6 @@ input({opts})
 			:  let g:Foo = input("enter search pattern: ")
 			:  call inputrestore()
 			:endfunction
-
-inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
-inputdialog({opts})
-		Like |input()|, but when the GUI is running and text dialogs
-		are supported, a dialog window pops up to input the text.
-		Example: >
-		   :let n = inputdialog("value for shiftwidth", shiftwidth())
-		   :if n != ""
-		   :  let &sw = n
-		   :endif
-<		When the dialog is cancelled {cancelreturn} is returned.  When
-		omitted an empty string is returned.
-		Hitting <Enter> works like pressing the OK button.  Hitting
-		<Esc> works like pressing the Cancel button.
 
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is

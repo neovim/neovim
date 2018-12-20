@@ -37,6 +37,7 @@ Functions ~
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
+*inputdialog()*		Use |input()| instead.
 *jobclose()*		Obsolete name for |chanclose()|
 *jobsend()*		Obsolete name for |chansend()|
 *last_buffer_nr()*	Obsolete name for bufnr("$").

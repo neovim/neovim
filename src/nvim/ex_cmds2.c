@@ -3069,6 +3069,17 @@ theend:
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
 {
+  if (eap->addr_count > 0) {
+    // :script {scriptId}: edit the script
+    if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
+      EMSG(_(e_invarg));
+    } else {
+      eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      do_exedit(eap, NULL);
+    }
+    return;
+  }
+
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name,
@@ -3817,7 +3828,13 @@ static void script_host_execute(char *name, exarg_T *eap)
     // current range
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
-    (void)eval_call_provider(name, "execute", args);
+
+    if (!eval_has_provider(name)) {
+      emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+            name);
+    } else {
+      (void)eval_call_provider(name, "execute", args);
+    }
   }
 }
 

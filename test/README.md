@@ -1,27 +1,63 @@
 Tests
 =====
 
-Tests are run by `/cmake/RunTests.cmake` file, using `busted`.
+Tests are broadly divided into *unit tests* ([test/unit](https://github.com/neovim/neovim/tree/master/test/unit/)),
+*functional tests* ([test/functional](https://github.com/neovim/neovim/tree/master/test/functional/)),
+and *old tests* ([src/nvim/testdir/](https://github.com/neovim/neovim/tree/master/src/nvim/testdir/)).
 
-For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight. 
+- _Unit_ testing is achieved by compiling the tests as a shared library which is
+  loaded and called by [LuaJit FFI](http://luajit.org/ext_ffi.html).
+- _Functional_ tests are driven by RPC, so they do not require LuaJit (as
+  opposed to Lua).
 
-Depending on the presence of binaries (e.g., `xclip`) some tests will be ignored. You must compile with libintl to prevent `E319: The command is not available in this version` errors.
+You can learn the [key concepts of Lua in 15 minutes](http://learnxinyminutes.com/docs/lua/).
+Use any existing test as a template to start writing new tests.
+
+Tests are run by `/cmake/RunTests.cmake` file, using `busted` (a Lua test-runner).
+For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+
+Depending on the presence of binaries (e.g., `xclip`) some tests will be
+ignored. You must compile with libintl to prevent `E319: The command is not
+available in this version` errors.
+
 
 ---
 
 - [Running tests](#running-tests)
-- [Unit tests](#unit-tests)
+- [Writing tests](#writing-tests)
 - [Lint](#lint)
 - [Environment variables](#environment-variables)
 
 ---
 
+
+Layout
+======
+
+- `/test/benchmark` : benchmarks
+- `/test/functional` : functional tests
+- `/test/unit` : unit tests
+- `/test/config` : contains `*.in` files which are transformed into `*.lua`
+  files using `configure_file` CMake command: this is for acessing CMake
+  variables in lua tests.
+- `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
+  parser: normally used to make macros not accessible via this mechanism
+  accessible the other way.
+- `/test/*/preload.lua` : modules preloaded by busted `--helper` option
+- `/test/**/helpers.lua` : common utility functions for test code
+- `/test/*/**/*_spec.lua` : actual tests. Files that do not end with
+  `_spec.lua` are libraries like `/test/**/helpers.lua`, except that they have
+  some common topic.
+- `/src/nvim/testdir` : old tests (from Vim)
+
+
 Running tests
--------------
+=============
 
-## Executing Tests
+Executing Tests
+---------------
 
-To run all _non-legacy_ (unit + functional) tests:
+To run all tests (except "old" tests):
 
     make test
 
@@ -33,9 +69,32 @@ To run only _functional_ tests:
 
     make functionaltest
 
----
 
-## Filter Tests
+Legacy tests
+------------
+
+To run all legacy Vim tests:
+
+    make oldtest
+
+To run a *single* legacy test set `TEST_FILE`, for example:
+
+    TEST_FILE=test_syntax.res make oldtest
+
+- The `.res` extension (instead of `.vim`) is required.
+- Specify only the test file name, not the full path.
+
+
+Debugging tests
+---------------
+
+You can set `$GDB` to [run tests under gdbserver](https://github.com/neovim/neovim/pull/1527).
+And if `$VALGRIND` is set it will pass `--vgdb=yes` to valgrind instead of
+starting gdbserver directly.
+
+
+Filtering Tests
+---------------
 
 ### Filter by name
 
@@ -85,57 +144,19 @@ To run only the tagged tests:
 
     TEST_TAG=foo make functionaltest
 
-**NOTES**:
+**NOTE:**
 
-* Tags are mainly used for testing issues (ex: `#1234`), so use the following
-  method.
 * `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The
   given value to `TEST_FILE` must be a path to an existing file.
-* Both `TEST_TAG` and `TEST_FILTER` filter tests by the strings from either
-  `it()` or `describe()` functions.
+* Both `TEST_TAG` and `TEST_FILTER` filter tests by the string descriptions
+  found in `it()` and `describe()`.
 
----
 
-### Legacy
+Writing tests
+=============
 
-To run all legacy (Vim) integration tests:
-
-    make oldtest
-
-To run a *single* legacy test,  run `make` with `TEST_FILE=test_name.res`. E.g.
-to run `test_syntax.vim`:
-
-    TEST_FILE=test_syntax.res make oldtest
-
--  The `.res` extension (instead of `.vim`) is required.
-- Specify only the test file name, not the full path.
-
-### Functional tests
-
-`$GDB` can be set to [run tests under
-gdbserver](https://github.com/neovim/neovim/pull/1527). If `$VALGRIND` is also
-set, it will add the `--vgdb=yes` option to valgrind instead of
-starting gdbserver directly.
-
-Unit tests
+Guidelines
 ----------
-
-Tests are broadly divided into *unit tests*
-([test/unit](https://github.com/neovim/neovim/tree/master/test/unit) directory)
-and *functional tests*
-([test/functional](https://github.com/neovim/neovim/tree/master/test/functional)
-directory). Use any of the existing tests as a template to start writing new
-tests.
-
-- _Unit_ testing is achieved by compiling the tests as a shared library which is
-  loaded and called by LuaJit [FFI](http://luajit.org/ext_ffi.html).
-- _Functional_ tests are driven by RPC, so they do not require LuaJit (as
-  opposed to Lua).
-
-You can learn the [key concepts of Lua in 15
-minutes](http://learnxinyminutes.com/docs/lua/).
-
-## Guidelines for writing tests
 
 - Consider [BDD](http://en.wikipedia.org/wiki/Behavior-driven_development)
   guidelines for organization and readability of tests. Describe what you're
@@ -174,8 +195,14 @@ minutes](http://learnxinyminutes.com/docs/lua/).
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
 - Use `make testlint` for using the shipped luacheck program ([supported by syntastic](https://github.com/scrooloose/syntastic/blob/d6b96c079be137c83009827b543a83aa113cc011/doc/syntastic-checkers.txt#L3546))
   to lint all tests.
+- Really long `source([=[...]=])` blocks may break syntax highlighting. Try
+  `:syntax sync fromstart` to fix it.
 
-### Where tests go
+Where tests go
+--------------
+
+Tests in `/test/unit` and `/test/functional` are divided into groups
+by the semantic component they are testing.
 
 - _Unit tests_
   ([test/unit](https://github.com/neovim/neovim/tree/master/test/unit))  should
@@ -189,33 +216,9 @@ minutes](http://learnxinyminutes.com/docs/lua/).
     - Try to find an existing `test/functional/*/*_spec.lua` group that makes
       sense, before creating a new one.
 
-## Checklist for migrating legacy tests
-
-**Note:** Only "old style" (`src/nvim/testdir/*.in`) legacy tests should be
-converted. Please _do not_ convert "new style" Vim tests
-(`src/nvim/testdir/*.vim`).
-The "new style" Vim tests are faster than the old ones, and converting them
-takes time and effort better spent elsewhere.
-
-- Remove the associated `test.in`, `test.out`, and `test.ok` files from
-  `src/nvim/testdir/`.
-- Make sure the lua test ends in `_spec.lua`.
-- Make sure the test count increases accordingly in the build log.
-- Make sure the new test contains the same control characters (`^]`, ...) as the
-  old test.
-  - Instead of the actual control characters, use an equivalent textual
-    representation (e.g. `<esc>` instead of `^]`). The
-    `scripts/legacy2luatest.pl` script does some of these conversions
-    automatically.
-
-## Tips
-
-- Really long `source([=[...]=])` blocks may break syntax highlighting. Try
-  `:syntax sync fromstart` to fix it.
-
 
 Lint
-----
+====
 
 `make lint` (and `make testlint`) runs [luacheck](https://github.com/mpeterv/luacheck)
 on the test code.
@@ -229,29 +232,9 @@ http://luacheck.readthedocs.io/en/stable/warnings.html
 Ignore the smallest applicable scope (e.g. inside a function, not at the top of
 the file).
 
-Layout
-------
-
-- `/test/benchmark` : benchmarks
-- `/test/functional` : functional tests
-- `/test/unit` : unit tests
-- `/test/config` : contains `*.in` files which are transformed into `*.lua`
-  files using `configure_file` CMake command: this is for acessing CMake
-  variables in lua tests.
-- `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
-  parser: normally used to make macros not accessible via this mechanism
-  accessible the other way.
-- `/test/*/preload.lua` : modules preloaded by busted `--helper` option
-- `/test/**/helpers.lua` : common utility functions for test code
-- `/test/*/**/*_spec.lua` : actual tests. Files that do not end with
-  `_spec.lua` are libraries like `/test/**/helpers.lua`, except that they have
-  some common topic.
-
-Tests in `/test/unit` and `/test/functional` are normally divided into groups
-by the semantic component they are testing.
 
 Environment variables
----------------------
+=====================
 
 Test behaviour is affected by environment variables. Currently supported 
 (Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined, 

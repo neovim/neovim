@@ -2637,3 +2637,30 @@ func Test_shorten_fname()
   silent! clist
   call assert_equal('test_quickfix.vim', bufname('test_quickfix.vim'))
 endfunc
+
+" Test for the position of the quickfix and location list window
+func Test_qfwin_pos()
+  " Open two windows
+  new | only
+  new
+  cexpr ['F1:10:L10']
+  copen
+  " Quickfix window should be the bottom most window
+  call assert_equal(3, winnr())
+  close
+  " Open at the very top
+  wincmd t
+  topleft copen
+  call assert_equal(1, winnr())
+  close
+  " open left of the current window
+  wincmd t
+  below new
+  leftabove copen
+  call assert_equal(2, winnr())
+  close
+  " open right of the current window
+  rightbelow copen
+  call assert_equal(3, winnr())
+  close
+endfunc

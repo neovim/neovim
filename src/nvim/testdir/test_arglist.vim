@@ -297,6 +297,18 @@ func Test_argdelete()
   %argd
 endfunc
 
+func Test_argdelete_completion()
+  args foo bar
+
+  call feedkeys(":argdelete \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete bar foo', @:)
+
+  call feedkeys(":argdelete x \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete x bar foo', @:)
+
+  %argd
+endfunc
+
 " Tests for the :next, :prev, :first, :last, :rewind commands
 func Test_argpos()
   call Reset_arglist()

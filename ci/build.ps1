@@ -68,14 +68,14 @@ elseif ($compiler -eq 'MSVC') {
 }
 
 # Setup python (use AppVeyor system python)
-C:\Python27\python.exe -m pip install neovim ; exitIfFailed
-C:\Python35\python.exe -m pip install neovim ; exitIfFailed
+C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
+C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
 # Disambiguate python3
 move c:\Python35\python.exe c:\Python35\python3.exe
 $env:PATH = "C:\Python35;C:\Python27;$env:PATH"
 # Sanity check
-python  -c "import neovim; print(str(neovim))" ; exitIfFailed
-python3 -c "import neovim; print(str(neovim))" ; exitIfFailed
+python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
 $env:PATH = "C:\Ruby24\bin;$env:PATH"
 gem.cmd install neovim

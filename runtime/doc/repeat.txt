@@ -305,6 +305,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			first sourced.  The number is used for the script ID
 			|<SID>|.
 
+:scr[iptnames][!] {scriptId}			*:script*
+			Edit script {scriptId}.  Suggested name is ":script".
+
 						*:fini* *:finish* *E168*
 :fini[sh]		Stop sourcing a script.  Can only be used in a Vim
 			script file.  This is a quick way to skip the rest of

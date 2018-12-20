@@ -521,25 +521,24 @@ CmdUndefined			When a user command is used but it isn't
 				command is defined.  An alternative is to
 				always define the user command and have it
 				invoke an autoloaded function.  See |autoload|.
- 							*CmdlineChanged*
-CmdlineChanged			After a change was made to the text in the
-				command line.  Be careful not to mess up
-				the command line, it may cause Vim to lock up.
+							*CmdlineChanged*
+CmdlineChanged			After a change was made to the text inside
+				command line.  Be careful not to mess up the
+				command line, it may cause Vim to lock up.
+				<afile> is set to the |cmdline-char|.
 							*CmdlineEnter*
-CmdlineEnter			After moving the cursor to the command line,
-				where the user can type a command or search
-				string.
-				<afile> is set to a single character,
-				indicating the type of command-line.
-				|cmdline-char|
+CmdlineEnter			After entering the command-line (including
+				non-interactive use of ":" in a mapping: use
+				|<Cmd>| instead to avoid this).
+				<afile> is set to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    cmdlevel
 				    cmdtype
 							*CmdlineLeave*
-CmdlineLeave			Before leaving the command line.
-				<afile> is set to a single character,
-				indicating the type of command-line.
-				|cmdline-char|
+CmdlineLeave			Before leaving the command-line (including
+				non-interactive use of ":" in a mapping: use
+				|<Cmd>| instead to avoid this).
+				<afile> is set to the |cmdline-char|.
 				Sets these |v:event| keys:
 				    abort (mutable)
 				    cmdlevel
@@ -630,6 +629,11 @@ CursorMoved			After the cursor was moved in Normal or Visual
 CursorMovedI			After the cursor was moved in Insert mode.
 				Not triggered when the popup menu is visible.
 				Otherwise the same as CursorMoved.
+							*DiffUpdated*
+DiffUpdated			After diffs have been updated.  Depending on
+				what kind of diff is being used (internal or
+				external) this can be triggered on every
+				change or when doing |:diffupdate|.
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
 				Sets these |v:event| keys:

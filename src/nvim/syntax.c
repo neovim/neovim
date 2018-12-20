@@ -61,6 +61,7 @@ struct hl_group {
   scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
+                                ///< (combination of \ref HlAttrFlags)
   int sg_cterm_fg;              ///< terminal fg color number + 1
   int sg_cterm_bg;              ///< terminal bg color number + 1
   bool sg_cterm_bold;           ///< bold attr was set for light color
@@ -2891,6 +2892,13 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
 
   if (l_syn_time_on) {
     pt = profile_start();
+  }
+
+  if (rmp->regprog == NULL) {
+    // This can happen if a previous call to vim_regexec_multi() tried to
+    // use the NFA engine, which resulted in NFA_TOO_EXPENSIVE, and
+    // compiling the pattern with the other engine fails.
+    return false;
   }
 
   rmp->rmm_maxcol = syn_buf->b_p_smc;

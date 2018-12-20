@@ -410,20 +410,17 @@ accordingly.  Vim proceeds in this order:
 
 3. Execute Ex commands, from environment variables and/or files
 	An environment variable is read as one Ex command line, where multiple
-	commands must be separated with '|' or "<NL>".
-						    *init.vim* *vimrc* *exrc*
-	A file that contains initialization commands is called a "vimrc" file.
-	Each line in a vimrc file is executed as an Ex command line.  It is
-	sometimes also referred to as "exrc" file.  They are the same type of
-	file, but "exrc" is what Vi always used, "vimrc" is a Vim specific
-	name, "init.vim" is Neovim specific location for vimrc file.  Also see 
-	|vimrc-intro|.
+	commands must be separated with '|' or <NL>.
+					*config* *init.vim* *vimrc* *exrc*
+	A file that contains initialization commands is generically called
+	a "vimrc" or config file.  Each line in a vimrc file is executed as an
+	Ex command line.  See also |vimrc-intro| and |base-directories|.
 
-	Places for your personal initializations (see |base-directories|):
-		Unix		$XDG_CONFIG_HOME/nvim/init.vim
-				(default for $XDG_CONFIG_HOME is ~/.config)
-		Windows		$XDG_CONFIG_HOME/nvim/init.vim
-				(default for $XDG_CONFIG_HOME is ~/AppData/Local)
+	The Nvim config file is named "init.vim", located at:
+		Unix		~/.config/nvim/init.vim
+		Windows		~/AppData/Local/nvim/init.vim
+	Or if |$XDG_CONFIG_HOME| is defined:
+				$XDG_CONFIG_HOME/nvim/init.vim
 
 	RECOMMENDATION: Put all your Vim configuration stuff in the 
 	$HOME/.config/nvim/ directory. That makes it easy to copy it to 
@@ -439,10 +436,11 @@ accordingly.  Vim proceeds in this order:
 	If Vim was started in Ex mode with the "-s" argument, all following
 	initializations until 4. are skipped.  Only the "-u" option is
 	interpreted.
-							*system-vimrc*
-     a. For Unix, MS-Windows, and Macintosh, the system vimrc file is read for
-	initializations.  The path of this file is shown with the
-	":version" command.  Mostly it's "$VIM/vimrc".
+						*system-vimrc* *sysinit.vim*
+     a. The system vimrc file is read for initializations.  If
+	nvim/sysinit.vim file exists in one of $XDG_CONFIG_DIRS, it will be
+	used.  Otherwise, the system vimrc file is used. The path of this file
+	is shown with the ":version" command.  Mostly it's "$VIM/sysinit.vim".
 
 						*VIMINIT* *EXINIT* *$MYVIMRC*
      b. Four places are searched for initializations.  The first that exists

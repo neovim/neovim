@@ -80,6 +80,19 @@ As Nvim evolves the API may change in compliance with this CONTRACT:
 - Deprecated functions will not be removed until Nvim version 2.0
 
 ==============================================================================
+Global events						    *api-global-events*
+
+When a client invokes an API request as an async notification, it is not
+possible for Nvim to send an error response. Instead, in case of error, the
+following notification will be sent to the client:
+
+                                                             *nvim_error_event*
+nvim_error_event[{type}, {message}]
+
+{type} is a numeric id as defined by `api_info().error_types`, and {message} is
+a string with the error message.
+
+==============================================================================
 Buffer update events					*api-buffer-updates*
 
 API clients can "attach" to Nvim buffers to subscribe to buffer update events.
@@ -206,7 +219,7 @@ Example using the Nvim python-client:
     buf.clear_highlight(src)
 <
 If the highlights don't need to be deleted or updated, just pass -1 as
-src_id (this is the default in python). Use |nvim_buf_clear_highlight()| to
+src_id (this is the default in python). Use |nvim_buf_clear_namespace()| to
 clear highlights from a specific source, in a specific line range or the
 entire buffer by passing in the line range 0, -1 (the latter is the default in
 python as used above).
@@ -218,7 +231,7 @@ An example of calling the api from vimscript: >
     call nvim_buf_add_highlight(0, src, "Identifier", 0, 5, -1)
 
     " later
-    call nvim_buf_clear_highlight(0, src, 0, -1)
+    call nvim_buf_clear_namespace(0, src, 0, -1)
 >
 ==============================================================================
 Global Functions                                                  *api-global*
@@ -478,6 +491,9 @@ nvim_err_writeln({str})                                   *nvim_err_writeln()*
 nvim_list_bufs()                                            *nvim_list_bufs()*
                 Gets the current list of buffer handles
 
+                Includes unlisted (unloaded/deleted) buffers, like `:ls!`. Use
+                |nvim_buf_is_loaded()| to check if a buffer is loaded.
+
                 Return: ~
                     List of buffer handles
 
@@ -528,6 +544,30 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
 
                 Parameters: ~
                     {tabpage}  Tabpage handle
+
+nvim_create_namespace({name})                        *nvim_create_namespace()*
+                create a new namespace, or get one with an exisiting name
+
+                Namespaces are currently used for buffer highlighting and
+                virtual text, see |nvim_buf_add_highlight| and
+                |nvim_buf_set_virtual_text|.
+
+                Namespaces can have a name of be anonymous. If `name` is a
+                non-empty string, and a namespace already exists with that
+                name,the existing namespace id is returned. If an empty string
+                is used, a new anonymous namespace is returned.
+
+                Parameters: ~
+                    {name}  Name of the namespace or empty string
+
+                Return: ~
+                    the namespace id
+
+nvim_get_namespaces()                                  *nvim_get_namespaces()*
+                Get existing named namespaces
+
+                Return: ~
+                    dict that maps from names to namespace ids.
 
 nvim_subscribe({event})                                     *nvim_subscribe()*
                 Subscribes to event broadcasts
@@ -1082,35 +1122,36 @@ nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
                     (row, col) tuple
 
                                                     *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
+nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
                        {col_start}, {col_end})
                 Adds a highlight to buffer.
 
                 Useful for plugins that dynamically generate highlights to a
                 buffer (like a semantic highlighter or linter). The function
-                adds a single highlight to a buffer. Unlike matchaddpos()
+                adds a single highlight to a buffer. Unlike |matchaddpos()|
                 highlights follow changes to line numbering (as lines are
                 inserted/removed above the highlighted line), like signs and
                 marks do.
 
-                `src_id` is useful for batch deletion/updating of a set of
-                highlights. When called with `src_id = 0`, an unique source id
-                is generated and returned. Successive calls can pass that
-                `src_id` to associate new highlights with the same source
-                group. All highlights in the same group can be cleared with
-                `nvim_buf_clear_highlight`. If the highlight never will be
-                manually deleted, pass `src_id = -1`.
+                Namespaces are used for batch deletion/updating of a set of
+                highlights. To create a namespace, use |nvim_create_namespace|
+                which returns a namespace id. Pass it in to this function as
+                `ns_id` to add highlights to the namespace. All highlights in
+                the same namespace can then be cleared with single call to
+                |nvim_buf_clear_namespace|. If the highlight never will be
+                deleted by an API call, pass `ns_id = -1`.
 
-                If `hl_group` is the empty string no highlight is added, but a
-                new `src_id` is still returned. This is useful for an external
-                plugin to synchrounously request an unique `src_id` at
-                initialization, and later asynchronously add and clear
-                highlights in response to buffer changes.
+                As a shorthand, `ns_id = 0` can be used to create a new
+                namespace for the highlight, the allocated id is then
+                returned. If `hl_group` is the empty string no highlight is
+                added, but a new `ns_id` is still returned. This is supported
+                for backwards compatibility, new code should use
+                |nvim_create_namespace| to create a new empty namespace.
 
                 Parameters: ~
                     {buffer}     Buffer handle
-                    {src_id}     Source group to use or 0 to use a new group,
-                                 or -1 for ungrouped highlight
+                    {ns_id}      namespace to use or -1 for ungrouped
+                                 highlight
                     {hl_group}   Name of the highlight group to use
                     {line}       Line to highlight (zero-indexed)
                     {col_start}  Start of (byte-indexed) column range to
@@ -1119,43 +1160,50 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                                  highlight, or -1 to highlight to end of line
 
                 Return: ~
-                    The src_id that was used
+                    The ns_id that was used
 
-                                                  *nvim_buf_clear_highlight()*
-nvim_buf_clear_highlight({buffer}, {src_id}, {line_start}, {line_end})
-                Clears highlights and virtual text from a given source id and
-                range of lines
+                                                  *nvim_buf_clear_namespace()*
+nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
+                Clears namespaced objects, highlights and virtual text, from a
+                line range
 
-                To clear a source group in the entire buffer, pass in 0 and -1
+                To clear the namespace in the entire buffer, pass in 0 and -1
                 to line_start and line_end respectively.
 
                 Parameters: ~
                     {buffer}      Buffer handle
-                    {src_id}      Highlight source group to clear, or -1 to
-                                  clear all.
+                    {ns_id}       Namespace to clear, or -1 to clear all
+                                  namespaces.
                     {line_start}  Start of range of lines to clear
                     {line_end}    End of range of lines to clear (exclusive)
-                                  or -1 to clear to end of file.
+                                  or -1 to clear to end of buffer.
 
                                                  *nvim_buf_set_virtual_text()*
-nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
-                          {opts})
+nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 Set the virtual text (annotation) for a buffer line.
 
                 By default (and currently the only option) the text will be
                 placed after the buffer text. Virtual text will never cause
                 reflow, rather virtual text will be truncated at the end of
-                the screen line. The virtual text will begin after one cell to
-                the right of the ordinary text, this will contain the |lcs-
-                eol| char if set, otherwise just be a space.
+                the screen line. The virtual text will begin one cell (|lcs-
+                eol| or space) after the ordinary text.
 
-                The same src_id can be used for both virtual text and
-                highlights added by nvim_buf_add_highlight. Virtual text is
-                cleared using nvim_buf_clear_highlight.
+                Namespaces are used to support batch deletion/updating of
+                virtual text. To create a namespace, use
+                |nvim_create_namespace|. Virtual text is cleared using
+                |nvim_buf_clear_namespace|. The same `ns_id` can be used for
+                both virtual text and highlights added by
+                |nvim_buf_add_highlight|, both can then be cleared with a
+                single call to |nvim_buf_clear_namespace|. If the virtual text
+                never will be cleared by an API call, pass `ns_id = -1`.
+
+                As a shorthand, `ns_id = 0` can be used to create a new
+                namespace for the virtual text, the allocated id is then
+                returned.
 
                 Parameters: ~
                     {buffer}  Buffer handle
-                    {src_id}  Source group to use or 0 to use a new group, or
+                    {ns_id}   Namespace to use or 0 to create a namespace, or
                               -1 for a ungrouped annotation
                     {line}    Line to annotate with virtual text (zero-
                               indexed)
@@ -1166,7 +1214,7 @@ nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks},
                     {opts}    Optional parameters. Currently not used.
 
                 Return: ~
-                    The src_id that was used
+                    The ns_id that was used
 
 
 ==============================================================================
@@ -1180,6 +1228,13 @@ nvim_win_get_buf({window})                                *nvim_win_get_buf()*
 
                 Return: ~
                     Buffer handle
+
+nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
+                Sets the current buffer in a window, without side-effects
+
+                Parameters: ~
+                    {window}  Window handle
+                    {buffer}  Buffer handle
 
 nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
                 Gets the cursor position in the window

@@ -1739,13 +1739,13 @@ failed:
     close(0);
 #ifndef WIN32
     // On Unix, use stderr for stdin, makes shell commands work.
-    ignored = dup(2);
+    vim_ignored = dup(2);
 #else
     // On Windows, use the console input handle for stdin.
     HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
                               FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
                               OPEN_EXISTING, 0, (HANDLE)NULL);
-    ignored = _open_osfhandle(conin, _O_RDONLY);
+    vim_ignored = _open_osfhandle(conin, _O_RDONLY);
 #endif
   }
 
@@ -6903,7 +6903,13 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   } else {
     sfname = vim_strsave(fname);
     // Don't try expanding the following events.
-    if (event == EVENT_COLORSCHEME
+    if (event == EVENT_CMDLINECHANGED
+        || event == EVENT_CMDLINEENTER
+        || event == EVENT_CMDLINELEAVE
+        || event == EVENT_CMDWINENTER
+        || event == EVENT_CMDWINLEAVE
+        || event == EVENT_CMDUNDEFINED
+        || event == EVENT_COLORSCHEME
         || event == EVENT_COLORSCHEMEPRE
         || event == EVENT_DIRCHANGED
         || event == EVENT_FILETYPE

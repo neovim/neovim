@@ -768,6 +768,40 @@ describe('CursorLine highlight', function()
       {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
     ]])
+
+    -- CursorLine with fg=NONE is "low-priority".
+    -- Rendered as underline in a diff-line. #9028
+    command('hi CursorLine ctermbg=red ctermfg=NONE guibg=red guifg=NONE')
+    feed('kkkk')
+    screen:expect([[
+      {1:  }line 1 some text       {4:│}{1:  }line 1 some text      |
+      {1:  }{11:line 2 mo}{12:Re text!}{11:      }{4:│}{1:  }{11:^line 2 mo}{12:re text}{11:      }|
+      {1:  }{5:extra line!            }{4:│}{1:  }{6:----------------------}|
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }extra line!            {4:│}{1:  }extra line!           |
+      {1:  }last line ...          {4:│}{1:  }last line ...         |
+      {1:  }                       {4:│}{1:  }                      |
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {1:  }{8:~                      }{4:│}{1:  }{8:~                     }|
+      {4:[No Name] [+]             }{9:[No Name] [+]           }|
+                                                        |
+    ]], {
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [2] = {bold = true, background = Screen.colors.Red},
+      [3] = {background = Screen.colors.LightMagenta},
+      [4] = {reverse = true},
+      [5] = {background = Screen.colors.LightBlue},
+      [6] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+      [7] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [8] = {bold = true, foreground = Screen.colors.Blue1},
+      [9] = {bold = true, reverse = true},
+      [10] = {bold = true},
+      [11] = {underline = true,
+              background = Screen.colors.LightMagenta},
+      [12] = {bold = true, underline = true,
+              background = Screen.colors.Red},
+    })
   end)
 end)
 

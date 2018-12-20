@@ -8,10 +8,8 @@ if [[ "${CI_TARGET}" == lint ]]; then
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  brew install ninja
-  brew install gettext
-  brew reinstall -s libtool
   brew install ccache
+  brew install ninja
   export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 

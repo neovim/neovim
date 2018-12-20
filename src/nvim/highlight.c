@@ -177,8 +177,27 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 }
 
+/// Gets HL_UNDERLINE highlight.
+int hl_get_underline(void)
+{
+  return get_attr_entry((HlEntry){
+      .attr = (HlAttrs){
+          .cterm_ae_attr = (int16_t)HL_UNDERLINE,
+          .cterm_fg_color = 0,
+          .cterm_bg_color = 0,
+          .rgb_ae_attr = (int16_t)HL_UNDERLINE,
+          .rgb_fg_color = -1,
+          .rgb_bg_color = -1,
+          .rgb_sp_color = -1,
+      },
+      .kind = kHlUI,
+      .id1 = 0,
+      .id2 = 0,
+  });
+}
+
 /// Get attribute code for forwarded :terminal highlights.
-int get_term_attr_entry(HlAttrs *aep)
+int hl_get_term_attr(HlAttrs *aep)
 {
   return get_attr_entry((HlEntry){ .attr= *aep, .kind = kHlTerminal,
                                    .id1 = 0, .id2 = 0 });

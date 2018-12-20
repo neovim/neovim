@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
+local meths = helpers.meths
 local curbufmeths, eq = helpers.curbufmeths, helpers.eq
 
 describe('Buffer highlighting', function()
@@ -37,8 +38,8 @@ describe('Buffer highlighting', function()
     screen:detach()
   end)
 
-  local add_hl = curbufmeths.add_highlight
-  local clear_hl = curbufmeths.clear_highlight
+  local add_highlight = curbufmeths.add_highlight
+  local clear_namespace = curbufmeths.clear_namespace
 
   it('works', function()
     insert([[
@@ -57,8 +58,8 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    add_hl(-1, "String", 0 , 10, 14)
-    add_hl(-1, "Statement", 1 , 5, -1)
+    add_highlight(-1, "String", 0 , 10, 14)
+    add_highlight(-1, "Statement", 1 , 5, -1)
 
     screen:expect([[
       these are {2:some} lines                    |
@@ -83,7 +84,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_hl(-1, 0, -1)
+    clear_namespace(-1, 0, -1)
     screen:expect([[
       these are some lines                    |
       ^                                        |
@@ -96,7 +97,7 @@ describe('Buffer highlighting', function()
     ]])
   end)
 
-  describe('support adding multiple sources', function()
+  describe('support using multiple namespaces', function()
     local id1, id2
     before_each(function()
       insert([[
@@ -106,21 +107,21 @@ describe('Buffer highlighting', function()
         from different sources]])
 
       command("hi ImportantWord gui=bold cterm=bold")
-      id1 = add_hl(0, "ImportantWord", 0, 2, 8)
-      add_hl(id1, "ImportantWord", 1, 12, -1)
-      add_hl(id1, "ImportantWord", 2, 0, 9)
-      add_hl(id1, "ImportantWord", 3, 5, 14)
+      id1 = add_highlight(0, "ImportantWord", 0, 2, 8)
+      add_highlight(id1, "ImportantWord", 1, 12, -1)
+      add_highlight(id1, "ImportantWord", 2, 0, 9)
+      add_highlight(id1, "ImportantWord", 3, 5, 14)
 
       -- add_highlight can be called like this to get a new source
       -- without adding any highlight
-      id2 = add_hl(0, "", 0, 0, 0)
+      id2 = add_highlight(0, "", 0, 0, 0)
       neq(id1, id2)
 
-      add_hl(id2, "Special", 0, 2, 8)
-      add_hl(id2, "Identifier", 1, 3, 8)
-      add_hl(id2, "Special", 1, 14, 20)
-      add_hl(id2, "Underlined", 2, 6, 12)
-      add_hl(id2, "Underlined", 3, 0, 9)
+      add_highlight(id2, "Special", 0, 2, 8)
+      add_highlight(id2, "Identifier", 1, 3, 8)
+      add_highlight(id2, "Special", 1, 14, 20)
+      add_highlight(id2, "Underlined", 2, 6, 12)
+      add_highlight(id2, "Underlined", 3, 0, 9)
 
       screen:expect([[
         a {5:longer} example                        |
@@ -135,7 +136,21 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing the first added', function()
-      clear_hl(id1, 0, -1)
+      clear_namespace(id1, 0, -1)
+      screen:expect([[
+        a {4:longer} example                        |
+        in {6:order} to de{4:monstr}ate                 |
+        combin{9:ing hi}ghlights                    |
+        {9:from diff}erent source^s                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
+
+    it('and clearing using deprecated name', function()
+      curbufmeths.clear_highlight(id1, 0, -1)
       screen:expect([[
         a {4:longer} example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -149,7 +164,7 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing the second added', function()
-      clear_hl(id2, 0, -1)
+      clear_namespace(id2, 0, -1)
       screen:expect([[
         a {7:longer} example                        |
         in order to {7:demonstrate}                 |
@@ -163,9 +178,9 @@ describe('Buffer highlighting', function()
     end)
 
     it('and clearing line ranges', function()
-      clear_hl(-1, 0, 1)
-      clear_hl(id1, 1, 2)
-      clear_hl(id2, 2, -1)
+      clear_namespace(-1, 0, 1)
+      clear_namespace(id1, 1, 2)
+      clear_namespace(id2, 2, -1)
       screen:expect([[
         a longer example                        |
         in {6:order} to de{4:monstr}ate                 |
@@ -208,9 +223,9 @@ describe('Buffer highlighting', function()
   it('prioritizes latest added highlight', function()
     insert([[
       three overlapping colors]])
-    add_hl(0, "Identifier", 0, 6, 17)
-    add_hl(0, "String", 0, 14, 23)
-    local id = add_hl(0, "Special", 0, 0, 9)
+    add_highlight(0, "Identifier", 0, 6, 17)
+    add_highlight(0, "String", 0, 14, 23)
+    local id = add_highlight(0, "Special", 0, 0, 9)
 
     screen:expect([[
       {4:three ove}{6:rlapp}{2:ing color}^s                |
@@ -223,7 +238,7 @@ describe('Buffer highlighting', function()
                                               |
     ]])
 
-    clear_hl(id, 0, 1)
+    clear_namespace(id, 0, 1)
     screen:expect([[
       three {6:overlapp}{2:ing color}^s                |
       {1:~                                       }|
@@ -239,8 +254,8 @@ describe('Buffer highlighting', function()
   it('works with multibyte text', function()
     insert([[
       Ta båten över sjön!]])
-    add_hl(-1, "Identifier", 0, 3, 9)
-    add_hl(-1, "String", 0, 16, 21)
+    add_highlight(-1, "Identifier", 0, 3, 9)
+    add_highlight(-1, "String", 0, 16, 21)
 
     screen:expect([[
       Ta {6:båten} över {2:sjön}^!                     |
@@ -257,7 +272,7 @@ describe('Buffer highlighting', function()
   it('works with new syntax groups', function()
     insert([[
       fancy code in a new fancy language]])
-    add_hl(-1, "FancyLangItem", 0, 0, 5)
+    add_highlight(-1, "FancyLangItem", 0, 0, 5)
     screen:expect([[
       fancy code in a new fancy languag^e      |
       {1:~                                       }|
@@ -321,7 +336,7 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      clear_hl(id1, 0, -1)
+      clear_namespace(id1, 0, -1)
       screen:expect([[
         ^1 + 2                                   |
         3 +                                     |
@@ -449,7 +464,7 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      clear_hl(-1, 0, -1)
+      clear_namespace(-1, 0, -1)
       screen:expect([[
         ^1 + 2{1:$}                                  |
         3 +{1:$}                                    |
@@ -503,4 +518,13 @@ describe('Buffer highlighting', function()
     end)
   end)
 
+  it('and virtual text use the same namespace counter', function()
+    local set_virtual_text = curbufmeths.set_virtual_text
+    eq(1, add_highlight(0, "String", 0 , 0, -1))
+    eq(2, set_virtual_text(0, 0, {{"= text", "Comment"}}, {}))
+    eq(3, meths.create_namespace("my-ns"))
+    eq(4, add_highlight(0, "String", 0 , 0, -1))
+    eq(5, set_virtual_text(0, 0, {{"= text", "Comment"}}, {}))
+    eq(6, meths.create_namespace("other-ns"))
+  end)
 end)

@@ -6,6 +6,7 @@ local clear, command, nvim, nvim_dir =
 local eval, eq, retry =
   helpers.eval, helpers.eq, helpers.retry
 local ok = helpers.ok
+local feed = helpers.feed
 local iswin = helpers.iswin
 
 
@@ -87,5 +88,6 @@ describe('TermClose event', function()
 
     command('3bdelete!')
     retry(nil, nil, function() eq('3', eval('g:abuf')) end)
+    feed('<c-c>:qa!<cr>')
   end)
 end)

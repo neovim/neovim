@@ -161,7 +161,6 @@ void channel_init(void)
   channels = pmap_new(uint64_t)();
   channel_alloc(kChannelStreamStderr);
   rpc_init();
-  remote_ui_init();
 }
 
 /// Allocates a channel.

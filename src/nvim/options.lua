@@ -132,10 +132,10 @@ return {
     {
       full_name='background', abbreviation='bg',
       type='string', scope={'global'},
-      vi_def=true,
+      vim=true,
       redraw={'all_windows'},
       varname='p_bg',
-      defaults={if_true={vi="light"}}
+      defaults={if_true={vi="light",vim="dark"}}
     },
     {
       full_name='backspace', abbreviation='bs',
@@ -615,7 +615,7 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true={vi="filler"}}
+      defaults={if_true={vi="internal,filler"}}
     },
     {
       full_name='digraph', abbreviation='dg',

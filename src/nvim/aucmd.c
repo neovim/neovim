@@ -26,7 +26,6 @@ void aucmd_schedule_focusgained(bool gained)
 }
 
 static void do_autocmd_focusgained(bool gained)
-  FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;
 

@@ -156,6 +156,82 @@ local function screen_tests(linegrid)
     end)
   end)
 
+  describe('statusline', function()
+    it('is redrawn after <c-l>', function()
+      command('set laststatus=2')
+      screen:expect([[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+      ]])
+
+      feed('<c-l>')
+      screen:expect{grid=[[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+      ]], reset=true}
+
+      command('split')
+      screen:expect([[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name]                                            }|
+                                                             |
+      ]])
+
+      feed('<c-l>')
+      screen:expect{grid=[[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name]                                            }|
+                                                             |
+      ]], reset=true}
+    end)
+  end)
+
   describe('window', function()
     describe('split', function()
       it('horizontal', function()

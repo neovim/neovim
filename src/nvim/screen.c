@@ -669,8 +669,8 @@ static void win_update(win_T *wp)
 
   type = wp->w_redr_type;
 
-  if (type == NOT_VALID) {
-    wp->w_redr_status = TRUE;
+  if (type >= NOT_VALID) {
+    wp->w_redr_status = true;
     wp->w_lines_valid = 0;
   }
 
@@ -2169,21 +2169,21 @@ win_line (
   static linenr_T checked_lnum = 0;     /* line number for "checked_col" */
   static int checked_col = 0;           /* column in "checked_lnum" up to which
                                          * there are no spell errors */
-  static int cap_col = -1;              /* column to check for Cap word */
-  static linenr_T capcol_lnum = 0;      /* line number where "cap_col" used */
-  int cur_checked_col = 0;              /* checked column for current line */
-  int extra_check;                      /* has syntax or linebreak */
-  int multi_attr = 0;                   /* attributes desired by multibyte */
-  int mb_l = 1;                         /* multi-byte byte length */
-  int mb_c = 0;                         /* decoded multi-byte character */
-  int mb_utf8 = FALSE;                  /* screen char is UTF-8 char */
-  int u8cc[MAX_MCO];                    /* composing UTF-8 chars */
-  int filler_lines;                     /* nr of filler lines to be drawn */
-  int filler_todo;                      /* nr of filler lines still to do + 1 */
-  hlf_T diff_hlf = (hlf_T)0;            /* type of diff highlighting */
-  int change_start = MAXCOL;            /* first col of changed area */
-  int change_end = -1;                  /* last col of changed area */
-  colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
+  static int cap_col = -1;              // column to check for Cap word
+  static linenr_T capcol_lnum = 0;      // line number where "cap_col"
+  int cur_checked_col = 0;              // checked column for current line
+  int extra_check = 0;                  // has syntax or linebreak
+  int multi_attr = 0;                   // attributes desired by multibyte
+  int mb_l = 1;                         // multi-byte byte length
+  int mb_c = 0;                         // decoded multi-byte character
+  bool mb_utf8 = false;                 // screen char is UTF-8 char
+  int u8cc[MAX_MCO];                    // composing UTF-8 chars
+  int filler_lines;                     // nr of filler lines to be drawn
+  int filler_todo;                      // nr of filler lines still to do + 1
+  hlf_T diff_hlf = (hlf_T)0;            // type of diff highlighting
+  int change_start = MAXCOL;            // first col of changed area
+  int change_end = -1;                  // last col of changed area
+  colnr_T trailcol = MAXCOL;            // start of trailing spaces
   int need_showbreak = false;           // overlong line, skip first x chars
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
@@ -2826,7 +2826,7 @@ win_line (
         draw_state = WL_BRI - 1;
       }
 
-      // draw 'breakindent': indent wrapped text accodringly
+      // draw 'breakindent': indent wrapped text accordingly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
         // if need_showbreak is set, breakindent also applies
@@ -3052,8 +3052,13 @@ win_line (
           diff_hlf = HLF_CHD;                   // changed line
         }
         line_attr = win_hl_attr(wp, diff_hlf);
+        // Overlay CursorLine onto diff-mode highlight.
         if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-          line_attr = hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
+          line_attr = 0 != line_attr_lowprio  // Low-priority CursorLine
+            ? hl_combine_attr(hl_combine_attr(win_hl_attr(wp, HLF_CUL),
+                                              line_attr),
+                              hl_get_underline())
+            : hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
         }
       }
 
@@ -3100,8 +3105,9 @@ win_line (
           mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
-        } else
-          mb_utf8 = FALSE;
+        } else {
+          mb_utf8 = false;
+        }
       } else {
         c = *p_extra;
         if (has_mbyte) {
@@ -3272,7 +3278,7 @@ win_line (
             && (*mb_char2cells)(mb_c) == 2) {
           c = '>';
           mb_c = c;
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           mb_l = 1;
           multi_attr = win_hl_attr(wp, HLF_AT);
           // Put pointer back so that the character will be
@@ -3295,7 +3301,7 @@ win_line (
             saved_attr2 = char_attr;             // save current attr
           }
           mb_c = c;
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           mb_l = 1;
         }
 
@@ -3573,7 +3579,7 @@ win_line (
             }
           }
 
-          mb_utf8 = (int)false;  // don't draw as UTF-8
+          mb_utf8 = false;  // don't draw as UTF-8
           if (wp->w_p_list) {
             c = lcs_tab1;
             if (wp->w_p_lbr) {
@@ -3636,8 +3642,9 @@ win_line (
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
-          } else
-            mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
+          } else {
+            mb_utf8 = false;                    // don't draw as UTF-8
+          }
         } else if (c != NUL) {
           p_extra = transchar(c);
           if (n_extra == 0) {
@@ -3726,8 +3733,9 @@ win_line (
           mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
-        } else
-          mb_utf8 = FALSE;              /* don't draw as UTF-8 */
+        } else {
+          mb_utf8 = false;              // don't draw as UTF-8
+        }
       } else {
         prev_syntax_id = 0;
         is_concealing = FALSE;
@@ -4053,8 +4061,9 @@ win_line (
         mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
-      } else
-        mb_utf8 = FALSE;
+      } else {
+        mb_utf8 = false;
+      }
     }
 
     /* advance to the next 'colorcolumn' */
@@ -5594,6 +5603,7 @@ next_search_hl (
   linenr_T l;
   colnr_T matchcol;
   long nmatched = 0;
+  int save_called_emsg = called_emsg;
 
   if (shl->lnum != 0) {
     /* Check for three situations:
@@ -5686,6 +5696,9 @@ next_search_hl (
       shl->lnum += shl->rm.startpos[0].lnum;
       break;                            /* useful match found */
     }
+
+    // Restore called_emsg for assert_fails().
+    called_emsg = save_called_emsg;
   }
 }
 

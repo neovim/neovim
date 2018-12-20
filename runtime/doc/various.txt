@@ -517,14 +517,9 @@ m  *+xim*		X input method |xim|
 			    :silent! /^begin
 			    :if v:errmsg != ""
 			    : ... pattern was not found
-<			":silent" will also avoid the hit-enter prompt.  When
-			using this for an external command, this may cause the
-			screen to be messed up.  Use |CTRL-L| to clean it up
-			then.
-			":silent menu ..." defines a menu that will not echo a
-			Command-line command.  The command will still produce
-			messages though.  Use ":silent" in the command itself
-			to avoid that: ":silent menu .... :silent command".
+<			":silent" also skips the hit-enter prompt.
+			Dialogs that prompt for user input (|confirm()|,
+			'swapfile', …) are never silent.
 
 						*:uns* *:unsilent*
 :uns[ilent] {command}	Execute {command} not silently.  Only makes a

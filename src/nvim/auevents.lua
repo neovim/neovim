@@ -21,6 +21,7 @@ return {
     'BufWritePre',            -- before writing a buffer
     'ChanInfo',               -- info was received about channel
     'ChanOpen',               -- channel was opened
+    'CmdLineChanged',         -- command line was modified
     'CmdLineEnter',           -- after entering cmdline mode
     'CmdLineLeave',           -- before leaving cmdline mode
     'CmdUndefined',           -- command undefined
@@ -33,6 +34,7 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'DiffUpdated',            -- diffs have been updated
     'DirChanged',             -- directory changed
     'EncodingChanged',        -- after changing the 'encoding' option
     'ExitPre',                -- before exiting

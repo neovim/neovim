@@ -105,8 +105,8 @@ typedef struct {
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
   int print_attr_id;
-  bool has_bg;
   bool default_attr;
+  bool can_clear_attr;
   ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;
@@ -187,7 +187,7 @@ static void terminfo_start(UI *ui)
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->default_attr = false;
-  data->has_bg = false;
+  data->can_clear_attr = false;
   data->is_invisible = true;
   data->busy = false;
   data->cork = false;
@@ -228,14 +228,17 @@ static void terminfo_start(UI *ui)
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
   const char *vte_version_env = os_getenv("VTE_VERSION");
-  long vte_version = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
+  long vtev = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool konsole = terminfo_is_term_family(term, "konsole")
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
+  const char *konsolev_env = os_getenv("KONSOLE_VERSION");
+  long konsolev = konsolev_env ? strtol(konsolev_env, NULL, 10)
+                               : (konsole ? 1 : 0);
 
-  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);
-  augment_terminfo(data, term, colorterm, vte_version, konsole, iterm_env);
+  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env);
+  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -489,8 +492,6 @@ static void update_attrs(UI *ui, int attr_id)
                  : (data->clear_attrs.cterm_bg_color - 1);
   }
 
-  data->has_bg = bg != -1;
-
   int attr = ui->rgb ? attrs.rgb_ae_attr : attrs.cterm_ae_attr;
   bool bold = attr & HL_BOLD;
   bool italic = attr & HL_ITALIC;
@@ -582,6 +583,12 @@ static void update_attrs(UI *ui, int attr_id)
 
   data->default_attr = fg == -1 && bg == -1
     && !bold && !italic && !underline && !undercurl && !reverse && !standout;
+
+  // Non-BCE terminals can't clear with non-default background color. Some BCE
+  // terminals don't support attributes either, so don't rely on it. But assume
+  // italic and bold has no effect if there is no text.
+  data->can_clear_attr = !reverse && !standout && !underline && !undercurl
+    && (data->bce || bg == -1);
 }
 
 static void final_column_wrap(UI *ui)
@@ -753,12 +760,10 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
 
   update_attrs(ui, attr_id);
 
-  // non-BCE terminals can't clear with non-default background color
-  bool can_clear = data->bce || !data->has_bg;
-
   // Background is set to the default color and the right edge matches the
   // screen end, try to use terminal codes for clearing the requested area.
-  if (can_clear && left == 0 && right == ui->width && bot == ui->height) {
+  if (data->can_clear_attr
+      && left == 0 && right == ui->width && bot == ui->height) {
     if (top == 0) {
       unibi_out(ui, unibi_clear_screen);
       ugrid_goto(&data->grid, top, left);
@@ -772,9 +777,9 @@ static void clear_region(UI *ui, int top, int bot, int left, int right,
     // iterate through each line and clear
     for (int row = top; row < bot; row++) {
       cursor_goto(ui, row, left);
-      if (can_clear && right == ui->width) {
+      if (data->can_clear_attr && right == ui->width) {
         unibi_out(ui, unibi_clr_eol);
-      } else if (data->can_erase_chars && can_clear && width >= 5) {
+      } else if (data->can_erase_chars && data->can_clear_attr && width >= 5) {
         UNIBI_SET_NUM_VAR(data->params[0], width);
         unibi_out(ui, unibi_erase_chars);
       } else {
@@ -1274,9 +1279,10 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     // width and the line continuation is within the grid.
 
     if (endcol != grid->width) {
-      // Print the last cell of the row, if we haven't already done so.
-      cursor_goto(ui, (int)linerow, grid->width - 1);
-      print_cell(ui, &grid->cells[linerow][grid->width - 1]);
+      // Print the last char of the row, if we haven't already done so.
+      int size = grid->cells[linerow][grid->width - 1].data[0] == NUL ? 2 : 1;
+      cursor_goto(ui, (int)linerow, grid->width - size);
+      print_cell(ui, &grid->cells[linerow][grid->width - size]);
     }
 
     // Wrap the cursor over to the next line. The next line will be
@@ -1459,16 +1465,19 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                bool konsole, bool iterm_env)
+                                long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  const char * xterm_version = os_getenv("XTERM_VERSION");
+  const char *xterm_version = os_getenv("XTERM_VERSION");
 #if 0   // We don't need to identify this specifically, for now.
   bool roxterm = !!os_getenv("ROXTERM_ID");
 #endif
-  bool xterm = terminfo_is_term_family(term, "xterm");
+  bool xterm = terminfo_is_term_family(term, "xterm")
+    // Treat Terminal.app as generic xterm-like, for now.
+    || terminfo_is_term_family(term, "nsterm");
   bool kitty = terminfo_is_term_family(term, "xterm-kitty");
   bool linuxvt = terminfo_is_term_family(term, "linux");
+  bool bsdvt = terminfo_is_bsd_console(term);
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
@@ -1484,12 +1493,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool konsole_pretending_xterm = xterm && konsole;
+  bool konsole_pretending_xterm = xterm && konsolev;
   bool gnome_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
-  bool true_xterm = xterm && !!xterm_version;
+  bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1629,7 +1638,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
-    } else if (konsole || xterm || gnome || rxvt || st || putty
+    } else if (konsolev || xterm || gnome || rxvt || st || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
@@ -1650,7 +1659,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   }
 
   // Blacklist of terminals that cannot be trusted to report DECSCUSR support.
-  if (!(st || (vte_version != 0 && vte_version < 3900) || konsole)) {
+  if (!(st || (vte_version != 0 && vte_version < 3900)
+        || (konsolev > 0 && konsolev < 180770))) {
     data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
     data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
@@ -1659,15 +1669,15 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   // adding them to terminal types, that have such control sequences but lack
   // the correct terminfo entries, is a fixup, not an augmentation.
   if (-1 == data->unibi_ext.set_cursor_style) {
-    // DECSCUSR (cursor shape) sequence is widely supported by several terminal
-    // types.  https://github.com/gnachman/iTerm2/pull/92
-    // xterm extension: vertical bar
-    if (!konsole
+    // DECSCUSR (cursor shape) is widely supported.
+    // https://github.com/gnachman/iTerm2/pull/92
+    if ((!bsdvt && (!konsolev || konsolev >= 180770))
         && ((xterm && !vte_version)  // anything claiming xterm compat
             // per MinTTY 0.4.3-1 release notes from 2009
             || putty
             // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
             || (vte_version >= 3900)
+            || (konsolev >= 180770)  // #9364
             || tmux       // per tmux manual page
             // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
             || screen
@@ -1675,7 +1685,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || rxvt       // per command.C
             // per analysis of VT100Terminal.m
             || iterm || iterm_pretending_xterm
-            || teraterm    // per TeraTerm "Supported Control Functions" doco
+            || teraterm   // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
@@ -1715,12 +1725,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
                                                                       "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          "\x1b[?c");
-    } else if (konsole) {
-      // Konsole uses an idiosyncratic escape code to set the cursor shape and
-      // does not support DECSCUSR.  This makes Konsole set up and apply a
-      // nonce profile, which has side-effects on temporary font resizing.
-      // In an ideal world, Konsole would just support DECSCUSR.
+                        "\x1b[?c");
+    } else if (konsolev > 0 && konsolev < 180770) {
+      // Konsole before version 18.07.70: set up a nonce profile. This has
+      // side-effects on temporary font resizing. #6798
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
@@ -1743,10 +1751,14 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
-    const char *colorterm, long vte_version, bool konsole, bool iterm_env)
+                             const char *colorterm, long vte_version,
+                             long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  bool xterm = terminfo_is_term_family(term, "xterm");
+  bool xterm = terminfo_is_term_family(term, "xterm")
+    // Treat Terminal.app as generic xterm-like, for now.
+    || terminfo_is_term_family(term, "nsterm");
+  bool bsdvt = terminfo_is_bsd_console(term);
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
@@ -1757,16 +1769,17 @@ static void augment_terminfo(TUIData *data, const char *term,
     || terminfo_is_term_family(term, "iterm2")
     || terminfo_is_term_family(term, "iTerm.app")
     || terminfo_is_term_family(term, "iTerm2.app");
+  bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
-  const char * xterm_version = os_getenv("XTERM_VERSION");
-  bool true_xterm = xterm && !!xterm_version;
+  const char *xterm_version = os_getenv("XTERM_VERSION");
+  bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
       || xterm       // per xterm ctlseqs doco
-      || konsole     // per commentary in VT102Emulation.cpp
+      || konsolev    // per commentary in VT102Emulation.cpp
       || teraterm    // per TeraTerm "Supported Control Functions" doco
       || rxvt) {     // per command.C
     data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut,
@@ -1824,7 +1837,8 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-  } else if ((xterm || rxvt) && (vte_version == 0 || vte_version >= 3900)) {
+  } else if ((xterm || rxvt || alacritty)
+             && (vte_version == 0 || vte_version >= 3900)) {
     // Supported in urxvt, newer VTE.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, "ext.set_cursor_color", "\033]12;#%p1%06x\007");
@@ -1864,13 +1878,9 @@ static void augment_terminfo(TUIData *data, const char *term,
           ut, "ext.enter_undercurl_mode", "\x1b[4:3m");
       data->unibi_ext.exit_undercurl_mode = (int)unibi_add_ext_str(
           ut, "ext.exit_undercurl_mode", "\x1b[4:0m");
-      if (has_colon_rgb) {
-          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
-              ut, "ext.set_underline_color", "\x1b[58:2:%p1%d:%p2%d:%p3%dm");
-      } else {
-          data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
-              ut, "ext.set_underline_color", "\x1b[58;2;%p1%d;%p2%d;%p3%dm");
-      }
+      // Only support colon syntax. #9270
+      data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(
+          ut, "ext.set_underline_color", "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
   }
 }
 

@@ -117,60 +117,60 @@ local function test_cmdline(linegrid)
     end)
 
     it('but not with scrolled messages', function()
-      screen:try_resize(50,10)
+      screen:try_resize(35,10)
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+                                           |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+                                           |
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
 
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
 
       feed('<cr>')
       screen:expect{grid=[[
-        ^                                                  |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:n                                                 }|
-                                                          |
+        ^                                   |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:n                                  }|
+                                           |
       ]]}
     end)
   end)

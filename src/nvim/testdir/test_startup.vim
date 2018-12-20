@@ -150,6 +150,83 @@ func Test_compatible_args()
   call delete('Xtestout')
 endfunc
 
+" Test the -o[N] and -O[N] arguments to open N windows split
+" horizontally or vertically.
+func Test_o_arg()
+  let after = [
+	\ 'call writefile([winnr("$"),
+	\		   winheight(1), winheight(2), &lines,
+	\		   winwidth(1), winwidth(2), &columns,
+	\		   bufname(winbufnr(1)), bufname(winbufnr(2))],
+	\		   "Xtestout")',
+	\ 'qall',
+	\ ]
+  if RunVim([], after, '-o2')
+    " Open 2 windows split horizontally. Expect:
+    " - 2 windows
+    " - both windows should have the same or almost the same height
+    " - sum of both windows height (+ 3 for both statusline and Ex command)
+    "   should be equal to the number of lines
+    " - both windows should have the same width which should be equal to the
+    "   number of columns
+    " - buffer of both windows should have no name
+    let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
+    call assert_equal('2', wn)
+    call assert_inrange(0, 1, wh1 - wh2)
+    call assert_equal(string(wh1 + wh2 + 3), ln)
+    call assert_equal(ww1, ww2)
+    call assert_equal(ww1, cn)
+    call assert_equal('', bn1)
+    call assert_equal('', bn2)
+  endif
+
+  if RunVim([], after, '-o foo bar')
+    " Same expectations as for -o2 but buffer names should be foo and bar
+    let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
+    call assert_equal('2', wn)
+    call assert_inrange(0, 1, wh1 - wh2)
+    call assert_equal(string(wh1 + wh2 + 3), ln)
+    call assert_equal(ww1, ww2)
+    call assert_equal(ww1, cn)
+    call assert_equal('foo', bn1)
+    call assert_equal('bar', bn2)
+  endif
+
+  if RunVim([], after, '-O2')
+    " Open 2 windows split vertically. Expect:
+    " - 2 windows
+    " - both windows should have the same or almost the same width
+    " - sum of both windows width (+ 1 separator) should be equal to the
+    "   number of columns
+    " - both windows should have the same height
+    " - window height (+ 2 for the statusline and Ex command) should be equal
+    "   to the number of lines
+    " - buffer of both windowns should have no name
+    let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
+    call assert_equal('2', wn)
+    call assert_inrange(0, 1, ww1 - ww2)
+    call assert_equal(string(ww1 + ww2 + 1), cn)
+    call assert_equal(wh1, wh2)
+    call assert_equal(string(wh1 + 2), ln)
+    call assert_equal('', bn1)
+    call assert_equal('', bn2)
+  endif
+
+  if RunVim([], after, '-O foo bar')
+    " Same expectations as for -O2 but buffer names should be foo and bar
+    let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
+    call assert_equal('2', wn)
+    call assert_inrange(0, 1, ww1 - ww2)
+    call assert_equal(string(ww1 + ww2 + 1), cn)
+    call assert_equal(wh1, wh2)
+    call assert_equal(string(wh1 + 2), ln)
+    call assert_equal('foo', bn1)
+    call assert_equal('bar', bn2)
+  endif
+
+  call delete('Xtestout')
+endfunc
+
 func Test_file_args()
   let after = [
 	\ 'call writefile(argv(), "Xtestout")',

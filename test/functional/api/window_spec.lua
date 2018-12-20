@@ -11,6 +11,7 @@ local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
+local expect_err = helpers.expect_err
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -31,7 +32,7 @@ local function is_visible(str)
     return false
 end
 
-describe('api/win', function()
+describe('API/win', function()
   before_each(clear)
 
   describe('get_buf', function()
@@ -42,6 +43,21 @@ describe('api/win', function()
       eq(curbuf(), window('get_buf', nvim('list_wins')[2]))
       neq(window('get_buf', nvim('list_wins')[1]),
         window('get_buf', nvim('list_wins')[2]))
+    end)
+  end)
+
+  describe('set_buf', function()
+    it('works', function()
+      nvim('command', 'new')
+      local windows = nvim('list_wins')
+      neq(window('get_buf', windows[2]), window('get_buf', windows[1]))
+      window('set_buf', windows[2], window('get_buf', windows[1]))
+      eq(window('get_buf', windows[2]), window('get_buf', windows[1]))
+    end)
+
+    it('validates args', function()
+      expect_err('Invalid buffer id$', window, 'set_buf', nvim('get_current_win'), 23)
+      expect_err('Invalid window id$', window, 'set_buf', 23, nvim('get_current_buf'))
     end)
   end)
 
