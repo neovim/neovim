@@ -396,7 +396,7 @@ class DebugSession( object ):
       'arguments': {
         'terminateDebugee': True
       },
-    }, failure_handler = handler )
+    }, failure_handler = handler, timeout = 5000 )
 
     # This request times out after 5 seconds
     while not state[ 'done' ]:
@@ -426,7 +426,7 @@ class DebugSession( object ):
       'arguments': {
         'terminateDebugee': True
       },
-    }, failure_handler = handler )
+    }, failure_handler = handler, timeout = 5000 )
 
   def _SelectProcess( self, adapter_config, launch_config ):
     atttach_config = adapter_config[ 'attach' ]

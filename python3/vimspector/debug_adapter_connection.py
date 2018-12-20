@@ -44,7 +44,7 @@ class DebugAdapterConnection( object ):
                  handler,
                  msg,
                  failure_handler=None,
-                 timeout = 5000 ):
+                 timeout = 15000 ):
     this_id = self._next_message_id
     self._next_message_id += 1
 
@@ -66,13 +66,13 @@ class DebugAdapterConnection( object ):
     request_id = None
     for seq, request in self._outstanding_requests.items():
       if request.expiry_id == timer_id:
-        self._AbortRequest( request, 'Timeout' )
         request_id = seq
         break
 
     # Avoid modifying _outstanding_requests while looping
     if request_id is not None:
-      del self._outstanding_requests[ request_id ]
+      request = self._outstanding_requests.pop( request_id )
+      self._AbortRequest( request, 'Timeout' )
 
   def DoResponse( self, request, error, response ):
     this_id = self._next_message_id
@@ -95,20 +95,21 @@ class DebugAdapterConnection( object ):
   def Reset( self ):
     self._Write = None
     self._handler = None
-    for _, request in self._outstanding_requests.items():
+
+    while self._outstanding_requests:
+      _, request = self._outstanding_requests.popitem()
       self._AbortRequest( request, 'Closing down' )
-    self._outstanding_requests.clear()
 
   def _AbortRequest( self, request, reason ):
-    self._logger.debug( 'Aborting request {} because {}'.format(
-      json.dumps( request.msg ),
-      reason ) )
-
+    self._logger.debug( '{}: Aborting request {}'.format( reason,
+                                                          request.msg ) )
     _KillTimer( request )
     if request.failure_handler:
       request.failure_handler( reason, {} )
     else:
-      utils.UserMessage( 'Request aborted: {}'.format( reason ) )
+      utils.UserMessage( 'Request for {} aborted: {}'.format(
+        request.msg[ 'command' ],
+        reason ) )
 
 
   def OnData( self, data ):
