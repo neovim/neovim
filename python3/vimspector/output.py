@@ -88,8 +88,12 @@ class OutputView( object ):
     def print_result( message ):
       utils.AppendToBuffer( console,
                             'Evaluated: ' + expression )
-      utils.AppendToBuffer( console,
-                            '  Result: ' + message[ 'body' ][ 'result' ] )
+
+      result = message[ 'body' ][ 'result' ]
+      if message[ 'body' ].get( 'result' ) is None:
+        result = 'null'
+
+      utils.AppendToBuffer( console, '  Result: ' + result )
 
     self._connection.DoRequest( print_result, {
       'command': 'evaluate',

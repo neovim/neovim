@@ -214,10 +214,7 @@ class VariablesView( object ):
       view.draw()
       return
 
-    # Expand. (only if there is anything to expand)
-    if 'variablesReference' not in variable:
-      return
-    if variable[ 'variablesReference' ] <= 0:
+    if variable.get( 'variablesReference', 0 ) <= 0:
       return
 
     variable[ '_expanded' ] = True
@@ -236,7 +233,7 @@ class VariablesView( object ):
         view.win.buffer,
         '{indent}{icon} {name} ({type_}): {value}'.format(
           indent = ' ' * indent,
-          icon = '+' if ( variable[ 'variablesReference' ] > 0 and
+          icon = '+' if ( variable.get( 'variablesReference', 0 ) > 0 and
                           '_variables' not in variable ) else '-',
           name = variable[ 'name' ],
           type_ = variable.get( 'type', '<unknown type>' ),
@@ -275,7 +272,7 @@ class VariablesView( object ):
           self._DrawWatchResult( 2, watch )
 
   def _DrawScope( self, indent, scope ):
-    icon = '+' if ( scope[ 'variablesReference' ] > 0 and
+    icon = '+' if ( scope.get( 'variablesReference', 0 ) > 0 and
                     '_variables' not in scope ) else '-'
 
     line = utils.AppendToBuffer( self._vars.win.buffer,
@@ -294,7 +291,7 @@ class VariablesView( object ):
 
     result = watch[ '_result' ]
 
-    icon = '+' if ( result[ 'variablesReference' ] > 0 and
+    icon = '+' if ( result.get( 'variablesReference', 0 ) > 0 and
                     '_variables' not in result ) else '-'
 
     line =  '{0}{1} Result: {2} '.format( ' ' * indent,
@@ -347,7 +344,6 @@ class VariablesView( object ):
       # TODO: this result count be expandable, but we have no way to allow the
       # user to interact with the balloon to expand it.
       body = message[ 'body' ]
-      ref = body.get( 'variablesReference', 0 )
       display = [
         'Type: ' + body.get( 'type', '<unknown>' ),
         'Value: ' + body[ 'result' ]

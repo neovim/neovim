@@ -283,7 +283,7 @@ not always (or not completely).
       "name": "python",
       "command": [
         "node",
-        "<path to extension>/out/client/debugger/Main.js"
+        "<path to extension>/out/client/debugger/debugAdapter/main.js"
       ]
     }
     ...

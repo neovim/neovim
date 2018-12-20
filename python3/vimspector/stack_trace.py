@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import vim
+import os
 
 from vimspector import utils
 
@@ -195,6 +196,9 @@ class StackTraceView( object ):
         source = frame[ 'source' ]
       else:
         source = { 'name': '<unknown>' }
+
+      if 'name' not in source:
+        source[ 'name' ] = os.path.basename( source[ 'path' ] )
 
       line = utils.AppendToBuffer(
         self._buf,

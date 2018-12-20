@@ -9,7 +9,7 @@
       },
       "cppdbg": {
         "name": "cppdbg",
-        "command": [ "$HOME/.vscode/extensions/ms-vscode.cpptools-0.17.4/debugAdapters/OpenDebugAD7" ],
+        "command": [ "$HOME/.vscode/extensions/ms-vscode.cpptools-0.20.1/debugAdapters/OpenDebugAD7" ],
         "attach": {
           "pidProperty": "processId",
           "pidSelect": "ask"
@@ -49,7 +49,7 @@
         "target": "support/test/cpp/simple_c_program/test",
         "args": [],
         "cwd": ".",
-        "lldbmipath": "$HOME/.vscode/extensions/ms-vscode.cpptools-0.17.4/debugAdapters/lldb/bin/lldb-mi",
+        "lldbmipath": "$HOME/.vscode/extensions/ms-vscode.cpptools-0.20.1/debugAdapters/lldb/bin/lldb-mi",
         "trace": true,
         "logFilePath": "$HOME/.vimspector.protocol.log"
       }

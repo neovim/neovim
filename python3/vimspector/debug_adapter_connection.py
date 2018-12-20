@@ -142,6 +142,8 @@ class DebugAdapterConnection( object ):
     payload = str( self._buffer[ : content_length  ], 'utf-8' )
     self._buffer = self._buffer[ content_length : ]
 
+    self._logger.debug( 'Message received (raw): %s', payload )
+
     message = json.loads( payload )
 
     self._logger.debug( 'Message received: {0}'.format( message ) )
@@ -157,7 +159,16 @@ class DebugAdapterConnection( object ):
       return
 
     if message[ 'type' ] == 'response':
-      request = self._outstanding_requests.pop( message[ 'request_seq' ] )
+      try:
+        request = self._outstanding_requests.pop( message[ 'request_seq' ] )
+      except KeyError:
+        # Sigh. It looks like the ms python debug adapter sends duplicate
+        # initialize responses.
+        utils.UserMessage(
+          "Protocol error: duplicate response for request {}".format(
+            message[ 'request_seq' ] ) )
+        self._logger.exception( 'Duplicate response: {}'.format( message ) )
+        return
 
       if message[ 'success' ]:
         if request.handler:

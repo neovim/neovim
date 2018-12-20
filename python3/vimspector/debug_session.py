@@ -516,6 +516,19 @@ class DebugSession( object ):
 
     self._connection.DoResponse( message, None, response )
 
+  def OnEvent_exited( self, message ):
+    utils.UserMessage( 'The debugee exited with status code: {}'.format(
+      message[ 'body' ][ 'exitCode' ] ) )
+
+  def OnEvent_process( self, message ):
+    utils.UserMessage( 'The debugee was started: {}'.format(
+      message[ 'body' ][ 'name' ] ) )
+
+  def OnEvent_module( self, message ):
+    pass
+
+  def OnEvent_continued( self, message ):
+    pass
 
   def Clear( self ):
     self._codeView.Clear()
