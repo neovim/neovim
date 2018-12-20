@@ -42,6 +42,12 @@ function! s:_Send( msg ) abort
   call ch_sendraw( s:ch, a:msg )
 endfunction
 
+function! vimspector#internal#channel#Timeout( id ) abort
+  py3 << EOF
+_vimspector_session.OnRequestTimeout( vim.eval( 'a:id' ) )
+EOF
+endfunction
+
 function! vimspector#internal#channel#StartDebugSession( config ) abort
 
   if exists( 's:ch' )

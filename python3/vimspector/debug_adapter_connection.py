@@ -15,13 +15,17 @@
 
 import logging
 import json
-
-from collections import namedtuple
+import vim
 
 from vimspector import utils
 
-PendingRequest = namedtuple( 'PendingRequest',
-                             [ 'msg', 'handler', 'failure_handler' ] )
+
+class PendingRequest( object ):
+  def __init__( self, msg, handler, failure_handler, expiry_id ):
+    self.msg = msg
+    self.handler = handler
+    self.failure_handler = failure_handler
+    self.expiry_id = expiry_id
 
 
 class DebugAdapterConnection( object ):
@@ -36,17 +40,39 @@ class DebugAdapterConnection( object ):
     self._next_message_id = 0
     self._outstanding_requests = {}
 
-  def DoRequest( self, handler, msg, failure_handler=None ):
+  def DoRequest( self,
+                 handler,
+                 msg,
+                 failure_handler=None,
+                 timeout = 15000 ):
     this_id = self._next_message_id
     self._next_message_id += 1
 
     msg[ 'seq' ] = this_id
     msg[ 'type' ] = 'request'
 
+    # TODO/FIXME: This is so messy
+    expiry_id = vim.eval(
+      'timer_start( {}, "vimspector#internal#channel#Timeout" )'.format(
+        timeout ) )
+
     self._outstanding_requests[ this_id ] = PendingRequest( msg,
                                                             handler,
-                                                            failure_handler )
+                                                            failure_handler,
+                                                            expiry_id )
     self._SendMessage( msg )
+
+  def OnRequestTimeout( self, timer_id ):
+    request_id = None
+    for seq, request in self._outstanding_requests.items():
+      if request.expiry_id == timer_id:
+        request_id = seq
+        break
+
+    # Avoid modifying _outstanding_requests while looping
+    if request_id is not None:
+      request = self._outstanding_requests.pop( request_id )
+      self._AbortRequest( request, 'Timeout' )
 
   def DoResponse( self, request, error, response ):
     this_id = self._next_message_id
@@ -69,6 +95,22 @@ class DebugAdapterConnection( object ):
   def Reset( self ):
     self._Write = None
     self._handler = None
+
+    while self._outstanding_requests:
+      _, request = self._outstanding_requests.popitem()
+      self._AbortRequest( request, 'Closing down' )
+
+  def _AbortRequest( self, request, reason ):
+    self._logger.debug( '{}: Aborting request {}'.format( reason,
+                                                          request.msg ) )
+    _KillTimer( request )
+    if request.failure_handler:
+      request.failure_handler( reason, {} )
+    else:
+      utils.UserMessage( 'Request for {} aborted: {}'.format(
+        request.msg[ 'command' ],
+        reason ) )
+
 
   def OnData( self, data ):
     data = bytes( data, 'utf-8' )
@@ -110,6 +152,11 @@ class DebugAdapterConnection( object ):
     if len( parts ) > 1:
       headers = parts[ 0 ]
       for header_line in headers.split( bytes( '\r\n', 'utf-8' ) ):
+        if bytes( '\n', 'utf-8' ) in header_line:
+          # Work around bugs in cppdbg where mono spams nonesense to stdout.
+          # This is such a dodgyhack, but it fixes the issues.
+          header_line = header_line.split( bytes( '\n', 'utf-8' ) )[ -1 ]
+
         if header_line.strip():
           key, value = str( header_line, 'utf-8' ).split( ':', 1 )
           self._headers[ key ] = value
@@ -130,6 +177,7 @@ class DebugAdapterConnection( object ):
       # Skip to reading headers. Because, what else can we do.
       self._logger.error( 'Missing Content-Length header in: {0}'.format(
         json.dumps( self._headers ) ) )
+
       self._buffer = bytes( '', 'utf-8' )
       self._SetState( 'READ_HEADER' )
       return
@@ -170,6 +218,8 @@ class DebugAdapterConnection( object ):
         self._logger.exception( 'Duplicate response: {}'.format( message ) )
         return
 
+      _KillTimer( request )
+
       if message[ 'success' ]:
         if request.handler:
           request.handler( message )
@@ -181,7 +231,7 @@ class DebugAdapterConnection( object ):
             # TODO: Actually make this work
             reason = fmt
           else:
-            message = 'No reason'
+            reason = 'No reason'
 
         self._logger.error( 'Request failed: {0}'.format( reason ) )
         if request.failure_handler:
@@ -203,3 +253,9 @@ class DebugAdapterConnection( object ):
         utils.UserMessage(
           'Unhandled request: {0}'.format( message[ 'command' ] ),
           persist = True )
+
+
+def _KillTimer( request ):
+  if request.expiry_id is not None:
+    vim.eval( 'timer_stop( {} )'.format( request.expiry_id ) )
+    request.expiry_id = None

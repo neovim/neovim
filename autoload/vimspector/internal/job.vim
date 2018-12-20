@@ -39,8 +39,13 @@ function! s:_OnClose( channel ) abort
 endfunction
 
 function! s:_Send( msg ) abort
+  if ! exists( 's:job' )
+    echom "Can't send message: Job was not initialised correctly"
+    return
+  endif
+
   if job_status( s:job ) != 'run'
-    echom "Server isnt running"
+    echom "Can't send message: Job is not running"
     return
   endif
 
@@ -55,7 +60,7 @@ endfunction
 
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
-    echo "Job is already running"
+    echom "Not starging: Job is already running"
     return v:none
   endif
 
@@ -72,8 +77,10 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
         \                }
         \              )
 
+  echom 'Started job, status is: ' . job_status( s:job )
+
   if job_status( s:job ) != 'run'
-    echom 'Fail whale. Job is ' . job_status( s:job )
+    echom 'Unable to start job, status is: ' . job_status( s:job )
     return v:none
   endif
 
@@ -81,6 +88,11 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
 endfunction
 
 function! vimspector#internal#job#StopDebugSession() abort
+  if !exists( 's:job' )
+    echom "Not stopping session: Job doesn't exist"
+    return
+  endif
+
   if job_status( s:job ) == 'run'
     call job_stop( s:job, 'term' )
   endif
@@ -89,9 +101,7 @@ function! vimspector#internal#job#StopDebugSession() abort
 endfunction
 
 function! vimspector#internal#job#Reset() abort
-  if exists( 's:job' )
-    call vimspector#internal#job#StopDebugSession()
-  endif
+  call vimspector#internal#job#StopDebugSession()
 endfunction
 
 function! vimspector#internal#job#ForceRead() abort

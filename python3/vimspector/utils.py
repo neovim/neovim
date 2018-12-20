@@ -202,23 +202,33 @@ def AskForInput( prompt ):
 
 
 def AppendToBuffer( buf, line_or_lines, modified=False ):
-  # After clearing the buffer (using buf[:] = None) there is always a single
-  # empty line in the buffer object and no "is empty" method.
-  if len( buf ) > 1 or buf[ 0 ]:
-    line = len( buf ) + 1
-    buf.append( line_or_lines )
-  elif isinstance( line_or_lines, str ):
-    line = 1
-    buf[-1] = line_or_lines
-  else:
-    line = 1
-    buf[:] = line_or_lines
-
-  if not modified:
-    buf.options[ 'modified' ] = False
+  try:
+    # After clearing the buffer (using buf[:] = None) there is always a single
+    # empty line in the buffer object and no "is empty" method.
+    if len( buf ) > 1 or buf[ 0 ]:
+      line = len( buf ) + 1
+      buf.append( line_or_lines )
+    elif isinstance( line_or_lines, str ):
+      line = 1
+      buf[-1] = line_or_lines
+    else:
+      line = 1
+      buf[:] = line_or_lines
+  except vim.error as e:
+    # There seem to be a lot of Vim bugs that lead to E351, whose help says that
+    # this is an internal error. Ignore the error, but write a trace to the log.
+    if 'E315' in str( e ):
+      logging.getLogger( __name__ ).exception(
+        'Internal error while updating buffer' )
+    else:
+      raise e
+  finally:
+    if not modified:
+      buf.options[ 'modified' ] = False
 
   # Return the first Vim line number (1-based) that we just set.
   return line
+
 
 
 def ClearBuffer( buf ):

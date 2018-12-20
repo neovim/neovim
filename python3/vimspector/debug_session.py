@@ -189,6 +189,10 @@ class DebugSession( object ):
     if self._connection:
       self._connection.OnData( data )
 
+  def OnRequestTimeout( self, timer_id ):
+    if self._connection:
+      self._connection.OnRequestTimeout( timer_id )
+
   def OnChannelClosed( self ):
     self._connection = None
 
@@ -384,7 +388,7 @@ class DebugSession( object ):
     # scope)
     state = { 'done': False }
 
-    def handler( self ):
+    def handler( *args ):
       state[ 'done' ] = True
 
     self._connection.DoRequest( handler, {
@@ -392,11 +396,10 @@ class DebugSession( object ):
       'arguments': {
         'terminateDebugee': True
       },
-    } )
+    }, failure_handler = handler, timeout = 5000 )
 
-    tries = 0
-    while not state[ 'done' ] and tries < 10:
-      tries = tries + 1
+    # This request times out after 5 seconds
+    while not state[ 'done' ]:
       vim.eval( 'vimspector#internal#{}#ForceRead()'.format(
         self._connection_type ) )
 
@@ -404,7 +407,7 @@ class DebugSession( object ):
       self._connection_type ) )
 
   def _StopDebugAdapter( self, callback = None ):
-    def handler( message ):
+    def handler( *args ):
       vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
         self._connection_type ) )
 
@@ -423,7 +426,7 @@ class DebugSession( object ):
       'arguments': {
         'terminateDebugee': True
       },
-    } )
+    }, failure_handler = handler, timeout = 5000 )
 
   def _SelectProcess( self, adapter_config, launch_config ):
     atttach_config = adapter_config[ 'attach' ]
