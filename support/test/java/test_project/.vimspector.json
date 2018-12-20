@@ -1,0 +1,22 @@
+{
+  "adapters": {
+    "java-debug-server": {
+      "name": "vscode-java",
+      "port": "ask"
+    }
+  },
+  "configurations": {
+    "Java Launch": {
+      "adapter": "java-debug-server",
+      "configuration": {
+        "request": "launch",
+        "mainClass": "com.vimspector.test.TestApplication",
+        "sourcePaths": [ "${workspaceRoot}/src/main/java" ],
+        "classPaths": [ "${workspaceRoot}/target/classes" ],
+        "args": "hello world!",
+        "stopOnEntry": true,
+        "console": "integratedTerminal"
+      }
+    }
+  }
+}

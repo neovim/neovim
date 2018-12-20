@@ -46,7 +46,7 @@ class DebugSession( object ):
     self._next_sign_id = SIGN_ID_OFFSET
 
     # FIXME: This needs redesigning. There are a number of problems:
-    #  - breakpoints don't have to be line-wisw (e.g. method/exception)
+    #  - breakpoints don't have to be line-wise (e.g. method/exception)
     #  - when the server moves/changes a breakpoint, this is not updated,
     #    leading to them getting out of sync
     #  - the split of responsibility between this object and the CodeView is
@@ -133,8 +133,10 @@ class DebugSession( object ):
     if not configuration:
       return
 
+    self._workspace_root = os.path.dirname( launch_config_file )
+
     utils.ExpandReferencesInDict( launch_config[ configuration ], {
-      'workspaceRoot': os.path.dirname( launch_config_file )
+      'workspaceRoot': self._workspace_root
     } )
 
     adapter = launch_config[ configuration ].get( 'adapter' )
@@ -207,7 +209,8 @@ class DebugSession( object ):
       vim.current.tabpage = self._uiTab
       vim.command( 'tabclose!' )
 
-    vim.eval( 'vimspector#internal#job#Reset()' )
+    vim.eval( 'vimspector#internal#{}#Reset()'.format(
+      self._connection_type ) )
     vim.eval( 'vimspector#internal#state#Reset()' )
 
     # make sure that we're displaying signs in any still-open buffers
@@ -347,8 +350,17 @@ class DebugSession( object ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
       self._adapter ) ) )
 
+    self._connection_type = 'job'
+    if 'port' in self._adapter:
+      self._connection_type = 'channel'
+
+      if self._adapter[ 'port' ] == 'ask':
+        port = utils.AskForInput( 'Enter port to connect to: ' )
+        self._adapter[ 'port' ] = port
+
     channel_send_func = vim.bindeval(
-      "vimspector#internal#job#StartDebugSession( {0} )".format(
+      "vimspector#internal#{}#StartDebugSession( {} )".format(
+        self._connection_type,
         json.dumps( self._adapter ) ) )
 
     if channel_send_func is None:
@@ -385,13 +397,16 @@ class DebugSession( object ):
     tries = 0
     while not state[ 'done' ] and tries < 10:
       tries = tries + 1
-      vim.eval( 'vimspector#internal#job#ForceRead()' )
+      vim.eval( 'vimspector#internal#{}#ForceRead()'.format(
+        self._connection_type ) )
 
-    vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+    vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
+      self._connection_type ) )
 
   def _StopDebugAdapter( self, callback = None ):
     def handler( message ):
-      vim.eval( 'vimspector#internal#job#StopDebugSession()' )
+      vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
+        self._connection_type ) )
 
       vim.command( 'au! vimspector_cleanup' )
 
@@ -488,6 +503,9 @@ class DebugSession( object ):
 
   def OnRequest_runInTerminal( self, message ):
     params = message[ 'arguments' ]
+
+    if 'cwd' not in params:
+      params[ 'cwd' ] = self._workspace_root
 
     buffer_number = self._codeView.LaunchTerminal( params )
 
