@@ -152,6 +152,11 @@ class DebugAdapterConnection( object ):
     if len( parts ) > 1:
       headers = parts[ 0 ]
       for header_line in headers.split( bytes( '\r\n', 'utf-8' ) ):
+        if bytes( '\n', 'utf-8' ) in header_line:
+          # Work around bugs in cppdbg where mono spams nonesense to stdout.
+          # This is such a dodgyhack, but it fixes the issues.
+          header_line = header_line.split( bytes( '\n', 'utf-8' ) )[ -1 ]
+
         if header_line.strip():
           key, value = str( header_line, 'utf-8' ).split( ':', 1 )
           self._headers[ key ] = value
@@ -172,6 +177,7 @@ class DebugAdapterConnection( object ):
       # Skip to reading headers. Because, what else can we do.
       self._logger.error( 'Missing Content-Length header in: {0}'.format(
         json.dumps( self._headers ) ) )
+
       self._buffer = bytes( '', 'utf-8' )
       self._SetState( 'READ_HEADER' )
       return
