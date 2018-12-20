@@ -55,7 +55,7 @@ endfunction
 
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
-    echo "Job is already running"
+    echom "Job is already running"
     return v:none
   endif
 
@@ -81,6 +81,10 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
 endfunction
 
 function! vimspector#internal#job#StopDebugSession() abort
+  if ! exists( 's:job' )
+    return
+  endfunction
+
   if job_status( s:job ) == 'run'
     call job_stop( s:job, 'term' )
   endif
