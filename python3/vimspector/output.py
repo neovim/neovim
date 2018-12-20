@@ -90,7 +90,7 @@ class OutputView( object ):
                             'Evaluated: ' + expression )
 
       result = message[ 'body' ][ 'result' ]
-      if message[ 'body' ].get( 'result' ) is None:
+      if result is None:
         result = 'null'
 
       utils.AppendToBuffer( console, '  Result: ' + result )

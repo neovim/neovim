@@ -294,9 +294,11 @@ class VariablesView( object ):
     icon = '+' if ( result.get( 'variablesReference', 0 ) > 0 and
                     '_variables' not in result ) else '-'
 
-    line =  '{0}{1} Result: {2} '.format( ' ' * indent,
-                                          icon,
-                                          result[ 'result' ] )
+    result_str = result[ 'result' ]
+    if result_str is None:
+      result_str = 'null'
+
+    line =  '{0}{1} Result: {2} '.format( ' ' * indent, icon, result_str )
     line = utils.AppendToBuffer( self._watch.win.buffer, line.split( '\n' ) )
     self._watch.lines[ line ] = result
 
@@ -344,9 +346,12 @@ class VariablesView( object ):
       # TODO: this result count be expandable, but we have no way to allow the
       # user to interact with the balloon to expand it.
       body = message[ 'body' ]
+      result = body[ 'result' ]
+      if result is None:
+        result = 'null'
       display = [
         'Type: ' + body.get( 'type', '<unknown>' ),
-        'Value: ' + body[ 'result' ]
+        'Value: ' + result
       ]
       vim.eval( "balloon_show( {0} )".format(
         json.dumps( display ) ) )
