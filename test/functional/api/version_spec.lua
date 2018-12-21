@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local mpack = require('mpack')
 local clear, funcs, eq = helpers.clear, helpers.funcs, helpers.eq
 local call = helpers.call
+local meths = helpers.meths
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')
@@ -43,7 +44,7 @@ describe("api_info()['version']", function()
 end)
 
 
-describe("api functions", function()
+describe("api metadata", function()
   before_each(clear)
 
   local function name_table(entries)
@@ -87,26 +88,23 @@ describe("api functions", function()
     end
   end
 
-  it("are compatible with old metadata or have new level", function()
-    local api = helpers.call('api_info')
-    local compat  = api.version.api_compatible
-    local api_level = api.version.api_level
-    local stable
+  local api, compat, stable, api_level
+  local old_api = {}
+  setup(function()
+    api = meths.get_api_info()[2]
+    compat  = api.version.api_compatible
+    api_level = api.version.api_level
     if api.version.api_prerelease then
       stable = api_level-1
     else
       stable = api_level
     end
 
-    local funcs_new = name_table(api.functions)
-    local ui_events_new = name_table(api.ui_events)
-    local funcs_compat = {}
-    local ui_events_compat = {}
     for level = compat, stable do
       local path = ('test/functional/fixtures/api_level_'..
                    tostring(level)..'.mpack')
-      local old_api = read_mpack_file(path)
-      if old_api == nil then
+      old_api[level] = read_mpack_file(path)
+      if old_api[level] == nil then
         local errstr = "missing metadata fixture for stable level "..level..". "
         if level == api_level and not api.version.api_prerelease then
           errstr = (errstr.."If NVIM_API_CURRENT was bumped, "..
@@ -116,10 +114,16 @@ describe("api functions", function()
       end
 
       if level == 0 then
-        clean_level_0(old_api)
+        clean_level_0(old_api[level])
       end
+    end
+  end)
 
-      for _,f in ipairs(old_api.functions) do
+  it("functions are compatible with old metadata or have new level", function()
+    local funcs_new = name_table(api.functions)
+    local funcs_compat = {}
+    for level = compat, stable do
+      for _,f in ipairs(old_api[level].functions) do
         if funcs_new[f.name] == nil then
           if f.since >= compat then
             error('function '..f.name..' was removed but exists in level '..
@@ -130,18 +134,7 @@ describe("api functions", function()
              filter_function_metadata(funcs_new[f.name]))
         end
       end
-      funcs_compat[level] = name_table(old_api.functions)
-
-      -- UI events were formalized in level 3
-      if level >= 3 then
-        for _,e in ipairs(old_api.ui_events) do
-          local new_e = ui_events_new[e.name]
-          if new_e ~= nil then
-            check_ui_event_compatible(e, new_e)
-          end
-        end
-        ui_events_compat[level] = name_table(old_api.ui_events)
-      end
+      funcs_compat[level] = name_table(old_api[level].functions)
     end
 
     for _,f in ipairs(api.functions) do
@@ -171,6 +164,22 @@ describe("api functions", function()
         end
       end
     end
+  end)
+
+  it("UI events are compatible with old metadata or have new level", function()
+    local ui_events_new = name_table(api.ui_events)
+    local ui_events_compat = {}
+
+    -- UI events were formalized in level 3
+    for level = 3, stable do
+      for _,e in ipairs(old_api[level].ui_events) do
+        local new_e = ui_events_new[e.name]
+        if new_e ~= nil then
+          check_ui_event_compatible(e, new_e)
+        end
+      end
+      ui_events_compat[level] = name_table(old_api[level].ui_events)
+    end
 
     for _,e in ipairs(api.ui_events) do
       if e.since <= stable then
@@ -197,15 +206,18 @@ describe("api functions", function()
     end
   end)
 
-end)
-
-describe("ui_options in metadata", function()
-  it('are correct', function()
-    -- TODO(bfredl) once a release freezes this into metadata,
-    -- instead check that all old options are present
-    local api = helpers.call('api_info')
-    local options = api.ui_options
-    eq({'rgb', 'ext_cmdline', 'ext_popupmenu',
-        'ext_tabline', 'ext_wildmenu', 'ext_linegrid', 'ext_hlstate'}, options)
+  it("ui_options are preserved from older levels", function()
+    local available_options = {}
+    for _, option in ipairs(api.ui_options) do
+      available_options[option] = true
+    end
+    -- UI options were versioned from level 4
+    for level = 4, stable do
+      for _, option in ipairs(old_api[level].ui_options) do
+        if not available_options[option] then
+          error("UI option "..option.." from stable metadata is missing")
+        end
+      end
+    end
   end)
 end)
