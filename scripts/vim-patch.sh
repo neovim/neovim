@@ -345,7 +345,8 @@ list_vim_commits() { (
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
-# Commit hashes (xxx not starting with "\d\.") are shortened to 7 characters.
+# Uses `{7,7}` with `sed` to canonicalize (internal) Git hashes ((xxx not
+# starting with "\d\.") to 7 chars (used in tokens caches).
 list_vimpatch_tokens() {
   git -C "${NVIM_SOURCE_DIR}" log -E --grep='vim-patch:[^ ,{]{7,}' \
     | grep -oE 'vim-patch:[^ ,{:]{7,}' \
