@@ -121,6 +121,7 @@ addons:
 branches:
   except:
     - nightly
+    - stable
 
 cache:
   apt: true
