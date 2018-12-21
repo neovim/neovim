@@ -11,14 +11,8 @@ function! s:GetManifestPath() abort
     return fnamemodify($NVIM_RPLUGIN_MANIFEST, ':p')
   endif
 
-  let dest = has('win32') ? '$LOCALAPPDATA' : '$XDG_DATA_HOME'
-  if !exists(dest)
-    let dest = has('win32') ? '~/AppData/Local' : '~/.local/share'
-  endif
-
-  let dest = fnamemodify(expand(dest), ':p')
+  let dest = stdpath('data')
   if !empty(dest)
-    let dest .= ('/' ==# dest[-1:] ? '' : '/') . 'nvim'
     if !isdirectory(dest)
       call mkdir(dest, 'p', 0700)
     endif
