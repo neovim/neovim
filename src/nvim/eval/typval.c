@@ -2850,7 +2850,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
 /// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
-///          may be used only once, next call to get_tv_string may reuse it. Use
+///          may be used only once, next call to tv_get_string may reuse it. Use
 ///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
@@ -2869,7 +2869,7 @@ const char *tv_get_string_chk(const typval_T *const tv)
 /// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
-///          may be used only once, next call to get_tv_string may reuse it. Use
+///          may be used only once, next call to tv_get_string may reuse it. Use
 ///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
