@@ -556,14 +556,6 @@ size_t mb_string2cells(const char_u *str)
   return clen;
 }
 
-/// Return number of display cells for char at ScreenLines[off].
-/// We make sure that the offset used is less than "max_off".
-int utf_off2cells(ScreenGrid *grid, unsigned off, unsigned max_off)
-{
-  return (off + 1 < max_off
-          && grid->ScreenLines[off + 1][0] == 0) ? 2 : 1;
-}
-
 /// Convert a UTF-8 byte sequence to a wide character
 ///
 /// If the sequence is illegal or truncated by a NUL then the first byte is

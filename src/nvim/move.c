@@ -151,7 +151,7 @@ void update_topline(void)
   long save_so = p_so;
 
   // need to have w_grid.Rows/Columns updated
-  win_grid_alloc(curwin, false);
+  win_grid_alloc(curwin);
 
   // If there is no valid screen and when the window height is zero just use
   // the cursor line.
@@ -529,7 +529,7 @@ int cursor_valid(void)
  */
 void validate_cursor(void)
 {
-  win_grid_alloc(curwin, false);  // we need to have w_grid.Rows/Columns updated
+  win_grid_alloc(curwin);  // we need to have w_grid.Rows/Columns updated
   check_cursor_moved(curwin);
   if ((curwin->w_valid & (VALID_WCOL|VALID_WROW)) != (VALID_WCOL|VALID_WROW))
     curs_columns(true);

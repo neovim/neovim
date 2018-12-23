@@ -4299,7 +4299,6 @@ void win_setheight_win(int height, win_T *win)
   }
 
   frame_setheight(win->w_frame, height + win->w_status_height);
-  win_grid_alloc(win, false);
 
   /* recompute the window positions */
   row = win_comp_pos();
@@ -4497,7 +4496,6 @@ void win_setwidth_win(int width, win_T *wp)
   }
 
   frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
-  win_grid_alloc(wp, false);
 
   /* recompute the window positions */
   (void)win_comp_pos();

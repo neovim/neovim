@@ -146,7 +146,10 @@ typedef struct {
 #define LINE_STATE(p) { p, 0, 0 }
 
 /// Whether to call "ui_call_grid_resize" in win_grid_alloc
-static int send_grid_resize;
+static bool send_grid_resize = false;
+
+/// Highlight ids are no longer valid. Force retransmission
+static bool highlights_invalid = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
@@ -182,6 +185,12 @@ void redraw_all_later(int type)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     redraw_win_later(wp, type);
   }
+}
+
+void screen_invalidate_highlights(void)
+{
+  redraw_all_later(NOT_VALID);
+  highlights_invalid = true;
 }
 
 /*
@@ -353,6 +362,8 @@ void update_screen(int type)
     type = NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
     must_redraw = 0;
+  } else if (highlights_invalid) {
+    grid_invalidate(&default_grid);
   }
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
@@ -439,6 +450,7 @@ void update_screen(int type)
     }
   }
   send_grid_resize = false;
+  highlights_invalid = false;
   end_search_hl();
   // May need to redraw the popup menu.
   if (pum_drawn()) {
@@ -522,7 +534,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
         prepare_search_hl(wp, lnum);
         update_window_hl(wp, false);
         // allocate window grid if not already
-        win_grid_alloc(wp, false);
+        win_grid_alloc(wp);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false, false);
         end_search_hl();
         break;
@@ -680,7 +692,7 @@ static void win_update(win_T *wp)
 
   type = wp->w_redr_type;
 
-  win_grid_alloc(wp, false);
+  win_grid_alloc(wp);
 
   if (type >= NOT_VALID) {
     wp->w_redr_status = true;
@@ -5984,7 +5996,7 @@ int screen_valid(int doclear)
 ///
 /// If "doclear" is true, don't try to copy from the old grid rather clear the
 /// resized grid.
-void win_grid_alloc(win_T *wp, int doclear)
+void win_grid_alloc(win_T *wp)
 {
   ScreenGrid *grid = &wp->w_grid;
   int rows = grid->internal_rows;
@@ -6002,11 +6014,15 @@ void win_grid_alloc(win_T *wp, int doclear)
   bool want_allocation = ui_is_external(kUIMultigrid);
   bool has_allocation = (grid->ScreenLines != NULL);
 
+  if (want_allocation && has_allocation && highlights_invalid) {
+    grid_invalidate(grid);
+  }
+
   if ((has_allocation != want_allocation)
       || grid->Rows != rows
       || grid->Columns != columns) {
     if (want_allocation) {
-      grid_alloc(grid, rows, columns, !doclear);
+      grid_alloc(grid, rows, columns, true);
       win_free_lsize(wp);
       win_alloc_lines(wp);
     } else {
@@ -6288,6 +6304,13 @@ static void grid_clear_line(ScreenGrid *grid, unsigned off, int width,
   int fill = valid ? 0 : -1;
   (void)memset(grid->ScreenAttrs + off, fill, (size_t)width * sizeof(sattr_T));
 }
+
+static void grid_invalidate(ScreenGrid *grid)
+{
+  (void)memset(grid->ScreenAttrs, -1,
+               grid->Rows * grid->Columns * sizeof(sattr_T));
+}
+
 
 /// Copy part of a Screenline for vertically split window.
 static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
