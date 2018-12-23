@@ -25,3 +25,30 @@ func Test_pydo()
     bwipe!
   endif
 endfunc
+
+func Test_vim_function()
+  " Check creating vim.Function object
+  py import vim
+
+  func s:foo()
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+_foo$')
+  endfunc
+  let name = '<SNR>' . s:foo()
+
+  try
+    py f = vim.bindeval('function("s:foo")')
+    call assert_equal(name, pyeval('f.name'))
+  catch
+    call assert_false(v:exception)
+  endtry
+
+  try
+    py f = vim.Function('\x80\xfdR' + vim.eval('s:foo()'))
+    call assert_equal(name, pyeval('f.name'))
+  catch
+    call assert_false(v:exception)
+  endtry
+
+  py del f
+  delfunc s:foo
+endfunc
