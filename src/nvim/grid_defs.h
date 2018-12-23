@@ -41,17 +41,17 @@ typedef struct {
   unsigned *LineOffset;
   char_u   *LineWraps;
 
-  // the size of the allocated grid
+  // the size of the allocated grid.
   int Rows;
   int Columns;
 
   // offsets for the grid relative to the global screen
-  int OffsetRow;
-  int OffsetColumn;
+  int row_offset;
+  int col_offset;
 
-  // the size expected to be allocated to the internal grid
-  int internal_rows;
-  int internal_columns;
+  // grid size requested by the UI. Used for window grids only.
+  int requested_rows;
+  int requested_cols;
 
   int was_resized;
 } ScreenGrid;

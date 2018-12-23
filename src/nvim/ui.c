@@ -321,8 +321,8 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
              int clearattr, bool wrap)
 {
   size_t off = grid->LineOffset[row] + (size_t)startcol;
-  int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow;
-  int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn;
+  int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
+  int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
 
   UI_CALL(raw_line, grid->handle, row_off + row, col_off + startcol,
           col_off + endcol, col_off + clearcol, clearattr, wrap,
@@ -347,8 +347,8 @@ void ui_cursor_goto(int new_row, int new_col)
 
 void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
 {
-  new_row += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetRow;
-  new_col += ui_is_external(kUIMultigrid) ? 0 : grid->OffsetColumn;
+  new_row += ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
+  new_col += ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
   int handle = ui_is_external(kUIMultigrid) ? grid->handle
                                             : DEFAULT_GRID_HANDLE;
 
@@ -457,7 +457,7 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
     return;
   }
 
-  wp->w_grid.internal_rows = (int)height;
-  wp->w_grid.internal_columns = (int)width;
+  wp->w_grid.requested_rows = (int)height;
+  wp->w_grid.requested_cols = (int)width;
   redraw_win_later(wp, SOME_VALID);
 }

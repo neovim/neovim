@@ -4269,7 +4269,7 @@ win_line (
         // if we're not in ext_multigrid mode, grid has not been allocated; keep
         // working on the default_grid.
         if (!ui_is_external(kUIMultigrid)) {
-          current_row += grid->OffsetRow;
+          current_row += grid->row_offset;
           current_grid = &default_grid;
         }
 
@@ -4397,8 +4397,8 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
 
   // If UI is not externalized, merge the contents of global and window grids
   if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->OffsetRow;
-    coloff += grid->OffsetColumn;
+    row += grid->row_offset;
+    coloff += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5303,8 +5303,8 @@ static int grid_off2cells(ScreenGrid *grid, size_t off, size_t max_off)
 bool grid_lefthalve(ScreenGrid *grid, int row, int col)
 {
   if (!ui_is_external(kUIMultigrid)) {
-    row += grid->OffsetRow;
-    col += grid->OffsetColumn;
+    row += grid->row_offset;
+    col += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5318,8 +5318,8 @@ int grid_fix_col(ScreenGrid *grid, int col, int row)
 {
   int coloff = 0;
   if (!ui_is_external(kUIMultigrid)) {
-    row += grid->OffsetRow;
-    coloff = grid->OffsetColumn;
+    row += grid->row_offset;
+    coloff = grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5348,8 +5348,8 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
   unsigned off;
 
   if (!ui_is_external(kUIMultigrid)) {
-    row += grid->OffsetRow;
-    col += grid->OffsetColumn;
+    row += grid->row_offset;
+    col += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5410,8 +5410,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 
   // If UI is not externalized, keep working on the default grid
   if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->OffsetRow;
-    col += grid->OffsetColumn;
+    row += grid->row_offset;
+    col += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5870,10 +5870,10 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
 
   // if grids are not externalized, keep working on the default_grid
   if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    start_row += grid->OffsetRow;
-    end_row += grid->OffsetRow;
-    start_col += grid->OffsetColumn;
-    end_col += grid->OffsetColumn;
+    start_row += grid->row_offset;
+    end_row += grid->row_offset;
+    start_col += grid->col_offset;
+    end_col += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -5999,13 +5999,13 @@ int screen_valid(int doclear)
 void win_grid_alloc(win_T *wp)
 {
   ScreenGrid *grid = &wp->w_grid;
-  int rows = grid->internal_rows;
-  int columns = grid->internal_columns;
-  int was_resized = false;
 
+  int rows = grid->requested_rows;
   if (rows == 0) {
     rows = wp->w_height;
   }
+
+  int columns = grid->requested_cols;
   if (columns == 0) {
     columns = wp->w_width;
   }
@@ -6018,6 +6018,7 @@ void win_grid_alloc(win_T *wp)
     grid_invalidate(grid);
   }
 
+  int was_resized = false;
   if ((has_allocation != want_allocation)
       || grid->Rows != rows
       || grid->Columns != columns) {
@@ -6035,8 +6036,8 @@ void win_grid_alloc(win_T *wp)
     was_resized = true;
   }
 
-  grid->OffsetRow = wp->w_winrow;
-  grid->OffsetColumn = wp->w_wincol;
+  grid->row_offset = wp->w_winrow;
+  grid->col_offset = wp->w_wincol;
 
   // send grid resize event if:
   // - a grid was just resized
@@ -6141,8 +6142,8 @@ retry:
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = default_grid.Columns;
 
-  default_grid.OffsetRow = 0;
-  default_grid.OffsetColumn = 0;
+  default_grid.row_offset = 0;
+  default_grid.col_offset = 0;
   default_grid.handle = DEFAULT_GRID_HANDLE;
 
   must_redraw = CLEAR;          /* need to clear the screen later */
@@ -6413,9 +6414,9 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   // If UI is not externalized, keep working on default grid
   if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->OffsetRow;
-    end += grid->OffsetRow;
-    col += grid->OffsetColumn;
+    row += grid->row_offset;
+    end += grid->row_offset;
+    col += grid->col_offset;
     grid = &default_grid;
   }
 
@@ -6468,9 +6469,9 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   // If UI is not externalized, keep working on default grid
   if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->OffsetRow;
-    end += grid->OffsetRow;
-    col += grid->OffsetColumn;
+    row += grid->row_offset;
+    end += grid->row_offset;
+    col += grid->col_offset;
     grid = &default_grid;
   }
 
