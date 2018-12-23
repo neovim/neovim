@@ -129,38 +129,6 @@ typedef off_t off_T;
 # endif
 #endif
 
-/// ScreenLines[] contains a copy of the whole screen, as it currently is
-/// displayed. It is a single block of screen cells, the size of the screen
-/// plus one line. The extra line used as a buffer while redrawing a window
-/// line, so it can be compared with the previous state of that line. This way
-/// we can avoid sending bigger updates than neccessary to the Ul layer.
-///
-/// Screen cells are stored as NUL-terminated UTF-8 strings, and a cell can
-/// contain up to MAX_MCO composing characters after the base character.
-/// The composing characters are to be drawn on top of the original character.
-/// The content after the NUL is not defined (so comparison must be done a
-/// single cell at a time). Double-width characters are stored in the left cell,
-/// and the right cell should only contain the empty string. When a part of the
-/// screen is cleared, the cells should be filled with a single whitespace char.
-///
-/// ScreenAttrs[] contains the highlighting attribute for each cell.
-/// LineOffset[n] is the offset from ScreenLines[] and ScreenAttrs[] for the
-/// start of line 'n'. These offsets are in general not linear, as full screen
-/// scrolling is implemented by rotating the offsets in the LineOffset array.
-/// LineWraps[] is an array of boolean flags indicating if the screen line wraps
-/// to the next line. It can only be true if a window occupies the entire screen
-/// width.
-///
-/// These, with other related attributes, are stored in a "ScreenGrid"
-/// datastructure.
-///
-/// Note: before the screen is initialized and when out of memory these can be
-/// NULL.
-EXTERN ScreenGrid default_grid INIT(= { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0,
-                                        0, 0, 0 });
-
-#define DEFAULT_GRID_HANDLE 1                   // handle for the default_grid
-
 /*
  * When vgetc() is called, it sets mod_mask to the set of modifiers that are
  * held down based on the MOD_MASK_* symbols that are read first.

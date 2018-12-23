@@ -7352,7 +7352,7 @@ void win_new_shellsize(void)
   }
 }
 
-win_T * get_win_by_grid_handle(GridHandle handle)
+win_T *get_win_by_grid_handle(handle_T handle)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_grid.handle == handle) {

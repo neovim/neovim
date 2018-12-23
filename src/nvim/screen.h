@@ -5,6 +5,7 @@
 
 #include "nvim/types.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/grid_defs.h"
 #include "nvim/pos.h"
 
 /*
@@ -19,6 +20,18 @@
 #define SOME_VALID              35  /* like NOT_VALID but may scroll */
 #define NOT_VALID               40  /* buffer needs complete redraw */
 #define CLEAR                   50  /* screen messed up, clear it */
+
+/// By default, all widows are draw on a single rectangular grid, represented by
+/// this ScreenGrid instance. In multigrid mode each window will have its own
+/// grid, then this is only used for global screen elements that hasn't been
+/// externalized.
+///
+/// Note: before the screen is initialized and when out of memory these can be
+/// NULL.
+EXTERN ScreenGrid default_grid INIT(= { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0,
+                                        0, 0, 0 });
+
+#define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
 /// Status line click definition
 typedef struct {

@@ -18,6 +18,8 @@ typedef struct {
 
 // for garray_T
 #include "nvim/garray.h"
+// for ScreenGrid
+#include "nvim/grid_defs.h"
 // for HLF_COUNT
 #include "nvim/highlight_defs.h"
 // for pos_T, lpos_T and linenr_T

@@ -57,7 +57,7 @@ static int busy = 0;
 static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
-static GridHandle cursor_grid_handle = DEFAULT_GRID_HANDLE;
+static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -443,7 +443,7 @@ Array ui_array(void)
   return all_uis;
 }
 
-void ui_grid_resize(GridHandle grid_handle, int width, int height, Error *error)
+void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
 {
   if (grid_handle == DEFAULT_GRID_HANDLE) {
     screen_resize(width, height);
