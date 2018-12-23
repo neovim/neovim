@@ -23,22 +23,32 @@ function! s:GetManifestPath() abort
 endfunction
 
 " Old manifest file based on known script locations.
-function! s:GetOldManifestPath() abort
+function! s:GetOldManifestPaths() abort
   let prefix = exists('$MYVIMRC')
         \ ? $MYVIMRC
         \ : matchstr(get(split(execute('scriptnames'), '\n'), 0, ''), '\f\+$')
-  return fnamemodify(expand(prefix, 1), ':h')
+  let origpath = fnamemodify(expand(prefix, 1), ':h')
         \.'/.'.fnamemodify(prefix, ':t').'-rplugin~'
+  if !has('win32')
+    return [origpath]
+  endif
+  " Windows used to use $APPLOCALDATA/nvim but stdpath('data') is
+  " $XDG_DATA_DIR/nvim-data
+  let pseudostdpath = exists('$LOCALAPPDATA') ? '$LOCALAPPDATA' : '~/AppData/Local'
+  let pseudostdpath = fnamemodify(expand(pseudostdpath), ':p')
+  return [substitute(pseudostdpath, '[/\\]\=$', '/', '') . 'nvim/rplugin.vim', origpath]
 endfunction
 
 function! s:GetManifest() abort
   let manifest = s:GetManifestPath()
   if !filereadable(manifest)
     " Check if an old manifest file exists and move it to the new location.
-    let old_manifest = s:GetOldManifestPath()
-    if filereadable(old_manifest)
-      call rename(old_manifest, manifest)
-    endif
+    for old_manifest in s:GetOldManifestPaths()
+      if filereadable(old_manifest)
+        call rename(old_manifest, manifest)
+        break
+      endif
+    endfor
   endif
   return manifest
 endfunction
