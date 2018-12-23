@@ -240,7 +240,6 @@ function Screen:try_resize(columns, rows)
 end
 
 function Screen:try_resize_grid(grid, columns, rows)
-  self._grid = self._grids[1]
   self.uimeths.try_resize_grid(grid, columns, rows)
 end
 

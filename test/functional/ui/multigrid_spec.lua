@@ -1,20 +1,16 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local spawn, set_session = helpers.spawn, helpers.set_session
+local clear = helpers.clear
 local feed, command, insert = helpers.feed, helpers.command, helpers.insert
 local eq = helpers.eq
 
 
 describe('multigrid screen', function()
   local screen
-  local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
-                     '--embed'}
 
   before_each(function()
-    local screen_nvim = spawn(nvim_argv)
-    set_session(screen_nvim)
-    screen = Screen.new()
+    clear{headless=false, args={'--cmd', 'set laststatus=2'}}
+    screen = Screen.new(53,14)
     screen:attach({ext_multigrid=true})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -1125,7 +1121,7 @@ describe('multigrid screen', function()
 
     command([[
       func! ErrMsg()
-        for i in range(12)
+        for i in range(11)
           echoerr "error ".i
         endfor
       endfunc]])
@@ -1145,7 +1141,7 @@ describe('multigrid screen', function()
       {14:error 8}                                              |
       {14:error 9}                                              |
       {14:error 10}                                             |
-      {15:-- More --}^                                           |
+      {15:Press ENTER or type command to continue}^              |
     ## grid 2
                                                            |
       {1:~                                                    }|
