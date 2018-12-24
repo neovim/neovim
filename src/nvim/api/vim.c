@@ -687,6 +687,17 @@ Object nvim_get_vvar(String name, Error *err)
   return dict_get_value(&vimvardict, name, err);
 }
 
+/// Sets a v: variable, if it is not readonly
+///
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
+void nvim_set_vvar(String name, Object value, Error *err)
+  FUNC_API_SINCE(6)
+{
+  dict_set_var(&vimvardict, name, value, false, false, err);
+}
+
 /// Gets an option value string
 ///
 /// @param name     Option name
