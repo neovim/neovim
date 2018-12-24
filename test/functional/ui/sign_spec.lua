@@ -20,6 +20,9 @@ describe('Signs', function()
       [6] = {foreground = Screen.colors.Brown},
       [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
       [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [9] = {bold = true, foreground = Screen.colors.Magenta},
+      [10] = {foreground = Screen.colors.Blue1},
+      [11] = {bold = true, foreground = Screen.colors.SeaGreen4},
     } )
   end)
 
@@ -99,6 +102,46 @@ describe('Signs', function()
         {2:  }{6:  2 }{8:b                                              }|
         {2:  }{7:  3 }c                                              |
         {1:>>}{7:  4 }{8:^                                               }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+                                                             |
+      ]])
+    end)
+
+    it('can have 32bit sign IDs', function()
+      command('sign define piet text=>> texthl=Search')
+      command('sign place 100000 line=1 name=piet buffer=1')
+      feed(':sign place<cr>')
+      screen:expect([[
+        {1:>>}                                                   |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {4:                                                     }|
+        :sign place                                          |
+        {9:--- Signs ---}                                        |
+        {10:Signs for [NULL]:}                                    |
+            line=1  id=100000  name=piet                     |
+                                                             |
+        {11:Press ENTER or type command to continue}^              |
+      ]])
+
+      feed('<cr>')
+      screen:expect([[
+        {1:>>}^                                                   |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
