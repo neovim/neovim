@@ -313,9 +313,14 @@ Also the mock debugger, but that isn't actually useful.
 
 Known not to work:
 
-* Java Debug Server. This doesn't work (yet) because it runs as a jdt.ls plugin.
-  Support for this may be added in conjunction with [ycmd][], but this
-  architecture is incredibly complex and vastly different from any other.
+* Java Debug Server. The [java debug server][java-debug-server] runs as a
+  jdt.ls plugin, rather than a standalone debug adapter. This makes a lot
+  of sense if you already happen to be running the language server. 
+  Vimspector is not in the business of running language servers. So, rather
+  than doing so, vimspector simply allows you to start the java debug server
+  manually (however you might do so) and you can tell vimspector the port
+  on which it is listening. See [this issue](https://github.com/puremourning/vimspector/issues/3)
+  for more background.
 * C-sharp. The license appears to require that it is only used with Visual
   Studio Code.
 
