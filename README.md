@@ -354,3 +354,4 @@ Copyright © 2018 Ben Jackson
 
 [ycmd]: https://github.com/Valloric/ycmd
 [gitter]: https://gitter.im/vimspector/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
+[java-debug-server]: https://github.com/Microsoft/java-debug
