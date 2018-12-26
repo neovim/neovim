@@ -7,10 +7,6 @@ if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  >/dev/null brew update
-fi
-
 echo 'python info:'
 (
   2>&1 python --version || true
