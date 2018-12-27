@@ -203,8 +203,7 @@ USING UNICODE IN A UNICODE TERMINAL
 
 There are terminals that support Unicode directly.  The standard xterm that
 comes with XFree86 is one of them.  Let's use that as an example.
-   First of all, the xterm must have been compiled with Unicode support.  See
-|UTF8-xterm| how to check that and how to compile it when needed.
+   First of all, the xterm must have been compiled with Unicode support.
    Start the xterm with the "-u8" argument.  You might also need so specify a
 font.  Example: >
 

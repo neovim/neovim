@@ -381,7 +381,7 @@ T  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
 B  *+termguicolors*	24-bit color in xterm-compatible terminals support
-N  *+termresponse*	support for |t_RV| and |v:termresponse|
+N  *+termresponse*	support for t_RV and |v:termresponse|
 N  *+textobjects*	|text-objects| selection
 N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'
@@ -517,14 +517,9 @@ m  *+xim*		X input method |xim|
 			    :silent! /^begin
 			    :if v:errmsg != ""
 			    : ... pattern was not found
-<			":silent" will also avoid the hit-enter prompt.  When
-			using this for an external command, this may cause the
-			screen to be messed up.  Use |CTRL-L| to clean it up
-			then.
-			":silent menu ..." defines a menu that will not echo a
-			Command-line command.  The command will still produce
-			messages though.  Use ":silent" in the command itself
-			to avoid that: ":silent menu .... :silent command".
+<			":silent" also skips the hit-enter prompt.
+			Dialogs that prompt for user input (|confirm()|,
+			'swapfile', …) are never silent.
 
 						*:uns* *:unsilent*
 :uns[ilent] {command}	Execute {command} not silently.  Only makes a

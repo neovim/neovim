@@ -1,3 +1,4 @@
+require('vim.compat')
 require('coxpcall')
 local luv = require('luv')
 local lfs = require('lfs')
@@ -300,8 +301,10 @@ end
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 local function retry(max, max_ms, fn)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
-  local timeout = (max_ms and max_ms > 0) and max_ms or 10000
+  local timeout = (max_ms and max_ms or 10000)
   local start_time = luv.now()
   while true do
     local status, result = pcall(fn)
@@ -755,6 +758,14 @@ return function(after_each)
       end
       check_logs()
       check_cores('build/bin/nvim')
+      if session then
+        local msg = session:next_message(0)
+        if msg then
+          if msg[1] == "notification" and msg[2] == "nvim_error_event" then
+            error(msg[3][2])
+          end
+        end
+      end
     end)
   end
   return module

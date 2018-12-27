@@ -245,6 +245,7 @@ let s:flaky = [
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',
+      \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
       \ 'Test_quotestar()',
       \ 'Test_reltime()',

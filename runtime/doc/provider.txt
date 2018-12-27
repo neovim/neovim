@@ -4,14 +4,21 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Providers	 						    *provider*
+Providers	 				*provider*
 
-Nvim delegates some features to dynamic "providers".
+Nvim delegates some features to dynamic "providers". This document describes
+the providers and how to install them.
+						*E319*
+Use of a feature requiring a missing provider is an error: >
+
+    E319: No "foo" provider found. Run ":checkhealth provider"
+
+Run the |:checkhealth| command, and review the sections below.
 
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
-Python integration		    	      *provider-python*
+Python integration				*provider-python*
 
 Nvim supports Python |remote-plugin|s and the Vim legacy |python2| and
 |python3| interfaces (which are implemented as remote-plugins).
@@ -19,23 +26,23 @@ Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 
 PYTHON QUICKSTART ~
 
-Install the "neovim" Python package:
+Install the "pynvim" Python package:
 
 - Run |:checkhealth| to see if you already have the package (some package
-  managers install the "neovim" Python package with Nvim itself). 
+  managers install the "pynvim" Python package with Nvim itself).
 
 - For Python 2 plugins, make sure Python 2.7 is available in your $PATH, then
   install the package systemwide: >
-    sudo pip2 install --upgrade neovim
+    sudo pip2 install --upgrade pynvim
 <  or for the current user: >
-    pip2 install --user --upgrade neovim
+    pip2 install --user --upgrade pynvim
 <  If "pip2" is missing, try "pip".
 
 - For Python 3 plugins, make sure Python 3.4+ is available in your $PATH, then
   install the package systemwide: >
-    sudo pip3 install --upgrade neovim
+    sudo pip3 install --upgrade pynvim
 <  or for the current user: >
-    pip3 install --user --upgrade neovim
+    pip3 install --user --upgrade pynvim
 <  If "pip3" is missing, try "pip".
 
 - The `--upgrade` flag ensures you have the latest version even if a previous
@@ -64,14 +71,14 @@ PYTHON VIRTUALENVS ~
 
 If you plan to use per-project virtualenvs often, you should assign one
 virtualenv for Neovim and hard-code the interpreter path via
-|g:python3_host_prog| (or |g:python_host_prog|) so that the "neovim" package
+|g:python3_host_prog| (or |g:python_host_prog|) so that the "pynvim" package
 is not required for each virtualenv.
 
 Example using pyenv: >
     pyenv install 3.4.4
     pyenv virtualenv 3.4.4 py3nvim
     pyenv activate py3nvim
-    pip install neovim
+    pip install pynvim
     pyenv which python  # Note the path
 The last command reports the interpreter path, add it to your init.vim: >
     let g:python3_host_prog = '/path/to/py3nvim/bin/python'
@@ -150,16 +157,19 @@ The presence of a working clipboard tool implicitly enables the '+' and '*'
 registers. Nvim looks for these clipboard tools, in order of priority:
 
   - |g:clipboard|
-  - pbcopy/pbpaste (macOS)
-  - xsel (if $DISPLAY is set)
+  - pbcopy, pbpaste (macOS)
+  - wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
   - xclip (if $DISPLAY is set)
+  - xsel (if $DISPLAY is set)
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
   - win32yank (Windows)
   - tmux (if $TMUX is set)
 
 								 *g:clipboard*
-To configure a custom clipboard tool, set `g:clipboard` to a dictionary: >
+To configure a custom clipboard tool, set g:clipboard to a dictionary.
+For example this configuration integrates the tmux clipboard: >
+
     let g:clipboard = {
           \   'name': 'myClipboard',
           \   'copy': {
@@ -173,9 +183,28 @@ To configure a custom clipboard tool, set `g:clipboard` to a dictionary: >
           \   'cache_enabled': 1,
           \ }
 
-If `cache_enabled` is |TRUE| then when a selection is copied, Nvim will cache
+If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
-process has not died, the cached selection is applied.
+process has not died the cached selection is applied.
+
+g:clipboard can also use functions (see |lambda|) instead of strings.
+For example this configuration uses the g:foo variable as a fake clipboard: >
+
+    let g:clipboard = {
+          \   'name': 'myClipboard',
+          \   'copy': {
+          \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+          \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+          \    },
+          \   'paste': {
+          \      '+': {-> get(g:, 'foo', [])},
+          \      '*': {-> get(g:, 'foo', [])},
+          \   },
+          \ }
+
+The "copy" function stores a list of lines and the register type. The "paste"
+function returns the clipboard as a `[lines, regtype]` list, where `lines` is
+a list of lines and `regtype` is a register type conforming to |setreg()|.
 
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*

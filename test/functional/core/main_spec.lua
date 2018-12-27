@@ -77,8 +77,8 @@ describe('Command-line option', function()
                                                 |
                                                 |
       ]], {
-        [1] = {foreground = 4210943, special = Screen.colors.Grey0},
-        [2] = {special = Screen.colors.Grey0, bold = true, reverse = true}
+        [1] = {foreground = 4210943},
+        [2] = {bold = true, reverse = true}
       })
       feed('i:cq<CR>')
       screen:expect([[

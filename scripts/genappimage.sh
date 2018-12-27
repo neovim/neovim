@@ -62,8 +62,17 @@ delete_blacklisted
 # AppDir complete. Now package it as an AppImage.
 ########################################################################
 
-# No need for a fancy script. AppRun can just be a symlink to nvim.
-ln -s usr/bin/nvim AppRun
+# Appimage set the ARGV0 environment variable. This causes problems in zsh.
+# To prevent this, we use wrapper script to unset ARGV0 as AppRun.
+# See https://github.com/AppImage/AppImageKit/issues/852
+#
+cat << 'EOF' > AppRun
+#!/bin/bash
+
+unset ARGV0
+exec "$(dirname "$(readlink  -f "${0}")")/usr/bin/nvim" ${@+"$@"}
+EOF
+chmod 755 AppRun
 
 cd "$APP_BUILD_DIR" # Get out of AppImage directory.
 

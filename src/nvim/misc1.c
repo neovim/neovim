@@ -52,6 +52,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/stream.h"
@@ -1121,8 +1122,9 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       if (ascii_iswhite(string[0])) {
         if (i == 0 || !ascii_iswhite(line[i - 1]))
           continue;
-        while (ascii_iswhite(string[0]))
-          ++string;
+        while (ascii_iswhite(*string)) {
+          string++;
+        }
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
         /* do nothing */;
@@ -1136,6 +1138,19 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       if (vim_strchr(part_buf, COM_BLANK) != NULL
           && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
+      }
+
+      if (vim_strchr(part_buf, COM_MIDDLE) != NULL) {
+        // For a middlepart comment, only consider it to match if
+        // everything before the current position in the line is
+        // whitespace.  Otherwise we would think we are inside a
+        // comment if the middle part appears somewhere in the middle
+        // of the line.  E.g. for C the "*" appears often.
+        for (j = 0; ascii_iswhite(line[j]) && j <= i; j++) {
+        }
+        if (j < i) {
+          continue;
+        }
       }
 
       /*
@@ -1936,10 +1951,10 @@ changed_lines(
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
 
-  if (xtra == 0 && curwin->w_p_diff) {
-    /* When the number of lines doesn't change then mark_adjust() isn't
-     * called and other diff buffers still need to be marked for
-     * displaying. */
+  if (xtra == 0 && curwin->w_p_diff && !diff_internal()) {
+    // When the number of lines doesn't change then mark_adjust() isn't
+    // called and other diff buffers still need to be marked for
+    // displaying.
     linenr_T wlnum;
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -2007,6 +2022,10 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 
   /* mark the buffer as modified */
   changed();
+
+  if (curwin->w_p_diff && diff_internal()) {
+    curtab->tp_diff_update = true;
+  }
 
   /* set the '. mark */
   if (!cmdmod.keepjumps) {
@@ -2653,6 +2672,8 @@ void preserve_exit(void)
   }
 
   really_exiting = true;
+  // Ignore SIGHUP while we are already exiting. #9274
+  signal_reject_deadly();
   mch_errmsg(IObuff);
   mch_errmsg("\n");
   ui_flush();

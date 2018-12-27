@@ -2661,6 +2661,8 @@ void ex_copen(exarg_T *eap)
       }
     }
   } else {
+    int flags = 0;
+
     qf_buf = qf_find_buf(qi);
 
     /* The current window becomes the previous window afterwards. */
@@ -2668,11 +2670,17 @@ void ex_copen(exarg_T *eap)
 
     if ((eap->cmdidx == CMD_copen || eap->cmdidx == CMD_cwindow)
         && cmdmod.split == 0)
-      /* Create the new window at the very bottom, except when
-       * :belowright or :aboveleft is used. */
+      // Create the new quickfix window at the very bottom, except when
+      // :belowright or :aboveleft is used.
       win_goto(lastwin);
-    if (win_split(height, WSP_BELOW | WSP_NEWLOC) == FAIL)
-      return;                   /* not enough room for window */
+    // Default is to open the window below the current window
+    if (cmdmod.split == 0) {
+      flags = WSP_BELOW;
+    }
+    flags |= WSP_NEWLOC;
+    if (win_split(height, flags) == FAIL) {
+      return;                   // not enough room for window
+    }
     RESET_BINDING(curwin);
 
     if (eap->cmdidx == CMD_lopen || eap->cmdidx == CMD_lwindow) {

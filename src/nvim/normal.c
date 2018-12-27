@@ -1325,6 +1325,14 @@ static int normal_check(VimState *state)
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
 
+    // Updating diffs from changed() does not always work properly,
+    // esp. updating folds.  Do an update just before redrawing if
+    // needed.
+    if (curtab->tp_diff_update || curtab->tp_diff_invalid) {
+      ex_diffupdate(NULL);
+      curtab->tp_diff_update = false;
+    }
+
     // Scroll-binding for diff mode may have been postponed until
     // here.  Avoids doing it for every change.
     if (diff_need_scrollbind) {

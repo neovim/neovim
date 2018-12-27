@@ -2512,7 +2512,7 @@ describe(":substitute", function()
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
-  retry(2, nil, function()
+  retry(2, 40000, function()
     local screen = Screen.new(30,15)
     clear()
 

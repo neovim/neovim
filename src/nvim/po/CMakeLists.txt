@@ -8,6 +8,7 @@ if(NOT LANGUAGES)
     af
     ca
     cs
+    da
     de
     en_GB
     eo

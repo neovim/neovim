@@ -6,19 +6,20 @@
 
 Development of Nvim					*development*
 
-Nvim is open source software.  Everybody is encouraged to contribute.
-    https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
+This reference describes design constraints and guidelines, for developing
+Nvim applications or Nvim itself.
+Architecture and internal concepts are covered in src/nvim/README.md
 
-See src/nvim/README.md for an overview of the source code.
+Nvim is free and open source.  Everybody is encouraged to contribute.
+    https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
 Design goals						*design-goals*
 
-Most important things come first (roughly).
-
-Note that some items conflict; this is intentional.  A balance must be found.
+Most important things come first (roughly).  Some items conflict; this is
+intentional.  A balance must be found.
 
 
 NVIM IS... IMPROVED					*design-improved*
@@ -80,41 +81,6 @@ include the kitchen sink... but it's good for plumbing."
 ==============================================================================
 Developer guidelines				        *dev*
 
-
-JARGON	 						*dev-jargon*
-
-API client ~
-All external UIs and remote plugins (as opposed to regular Vim plugins) are
-"clients" in general; but we call something an "API client" if its purpose is
-to abstract or wrap the RPC API for the convenience of other applications
-(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
-using an HTTP client like curl, but boto3 wraps that in a convenient python
-interface). For example, the Nvim lua-client is an API client:
-    https://github.com/neovim/lua-client
-
-Host ~
-A plugin "host" is both a client (of the Nvim API) and a server (of an
-external platform, e.g. python). It is a remote plugin that hosts other
-plugins.
-
-Remote plugin ~
-Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
-process and communicates with Nvim via the |api|.
-
-Window ~
-The word "window" is commonly used for several things: A window on the screen,
-the xterm window, a window inside Vim to view a buffer.
-To avoid confusion, other items that are sometimes called window have been
-given another name.  Here is an overview of the related items:
-
-screen		The whole display.
-shell		The Vim application.  This can cover the whole screen (e.g.,
-		when running in a console) or part of it (xterm or GUI).
-window		View on a buffer.  There can be several windows in Vim,
-		together with the command line, menubar, toolbar, etc. they
-		fit in the shell.
-frame		Windows are kept in a tree of frames.  Each frame contains
-		a column, row, or window ("leaf" frame).
 
 PROVIDERS 						*dev-provider*
 
@@ -215,6 +181,8 @@ Standard Features ~
 - Clients should call |nvim_set_client_info()| after connecting, so users and
   plugins can detect the client by handling the |ChanInfo| event. This
   avoids the need for special variables or other client hints.
+- Clients should handle |nvim_error_event| notifications, which will be sent
+  if an async request to nvim was rejected or caused an error.
 
 Package Naming ~
 

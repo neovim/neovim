@@ -3127,10 +3127,16 @@ static void ins_compl_restart(void)
  */
 static void ins_compl_set_original_text(char_u *str)
 {
-  /* Replace the original text entry. */
-  if (compl_first_match->cp_flags & ORIGINAL_TEXT) {    /* safety check */
+  // Replace the original text entry.
+  // The ORIGINAL_TEXT flag is either at the first item or might possibly be
+  // at the last item for backward completion
+  if (compl_first_match->cp_flags & ORIGINAL_TEXT) {  // safety check
     xfree(compl_first_match->cp_str);
     compl_first_match->cp_str = vim_strsave(str);
+  } else if (compl_first_match->cp_prev != NULL
+             && (compl_first_match->cp_prev->cp_flags & ORIGINAL_TEXT)) {
+    xfree(compl_first_match->cp_prev->cp_str);
+    compl_first_match->cp_prev->cp_str = vim_strsave(str);
   }
 }
 
@@ -3189,7 +3195,8 @@ static bool ins_compl_prep(int c)
 
   /* Ignore end of Select mode mapping and mouse scroll buttons. */
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
-      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT) {
+      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
+      || c == K_COMMAND) {
     return retval;
   }
 

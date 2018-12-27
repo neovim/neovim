@@ -818,6 +818,18 @@ func Test_QuitPre()
 endfunc
 
 func Test_Cmdline()
+  au! CmdlineChanged : let g:text = getcmdline()
+  let g:text = 0
+  call feedkeys(":echom 'hello'\<CR>", 'xt')
+  call assert_equal("echom 'hello'", g:text)
+  au! CmdlineChanged
+
+  au! CmdlineChanged : let g:entered = expand('<afile>')
+  let g:entered = 0
+  call feedkeys(":echom 'hello'\<CR>", 'xt')
+  call assert_equal(':', g:entered)
+  au! CmdlineChanged
+
   au! CmdlineEnter : let g:entered = expand('<afile>')
   au! CmdlineLeave : let g:left = expand('<afile>')
   let g:entered = 0
@@ -828,6 +840,8 @@ func Test_Cmdline()
   au! CmdlineEnter
   au! CmdlineLeave
 
+  let save_shellslash = &shellslash
+  set noshellslash
   au! CmdlineEnter / let g:entered = expand('<afile>')
   au! CmdlineLeave / let g:left = expand('<afile>')
   let g:entered = 0
@@ -840,6 +854,7 @@ func Test_Cmdline()
   bwipe!
   au! CmdlineEnter
   au! CmdlineLeave
+  let &shellslash = save_shellslash
 endfunc
 
 " Test for BufWritePre autocommand that deletes or unloads the buffer.

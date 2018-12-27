@@ -1068,6 +1068,10 @@ void set_helplang_default(const char *lang)
     if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
       p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
       p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
+    } else if (STRLEN(p_hlg) >= 1 && *p_hlg == 'C') {
+      // any C like setting, such as C.UTF-8, becomes "en"
+      p_hlg[0] = 'e';
+      p_hlg[1] = 'n';
     }
     p_hlg[2] = NUL;
     options[idx].flags |= P_ALLOCED;
@@ -1769,14 +1773,13 @@ do_set (
             // Set the new value.
             *(char_u **)(varp) = newval;
 
-            if (!starting && origval != NULL && newval != NULL) {
-              // origval may be freed by
-              // did_set_string_option(), make a copy.
-              saved_origval = xstrdup((char *)origval);
-              // newval (and varp) may become invalid if the
-              // buffer is closed by autocommands.
-              saved_newval = xstrdup((char *)newval);
-            }
+            // origval may be freed by
+            // did_set_string_option(), make a copy.
+            saved_origval = (origval != NULL) ? xstrdup((char *)origval) : 0;
+
+            // newval (and varp) may become invalid if the
+            // buffer is closed by autocommands.
+            saved_newval = (newval != NULL) ? xstrdup((char *)newval) : 0;
 
             // Handle side effects, and set the global value for
             // ":set" on local options. Note: when setting 'syntax'
@@ -1786,8 +1789,14 @@ do_set (
                 new_value_alloced, oldval, errbuf, opt_flags);
 
             if (errmsg == NULL) {
-              trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
-                                        saved_newval);
+              if (!starting) {
+                trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
+                                          saved_newval);
+              }
+              if (options[opt_idx].flags & P_UI_OPTION) {
+                ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                                   STRING_OBJ(cstr_as_string(saved_newval)));
+              }
             }
             xfree(saved_origval);
             xfree(saved_newval);
@@ -2378,8 +2387,8 @@ static char *set_string_option(const int opt_idx, const char *const value,
   char *const oldval = *varp;
   *varp = s;
 
-  char *const saved_oldval = (starting ? NULL : xstrdup(oldval));
-  char *const saved_newval = (starting ? NULL : xstrdup(s));
+  char *const saved_oldval = xstrdup(oldval);
+  char *const saved_newval = xstrdup(s);
 
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
@@ -2389,8 +2398,13 @@ static char *set_string_option(const int opt_idx, const char *const value,
 
   // call autocommand after handling side effects
   if (r == NULL) {
-    trigger_optionsset_string(opt_idx, opt_flags,
-                              saved_oldval, saved_newval);
+    if (!starting) {
+      trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_newval);
+    }
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         STRING_OBJ(cstr_as_string(saved_newval)));
+    }
   }
   xfree(saved_oldval);
   xfree(saved_newval);
@@ -4056,10 +4070,11 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         BOOLEAN_OBJ(value));
-    }
+  }
+
+  if (options[opt_idx].flags & P_UI_OPTION) {
+    ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                       BOOLEAN_OBJ(value));
   }
 
   comp_col();                       /* in case 'ruler' or 'showcmd' changed */
@@ -4429,10 +4444,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         INTEGER_OBJ(value));
-    }
+  }
+
+  if (errmsg == NULL && options[opt_idx].flags & P_UI_OPTION) {
+    ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                       INTEGER_OBJ(value));
   }
 
   comp_col();                       /* in case 'columns' or 'ls' changed */
@@ -4461,10 +4477,6 @@ static void trigger_optionsset_string(int opt_idx, int opt_flags,
     apply_autocmds(EVENT_OPTIONSET,
                    (char_u *)options[opt_idx].fullname, NULL, false, NULL);
     reset_v_option_vars();
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                         STRING_OBJ(cstr_as_string(newval)));
-    }
   }
 }
 

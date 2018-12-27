@@ -485,7 +485,7 @@ static char_u e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
 static char_u e_unmatchedp[] = N_("E54: Unmatched %s(");
 static char_u e_unmatchedpar[] = N_("E55: Unmatched %s)");
 static char_u e_z_not_allowed[] = N_("E66: \\z( not allowed here");
-static char_u e_z1_not_allowed[] = N_("E67: \\z1 et al. not allowed here");
+static char_u e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
 static char_u e_missing_sb[] = N_("E69: Missing ] after %s%%[");
 static char_u e_empty_sb[]  = N_("E70: Empty %s%%[]");
 #define NOT_MULTI       0
@@ -1952,7 +1952,7 @@ static char_u *regatom(int *flagp)
   {
     c = no_Magic(getchr());
     switch (c) {
-    case '(': if (reg_do_extmatch != REX_SET)
+    case '(': if ((reg_do_extmatch & REX_SET) == 0)
         EMSG_RET_NULL(_(e_z_not_allowed));
       if (one_exactly)
         EMSG_ONE_RET_NULL;
@@ -1971,7 +1971,7 @@ static char_u *regatom(int *flagp)
     case '6':
     case '7':
     case '8':
-    case '9': if (reg_do_extmatch != REX_USE)
+    case '9': if ((reg_do_extmatch & REX_USE) == 0)
         EMSG_RET_NULL(_(e_z1_not_allowed));
       ret = regnode(ZREF + c - '0');
       re_has_z = REX_USE;
@@ -7257,15 +7257,13 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
   return vim_regexec_both(rmp, line, col, true);
 }
 
-/*
- * Match a regexp against multiple lines.
- * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
- * Note: "rmp->regprog" may be freed and changed.
- * Uses curbuf for line count and 'iskeyword'.
- *
- * Return zero if there is no match.  Return number of lines contained in the
- * match otherwise.
- */
+/// Match a regexp against multiple lines.
+/// "rmp->regprog" must be a compiled regexp as returned by vim_regcomp().
+/// Note: "rmp->regprog" may be freed and changed, even set to NULL.
+/// Uses curbuf for line count and 'iskeyword'.
+///
+/// Return zero if there is no match.  Return number of lines contained in the
+/// match otherwise.
 long vim_regexec_multi(
   regmmatch_T *rmp,
   win_T       *win,               /* window in which to search or NULL */
@@ -7297,7 +7295,12 @@ long vim_regexec_multi(
     p_re = BACKTRACKING_ENGINE;
     vim_regfree(rmp->regprog);
     report_re_switch(pat);
+    // checking for \z misuse was already done when compiling for NFA,
+    // allow all here
+    reg_do_extmatch = REX_ALL;
     rmp->regprog = vim_regcomp(pat, re_flags);
+    reg_do_extmatch = 0;
+
     if (rmp->regprog != NULL) {
       result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
                                                    tm);

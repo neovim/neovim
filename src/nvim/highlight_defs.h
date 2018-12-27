@@ -22,7 +22,7 @@ typedef enum {
 /// Stores a complete highlighting entry, including colors and attributes
 /// for both TUI and GUI.
 typedef struct attr_entry {
-  int16_t rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  int16_t rgb_ae_attr, cterm_ae_attr;  ///< HlAttrFlags
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
 } HlAttrs;
@@ -30,17 +30,6 @@ typedef struct attr_entry {
 #define HLATTRS_INIT (HlAttrs) { \
   .rgb_ae_attr = 0, \
   .cterm_ae_attr = 0, \
-  .rgb_fg_color = -1, \
-  .rgb_bg_color = -1, \
-  .rgb_sp_color = -1, \
-  .cterm_fg_color = 0, \
-  .cterm_bg_color = 0, \
-}
-
-// sentinel value that compares unequal to any valid highlight
-#define HLATTRS_INVALID (HlAttrs) { \
-  .rgb_ae_attr = -1, \
-  .cterm_ae_attr = -1, \
   .rgb_fg_color = -1, \
   .rgb_bg_color = -1, \
   .rgb_sp_color = -1, \
@@ -94,8 +83,8 @@ typedef enum {
   , HLF_TP          // tabpage line
   , HLF_TPS         // tabpage line selected
   , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursurcolumn'
-  , HLF_CUL         // 'cursurline'
+  , HLF_CUC         // 'cursorcolumn'
+  , HLF_CUL         // 'cursorline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
   , HLF_0           // Whitespace

@@ -2235,6 +2235,35 @@ func Test_cclose_in_autocmd()
   " call test_override('starting', 0)
 endfunc
 
+" Check that ":file" without an argument is possible even when "curbuf_lock"
+" is set.
+func Test_file_from_copen()
+  " Works without argument.
+  augroup QF_Test
+    au!
+    au FileType qf file
+  augroup END
+  copen
+
+  augroup QF_Test
+    au!
+  augroup END
+  cclose
+
+  " Fails with argument.
+  augroup QF_Test
+    au!
+    au FileType qf call assert_fails(':file foo', 'E788')
+  augroup END
+  copen
+  augroup QF_Test
+    au!
+  augroup END
+  cclose
+
+  augroup! QF_Test
+endfunction
+
 func Test_resize_from_copen()
     augroup QF_Test
 	au!
@@ -2607,4 +2636,31 @@ func Test_shorten_fname()
   " Displaying the quickfix list should simplify the file path
   silent! clist
   call assert_equal('test_quickfix.vim', bufname('test_quickfix.vim'))
+endfunc
+
+" Test for the position of the quickfix and location list window
+func Test_qfwin_pos()
+  " Open two windows
+  new | only
+  new
+  cexpr ['F1:10:L10']
+  copen
+  " Quickfix window should be the bottom most window
+  call assert_equal(3, winnr())
+  close
+  " Open at the very top
+  wincmd t
+  topleft copen
+  call assert_equal(1, winnr())
+  close
+  " open left of the current window
+  wincmd t
+  below new
+  leftabove copen
+  call assert_equal(2, winnr())
+  close
+  " open right of the current window
+  rightbelow copen
+  call assert_equal(3, winnr())
+  close
 endfunc

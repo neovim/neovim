@@ -14,6 +14,7 @@ local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
 local request = helpers.request
 local source = helpers.source
+local next_msg = helpers.next_msg
 
 local expect_err = global_helpers.expect_err
 local format_string = global_helpers.format_string
@@ -44,6 +45,15 @@ describe('API', function()
     --      "Packer instance already working. Use another Packer ..."
     expect_err("can't serialize object$",
                request, nil)
+  end)
+
+  it('handles errors in async requests', function()
+    local error_types = meths.get_api_info()[2].error_types
+    nvim_async("bogus")
+    eq({'notification', 'nvim_error_event',
+        {error_types.Exception.id, 'Invalid method: nvim_bogus'}}, next_msg())
+    -- error didn't close channel.
+    eq(2, eval('1+1'))
   end)
 
   describe('nvim_command', function()
@@ -1237,7 +1247,7 @@ describe('API', function()
 
   describe('nvim_list_uis', function()
     it('returns empty if --headless', function()
-      -- --embed implies --headless.
+      -- Test runner defaults to --headless.
       eq({}, nvim("list_uis"))
     end)
     it('returns attached UIs', function()
@@ -1269,4 +1279,16 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_create_namespace', function()
+    it('works', function()
+      eq({}, meths.get_namespaces())
+      eq(1, meths.create_namespace("ns-1"))
+      eq(2, meths.create_namespace("ns-2"))
+      eq(1, meths.create_namespace("ns-1"))
+      eq({["ns-1"]=1, ["ns-2"]=2}, meths.get_namespaces())
+      eq(3, meths.create_namespace(""))
+      eq(4, meths.create_namespace(""))
+      eq({["ns-1"]=1, ["ns-2"]=2}, meths.get_namespaces())
+    end)
+  end)
 end)

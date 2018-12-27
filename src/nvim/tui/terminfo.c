@@ -13,6 +13,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/os/os.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
 
@@ -31,6 +32,24 @@ bool terminfo_is_term_family(const char *term, const char *family)
     && 0 == memcmp(term, family, flen)
     // Per commentary in terminfo, minus is the only valid suffix separator.
     && ('\0' == term[flen] || '-' == term[flen]);
+}
+
+bool terminfo_is_bsd_console(const char *term)
+{
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) \
+  || defined(__DragonFly__)
+  if (strequal(term, "vt220")         // OpenBSD
+      || strequal(term, "vt100")) {   // NetBSD
+    return true;
+  }
+# if defined(__FreeBSD__)
+  // FreeBSD console sets TERM=xterm, but it does not support xterm features
+  // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
+  return strequal(term, "xterm") && !!os_getenv("XTERM_VERSION");
+# endif
+#else
+  return false;
+#endif
 }
 
 /// Loads a built-in terminfo db when we (unibilium) failed to load a terminfo

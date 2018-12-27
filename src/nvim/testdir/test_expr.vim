@@ -177,6 +177,22 @@ function Test_printf_misc()
   call assert_equal('173', printf('%O', 123))
   call assert_equal('7b', printf('%x', 123))
   call assert_equal('7B', printf('%X', 123))
+
+  call assert_equal('123', printf('%hd', 123))
+  call assert_equal('-123', printf('%hd', -123))
+  call assert_equal('-1', printf('%hd', 0xFFFF))
+  call assert_equal('-1', printf('%hd', 0x1FFFFF))
+
+  call assert_equal('123', printf('%hu', 123))
+  call assert_equal('65413', printf('%hu', -123))
+  call assert_equal('65535', printf('%hu', 0xFFFF))
+  call assert_equal('65535', printf('%hu', 0x1FFFFF))
+
+  call assert_equal('123', printf('%ld', 123))
+  call assert_equal('-123', printf('%ld', -123))
+  call assert_equal('65535', printf('%ld', 0xFFFF))
+  call assert_equal('131071', printf('%ld', 0x1FFFF))
+
   call assert_equal('{', printf('%c', 123))
   call assert_equal('abc', printf('%s', 'abc'))
   call assert_equal('abc', printf('%S', 'abc'))
@@ -216,6 +232,11 @@ function Test_printf_misc()
   call assert_equal('  123', printf('% *d', 5, 123))
   call assert_equal(' +123', printf('%+ *d', 5, 123))
 
+  call assert_equal('foobar', printf('%.*s',  9, 'foobar'))
+  call assert_equal('foo',    printf('%.*s',  3, 'foobar'))
+  call assert_equal('',       printf('%.*s',  0, 'foobar'))
+  call assert_equal('foobar', printf('%.*s', -1, 'foobar'))
+
   " Simple quote (thousand grouping char) is ignored.
   call assert_equal('+00123456', printf("%+'09d", 123456))
 
@@ -237,6 +258,11 @@ function Test_printf_misc()
 
   call assert_equal(' 00123', printf('%6.5d', 123))
   call assert_equal(' 0007b', printf('%6.5x', 123))
+
+  call assert_equal('123', printf('%.2d', 123))
+  call assert_equal('0123', printf('%.4d', 123))
+  call assert_equal('0000000123', printf('%.10d', 123))
+  call assert_equal('123', printf('%.0d', 123))
 
   call assert_equal('abc', printf('%2s', 'abc'))
   call assert_equal('abc', printf('%2S', 'abc'))
@@ -334,6 +360,11 @@ function Test_printf_float()
   call assert_equal('-INF  ', printf('%-6E', -1.0/0.0))
   call assert_equal("str2float('inf')", printf('%s', 1.0/0.0))
   call assert_equal("-str2float('inf')", printf('%s', -1.0/0.0))
+
+  " Test special case where max precision is truncated at 340.
+  call assert_equal('1.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', printf('%.330f', 1.0))
+  call assert_equal('1.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', printf('%.340f', 1.0))
+  call assert_equal('1.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', printf('%.350f', 1.0))
 
   " Float nan (not a number) has no sign.
   call assert_equal('nan', printf('%f', sqrt(-1.0)))

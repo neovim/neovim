@@ -603,13 +603,14 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int attr_id = 0;
 
     if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
-      attr_id = get_term_attr_entry(&(HlAttrs) {
+      attr_id = hl_get_term_attr(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
         .rgb_ae_attr = (int16_t)hl_attrs,
         .rgb_fg_color = vt_fg,
         .rgb_bg_color = vt_bg,
+        .rgb_sp_color = -1,
       });
     }
 

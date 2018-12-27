@@ -85,6 +85,36 @@ func Test_spellreall()
   bwipe!
 endfunc
 
+func Test_spellinfo()
+  throw 'skipped: Nvim does not support enc=latin1'
+  new
+
+  set enc=latin1 spell spelllang=en
+  call assert_match("^\nfile: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+
+  set enc=cp1250 spell spelllang=en
+  call assert_match("^\nfile: .*/runtime/spell/en.ascii.spl\n$", execute('spellinfo'))
+
+  if has('multi_byte')
+    set enc=utf-8 spell spelllang=en
+    call assert_match("^\nfile: .*/runtime/spell/en.utf-8.spl\n$", execute('spellinfo'))
+  endif
+
+  set enc=latin1 spell spelllang=en_us,en_nz
+  call assert_match("^\n" .
+                 \  "file: .*/runtime/spell/en.latin1.spl\n" .
+                 \  "file: .*/runtime/spell/en.latin1.spl\n$", execute('spellinfo'))
+
+  set spell spelllang=
+  call assert_fails('spellinfo', 'E756:')
+
+  set nospell spelllang=en
+  call assert_fails('spellinfo', 'E756:')
+
+  set enc& spell& spelllang&
+  bwipe
+endfunc
+
 func Test_zz_basic()
   call LoadAffAndDic(g:test_data_aff1, g:test_data_dic1)
   call RunGoodBad("wrong OK puts. Test the end",

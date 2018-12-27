@@ -38,3 +38,8 @@ function Test_messages()
     let &more = oldmore
   endtry
 endfunction
+
+func Test_message_completion()
+  call feedkeys(":message \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"message clear', @:)
+endfunc

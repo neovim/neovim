@@ -8,10 +8,6 @@ if [[ "${CI_TARGET}" == lint ]]; then
 fi
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  brew install ninja
-  brew install gettext
-  brew reinstall -s libtool
-  brew install ccache
   export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 
@@ -26,10 +22,10 @@ if ! [ "${TRAVIS_OS_NAME}" = osx ] ; then
   # Use default CC to avoid compilation problems when installing Python modules.
   echo "Install neovim module for Python 2."
   CC=cc python2.7 -m pip -q install --user --upgrade neovim
-
-  echo "Install neovim RubyGem."
-  gem install --no-document --version ">= 0.2.0" neovim
 fi
+
+echo "Install neovim RubyGem."
+gem install --no-document --version ">= 0.8.0" neovim
 
 echo "Install neovim npm package"
 npm install -g neovim

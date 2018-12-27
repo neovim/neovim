@@ -167,7 +167,7 @@ the editor.
 	mouse support is active. Some options like 'ambiwidth' have already
 	taken effect on the grid, where appropriate empty cells are added,
 	however a UI might still use such options when rendering raw text
-	sent from Nvim, like for |ui-ext-cmdline|.
+	sent from Nvim, like for |ui-cmdline|.
 
 ["mode_change", mode, mode_idx]
 	The mode changed.  The first parameter `mode` is a string representing
@@ -325,14 +325,14 @@ numerical highlight `id`:s to the actual attributes.
 		+-------------------------+ src_top    |
 		| src (moved up) and dst  |            |
 		|-------------------------| dst_bot    |
-		| src (cleared)           |            |
+		| src (invalid)           |            |
 		+=========================+ src_bot
 <
 	If `rows` is less than zero, move a rectangle in the SR down, this can
 	happen while scrolling up.
 >
 		+=========================+ src_top
-		| src (cleared)           |            |
+		| src (invalid)           |            |
 		|------------------------ | dst_top    |
 		| src (moved down) and dst|            |
 		+-------------------------+ src_bot    |
@@ -347,6 +347,10 @@ numerical highlight `id`:s to the actual attributes.
 	Note when updating code from |ui-grid-old| events: ranges are
 	end-exclusive, which is consistent with API conventions, but different
 	from `set_scroll_region` which was end-inclusive.
+
+	The scrolled-in area will be filled using |ui-event-grid_line| directly
+	after the scroll event. The UI thus doesn't need to clear this area as
+	part of handling the scroll event.
 
 ==============================================================================
 Legacy Grid Events (cell based)					   *ui-grid-old*

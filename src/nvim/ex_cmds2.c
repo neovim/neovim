@@ -3069,6 +3069,17 @@ theend:
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
 {
+  if (eap->addr_count > 0) {
+    // :script {scriptId}: edit the script
+    if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
+      EMSG(_(e_invarg));
+    } else {
+      eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      do_exedit(eap, NULL);
+    }
+    return;
+  }
+
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name,
@@ -3506,7 +3517,12 @@ static char *get_locale_val(int what)
 }
 #endif
 
-
+// Return true when "lang" starts with a valid language name.
+// Rejects NULL, empty string, "C", "C.UTF-8" and others.
+static bool is_valid_mess_lang(char *lang)
+{
+  return lang != NULL && ASCII_ISALPHA(lang[0]) && ASCII_ISALPHA(lang[1]);
+}
 
 /// Obtain the current messages language.  Used to set the default for
 /// 'helplang'.  May return NULL or an empty string.
@@ -3526,14 +3542,14 @@ char *get_mess_lang(void)
 #  endif
 # else
   p = os_getenv("LC_ALL");
-  if (p == NULL) {
+  if (!is_valid_mess_lang(p)) {
     p = os_getenv("LC_MESSAGES");
-    if (p == NULL) {
+    if (!is_valid_mess_lang(p)) {
       p = os_getenv("LANG");
     }
   }
 # endif
-  return p;
+  return is_valid_mess_lang(p) ? p : NULL;
 }
 
 // Complicated #if; matches with where get_mess_env() is used below.
@@ -3812,7 +3828,13 @@ static void script_host_execute(char *name, exarg_T *eap)
     // current range
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
-    (void)eval_call_provider(name, "execute", args);
+
+    if (!eval_has_provider(name)) {
+      emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+            name);
+    } else {
+      (void)eval_call_provider(name, "execute", args);
+    }
   }
 }
 

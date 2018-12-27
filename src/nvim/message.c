@@ -505,7 +505,7 @@ int emsg(const char_u *s_)
      */
     if (cause_errthrow((char_u *)s, severe, &ignore) == true) {
       if (!ignore) {
-        did_emsg = true;
+        did_emsg++;
       }
       return true;
     }
@@ -554,7 +554,7 @@ int emsg(const char_u *s_)
     } else {
       flush_buffers(FLUSH_MINIMAL);  // flush internal buffers
     }
-    did_emsg = true;          // flag for DoOneCmd()
+    did_emsg++;               // flag for DoOneCmd()
   }
 
   emsg_on_display = true;     // remember there is an error message
@@ -1896,6 +1896,9 @@ static void msg_scroll_up(void)
   } else {
     screen_del_lines(0, 1, (int)Rows, 0, Columns);
   }
+  // TODO(bfredl): when msgsep display is properly batched, this fill should be
+  // eliminated.
+  screen_fill(Rows-1, Rows, 0, (int)Columns, ' ', ' ', 0);
 }
 
 /*
@@ -2311,6 +2314,7 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1
               && screen_ins_lines(0, 1, (int)Rows, 0, (int)Columns) == OK) {
+            screen_fill(0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {
@@ -2821,7 +2825,6 @@ do_dialog (
                                Ex command */
 )
 {
-  int oldState;
   int retval = 0;
   char_u      *hotkeys;
   int c;
@@ -2834,7 +2837,10 @@ do_dialog (
   }
 
 
-  oldState = State;
+  int save_msg_silent = msg_silent;
+  int oldState = State;
+
+  msg_silent = 0;  // If dialog prompts for input, user needs to see it! #8788
   State = CONFIRM;
   setmouse();
 
@@ -2887,6 +2893,7 @@ do_dialog (
 
   xfree(hotkeys);
 
+  msg_silent = save_msg_silent;
   State = oldState;
   setmouse();
   --no_wait_return;

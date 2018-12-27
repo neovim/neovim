@@ -703,47 +703,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 	been set.
 
 							*'background'* *'bg'*
-'background' 'bg'	string	(default "dark" or "light", see below)
+'background' 'bg'	string	(default "dark")
 			global
-	When set to "dark", Vim will try to use colors that look good on a
-	dark background.  When set to "light", Vim will try to use colors that
-	look good on a light background.  Any other value is illegal.
-	Vim tries to set the default value according to the terminal used.
-	This will not always be correct.
-	Setting this option does not change the background color, it tells Vim
-	what the background color looks like.  For changing the background
-	color, see |:hi-normal|.
+	When set to "dark" or "light", Nvim will adjust the default color
+	groups for a dark or light background, respectively.
 
-	When 'background' is set Vim will adjust the default color groups for
-	the new value.  But the colors used for syntax highlighting will not
-	change.					*g:colors_name*
+	This option does NOT change the background color, it tells Nvim what
+	the "inherited" (terminal/GUI) background looks like.
+	See |:hi-normal| if you want to set the background color explicitly.
+						*g:colors_name*
 	When a color scheme is loaded (the "g:colors_name" variable is set)
 	setting 'background' will cause the color scheme to be reloaded.  If
 	the color scheme adjusts to the value of 'background' this will work.
 	However, if the color scheme sets 'background' itself the effect may
 	be undone.  First delete the "g:colors_name" variable when needed.
 
-	When setting 'background' to the default value with: >
-		:set background&
-<	Vim will guess the value.  In the GUI this should work correctly,
-	in other cases Vim might not be able to guess the right value.
-
-	When starting the GUI, the default value for 'background' will be
-	"light".  When the value is not set in the gvimrc, and Vim detects
-	that the background is actually quite dark, 'background' is set to
-	"dark".  But this happens only AFTER the gvimrc file has been read
-	(because the window needs to be opened to find the actual background
-	color).  To get around this, force the GUI window to be opened by
-	putting a ":gui" command in the gvimrc file, before where the value
-	of 'background' is used (e.g., before ":syntax on").
-
-	For Windows the default is "dark". "dark" should be used if $COLORFGBG
-	suggests a dark	background (not yet implemented). Otherwise the default
-	is "light".
-
 	Normally this option would be set in the vimrc file.  Possibly
 	depending on the terminal name.  Example: >
-		:if $TERM == "xterm"
+		:if $TERM ==# "xterm"
 		:  set background=dark
 		:endif
 <	When this option is set, the default settings for the highlight groups
@@ -1485,7 +1462,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When 'confirm' is on, certain operations that would normally
 	fail because of unsaved changes to a buffer, e.g. ":q" and ":e",
-	instead raise a |dialog| asking if you wish to save the current
+	instead raise a dialog asking if you wish to save the current
 	file(s).  You can still use a ! to unconditionally |abandon| a buffer.
 	If 'confirm' is off you can still activate confirmation for one
 	command only (this is most useful in mappings) with the |:confirm|
@@ -1882,13 +1859,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'dex'* *'diffexpr'*
 'diffexpr' 'dex'	string	(default "")
 			global
-	Expression which is evaluated to obtain an ed-style diff file from two
-	versions of a file.  See |diff-diffexpr|.
+	Expression which is evaluated to obtain a diff file (either ed-style
+	or unified-style) from two versions of a file.  See |diff-diffexpr|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		string	(default "filler")
+'diffopt' 'dip'		string	(default "internal,filler")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -1948,11 +1925,31 @@ A jump table for the options with a short description can be found at |Q_op|.
 		foldcolumn:{n}	Set the 'foldcolumn' option to {n} when
 				starting diff mode.  Without this 2 is used.
 
-	Examples: >
+		internal	Use the internal diff library.  This is
+				ignored when 'diffexpr' is set.  *E960*
+				When running out of memory when writing a
+				buffer this item will be ignored for diffs
+				involving that buffer.  Set the 'verbose'
+				option to see when this happens.
 
-		:set diffopt=filler,context:4
+		indent-heuristic
+				Use the indent heuristic for the internal
+				diff library.
+
+                algorithm:{text} Use the specified diff algorithm with the
+				internal diff engine. Currently supported 
+				algorithms are:
+				myers      the default algorithm
+				minimal    spend extra time to generate the
+					   smallest possible diff
+				patience   patience diff algorithm
+				histogram  histogram diff algorithm
+
+	Examples: >
+		:set diffopt=internal,filler,context:4
 		:set diffopt=
-		:set diffopt=filler,foldcolumn:3
+		:set diffopt=internal,filler,foldcolumn:3
+		:set diffopt-=internal  " do NOT use the internal diff parser
 <
 				     *'digraph'* *'dg'* *'nodigraph'* *'nodg'*
 'digraph' 'dg'		boolean	(default off)
@@ -2803,8 +2800,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set guifont=*
 <	will bring up a font requester, where you can pick the font you want.
 
-	The font name depends on the GUI used.  See |setting-guifont| for a
-	way to set 'guifont' for various systems.
+	The font name depends on the GUI used.
 
 	For Mac OSX you can use something like this: >
 	    :set guifont=Monaco:h10
@@ -6586,8 +6582,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	menu.  This conflicts with the use of the ALT key for mappings and
 	entering special characters.  This option tells what to do:
 	  no	Don't use ALT keys for menus.  ALT key combinations can be
-		mapped, but there is no automatic handling.  This can then be
-		done with the |:simalt| command.
+		mapped, but there is no automatic handling.
 	  yes	ALT key handling is done by the windowing system.  ALT key
 		combinations cannot be mapped.
 	  menu	Using ALT in combination with a character that is a menu

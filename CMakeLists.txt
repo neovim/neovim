@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
 if(POLICY CMP0059)
-  cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
+  # Needed for use of DEFINITIONS variable, which is used to collect the
+  # compilation flags for reporting in "nvim --version"
+  # https://github.com/neovim/neovim/pull/8558#issuecomment-398033140
+  cmake_policy(SET CMP0059 OLD)
 endif()
 
 # Point CMake at any custom modules we may ship
@@ -386,7 +389,7 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 
 if(PREFER_LUA)
-  find_package(Lua REQUIRED)
+  find_package(Lua 5.1 REQUIRED)
   set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
   set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
   # Passive (not REQUIRED): if LUAJIT_FOUND is not set, nvim-test is skipped.
@@ -407,6 +410,7 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
+unset(CMAKE_REQUIRED_LIBRARIES)
 if(MSGPACK_HAS_FLOAT32)
   add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
@@ -428,11 +432,13 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
-  find_package(LibTermkey REQUIRED)
+  find_package(LibTermkey 0.18 REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
@@ -440,7 +446,7 @@ find_package(LibVterm REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 if(WIN32)
-  find_package(Winpty REQUIRED)
+  find_package(Winpty 0.4.3 REQUIRED)
   include_directories(SYSTEM ${WINPTY_INCLUDE_DIRS})
 endif()
 
@@ -700,7 +706,7 @@ if(LUACHECK_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
 
   add_custom_target(
-    blobcodelint
+    lintbuiltinlua
     COMMAND
       ${CMAKE_COMMAND}
         -DLUACHECK_PRG=${LUACHECK_PRG}
@@ -709,10 +715,21 @@ if(LUACHECK_PRG)
         -DREAD_GLOBALS=vim
         -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
   )
+  add_custom_target(
+    lintruntimelua
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
   # TODO(ZyX-I): Run linter for all lua code in src
   add_custom_target(
     lualint
-    DEPENDS blobcodelint
+    DEPENDS lintruntimelua
+    DEPENDS lintbuiltinlua
   )
 endif()
 

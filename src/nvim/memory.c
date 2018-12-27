@@ -16,6 +16,7 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/ui.h"
+#include "nvim/api/vim.h"
 
 #ifdef HAVE_JEMALLOC
 // Force je_ prefix on jemalloc functions.
@@ -681,6 +682,7 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+  api_vim_free_all_mem();
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that
   // were freed already.

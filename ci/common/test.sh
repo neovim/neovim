@@ -83,7 +83,7 @@ valgrind_check() {
 
 asan_check() {
   if test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
-    check_logs "${1}" "*san.*" | asan_symbolize
+    check_logs "${1}" "*san.*" | $ASAN_SYMBOLIZE
   fi
 }
 

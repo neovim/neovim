@@ -2728,6 +2728,12 @@ void ex_call(exarg_T *eap)
   lnum = eap->line1;
   for (; lnum <= eap->line2; lnum++) {
     if (eap->addr_count > 0) {  // -V560
+      if (lnum > curbuf->b_ml.ml_line_count) {
+        // If the function deleted lines or switched to another buffer
+        // the line number may become invalid.
+        EMSG(_(e_invrange));
+        break;
+      }
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
@@ -8119,6 +8125,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const int save_msg_silent = msg_silent;
   const int save_emsg_silent = emsg_silent;
   const bool save_emsg_noredir = emsg_noredir;
+  const bool save_redir_off = redir_off;
   garray_T *const save_capture_ga = capture_ga;
 
   if (check_secure()) {
@@ -8146,6 +8153,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   garray_T capture_local;
   ga_init(&capture_local, (int)sizeof(char), 80);
   capture_ga = &capture_local;
+  redir_off = false;
 
   if (argvars[0].v_type != VAR_LIST) {
     do_cmdline_cmd(tv_get_string(&argvars[0]));
@@ -8163,6 +8171,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   msg_silent = save_msg_silent;
   emsg_silent = save_emsg_silent;
   emsg_noredir = save_emsg_noredir;
+  redir_off = save_redir_off;
 
   ga_append(capture_ga, NUL);
   rettv->v_type = VAR_STRING;
@@ -10326,10 +10335,10 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tabnr++;
     int16_t winnr = 0;
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      winnr++;
       if (wparg != NULL && wp != wparg) {
         continue;
       }
-      winnr++;
       dict_T *const d = get_win_info(wp, tabnr, winnr);
       tv_list_append_dict(rettv->vval.v_list, d);
       if (wparg != NULL) {
@@ -10791,17 +10800,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!n && eval_has_provider(name)) {
     n = true;
-  }
-
-  if (STRICMP(name, "ruby") == 0 && n == true) {
-    char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
-    if (rubyhost) {
-      if (*rubyhost == NUL) {
-        // Invalid rubyhost executable. Gem is probably not installed.
-        n = false;
-      }
-      xfree(rubyhost);
-    }
   }
 
   rettv->vval.v_number = n;
@@ -11718,7 +11716,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (new_cwd && strlen(new_cwd) > 0) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir((char_u *)cwd)) {
+      if (!os_isdir_executable((const char *)cwd)) {
         EMSG2(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
@@ -16763,7 +16761,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir((const char_u *)cwd)) {
+      if (!os_isdir_executable((const char *)cwd)) {
         EMSG2(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
@@ -19244,7 +19242,8 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
-        internal_error("set_var()");
+        EMSG2(_("E963: setting %s to value with wrong type"), name);
+        return;
       }
     }
 
@@ -19532,6 +19531,7 @@ void ex_echo(exarg_T *eap)
   typval_T rettv;
   bool needclr = true;
   bool atstart = true;
+  const int did_emsg_before = did_emsg;
 
   if (eap->skip)
     ++emsg_skip;
@@ -19546,7 +19546,7 @@ void ex_echo(exarg_T *eap)
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.
-        if (!aborting()) {
+        if (!aborting() && did_emsg == did_emsg_before) {
           EMSG2(_(e_invexpr2), p);
         }
         need_clr_eos = false;
@@ -19635,7 +19635,7 @@ void ex_execute(exarg_T *eap)
   int ret = OK;
   char_u      *p;
   garray_T ga;
-  int save_did_emsg;
+  int save_did_emsg = did_emsg;
 
   ga_init(&ga, 1, 80);
 
@@ -19649,8 +19649,9 @@ void ex_execute(exarg_T *eap)
        * has been cancelled due to an aborting error, an interrupt, or an
        * exception.
        */
-      if (!aborting())
+      if (!aborting() && did_emsg == save_did_emsg) {
         EMSG2(_(e_invexpr2), p);
+      }
       ret = FAIL;
       break;
     }
@@ -22758,7 +22759,18 @@ bool eval_has_provider(const char *name)
     CHECK_PROVIDER(python);
     return has_python;
   } else if (strequal(name, "ruby")) {
+    bool need_check_ruby = (has_ruby == -1);
     CHECK_PROVIDER(ruby);
+    if (need_check_ruby && has_ruby == 1) {
+      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
+      if (rubyhost) {
+        if (*rubyhost == NUL) {
+          // Invalid rubyhost executable. Gem is probably not installed.
+          has_ruby = 0;
+        }
+        xfree(rubyhost);
+      }
+    }
     return has_ruby;
   }
 

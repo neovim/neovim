@@ -114,6 +114,15 @@ func Test_syntime()
   bd
 endfunc
 
+func Test_syntime_completion()
+  if !has('profile')
+    return
+  endif
+
+  call feedkeys(":syntime \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clear off on report', @:)
+endfunc
+
 func Test_syntax_list()
   syntax on
   let a = execute('syntax list')
@@ -481,4 +490,16 @@ fun Test_synstack_synIDtrans()
 
   syn clear
   bw!
+endfunc
+
+" Using \z() in a region with NFA failing should not crash.
+func Test_syn_wrong_z_one()
+  new
+  call setline(1, ['just some text', 'with foo and bar to match with'])
+  syn region FooBar start="foo\z(.*\)bar" end="\z1"
+  " call test_override("nfa_fail", 1)
+  redraw!
+  redraw!
+  " call test_override("ALL", 0)
+  bwipe!
 endfunc

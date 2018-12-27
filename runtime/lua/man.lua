@@ -1,3 +1,5 @@
+require('vim.compat')
+
 local buf_hls = {}
 
 local function highlight_line(line, linenr)
@@ -10,9 +12,9 @@ local function highlight_line(line, linenr)
   local attr = NONE
   local byte = 0 -- byte offset
 
-  local function end_attr_hl(attr)
+  local function end_attr_hl(attr_)
     for i, hl in ipairs(hls) do
-      if hl.attr == attr and hl.final == -1 then
+      if hl.attr == attr_ and hl.final == -1 then
         hl.final = byte
         hls[i] = hl
       end
@@ -106,7 +108,7 @@ local function highlight_line(line, linenr)
       -- the range 0x20 - 0x3f, then 'm'. (See ECMA-48, sections 5.4 & 8.3.117)
       local sgr = prev_char:match("^%[([\032-\063]*)m$")
       if sgr then
-        local match = ''
+        local match
         while sgr and #sgr > 0 do
           -- Match against SGR parameters, which may be separated by ';'
           match, sgr = sgr:match("^(%d*);?(.*)")

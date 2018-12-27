@@ -373,7 +373,7 @@ funct Test_undofile()
   let cwd = getcwd()
   if has('win32')
     " Replace windows drive such as C:... into C%...
-    let cwd = substitute(cwd, '^\([A-Z]\):', '\1%', 'g')
+    let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
   endif
   let pathsep = has('win32') ? '\' : '/'
   let cwd = substitute(cwd . pathsep . 'Xundofoo', pathsep, '%', 'g')
