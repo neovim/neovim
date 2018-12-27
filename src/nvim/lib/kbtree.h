@@ -31,10 +31,10 @@
 #define	__KB_KEY(type, x)	(x->key)
 #define __KB_PTR(btr, x)	(x->ptr)
 
-#define kbtree_t(name) kbtree_##name##_t
-#define kbitr_t(name) kbitr_##name##_t
+#define kbtree_t(name) kbtree_t_##name
+#define kbitr_t(name) kbitr_t_##name
 #define kb_init(b) ((b)->n_keys = (b)->n_nodes = 0, (b)->root = 0)
-#define kb_destroy(name, b) __kb_destroy(kbnode_##name##_t, b)
+#define kb_destroy(name, b) kb_destroy_##name(b)
 #define kb_get(name, b, k) kb_get_##name(b, k)
 #define kb_put(name, b, k) kb_put_##name(b, k)
 #define kb_del(name, b, k) kb_del_##name(b, k)

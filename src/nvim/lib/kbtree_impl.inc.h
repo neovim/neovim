@@ -13,11 +13,15 @@
 #include "nvim/memory.h"
 #include "nvim/lib/kbtree.h"
 
-#define kbtree_impl_t kbtree_##KB_TYPENAME##_t
-#define kbitr_impl_t kbitr_##KB_TYPENAME##_t
-#define kbnode_t kbnode_##KB_TYPENAME##_t
-#define kbnode_s kbnode_##KB_TYPENAME##_s
-#define kbpos_t kbpos_##KB_TYPENAME##_t
+#define __KB_KEY(type, x) (x->key)
+#define __KB_PTR(btr, x) (x->ptr)
+
+
+#define kbtree_impl_t KB_NAME_SUFFIX(kbtree_t)
+#define kbitr_impl_t KB_NAME_SUFFIX(kbitr_t)
+#define kbnode_t KB_NAME_SUFFIX(kbnode_t)
+#define kbnode_s KB_NAME_SUFFIX(kbnode_t)
+#define kbpos_t KB_NAME_SUFFIX(kbpos_t)
 #define key_t KB_KEY_TYPE
 
 #define T KB_BRANCH_FACTOR
@@ -48,10 +52,7 @@ typedef struct {
   kbpos_t stack[KB_MAX_DEPTH], *p;
 } kbitr_impl_t;
 
-#define IMPL(name) name##KB_TYPENAME
-
-#define __KB_KEY(type, x) (x->key)
-#define __KB_PTR(btr, x) (x->ptr)
+#define IMPL(name) KB_NAME_SUFFIX(name)
 
 static inline void IMPL(kb_destroy)(kbtree_impl_t *b)
 {
@@ -389,6 +390,3 @@ static inline void IMPL(kb_del_itr)(kbtree_impl_t *b, kbitr_impl_t *itr)
 
 #undef T
 #undef IMPL
-
-#undef __KB_KEY
-#undef __KB_PTR

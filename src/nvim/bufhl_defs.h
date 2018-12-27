@@ -38,11 +38,13 @@ typedef struct {
 #define BUFHL_CMP(a, b) ((int)(((a)->line - (b)->line)))
 
 #define KB_TYPENAME bufhl
+#define KB_NAME_SUFFIX(X) X##_bufhl
 #define KB_KEY_TYPE BufhlLine *
 #define KB_KEY_CMP(x,y) BUFHL_CMP(x,y)
 #define KB_BRANCH_FACTOR 10
 #include "nvim/lib/kbtree_impl.inc.h"
 #undef KB_TYPENAME
+#undef KB_NAME_SUFFIX
 #undef KB_KEY_TYPE
 #undef KB_KEY_CMP
 #undef KB_BRANCH_FACTOR
