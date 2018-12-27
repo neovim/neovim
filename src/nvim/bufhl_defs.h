@@ -36,6 +36,17 @@ typedef struct {
 } BufhlLineInfo;
 
 #define BUFHL_CMP(a, b) ((int)(((a)->line - (b)->line)))
-KBTREE_INIT(bufhl, BufhlLine *, BUFHL_CMP, 10)  // -V512
+
+#define KB_TYPENAME bufhl
+#define KB_KEY_TYPE BufhlLine *
+#define KB_KEY_CMP(x,y) BUFHL_CMP(x,y)
+#define KB_BRANCH_FACTOR 10
+#include "nvim/lib/kbtree_impl.inc.h"
+#undef KB_TYPENAME
+#undef KB_KEY_TYPE
+#undef KB_KEY_CMP
+#undef KB_BRANCH_FACTOR
+
 typedef kbtree_t(bufhl) BufhlInfo;
+
 #endif  // NVIM_BUFHL_DEFS_H
