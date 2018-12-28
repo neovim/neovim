@@ -1021,6 +1021,14 @@ void nvim_buf_clear_highlight(Buffer buffer,
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
 }
 
+String nvim__buf_tree_inspect(Buffer buffer, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return (String)STRING_INIT;
+  }
+  return bufhl_inspect(buf);
+}
 
 /// Set the virtual text (annotation) for a buffer line.
 ///

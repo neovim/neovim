@@ -5630,6 +5630,37 @@ int bufhl_get_attr(BufhlLineInfo *info, colnr_T col)
   return attr;
 }
 
+String bufhl_inspect(buf_T *buf)
+{
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char), 80);
+#define GA_PUT(x) ga_concat(&ga, (char_u *)(x))
+  kbitr_t(bufhl) itr[1];
+  kb_itr_first(bufhl, &buf->b_bufhl_info, itr);
+  kbpos_t_bufhl *lastp = itr->stack;
+  for (; kb_itr_valid(itr); kb_itr_next(bufhl, &buf->b_bufhl_info, itr)) {
+    while (itr->p < lastp) {
+      GA_PUT(")");
+      lastp--;
+    }
+    while (itr->p > lastp) {
+      GA_PUT("(");
+      lastp++;
+    }
+    vim_snprintf((char *) IObuff, IOSIZE, "%ld", kb_itr_key(itr)->line);
+    GA_PUT(IObuff);
+    if (!itr->p->x->is_internal) {
+      GA_PUT(",");
+    }
+    lastp = itr->p;
+  }
+  while (itr->stack < lastp) {
+    GA_PUT(")");
+    lastp--;
+  }
+  return (String){.data=ga.ga_data, .size=(size_t)ga.ga_len};
+}
+
 
 /*
  * Set 'buflisted' for curbuf to "on" and trigger autocommands if it changed.

@@ -41,7 +41,7 @@ typedef struct {
 #define KB_NAME_SUFFIX(X) X##_bufhl
 #define KB_KEY_TYPE BufhlLine *
 #define KB_KEY_CMP(x,y) BUFHL_CMP(x,y)
-#define KB_BRANCH_FACTOR 10
+#define KB_BRANCH_FACTOR 3
 #include "nvim/lib/kbtree_impl.c.h"
 #undef KB_TYPENAME
 #undef KB_NAME_SUFFIX
