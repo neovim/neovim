@@ -28,9 +28,6 @@
 #ifndef NVIM_LIB_KBTREE_H
 #define NVIM_LIB_KBTREE_H
 
-#define	__KB_KEY(type, x)	(x->key)
-#define __KB_PTR(btr, x)	(x->ptr)
-
 #define kbtree_t(name) kbtree_t_##name
 #define kbitr_t(name) kbitr_t_##name
 #define kb_init(b) ((b)->n_keys = (b)->n_nodes = 0, (b)->root = 0)
@@ -50,7 +47,7 @@
 #define kb_itr_next(name, b, i) kb_itr_next_##name(b, i)
 #define kb_itr_prev(name, b, i) kb_itr_prev_##name(b, i)
 #define kb_del_itr(name, b, i) kb_del_itr_##name(b, i)
-#define kb_itr_key(itr) __KB_KEY(dummy, (itr)->p->x)[(itr)->p->i]
+#define kb_itr_key(itr) ((itr)->p->x->key[(itr)->p->i])
 #define kb_itr_valid(itr) ((itr)->p >= (itr)->stack)
 
 #define kb_size(b) ((b)->n_keys)

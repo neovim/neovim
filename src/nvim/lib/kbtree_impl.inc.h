@@ -22,10 +22,6 @@ typedef struct {
 #include "nvim/memory.h"
 #include "nvim/lib/kbtree.h"
 
-#define __KB_KEY(type, x) (x->key)
-#define __KB_PTR(btr, x) (x->ptr)
-
-
 #define kbtree_impl_t KB_NAME_SUFFIX(kbtree_t)
 #define kbitr_impl_t KB_NAME_SUFFIX(kbitr_t)
 #define kbnode_t KB_NAME_SUFFIX(kbnode_t)
@@ -75,13 +71,13 @@ static inline void IMPL(kb_destroy)(kbtree_impl_t *b)
       x = *--top;
       if (x->is_internal == 0) { xfree(x); continue; }
       for (i = 0; i <= x->n; ++i)
-        if (__KB_PTR(b, x)[i]) {
+        if (x->ptr[i]) {
           if (top - stack == (int)max) {
             max <<= 1;
             stack = (kbnode_t**)xrealloc(stack, max * sizeof(kbnode_t*));
             top = stack + (max>>1);
           }
-          *top++ = __KB_PTR(b, x)[i];
+          *top++ = x->ptr[i];
         }
       xfree(x);
     }
@@ -97,11 +93,11 @@ static inline int IMPL(__kb_getp_aux)(const kbnode_t * __restrict x,
   rr = r? r : &tr;
   while (begin < end) {
     int mid = (begin + end) >> 1;
-    if (__cmp(__KB_KEY(key_t, x)[mid], *k) < 0) begin = mid + 1;
+    if (__cmp(x->key[mid], *k) < 0) begin = mid + 1;
     else end = mid;
   }
   if (begin == x->n) { *rr = 1; return x->n - 1; }
-  if ((*rr = __cmp(*k, __KB_KEY(key_t, x)[begin])) < 0) --begin;
+  if ((*rr = __cmp(*k, x->key[begin])) < 0) --begin;
   return begin;
 }
 
@@ -114,9 +110,9 @@ static key_t *IMPL(kb_getp)(kbtree_impl_t *b, key_t * __restrict k)
   kbnode_t *x = b->root;
   while (x) {
     i = IMPL(__kb_getp_aux)(x, k, &r);
-    if (i >= 0 && r == 0) return &__KB_KEY(key_t, x)[i];
+    if (i >= 0 && r == 0) return &x->key[i];
     if (x->is_internal == 0) return 0;
-    x = __KB_PTR(b, x)[i + 1];
+    x = x->ptr[i + 1];
   }
   return 0;
 }
@@ -137,13 +133,13 @@ static inline void IMPL(kb_intervalp)(kbtree_impl_t *b, key_t * __restrict k, ke
   while (x) {
     i = IMPL(__kb_getp_aux)(x, k, &r);
     if (i >= 0 && r == 0) {
-      *lower = *upper = &__KB_KEY(key_t, x)[i];
+      *lower = *upper = &x->key[i];
       return;
     }
-    if (i >= 0) *lower = &__KB_KEY(key_t, x)[i];
-    if (i < x->n - 1) *upper = &__KB_KEY(key_t, x)[i + 1];
+    if (i >= 0) *lower = &x->key[i];
+    if (i < x->n - 1) *upper = &x->key[i + 1];
     if (x->is_internal == 0) return;
-    x = __KB_PTR(b, x)[i + 1];
+    x = x->ptr[i + 1];
   }
 }
 
@@ -160,13 +156,13 @@ static inline void IMPL(__kb_split)(kbtree_impl_t *b, kbnode_t *x, int i, kbnode
   ++b->n_nodes;
   z->is_internal = y->is_internal;
   z->n = T - 1;
-  memcpy(__KB_KEY(key_t, z), &__KB_KEY(key_t, y)[T], sizeof(key_t) * (T - 1));
-  if (y->is_internal) memcpy(__KB_PTR(b, z), &__KB_PTR(b, y)[T], sizeof(void*) * T);
+  memcpy(z->key, &y->key[T], sizeof(key_t) * (T - 1));
+  if (y->is_internal) memcpy(z->ptr, &y->ptr[T], sizeof(void*) * T);
   y->n = T - 1;
-  memmove(&__KB_PTR(b, x)[i + 2], &__KB_PTR(b, x)[i + 1], sizeof(void*) * (unsigned int)(x->n - i));
-  __KB_PTR(b, x)[i + 1] = z;
-  memmove(&__KB_KEY(key_t, x)[i + 1], &__KB_KEY(key_t, x)[i], sizeof(key_t) * (unsigned int)(x->n - i));
-  __KB_KEY(key_t, x)[i] = __KB_KEY(key_t, y)[T - 1];
+  memmove(&x->ptr[i + 2], &x->ptr[i + 1], sizeof(void*) * (size_t)(x->n - i));
+  x->ptr[i + 1] = z;
+  memmove(&x->key[i + 1], &x->key[i], sizeof(key_t) * (size_t)(x->n - i));
+  x->key[i] = y->key[T - 1];
   ++x->n;
 }
 
@@ -177,17 +173,17 @@ static inline key_t *IMPL(__kb_putp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * 
   if (x->is_internal == 0) {
     i = IMPL(__kb_getp_aux)(x, k, 0);
     if (i != x->n - 1)
-      memmove(&__KB_KEY(key_t, x)[i + 2], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t));
-    ret = &__KB_KEY(key_t, x)[i + 1];
+      memmove(&x->key[i + 2], &x->key[i + 1], (size_t)(x->n - i - 1) * sizeof(key_t));
+    ret = &x->key[i + 1];
     *ret = *k;
     ++x->n;
   } else {
     i = IMPL(__kb_getp_aux)(x, k, 0) + 1;
-    if (__KB_PTR(b, x)[i]->n == 2 * T - 1) {
-      IMPL(__kb_split)(b, x, i, __KB_PTR(b, x)[i]);
-      if (__cmp(*k, __KB_KEY(key_t, x)[i]) > 0) ++i;
+    if (x->ptr[i]->n == 2 * T - 1) {
+      IMPL(__kb_split)(b, x, i, x->ptr[i]);
+      if (__cmp(*k, x->key[i]) > 0) ++i;
     }
-    ret = IMPL(__kb_putp_aux)(b, __KB_PTR(b, x)[i], k);
+    ret = IMPL(__kb_putp_aux)(b, x->ptr[i], k);
   }
   return ret;
 }
@@ -205,7 +201,7 @@ static inline key_t *IMPL(kb_putp)(kbtree_impl_t *b, key_t * __restrict k)
     ++b->n_nodes;
     s = (kbnode_t*)xcalloc(1, ILEN);
     b->root = s; s->is_internal = 1; s->n = 0;
-    __KB_PTR(b, s)[0] = r;
+    s->ptr[0] = r;
     IMPL(__kb_split)(b, s, 0, r);
     r = s;
   }
@@ -230,68 +226,68 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
   } else i = IMPL(__kb_getp_aux)(x, k, &r);
   if (x->is_internal == 0) {
     if (s == 2) ++i;
-    kp = __KB_KEY(key_t, x)[i];
-    memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t));
+    kp = x->key[i];
+    memmove(&x->key[i], &x->key[i + 1], (size_t)(x->n - i - 1) * sizeof(key_t));
     --x->n;
     return kp;
   }
   if (r == 0) {
-    if ((yn = __KB_PTR(b, x)[i]->n) >= T) {
-      xp = __KB_PTR(b, x)[i];
-      kp = __KB_KEY(key_t, x)[i];
-      __KB_KEY(key_t, x)[i] = IMPL(__kb_delp_aux)(b, xp, 0, 1);
+    if ((yn = x->ptr[i]->n) >= T) {
+      xp = x->ptr[i];
+      kp = x->key[i];
+      x->key[i] = IMPL(__kb_delp_aux)(b, xp, 0, 1);
       return kp;
-    } else if ((zn = __KB_PTR(b, x)[i + 1]->n) >= T) {
-      xp = __KB_PTR(b, x)[i + 1];
-      kp = __KB_KEY(key_t, x)[i];
-      __KB_KEY(key_t, x)[i] = IMPL(__kb_delp_aux)(b, xp, 0, 2);
+    } else if ((zn = x->ptr[i + 1]->n) >= T) {
+      xp = x->ptr[i + 1];
+      kp = x->key[i];
+      x->key[i] = IMPL(__kb_delp_aux)(b, xp, 0, 2);
       return kp;
     } else if (yn == T - 1 && zn == T - 1) {
-      y = __KB_PTR(b, x)[i]; z = __KB_PTR(b, x)[i + 1];
-      __KB_KEY(key_t, y)[y->n++] = *k;
-      memmove(&__KB_KEY(key_t, y)[y->n], __KB_KEY(key_t, z), (unsigned int)z->n * sizeof(key_t));
-      if (y->is_internal) memmove(&__KB_PTR(b, y)[y->n], __KB_PTR(b, z), (unsigned int)(z->n + 1) * sizeof(void*));
+      y = x->ptr[i]; z = x->ptr[i + 1];
+      y->key[y->n++] = *k;
+      memmove(&y->key[y->n], z->key, (size_t)z->n * sizeof(key_t));
+      if (y->is_internal) memmove(&y->ptr[y->n], z->ptr, (size_t)(z->n + 1) * sizeof(void*));
       y->n += z->n;
-      memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t));
-      memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*));
+      memmove(&x->key[i], &x->key[i + 1], (size_t)(x->n - i - 1) * sizeof(key_t));
+      memmove(&x->ptr[i + 1], &x->ptr[i + 2], (size_t)(x->n - i - 1) * sizeof(void*));
       --x->n;
       xfree(z);
       return IMPL(__kb_delp_aux)(b, y, k, s);
     }
   }
   ++i;
-  if ((xp = __KB_PTR(b, x)[i])->n == T - 1) {
-    if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n >= T) {
-      memmove(&__KB_KEY(key_t, xp)[1], __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t));
-      if (xp->is_internal) memmove(&__KB_PTR(b, xp)[1], __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*));
-      __KB_KEY(key_t, xp)[0] = __KB_KEY(key_t, x)[i - 1];
-      __KB_KEY(key_t, x)[i - 1] = __KB_KEY(key_t, y)[y->n - 1];
-      if (xp->is_internal) __KB_PTR(b, xp)[0] = __KB_PTR(b, y)[y->n];
+  if ((xp = x->ptr[i])->n == T - 1) {
+    if (i > 0 && (y = x->ptr[i - 1])->n >= T) {
+      memmove(&xp->key[1], xp->key, (size_t)xp->n * sizeof(key_t));
+      if (xp->is_internal) memmove(&xp->ptr[1], xp->ptr, (size_t)(xp->n + 1) * sizeof(void*));
+      xp->key[0] = x->key[i - 1];
+      x->key[i - 1] = y->key[y->n - 1];
+      if (xp->is_internal) xp->ptr[0] = y->ptr[y->n];
       --y->n; ++xp->n;
-    } else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n >= T) {
-      __KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];
-      __KB_KEY(key_t, x)[i] = __KB_KEY(key_t, y)[0];
-      if (xp->is_internal) __KB_PTR(b, xp)[xp->n] = __KB_PTR(b, y)[0];
+    } else if (i < x->n && (y = x->ptr[i + 1])->n >= T) {
+      xp->key[xp->n++] = x->key[i];
+      x->key[i] = y->key[0];
+      if (xp->is_internal) xp->ptr[xp->n] = y->ptr[0];
       --y->n;
-      memmove(__KB_KEY(key_t, y), &__KB_KEY(key_t, y)[1], (unsigned int)y->n * sizeof(key_t));
-      if (y->is_internal) memmove(__KB_PTR(b, y), &__KB_PTR(b, y)[1], (unsigned int)(y->n + 1) * sizeof(void*));
-    } else if (i > 0 && (y = __KB_PTR(b, x)[i - 1])->n == T - 1) {
-      __KB_KEY(key_t, y)[y->n++] = __KB_KEY(key_t, x)[i - 1];
-      memmove(&__KB_KEY(key_t, y)[y->n], __KB_KEY(key_t, xp), (unsigned int)xp->n * sizeof(key_t));
-      if (y->is_internal) memmove(&__KB_PTR(b, y)[y->n], __KB_PTR(b, xp), (unsigned int)(xp->n + 1) * sizeof(void*));
+      memmove(y->key, &y->key[1], (size_t)y->n * sizeof(key_t));
+      if (y->is_internal) memmove(y->ptr, &y->ptr[1], (size_t)(y->n + 1) * sizeof(void*));
+    } else if (i > 0 && (y = x->ptr[i - 1])->n == T - 1) {
+      y->key[y->n++] = x->key[i - 1];
+      memmove(&y->key[y->n], xp->key, (size_t)xp->n * sizeof(key_t));
+      if (y->is_internal) memmove(&y->ptr[y->n], xp->ptr, (size_t)(xp->n + 1) * sizeof(void*));
       y->n += xp->n;
-      memmove(&__KB_KEY(key_t, x)[i - 1], &__KB_KEY(key_t, x)[i], (unsigned int)(x->n - i) * sizeof(key_t));
-      memmove(&__KB_PTR(b, x)[i], &__KB_PTR(b, x)[i + 1], (unsigned int)(x->n - i) * sizeof(void*));
+      memmove(&x->key[i - 1], &x->key[i], (size_t)(x->n - i) * sizeof(key_t));
+      memmove(&x->ptr[i], &x->ptr[i + 1], (size_t)(x->n - i) * sizeof(void*));
       --x->n;
       xfree(xp);
       xp = y;
-    } else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n == T - 1) {
-      __KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];
-      memmove(&__KB_KEY(key_t, xp)[xp->n], __KB_KEY(key_t, y), (unsigned int)y->n * sizeof(key_t));
-      if (xp->is_internal) memmove(&__KB_PTR(b, xp)[xp->n], __KB_PTR(b, y), (unsigned int)(y->n + 1) * sizeof(void*));
+    } else if (i < x->n && (y = x->ptr[i + 1])->n == T - 1) {
+      xp->key[xp->n++] = x->key[i];
+      memmove(&xp->key[xp->n], y->key, (size_t)y->n * sizeof(key_t));
+      if (xp->is_internal) memmove(&xp->ptr[xp->n], y->ptr, (size_t)(y->n + 1) * sizeof(void*));
       xp->n += y->n;
-      memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t));
-      memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*));
+      memmove(&x->key[i], &x->key[i + 1], (size_t)(x->n - i - 1) * sizeof(key_t));
+      memmove(&x->ptr[i + 1], &x->ptr[i + 2], (size_t)(x->n - i - 1) * sizeof(void*));
       --x->n;
       xfree(y);
     }
@@ -308,7 +304,7 @@ static inline key_t IMPL(kb_delp)(kbtree_impl_t *b, key_t * __restrict k)
   if (b->root->n == 0 && b->root->is_internal) {
     --b->n_nodes;
     x = b->root;
-    b->root = __KB_PTR(b, x)[0];
+    b->root = x->ptr[0];
     xfree(x);
   }
   return ret;
@@ -325,10 +321,10 @@ static inline void IMPL(kb_itr_first)(kbtree_impl_t *b, kbitr_impl_t *itr)
   if (b->n_keys == 0) return;
   itr->p = itr->stack;
   itr->p->x = b->root; itr->p->i = 0;
-  while (itr->p->x->is_internal && __KB_PTR(b, itr->p->x)[0] != 0) {
+  while (itr->p->x->is_internal && itr->p->x->ptr[0] != 0) {
     kbnode_t *x = itr->p->x;
     ++itr->p;
-    itr->p->x = __KB_PTR(b, x)[0]; itr->p->i = 0;
+    itr->p->x = x->ptr[0]; itr->p->i = 0;
   }
 }
 
@@ -339,7 +335,7 @@ static inline int IMPL(kb_itr_next)(kbtree_impl_t *b, kbitr_impl_t *itr)
     ++itr->p->i;
     while (itr->p->x && itr->p->i <= itr->p->x->n) {
       itr->p[1].i = 0;
-      itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0;
+      itr->p[1].x = itr->p->x->is_internal? itr->p->x->ptr[itr->p->i] : 0;
       ++itr->p;
     }
     --itr->p;
@@ -352,7 +348,7 @@ static inline int IMPL(kb_itr_prev)(kbtree_impl_t *b, kbitr_impl_t *itr)
   if (itr->p < itr->stack) return 0;
   for (;;) {
     while (itr->p->x && itr->p->i >= 0) {
-      itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0;
+      itr->p[1].x = itr->p->x->is_internal? itr->p->x->ptr[itr->p->i] : 0;
       itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1;
       ++itr->p;
     }
@@ -376,7 +372,7 @@ static inline int IMPL(kb_itr_getp)(kbtree_impl_t *b, key_t * __restrict k, kbit
     itr->p->i = i;
     if (i >= 0 && r == 0) return 1;
     ++itr->p->i;
-    itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0;
+    itr->p[1].x = itr->p->x->is_internal? itr->p->x->ptr[i + 1] : 0;
     ++itr->p;
   }
   return 0;
