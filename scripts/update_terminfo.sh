@@ -84,8 +84,8 @@ for term in $sorted_terms; do
   infocmp -L -1 -A "$db" "$term" | sed -e '1d' -e 's#^#// #' | tr '\t' ' '
   printf 'static const int8_t %s[] = {\n' "${entries[$term]}"
   printf '  '
-  od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ','
-  printf '};\n'
+  od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ',' | tr -d '\n'
+  printf '  // NOLINT\n};\n'
 done >> "$target"
 
 cat >> "$target" <<EOF
