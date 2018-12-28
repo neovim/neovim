@@ -772,6 +772,13 @@ describe("tui 'term' option", function()
     end
   end)
 
+  it('builtin terms', function()
+    -- These non-standard terminfos are always builtin.
+    assert_term('win32con', 'builtin_win32con')
+    assert_term('conemu', 'builtin_conemu')
+    assert_term('vtpcon', 'builtin_vtpcon')
+  end)
+
 end)
 
 -- These tests require `thelpers` because --headless/--embed
