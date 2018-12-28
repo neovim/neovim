@@ -1,6 +1,7 @@
 
 /// input:
 /// #define KB_TYPENAME name of tree-type
+/// #define KB_NAME_SUFFIX(X) X##_the_suffix
 /// #define KB_KEY_TYPE type of key
 /// #define KB_KEY_CMP comparator between keys
 /// #define KB_BRANCH_FACTOR branch factor (at least 2)
