@@ -76,15 +76,16 @@ EOF
 
 for term in $sorted_terms; do
   path="$(find "$db" -name "$term")"
-  if [[ -z $path ]]; then
-    echo "Not found: $term. Skipping." 1>&2
+  if [ -z "$path" ]; then
+    >&2 echo "Not found: $term. Skipping."
     continue
   fi
-  echo
+  printf '\n'
   infocmp -L -1 -A "$db" "$term" | sed -e '1d' -e 's#^#// #' | tr '\t' ' '
-  echo "static const int8_t ${entries[$term]}[] = {"
-  echo -n "  "; od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ','
-  echo "};"
+  printf 'static const int8_t %s[] = {\n' "${entries[$term]}"
+  printf '  '
+  od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ','
+  printf '};\n'
 done >> "$target"
 
 cat >> "$target" <<EOF
