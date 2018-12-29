@@ -149,9 +149,11 @@ static inline void IMPL(kb_interval)(kbtree_impl_t *b, key_t k, key_t **lower, k
     IMPL(kb_intervalp)(b, &k, lower, upper);
 }
 
-// x must be an internal node
-static inline void IMPL(__kb_split)(kbtree_impl_t *b, kbnode_t *x, int i, kbnode_t *y)
+// x must be an internal node, which is not full
+// x->ptr[i] should be a full node, i e x->ptr[i]->n == 2*T-1
+static inline void IMPL(__kb_split)(kbtree_impl_t *b, kbnode_t *x, int i)
 {
+  kbnode_t *y = x->ptr[i];
   kbnode_t *z;
   z = (kbnode_t*)xcalloc(1, y->is_internal? ILEN : sizeof(kbnode_t));
   ++b->n_nodes;
@@ -163,10 +165,12 @@ static inline void IMPL(__kb_split)(kbtree_impl_t *b, kbnode_t *x, int i, kbnode
   memmove(&x->ptr[i + 2], &x->ptr[i + 1], sizeof(void*) * (size_t)(x->n - i));
   x->ptr[i + 1] = z;
   memmove(&x->key[i + 1], &x->key[i], sizeof(key_t) * (size_t)(x->n - i));
+  // move key to internal layer:
   x->key[i] = y->key[T - 1];
   ++x->n;
 }
 
+// x must not be a full node (even if there might be internal space)
 static inline key_t *IMPL(__kb_putp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * __restrict k)
 {
   int i = x->n - 1;
@@ -181,7 +185,7 @@ static inline key_t *IMPL(__kb_putp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * 
   } else {
     i = IMPL(__kb_getp_aux)(x, k, 0) + 1;
     if (x->ptr[i]->n == 2 * T - 1) {
-      IMPL(__kb_split)(b, x, i, x->ptr[i]);
+      IMPL(__kb_split)(b, x, i);
       if (__cmp(*k, x->key[i]) > 0) ++i;
     }
     ret = IMPL(__kb_putp_aux)(b, x->ptr[i], k);
@@ -203,7 +207,7 @@ static inline key_t *IMPL(kb_putp)(kbtree_impl_t *b, key_t * __restrict k)
     s = (kbnode_t*)xcalloc(1, ILEN);
     b->root = s; s->is_internal = 1; s->n = 0;
     s->ptr[0] = r;
-    IMPL(__kb_split)(b, s, 0, r);
+    IMPL(__kb_split)(b, s, 0);
     r = s;
   }
   return IMPL(__kb_putp_aux)(b, r, k);
