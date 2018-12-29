@@ -2567,32 +2567,49 @@ static int add_pack_dir_to_rtp(char_u *fname)
   }
 
   // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
+  // Also stop at the first "after" directory
   size_t fname_len = strlen(ffname);
-  const char *insp = (const char *)p_rtp;
   buf = try_malloc(MAXPATHL);
   if (buf == NULL) {
     goto theend;
   }
-  while (*insp != NUL) {
-    copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
-    add_pathsep((char *)buf);
-    char *const rtp_ffname = fix_fname((char *)buf);
-    if (rtp_ffname == NULL) {
-      goto theend;
+  const char *insp = NULL;
+  const char *after_insp = NULL;
+  for (const char *entry = (const char *)p_rtp; *entry != NUL; ) {
+    const char *cur_entry = entry;
+
+    copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
+    if (insp == NULL) {
+      add_pathsep((char *)buf);
+      char *const rtp_ffname = fix_fname((char *)buf);
+      if (rtp_ffname == NULL) {
+        goto theend;
+      }
+      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
+      xfree(rtp_ffname);
+      if (match) {
+        // Insert "ffname" after this entry (and comma).
+        insp = entry;
+      }
     }
-    bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
-    xfree(rtp_ffname);
-    if (match) {
+
+    if ((p = (char_u *)strstr((char *)buf, "after")) != NULL
+        && p > buf
+        && vim_ispathsep(p[-1])
+        && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',')) {
+      if (insp == NULL) {
+        // Did not find "ffname" before the first "after" directory,
+        // insert it before this entry.
+        insp = cur_entry;
+      }
+      after_insp = cur_entry;
       break;
     }
   }
 
-  if (*insp == NUL) {
-    // not found, append at the end
+  if (insp == NULL) {
+    // Both "fname" and "after" not found, append at the end.
     insp = (const char *)p_rtp + STRLEN(p_rtp);
-  } else {
-    // append after the matching directory.
-    insp--;
   }
 
   // check if rtp/pack/name/start/name/after exists
@@ -2604,31 +2621,53 @@ static int add_pack_dir_to_rtp(char_u *fname)
 
   const size_t oldlen = STRLEN(p_rtp);
   const size_t addlen = STRLEN(fname) + 1;  // add one for comma
-  const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
-  // add one for NUL -------------------------------------^
-  char *const new_rtp = try_malloc(new_rtp_len);
+  const size_t new_rtp_capacity = oldlen + addlen + afterlen + 1;
+  // add one for NUL ------------------------------------------^
+  char *const new_rtp = try_malloc(new_rtp_capacity);
   if (new_rtp == NULL) {
     goto theend;
   }
-  const size_t keep = (size_t)(insp - (const char *)p_rtp);
-  size_t new_rtp_fill = 0;
+
+  // We now have 'rtp' parts: {keep}{keep_after}{rest}.
+  // Create new_rtp, first: {keep},{fname}
+  size_t keep = (size_t)(insp - (const char *)p_rtp);
   memmove(new_rtp, p_rtp, keep);
-  new_rtp_fill += keep;
-  new_rtp[new_rtp_fill++] = ',';
-  memmove(new_rtp + new_rtp_fill, fname, addlen);
-  new_rtp_fill += addlen - 1;
-  assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
+  size_t new_rtp_len = keep;
+  if (*insp == NUL) {
+    new_rtp[new_rtp_len++] = ',';  // add comma before
+  }
+  memmove(new_rtp + new_rtp_len, fname, addlen - 1);
+  new_rtp_len += addlen - 1;
+  if (*insp != NUL) {
+    new_rtp[new_rtp_len++] = ',';  // add comma after
+  }
+
+  if (afterlen > 0 && after_insp != NULL) {
+    size_t keep_after = (size_t)(after_insp - (const char *)p_rtp);
+
+    // Add to new_rtp: {keep},{fname}{keep_after},{afterdir}
+    memmove(new_rtp + new_rtp_len, p_rtp + keep, keep_after - keep);
+    new_rtp_len += keep_after - keep;
+    memmove(new_rtp + new_rtp_len, afterdir, afterlen - 1);
+    new_rtp_len += afterlen - 1;
+    new_rtp[new_rtp_len++] = ',';
+    keep = keep_after;
+  }
+
   if (p_rtp[keep] != NUL) {
-    memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
-    new_rtp_fill += oldlen - keep;
+    // Append rest: {keep},{fname}{keep_after},{afterdir}{rest}
+    memmove(new_rtp + new_rtp_len, p_rtp + keep, oldlen - keep + 1);
+  } else {
+    new_rtp[new_rtp_len] = NUL;
   }
-  if (afterlen > 0) {
-    assert(new_rtp[new_rtp_fill] == NUL);
-    new_rtp[new_rtp_fill++] = ',';
-    memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
-    new_rtp_fill += afterlen - 1;
+
+  if (afterlen > 0 && after_insp == NULL) {
+    // Append afterdir when "after" was not found:
+    // {keep},{fname}{rest},{afterdir}
+    xstrlcat(new_rtp, ",", new_rtp_capacity);
+    xstrlcat(new_rtp, afterdir, new_rtp_capacity);
   }
-  new_rtp[new_rtp_fill] = NUL;
+
   set_option_value("rtp", 0L, new_rtp, 0);
   xfree(new_rtp);
   retval = OK;

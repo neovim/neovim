@@ -29,12 +29,25 @@ describe('packadd', function()
       endfunc
 
       func Test_packadd()
+        if !exists('s:plugdir')
+          echomsg 'when running this test manually, call SetUp() first'
+          return
+        endif
+
         call mkdir(s:plugdir . '/plugin/also', 'p')
         call mkdir(s:plugdir . '/ftdetect', 'p')
         call mkdir(s:plugdir . '/after', 'p')
         set rtp&
         let rtp = &rtp
         filetype on
+
+        let rtp_entries = split(rtp, ',')
+        for entry in rtp_entries
+          if entry =~? '\<after\>'
+            let first_after_entry = entry
+            break
+          endif
+        endfor
 
         exe 'split ' . s:plugdir . '/plugin/test.vim'
         call setline(1, 'let g:plugin_works = 42')
@@ -55,7 +68,12 @@ describe('packadd', function()
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
         call assert_match(Escape(s:plugdir) . '\($\|,\)', &rtp)
-        call assert_match(Escape(expand(s:plugdir . '/after$')), &rtp)
+
+        let new_after = match(&rtp, Escape(expand(s:plugdir . '/after') . ','))
+        let old_after = match(&rtp, ',' . Escape(first_after_entry) . '\>')
+        call assert_true(new_after > 0, 'rtp is ' . &rtp)
+        call assert_true(old_after > 0, 'rtp is ' . &rtp)
+        call assert_true(new_after < old_after, 'rtp is ' . &rtp)
 
         " NOTE: '/.../opt/myte' forwardly matches with '/.../opt/mytest'
         call mkdir(fnamemodify(s:plugdir, ':h') . '/myte', 'p')
