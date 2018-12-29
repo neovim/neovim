@@ -1573,9 +1573,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
-    // 2017-04 terminfo.src has older control sequences.
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    // Enter/exit alternate screen with "title stacking". #4063
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h\x1b[22;0;0t");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l\x1b[23;0;0t");
   } else if (screen) {
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
@@ -1595,9 +1595,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (putty) {
     // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
-    // 2017-04 terminfo.src has older control sequences.
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    // Enter/exit alternate screen with "title stacking". #4063
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h\x1b[22;0;0t");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l\x1b[23;0;0t");
     // 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_orig_pair, "\x1b[39;49m");
