@@ -219,6 +219,9 @@ static inline void IMPL(kb_put)(kbtree_impl_t *b, key_t k)
 }
 
 
+/// special casess
+/// s = 1: always delete last key of subtree, ignore k
+/// s = 2: always delete first key of subtree, ignore k
 static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * __restrict k, int s)
 {
   int yn, zn, i, r = 0;
@@ -226,9 +229,13 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
   key_t kp;
   if (x == 0) return *k;
   if (s) { /* s can only be 0, 1 or 2 */
+    // this asignment seems rather dead, r=1 always works
+    // but maybe r should be -1 when i is -1 "conceptually"
     r = x->is_internal == 0? 0 : s == 1? 1 : -1;
     i = s == 1? x->n - 1 : -1;
-  } else i = IMPL(__kb_getp_aux)(x, k, &r);
+  } else {
+    i = IMPL(__kb_getp_aux)(x, k, &r);
+  }
   if (x->is_internal == 0) {
     if (s == 2) ++i;
     kp = x->key[i];
@@ -238,16 +245,24 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
   }
   if (r == 0) {
     if ((yn = x->ptr[i]->n) >= T) {
+      // delete internal key. Steal the lowest element of right subnode, which
+      // is allowed to shrink.
       xp = x->ptr[i];
       kp = x->key[i];
       x->key[i] = IMPL(__kb_delp_aux)(b, xp, 0, 1);
       return kp;
     } else if ((zn = x->ptr[i + 1]->n) >= T) {
+      // delete internal key. Steal the highest element of left subnode, which
+      // is allowed to shrink.
       xp = x->ptr[i + 1];
       kp = x->key[i];
       x->key[i] = IMPL(__kb_delp_aux)(b, xp, 0, 2);
       return kp;
     } else if (yn == T - 1 && zn == T - 1) {
+      // this else if is always triggered if none of the above?
+      // left and right neighbour can be joined togheter to node of size 2*T-1
+      // exactly. this will make x smaller, but if x is not the
+      // root node, the caller have already ensured xp->n >= T
       y = x->ptr[i]; z = x->ptr[i + 1];
       y->key[y->n++] = *k;
       memmove(&y->key[y->n], z->key, (size_t)z->n * sizeof(key_t));
@@ -261,8 +276,13 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
     }
   }
   ++i;
+  // we delete inside xp = x->ptr[i]. But if it has the risk of becoming
+  // to small, we need to prepare. Steal a key from a neighbor if possible,
+  // otherwise merge with a neighbour.
   if ((xp = x->ptr[i])->n == T - 1) {
     if (i > 0 && (y = x->ptr[i - 1])->n >= T) {
+      // steal one key (+ subtree) from the left neighbour of xp, which is
+      // allowed to shrink.
       memmove(&xp->key[1], xp->key, (size_t)xp->n * sizeof(key_t));
       if (xp->is_internal) memmove(&xp->ptr[1], xp->ptr, (size_t)(xp->n + 1) * sizeof(void*));
       xp->key[0] = x->key[i - 1];
@@ -270,6 +290,8 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
       if (xp->is_internal) xp->ptr[0] = y->ptr[y->n];
       --y->n; ++xp->n;
     } else if (i < x->n && (y = x->ptr[i + 1])->n >= T) {
+      // steal one key (+ subtree) from the right neighbour of xp, which is
+      // allowed to shrink.
       xp->key[xp->n++] = x->key[i];
       x->key[i] = y->key[0];
       if (xp->is_internal) xp->ptr[xp->n] = y->ptr[0];
@@ -277,6 +299,8 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
       memmove(y->key, &y->key[1], (size_t)y->n * sizeof(key_t));
       if (y->is_internal) memmove(y->ptr, &y->ptr[1], (size_t)(y->n + 1) * sizeof(void*));
     } else if (i > 0 && (y = x->ptr[i - 1])->n == T - 1) {
+      // merge with left neighbour. This will make x smaller, but if x is not the
+      // root node, the caller have already ensured xp->n >= T
       y->key[y->n++] = x->key[i - 1];
       memmove(&y->key[y->n], xp->key, (size_t)xp->n * sizeof(key_t));
       if (y->is_internal) memmove(&y->ptr[y->n], xp->ptr, (size_t)(xp->n + 1) * sizeof(void*));
@@ -287,6 +311,9 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
       xfree(xp);
       xp = y;
     } else if (i < x->n && (y = x->ptr[i + 1])->n == T - 1) {
+      // Again, this case must be true if none of the above.
+      // merge with right neighbour. This will make x smaller, but if x is not the
+      // root node, the caller have already ensured xp->n >= T
       xp->key[xp->n++] = x->key[i];
       memmove(&xp->key[xp->n], y->key, (size_t)y->n * sizeof(key_t));
       if (xp->is_internal) memmove(&xp->ptr[xp->n], y->ptr, (size_t)(y->n + 1) * sizeof(void*));
@@ -297,6 +324,8 @@ static inline key_t IMPL(__kb_delp_aux)(kbtree_impl_t *b, kbnode_t *x, key_t * _
       xfree(y);
     }
   }
+
+  // now delete from child tree, where xp-->n >= T
   return IMPL(__kb_delp_aux)(b, xp, k, s);
 }
 
@@ -306,6 +335,9 @@ static inline key_t IMPL(kb_delp)(kbtree_impl_t *b, key_t * __restrict k)
   key_t ret;
   ret = IMPL(__kb_delp_aux)(b, b->root, k, 0);
   --b->n_keys;
+
+  // special case, merging of two nodes of the root, can have removed all
+  // internal keys. just turn the last subnode into the root
   if (b->root->n == 0 && b->root->is_internal) {
     --b->n_nodes;
     x = b->root;
