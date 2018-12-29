@@ -2683,10 +2683,24 @@ static int APP_BOTH;
 
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
-  if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)fname) == NULL) {
-    // directory is not yet in 'runtimepath', add it
-    if (add_pack_dir_to_rtp(fname) == FAIL) {
-      return;
+  if (cookie != &APP_LOAD) {
+    char *buf = xmalloc(MAXPATHL);
+    bool found = false;
+
+    const char *p = (const char *)p_rtp;
+    while (*p != NUL) {
+      copy_option_part((char_u **)&p, (char_u *)buf, MAXPATHL, ",");
+      if (path_fnamecmp(buf, (char *)fname) == 0) {
+        found = true;
+        break;
+      }
+    }
+    xfree(buf);
+    if (!found) {
+      // directory is not yet in 'runtimepath', add it
+      if (add_pack_dir_to_rtp(fname) == FAIL) {
+        return;
+      }
     }
   }
 
