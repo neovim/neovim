@@ -119,6 +119,7 @@ typedef struct {
     int resize_screen;
     int reset_scroll_region;
     int set_cursor_style, reset_cursor_style;
+    int save_title, restore_title;
     int enter_undercurl_mode, exit_undercurl_mode, set_underline_color;
   } unibi_ext;
   char *space_buf;
@@ -257,9 +258,11 @@ static void terminfo_start(UI *ui)
                                      data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
-  // Enter alternate screen and clear
+  // Enter alternate screen, save title, and clear.
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
+  // Save title/icon to the "stack". #4063
+  unibi_out_ext(ui, data->unibi_ext.save_title);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
@@ -286,10 +289,12 @@ static void terminfo_stop(UI *ui)
   tui_mode_change(ui, (String)STRING_INIT, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
-  // cursor should be set to normal before exiting alternate screen
+  // Reset cursor to normal before exiting alternate screen.
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
+  // Restore title/icon from the "stack". #4063
+  unibi_out_ext(ui, data->unibi_ext.restore_title);
   if (data->cursor_color_changed) {
     unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
   }
@@ -1573,9 +1578,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
-    // Enter/exit alternate screen with "title stacking". #4063
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h\x1b[22;0;0t");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l\x1b[23;0;0t");
+    // 2017-04 terminfo.src has older control sequences.
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
   } else if (screen) {
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
@@ -1595,9 +1600,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (putty) {
     // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
-    // Enter/exit alternate screen with "title stacking". #4063
-    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h\x1b[22;0;0t");
-    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l\x1b[23;0;0t");
+    // 2017-04 terminfo.src has older control sequences.
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
     // 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_orig_pair, "\x1b[39;49m");
@@ -1848,6 +1853,11 @@ static void augment_terminfo(TUIData *data, const char *term,
     data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(
         ut, "ext.reset_cursor_color", "\x1b]112\x07");
   }
+
+  data->unibi_ext.save_title = (int)unibi_add_ext_str(
+      ut, "ext.save_title", "\x1b[22;0;0t");
+  data->unibi_ext.restore_title = (int)unibi_add_ext_str(
+      ut, "ext.restore_title", "\x1b[23;0;0t");
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
