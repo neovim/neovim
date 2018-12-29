@@ -2536,6 +2536,146 @@ static void source_all_matches(char_u *pat)
   }
 }
 
+/// Add the package directory to 'runtimepath'
+static int add_pack_dir_to_rtp(char_u *fname)
+{
+  char_u *p4, *p3, *p2, *p1, *p;
+  char_u *buf = NULL;
+  char *afterdir = NULL;
+  int retval = FAIL;
+
+  p4 = p3 = p2 = p1 = get_past_head(fname);
+  for (p = p1; *p; MB_PTR_ADV(p)) {
+    if (vim_ispathsep_nocolon(*p)) {
+      p4 = p3; p3 = p2; p2 = p1; p1 = p;
+    }
+  }
+
+  // now we have:
+  // rtp/pack/name/start/name
+  //    p4   p3   p2   p1
+  //
+  // find the part up to "pack" in 'runtimepath'
+  p4++;  // append pathsep in order to expand symlink
+  char_u c = *p4;
+  *p4 = NUL;
+  char *const ffname = fix_fname((char *)fname);
+  *p4 = c;
+
+  if (ffname == NULL) {
+    return FAIL;
+  }
+
+  // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
+  size_t fname_len = strlen(ffname);
+  const char *insp = (const char *)p_rtp;
+  buf = try_malloc(MAXPATHL);
+  if (buf == NULL) {
+    goto theend;
+  }
+  while (*insp != NUL) {
+    copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
+    add_pathsep((char *)buf);
+    char *const rtp_ffname = fix_fname((char *)buf);
+    if (rtp_ffname == NULL) {
+      goto theend;
+    }
+    bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
+    xfree(rtp_ffname);
+    if (match) {
+      break;
+    }
+  }
+
+  if (*insp == NUL) {
+    // not found, append at the end
+    insp = (const char *)p_rtp + STRLEN(p_rtp);
+  } else {
+    // append after the matching directory.
+    insp--;
+  }
+
+  // check if rtp/pack/name/start/name/after exists
+  afterdir = concat_fnames((char *)fname, "after", true);
+  size_t afterlen = 0;
+  if (os_isdir((char_u *)afterdir)) {
+    afterlen = strlen(afterdir) + 1;  // add one for comma
+  }
+
+  const size_t oldlen = STRLEN(p_rtp);
+  const size_t addlen = STRLEN(fname) + 1;  // add one for comma
+  const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
+  // add one for NUL -------------------------------------^
+  char *const new_rtp = try_malloc(new_rtp_len);
+  if (new_rtp == NULL) {
+    goto theend;
+  }
+  const size_t keep = (size_t)(insp - (const char *)p_rtp);
+  size_t new_rtp_fill = 0;
+  memmove(new_rtp, p_rtp, keep);
+  new_rtp_fill += keep;
+  new_rtp[new_rtp_fill++] = ',';
+  memmove(new_rtp + new_rtp_fill, fname, addlen);
+  new_rtp_fill += addlen - 1;
+  assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
+  if (p_rtp[keep] != NUL) {
+    memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
+    new_rtp_fill += oldlen - keep;
+  }
+  if (afterlen > 0) {
+    assert(new_rtp[new_rtp_fill] == NUL);
+    new_rtp[new_rtp_fill++] = ',';
+    memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
+    new_rtp_fill += afterlen - 1;
+  }
+  new_rtp[new_rtp_fill] = NUL;
+  set_option_value("rtp", 0L, new_rtp, 0);
+  xfree(new_rtp);
+  retval = OK;
+
+theend:
+  xfree(buf);
+  xfree(ffname);
+  xfree(afterdir);
+  return retval;
+}
+
+/// Load scripts in "plugin" and "ftdetect" directories of the package.
+static int load_pack_plugin(char_u *fname)
+{
+  static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
+  static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
+
+  int retval = FAIL;
+  char *const ffname = fix_fname((char *)fname);
+  size_t len = strlen(ffname) + STRLEN(ftpat);
+  char_u *pat = try_malloc(len + 1);
+  if (pat == NULL) {
+    goto theend;
+  }
+  vim_snprintf((char *)pat, len, plugpat, ffname);
+  source_all_matches(pat);
+
+  char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
+
+  // If runtime/filetype.vim wasn't loaded yet, the scripts will be
+  // found when it loads.
+  if (eval_to_number(cmd) > 0) {
+    do_cmdline_cmd("augroup filetypedetect");
+    vim_snprintf((char *)pat, len, ftpat, ffname);
+    source_all_matches(pat);
+    do_cmdline_cmd("augroup END");
+  }
+  xfree(cmd);
+  xfree(pat);
+  retval = OK;
+
+theend:
+  xfree(ffname);
+
+  return retval;
+}
+
 // used for "cookie" of add_pack_plugin()
 static int APP_ADD_DIR;
 static int APP_LOAD;
@@ -2543,130 +2683,16 @@ static int APP_BOTH;
 
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
-  char_u *p4, *p3, *p2, *p1, *p;
-  char_u *buf = NULL;
-
-  char *const ffname = fix_fname((char *)fname);
-
-  if (ffname == NULL) {
-    return;
-  }
-
-  if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
+  if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)fname) == NULL) {
     // directory is not yet in 'runtimepath', add it
-    p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
-    for (p = p1; *p; MB_PTR_ADV(p)) {
-      if (vim_ispathsep_nocolon(*p)) {
-        p4 = p3; p3 = p2; p2 = p1; p1 = p;
-      }
+    if (add_pack_dir_to_rtp(fname) == FAIL) {
+      return;
     }
-
-    // now we have:
-    // rtp/pack/name/start/name
-    //    p4   p3   p2   p1
-    //
-    // find the part up to "pack" in 'runtimepath'
-    char_u c = *p4;
-    *p4 = NUL;
-
-    // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-    size_t fname_len = strlen(ffname);
-    const char *insp = (const char *)p_rtp;
-    buf = try_malloc(MAXPATHL);
-    if (buf == NULL) {
-      goto theend;
-    }
-    while (*insp != NUL) {
-      copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
-      add_pathsep((char *)buf);
-      char *const rtp_ffname = fix_fname((char *)buf);
-      if (rtp_ffname == NULL) {
-        goto theend;
-      }
-      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
-      xfree(rtp_ffname);
-      if (match) {
-        break;
-      }
-    }
-
-    if (*insp == NUL) {
-      // not found, append at the end
-      insp = (const char *)p_rtp + STRLEN(p_rtp);
-    } else {
-      // append after the matching directory.
-      insp--;
-    }
-    *p4 = c;
-
-    // check if rtp/pack/name/start/name/after exists
-    char *afterdir = concat_fnames(ffname, "after", true);
-    size_t afterlen = 0;
-    if (os_isdir((char_u *)afterdir)) {
-      afterlen = strlen(afterdir) + 1;  // add one for comma
-    }
-
-    const size_t oldlen = STRLEN(p_rtp);
-    const size_t addlen = strlen(ffname) + 1;  // add one for comma
-    const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
-    // add one for NUL -------------------------------------^
-    char *const new_rtp = try_malloc(new_rtp_len);
-    if (new_rtp == NULL) {
-      goto theend;
-    }
-    const size_t keep = (size_t)(insp - (const char *)p_rtp);
-    size_t new_rtp_fill = 0;
-    memmove(new_rtp, p_rtp, keep);
-    new_rtp_fill += keep;
-    new_rtp[new_rtp_fill++] = ',';
-    memmove(new_rtp + new_rtp_fill, ffname, addlen);
-    new_rtp_fill += addlen - 1;
-    assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
-    if (p_rtp[keep] != NUL) {
-      memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
-      new_rtp_fill += oldlen - keep;
-    }
-    if (afterlen > 0) {
-      assert(new_rtp[new_rtp_fill] == NUL);
-      new_rtp[new_rtp_fill++] = ',';
-      memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
-      new_rtp_fill += afterlen - 1;
-    }
-    new_rtp[new_rtp_fill] = NUL;
-    set_option_value("rtp", 0L, new_rtp, 0);
-    xfree(new_rtp);
-    xfree(afterdir);
   }
 
   if (cookie != &APP_ADD_DIR) {
-    static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
-    static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
-
-    size_t len = strlen(ffname) + STRLEN(ftpat);
-    char_u *pat = try_malloc(len + 1);
-    if (pat == NULL) {
-      goto theend;
-    }
-    vim_snprintf((char *)pat, len, plugpat, ffname);
-    source_all_matches(pat);
-
-    char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
-
-    // If runtime/filetype.vim wasn't loaded yet, the scripts will be
-    // found when it loads.
-    if (eval_to_number(cmd) > 0) {
-      do_cmdline_cmd("augroup filetypedetect");
-      vim_snprintf((char *)pat, len, ftpat, ffname);
-      source_all_matches(pat);
-      do_cmdline_cmd("augroup END");
-    }
-    xfree(cmd);
-    xfree(pat);
+    load_pack_plugin(fname);
   }
-
-theend:
-  xfree(buf);
-  xfree(ffname);
 }
 
 /// Add all packages in the "start" directory to 'runtimepath'.
