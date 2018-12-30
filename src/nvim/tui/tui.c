@@ -1515,7 +1515,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
   bool cygwin = terminfo_is_term_family(term, "cygwin");
-  bool conemu = terminfo_is_term_family(term, "conemu");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1553,10 +1552,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (tmux || screen || kitty) {
     // Disable BCE in some cases we know it is not working. #8806
     unibi_set_bool(ut, unibi_back_color_erase, false);
-  }
-
-  if (conemu) {
-    unibi_set_bool(ut, unibi_back_color_erase, true);
   }
 
   if (xterm) {
@@ -1630,6 +1625,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
   }
+
 // At this time (2017-07-12) it seems like all terminals that support 256
 // color codes can use semicolons in the terminal code and be fine.
 // However, this is not correct according to the spec. So to reward those
