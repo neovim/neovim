@@ -64,6 +64,7 @@ return {
     complete={args=2},
     complete_add={args=1},
     complete_check={},
+    complete_update={args=2},
     confirm={args={1, 4}},
     copy={args=1},
     cos={args=1, func="float_op_wrapper", data="&cos"},

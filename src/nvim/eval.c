@@ -7555,6 +7555,34 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /*
+ * "complete_update()" function
+ */
+static void f_complete_update(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if ((State & INSERT) == 0) {
+    EMSG(_("E785: complete() can only be used in Insert mode"));
+    return;
+  }
+
+  /* Check for undo allowed here, because if something was already inserted
+   * the line was already saved for undo and this check isn't done. */
+  if (!undo_allowed())
+    return;
+
+  if (argvars[1].v_type != VAR_LIST) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  const colnr_T startcol = tv_get_number_chk(&argvars[0], NULL);
+  if (startcol <= 0) {
+    return;
+  }
+
+  update_completion(startcol - 1, argvars[1].vval.v_list);
+}
+
+/*
  * "confirm(message, buttons[, default [, type]])" function
  */
 static void f_confirm(typval_T *argvars, typval_T *rettv, FunPtr fptr)

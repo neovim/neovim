@@ -2485,6 +2485,69 @@ void set_completion(colnr_T startcol, list_T *list)
 }
 
 
+void update_completion(colnr_T startcol, list_T *list)
+{
+  // If already doing completions stop it.
+  if (ctrl_x_mode == 0) {
+    set_completion(startcol, list);
+    return;
+  }
+
+  compl_length = (int)curwin->w_cursor.col - (int)startcol;
+  /* compl_pattern doesn't need to be set */
+  compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
+                                 compl_length);
+
+  ins_compl_clear();
+
+  // part of ins_compl_free()
+  compl_curr_match = compl_first_match;
+  do {
+    compl_T *match;
+    int i;
+
+    match = compl_curr_match;
+    compl_curr_match = compl_curr_match->cp_next;
+    xfree(match->cp_str);
+    /* several entries may use the same fname, free it just once. */
+    if (match->cp_flags & FREE_FNAME)
+      xfree(match->cp_fname);
+    for (i = 0; i < CPT_COUNT; ++i)
+      xfree(match->cp_text[i]);
+    xfree(match);
+  } while (compl_curr_match != NULL && compl_curr_match != compl_first_match);
+  compl_first_match = compl_curr_match = NULL;
+  compl_shown_match = NULL;
+  compl_old_match = NULL;
+
+  ins_compl_add_list(list);
+  compl_matches = ins_compl_make_cyclic();
+  compl_started = TRUE;
+  compl_used_match = TRUE;
+  compl_cont_status = 0;
+  int save_w_wrow = curwin->w_wrow;
+  int save_w_leftcol = curwin->w_leftcol;
+
+  compl_curr_match = compl_first_match;
+  if (compl_no_insert || compl_no_select) {
+    ins_complete(K_DOWN, false);
+    if (compl_no_select) {
+      ins_complete(K_UP, false);
+    }
+  } else {
+    ins_complete(Ctrl_N, false);
+  }
+  compl_enter_selects = compl_no_insert;
+
+  // Lazily show the popup menu, unless we got interrupted.
+  if (!compl_interrupted) {
+    show_pum(save_w_wrow, save_w_leftcol);
+  }
+
+  ui_flush();
+}
+
+
 /* "compl_match_array" points the currently displayed list of entries in the
  * popup menu.  It is NULL when there is no popup menu. */
 static pumitem_T *compl_match_array = NULL;
