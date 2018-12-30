@@ -955,13 +955,6 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-#if 0
-  // This bodges around problems that should be fixed in the TUI layer.
-  if (!headless && !os_term_is_nice()) {
-    set_string_option_direct((char_u *)"guicursor", -1, (char_u *)"",
-                             OPT_GLOBAL, SID_NONE);
-  }
-#endif
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
