@@ -364,24 +364,6 @@ include_directories("${PROJECT_SOURCE_DIR}/src")
 find_package(LibUV REQUIRED)
 include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 
-if(WIN32)
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${LIBUV_INCLUDE_DIRS}")
-  list(APPEND CMAKE_REQUIRED_LIBRARIES "${LIBUV_LIBRARIES}")
-  check_c_source_compiles("
-  #include <uv.h>
-
-  int
-  main(void)
-  {
-    uv_set_vterm_state(UV_UNSUPPORTED);
-    return 0;
-  }
-  " UV_HAS_SET_VTERM_STATE)
-  if(UV_HAS_SET_VTERM_STATE)
-    add_definitions(-DNVIM_UV_HAS_SET_VTERM_STATE)
-  endif()
-endif()
-
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 

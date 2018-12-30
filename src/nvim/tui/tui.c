@@ -31,6 +31,7 @@
 #include "nvim/event/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
@@ -61,10 +62,6 @@
   } while (0)
 #else
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
-#endif
-
-#if defined(WIN32) && !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-# define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
 
 typedef struct {
@@ -216,60 +213,13 @@ static void terminfo_start(UI *ui)
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
 
-  // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
-  bool conemu_ansi = false;
 #ifdef WIN32
-  bool winpty = false;
-  bool vtp = false;
-  const char *env = os_getenv("VIM_TERMINAL");
-  if (env) {
-    winpty = true;
-  }
-  // If we change to set environment variable in terminal of nvim,
-  // add condition here
-
-  if (!winpty) {
-# ifdef NVIM_UV_HAS_SET_VTERM_STATE
-    env = os_getenv("ConEmuANSI");
-    if (env && !STRCMP(env, "ON")) {
-      conemu_ansi = true;
-    }
-# endif
-
-    HANDLE handle = (HANDLE)_get_osfhandle(data->out_fd);
-    DWORD dwMode;
-    if (handle != INVALID_HANDLE_VALUE && GetConsoleMode(handle, &dwMode)) {
-      dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-      if (SetConsoleMode(handle, dwMode)) {
-        vtp = true;
-      }
-    }
-  } else {
-    // If it is running under winpty ignore the TERM environment variable and
-    // force it to be win32con.
-    term = "win32con";
-  }
-
-  if (term == NULL) {
-    if (vtp) {
-      term = "vtpcon";
-    } else if (conemu_ansi) {
-      term = "conemu";
-    } else {
-      term = "win32con";
-    }
-  }
-
+  os_tty_guess_term(&term, data->out_fd);
   os_setenv("TERM", term, 1);
-# ifdef NVIM_UV_HAS_SET_VTERM_STATE
-  if (conemu_ansi) {
-    uv_set_vterm_state(UV_SUPPORTED);
-  } else if (winpty) {
-    uv_set_vterm_state(UV_UNSUPPORTED);
-  }
-# endif
 #endif
+
+  // Set up unibilium/terminfo.
   data->ut = unibi_from_env();
   char *termname = NULL;
   if (!term || !data->ut) {
@@ -310,7 +260,7 @@ static void terminfo_start(UI *ui)
     && !!unibi_get_str(data->ut, unibi_parm_insert_line);
   data->can_erase_chars = !!unibi_get_str(data->ut, unibi_erase_chars);
   data->immediate_wrap_after_last_column =
-    conemu_ansi
+    terminfo_is_term_family(term, "conemu")
     || terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
