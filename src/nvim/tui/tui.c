@@ -31,6 +31,7 @@
 #include "nvim/event/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
@@ -94,6 +95,7 @@ typedef struct {
   bool can_change_scroll_region;
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
+  bool can_scroll;
   bool can_erase_chars;
   bool immediate_wrap_after_last_column;
   bool bce;
@@ -211,8 +213,13 @@ static void terminfo_start(UI *ui)
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
 
-  // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
+#ifdef WIN32
+  os_tty_guess_term(&term, data->out_fd);
+  os_setenv("TERM", term, 1);
+#endif
+
+  // Set up unibilium/terminfo.
   data->ut = unibi_from_env();
   char *termname = NULL;
   if (!term || !data->ut) {
@@ -246,9 +253,16 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
+  data->can_scroll =
+    !!unibi_get_str(data->ut, unibi_delete_line)
+    && !!unibi_get_str(data->ut, unibi_parm_delete_line)
+    && !!unibi_get_str(data->ut, unibi_insert_line)
+    && !!unibi_get_str(data->ut, unibi_parm_insert_line);
   data->can_erase_chars = !!unibi_get_str(data->ut, unibi_erase_chars);
   data->immediate_wrap_after_last_column =
-    terminfo_is_term_family(term, "cygwin")
+    terminfo_is_term_family(term, "conemu")
+    || terminfo_is_term_family(term, "cygwin")
+    || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
   data->bce = unibi_get_bool(data->ut, unibi_back_color_erase);
   data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
@@ -1044,11 +1058,12 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
 
   ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
-  bool can_scroll = data->scroll_region_is_full_screen
-                    || (data->can_change_scroll_region
-                        && ((left == 0 && right == ui->width - 1)
-                            || data->can_set_lr_margin
-                            || data->can_set_left_right_margin));
+  bool can_scroll = data->can_scroll
+    && (data->scroll_region_is_full_screen
+        || (data->can_change_scroll_region
+            && ((left == 0 && right == ui->width - 1)
+                || data->can_set_lr_margin
+                || data->can_set_left_right_margin)));
 
   if (can_scroll) {
     // Change terminal scroll region and move cursor to the top
@@ -1499,6 +1514,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
+  bool cygwin = terminfo_is_term_family(term, "cygwin");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1687,6 +1703,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             || iterm || iterm_pretending_xterm
             || teraterm   // per TeraTerm "Supported Control Functions" doco
             || alacritty  // https://github.com/jwilm/alacritty/pull/608
+            || cygwin
             // Some linux-type terminals implement the xterm extension.
             // Example: console-terminal-emulator from the nosh toolset.
             || (linuxvt

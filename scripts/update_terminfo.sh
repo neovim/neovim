@@ -26,6 +26,10 @@ readonly -A entries=(
   [tmux-256color]=tmux_256colour_terminfo
   [vte-256color]=vte_256colour_terminfo
   [xterm-256color]=xterm_256colour_terminfo
+  [cygwin]=cygwin_terminfo
+  [win32con]=win32con_terminfo
+  [conemu]=conemu_terminfo
+  [vtpcon]=vtpcon_terminfo
 )
 
 db="$(mktemp -du)"
@@ -47,7 +51,7 @@ gunzip -f terminfo.src.gz
 # Build terminfo database
 #
 print_bold '[*] Build terminfo database\n'
-tic -x -o "$db" terminfo.src
+cat terminfo.src scripts/windows.ti | tic -x -o "$db" -
 rm -f terminfo.src
 
 #
@@ -72,18 +76,19 @@ EOF
 
 for term in $sorted_terms; do
   path="$(find "$db" -name "$term")"
-  if [[ -z $path ]]; then
-    echo "Not found: $term. Skipping." 1>&2
+  if [ -z "$path" ]; then
+    >&2 echo "Not found: $term. Skipping."
     continue
   fi
-  echo
+  printf '\n'
   infocmp -L -1 -A "$db" "$term" | sed -e '1d' -e 's#^#// #' | tr '\t' ' '
-  echo "static const int8_t ${entries[$term]}[] = {"
-  echo -n "  "; od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ','
-  echo "};"
+  printf 'static const int8_t %s[] = {\n' "${entries[$term]}"
+  printf '  '
+  od -v -t d1 < "$path" | cut -c9- | xargs | tr ' ' ',' | tr -d '\n'
+  printf '  // NOLINT\n};\n'
 done >> "$target"
 
-cat > "$target" <<EOF
+cat >> "$target" <<EOF
 #endif  // NVIM_TUI_TERMINFO_DEFS_H
 EOF
 print_bold 'done\n'
