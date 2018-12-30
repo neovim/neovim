@@ -905,17 +905,17 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   }
 }
 
-/// create a new namespace, or get one with an exisiting name
+/// Creates a new namespace, or gets an existing one
 ///
-/// Namespaces are currently used for buffer highlighting and virtual text, see
-/// |nvim_buf_add_highlight| and |nvim_buf_set_virtual_text|.
+/// Namespaces are used for buffer highlights and virtual text, see
+/// |nvim_buf_add_highlight()| and |nvim_buf_set_virtual_text()|.
 ///
-/// Namespaces can have a name of be anonymous. If `name` is a non-empty string,
-/// and a namespace already exists with that name,the existing namespace id is
-/// returned. If an empty string is used, a new anonymous namespace is returned.
+/// Namespaces can be named or anonymous. If `name` matches an existing
+/// namespace, the associated id is returned. If `name` is an empty string
+/// a new, anonymous namespace is created.
 ///
-/// @param name Name of the namespace or empty string
-/// @return the namespace id
+/// @param name Namespace name or empty string
+/// @return Namespace id
 Integer nvim_create_namespace(String name)
   FUNC_API_SINCE(5)
 {
@@ -931,7 +931,7 @@ Integer nvim_create_namespace(String name)
   return (Integer)id;
 }
 
-/// Get existing named namespaces
+/// Gets existing, non-anonymous namespaces
 ///
 /// @return dict that maps from names to namespace ids.
 Dictionary nvim_get_namespaces(void)

@@ -1886,8 +1886,6 @@ v:termresponse	The escape sequence returned by the terminal for the DA
 
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
-		Also, when set certain error messages won't be shown for 2
-		seconds. (e.g. "'dictionary' option is empty")
 
 				*v:this_session* *this_session-variable*
 v:this_session	Full filename of the last loaded or saved session file.  See
@@ -2781,7 +2779,7 @@ changenr()						*changenr()*
 		redo it is the number of the redone change.  After undo it is
 		one less than the number of the undone change.
 
-chanclose({id}[, {stream}])				{Nvim} *chanclose()*
+chanclose({id}[, {stream}])				*chanclose()*
 		Close a channel or a specific stream associated with it.
 		For a job, {stream} can be one of "stdin", "stdout",
 		"stderr" or "rpc" (closes stdin/stdout for a job started
@@ -2791,7 +2789,7 @@ chanclose({id}[, {stream}])				{Nvim} *chanclose()*
 		For a socket, there is only one stream, and {stream} should be
 		ommited.
 
-chansend({id}, {data})					{Nvim} *chansend()*
+chansend({id}, {data})					*chansend()*
 		Send data to channel {id}. For a job, it writes it to the
 		stdin of the process. For the stdio channel |channel-stdio|,
 		it writes to Nvim's stdout.  Returns the number of bytes
@@ -3822,8 +3820,7 @@ garbagecollect([{atexit}])				*garbagecollect()*
 
 		The garbage collection is not done immediately but only when
 		it's safe to perform.  This is when waiting for the user to
-		type a character.  To force garbage collection immediately use
-		|test_garbagecollect_now()|.
+		type a character.
 
 get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
@@ -5728,7 +5725,7 @@ mkdir({name} [, {path} [, {prot}]])
 		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
 		the user readable for others).	Use 0700 to make it unreadable
 		for others.
-									{Nvim}
+
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
@@ -5771,7 +5768,7 @@ mode([expr])	Return a string that indicates the current mode.
 		"c" or "n".
 		Also see |visualmode()|.
 
-msgpackdump({list})				   {Nvim} *msgpackdump()*
+msgpackdump({list})					*msgpackdump()*
 		Convert a list of VimL objects to msgpack. Returned value is
 		|readfile()|-style list. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
@@ -5786,7 +5783,7 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		4. Other strings are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
-msgpackparse({list})				   {Nvim} *msgpackparse()*
+msgpackparse({list})					*msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
@@ -6404,25 +6401,25 @@ round({expr})							*round()*
 			echo round(-4.5)
 <			-5.0
 
-rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
+rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
 		If {channel} is 0, the event is broadcast to all channels.
 		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
 
-rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
+rpcrequest({channel}, {method}[, {args}...])			*rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
-rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
+rpcstart({prog}[, {argv}])					*rpcstart()*
 		Deprecated. Replace  >
 			:let id = rpcstart('prog', ['arg1', 'arg2'])
 <		with >
 			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
-rpcstop({channel})					    {Nvim} *rpcstop()*
+rpcstop({channel})						*rpcstop()*
 		Deprecated. Instead use |jobstop()| to stop any job, and
 		chanclose(id, "rpc") to close RPC communication without
 		stopping the job. Use chanclose(id) to close any socket.
@@ -7889,7 +7886,7 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
-termopen({cmd}[, {opts}])			{Nvim} *termopen()*
+termopen({cmd}[, {opts}])			*termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected
 		to the current buffer.  {cmd} is the same as the one passed to
 		|jobstart()|.  This function fails if the current buffer is
@@ -7904,7 +7901,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		See |terminal| for more information.
 
 test_garbagecollect_now()			 *test_garbagecollect_now()*
-		Like garbagecollect(), but executed right away.  This must
+		Like |garbagecollect()|, but executed right away.  This must
 		only be called directly to avoid any structure to exist
 		internally, and |v:testing| must have been set before calling
 		any function.

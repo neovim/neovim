@@ -6,7 +6,7 @@
 
 The Python Interface to Vim				*if_pyth* *python* *Python*
 
-See |provider-python| for more information. {Nvim}
+See |provider-python| for more information.
 
                                       Type |gO| to see the table of contents.
 
@@ -721,27 +721,6 @@ You can test what Python version is available with: >
   	if has('python3')
 	  echo 'there is Python 3.x'
 	endif
-
-Note however, that if Python 2 and 3 are both available, but not loaded,
-these has() calls will try to load them.
-
-To avoid loading the dynamic library, only check if Vim was compiled with
-python support: >
-	if has('python_compiled')
-	  echo 'compiled with Python 2.x support'
-	  if has('python_dynamic')
-	    echo 'Python 2.x dynamically loaded'
-	  endif
-	endif
-  	if has('python3_compiled')
-	  echo 'compiled with Python 3.x support'
-	  if has('python3_dynamic')
-	    echo 'Python 3.x dynamically loaded'
-	  endif
-	endif
-
-This also tells you whether Python is dynamically loaded, which will fail if
-the runtime library cannot be found.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

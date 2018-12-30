@@ -137,6 +137,13 @@ DOCUMENTATION						*dev-doc*
       "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
+- Docstrings: do not start parameter descriptions with "The" or "A" unless it
+  is critical to avoid ambiguity.
+      GOOD: >
+      /// @param dirname Path fragment before `pend`
+<      BAD: >
+      /// @param dirname The path fragment before `pend`
+<
 
 API							*dev-api*
 

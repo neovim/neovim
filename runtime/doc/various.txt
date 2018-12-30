@@ -215,11 +215,12 @@ g8			Print the hex values of the bytes used in the
 			":normal" command without a range.
 
 						  *:sh* *:shell* *E371* *E360*
-:sh[ell]		Removed. |vim-differences| {Nvim}
+:sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-emulator|
-			buffer. Without {cmd}, start an interactive 'shell'.
+:te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
+			|terminal-emulator| buffer. Without {cmd}, start an
+			interactive 'shell'.
 
 			Type |i| to enter |Terminal-mode|, then keys are sent to
 			the job running in the terminal. Type <C-\><C-N> to

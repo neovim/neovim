@@ -459,7 +459,7 @@ For example, to use a modeline only for Vim 7.0:
 To use a modeline for Vim after version 7.2:
 	/* vim>702: set cole=2: */ ~
 There can be no blanks between "vim" and the ":".
-The modeline is ignored if {vers} does not fit in an integer. {Nvim}
+The modeline is ignored if {vers} does not fit in an integer.
 
 
 The number of lines that are checked can be set with the 'modelines' option.
@@ -908,13 +908,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the newly created file).  Also see 'backupcopy' and |crontab|.
 
 						*'balloondelay'* *'bdlay'*
-'balloondelay' 'bdlay'	Removed. {Nvim}
+'balloondelay' 'bdlay'	Removed.
 
 			*'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
-'ballooneval' 'beval'	Removed. {Nvim}
+'ballooneval' 'beval'	Removed.
 
 						*'balloonexpr'* *'bexpr'*
-'balloonexpr' 'bexpr'	Removed. {Nvim}
+'balloonexpr' 'bexpr'	Removed.
 
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "all")
@@ -3475,7 +3475,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	help.  (Note that previously setting the global option to the empty
 	value did this, which is now deprecated.)
 	When the first character is ":", the command is invoked as a Vim
-	command prefixed with [count]. {Nvim}
+	command prefixed with [count].
 	When "man" or "man -s" is used, Vim will automatically translate
 	a [count] for the "K" command to a section number.
 	See |option-backslash| about including spaces and backslashes.
@@ -3795,7 +3795,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set a time.  This is to be compatible with Nvi.
 
 						*'maxcombine'* *'mco'*
-'maxcombine' 'mco'	Removed. |vim-differences| {Nvim}
+'maxcombine' 'mco'	Removed. |vim-differences|
 	Nvim always displays up to 6 combining characters.  You can still edit
     text with more than 6 combining characters, you just can't see them.
     Use |g8| or |ga|.  See |mbyte-combining|.
@@ -6219,7 +6219,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to be garbled (e.g., when it contains a CR or NL character).
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
-'ttyfast' 'tf'		Removed. |vim-differences| {Nvim}
+'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
