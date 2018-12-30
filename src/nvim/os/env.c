@@ -779,7 +779,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
   char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 
-  if (homedir_env_mod != NULL && strchr(homedir_env_mod, '~') != NULL) {
+  if (homedir_env_mod != NULL && *homedir_env_mod == '~') {
     must_free = true;
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
