@@ -110,9 +110,9 @@ retnomove:
   // Remember the character under the mouse, it might be a '-' or '+' in the
   // fold column. NB: only works for ASCII chars!
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && default_grid.ScreenLines != NULL) {
-    mouse_char = default_grid.ScreenLines[default_grid.LineOffset[row]
-                                          + (unsigned)col][0];
+      && default_grid.chars != NULL) {
+    mouse_char = default_grid.chars[default_grid.line_offset[row]
+                                    + (unsigned)col][0];
   } else {
     mouse_char = ' ';
   }

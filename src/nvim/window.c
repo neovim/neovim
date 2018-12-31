@@ -6096,7 +6096,7 @@ void win_ui_flush(void)
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_pos_changed && wp->w_grid.ScreenLines != NULL) {
+    if (wp->w_pos_changed && wp->w_grid.chars != NULL) {
       if (tp == curtab) {
         ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,
                         wp->w_wincol, wp->w_width, wp->w_height);

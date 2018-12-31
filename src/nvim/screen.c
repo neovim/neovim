@@ -7,8 +7,7 @@
 // by remembering what is already on the screen, and only updating the parts
 // that changed.
 //
-// The screen_*() functions write to the screen and handle updating
-// ScreenLines[].
+// The grid_*() functions write to the screen and handle updating grid->lines[].
 //
 // update_screen() is the function that updates all windows and status lines.
 // It is called from the main loop when must_redraw is non-zero.  It may be
@@ -253,12 +252,12 @@ void update_curbuf(int type)
   update_screen(type);
 }
 
-/*
- * update_screen()
- *
- * Based on the current value of curwin->w_topline, transfer a screenfull
- * of stuff from Filemem to ScreenLines[], and update curwin->w_botline.
- */
+/// Redraw the parts of the screen that is marked for redraw.
+///
+/// Most code shouldn't call this directly, rather use redraw_later() and
+/// and redraw_all_later() to mark parts of the screen as needing a redraw.
+///
+/// @param type set to a NOT_VALID to force redraw of entire screen
 void update_screen(int type)
 {
   static int did_intro = FALSE;
@@ -2046,7 +2045,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 }
 
 
-/// Copy "buf[len]" to ScreenLines["off"] and set attributes to "attr".
+/// Copy "buf[len]" to linebuf_char["off"] and set attributes to "attr".
 ///
 /// Only works for ASCII text!
 static void copy_text_attr(int off, char_u *buf, int len, int attr)
@@ -3529,8 +3528,7 @@ win_line (
        */
       if (!vim_isprintc(c)) {
         // when getting a character from the file, we may have to
-        // turn it into something else on the way to putting it
-        // into "ScreenLines".
+        // turn it into something else on the way to putting it on the screen.
         if (c == TAB && (!wp->w_p_list || lcs_tab1)) {
           int tab_len = 0;
           long vcol_adjusted = vcol;  // removed showbreak length
@@ -4274,10 +4272,10 @@ win_line (
         }
 
         // Force a redraw of the first column of the next line.
-        current_grid->ScreenAttrs[current_grid->LineOffset[current_row+1]] = -1;
+        current_grid->attrs[current_grid->line_offset[current_row+1]] = -1;
 
         // Remember that the line wraps, used for modeless copy.
-        current_grid->LineWraps[current_row] = true;
+        current_grid->line_wraps[current_row] = true;
       }
 
       boguscols = 0;
@@ -4352,11 +4350,11 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to,
                                   int cols)
 {
   return (cols > 0
-          && ((schar_cmp(linebuf_char[off_from], grid->ScreenLines[off_to])
-               || linebuf_attr[off_from] != grid->ScreenAttrs[off_to]
+          && ((schar_cmp(linebuf_char[off_from], grid->chars[off_to])
+               || linebuf_attr[off_from] != grid->attrs[off_to]
                || (line_off2cells(linebuf_char, off_from, off_from + cols) > 1
                    && schar_cmp(linebuf_char[off_from + 1],
-                                grid->ScreenLines[off_to + 1])))
+                                grid->chars[off_to + 1])))
               || p_wd < 0));
 }
 
@@ -4403,16 +4401,16 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
   }
 
   off_from = 0;
-  off_to = grid->LineOffset[row] + coloff;
+  off_to = grid->line_offset[row] + coloff;
   max_off_from = linebuf_size;
-  max_off_to = grid->LineOffset[row] + grid->Columns;
+  max_off_to = grid->line_offset[row] + grid->Columns;
 
   if (rlflag) {
     /* Clear rest first, because it's left of the text. */
     if (clear_width > 0) {
-      while (col <= endcol && grid->ScreenLines[off_to][0] == ' '
-             && grid->ScreenLines[off_to][1] == NUL
-             && grid->ScreenAttrs[off_to] == bg_attr
+      while (col <= endcol && grid->chars[off_to][0] == ' '
+             && grid->chars[off_to][1] == NUL
+             && grid->attrs[off_to] == bg_attr
              ) {
         ++off_to;
         ++col;
@@ -4423,7 +4421,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
       }
     }
     col = endcol + 1;
-    off_to = grid->LineOffset[row] + col + coloff;
+    off_to = grid->line_offset[row] + col + coloff;
     off_from += col;
     endcol = (clear_width > 0 ? clear_width : -clear_width);
   }
@@ -4466,16 +4464,16 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
         clear_next = true;
       }
 
-      schar_copy(grid->ScreenLines[off_to], linebuf_char[off_from]);
+      schar_copy(grid->chars[off_to], linebuf_char[off_from]);
       if (char_cells == 2) {
-        schar_copy(grid->ScreenLines[off_to+1], linebuf_char[off_from+1]);
+        schar_copy(grid->chars[off_to+1], linebuf_char[off_from+1]);
       }
 
-      grid->ScreenAttrs[off_to] = linebuf_attr[off_from];
+      grid->attrs[off_to] = linebuf_attr[off_from];
       // For simplicity set the attributes of second half of a
       // double-wide character equal to the first half.
       if (char_cells == 2) {
-        grid->ScreenAttrs[off_to + 1] = linebuf_attr[off_from];
+        grid->attrs[off_to + 1] = linebuf_attr[off_from];
       }
     }
 
@@ -4487,7 +4485,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
   if (clear_next) {
     /* Clear the second half of a double-wide character of which the left
      * half was overwritten with a single-wide character. */
-    schar_from_ascii(grid->ScreenLines[off_to], ' ');
+    schar_from_ascii(grid->chars[off_to], ' ');
     end_dirty++;
   }
 
@@ -4496,12 +4494,12 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
     // blank out the rest of the line
     // TODO(bfredl): we could cache winline widths
     while (col < clear_width) {
-      if (grid->ScreenLines[off_to][0] != ' '
-          || grid->ScreenLines[off_to][1] != NUL
-          || grid->ScreenAttrs[off_to] != bg_attr) {
-        grid->ScreenLines[off_to][0] = ' ';
-        grid->ScreenLines[off_to][1] = NUL;
-        grid->ScreenAttrs[off_to] = bg_attr;
+      if (grid->chars[off_to][0] != ' '
+          || grid->chars[off_to][1] != NUL
+          || grid->attrs[off_to] != bg_attr) {
+        grid->chars[off_to][0] = ' ';
+        grid->chars[off_to][1] = NUL;
+        grid->attrs[off_to] = bg_attr;
         if (start_dirty == -1) {
           start_dirty = col;
           end_dirty = col;
@@ -4518,7 +4516,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
   if (clear_width > 0 || wp->w_width != grid->Columns) {
     // If we cleared after the end of the line, it did not wrap.
     // For vsplit, line wrapping is not possible.
-    grid->LineWraps[row] = false;
+    grid->line_wraps[row] = false;
   }
 
   if (clear_end < end_dirty) {
@@ -5289,11 +5287,11 @@ static int line_off2cells(schar_T *line, size_t off, size_t max_off)
   return (off + 1 < max_off && line[off + 1][0] == 0) ? 2 : 1;
 }
 
-/// Return number of display cells for char at ScreenLines[off].
+/// Return number of display cells for char at grid->chars[off].
 /// We make sure that the offset used is less than "max_off".
 static int grid_off2cells(ScreenGrid *grid, size_t off, size_t max_off)
 {
-  return line_off2cells(grid->ScreenLines, off, max_off);
+  return line_off2cells(grid->chars, off, max_off);
 }
 
 /// Return true if the character at "row"/"col" on the screen is the left side
@@ -5308,8 +5306,8 @@ bool grid_lefthalve(ScreenGrid *grid, int row, int col)
     grid = &default_grid;
   }
 
-  return grid_off2cells(grid, grid->LineOffset[row] + col,
-                        grid->LineOffset[row] + grid->Columns) > 1;
+  return grid_off2cells(grid, grid->line_offset[row] + col,
+                        grid->line_offset[row] + grid->Columns) > 1;
 }
 
 /// Correct a position on the screen, if it's the right half of a double-wide
@@ -5324,14 +5322,14 @@ int grid_fix_col(ScreenGrid *grid, int col, int row)
   }
 
   col += coloff;
-  if (grid->ScreenLines != NULL && col > 0
-      && grid->ScreenLines[grid->LineOffset[row] + col][0] == 0) {
+  if (grid->chars != NULL && col > 0
+      && grid->chars[grid->line_offset[row] + col][0] == 0) {
     return col - 1 - coloff;
   }
   return col - coloff;
 }
 
-/// output a single character directly to the grid and update ScreenLines.
+/// output a single character directly to the grid
 void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
 {
   char_u buf[MB_MAXBYTES + 1];
@@ -5340,7 +5338,7 @@ void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
   grid_puts(grid, buf, row, col, attr);
 }
 
-/// get a single character directly from grid.ScreenLines into "bytes[]".
+/// get a single character directly from grid.chars into "bytes[]".
 /// Also return its attribute in *attrp;
 void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
                    int *attrp)
@@ -5354,18 +5352,18 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
   }
 
   // safety check
-  if (grid->ScreenLines != NULL && row < grid->Rows && col < grid->Columns) {
-    off = grid->LineOffset[row] + col;
-    *attrp = grid->ScreenAttrs[off];
-    schar_copy(bytes, grid->ScreenLines[off]);
+  if (grid->chars != NULL && row < grid->Rows && col < grid->Columns) {
+    off = grid->line_offset[row] + col;
+    *attrp = grid->attrs[off];
+    schar_copy(bytes, grid->chars[off]);
   }
 }
 
 
 /// put string '*text' on the window grid at position 'row' and 'col', with
-/// attributes 'attr', and update ScreenLines[] and ScreenAttrs[].
+/// attributes 'attr', and update chars[] and attrs[].
 /// Note: only outputs within one row, message is truncated at grid boundary!
-/// Note: if ScreenLines[], row and/or col is invalid, nothing is done.
+/// Note: if grid, row and/or col is invalid, nothing is done.
 void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
 {
   grid_puts_len(grid, text, -1, row, col, attr);
@@ -5416,7 +5414,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   }
 
   // safety check
-  if (grid->ScreenLines == NULL || row >= grid->Rows || col >= grid->Columns) {
+  if (grid->chars == NULL || row >= grid->Rows || col >= grid->Columns) {
     return;
   }
 
@@ -5428,13 +5426,13 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
       abort();
     }
   }
-  off = grid->LineOffset[row] + col;
+  off = grid->line_offset[row] + col;
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
   if (col > 0 && col < grid->Columns && grid_fix_col(grid, col, row) != col) {
-    schar_from_ascii(grid->ScreenLines[off - 1], ' ');
-    grid->ScreenAttrs[off - 1] = 0;
+    schar_from_ascii(grid->chars[off - 1], ' ');
+    grid->attrs[off - 1] = 0;
     // redraw the previous cell, make it empty
     if (put_dirty_first == -1) {
       put_dirty_first = col-1;
@@ -5444,7 +5442,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
     force_redraw_next = true;
   }
 
-  max_off = grid->LineOffset[row] + grid->Columns;
+  max_off = grid->line_offset[row] + grid->Columns;
   while (col < grid->Columns
          && (len < 0 || (int)(ptr - text) < len)
          && *ptr != NUL) {
@@ -5492,9 +5490,9 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
     force_redraw_this = force_redraw_next;
     force_redraw_next = FALSE;
 
-    need_redraw = schar_cmp(grid->ScreenLines[off], buf)
-                  || (mbyte_cells == 2 && grid->ScreenLines[off + 1][0] != 0)
-                  || grid->ScreenAttrs[off] != attr
+    need_redraw = schar_cmp(grid->chars[off], buf)
+                  || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)
+                  || grid->attrs[off] != attr
                   || exmode_active;
 
     if (need_redraw || force_redraw_this) {
@@ -5515,11 +5513,11 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
         clear_next_cell = true;
       }
 
-      schar_copy(grid->ScreenLines[off], buf);
-      grid->ScreenAttrs[off] = attr;
+      schar_copy(grid->chars[off], buf);
+      grid->attrs[off] = attr;
       if (mbyte_cells == 2) {
-        grid->ScreenLines[off + 1][0] = 0;
-        grid->ScreenAttrs[off + 1] = attr;
+        grid->chars[off + 1][0] = 0;
+        grid->attrs[off + 1] = attr;
       }
       if (put_dirty_first == -1) {
         put_dirty_first = col;
@@ -5886,9 +5884,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
   }
 
   // nothing to do
-  if (grid->ScreenLines == NULL
-      || start_row >= end_row
-      || start_col >= end_col) {
+  if (grid->chars == NULL || start_row >= end_row || start_col >= end_col) {
     return;
   }
 
@@ -5915,13 +5911,13 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
 
     int col = start_col;
     schar_from_char(sc, c1);
-    int lineoff = grid->LineOffset[row];
+    int lineoff = grid->line_offset[row];
     for (col = start_col; col < end_col; col++) {
       int off = lineoff + col;
-      if (schar_cmp(grid->ScreenLines[off], sc)
-          || grid->ScreenAttrs[off] != attr) {
-        schar_copy(grid->ScreenLines[off], sc);
-        grid->ScreenAttrs[off] = attr;
+      if (schar_cmp(grid->chars[off], sc)
+          || grid->attrs[off] != attr) {
+        schar_copy(grid->chars[off], sc);
+        grid->attrs[off] = attr;
         if (dirty_first == INT_MAX) {
           dirty_first = col;
         }
@@ -5945,7 +5941,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
     }
 
     if (end_col == grid->Columns) {
-      grid->LineWraps[row] = false;
+      grid->line_wraps[row] = false;
     }
 
     // TODO(bfredl): The relevant caller should do this
@@ -5988,7 +5984,7 @@ void check_for_delay(int check_msg_scroll)
 int screen_valid(int doclear)
 {
   screenalloc(doclear);  // allocate screen buffers if size changed
-  return default_grid.ScreenLines != NULL;
+  return default_grid.chars != NULL;
 }
 
 /// (Re)allocates a window grid if size changed while in ext_multigrid mode.
@@ -6012,7 +6008,7 @@ void win_grid_alloc(win_T *wp)
 
   // TODO(bfredl): floating windows should force this to true
   bool want_allocation = ui_is_external(kUIMultigrid);
-  bool has_allocation = (grid->ScreenLines != NULL);
+  bool has_allocation = (grid->chars != NULL);
 
   if (want_allocation && has_allocation && highlights_invalid) {
     grid_invalidate(grid);
@@ -6059,17 +6055,16 @@ void grid_assign_handle(ScreenGrid *grid)
   }
 }
 
-/*
- * Resize the shell to Rows and Columns.
- * Allocate default_grid.ScreenLines[] and associated items.
- *
- * There may be some time between setting Rows and Columns and (re)allocating
- * default_grid.ScreenLines[].  This happens when starting up and when
- * (manually) changing the shell size.  Always use default_grid.Rows and
- * default_grid.Columns to access items in default_grid.ScreenLines[].  Use Rows
- * and Columns for positioning text etc. where the final size of the shell is
- * needed.
- */
+/// Resize the screen to Rows and Columns.
+///
+/// Allocate default_grid.chars[] and other grid arrays.
+///
+/// There may be some time between setting Rows and Columns and (re)allocating
+/// default_grid arrays.  This happens when starting up and when
+/// (manually) changing the shell size.  Always use default_grid.Rows and
+/// default_grid.Columns to access items in default_grid.chars[].  Use Rows
+/// and Columns for positioning text etc. where the final size of the shell is
+/// needed.
 void screenalloc(bool doclear)
 {
   static bool entered = false;  // avoid recursiveness
@@ -6079,13 +6074,13 @@ retry:
   // Allocation of the screen buffers is done only when the size changes and
   // when Rows and Columns have been set and we have started doing full
   // screen stuff.
-  if ((default_grid.ScreenLines != NULL
+  if ((default_grid.chars != NULL
        && Rows == default_grid.Rows
        && Columns == default_grid.Columns
        )
       || Rows == 0
       || Columns == 0
-      || (!full_screen && default_grid.ScreenLines == NULL)) {
+      || (!full_screen && default_grid.chars == NULL)) {
     return;
   }
 
@@ -6108,17 +6103,15 @@ retry:
 
   comp_col();           /* recompute columns for shown command and ruler */
 
-  /*
-   * We're changing the size of the screen.
-   * - Allocate new arrays for ScreenLines and ScreenAttrs.
-   * - Move lines from the old arrays into the new arrays, clear extra
-   *	 lines (unless the screen is going to be cleared).
-   * - Free the old arrays.
-   *
-   * If anything fails, make ScreenLines NULL, so we don't do anything!
-   * Continuing with the old ScreenLines may result in a crash, because the
-   * size is wrong.
-   */
+  // We're changing the size of the screen.
+  // - Allocate new arrays for default_grid
+  // - Move lines from the old arrays into the new arrays, clear extra
+  //   lines (unless the screen is going to be cleared).
+  // - Free the old arrays.
+  //
+  // If anything fails, make grid arrays NULL, so we don't do anything!
+  // Continuing with the old arrays may result in a crash, because the
+  // size is wrong.
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_free_lsize(wp);
   }
@@ -6172,32 +6165,32 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
   ScreenGrid new = *grid;
 
   size_t ncells = (size_t)((rows+1) * columns);
-  new.ScreenLines = xmalloc(ncells * sizeof(schar_T));
-  new.ScreenAttrs = xmalloc(ncells * sizeof(sattr_T));
-  new.LineOffset = xmalloc((size_t)(rows * sizeof(unsigned)));
-  new.LineWraps = xmalloc((size_t)(rows * sizeof(char_u)));
+  new.chars = xmalloc(ncells * sizeof(schar_T));
+  new.attrs = xmalloc(ncells * sizeof(sattr_T));
+  new.line_offset = xmalloc((size_t)(rows * sizeof(unsigned)));
+  new.line_wraps = xmalloc((size_t)(rows * sizeof(char_u)));
 
   new.Rows = rows;
   new.Columns = columns;
 
   for (new_row = 0; new_row < new.Rows; new_row++) {
-    new.LineOffset[new_row] = new_row * new.Columns;
-    new.LineWraps[new_row] = false;
+    new.line_offset[new_row] = new_row * new.Columns;
+    new.line_wraps[new_row] = false;
 
-    grid_clear_line(&new, new.LineOffset[new_row], columns, true);
+    grid_clear_line(&new, new.line_offset[new_row], columns, true);
 
     if (copy) {
       // If the screen is not going to be cleared, copy as much as
       // possible from the old screen to the new one and clear the rest
       // (used when resizing the window at the "--more--" prompt or when
       // executing an external command, for the GUI).
-      if (new_row < grid->Rows && grid->ScreenLines != NULL) {
+      if (new_row < grid->Rows && grid->chars != NULL) {
         int len = MIN(grid->Columns, new.Columns);
-        memmove(new.ScreenLines + new.LineOffset[new_row],
-                grid->ScreenLines + grid->LineOffset[new_row],
+        memmove(new.chars + new.line_offset[new_row],
+                grid->chars + grid->line_offset[new_row],
                 (size_t)len * sizeof(schar_T));
-        memmove(new.ScreenAttrs + new.LineOffset[new_row],
-                grid->ScreenAttrs + grid->LineOffset[new_row],
+        memmove(new.attrs + new.line_offset[new_row],
+                grid->attrs + grid->line_offset[new_row],
                 (size_t)len * sizeof(sattr_T));
       }
     }
@@ -6218,15 +6211,15 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
 
 void grid_free(ScreenGrid *grid)
 {
-  xfree(grid->ScreenLines);
-  xfree(grid->ScreenAttrs);
-  xfree(grid->LineOffset);
-  xfree(grid->LineWraps);
+  xfree(grid->chars);
+  xfree(grid->attrs);
+  xfree(grid->line_offset);
+  xfree(grid->line_wraps);
 
-  grid->ScreenLines = NULL;
-  grid->ScreenAttrs = NULL;
-  grid->LineOffset = NULL;
-  grid->LineWraps = NULL;
+  grid->chars = NULL;
+  grid->attrs = NULL;
+  grid->line_offset = NULL;
+  grid->line_wraps = NULL;
 }
 
 /// Doesn't allow reinit, so must only be called by free_all_mem!
@@ -6265,15 +6258,15 @@ static void screenclear2(void)
 {
   int i;
 
-  if (starting == NO_SCREEN || default_grid.ScreenLines == NULL) {
+  if (starting == NO_SCREEN || default_grid.chars == NULL) {
     return;
   }
 
-  // blank out ScreenLines
+  // blank out the default grid
   for (i = 0; i < default_grid.Rows; i++) {
-    grid_clear_line(&default_grid, default_grid.LineOffset[i],
+    grid_clear_line(&default_grid, default_grid.line_offset[i],
                     (int)default_grid.Columns, true);
-    default_grid.LineWraps[i] = false;
+    default_grid.line_wraps[i] = false;
   }
 
   ui_call_grid_clear(1);  // clear the display
@@ -6300,28 +6293,27 @@ static void grid_clear_line(ScreenGrid *grid, unsigned off, int width,
                             bool valid)
 {
   for (int col = 0; col < width; col++) {
-    schar_from_ascii(grid->ScreenLines[off + col], ' ');
+    schar_from_ascii(grid->chars[off + col], ' ');
   }
   int fill = valid ? 0 : -1;
-  (void)memset(grid->ScreenAttrs + off, fill, (size_t)width * sizeof(sattr_T));
+  (void)memset(grid->attrs + off, fill, (size_t)width * sizeof(sattr_T));
 }
 
 static void grid_invalidate(ScreenGrid *grid)
 {
-  (void)memset(grid->ScreenAttrs, -1,
-               grid->Rows * grid->Columns * sizeof(sattr_T));
+  (void)memset(grid->attrs, -1, grid->Rows * grid->Columns * sizeof(sattr_T));
 }
 
 
-/// Copy part of a Screenline for vertically split window.
+/// Copy part of a grid line for vertically split window.
 static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
 {
-  unsigned off_to = grid->LineOffset[to] + col;
-  unsigned off_from = grid->LineOffset[from] + col;
+  unsigned off_to = grid->line_offset[to] + col;
+  unsigned off_from = grid->line_offset[from] + col;
 
-  memmove(grid->ScreenLines + off_to, grid->ScreenLines + off_from,
+  memmove(grid->chars + off_to, grid->chars + off_from,
           width * sizeof(schar_T));
-  memmove(grid->ScreenAttrs + off_to, grid->ScreenAttrs + off_from,
+  memmove(grid->attrs + off_to, grid->attrs + off_from,
           width * sizeof(sattr_T));
 }
 
@@ -6397,7 +6389,7 @@ static int win_do_lines(win_T *wp, int row, int line_count, int del)
  */
 
 
-/// insert lines on the screen and update ScreenLines[]
+/// insert lines on the screen and move the existing lines down
 /// 'line_count' is the number of lines to be inserted.
 /// 'end' is the line after the scrolled part. Normally it is Rows.
 /// 'col' is the column from with we start inserting.
@@ -6424,8 +6416,8 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     return FAIL;
   }
 
-  // Shift LineOffset[] line_count down to reflect the inserted lines.
-  // Clear the inserted lines in ScreenLines[].
+  // Shift line_offset[] line_count down to reflect the inserted lines.
+  // Clear the inserted lines.
   for (i = 0; i < line_count; i++) {
     if (width != grid->Columns) {
       // need to copy part of a line
@@ -6434,17 +6426,17 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
         linecopy(grid, j + line_count, j, col, width);
       }
       j += line_count;
-      grid_clear_line(grid, grid->LineOffset[j] + col, width, false);
-      grid->LineWraps[j] = false;
+      grid_clear_line(grid, grid->line_offset[j] + col, width, false);
+      grid->line_wraps[j] = false;
     } else {
       j = end - 1 - i;
-      temp = grid->LineOffset[j];
+      temp = grid->line_offset[j];
       while ((j -= line_count) >= row) {
-        grid->LineOffset[j + line_count] = grid->LineOffset[j];
-        grid->LineWraps[j + line_count] = grid->LineWraps[j];
+        grid->line_offset[j + line_count] = grid->line_offset[j];
+        grid->line_wraps[j + line_count] = grid->line_wraps[j];
       }
-      grid->LineOffset[j + line_count] = temp;
-      grid->LineWraps[j + line_count] = false;
+      grid->line_offset[j + line_count] = temp;
+      grid->line_wraps[j + line_count] = false;
       grid_clear_line(grid, temp, (int)grid->Columns, false);
     }
   }
@@ -6454,7 +6446,7 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   return OK;
 }
 
-/// delete lines on the screen and update ScreenLines[]
+/// delete lines on the screen and move lines up.
 /// 'end' is the line after the scrolled part. Normally it is Rows.
 /// When scrolling region used 'off' is the offset from the top for the region.
 /// 'row' and 'end' are relative to the start of the region.
@@ -6479,8 +6471,8 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     return FAIL;
   }
 
-  // Now shift LineOffset[] line_count up to reflect the deleted lines.
-  // Clear the inserted lines in ScreenLines[].
+  // Now shift line_offset[] line_count up to reflect the deleted lines.
+  // Clear the inserted lines.
   for (i = 0; i < line_count; i++) {
     if (width != grid->Columns) {
       // need to copy part of a line
@@ -6489,18 +6481,18 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
         linecopy(grid, j - line_count, j, col, width);
       }
       j -= line_count;
-      grid_clear_line(grid, grid->LineOffset[j] + col, width, false);
-      grid->LineWraps[j] = false;
+      grid_clear_line(grid, grid->line_offset[j] + col, width, false);
+      grid->line_wraps[j] = false;
     } else {
       // whole width, moving the line pointers is faster
       j = row + i;
-      temp = grid->LineOffset[j];
+      temp = grid->line_offset[j];
       while ((j += line_count) <= end - 1) {
-        grid->LineOffset[j - line_count] = grid->LineOffset[j];
-        grid->LineWraps[j - line_count] = grid->LineWraps[j];
+        grid->line_offset[j - line_count] = grid->line_offset[j];
+        grid->line_wraps[j - line_count] = grid->line_wraps[j];
       }
-      grid->LineOffset[j - line_count] = temp;
-      grid->LineWraps[j - line_count] = false;
+      grid->line_offset[j - line_count] = temp;
+      grid->line_wraps[j - line_count] = false;
       grid_clear_line(grid, temp, (int)grid->Columns, false);
     }
   }
@@ -6755,7 +6747,7 @@ static void draw_tabline(void)
   int use_sep_chars = (t_colors < 8
                        );
 
-  if (default_grid.ScreenLines == NULL) {
+  if (default_grid.chars == NULL) {
     return;
   }
   redraw_tabline = false;
@@ -7280,7 +7272,7 @@ void screen_resize(int width, int height)
      * - in Ex mode, don't redraw anything.
      * - Otherwise, redraw right now, and position the cursor.
      * Always need to call update_screen() or screenalloc(), to make
-     * sure Rows/Columns and the size of ScreenLines[] is correct!
+     * sure Rows/Columns and the size of the screen is correct!
      */
     if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
         || exmode_active) {

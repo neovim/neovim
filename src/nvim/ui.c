@@ -320,14 +320,14 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
 void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
              int clearattr, bool wrap)
 {
-  size_t off = grid->LineOffset[row] + (size_t)startcol;
+  size_t off = grid->line_offset[row] + (size_t)startcol;
   int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
   int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
 
   UI_CALL(raw_line, grid->handle, row_off + row, col_off + startcol,
           col_off + endcol, col_off + clearcol, clearattr, wrap,
-          (const schar_T *)grid->ScreenLines + off,
-          (const sattr_T *)grid->ScreenAttrs + off);
+          (const schar_T *)grid->chars + off,
+          (const sattr_T *)grid->attrs + off);
 
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = row, old_col = col;

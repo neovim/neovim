@@ -1494,7 +1494,7 @@ void edit_putchar(int c, int highlight)
 {
   int attr;
 
-  if (curwin->w_grid.ScreenLines != NULL || default_grid.ScreenLines != NULL) {
+  if (curwin->w_grid.chars != NULL || default_grid.chars != NULL) {
     update_topline();  // just in case w_topline isn't valid
     validate_cursor();
     if (highlight) {

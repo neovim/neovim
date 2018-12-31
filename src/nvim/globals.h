@@ -92,7 +92,7 @@ EXTERN struct nvim_stats_s {
  * Number of Rows and Columns in the screen.
  * Must be long to be able to use them as options in option.c.
  * Note: Use default_grid.Rows and default_grid.Columns to access items in
- * default_grid.ScreenLines[]. They may have different values when the screen
+ * default_grid.chars[]. They may have different values when the screen
  * wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
  * up).
  */
@@ -190,11 +190,8 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      /* for ctrl_x_mode 0, ^X^P/^X^N do a local
                                  * expansion, (eg use complete=.) */
 
-/*
- * Functions for putting characters in the command line,
- * while keeping ScreenLines[] updated.
- */
-EXTERN int cmdmsg_rl INIT(= FALSE);         /* cmdline is drawn right to left */
+// state for putting characters in the message area
+EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
 EXTERN int msg_row;
 EXTERN int msg_scrolled;        /* Number of screen lines that windows have
