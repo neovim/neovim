@@ -126,7 +126,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
     }
   }
 
-  if (ui->ui_ext[kUIHlState]) {
+  if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {
     ui->ui_ext[kUILinegrid] = true;
   }
 
@@ -243,6 +243,28 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
 
   api_set_error(error, kErrorTypeValidation, "No such UI option: %s",
                 name.data);
+}
+
+/// Tell nvim to resize a grid. Nvim sends grid_resize event with the
+/// requested grid size is within size limits and with maximum allowed size
+/// otherwise.
+///
+/// On invalid grid handle, fails with error.
+///
+/// @param grid    The handle of the grid to be changed.
+/// @param width   The new requested width.
+/// @param height  The new requested height.
+void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
+                             Integer height, Error *error)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  ui_grid_resize((handle_T)grid, (int)width, (int)height, error);
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().

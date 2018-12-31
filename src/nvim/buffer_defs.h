@@ -18,6 +18,8 @@ typedef struct {
 
 // for garray_T
 #include "nvim/garray.h"
+// for ScreenGrid
+#include "nvim/grid_defs.h"
 // for HLF_COUNT
 #include "nvim/highlight_defs.h"
 // for pos_T, lpos_T and linenr_T
@@ -1182,6 +1184,9 @@ struct window_S {
   taggy_T w_tagstack[TAGSTACKSIZE];             /* the tag stack */
   int w_tagstackidx;                    /* idx just below active entry */
   int w_tagstacklen;                    /* number of tags on stack */
+
+  ScreenGrid w_grid;                    // the grid specific to the window
+  bool w_pos_changed;                   // true if window position changed
 
   /*
    * w_fraction is the fractional row of the cursor within the window, from

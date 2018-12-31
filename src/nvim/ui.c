@@ -57,6 +57,7 @@ static int busy = 0;
 static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
+static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -196,13 +197,6 @@ void ui_refresh(void)
   row = col = 0;
   pending_cursor_update = true;
 
-  ui_default_colors_set();
-
-  int save_p_lz = p_lz;
-  p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
-  p_lz = save_p_lz;
-
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ui_ext[i] = ext_widgets[i];
     if (i < kUIGlobalCount) {
@@ -210,6 +204,14 @@ void ui_refresh(void)
                          BOOLEAN_OBJ(ext_widgets[i]));
     }
   }
+
+  ui_default_colors_set();
+
+  int save_p_lz = p_lz;
+  p_lz = false;  // convince redrawing() to return true ...
+  screen_resize(width, height);
+  p_lz = save_p_lz;
+
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
@@ -315,12 +317,18 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
   }
 }
 
-void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
-             bool wrap)
+void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
+             int clearattr, bool wrap)
 {
-  size_t off = LineOffset[row]+(size_t)startcol;
-  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr, wrap,
-          (const schar_T *)ScreenLines+off, (const sattr_T *)ScreenAttrs+off);
+  size_t off = grid->line_offset[row] + (size_t)startcol;
+  int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
+  int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
+
+  UI_CALL(raw_line, grid->handle, row_off + row, col_off + startcol,
+          col_off + endcol, col_off + clearcol, clearattr, wrap,
+          (const schar_T *)grid->chars + off,
+          (const sattr_T *)grid->attrs + off);
+
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = row, old_col = col;
     // If'writedelay is active, we set the cursor to highlight what was drawn
@@ -334,11 +342,23 @@ void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
 
 void ui_cursor_goto(int new_row, int new_col)
 {
-  if (new_row == row && new_col == col) {
+  ui_grid_cursor_goto(&default_grid, new_row, new_col);
+}
+
+void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
+{
+  new_row += ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
+  new_col += ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
+  int handle = ui_is_external(kUIMultigrid) ? grid->handle
+                                            : DEFAULT_GRID_HANDLE;
+
+  if (new_row == row && new_col == col && handle == cursor_grid_handle) {
     return;
   }
+
   row = new_row;
   col = new_col;
+  cursor_grid_handle = handle;
   pending_cursor_update = true;
 }
 
@@ -360,8 +380,9 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
+  win_ui_flush();
   if (pending_cursor_update) {
-    ui_call_grid_cursor_goto(1, row, col);
+    ui_call_grid_cursor_goto(cursor_grid_handle, row, col);
     pending_cursor_update = false;
   }
   if (pending_mode_info_update) {
@@ -420,4 +441,23 @@ Array ui_array(void)
     ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;
+}
+
+void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
+{
+  if (grid_handle == DEFAULT_GRID_HANDLE) {
+    screen_resize(width, height);
+    return;
+  }
+
+  win_T *wp = get_win_by_grid_handle(grid_handle);
+  if (wp == NULL) {
+    api_set_error(error, kErrorTypeValidation,
+                  "No window with the given handle");
+    return;
+  }
+
+  wp->w_grid.requested_rows = (int)height;
+  wp->w_grid.requested_cols = (int)width;
+  redraw_win_later(wp, SOME_VALID);
 }

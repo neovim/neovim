@@ -14023,11 +14023,11 @@ static void f_screenattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   const int row = (int)tv_get_number_chk(&argvars[0], NULL) - 1;
   const int col = (int)tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= screen_Rows
-      || col < 0 || col >= screen_Columns) {
+  if (row < 0 || row >= default_grid.Rows
+      || col < 0 || col >= default_grid.Columns) {
     c = -1;
   } else {
-    c = ScreenAttrs[LineOffset[row] + col];
+    c = default_grid.attrs[default_grid.line_offset[row] + col];
   }
   rettv->vval.v_number = c;
 }
@@ -14042,12 +14042,12 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   const int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   const int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= screen_Rows
-      || col < 0 || col >= screen_Columns) {
+  if (row < 0 || row >= default_grid.Rows
+      || col < 0 || col >= default_grid.Columns) {
     c = -1;
   } else {
-    off = LineOffset[row] + col;
-    c = utf_ptr2char(ScreenLines[off]);
+    off = default_grid.line_offset[row] + col;
+    c = utf_ptr2char(default_grid.chars[off]);
   }
   rettv->vval.v_number = c;
 }
@@ -16774,10 +16774,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  uint16_t term_width = MAX(0, curwin->w_width - win_col_off(curwin));
+  uint16_t term_width = MAX(0, curwin->w_grid.Columns - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     true, false, false, cwd,
-                                    term_width, curwin->w_height,
+                                    term_width, curwin->w_grid.Rows,
                                     xstrdup("xterm-256color"),
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {

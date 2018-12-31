@@ -556,13 +556,6 @@ size_t mb_string2cells(const char_u *str)
   return clen;
 }
 
-/// Return number of display cells for char at ScreenLines[off].
-/// We make sure that the offset used is less than "max_off".
-int utf_off2cells(unsigned off, unsigned max_off)
-{
-  return (off + 1 < max_off && ScreenLines[off + 1][0] == 0) ? 2 : 1;
-}
-
 /// Convert a UTF-8 byte sequence to a wide character
 ///
 /// If the sequence is illegal or truncated by a NUL then the first byte is
@@ -1822,32 +1815,6 @@ const char *mb_unescape(const char **const pp)
   return NULL;
 }
 
-/*
- * Return true if the character at "row"/"col" on the screen is the left side
- * of a double-width character.
- * Caller must make sure "row" and "col" are not invalid!
- */
-bool mb_lefthalve(int row, int col)
-{
-  return utf_off2cells(LineOffset[row] + col,
-                       LineOffset[row] + screen_Columns) > 1;
-}
-
-/*
- * Correct a position on the screen, if it's the right half of a double-wide
- * char move it to the left half.  Returns the corrected column.
- */
-int mb_fix_col(int col, int row)
-{
-  col = check_col(col);
-  row = check_row(row);
-  if (ScreenLines != NULL && col > 0
-      && ScreenLines[LineOffset[row] + col][0] == 0) {
-    return col - 1;
-  }
-  return col;
-}
-
 
 /*
  * Skip the Vim specific head of a 'encoding' name.
@@ -2523,24 +2490,4 @@ char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr,
   }
 
   return retval;
-}
-
-// Check bounds for column number
-static int check_col(int col)
-{
-  if (col < 0)
-    return 0;
-  if (col >= screen_Columns)
-    return screen_Columns - 1;
-  return col;
-}
-
-// Check bounds for row number
-static int check_row(int row)
-{
-  if (row < 0)
-    return 0;
-  if (row >= screen_Rows)
-    return screen_Rows - 1;
-  return row;
 }

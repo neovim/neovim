@@ -19,13 +19,6 @@
 #define MB_BYTE2LEN(b)         utf8len_tab[b]
 #define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
 
-/// Maximum value for 'maxcombine'
-///
-/// At most that number of composing characters may be attached to the leading
-/// character by various `utfc_*` functions. Note that some functions do not
-/// have this limit.
-enum { MAX_MCO = 6 };
-
 // max length of an unicode char
 #define MB_MAXCHAR     6
 

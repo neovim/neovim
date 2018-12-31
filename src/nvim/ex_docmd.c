@@ -9194,10 +9194,10 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       /* restore height when not full height */
       if (wp->w_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
-                  "exe '%dresize ' . ((&lines * %" PRId64
-                  " + %" PRId64 ") / %" PRId64 ")",
-                  n, (int64_t)wp->w_height,
-                  (int64_t)(Rows / 2), (int64_t)Rows) < 0
+                      "exe '%dresize ' . ((&lines * %" PRId64
+                      " + %" PRId64 ") / %" PRId64 ")",
+                      n, (int64_t)wp->w_grid.Rows,
+                      (int64_t)(Rows / 2), (int64_t)Rows) < 0
               || put_eol(fd) == FAIL))
         return FAIL;
 
@@ -9459,8 +9459,8 @@ put_view(
                 " * winheight(0) + %" PRId64 ") / %" PRId64 ")",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)(wp->w_height / 2),
-                (int64_t)wp->w_height) < 0
+                (int64_t)(wp->w_grid.Rows / 2),
+                (int64_t)wp->w_grid.Rows) < 0
         || put_eol(fd) == FAIL
         || put_line(fd, "if s:l < 1 | let s:l = 1 | endif") == FAIL
         || put_line(fd, "exe s:l") == FAIL

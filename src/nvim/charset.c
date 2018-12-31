@@ -1022,12 +1022,12 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       && vim_isbreak(c)
       && !vim_isbreak((int)s[1])
       && wp->w_p_wrap
-      && (wp->w_width != 0)) {
+      && (wp->w_grid.Columns != 0)) {
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
     numberextra = win_col_off(wp);
     col2 = col;
-    colmax = (colnr_T)(wp->w_width - numberextra - col_adj);
+    colmax = (colnr_T)(wp->w_grid.Columns - numberextra - col_adj);
 
     if (col >= colmax) {
         colmax += col_adj;
@@ -1076,9 +1076,9 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     numberextra = numberwidth;
     col += numberextra + mb_added;
 
-    if (col >= (colnr_T)wp->w_width) {
-      col -= wp->w_width;
-      numberextra = wp->w_width - (numberextra - win_col_off2(wp));
+    if (col >= (colnr_T)wp->w_grid.Columns) {
+      col -= wp->w_grid.Columns;
+      numberextra = wp->w_grid.Columns - (numberextra - win_col_off2(wp));
       if (col >= numberextra && numberextra > 0) {
         col %= numberextra;
       }
@@ -1097,16 +1097,17 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       numberwidth -= win_col_off2(wp);
     }
 
-    if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width)) {
+    if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_grid.Columns)) {
       added = 0;
 
       if (*p_sbr != NUL) {
-        if (size + sbrlen + numberwidth > (colnr_T)wp->w_width) {
+        if (size + sbrlen + numberwidth > (colnr_T)wp->w_grid.Columns) {
           // Calculate effective window width.
-          int width = (colnr_T)wp->w_width - sbrlen - numberwidth;
-          int prev_width = col ? ((colnr_T)wp->w_width - (sbrlen + col)) : 0;
+          int width = (colnr_T)wp->w_grid.Columns - sbrlen - numberwidth;
+          int prev_width = col ? ((colnr_T)wp->w_grid.Columns - (sbrlen + col))
+                               : 0;
           if (width == 0) {
-            width = (colnr_T)wp->w_width;
+            width = (colnr_T)wp->w_grid.Columns;
           }
           added += ((size - prev_width) / width) * vim_strsize(p_sbr);
           if ((size - prev_width) % width) {
@@ -1175,11 +1176,11 @@ bool in_win_border(win_T *wp, colnr_T vcol)
   int width1;             // width of first line (after line number)
   int width2;             // width of further lines
 
-  if (wp->w_width == 0) {
+  if (wp->w_grid.Columns == 0) {
     // there is no border
     return false;
   }
-  width1 = wp->w_width - win_col_off(wp);
+  width1 = wp->w_grid.Columns - win_col_off(wp);
 
   if ((int)vcol < width1 - 1) {
     return false;

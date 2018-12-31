@@ -1546,10 +1546,8 @@ void msg_prt_line(char_u *s, int list)
   msg_clr_eos();
 }
 
-/*
- * Use screen_puts() to output one multi-byte character.
- * Return the pointer "s" advanced to the next character.
- */
+// Use grid_puts() to output one multi-byte character.
+// Return the pointer "s" advanced to the next character.
 static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
 {
   int cw;
@@ -1563,7 +1561,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     return s;
   }
 
-  screen_puts_len(s, l, msg_row, msg_col, attr);
+  grid_puts_len(&default_grid, s, l, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
@@ -1886,19 +1884,22 @@ int msg_scrollsize(void)
  */
 static void msg_scroll_up(void)
 {
+  if (msg_scrolled == 0) {
+    ui_call_win_scroll_over_start();
+  }
   if (dy_flags & DY_MSGSEP) {
     if (msg_scrolled == 0) {
-      screen_fill(Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,
-                  fill_msgsep, fill_msgsep, HL_ATTR(HLF_MSGSEP));
+      grid_fill(&default_grid, Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,
+                fill_msgsep, fill_msgsep, HL_ATTR(HLF_MSGSEP));
     }
     int nscroll = MIN(msg_scrollsize()+1, Rows);
-    screen_del_lines(Rows-nscroll, 1, Rows, 0, Columns);
+    grid_del_lines(&default_grid, Rows-nscroll, 1, Rows, 0, Columns);
   } else {
-    screen_del_lines(0, 1, (int)Rows, 0, Columns);
+    grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, Columns);
   }
   // TODO(bfredl): when msgsep display is properly batched, this fill should be
   // eliminated.
-  screen_fill(Rows-1, Rows, 0, (int)Columns, ' ', ' ', 0);
+  grid_fill(&default_grid, Rows-1, Rows, 0, (int)Columns, ' ', ' ', 0);
 }
 
 /*
@@ -2097,7 +2098,8 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
 {
   // Output postponed text.
   msg_didout = true;  // Remember that line is not empty.
-  screen_puts_len((char_u *)t_s, (int)(s - t_s), msg_row, msg_col, attr);
+  grid_puts_len(&default_grid, (char_u *)t_s, (int)(s - t_s), msg_row, msg_col,
+                attr);
   msg_col += *t_col;
   *t_col = 0;
   /* If the string starts with a composing character don't increment the
@@ -2313,8 +2315,9 @@ static int do_more_prompt(int typed_char)
           }
 
           if (toscroll == -1
-              && screen_ins_lines(0, 1, (int)Rows, 0, (int)Columns) == OK) {
-            screen_fill(0, 1, 0, (int)Columns, ' ', ' ', 0);
+              && grid_ins_lines(&default_grid, 0, 1, (int)Rows,
+                                0, (int)Columns) == OK) {
+            grid_fill(&default_grid, 0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {
@@ -2333,18 +2336,18 @@ static int do_more_prompt(int typed_char)
           /* scroll up, display line at bottom */
           msg_scroll_up();
           inc_msg_scrolled();
-          screen_fill((int)Rows - 2, (int)Rows - 1, 0,
-              (int)Columns, ' ', ' ', 0);
+          grid_fill(&default_grid, (int)Rows - 2, (int)Rows - 1, 0,
+                    (int)Columns, ' ', ' ', 0);
           mp_last = disp_sb_line((int)Rows - 2, mp_last);
           --toscroll;
         }
       }
 
       if (toscroll <= 0) {
-        /* displayed the requested text, more prompt again */
-        screen_fill((int)Rows - 1, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
-        msg_moremsg(FALSE);
+        // displayed the requested text, more prompt again
+        grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0,
+                  (int)Columns, ' ', ' ', 0);
+        msg_moremsg(false);
         continue;
       }
 
@@ -2355,8 +2358,9 @@ static int do_more_prompt(int typed_char)
     break;
   }
 
-  /* clear the --more-- message */
-  screen_fill((int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
+  // clear the --more-- message
+  grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ',
+            0);
   State = oldState;
   setmouse();
   if (quit_more) {
@@ -2452,8 +2456,8 @@ void mch_msg(char *str)
  */
 static void msg_screen_putchar(int c, int attr)
 {
-  msg_didout = TRUE;            /* remember that line is not empty */
-  screen_putchar(c, msg_row, msg_col, attr);
+  msg_didout = true;            // remember that line is not empty
+  grid_putchar(&default_grid, c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
       msg_col = Columns;
@@ -2473,11 +2477,12 @@ void msg_moremsg(int full)
   char_u      *s = (char_u *)_("-- More --");
 
   attr = HL_ATTR(HLF_M);
-  screen_puts(s, (int)Rows - 1, 0, attr);
-  if (full)
-    screen_puts((char_u *)
-        _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-        (int)Rows - 1, vim_strsize(s), attr);
+  grid_puts(&default_grid, s, (int)Rows - 1, 0, attr);
+  if (full) {
+    grid_puts(&default_grid, (char_u *)
+              _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
+              (int)Rows - 1, vim_strsize(s), attr);
+  }
 }
 
 /*
@@ -2525,13 +2530,13 @@ void msg_clr_eos(void)
  */
 void msg_clr_eos_force(void)
 {
-  if (cmdmsg_rl) {
-    screen_fill(msg_row, msg_row + 1, 0, msg_col + 1, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  } else {
-    screen_fill(msg_row, msg_row + 1, msg_col, (int)Columns, ' ', ' ', 0);
-    screen_fill(msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ', 0);
-  }
+  int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
+  int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : (int)Columns;
+
+  grid_fill(&default_grid, msg_row, msg_row + 1, msg_startcol, msg_endcol, ' ',
+            ' ', 0);
+  grid_fill(&default_grid, msg_row + 1, (int)Rows, 0, (int)Columns, ' ', ' ',
+            0);
 }
 
 /*

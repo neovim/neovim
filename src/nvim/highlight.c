@@ -98,7 +98,7 @@ static int get_attr_entry(HlEntry entry)
   return id;
 }
 
-/// When a UI connects, we need to send it the table of higlights used so far.
+/// When a UI connects, we need to send it the table of highlights used so far.
 void ui_send_all_hls(UI *ui)
 {
   for (size_t i = 1; i < kv_size(attr_entries); i++) {
@@ -212,13 +212,7 @@ void clear_hl_tables(bool reinit)
     map_clear(int, int)(combine_attr_entries);
     highlight_attr_set_all();
     highlight_changed();
-    redraw_all_later(NOT_VALID);
-    if (ScreenAttrs) {
-      // the meaning of 0 doesn't change anyway
-      // but the rest must be retransmitted
-      memset(ScreenAttrs, 0,
-             sizeof(*ScreenAttrs) * (size_t)(screen_Rows * screen_Columns));
-    }
+    screen_invalidate_highlights();
   } else {
     kv_destroy(attr_entries);
     map_free(HlEntry, int)(attr_entry_ids);

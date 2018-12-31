@@ -698,8 +698,8 @@ void free_all_mem(void)
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
 
-  /* screenlines (can't display anything now!) */
-  free_screenlines();
+  // free screenlines (can't display anything now!)
+  screen_free_all_mem();
 
   clear_hl_tables(false);
   list_free_log();

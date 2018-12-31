@@ -997,6 +997,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     p_wh = i;
   }
 
+  // Send the window positions to the UI
+  oldwin->w_pos_changed = true;
+
   return OK;
 }
 
@@ -1341,6 +1344,9 @@ static void win_rotate(int upwards, int count)
     (void)win_comp_pos();
   }
 
+  wp1->w_pos_changed = true;
+  wp2->w_pos_changed = true;
+
   redraw_all_later(NOT_VALID);
 }
 
@@ -1423,6 +1429,9 @@ void win_move_after(win_T *win1, win_T *win2)
     redraw_later(NOT_VALID);
   }
   win_enter(win1, false);
+
+  win1->w_pos_changed = true;
+  win2->w_pos_changed = true;
 }
 
 /*
@@ -2059,6 +2068,7 @@ int win_close(win_T *win, bool free_buf)
   if (help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
 
+  curwin->w_pos_changed = true;
   redraw_all_later(NOT_VALID);
   return OK;
 }
@@ -3108,6 +3118,10 @@ int win_new_tabpage(int after, char_u *filename)
 
     redraw_all_later(NOT_VALID);
 
+    if (ui_is_external(kUIMultigrid)) {
+        tabpage_check_windows(tp);
+    }
+
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
@@ -3299,10 +3313,15 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   int old_off = tp->tp_firstwin->w_winrow;
   win_T       *next_prevwin = tp->tp_prevwin;
 
+  tabpage_T *old_curtab = curtab;
   curtab = tp;
   firstwin = tp->tp_firstwin;
   lastwin = tp->tp_lastwin;
   topframe = tp->tp_topframe;
+
+  if (old_curtab != curtab && ui_is_external(kUIMultigrid)) {
+     tabpage_check_windows(old_curtab);
+  }
 
   /* We would like doing the TabEnter event first, but we don't have a
    * valid current window yet, which may break some commands.
@@ -3337,6 +3356,20 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
 
   redraw_all_later(NOT_VALID);
   must_redraw = NOT_VALID;
+}
+
+/// called when changing current tabpage from old_curtab to curtab
+static void tabpage_check_windows(tabpage_T *old_curtab)
+{
+  win_T *next_wp;
+  for (win_T *wp = old_curtab->tp_firstwin; wp; wp = next_wp) {
+    next_wp = wp->w_next;
+    wp->w_pos_changed = true;
+  }
+
+  for (win_T *wp = firstwin; wp; wp = wp->w_next) {
+    wp->w_pos_changed = true;
+  }
 }
 
 /*
@@ -3860,6 +3893,8 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
+  grid_assign_handle(&new_wp->w_grid);
+
   // Init w: variables.
   new_wp->w_vars = tv_dict_alloc();
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
@@ -3958,6 +3993,8 @@ win_free (
 
   xfree(wp->w_p_cc_cols);
 
+  win_free_grid(wp, false);
+
   if (wp != aucmd_win)
     win_remove(wp, tp);
   if (autocmd_busy) {
@@ -3968,6 +4005,20 @@ win_free (
   }
 
   unblock_autocmds();
+}
+
+void win_free_grid(win_T *wp, bool reinit)
+{
+  if (wp->w_grid.handle != 0 && ui_is_external(kUIMultigrid)) {
+    ui_call_grid_destroy(wp->w_grid.handle);
+    wp->w_grid.handle = 0;
+  }
+  grid_free(&wp->w_grid);
+  if (reinit) {
+    // if a float is turned into a split and back into a float, the grid
+    // data structure will be reused
+    memset(&wp->w_grid, 0, sizeof(wp->w_grid));
+  }
 }
 
 /*
@@ -4071,8 +4122,8 @@ static void frame_remove(frame_T *frp)
 void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
-  assert(Rows >= 0);
-  wp->w_lines = xcalloc(Rows, sizeof(wline_T));
+  assert(wp->w_grid.Rows >= 0);
+  wp->w_lines = xcalloc(MAX(wp->w_grid.Rows + 1, Rows), sizeof(wline_T));
 }
 
 /*
@@ -4202,7 +4253,8 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       wp->w_winrow = *row;
       wp->w_wincol = *col;
       redraw_win_later(wp, NOT_VALID);
-      wp->w_redr_status = TRUE;
+      wp->w_redr_status = true;
+      wp->w_pos_changed = true;
     }
     *row += wp->w_height + wp->w_status_height;
     *col += wp->w_width + wp->w_vsep_width;
@@ -4255,8 +4307,9 @@ void win_setheight_win(int height, win_T *win)
    * If there is extra space created between the last window and the command
    * line, clear it.
    */
-  if (full_screen && msg_scrolled == 0 && row < cmdline_row)
-    screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
+    grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  }
   cmdline_row = row;
   msg_row = row;
   msg_col = 0;
@@ -4706,7 +4759,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
       fr = fr->fr_next;
   }
   row = win_comp_pos();
-  screen_fill(row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
   cmdline_row = row;
   p_ch = Rows - cmdline_row;
   if (p_ch < 1)
@@ -4866,6 +4919,8 @@ void win_new_height(win_T *wp, int height)
   if (!exiting) {
     scroll_to_fraction(wp, prev_height);
   }
+
+  wp->w_pos_changed = true;
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -4996,6 +5051,7 @@ void win_new_width(win_T *wp, int width)
                       0);
     }
   }
+  wp->w_pos_changed = true;
 }
 
 void win_comp_scroll(win_T *wp)
@@ -5052,10 +5108,11 @@ void command_height(void)
       /* Recompute window positions. */
       (void)win_comp_pos();
 
-      /* clear the lines added to cmdline */
-      if (full_screen)
-        screen_fill(cmdline_row, (int)Rows, 0,
-            (int)Columns, ' ', ' ', 0);
+      // clear the lines added to cmdline
+      if (full_screen) {
+        grid_fill(&default_grid, cmdline_row, (int)Rows, 0, (int)Columns, ' ',
+                  ' ', 0);
+      }
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;
       return;
@@ -6030,4 +6087,24 @@ void win_findbuf(typval_T *argvars, list_T *list)
       tv_list_append_number(list, wp->handle);
     }
   }
+}
+
+void win_ui_flush(void)
+{
+  if (!ui_is_external(kUIMultigrid)) {
+    return;
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_pos_changed && wp->w_grid.chars != NULL) {
+      if (tp == curtab) {
+        ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,
+                        wp->w_wincol, wp->w_width, wp->w_height);
+      } else {
+        ui_call_win_hide(wp->w_grid.handle);
+      }
+      wp->w_pos_changed = false;
+    }
+  }
+
 }
