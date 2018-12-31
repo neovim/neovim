@@ -8,6 +8,13 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/suite.sh"
 
+# Build using system packages.
+enter_suite 'build'
+run_test 'make nvim' build
+# build_make install
+run_test './build/bin/nvim --version' run
+exit_suite --continue
+
 enter_suite 'clint'
 
 run_test 'make clint-full' clint
