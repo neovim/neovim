@@ -465,6 +465,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_grid.Columns
+    - (int)wp->w_p_nmrg
     - ((wp->w_p_nu || wp->w_p_rnu)
         && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
         ? number_width(wp) + 1 : 0);

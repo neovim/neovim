@@ -1472,6 +1472,11 @@ return {
       defaults={if_true={vi="make"}}
     },
     {
+      full_name='margin', abbreviation='nmrg',
+      type='number', scope={'window'},
+      redraw={'current_window'},
+    },
+    {
       full_name='matchpairs', abbreviation='mps',
       type='string', list='onecomma', scope={'buffer'},
       deny_duplicates=true,

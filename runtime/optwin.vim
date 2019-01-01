@@ -1,7 +1,7 @@
-" These commands create the option window.
+ These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2018 May 15
+" Last Change:	2019 January 1
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -382,6 +382,9 @@ if has("linebreak")
   call append("$", "\t(local to window)")
   call <SID>OptionL("nuw")
 endif
+call append("$", "margin\tcolumns between the start of the text and the line number or window edge")
+call append("$", "\t(local to window)")
+call <SID>OptionL("margin")
 if has("conceal")
   call append("$", "conceallevel\tcontrols whether concealable text is hidden")
   call append("$", "\t(local to window)")
