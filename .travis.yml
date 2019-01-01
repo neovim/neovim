@@ -126,6 +126,7 @@ addons:
 branches:
   only:
     - master
+    - /^release-\d+\.\d+$/
 
 cache:
   apt: true
