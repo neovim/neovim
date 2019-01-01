@@ -4256,20 +4256,15 @@ win_line (
         && filler_todo <= 0          // Not drawing diff filler lines.
         && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
         && row != endrow - 1         // Not the last line being displayed.
-        && grid->Columns == Columns  // Window spans the width of the screen.
+        && (grid->Columns == Columns  // Window spans the width of the screen,
+            || ui_is_external(kUIMultigrid))  // or has dedicated grid.
         && !wp->w_p_rl;              // Not right-to-left.
       grid_put_linebuf(grid, row, 0, col - boguscols, grid->Columns, wp->w_p_rl,
                        wp, wp->w_hl_attr_normal, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
-        int current_row = row;
-
-        // if we're not in ext_multigrid mode, grid has not been allocated; keep
-        // working on the default_grid.
-        if (!ui_is_external(kUIMultigrid)) {
-          current_row += grid->row_offset;
-          current_grid = &default_grid;
-        }
+        int current_row = row, dummy_col = 0;  // dummy_col unused
+        screen_adjust_grid(&current_grid, &current_row, &dummy_col);
 
         // Force a redraw of the first column of the next line.
         current_grid->attrs[current_grid->line_offset[current_row+1]] = -1;
@@ -4338,6 +4333,22 @@ win_line (
   return row;
 }
 
+/// Determine if dedicated window grid should be used or the default_grid
+///
+/// If UI did not request multigrid support, draw all windows on the
+/// default_grid.
+///
+/// If the default_grid is used, adjust window relative positions to global
+/// screen positions.
+static void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
+{
+  if (!ui_is_external(kUIMultigrid) && *grid != &default_grid) {
+    *row_off += (*grid)->row_offset;
+    *col_off += (*grid)->col_offset;
+    *grid = &default_grid;
+  }
+}
+
 
 /*
  * Check whether the given character needs redrawing:
@@ -4385,6 +4396,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
                                             // 2: occupies two display cells
   int start_dirty = -1, end_dirty = 0;
 
+  // TODO(bfredl): check all callsites and eliminate
   // Check for illegal row and col, just in case
   if (row >= grid->Rows) {
     row = grid->Rows - 1;
@@ -4393,12 +4405,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
     endcol = grid->Columns;
   }
 
-  // If UI is not externalized, merge the contents of global and window grids
-  if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->row_offset;
-    coloff += grid->col_offset;
-    grid = &default_grid;
-  }
+  screen_adjust_grid(&grid, &row, &coloff);
 
   off_from = 0;
   off_to = grid->line_offset[row] + coloff;
@@ -5300,11 +5307,7 @@ static int grid_off2cells(ScreenGrid *grid, size_t off, size_t max_off)
 /// Caller must make sure "row" and "col" are not invalid!
 bool grid_lefthalve(ScreenGrid *grid, int row, int col)
 {
-  if (!ui_is_external(kUIMultigrid)) {
-    row += grid->row_offset;
-    col += grid->col_offset;
-    grid = &default_grid;
-  }
+  screen_adjust_grid(&grid, &row, &col);
 
   return grid_off2cells(grid, grid->line_offset[row] + col,
                         grid->line_offset[row] + grid->Columns) > 1;
@@ -5315,11 +5318,7 @@ bool grid_lefthalve(ScreenGrid *grid, int row, int col)
 int grid_fix_col(ScreenGrid *grid, int col, int row)
 {
   int coloff = 0;
-  if (!ui_is_external(kUIMultigrid)) {
-    row += grid->row_offset;
-    coloff = grid->col_offset;
-    grid = &default_grid;
-  }
+  screen_adjust_grid(&grid, &row, &coloff);
 
   col += coloff;
   if (grid->chars != NULL && col > 0
@@ -5345,11 +5344,8 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
 {
   unsigned off;
 
-  if (!ui_is_external(kUIMultigrid)) {
-    row += grid->row_offset;
-    col += grid->col_offset;
-    grid = &default_grid;
-  }
+  screen_adjust_grid(&grid, &row, &col);
+
 
   // safety check
   if (grid->chars != NULL && row < grid->Rows && col < grid->Columns) {
@@ -5406,12 +5402,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   int need_redraw;
   bool do_flush = false;
 
-  // If UI is not externalized, keep working on the default grid
-  if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->row_offset;
-    col += grid->col_offset;
-    grid = &default_grid;
-  }
+  screen_adjust_grid(&grid, &row, &col);
 
   // safety check
   if (grid->chars == NULL || row >= grid->Rows || col >= grid->Columns) {
@@ -5552,7 +5543,8 @@ void grid_puts_line_flush(ScreenGrid *grid, bool set_cursor)
   assert(put_dirty_row != -1);
   if (put_dirty_first != -1) {
     if (set_cursor) {
-      ui_grid_cursor_goto(grid, put_dirty_row, put_dirty_last);
+      ui_grid_cursor_goto(grid->handle, put_dirty_row,
+                          MIN(put_dirty_last, grid->Columns-1));
     }
     ui_line(grid, put_dirty_row, put_dirty_first, put_dirty_last,
             put_dirty_last, 0, false);
@@ -5866,14 +5858,12 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
 {
   schar_T sc;
 
-  // if grids are not externalized, keep working on the default_grid
-  if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    start_row += grid->row_offset;
-    end_row += grid->row_offset;
-    start_col += grid->col_offset;
-    end_col += grid->col_offset;
-    grid = &default_grid;
-  }
+  int row_off = 0, col_off = 0;
+  screen_adjust_grid(&grid, &row_off, &col_off);
+  start_row += row_off;
+  end_row += row_off;
+  start_col += col_off;
+  end_col += col_off;
 
   // safety check
   if (end_row > grid->Rows) {
@@ -6324,15 +6314,20 @@ void setcursor(void)
 {
   if (redrawing()) {
     validate_cursor();
-    int left_offset = curwin->w_wcol;
+
+    ScreenGrid *grid = &curwin->w_grid;
+    int row = curwin->w_wrow;
+    int col = curwin->w_wcol;
     if (curwin->w_p_rl) {
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
-      left_offset = curwin->w_grid.Columns - curwin->w_wcol
+      col = curwin->w_grid.Columns - curwin->w_wcol
                     - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
                         && vim_isprintc(gchar_cursor())) ? 2 : 1);
     }
-    ui_grid_cursor_goto(&curwin->w_grid, curwin->w_wrow, left_offset);
+
+    screen_adjust_grid(&grid, &row, &col);
+    ui_grid_cursor_goto(grid->handle, row, col);
   }
 }
 
@@ -6404,13 +6399,10 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   int j;
   unsigned temp;
 
-  // If UI is not externalized, keep working on default grid
-  if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->row_offset;
-    end += grid->row_offset;
-    col += grid->col_offset;
-    grid = &default_grid;
-  }
+  int row_off = 0;
+  screen_adjust_grid(&grid, &row_off, &col);
+  row += row_off;
+  end += row_off;
 
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;
@@ -6459,13 +6451,10 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   int i;
   unsigned temp;
 
-  // If UI is not externalized, keep working on default grid
-  if (!ui_is_external(kUIMultigrid) && grid != &default_grid) {
-    row += grid->row_offset;
-    end += grid->row_offset;
-    col += grid->col_offset;
-    grid = &default_grid;
-  }
+  int row_off = 0;
+  screen_adjust_grid(&grid, &row_off, &col);
+  row += row_off;
+  end += row_off;
 
   if (!screen_valid(TRUE) || line_count <= 0) {
     return FAIL;

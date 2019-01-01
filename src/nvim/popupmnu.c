@@ -94,7 +94,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     if (curwin->w_p_rl) {
       col = curwin->w_width - curwin->w_wcol - 1;
     } else {
-      col = curwin->w_wincol + curwin->w_wcol;
+      col = curwin->w_wcol;
     }
 
     int grid = (int)curwin->w_grid.handle;

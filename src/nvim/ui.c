@@ -321,44 +321,37 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
              int clearattr, bool wrap)
 {
   size_t off = grid->line_offset[row] + (size_t)startcol;
-  int row_off = ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
-  int col_off = ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
 
-  UI_CALL(raw_line, grid->handle, row_off + row, col_off + startcol,
-          col_off + endcol, col_off + clearcol, clearattr, wrap,
-          (const schar_T *)grid->chars + off,
+  UI_CALL(raw_line, grid->handle, row, startcol, endcol, clearcol, clearattr,
+          wrap, (const schar_T *)grid->chars + off,
           (const sattr_T *)grid->attrs + off);
 
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = row, old_col = col;
+    handle_T old_grid = cursor_grid_handle;
     // If'writedelay is active, we set the cursor to highlight what was drawn
-    ui_cursor_goto(row, MIN(clearcol, (int)Columns-1));
+    ui_grid_cursor_goto(grid->handle, row, MIN(clearcol, (int)Columns-1));
     ui_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
     os_microdelay(wd * 1000u, true);
-    ui_cursor_goto(old_row, old_col);
+    ui_grid_cursor_goto(old_grid, old_row, old_col);
   }
 }
 
 void ui_cursor_goto(int new_row, int new_col)
 {
-  ui_grid_cursor_goto(&default_grid, new_row, new_col);
+  ui_grid_cursor_goto(DEFAULT_GRID_HANDLE, new_row, new_col);
 }
 
-void ui_grid_cursor_goto(ScreenGrid *grid, int new_row, int new_col)
+void ui_grid_cursor_goto(handle_T grid_handle, int new_row, int new_col)
 {
-  new_row += ui_is_external(kUIMultigrid) ? 0 : grid->row_offset;
-  new_col += ui_is_external(kUIMultigrid) ? 0 : grid->col_offset;
-  int handle = ui_is_external(kUIMultigrid) ? grid->handle
-                                            : DEFAULT_GRID_HANDLE;
-
-  if (new_row == row && new_col == col && handle == cursor_grid_handle) {
+  if (new_row == row && new_col == col && grid_handle == cursor_grid_handle) {
     return;
   }
 
   row = new_row;
   col = new_col;
-  cursor_grid_handle = handle;
+  cursor_grid_handle = grid_handle;
   pending_cursor_update = true;
 }
 
