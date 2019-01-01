@@ -29,21 +29,16 @@ foreach(PACKAGE ${PACKAGES})
   file(GLOB "${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
   if(${PACKNAME}_DOC_FILES)
     file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
-    add_custom_target("${PACKNAME}-tags"
+    add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PACKAGE} ${GENERATED_PACKAGE_DIR}/${PACKNAME}
       COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
         -u NONE -i NONE -e --headless -c "helptags doc" -c quit
       DEPENDS
         nvim
+        nvim_runtime_deps
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
     )
-    add_dependencies(${PACKNAME}-tags nvim_runtime_deps)
-
-    add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
-      DEPENDS
-        "${PACKNAME}-tags"
-      )
 
     set("${PACKNAME}_DOC_NAMES")
     foreach(DF "${${PACKNAME}_DOC_FILES}")
@@ -67,7 +62,7 @@ foreach(DF ${DOCFILES})
   list(APPEND BUILDDOCFILES ${GENERATED_RUNTIME_DIR}/doc/${F})
 endforeach()
 
-add_custom_target(helptags
+add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E remove doc/*
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
@@ -75,14 +70,10 @@ add_custom_target(helptags
     -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
   DEPENDS
     nvim
+    nvim_runtime_deps
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
-add_dependencies(helptags nvim_runtime_deps)
 
-add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
-  DEPENDS
-    helptags
-)
 
 add_custom_target(doc_html
   COMMAND make html
