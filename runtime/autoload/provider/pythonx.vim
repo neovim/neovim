@@ -10,7 +10,7 @@ function! provider#pythonx#Require(host) abort
 
   " Python host arguments
   let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
-  let args = [prog, '-c', 'import sys; sys.path.remove(""); import pynvim; pynvim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)
@@ -40,7 +40,7 @@ function! provider#pythonx#Detect(major_ver) abort
   let errors = []
 
   for prog in progs
-    let [result, err] = provider#pythonx#CheckForModule(prog, 'pynvim', a:major_ver)
+    let [result, err] = provider#pythonx#CheckForModule(prog, 'neovim', a:major_ver)
     if result
       return [prog, err]
     endif
