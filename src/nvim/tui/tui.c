@@ -1675,8 +1675,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   }
 
   // Blacklist of terminals that cannot be trusted to report DECSCUSR support.
-  if (!(st || (vte_version != 0 && vte_version < 3900)
-        || (konsolev > 0 && konsolev < 180770))) {
+  if (!(st || (vte_version != 0 && vte_version < 3900) || konsolev)) {
     data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
     data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
