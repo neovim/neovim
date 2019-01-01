@@ -70,6 +70,7 @@ int jump_to_mouse(int flags,
   bool first;
   int row = mouse_row;
   int col = mouse_col;
+  int grid = mouse_grid;
   int mouse_char;
 
   mouse_past_bottom = false;
@@ -125,20 +126,22 @@ retnomove:
       return IN_UNKNOWN;
 
     // find the window where the row is in
-    wp = mouse_find_win(&row, &col);
+    wp = mouse_find_win(&grid, &row, &col);
     if (wp == NULL) {
       return IN_UNKNOWN;
     }
     dragwin = NULL;
     // winpos and height may change in win_enter()!
-    if (row >= wp->w_height) {                  // In (or below) status line
+    if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
+      // In (or below) status line
       on_status_line = row - wp->w_height + 1;
       dragwin = wp;
     } else {
       on_status_line = 0;
     }
 
-    if (col >= wp->w_width) {           // In separator line
+    if (grid == DEFAULT_GRID_HANDLE && col >= wp->w_width) {
+      // In separator line
       on_sep_line = col - wp->w_width + 1;
       dragwin = wp;
     } else {
@@ -160,12 +163,10 @@ retnomove:
         && (wp->w_buffer != curwin->w_buffer
             || (!on_status_line
                 && !on_sep_line
-                && (
-                  wp->w_p_rl ? col < wp->w_width - wp->w_p_fdc :
-                                     col >= wp->w_p_fdc
-                                             + (cmdwin_type == 0 && wp ==
-                                                curwin ? 0 : 1)
-                  )
+                && (wp->w_p_rl
+                    ? col < wp->w_grid.Columns - wp->w_p_fdc
+                    : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
+                                            ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -257,7 +258,7 @@ retnomove:
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       redraw_later(VALID);
       row = 0;
-    } else if (row >= curwin->w_height)   {
+    } else if (row >= curwin->w_grid.Rows)   {
       count = 0;
       for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
         if (curwin->w_topfill > 0) {
@@ -266,7 +267,7 @@ retnomove:
           count += plines(curwin->w_topline);
         }
 
-        if (!first && count > row - curwin->w_height + 1) {
+        if (!first && count > row - curwin->w_grid.Rows + 1) {
           break;
         }
         first = false;
@@ -288,7 +289,7 @@ retnomove:
       redraw_later(VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      row = curwin->w_height - 1;
+      row = curwin->w_grid.Rows - 1;
     } else if (row == 0)   {
       // When dragging the mouse, while the text has been scrolled up as
       // far as it goes, moving the mouse in the top line should scroll
@@ -303,7 +304,7 @@ retnomove:
   }
 
   // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_width - curwin->w_p_fdc :
+  if (curwin->w_p_rl ? col < curwin->w_grid.Columns - curwin->w_p_fdc :
       col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
     mouse_char = ' ';
   }
@@ -369,8 +370,9 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   int off;
   int count;
 
-  if (win->w_p_rl)
-    col = win->w_width - 1 - col;
+  if (win->w_p_rl) {
+    col = win->w_grid.Columns - 1 - col;
+  }
 
   lnum = win->w_topline;
 
@@ -407,7 +409,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     off = win_col_off(win) - win_col_off2(win);
     if (col < off)
       col = off;
-    col += row * (win->w_width - off);
+    col += row * (win->w_grid.Columns - off);
     // add skip column (for long wrapping line)
     col += win->w_skipcol;
   }
@@ -428,11 +430,23 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   return retval;
 }
 
-// Find the window at screen position "*rowp" and "*colp".  The positions are
-// updated to become relative to the top-left of the window.
-// Returns NULL when something is wrong.
-win_T *mouse_find_win(int *rowp, int *colp)
+/// Find the window at "grid" position "*rowp" and "*colp".  The positions are
+/// updated to become relative to the top-left of the window.
+///
+/// @return NULL when something is wrong.
+win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 {
+  win_T *wp_grid = mouse_find_grid_win(gridp, rowp, colp);
+  if (wp_grid) {
+    return wp_grid;
+  }
+
+  // TODO(bfredl): grid zero will have floats displayed on it, and will
+  // be adjusted to float grids.
+  if (*gridp == 0) {
+    *gridp = DEFAULT_GRID_HANDLE;
+  }
+
   frame_T     *fp;
 
   fp = topframe;
@@ -458,6 +472,19 @@ win_T *mouse_find_win(int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
+      return wp;
+    }
+  }
+  return NULL;
+}
+
+static win_T *mouse_find_grid_win(int *grid, int *rowp, int *colp)
+{
+  if (*grid > 1) {
+    win_T *wp = get_win_by_grid_handle(*grid);
+    if (wp && wp->w_grid.chars) {
+      *rowp = MIN(*rowp, wp->w_grid.Rows-1);
+      *colp = MIN(*colp, wp->w_grid.Columns-1);
       return wp;
     }
   }
@@ -595,7 +622,7 @@ bool mouse_scroll_horiz(int dir)
 
   int step = 6;
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      step = curwin->w_width;
+      step = curwin->w_grid.Columns;
   }
 
   int leftcol = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : +step);
@@ -647,7 +674,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // Find the offset where scanning should begin.
   int offset = wp->w_leftcol;
   if (row > 0) {
-    offset += row * (wp->w_width - win_col_off(wp) - win_col_off2(wp) -
+    offset += row * (wp->w_grid.Columns - win_col_off(wp) - win_col_off2(wp) -
                      wp->w_leftcol + wp->w_skipcol);
   }
 

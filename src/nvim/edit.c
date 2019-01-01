@@ -7943,11 +7943,10 @@ static void ins_mousescroll(int dir)
   pos_T tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row = mouse_row;
-    int col = mouse_col;
+    int row = mouse_row, col = mouse_col, grid = mouse_grid;
 
     // find the window at the pointer coordinates
-    win_T *const wp = mouse_find_win(&row, &col);
+    win_T *wp = mouse_find_win(&grid, &row, &col);
     if (wp == NULL) {
       return;
     }

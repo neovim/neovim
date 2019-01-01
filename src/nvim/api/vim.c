@@ -198,6 +198,10 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// @note |keycodes| like <CR> are translated, so "<" is special.
 ///       To input a literal "<", send <LT>.
 ///
+/// For mouse events use |nvim_input_mouse()|. For back-compat reasons
+/// this method supports mouse input as "<LeftMouse><col,row>". This
+/// usage is deprecated since API level 6, use the dedicated method instead.
+///
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
 ///         requested if the buffer becomes full).
@@ -205,6 +209,98 @@ Integer nvim_input(String keys)
   FUNC_API_SINCE(1) FUNC_API_ASYNC
 {
   return (Integer)input_enqueue(keys);
+}
+
+/// Send mouse event from GUI
+///
+/// The call is non-blocking. It doesn't wait on any resulting action, but
+/// queues the event to be processed soon by the event loop.
+///
+/// @note Currently this doesn't support "scripting" multiple mouse events
+///       by calling it multiple times in a loop: the intermediate mouse
+///       positions will be ignored. It should be used to implement real-time
+///       mouse input in a GUI. The deprecated pseudokey form
+///       ("<LeftMouse><col,row>") in |nvim_input()| has the same limitiation.
+///
+/// @param button Which mouse button, one of "left", "right", "middle" or
+///               "wheel".
+/// @param action For ordinary buttons, one of "press", "drag" and "release"
+///               For the wheel, use "up", "down", "left" and "right".
+/// @param modifier String of modifiers each represented by a single char.
+///                 The same specifiers are used as for a key press, except
+///                 that the "-" separator is optional, so "C-A-", "c-a"
+///                 and "CA" can all be used to specify Ctrl+Alt+click
+/// @param grid For a client using |ui-multigrid| pass in the grid number.
+///             Other clients should pass in 0 (not 1).
+/// @param row row position of mouse (zero-based, like in redraw events)
+/// @param col column position of mouse (zero-based, like in redraw events)
+void nvim_input_mouse(String button, String action, String modifier,
+                      Integer grid, Integer row, Integer col, Error *err)
+  FUNC_API_SINCE(6) FUNC_API_ASYNC
+{
+  if (button.data == NULL || action.data == NULL) {
+    goto error;
+  }
+
+  int code = 0;
+
+  if (strequal(button.data, "left")) {
+    code = KE_LEFTMOUSE;
+  } else if (strequal(button.data, "middle")) {
+    code = KE_MIDDLEMOUSE;
+  } else if (strequal(button.data, "right")) {
+    code = KE_RIGHTMOUSE;
+  } else if (strequal(button.data, "wheel")) {
+    code = KE_MOUSEDOWN;
+  } else {
+    goto error;
+  }
+
+  if (code == KE_MOUSEDOWN) {
+    if (strequal(action.data, "down")) {
+      code = KE_MOUSEUP;
+    } else if (strequal(action.data, "up")) {
+      code = KE_MOUSEDOWN;
+    } else if (strequal(action.data, "left")) {
+      code = KE_MOUSERIGHT;
+    } else if (strequal(action.data, "right")) {
+      code = KE_MOUSELEFT;
+    } else {
+      goto error;
+    }
+  } else {
+    if (strequal(action.data, "press")) {
+      // pass
+    } else if (strequal(action.data, "drag")) {
+      code += KE_LEFTDRAG - KE_LEFTMOUSE;
+    } else if (strequal(action.data, "release")) {
+      code += KE_LEFTRELEASE - KE_LEFTMOUSE;
+    } else {
+      goto error;
+    }
+  }
+
+  int modmask = 0;
+  for (size_t i = 0; i < modifier.size; i++) {
+    char byte = modifier.data[i];
+    if (byte == '-') {
+      continue;
+    }
+    int mod = name_to_mod_mask(byte);
+    if (mod == 0) {
+      api_set_error(err, kErrorTypeValidation,
+                    "invalid modifier %c", byte);
+      return;
+    }
+    modmask |= mod;
+  }
+
+  input_enqueue_mouse(code, (uint8_t)modmask, (int)grid, (int)row, (int)col);
+  return;
+
+error:
+  api_set_error(err, kErrorTypeValidation,
+                "invalid button or action");
 }
 
 /// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with

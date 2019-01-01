@@ -5031,10 +5031,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 }
 
-/// Set the width of a window.
-void win_new_width(win_T *wp, int width)
+void win_inner_width_changed(win_T *wp)
 {
-  wp->w_width = width;
   wp->w_lines_valid = 0;
   changed_line_abv_curs_win(wp);
   invalidate_botline_win(wp);
@@ -5042,6 +5040,20 @@ void win_new_width(win_T *wp, int width)
     update_topline();
     curs_columns(TRUE);         /* validate w_wrow */
   }
+}
+
+/// Set the width of a window.
+void win_new_width(win_T *wp, int width)
+{
+  wp->w_width = width;
+  // TODO(bfredl): refactor this. There should be some variable
+  // wp->w_inner_width which always contains the final actual width.
+  // Alternatively use wp->w_width for this and introduce wp->w_outer_width
+  // Then use this to fix terminal_resize.
+  if (!ui_is_external(kUIMultigrid) || wp->w_grid.requested_cols == 0) {
+    win_inner_width_changed(wp);
+  }
+
   redraw_win_later(wp, NOT_VALID);
   wp->w_redr_status = TRUE;
 

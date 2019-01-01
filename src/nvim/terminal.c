@@ -981,8 +981,8 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 // terminal should lose focus
 static bool send_mouse_event(Terminal *term, int c)
 {
-  int row = mouse_row, col = mouse_col;
-  win_T *mouse_win = mouse_find_win(&row, &col);
+  int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  win_T *mouse_win = mouse_find_win(&grid, &row, &col);
 
   if (term->forward_mouse && mouse_win->w_buffer->terminal == term) {
     // event in the terminal window and mouse events was enabled by the

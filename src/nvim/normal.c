@@ -3997,13 +3997,14 @@ static void nv_mousescroll(cmdarg_T *cap)
   win_T *old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int row, col;
+    int grid, row, col;
 
+    grid = mouse_grid;
     row = mouse_row;
     col = mouse_col;
 
     // find the window at the pointer coordinates
-    win_T *const wp = mouse_find_win(&row, &col);
+    win_T *wp = mouse_find_win(&grid, &row, &col);
     if (wp == NULL) {
       return;
     }

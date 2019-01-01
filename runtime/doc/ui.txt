@@ -525,6 +525,7 @@ tabs.
 
 See |ui-linegrid| for grid events.
 See |nvim_ui_try_resize_grid| in |api-ui| to request changing the grid size.
+See |nvim_input_mouse| for sending mouse events to Nvim.
 
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
