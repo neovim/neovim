@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
+local insert = helpers.insert
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -255,6 +256,81 @@ describe('popup placement', function()
       hh                              |
       {3:[No Name] [Preview][+]          }|
       {2:-- }{5:match 1 of 10}                |
+    ]])
+  end)
+
+  it('works with vsplits', function()
+    insert('aaa aab aac\n')
+    feed(':vsplit<cr>')
+    screen:expect([[
+      aaa aab aac         {3:│}aaa aab aac|
+      ^                    {3:│}           |
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {4:[No Name] [+]        }{3:<Name] [+] }|
+      :vsplit                         |
+    ]])
+
+    feed('ibbb a<c-x><c-n>')
+    screen:expect([[
+      aaa aab aac         {3:│}aaa aab aac|
+      bbb aaa^             {3:│}bbb aaa    |
+      {1:~  }{s: aaa            }{1: }{3:│}{1:~          }|
+      {1:~  }{n: aab            }{1: }{3:│}{1:~          }|
+      {1:~  }{n: aac            }{1: }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {1:~                   }{3:│}{1:~          }|
+      {4:[No Name] [+]        }{3:<Name] [+] }|
+      {2:-- }{5:match 1 of 3}                 |
+    ]])
+
+    feed('<esc><c-w><c-w>oc a<c-x><c-n>')
+    screen:expect([[
+      aaa aab aac{3:│}aaa aab aac         |
+      bbb aaa    {3:│}bbb aaa             |
+      c aaa      {3:│}c aaa^               |
+      {1:~          }{3:│}{1:~}{s: aaa            }{1:   }|
+      {1:~          }{3:│}{1:~}{n: aab            }{1:   }|
+      {1:~          }{3:│}{1:~}{n: aac            }{1:   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {1:~          }{3:│}{1:~                   }|
+      {3:<Name] [+]  }{4:[No Name] [+]       }|
+      {2:-- }{5:match 1 of 3}                 |
     ]])
   end)
 end)
