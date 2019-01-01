@@ -415,17 +415,18 @@ function! s:check_python(version) abort
     call health#report_info('Python version: ' . pyversion)
     if s:is_bad_response(status)
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
-    else
-      call health#report_info(printf('pynvim version: %s', current))
       let [module_found, _msg] = provider#pythonx#CheckForModule(python_bin,
-            \ 'neovim', a:version)
-      if !module_found
+            \ 'pynvim', a:version)
+      if status !=? '^outdated' && module_found
+        " neovim module was not found, but pynvim was
         call health#report_error('Importing "neovim" failed.',
               \ "Reinstall \"pynvim\" and optionally \"neovim\" packages.\n" .
               \    pip ." uninstall pynvim neovim\n" .
               \    pip ." install pynvim\n" .
               \    pip ." install neovim # only if needed by third-party software")
       endif
+    else
+      call health#report_info(printf('pynvim version: %s', current))
     endif
 
     if s:is_bad_response(current)
