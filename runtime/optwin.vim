@@ -1,4 +1,4 @@
- These commands create the option window.
+" These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 " Last Change:	2019 January 1
