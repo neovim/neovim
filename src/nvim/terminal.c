@@ -529,6 +529,20 @@ void terminal_send(Terminal *term, char *data, size_t size)
   term->opts.write_cb(data, size, term->opts.data);
 }
 
+void terminal_paste(long count, char_u **y_array, size_t y_size)
+{
+  for (int i = 0; i < count; i++) {  // -V756
+    // feed the lines to the terminal
+    for (size_t j = 0; j < y_size; j++) {
+      if (j) {
+        // terminate the previous line
+        terminal_send(curbuf->terminal, "\n", 1);
+      }
+      terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+    }
+  }
+}
+
 void terminal_flush_output(Terminal *term)
 {
   size_t len = vterm_output_read(term->vt, term->textbuf,

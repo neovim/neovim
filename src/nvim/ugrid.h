@@ -25,8 +25,8 @@ struct ugrid {
 #define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
   do { \
     UCell *row_cells = (grid)->cells[row]; \
-    for (int col = startcol; col < endcol; col++) { \
-      UCell *cell = row_cells + col; \
+    for (int curcol = startcol; curcol < endcol; curcol++) { \
+      UCell *cell = row_cells + curcol; \
       (void)(cell); \
       code; \
     } \

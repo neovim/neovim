@@ -5997,9 +5997,8 @@ void do_autocmd(char_u *arg_in, int forceit)
   char_u      *pat;
   char_u      *envpat = NULL;
   char_u      *cmd;
-  event_T event;
-  int need_free = FALSE;
-  int nested = FALSE;
+  int need_free = false;
+  int nested = false;
   int group;
 
   if (*arg == '|') {
@@ -6082,7 +6081,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   last_event = (event_T)-1;             // for listing the event name
   last_group = AUGROUP_ERROR;           // for listing the group name
   if (*arg == '*' || *arg == NUL || *arg == '|') {
-    for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
+    for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS;
          event = (event_T)((int)event + 1)) {
       if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
         break;

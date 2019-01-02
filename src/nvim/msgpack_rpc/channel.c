@@ -495,8 +495,8 @@ static void broadcast_event(const char *name, Array args)
                                       kv_size(subscribed));
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
-    Channel *channel = kv_A(subscribed, i);
-    channel_write(channel, buffer);
+    Channel *c = kv_A(subscribed, i);
+    channel_write(c, buffer);
   }
 
 end:

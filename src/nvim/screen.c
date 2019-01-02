@@ -4006,23 +4006,23 @@ win_line (
             draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
           }
 
-          int attr = base_attr;
+          int col_attr = base_attr;
 
           if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
-            attr = cuc_attr;
+            col_attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
-            attr = mc_attr;
+            col_attr = mc_attr;
           }
 
           if (do_virttext) {
-            attr = hl_combine_attr(attr, virt_attr);
+            col_attr = hl_combine_attr(col_attr, virt_attr);
           }
 
-          attr = hl_combine_attr(attr, line_attr);
+          col_attr = hl_combine_attr(col_attr, line_attr);
 
-          linebuf_attr[off] = attr;
+          linebuf_attr[off] = col_attr;
           if (cells == 2) {
-            linebuf_attr[off+1] = attr;
+            linebuf_attr[off+1] = col_attr;
           }
           off += cells * col_stride;
 
@@ -5200,9 +5200,9 @@ win_redr_custom (
   curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
-    int len = (int)(hltab[n].start - p);
-    grid_puts_len(&default_grid, p, len, row, col, curattr);
-    col += vim_strnsize(p, len);
+    int textlen = (int)(hltab[n].start - p);
+    grid_puts_len(&default_grid, p, textlen, row, col, curattr);
+    col += vim_strnsize(p, textlen);
     p = hltab[n].start;
 
     if (hltab[n].userhl == 0)
