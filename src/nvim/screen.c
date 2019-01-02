@@ -678,8 +678,7 @@ static void win_update(win_T *wp)
   static int recursive = FALSE;         /* being called recursively */
   int old_botline = wp->w_botline;
   long fold_count;
-  /* remember what happened to the previous line, to know if
-   * check_visual_highlight() can be used */
+  // Remember what happened to the previous line.
 #define DID_NONE 1      /* didn't update a line */
 #define DID_LINE 2      /* updated a normal line */
 #define DID_FOLD 3      /* updated a folded line */

@@ -319,7 +319,6 @@ retnomove:
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
-    check_visual_highlight();
     VIsual = old_cursor;
     VIsual_active = true;
     VIsual_reselect = true;
