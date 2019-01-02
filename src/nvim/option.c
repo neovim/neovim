@@ -4322,6 +4322,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (p_uc && !old_value) {
       ml_open_files();
     }
+  } else if (pp == &p_pyx) {
+    if (p_pyx != 0 && p_pyx != 2 && p_pyx != 3) {
+      errmsg = e_invarg;
+    }
   } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
     // sync undo before 'undolevels' changes
     // use the old value, otherwise u_sync() may not work properly

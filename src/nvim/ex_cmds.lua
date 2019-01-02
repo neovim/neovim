@@ -2067,6 +2067,30 @@ return {
     func='ex_py3file',
   },
   {
+    command='pyx',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyx',
+  },
+  {
+    command='pyxdo',
+    flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyxdo',
+  },
+  {
+    command='pythonx',
+    flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyx',
+  },
+  {
+    command='pyxfile',
+    flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_pyxfile',
+  },
+  {
     command='quit',
     flags=bit.bor(BANG, RANGE, COUNT, NOTADR, TRLBAR, CMDWIN),
     addr_type=ADDR_WINDOWS,

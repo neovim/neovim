@@ -692,6 +692,7 @@ vim.Function object				*python-Function*
 
 To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()| 
 functions to evaluate Python expressions and pass their values to Vim script.
+|pyxeval()| is also available.
 
 ==============================================================================
 9. Python 3						*python3*
@@ -720,6 +721,59 @@ You can test what Python version is available with: >
 	endif
   	if has('python3')
 	  echo 'there is Python 3.x'
+	endif
+
+==============================================================================
+10. Python X						*python_x* *pythonx*
+
+Because most python code can be written so that it works with Python 2.6+ and
+Python 3, the pyx* functions and commands have been written.  They work the
+same as the Python 2 and 3 variants, but select the Python version using the
+'pyxversion' setting.
+
+Set 'pyxversion' in your |vimrc| to prefer Python 2 or Python 3 for Python
+commands. Changing this setting at runtime risks losing the state of plugins
+(such as initialization).
+
+If you want to use a module, you can put it in the {rtp}/pythonx directory.
+See |pythonx-directory|.
+
+							*:pyx* *:pythonx*
+`:pyx` and `:pythonx` work similar to `:python`.  To check if `:pyx` works: >
+	:pyx print("Hello")
+
+To see what version of Python is being used: >
+	:pyx import sys
+	:pyx print(sys.version)
+<
+					*:pyxfile* *python_x-special-comments*
+`:pyxfile` works similar to `:pyfile`.  But you can add a "shebang" comment to
+force Vim to use `:pyfile` or `:py3file`: >
+  #!/any string/python2		" Shebang. Must be the first line of the file.
+  #!/any string/python3		" Shebang. Must be the first line of the file.
+  # requires python 2.x		" Maximum lines depend on 'modelines'.
+  # requires python 3.x		" Maximum lines depend on 'modelines'.
+Unlike normal modelines, the bottom of the file is not checked.
+If none of them are found, the 'pyxversion' option is used.
+							*W20* *W21*
+If Vim does not support the selected Python version a silent message will be
+printed.  Use `:messages` to read them.
+
+							*:pyxdo*
+`:pyxdo` works similar to `:pydo`.
+
+							*has-pythonx*
+To check if pyx* functions and commands are available: >
+	if has('pythonx')
+	  echo 'pyx* commands are available. (Python ' . &pyx . ')'
+	endif
+
+If you prefer Python 2 and want to fallback to Python 3, set 'pyxversion'
+explicitly in your |.vimrc|.  Example: >
+	if has('python')
+	  set pyx=2
+	elseif has('python3')
+	  set pyx=3
 	endif
 
 ==============================================================================
