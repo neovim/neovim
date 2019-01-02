@@ -192,9 +192,9 @@ function! s:version_info(python) abort
   let nvim_path = s:trim(s:system([
         \ a:python, '-c',
         \ 'import sys; sys.path.remove(""); ' .
-        \ 'import pynvim; print(pynvim.__file__)']))
+        \ 'import neovim; print(neovim.__file__)']))
   if s:shell_error || empty(nvim_path)
-    return [python_version, 'unable to load pynvim Python module', pypi_version,
+    return [python_version, 'unable to load neovim Python module', pypi_version,
           \ nvim_path]
   endif
 
@@ -206,13 +206,13 @@ function! s:version_info(python) abort
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
-  " Try to get pynvim.VERSION (added in 0.1.11dev).
+  " Try to get neovim.VERSION (added in 0.1.11dev).
   let nvim_version = s:system([a:python, '-c',
-        \ 'from pynvim import VERSION as v; '.
+        \ 'from neovim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
   if empty(nvim_version)
-    let nvim_version = 'unable to find pynvim Python module version'
+    let nvim_version = 'unable to find neovim Python module version'
     let base = fnamemodify(nvim_path, ':h')
     let metas = glob(base.'-*/METADATA', 1, 1)
           \ + glob(base.'-*/PKG-INFO', 1, 1)
@@ -415,17 +415,18 @@ function! s:check_python(version) abort
     call health#report_info('Python version: ' . pyversion)
     if s:is_bad_response(status)
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
-    else
-      call health#report_info(printf('pynvim version: %s', current))
       let [module_found, _msg] = provider#pythonx#CheckForModule(python_bin,
-            \ 'neovim', a:version)
-      if !module_found
+            \ 'pynvim', a:version)
+      if status !=? '^outdated' && module_found
+        " neovim module was not found, but pynvim was
         call health#report_error('Importing "neovim" failed.',
               \ "Reinstall \"pynvim\" and optionally \"neovim\" packages.\n" .
               \    pip ." uninstall pynvim neovim\n" .
               \    pip ." install pynvim\n" .
               \    pip ." install neovim # only if needed by third-party software")
       endif
+    else
+      call health#report_info(printf('pynvim version: %s', current))
     endif
 
     if s:is_bad_response(current)

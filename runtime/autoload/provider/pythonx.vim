@@ -10,7 +10,7 @@ function! provider#pythonx#Require(host) abort
 
   " Python host arguments
   let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
-  let args = [prog, '-c', 'import sys; sys.path.remove(""); import pynvim; pynvim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
   let python_plugins = remote#host#PluginsForHost(a:host.name)
@@ -40,7 +40,7 @@ function! provider#pythonx#Detect(major_ver) abort
   let errors = []
 
   for prog in progs
-    let [result, err] = provider#pythonx#CheckForModule(prog, 'pynvim', a:major_ver)
+    let [result, err] = provider#pythonx#CheckForModule(prog, 'neovim', a:major_ver)
     if result
       return [prog, err]
     endif
@@ -75,12 +75,12 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
 
   let min_version = (a:major_version == 2) ? '2.6' : '3.3'
 
-  " Try to load pynvim module, and output Python version.
+  " Try to load module, and output Python version.
   " Exit codes:
-  "   0  pynvim module can be loaded.
-  "   2  pynvim module cannot be loaded.
+  "   0  module can be loaded.
+  "   2  module cannot be loaded.
   "   Otherwise something else went wrong (e.g. 1 or 127).
-  let [prog_exitcode, prog_version] = s:import_module(a:prog, 'pynvim')
+  let [prog_exitcode, prog_version] = s:import_module(a:prog, a:module)
 
   if prog_exitcode == 2 || prog_exitcode == 0
     " Check version only for expected return codes.
@@ -94,7 +94,7 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
   endif
 
   if prog_exitcode == 2
-    return [0, prog_path.' does not have the "pynvim" module. :help provider-python']
+    return [0, prog_path.' does not have the "' . a:module . '" module. :help provider-python']
   elseif prog_exitcode == 127
     " This can happen with pyenv's shims.
     return [0, prog_path . ' does not exist: ' . prog_version]
