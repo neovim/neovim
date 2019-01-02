@@ -2761,9 +2761,9 @@ do_mouse (
   } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (NORMAL | INSERT))
              && mouse_has(MOUSE_VISUAL)) {
     if (is_click || !VIsual_active) {
-      if (VIsual_active)
+      if (VIsual_active) {
         orig_cursor = VIsual;
-      else {
+      } else {
         VIsual = curwin->w_cursor;
         orig_cursor = VIsual;
         VIsual_active = true;
@@ -6401,8 +6401,8 @@ static void nv_visual(cmdarg_T *cap)
       VIsual_mode = cap->cmdchar;
       showmode();
     }
-    redraw_curbuf_later(INVERTED);          /* update the inversion */
-  } else {                /* start Visual mode */
+    redraw_curbuf_later(INVERTED);          // update the inversion
+  } else {                // start Visual mode
     if (cap->count0 > 0 && resel_VIsual_mode != NUL) {
       /* use previously selected part */
       VIsual = curwin->w_cursor;

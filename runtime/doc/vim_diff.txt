@@ -357,6 +357,9 @@ TUI:
   and has a 'ttybuiltin' setting to control how that combination works.  Nvim
   uses one or the other, it does not attempt to merge the two.
 
+UI/Display:
+  |Visual| selection highlights the character at cursor. |visual-use|
+
 VimL (Vim script) compatibility:
   `count` does not alias to |v:count|
   `errmsg` does not alias to |v:errmsg|
