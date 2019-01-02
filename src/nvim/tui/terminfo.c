@@ -137,9 +137,6 @@ unibi_term *terminfo_from_builtin(const char *term, char **termname)
   if (*termname == NULL) {
     *termname = xstrdup("builtin_?");
   }
-  // Disable BCE by default (for built-in terminfos). #7624
-  // https://github.com/kovidgoyal/kitty/issues/160#issuecomment-346470545
-  unibi_set_bool(ut, unibi_back_color_erase, false);
   return ut;
 }
 
