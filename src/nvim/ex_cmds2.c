@@ -1772,7 +1772,7 @@ void ex_args(exarg_T *eap)
     }
   }
 
-  if (!ends_excmd(*eap->arg)) {
+  if (*eap->arg != NUL) {
     // ":args file ..": define new argument list, handle like ":next"
     // Also for ":argslocal file .." and ":argsglobal file ..".
     ex_next(eap);
