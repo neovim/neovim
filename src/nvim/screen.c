@@ -1902,7 +1902,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * Add the margin between the text and either the number column
    * or the edge of the window.
    */
-   if (wp->w_p_nmrg) {
+  if (wp->w_p_nmrg) {
      len = wp->w_width - col;
      if (len > wp->w_p_nmrg) {
        len = wp->w_p_nmrg;
@@ -2864,11 +2864,11 @@ win_line (
         draw_state = WL_NMRG;
         if (wp->w_p_nmrg) {
           c_extra = ' ';
-      		n_extra = wp->w_p_nmrg;
+          n_extra = wp->w_p_nmrg;
 
-      		if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-      			char_attr = win_hl_attr(wp, HLF_CUL);
-      		} else {
+          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            char_attr = win_hl_attr(wp, HLF_CUL);
+          } else {
       			char_attr = 0;
       		}
       	}
