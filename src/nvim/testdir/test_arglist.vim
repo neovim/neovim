@@ -170,6 +170,15 @@ func Test_argument()
   call assert_fails('argument', 'E163:')
 endfunc
 
+func Test_args_with_quote()
+  " Only on Unix can a file name include a double quote.
+  if has('unix')
+    args \"foobar
+    call assert_equal('"foobar', argv(0))
+    %argdelete
+  endif
+endfunc
+
 " Test for 0argadd and 0argedit
 " Ported from the test_argument_0count.in test script
 func Test_zero_argadd()
