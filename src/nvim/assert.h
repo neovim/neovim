@@ -15,10 +15,6 @@
 # define __has_extension __has_feature
 #endif
 
-#ifndef __has_builtin
-# define __has_builtin __has_feature
-#endif
-
 /// @def STATIC_ASSERT
 /// @brief Assert at compile time if condition is not satisfied.
 ///
@@ -136,20 +132,22 @@
 ///
 /// @param MAX Maximum value of the narrowest type of operand.
 ///            Not used if compiler supports __builtin_add_overflow.
-#if __has_builtin(__builtin_add_overflow)
-# define STRICT_ADD(a, b, c) \
+#if (defined(__clang__) && __has_builtin(__builtin_add_overflow)) \
+  || (__GNUC__ >= 5)
+# define STRICT_ADD(a, b, c, t) \
   do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
 #else
-# define STRICT_ADD(a, b, c) \
-  do { *c = a + b; } while (0)
+# define STRICT_ADD(a, b, c, t) \
+  do { *(c) = (t)(a + b); } while (0)
 #endif
 
-#if __has_builtin(__builtin_sub_overflow)
-# define STRICT_SUB(a, b, c) \
+#if (defined(__clang__) && __has_builtin(__builtin_sub_overflow)) \
+  || (__GNUC__ >= 5)
+# define STRICT_SUB(a, b, c, t) \
   do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
 #else
-# define STRICT_SUB(a, b, c) \
-  do { *c = a - b; } while (0)
+# define STRICT_SUB(a, b, c, t) \
+  do { *(c) = (t)(a - b); } while (0)
 #endif
 
 #endif  // NVIM_ASSERT_H
