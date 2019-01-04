@@ -22,7 +22,7 @@ is_merge_commit() {
 for commit in $(git log --format='%H' --first-parent "$__SINCE"..HEAD); do
   if is_merge_commit ${commit} ; then
       if [ -z "$__INVMATCH" ] || ! git log --oneline ${commit}^1..${commit}^2 \
-           | grep -E "$__INVMATCH" >/dev/null 2>&1 ; then
+           | >/dev/null 2>&1 grep -E "$__INVMATCH" ; then
         git log -1 --oneline ${commit}
         git log --format='    %h %s' ${commit}^1..${commit}^2
       fi
