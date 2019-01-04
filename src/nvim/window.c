@@ -4392,11 +4392,11 @@ static void frame_setheight(frame_T *curfrp, int height)
           room_cmdline = 0;
       }
 
-      if (height <= room + room_cmdline)
+      if (height <= room + room_cmdline) {
         break;
+      }
       if (run == 2 || curfrp->fr_width == Columns) {
-        if (height > room + room_cmdline)
-          height = room + room_cmdline;
+        height = room + room_cmdline;
         break;
       }
       frame_setheight(curfrp->fr_parent, height
