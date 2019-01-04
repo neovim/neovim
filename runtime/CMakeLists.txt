@@ -78,7 +78,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
 add_custom_target(doc_html
   COMMAND make html
   DEPENDS
-    helptags
+    ${GENERATED_HELP_TAGS}
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}/doc"
 )
 

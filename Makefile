@@ -101,7 +101,7 @@ else
 endif
 
 helptags: | nvim
-	+$(BUILD_CMD) -C build helptags
+	+$(BUILD_CMD) -C build runtime/doc/tags
 
 # Builds help HTML _and_ checks for invalid help tags.
 helphtml: | nvim helptags
