@@ -1565,7 +1565,8 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
                         &lnum_new, &count_new) == FAIL) {
         continue;
       }
-    } else if (diffstyle == DIFF_UNIFIED) {
+    } else {
+      assert(diffstyle == DIFF_UNIFIED);
       if (STRNCMP(line, "@@ ", 3)  != 0) {
         continue;   // not the start of a diff block
       }
@@ -1573,9 +1574,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
                              &lnum_new, &count_new) == FAIL) {
         continue;
       }
-    } else {
-      EMSG(_("E959: Invalid diff format."));
-      break;
     }
 
     // Go over blocks before the change, for which orig and new are equal.
