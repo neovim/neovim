@@ -544,10 +544,8 @@ int get_expr_indent(void)
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
   char_u *inde_copy = vim_strsave(curbuf->b_p_inde);
-  if (inde_copy != NULL) {
-    indent = (int)eval_to_number(inde_copy);
-    xfree(inde_copy);
-  }
+  indent = (int)eval_to_number(inde_copy);
+  xfree(inde_copy);
 
   if (use_sandbox) {
     sandbox--;
