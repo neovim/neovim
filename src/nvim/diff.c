@@ -1547,7 +1547,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       } else if ((STRNCMP(line, "--- ", 4) == 0)
                  && (vim_fgets(linebuf, LBUFLEN, fd) == 0)
                  && (STRNCMP(line, "+++ ", 4) == 0)
-                 && (vim_fgets(linebuf, LBUFLEN, fd) == 0)
+                 && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
                  && (STRNCMP(line, "@@ ", 3) == 0)) {
         diffstyle = DIFF_UNIFIED;
       } else {
