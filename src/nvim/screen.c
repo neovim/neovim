@@ -73,6 +73,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/cursor_shape.h"
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -678,11 +679,10 @@ static void win_update(win_T *wp)
   static int recursive = FALSE;         /* being called recursively */
   int old_botline = wp->w_botline;
   long fold_count;
-  /* remember what happened to the previous line, to know if
-   * check_visual_highlight() can be used */
-#define DID_NONE 1      /* didn't update a line */
-#define DID_LINE 2      /* updated a normal line */
-#define DID_FOLD 3      /* updated a folded line */
+  // Remember what happened to the previous line.
+#define DID_NONE 1      // didn't update a line
+#define DID_LINE 2      // updated a normal line
+#define DID_FOLD 3      // updated a folded line
   int did_update = DID_NONE;
   linenr_T syntax_last_parsed = 0;              /* last parsed text line */
   linenr_T mod_top = 0;
@@ -2181,10 +2181,10 @@ win_line (
   int syntax_attr = 0;                  /* attributes desired by syntax */
   int has_syntax = FALSE;               /* this buffer has syntax highl. */
   int save_did_emsg;
-  int eol_hl_off = 0;                   /* 1 if highlighted char after EOL */
-  int draw_color_col = FALSE;           /* highlight colorcolumn */
-  int         *color_cols = NULL;       /* pointer to according columns array */
-  bool has_spell = false;               /* this buffer has spell checking */
+  int eol_hl_off = 0;                   // 1 if highlighted char after EOL
+  int draw_color_col = false;           // highlight colorcolumn
+  int *color_cols = NULL;               // pointer to according columns array
+  bool has_spell = false;               // this buffer has spell checking
 # define SPWORDLEN 150
   char_u nextline[SPWORDLEN * 2];       /* text with start of the next line */
   int nextlinecol = 0;                  /* column where nextline[] starts */
@@ -2390,8 +2390,9 @@ win_line (
         }
       }
 
-      // Check if the character under the cursor should not be inverted
-      if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin) {
+      // Check if the char under the cursor should be inverted (highlighted).
+      if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin
+          && cursor_is_block_during_visual(*p_sel == 'e')) {
         noinvcur = true;
       }
 
