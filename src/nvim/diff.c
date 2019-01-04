@@ -695,7 +695,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     len += (long)STRLEN(ml_get_buf(buf, lnum, false)) + 1;
   }
-  ptr = xmalloc(len);
+  ptr = try_malloc(len);
   if (ptr == NULL) {
     // Allocating memory failed.  This can happen, because we try to read
     // the whole buffer text into memory.  Set the failed flag, the diff
@@ -1088,9 +1088,6 @@ static int diff_file(diffio_T *dio)
     const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
                         + STRLEN(p_srr) + 27);
     char *const cmd = xmalloc(len);
-    if (cmd == NULL) {
-      return FAIL;
-    }
 
     // We don't want $DIFF_OPTIONS to get in the way.
     if (os_getenv("DIFF_OPTIONS")) {
