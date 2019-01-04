@@ -4008,7 +4008,7 @@ shada_read_next_item_start:
             // XXX: Temporarily reassign `i` because the macros depend on it.
             const size_t j = i;
             {
-              for (i = 0; i < unpacked_2.data.via.map.size; i++) {
+              for (i = 0; i < unpacked_2.data.via.map.size; i++) {  // -V535
                 CHECK_KEY_IS_STR(unpacked_2, "buffer list entry")
                 LONG_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
                          entry->data.buffer_list.buffers[j].pos.lnum)
