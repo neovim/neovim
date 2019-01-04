@@ -1,11 +1,11 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * normal.c:	Contains the main routine for processing characters in command
- *		mode.  Communicates closely with the code in ops.c to handle
- *		the operators.
- */
+//
+// normal.c:    Contains the main routine for processing characters in command
+//              mode.  Communicates closely with the code in ops.c to handle
+//              the operators.
+//
 
 #include <assert.h>
 #include <inttypes.h>
@@ -3939,9 +3939,11 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
             (void)hasFolding(curwin->w_cursor.lnum,
                 &curwin->w_cursor.lnum, NULL);
           linelen = linetabsize(get_cursor_line_ptr());
-          if (linelen > width1)
-            curwin->w_curswant += (((linelen - width1 - 1) / width2)
-                                   + 1) * width2;
+          if (linelen > width1) {
+            int w = (((linelen - width1 - 1) / width2) + 1) * width2;
+            assert(curwin->w_curswant <= INT_MAX - w);
+            curwin->w_curswant += w;
+          }
         }
       } else { /* dir == FORWARD */
         if (linelen > width1)
