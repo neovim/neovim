@@ -550,13 +550,11 @@ void update_single_line(win_T *wp, linenr_T lnum)
     for (j = 0; j < wp->w_lines_valid; ++j) {
       if (lnum == wp->w_lines[j].wl_lnum) {
         init_search_hl(wp);
-        start_search_hl();
         prepare_search_hl(wp, lnum);
         update_window_hl(wp, false);
         // allocate window grid if not already
         win_grid_alloc(wp);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false, false);
-        end_search_hl();
         break;
       }
       row += wp->w_lines[j].wl_size;
