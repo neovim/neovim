@@ -6197,9 +6197,6 @@ static int open_cmdwin(void)
         stuffReadbuff(p);
         stuffcharReadbuff(CAR);
       }
-    } else if (cmdwin_result == K_XF2) {      /* :qa typed */
-      ccline.cmdbuff = vim_strsave((char_u *)"qa");
-      cmdwin_result = CAR;
     } else if (cmdwin_result == Ctrl_C) {
       /* :q or :close, don't execute any command
        * and don't modify the cmd window. */
