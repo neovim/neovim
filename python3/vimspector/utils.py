@@ -197,6 +197,7 @@ def SelectFromList( prompt, options ):
 
 
 def AskForInput( prompt ):
+  # TODO: Handle the ctrl-c and such responses returning empty or something
   with InputSave():
     return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
 
@@ -239,11 +240,33 @@ def IsCurrent( window, buf ):
   return vim.current.window == window and vim.current.window.buffer == buf
 
 
+# TODO: Should we just run the substitution on the whole JSON string instead?
+# That woul dallow expansion in bool and number values, such as ports etc. ?
 def ExpandReferencesInDict( obj, mapping, **kwargs ):
   def expand_refs_in_string( s ):
-    s = string.Template( s ).safe_substitute( mapping, **kwargs )
     s = os.path.expanduser( s )
     s = os.path.expandvars( s )
+
+    # Parse any variables passed in in mapping, and ask for any that weren't,
+    # storing the result in mapping
+    bug_catcher = 0
+    while bug_catcher < 100:
+      ++bug_catcher
+
+      try:
+        UserMessage( 'Dict: {}'.format( str( mapping ) ), persist = True )
+        s = string.Template( s ).substitute( mapping, **kwargs )
+        break
+      except KeyError as e:
+        # HACK: This is seemingly the only way to get the key. str( e ) returns
+        # the key surrounded by '' for unknowable reasons.
+        key = e.args[ 0 ]
+        mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ) )
+      except ValueError as e:
+        UserMessage( 'Invalid $ in string {}: {}'.format( s, e ),
+                     persist = True )
+        break
+
     return s
 
   def expand_refs_in_object( obj ):
