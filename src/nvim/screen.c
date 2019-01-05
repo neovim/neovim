@@ -2936,8 +2936,8 @@ win_line (
       break;
     }
 
-    if (draw_state == WL_LINE && area_highlighting) {
-      /* handle Visual or match highlighting in this line */
+    if (draw_state == WL_LINE && (area_highlighting || has_spell)) {
+      // handle Visual or match highlighting in this line
       if (vcol == fromcol
           || (vcol + 1 == fromcol && n_extra == 0
               && utf_ptr2cells(ptr) > 1)
