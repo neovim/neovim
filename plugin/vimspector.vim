@@ -25,13 +25,12 @@ endfunction
 if exists( "g:loaded_vimpector" )
   call s:restore_cpo()
   finish
+endif
 
 " TODO:
 "   - Check Vim version (for jobs)
 "   - Check python support
-"   - ?
-
-endif
+"   - Add commands/mappings/menus?
 
 let g:loaded_vimpector = 1
 "}}}
