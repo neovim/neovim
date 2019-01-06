@@ -258,8 +258,6 @@ function! s:check_python(version) abort
   call health#report_start('Python ' . a:version . ' provider (optional)')
 
   let pyname = 'python'.(a:version == 2 ? '' : '3')
-  let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
   let loaded_var = 'g:loaded_'.pyname.'_provider'
@@ -270,22 +268,7 @@ function! s:check_python(version) abort
     call health#report_info('Disabled ('.loaded_var.'='.eval(loaded_var).').  This might be due to some previous error.')
   endif
 
-  if !empty(pyenv)
-    if empty(pyenv_root)
-      call health#report_info(
-            \ 'pyenv was found, but $PYENV_ROOT is not set. `pyenv root` will be used.'
-            \ .' If you run into problems, try setting $PYENV_ROOT explicitly.'
-            \ )
-      let pyenv_root = s:trim(s:system([pyenv, 'root']))
-    endif
-
-    if !isdirectory(pyenv_root)
-      call health#report_error('Invalid pyenv root: '.pyenv_root)
-    else
-      call health#report_info(printf('pyenv: %s', pyenv))
-      call health#report_info(printf('pyenv root: %s', pyenv_root))
-    endif
-  endif
+  let [pyenv, pyenv_root] = s:check_for_pyenv()
 
   if exists('g:'.host_prog_var)
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
@@ -444,7 +427,37 @@ function! s:check_python(version) abort
       call health#report_ok(printf('Latest pynvim is installed.'))
     endif
   endif
+endfunction
 
+" Check if pyenv is available and a valid pyenv root can be found, then return
+" their respective paths. If either of those is invalid, return two empty
+" strings, effectivly ignoring pyenv.
+function! s:check_for_pyenv() abort
+  let pyenv_path = resolve(exepath('pyenv'))
+
+  if empty(pyenv_path)
+    return ['', '']
+  endif
+
+  call health#report_info('pyenv: Path: '. pyenv_path)
+
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
+
+  if empty(pyenv_root)
+    let pyenv_root = s:trim(s:system([pyenv_path, 'root']))
+    call health#report_info('pyenv: $PYENV_ROOT is not set. Infer from `pyenv root`.')
+  endif
+
+  if !isdirectory(pyenv_root)
+    call health#report_warn(
+          \ printf('pyenv: Root does not exist: %s. '
+          \ . 'Ignoring pyenv for all following checks.', pyenv_root))
+    return ['', '']
+  endif
+
+  call health#report_info('pyenv: Root: '.pyenv_root)
+
+  return [pyenv_path, pyenv_root]
 endfunction
 
 function! s:check_ruby() abort
