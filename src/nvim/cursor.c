@@ -394,7 +394,8 @@ void check_cursor_col_win(win_T *win)
       // Make sure that coladd is not more than the char width.
       // Not for the last character, coladd is then used when the cursor
       // is actually after the last character.
-      if (win->w_cursor.col + 1 < len && win->w_cursor.coladd > 0) {
+      if (win->w_cursor.col + 1 < len) {
+        assert(win->w_cursor.coladd > 0);
         int cs, ce;
 
         getvcol(win, &win->w_cursor, &cs, NULL, &ce);
