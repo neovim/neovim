@@ -7103,7 +7103,7 @@ static void f_bufloaded(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * Get buffer by number or pattern.
  */
-static buf_T *get_buf_tv(typval_T *tv, int curtab_only)
+static buf_T *tv_get_buf(typval_T *tv, int curtab_only)
 {
   char_u      *name = tv->vval.v_string;
   int save_magic;
@@ -7149,7 +7149,7 @@ static void f_bufname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   emsg_off++;
-  const buf_T *const buf = get_buf_tv(&argvars[0], false);
+  const buf_T *const buf = tv_get_buf(&argvars[0], false);
   emsg_off--;
   if (buf != NULL && buf->b_fname != NULL) {
     rettv->vval.v_string = (char_u *)xstrdup((char *)buf->b_fname);
@@ -7168,7 +7168,7 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   emsg_off++;
-  const buf_T *buf = get_buf_tv(&argvars[0], false);
+  const buf_T *buf = tv_get_buf(&argvars[0], false);
   emsg_off--;
 
   // If the buffer isn't found and the second argument is not zero create a
@@ -7195,7 +7195,7 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
   }
 
   emsg_off++;
-  buf_T *buf = get_buf_tv(&argvars[0], true);
+  buf_T *buf = tv_get_buf(&argvars[0], true);
   if (buf == NULL) {  // no need to search if buffer was not found
     rettv->vval.v_number = -1;
     goto end;
@@ -9280,7 +9280,7 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // Information about one buffer.  Argument specifies the buffer
     if (tv_check_num(&argvars[0])) {  // issue errmsg if type error
       emsg_off++;
-      argbuf = get_buf_tv(&argvars[0], false);
+      argbuf = tv_get_buf(&argvars[0], false);
       emsg_off--;
       if (argbuf == NULL) {
         return;
@@ -9376,7 +9376,7 @@ static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (tv_check_str_or_nr(&argvars[0])) {
     emsg_off++;
-    buf = get_buf_tv(&argvars[0], false);
+    buf = tv_get_buf(&argvars[0], false);
     emsg_off--;
   }
 
@@ -9404,7 +9404,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   const char *varname = tv_get_string_chk(&argvars[1]);
   emsg_off++;
-  buf_T *const buf = get_buf_tv(&argvars[0], false);
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
 
   if (buf != NULL && varname != NULL) {
     // set curbuf to be our buf, temporarily
@@ -14491,7 +14491,7 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   const char *varname = tv_get_string_chk(&argvars[1]);
-  buf_T *const buf = get_buf_tv(&argvars[0], false);
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
   typval_T *varp = &argvars[2];
 
   if (buf != NULL && varname != NULL) {
