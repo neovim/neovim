@@ -277,3 +277,44 @@ func Test_visual_mode_reset()
 
   set belloff&
 endfunc
+
+func Test_Visual_sentence_textobject()
+  new
+  call setline(1, ['First sentence. Second sentence. Third', 'sentence. Fouth sentence'])
+
+  " When start and end of visual area are identical, 'as' or 'is' select
+  " the whole sentence.
+  norm! 1gofdvasy
+  call assert_equal('Second sentence. ', @")
+  norm! 1gofdvisy
+  call assert_equal('Second sentence.', @")
+
+  " When start and end of visual area are not identical, 'as' or 'is'
+  " extend the sentence in direction of the end of the visual area.
+  norm! 1gofdvlasy
+  call assert_equal('d sentence. ', @")
+  norm! gvasy
+  call assert_equal("d sentence. Third\nsentence. ", @")
+
+  norm! 1gofdvlisy
+  call assert_equal('d sentence.', @")
+  norm! gvisy
+  call assert_equal('d sentence. ', @")
+  norm! gvisy
+  call assert_equal("d sentence. Third\nsentence.", @")
+
+  " Extend visual area in opposite direction.
+  norm! 1gofdvhasy
+  call assert_equal(' Second', @")
+  norm! gvasy
+  call assert_equal("First sentence. Second", @")
+
+  norm! 1gofdvhisy
+  call assert_equal('Second', @")
+  norm! gvisy
+  call assert_equal(' Second', @")
+  norm! gvisy
+  call assert_equal('First sentence. Second', @")
+
+  bwipe!
+endfunc
