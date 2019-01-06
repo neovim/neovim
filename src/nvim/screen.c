@@ -477,6 +477,25 @@ void update_screen(int type)
 
 }
 
+// Prepare for updating one or more windows.
+// Caller must check for "updating_screen" already set to avoid recursiveness.
+static void update_prepare(void)
+{
+  updating_screen = true;
+  start_search_hl();
+}
+
+// Finish updating one or more windows.
+static void update_finish(void)
+{
+  if (redraw_cmdline) {
+    showmode();
+  }
+
+  end_search_hl();
+  updating_screen = false;
+}
+
 /*
  * Return TRUE if the cursor line in window "wp" may be concealed, according
  * to the 'concealcursor' option.
@@ -522,52 +541,28 @@ void update_single_line(win_T *wp, linenr_T lnum)
   if (linebuf_char == NULL || updating_screen) {
     return;
   }
-  updating_screen = true;
 
   if (lnum >= wp->w_topline && lnum < wp->w_botline
       && foldedCount(wp, lnum, &win_foldinfo) == 0) {
+    update_prepare();
+
     row = 0;
     for (j = 0; j < wp->w_lines_valid; ++j) {
       if (lnum == wp->w_lines[j].wl_lnum) {
         init_search_hl(wp);
-        start_search_hl();
         prepare_search_hl(wp, lnum);
         update_window_hl(wp, false);
         // allocate window grid if not already
         win_grid_alloc(wp);
         win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false, false);
-        end_search_hl();
         break;
       }
       row += wp->w_lines[j].wl_size;
     }
+
+    update_finish();
   }
   need_cursor_line_redraw = false;
-  updating_screen = false;
-}
-
-
-/*
- * Prepare for updating one or more windows.
- * Caller must check for "updating_screen" already set to avoid recursiveness.
- */
-static void update_prepare(void)
-{
-    updating_screen = TRUE;
-    start_search_hl();
-}
-
-/*
- * Finish updating one or more windows.
- */
-static void update_finish(void)
-{
-    if (redraw_cmdline) {
-        showmode();
-    }
-
-    end_search_hl();
-    updating_screen = FALSE;
 }
 
 void update_debug_sign(const buf_T *const buf, const linenr_T lnum)
@@ -2941,8 +2936,8 @@ win_line (
       break;
     }
 
-    if (draw_state == WL_LINE && area_highlighting) {
-      /* handle Visual or match highlighting in this line */
+    if (draw_state == WL_LINE && (area_highlighting || has_spell)) {
+      // handle Visual or match highlighting in this line
       if (vcol == fromcol
           || (vcol + 1 == fromcol && n_extra == 0
               && utf_ptr2cells(ptr) > 1)
