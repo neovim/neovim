@@ -15,6 +15,10 @@
 # define __has_extension __has_feature
 #endif
 
+#ifndef __has_builtin
+# define __has_builtin __has_feature
+#endif
+
 /// @def STATIC_ASSERT
 /// @brief Assert at compile time if condition is not satisfied.
 ///
@@ -119,6 +123,33 @@
 // compiled with gcc -combine -fwhole-program.
 # define STATIC_ASSERT_EXPR(e, m) \
     ((enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }) 0)
+#endif
+
+/// @def STRICT_ADD
+///
+/// Requires GCC 5+ and Clang 3.8+
+///   https://clang.llvm.org/docs/LanguageExtensions.html
+///   https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+///
+/// Alternative for compilers without __builtin_xx_overflow ?
+///   https://stackoverflow.com/a/44830670/152142
+///
+/// @param MAX Maximum value of the narrowest type of operand.
+///            Not used if compiler supports __builtin_add_overflow.
+#if __has_builtin(__builtin_add_overflow)
+# define STRICT_ADD(a, b, c) \
+  do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
+#else
+# define STRICT_ADD(a, b, c) \
+  do { *c = a + b; } while (0)
+#endif
+
+#if __has_builtin(__builtin_sub_overflow)
+# define STRICT_SUB(a, b, c) \
+  do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
+#else
+# define STRICT_SUB(a, b, c) \
+  do { *c = a - b; } while (0)
 #endif
 
 #endif  // NVIM_ASSERT_H
