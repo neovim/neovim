@@ -661,11 +661,13 @@ EXTERN int* (*iconv_errno)(void);
 ///    Visual_mode:    When State is NORMAL or INSERT.
 ///    finish_op  :    When State is NORMAL, after typing the operator and
 ///                    before typing the motion command.
+///    motion_force:   Last motion_force from do_pending_operator()
 EXTERN int State INIT(= NORMAL);        // This is the current state of the
                                         // command interpreter.
 
 EXTERN bool finish_op INIT(= false);    // true while an operator is pending
 EXTERN long opcount INIT(= 0);          // count for pending operator
+EXTERN int motion_force INIT(=0);       // motion force for pending operator
 
 // Ex Mode (Q) state
 EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
