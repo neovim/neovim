@@ -113,7 +113,7 @@ int get_real_state(void)
 /// @returns[allocated] mode string
 char *get_mode(void)
 {
-  char *buf = xcalloc(3, sizeof(char));
+  char *buf = xcalloc(4, sizeof(char));
 
   if (VIsual_active) {
     if (VIsual_select) {
@@ -160,6 +160,8 @@ char *get_mode(void)
     buf[0] = 'n';
     if (finish_op) {
       buf[1] = 'o';
+      // to able to detect force-linewise/blockwisecharacterwise operations
+      buf[2]=motion_force;
     }
   }
 
