@@ -254,10 +254,52 @@ For example, to use the "nvim_get_current_line()" API function, call
 ------------------------------------------------------------------------------
 vim.* builtin functions
 
+vim.deepcopy({object})                                         *vim.deepcopy*
+	Performs a deep copy of the given object, and returns that copy.
+	For a non-table object, that just means a usual copy of the object,
+	while for a table all subtables are copied recursively.
+
+vim.gsplit({s}, {sep}, {plain})                                  *vim.gsplit*
+	Split a given string by a separator. Returns an iterator of the 
+	split components. The separator can be a lua pattern, see
+		    https://www.lua.org/pil/20.2.html
+	Setting {plain} to `true` turns off pattern matching, as it is passed
+	to `string:find`, see 
+		http://lua-users.org/wiki/StringLibraryTutorial
+
+	Parameters:~
+		{s}     String: String to split
+		{sep}   String: Separator pattern. If empty, split by chars.
+		{plain} Boolean: If false, match {sep} verbatim
+
+	Return:~
+		Iterator of strings, which are the components of {s} after
+		splitting	
+
+vim.split({s}, {sep}, {plain})                                    *vim.split*
+	Split a given string by a separator. Returns a table containing the 
+	split components. The separator can be a lua pattern, see
+		    https://www.lua.org/pil/20.2.html
+	Setting {plain} to `true` turns off pattern matching, as it is passed
+	to `string:find`, see 
+		http://lua-users.org/wiki/StringLibraryTutorial
+
+	Parameters:~
+		{s}     String: String to split
+		{sep}   String: Separator pattern. If empty, split by chars.
+		{plain} Boolean: If false, match {sep} verbatim
+
+	Return:~
+		Table of strings, which are the components of {s} after
+		splitting	
+
 vim.stricmp(a, b)					*lua-vim.stricmp*
 	Function used for case-insensitive string comparison.  Takes two 
 	string arguments and returns 0, 1 or -1 if strings are equal, a is 
 	greater then b or a is lesser then b respectively.
+
+vim.trim({string})                                                  *vim.trim*
+	Returns the string with all leading and trailing whitespace removed.
 	
 vim.type_idx						*lua-vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
