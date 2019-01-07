@@ -35,6 +35,11 @@ endfunction
 
 " Returns [path_to_python_executable, error_message]
 function! provider#pythonx#Detect(major_version) abort
+  return provider#pythonx#DetectByModule('neovim', a:major_version)
+endfunction
+
+" Returns [path_to_python_executable, error_message]
+function! provider#pythonx#DetectByModule(module, major_version) abort
   let python_exe = s:get_python_executable_from_host_var(a:major_version)
 
   if !empty(python_exe)
@@ -45,7 +50,7 @@ function! provider#pythonx#Detect(major_version) abort
   let errors = []
 
   for exe in candidates
-    let [result, error] = provider#pythonx#CheckForModule(exe, 'neovim', a:major_version)
+    let [result, error] = provider#pythonx#CheckForModule(exe, a:module, a:major_version)
     if result
       return [exe, error]
     endif

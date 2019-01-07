@@ -277,7 +277,7 @@ function! s:check_python(version) abort
   let [pyname, pythonx_errors] = provider#pythonx#Detect(a:version)
 
   if empty(pyname)
-    call health#report_warn('No Python executable found that could `import neovim`. '
+    call health#report_warn('No Python executable found that can `import neovim`. '
             \ . 'Using the first available executable for diagnostics.')
   elseif exists('g:'.host_prog_var)
     let python_exe = pyname
@@ -387,29 +387,37 @@ function! s:check_python(version) abort
 
   let pip = 'pip' . (a:version == 2 ? '' : '3')
 
-  if !empty(python_exe)
+  if empty(python_exe)
+    " No Python executable can import 'neovim'. Check if any Python executable
+    " can import 'pynvim'. If so, that Python failed to import 'neovim' as
+    " well, which is most probably due to a failed pip upgrade:
+    " https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
+    let [pynvim_exe, errors] = provider#pythonx#DetectByModule('pynvim', a:version)
+    if !empty(pynvim_exe)
+      call health#report_error(
+            \ 'Detected pip upgrade failure: Python executable can import "pynvim" but '
+            \ . 'not "neovim": '. pynvim_exe,
+            \ "Use that Python version to reinstall \"pynvim\" and optionally \"neovim\".\n"
+            \ . pip ." uninstall pynvim neovim\n"
+            \ . pip ." install pynvim\n"
+            \ . pip ." install neovim  # only if needed by third-party software")
+    endif
+  else
     let [pyversion, current, latest, status] = s:version_info(python_exe)
+
     if a:version != str2nr(pyversion)
       call health#report_warn('Unexpected Python version.' .
                   \ ' This could lead to confusing error messages.')
     endif
+
     if a:version == 3 && str2float(pyversion) < 3.3
       call health#report_warn('Python 3.3+ is recommended.')
     endif
 
     call health#report_info('Python version: ' . pyversion)
+
     if s:is_bad_response(status)
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
-      let [module_found, _msg] = provider#pythonx#CheckForModule(python_exe,
-            \ 'pynvim', a:version)
-      if status !=? '^outdated' && module_found
-        " neovim module was not found, but pynvim was
-        call health#report_error('Importing "neovim" failed.',
-              \ "Reinstall \"pynvim\" and optionally \"neovim\" packages.\n" .
-              \    pip ." uninstall pynvim neovim\n" .
-              \    pip ." install pynvim\n" .
-              \    pip ." install neovim # only if needed by third-party software")
-      endif
     else
       call health#report_info(printf('pynvim version: %s', current))
     endif
