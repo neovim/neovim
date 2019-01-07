@@ -252,13 +252,13 @@ For example, to use the "nvim_get_current_line()" API function, call
 	print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
-vim.* utility functions
+vim.* builtin functions
 
 vim.stricmp(a, b)					*lua-vim.stricmp*
 	Function used for case-insensitive string comparison.  Takes two 
 	string arguments and returns 0, 1 or -1 if strings are equal, a is 
 	greater then b or a is lesser then b respectively.
-
+	
 vim.type_idx						*lua-vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |lua-vim.types| allows typing the empty table (it is 
@@ -294,6 +294,16 @@ vim.types						*lua-vim.types*
 	`vim.types.dictionary` will not change or that `vim.types` table will 
 	only contain values for these three types.
 
+------------------------------------------------------------------------------
+vim.* runtime functions
+
+Those functions are only available after the runtime files have been loaded.
+In particular, they are not available when using `nvim -u NONE`.
+
+vim.inspect({object}, {options})                                 *vim.inspect*
+	Return a human-readable representation of the passed object. See
+	         https://github.com/kikito/inspect.lua
+	for details and possible options.
 ==============================================================================
 The luaeval function					*lua-luaeval* *lua-eval*
 							*luaeval()*

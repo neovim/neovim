@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local funcs = helpers.funcs
 local clear = helpers.clear
 local eq = helpers.eq
+local neq = helpers.neq
+local command = helpers.command
 
 before_each(clear)
 
@@ -104,5 +106,20 @@ describe('vim.stricmp', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0b\\0")'))
     eq(1, funcs.luaeval('vim.stricmp("\\0c\\0", "\\0b\\0")'))
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
+  end)
+end)
+
+describe("vim.inspect", function()
+  it('works', function()
+    command("source runtime/plugin/nvim.vim")
+    -- just make sure it basically works, it has its own test suite
+    local inspect = function(t, opts)
+      return meths.execute_lua('return vim.inspect(...)', { t, opts })
+    end
+
+    eq('2', inspect(2))
+
+    local i = inspect({ a = { b = 1 } }, { newline = '+', indent = '' })
+    eq('{+a = {+b = 1+}+}', i)
   end)
 end)
