@@ -117,8 +117,8 @@ static void redraw_for_cursorline(win_T *wp)
         // "w_last_cursorline" may be outdated, worst case we redraw
         // too much.  This is optimized for moving the cursor around in
         // the current window.
-        redrawWinline(wp, wp->w_last_cursorline, false);
-        redrawWinline(wp, wp->w_cursor.lnum, false);
+        redrawWinline(wp, wp->w_last_cursorline);
+        redrawWinline(wp, wp->w_cursor.lnum);
         redraw_win_later(wp, VALID);
       } else {
         redraw_win_later(wp, SOME_VALID);

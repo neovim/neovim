@@ -218,7 +218,7 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
-      redrawWinline(wp, line, false);
+      redrawWinline(wp, line);
     }
   }
 }
@@ -234,12 +234,9 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
 void
 redrawWinline(
     win_T *wp,
-    linenr_T lnum,
-    int invalid             /* window line height is invalid now */
+    linenr_T lnum
 )
 {
-  int i;
-
   if (lnum >= wp->w_topline
       && lnum < wp->w_botline) {
     if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
@@ -249,14 +246,6 @@ redrawWinline(
         wp->w_redraw_bot = lnum;
     }
     redraw_win_later(wp, VALID);
-
-    if (invalid) {
-      // A w_lines[] entry for this lnum has become invalid.
-      i = find_wl_entry(wp, lnum);
-      if (i >= 0) {
-        wp->w_lines[i].wl_valid = false;
-      }
-    }
   }
 }
 
