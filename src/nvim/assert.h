@@ -122,6 +122,7 @@
 #endif
 
 /// @def STRICT_ADD
+/// @brief Adds (a + b) and stores result in `c`.  Aborts on overflow.
 ///
 /// Requires GCC 5+ and Clang 3.8+
 ///   https://clang.llvm.org/docs/LanguageExtensions.html
@@ -132,8 +133,7 @@
 ///
 /// @param MAX Maximum value of the narrowest type of operand.
 ///            Not used if compiler supports __builtin_add_overflow.
-#if (defined(__clang__) && __has_builtin(__builtin_add_overflow)) \
-  || (__GNUC__ >= 5)
+#if HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_ADD(a, b, c, t) \
   do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
 #else
@@ -141,8 +141,9 @@
   do { *(c) = (t)(a + b); } while (0)
 #endif
 
-#if (defined(__clang__) && __has_builtin(__builtin_sub_overflow)) \
-  || (__GNUC__ >= 5)
+/// @def STRICT_SUB
+/// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
+#if HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_SUB(a, b, c, t) \
   do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
 #else
