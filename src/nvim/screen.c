@@ -214,6 +214,15 @@ void redraw_buf_later(buf_T *buf, int type)
   }
 }
 
+void redraw_buf_line_later(buf_T *buf,  linenr_T line)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf) {
+      redrawWinline(wp, line, false);
+    }
+  }
+}
+
 /*
  * Changed something in the current window, at buffer line "lnum", that
  * requires that line and possibly other lines to be redrawn.
@@ -231,6 +240,8 @@ redrawWinline(
 {
   int i;
 
+  if (lnum >= wp->w_topline
+      && lnum < wp->w_botline) {
     if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
         wp->w_redraw_top = lnum;
     }
@@ -239,11 +250,12 @@ redrawWinline(
     }
     redraw_win_later(wp, VALID);
 
-  if (invalid) {
-    // A w_lines[] entry for this lnum has become invalid.
-    i = find_wl_entry(wp, lnum);
-    if (i >= 0) {
-      wp->w_lines[i].wl_valid = false;
+    if (invalid) {
+      // A w_lines[] entry for this lnum has become invalid.
+      i = find_wl_entry(wp, lnum);
+      if (i >= 0) {
+        wp->w_lines[i].wl_valid = false;
+      }
     }
   }
 }
@@ -569,58 +581,6 @@ void update_single_line(win_T *wp, linenr_T lnum)
   need_cursor_line_redraw = false;
 }
 
-void update_debug_sign(const buf_T *const buf, const linenr_T lnum)
-{
-  bool doit = false;
-  win_foldinfo.fi_level = 0;
-
-  // update/delete a specific mark
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (buf != NULL && lnum > 0) {
-      if (wp->w_buffer == buf && lnum >= wp->w_topline
-          && lnum < wp->w_botline) {
-        if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
-          wp->w_redraw_top = lnum;
-        }
-        if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
-          wp->w_redraw_bot = lnum;
-        }
-        redraw_win_later(wp, VALID);
-      }
-    } else {
-      redraw_win_later(wp, VALID);
-    }
-    if (wp->w_redr_type != 0) {
-      doit = true;
-    }
-  }
-
-  // Return when there is nothing to do, screen updating is already
-  // happening (recursive call), messages on the screen or still starting up.
-  if (!doit
-      || updating_screen
-      || State == ASKMORE
-      || State == HITRETURN
-      || msg_scrolled
-      || starting) {
-    return;
-  }
-
-  // update all windows that need updating
-  update_prepare();
-
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_redr_type != 0) {
-      update_window_hl(wp, wp->w_redr_type >= NOT_VALID);
-      win_update(wp);
-    }
-    if (wp->w_redr_status) {
-      win_redr_status(wp, false);
-    }
-  }
-
-  update_finish();
-}
 
 /*
  * Update a single window.
