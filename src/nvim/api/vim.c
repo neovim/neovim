@@ -75,7 +75,6 @@ void nvim_command(String command, Error *err)
 {
   try_start();
   do_cmdline_cmd(command.data);
-  update_screen(VALID);
   try_end(err);
 }
 
