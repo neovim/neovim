@@ -5,7 +5,6 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
-local neq = helpers.neq
 local command = helpers.command
 
 before_each(clear)
@@ -191,7 +190,7 @@ describe("vim.deepcopy", function()
 
       local count = 0
       for _ in pairs(b) do count = count + 1 end
-      
+
       return b.x[1] == 1 and b.x[2] == 2 and b.y == 5 and count == 2
              and tostring(a) ~= tostring(b)
     ]], {})
