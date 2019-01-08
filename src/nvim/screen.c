@@ -185,6 +185,10 @@ void redraw_all_later(int type)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     redraw_win_later(wp, type);
   }
+  // This may be needed when switching tabs.
+  if (must_redraw < type) {
+    must_redraw = type;
+  }
 }
 
 void screen_invalidate_highlights(void)

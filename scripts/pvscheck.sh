@@ -8,6 +8,10 @@ set -e
 # arguments provided.
 test -z "$POSH_VERSION" && set -u
 
+log_info() {
+  >&2 printf "pvscheck.sh: %s\n" "$@"
+}
+
 get_jobs_num() {
   if [ -n "${TRAVIS:-}" ] ; then
     # HACK: /proc/cpuinfo on Travis CI is misleading, so hardcode 1.
@@ -260,6 +264,11 @@ install_pvs() {(
   local pvs_url="$1" ; shift
 
   cd "$tgt"
+
+  if test -d pvs-studio ; then
+    log_info 'install_pvs: "pvs-studio" directory already exists, skipping install'
+    return 0
+  fi
 
   mkdir pvs-studio
   cd pvs-studio
