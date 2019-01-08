@@ -8,13 +8,13 @@ low-risk/isolated tasks:
 
 - [Merge a Vim patch].
 - Try a [complexity:low] issue.
-- Fix bugs found by [clang scan-build](#clang-scan-build),
-  [coverity](#coverity), and [PVS](#pvs-studio).
+- Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
+  [Coverity](#coverity).
 
 Developer guidelines
 --------------------
 
-- Nvim contributors should read `:help dev` (especially `:help dev-api`).
+- Nvim contributors should read `:help dev`.
 - External UI developers should read `:help dev-ui`.
 - API client developers should read `:help dev-api-client`.
 - Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
@@ -27,14 +27,14 @@ Developer guidelines
 Reporting problems
 ------------------
 
-- Check the [**FAQ**][wiki-faq].
-- Search [existing issues][github-issues] (including closed!)
+- [Check the FAQ][wiki-faq].
+- [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
 - Disable plugins incrementally, to narrow down the cause of the issue.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/Development-tips#backtrace-linux).
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
-- Include `cmake --system-information` for **build** issues.
+- Include `cmake --system-information` for build-related issues.
 
 Pull requests ("PRs")
 ---------------------
@@ -86,14 +86,14 @@ the VCS/git logs more valuable.
 - Try to keep the first line under 72 characters.
 - **Prefix the commit subject with a _scope_:** `doc:`, `test:`, `foo.c:`,
   `runtime:`, ...
-    - For commits that contain only style/lint changes, a single-word subject
-      line is preferred: `style` or `lint`.
+    - Subject line for commits with only style/lint changes can be a single
+      word: `style` or `lint`.
 - A blank line must separate the subject from the description.
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [travis CI], [quickbuild]
+Each pull request must pass the automated builds on [Travis CI], [QuickBuild]
 and [AppVeyor].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
@@ -108,8 +108,6 @@ and [AppVeyor].
 - The `lint` build ([#3174][3174]) checks modified lines _and their immediate
   neighbors_. This is to encourage incrementally updating the legacy style to
   meet our style guidelines.
-    - A single word (`lint` or `style`) is sufficient as the subject line of
-      a commit that contains only style changes.
 - [How to investigate QuickBuild failures](https://github.com/neovim/neovim/pull/4718#issuecomment-217631350)
 
 QuickBuild uses this invocation:
@@ -123,29 +121,48 @@ QuickBuild uses this invocation:
 
 ### Clang scan-build
 
-The auto-generated [clang-scan] report presents walk-throughs of bugs found by
-Clang's [scan-build](https://clang-analyzer.llvm.org/scan-build.html) static
-analyzer. To verify a fix locally, run `scan-build` like this:
+View the [Clang report] to see potential bugs found by the Clang
+[scan-build](https://clang-analyzer.llvm.org/scan-build.html) analyzer.
 
-    rm -rf build/
-    scan-build --use-analyzer=/usr/bin/clang make
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep clang
+  ```
+- To verify a fix locally, run `scan-build` like this:
+  ```
+  rm -rf build/
+  scan-build --use-analyzer=/usr/bin/clang make
+  ```
+
+### PVS-Studio
+
+View the [PVS report](https://neovim.io/doc/reports/pvs/PVS-studio.html.d/) to
+see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
+
+- Use this format for commit messages (where `{id}` is the PVS warning-id)):
+  ```
+  PVS/V{id}: {description}
+  ```
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep PVS
+  ```
+- Try `./scripts/pvscheck.sh` to run PVS locally.
 
 ### Coverity
 
 [Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
 master build. To view the defects, just request access; you will be approved.
 
-Use this commit-message format for coverity fixes:
-
-    coverity/<id>: <description of what fixed the defect>
-
-where `<id>` is the Coverity ID (CID). For example see [#804](https://github.com/neovim/neovim/pull/804).
-
-### PVS-Studio
-
-View the [PVS analysis report](https://neovim.io/doc/reports/pvs/) to see bugs
-found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
-You can run `scripts/pvscheck.sh` locally to run PVS on your machine.
+- Use this format for commit messages (where `{id}` is the CID (Coverity ID);
+  ([example](https://github.com/neovim/neovim/pull/804))):
+  ```
+  coverity/{id}: {description}
+  ```
+- Search the Neovim commit history to find examples:
+  ```
+  git log --oneline --no-merges --grep coverity
+  ```
 
 Reviewing
 ---------
@@ -179,9 +196,9 @@ as context, use the `-W` argument as well.
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174
-[travis CI]: https://travis-ci.org/neovim/neovim
-[quickbuild]: http://neovim-qb.szakmeister.net/dashboard
+[Travis CI]: https://travis-ci.org/neovim/neovim
+[QuickBuild]: http://neovim-qb.szakmeister.net/dashboard
 [AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
-[clang-scan]: https://neovim.io/doc/reports/clang/
+[Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
