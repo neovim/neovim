@@ -65,7 +65,7 @@ function! provider#clipboard#Executable() abort
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
-  elseif has('mac') && executable('pbpaste') && s:cmd_ok('pbpaste')
+  elseif has('mac')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
