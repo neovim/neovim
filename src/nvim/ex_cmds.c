@@ -5759,7 +5759,7 @@ void ex_sign(exarg_T *eap)
         id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum);
         if (id > 0) {
           buf_delsign(curwin->w_buffer, id);
-          update_debug_sign(curwin->w_buffer, curwin->w_cursor.lnum);
+          redraw_buf_line_later(curwin->w_buffer, curwin->w_cursor.lnum);
         } else {
           EMSG(_("E159: Missing sign number"));
         }
@@ -5788,7 +5788,7 @@ void ex_sign(exarg_T *eap)
           // ":sign unplace {id}": remove placed sign by number
           FOR_ALL_BUFFERS(buf) {
             if ((lnum = buf_delsign(buf, id)) != 0) {
-              update_debug_sign(buf, lnum);
+              redraw_buf_line_later(buf, lnum);
             }
           }
           return;
@@ -5888,7 +5888,7 @@ void ex_sign(exarg_T *eap)
       } else {
         // ":sign unplace {id} file={fname}"
         lnum = buf_delsign(buf, id);
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       }
     } else if (sign_name != NULL) {
       // idx == SIGNCMD_PLACE
@@ -5910,7 +5910,7 @@ void ex_sign(exarg_T *eap)
         lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
       }
       if (lnum > 0) {
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       } else {
         EMSG2(_("E885: Not possible to change sign %s"), sign_name);
       }
