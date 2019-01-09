@@ -1463,7 +1463,6 @@ static void win_update(win_T *wp)
         fold_count = foldedCount(wp, lnum, &win_foldinfo);
         if (fold_count != 0) {
           fold_line(wp, fold_count, &win_foldinfo, lnum, row);
-          --fold_count;
         } else {
           (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
         }
