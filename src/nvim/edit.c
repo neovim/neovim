@@ -184,6 +184,16 @@ static expand_T compl_xp;
 
 static int compl_opt_refresh_always = FALSE;
 
+static int pum_selected_item = -1;
+
+/// state for pum_ext_select_item.
+struct {
+  bool active;
+  int item;
+  bool insert;
+  bool finish;
+} pum_want;
+
 typedef struct insert_state {
   VimState state;
   cmdarg_T *ca;
@@ -976,10 +986,25 @@ static int insert_handle_key(InsertState *s)
 
   case K_EVENT:       // some event
     multiqueue_process_events(main_loop.events);
-    break;
+    goto check_pum;
 
   case K_COMMAND:       // some command
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+
+check_pum:
+    // TODO(bfredl): Not entirely sure this indirection is necessary
+    // but doing like this ensures using nvim_select_popupmenu_item is
+    // equivalent to selecting the item with a typed key.
+    if (pum_want.active) {
+      if (pum_visible()) {
+        insert_do_complete(s);
+        if (pum_want.finish) {
+          // accept the item and stop completion
+          ins_compl_prep(Ctrl_Y);
+        }
+      }
+      pum_want.active = false;
+    }
     break;
 
   case K_HOME:        // <Home>
@@ -2666,6 +2691,7 @@ void ins_compl_show_pum(void)
   // Use the cursor to get all wrapping and other settings right.
   col = curwin->w_cursor.col;
   curwin->w_cursor.col = compl_col;
+  pum_selected_item = cur;
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed);
   curwin->w_cursor.col = col;
 }
@@ -4346,6 +4372,17 @@ ins_compl_next (
   return num_matches;
 }
 
+void pum_ext_select_item(int item, bool insert, bool finish)
+{
+  if (!pum_visible() || item < -1 || item >= compl_match_arraysize) {
+    return;
+  }
+  pum_want.active = true;
+  pum_want.item = item;
+  pum_want.insert = insert;
+  pum_want.finish = finish;
+}
+
 // Call this while finding completions, to check whether the user has hit a key
 // that should change the currently displayed completion, or exit completion
 // mode.  Also, when compl_pending is not zero, show a completion as soon as
@@ -4406,6 +4443,9 @@ void ins_compl_check_keys(int frequency, int in_compl_func)
  */
 static int ins_compl_key2dir(int c)
 {
+  if (c == K_EVENT || c == K_COMMAND) {
+    return pum_want.item < pum_selected_item ? BACKWARD : FORWARD;
+  }
   if (c == Ctrl_P || c == Ctrl_L
       || c == K_PAGEUP || c == K_KPAGEUP
       || c == K_S_UP || c == K_UP) {
@@ -4433,6 +4473,11 @@ static int ins_compl_key2count(int c)
 {
   int h;
 
+  if (c == K_EVENT || c == K_COMMAND) {
+    int offset = pum_want.item - pum_selected_item;
+    return abs(offset);
+  }
+
   if (ins_compl_pum_key(c) && c != K_UP && c != K_DOWN) {
     h = pum_get_height();
     if (h > 3)
@@ -4459,6 +4504,9 @@ static bool ins_compl_use_match(int c)
   case K_KPAGEUP:
   case K_S_UP:
     return false;
+  case K_EVENT:
+  case K_COMMAND:
+    return pum_want.active && pum_want.insert;
   }
   return true;
 }
