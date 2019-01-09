@@ -135,7 +135,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  update_screen(VALID);
+  redraw_win_later(win, VALID);
 }
 
 /// Gets the window height
