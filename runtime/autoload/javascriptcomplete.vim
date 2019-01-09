@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	Java Script
 " Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2017 Mar 04
+" Last Change:	2019 Jan 09
 
 function! javascriptcomplete#CompleteJS(findstart, base)
   if a:findstart
@@ -11,7 +11,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	let curline = line('.')
 	let compl_begin = col('.') - 2
 	" Bit risky but JS is rather limited language and local chars shouldn't
-	" fint way into names
+	" find way into names
 	while start >= 0 && line[start - 1] =~ '\k'
 		let start -= 1
 	endwhile
@@ -48,29 +48,27 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		let doms = ['style.']
 		" Arrays
 		let arrayprop = ['constructor', 'index', 'input', 'length', 'prototype']
-		let arraymeth = ['concat', 'join', 'pop', 'push', 'reverse', 'shift',
-					\ 'splice', 'sort', 'toSource', 'toString', 'unshift', 'valueOf',
-					\ 'watch', 'unwatch']
+		let arraymeth = [
+          \ 'concat', 'copyWithin', 'entries', 'every', 'fill', 'filter', 'findIndex',
+          \ 'forEach', 'from', 'includes', 'indexOf', 'isArray', 'join', 'keys', 'lastIndexOf',
+          \ 'map', 'pop', 'push', 'reduce', 'reduceRight', 'reverse', 'shift', 'slice', 'some',
+          \ 'sort', 'splice', 'toString', 'unshift', 'valueOf',
+					\   ]
 		call map(arraymeth, 'v:val."("')
 		let arrays = arrayprop + arraymeth
 
-		" Boolean - complete subset of array values
-		" properties - constructor, prototype
-		" methods    - toSource, toString, valueOf
-
 		" Date
 		" properties - constructor, prototype
-		let datemeth = ['getDate', 'getDay', 'getFullYear', 'getHours', 'getMilliseconds',
-					\ 'getMinutes', 'getMonth', 'getSeconds', 'getTime', 'getTimezoneOffset',
-					\ 'getUTCDate', 'getUTCDay', 'getUTCFullYear', 'getUTCHours', 'getUTCMilliseconds',
-					\ 'getUTCMinutes', 'getUTCMonth', 'getUTCSeconds',
-					\ 'getYear', 'parse', 'parse',
-					\ 'setDate', 'setDay', 'setFullYear', 'setHours', 'setMilliseconds',
-					\ 'setMinutes', 'setMonth', 'setSeconds',
-					\ 'setUTCDate', 'setUTCDay', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds',
-					\ 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear', 'setTime',
-					\ 'toGMTString', 'toLocaleString', 'toLocaleDateString', 'toLocaleTimeString',
-					\ 'toSource', 'toString', 'toUTCString', 'UTC', 'valueOf', 'watch', 'unwatch']
+		let datemeth = [
+          \ 'getUTCDate', 'getUTCDay', 'getUTCFullYear', 'getUTCHours', 'getUTCMilliseconds',
+					\ 'getUTCMinutes', 'getUTCMonth', 'getUTCSeconds', 'parse', 'setDate',
+          \ 'setDay', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds',
+					\ 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes',
+          \ 'setUTCMonth', 'setUTCSeconds', 'setTime', 'toLocaleString', 'toLocaleDateString',
+          \ 'toLocaleTimeString', 'toString', 'toJSON', 'toISOString', 'toUTCString', 'UTC', 'valueOf',
+          \ 'getDay', 'getFullYear', 'getHours', 'getMilliseconds', 'setFullYear',
+          \ 'getMinutes', 'getMonth', 'getSeconds', 'getTime', 'getTimezoneOffset'
+          \ ]
 		call map(datemeth, 'v:val."("')
 		let dates = datemeth
 
@@ -82,40 +80,48 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		let funcs = funcprop + funcmeth
 
 		" Math
-		let mathprop = ['E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'PI', 'SQRT1_2', 'SQRT']
-		let mathmeth = ['abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'exp', 'floor',
-					\ 'log', 'max', 'min', 'pow', 'random', 'round', 'sin', 'sqrt', 'tan',
-					\ 'watch', 'unwatch']
+		let mathprop = ['E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'PI', 'SQRT1_2', 'SQRT2']
+		let mathmeth = [
+          \ 'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh', 'cbrt', 'ceil',
+          \ 'cos', 'cosh', 'exp', 'floor', 'log', 'max', 'min', 'pow', 'random', 'round', 'sin',
+          \ 'sinh', 'sqrt', 'tan', 'tanh', 'trunc'
+					\ ]
 		call map(mathmeth, 'v:val."("')
 		let maths = mathprop + mathmeth
 
 		" Number
-		let numbprop = ['MAX_VALUE', 'MIN_VALUE', 'NaN', 'NEGATIVE_INFINITY', 'POSITIVE_INFINITY', 
+		let numbprop = ['MAX_VALUE', 'MIN_VALUE', 'NaN', 'NEGATIVE_INFINITY', 'POSITIVE_INFINITY',
 					\ 'constructor', 'prototype']
-		let numbmeth = ['toExponential', 'toFixed', 'toPrecision', 'toSource', 'toString', 'valueOf',
-					\ 'watch', 'unwatch']
+		let numbmeth = [
+          \ 'isFinite', 'isInteger', 'isNaN', 'isSafeInteger', 'toExponential',
+          \ 'toFixed', 'toPrecision', 'toString', 'valueOf'
+					\ ]
 		call map(numbmeth, 'v:val."("')
 		let numbs = numbprop + numbmeth
 
 		" Object
-		let objeprop = ['constructor', 'prototype']
-		let objemeth = ['eval', 'toSource', 'toString', 'unwatch', 'watch', 'valueOf']
+		let objeprop = ['constructor', 'prototype', 'length']
+		let objemeth = [
+          \ 'assign', 'create', 'defineProperty', 'defineProperties', 'entries', 'freeze', 'fromEntries',
+          \ 'getOwnPropertyDescriptor', 'getOwnPropertyDescriptors', 'getOwnPropertyNames', 'getPrototypeOf',
+          \ 'is', 'isExtensible', 'isFrozen', 'isSealed', 'keys', 'preventExtensions', 'seal', 'values', 'toString', 'valueOf']
 		call map(objemeth, 'v:val."("')
 		let objes = objeprop + objemeth
 
 		" RegExp
 		let regeprop = ['constructor', 'global', 'ignoreCase', 'lastIndex', 'multiline', 'source', 'prototype']
-		let regemeth = ['exec', 'test', 'toSource', 'toString', 'watch', 'unwatch']
+		let regemeth = ['compile', 'exec', 'test', 'toString']
 		call map(regemeth, 'v:val."("')
 		let reges = regeprop + regemeth
 
 		" String
 		let striprop = ['constructor', 'length', 'prototype']
-		let strimeth = ['anchor', 'big', 'blink', 'bold', 'charAt', 'charCodeAt', 'concat',
-					\ 'fixed', 'fontcolor', 'fontsize', 'fromCharCode', 'indexOf', 'italics',
-					\ 'lastIndexOf', 'link', 'match', 'replace', 'search', 'slice', 'small',
-					\ 'split', 'strike', 'sub', 'substr', 'substring', 'sup', 'toLowerCase',
-					\ 'toSource', 'toString', 'toUpperCase', 'watch', 'unwatch']
+		let strimeth = [
+          \ 'charAt', 'charCodeAt', 'concat', 'endswith', 'fromCharCode', 'includes', 'indexOf',
+          \ 'lastIndexOf', 'localeCompare', 'match', 'repeat', 'replace', 'search', 'slice',
+					\ 'split', 'startsWith', 'substr', 'substring', 'toLocaleLowerCase', 'toLocaleUpperCase',
+          \ 'toLowerCase', 'toString', 'toUpperCase', 'trim', 'valueOf'
+          \ ]
 		call map(strimeth, 'v:val."("')
 		let stris = striprop + strimeth
 
@@ -208,50 +214,50 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		call map(buttmeth, 'v:val."("')
 		let butts = buttprop + buttmeth
 		" Checkbox - accessible only by other properties
-		let checprop = ['accept', 'accessKey', 'align', 'alt', 'checked', 'defaultChecked', 
-					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value'] 
+		let checprop = ['accept', 'accessKey', 'align', 'alt', 'checked', 'defaultChecked',
+					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value']
 		let checmeth = ['blur', 'click', 'focus', 'onBlur', 'onClick', 'onFocus', 'onMouseDown', 'onMouseUp']
 		call map(checmeth, 'v:val."("')
 		let checs = checprop + checmeth
 		" File upload - accessible only by other properties
-		let fileprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value'] 
+		let fileprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value']
 		let filemeth = ['blur', 'focus', 'onBlur', 'onClick', 'onFocus', 'onMouseDown', 'onMouseUp']
 		call map(filemeth, 'v:val."("')
 		let files = fileprop + filemeth
 		" Hidden - accessible only by other properties
-		let hiddprop = ['defaultValue', 'form', 'id', 'name', 'type', 'value'] 
+		let hiddprop = ['defaultValue', 'form', 'id', 'name', 'type', 'value']
 		let hidds = hiddprop
 		" Password - accessible only by other properties
-		let passprop = ['accept', 'accessKey', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'maxLength', 'name', 'readOnly', 'size', 'tabIndex', 
-					\ 'type', 'value'] 
-		let passmeth = ['blur', 'click', 'focus', 'select', 'onBlur', 'onFocus', 'onKeyDown', 
+		let passprop = ['accept', 'accessKey', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'maxLength', 'name', 'readOnly', 'size', 'tabIndex',
+					\ 'type', 'value']
+		let passmeth = ['blur', 'click', 'focus', 'select', 'onBlur', 'onFocus', 'onKeyDown',
 					\ 'onKeyPress', 'onKeyUp']
 		call map(passmeth, 'v:val."("')
 		let passs = passprop + passmeth
 		" Radio - accessible only by other properties
-		let radiprop = ['accept', 'accessKey', 'align', 'alt', 'checked', 'defaultChecked', 
-					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value'] 
+		let radiprop = ['accept', 'accessKey', 'align', 'alt', 'checked', 'defaultChecked',
+					\ 'disabled', 'form', 'id', 'name', 'tabIndex', 'type', 'value']
 		let radimeth = ['blur', 'click', 'focus', 'select', 'onBlur', 'onFocus']
 		call map(radimeth, 'v:val."("')
 		let radis = radiprop + radimeth
 		" Reset - accessible only by other properties
-		let reseprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'name', 'size', 'tabIndex', 'type', 'value'] 
+		let reseprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'name', 'size', 'tabIndex', 'type', 'value']
 		let resemeth = ['blur', 'click', 'focus', 'select', 'onBlur', 'onFocus']
 		call map(resemeth, 'v:val."("')
 		let reses = reseprop + resemeth
 		" Submit - accessible only by other properties
-		let submprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'name', 'size', 'tabIndex', 'type', 'value'] 
+		let submprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'name', 'size', 'tabIndex', 'type', 'value']
 		let submmeth = ['blur', 'click', 'focus', 'select', 'onClick', 'onSelectStart']
 		call map(submmeth, 'v:val."("')
 		let subms = submprop + submmeth
 		" Text - accessible only by other properties
-		let textprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'maxLength', 'name', 'readOnly', 
-					\ 'size', 'tabIndex', 'type', 'value'] 
+		let textprop = ['accept', 'accessKey', 'align', 'alt', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'maxLength', 'name', 'readOnly',
+					\ 'size', 'tabIndex', 'type', 'value']
 		let textmeth = ['blur', 'focus', 'select', 'onBlur', 'onChange', 'onFocus', 'onKeyDown',
 					\ 'onKeyPress', 'onKeyUp', 'onSelect']
 		call map(textmeth, 'v:val."("')
@@ -283,15 +289,15 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 					\ 'type', 'useMap', 'vspace', 'width']
 		let objes = objeprop
 		" Option - accessible only by other properties
-		let optiprop = ['defaultSelected', 
+		let optiprop = ['defaultSelected',
 					\ 'disabled', 'form', 'id', 'index', 'label', 'selected', 'text', 'value']
 		let optis = optiprop
 		" Screen - screen.
 		let screprop = ['availHeight', 'availWidth', 'colorDepth', 'height', 'width']
 		let scres = screprop
 		" Select - accessible only by other properties
-		let seleprop = ['options', 'disabled', 'form', 'id', 'length', 'multiple', 'name', 
-					\ 'selectedIndex', 'size', 'tabIndex', 'type', 'value'] 
+		let seleprop = ['options', 'disabled', 'form', 'id', 'length', 'multiple', 'name',
+					\ 'selectedIndex', 'size', 'tabIndex', 'type', 'value']
 		let selemeth = ['blur', 'focus', 'remove', 'onBlur', 'onChange', 'onFocus']
 		call map(selemeth, 'v:val."("')
 		let seles = seleprop + selemeth
@@ -338,9 +344,9 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		call map(trowmeth, 'v:val."("')
 		let trows = trowprop + trowmeth
 		" Textarea - accessible only by other properties
-		let tareprop = ['accessKey', 'cols', 'defaultValue', 
-					\ 'disabled', 'form', 'id', 'name', 'readOnly', 'rows', 
-					\ 'tabIndex', 'type', 'value', 'selectionStart', 'selectionEnd'] 
+		let tareprop = ['accessKey', 'cols', 'defaultValue',
+					\ 'disabled', 'form', 'id', 'name', 'readOnly', 'rows',
+					\ 'tabIndex', 'type', 'value', 'selectionStart', 'selectionEnd']
 		let taremeth = ['blur', 'focus', 'select', 'onBlur', 'onChange', 'onFocus']
 		call map(taremeth, 'v:val."("')
 		let tares = tareprop + taremeth
@@ -365,7 +371,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		" Attributes - element.attributes[x].
 		let xdomattrprop = ['name', 'specified', 'value']
 		" Element - anyelement.
-		let xdomelemprop = ['attributes', 'childNodes', 'firstChild', 'lastChild', 
+		let xdomelemprop = ['attributes', 'childNodes', 'firstChild', 'lastChild',
 					\ 'namespaceURI', 'nextSibling', 'nodeName', 'nodeType', 'nodeValue',
 					\ 'ownerDocument', 'parentNode', 'prefix', 'previousSibling', 'tagName']
 		let xdomelemmeth = ['appendChild', 'cloneNode', 'getAttribute', 'getAttributeNode',
@@ -375,14 +381,14 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 		call map(xdomelemmeth, 'v:val."("')
 		let xdomelems = xdomelemprop + xdomelemmeth
 		" Node - anynode.
-		let xdomnodeprop = ['attributes', 'childNodes', 'firstChild', 'lastChild', 
+		let xdomnodeprop = ['attributes', 'childNodes', 'firstChild', 'lastChild',
 					\ 'namespaceURI', 'nextSibling', 'nodeName', 'nodeType', 'nodeValue',
 					\ 'ownerDocument', 'parentNode', 'prefix', 'previousSibling']
 		let xdomnodemeth = ['appendChild', 'cloneNode',
 					\ 'hasChildNodes', 'insertBefore', 'removeChild', 'replaceChild']
 		call map(xdomnodemeth, 'v:val."("')
 		let xdomnodes = xdomnodeprop + xdomnodemeth
-		" NodeList 
+		" NodeList
 		let xdomnliss = ['length', 'item(']
 		" Error - parseError.
 		let xdomerror = ['errorCode', 'reason', 'line', 'linepos', 'srcText', 'url', 'filepos']
@@ -403,7 +409,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 						let object_type = 'XMLHttpRequest'
 				endif
 			else
-				let decl_line = search('var\s*'.object.'\s*=\s*\/', 'bn')
+				let decl_line = search('var|let|const\s*'.object.'\s*=\s*\/', 'bn')
 				if decl_line > 0
 					let object_type = 'RegExp'
 				endif
@@ -418,7 +424,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 							let object_type = 'XMLHttpRequest'
 					endif
 				else
-					let dext_line = filter(copy(b:js_extfiles), 'v:val =~ "var\s*'.object.'\\s*=\\s*\\/"')
+					let dext_line = filter(copy(b:js_extfiles), 'v:val =~ "var|let|const\s*'.object.'\\s*=\\s*\\/"')
 					if len(dext_line) > 0
 						let object_type = 'RegExp'
 					endif
@@ -524,8 +530,8 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	" }}}
 
 	" Get variables data.
-	let variables = filter(copy(file), 'v:val =~ "var\\s"')
-	call map(variables, 'matchstr(v:val, ".\\{-}var\\s\\+\\zs.*\\ze")')
+	let variables = filter(copy(file), 'v:val =~ "var\|let\|const\\s"')
+	call map(variables, 'matchstr(v:val, ".\\{-}\vvar|let|const\\s\\+\\zs.*\\ze")')
 	call map(variables, 'substitute(v:val, ";\\|$", ",", "g")')
 	let vars = []
 	" This loop (and next one) is necessary to get variable names from
@@ -554,7 +560,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	" Get functions
 	let functions = filter(copy(file), 'v:val =~ "^\\s*function\\s"')
 	let arguments = copy(functions)
-	call map(functions, 'matchstr(v:val, "^\\s*function\\s\\+\\zs\\k\\+")')
+	call map(functions, 'matchstr(v:val, "^\\s*function\\s\\+\\zs\\k\\+\|.\vconst\s+[a-zA-Z]*\s\=")')
 	call map(functions, 'v:val."("')
 	let functions = sort(functions)
 
@@ -569,7 +575,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	endfor
 
 	" Get functions arguments
-	call map(arguments, 'matchstr(v:val, "function.\\{-}(\\zs.\\{-}\\ze)")')
+	call map(arguments, 'matchstr(v:val, "function\\|\\s.\\{-}(\\zs.\\{-}\\ze)")')
 	let jargs = join(arguments, ',')
 	let jargs = substitute(jargs, '\s', '', 'g')
 	let arguments = split(jargs, ',')
@@ -579,7 +585,10 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	let builtin = ['alert(', 'confirm(']
 
 	" Top-level HTML DOM objects
-	let htmldom = ['document', 'anchor', 'area', 'base', 'body', 'document', 'event', 'form', 'frame', 'frameset', 'history', 'iframe', 'image', 'input', 'link', 'location', 'meta', 'navigator', 'object', 'option', 'screen', 'select', 'table', 'tableData', 'tableHeader', 'tableRow', 'textarea', 'window']
+	let htmldom = [
+        \ 'document', 'anchor', 'area', 'base', 'body', 'document', 'event', 'form', 'frame', 'frameset', 'history', 'iframe', 'image', 'input', 'link', 'location', 'meta', 'navigator', 'object',
+        \ 'option', 'screen', 'select', 'table', 'tableData', 'tableHeader', 'tableRow', 'textarea', 'window'
+        \ ]
 	call map(htmldom, 'v:val."."')
 
 	" Top-level properties
@@ -588,7 +597,12 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 				\ 'parseInt', 'String', 'undefined', 'escape', 'unescape']
 
 	" Keywords
-	let keywords = ["Array", "Boolean", "Date", "Function", "Math", "Number", "Object", "RegExp", "String", "XMLHttpRequest", "ActiveXObject", "abstract", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double ", "else", "enum", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "import", "in ", "instanceof", "int", "interface", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super ", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while", "with"]
+	let keywords = [
+        \ 'Array', 'Boolean', 'Date', 'Function', 'Math', 'Number', 'Object', 'RegExp', 'String', 'XMLHttpRequest', 'ActiveXObject', 'abstract', 'boolean', 'break', 'byte', 'case', 'catch',
+        \ 'char', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double ', 'else', 'enum', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for', 'function',
+        \ 'goto', 'if', 'implements', 'import', 'in ', 'instanceof', 'int', 'interface', 'long', 'native', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'short', 'static',
+        \ 'super ', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with'
+        \ ]
 
 	let values = variables + functions + htmldom + arguments + builtin + properties + keywords
 
@@ -620,6 +634,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 	let g:fm = final_menu
 	return final_menu
 
+endif
 endfunction
 
 " vim:set foldmethod=marker:
