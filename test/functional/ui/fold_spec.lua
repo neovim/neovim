@@ -26,6 +26,27 @@ describe("folded lines", function()
     screen:detach()
   end)
 
+  it("highlighting works with relative line numbers", function()
+    feed_command("set fdm=marker")
+    feed_command("set rnu")
+    feed_command("set foldcolumn=2")
+    helpers.funcs.setline(1, '{{{1')
+    helpers.funcs.setline(2, 'line 1')
+    helpers.funcs.setline(3, '{{{1')
+    helpers.funcs.setline(4, 'line 2')
+    feed("j")
+    screen:expect([[
+      {7:+ }{5:  1 +--  2 lines: ·························}|
+      {7:+ }{5:  0 ^+--  2 lines: ·························}|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      :set foldcolumn=2                            |
+    ]])
+  end)
+
   it("works with multibyte text", function()
     -- Currently the only allowed value of 'maxcombine'
     eq(6, meths.get_option('maxcombine'))
