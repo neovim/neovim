@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include "nvim/assert.h"
 #include "nvim/cursor.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"
@@ -170,7 +171,9 @@ static int coladvance2(
       if (line[idx] == NUL) {
         /* Append spaces */
         int correct = wcol - col;
-        char_u *newline = xmallocz((size_t)(idx + correct));
+        size_t newline_size;
+        STRICT_ADD(idx, correct, &newline_size, size_t);
+        char_u *newline = xmallocz(newline_size);
         memcpy(newline, line, (size_t)idx);
         memset(newline + idx, ' ', (size_t)correct);
 
@@ -187,14 +190,17 @@ static int coladvance2(
         if (-correct > csize)
           return FAIL;
 
-        newline = xmallocz((size_t)(linelen - 1 + csize));
+        size_t n;
+        STRICT_ADD(linelen - 1, csize, &n, size_t);
+        newline = xmallocz(n);
         // Copy first idx chars
         memcpy(newline, line, (size_t)idx);
         // Replace idx'th char with csize spaces
         memset(newline + idx, ' ', (size_t)csize);
         // Copy the rest of the line
-        memcpy(newline + idx + csize, line + idx + 1,
-               (size_t)(linelen - idx - 1));
+        STRICT_SUB(linelen, idx, &n, size_t);
+        STRICT_SUB(n, 1, &n, size_t);
+        memcpy(newline + idx + csize, line + idx + 1, n);
 
         ml_replace(pos->lnum, newline, false);
         changed_bytes(pos->lnum, idx);

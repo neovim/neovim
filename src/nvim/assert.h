@@ -121,4 +121,34 @@
     ((enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }) 0)
 #endif
 
+/// @def STRICT_ADD
+/// @brief Adds (a + b) and stores result in `c`.  Aborts on overflow.
+///
+/// Requires GCC 5+ and Clang 3.8+
+///   https://clang.llvm.org/docs/LanguageExtensions.html
+///   https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+///
+/// Alternative for compilers without __builtin_xx_overflow ?
+///   https://stackoverflow.com/a/44830670/152142
+///
+/// @param MAX Maximum value of the narrowest type of operand.
+///            Not used if compiler supports __builtin_add_overflow.
+#if HAVE_BUILTIN_ADD_OVERFLOW
+# define STRICT_ADD(a, b, c, t) \
+  do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
+#else
+# define STRICT_ADD(a, b, c, t) \
+  do { *(c) = (t)(a + b); } while (0)
+#endif
+
+/// @def STRICT_SUB
+/// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
+#if HAVE_BUILTIN_ADD_OVERFLOW
+# define STRICT_SUB(a, b, c, t) \
+  do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
+#else
+# define STRICT_SUB(a, b, c, t) \
+  do { *(c) = (t)(a - b); } while (0)
+#endif
+
 #endif  // NVIM_ASSERT_H

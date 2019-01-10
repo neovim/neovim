@@ -248,6 +248,16 @@ int main(void)
 }
 " HAVE_EXECINFO_BACKTRACE)
 
+check_c_source_compiles("
+int main(void)
+{
+  int a;
+  __builtin_add_overflow(a, a, &a);
+  __builtin_sub_overflow(a, a, &a);
+  return 0;
+}
+" HAVE_BUILTIN_ADD_OVERFLOW)
+
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
