@@ -371,7 +371,7 @@ VimL (Vim script) compatibility:
 
 Some legacy Vim features are not implemented:
 
-- |if_py|: vim.bindeval() and vim.Function() are not supported
+- |if_py|: *python-bindeval* *python-Function* are not supported
 - |if_lua|: the `vim` object is missing some legacy methods
 - *if_perl*
 - *if_mzscheme*

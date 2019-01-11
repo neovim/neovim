@@ -22,7 +22,9 @@ Python integration				*provider-python*
 
 Nvim supports Python |remote-plugin|s and the Vim legacy |python2| and
 |python3| interfaces (which are implemented as remote-plugins).
-Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
+
+Note: Only the Vim 7.3 legacy interface is supported, not later features such
+as |python-bindeval| (Vim 7.4); use the Nvim API instead.
 
 PYTHON QUICKSTART ~
 

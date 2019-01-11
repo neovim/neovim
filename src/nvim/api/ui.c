@@ -245,9 +245,8 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
                 name.data);
 }
 
-/// Tell nvim to resize a grid. Nvim sends grid_resize event with the
-/// requested grid size is within size limits and with maximum allowed size
-/// otherwise.
+/// Tell Nvim to resize a grid. Triggers a grid_resize event with the requested
+/// grid size or the maximum size if it exceeds size limits.
 ///
 /// On invalid grid handle, fails with error.
 ///

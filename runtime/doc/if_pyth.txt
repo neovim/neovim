@@ -11,7 +11,7 @@ See |provider-python| for more information.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Commands						*python-commands*
+Commands						*python-commands*
 
 					*:python* *:py* *E263* *E264* *E887*
 :[range]py[thon] {stmt}
@@ -44,10 +44,10 @@ Example: >
 To see what version of Python you have: >
 	:python print(sys.version)
 
-There is no need to import sys, it's done by default.
+There is no need to "import sys", it's done by default.
 
-Note: Python is very sensitive to the indenting.  Make sure the "class" line
-and "EOF" do not have any indent.
+Note: Python is very sensitive to indenting.  Make sure the "class" line and
+"EOF" do not have any indent.
 
 							*:pydo*
 :[range]pydo {body}	Execute Python function "def _vim_pydo(line, linenr):
@@ -103,8 +103,8 @@ Here are some examples					*python-examples*  >
 	:python print "Hello"
 	:python str = current.buffer[42]
 
-(Note that changes - like the imports - persist from one command to the next,
-just like in the Python interpreter.)
+Note that changes (such as the "import" statements) persist from one command
+to the next, just like the Python REPL.
 
 							*script-here*
 When using a script language in-line, you might want to skip this when the
@@ -130,7 +130,7 @@ Instead, put the Python command in a function and call that function:
 Note that "EOF" must be at the start of the line.
 
 ==============================================================================
-2. The vim module					*python-vim* *python2*
+The vim module						*python-vim* *python2*
 
 Python code gets all of its access to vim (with one exception - see
 |python-output| below) via the "vim" module.  The vim module implements two
@@ -188,11 +188,6 @@ vim.eval(str)						*python-eval*
 	    :py str = vim.eval("12+12")		# NB result is a string! Use
 						# string.atoi() to convert to
 						# a number.
-
-vim.bindeval(str)					*python-bindeval*
-	Like |python-eval|, but returns special objects described in 
-	|python-bindeval-objects|. These python objects let you modify (|List| 
-	or |Dictionary|) or call (|Funcref|) vim objects.
 
 vim.strwidth(str)					*python-strwidth*
 	Like |strwidth()|: returns number of display cells str occupies, tab 
@@ -291,8 +286,7 @@ vim.current						*python-current*
 vim.vars						*python-vars*
 vim.vvars						*python-vvars*
 	Dictionary-like objects holding dictionaries with global (|g:|) and 
-	vim (|v:|) variables respectively. Identical to `vim.bindeval("g:")`, 
-	but faster.
+	vim (|v:|) variables respectively.
 
 vim.options						*python-options*
 	Object partly supporting mapping protocol (supports setting and 
@@ -407,7 +401,7 @@ vim._get_paths						*python-_get_paths*
 	{rtp}/pythonx directories for each {rtp} in 'runtimepath'.
 
 ==============================================================================
-3. Buffer objects					*python-buffer*
+Buffer objects						*python-buffer*
 
 Buffer objects represent vim buffers.  You can obtain them in a number of ways:
 	- via vim.current.buffer (|python-current|)
@@ -485,7 +479,7 @@ Examples (assume b is the current buffer) >
 	:py del b.options["ar"]		# same as :set autoread<
 
 ==============================================================================
-4. Range objects					*python-range*
+Range objects						*python-range*
 
 Range objects represent a part of a vim buffer.  You can obtain them in a
 number of ways:
@@ -517,7 +511,7 @@ Example (assume r is the current range):
 	vim.command("%d,%dhardcopy!" % (r.start+1,r.end+1))
 
 ==============================================================================
-5. Window objects					*python-window*
+Window objects						*python-window*
 
 Window objects represent vim windows.  You can obtain them in a number of ways:
 	- via vim.current.window (|python-current|)
@@ -561,7 +555,7 @@ The width attribute is writable only if the screen is split vertically.
 Window object type is available using "Window" attribute of vim module.
 
 ==============================================================================
-6. Tab page objects					*python-tabpage*
+Tab page objects					*python-tabpage*
 
 Tab page objects represent vim tab pages. You can obtain them in a number of 
 ways:
@@ -583,119 +577,14 @@ Tab page attributes are:
 TabPage object type is available using "TabPage" attribute of vim module.
 
 ==============================================================================
-7. vim.bindeval objects				*python-bindeval-objects*
-
-vim.Dictionary object				*python-Dictionary*
-    Dictionary-like object providing access to vim |Dictionary| type.
-    Attributes:
-        Attribute  Description ~
-        locked     One of                       *python-.locked*
-                    Value           Description ~
-                    zero            Variable is not locked
-                    vim.VAR_LOCKED  Variable is locked, but can be unlocked
-                    vim.VAR_FIXED   Variable is locked and can't be unlocked
-                   Read-write. You can unlock locked variable by assigning 
-                   `True` or `False` to this attribute. No recursive locking 
-                   is supported.
-        scope      One of
-                    Value              Description ~
-                    zero               Dictionary is not a scope one
-                    vim.VAR_DEF_SCOPE  |g:| or |l:| dictionary
-                    vim.VAR_SCOPE      Other scope dictionary,
-                                       see |internal-variables|
-    Methods (note: methods do not support keyword arguments):
-        Method      Description ~
-        keys()      Returns a list with dictionary keys.
-        values()    Returns a list with dictionary values.
-        items()     Returns a list of 2-tuples with dictionary contents.
-        update(iterable), update(dictionary), update(**kwargs)
-                    Adds keys to dictionary.
-        get(key[, default=None])
-                    Obtain key from dictionary, returning the default if it is 
-                    not present.
-        pop(key[, default])
-                    Remove specified key from dictionary and return 
-                    corresponding value. If key is not found and default is 
-                    given returns the default, otherwise raises KeyError.
-        popitem()
-                    Remove random key from dictionary and return (key, value) 
-                    pair.
-        has_key(key)
-                    Check whether dictionary contains specified key, similar 
-                    to `key in dict`.
-
-        __new__(), __new__(iterable), __new__(dictionary), __new__(update)
-                    You can use `vim.Dictionary()` to create new vim 
-                    dictionaries. `d=vim.Dictionary(arg)` is the same as 
-                    `d=vim.bindeval('{}');d.update(arg)`. Without arguments 
-                    constructs empty dictionary.
-
-    Examples: >
-        d = vim.Dictionary(food="bar")		# Constructor
-        d['a'] = 'b'				# Item assignment
-        print d['a']				# getting item
-        d.update({'c': 'd'})			# .update(dictionary)
-        d.update(e='f')				# .update(**kwargs)
-        d.update((('g', 'h'), ('i', 'j')))	# .update(iterable)
-        for key in d.keys():			# .keys()
-        for val in d.values():			# .values()
-        for key, val in d.items():		# .items()
-        print isinstance(d, vim.Dictionary)	# True
-        for key in d:				# Iteration over keys
-        class Dict(vim.Dictionary):		# Subclassing
-<
-    Note: when iterating over keys you should not modify dictionary.
-
-vim.List object					*python-List*
-    Sequence-like object providing access to vim |List| type.
-    Supports `.locked` attribute, see |python-.locked|. Also supports the 
-    following methods:
-        Method          Description ~
-        extend(item)    Add items to the list.
-
-        __new__(), __new__(iterable)
-                        You can use `vim.List()` to create new vim lists. 
-                        `l=vim.List(iterable)` is the same as 
-                        `l=vim.bindeval('[]');l.extend(iterable)`. Without 
-                        arguments constructs empty list.
-    Examples: >
-        l = vim.List("abc")		# Constructor, result: ['a', 'b', 'c']
-        l.extend(['abc', 'def'])	# .extend() method
-        print l[1:]			# slicing
-        l[:0] = ['ghi', 'jkl']		# slice assignment
-        print l[0]			# getting item
-        l[0] = 'mno'			# assignment
-        for i in l:			# iteration
-        print isinstance(l, vim.List)	# True
-        class List(vim.List):		# Subclassing
-
-vim.Function object				*python-Function*
-    Function-like object, acting like vim |Funcref| object. Supports `.name` 
-    attribute and is callable. Accepts special keyword argument `self`, see 
-    |Dictionary-function|. You can also use `vim.Function(name)` constructor, 
-    it is the same as `vim.bindeval('function(%s)'%json.dumps(name))`.
-
-    Examples: >
-        f = vim.Function('tr')			# Constructor
-        print f('abc', 'a', 'b')		# Calls tr('abc', 'a', 'b')
-        vim.command('''
-            function DictFun() dict
-                return self
-            endfunction
-        ''')
-        f = vim.bindeval('function("DictFun")')
-        print f(self={})			# Like call('DictFun', [], {})
-        print isinstance(f, vim.Function)	# True
-
-==============================================================================
-8. pyeval() and py3eval() Vim functions			*python-pyeval*
+pyeval() and py3eval() Vim functions			*python-pyeval*
 
 To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()| 
 functions to evaluate Python expressions and pass their values to Vim script.
 |pyxeval()| is also available.
 
 ==============================================================================
-9. Python 3						*python3*
+Python 3						*python3*
 
 							*:py3* *:python3*
 The `:py3` and `:python3` commands work similar to `:python`.  A simple check
@@ -724,7 +613,7 @@ You can test what Python version is available with: >
 	endif
 
 ==============================================================================
-10. Python X						*python_x* *pythonx*
+Python X						*python_x* *pythonx*
 
 Because most python code can be written so that it works with Python 2.6+ and
 Python 3, the pyx* functions and commands have been written.  They work the

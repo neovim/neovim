@@ -36,10 +36,11 @@ Reporting problems
 - Check `$NVIM_LOG_FILE`, if it exists.
 - Include `cmake --system-information` for build-related issues.
 
-Pull requests ("PRs")
+Pull requests (PRs)
 ---------------------
 
 - To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
+- Your PR must include **test coverage.** See [test/README.md][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
 - Use a **rebase workflow** for small PRs.

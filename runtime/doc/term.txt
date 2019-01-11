@@ -6,17 +6,18 @@
 
 Terminal UI						*TUI* *tui*
 
-Nvim (except in |--headless| mode) uses information about the terminal you are
-using to present a built-in UI.  If that information is not correct, the
-screen may be messed up or keys may not be recognized.
+Nvim uses a list of terminal capabilities to display its user interface
+(except in |--embed| and |--headless| modes). If that information is wrong,
+the screen may be messed up or keys may not be recognized.
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
 Startup						*startup-terminal*
 
-Nvim (except in |--headless| mode) guesses a terminal type when it starts.
-|$TERM| is the primary hint that determines the terminal type.
+Nvim guesses the terminal type when it starts (except in |--embed| and
+|--headless| modes). The |$TERM| environment variable is the primary hint that
+determines the terminal type.
 
 					*terminfo* *E557* *E558* *E559*
 The terminfo database is used if available.
@@ -37,39 +38,39 @@ The $TERM environment variable must match the terminal you are using!
 Otherwise Nvim cannot know what sequences your terminal expects, and weird
 or sub-optimal behavior will result (scrolling quirks, wrong colors, etc.).
 
-$TERM is also important because it is mirrored by SSH to the remote session,
+$TERM is also important because it is forwarded by SSH to the remote session,
 unlike most other environment variables.
 
   For this terminal           Set $TERM to                  |builtin-terms|
   -------------------------------------------------------------------------
+  anything libvte-based       vte, vte-256color                   Y
+   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
   iTerm (original)            iterm, iTerm.app                    N
   iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
   Konsole                     konsole-256color                    N
-  anything libvte-based       vte, vte-256color                   Y
-   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
-  tmux                        tmux, tmux-256color                 Y
-  screen                      screen, screen-256color             Y
-  PuTTY                       putty, putty-256color               Y
-  Terminal.app                nsterm                              N
   Linux virtual terminal      linux, linux-256color               Y
+  PuTTY                       putty, putty-256color               Y
+  rxvt                        rxvt, rxvt-256color                 Y
+  screen                      screen, screen-256color             Y
+  simple terminal (st)        st, st-256color                     Y
+  Terminal.app                nsterm                              N
+  tmux                        tmux, tmux-256color                 Y
+  Windows/ConEmu              conemu                              Y
+  Windows/Cygwin-built Nvim   cygwin                              Y
+  Windows/Interix             interix                             Y
+  Windows/VTP console         vtpcon                              Y
+  Windows/legacy console      win32con                            Y
+  xterm or compatible         xterm, xterm-256color               Y
 
 					*builtin-terms* *builtin_terms*
-If a |terminfo| database is not available, or no entry for the terminal type is
-found in that database, Nvim will use a compiled-in mini-database of terminfo
-entries for "xterm", "putty", "screen", "tmux", "rxvt", "iterm", "interix",
-"linux", "st", "vte", "gnome", and "ansi".
+If a |terminfo| database is not available or there is no entry for the current
+terminal, Nvim will map |$TERM| to a builtin entry according to the above
+table, or "ansi" if there is no match. For example "TERM=putty-256color" will
+be mapped to the builtin "putty" entry. See also |tui-colors|.
 
-The lookup matches the initial portion of the terminal type, so (for example)
-"putty-256color" and "putty" will both be mapped to the built-in "putty"
-entry.  The built-in terminfo entries describe the terminal as 256-colour
-capable if possible.  See |tui-colors|.
-
-If no built-in terminfo record matches the terminal type, the built-in "ansi"
-terminfo record is used as a final fallback.
-
-The built-in mini-database is not combined with an external terminfo database,
-nor can it be used in preference to one.  You can thus entirely override any
-omissions or out-of-date information in the built-in terminfo database by
+The builtin terminfo is not combined with any external terminfo database, nor
+can it be used in preference to one.  You can thus entirely override any
+omissions or out-of-date information in the builtin terminfo database by
 supplying an external one with entries for the terminal type.
 
 Settings depending on terminal			*term-dependent-settings*
@@ -107,12 +108,6 @@ and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
 it will make use of this ability to speed up scrolling that is not the full
 width of the terminal.
 
-This ability is only present in genuine Xterm, not in the many terminal
-emulators that incorrectly describe themselves as xterm.  Nvim's detection of
-genuine Xterm will not work over an SSH connection, because the environment
-variable, set by genuine Xterm, that it looks for is not automatically
-replicated over an SSH login session.
-
 							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
 including "linux" (whose virtual terminals have had 256-colour support since
@@ -149,7 +144,7 @@ extension pioneered by dtterm.  |terminfo| does not have a flag for this
 extension.  So Nvim simply assumes that (all) "dtterm", "xterm", "teraterm",
 "rxvt" terminal types, and Konsole, are capable of this.
 
-							*tui-cursor-shape* 
+							*tui-cursor-shape*
 Nvim will adjust the shape of the cursor from a block to a line when in insert
 mode (or as specified by the 'guicursor' option), on terminals that support
 it.  It uses the same |terminfo| extensions that were pioneered by tmux for
@@ -162,55 +157,22 @@ environment variables.  For the "rxvt", "putty", "linux", "screen",
 terminal emulator, or genuine Xterm are detected, it will add constructed
 "Ss" and "Se" capabilities.
 
-Note: Sometimes it will appear that Nvim when run within tmux is not changing
-the cursor, but in fact it is tmux receiving instructions from Nvim to change
-the cursor and not knowing what to do in turn.  tmux has to translate what it
-receives from Nvim into whatever control sequence is appropriate for the
-terminal that it is outputting to.  It shares a common mechanism with Nvim, of
-using the "Ss" and "Se" capabilities from terminfo (for the output terminal)
-if they are present.  Unlike Nvim, if they are not present in terminfo you
-must add them by setting "terminal-overrides" in ~/.tmux.conf .
+							*tui-cursor-tmux*
+Within tmux it may appear that Nvim is not changing the cursor, but in fact it
+is tmux receiving instructions from Nvim to change the cursor and not knowing
+what to do in turn.  tmux must translate what it receives from Nvim into
+whatever control sequence is appropriate for the host terminal.  It shares
+a common mechanism with Nvim, of using the "Ss" and "Se" capabilities from
+terminfo (for the output terminal) if they are present. Unlike Nvim, if they
+are not in terminfo you must add them by setting "terminal-overrides" in
+~/.tmux.conf .
 
 See the tmux(1) manual page for the details of how and what to do in the tmux
 configuration file.  It will look something like: >
 	set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
-<or (alas!) for Konsole specifically, something more complex like: >
+<or (alas!) for Konsole 18.07.70 or older, something more complex like: >
 	set -ga terminal-overrides 'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
 <
-							*cs7-problem*
-Note: If the terminal settings are changed after running Vim, you might have
-an illegal combination of settings.  This has been reported on Solaris 2.5
-with "stty cs8 parenb", which is restored as "stty cs7 parenb".  Use
-"stty cs8 -parenb -istrip" instead, this is restored correctly.
-
-Many cursor key codes start with an <Esc>.  Vim must find out if this is a
-single hit of the <Esc> key or the start of a cursor key sequence.  It waits
-for a next character to arrive.  If it does not arrive within one second a
-single <Esc> is assumed.  On very slow systems this may fail, causing cursor
-keys not to work sometimes.  If you discover this problem reset the 'timeout'
-option.  Vim will wait for the next character to arrive after an <Esc>.  If
-you want to enter a single <Esc> you must type it twice.
-
-Some terminals have confusing codes for the cursor keys.  The televideo 925 is
-such a terminal.  It sends a CTRL-H for cursor-left.  This would make it
-impossible to distinguish a backspace and cursor-left.  To avoid this problem
-CTRL-H is never recognized as cursor-left.
-
-					*vt100-cursor-keys* *xterm-cursor-keys*
-Other terminals (e.g., vt100 and xterm) have cursor keys that send <Esc>OA,
-<Esc>OB, etc.  Unfortunately these are valid commands in insert mode: Stop
-insert, Open a new line above the new one, start inserting 'A', 'B', etc.
-Instead of performing these commands Vim will erroneously recognize this typed
-key sequence as a cursor key movement.  To avoid this and make Vim do what you
-want in either case you could use these settings: >
-	:set notimeout		" don't timeout on mappings
-	:set ttimeout		" do timeout on terminal key codes
-	:set timeoutlen=100	" timeout after 100 msec
-This requires the key-codes to be sent within 100 msec in order to recognize
-them as a cursor key.  When you type you normally are not that fast, so they
-are recognized as individual typed commands, even though Vim receives the same
-sequence of bytes.
-
 ==============================================================================
 Window size						*window-size*
 
