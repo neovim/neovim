@@ -5147,8 +5147,9 @@ void buf_addsign(
     int typenr      /* typenr of sign we are adding */
     )
 {
-    signlist_T *sign;  /* a sign in the signlist */
-    signlist_T *prev;  /* the previous sign */
+    signlist_T **lastp; /* pointer to pointer to current sign */
+    signlist_T *sign;   /* a sign in the signlist */
+    signlist_T *prev;   /* the previous sign */
 
     prev = NULL;
     for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
@@ -5160,7 +5161,19 @@ void buf_addsign(
     }
     insert_sign(buf, prev, sign, id, lnum, typenr);
 
-    return;
+    /*
+     * Having more than one sign with _the same type_ and on the _same line_ is
+     * unwanted, let's prevent it.
+     */
+    lastp = &buf->b_signlist;
+    for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
+        if (lnum == sign->lnum && sign->typenr == typenr && id != sign->id) {
+            *lastp = sign->next;
+            xfree(sign);
+        } else {
+            lastp = &sign->next;
+        }
+    }
 }
 
 // For an existing, placed sign "markId" change the type to "typenr".
