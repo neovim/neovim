@@ -1,8 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
+local command = helpers.command
 local feed_command = helpers.feed_command
 local insert = helpers.insert
+local funcs = helpers.funcs
 local meths = helpers.meths
 
 describe("folded lines", function()
@@ -24,6 +26,26 @@ describe("folded lines", function()
 
   after_each(function()
     screen:detach()
+  end)
+
+  it("highlighting with relative line numbers", function()
+    command("set relativenumber foldmethod=marker")
+    feed_command("set foldcolumn=2")
+    funcs.setline(1, '{{{1')
+    funcs.setline(2, 'line 1')
+    funcs.setline(3, '{{{1')
+    funcs.setline(4, 'line 2')
+    feed("j")
+    screen:expect([[
+      {7:+ }{5:  1 +--  2 lines: ·························}|
+      {7:+ }{5:  0 ^+--  2 lines: ·························}|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      {7:  }{1:~                                          }|
+      :set foldcolumn=2                            |
+    ]])
   end)
 
   it("works with multibyte text", function()

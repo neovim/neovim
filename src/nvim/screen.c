@@ -1409,7 +1409,12 @@ static void win_update(win_T *wp)
       if (wp->w_p_rnu) {
         // 'relativenumber' set: The text doesn't need to be drawn, but
         // the number column nearly always does.
-        (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
+        fold_count = foldedCount(wp, lnum, &win_foldinfo);
+        if (fold_count != 0) {
+          fold_line(wp, fold_count, &win_foldinfo, lnum, row);
+        } else {
+          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
+        }
       }
 
       // This line does not need to be drawn, advance to the next one.
