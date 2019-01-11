@@ -7121,6 +7121,7 @@ int win_signcol_count(win_T *wp)
   if (*scl == 'n') {
     return 0;
   }
+  needed_signcols = buf_get_needed_signcols(wp->w_buffer);
 
   /* yes or yes: */
   if (!strncmp(scl, "yes:", 4)) {
@@ -7137,7 +7138,6 @@ int win_signcol_count(win_T *wp)
     maximum = scl[5] - '0';
   }
 
-  needed_signcols = buf_get_needed_signcols(wp->w_buffer);
   return MIN(maximum, needed_signcols);
 }
 
