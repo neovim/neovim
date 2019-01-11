@@ -1452,21 +1452,24 @@ ins_redraw (
     }
   }
 
-  if (must_redraw)
-    update_screen(0);
-  else if (clear_cmdline || redraw_cmdline)
-    showmode();                 /* clear cmdline and show mode */
   if ((conceal_update_lines
        && (conceal_old_cursor_line != conceal_new_cursor_line
            || conceal_cursor_line(curwin)))
       || need_cursor_line_redraw) {
-    if (conceal_old_cursor_line != conceal_new_cursor_line)
-      update_single_line(curwin, conceal_old_cursor_line);
-    update_single_line(curwin, conceal_new_cursor_line == 0
-        ? curwin->w_cursor.lnum : conceal_new_cursor_line);
+    if (conceal_old_cursor_line != conceal_new_cursor_line) {
+      redrawWinline(curwin, conceal_old_cursor_line);
+    }
+    redrawWinline(curwin, conceal_new_cursor_line == 0
+                  ? curwin->w_cursor.lnum : conceal_new_cursor_line);
     curwin->w_valid &= ~VALID_CROW;
   }
-  showruler(FALSE);
+
+  if (must_redraw) {
+    update_screen(0);
+  } else if (clear_cmdline || redraw_cmdline) {
+    showmode();  // clear cmdline and show mode
+  }
+  showruler(false);
   setcursor();
   emsg_on_display = FALSE;      /* may remove error message now */
 }

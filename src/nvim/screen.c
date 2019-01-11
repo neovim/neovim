@@ -482,25 +482,6 @@ void update_screen(int type)
 
 }
 
-// Prepare for updating one or more windows.
-// Caller must check for "updating_screen" already set to avoid recursiveness.
-static void update_prepare(void)
-{
-  updating_screen = true;
-  start_search_hl();
-}
-
-// Finish updating one or more windows.
-static void update_finish(void)
-{
-  if (redraw_cmdline) {
-    showmode();
-  }
-
-  end_search_hl();
-  updating_screen = false;
-}
-
 /*
  * Return TRUE if the cursor line in window "wp" may be concealed, according
  * to the 'concealcursor' option.
@@ -535,39 +516,6 @@ void conceal_check_cursor_line(void)
      * without concealing. */
     curs_columns(TRUE);
   }
-}
-
-void update_single_line(win_T *wp, linenr_T lnum)
-{
-  int row;
-  int j;
-
-  // Don't do anything if the screen structures are (not yet) valid.
-  if (linebuf_char == NULL || updating_screen) {
-    return;
-  }
-
-  if (lnum >= wp->w_topline && lnum < wp->w_botline
-      && foldedCount(wp, lnum, &win_foldinfo) == 0) {
-    update_prepare();
-
-    row = 0;
-    for (j = 0; j < wp->w_lines_valid; ++j) {
-      if (lnum == wp->w_lines[j].wl_lnum) {
-        init_search_hl(wp);
-        prepare_search_hl(wp, lnum);
-        update_window_hl(wp, false);
-        // allocate window grid if not already
-        win_grid_alloc(wp);
-        win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false, false);
-        break;
-      }
-      row += wp->w_lines[j].wl_size;
-    }
-
-    update_finish();
-  }
-  need_cursor_line_redraw = false;
 }
 
 

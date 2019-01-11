@@ -1246,6 +1246,25 @@ static void normal_redraw(NormalState *s)
   update_topline();
   validate_cursor();
 
+  // TODO(bfredl): this logic is only used for 'concealcursor', not
+  // 'cursorline'. Maybe we can eliminate this check (and in edit.c) by
+  // checking for 'concealcursor' wherever we check for 'cursorline'
+  if (s->conceal_update_lines
+      && (s->conceal_old_cursor_line !=
+        s->conceal_new_cursor_line
+        || conceal_cursor_line(curwin)
+        || need_cursor_line_redraw)) {
+    if (s->conceal_old_cursor_line !=
+        s->conceal_new_cursor_line
+        && s->conceal_old_cursor_line <=
+        curbuf->b_ml.ml_line_count) {
+      redrawWinline(curwin, s->conceal_old_cursor_line);
+    }
+
+    redrawWinline(curwin, s->conceal_new_cursor_line);
+    curwin->w_valid &= ~VALID_CROW;
+  }
+
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {
@@ -1280,22 +1299,6 @@ static void normal_redraw(NormalState *s)
   msg_didany = false;  // reset lines_left in msg_start()
   may_clear_sb_text();  // clear scroll-back text on next msg
   showruler(false);
-
-  if (s->conceal_update_lines
-      && (s->conceal_old_cursor_line !=
-        s->conceal_new_cursor_line
-        || conceal_cursor_line(curwin)
-        || need_cursor_line_redraw)) {
-    if (s->conceal_old_cursor_line !=
-        s->conceal_new_cursor_line
-        && s->conceal_old_cursor_line <=
-        curbuf->b_ml.ml_line_count) {
-      update_single_line(curwin, s->conceal_old_cursor_line);
-    }
-
-    update_single_line(curwin, s->conceal_new_cursor_line);
-    curwin->w_valid &= ~VALID_CROW;
-  }
 
   setcursor();
 }
@@ -7089,7 +7092,7 @@ static void n_opencmd(cmdarg_T *cap)
                      ? OPENLINE_DO_COM : 0,
                      0)) {
       if (curwin->w_p_cole > 0 && oldline != curwin->w_cursor.lnum) {
-        update_single_line(curwin, oldline);
+        redrawWinline(curwin, oldline);
       }
       if (curwin->w_p_cul) {
         // force redraw of cursorline
