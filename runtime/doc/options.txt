@@ -5399,9 +5399,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'signcolumn'* *'scl'*
 'signcolumn' 'scl'	string	(default "auto")
 			local to window
-	Whether or not to draw the signcolumn. Valid values are:
+	Whether or not to draw the signcolumn, and how. Valid values are:
 	   "auto"   	only when there is a sign to display
-	   "auto:[1-9]" resize to accomodate multiple signs, up to the
+	   "auto:[1-9]" resize to accommodate multiple signs, up to the
 	                number being given after "auto:", e.g. "auto:9"
 	   "no"	    	never
 	   "yes"    	always
