@@ -4028,12 +4028,7 @@ static void script_host_execute(char *name, exarg_T *eap)
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
 
-    if (!eval_has_provider(name)) {
-      emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
-            name);
-    } else {
-      (void)eval_call_provider(name, "execute", args);
-    }
+    (void)eval_call_provider(name, "execute", args);
   }
 }
 

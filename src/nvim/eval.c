@@ -22706,6 +22706,16 @@ static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 {
+  if (!eval_has_provider(provider)) {
+    emsgf("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+          provider);
+    return (typval_T){
+      .v_type = VAR_NUMBER,
+      .v_lock = VAR_UNLOCKED,
+      .vval.v_number = (varnumber_T)0
+    };
+  }
+
   char func[256];
   int name_len = snprintf(func, sizeof(func), "provider#%s#Call", provider);
 
