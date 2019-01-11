@@ -88,12 +88,13 @@ char_u *parse_shape_opt(int what)
   char_u      *colonp;
   char_u      *commap;
   char_u      *slashp;
-  char_u      *p, *endp;
-  int idx = 0;                          /* init for GCC */
+  char_u      *p = NULL;
+  char_u      *endp;
+  int idx = 0;                          // init for GCC
   int all_idx;
   int len;
   int i;
-  int found_ve = false;                 /* found "ve" flag */
+  int found_ve = false;                 // found "ve" flag
   int round;
 
   // First round: check for errors; second round: do it for real.
