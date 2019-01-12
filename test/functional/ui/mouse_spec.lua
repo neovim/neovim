@@ -741,10 +741,11 @@ describe('ui/mouse/input', function()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
         c = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+        sm = {bold = true},
       })
       feed('ggdG')
 
-      feed_command('set concealcursor=n')
+      feed_command('set concealcursor=ni')
       feed_command('set nowrap')
       feed_command('set shiftwidth=2 tabstop=4 list listchars=tab:>-')
       feed_command('syntax match NonText "\\*" conceal')
@@ -972,6 +973,76 @@ describe('ui/mouse/input', function()
                                  |
       ]])
     end) -- level 2 - non wrapped
+
+    it('(level 2) click on non-wrapped lines (insert mode)', function()
+      feed_command('let &conceallevel=2', 'echo')
+
+      feed('<esc>i<LeftMouse><20,0>')
+      screen:expect([[
+        Section{0:>>--->--->---}^t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+
+      feed('<LeftMouse><14,1>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  ^t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+
+      feed('<LeftMouse><18,1>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t^3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+
+      feed('<LeftMouse><0,2>')  -- Weirdness
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:^>} 私は猫が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+
+      feed('<LeftMouse><8,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫^が大好き{0:>---}{c:X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+
+      feed('<LeftMouse><20,2>')
+      screen:expect([[
+        Section{0:>>--->--->---}t1   |
+        {0:>--->--->---}  t2 t3 t4   |
+        {c:>} 私は猫が大好き{0:>---}{c:^X} ✨{0:>}|
+                                 |
+        {0:~                        }|
+        {0:~                        }|
+        {sm:-- INSERT --}             |
+      ]])
+    end) -- level 2 - non wrapped (insert mode)
 
     it('(level 2) click on wrapped lines', function()
       feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
