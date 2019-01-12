@@ -1462,6 +1462,7 @@ ins_redraw (
     redrawWinline(curwin, conceal_new_cursor_line == 0
                   ? curwin->w_cursor.lnum : conceal_new_cursor_line);
     curwin->w_valid &= ~VALID_CROW;
+    need_cursor_line_redraw = false;
   }
 
   if (must_redraw) {

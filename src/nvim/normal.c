@@ -1263,6 +1263,7 @@ static void normal_redraw(NormalState *s)
 
     redrawWinline(curwin, s->conceal_new_cursor_line);
     curwin->w_valid &= ~VALID_CROW;
+    need_cursor_line_redraw = false;
   }
 
   if (VIsual_active) {
