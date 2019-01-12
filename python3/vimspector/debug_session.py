@@ -448,11 +448,6 @@ class DebugSession( object ):
 
   def _Initialise( self ):
     adapter_config = self._adapter
-    launch_config = self._configuration[ 'configuration' ]
-
-    if launch_config.get( 'request' ) == "attach":
-      self._SelectProcess( adapter_config, launch_config )
-
     self._connection.DoRequest( None, {
       'command': 'initialize',
       'arguments': {
@@ -469,15 +464,28 @@ class DebugSession( object ):
       },
     } )
 
+
+  def _Launch( self ):
+    self._logger.debug( "LAUNCH!" )
+    adapter_config = self._adapter
+    launch_config = self._configuration[ 'configuration' ]
+
+    if launch_config.get( 'request' ) == "attach":
+      self._SelectProcess( adapter_config, launch_config )
+
     # FIXME: name is mandatory. Forcefully add it (we should really use the
     # _actual_ name, but that isn't actually remembered at this point)
     if 'name' not in launch_config:
       launch_config[ 'name' ] = 'test'
 
-    self._connection.DoRequest( None, {
-      'command': launch_config[ 'request' ],
-      'arguments': launch_config
-    } )
+    self._connection.DoRequest(
+      lambda msg: self._stackTraceView.LoadThreads( True ),
+      {
+        'command': launch_config[ 'request' ],
+        'arguments': launch_config
+      }
+    )
+
 
   def _UpdateBreakpoints( self, source, message ):
     if 'body' not in message:
@@ -485,10 +493,11 @@ class DebugSession( object ):
     self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
     self._codeView.ShowBreakpoints()
 
+
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
     self._connection.DoRequest(
-      lambda msg: self._stackTraceView.LoadThreads( True ),
+      lambda msg: self._Launch(),
       {
         'command': 'configurationDone',
       }
