@@ -64,12 +64,9 @@
 
 typedef struct normal_state {
   VimState state;
-  linenr_T conceal_old_cursor_line;
-  linenr_T conceal_new_cursor_line;
   bool command_finished;
   bool ctrl_w;
   bool need_flushbuf;
-  bool conceal_update_lines;
   bool set_prevcount;
   bool previous_got_int;             // `got_int` was true
   bool cmdwin;                       // command-line window normal mode
@@ -1201,12 +1198,6 @@ static void normal_check_cursor_moved(NormalState *s)
       apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
     }
 
-    if (curwin->w_p_cole > 0) {
-      s->conceal_old_cursor_line = last_cursormoved.lnum;
-      s->conceal_new_cursor_line = curwin->w_cursor.lnum;
-      s->conceal_update_lines = true;
-    }
-
     last_cursormoved = curwin->w_cursor;
   }
 }
@@ -1246,24 +1237,11 @@ static void normal_redraw(NormalState *s)
   update_topline();
   validate_cursor();
 
-  // TODO(bfredl): this logic is only used for 'concealcursor', not
-  // 'cursorline'. Maybe we can eliminate this check (and in edit.c) by
-  // checking for 'concealcursor' wherever we check for 'cursorline'
-  if (s->conceal_update_lines
-      && (s->conceal_old_cursor_line !=
-        s->conceal_new_cursor_line
-        || conceal_cursor_line(curwin)
-        || need_cursor_line_redraw)) {
-    if (s->conceal_old_cursor_line !=
-        s->conceal_new_cursor_line
-        && s->conceal_old_cursor_line <=
-        curbuf->b_ml.ml_line_count) {
-      redrawWinline(curwin, s->conceal_old_cursor_line);
-    }
-
-    redrawWinline(curwin, s->conceal_new_cursor_line);
-    curwin->w_valid &= ~VALID_CROW;
-    need_cursor_line_redraw = false;
+  // If the cursor moves horizontally when 'concealcursor' is active, then the
+  // current line needs to be redrawn in order to calculate the correct
+  // cursor position.
+  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
+    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   if (VIsual_active) {
@@ -6500,9 +6478,6 @@ void may_start_select(int c)
  */
 static void n_start_visual_mode(int c)
 {
-  // Check for redraw before changing the state.
-  conceal_check_cursor_line();
-
   VIsual_mode = c;
   VIsual_active = true;
   VIsual_reselect = true;
@@ -7072,8 +7047,6 @@ static void nv_g_cmd(cmdarg_T *cap)
  */
 static void n_opencmd(cmdarg_T *cap)
 {
-  linenr_T oldline = curwin->w_cursor.lnum;
-
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == 'O')
       /* Open above the first line of a folded sequence of lines */
@@ -7092,10 +7065,7 @@ static void n_opencmd(cmdarg_T *cap)
                      has_format_option(FO_OPEN_COMS)
                      ? OPENLINE_DO_COM : 0,
                      0)) {
-      if (curwin->w_p_cole > 0 && oldline != curwin->w_cursor.lnum) {
-        redrawWinline(curwin, oldline);
-      }
-      if (curwin->w_p_cul) {
+      if (win_cursorline_standout(curwin)) {
         // force redraw of cursorline
         curwin->w_valid &= ~VALID_CROW;
       }

@@ -105,14 +105,14 @@ void reset_cursorline(void)
 // Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 static void redraw_for_cursorline(win_T *wp)
 {
-  if ((wp->w_p_rnu || wp->w_p_cul)
+  if ((wp->w_p_rnu || win_cursorline_standout(wp))
       && (wp->w_valid & VALID_CROW) == 0
       && !pum_visible()) {
     if (wp->w_p_rnu) {
       // win_line() will redraw the number column only.
       redraw_win_later(wp, VALID);
     }
-    if (wp->w_p_cul) {
+    if (win_cursorline_standout(wp)) {
       if (wp->w_redr_type <= VALID && wp->w_last_cursorline != 0) {
         // "w_last_cursorline" may be outdated, worst case we redraw
         // too much.  This is optimized for moving the cursor around in
@@ -2207,7 +2207,7 @@ void do_check_cursorbind(void)
         int restart_edit_save = restart_edit;
         restart_edit = true;
         check_cursor();
-        if (curwin->w_p_cul || curwin->w_p_cuc) {
+        if (win_cursorline_standout(curwin) || curwin->w_p_cuc) {
           validate_cursor();
         }
         restart_edit = restart_edit_save;
