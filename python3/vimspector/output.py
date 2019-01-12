@@ -42,19 +42,25 @@ class OutputView( object ):
 
     self.ShowOutput( 'Console' )
 
+  def ServerEcho( self, text ):
+    self._Print( 'server', text.splitlines() )
+
   def OnOutput( self, event ):
     category = CategoryToBuffer( event.get( 'category' ) or 'output' )
+    text_lines = event[ 'output' ].splitlines()
+    if 'data' in event:
+      text_lines.extend( json.dumps( event[ 'data' ],
+                                     indent = 2 ).splitlines() )
+
+    self._Print( category, text_lines )
+
+  def _Print( self, category, text_lines ):
     if category not in self._buffers:
       self._CreateBuffer( category )
 
     buf = self._buffers[ category ]
     with utils.ModifiableScratchBuffer( buf ):
-      utils.AppendToBuffer( buf, event[ 'output' ].splitlines() )
-      if 'data' in event:
-        utils.AppendToBuffer( buf,
-                              json.dumps( event[ 'data' ],
-                                          indent = 2 ).splitlines() )
-
+      utils.AppendToBuffer( buf, text_lines )
 
     # Scroll the buffer
     with utils.RestoreCurrentWindow():

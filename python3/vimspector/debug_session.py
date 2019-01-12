@@ -189,6 +189,11 @@ class DebugSession( object ):
     if self._connection:
       self._connection.OnData( data )
 
+  def OnServerStderr( self, data ):
+    self._logger.info( "Server stderr: %s", data )
+    if self._outputView:
+      self._outputView.ServerEcho( data )
+
   def OnRequestTimeout( self, timer_id ):
     if self._connection:
       self._connection.OnRequestTimeout( timer_id )

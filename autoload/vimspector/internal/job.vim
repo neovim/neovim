@@ -26,7 +26,9 @@ EOF
 endfunction
 
 function! s:_OnServerError( channel, data ) abort
-  echom "Channel received error: " . a:data
+  py3 << EOF
+_vimspector_session.OnServerStderr( vim.eval( 'a:data' ) )
+EOF
 endfunction
 
 function! s:_OnExit( channel, status ) abort
