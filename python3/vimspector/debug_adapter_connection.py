@@ -122,7 +122,7 @@ class DebugAdapterConnection( object ):
 
     while True:
       if self._state == 'READ_HEADER':
-        data = self._ReadHeaders()
+        self._ReadHeaders()
 
       if self._state == 'READ_BODY':
         self._ReadBody()
