@@ -13,9 +13,12 @@ coverage:
 
   status:
     project: yes
+      default:
+        threshold: 1
     patch:
       default:
         threshold: 1
+        only_pulls: true
     changes: no
 
 parsers:
