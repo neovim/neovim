@@ -186,19 +186,21 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
   // level. We make it a generous size because we'll populate it with opt[who]
   // further down and we can't know how big that will be.
   size_t error_max = 1000;
-  char *err_prefix = malloc(sizeof(char) * error_max);
+  char *err_prefix = xmalloc(sizeof(char) * error_max);
   snprintf(err_prefix, error_max, "%s %s nvim_log():",
            date_time, log_levels[ERROR_LOG_LEVEL]);
 
   // extract char *who
   char *who = "";
+  bool who_needs_freeing = false;
   for (size_t i = 0; i < opt.size; i++) {
     String k = opt.items[i].key;
     Object v = opt.items[i].value;
     if (strequal("who", k.data)) {
       if (v.type == kObjectTypeString) {
         size_t who_len = v.data.string.size + 3;
-        who = malloc(who_len);
+        who = xmalloc(who_len);
+        who_needs_freeing = true;
         snprintf(who, who_len, "[%s]", v.data.string.data);
 
         // also rewrite our err_prefix to include *who
@@ -241,7 +243,10 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
     fclose(log_file);
   }
 
-  free(err_prefix);
+  if (who_needs_freeing) {
+    xfree(who);
+  }
+  xfree(err_prefix);
 unlock:
   log_unlock();
 
