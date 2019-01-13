@@ -5933,6 +5933,7 @@ void ex_history(exarg_T *eap)
 
   for (; !got_int && histype1 <= histype2; ++histype1) {
     STRCPY(IObuff, "\n      #  ");
+    assert(history_names[histype1] != NULL);
     STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
     MSG_PUTS_TITLE(IObuff);
     idx = hisidx[histype1];
