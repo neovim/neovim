@@ -447,7 +447,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     return;
   }
 
-  if (win_valid_any_tab(win)) {
+  if (win != NULL  // Avoid bogus clang warning.
+      && win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
     // Remember the last cursor position and window options of the buffer.
     // This used to be only for the current window, but then options like
@@ -575,7 +576,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   if (buf == curbuf && !is_curbuf)
     return;
 
-  if (win_valid_any_tab(win) && win->w_buffer == buf) {
+  if (win != NULL  // Avoid bogus clang warning.
+      && win_valid_any_tab(win)
+      && win->w_buffer == buf) {
     win->w_buffer = NULL;  // make sure we don't use the buffer now
   }
 
