@@ -214,15 +214,11 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
 
   // work out whether the provided log level is valid; if not, use 'ERROR'
   char *log_level_str;
-  bool log_level_valid = false;
 
-  if (log_level != NULL) {
-      log_level_valid = (0 == strcmp(log_level, "ERROR")
-                         || 0 == strcmp(log_level, "WARN")
-                         || 0 == strcmp(log_level, "INFO")
-                         || 0 == strcmp(log_level, "DEBUG"));
-  }
-  if (log_level_valid) {
+  if (strequal(log_level, "ERROR")
+      || strequal(log_level, "WARN")
+      || strequal(log_level, "INFO")
+      || strequal(log_level, "DEBUG")) {
     log_level_str = log_level;
   } else {
     log_level_str = log_levels[ERROR_LOG_LEVEL];
