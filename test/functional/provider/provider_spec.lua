@@ -50,12 +50,12 @@ describe('remote host provider', function()
       end
     end
 
-    -- NOTE: we need to kill the old nvim before we'll be able to remove the logfile
-    clear()
-    os.remove(nvim_log)
-
     if not found_stderr_in_logs then
       error("Did not find host's stderr in $NVIM_LOG_FILE")
     end
+
+    -- NOTE: we need to kill the old nvim before we'll be able to remove the logfile
+    clear()
+    os.remove(nvim_log)
   end)
 end)
