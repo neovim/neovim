@@ -641,7 +641,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
   char_u *ptr = line;
-  char_u *ptr_end = line;
+  char_u *ptr_end;
   char_u *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
 
   // Find the offset where scanning should begin.

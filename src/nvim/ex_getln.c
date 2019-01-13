@@ -1808,7 +1808,6 @@ static int command_line_changed(CommandLineState *s)
   if (has_event(EVENT_CMDLINECHANGED)) {
     TryState tstate;
     Error err = ERROR_INIT;
-    bool tl_ret = true;
     dict_T *dict = get_vim_var_dict(VV_EVENT);
 
     char firstcbuf[2];
@@ -1825,14 +1824,13 @@ static int command_line_changed(CommandLineState *s)
                    (char_u *)firstcbuf, false, curbuf);
     tv_dict_clear(dict);
 
-    tl_ret = try_leave(&tstate, &err);
+    bool tl_ret = try_leave(&tstate, &err);
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
       api_clear_error(&err);
       redrawcmd();
     }
-    tl_ret = true;
   }
 
   // 'incsearch' highlighting.
@@ -5933,6 +5931,7 @@ void ex_history(exarg_T *eap)
 
   for (; !got_int && histype1 <= histype2; ++histype1) {
     STRCPY(IObuff, "\n      #  ");
+    assert(history_names[histype1] != NULL);
     STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
     MSG_PUTS_TITLE(IObuff);
     idx = hisidx[histype1];

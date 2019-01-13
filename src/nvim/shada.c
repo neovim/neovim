@@ -599,6 +599,7 @@ static inline void hmll_insert(HMLList *const hmll,
     if (hmll_entry == hmll->first) {
       hmll_entry = NULL;
     }
+    assert(hmll->first != NULL);
     hmll_remove(hmll, hmll->first);
   }
   HMLListEntry *target_entry;

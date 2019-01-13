@@ -760,8 +760,6 @@ readfile (
     fenc = (char_u *)"utf-8";
 
     fenc_alloced = false;
-
-    c = 1;
   } else if (*p_fencs == NUL) {
     fenc = curbuf->b_p_fenc;            /* use format from buffer */
     fenc_alloced = FALSE;
