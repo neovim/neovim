@@ -3770,6 +3770,7 @@ find_decl (
   clearpos(&found_pos);
   for (;; ) {
     valid = false;
+    (void)valid;  // Avoid "dead assignment" warning.
     t = searchit(curwin, curbuf, &curwin->w_cursor, FORWARD,
         pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum)
