@@ -228,7 +228,8 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
   for (size_t i = 0; i < lines.size; i++) {
     Object item = lines.items[i];
     if (item.type == kObjectTypeString) {
-      fprintf(log_file, "%s %s %s %s\n", date_time, log_level_str, who, item.data.string.data);
+      fprintf(log_file, "%s %s %s %s\n", date_time, log_level_str, who,
+              item.data.string.data);
     } else {
       // issue a generic error message for invalid line items
       fprintf(log_file, "%s lines[%d] should be a string; got %s instead\n",
