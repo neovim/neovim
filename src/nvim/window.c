@@ -3547,7 +3547,7 @@ void win_goto(win_T *wp)
     redrawWinline(owp, owp->w_cursor.lnum);
   }
   if (curwin->w_p_cole > 0 && !msg_scrolled) {
-    need_cursor_line_redraw = true;
+    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 }
 

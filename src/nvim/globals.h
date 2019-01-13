@@ -918,10 +918,6 @@ EXTERN disptick_T display_tick INIT(= 0);
  * cursor position in Insert mode. */
 EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 
-/* Set when the cursor line needs to be redrawn. */
-EXTERN int need_cursor_line_redraw INIT(= FALSE);
-
-
 #ifdef USE_MCH_ERRMSG
 // Grow array to collect error messages in until they can be displayed.
 EXTERN garray_T error_ga INIT(= GA_EMPTY_INIT_VALUE);

@@ -151,6 +151,8 @@ static bool send_grid_resize = false;
 /// Highlight ids are no longer valid. Force retransmission
 static bool highlights_invalid = false;
 
+static bool conceal_cursor_used = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -505,19 +507,28 @@ int conceal_cursor_line(win_T *wp)
   return vim_strchr(wp->w_p_cocu, c) != NULL;
 }
 
-/*
- * Check if the cursor line needs to be redrawn because of 'concealcursor'.
- */
+// Check if the cursor line needs to be redrawn because of 'concealcursor'.
+//
+// When cursor is moved at the same time, both lines will be redrawn regardless.
 void conceal_check_cursor_line(void)
 {
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-    need_cursor_line_redraw = TRUE;
-    /* Need to recompute cursor column, e.g., when starting Visual mode
-     * without concealing. */
-    curs_columns(TRUE);
+  bool should_conceal = conceal_cursor_line(curwin);
+  if (curwin->w_p_cole > 0 && (conceal_cursor_used != should_conceal)) {
+    redrawWinline(curwin, curwin->w_cursor.lnum);
+    // Need to recompute cursor column, e.g., when starting Visual mode
+    // without concealing. */
+    curs_columns(true);
   }
 }
 
+/// Whether cursorline is drawn in a special way
+///
+/// If true, both old and new cursorline will need
+/// need to be redrawn when moving cursor within windows.
+bool win_cursorline_standout(win_T *wp)
+{
+  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+}
 
 /*
  * Update a single window.
@@ -1942,6 +1953,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     curwin->w_cline_height = 1;
     curwin->w_cline_folded = true;
     curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
+    conceal_cursor_used = conceal_cursor_line(curwin);
   }
 }
 
@@ -3960,6 +3972,7 @@ win_line (
         curwin->w_cline_height = row - startrow;
         curwin->w_cline_folded = false;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
+        conceal_cursor_used = conceal_cursor_line(curwin);
       }
 
       break;

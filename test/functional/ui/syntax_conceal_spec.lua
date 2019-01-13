@@ -12,7 +12,11 @@ describe('Screen', function()
     screen:attach()
     screen:set_default_attr_ids( {
       [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray}
+      [1] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
+      [2] = {bold = true, reverse = true},
+      [3] = {reverse = true},
+      [4] = {bold = true},
+      [5] = {background = Screen.colors.Yellow},
     } )
   end)
 
@@ -329,4 +333,494 @@ describe('Screen', function()
       ]])
     end)
   end) -- conceallevel
+
+
+  describe("cursor movement", function()
+    before_each(function()
+      command("syn keyword concealy barf conceal cchar=b")
+      command("set cole=2")
+      feed('5Ofoo barf bar barf eggs<esc>')
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo barf bar barf egg^s                               |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+    end)
+
+    it('between windows', function()
+      command("split")
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo barf bar barf egg^s                               |
+                                                             |
+        {2:[No Name] [+]                                        }|
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {3:[No Name] [+]                                        }|
+                                                             |
+      ]])
+      feed('<c-w>w')
+
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {3:[No Name] [+]                                        }|
+        foo {1:b} bar {1:b} eggs                                     |
+        foo barf bar barf egg^s                               |
+                                                             |
+        {2:[No Name] [+]                                        }|
+                                                             |
+      ]])
+    end)
+
+    it('in insert mode', function()
+      feed('i')
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo barf bar barf egg^s                               |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+
+      feed('<up>')
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo barf bar barf egg^s                               |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+    end)
+
+    it('between modes cocu=iv', function()
+      command('set cocu=iv')
+      feed('gg')
+      screen:expect([[
+        ^foo barf bar barf eggs                               |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed('i')
+      screen:expect([[
+        ^foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+
+      feed('<esc>')
+      screen:expect([[
+        ^foo barf bar barf eggs                               |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed('v')
+      screen:expect([[
+        ^foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- VISUAL --}                                         |
+      ]])
+
+      feed('<esc>')
+      screen:expect([[
+        ^foo barf bar barf eggs                               |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+    end)
+
+    it('between modes cocu=n', function()
+      command('set cocu=n')
+      feed('gg')
+      screen:expect([[
+        ^foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed('i')
+      screen:expect([[
+        ^foo barf bar barf eggs                               |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+
+      feed('<esc>')
+      screen:expect([[
+        ^foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+
+      feed('v')
+      screen:expect([[
+        ^foo barf bar barf eggs                               |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- VISUAL --}                                         |
+      ]])
+
+      feed('<esc>')
+      screen:expect([[
+        ^foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
+    it('and open line', function()
+      feed('o')
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        ^                                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+    end)
+
+    it('and open line cocu=i', function()
+      command('set cocu=i')
+      feed('o')
+      screen:expect([[
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        ^                                                     |
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+    end)
+
+    describe('with incsearch', function()
+      before_each(function()
+        command('set incsearch hlsearch')
+        feed('2GA x<esc>3GA xy<esc>gg')
+        screen:expect([[
+          ^foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+                                                               |
+        ]])
+      end)
+
+      it('cocu=', function()
+        feed('/')
+        screen:expect([[
+          foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+
+        feed('x')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo barf bar barf eggs {3:x}                             |
+          foo {1:b} bar {1:b} eggs {5:x}y                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /x^                                                   |
+        ]])
+
+        feed('y')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo barf bar barf eggs {3:xy}                            |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /xy^                                                  |
+        ]])
+
+        feed('<c-w>')
+        screen:expect([[
+          foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+      end)
+
+      it('cocu=c', function()
+        command('set cocu=c')
+
+        feed('/')
+        -- NB: we don't do this redraw. Probably best to still skip it,
+        -- to avoid annoying distraction from the cmdline
+        screen:expect([[
+          foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+
+        feed('x')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs {3:x}                                   |
+          foo {1:b} bar {1:b} eggs {5:x}y                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /x^                                                   |
+        ]])
+
+        feed('y')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs {3:xy}                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /xy^                                                  |
+        ]])
+
+        feed('<c-w>')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+
+        feed('<esc>')
+        screen:expect([[
+          ^foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+                                                               |
+        ]])
+      end)
+
+      it('cocu=n', function()
+        command('set cocu=n')
+        screen:expect([[
+          ^foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+                                                               |
+        ]])
+
+        feed('/')
+        -- NB: we don't do this redraw. Probably best to still skip it,
+        -- to avoid annoying distraction from the cmdline
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+
+        feed('x')
+        screen:expect([[
+          foo {1:b} bar {1:b} eggs                                     |
+          foo barf bar barf eggs {3:x}                             |
+          foo {1:b} bar {1:b} eggs {5:x}y                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /x^                                                   |
+        ]])
+
+        feed('<c-w>')
+        screen:expect([[
+          foo barf bar barf eggs                               |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+          /^                                                    |
+        ]])
+
+        feed('<esc>')
+        screen:expect([[
+          ^foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs x                                   |
+          foo {1:b} bar {1:b} eggs xy                                  |
+          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |
+                                                               |
+          {0:~                                                    }|
+          {0:~                                                    }|
+          {0:~                                                    }|
+                                                               |
+        ]])
+      end)
+    end)
+  end)
 end)

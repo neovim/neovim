@@ -306,10 +306,6 @@ static void insert_enter(InsertState *s)
     }
   }
 
-  // Check if the cursor line needs redrawing before changing State. If
-  // 'concealcursor' is "n" it needs to be redrawn without concealing.
-  conceal_check_cursor_line();
-
   // When doing a paste with the middle mouse button, Insstart is set to
   // where the paste started.
   if (where_paste_started.lnum != 0) {
@@ -1381,9 +1377,7 @@ ins_redraw (
     int ready                   /* not busy with something */
 )
 {
-  linenr_T conceal_old_cursor_line = 0;
-  linenr_T conceal_new_cursor_line = 0;
-  int conceal_update_lines = FALSE;
+  bool conceal_cursor_moved = false;
 
   if (char_avail())
     return;
@@ -1406,11 +1400,7 @@ ins_redraw (
       update_curswant();
       ins_apply_autocmds(EVENT_CURSORMOVEDI);
     }
-    if (curwin->w_p_cole > 0) {
-      conceal_old_cursor_line = last_cursormoved.lnum;
-      conceal_new_cursor_line = curwin->w_cursor.lnum;
-      conceal_update_lines = TRUE;
-    }
+    conceal_cursor_moved = true;
     last_cursormoved = curwin->w_cursor;
   }
 
@@ -1452,17 +1442,9 @@ ins_redraw (
     }
   }
 
-  if ((conceal_update_lines
-       && (conceal_old_cursor_line != conceal_new_cursor_line
-           || conceal_cursor_line(curwin)))
-      || need_cursor_line_redraw) {
-    if (conceal_old_cursor_line != conceal_new_cursor_line) {
-      redrawWinline(curwin, conceal_old_cursor_line);
-    }
-    redrawWinline(curwin, conceal_new_cursor_line == 0
-                  ? curwin->w_cursor.lnum : conceal_new_cursor_line);
-    curwin->w_valid &= ~VALID_CROW;
-    need_cursor_line_redraw = false;
+  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
+      && conceal_cursor_moved) {
+    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   if (must_redraw) {
