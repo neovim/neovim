@@ -6,7 +6,10 @@ local matches = helpers.matches
 
 local function spawn_flaky_host()
   -- create a fake remote plugin host that dies immediately on startup
-  local flaky_code = "echo 'FLAKY HOST STARTUP ERROR' >&2;exit 7"
+  -- NOTE: the 'FLAKY' 'HOST' message is split into pieces because the command
+  -- arguments (including the arguments to 'echo') are written to .nvimlog as
+  -- the subprocess starts up.
+  local flaky_code = "echo 'FLAKY' 'HOST' 'STARTUP' 'ERROR' >&2;exit 7"
   local argv = {'sh', '-c', flaky_code}
   local long_name = 'flaky rplugin host'
 
