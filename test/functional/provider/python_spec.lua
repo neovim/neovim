@@ -19,8 +19,9 @@ do
   clear()
   if missing_provider('python') then
     it(':python reports E319 if provider is missing', function()
-      expect_err([[Vim%(python%):E319: No "python" provider found.*]],
-                 command, 'python print("foo")')
+      local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
+      expect_err(expected, command, 'py print("foo")')
+      expect_err(expected, command, 'pyfile foo')
     end)
     pending('Python 2 (or the pynvim module) is broken/missing', function() end)
     return

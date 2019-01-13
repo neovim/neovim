@@ -19,8 +19,9 @@ do
   clear()
   if missing_provider('ruby') then
     it(':ruby reports E319 if provider is missing', function()
-      expect_err([[Vim%(ruby%):E319: No "ruby" provider found.*]],
-      command, 'ruby puts "foo"')
+      local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
+      expect_err(expected, command, 'ruby puts "foo"')
+      expect_err(expected, command, 'rubyfile foo')
     end)
     pending("Missing neovim RubyGem.", function() end)
     return

@@ -21,37 +21,45 @@ function! provider#pythonx#Require(host) abort
   return provider#Poll(args, a:host.orig_name, '$NVIM_PYTHON_LOG_FILE')
 endfunction
 
-function! provider#pythonx#Detect(major_ver) abort
-  if a:major_ver == 2
-    if exists('g:python_host_prog')
-      return [expand(g:python_host_prog), '']
-    else
-      let progs = ['python2', 'python2.7', 'python2.6', 'python']
-    endif
-  else
-    if exists('g:python3_host_prog')
-      return [expand(g:python3_host_prog), '']
-    else
-      let progs = ['python3', 'python3.7', 'python3.6', 'python3.5',
-            \ 'python3.4', 'python3.3', 'python']
-    endif
+function! s:get_python_executable_from_host_var(major_version) abort
+  return expand(get(g:, 'python'.(a:major_version == 3 ? '3' : '').'_host_prog', ''))
+endfunction
+
+function! s:get_python_candidates(major_version) abort
+  return {
+        \ 2: ['python2', 'python2.7', 'python2.6', 'python'],
+        \ 3: ['python3', 'python3.7', 'python3.6', 'python3.5', 'python3.4', 'python3.3',
+        \     'python']
+        \ }[a:major_version]
+endfunction
+
+" Returns [path_to_python_executable, error_message]
+function! provider#pythonx#Detect(major_version) abort
+  return provider#pythonx#DetectByModule('neovim', a:major_version)
+endfunction
+
+" Returns [path_to_python_executable, error_message]
+function! provider#pythonx#DetectByModule(module, major_version) abort
+  let python_exe = s:get_python_executable_from_host_var(a:major_version)
+
+  if !empty(python_exe)
+    return [python_exe, '']
   endif
 
+  let candidates = s:get_python_candidates(a:major_version)
   let errors = []
 
-  for prog in progs
-    let [result, err] = provider#pythonx#CheckForModule(prog, 'neovim', a:major_ver)
+  for exe in candidates
+    let [result, error] = provider#pythonx#CheckForModule(exe, a:module, a:major_version)
     if result
-      return [prog, err]
+      return [exe, error]
     endif
-    " Accumulate errors in case we don't find
-    " any suitable Python interpreter.
-    call add(errors, err)
+    " Accumulate errors in case we don't find any suitable Python executable.
+    call add(errors, error)
   endfor
 
-  " No suitable Python interpreter found.
-  return ['', 'provider/pythonx: Could not load Python ' . a:major_ver
-        \ . ":\n" .  join(errors, "\n")]
+  " No suitable Python executable found.
+  return ['', 'provider/pythonx: Could not load Python '.a:major_version.":\n".join(errors, "\n")]
 endfunction
 
 " Returns array: [prog_exitcode, prog_version]
