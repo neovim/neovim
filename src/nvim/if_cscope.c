@@ -1371,6 +1371,8 @@ static char *cs_manage_matches(char **matches, char **contexts,
     next = 0;
     break;
   case Print:
+    assert(mp != NULL);
+    assert(cp != NULL);
     cs_print_tags_priv(mp, cp, cnt);
     break;
   default:      // should not reach here
