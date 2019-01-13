@@ -4820,8 +4820,9 @@ static void win_redr_status(win_T *wp, int ignore_pum)
     if (wp->w_buffer->b_help
         || wp->w_p_pvw
         || bufIsChanged(wp->w_buffer)
-        || wp->w_buffer->b_p_ro)
+        || wp->w_buffer->b_p_ro) {
       *(p + len++) = ' ';
+    }
     if (wp->w_buffer->b_help) {
       STRCPY(p + len, _("[Help]"));
       len += (int)STRLEN(p + len);
@@ -4836,7 +4837,7 @@ static void win_redr_status(win_T *wp, int ignore_pum)
     }
     if (wp->w_buffer->b_p_ro) {
       STRCPY(p + len, _("[RO]"));
-      len += (int)STRLEN(p + len);
+      // len += (int)STRLEN(p + len);  // dead assignment
     }
 
     this_ru_col = ru_col - (Columns - wp->w_width);
