@@ -15,10 +15,6 @@
 #     - Tag the commit.
 #   Create the "version bump" commit:
 #     - CMakeLists.txt: Set NVIM_VERSION_PRERELEASE to "-dev"
-#
-# Manual steps:
-#   - CMakeLists.txt: Bump NVIM_VERSION_* as appropriate.
-#   - git push --follow-tags
 
 set -e
 set -u
@@ -95,5 +91,9 @@ _do_bump_commit
 echo "
 Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt
-    - git push --follow-tags
-    - update website: index.html"
+    - Push the tag:
+        git push --follow-tags
+    - Empty-merge (if this is a maintenance release):
+        git checkout upstream/master
+        git merge -s ours upstream/release-x.y
+    - Update website: index.html"
