@@ -34,21 +34,22 @@ static uv_mutex_t mutex;
 
 #define LOCAL_TIME_STRING_LEN 20
 
-void get_local_time_string(char out[LOCAL_TIME_STRING_LEN])
+void get_local_time_string(char *out, size_t out_len)
 {
   // Populate 'out' with the current date/time. If this fails we don't get a
   // meaningful error so we just use a blank timestamp to avoid interruptting
-  // the logging features.
+  // the logging features. The *out buffer size should be LOCAL_TIME_STRING_LEN
+  // to ensure there is sufficient space for the full timestamp.
 
   struct tm local_time;
   if (os_localtime(&local_time) != NULL) {
-    if (strftime(out, LOCAL_TIME_STRING_LEN, "%Y-%m-%dT%H:%M:%S", &local_time) != 0) {
-      return; // success
+    if (strftime(out, out_len, "%Y-%m-%dT%H:%M:%S", &local_time) != 0) {
+      return;  // success
     }
   }
 
   // couldn't get or format local time - use "0000-00-00 00:00:00"
-  strcpy(out, "0000-00-00T00:00:00");
+  xstrlcpy(out, "0000-00-00T00:00:00", out_len);
 }
 
 static bool log_try_create(char *fname)
@@ -180,7 +181,7 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
 
   // get the current time
   char date_time[LOCAL_TIME_STRING_LEN];
-  get_local_time_string(date_time);
+  get_local_time_string(date_time, LOCAL_TIME_STRING_LEN);
 
   // make an err_prefix for error lines that already contains the date and error
   // level. We make it a generous size because we'll populate it with opt[who]
@@ -382,7 +383,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
 
   // format current timestamp in local time
   char date_time[LOCAL_TIME_STRING_LEN];
-  get_local_time_string(date_time);
+  get_local_time_string(date_time, LOCAL_TIME_STRING_LEN);
 
   int millis = 0;
 #if !defined(WIN32)
