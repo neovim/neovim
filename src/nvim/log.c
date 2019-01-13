@@ -205,7 +205,7 @@ bool do_log_array(char *log_level, Array lines, Dictionary opt)
 
         // also rewrite our err_prefix to include *who
         snprintf(err_prefix, error_max, "%s %s %s nvim_log():",
-                date_time, log_levels[ERROR_LOG_LEVEL], who);
+                 date_time, log_levels[ERROR_LOG_LEVEL], who);
       } else {
         fprintf(log_file, "%s opt[who] must be a string\n", err_prefix);
       }
