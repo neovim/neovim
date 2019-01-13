@@ -44,5 +44,5 @@ function! s:Log(log_level, msg)
 endfun
 
 function! s:LogEvent(who, log_level, job, data, event)
-  call nvim_log(a:log_level, lines, {'who': who})
+  call nvim_log(a:log_level, a:data, {'who': a:who})
 endfunction
