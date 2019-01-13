@@ -9,9 +9,9 @@ function! provider#Poll(argv, long_name, log_env) abort
   " Jobs are exptected to log errors etc using nvim_log() via the rpc api;
   " we're just writing stderr to the log file as a courtesy to users who are
   " trying to debug broken providers. Therefore we we log the events at
-  " "WARNING" level because anything coming via stderr indicates a problem
+  " "WARN" level because anything coming via stderr indicates a problem
   " with the provider.
-  let job['on_stderr'] = function('s:LogEvent', [printf('%s:stderr', a:long_name), 'WARNING'])
+  let job['on_stderr'] = function('s:LogEvent', [printf('%s:stderr', a:long_name), 'WARN'])
 
   try
     " attempt to start the provider
