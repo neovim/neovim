@@ -351,8 +351,8 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_get_var, nvim_set_var, nvim_del_var', function()
-    it('works', function()
+  describe('set/get/del variables', function()
+    it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'g:lua'))
@@ -361,9 +361,20 @@ describe('API', function()
       eq(0, funcs.exists('g:lua'))
       eq({false, "Key not found: lua"}, meth_pcall(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
+
+      -- Set locked g: var.
       command('lockvar lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.set_var, 'lua', 1))
+    end)
+
+    it('nvim_get_vvar, nvim_set_vvar', function()
+      -- Set readonly v: var.
+      expect_err('Key is read%-only: count$', request,
+                 'nvim_set_vvar', 'count', 42)
+      -- Set writable v: var.
+      meths.set_vvar('errmsg', 'set by API')
+      eq('set by API', meths.get_vvar('errmsg'))
     end)
 
     it('vim_set_var returns the old value', function()
