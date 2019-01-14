@@ -176,6 +176,16 @@ describe("vim.inspect", function()
     eq('2', inspect(2))
     eq('{+a = {+b = 1+}+}',
        inspect({ a = { b = 1 } }, { newline = '+', indent = '' }))
+
+    -- special value vim.inspect.KEY works
+    eq('{  KEY_a = "x",  KEY_b = "y"}', meths.execute_lua([[
+      return vim.inspect({a="x", b="y"}, {newline = '', process = function(item, path)
+        if path[#path] == vim.inspect.KEY then
+          return 'KEY_'..item
+        end
+        return item
+      end})
+    ]], {}))
   end)
 end)
 
