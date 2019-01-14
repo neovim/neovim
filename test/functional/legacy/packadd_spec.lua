@@ -14,6 +14,10 @@ describe('packadd', function()
     clear()
 
     source([=[
+      func Escape(s)
+        return escape(a:s, '\~')
+      endfunc
+
       func SetUp()
         let s:topdir = expand(getcwd() . '/Xdir')
         exe 'set packpath=' . s:topdir
@@ -25,12 +29,25 @@ describe('packadd', function()
       endfunc
 
       func Test_packadd()
+        if !exists('s:plugdir')
+          echomsg 'when running this test manually, call SetUp() first'
+          return
+        endif
+
         call mkdir(s:plugdir . '/plugin/also', 'p')
         call mkdir(s:plugdir . '/ftdetect', 'p')
         call mkdir(s:plugdir . '/after', 'p')
         set rtp&
         let rtp = &rtp
         filetype on
+
+        let rtp_entries = split(rtp, ',')
+        for entry in rtp_entries
+          if entry =~? '\<after\>'
+            let first_after_entry = entry
+            break
+          endif
+        endfor
 
         exe 'split ' . s:plugdir . '/plugin/test.vim'
         call setline(1, 'let g:plugin_works = 42')
@@ -50,8 +67,23 @@ describe('packadd', function()
         call assert_equal(77, g:plugin_also_works)
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
-        call assert_true(&rtp =~ (escape(s:plugdir, '\') . '\($\|,\)'))
-        call assert_true(&rtp =~ escape(expand(s:plugdir . '/after$'), '\'))
+        call assert_match(Escape(s:plugdir) . '\($\|,\)', &rtp)
+
+        let new_after = match(&rtp, Escape(expand(s:plugdir . '/after') . ','))
+        let forwarded = substitute(first_after_entry, '\\', '[/\\\\]', 'g')
+        let old_after = match(&rtp, ',' . escape(forwarded, '~') . '\>')
+        call assert_true(new_after > 0, 'rtp is ' . &rtp)
+        call assert_true(old_after > 0, 'match ' . forwarded . ' in ' . &rtp)
+        call assert_true(new_after < old_after, 'rtp is ' . &rtp)
+
+        " NOTE: '/.../opt/myte' forwardly matches with '/.../opt/mytest'
+        call mkdir(fnamemodify(s:plugdir, ':h') . '/myte', 'p')
+        let rtp = &rtp
+        packadd myte
+
+        " Check the path of 'myte' is added
+        call assert_true(len(&rtp) > len(rtp))
+        call assert_match(Escape(s:plugdir) . '\($\|,\)', &rtp)
 
         " Check exception
         call assert_fails("packadd directorynotfound", 'E919:')
@@ -73,7 +105,7 @@ describe('packadd', function()
 
         call assert_equal(24, g:plugin_works)
         call assert_true(len(&rtp) > len(rtp))
-        call assert_true(&rtp =~ (escape(plugdir, '\') . '\($\|,\)'))
+        call assert_match(Escape(plugdir) . '\($\|,\)', &rtp)
       endfunc
 
       func Test_packadd_noload()
@@ -90,7 +122,7 @@ describe('packadd', function()
         packadd! mytest
 
         call assert_true(len(&rtp) > len(rtp))
-        call assert_true(&rtp =~ (escape(s:plugdir, '\') . '\($\|,\)'))
+        call assert_match(Escape(s:plugdir) . '\($\|,\)', &rtp)
         call assert_equal(0, g:plugin_works)
 
         " check the path is not added twice
@@ -122,7 +154,7 @@ describe('packadd', function()
         packadd mytest
 
         " Must have been inserted in the middle, not at the end
-        call assert_true(&rtp =~ escape(expand('/pack/mine/opt/mytest').',', '\'))
+        call assert_match(Escape(expand('/pack/mine/opt/mytest').','), &rtp)
         call assert_equal(44, g:plugin_works)
 
         " No change when doing it again.
@@ -133,6 +165,48 @@ describe('packadd', function()
         set rtp&
         let rtp = &rtp
         exec "silent !" (has('win32') ? "rd /q/s" : "rm") top2_dir
+      endfunc
+
+      func Test_packadd_symlink_dir2()
+        let top2_dir = expand(s:topdir . '/Xdir2')
+        let real_dir = expand(s:topdir . '/Xsym/pack')
+        call mkdir(top2_dir, 'p')
+        call mkdir(real_dir, 'p')
+        let &rtp = top2_dir . ',' . top2_dir . '/after'
+        let &packpath = &rtp
+
+        if has('win32')
+          exec "silent! !mklink /d" top2_dir "Xsym"
+        else
+          exec "silent !ln -s ../Xsym/pack"  top2_dir . '/pack'
+        endif
+        let s:plugdir = expand(top2_dir . '/pack/mine/opt/mytest')
+        call mkdir(s:plugdir . '/plugin', 'p')
+
+        exe 'split ' . s:plugdir . '/plugin/test.vim'
+        call setline(1, 'let g:plugin_works = 48')
+        wq
+        let g:plugin_works = 0
+
+        packadd mytest
+
+        " Must have been inserted in the middle, not at the end
+        call assert_match(Escape(expand('/Xdir2/pack/mine/opt/mytest').','), &rtp)
+        call assert_equal(48, g:plugin_works)
+
+        " No change when doing it again.
+        let rtp_before = &rtp
+        packadd mytest
+        call assert_equal(rtp_before, &rtp)
+
+        set rtp&
+        let rtp = &rtp
+        if has('win32')
+          exec "silent !rd /q/s" top2_dir
+        else
+          exec "silent !rm" top2_dir . '/pack'
+          exec "silent !rmdir" top2_dir
+        endif
       endfunc
 
       func Test_packloadall()
@@ -190,9 +264,9 @@ describe('packadd', function()
         helptags ALL
 
         let tags1 = readfile(docdir1 . '/tags')
-        call assert_true(tags1[0] =~ 'look-here')
+        call assert_match('look-here', tags1[0])
         let tags2 = readfile(docdir2 . '/tags')
-        call assert_true(tags2[0] =~ 'look-away')
+        call assert_match('look-away', tags2[0])
       endfunc
 
       func Test_colorscheme()

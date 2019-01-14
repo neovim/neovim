@@ -28,6 +28,7 @@
 #include "nvim/screen.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/option.h"
@@ -75,7 +76,6 @@ void nvim_command(String command, Error *err)
 {
   try_start();
   do_cmdline_cmd(command.data);
-  update_screen(VALID);
   try_end(err);
 }
 
@@ -716,6 +716,17 @@ Object nvim_get_vvar(String name, Error *err)
   return dict_get_value(&vimvardict, name, err);
 }
 
+/// Sets a v: variable, if it is not readonly
+///
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
+void nvim_set_vvar(String name, Object value, Error *err)
+  FUNC_API_SINCE(6)
+{
+  dict_set_var(&vimvardict, name, value, false, false, err);
+}
+
 /// Gets an option value string
 ///
 /// @param name     Option name
@@ -934,17 +945,17 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   }
 }
 
-/// create a new namespace, or get one with an exisiting name
+/// Creates a new namespace, or gets an existing one
 ///
-/// Namespaces are currently used for buffer highlighting and virtual text, see
-/// |nvim_buf_add_highlight| and |nvim_buf_set_virtual_text|.
+/// Namespaces are used for buffer highlights and virtual text, see
+/// |nvim_buf_add_highlight()| and |nvim_buf_set_virtual_text()|.
 ///
-/// Namespaces can have a name of be anonymous. If `name` is a non-empty string,
-/// and a namespace already exists with that name,the existing namespace id is
-/// returned. If an empty string is used, a new anonymous namespace is returned.
+/// Namespaces can be named or anonymous. If `name` matches an existing
+/// namespace, the associated id is returned. If `name` is an empty string
+/// a new, anonymous namespace is created.
 ///
-/// @param name Name of the namespace or empty string
-/// @return the namespace id
+/// @param name Namespace name or empty string
+/// @return Namespace id
 Integer nvim_create_namespace(String name)
   FUNC_API_SINCE(5)
 {
@@ -960,7 +971,7 @@ Integer nvim_create_namespace(String name)
   return (Integer)id;
 }
 
-/// Get existing named namespaces
+/// Gets existing, non-anonymous namespaces
 ///
 /// @return dict that maps from names to namespace ids.
 Dictionary nvim_get_namespaces(void)
@@ -1948,17 +1959,46 @@ Object nvim_get_proc(Integer pid, Error *err)
   return rvobj;
 }
 
+/// Selects an item in the completion popupmenu
+///
+/// When insert completion is not active, this API call is silently ignored.
+/// It is mostly useful for an external UI using |ui-popupmenu| for instance
+/// to control the popupmenu with the mouse. But it can also be used in an
+/// insert mode mapping, use <cmd> mapping |:map-cmd| to ensure the mapping
+/// doesn't end completion mode.
+///
+/// @param item   Index of the item to select, starting with zero. Pass in "-1"
+///               to select no item (restore original text).
+/// @param insert Whether the selection should be inserted in the buffer.
+/// @param finish If true, completion will be finished with this item, and the
+///               popupmenu dissmissed. Implies `insert`.
+void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish,
+                                Dictionary opts, Error *err)
+  FUNC_API_SINCE(6)
+{
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return;
+  }
+
+  if (finish) {
+    insert = true;
+  }
+
+  pum_ext_select_item((int)item, insert, finish);
+}
+
 /// NB: if your UI doesn't use hlstate, this will not return hlstate first time
 Array nvim__inspect_cell(Integer row, Integer col, Error *err)
 {
   Array ret = ARRAY_DICT_INIT;
-  if (row < 0 || row >= screen_Rows
-      || col < 0 || col >= screen_Columns) {
+  if (row < 0 || row >= default_grid.Rows
+      || col < 0 || col >= default_grid.Columns) {
     return ret;
   }
-  size_t off = LineOffset[(size_t)row] + (size_t)col;
-  ADD(ret, STRING_OBJ(cstr_to_string((char *)ScreenLines[off])));
-  int attr = ScreenAttrs[off];
+  size_t off = default_grid.line_offset[(size_t)row] + (size_t)col;
+  ADD(ret, STRING_OBJ(cstr_to_string((char *)default_grid.chars[off])));
+  int attr = default_grid.attrs[off];
   ADD(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, err)));
   // will not work first time
   if (!highlight_use_hlstate()) {

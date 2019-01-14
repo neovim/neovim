@@ -26,6 +26,7 @@ describe('ui receives option updates', function()
       ext_wildmenu=false,
       ext_linegrid=false,
       ext_hlstate=false,
+      ext_multigrid=false,
     }
 
     clear(...)

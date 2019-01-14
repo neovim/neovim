@@ -447,7 +447,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     return;
   }
 
-  if (win_valid_any_tab(win)) {
+  if (win != NULL  // Avoid bogus clang warning.
+      && win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
     // Remember the last cursor position and window options of the buffer.
     // This used to be only for the current window, but then options like
@@ -575,7 +576,9 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   if (buf == curbuf && !is_curbuf)
     return;
 
-  if (win_valid_any_tab(win) && win->w_buffer == buf) {
+  if (win != NULL  // Avoid bogus clang warning.
+      && win_valid_any_tab(win)
+      && win->w_buffer == buf) {
     win->w_buffer = NULL;  // make sure we don't use the buffer now
   }
 
@@ -5347,8 +5350,7 @@ int bufhl_add_hl(buf_T *buf,
   hlentry->stop = col_end;
 
   if (0 < lnum && lnum <= buf->b_ml.ml_line_count) {
-    changed_lines_buf(buf, lnum, lnum+1, 0);
-    redraw_buf_later(buf, VALID);
+    redraw_buf_line_later(buf, lnum);
   }
   return src_id;
 }
@@ -5414,8 +5416,7 @@ int bufhl_add_virt_text(buf_T *buf,
   }
 
   if (0 < lnum && lnum <= buf->b_ml.ml_line_count) {
-    changed_lines_buf(buf, lnum, lnum+1, 0);
-    redraw_buf_later(buf, VALID);
+    redraw_buf_line_later(buf, lnum);
   }
   return src_id;
 }
@@ -5440,8 +5441,6 @@ void bufhl_clear_line_range(buf_T *buf,
                             linenr_T line_start,
                             linenr_T line_end)
 {
-  linenr_T first_changed = MAXLNUM, last_changed = -1;
-
   kbitr_t(bufhl) itr;
   BufhlLine *l, t = BUFHLLINE_INIT(line_start);
   if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
@@ -5456,23 +5455,13 @@ void bufhl_clear_line_range(buf_T *buf,
     if (line_start <= line) {
       BufhlLineStatus status = bufhl_clear_line(l, src_id, line);
       if (status != kBLSUnchanged) {
-        if (line > last_changed) {
-          last_changed = line;
-        }
-        if (line < first_changed) {
-          first_changed = line;
-        }
+        redraw_buf_line_later(buf, line);
       }
       if (status == kBLSDeleted) {
         kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
         xfree(l);
       }
     }
-  }
-
-  if (last_changed != -1) {
-    changed_lines_buf(buf, first_changed, last_changed+1, 0);
-    redraw_buf_later(buf, VALID);
   }
 }
 

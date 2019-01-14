@@ -546,25 +546,24 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
                     {tabpage}  Tabpage handle
 
 nvim_create_namespace({name})                        *nvim_create_namespace()*
-                create a new namespace, or get one with an exisiting name
+                Creates a new namespace, or gets an existing one
 
-                Namespaces are currently used for buffer highlighting and
-                virtual text, see |nvim_buf_add_highlight| and
-                |nvim_buf_set_virtual_text|.
+                Namespaces are used for buffer highlights and virtual text,
+                see |nvim_buf_add_highlight()| and
+                |nvim_buf_set_virtual_text()|.
 
-                Namespaces can have a name of be anonymous. If `name` is a
-                non-empty string, and a namespace already exists with that
-                name,the existing namespace id is returned. If an empty string
-                is used, a new anonymous namespace is returned.
+                Namespaces can be named or anonymous. If `name` matches an
+                existing namespace, the associated id is returned. If `name`
+                is an empty string a new, anonymous namespace is created.
 
                 Parameters: ~
-                    {name}  Name of the namespace or empty string
+                    {name}  Namespace name or empty string
 
                 Return: ~
-                    the namespace id
+                    Namespace id
 
 nvim_get_namespaces()                                  *nvim_get_namespaces()*
-                Get existing named namespaces
+                Gets existing, non-anonymous namespaces
 
                 Return: ~
                     dict that maps from names to namespace ids.

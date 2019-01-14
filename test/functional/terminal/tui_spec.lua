@@ -259,10 +259,10 @@ describe('tui', function()
     feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(v))})\013')
     screen:expect([=[
       [[['ext_cmdline', v:false], ['ext_hlstate', v:fals|
-      e], ['ext_linegrid', v:true], ['ext_popupmenu', v:|
-      false], ['ext_tabline', v:false], ['ext_wildmenu',|
-       v:false], ['height', 6], ['rgb', v:false], ['widt|
-      h', 50]]]                                         |
+      e], ['ext_linegrid', v:true], ['ext_multigrid', v:|
+      false], ['ext_popupmenu', v:false], ['ext_tabline'|
+      , v:false], ['ext_wildmenu', v:false], ['height', |
+      6], ['rgb', v:false], ['width', 50]]]             |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]=])
@@ -401,7 +401,7 @@ describe('tui FocusGained/FocusLost', function()
       -- Exit cmdline-mode. Redraws from timers/events are blocked during
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
-      screen:expect{any='lost'..(' '):rep(46)..'\ngained'}
+      screen:expect{any='lost'..(' '):rep(46)..'|\ngained'}
     end)
   end)
 
@@ -770,6 +770,13 @@ describe("tui 'term' option", function()
     else
       assert_term("xterm", "xterm")
     end
+  end)
+
+  it('builtin terms', function()
+    -- These non-standard terminfos are always builtin.
+    assert_term('win32con', 'builtin_win32con')
+    assert_term('conemu', 'builtin_conemu')
+    assert_term('vtpcon', 'builtin_vtpcon')
   end)
 
 end)

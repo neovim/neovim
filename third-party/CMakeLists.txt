@@ -120,8 +120,13 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.23.2.tar.gz)
-set(LIBUV_SHA256 30af979c4f4b8d1b895ae6d115f7400c751542ccb9e656350fc89fda08d4eabd)
+if(WIN32)
+  set(LIBUV_URL https://github.com/neovim/libuv/archive/0ed7feb71ca949f7a96ccb102481d17ea1bb5933.tar.gz)
+  set(LIBUV_SHA256 813fe763022f19878557c6fde311b6394fb9180caaaab0dd98d8704732234508)
+else()
+  set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.23.2.tar.gz)
+  set(LIBUV_SHA256 30af979c4f4b8d1b895ae6d115f7400c751542ccb9e656350fc89fda08d4eabd)
+endif()
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
@@ -158,8 +163,8 @@ set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.10/neovim-qt.zip)
-set(WINGUI_SHA256 97988a96994b6066ea2b5f035a633304d664b8a14c91e946c5833a6e3782fdbb)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.12/neovim-qt.zip)
+set(WINGUI_SHA256 68f8d7d46e21c94ac24577bc65d378c5f622794d11d34950e41edc1b0335560c)
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)

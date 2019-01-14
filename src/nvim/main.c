@@ -781,7 +781,6 @@ static void command_line_scan(mparm_T *parmp)
   bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
   int c;
-  char_u *p = NULL;
   long n;
 
   argc--;
@@ -1227,7 +1226,7 @@ scripterror:
 
       // Add the file to the global argument list.
       ga_grow(&global_alist.al_ga, 1);
-      p = vim_strsave((char_u *)argv[0]);
+      char_u *p = vim_strsave((char_u *)argv[0]);
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {

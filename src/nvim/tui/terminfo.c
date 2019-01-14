@@ -105,6 +105,22 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
     *termname = xstrdup("builtin_vte");
     return unibi_from_mem((const char *)vte_256colour_terminfo,
                           sizeof vte_256colour_terminfo);
+  } else if (terminfo_is_term_family(term, "cygwin")) {
+    *termname = xstrdup("builtin_cygwin");
+    return unibi_from_mem((const char *)cygwin_terminfo,
+                          sizeof cygwin_terminfo);
+  } else if (terminfo_is_term_family(term, "win32con")) {
+    *termname = xstrdup("builtin_win32con");
+    return unibi_from_mem((const char *)win32con_terminfo,
+                          sizeof win32con_terminfo);
+  } else if (terminfo_is_term_family(term, "conemu")) {
+    *termname = xstrdup("builtin_conemu");
+    return unibi_from_mem((const char *)conemu_terminfo,
+                          sizeof conemu_terminfo);
+  } else if (terminfo_is_term_family(term, "vtpcon")) {
+    *termname = xstrdup("builtin_vtpcon");
+    return unibi_from_mem((const char *)vtpcon_terminfo,
+                          sizeof vtpcon_terminfo);
   } else {
     *termname = xstrdup("builtin_ansi");
     return unibi_from_mem((const char *)ansi_terminfo,
@@ -121,9 +137,6 @@ unibi_term *terminfo_from_builtin(const char *term, char **termname)
   if (*termname == NULL) {
     *termname = xstrdup("builtin_?");
   }
-  // Disable BCE by default (for built-in terminfos). #7624
-  // https://github.com/kovidgoyal/kitty/issues/160#issuecomment-346470545
-  unibi_set_bool(ut, unibi_back_color_erase, false);
   return ut;
 }
 

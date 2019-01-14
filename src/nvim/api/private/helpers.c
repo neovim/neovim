@@ -184,35 +184,28 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
                     bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
-
-  if (dict->dv_lock) {
-    api_set_error(err, kErrorTypeException, "Dictionary is locked");
-    return rv;
-  }
-
-  if (key.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "Key name is empty");
-    return rv;
-  }
-
-  if (key.size > INT_MAX) {
-    api_set_error(err, kErrorTypeValidation, "Key name is too long");
-    return rv;
-  }
-
   dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di != NULL) {
     if (di->di_flags & DI_FLAGS_RO) {
       api_set_error(err, kErrorTypeException, "Key is read-only: %s", key.data);
       return rv;
-    } else if (di->di_flags & DI_FLAGS_FIX) {
-      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
-      return rv;
     } else if (di->di_flags & DI_FLAGS_LOCK) {
       api_set_error(err, kErrorTypeException, "Key is locked: %s", key.data);
       return rv;
+    } else if (del && (di->di_flags & DI_FLAGS_FIX)) {
+      api_set_error(err, kErrorTypeException, "Key is fixed: %s", key.data);
+      return rv;
     }
+  } else if (dict->dv_lock) {
+    api_set_error(err, kErrorTypeException, "Dictionary is locked");
+    return rv;
+  } else if (key.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "Key name is empty");
+    return rv;
+  } else if (key.size > INT_MAX) {
+    api_set_error(err, kErrorTypeValidation, "Key name is too long");
+    return rv;
   }
 
   if (del) {

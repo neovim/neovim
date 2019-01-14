@@ -110,8 +110,9 @@ retnomove:
   // Remember the character under the mouse, it might be a '-' or '+' in the
   // fold column. NB: only works for ASCII chars!
   if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && ScreenLines != NULL) {
-    mouse_char = ScreenLines[LineOffset[row] + (unsigned)col][0];
+      && default_grid.chars != NULL) {
+    mouse_char = default_grid.chars[default_grid.line_offset[row]
+                                    + (unsigned)col][0];
   } else {
     mouse_char = ' ';
   }
@@ -318,7 +319,6 @@ retnomove:
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
-    check_visual_highlight();
     VIsual = old_cursor;
     VIsual_active = true;
     VIsual_reselect = true;
@@ -641,7 +641,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
   char_u *ptr = line;
-  char_u *ptr_end = line;
+  char_u *ptr_end;
   char_u *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
 
   // Find the offset where scanning should begin.

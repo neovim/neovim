@@ -72,10 +72,10 @@ local function screen_setup(extra_rows, command, cols)
   if command == default_command then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
-    local empty_line = (' '):rep(cols + 1)
+    local empty_line = (' '):rep(cols)
     local expected = {
-      'tty ready'..(' '):rep(cols - 8),
-      '{1: }'    ..(' '):rep(cols),
+      'tty ready'..(' '):rep(cols - 9),
+      '{1: }'    ..(' '):rep(cols - 1),
       empty_line,
       empty_line,
       empty_line,
@@ -85,8 +85,8 @@ local function screen_setup(extra_rows, command, cols)
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 13)))
-    screen:expect(table.concat(expected, '\n'))
+    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 14)))
+    screen:expect(table.concat(expected, '|\n')..'|')
   else
     -- This eval also acts as a wait().
     if 0 == nvim('eval', "exists('b:terminal_job_id')") then

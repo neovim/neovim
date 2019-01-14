@@ -599,6 +599,7 @@ static inline void hmll_insert(HMLList *const hmll,
     if (hmll_entry == hmll->first) {
       hmll_entry = NULL;
     }
+    assert(hmll->first != NULL);
     hmll_remove(hmll, hmll->first);
   }
   HMLListEntry *target_entry;
@@ -3475,53 +3476,55 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
     } \
     tgt = proc(obj.via.attr); \
   } while (0)
-#define CHECK_KEY_IS_STR(entry_name) \
-  if (unpacked.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
+#define CHECK_KEY_IS_STR(un, entry_name) \
+  if (un.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
     emsgf(_(READERR(entry_name, "has key which is not a string")), \
           initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
-  } else if (unpacked.data.via.map.ptr[i].key.via.str.size == 0) { \
+  } else if (un.data.via.map.ptr[i].key.via.str.size == 0) { \
     emsgf(_(READERR(entry_name, "has empty key")), initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
-#define CHECKED_KEY(entry_name, name, error_desc, tgt, condition, attr, proc) \
+#define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, \
+                    proc) \
   else if (CHECK_KEY( /* NOLINT(readability/braces) */ \
-      unpacked.data.via.map.ptr[i].key, name)) { \
+      un.data.via.map.ptr[i].key, name)) { \
     CHECKED_ENTRY( \
         condition, "has " name " key value " error_desc, \
-        entry_name, unpacked.data.via.map.ptr[i].val, \
+        entry_name, un.data.via.map.ptr[i].val, \
         tgt, attr, proc); \
   }
-#define TYPED_KEY(entry_name, name, type_name, tgt, objtype, attr, proc) \
+#define TYPED_KEY(un, entry_name, name, type_name, tgt, objtype, attr, proc) \
   CHECKED_KEY( \
-      entry_name, name, "which is not " type_name, tgt, \
-      unpacked.data.via.map.ptr[i].val.type == MSGPACK_OBJECT_##objtype, \
+      un, entry_name, name, "which is not " type_name, tgt, \
+      un.data.via.map.ptr[i].val.type == MSGPACK_OBJECT_##objtype, \
       attr, proc)
-#define BOOLEAN_KEY(entry_name, name, tgt) \
-  TYPED_KEY(entry_name, name, "a boolean", tgt, BOOLEAN, boolean, ID)
-#define STRING_KEY(entry_name, name, tgt) \
-  TYPED_KEY(entry_name, name, "a binary", tgt, BIN, bin, BINDUP)
-#define CONVERTED_STRING_KEY(entry_name, name, tgt) \
-  TYPED_KEY(entry_name, name, "a binary", tgt, BIN, bin, BIN_CONVERTED)
-#define INT_KEY(entry_name, name, tgt, proc) \
+#define BOOLEAN_KEY(un, entry_name, name, tgt) \
+  TYPED_KEY(un, entry_name, name, "a boolean", tgt, BOOLEAN, boolean, ID)
+#define STRING_KEY(un, entry_name, name, tgt) \
+  TYPED_KEY(un, entry_name, name, "a binary", tgt, BIN, bin, BINDUP)
+#define CONVERTED_STRING_KEY(un, entry_name, name, tgt) \
+  TYPED_KEY(un, entry_name, name, "a binary", tgt, BIN, bin, \
+            BIN_CONVERTED)
+#define INT_KEY(un, entry_name, name, tgt, proc) \
   CHECKED_KEY( \
-      entry_name, name, "which is not an integer", tgt, \
-      ((unpacked.data.via.map.ptr[i].val.type \
+      un, entry_name, name, "which is not an integer", tgt, \
+      ((un.data.via.map.ptr[i].val.type \
         == MSGPACK_OBJECT_POSITIVE_INTEGER) \
-       || (unpacked.data.via.map.ptr[i].val.type \
+       || (un.data.via.map.ptr[i].val.type \
            == MSGPACK_OBJECT_NEGATIVE_INTEGER)), \
       i64, proc)
-#define INTEGER_KEY(entry_name, name, tgt) \
-  INT_KEY(entry_name, name, tgt, TOINT)
-#define LONG_KEY(entry_name, name, tgt) \
-  INT_KEY(entry_name, name, tgt, TOLONG)
-#define ADDITIONAL_KEY \
+#define INTEGER_KEY(un, entry_name, name, tgt) \
+  INT_KEY(un, entry_name, name, tgt, TOINT)
+#define LONG_KEY(un, entry_name, name, tgt) \
+  INT_KEY(un, entry_name, name, tgt, TOLONG)
+#define ADDITIONAL_KEY(un) \
   else { /* NOLINT(readability/braces) */ \
     ga_grow(&ad_ga, 1); \
-    memcpy(((char *)ad_ga.ga_data) + ((size_t) ad_ga.ga_len \
-                                      * sizeof(*unpacked.data.via.map.ptr)), \
-           unpacked.data.via.map.ptr + i, \
-           sizeof(*unpacked.data.via.map.ptr)); \
+    memcpy(((char *)ad_ga.ga_data) + ((size_t)ad_ga.ga_len \
+                                      * sizeof(*un.data.via.map.ptr)), \
+           un.data.via.map.ptr + i, \
+           sizeof(*un.data.via.map.ptr)); \
     ad_ga.ga_len++; \
   }
 #define CONVERTED(str, len) (xmemdupz((str), (len)))
@@ -3726,28 +3729,29 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("search pattern")
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_MAGIC,
+        CHECK_KEY_IS_STR(unpacked, "search pattern")
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_MAGIC,
                     entry->data.search_pattern.magic)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_SMARTCASE,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_SMARTCASE,
                     entry->data.search_pattern.smartcase)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_HAS_LINE_OFFSET,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_HAS_LINE_OFFSET,
                     entry->data.search_pattern.has_line_offset)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_PLACE_CURSOR_AT_END,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_PLACE_CURSOR_AT_END,
                     entry->data.search_pattern.place_cursor_at_end)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_LAST_USED,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_IS_LAST_USED,
                     entry->data.search_pattern.is_last_used)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_IS_SUBSTITUTE_PATTERN,
+        BOOLEAN_KEY(unpacked, "search pattern",
+                    SEARCH_KEY_IS_SUBSTITUTE_PATTERN,
                     entry->data.search_pattern.is_substitute_pattern)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_HIGHLIGHTED,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_HIGHLIGHTED,
                     entry->data.search_pattern.highlighted)
-        BOOLEAN_KEY("search pattern", SEARCH_KEY_BACKWARD,
+        BOOLEAN_KEY(unpacked, "search pattern", SEARCH_KEY_BACKWARD,
                     entry->data.search_pattern.search_backward)
-        INTEGER_KEY("search pattern", SEARCH_KEY_OFFSET,
+        INTEGER_KEY(unpacked, "search pattern", SEARCH_KEY_OFFSET,
                     entry->data.search_pattern.offset)
-        CONVERTED_STRING_KEY("search pattern", SEARCH_KEY_PAT,
+        CONVERTED_STRING_KEY(unpacked, "search pattern", SEARCH_KEY_PAT,
                              entry->data.search_pattern.pat)
-        ADDITIONAL_KEY
+        ADDITIONAL_KEY(unpacked)
       }
       if (entry->data.search_pattern.pat == NULL) {
         emsgf(_(READERR("search pattern", "has no pattern")), initial_fpos);
@@ -3768,7 +3772,7 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("mark")
+        CHECK_KEY_IS_STR(unpacked, "mark")
         if (CHECK_KEY(unpacked.data.via.map.ptr[i].key, KEY_NAME_CHAR)) {
           if (type_u64 == kSDItemJump || type_u64 == kSDItemChange) {
             emsgf(_(READERR("mark", "has n key which is only valid for "
@@ -3782,10 +3786,10 @@ shada_read_next_item_start:
               "mark", unpacked.data.via.map.ptr[i].val,
               entry->data.filemark.name, u64, TOCHAR);
         }
-        LONG_KEY("mark", KEY_LNUM, entry->data.filemark.mark.lnum)
-        INTEGER_KEY("mark", KEY_COL, entry->data.filemark.mark.col)
-        STRING_KEY("mark", KEY_FILE, entry->data.filemark.fname)
-        ADDITIONAL_KEY
+        LONG_KEY(unpacked, "mark", KEY_LNUM, entry->data.filemark.mark.lnum)
+        INTEGER_KEY(unpacked, "mark", KEY_COL, entry->data.filemark.mark.col)
+        STRING_KEY(unpacked, "mark", KEY_FILE, entry->data.filemark.fname)
+        ADDITIONAL_KEY(unpacked)
       }
       if (entry->data.filemark.fname == NULL) {
         emsgf(_(READERR("mark", "is missing file name")), initial_fpos);
@@ -3810,7 +3814,7 @@ shada_read_next_item_start:
       garray_T ad_ga;
       ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
       for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-        CHECK_KEY_IS_STR("register")
+        CHECK_KEY_IS_STR(unpacked, "register")
         if (CHECK_KEY(unpacked.data.via.map.ptr[i].key,
                       REG_KEY_CONTENTS)) {
           if (unpacked.data.via.map.ptr[i].val.type != MSGPACK_OBJECT_ARRAY) {
@@ -3828,8 +3832,8 @@ shada_read_next_item_start:
           }
           const msgpack_object_array arr =
               unpacked.data.via.map.ptr[i].val.via.array;
-          for (size_t i = 0; i < arr.size; i++) {
-            if (arr.ptr[i].type != MSGPACK_OBJECT_BIN) {
+          for (size_t j = 0; j < arr.size; j++) {
+            if (arr.ptr[j].type != MSGPACK_OBJECT_BIN) {
               emsgf(_(READERR("register", "has " REG_KEY_CONTENTS " array "
                               "with non-binary value")), initial_fpos);
               CLEAR_GA_AND_ERROR_OUT(ad_ga);
@@ -3837,18 +3841,19 @@ shada_read_next_item_start:
           }
           entry->data.reg.contents_size = arr.size;
           entry->data.reg.contents = xmalloc(arr.size * sizeof(char *));
-          for (size_t i = 0; i < arr.size; i++) {
-            entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
+          for (size_t j = 0; j < arr.size; j++) {
+            entry->data.reg.contents[j] = BIN_CONVERTED(arr.ptr[j].via.bin);
           }
         }
-        BOOLEAN_KEY("register", REG_KEY_UNNAMED, entry->data.reg.is_unnamed)
-        TYPED_KEY("register", REG_KEY_TYPE, "an unsigned integer",
+        BOOLEAN_KEY(unpacked, "register", REG_KEY_UNNAMED,
+                    entry->data.reg.is_unnamed)
+        TYPED_KEY(unpacked, "register", REG_KEY_TYPE, "an unsigned integer",
                   entry->data.reg.type, POSITIVE_INTEGER, u64, TOU8)
-        TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",
+        TYPED_KEY(unpacked, "register", KEY_NAME_CHAR, "an unsigned integer",
                   entry->data.reg.name, POSITIVE_INTEGER, u64, TOCHAR)
-        TYPED_KEY("register", REG_KEY_WIDTH, "an unsigned integer",
+        TYPED_KEY(unpacked, "register", REG_KEY_WIDTH, "an unsigned integer",
                   entry->data.reg.width, POSITIVE_INTEGER, u64, TOSIZE)
-        ADDITIONAL_KEY
+        ADDITIONAL_KEY(unpacked)
       }
       if (entry->data.reg.contents == NULL) {
         emsgf(_(READERR("register", "has missing " REG_KEY_CONTENTS " array")),
@@ -3990,8 +3995,7 @@ shada_read_next_item_start:
           .data = unpacked.data.via.array.ptr[i],
         };
         {
-          msgpack_unpacked unpacked = unpacked_2;
-          if (unpacked.data.type != MSGPACK_OBJECT_MAP) {
+          if (unpacked_2.data.type != MSGPACK_OBJECT_MAP) {
             emsgf(_(RERR "Error while reading ShaDa file: "
                     "buffer list at position %" PRIu64 " "
                     "contains entry that is not a dictionary"),
@@ -4000,21 +4004,23 @@ shada_read_next_item_start:
           }
           entry->data.buffer_list.buffers[i].pos = default_pos;
           garray_T ad_ga;
-          ga_init(&ad_ga, sizeof(*(unpacked.data.via.map.ptr)), 1);
+          ga_init(&ad_ga, sizeof(*(unpacked_2.data.via.map.ptr)), 1);
           {
+            // XXX: Temporarily reassign `i` because the macros depend on it.
             const size_t j = i;
             {
-              for (size_t i = 0; i < unpacked.data.via.map.size; i++) {
-                CHECK_KEY_IS_STR("buffer list entry")
-                LONG_KEY("buffer list entry", KEY_LNUM,
+              for (i = 0; i < unpacked_2.data.via.map.size; i++) {  // -V535
+                CHECK_KEY_IS_STR(unpacked_2, "buffer list entry")
+                LONG_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
                          entry->data.buffer_list.buffers[j].pos.lnum)
-                INTEGER_KEY("buffer list entry", KEY_COL,
+                INTEGER_KEY(unpacked_2, "buffer list entry", KEY_COL,
                             entry->data.buffer_list.buffers[j].pos.col)
-                STRING_KEY("buffer list entry", KEY_FILE,
+                STRING_KEY(unpacked_2, "buffer list entry", KEY_FILE,
                            entry->data.buffer_list.buffers[j].fname)
-                ADDITIONAL_KEY
+                ADDITIONAL_KEY(unpacked_2)
               }
             }
+            i = j;  // XXX: Restore `i`.
           }
           if (entry->data.buffer_list.buffers[i].pos.lnum <= 0) {
             emsgf(_(RERR "Error while reading ShaDa file: "

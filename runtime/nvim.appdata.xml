@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2018 Neovim contributors
+
+  See also:
+    https://appimage.github.io/neovim/
+    https://github.com/flathub/io.neovim.nvim
+-->
+<component type="desktop-application">
+  <id>nvim</id>
+  <project_license>Apache-2.0</project_license>
+  <metadata_license>CC0-1.0</metadata_license>
+  <name>Neovim</name>
+  <summary>Vim-fork focused on extensibility and usability</summary>
+
+  <description>
+    <p>Neovim is a refactor of the Vim text editor designed to encourage new features, advanced UIs, and powerful extensions.</p>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Live :substitute feature</caption>
+      <image>https://neovim.io/images/nvim-screenshot-1.png</image>
+    </screenshot>
+  </screenshots>
+
+  <launchable type="desktop-id">nvim.desktop</launchable>
+  <url type="homepage">https://neovim.io/</url>
+  <url type="bugtracker">https://github.com/neovim/neovim/issues</url>
+  <url type="faq">https://github.com/neovim/neovim/wiki/FAQ</url>
+  <url type="help">https://neovim.io/doc/</url>
+  <url type="donation">https://neovim.io/#sponsor</url>
+  <url type="translate">https://github.com/neovim/neovim/tree/master/src/nvim/po</url>
+  <provides>
+    <binary>nvim</binary>
+  </provides>
+</component>

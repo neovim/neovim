@@ -61,6 +61,9 @@ describe('feeding large chunks of input with <Paste>', function()
   end)
 
   it('ok', function()
+    if helpers.skip_fragile(pending) then
+      return
+    end
     local t = {}
     for i = 1, 20000 do
       t[i] = 'item ' .. tostring(i)

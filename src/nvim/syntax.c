@@ -6463,7 +6463,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // If no argument, list current highlighting.
   if (ends_excmd((uint8_t)(*line))) {
-    for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+    for (i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
       // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
     }
@@ -6569,8 +6569,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       restore_cterm_colors();
 
       // Clear all default highlight groups and load the defaults.
-      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
-        highlight_clear(idx);
+      for (int j = 0; j < highlight_ga.ga_len; j++) {
+        highlight_clear(j);
       }
       init_highlight(true, true);
       highlight_changed();

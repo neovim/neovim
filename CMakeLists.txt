@@ -111,12 +111,12 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 3)
-set(NVIM_VERSION_PATCH 2)
+set(NVIM_VERSION_MINOR 4)
+set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 5)         # Bump this after any API change.
+set(NVIM_API_LEVEL 6)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -174,7 +174,7 @@ endif()
 
 # Enable -Wconversion.
 if(NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wshadow -Wconversion")
 endif()
 
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
@@ -247,6 +247,16 @@ int main(void)
   return 0;
 }
 " HAVE_EXECINFO_BACKTRACE)
+
+check_c_source_compiles("
+int main(void)
+{
+  int a;
+  __builtin_add_overflow(a, a, &a);
+  __builtin_sub_overflow(a, a, &a);
+  return 0;
+}
+" HAVE_BUILTIN_ADD_OVERFLOW)
 
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241

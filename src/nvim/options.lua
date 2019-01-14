@@ -1810,6 +1810,14 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='pyxversion', abbreviation='pyx',
+      type='number', scope={'global'},
+      secure=true,
+      vi_def=true,
+      varname='p_pyx',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='quoteescape', abbreviation='qe',
       type='string', scope={'buffer'},
       vi_def=true,

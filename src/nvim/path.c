@@ -2038,12 +2038,11 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
   if (*p_wig) {
     char_u  *ffname;
 
-    // check all filess in (*files)[]
+    // check all files in (*files)[]
     for (i = 0; i < *num_files; i++) {
       ffname = (char_u *)FullName_save((char *)(*files)[i], false);
-      if (ffname == NULL) {               // out of memory
-        break;
-      }
+      assert((*files)[i] != NULL);
+      assert(ffname != NULL);
       if (match_file_list(p_wig, (*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);

@@ -51,12 +51,13 @@
 static UI *uis[MAX_UI_COUNT];
 static bool ui_ext[kUIExtCount] = { 0 };
 static size_t ui_count = 0;
-static int row = 0, col = 0;
+static int ui_mode_idx = SHAPE_IDX_N;
+static int cursor_row = 0, cursor_col = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
-static int mode_idx = SHAPE_IDX_N;
 static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
+static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -188,20 +189,13 @@ void ui_refresh(void)
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
-      ext_widgets[i] &= ui->ui_ext[i];
+    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
+      ext_widgets[j] &= ui->ui_ext[j];
     }
   }
 
-  row = col = 0;
+  cursor_row = cursor_col = 0;
   pending_cursor_update = true;
-
-  ui_default_colors_set();
-
-  int save_p_lz = p_lz;
-  p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
-  p_lz = save_p_lz;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ui_ext[i] = ext_widgets[i];
@@ -210,6 +204,14 @@ void ui_refresh(void)
                          BOOLEAN_OBJ(ext_widgets[i]));
     }
   }
+
+  ui_default_colors_set();
+
+  int save_p_lz = p_lz;
+  p_lz = false;  // convince redrawing() to return true ...
+  screen_resize(width, height);
+  p_lz = save_p_lz;
+
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
@@ -315,30 +317,43 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
   }
 }
 
-void ui_line(int row, int startcol, int endcol, int clearcol, int clearattr,
-             bool wrap)
+void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
+             int clearattr, bool wrap)
 {
-  size_t off = LineOffset[row]+(size_t)startcol;
-  UI_CALL(raw_line, 1, row, startcol, endcol, clearcol, clearattr, wrap,
-          (const schar_T *)ScreenLines+off, (const sattr_T *)ScreenAttrs+off);
+  size_t off = grid->line_offset[row] + (size_t)startcol;
+
+  UI_CALL(raw_line, grid->handle, row, startcol, endcol, clearcol, clearattr,
+          wrap, (const schar_T *)grid->chars + off,
+          (const sattr_T *)grid->attrs + off);
+
   if (p_wd) {  // 'writedelay': flush & delay each time.
-    int old_row = row, old_col = col;
-    // If'writedelay is active, we set the cursor to highlight what was drawn
-    ui_cursor_goto(row, MIN(clearcol, (int)Columns-1));
+    int old_row = cursor_row, old_col = cursor_col;
+    handle_T old_grid = cursor_grid_handle;
+    // If 'writedelay' is active, set the cursor to indicate what was drawn.
+    ui_grid_cursor_goto(grid->handle, row, MIN(clearcol, (int)Columns-1));
     ui_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
     os_microdelay(wd * 1000u, true);
-    ui_cursor_goto(old_row, old_col);
+    ui_grid_cursor_goto(old_grid, old_row, old_col);
   }
 }
 
 void ui_cursor_goto(int new_row, int new_col)
 {
-  if (new_row == row && new_col == col) {
+  ui_grid_cursor_goto(DEFAULT_GRID_HANDLE, new_row, new_col);
+}
+
+void ui_grid_cursor_goto(handle_T grid_handle, int new_row, int new_col)
+{
+  if (new_row == cursor_row
+      && new_col == cursor_col
+      && grid_handle == cursor_grid_handle) {
     return;
   }
-  row = new_row;
-  col = new_col;
+
+  cursor_row = new_row;
+  cursor_col = new_col;
+  cursor_grid_handle = grid_handle;
   pending_cursor_update = true;
 }
 
@@ -349,19 +364,20 @@ void ui_mode_info_set(void)
 
 int ui_current_row(void)
 {
-  return row;
+  return cursor_row;
 }
 
 int ui_current_col(void)
 {
-  return col;
+  return cursor_col;
 }
 
 void ui_flush(void)
 {
   cmdline_ui_flush();
+  win_ui_flush();
   if (pending_cursor_update) {
-    ui_call_grid_cursor_goto(1, row, col);
+    ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
   }
   if (pending_mode_info_update) {
@@ -372,8 +388,8 @@ void ui_flush(void)
     pending_mode_info_update = false;
   }
   if (pending_mode_update) {
-    char *full_name = shape_table[mode_idx].full_name;
-    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
+    char *full_name = shape_table[ui_mode_idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
     pending_mode_update = false;
   }
   ui_call_flush();
@@ -389,8 +405,8 @@ void ui_cursor_shape(void)
   }
   int new_mode_idx = cursor_get_mode_idx();
 
-  if (new_mode_idx != mode_idx) {
-    mode_idx = new_mode_idx;
+  if (new_mode_idx != ui_mode_idx) {
+    ui_mode_idx = new_mode_idx;
     pending_mode_update = true;
   }
   conceal_check_cursor_line();
@@ -420,4 +436,23 @@ Array ui_array(void)
     ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;
+}
+
+void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
+{
+  if (grid_handle == DEFAULT_GRID_HANDLE) {
+    screen_resize(width, height);
+    return;
+  }
+
+  win_T *wp = get_win_by_grid_handle(grid_handle);
+  if (wp == NULL) {
+    api_set_error(error, kErrorTypeValidation,
+                  "No window with the given handle");
+    return;
+  }
+
+  wp->w_grid.requested_rows = (int)height;
+  wp->w_grid.requested_cols = (int)width;
+  redraw_win_later(wp, SOME_VALID);
 }

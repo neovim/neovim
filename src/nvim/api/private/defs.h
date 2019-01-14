@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "nvim/func_attr.h"
+#include "nvim/types.h"
 
 #define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
@@ -19,8 +20,6 @@
 # define ArrayOf(...) Array
 # define DictionaryOf(...) Dictionary
 #endif
-
-typedef int handle_T;
 
 // Basic types
 typedef enum {

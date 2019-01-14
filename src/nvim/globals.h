@@ -91,9 +91,10 @@ EXTERN struct nvim_stats_s {
 /*
  * Number of Rows and Columns in the screen.
  * Must be long to be able to use them as options in option.c.
- * Note: Use screen_Rows and screen_Columns to access items in ScreenLines[].
- * They may have different values when the screen wasn't (re)allocated yet
- * after setting Rows or Columns (e.g., when starting up).
+ * Note: Use default_grid.Rows and default_grid.Columns to access items in
+ * default_grid.chars[]. They may have different values when the screen
+ * wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
+ * up).
  */
 #define DFLT_COLS       80              // default value for 'columns'
 #define DFLT_ROWS       24              // default value for 'lines'
@@ -127,45 +128,6 @@ typedef off_t off_T;
 #  define vim_fseek(a, b, c) fseek(a, (long)b, c)
 # endif
 #endif
-
-/*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
-typedef int16_t sattr_T;
-
-/// ScreenLines[] contains a copy of the whole screen, as it currently is
-/// displayed. It is a single block of screen cells, the size of the screen
-/// plus one line. The extra line used as a buffer while redrawing a window
-/// line, so it can be compared with the previous state of that line. This way
-/// we can avoid sending bigger updates than neccessary to the Ul layer.
-///
-/// Screen cells are stored as NUL-terminated UTF-8 strings, and a cell can
-/// contain up to MAX_MCO composing characters after the base character.
-/// The composing characters are to be drawn on top of the original character.
-/// The content after the NUL is not defined (so comparison must be done a
-/// single cell at a time). Double-width characters are stored in the left cell,
-/// and the right cell should only contain the empty string. When a part of the
-/// screen is cleared, the cells should be filled with a single whitespace char.
-///
-/// ScreenAttrs[] contains the highlighting attribute for each cell.
-/// LineOffset[n] is the offset from ScreenLines[] and ScreenAttrs[] for the
-/// start of line 'n'. These offsets are in general not linear, as full screen
-/// scrolling is implemented by rotating the offsets in the LineOffset array.
-/// LineWraps[] is an array of boolean flags indicating if the screen line wraps
-/// to the next line. It can only be true if a window occupies the entire screen
-/// width.
-///
-///
-/// Note: before the screen is initialized and when out of memory these can be
-/// NULL.
-EXTERN schar_T  *ScreenLines INIT(= NULL);
-EXTERN sattr_T  *ScreenAttrs INIT(= NULL);
-EXTERN unsigned *LineOffset INIT(= NULL);
-EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
-
-EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
-EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
 
 /*
  * When vgetc() is called, it sets mod_mask to the set of modifiers that are
@@ -228,11 +190,8 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      /* for ctrl_x_mode 0, ^X^P/^X^N do a local
                                  * expansion, (eg use complete=.) */
 
-/*
- * Functions for putting characters in the command line,
- * while keeping ScreenLines[] updated.
- */
-EXTERN int cmdmsg_rl INIT(= FALSE);         /* cmdline is drawn right to left */
+// state for putting characters in the message area
+EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
 EXTERN int msg_row;
 EXTERN int msg_scrolled;        /* Number of screen lines that windows have
@@ -702,11 +661,13 @@ EXTERN int* (*iconv_errno)(void);
 ///    Visual_mode:    When State is NORMAL or INSERT.
 ///    finish_op  :    When State is NORMAL, after typing the operator and
 ///                    before typing the motion command.
+///    motion_force:   Last motion_force from do_pending_operator()
 EXTERN int State INIT(= NORMAL);        // This is the current state of the
                                         // command interpreter.
 
 EXTERN bool finish_op INIT(= false);    // true while an operator is pending
 EXTERN long opcount INIT(= 0);          // count for pending operator
+EXTERN int motion_force INIT(=0);       // motion force for pending operator
 
 // Ex Mode (Q) state
 EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
@@ -956,10 +917,6 @@ EXTERN disptick_T display_tick INIT(= 0);
 /* Line in which spell checking wasn't highlighted because it touched the
  * cursor position in Insert mode. */
 EXTERN linenr_T spell_redraw_lnum INIT(= 0);
-
-/* Set when the cursor line needs to be redrawn. */
-EXTERN int need_cursor_line_redraw INIT(= FALSE);
-
 
 #ifdef USE_MCH_ERRMSG
 // Grow array to collect error messages in until they can be displayed.

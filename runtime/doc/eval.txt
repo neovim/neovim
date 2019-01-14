@@ -1886,8 +1886,6 @@ v:termresponse	The escape sequence returned by the terminal for the DA
 
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
-		Also, when set certain error messages won't be shown for 2
-		seconds. (e.g. "'dictionary' option is empty")
 
 				*v:this_session* *this_session-variable*
 v:this_session	Full filename of the last loaded or saved session file.  See
@@ -2211,6 +2209,7 @@ printf({fmt}, {expr1}...)	String	format text
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
 py3eval({expr})			any	evaluate |python3| expression
+pyxeval({expr})			any	evaluate |python_x| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readfile({fname} [, {binary} [, {max}]])
@@ -2781,7 +2780,7 @@ changenr()						*changenr()*
 		redo it is the number of the redone change.  After undo it is
 		one less than the number of the undone change.
 
-chanclose({id}[, {stream}])				{Nvim} *chanclose()*
+chanclose({id}[, {stream}])				*chanclose()*
 		Close a channel or a specific stream associated with it.
 		For a job, {stream} can be one of "stdin", "stdout",
 		"stderr" or "rpc" (closes stdin/stdout for a job started
@@ -2791,7 +2790,7 @@ chanclose({id}[, {stream}])				{Nvim} *chanclose()*
 		For a socket, there is only one stream, and {stream} should be
 		ommited.
 
-chansend({id}, {data})					{Nvim} *chansend()*
+chansend({id}, {data})					*chansend()*
 		Send data to channel {id}. For a job, it writes it to the
 		stdin of the process. For the stdio channel |channel-stdio|,
 		it writes to Nvim's stdout.  Returns the number of bytes
@@ -3822,8 +3821,7 @@ garbagecollect([{atexit}])				*garbagecollect()*
 
 		The garbage collection is not done immediately but only when
 		it's safe to perform.  This is when waiting for the user to
-		type a character.  To force garbage collection immediately use
-		|test_garbagecollect_now()|.
+		type a character.
 
 get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
@@ -5728,7 +5726,7 @@ mkdir({name} [, {path} [, {prot}]])
 		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
 		the user readable for others).	Use 0700 to make it unreadable
 		for others.
-									{Nvim}
+
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
@@ -5743,35 +5741,41 @@ mode([expr])	Return a string that indicates the current mode.
 		a non-empty String (|non-zero-arg|), then the full mode is
 		returned, otherwise only the first letter is returned.
 
-			n	Normal
-			no	Operator-pending
-			v	Visual by character
-			V	Visual by line
-			CTRL-V	Visual blockwise
-			s	Select by character
-			S	Select by line
-			CTRL-S	Select blockwise
-			i	Insert
-			ic	Insert mode completion |compl-generic|
-			ix	Insert mode |i_CTRL-X| completion
-			R	Replace |R|
-			Rc	Replace mode completion |compl-generic|
-			Rv	Virtual Replace |gR|
-			Rx	Replace mode |i_CTRL-X| completion
-			c	Command-line editing
-			cv	Vim Ex mode |gQ|
-			ce	Normal Ex mode |Q|
-			r	Hit-enter prompt
-			rm	The -- more -- prompt
-			r?	A |:confirm| query of some sort
-			!	Shell or external command is executing
-			t	Terminal mode: keys go to the job
+		   n	    Normal
+		   no	    Operator-pending
+		   nov	    Operator-pending (forced characterwise |o_v|)
+		   noV	    Operator-pending (forced linewise |o_V|)
+		   noCTRL-V Operator-pending (forced blockwise |o_CTRL-V|)
+		   niI	    Normal using |i_CTRL-O| in |Insert-mode|
+		   niR	    Normal using |i_CTRL-O| in |Replace-mode|
+		   niV	    Normal using |i_CTRL-O| in |Virtual-Replace-mode|
+		   v	    Visual by character
+		   V	    Visual by line
+		   CTRL-V   Visual blockwise
+		   s	    Select by character
+		   S	    Select by line
+		   CTRL-S   Select blockwise
+		   i	    Insert
+		   ic	    Insert mode completion |compl-generic|
+		   ix	    Insert mode |i_CTRL-X| completion
+		   R	    Replace |R|
+		   Rc	    Replace mode completion |compl-generic|
+		   Rv	    Virtual Replace |gR|
+		   Rx	    Replace mode |i_CTRL-X| completion
+		   c	    Command-line editing
+		   cv	    Vim Ex mode |gQ|
+		   ce	    Normal Ex mode |Q|
+		   r	    Hit-enter prompt
+		   rm	    The -- more -- prompt
+		   r?	    |:confirm| query of some sort
+		   !	    Shell or external command is executing
+		   t	    Terminal mode: keys go to the job
 		This is useful in the 'statusline' option or when used
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
 		Also see |visualmode()|.
 
-msgpackdump({list})				   {Nvim} *msgpackdump()*
+msgpackdump({list})					*msgpackdump()*
 		Convert a list of VimL objects to msgpack. Returned value is
 		|readfile()|-style list. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
@@ -5786,7 +5790,7 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		4. Other strings are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
-msgpackparse({list})				   {Nvim} *msgpackparse()*
+msgpackparse({list})					*msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
@@ -6149,6 +6153,12 @@ pyeval({expr})						*pyeval()*
 		non-string keys result in error.
 		{only available when compiled with the |+python| feature}
 
+pyxeval({expr})						*pyxeval()*
+		Evaluate Python expression {expr} and return its result
+		converted to Vim data structures.
+		Uses Python 2 or 3, see |python_x| and 'pyxversion'.
+		See also: |pyeval()|, |py3eval()|
+
 							*E726* *E727*
 range({expr} [, {max} [, {stride}]])				*range()*
 		Returns a |List| with Numbers:
@@ -6404,25 +6414,25 @@ round({expr})							*round()*
 			echo round(-4.5)
 <			-5.0
 
-rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
+rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
 		If {channel} is 0, the event is broadcast to all channels.
 		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
 
-rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
+rpcrequest({channel}, {method}[, {args}...])			*rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
-rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
+rpcstart({prog}[, {argv}])					*rpcstart()*
 		Deprecated. Replace  >
 			:let id = rpcstart('prog', ['arg1', 'arg2'])
 <		with >
 			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
-rpcstop({channel})					    {Nvim} *rpcstop()*
+rpcstop({channel})						*rpcstop()*
 		Deprecated. Instead use |jobstop()| to stop any job, and
 		chanclose(id, "rpc") to close RPC communication without
 		stopping the job. Use chanclose(id) to close any socket.
@@ -7889,7 +7899,7 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
-termopen({cmd}[, {opts}])			{Nvim} *termopen()*
+termopen({cmd}[, {opts}])			*termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected
 		to the current buffer.  {cmd} is the same as the one passed to
 		|jobstart()|.  This function fails if the current buffer is
@@ -7904,7 +7914,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		See |terminal| for more information.
 
 test_garbagecollect_now()			 *test_garbagecollect_now()*
-		Like garbagecollect(), but executed right away.  This must
+		Like |garbagecollect()|, but executed right away.  This must
 		only be called directly to avoid any structure to exist
 		internally, and |v:testing| must have been set before calling
 		any function.
@@ -8520,6 +8530,7 @@ printer			Compiled with |:hardcopy| support.
 profile			Compiled with |:profile| support.
 python			Legacy Vim Python 2.x API is available. |has-python|
 python3			Legacy Vim Python 3.x API is available. |has-python|
+pythonx			Compiled with |python_x| interface. |has-pythonx|
 quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.

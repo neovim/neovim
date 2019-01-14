@@ -256,10 +256,12 @@ void ex_align(exarg_T *eap)
      */
     if (width <= 0)
       width = curbuf->b_p_tw;
-    if (width == 0 && curbuf->b_p_wm > 0)
-      width = curwin->w_width - curbuf->b_p_wm;
-    if (width <= 0)
+    if (width == 0 && curbuf->b_p_wm > 0) {
+      width = curwin->w_grid.Columns - curbuf->b_p_wm;
+    }
+    if (width <= 0) {
       width = 80;
+    }
   }
 
   if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL)
@@ -2870,11 +2872,11 @@ void ex_z(exarg_T *eap)
   // Vi compatible: ":z!" uses display height, without a count uses
   // 'scroll'
   if (eap->forceit) {
-    bigness = curwin->w_height;
+    bigness = curwin->w_grid.Rows;
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
-    bigness = curwin->w_height - 3;
+    bigness = curwin->w_grid.Rows - 3;
   }
   if (bigness < 1) {
     bigness = 1;
@@ -5757,7 +5759,7 @@ void ex_sign(exarg_T *eap)
         id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum);
         if (id > 0) {
           buf_delsign(curwin->w_buffer, id);
-          update_debug_sign(curwin->w_buffer, curwin->w_cursor.lnum);
+          redraw_buf_line_later(curwin->w_buffer, curwin->w_cursor.lnum);
         } else {
           EMSG(_("E159: Missing sign number"));
         }
@@ -5786,7 +5788,7 @@ void ex_sign(exarg_T *eap)
           // ":sign unplace {id}": remove placed sign by number
           FOR_ALL_BUFFERS(buf) {
             if ((lnum = buf_delsign(buf, id)) != 0) {
-              update_debug_sign(buf, lnum);
+              redraw_buf_line_later(buf, lnum);
             }
           }
           return;
@@ -5886,7 +5888,7 @@ void ex_sign(exarg_T *eap)
       } else {
         // ":sign unplace {id} file={fname}"
         lnum = buf_delsign(buf, id);
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       }
     } else if (sign_name != NULL) {
       // idx == SIGNCMD_PLACE
@@ -5908,7 +5910,7 @@ void ex_sign(exarg_T *eap)
         lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
       }
       if (lnum > 0) {
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       } else {
         EMSG2(_("E885: Not possible to change sign %s"), sign_name);
       }

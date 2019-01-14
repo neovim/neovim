@@ -779,7 +779,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
   char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 
-  if (homedir_env_mod != NULL && strchr(homedir_env_mod, '~') != NULL) {
+  if (homedir_env_mod != NULL && *homedir_env_mod == '~') {
     must_free = true;
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
@@ -943,31 +943,6 @@ bool os_setenv_append_path(const char *fname)
     return true;
   }
   return false;
-}
-
-/// Returns true if the terminal can be assumed to silently ignore unknown
-/// control codes.
-bool os_term_is_nice(void)
-{
-#if defined(__APPLE__) || defined(WIN32)
-  return true;
-#else
-  const char *vte_version = os_getenv("VTE_VERSION");
-  if ((vte_version && atoi(vte_version) >= 3900)
-      || os_getenv("KONSOLE_PROFILE_NAME")
-      || os_getenv("KONSOLE_DBUS_SESSION")) {
-    return true;
-  }
-  const char *termprg = os_getenv("TERM_PROGRAM");
-  if (termprg && striequal(termprg, "iTerm.app")) {
-    return true;
-  }
-  const char *term = os_getenv("TERM");
-  if (term && strncmp(term, "rxvt", 4) == 0) {
-    return true;
-  }
-  return false;
-#endif
 }
 
 /// Returns true if `sh` looks like it resolves to "cmd.exe".

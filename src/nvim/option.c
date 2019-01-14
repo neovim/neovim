@@ -955,13 +955,6 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-#if 0
-  // This bodges around problems that should be fixed in the TUI layer.
-  if (!headless && !os_term_is_nice()) {
-    set_string_option_direct((char_u *)"guicursor", -1, (char_u *)"",
-                             OPT_GLOBAL, SID_NONE);
-  }
-#endif
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
@@ -4328,6 +4321,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     // when 'updatecount' changes from zero to non-zero, open swap files
     if (p_uc && !old_value) {
       ml_open_files();
+    }
+  } else if (pp == &p_pyx) {
+    if (p_pyx != 0 && p_pyx != 2 && p_pyx != 3) {
+      errmsg = e_invarg;
     }
   } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
     // sync undo before 'undolevels' changes

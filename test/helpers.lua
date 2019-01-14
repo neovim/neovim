@@ -49,8 +49,8 @@ local check_logs_useless_lines = {
 local function eq(expected, actual, ctx)
   return assert.are.same(expected, actual, ctx)
 end
-local function neq(expected, actual)
-  return assert.are_not.same(expected, actual)
+local function neq(expected, actual, context)
+  return assert.are_not.same(expected, actual, context)
 end
 local function ok(res)
   return assert.is_true(res)

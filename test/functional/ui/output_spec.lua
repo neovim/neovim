@@ -51,6 +51,9 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
+    if helpers.skip_fragile(pending) then
+      return
+    end
     child_session.feed_data(
       ":!for i in $(seq 2 30000); do echo XXXXXXXXXX $i; done\n")
 

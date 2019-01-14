@@ -322,6 +322,40 @@ describe('highlight', function()
     screen:attach()
   end)
 
+  it('visual', function()
+    screen:detach()
+    screen = Screen.new(20,4)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.LightGrey},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+      [3] = {bold = true},
+    })
+    insert([[
+      line1 foo bar
+    ]])
+
+    -- Non-blinking block cursor: does NOT highlight char-at-cursor.
+    command('set guicursor=a:block-blinkon0')
+    feed('gg$vhhh')
+    screen:expect([[
+        line1 foo^ {1:bar}     |
+                          |
+      {2:~                   }|
+      {3:-- VISUAL --}        |
+    ]])
+
+    -- Vertical cursor: highlights char-at-cursor. #8983
+    command('set guicursor=a:block-blinkon175')
+    feed('<esc>gg$vhhh')
+    screen:expect([[
+        line1 foo{1:^ bar}     |
+                          |
+      {2:~                   }|
+      {3:-- VISUAL --}        |
+    ]])
+  end)
+
   it('cterm=standout gui=standout', function()
     screen:detach()
     screen = Screen.new(20,5)

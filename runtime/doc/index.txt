@@ -1418,6 +1418,10 @@ tag	      command	      action ~
 |:python|	:py[thon]	execute Python command
 |:pydo|		:pyd[o]		execute Python command for each line
 |:pyfile|	:pyf[ile]	execute Python script file
+|:pyx|		:pyx		execute |python_x| command
+|:pythonx|	:pythonx	same as :pyx
+|:pyxdo|	:pyxd[o]	execute |python_x| command for each line
+|:pyxfile|	:pyxf[ile]	execute |python_x| script file
 |:quit|		:q[uit]		quit current window (when one window quit Vim)
 |:quitall|	:quita[ll]	quit Vim
 |:qall|		:qa[ll]		quit Vim

@@ -68,12 +68,12 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   int kind_width;
   int extra_width;
   int i;
-  int row;
   int context_lines;
-  int col;
   int above_row;
   int below_row;
   int redo_count = 0;
+  int row;
+  int col;
 
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
@@ -90,11 +90,18 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     below_row = cmdline_row;
 
     // anchor position: the start of the completed word
-    row = curwin->w_wrow + curwin->w_winrow;
+    row = curwin->w_wrow;
     if (curwin->w_p_rl) {
-      col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
+      col = curwin->w_width - curwin->w_wcol - 1;
     } else {
-      col = curwin->w_wincol + curwin->w_wcol;
+      col = curwin->w_wcol;
+    }
+
+    int grid = (int)curwin->w_grid.handle;
+    if (!ui_is_external(kUIMultigrid)) {
+      grid = (int)default_grid.handle;
+      row += curwin->w_winrow;
+      col += curwin->w_wincol;
     }
 
     if (pum_external) {
@@ -108,7 +115,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
           ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
           ADD(arr, ARRAY_OBJ(item));
         }
-        ui_call_popupmenu_show(arr, selected, row, col);
+        ui_call_popupmenu_show(arr, selected, row, col, grid);
       } else {
         ui_call_popupmenu_select(selected);
       }
@@ -351,10 +358,10 @@ void pum_redraw(void)
     // prepend a space if there is room
     if (curwin->w_p_rl) {
       if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
-        screen_putchar(' ', row, pum_col + 1, attr);
+        grid_putchar(&default_grid, ' ', row, pum_col + 1, attr);
       }
     } else if (pum_col > 0) {
-      screen_putchar(' ', row, pum_col - 1, attr);
+      grid_putchar(&default_grid, ' ', row, pum_col - 1, attr);
     }
 
     // Display each entry, use two spaces for a Tab.
@@ -416,12 +423,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1, attr);
+              grid_puts_len(&default_grid, rt, (int)STRLEN(rt), row,
+                            col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               col -= width;
             } else {
-              screen_puts_len(st, (int)STRLEN(st), row, col, attr);
+              grid_puts_len(&default_grid, st, (int)STRLEN(st), row, col, attr);
               xfree(st);
               col += width;
             }
@@ -432,10 +440,11 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (curwin->w_p_rl) {
-              screen_puts_len((char_u *)"  ", 2, row, col - 1, attr);
+              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col - 1,
+                            attr);
               col -= 2;
             } else {
-              screen_puts_len((char_u *)"  ", 2, row, col, attr);
+              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
             totwidth += 2;
@@ -466,36 +475,37 @@ void pum_redraw(void)
       }
 
       if (curwin->w_p_rl) {
-        screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
-                    col + 1, ' ', ' ', attr);
+        grid_fill(&default_grid, row, row + 1, pum_col - pum_base_width - n + 1,
+                  col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
       } else {
-        screen_fill(row, row + 1, col, pum_col + pum_base_width + n,
-                    ' ', ' ', attr);
+        grid_fill(&default_grid, row, row + 1, col,
+                  pum_col + pum_base_width + n, ' ', ' ', attr);
         col = pum_col + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (curwin->w_p_rl) {
-      screen_fill(row, row + 1, pum_col - pum_width + 1, col + 1, ' ', ' ',
-                  attr);
+      grid_fill(&default_grid, row, row + 1, pum_col - pum_width + 1, col + 1,
+                ' ', ' ', attr);
     } else {
-      screen_fill(row, row + 1, col, pum_col + pum_width, ' ', ' ', attr);
+      grid_fill(&default_grid, row, row + 1, col, pum_col + pum_width, ' ', ' ',
+                attr);
     }
 
     if (pum_scrollbar > 0) {
       if (curwin->w_p_rl) {
-        screen_putchar(' ', row, pum_col - pum_width,
-                       i >= thumb_pos && i < thumb_pos + thumb_heigth
-                       ? attr_thumb : attr_scroll);
+        grid_putchar(&default_grid, ' ', row, pum_col - pum_width,
+                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     ? attr_thumb : attr_scroll);
       } else {
-        screen_putchar(' ', row, pum_col + pum_width,
-                       i >= thumb_pos && i < thumb_pos + thumb_heigth
-                       ? attr_thumb : attr_scroll);
+        grid_putchar(&default_grid, ' ', row, pum_col + pum_width,
+                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     ? attr_thumb : attr_scroll);
       }
     }
-    screen_puts_line_flush(false);
+    grid_puts_line_flush(&default_grid, false);
     row++;
   }
 }

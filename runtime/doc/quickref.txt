@@ -813,6 +813,7 @@ Short explanation of each option:		*option-list*
 'pumwidth'	  'pw'	    minimum width of the popup menu
 'pythondll'		    name of the Python 2 dynamic library
 'pythonthreedll'	    name of the Python 3 dynamic library
+'pyxversion'	  'pyx'	    Python version used for pyx* commands
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting

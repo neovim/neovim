@@ -999,7 +999,10 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           } else if (fmt_spec == 'd') {
             // signed
             switch (length_modifier) {
-              case '\0':
+              case '\0': {
+                arg = (int)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
+                break;
+              }
               case 'h': {
                 // char and short arguments are passed as int16_t
                 arg = (int16_t)(tvs ? tv_nr(tvs, &arg_idx) : va_arg(ap, int));
@@ -1031,11 +1034,16 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
           } else {
             // unsigned
             switch (length_modifier) {
-              case '\0':
+              case '\0': {
+                uarg = (unsigned int)(tvs
+                                      ? tv_nr(tvs, &arg_idx)
+                                      : va_arg(ap, unsigned int));
+                break;
+              }
               case 'h': {
                 uarg = (uint16_t)(tvs
                                   ? tv_nr(tvs, &arg_idx)
-                                  : va_arg(ap, unsigned));
+                                  : va_arg(ap, unsigned int));
                 break;
               }
               case 'l': {

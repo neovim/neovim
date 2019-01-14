@@ -45,6 +45,8 @@ curl -Lo "$APP_BUILD_DIR"/appimage_functions.sh https://github.com/AppImage/AppI
 # get_desktop
 cp "$ROOT_DIR/runtime/nvim.desktop" "$APP_DIR/"
 cp "$ROOT_DIR/runtime/nvim.png" "$APP_DIR/"
+mkdir "$APP_DIR/usr/share/metainfo/"
+cp "$ROOT_DIR/runtime/nvim.appdata.xml" "$APP_DIR/usr/share/metainfo/"
 
 cd "$APP_DIR"
 

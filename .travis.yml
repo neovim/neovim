@@ -74,7 +74,8 @@ jobs:
     - os: osx
       compiler: gcc
       osx_image: xcode9.4  # macOS 10.13
-    - os: linux
+    - if: branch = master
+      os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
       os: linux
@@ -117,10 +118,16 @@ addons:
       - unzip
       - valgrind
       - xclip
+  homebrew:
+    update: true
+    packages:
+      - ccache
+      - ninja
 
 branches:
-  except:
-    - nightly
+  only:
+    - master
+    - /^release-\d+\.\d+$/
 
 cache:
   apt: true
