@@ -118,11 +118,93 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
+local function gsplit(s, sep, plain)
+  assert(type(s) == "string")
+  assert(type(sep) == "string")
+  assert(type(plain) == "boolean" or type(plain) == "nil")
+
+  local start = 1
+  local done = false
+
+  local function pass(i, j, ...)
+    if i then
+      assert(j+1 > start, "Infinite loop detected")
+      local seg = s:sub(start, i - 1)
+      start = j + 1
+      return seg, ...
+    else
+      done = true
+      return s:sub(start)
+    end
+  end
+
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      if start == #s then
+        done = true
+      end
+      return pass(start+1, start)
+    end
+    return pass(s:find(sep, start, plain))
+  end
+end
+
+local inspect = (function()
+  local f
+  return function(...)
+    if f == nil then f = require('vim.inspect') end
+    return f(...)
+  end
+end)()
+
+local function split(s,sep,plain)
+  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
+  return t
+end
+
+local function trim(s)
+  assert(type(s) == "string", "Only strings can be trimmed")
+  local result = s:gsub("^%s+", ""):gsub("%s+$", "")
+  return result
+end
+
+local deepcopy
+
+local function id(v)
+  return v
+end
+
+local deepcopy_funcs = {
+  table = function(orig)
+    local copy = {}
+    for k, v in pairs(orig) do
+      copy[deepcopy(k)] = deepcopy(v)
+    end
+    return copy
+  end,
+  number = id,
+  string = id,
+  ['nil'] = id,
+  boolean = id,
+}
+
+deepcopy = function(orig)
+  return deepcopy_funcs[type(orig)](orig)
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
   _system = _system,
+  trim = trim,
+  split = split,
+  gsplit = gsplit,
+  deepcopy = deepcopy,
+  inspect = inspect,
 }
 
 return module
