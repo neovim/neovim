@@ -152,14 +152,6 @@ local function gsplit(s, sep, plain)
   end
 end
 
-local inspect = (function()
-  local f
-  return function(...)
-    if f == nil then f = require('vim.inspect') end
-    return f(...)
-  end
-end)()
-
 local function split(s,sep,plain)
   local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
   return t
@@ -195,6 +187,13 @@ deepcopy = function(orig)
   return deepcopy_funcs[type(orig)](orig)
 end
 
+local function __index(table, key)
+  if key == "inspect" then
+    table.inspect = require("vim.inspect")
+    return table.inspect
+  end
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -204,7 +203,10 @@ local module = {
   split = split,
   gsplit = gsplit,
   deepcopy = deepcopy,
-  inspect = inspect,
 }
+
+setmetatable(module, {
+  __index = __index
+})
 
 return module
