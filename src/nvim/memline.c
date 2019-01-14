@@ -277,6 +277,9 @@ int ml_open(buf_T *buf)
 
   // Open the memfile.  No swap file is created yet.
   memfile_T *mfp = mf_open(NULL, 0);
+  if (mfp == NULL) {
+    goto error;
+  }
 
   buf->b_ml.ml_mfp = mfp;
   buf->b_ml.ml_flags = ML_EMPTY;
@@ -360,10 +363,12 @@ int ml_open(buf_T *buf)
   return OK;
 
 error:
-  if (hp) {
-    mf_put(mfp, hp, false, false);
+  if (mfp != NULL) {
+    if (hp) {
+      mf_put(mfp, hp, false, false);
+    }
+    mf_close(mfp, true);  // will also xfree(mfp->mf_fname)
   }
-  mf_close(mfp, true);  // will also xfree(mfp->mf_fname)
   buf->b_ml.ml_mfp = NULL;
   return FAIL;
 }
@@ -839,7 +844,7 @@ void ml_recover(void)
                                     mf_open() will consume "fname_used"! */
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
-  if (mfp->mf_fd < 0) {
+  if (mfp == NULL || mfp->mf_fd < 0) {
     EMSG2(_("E306: Cannot open %s"), fname_used);
     goto theend;
   }
