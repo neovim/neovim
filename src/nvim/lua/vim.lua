@@ -152,6 +152,14 @@ local function gsplit(s, sep, plain)
   end
 end
 
+local inspect = (function()
+  local f
+  return function(...)
+    if f == nil then f = require('vim.inspect') end
+    return f(...)
+  end
+end)()
+
 local function split(s,sep,plain)
   local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
   return t
@@ -196,6 +204,7 @@ local module = {
   split = split,
   gsplit = gsplit,
   deepcopy = deepcopy,
+  inspect = inspect,
 }
 
 return module

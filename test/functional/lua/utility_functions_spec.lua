@@ -169,16 +169,14 @@ end)
 
 describe("vim.inspect", function()
   it('works', function()
-    command("source runtime/plugin/nvim.vim")
     -- just make sure it basically works, it has its own test suite
     local inspect = function(t, opts)
       return meths.execute_lua('return vim.inspect(...)', { t, opts })
     end
 
     eq('2', inspect(2))
-
-    local i = inspect({ a = { b = 1 } }, { newline = '+', indent = '' })
-    eq('{+a = {+b = 1+}+}', i)
+    eq('{+a = {+b = 1+}+}',
+       inspect({ a = { b = 1 } }, { newline = '+', indent = '' }))
   end)
 end)
 
