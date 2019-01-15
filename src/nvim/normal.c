@@ -3284,11 +3284,11 @@ void clear_showcmd(void)
       p_sbr = empty_option;
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
-      sprintf((char *)showcmd_buf, "%" PRId64 "x%" PRId64,
-              (int64_t)lines, (int64_t)(rightcol - leftcol + 1));
-    } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum)
-      sprintf((char *)showcmd_buf, "%" PRId64, (int64_t)lines);
-    else {
+      snprintf((char *)showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64 "x%" PRId64,
+               (int64_t)lines, (int64_t)rightcol - leftcol + 1);
+    } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum) {
+      snprintf((char *)showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64, (int64_t)lines);
+    } else {
       char_u  *s, *e;
       int l;
       int bytes = 0;
@@ -4930,10 +4930,10 @@ get_visual_text (
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
       *pp = ml_get_pos(&curwin->w_cursor);
-      *lenp = (size_t)(VIsual.col - curwin->w_cursor.col + 1);
+      *lenp = (size_t)VIsual.col - (size_t)curwin->w_cursor.col + 1;
     } else {
       *pp = ml_get_pos(&VIsual);
-      *lenp = (size_t)(curwin->w_cursor.col - VIsual.col + 1);
+      *lenp = (size_t)curwin->w_cursor.col - (size_t)VIsual.col + 1;
     }
     if (has_mbyte)
       /* Correct the length to include the whole last character. */
