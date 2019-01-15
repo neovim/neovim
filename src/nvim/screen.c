@@ -6274,10 +6274,6 @@ static int win_do_lines(win_T *wp, int row, int line_count, int del)
     return OK;
   }
 
-  // when scrolling, the message on the command line should be cleared,
-  // otherwise it will stay there forever.
-  check_for_delay(false);
-  clear_cmdline = true;
   int retval;
   if (del) {
     retval = grid_del_lines(&wp->w_grid, row, line_count,

@@ -662,7 +662,7 @@ describe('ui/mouse/input', function()
                                                            |
       {0:~                                                    }|
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<ScrollWheelUp><27,0>')
     screen:expect([[
@@ -679,7 +679,7 @@ describe('ui/mouse/input', function()
                                                            |
       {0:~                                                    }|
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
     feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     screen:expect([[
@@ -696,7 +696,7 @@ describe('ui/mouse/input', function()
       many                                                 |
       lines                                                |
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
   end)
 
