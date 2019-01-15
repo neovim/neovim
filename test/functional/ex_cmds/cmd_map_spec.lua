@@ -279,7 +279,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
-                                                                       |
+      :normal ,x                                                       |
     ]])
 
     eq('Vim:E492: Not an editor command: nosuchcommand', exc_exec("normal ,f"))
@@ -294,7 +294,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
-                                                                       |
+      :normal ,x                                                       |
     ]])
 
     feed_command(':%d')
