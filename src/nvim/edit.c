@@ -2485,13 +2485,14 @@ void set_completion(colnr_T startcol, list_T *list)
 }
 
 
-void update_completion(list_T *list)
+void update_completion(colnr_T startcol, list_T *list)
 {
   // If already doing completions stop it.
   if (ctrl_x_mode == 0) {
     return;
   }
 
+  compl_length = (int)curwin->w_cursor.col - (int)startcol;
   /* compl_pattern doesn't need to be set */
   compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
                                  compl_length);
@@ -2631,7 +2632,7 @@ void ins_compl_show_pum(void)
   do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
 
   /* Update the screen before drawing the popup menu over it. */
-  //update_screen(0);
+  update_screen(0);
 
   if (compl_match_array == NULL) {
     array_changed = true;

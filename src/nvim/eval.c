@@ -7569,12 +7569,17 @@ static void f_complete_update(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!undo_allowed())
     return;
 
-  if (argvars[0].v_type != VAR_LIST) {
+  if (argvars[1].v_type != VAR_LIST) {
     EMSG(_(e_invarg));
     return;
   }
 
-  update_completion(argvars[0].vval.v_list);
+  const colnr_T startcol = tv_get_number_chk(&argvars[0], NULL);
+  if (startcol <= 0) {
+    return;
+  }
+
+  update_completion(startcol - 1, argvars[1].vval.v_list);
 }
 
 /*
