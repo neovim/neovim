@@ -479,6 +479,14 @@ class DebugSession( object ):
       launch_config[ 'name' ] = 'test'
 
     self._connection.DoRequest(
+      # NOTE: You might think we should only load threads on a stopped event,
+      # but the spec is clear:
+      #
+      #   After a successful launch or attach the development tool requests the
+      #   baseline of currently existing threads with the threads request and
+      #   then starts to listen for thread events to detect new or terminated
+      #   threads.
+      #
       lambda msg: self._stackTraceView.LoadThreads( True ),
       {
         'command': launch_config[ 'request' ],

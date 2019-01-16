@@ -254,7 +254,6 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
       ++bug_catcher
 
       try:
-        UserMessage( 'Dict: {}'.format( str( mapping ) ), persist = True )
         s = string.Template( s ).substitute( mapping, **kwargs )
         break
       except KeyError as e:
