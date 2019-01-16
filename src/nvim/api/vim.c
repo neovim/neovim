@@ -93,7 +93,7 @@ void nvim_command(String command, Error *err)
 /// @return void
 /// @see $NVIM_LOG_FILE
 void nvim_log(String log_level, Array lines, Dictionary opt, Error *err)
-  FUNC_API_SINCE(5)
+  FUNC_API_SINCE(6)
 {
   // nothing to do when lines is empty
   if (lines.size < 1) {
