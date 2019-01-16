@@ -2684,7 +2684,7 @@ win_line (
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
                   text_sign = buf_getsigntype_ext(wp->w_buffer, lnum, SIGN_TEXT,
-                                                  sign_idx);
+                                                  sign_idx, count);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
                       int symbol_blen = (int)STRLEN(p_extra);

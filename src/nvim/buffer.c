@@ -5196,16 +5196,24 @@ linenr_T buf_change_sign_type(
     return (linenr_T)0;
 }
 
+#define MAX_SIGN_MATCHES 9
+
 /// Gets a sign from a given line.
-/// In case of multiple signs, returns the most recently placed one.
 ///
 /// @param buf Buffer in which to search
 /// @param lnum Line in which to search
 /// @param type Type of sign to look for
-/// @return Identifier of the first matching sign, or 0
-int buf_getsigntype_ext(buf_T *buf, linenr_T lnum, SignType type, int idx)
+/// @param idx if there multiple signs, this index will pick the n-th
+//          out of the most `max_signs` sorted ascending by Id.
+/// @param max_signs the number of signs, with priority for the ones
+//         with the highest Ids.
+/// @return Identifier of the matching sign, or 0
+int buf_getsigntype_ext(buf_T *buf, linenr_T lnum, SignType type,
+                        int idx, int max_signs)
 {
     signlist_T *sign;  // a sign in a b_signlist
+    signlist_T *matches[MAX_SIGN_MATCHES];
+    int nr_matches = 0;
 
     for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
         if (sign->lnum == lnum
@@ -5217,20 +5225,30 @@ int buf_getsigntype_ext(buf_T *buf, linenr_T lnum, SignType type, int idx)
                     || (type == SIGN_NUMHL
                         && sign_get_attr(sign->typenr, SIGN_NUMHL) != 0))) {
 
-            if (idx > 0) {
-                idx--;
-                continue;
-            }
+            matches[nr_matches] = sign;
+            nr_matches++;
 
-            return sign->typenr;
+            if (nr_matches == MAX_SIGN_MATCHES)
+                break;
         }
     }
+
+    if (nr_matches > 0) {
+        if (nr_matches > max_signs)
+            idx += nr_matches - max_signs;
+
+        if (idx >= nr_matches)
+            return 0;
+
+        return matches[idx]->typenr;
+    }
+
     return 0;
 }
 
 int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type)
 {
-    return buf_getsigntype_ext(buf, lnum, type, 0);
+    return buf_getsigntype_ext(buf, lnum, type, 0, 1);
 }
 
 linenr_T buf_delsign(
