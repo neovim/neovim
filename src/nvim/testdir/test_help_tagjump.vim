@@ -28,9 +28,9 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*quotestar\*')
   helpclose
 
-  help sp?it
+  help ch?ckhealth
   call assert_equal("help", &filetype)
-  call assert_true(getline('.') =~ '\*'.(has('win32') ? 'split()' : ':split').'\*')
+  call assert_true(getline('.') =~ '\*:checkhealth\*')
   helpclose
 
   help :?

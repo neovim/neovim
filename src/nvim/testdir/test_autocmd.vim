@@ -18,6 +18,8 @@ func Test_vim_did_enter()
 endfunc
 
 if has('timers')
+  source load.vim
+
   func ExitInsertMode(id)
     call feedkeys("\<Esc>")
   endfunc
@@ -29,7 +31,7 @@ if has('timers')
     let g:triggered = 0
     au CursorHoldI * let g:triggered += 1
     set updatetime=20
-    call timer_start(100, 'ExitInsertMode')
+    call timer_start(LoadAdjust(100), 'ExitInsertMode')
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     au! CursorHoldI
@@ -40,7 +42,7 @@ if has('timers')
     let g:triggered = 0
     au CursorHoldI * let g:triggered += 1
     set updatetime=20
-    call timer_start(100, 'ExitInsertMode')
+    call timer_start(LoadAdjust(100), 'ExitInsertMode')
     " CursorHoldI does not trigger after CTRL-X
     call feedkeys("a\<C-X>", 'x!')
     call assert_equal(0, g:triggered)
