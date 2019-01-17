@@ -307,6 +307,10 @@ not always (or not completely).
 }
 ```
 
+* TCL (TclProDebug)
+
+See [my fork of TclProDebug](https://github.com/puremourning/TclProDebug) for instructions.
+
 Also the mock debugger, but that isn't actually useful.
 
 # Unsupported
