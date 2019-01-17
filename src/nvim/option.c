@@ -307,7 +307,7 @@ static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
-  "yes:9", NULL};
+  "yes:9", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -7123,18 +7123,18 @@ int win_signcol_count(win_T *wp)
   }
   needed_signcols = buf_get_needed_signcols(wp->w_buffer);
 
-  /* yes or yes: */
+  // yes or yes
   if (!strncmp(scl, "yes:", 4)) {
-    /* Fixed amount of columns */
+    // Fixed amount of columns
     return scl[4] - '0';
   }
   if (*scl == 'y') {
     return 1;
   }
 
-  /* auto or auto:<NUM> */
+  // auto or auto:<NUM>
   if (!strncmp(scl, "auto:", 5)) {
-    /* Variable depending on a configuration */
+    // Variable depending on a configuration
     maximum = scl[5] - '0';
   }
 
