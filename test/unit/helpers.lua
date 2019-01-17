@@ -865,7 +865,7 @@ local module = {
   ptr2key = ptr2key,
   debug_log = debug_log,
 }
-module = global_helpers.map_extend('error', module, global_helpers)
+module = global_helpers.tbl_extend('error', module, global_helpers)
 return function()
   return module
 end

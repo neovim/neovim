@@ -1,4 +1,5 @@
 require('vim.compat')
+local shared = require('vim.shared')
 local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
@@ -435,34 +436,6 @@ local function concat_tables(...)
   return ret
 end
 
--- Concat map-like tables.
---
--- behavior: Decides what to do if a key is found in more than one map:
---           "error": raise an error
---           "keep":  skip
---           "force": set the item again
-local function map_extend(behavior, ...)
-  if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
-    error('invalid "behavior": '..tostring(behavior))
-  end
-  local ret = {}
-  for i = 1, select('#', ...) do
-    local tbl = select(i, ...)
-    if tbl then
-      for k, v in pairs(tbl) do
-        if behavior ~= 'force' and ret[k] ~= nil then
-          if behavior == 'error' then
-            error('key found in more than one map: '..k)
-          end  -- Else behavior is "keep".
-        else
-          ret[k] = v
-        end
-      end
-    end
-  end
-  return ret
-end
-
 local function dedent(str, leave_indent)
   -- find minimum common indent across lines
   local indent = nil
@@ -801,7 +774,6 @@ local module = {
   intchar2lua = intchar2lua,
   isCI = isCI,
   map = map,
-  map_extend = map_extend,
   matches = matches,
   mergedicts_copy = mergedicts_copy,
   near = near,
@@ -816,6 +788,7 @@ local module = {
   shallowcopy = shallowcopy,
   sleep = sleep,
   table_contains = table_contains,
+  tbl_extend = shared.tbl_extend,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
@@ -823,6 +796,6 @@ local module = {
   which = which,
   write_file = write_file,
 }
-module = map_extend('error', module, Paths)
+module = shared.tbl_extend('error', module, Paths)
 
 return module

@@ -846,7 +846,7 @@ local module = {
   window = window,
   winmeths = winmeths,
 }
-module = global_helpers.map_extend('error', module, global_helpers)
+module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then
