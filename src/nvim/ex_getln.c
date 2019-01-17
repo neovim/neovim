@@ -3393,14 +3393,11 @@ void cmdline_paste_str(char_u *s, int literally)
     }
 }
 
-/*
- * Delete characters on the command line, from "from" to the current
- * position.
- */
+/// Delete characters on the command line, from "from" to the current position.
 static void cmdline_del(int from)
 {
   memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
-      (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+          (size_t)ccline.cmdlen - ccline.cmdpos + 1);
   ccline.cmdlen -= ccline.cmdpos - from;
   ccline.cmdpos = from;
 }
@@ -3661,8 +3658,8 @@ nextwild (
       xp->xp_pattern = ccline.cmdbuff + i;
     }
     memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
-        &ccline.cmdbuff[ccline.cmdpos],
-        (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+            &ccline.cmdbuff[ccline.cmdpos],
+            (size_t)ccline.cmdlen - ccline.cmdpos + 1);
     memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
     ccline.cmdlen += difflen;
     ccline.cmdpos += difflen;
@@ -4705,7 +4702,7 @@ ExpandFromContext (
     return ret;
   }
 
-  *file = (char_u **)"";
+  *file = NULL;
   *num_file = 0;
   if (xp->xp_context == EXPAND_HELP) {
     /* With an empty argument we would get all the help tags, which is

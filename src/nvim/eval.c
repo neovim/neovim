@@ -19902,13 +19902,15 @@ void ex_function(exarg_T *eap)
           if (FUNCLINE(fp, j) == NULL)
             continue;
           msg_putchar('\n');
-          msg_outnum((long)(j + 1));
-          if (j < 9)
+          msg_outnum((long)j + 1);
+          if (j < 9) {
             msg_putchar(' ');
-          if (j < 99)
+          }
+          if (j < 99) {
             msg_putchar(' ');
-          msg_prt_line(FUNCLINE(fp, j), FALSE);
-          ui_flush();                  /* show a line at a time */
+          }
+          msg_prt_line(FUNCLINE(fp, j), false);
+          ui_flush();                  // show a line at a time
           os_breakcheck();
         }
         if (!got_int) {

@@ -4895,7 +4895,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
     }
   }
 
-  *matches = (char_u **)"";
+  *matches = NULL;
   *num_matches = 0;
   int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
   if (keep_lang) {
