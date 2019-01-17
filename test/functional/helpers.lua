@@ -1,4 +1,3 @@
-require('vim.compat')
 require('coxpcall')
 local luv = require('luv')
 local lfs = require('lfs')
