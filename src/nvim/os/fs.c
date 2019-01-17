@@ -258,21 +258,18 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
     if (!pathext) {
       pathext = ".com;.exe;.bat;.cmd";
     }
-    bool ok = (is_extension_executable((char *)name)
-               && is_executable((char *)name))
-               || is_executable_ext((char *)name, pathext);
+    if ((is_extension_executable((char *)name)
+         && is_executable((char *)name, abspath))
+        || is_executable_ext((char *)name, pathext, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
-    const bool ok = ((const char_u *)gettail_dir((const char *)name) != name
-                     && is_executable((char *)name));
+    if ((const char_u *)gettail_dir((const char *)name) != name
+        && is_executable((char *)name, abspath)) {
 #endif
-    if (ok) {
-      if (abspath != NULL) {
-        *abspath = save_abs_path(name);
-      }
       return true;
+    } else {
+      return false;
     }
-    return false;
   }
 
   return is_executable_in_path(name, abspath);
@@ -341,8 +338,8 @@ static bool is_extension_executable(const char *name)
 #endif
 
 /// Returns true if `name` is an executable file.
-static bool is_executable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
+static bool is_executable(const char *name, char_u **abspath)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int32_t mode = os_getperm((const char *)name);
 
@@ -353,21 +350,28 @@ static bool is_executable(const char *name)
 #ifdef WIN32
   // Windows does not have exec bit; just check if the file exists and is not
   // a directory.
-  return (S_ISREG(mode));
+  const bool ok = S_ISREG(mode);
 #else
   int r = -1;
   if (S_ISREG(mode)) {
     RUN_UV_FS_FUNC(r, uv_fs_access, name, X_OK, NULL);
   }
-  return (r == 0);
+  const bool ok = (r == 0);
 #endif
+  if (ok) {
+    if (abspath != NULL) {
+      *abspath = save_abs_path((char_u *)name);
+    }
+    return true;
+  }
+  return false;
 }
 
 #ifdef WIN32
 /// Appends file extensions from `pathext` to `name` and returns true if any
 /// such combination is executable.
-static bool is_executable_ext(char *name, const char *pathext)
-  FUNC_ATTR_NONNULL_ALL
+static bool is_executable_ext(char *name, const char *pathext, char_u **abspath)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   xstrlcpy(os_buf, name, sizeof(os_buf));
   char *buf_end = xstrchrnul(os_buf, '\0');
@@ -381,7 +385,7 @@ static bool is_executable_ext(char *name, const char *pathext)
     const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
     STRLCPY(buf_end, ext, ext_end - ext + 1);
 
-    if (is_executable(os_buf)) {
+    if (is_executable(os_buf, abspath)) {
       return true;
     }
 
@@ -441,16 +445,11 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     append_path(buf, (char *)name, buf_len);
 
 #ifdef WIN32
-    bool ok = (is_extension_executable(buf) && is_executable(buf))
-               || is_executable_ext(buf, pathext);
+    if ((is_extension_executable(buf) && is_executable(buf, abspath))
+        || is_executable_ext(buf, pathext, abspath)) {
 #else
-    bool ok = is_executable(buf);
+    if (is_executable(buf, abspath)) {
 #endif
-    if (ok) {
-      if (abspath != NULL) {  // Caller asked for a copy of the path.
-        *abspath = save_abs_path((char_u *)buf);
-      }
-
       rv = true;
       goto end;
     }
