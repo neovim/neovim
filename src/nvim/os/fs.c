@@ -258,8 +258,9 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
     if (!pathext) {
       pathext = ".com;.exe;.bat;.cmd";
     }
-    bool ok = is_executable((char *)name) || is_executable_ext((char *)name,
-                                                               pathext);
+    bool ok = (is_extension_executable((char *)name)
+               && is_executable((char *)name))
+               || is_executable_ext((char *)name, pathext);
 #else
     // Must have path separator, cannot execute files in the current directory.
     const bool ok = ((const char_u *)gettail_dir((const char *)name) != name
@@ -276,6 +277,68 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 
   return is_executable_in_path(name, abspath);
 }
+
+#ifdef WIN32
+/// Returns true if extension of `name` is executalbe file exteinsion.
+static bool is_extension_executable(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Don't check extensions, when a Unix-shell like 'shell'.
+  const char_u *shell_end = p_sh + STRLEN(p_sh);
+  while (true) {
+    if (*shell_end == '.') {
+      break;
+    } else if (shell_end == p_sh
+               || (*shell_end == '/' || *shell_end == '\\')) {
+      shell_end = p_sh + STRLEN(p_sh);
+      break;
+    }
+    shell_end--;
+  }
+  if (mb_strnicmp(shell_end - 2, (const char_u  *)"sh", 2) == 0) {
+    return true;
+  }
+
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+  const char *ext_pos = name + STRLEN(name) - 1;
+  while (name != ext_pos) {
+    if (*ext_pos == '\\' || *ext_pos == '/') {
+      ext_pos = name;
+      break;
+    }
+    if (*ext_pos == '.') {
+      break;
+    }
+    ext_pos--;
+  }
+
+  const char *cur_pos = pathext;
+  while (true) {
+    // Don't check extension, if $PATHEXT contain dot itself.
+    if (*cur_pos == '.'
+        && (*(cur_pos + 1) == ENV_SEPCHAR || *(cur_pos + 1) == NUL)) {
+      return true;
+    }
+    const char *ext_end = strchr(cur_pos, ENV_SEPCHAR);
+    size_t ext_len = ext_end ?
+      (size_t)(ext_end - cur_pos) :
+      (STRLEN(pathext) - (size_t)(cur_pos - pathext));
+    if (ext_pos != name && mb_strnicmp((const char_u *)ext_pos,
+                                       (const char_u *)cur_pos, ext_len) == 0) {
+      return true;
+    }
+    if (ext_end == NULL) {
+      break;
+    } else {
+      cur_pos = ++ext_end;
+    }
+  }
+  return false;
+}
+#endif
 
 /// Returns true if `name` is an executable file.
 static bool is_executable(const char *name)
@@ -378,7 +441,8 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     append_path(buf, (char *)name, buf_len);
 
 #ifdef WIN32
-    bool ok = is_executable(buf) || is_executable_ext(buf, pathext);
+    bool ok = (is_extension_executable(buf) && is_executable(buf))
+               || is_executable_ext(buf, pathext);
 #else
     bool ok = is_executable(buf);
 #endif
