@@ -1267,7 +1267,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   }
 
   *num_file = ga.ga_len;
-  *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : &vim_emptystr;
+  *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : NULL;
 
   recursive = false;
 

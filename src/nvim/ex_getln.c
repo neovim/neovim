@@ -4702,7 +4702,7 @@ ExpandFromContext (
     return ret;
   }
 
-  *file = &vim_emptystr;
+  *file = NULL;
   *num_file = 0;
   if (xp->xp_context == EXPAND_HELP) {
     /* With an empty argument we would get all the help tags, which is
