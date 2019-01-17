@@ -1,3 +1,4 @@
+require('vim.compat')
 local helpers = require('test.unit.helpers')(nil)
 local eval_helpers = require('test.unit.eval.helpers')
 
@@ -114,8 +115,7 @@ local lua2obj_type_tab = {
                      api.xmalloc(len * ffi.sizeof('KeyValuePair'))),
     }})
     for i = 1, len do
-      local table_unpack = table.unpack or unpack  -- luacheck: compat
-      local key, val = table_unpack(kvs[i])
+      local key, val = unpack(kvs[i])
       dct.data.dictionary.items[i - 1] = ffi.new(
           'KeyValuePair', {key=ffi.gc(lua2obj(key), nil).data.string,
                            value=ffi.gc(lua2obj(val), nil)})
