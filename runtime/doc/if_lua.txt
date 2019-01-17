@@ -148,6 +148,66 @@ lua/charblob.lua: >
 	  encode = charblob_encode,
 	}
 
+------------------------------------------------------------------------------
+The plugin table                                             *lua-plugin_table*
+
+To create a new plugin, call |vim.helpers.new_plugin|, passing the plugin
+name. It returns a table representing the plugin, containing some information
+on the plugin and some methods on the plugin table itself.
+
+Information in the plugin table                  *lua-plugin_table_information*
+    
+    Key:~
+    `ns`   The namespace for the addon. It is uniquely identified by the name 
+         given when calling |vim.helpers.new_plugin|. Don't change it, and don't
+         make assumptions about its type.
+    `name` The name of the plugin, as passed to |vim.helpers.new_plugin|.
+
+Methods in the plugin table                      *lua-plugin_table_functions*
+
+plugin:map({keys}, {fn})                                     *lua-plugin:map*
+	Provides an interface to |map-cmd|. Note the mode-agnostic nature. If
+	you want to provide functionality only for certain modes, check
+	for the mode in the function body. Otherwise, use
+	|lua-plugin:map_table|.
+
+	Parameters:~
+	  {keys} String. The keys to be mapped.
+	  {fn}   Function. The lua function to be executed by the keys.
+
+plugin:map({args})                                     *lua-plugin:map_table*
+	Provides an interface to |map|.
+
+	Parameters:~
+	  {args} Table. Mandatory keys are `keys` and `fn` as in
+	         |lua-plugin:map|. Optionally, set any of `buffer`, `nowait`,
+		 `silent` or `unique` to `true` to use it as a special
+		 argument as in |:map-arguments|. You can set `recursive` to
+		 `true` to get a recursive mapping. Set `mode` to the mode
+		 you want the mapping to work in (use `n` for normal, `v` for
+		 visual, `s` for select, `o` for operator-pending, `i for
+		 insert, `c` for command-line, `l` for a language mapping, `t`
+		 for terminal, or the combinations `nvos`, `vs`, `ic`; trying
+		 a descriptive name for single modes might also work). Set
+		 `is_cmd` to `false` explicitely to disable creating a command
+		 mapping.
+
+plugin:unmap({keys}, {mode})                                       *lua-plugin:unmap*
+	Provides an interface to |:unmap|. Only keys having been mapped from
+	this plugin via |lua-plugin:map| can be unmapped.
+
+	Parameters:~
+	  {keys} The keys to be unmapped.
+	  {mode} String, optional. The mode to unmap the keys in. Possible
+	         values as described in |lua-plugin:map_table|.
+
+	Return:~
+	  A table containing tables with 2 entries. The first entry of each
+	  such subtable is a char representing the mode, the second is the
+	  function that was mapped for this mode. Returns `nil` if unmapping
+	  did not work (that is, they keys haven't been mapped from this
+	  plugin before).
+
 ==============================================================================
 Commands						*lua-commands*
 
@@ -293,7 +353,20 @@ vim.types						*lua-vim.types*
 	values corresponding to `vim.types.float`, `vim.types.array` and 
 	`vim.types.dictionary` will not change or that `vim.types` table will 
 	only contain values for these three types.
+------------------------------------------------------------------------------
+vim.helpers.* helper functions
 
+This modules provides lua-only helper functions to assist in writing lua
+plugins.
+
+vim.helpers.new_plugin({string})                        *vim.helpers.new_plugin*
+	Declare a new plugin namespace.	
+
+	Parameters:~
+		{string}  The name of the plugin
+
+	Return:~
+	        A table representing the plugin. See |lua-plugin_table|.
 ==============================================================================
 The luaeval function					*lua-luaeval* *lua-eval*
 							*luaeval()*
