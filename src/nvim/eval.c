@@ -19593,7 +19593,7 @@ void ex_echo(exarg_T *eap)
         msg_puts_attr(" ", echo_attr);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      msg_echo_show(tofree, echo_attr);
+      msg_multiline_attr(tofree, echo_attr);
       xfree(tofree);
     }
     tv_clear(&rettv);
