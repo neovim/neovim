@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call, iswin, write_file =
-  helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file
+local eq, clear, call, iswin, write_file, command =
+  helpers.eq, helpers.clear, helpers.call, helpers.iswin, helpers.write_file,
+  helpers.command
 
 describe('executable()', function()
   before_each(clear)
@@ -48,18 +49,17 @@ describe('executable()', function()
     end)
 
     it('not set', function()
-      local expected = iswin() and 1 or 0
-      eq(expected, call('executable', 'Xtest_not_executable'))
-      eq(expected, call('executable', './Xtest_not_executable'))
+      eq(0, call('executable', 'Xtest_not_executable'))
+      eq(0, call('executable', './Xtest_not_executable'))
     end)
 
     it('set, unqualified and not in $PATH', function()
-      local expected = iswin() and 1 or 0
-      eq(expected, call('executable', 'Xtest_executable'))
+      eq(0, call('executable', 'Xtest_executable'))
     end)
 
     it('set, qualified as a path', function()
-      eq(1, call('executable', './Xtest_executable'))
+      local expected = iswin() and 0 or 1
+      eq(expected, call('executable', './Xtest_executable'))
     end)
   end)
 end)
@@ -136,21 +136,62 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', '.\\test_executable_zzz'))
   end)
 
-  it('returns 1 for any existing filename', function()
+  it('returns 1 for any existing filename, when a Unix-shell like \'shell\'', function()
     clear({env={PATHEXT=''}})
+    command('set shell=sh')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
     end
     eq(1, call('executable', 'test_executable_zzz.zzz'))
   end)
 
-  it('returns 1 for any existing path (backslashes)', function()
+  it('returns 1 for any existing path, when a Unix-shell like \'shell\' (backslashes)', function()
     clear({env={PATHEXT=''}})
+    command('set shell=bash.exe')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
       eq(1, call('executable', './test_executable_'..ext..'.'..ext))
     end
     eq(1, call('executable', '.\\test_executable_zzz.zzz'))
     eq(1, call('executable', './test_executable_zzz.zzz'))
+  end)
+
+  it('returns 1 for any existing filename, when $PATHEXT contain dot itself', function()
+    clear({env={PATHEXT='.;.zzz'}})
+    command('set shell=sh')
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+    clear({env={PATHEXT='.zzz;.'}})
+    command('set shell=sh')
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+  end)
+
+  it('returns 1 for any existing path, when $PATHEXT contain dot itself (backslashes)', function()
+    clear({env={PATHEXT='.;.zzz'}})
+    command('set shell=bash.exe')
+    for _,ext in ipairs(exts) do
+      eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
+      eq(1, call('executable', './test_executable_'..ext..'.'..ext))
+    end
+    eq(1, call('executable', '.\\test_executable_zzz.zzz'))
+    eq(1, call('executable', './test_executable_zzz.zzz'))
+  end)
+
+  it('ignore case of extension', function()
+    clear({env={PATHEXT='.ZZZ'}})
+    eq(1, call('executable', 'test_executable_zzz.zzz'))
+  end)
+
+  it('file is not found by relative path from $PATH', function()
+    clear({env={PATHEXT=''}})
+    eq(0, call('executable', './System32/notepad.exe'))
+    eq(0, call('executable', '.\\System32\\notepad.exe'))
+    eq(0, call('executable', '../notepad.exe'))
+    eq(0, call('executable', '..\\notepad.exe'))
   end)
 end)

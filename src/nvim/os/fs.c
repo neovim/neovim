@@ -276,7 +276,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 }
 
 #ifdef WIN32
-/// Returns true if extension of `name` is executalbe file exteinsion.
+/// Returns true if extension of `name` is executable file exteinsion.
 static bool is_extension_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
