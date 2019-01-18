@@ -1737,8 +1737,8 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
 /// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
 static void write_msg(String message, bool to_err)
 {
-  static size_t out_pos = 0, err_pos = 0;
-  static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
+  static size_t out_pos = 0;
+  static char out_line_buf[LINE_BUFFER_SIZE];
 
 #define PUSH_CHAR(i, pos, line_buf, msg) \
   if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
@@ -1751,10 +1751,13 @@ static void write_msg(String message, bool to_err)
   line_buf[pos++] = message.data[i];
 
   ++no_wait_return;
-  for (uint32_t i = 0; i < message.size; i++) {
-    if (to_err) {
-      PUSH_CHAR(i, err_pos, err_line_buf, emsg);
-    } else {
+  if (to_err) {
+    // Do not split error messages up into separate lines because then v:errmsg will only
+    // be populated with the first line
+    emsg(message.data);
+  }
+  else {
+    for (uint32_t i = 0; i < message.size; i++) {
       PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
   }
