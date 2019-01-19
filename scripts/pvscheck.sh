@@ -371,7 +371,7 @@ run_analysis() {(
       --output-file PVS-studio.log \
       --verbose \
       --file build/compile_commands.json \
-    || true
+      --sourcetree-root . || true
 
   rm -rf PVS-studio.{xml,err,tsk,html.d}
   local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011"
