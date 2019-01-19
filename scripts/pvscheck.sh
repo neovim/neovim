@@ -371,10 +371,10 @@ run_analysis() {(
       --output-file PVS-studio.log \
       --verbose \
       --file build/compile_commands.json \
-      --sourcetree-root . || true
+    || true
 
   rm -rf PVS-studio.{xml,err,tsk,html.d}
-  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011 --exclude-path stddef.h --exclude-path stdarg.h"
+  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011"
   plog-converter $plog_args --renderTypes xml       --output PVS-studio.xml
   plog-converter $plog_args --renderTypes errorfile --output PVS-studio.err
   plog-converter $plog_args --renderTypes tasklist  --output PVS-studio.tsk
@@ -472,8 +472,6 @@ main() {
     help
     return 0
   fi
-
-  # set -x
 
   if test -n "$patch" ; then
     patch_sources "$tgt" "$only_build"
