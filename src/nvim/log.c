@@ -12,6 +12,7 @@
 #endif
 #include <uv.h>
 
+#include "auto/config.h"
 #include "nvim/log.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
