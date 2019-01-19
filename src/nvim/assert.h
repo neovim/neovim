@@ -137,7 +137,12 @@
 ///            Not used if compiler supports __builtin_add_overflow.
 #ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_ADD(a, b, c, t) \
-  do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
+  do { \
+    if (__builtin_add_overflow(a, b, c)) { \
+      ELOG("STRICT_ADD overflow"); \
+      abort(); \
+    } \
+  } while (0)
 #else
 # define STRICT_ADD(a, b, c, t) \
   do { *(c) = (t)(a + b); } while (0)
@@ -147,7 +152,12 @@
 /// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
 #ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_SUB(a, b, c, t) \
-  do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
+  do { \
+    if (__builtin_sub_overflow(a, b, c)) { \
+      ELOG("STRICT_SUB overflow"); \
+      abort(); \
+    } \
+  } while (0)
 #else
 # define STRICT_SUB(a, b, c, t) \
   do { *(c) = (t)(a - b); } while (0)
