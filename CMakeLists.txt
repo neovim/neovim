@@ -456,22 +456,6 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD|Windows")  # see #5318
-  message(STATUS "skipping jemalloc on this system: ${CMAKE_SYSTEM_NAME}")
-  option(ENABLE_JEMALLOC "enable jemalloc" OFF)
-else()
-  option(ENABLE_JEMALLOC "enable jemalloc" ON)
-endif()
-
-if(ENABLE_JEMALLOC)
-  if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
-    message(STATUS "Sanitizers enabled; disabling jemalloc")
-  else()
-    find_package(JeMalloc REQUIRED)
-    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
-  endif()
-endif()
-
 if(ENABLE_LIBINTL)
   # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
   find_package(LibIntl REQUIRED)
