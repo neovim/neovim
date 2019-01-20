@@ -394,9 +394,8 @@ EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
 EXTERN buf_T *au_pending_free_buf INIT(= NULL);
 EXTERN win_T *au_pending_free_win INIT(= NULL);
 
-/*
- * Mouse coordinates, set by check_termcode()
- */
+// Mouse coordinates, set by handle_mouse_event()
+EXTERN int mouse_grid;
 EXTERN int mouse_row;
 EXTERN int mouse_col;
 EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */

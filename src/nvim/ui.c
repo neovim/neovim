@@ -454,5 +454,6 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
 
   wp->w_grid.requested_rows = (int)height;
   wp->w_grid.requested_cols = (int)width;
+  win_inner_width_changed(wp);
   redraw_win_later(wp, SOME_VALID);
 }

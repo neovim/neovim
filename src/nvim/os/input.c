@@ -236,6 +236,53 @@ size_t input_enqueue(String keys)
   return rv;
 }
 
+static uint8_t check_multiclick(int code, int grid, int row, int col)
+{
+  static int orig_num_clicks = 0;
+  static int orig_mouse_code = 0;
+  static int orig_mouse_grid = 0;
+  static int orig_mouse_col = 0;
+  static int orig_mouse_row = 0;
+  static uint64_t orig_mouse_time = 0;  // time of previous mouse click
+
+  if (code == KE_LEFTRELEASE || code == KE_RIGHTRELEASE
+      || code == KE_MIDDLERELEASE) {
+    return 0;
+  }
+  uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+
+  // compute the time elapsed since the previous mouse click and
+  // convert p_mouse from ms to ns
+  uint64_t timediff = mouse_time - orig_mouse_time;
+  uint64_t mouset = (uint64_t)p_mouset * 1000000;
+  if (code == orig_mouse_code
+      && timediff < mouset
+      && orig_num_clicks != 4
+      && orig_mouse_grid == grid
+      && orig_mouse_col == col
+      && orig_mouse_row == row) {
+    orig_num_clicks++;
+  } else {
+    orig_num_clicks = 1;
+  }
+  orig_mouse_code = code;
+  orig_mouse_grid = grid;
+  orig_mouse_col = col;
+  orig_mouse_row = row;
+  orig_mouse_time = mouse_time;
+
+  uint8_t modifiers = 0;
+  if (orig_num_clicks == 2) {
+    modifiers |= MOD_MASK_2CLICK;
+  } else if (orig_num_clicks == 3) {
+    modifiers |= MOD_MASK_3CLICK;
+  } else if (orig_num_clicks == 4) {
+    modifiers |= MOD_MASK_4CLICK;
+  }
+  return modifiers;
+}
+
+
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)
 static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
@@ -274,48 +321,16 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
       if (row >= Rows) {
         row = (int)Rows - 1;
       }
+      mouse_grid = 0;
       mouse_row = row;
       mouse_col = col;
     }
     *ptr += advance;
   }
 
-  static int orig_num_clicks = 0;
-  if (mouse_code != KE_LEFTRELEASE && mouse_code != KE_RIGHTRELEASE
-      && mouse_code != KE_MIDDLERELEASE) {
-      static int orig_mouse_code = 0;
-      static int orig_mouse_col = 0;
-      static int orig_mouse_row = 0;
-      static uint64_t orig_mouse_time = 0;  // time of previous mouse click
-      uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+  uint8_t modifiers = check_multiclick(mouse_code, mouse_grid,
+                                       mouse_row, mouse_col);
 
-      // compute the time elapsed since the previous mouse click and
-      // convert p_mouse from ms to ns
-      uint64_t timediff = mouse_time - orig_mouse_time;
-      uint64_t mouset = (uint64_t)p_mouset * 1000000;
-      if (mouse_code == orig_mouse_code
-          && timediff < mouset
-          && orig_num_clicks != 4
-          && orig_mouse_col == mouse_col
-          && orig_mouse_row == mouse_row) {
-        orig_num_clicks++;
-      } else {
-        orig_num_clicks = 1;
-      }
-      orig_mouse_code = mouse_code;
-      orig_mouse_col = mouse_col;
-      orig_mouse_row = mouse_row;
-      orig_mouse_time = mouse_time;
-  }
-
-  uint8_t modifiers = 0;
-  if (orig_num_clicks == 2) {
-    modifiers |= MOD_MASK_2CLICK;
-  } else if (orig_num_clicks == 3) {
-    modifiers |= MOD_MASK_3CLICK;
-  } else if (orig_num_clicks == 4) {
-    modifiers |= MOD_MASK_4CLICK;
-  }
 
   if (modifiers) {
     if (buf[1] != KS_MODIFIER) {
@@ -332,6 +347,30 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   }
 
   return bufsize;
+}
+
+size_t input_enqueue_mouse(int code, uint8_t modifier,
+                           int grid, int row, int col)
+{
+  modifier |= check_multiclick(code, grid, row, col);
+  uint8_t buf[7], *p = buf;
+  if (modifier) {
+    p[0] = K_SPECIAL;
+    p[1] = KS_MODIFIER;
+    p[2] = modifier;
+    p += 3;
+  }
+  p[0] = K_SPECIAL;
+  p[1] = KS_EXTRA;
+  p[2] = (uint8_t)code;
+
+  mouse_grid = grid;
+  mouse_row = row;
+  mouse_col = col;
+
+  size_t written = 3 + (size_t)(p-buf);
+  rbuffer_write(input_buffer, (char *)buf, written);
+  return written;
 }
 
 /// @return true if the main loop is blocked and waiting for input.
