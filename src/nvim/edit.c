@@ -473,6 +473,8 @@ static void insert_enter(InsertState *s)
     o_lnum = curwin->w_cursor.lnum;
   }
 
+  pum_check_clear();
+
   foldUpdateAfterInsert();
   // When CTRL-C was typed got_int will be set, with the result
   // that the autocommands won't be executed. When mapped got_int
@@ -1447,6 +1449,7 @@ ins_redraw (
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
+  pum_check_clear();
   if (must_redraw) {
     update_screen(0);
   } else if (clear_cmdline || redraw_cmdline) {
@@ -2490,20 +2493,10 @@ void set_completion(colnr_T startcol, list_T *list)
 static pumitem_T *compl_match_array = NULL;
 static int compl_match_arraysize;
 
+
 /*
  * Update the screen and when there is any scrolling remove the popup menu.
  */
-static void ins_compl_upd_pum(void)
-{
-  int h;
-
-  if (compl_match_array != NULL) {
-    h = curwin->w_cline_height;
-    update_screen(0);
-    if (h != curwin->w_cline_height)
-      ins_compl_del_pum();
-  }
-}
 
 /*
  * Remove any popup menu.
@@ -2511,7 +2504,7 @@ static void ins_compl_upd_pum(void)
 static void ins_compl_del_pum(void)
 {
   if (compl_match_array != NULL) {
-    pum_undisplay();
+    pum_undisplay(false);
     xfree(compl_match_array);
     compl_match_array = NULL;
   }
@@ -4305,17 +4298,14 @@ ins_compl_next (
   }
 
   if (!allow_get_expansion) {
-    /* may undisplay the popup menu first */
-    ins_compl_upd_pum();
-
-    /* redraw to show the user what was inserted */
+    // redraw to show the user what was inserted
     update_screen(0);
 
-    /* display the updated popup menu */
+    // display the updated popup menu
     ins_compl_show_pum();
 
-    /* Delete old text to be replaced, since we're still searching and
-     * don't want to match ourselves!  */
+    // Delete old text to be replaced, since we're still searching and
+    // don't want to match ourselves!
     ins_compl_delete();
   }
 
@@ -4862,8 +4852,6 @@ static int ins_complete(int c, bool enable_pum)
   save_w_leftcol = curwin->w_leftcol;
   n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
 
-  /* may undisplay the popup menu */
-  ins_compl_upd_pum();
 
   if (n > 1)            /* all matches have been found */
     compl_matches = n;
@@ -7939,7 +7927,6 @@ static void ins_mouse(int c)
 static void ins_mousescroll(int dir)
 {
   win_T *const old_curwin = curwin;
-  bool did_scroll = false;
   pos_T tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
@@ -7969,21 +7956,12 @@ static void ins_mousescroll(int dir)
     } else {
         mouse_scroll_horiz(dir);
     }
-    did_scroll = true;
   }
 
   curwin->w_redr_status = TRUE;
 
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
-
-  /* The popup menu may overlay the window, need to redraw it.
-   * TODO: Would be more efficient to only redraw the windows that are
-   * overlapped by the popup menu. */
-  if (pum_visible() && did_scroll) {
-    redraw_all_later(NOT_VALID);
-    ins_compl_show_pum();
-  }
 
   if (!equalpos(curwin->w_cursor, tpos)) {
     start_arrow(&tpos);

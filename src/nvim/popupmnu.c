@@ -42,6 +42,7 @@ static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
 static bool pum_is_visible = false;
+static bool pum_is_drawn = false;
 static bool pum_external = false;
 
 static ScreenGrid pum_grid = SCREEN_GRID_INIT;
@@ -88,6 +89,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     // Mark the pum as visible already here,
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
     pum_is_visible = true;
+    pum_is_drawn = true;
     validate_cursor_col();
     above_row = 0;
     below_row = cmdline_row;
@@ -730,6 +732,8 @@ static int pum_set_selected(int n, int repeat)
 
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
+            // TODO(bfredl): can simplify, get rid of the flag munging?
+            // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
             update_screen(0);
             pum_is_visible = true;
@@ -759,17 +763,27 @@ static int pum_set_selected(int n, int repeat)
 }
 
 /// Undisplay the popup menu (later).
-void pum_undisplay(void)
+void pum_undisplay(bool immediate)
 {
   pum_is_visible = false;
   pum_array = NULL;
 
-  if (pum_external) {
-    ui_call_popupmenu_hide();
-  } else {
-    ui_comp_remove_grid(&pum_grid);
-    // TODO(bfredl): consider the possibility of keeping float grids allocated.
-    grid_free(&pum_grid);
+  if (immediate) {
+    pum_check_clear();
+  }
+}
+
+void pum_check_clear(void)
+{
+  if (!pum_is_visible && pum_is_drawn) {
+    if (pum_external) {
+      ui_call_popupmenu_hide();
+    } else {
+      ui_comp_remove_grid(&pum_grid);
+      // TODO(bfredl): consider keeping float grids allocated.
+      grid_free(&pum_grid);
+    }
+    pum_is_drawn = false;
   }
 }
 
