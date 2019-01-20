@@ -2487,8 +2487,9 @@ void set_completion(colnr_T startcol, list_T *list)
 
 void update_completion(colnr_T startcol, list_T *list)
 {
-  // If already doing completions stop it.
+  // If already doing completions, fallback to complete().
   if (ctrl_x_mode == 0) {
+    set_completion(startcol, list);
     return;
   }
 
