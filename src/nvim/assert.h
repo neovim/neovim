@@ -145,7 +145,7 @@
   } while (0)
 #else
 # define STRICT_ADD(a, b, c, t) \
-  do { *(c) = (t)(a + b); } while (0)
+  do { *(c) = (t)((a) + (b)); } while (0)
 #endif
 
 /// @def STRICT_SUB
@@ -160,7 +160,7 @@
   } while (0)
 #else
 # define STRICT_SUB(a, b, c, t) \
-  do { *(c) = (t)(a - b); } while (0)
+  do { *(c) = (t)((a) - (b)); } while (0)
 #endif
 
 #endif  // NVIM_ASSERT_H

@@ -204,13 +204,12 @@ int set_indent(int size, int flags)
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
-    assert(orig_char_len + size - ind_done + line_len >= 0);
-    size_t n;  // = orig_char_len + size - ind_done + line_len
-    size_t n2;
-    STRICT_ADD(orig_char_len, size, &n, size_t);
-    STRICT_ADD(ind_done, line_len, &n2, size_t);
-    STRICT_SUB(n, n2, &n, size_t);
-    newline = xmalloc(n);
+    int newline_size;  // = orig_char_len + size - ind_done + line_len
+    STRICT_ADD(orig_char_len, size, &newline_size, int);
+    STRICT_SUB(newline_size, ind_done, &newline_size, int);
+    STRICT_ADD(newline_size, line_len, &newline_size, int);
+    assert(newline_size >= 0);
+    newline = xmalloc((size_t)newline_size);
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
