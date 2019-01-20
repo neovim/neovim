@@ -2499,7 +2499,8 @@ static void ins_compl_upd_pum(void)
 
   if (compl_match_array != NULL) {
     h = curwin->w_cline_height;
-    update_screen(0);
+    // Update the screen later, before drawing the popup menu over it.
+    pum_call_update_screen();
     if (h != curwin->w_cline_height)
       ins_compl_del_pum();
   }
@@ -2569,8 +2570,8 @@ void ins_compl_show_pum(void)
   /* Dirty hard-coded hack: remove any matchparen highlighting. */
   do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
 
-  /* Update the screen before drawing the popup menu over it. */
-  update_screen(0);
+  // Update the screen later, before drawing the popup menu over it.
+  pum_call_update_screen();
 
   if (compl_match_array == NULL) {
     array_changed = true;

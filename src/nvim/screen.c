@@ -161,7 +161,7 @@ static bool conceal_cursor_used = false;
 /*
  * Redraw the current window later, with update_screen(type).
  * Set must_redraw only if not already set to a higher value.
- * e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
+ * E.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
  */
 void redraw_later(int type)
 {

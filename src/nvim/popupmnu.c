@@ -31,6 +31,8 @@ static int pum_size;                // nr of items in "pum_array"
 static int pum_selected;            // index of selected item or -1
 static int pum_first = 0;           // index of top item
 
+static int call_update_screen = false;
+
 static int pum_height;              // nr of displayed pum items
 static int pum_width;               // width of displayed pum items
 static int pum_base_width;          // width of pum items base
@@ -42,6 +44,8 @@ static int pum_col;                 // left column of pum
 
 static bool pum_is_visible = false;
 static bool pum_external = false;
+
+static int pum_skip_redraw = false;     // skip redraw
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -333,6 +337,13 @@ void pum_redraw(void)
   int thumb_heigth = 1;
   int round;
   int n;
+
+  if (call_update_screen) {
+      call_update_screen = false;
+      pum_skip_redraw = true;
+      update_screen(0);
+      pum_skip_redraw = false;
+  }
 
   // Never display more than we have
   if (pum_first > pum_size - pum_height) {
@@ -711,6 +722,7 @@ static int pum_set_selected(int n, int repeat)
             pum_is_visible = false;
             update_screen(0);
             pum_is_visible = true;
+            call_update_screen = false;
           }
         }
       }
@@ -722,6 +734,30 @@ static int pum_set_selected(int n, int repeat)
   }
 
   return resized;
+}
+
+// Set a flag that when pum_redraw() is called it first calls update_screen().
+// This will avoid clearing and redrawing the popup menu, prevent flicker.
+void pum_call_update_screen()
+{
+    call_update_screen = true;
+
+    // Update the cursor position to be able to compute the popup menu
+    // position.  The cursor line length may have changed because of the
+    // inserted completion.
+    curwin->w_valid &= VALID_CROW|VALID_CHEIGHT;
+    validate_cursor();
+}
+
+// Return true if we are going to redraw the popup menu and the screen position
+// "row"/"col" is under the popup menu.
+int pum_under_menu(int row, int col)
+{
+    return pum_skip_redraw
+        && row >= pum_row
+        && row < pum_row + pum_height
+        && col >= pum_col - 1
+        && col < pum_col + pum_width;
 }
 
 /// Undisplay the popup menu (later).
