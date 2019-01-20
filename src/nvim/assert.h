@@ -1,6 +1,8 @@
 #ifndef NVIM_ASSERT_H
 #define NVIM_ASSERT_H
 
+#include "auto/config.h"
+
 // support static asserts (aka compile-time asserts)
 
 // some compilers don't properly support short-circuiting apparently, giving
@@ -133,9 +135,14 @@
 ///
 /// @param MAX Maximum value of the narrowest type of operand.
 ///            Not used if compiler supports __builtin_add_overflow.
-#if HAVE_BUILTIN_ADD_OVERFLOW
+#ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_ADD(a, b, c, t) \
-  do { if (__builtin_add_overflow(a, b, c)) { abort(); } } while (0)
+  do { \
+    if (__builtin_add_overflow(a, b, c)) { \
+      ELOG("STRICT_ADD overflow"); \
+      abort(); \
+    } \
+  } while (0)
 #else
 # define STRICT_ADD(a, b, c, t) \
   do { *(c) = (t)(a + b); } while (0)
@@ -143,9 +150,14 @@
 
 /// @def STRICT_SUB
 /// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
-#if HAVE_BUILTIN_ADD_OVERFLOW
+#ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_SUB(a, b, c, t) \
-  do { if (__builtin_sub_overflow(a, b, c)) { abort(); } } while (0)
+  do { \
+    if (__builtin_sub_overflow(a, b, c)) { \
+      ELOG("STRICT_SUB overflow"); \
+      abort(); \
+    } \
+  } while (0)
 #else
 # define STRICT_SUB(a, b, c, t) \
   do { *(c) = (t)(a - b); } while (0)
