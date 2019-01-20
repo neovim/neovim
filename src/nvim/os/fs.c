@@ -254,10 +254,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 
   if (no_path) {
 #ifdef WIN32
-    const char *pathext = os_getenv("PATHEXT");
-    if (!pathext) {
-      pathext = ".com;.exe;.bat;.cmd";
-    }
+    const char *pathext = get_pathext();
     if ((is_extension_executable((char *)name)
          && is_executable((char *)name, abspath))
         || is_executable_ext((char *)name, pathext, abspath)) {
@@ -276,6 +273,15 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 }
 
 #ifdef WIN32
+static const char *get_pathext(void)
+{
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+  return pathext;
+}
+
 /// Returns true if extension of `name` is executable file exteinsion.
 static bool is_extension_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
@@ -296,10 +302,7 @@ static bool is_extension_executable(const char *name)
     return true;
   }
 
-  const char *pathext = os_getenv("PATHEXT");
-  if (!pathext) {
-    pathext = ".com;.exe;.bat;.cmd";
-  }
+  const char *pathext = get_pathext();
   const char *ext_pos = name + STRLEN(name) - 1;
   while (name != ext_pos) {
     if (*ext_pos == '\\' || *ext_pos == '/') {
@@ -424,10 +427,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
   size_t buf_len = STRLEN(name) + strlen(path) + 2;
 
 #ifdef WIN32
-  const char *pathext = os_getenv("PATHEXT");
-  if (!pathext) {
-    pathext = ".com;.exe;.bat;.cmd";
-  }
+  const char *pathext = get_pathext();
   buf_len += strlen(pathext);
 #endif
 
