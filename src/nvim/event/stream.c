@@ -11,6 +11,9 @@
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
 #include "nvim/event/stream.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/stream.c.generated.h"
@@ -19,10 +22,6 @@
 // For compatbility with libuv < 1.19.0 (tested on 1.18.0)
 #if UV_VERSION_MINOR < 19
 #define uv_stream_get_write_queue_size(stream) stream->write_queue_size
-#endif
-
-#ifndef ENABLE_VIRTUAL_TERMINAL_INPUT
-# define ENABLE_VIRTUAL_TERMINAL_INPUT 0x0200
 #endif
 
 /// Sets the stream associated with `fd` to "blocking" mode.
