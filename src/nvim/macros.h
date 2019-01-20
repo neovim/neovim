@@ -1,6 +1,10 @@
 #ifndef NVIM_MACROS_H
 #define NVIM_MACROS_H
 
+#include <math.h>
+
+#include "auto/config.h"
+
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.
 #ifndef EXTERN
@@ -17,6 +21,23 @@
 #endif
 #ifndef MAX
 # define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#endif
+
+#if defined(__clang__) && __clang__ == 1 && __clang_major__ >= 6 \
+    && defined(HAVE___FPCLASSIFY)
+// Workaround glibc + Clang 6+ bug. #8274
+// https://bugzilla.redhat.com/show_bug.cgi?id=1472437
+# define xfpclassify __fpclassify
+# define xisnan __isnan
+# define xisinf __isinf
+#elif defined(__MINGW32__)
+// Workaround mingw warning. #7863
+# define xfpclassify __fpclassify
+# define xisnan _isnan
+#else
+# define xfpclassify fpclassify
+# define xisnan isnan
+# define xisinf isinf
 #endif
 
 /// String with length

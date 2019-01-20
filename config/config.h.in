@@ -71,5 +71,6 @@
 
 #cmakedefine HAVE_EXECINFO_BACKTRACE
 #cmakedefine HAVE_BUILTIN_ADD_OVERFLOW
+#cmakedefine HAVE___FPCLASSIFY
 
 #endif  // AUTO_CONFIG_H
