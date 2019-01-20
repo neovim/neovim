@@ -33,6 +33,9 @@
 #include "nvim/os/os.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/tty.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
@@ -1015,8 +1018,22 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
+#ifdef WIN32
+    // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // libuv. For this reason, vtp (vterm) state of libuv is temporarily
+    // disabled because the control sequence needs to be processed by libuv
+    // instead of Windows vtp.
+    // ref. https://docs.microsoft.com/en-us/windows/console/setconsolemode
+    flush_buf(ui);
+    os_set_vtp(false);
+#endif
     unibi_out_ext(ui, data->unibi_ext.enable_mouse);
     data->mouse_enabled = true;
+#ifdef WIN32
+    flush_buf(ui);
+    os_set_vtp(true);
+#endif
   }
 }
 
@@ -1024,8 +1041,22 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
+#ifdef WIN32
+    // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // libuv. For this reason, vtp (vterm) state of libuv is temporarily
+    // disabled because the control sequence needs to be processed by libuv
+    // instead of Windows vtp.
+    // ref. https://docs.microsoft.com/en-us/windows/console/setconsolemode
+    flush_buf(ui);
+    os_set_vtp(false);
+#endif
     unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
+#ifdef WIN32
+    flush_buf(ui);
+    os_set_vtp(true);
+#endif
   }
 }
 
