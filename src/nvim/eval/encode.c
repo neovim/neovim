@@ -19,6 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
+#include "nvim/math.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/charset.h"  // vim_isprintc()

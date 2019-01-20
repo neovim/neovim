@@ -27,6 +27,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"

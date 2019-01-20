@@ -258,19 +258,6 @@ int main(void)
 }
 " HAVE_BUILTIN_ADD_OVERFLOW)
 
-set(CMAKE_REQUIRED_LIBRARIES m)
-check_c_source_compiles("
-#include <math.h>
-int main(void)
-{
-  double d = 1.0;
-  int ok = (FP_NORMAL == __fpclassify(d) && !__isnan(d) && !__isinf(d));
-  return ok ? 0 : 1;
-}
-" HAVE___FPCLASSIFY)
-unset(CMAKE_REQUIRED_LIBRARIES)
-
-
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
