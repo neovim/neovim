@@ -397,11 +397,6 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-# Don't use jemalloc in the unit test library.
-if(JEMALLOC_FOUND)
-  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
-endif()
-
 if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()

@@ -47,10 +47,6 @@ if(Iconv_FOUND)
   set(HAVE_ICONV 1)
 endif()
 
-if(JEMALLOC_FOUND)
-  set(HAVE_JEMALLOC 1)
-endif()
-
 check_function_exists(_putenv_s HAVE_PUTENV_S)
 if(WIN32 AND NOT HAVE_PUTENV_S)
   message(SEND_ERROR "_putenv_s() function not found on your system.")
