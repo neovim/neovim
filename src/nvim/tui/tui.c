@@ -1011,8 +1011,24 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
+#ifdef WIN32
+    const char *term = os_getenv("TERM");
+    bool toggle_uv_vterm_state =
+      term && (terminfo_is_term_family(term, "conemu")
+               || terminfo_is_term_family(term, "vtpcon"));
+    if (toggle_uv_vterm_state) {
+      flush_buf(ui);
+      uv_set_vterm_state(UV_UNSUPPORTED);
+    }
+#endif
     unibi_out_ext(ui, data->unibi_ext.enable_mouse);
     data->mouse_enabled = true;
+#ifdef WIN32
+    if (toggle_uv_vterm_state) {
+      flush_buf(ui);
+      uv_set_vterm_state(UV_SUPPORTED);
+    }
+#endif
   }
 }
 
@@ -1020,8 +1036,24 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
+#ifdef WIN32
+    const char *term = os_getenv("TERM");
+    bool toggle_uv_vterm_state =
+      term && (terminfo_is_term_family(term, "conemu")
+               || terminfo_is_term_family(term, "vtpcon"));
+    if (toggle_uv_vterm_state) {
+      flush_buf(ui);
+      uv_set_vterm_state(UV_UNSUPPORTED);
+    }
+#endif
     unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
+#ifdef WIN32
+    if (toggle_uv_vterm_state) {
+      flush_buf(ui);
+      uv_set_vterm_state(UV_SUPPORTED);
+    }
+#endif
   }
 }
 
