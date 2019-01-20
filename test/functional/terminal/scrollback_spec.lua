@@ -357,11 +357,11 @@ describe('terminal prints more lines than the screen height and exits', function
       line8                         |
       line9                         |
                                     |
-      [Process exited 0]            |
-      -- TERMINAL --                |
+      [Process exited 0^]            |
+                                    |
     ]])
-    feed('<cr>')
-    -- closes the buffer correctly after pressing a key
+    command('bwipeout!')
+    -- closes the buffer correctly when wiped
     screen:expect([[
       ^                              |
       ~                             |

@@ -285,9 +285,9 @@ describe('tui with non-tty file descriptors', function()
       :q                                                |
       abc                                               |
                                                         |
-      [Process exited 0]{1: }                               |
+      [Process exited 0^]{2: }                               |
                                                         |
-      {3:-- TERMINAL --}                                    |
+                                                        |
     ]])
   end)
 end)

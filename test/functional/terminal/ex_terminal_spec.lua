@@ -123,10 +123,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     retry(3, 4 * screen.timeout, function()
     screen:expect([[
-      ^ready $                                           |
-      [Process exited 0]                                |
+      ready $                                           |
+      [Process exited 0^]                                |
                                                         |
-      :terminal                                         |
+                                                        |
     ]])
     end)
   end)
@@ -146,10 +146,10 @@ describe(':terminal (with fake shell)', function()
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     terminal_with_fake_shell()
     screen:expect([[
-      ^jeff $                                            |
-      [Process exited 0]                                |
+      jeff $                                            |
+      [Process exited 0^]                                |
                                                         |
-      :terminal                                         |
+                                                        |
     ]])
   end)
 
@@ -159,8 +159,8 @@ describe(':terminal (with fake shell)', function()
     screen:expect([[
       ^ready $ echo hi                                   |
                                                         |
-      [Process exited 0]                                |
-      :terminal echo hi                                 |
+      [Process exited 0^]                                |
+                                                        |
     ]])
   end)
 
@@ -171,8 +171,8 @@ describe(':terminal (with fake shell)', function()
     screen:expect([[
       ^jeff $ echo hi                                    |
                                                         |
-      [Process exited 0]                                |
-      :terminal echo hi                                 |
+      [Process exited 0^]                                |
+                                                        |
     ]])
   end)
 
@@ -182,8 +182,8 @@ describe(':terminal (with fake shell)', function()
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
                                                         |
-      [Process exited 0]                                |
-      :terminal echo 'hello' \ "world"                  |
+      [Process exited 0^]                                |
+                                                        |
     ]])
   end)
 
@@ -215,13 +215,12 @@ describe(':terminal (with fake shell)', function()
   it('works with :find', function()
     terminal_with_fake_shell()
     screen:expect([[
-      ^ready $                                           |
-      [Process exited 0]                                |
+      ready $                                           |
+      [Process exited 0^]                                |
                                                         |
-      :terminal                                         |
+                                                        |
     ]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
-    feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
     if iswin() then
       eq('scripts\\shadacat.py', eval('bufname("%")'))
@@ -236,10 +235,9 @@ describe(':terminal (with fake shell)', function()
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
-      [Process exited 0]                                |
-      :terminal echo "scripts/shadacat.py"              |
+      [Process exited 0^]                                |
+                                                        |
     ]])
-    feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[ggf"lgf]])
     eq('scripts/shadacat.py', eval('bufname("%")'))
