@@ -1806,6 +1806,14 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='pumblend', abbreviation='pb',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'ui_option'},
+      varname='p_pb',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pyxversion', abbreviation='pyx',
       type='number', scope={'global'},
       secure=true,

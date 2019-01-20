@@ -154,7 +154,7 @@ static bool highlights_invalid = false;
 
 static bool conceal_cursor_used = false;
 
-static bool floats_invalid = false;
+static bool redraw_popupmenu = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
@@ -466,13 +466,13 @@ void update_screen(int type)
 
   end_search_hl();
   // May need to redraw the popup menu.
-  if (pum_drawn() && floats_invalid) {
+  if (pum_drawn() && redraw_popupmenu) {
     pum_redraw();
   }
 
   send_grid_resize = false;
   highlights_invalid = false;
-  floats_invalid = false;
+  redraw_popupmenu = false;
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
@@ -6185,7 +6185,6 @@ static void screenclear2(void)
     default_grid.line_wraps[i] = false;
   }
 
-  floats_invalid = true;
   ui_call_grid_clear(1);  // clear the display
   clear_cmdline = false;
   mode_displayed = false;
@@ -6193,6 +6192,8 @@ static void screenclear2(void)
   redraw_all_later(NOT_VALID);
   redraw_cmdline = true;
   redraw_tabline = true;
+  redraw_popupmenu = true;
+  pum_invalidate();
   if (must_redraw == CLEAR) {
     must_redraw = NOT_VALID;  // no need to clear again
   }
@@ -7196,6 +7197,10 @@ void screen_resize(int width, int height)
       } else {
         update_topline();
         if (pum_drawn()) {
+          // TODO(bfredl): ins_compl_show_pum wants to redraw the screen first.
+          // For now make sure the nested update_screen(0) won't redraw the
+          // pum at the old position. Try to untangle this later.
+          redraw_popupmenu = false;
           ins_compl_show_pum();
         }
         update_screen(NOT_VALID);

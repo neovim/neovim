@@ -18,6 +18,7 @@ describe('ui receives option updates', function()
       guifontset='',
       guifontwide='',
       linespace=0,
+      pumblend=0,
       showtabline=1,
       termguicolors=false,
       ext_cmdline=false,

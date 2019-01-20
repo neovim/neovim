@@ -44,6 +44,7 @@ static int pum_col;                 // left column of pum
 static bool pum_is_visible = false;
 static bool pum_is_drawn = false;
 static bool pum_external = false;
+static bool pum_invalid = false;  // the screen was just cleared
 
 static ScreenGrid pum_grid = SCREEN_GRID_INIT;
 
@@ -360,12 +361,14 @@ void pum_redraw(void)
   grid_assign_handle(&pum_grid);
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col-col_off,
                                 pum_height, grid_width);
+  bool invalid_grid = moved || pum_invalid;
+  pum_invalid = false;
 
   if (!pum_grid.chars
       || pum_grid.Rows != pum_height || pum_grid.Columns != grid_width) {
-    grid_alloc(&pum_grid, pum_height, grid_width, !moved, false);
+    grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.Columns, pum_grid.Rows);
-  } else if (moved) {
+  } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
   }
 
@@ -804,6 +807,17 @@ bool pum_visible(void)
 bool pum_drawn(void)
 {
   return pum_visible() && !pum_external;
+}
+
+/// Screen was cleared, need to redraw next time
+void pum_invalidate(void)
+{
+  pum_invalid = true;
+}
+
+void pum_recompose(void)
+{
+  ui_comp_compose_grid(&pum_grid);
 }
 
 /// Gets the height of the menu.

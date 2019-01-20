@@ -160,6 +160,8 @@ typedef enum {
   kHlSyntax,
   kHlTerminal,
   kHlCombine,
+  kHlBlend,
+  kHlBlendThrough,
 } HlKind;
 
 typedef struct {
