@@ -2007,6 +2007,7 @@ col({expr})			Number	column nr of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
 complete_add({expr})		Number	add completion match
 complete_check()		Number	check for key typed during completion
+complete_mode()			String	current completion mode
 confirm({msg} [, {choices} [, {default} [, {type}]]])
 				Number	number of choice picked by user
 copy({expr})			any	make a shallow copy of {expr}
@@ -2915,6 +2916,29 @@ complete_check()				*complete_check()*
 		zero otherwise.
 		Only to be used by the function specified with the
 		'completefunc' option.
+
+							*complete_mode()*
+complete_mode([expr])
+		Return a string that indicates the current completion mode.
+		Note: It does not check popup menu is visible.
+
+		   keyword	Keyword completion(|i_CTRL-X_CTRL-N|)
+		   ctrl_x	Just press |i_CTRL-X|
+		   whole_line	Whole lines(|i_CTRL-X_CTRL-L|)
+		   files	File names(|i_CTRL-X_CTRL-F|)
+		   tags		Tags(|i_CTRL-X_CTRL-]|)
+		   path_defines
+				Definition completion(|i_CTRL-X_CTRL-D|)
+		   path_patterns
+		   		Include completion(|i_CTRL-X_CTRL-I|)
+		   dictionary	Dictionary(|i_CTRL-X_CTRL-K|)
+		   thesaurus	Thesaurus(|i_CTRL-X_CTRL-T|)
+		   cmdline	Vim Command line completion(|i_CTRL-X_CTRL-V|)
+		   function	User defined completion(|i_CTRL-X_CTRL-U|)
+		   omni		Omni completion(|i_CTRL-X_CTRL-O|)
+		   spell	Spelling suggestions(|i_CTRL-X_s|)
+		   eval		|complete()| completion
+		   unknown	Other internal modes
 
 						*confirm()*
 confirm({msg} [, {choices} [, {default} [, {type}]]])
