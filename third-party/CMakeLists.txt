@@ -146,8 +146,8 @@ set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116
 set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
 set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/3f62ac6b7bdffda39d68f723fb1806dfd6d6382d.tar.gz)
-set(LIBVTERM_SHA256 1c8b318370f00f831f43e3ec86a48984250e3ee5c76beb106a421c9a42286ac5)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/b45b648cab73f9667bde7c0c6045b285e22b3ecd.tar.gz)
+set(LIBVTERM_SHA256 37cc123deff29327efa654358c2ebaaf8589da03754ca5adb8ec47be386a0433)
 
 set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
 set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
