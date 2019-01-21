@@ -7554,9 +7554,7 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   RedrawingDisabled = saved;
 }
 
-/*
- * "complete_mode()" function
- */
+// "complete_mode()" function
 static void f_complete_mode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char *mode = ins_compl_mode();
