@@ -1,3 +1,6 @@
+# To validate:
+#   cat codecov.yml | curl --data-binary @- https://codecov.io/validate
+
 codecov:
   notify:
     require_ci_to_pass: no
@@ -12,12 +15,13 @@ coverage:
   range: "70...100"
 
   status:
-    project: yes
+    project:
       default:
         threshold: 1
     patch:
       default:
         threshold: 1
+        only_pulls: true
     changes: no
 
 parsers:
