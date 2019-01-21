@@ -19,6 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
+#include "nvim/math.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/charset.h"  // vim_isprintc()
@@ -27,11 +28,6 @@
 #include "nvim/vim.h"  // For _()
 #include "nvim/lib/kvec.h"
 #include "nvim/eval/typval_encode.h"
-
-#ifdef __MINGW32__
-# undef fpclassify
-# define fpclassify __fpclassify
-#endif
 
 #define ga_concat(a, b) ga_concat(a, (char_u *)b)
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
@@ -327,7 +323,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (xfpclassify(flt_)) { \
         case FP_NAN: { \
           ga_concat(gap, (char_u *) "str2float('nan')"); \
           break; \
@@ -531,7 +527,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (xfpclassify(flt_)) { \
         case FP_NAN: { \
           EMSG(_("E474: Unable to represent NaN value in JSON")); \
           return FAIL; \
