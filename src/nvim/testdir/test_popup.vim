@@ -712,4 +712,37 @@ func Test_popup_and_window_resize()
   bwipe!
 endfunc
 
+func Test_popup_complete_mode()
+  new
+  for [key, expected] in [
+        \ ["\<C-X>", 'ctrl_x'],
+        \ ["\<C-X>\<C-N>", 'keyword'],
+        \ ["\<C-X>\<C-L>", 'whole_line'],
+        \ ["\<C-X>\<C-F>", 'files'],
+        \ ["\<C-X>\<C-]>", 'tags'],
+        \ ["\<C-X>\<C-D>", 'path_defines'],
+        \ ["\<C-X>\<C-I>", 'path_patterns'],
+        \ ["\<C-X>\<C-K>", 'dictionary'],
+        \ ["\<C-X>\<C-T>", 'thesaurus'],
+        \ ["\<C-X>\<C-V>", 'cmdline'],
+        \ ["\<C-X>\<C-U>", 'function'],
+        \ ["\<C-X>\<C-O>", 'omni'],
+        \ ["\<C-X>s", 'spell'],
+        \]
+    call feedkeys(key . "\<C-r>=complete_mode()\<CR>", 'tx')
+    call assert_equal(expected, getline('.'))
+    %d
+  endfor
+
+  function! s:complTestEval() abort
+    call complete(1, ['source', 'soundfold'])
+    return ''
+  endfunction
+  inoremap <F5>  <C-R>=s:complTestEval()<CR>
+  call feedkeys("\<F5>\<C-r>=complete_mode()\<CR>", 'tx')
+  call assert_equal('eval', getline('.'))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
