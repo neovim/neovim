@@ -2486,7 +2486,7 @@ void set_completion(colnr_T startcol, list_T *list)
 
 
 // complete_mode() implementation.
-char *ins_compl_mode()
+char *ins_compl_mode(void)
 {
   char *mode = NULL;
   switch (ctrl_x_mode) {
