@@ -2918,7 +2918,7 @@ complete_check()				*complete_check()*
 		'completefunc' option.
 
 							*complete_mode()*
-complete_mode([expr])
+complete_mode()
 		Return a string that indicates the current completion mode.
 		Note: It does not check popup menu is visible.
 
