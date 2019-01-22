@@ -318,6 +318,10 @@ describe('API', function()
       eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
                  "attempt to call global 'bork' (a nil value)"},
          meth_pcall(meths.execute_lua, 'bork()', {}))
+
+      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
+                 "did\nthe\nfail"},
+         meth_pcall(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
     end)
   end)
 
