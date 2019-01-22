@@ -164,7 +164,7 @@ nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
 EXAMPLE ~
 
 Calling |nvim_buf_attach()| with send_buffer=true on an empty buffer, emits: >
-  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, -1, [""], v:false]
 
 User adds two lines to the buffer, emits: >
   nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
