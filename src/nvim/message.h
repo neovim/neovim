@@ -78,6 +78,7 @@ typedef struct msg_hist {
   struct msg_hist *next;  ///< Next message.
   char_u *msg;            ///< Message text.
   int attr;               ///< Message highlighting.
+  bool multiline;         ///< Multiline message.
 } MessageHistoryEntry;
 
 /// First message

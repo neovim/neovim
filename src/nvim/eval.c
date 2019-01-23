@@ -19593,24 +19593,7 @@ void ex_echo(exarg_T *eap)
         msg_puts_attr(" ", echo_attr);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      const char *p = tofree;
-      if (p != NULL) {
-        for (; *p != NUL && !got_int; ++p) {
-          if (*p == '\n' || *p == '\r' || *p == TAB) {
-            if (*p != TAB && needclr) {
-              /* remove any text still there from the command */
-              msg_clr_eos();
-              needclr = false;
-            }
-            msg_putchar_attr((uint8_t)(*p), echo_attr);
-          } else {
-            int i = (*mb_ptr2len)((const char_u *)p);
-
-            (void)msg_outtrans_len_attr((char_u *)p, i, echo_attr);
-            p += i - 1;
-          }
-        }
-      }
+      msg_multiline_attr(tofree, echo_attr);
       xfree(tofree);
     }
     tv_clear(&rettv);

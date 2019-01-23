@@ -115,7 +115,7 @@ static int verbose_did_open = FALSE;
  */
 int msg(char_u *s)
 {
-  return msg_attr_keep(s, 0, FALSE);
+  return msg_attr_keep(s, 0, false, false);
 }
 
 /*
@@ -126,28 +126,61 @@ int verb_msg(char_u *s)
   int n;
 
   verbose_enter();
-  n = msg_attr_keep(s, 0, FALSE);
+  n = msg_attr_keep(s, 0, false, false);
   verbose_leave();
 
   return n;
 }
 
-int msg_attr(const char *s, const int attr) FUNC_ATTR_NONNULL_ARG(1)
+int msg_attr(const char *s, const int attr)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_attr_keep((char_u *)s, attr, false);
+  return msg_attr_keep((char_u *)s, attr, false, false);
 }
 
-int
-msg_attr_keep (
-    char_u *s,
-    int attr,
-    int keep                   /* TRUE: set keep_msg if it doesn't scroll */
-)
-  FUNC_ATTR_NONNULL_ARG(1)
+/// similar to msg_outtrans_attr, but support newlines and tabs.
+void msg_multiline_attr(const char *s, int attr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *next_spec = s;
+
+  while (next_spec != NULL) {
+    next_spec = strpbrk(s, "\t\n\r");
+
+    if (next_spec != NULL) {
+      // Printing all char that are before the char found by strpbrk
+      msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
+
+      if (*next_spec != TAB) {
+        msg_clr_eos();
+      }
+      msg_putchar_attr((uint8_t)(*next_spec), attr);
+      s = next_spec + 1;
+    }
+  }
+
+  // Print the rest of the message. We know there is no special
+  // character because strpbrk returned NULL
+  if (*s != NUL) {
+    msg_outtrans_attr((char_u *)s, attr);
+  }
+}
+
+
+/// @param keep set keep_msg if it doesn't scroll
+bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
+  FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
   int retval;
   char_u *buf = NULL;
+
+  if (keep && multiline) {
+    // Not implemented. 'multiline' is only used by nvim-added messages,
+    // which should avoid 'keep' behavior (just show the message at
+    // the correct time already).
+    abort();
+  }
 
   // Skip messages not match ":filter pattern".
   // Don't filter when there is an error.
@@ -175,7 +208,7 @@ msg_attr_keep (
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
           && STRCMP(s, last_msg_hist->msg))) {
-    add_msg_hist((const char *)s, -1, attr);
+    add_msg_hist((const char *)s, -1, attr, multiline);
   }
 
   /* When displaying keep_msg, don't let msg_start() free it, caller must do
@@ -189,13 +222,18 @@ msg_attr_keep (
   if (buf != NULL)
     s = buf;
 
-  msg_outtrans_attr(s, attr);
+  if (multiline) {
+    msg_multiline_attr((char *)s, attr);
+  } else {
+    msg_outtrans_attr(s, attr);
+  }
   msg_clr_eos();
   retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
-      * Columns + sc_col)
+      * Columns + sc_col) {
     set_keep_msg(s, 0);
+  }
 
   xfree(buf);
   --entered;
@@ -468,17 +506,8 @@ int emsg_not_now(void)
   return FALSE;
 }
 
-/*
- * emsg() - display an error message
- *
- * Rings the bell, if appropriate, and calls message() to do the real work
- * When terminal not initialized (yet) mch_errmsg(..) is used.
- *
- * return TRUE if wait_return not called
- */
-int emsg(const char_u *s_)
+static bool emsg_multiline(const char *s, bool multiline)
 {
-  const char *s = (const char *)s_;
   int attr;
   int ignore = false;
   int severe;
@@ -573,7 +602,18 @@ int emsg(const char_u *s_)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_attr(s, attr);
+  return msg_attr_keep((char_u *)s, attr, false, multiline);
+}
+
+/// emsg() - display an error message
+///
+/// Rings the bell, if appropriate, and calls message() to do the real work
+/// When terminal not initialized (yet) mch_errmsg(..) is used.
+///
+/// @return true if wait_return not called
+bool emsg(const char_u *s)
+{
+  return emsg_multiline((const char *)s, false);
 }
 
 void emsg_invreg(int name)
@@ -591,6 +631,28 @@ bool emsgf(const char *const fmt, ...)
   va_start(ap, fmt);
   ret = emsgfv(fmt, ap);
   va_end(ap);
+
+  return ret;
+}
+
+#define MULTILINE_BUFSIZE 8192
+
+bool emsgf_multiline(const char *const fmt, ...)
+{
+  bool ret;
+  va_list ap;
+
+
+  static char  errbuf[MULTILINE_BUFSIZE];
+  if (emsg_not_now()) {
+    return true;
+  }
+
+  va_start(ap, fmt);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+  va_end(ap);
+
+  ret = emsg_multiline(errbuf, true);
 
   return ret;
 }
@@ -669,7 +731,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
   int n;
 
   // Add message to history before truncating.
-  add_msg_hist((const char *)s, -1, attr);
+  add_msg_hist((const char *)s, -1, attr, false);
 
   s = msg_may_trunc(force, s);
 
@@ -715,7 +777,7 @@ char_u *msg_may_trunc(int force, char_u *s)
 }
 
 /// @param[in]  len  Length of s or -1.
-static void add_msg_hist(const char *s, int len, int attr)
+static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 {
   if (msg_hist_off || msg_silent != 0)
     return;
@@ -739,12 +801,15 @@ static void add_msg_hist(const char *s, int len, int attr)
   p->msg = (char_u *)xmemdupz(s, (size_t)len);
   p->next = NULL;
   p->attr = attr;
-  if (last_msg_hist != NULL)
+  p->multiline = multiline;
+  if (last_msg_hist != NULL) {
     last_msg_hist->next = p;
+  }
   last_msg_hist = p;
-  if (first_msg_hist == NULL)
+  if (first_msg_hist == NULL) {
     first_msg_hist = last_msg_hist;
-  ++msg_hist_len;
+  }
+  msg_hist_len++;
 }
 
 /*
@@ -811,7 +876,7 @@ void ex_messages(void *const eap_p)
   // Display what was not skipped.
   for (; p != NULL && !got_int; p = p->next) {
     if (p->msg != NULL) {
-      msg_attr((const char *)p->msg, p->attr);
+      msg_attr_keep(p->msg, p->attr, false, p->multiline);
     }
   }
 
@@ -1205,7 +1270,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
 
   /* if MSG_HIST flag set, add message to history */
   if (attr & MSG_HIST) {
-    add_msg_hist(str, len, attr);
+    add_msg_hist(str, len, attr, false);
     attr &= ~MSG_HIST;
   }
 
@@ -1643,7 +1708,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
 
   // if MSG_HIST flag set, add message to history
   if (attr & MSG_HIST) {
-    add_msg_hist(str, (int)len, attr);
+    add_msg_hist(str, (int)len, attr, false);
     attr &= ~MSG_HIST;
   }
 
