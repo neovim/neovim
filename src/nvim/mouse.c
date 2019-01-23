@@ -731,7 +731,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
       } else {
         if (!(row > 0 && ptr == ptr_row_offset)
             && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
-                                      && (lcs_conceal != NUL
+                                      && (wp->w_p_lcs_chars.conceal != NUL
                                           || syn_get_sub_char() != NUL)))) {
           // At least one placeholder character will be displayed.
           decr();

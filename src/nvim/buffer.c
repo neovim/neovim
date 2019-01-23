@@ -3676,7 +3676,7 @@ int build_stl_str_hl(
     {
       // In list mode virtcol needs to be recomputed
       colnr_T virtcol = wp->w_virtcol;
-      if (wp->w_p_list && lcs_tab1 == NUL) {
+      if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
         wp->w_p_list = FALSE;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
         wp->w_p_list = TRUE;

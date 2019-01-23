@@ -806,11 +806,11 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'all_windows'},
-      varname='p_fcs',
+      alloced=true,
+      redraw={'current_window'},
       defaults={if_true={vi=''}}
     },
     {
@@ -1425,11 +1425,11 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vim=true,
-      redraw={'all_windows'},
-      varname='p_lcs',
+      alloced=true,
+      redraw={'current_window'},
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {

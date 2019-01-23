@@ -2121,10 +2121,10 @@ static void didset_options2(void)
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 
   // Parse default for 'fillchars'.
-  (void)set_chars_option(&p_fcs);
+  (void)set_chars_option(curwin, &curwin->w_p_fcs);
 
   // Parse default for 'listchars'.
-  (void)set_chars_option(&p_lcs);
+  (void)set_chars_option(curwin, &curwin->w_p_lcs);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
@@ -2567,10 +2567,19 @@ did_set_string_option (
     // 'ambiwidth'
     if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
       errmsg = e_invarg;
-    } else if (set_chars_option(&p_lcs) != NULL) {
-      errmsg = (char_u *)_("E834: Conflicts with value of 'listchars'");
-    } else if (set_chars_option(&p_fcs) != NULL) {
-      errmsg = (char_u *)_("E835: Conflicts with value of 'fillchars'");
+    } else {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
+        if (set_chars_option(wp, &wp->w_p_lcs) != NULL) {
+          errmsg = (char_u *)_("E834: Conflicts with value of 'listchars'");
+          goto ambw_end;
+        }
+        if (set_chars_option(wp, &wp->w_p_fcs) != NULL) {
+          errmsg = (char_u *)_("E835: Conflicts with value of 'fillchars'");
+          goto ambw_end;
+        }
+      }
+ambw_end:
+      {}  // clint prefers {} over ; as an empty statement
     }
   }
   /* 'background' */
@@ -2756,14 +2765,10 @@ did_set_string_option (
       }
       s = skip_to_option_part(s);
     }
-  }
-  /* 'listchars' */
-  else if (varp == &p_lcs) {
-    errmsg = set_chars_option(varp);
-  }
-  /* 'fillchars' */
-  else if (varp == &p_fcs) {
-    errmsg = set_chars_option(varp);
+  } else if (varp == &curwin->w_p_lcs) {  // 'listchars'
+    errmsg = set_chars_option(curwin, varp);
+  } else if (varp == &curwin->w_p_fcs) {  // 'fillchars'
+    errmsg = set_chars_option(curwin, varp);
   }
   /* 'cedit' */
   else if (varp == &p_cedit) {
@@ -3394,53 +3399,55 @@ skip:
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param varp either &p_lcs ('listchars') or &p_fcs ('fillchar')
+/// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char_u *set_chars_option(char_u **varp)
+static char_u *set_chars_option(win_T *wp, char_u **varp)
 {
   int round, i, len, entries;
-  char_u      *p, *s;
+  char_u *p, *s;
   int c1, c2 = 0;
-  struct charstab {
+
+  struct chars_tab {
     int     *cp;    ///< char value
     char    *name;  ///< char id
     int     def;    ///< default value
   };
-  static struct charstab filltab[] = {
-    { &fill_stl,     "stl"  , ' '  },
-    { &fill_stlnc,   "stlnc", ' '  },
-    { &fill_vert,    "vert" , 9474 },  // │
-    { &fill_fold,    "fold" , 183  },  // ·
-    { &fill_diff,    "diff" , '-'  },
-    { &fill_msgsep,  "msgsep", ' ' },
-    { &fill_eob,     "eob",   '~' },
-  };
-  static struct charstab lcstab[] = {
-    { &lcs_eol,      "eol",      NUL },
-    { &lcs_ext,      "extends",  NUL },
-    { &lcs_nbsp,     "nbsp",     NUL },
-    { &lcs_prec,     "precedes", NUL },
-    { &lcs_space,    "space",    NUL },
-    { &lcs_tab2,     "tab",      NUL },
-    { &lcs_trail,    "trail",    NUL },
-    { &lcs_conceal,  "conceal",  NUL },
-  };
-  struct charstab *tab;
+  struct chars_tab *tab;
 
-  if (varp == &p_lcs) {
-    tab = lcstab;
-    entries = ARRAY_SIZE(lcstab);
+  struct chars_tab fcs_tab[] = {
+    { &wp->w_p_fcs_chars.stl,     "stl",      ' '  },
+    { &wp->w_p_fcs_chars.stlnc,   "stlnc",    ' '  },
+    { &wp->w_p_fcs_chars.vert,    "vert",     9474 },  // │
+    { &wp->w_p_fcs_chars.fold,    "fold",     183  },  // ·
+    { &wp->w_p_fcs_chars.diff,    "diff",     '-'  },
+    { &wp->w_p_fcs_chars.msgsep,  "msgsep",   ' '  },
+    { &wp->w_p_fcs_chars.eob,     "eob",      '~'  },
+  };
+  struct chars_tab lcs_tab[] = {
+    { &wp->w_p_lcs_chars.eol,     "eol",      NUL  },
+    { &wp->w_p_lcs_chars.ext,     "extends",  NUL  },
+    { &wp->w_p_lcs_chars.nbsp,    "nbsp",     NUL  },
+    { &wp->w_p_lcs_chars.prec,    "precedes", NUL  },
+    { &wp->w_p_lcs_chars.space,   "space",    NUL  },
+    { &wp->w_p_lcs_chars.tab2,    "tab",      NUL  },
+    { &wp->w_p_lcs_chars.trail,   "trail",    NUL  },
+    { &wp->w_p_lcs_chars.conceal, "conceal",  NUL  },
+  };
+
+  if (varp == &wp->w_p_lcs) {
+    tab = lcs_tab;
+    entries = ARRAY_SIZE(lcs_tab);
   } else {
-    tab = filltab;
-    entries = ARRAY_SIZE(filltab);
+    tab = fcs_tab;
+    entries = ARRAY_SIZE(fcs_tab);
     if (*p_ambw == 'd') {
       // XXX: If ambiwidth=double then "|" and "·" take 2 columns, which is
       // forbidden (TUI limitation?). Set old defaults.
-      filltab[2].def = '|';
-      filltab[3].def = '-';
+      fcs_tab[2].def = '|';
+      fcs_tab[3].def = '-';
     } else {
-      filltab[2].def = 9474;  // │
-      filltab[3].def = 183;   // ·
+      fcs_tab[2].def = 9474;  // │
+      fcs_tab[3].def = 183;   // ·
     }
   }
 
@@ -3453,8 +3460,8 @@ static char_u *set_chars_option(char_u **varp)
           *(tab[i].cp) = tab[i].def;
         }
       }
-      if (varp == &p_lcs) {
-        lcs_tab1 = NUL;
+      if (varp == &wp->w_p_lcs) {
+        wp->w_p_lcs_chars.tab1 = NUL;
       }
     }
     p = *varp;
@@ -3472,7 +3479,7 @@ static char_u *set_chars_option(char_u **varp)
           if (mb_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
             continue;
           }
-          if (tab[i].cp == &lcs_tab2) {
+          if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
             if (*s == NUL) {
               continue;
             }
@@ -3484,9 +3491,9 @@ static char_u *set_chars_option(char_u **varp)
           }
           if (*s == ',' || *s == NUL) {
             if (round) {
-              if (tab[i].cp == &lcs_tab2) {
-                lcs_tab1 = c1;
-                lcs_tab2 = c2;
+              if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
+                wp->w_p_lcs_chars.tab1 = c1;
+                wp->w_p_lcs_chars.tab2 = c2;
               } else if (tab[i].cp != NULL)
                 *(tab[i].cp) = c1;
 
@@ -5613,6 +5620,8 @@ static char_u *get_varp(vimoption_T *p)
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
+  case PV_FCS:    return (char_u *)&(curwin->w_p_fcs);
+  case PV_LCS:    return (char_u *)&(curwin->w_p_lcs);
   default:        IEMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
@@ -5691,6 +5700,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fmr = vim_strsave(from->wo_fmr);
   to->wo_scl = vim_strsave(from->wo_scl);
   to->wo_winhl = vim_strsave(from->wo_winhl);
+  to->wo_fcs = vim_strsave(from->wo_fcs);
+  to->wo_lcs = vim_strsave(from->wo_lcs);
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -5721,6 +5732,8 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_cocu);
   check_string_option(&wop->wo_briopt);
   check_string_option(&wop->wo_winhl);
+  check_string_option(&wop->wo_fcs);
+  check_string_option(&wop->wo_lcs);
 }
 
 /*
@@ -5741,12 +5754,16 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
   clear_string_option(&wop->wo_winhl);
+  clear_string_option(&wop->wo_fcs);
+  clear_string_option(&wop->wo_lcs);
 }
 
 void didset_window_options(win_T *wp)
 {
   check_colorcolumn(wp);
   briopt_check(wp);
+  set_chars_option(wp, &wp->w_p_fcs);
+  set_chars_option(wp, &wp->w_p_lcs);
   parse_winhl_opt(wp);
 }
 
