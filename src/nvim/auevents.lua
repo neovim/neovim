@@ -66,6 +66,7 @@ return {
     'InsertLeave',            -- when leaving Insert mode
     'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
+    'MessageAdd',             -- after a message is added
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
@@ -120,5 +121,6 @@ return {
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
+    MessageAdd=true,
   },
 }
