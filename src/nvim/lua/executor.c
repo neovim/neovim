@@ -121,6 +121,7 @@ static void nlua_schedule_cb(void **argv)
   nlua_ctx *ctx = argv[0];
   lua_State *const lstate = nlua_enter();
   lua_rawgeti(lstate, LUA_REGISTRYINDEX, ctx->cb);
+  luaL_unref(lstate, LUA_REGISTRYINDEX, ctx->cb);
   lua_pcall(lstate, 0, 0, 0);
   free(ctx);
 }
