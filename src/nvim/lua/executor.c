@@ -181,6 +181,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // stricmp
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setfield(lstate, -2, "stricmp");
+  // schedule
+  lua_pushcfunction(lstate, &nlua_schedule);
+  lua_setfield(lstate, -2, "schedule");
 
   // vim.uv
   luv_set_loop(lstate, &main_loop.uv);
@@ -193,10 +196,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushstring(lstate, "uv_loop");
   lua_pushlightuserdata(lstate, &main_loop.uv);
   lua_rawset(lstate, LUA_REGISTRYINDEX);
-
-  // schedule
-  lua_pushcfunction(lstate, &nlua_schedule);
-  lua_setglobal(lstate, "nvim_schedule");
 
   return 0;
 }
