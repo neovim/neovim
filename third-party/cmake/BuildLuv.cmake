@@ -1,5 +1,7 @@
 include(CMakeParseArguments)
 
+set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
+
 # BuildLuv(PATCH_COMMAND ... CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build luv, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run
@@ -51,7 +53,6 @@ function(BuildLuv)
     INSTALL_COMMAND "${_luv_INSTALL_COMMAND}")
 endfunction()
 
-set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
   "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
 
@@ -88,6 +89,7 @@ if(MINGW AND CMAKE_CROSSCOMPILING)
     ${LUV_CONFIGURE_COMMAND_COMMON}
     # Pass toolchain
     -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
+    -DLUV_NO_INIT_LOOP="yes"
     "-DCMAKE_C_FLAGS:STRING=${LUV_INCLUDE_FLAGS} -D_WIN32_WINNT=0x0600"
     # Hack to avoid -rdynamic in Mingw
     -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS="")
@@ -95,6 +97,7 @@ elseif(MSVC)
   set(LUV_CONFIGURE_COMMAND
     ${LUV_CONFIGURE_COMMAND_COMMON}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DLUV_NO_INIT_LOOP="yes"
     # Same as Unix without fPIC
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS}"
     # Make sure we use the same generator, otherwise we may
@@ -107,6 +110,7 @@ else()
   set(LUV_CONFIGURE_COMMAND
     ${LUV_CONFIGURE_COMMAND_COMMON}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DLUV_NO_INIT_LOOP="yes"
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS} -fPIC")
 endif()
 
