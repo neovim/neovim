@@ -217,8 +217,16 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
 /// do something more efficient (where efficiency means smaller deltas to
 /// the downstream UI.)
 static void compose_line(Integer row, Integer startcol, Integer endcol,
-                         bool wrap)
+                         LineFlags flags)
 {
+  // in case we start on the right half of a double-width char, we need to
+  // check the left half. But skip it in output if it wasn't doublewidth.
+  int skip = 0;
+  if (startcol > 0 && (flags & kLineFlagInvalid)) {
+    startcol--;
+    skip = 1;
+  }
+
   int col = (int)startcol;
   ScreenGrid *grid = NULL;
 
@@ -247,15 +255,37 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
                  + (size_t)(col-grid->comp_col);
     memcpy(linebuf+(col-startcol), grid->chars+off, n * sizeof(*linebuf));
     memcpy(attrbuf+(col-startcol), grid->attrs+off, n * sizeof(*attrbuf));
+
+    // Tricky: if overlap caused a doublewidth char to get cut-off, must
+    // replace the visible half with a space.
+    if (linebuf[col-startcol][0] == NUL) {
+      linebuf[col-startcol][0] = ' ';
+      linebuf[col-startcol][1] = NUL;
+    } else if (n > 1 && linebuf[col-startcol+1][0] == NUL) {
+      skip = 0;
+    }
+    if (grid->comp_col+grid->Columns > until
+        && grid->chars[off+n][0] == NUL) {
+      linebuf[until-1-startcol][0] = ' ';
+      linebuf[until-1-startcol][1] = '\0';
+      if (col == startcol && n == 1) {
+        skip = 0;
+      }
+    }
     col = until;
   }
   assert(endcol <= chk_width);
   assert(row < chk_height);
-  // TODO(bfredl): too conservative, need check
-  // grid->line_wraps if grid->Width == Width
-  wrap = wrap && grid && grid->handle == 1;
-  ui_composed_call_raw_line(1, row, startcol, endcol, endcol, 0, wrap,
-                            (const schar_T *)linebuf, (const sattr_T *)attrbuf);
+
+  if (!(grid && grid == &default_grid)) {
+    // TODO(bfredl): too conservative, need check
+    // grid->line_wraps if grid->Width == Width
+    flags = flags & ~kLineFlagWrap;
+  }
+
+  ui_composed_call_raw_line(1, row, startcol+skip, endcol, endcol, 0, flags,
+                            (const schar_T *)linebuf+skip,
+                            (const sattr_T *)attrbuf+skip);
 }
 
 static void compose_area(Integer startrow, Integer endrow,
@@ -264,39 +294,35 @@ static void compose_area(Integer startrow, Integer endrow,
   endrow = MIN(endrow, default_grid.Rows);
   endcol = MIN(endcol, default_grid.Columns);
   for (int r = (int)startrow; r < endrow; r++) {
-    compose_line(r, startcol, endcol, false);
+    compose_line(r, startcol, endcol, kLineFlagInvalid);
   }
 }
 
-
-static void draw_line(ScreenGrid *grid, Integer row, Integer startcol,
-                      Integer endcol, Integer clearcol, Integer clearattr,
-                      bool wrap, const schar_T *chunk, const sattr_T *attrs)
-{
-  row += grid->comp_row;
-  startcol += grid->comp_col;
-  endcol += grid->comp_col;
-  clearcol += grid->comp_col;
-  wrap = wrap && grid->handle == 1;
-  assert(clearcol <= default_grid.Columns);
-  if (kv_size(layers) > grid->comp_index+1) {
-    compose_line(row, startcol, clearcol, wrap);
-  } else {
-    ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,
-                              wrap, chunk, attrs);
-  }
-}
 
 static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
                              Integer startcol, Integer endcol,
-                             Integer clearcol, Integer clearattr, bool wrap,
-                             const schar_T *chunk, const sattr_T *attrs)
+                             Integer clearcol, Integer clearattr,
+                             LineFlags flags, const schar_T *chunk,
+                             const sattr_T *attrs)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
   }
-  draw_line(curgrid, row, startcol, endcol, clearcol, clearattr, wrap, chunk,
-            attrs);
+
+  row += curgrid->comp_row;
+  startcol += curgrid->comp_col;
+  endcol += curgrid->comp_col;
+  clearcol += curgrid->comp_col;
+  if (curgrid != &default_grid) {
+    flags = flags & ~kLineFlagWrap;
+  }
+  assert(clearcol <= default_grid.Columns);
+  if (flags & kLineFlagInvalid || kv_size(layers) > curgrid->comp_index+1) {
+    compose_line(row, startcol, clearcol, flags);
+  } else {
+    ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,
+                              flags, chunk, attrs);
+  }
 }
 
 /// The screen is invalid and will soon be cleared

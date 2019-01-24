@@ -34,6 +34,13 @@ EXTERN const char *ui_ext_names[] INIT(= {
 
 typedef struct ui_t UI;
 
+enum {
+  kLineFlagWrap = 1,
+  kLineFlagInvalid = 2,
+};
+
+typedef int LineFlags;
+
 struct ui_t {
   bool rgb;
   bool composed;

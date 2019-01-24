@@ -92,7 +92,7 @@ void grid_destroy(Integer grid)
 // translate this in to the public grid_line format.
 void raw_line(Integer grid, Integer row, Integer startcol,
               Integer endcol, Integer clearcol, Integer clearattr,
-              Boolean wrap, const schar_T *chunk, const sattr_T *attrs)
+              LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
   FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
 
 void event(char *name, Array args, bool *args_consumed)

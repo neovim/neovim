@@ -5316,7 +5316,7 @@ void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
 }
 
 static int put_dirty_row = -1;
-static int put_dirty_first = -1;
+static int put_dirty_first = INT_MAX;
 static int put_dirty_last = 0;
 
 /// Start a group of screen_puts_len calls that builds a single screen line.
@@ -5347,8 +5347,6 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   int prev_c = 0;                       /* previous Arabic character */
   int pc, nc, nc1;
   int pcc[MAX_MCO];
-  int force_redraw_this;
-  int force_redraw_next = FALSE;
   int need_redraw;
   bool do_flush = false;
 
@@ -5371,16 +5369,10 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
-  if (col > 0 && col < grid->Columns && grid_fix_col(grid, col, row) != col) {
-    schar_from_ascii(grid->chars[off - 1], ' ');
-    grid->attrs[off - 1] = 0;
+  if (grid != &default_grid && col == 0 && grid_invalid_row(grid, row)) {
     // redraw the previous cell, make it empty
-    if (put_dirty_first == -1) {
-      put_dirty_first = col-1;
-    }
-    put_dirty_last = col+1;
-    // force the cell at "col" to be redrawn
-    force_redraw_next = true;
+    put_dirty_first = -1;
+    put_dirty_last = MAX(put_dirty_last, 1);
   }
 
   max_off = grid->line_offset[row] + grid->Columns;
@@ -5428,15 +5420,12 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
     schar_from_cc(buf, u8c, u8cc);
 
 
-    force_redraw_this = force_redraw_next;
-    force_redraw_next = FALSE;
-
     need_redraw = schar_cmp(grid->chars[off], buf)
                   || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)
                   || grid->attrs[off] != attr
                   || exmode_active;
 
-    if (need_redraw || force_redraw_this) {
+    if (need_redraw) {
       // When at the end of the text and overwriting a two-cell
       // character with a one-cell character, need to clear the next
       // cell.  Also when overwriting the left halve of a two-cell char
@@ -5460,9 +5449,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
         grid->chars[off + 1][0] = 0;
         grid->attrs[off + 1] = attr;
       }
-      if (put_dirty_first == -1 || col < put_dirty_first) {
-        put_dirty_first = col;
-      }
+      put_dirty_first = MIN(put_dirty_first, col);
       put_dirty_last = MAX(put_dirty_last, col+mbyte_cells);
     }
 
@@ -5491,14 +5478,14 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 void grid_puts_line_flush(ScreenGrid *grid, bool set_cursor)
 {
   assert(put_dirty_row != -1);
-  if (put_dirty_first != -1) {
+  if (put_dirty_first < put_dirty_last) {
     if (set_cursor) {
       ui_grid_cursor_goto(grid->handle, put_dirty_row,
                           MIN(put_dirty_last, grid->Columns-1));
     }
     ui_line(grid, put_dirty_row, put_dirty_first, put_dirty_last,
             put_dirty_last, 0, false);
-    put_dirty_first = -1;
+    put_dirty_first = INT_MAX;
     put_dirty_last = 0;
   }
   put_dirty_row = -1;
@@ -5870,9 +5857,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
     if (dirty_last > dirty_first) {
       // TODO(bfredl): support a cleared suffix even with a batched line?
       if (put_dirty_row == row) {
-        if (put_dirty_first == -1 || dirty_first < put_dirty_first) {
-          put_dirty_first = dirty_first;
-        }
+        put_dirty_first = MIN(put_dirty_first, dirty_first);
         put_dirty_last = MAX(put_dirty_last, dirty_last);
       } else {
         int last = c2 != ' ' ? dirty_last : dirty_first + (c1 != ' ');
@@ -5958,7 +5943,7 @@ void win_grid_alloc(win_T *wp)
       || grid->Rows != rows
       || grid->Columns != cols) {
     if (want_allocation) {
-      grid_alloc(grid, rows, cols, true);
+      grid_alloc(grid, rows, cols, true, true);
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
       // Only keep track of the size and offset of the window.
@@ -6054,7 +6039,7 @@ retry:
   // Continuing with the old arrays may result in a crash, because the
   // size is wrong.
 
-  grid_alloc(&default_grid, Rows, Columns, !doclear);
+  grid_alloc(&default_grid, Rows, Columns, !doclear, true);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
@@ -6088,7 +6073,7 @@ retry:
   }
 }
 
-void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
+void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
   ScreenGrid new = *grid;
@@ -6106,7 +6091,7 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
     new.line_offset[new_row] = new_row * new.Columns;
     new.line_wraps[new_row] = false;
 
-    grid_clear_line(&new, new.line_offset[new_row], columns, true);
+    grid_clear_line(&new, new.line_offset[new_row], columns, valid);
 
     if (copy) {
       // If the screen is not going to be cleared, copy as much as
@@ -6233,6 +6218,12 @@ void grid_invalidate(ScreenGrid *grid)
 {
   (void)memset(grid->attrs, -1, grid->Rows * grid->Columns * sizeof(sattr_T));
 }
+
+bool grid_invalid_row(ScreenGrid *grid, int row)
+{
+  return grid->attrs[grid->line_offset[row]] < 0;
+}
+
 
 
 /// Copy part of a grid line for vertically split window.

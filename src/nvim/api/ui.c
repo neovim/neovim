@@ -461,7 +461,7 @@ static void remote_ui_put(UI *ui, const char *cell)
 static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
                                Integer startcol, Integer endcol,
                                Integer clearcol, Integer clearattr,
-                               Boolean wrap, const schar_T *chunk,
+                               LineFlags flags, const schar_T *chunk,
                                const sattr_T *attrs)
 {
   UIData *data = ui->data;

@@ -315,11 +315,17 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
 void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
              int clearattr, bool wrap)
 {
+  LineFlags flags = wrap ? kLineFlagWrap : 0;
+  if (startcol == -1) {
+    startcol = 0;
+    flags |= kLineFlagInvalid;
+  }
+
   size_t off = grid->line_offset[row] + (size_t)startcol;
 
-  ui_call_raw_line(grid->handle, row, startcol, endcol,
-             clearcol, clearattr, wrap, (const schar_T *)grid->chars + off,
-             (const sattr_T *)grid->attrs + off);
+  ui_call_raw_line(grid->handle, row, startcol, endcol, clearcol, clearattr,
+                   flags, (const schar_T *)grid->chars + off,
+                   (const sattr_T *)grid->attrs + off);
 
   if (p_wd) {  // 'writedelay': flush & delay each time.
     int old_row = cursor_row, old_col = cursor_col;

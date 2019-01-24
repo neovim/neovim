@@ -1273,7 +1273,7 @@ static void tui_option_set(UI *ui, String name, Object value)
 
 static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
                          Integer endcol, Integer clearcol, Integer clearattr,
-                         Boolean wrap, const schar_T *chunk,
+                         LineFlags flags, const schar_T *chunk,
                          const sattr_T *attrs)
 {
   TUIData *data = ui->data;
@@ -1295,7 +1295,8 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
                  (int)clearattr);
   }
 
-  if (wrap && ui->width == grid->width && linerow + 1 < grid->height) {
+  if (flags & kLineFlagWrap && ui->width == grid->width
+      && linerow + 1 < grid->height) {
     // Only do line wrapping if the grid width is equal to the terminal
     // width and the line continuation is within the grid.
 

@@ -363,7 +363,7 @@ void pum_redraw(void)
 
   if (!pum_grid.chars
       || pum_grid.Rows != pum_height || pum_grid.Columns != grid_width) {
-    grid_alloc(&pum_grid, pum_height, grid_width, !moved);
+    grid_alloc(&pum_grid, pum_height, grid_width, !moved, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.Columns, pum_grid.Rows);
   } else if (moved) {
     grid_invalidate(&pum_grid);
