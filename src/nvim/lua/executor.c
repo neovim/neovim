@@ -36,6 +36,12 @@ typedef struct {
   String lua_err_str;
 } LuaError;
 
+/// We use this to store Lua callbacks
+typedef struct {
+  // TODO: store more info for debugging, traceback?
+  int cb;
+} nlua_ctx;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/vim_module.generated.h"
 # include "lua/executor.c.generated.h"
@@ -108,6 +114,36 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
+static void nlua_schedule_cb(void **argv)
+{
+  nlua_ctx *ctx = argv[0];
+  lua_State *const lstate = nlua_enter();
+  lua_rawgeti(lstate, LUA_REGISTRYINDEX, ctx->cb);
+  luaL_unref(lstate, LUA_REGISTRYINDEX, ctx->cb);
+  lua_pcall(lstate, 0, 0, 0);
+  free(ctx);
+}
+
+/// Schedule Lua callback on main loop's event queue
+///
+/// This is used to make sure nvim API is called at the right moment.
+///
+/// @param  lstate  Lua interpreter state.
+/// @param[in]  msg  Message base, must contain one `%s`.
+static int nlua_schedule(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // TODO: report error using nlua_error instead
+  luaL_checktype(lstate, 1, LUA_TFUNCTION);
+
+  nlua_ctx* ctx = (nlua_ctx*)malloc(sizeof(nlua_ctx));
+  lua_pushvalue(lstate, 1);
+  ctx->cb = luaL_ref(lstate, LUA_REGISTRYINDEX);
+
+  multiqueue_put(main_loop.events, nlua_schedule_cb, 1, ctx);
+  return 0;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -143,6 +179,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // stricmp
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setfield(lstate, -2, "stricmp");
+  // schedule
+  lua_pushcfunction(lstate, &nlua_schedule);
+  lua_setfield(lstate, -2, "schedule");
 
   lua_setglobal(lstate, "vim");
   return 0;
