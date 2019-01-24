@@ -10,7 +10,7 @@ local ok = helpers.ok
 local meths = helpers.meths
 local spawn, merge_args = helpers.spawn, helpers.merge_args
 local set_session = helpers.set_session
-local expect_err = helpers.expect_err
+local meth_pcall = helpers.meth_pcall
 
 describe('server -> client', function()
   local cid
@@ -221,8 +221,8 @@ describe('server -> client', function()
     end)
 
     it('returns an error if the request failed', function()
-      expect_err('Vim:Invalid method: does%-not%-exist',
-                 eval, "rpcrequest(vim, 'does-not-exist')")
+      eq({false, "Vim:Error invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist" },
+         meth_pcall(eval, "rpcrequest(vim, 'does-not-exist')"))
     end)
   end)
 

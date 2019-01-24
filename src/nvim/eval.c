@@ -6529,7 +6529,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(VIML_INTERNAL_CALL, args, &err);
 
   if (ERROR_SET(&err)) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    emsgf_multiline((const char *)e_api_error, err.msg);
     goto end;
   }
 
@@ -14118,8 +14118,11 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 
   Error err = ERROR_INIT;
-  Object result = rpc_send_call((uint64_t)argvars[0].vval.v_number,
-                                tv_get_string(&argvars[1]), args, &err);
+
+  uint64_t chan_id = (uint64_t)argvars[0].vval.v_number;
+  const char *method = tv_get_string(&argvars[1]);
+
+  Object result = rpc_send_call(chan_id, method, args, &err);
 
   if (l_provider_call_nesting) {
     current_SID = save_current_SID;
@@ -14132,7 +14135,20 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (ERROR_SET(&err)) {
-    nvim_err_writeln(cstr_as_string(err.msg));
+    const char *name = NULL;
+    Channel *chan = find_channel(chan_id);
+    if (chan) {
+      name = rpc_client_name(chan);
+    }
+    msg_ext_set_kind("rpc_error");
+    if (name) {
+      emsgf_multiline("Error invoking '%s' on channel %"PRIu64" (%s):\n%s",
+                      method, chan_id, name, err.msg);
+    } else {
+      emsgf_multiline("Error invoking '%s' on channel %"PRIu64":\n%s",
+                      method, chan_id, err.msg);
+    }
+
     goto end;
   }
 

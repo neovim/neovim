@@ -4,6 +4,7 @@ local clear, feed = helpers.clear, helpers.feed
 local eval = helpers.eval
 local eq = helpers.eq
 local command = helpers.command
+local set_method_error = helpers.set_method_error
 
 
 describe('ui/ext_messages', function()
@@ -631,7 +632,7 @@ describe('ui/ext_messages', function()
     eq(0, eval('&cmdheight'))
   end)
 
-  it('supports multiline messages', function()
+  it('supports multiline messages from lua', function()
     feed(':lua error("such\\nmultiline\\nerror")<cr>')
     screen:expect{grid=[[
       ^                         |
@@ -641,8 +642,60 @@ describe('ui/ext_messages', function()
       {1:~                        }|
     ]], messages={{
         content = {{'E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: such\nmultiline\nerror', 2}},
-        kind = "emsg"
+        kind = "lua_error"
      }}}
+  end)
+
+  it('supports multiline messages from rpc', function()
+    feed(':call rpcrequest(1, "test_method")<cr>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={{
+      content = {{"Error invoking 'test_method' on channel 1:\ncomplete\nerror\n\nmessage", 2}},
+      kind = "rpc_error"
+    }}, request_cb=function (name)
+      if name == "test_method" then
+        set_method_error("complete\nerror\n\nmessage")
+      end
+    end}
+  end)
+end)
+
+describe('ui/builtin messages', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 7)
+    screen:attach({rgb=true, ext_popupmenu=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true, reverse = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+  end)
+
+  it('supports multiline messages from rpc', function()
+    feed(':call rpcrequest(1, "test_method")<cr>')
+
+    screen:expect{grid=[[
+      {3:                                                            }|
+      {2:Error invoking 'test_method' on channel 1:}                  |
+      {2:complete}                                                    |
+      {2:error}                                                       |
+                                                                  |
+      {2:message}                                                     |
+      {4:Press ENTER or type command to continue}^                     |
+    ]], request_cb=function (name)
+      if name == "test_method" then
+        set_method_error("complete\nerror\n\nmessage")
+      end
+    end}
   end)
 end)
 
