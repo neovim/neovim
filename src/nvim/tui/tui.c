@@ -61,7 +61,7 @@
     (var) = unibi_var_from_num((num)); \
   } while (0)
 #else
-#define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
+#define UNIBI_SET_NUM_VAR(var, num) (var).i_ = (num);
 #endif
 
 typedef struct {
