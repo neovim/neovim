@@ -5026,7 +5026,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   invalidate_botline_win(wp);
 
   if (wp->w_buffer->terminal) {
-    terminal_resize(wp->w_buffer->terminal, 0, wp->w_height);
+    terminal_check_size(wp->w_buffer->terminal);
+    // TODO: terminal should this itself:
     redraw_win_later(wp, NOT_VALID);
   }
 }
@@ -5048,8 +5049,8 @@ void win_new_width(win_T *wp, int width)
   wp->w_width = width;
   // TODO(bfredl): refactor this. There should be some variable
   // wp->w_inner_width which always contains the final actual width.
-  // Alternatively use wp->w_width for this and introduce wp->w_outer_width
-  // Then use this to fix terminal_resize.
+  // Alternatively use wp->w_width for this and introduce wp->w_outer_width.
+  // Then use this to fix terminal_check_size.
   if (!ui_is_external(kUIMultigrid) || wp->w_grid.requested_cols == 0) {
     win_inner_width_changed(wp);
   }
@@ -5059,9 +5060,7 @@ void win_new_width(win_T *wp, int width)
 
   if (wp->w_buffer->terminal) {
     if (wp->w_height != 0) {
-      terminal_resize(wp->w_buffer->terminal,
-                      (uint16_t)(MAX(0, wp->w_width - win_col_off(wp))),
-                      0);
+      terminal_check_size(wp->w_buffer->terminal);
     }
   }
   wp->w_pos_changed = true;

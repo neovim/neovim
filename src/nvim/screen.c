@@ -629,9 +629,7 @@ static void win_update(win_T *wp)
     wp->w_nrwidth = i;
 
     if (buf->terminal) {
-      terminal_resize(buf->terminal,
-                      (uint16_t)(MAX(0, wp->w_grid.Columns - win_col_off(wp))),
-                      (uint16_t)wp->w_grid.Rows);
+      terminal_check_size(buf->terminal);
     }
   } else if (buf->b_mod_set
              && buf->b_mod_xlines != 0
