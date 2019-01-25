@@ -2055,6 +2055,7 @@ win_line (
   char_u      *p_extra = NULL;        // string of extra chars, plus NUL
   char_u      *p_extra_free = NULL;   // p_extra needs to be freed
   int c_extra = NUL;                  // extra chars, all the same
+  int c_final = NUL;                  // final char, mandatory if set
   int extra_attr = 0;                 // attributes when n_extra != 0
   static char_u *at_end_str = (char_u *)"";  // used for p_extra when displaying
                                              // curwin->w_p_lcs_chars.eol at
@@ -2066,6 +2067,7 @@ win_line (
   int saved_n_extra = 0;
   char_u      *saved_p_extra = NULL;
   int saved_c_extra = 0;
+  int saved_c_final = 0;
   int saved_char_attr = 0;
 
   int n_attr = 0;                       /* chars with special attr */
@@ -2644,6 +2646,7 @@ win_line (
           /* Draw the cmdline character. */
           n_extra = 1;
           c_extra = cmdwin_type;
+          c_final = NUL;
           char_attr = win_hl_attr(wp, HLF_AT);
         }
       }
@@ -2662,6 +2665,7 @@ win_line (
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
+          c_final = NUL;
           char_attr = win_hl_attr(wp, HLF_FC);
         }
       }
@@ -2675,6 +2679,7 @@ win_line (
               int text_sign;
               // Draw cells with the sign value or blank.
               c_extra = ' ';
+              c_final = NUL;
               char_attr = win_hl_attr(wp, HLF_SC);
               n_extra = win_signcol_width(wp);
 
@@ -2685,6 +2690,7 @@ win_line (
                       int symbol_blen = (int)STRLEN(p_extra);
                       if (p_extra != NULL) {
                           c_extra = NUL;
+                          c_final = NUL;
                           // symbol(s) bytes + (filling spaces) (one byte each)
                           n_extra = symbol_blen +
                             (win_signcol_width(wp) - mb_string2cells(p_extra));
@@ -2736,8 +2742,11 @@ win_line (
               rl_mirror(extra);
             p_extra = extra;
             c_extra = NUL;
-          } else
+            c_final = NUL;
+          } else {
             c_extra = ' ';
+            c_final = NUL;
+          }
           n_extra = number_width(wp) + 1;
           char_attr = win_hl_attr(wp, HLF_N);
 
@@ -2795,8 +2804,10 @@ win_line (
           // draw "deleted" diff line(s)
           if (char2cells(wp->w_p_fcs_chars.diff) > 1) {
             c_extra = '-';
+            c_final = NUL;
           } else {
             c_extra = wp->w_p_fcs_chars.diff;
+            c_final = NUL;
           }
           if (wp->w_p_rl) {
             n_extra = col + 1;
@@ -2809,6 +2820,7 @@ win_line (
           /* Draw 'showbreak' at the start of each broken line. */
           p_extra = p_sbr;
           c_extra = NUL;
+          c_final = NUL;
           n_extra = (int)STRLEN(p_sbr);
           char_attr = win_hl_attr(wp, HLF_AT);
           need_showbreak = false;
@@ -2830,6 +2842,7 @@ win_line (
           /* Continue item from end of wrapped line. */
           n_extra = saved_n_extra;
           c_extra = saved_c_extra;
+          c_final = saved_c_final;
           p_extra = saved_p_extra;
           char_attr = saved_char_attr;
         } else {
@@ -3027,20 +3040,18 @@ win_line (
       }
     }
 
-    /*
-     * Get the next character to put on the screen.
-     */
-    /*
-     * The "p_extra" points to the extra stuff that is inserted to
-     * represent special characters (non-printable stuff) and other
-     * things.  When all characters are the same, c_extra is used.
-     * "p_extra" must end in a NUL to avoid mb_ptr2len() reads past
-     * "p_extra[n_extra]".
-     * For the '$' of the 'list' option, n_extra == 1, p_extra == "".
-     */
+    // Get the next character to put on the screen.
+    //
+    // The "p_extra" points to the extra stuff that is inserted to
+    // represent special characters (non-printable stuff) and other
+    // things.  When all characters are the same, c_extra is used.
+    // If c_final is set, it will compulsorily be used at the end.
+    // "p_extra" must end in a NUL to avoid mb_ptr2len() reads past
+    // "p_extra[n_extra]".
+    // For the '$' of the 'list' option, n_extra == 1, p_extra == "".
     if (n_extra > 0) {
-      if (c_extra != NUL) {
-        c = c_extra;
+      if (c_extra != NUL || (n_extra == 1 && c_final != NUL)) {
+        c = (n_extra == 1 && c_final != NUL) ? c_final : c_extra;
         mb_c = c;               // doesn't handle non-utf-8 multi-byte!
         if (enc_utf8 && utf_char2len(c) > 1) {
           mb_utf8 = true;
@@ -3147,6 +3158,7 @@ win_line (
             mb_utf8 = (c >= 0x80);
             n_extra = (int)STRLEN(p_extra);
             c_extra = NUL;
+            c_final = NUL;
             if (area_attr == 0 && search_attr == 0) {
               n_attr = n_extra + 1;
               extra_attr = win_hl_attr(wp, HLF_8);
@@ -3199,6 +3211,7 @@ win_line (
               p_extra = extra;
               n_extra = (int)STRLEN(extra) - 1;
               c_extra = NUL;
+              c_final = NUL;
               c = *p_extra++;
               if (area_attr == 0 && search_attr == 0) {
                 n_attr = n_extra + 1;
@@ -3233,6 +3246,7 @@ win_line (
         if (n_skip > 0 && mb_l > 1 && n_extra == 0) {
           n_extra = 1;
           c_extra = MB_FILLER_CHAR;
+          c_final = NUL;
           c = ' ';
           if (area_attr == 0 && search_attr == 0) {
             n_attr = n_extra + 1;
@@ -3392,6 +3406,7 @@ win_line (
                       - vcol % (int)wp->w_buffer->b_p_ts - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
+          c_final = NUL;
           if (ascii_iswhite(c)) {
             if (c == TAB)
               /* See "Tab alignment" below. */
@@ -3523,12 +3538,15 @@ win_line (
 
           mb_utf8 = false;  // don't draw as UTF-8
           if (wp->w_p_list) {
-            c = wp->w_p_lcs_chars.tab1;
+            c = (n_extra == 0 && wp->w_p_lcs_chars.tab3)
+                 ? wp->w_p_lcs_chars.tab3
+                 : wp->w_p_lcs_chars.tab1;
             if (wp->w_p_lbr) {
               c_extra = NUL; /* using p_extra from above */
             } else {
               c_extra = wp->w_p_lcs_chars.tab2;
             }
+            c_final = wp->w_p_lcs_chars.tab3;
             n_attr = tab_len + 1;
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
@@ -3539,6 +3557,7 @@ win_line (
               c = 0xc0;
             }
           } else {
+            c_final = NUL;
             c_extra = ' ';
             c = ' ';
           }
@@ -3566,6 +3585,7 @@ win_line (
               p_extra = at_end_str;
               n_extra = 1;
               c_extra = NUL;
+              c_final = NUL;
             }
           }
           if (wp->w_p_list && wp->w_p_lcs_chars.eol > 0) {
@@ -3593,6 +3613,7 @@ win_line (
           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
             rl_mirror(p_extra);                 /* reverse "<12>" */
           c_extra = NUL;
+          c_final = NUL;
           if (wp->w_p_lbr) {
             char_u *p;
 
@@ -3716,6 +3737,7 @@ win_line (
         /* Double-width character being overwritten by the "precedes"
          * character, need to fill up half the character. */
         c_extra = MB_FILLER_CHAR;
+        c_final = NUL;
         n_extra = 1;
         n_attr = 2;
         extra_attr = win_hl_attr(wp, HLF_AT);
@@ -4231,6 +4253,7 @@ win_line (
       saved_n_extra = n_extra;
       saved_p_extra = p_extra;
       saved_c_extra = c_extra;
+      saved_c_final = c_final;
       saved_char_attr = char_attr;
       n_extra = 0;
       lcs_prec_todo = wp->w_p_lcs_chars.prec;

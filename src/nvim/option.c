@@ -3405,7 +3405,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
 {
   int round, i, len, entries;
   char_u *p, *s;
-  int c1, c2 = 0;
+  int c1 = 0, c2 = 0, c3 = 0;
 
   struct chars_tab {
     int     *cp;    ///< char value
@@ -3462,6 +3462,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
       }
       if (varp == &wp->w_p_lcs) {
         wp->w_p_lcs_chars.tab1 = NUL;
+        wp->w_p_lcs_chars.tab3 = NUL;
       }
     }
     p = *varp;
@@ -3471,6 +3472,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
+          c1 = c2 = c3 = 0;
           s = p + len + 1;
 
           // TODO(bfredl): use schar_T representation and utfc_ptr2len
@@ -3488,12 +3490,20 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
             if (mb_char2cells(c2) > 1 || (c2len == 1 && c2 > 127)) {
               continue;
             }
+            if (!(*s == ',' || *s == NUL)) {
+              int c3len = utf_ptr2len(s);
+              c3 = mb_cptr2char_adv((const char_u **)&s);
+              if (mb_char2cells(c3) > 1 || (c3len == 1 && c3 > 127)) {
+                continue;
+              }
+            }
           }
           if (*s == ',' || *s == NUL) {
             if (round) {
               if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
                 wp->w_p_lcs_chars.tab1 = c1;
                 wp->w_p_lcs_chars.tab2 = c2;
+                wp->w_p_lcs_chars.tab3 = c3;
               } else if (tab[i].cp != NULL) {
                 *(tab[i].cp) = c1;
               }

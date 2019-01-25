@@ -1016,6 +1016,7 @@ struct window_S {
     int space;
     int tab1;                       ///< first tab character
     int tab2;                       ///< second tab character
+    int tab3;                       ///< third tab character
     int trail;
     int conceal;
   } w_p_lcs_chars;

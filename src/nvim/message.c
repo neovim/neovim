@@ -1517,10 +1517,11 @@ void msg_prt_line(char_u *s, int list)
   int col = 0;
   int n_extra = 0;
   int c_extra = 0;
-  char_u      *p_extra = NULL;              /* init to make SASC shut up */
+  int c_final = 0;
+  char_u *p_extra = NULL;  // init to make SASC shut up
   int n;
   int attr = 0;
-  char_u      *trail = NULL;
+  char_u *trail = NULL;
   int l;
 
   if (curwin->w_p_list) {
@@ -1543,7 +1544,9 @@ void msg_prt_line(char_u *s, int list)
   while (!got_int) {
     if (n_extra > 0) {
       n_extra--;
-      if (c_extra) {
+      if (n_extra == 0 && c_final) {
+        c = c_final;
+      } else if (c_extra) {
         c = c_extra;
       } else {
         assert(p_extra != NULL);
@@ -1572,9 +1575,13 @@ void msg_prt_line(char_u *s, int list)
         if (!list) {
           c = ' ';
           c_extra = ' ';
+          c_final = NUL;
         } else {
-          c = curwin->w_p_lcs_chars.tab1;
+          c = (n_extra == 0 && curwin->w_p_lcs_chars.tab3)
+              ? curwin->w_p_lcs_chars.tab3
+              : curwin->w_p_lcs_chars.tab1;
           c_extra = curwin->w_p_lcs_chars.tab2;
+          c_final = curwin->w_p_lcs_chars.tab3;
           attr = HL_ATTR(HLF_8);
         }
       } else if (c == 160 && list && curwin->w_p_lcs_chars.nbsp != NUL) {
@@ -1583,6 +1590,7 @@ void msg_prt_line(char_u *s, int list)
       } else if (c == NUL && list && curwin->w_p_lcs_chars.eol != NUL) {
         p_extra = (char_u *)"";
         c_extra = NUL;
+        c_final = NUL;
         n_extra = 1;
         c = curwin->w_p_lcs_chars.eol;
         attr = HL_ATTR(HLF_AT);
@@ -1591,6 +1599,7 @@ void msg_prt_line(char_u *s, int list)
         n_extra = n - 1;
         p_extra = transchar_byte(c);
         c_extra = NUL;
+        c_final = NUL;
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
