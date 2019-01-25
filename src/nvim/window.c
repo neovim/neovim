@@ -3025,8 +3025,10 @@ static void new_frame(win_T *wp)
 void win_init_size(void)
 {
   firstwin->w_height = ROWS_AVAIL;
+  firstwin->w_height_inner = firstwin->w_height;
   topframe->fr_height = ROWS_AVAIL;
   firstwin->w_width = Columns;
+  firstwin->w_width_inner = firstwin->w_width;
   topframe->fr_width = Columns;
 }
 
@@ -4123,8 +4125,10 @@ static void frame_remove(frame_T *frp)
 void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
-  assert(wp->w_grid.Rows >= 0);
-  wp->w_lines = xcalloc(MAX(wp->w_grid.Rows + 1, Rows), sizeof(wline_T));
+  assert(wp->w_height_inner >= 0);
+  // TODO(bfredl) :this should work, add call to win_set_inner_size?
+  // wp->w_lines = xcalloc(wp->w_height_inner+1, sizeof(wline_T));
+  wp->w_lines = xcalloc(MAX(wp->w_height_inner + 1, Rows), sizeof(wline_T));
 }
 
 /*
@@ -4876,9 +4880,9 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
 // Has no effect when the window is less than two lines.
 void set_fraction(win_T *wp)
 {
-  if (wp->w_height > 1) {
-    wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height / 2)
-                   / (long)wp->w_height;
+  if (wp->w_height_inner > 1) {
+    wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height_inner / 2)
+                   / (long)wp->w_height_inner;
   }
 }
 
@@ -4889,46 +4893,25 @@ void set_fraction(win_T *wp)
  */
 void win_new_height(win_T *wp, int height)
 {
-  int prev_height = wp->w_height;
-
-  /* Don't want a negative height.  Happens when splitting a tiny window.
-   * Will equalize heights soon to fix it. */
-  if (height < 0)
+  // Don't want a negative height.  Happens when splitting a tiny window.
+  // Will equalize heights soon to fix it.
+  if (height < 0) {
     height = 0;
-  if (wp->w_height == height)
-    return;         /* nothing to do */
-
-  if (wp->w_height > 0) {
-    if (wp == curwin) {
-      // w_wrow needs to be valid. When setting 'laststatus' this may
-      // call win_new_height() recursively.
-      validate_cursor();
-    }
-    if (wp->w_height != prev_height) {  // -V547
-      return;  // Recursive call already changed the size, bail out.
-    }
-    if (wp->w_wrow != wp->w_prev_fraction_row) {
-      set_fraction(wp);
-    }
+  }
+  if (wp->w_height == height) {
+    return;  // nothing to do
   }
 
   wp->w_height = height;
-  wp->w_skipcol = 0;
-
-  // There is no point in adjusting the scroll position when exiting.  Some
-  // values might be invalid.
-  if (!exiting) {
-    scroll_to_fraction(wp, prev_height);
-  }
-
   wp->w_pos_changed = true;
+  win_set_inner_size(wp);
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
 {
     linenr_T lnum;
     int sline, line_size;
-    int height = wp->w_height;
+    int height = wp->w_height_inner;
 
   /* Don't change w_topline when height is zero.  Don't set w_topline when
    * 'scrollbind' is set and this isn't the current window. */
@@ -4951,8 +4934,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       // Make sure the whole cursor line is visible, if possible.
       const int rows = plines_win(wp, lnum, false);
 
-      if (sline > wp->w_height - rows) {
-        sline = wp->w_height - rows;
+      if (sline > wp->w_height_inner - rows) {
+        sline = wp->w_height_inner - rows;
         wp->w_wrow -= rows - line_size;
       }
     }
@@ -4964,14 +4947,14 @@ void scroll_to_fraction(win_T *wp, int prev_height)
        * room use w_skipcol;
        */
       wp->w_wrow = line_size;
-      if (wp->w_wrow >= wp->w_height
-          && (wp->w_width - win_col_off(wp)) > 0) {
-        wp->w_skipcol += wp->w_width - win_col_off(wp);
-        --wp->w_wrow;
-        while (wp->w_wrow >= wp->w_height) {
-          wp->w_skipcol += wp->w_width - win_col_off(wp)
+      if (wp->w_wrow >= wp->w_height_inner
+          && (wp->w_width_inner - win_col_off(wp)) > 0) {
+        wp->w_skipcol += wp->w_width_inner - win_col_off(wp);
+        wp->w_wrow--;
+        while (wp->w_wrow >= wp->w_height_inner) {
+          wp->w_skipcol += wp->w_width_inner - win_col_off(wp)
                            + win_col_off2(wp);
-          --wp->w_wrow;
+          wp->w_wrow--;
         }
       }
       set_topline(wp, lnum);
@@ -5024,22 +5007,58 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   redraw_win_later(wp, SOME_VALID);
   wp->w_redr_status = TRUE;
   invalidate_botline_win(wp);
+}
+
+void win_set_inner_size(win_T *wp)
+{
+  int width = wp->w_width_request;
+  if (width == 0) {
+    width = wp->w_width;
+  }
+
+  int prev_height = wp->w_height_inner;
+  int height = wp->w_height_request;
+  if (height == 0) {
+    height = wp->w_height;
+  }
+
+  if (height != prev_height) {
+    if (height > 0) {
+      if (wp == curwin) {
+        // w_wrow needs to be valid. When setting 'laststatus' this may
+        // call win_new_height() recursively.
+        validate_cursor();
+      }
+      if (wp->w_height_inner != prev_height) {  // -V547
+        return;  // Recursive call already changed the size, bail out.
+      }
+      if (wp->w_wrow != wp->w_prev_fraction_row) {
+        set_fraction(wp);
+      }
+    }
+    wp->w_height_inner = height;
+    wp->w_skipcol = 0;
+
+    // There is no point in adjusting the scroll position when exiting.  Some
+    // values might be invalid.
+    if (!exiting) {
+      scroll_to_fraction(wp, prev_height);
+    }
+  }
+
+  if (width != wp->w_width_inner) {
+    wp->w_width_inner = width;
+    wp->w_lines_valid = 0;
+    changed_line_abv_curs_win(wp);
+    invalidate_botline_win(wp);
+    if (wp == curwin) {
+      update_topline();
+      curs_columns(true);  // validate w_wrow
+    }
+  }
 
   if (wp->w_buffer->terminal) {
     terminal_check_size(wp->w_buffer->terminal);
-    // TODO: terminal should this itself:
-    redraw_win_later(wp, NOT_VALID);
-  }
-}
-
-void win_inner_width_changed(win_T *wp)
-{
-  wp->w_lines_valid = 0;
-  changed_line_abv_curs_win(wp);
-  invalidate_botline_win(wp);
-  if (wp == curwin) {
-    update_topline();
-    curs_columns(TRUE);         /* validate w_wrow */
   }
 }
 
@@ -5047,22 +5066,11 @@ void win_inner_width_changed(win_T *wp)
 void win_new_width(win_T *wp, int width)
 {
   wp->w_width = width;
-  // TODO(bfredl): refactor this. There should be some variable
-  // wp->w_inner_width which always contains the final actual width.
-  // Alternatively use wp->w_width for this and introduce wp->w_outer_width.
-  // Then use this to fix terminal_check_size.
-  if (!ui_is_external(kUIMultigrid) || wp->w_grid.requested_cols == 0) {
-    win_inner_width_changed(wp);
-  }
+  win_set_inner_size(wp);
 
   redraw_win_later(wp, NOT_VALID);
   wp->w_redr_status = TRUE;
 
-  if (wp->w_buffer->terminal) {
-    if (wp->w_height != 0) {
-      terminal_check_size(wp->w_buffer->terminal);
-    }
-  }
   wp->w_pos_changed = true;
 }
 

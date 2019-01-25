@@ -1034,6 +1034,10 @@ struct window_S {
   int w_width;                      /* Width of window, excluding separation. */
   int w_vsep_width;                 /* Number of separator columns (0 or 1). */
 
+  int w_height_inner;
+  int w_width_inner;
+  int w_height_request;
+  int w_width_request;
   /*
    * === start of cached values ====
    */

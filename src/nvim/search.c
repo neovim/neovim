@@ -2168,7 +2168,7 @@ showmatch(
     }
     if (curwin->w_p_wrap
         || (vcol >= curwin->w_leftcol
-            && vcol < curwin->w_leftcol + curwin->w_grid.Columns)) {
+            && vcol < curwin->w_leftcol + curwin->w_width_inner)) {
       mpos = *lpos;  // save the pos, update_screen() may change it
       save_cursor = curwin->w_cursor;
       save_so = p_so;

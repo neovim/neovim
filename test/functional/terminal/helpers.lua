@@ -33,7 +33,7 @@ local function disable_mouse() feed_termcode('[?1002l') end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
-local function screen_setup(extra_rows, command, cols)
+local function screen_setup(extra_rows, command, cols, opts)
   extra_rows = extra_rows and extra_rows or 0
   command = command and command or default_command
   cols = cols and cols or 50
@@ -55,7 +55,7 @@ local function screen_setup(extra_rows, command, cols)
     [10] = {foreground = 121},  -- "Press ENTER" in embedded :terminal session.
   })
 
-  screen:attach({rgb=false})
+  screen:attach(opts or {rgb=false})
 
   feed_command('enew | call termopen('..command..')')
   nvim('input', '<CR>')
@@ -69,7 +69,7 @@ local function screen_setup(extra_rows, command, cols)
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.
-  if command == default_command then
+  if command == default_command and opts == nil then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
     local empty_line = (' '):rep(cols)

@@ -164,7 +164,7 @@ retnomove:
             || (!on_status_line
                 && !on_sep_line
                 && (wp->w_p_rl
-                    ? col < wp->w_grid.Columns - wp->w_p_fdc
+                    ? col < wp->w_width_inner - wp->w_p_fdc
                     : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
                                             ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
@@ -258,7 +258,7 @@ retnomove:
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       redraw_later(VALID);
       row = 0;
-    } else if (row >= curwin->w_grid.Rows)   {
+    } else if (row >= curwin->w_height_inner)   {
       count = 0;
       for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
         if (curwin->w_topfill > 0) {
@@ -267,7 +267,7 @@ retnomove:
           count += plines(curwin->w_topline);
         }
 
-        if (!first && count > row - curwin->w_grid.Rows + 1) {
+        if (!first && count > row - curwin->w_height_inner + 1) {
           break;
         }
         first = false;
@@ -289,7 +289,7 @@ retnomove:
       redraw_later(VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      row = curwin->w_grid.Rows - 1;
+      row = curwin->w_height_inner - 1;
     } else if (row == 0)   {
       // When dragging the mouse, while the text has been scrolled up as
       // far as it goes, moving the mouse in the top line should scroll
@@ -304,7 +304,7 @@ retnomove:
   }
 
   // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_grid.Columns - curwin->w_p_fdc :
+  if (curwin->w_p_rl ? col < curwin->w_width_inner - curwin->w_p_fdc :
       col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
     mouse_char = ' ';
   }
@@ -371,7 +371,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   int count;
 
   if (win->w_p_rl) {
-    col = win->w_grid.Columns - 1 - col;
+    col = win->w_width_inner - 1 - col;
   }
 
   lnum = win->w_topline;
@@ -409,7 +409,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     off = win_col_off(win) - win_col_off2(win);
     if (col < off)
       col = off;
-    col += row * (win->w_grid.Columns - off);
+    col += row * (win->w_width_inner - off);
     // add skip column (for long wrapping line)
     col += win->w_skipcol;
   }
@@ -622,7 +622,7 @@ bool mouse_scroll_horiz(int dir)
 
   int step = 6;
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      step = curwin->w_grid.Columns;
+      step = curwin->w_width_inner;
   }
 
   int leftcol = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : +step);
@@ -674,7 +674,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // Find the offset where scanning should begin.
   int offset = wp->w_leftcol;
   if (row > 0) {
-    offset += row * (wp->w_grid.Columns - win_col_off(wp) - win_col_off2(wp) -
+    offset += row * (wp->w_width_inner - win_col_off(wp) - win_col_off2(wp) -
                      wp->w_leftcol + wp->w_skipcol);
   }
 

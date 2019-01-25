@@ -48,12 +48,8 @@ typedef struct {
   // offsets for the grid relative to the global screen
   int row_offset;
   int col_offset;
-
-  // grid size requested by the UI. Used for window grids only.
-  int requested_rows;
-  int requested_cols;
-
-  int was_resized;
 } ScreenGrid;
+
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0 }
 
 #endif  // NVIM_GRID_DEFS_H

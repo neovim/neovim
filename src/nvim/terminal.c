@@ -351,9 +351,9 @@ void terminal_check_size(Terminal *term)
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       window_seen = true;
       const uint16_t win_width =
-        (uint16_t)(MAX(0, wp->w_width - win_col_off(wp)));
+        (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
       width = MAX(width, win_width);
-      height = (uint16_t)MAX(height, wp->w_height);
+      height = (uint16_t)MAX(height, wp->w_height_inner);
     }
   }
 

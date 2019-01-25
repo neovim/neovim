@@ -121,11 +121,11 @@ static int coladvance2(
         --curwin->w_curswant;
     }
   } else {
-    int width = curwin->w_grid.Columns - win_col_off(curwin);
+    int width = curwin->w_width_inner - win_col_off(curwin);
 
     if (finetune
         && curwin->w_p_wrap
-        && curwin->w_grid.Columns != 0
+        && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width) {
       csize = linetabsize(line);
       if (csize > 0)
@@ -230,7 +230,7 @@ static int coladvance2(
       int b = (int)wcol - (int)col;
 
       // The difference between wcol and col is used to set coladd.
-      if (b > 0 && b < (MAXCOL - 2 * curwin->w_grid.Columns)) {
+      if (b > 0 && b < (MAXCOL - 2 * curwin->w_width_inner)) {
         pos->coladd = b;
       }
 
@@ -444,7 +444,7 @@ bool leftcol_changed(void)
   bool retval = false;
 
   changed_cline_bef_curs();
-  lastcol = curwin->w_leftcol + curwin->w_grid.Columns - curwin_col_off() - 1;
+  lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
   validate_virtcol();
 
   /*
