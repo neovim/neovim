@@ -25,6 +25,15 @@ function! s:check_config() abort
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
   endif
 
+  if v:ctype ==# 'C'
+    let ok = v:false
+    call health#report_error('Locale does not support UTF-8. Unicode characters may not display correctly.'
+          \                  .printf("\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s", $LANG, $LC_ALL, $LC_CTYPE),
+          \ [ 'If using tmux, try the -u option.',
+          \   'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.' ,
+          \   'Configure your system locale.' ])
+  endif
+
   if &paste
     let ok = v:false
     call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
