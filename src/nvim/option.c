@@ -3494,9 +3494,9 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
               if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
                 wp->w_p_lcs_chars.tab1 = c1;
                 wp->w_p_lcs_chars.tab2 = c2;
-              } else if (tab[i].cp != NULL)
+              } else if (tab[i].cp != NULL) {
                 *(tab[i].cp) = c1;
-
+              }
             }
             p = s;
             break;

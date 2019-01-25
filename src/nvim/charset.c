@@ -750,7 +750,7 @@ int vim_strnsize(char_u *s, int len)
 /// @return Number of characters.
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
   if (*(p) == TAB && (!(wp)->w_p_list || wp->w_p_lcs_chars.tab1)) { \
-    const int ts = (int) (buf)->b_p_ts; \
+    const int ts = (int)(buf)->b_p_ts; \
     return (ts - (int)(col % ts)); \
   } else { \
     return ptr2cells(p); \

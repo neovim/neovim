@@ -1523,20 +1523,22 @@ void msg_prt_line(char_u *s, int list)
   char_u      *trail = NULL;
   int l;
 
-  if (curwin->w_p_list)
-    list = TRUE;
-
-  /* find start of trailing whitespace */
-  if (list && curwin->w_p_lcs_chars.trail) {
-    trail = s + STRLEN(s);
-    while (trail > s && ascii_iswhite(trail[-1]))
-      --trail;
+  if (curwin->w_p_list) {
+    list = true;
   }
 
-  /* output a space for an empty line, otherwise the line will be
-   * overwritten */
-  if (*s == NUL && !(list && curwin->w_p_lcs_chars.eol != NUL))
+  // find start of trailing whitespace
+  if (list && curwin->w_p_lcs_chars.trail) {
+    trail = s + STRLEN(s);
+    while (trail > s && ascii_iswhite(trail[-1])) {
+      trail--;
+    }
+  }
+
+  // output a space for an empty line, otherwise the line will be overwritten
+  if (*s == NUL && !(list && curwin->w_p_lcs_chars.eol != NUL)) {
     msg_putchar(' ');
+  }
 
   while (!got_int) {
     if (n_extra > 0) {
@@ -1565,7 +1567,7 @@ void msg_prt_line(char_u *s, int list)
       attr = 0;
       c = *s++;
       if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
-        /* tab amount depends on current column */
+        // tab amount depends on current column
         n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
         if (!list) {
           c = ' ';

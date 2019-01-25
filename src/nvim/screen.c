@@ -1448,13 +1448,12 @@ static void win_update(win_T *wp)
       wp->w_botline = buf->b_ml.ml_line_count + 1;
       j = diff_check_fill(wp, wp->w_botline);
       if (j > 0 && !wp->w_botfill) {
-        /*
-         * Display filler lines at the end of the file
-         */
-        if (char2cells(wp->w_p_fcs_chars.diff) > 1)
+        // display filler lines at the end of the file
+        if (char2cells(wp->w_p_fcs_chars.diff) > 1) {
           i = '-';
-        else
+        } else {
           i = wp->w_p_fcs_chars.diff;
+        }
         if (row + j > wp->w_grid.Rows) {
           j = wp->w_grid.Rows - row;
         }
@@ -2042,25 +2041,26 @@ win_line (
     bool number_only                  // only update the number column
 )
 {
-  int c = 0;                            // init for GCC
-  long vcol = 0;                        // virtual column (for tabs)
-  long vcol_sbr = -1;                   // virtual column after showbreak
-  long vcol_prev = -1;                  // "vcol" of previous character
-  char_u      *line;                    // current line
-  char_u      *ptr;                     // current position in "line"
-  int row;                              // row in the window, excl w_winrow
-  ScreenGrid *grid = &wp->w_grid;       // grid specfic to the window
+  int c = 0;                          // init for GCC
+  long vcol = 0;                      // virtual column (for tabs)
+  long vcol_sbr = -1;                 // virtual column after showbreak
+  long vcol_prev = -1;                // "vcol" of previous character
+  char_u      *line;                  // current line
+  char_u      *ptr;                   // current position in "line"
+  int row;                            // row in the window, excl w_winrow
+  ScreenGrid *grid = &wp->w_grid;     // grid specfic to the window
 
-  char_u extra[18];                     /* line number and 'fdc' must fit in here */
-  int n_extra = 0;                      /* number of extra chars */
-  char_u      *p_extra = NULL;          /* string of extra chars, plus NUL */
-  char_u      *p_extra_free = NULL;     /* p_extra needs to be freed */
-  int c_extra = NUL;                    /* extra chars, all the same */
-  int extra_attr = 0;                   /* attributes when n_extra != 0 */
-  static char_u *at_end_str = (char_u *)"";   // used for p_extra when displaying
-                                              // curwin->w_p_lcs_chars.eol at end-of-line
-  int lcs_eol_one = wp->w_p_lcs_chars.eol;    // 'eol' until it's been used
-  int lcs_prec_todo = wp->w_p_lcs_chars.prec; // 'prec' until it's been used
+  char_u extra[18];                   // line number and 'fdc' must fit in here
+  int n_extra = 0;                    // number of extra chars
+  char_u      *p_extra = NULL;        // string of extra chars, plus NUL
+  char_u      *p_extra_free = NULL;   // p_extra needs to be freed
+  int c_extra = NUL;                  // extra chars, all the same
+  int extra_attr = 0;                 // attributes when n_extra != 0
+  static char_u *at_end_str = (char_u *)"";  // used for p_extra when displaying
+                                             // curwin->w_p_lcs_chars.eol at
+                                             // end-of-line
+  int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
+  int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
 
   /* saved "extra" items for when draw_state becomes WL_LINE (again) */
   int saved_n_extra = 0;
@@ -2792,11 +2792,12 @@ win_line (
       if (draw_state == WL_SBR - 1 && n_extra == 0) {
         draw_state = WL_SBR;
         if (filler_todo > 0) {
-          /* Draw "deleted" diff line(s). */
-          if (char2cells(wp->w_p_fcs_chars.diff) > 1)
+          // draw "deleted" diff line(s)
+          if (char2cells(wp->w_p_fcs_chars.diff) > 1) {
             c_extra = '-';
-          else
+          } else {
             c_extra = wp->w_p_fcs_chars.diff;
+          }
           if (wp->w_p_rl) {
             n_extra = col + 1;
           } else {
@@ -3406,7 +3407,8 @@ win_line (
             && (((c == 160
                   || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
                  && curwin->w_p_lcs_chars.nbsp)
-                || (c == ' ' && curwin->w_p_lcs_chars.space && ptr - line <= trailcol))) {
+                || (c == ' ' && curwin->w_p_lcs_chars.space
+                    && ptr - line <= trailcol))) {
           c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
           n_attr = 1;
           extra_attr = win_hl_attr(wp, HLF_0);
@@ -3467,7 +3469,8 @@ win_line (
               tab_len += vcol_off;
             }
             // boguscols before FIX_FOR_BOGUSCOLS macro from above.
-            if (wp->w_p_lcs_chars.tab1 && old_boguscols > 0 && n_extra > tab_len) {
+            if (wp->w_p_lcs_chars.tab1 && old_boguscols > 0
+                && n_extra > tab_len) {
               tab_len += n_extra - tab_len;
             }
 
@@ -3486,7 +3489,8 @@ win_line (
             for (i = 0; i < tab_len; i++) {
               utf_char2bytes(wp->w_p_lcs_chars.tab2, p);
               p += mb_char2len(wp->w_p_lcs_chars.tab2);
-              n_extra += mb_char2len(wp->w_p_lcs_chars.tab2) - (saved_nextra > 0 ? 1: 0);
+              n_extra += mb_char2len(wp->w_p_lcs_chars.tab2)
+                         - (saved_nextra > 0 ? 1: 0);
             }
             p_extra = p_extra_free;
 
@@ -3511,7 +3515,8 @@ win_line (
             // Make sure, the highlighting for the tab char will be
             // correctly set further below (effectively reverts the
             // FIX_FOR_BOGSUCOLS macro.
-            if (n_extra == tab_len + vc_saved && wp->w_p_list && wp->w_p_lcs_chars.tab1) {
+            if (n_extra == tab_len + vc_saved && wp->w_p_list
+                && wp->w_p_lcs_chars.tab1) {
               tab_len += vc_saved;
             }
           }
@@ -3858,7 +3863,8 @@ win_line (
 
         // Make sure alignment is the same regardless
         // if listchars=eol:X is used or not.
-        bool delay_virttext = wp->w_p_lcs_chars.eol == lcs_eol_one && eol_hl_off == 0;
+        bool delay_virttext = wp->w_p_lcs_chars.eol == lcs_eol_one
+                              && eol_hl_off == 0;
 
         if (wp->w_p_cuc) {
           rightmost_vcol = wp->w_virtcol;
@@ -3978,7 +3984,7 @@ win_line (
       break;
     }
 
-    /* line continues beyond line end */
+    // line continues beyond line end
     if (wp->w_p_lcs_chars.ext
         && !wp->w_p_wrap
         && filler_todo <= 0
@@ -4164,7 +4170,8 @@ win_line (
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->Columns))
         && (*ptr != NUL
             || filler_todo > 0
-            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && p_extra != at_end_str)
+            || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
+                && p_extra != at_end_str)
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
@@ -4227,13 +4234,15 @@ win_line (
       saved_char_attr = char_attr;
       n_extra = 0;
       lcs_prec_todo = wp->w_p_lcs_chars.prec;
-      if (filler_todo <= 0)
-        need_showbreak = TRUE;
-      --filler_todo;
-      /* When the filler lines are actually below the last line of the
-       * file, don't draw the line itself, break here. */
-      if (filler_todo == 0 && wp->w_botfill)
+      if (filler_todo <= 0) {
+        need_showbreak = true;
+      }
+      filler_todo--;
+      // When the filler lines are actually below the last line of the
+      // file, don't draw the line itself, break here.
+      if (filler_todo == 0 && wp->w_botfill) {
         break;
+      }
     }
 
   }     /* for every character in the line */
@@ -7001,12 +7010,12 @@ static void win_redr_ruler(win_T *wp, int always)
       off = 0;
     }
 
-    /* In list mode virtcol needs to be recomputed */
+    // In list mode virtcol needs to be recomputed
     colnr_T virtcol = wp->w_virtcol;
     if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
-      wp->w_p_list = FALSE;
+      wp->w_p_list = false;
       getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-      wp->w_p_list = TRUE;
+      wp->w_p_list = true;
     }
 
 #define RULER_BUF_LEN 70
