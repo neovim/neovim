@@ -714,6 +714,16 @@ endfunc
 
 func Test_popup_complete_mode()
   new
+  inoremap <f5> <c-r>=complete_mode()<cr>
+  call writefile([
+        \ '!rm	src/testdir/amiga.vim	/^cmap !rm !Delete all$/;"	m',
+        \], 'dummy.txt')
+  setlocal tags=dummy.txt
+  setlocal dictionary=dummy.txt
+  setlocal thesaurus=dummy.txt
+  setlocal omnifunc=syntaxcomplete#Complete
+  setlocal completefunc=syntaxcomplete#Complete
+  setlocal spell
   for [key, expected] in [
         \ ["\<C-X>", 'ctrl_x'],
         \ ["\<C-X>\<C-N>", 'keyword'],
@@ -729,17 +739,18 @@ func Test_popup_complete_mode()
         \ ["\<C-X>\<C-O>", 'omni'],
         \ ["\<C-X>s", 'spell'],
         \]
-    call feedkeys(key . "\<C-r>=complete_mode()\<CR>", 'tx')
+    call feedkeys("i" . key . "\<f5>\<ESC>", 'tx')
     call assert_equal(expected, getline('.'))
     %d
   endfor
+  call delete('dummy.txt')
 
   function! s:complTestEval() abort
     call complete(1, ['source', 'soundfold'])
     return ''
   endfunction
-  inoremap <F5>  <C-R>=s:complTestEval()<CR>
-  call feedkeys("\<F5>\<C-r>=complete_mode()\<CR>", 'tx')
+  inoremap <F6>  <c-r>=s:complTestEval()<CR>
+  call feedkeys("i\<f6>\<f5>\<ESC>", 'tx')
   call assert_equal('eval', getline('.'))
 
   bwipe!
