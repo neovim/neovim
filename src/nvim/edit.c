@@ -7132,11 +7132,17 @@ static void ins_reg(void)
    * message for it. Only call it explicitly. */
   ++no_u_sync;
   if (regname == '=') {
-    /* Sync undo when evaluating the expression calls setline() or
-     * append(), so that it can be undone separately. */
+    pos_T curpos = curwin->w_cursor;
+
+    // Sync undo when evaluating the expression calls setline() or
+    // append(), so that it can be undone separately.
     u_sync_once = 2;
 
     regname = get_expr_register();
+
+    // Cursor may be moved back a column.
+    curwin->w_cursor = curpos;
+    check_cursor();
   }
   if (regname == NUL || !valid_yank_reg(regname, false)) {
     vim_beep(BO_REG);
