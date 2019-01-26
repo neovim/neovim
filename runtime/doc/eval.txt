@@ -5666,23 +5666,24 @@ max({expr})	Return the maximum value of all items in {expr}.
 
 menu_get({path}, {modes})				*menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
-		by |:menu|, |:amenu|, etc.).
-		{path} limits the result to a subtree of the menu hierarchy
-		(empty string matches all menus). E.g. to get items in the
-		"File" menu subtree: >
+		by |:menu|, |:amenu|, …), including |hidden-menus|.
+
+		{path} matches a menu by name, or all menus if {path} is an
+		empty string.  Example: >
 			:echo menu_get('File','')
+			:echo menu_get('')
 <
 		{modes} is a string of zero or more modes (see |maparg()| or
 		|creating-menus| for the list of modes). "a" means "all".
 
-		For example: >
+		Example: >
 			nnoremenu &Test.Test inormal
 			inoremenu Test.Test insert
 			vnoremenu Test.Test x
 			echo menu_get("")
-<
-		returns something like this:
->
+
+<		returns something like this: >
+
 			[ {
 			  "hidden": 0,
 			  "name": "Test",

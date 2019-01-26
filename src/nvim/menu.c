@@ -735,27 +735,31 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 /// @return false if could not find path_name
 bool menu_get(char_u *const path_name, int modes, list_T *list)
 {
-  vimmenu_T   *menu;
-  menu = find_menu(root_menu, path_name, modes);
+  vimmenu_T *menu = find_menu(root_menu, path_name, modes);
   if (!menu) {
     return false;
   }
   for (; menu != NULL; menu = menu->next) {
-    dict_T *dict = menu_get_recursive(menu, modes);
-    if (dict && tv_dict_len(dict) > 0) {
-      tv_list_append_dict(list, dict);
+    dict_T *d = menu_get_recursive(menu, modes);
+    if (d && tv_dict_len(d) > 0) {
+      tv_list_append_dict(list, d);
+    }
+    if (*path_name != NUL) {
+      // If a (non-empty) path query was given, only the first node in the
+      // find_menu() result is relevant.  Else we want all nodes.
+      break;
     }
   }
   return true;
 }
 
 
-/// Find menu matching required name and modes
+/// Find menu matching `name` and `modes`.
 ///
 /// @param menu top menu to start looking from
 /// @param name path towards the menu
 /// @return menu if \p name is null, found menu or NULL
-static vimmenu_T* find_menu(vimmenu_T *menu, char_u * name, int modes)
+static vimmenu_T *find_menu(vimmenu_T *menu, char_u *name, int modes)
 {
   char_u *p;
 

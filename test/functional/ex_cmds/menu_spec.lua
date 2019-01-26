@@ -83,7 +83,7 @@ describe('menu_get', function()
   it("path='', modes='a'", function()
     local m = funcs.menu_get("","a");
     -- HINT: To print the expected table and regenerate the tests:
-    -- print(require('pl.pretty').dump(m))
+    -- print(require('inspect')(m))
     local expected = {
       {
         shortcut = "T",
@@ -310,8 +310,11 @@ describe('menu_get', function()
 
   it('matching path, all modes', function()
     local m = funcs.menu_get("Export", "a")
-    local expected = {
-      {
+    local expected = { {
+      hidden = 0,
+      name = "Export",
+      priority = 500,
+      submenus = { {
         tooltip = "This is the tooltip",
         hidden = 0,
         name = "Script",
@@ -325,8 +328,8 @@ describe('menu_get', function()
             silent = 0
           }
         }
-      }
-    }
+      } }
+    } }
     eq(expected, m)
   end)
 
