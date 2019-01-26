@@ -291,8 +291,8 @@ nvim_input({keys})                                              *nvim_input()*
 
                 Note:
                     For mouse events use |nvim_input_mouse()|. The pseudokey
-                    form "<LeftMouse><col,row>" is deprecated since |api-
-                    level| 6.
+                    form "<LeftMouse><col,row>" is deprecated since
+                    |api-level| 6.
 
                 Attributes: ~
                     {async}
@@ -1254,8 +1254,8 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 By default (and currently the only option) the text will be
                 placed after the buffer text. Virtual text will never cause
                 reflow, rather virtual text will be truncated at the end of
-                the screen line. The virtual text will begin one cell (|lcs-
-                eol| or space) after the ordinary text.
+                the screen line. The virtual text will begin one cell
+                (|lcs-eol| or space) after the ordinary text.
 
                 Namespaces are used to support batch deletion/updating of
                 virtual text. To create a namespace, use
@@ -1274,8 +1274,8 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                     {buffer}  Buffer handle
                     {ns_id}   Namespace to use or 0 to create a namespace, or
                               -1 for a ungrouped annotation
-                    {line}    Line to annotate with virtual text (zero-
-                              indexed)
+                    {line}    Line to annotate with virtual text
+                              (zero-indexed)
                     {chunks}  A list of [text, hl_group] arrays, each
                               representing a text chunk with specified
                               highlight. `hl_group` element can be omitted for

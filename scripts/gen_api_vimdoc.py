@@ -158,9 +158,12 @@ def doc_wrap(text, prefix='', width=70, func=False):
             lines[-1] += part
         return '\n'.join(x.rstrip() for x in lines).rstrip()
 
-    return '\n'.join(textwrap.wrap(text.strip(), width=width,
-                                   initial_indent=prefix,
-                                   subsequent_indent=indent_space))
+    tw = textwrap.TextWrapper(break_long_words = False,
+                              break_on_hyphens = False,
+                              width=width,
+                              initial_indent=prefix,
+                              subsequent_indent=indent_space)
+    return '\n'.join(tw.wrap(text.strip()))
 
 
 def parse_params(parent, width=62):
