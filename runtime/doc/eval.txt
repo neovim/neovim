@@ -2920,7 +2920,7 @@ complete_check()				*complete_check()*
 							*complete_mode()*
 complete_mode()
 		Return a string that indicates the current completion mode.
-		Note: It does not check popup menu is visible.
+		Note: It does not check whether popup menu is visible.
 
 		   keyword	Keyword completion(|i_CTRL-X_CTRL-N|)
 		   ctrl_x	Just press |i_CTRL-X|

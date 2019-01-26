@@ -717,10 +717,10 @@ func Test_popup_complete_mode()
   inoremap <f5> <c-r>=complete_mode()<cr>
   call writefile([
         \ '!rm	src/testdir/amiga.vim	/^cmap !rm !Delete all$/;"	m',
-        \], 'dummy.txt')
-  setlocal tags=dummy.txt
-  setlocal dictionary=dummy.txt
-  setlocal thesaurus=dummy.txt
+        \], 'Xdummy.txt')
+  setlocal tags=Xdummy.txt
+  setlocal dictionary=Xdummy.txt
+  setlocal thesaurus=Xdummy.txt
   setlocal omnifunc=syntaxcomplete#Complete
   setlocal completefunc=syntaxcomplete#Complete
   setlocal spell
@@ -743,17 +743,19 @@ func Test_popup_complete_mode()
     call assert_equal(expected, getline('.'))
     %d
   endfor
-  call delete('dummy.txt')
+  call delete('Xdummy.txt')
 
-  function! s:complTestEval() abort
+  func s:complTestEval() abort
     call complete(1, ['source', 'soundfold'])
     return ''
-  endfunction
-  inoremap <F6>  <c-r>=s:complTestEval()<CR>
+  endfunc
+  inoremap <f6>  <c-r>=s:complTestEval()<CR>
   call feedkeys("i\<f6>\<f5>\<ESC>", 'tx')
   call assert_equal('eval', getline('.'))
 
   bwipe!
+  iunmap <f5>
+  iunmap <f6>
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
