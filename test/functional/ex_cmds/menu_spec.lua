@@ -63,19 +63,21 @@ describe('menu_get', function()
 
   before_each(function()
     clear()
-    command('nnoremenu &Test.Test inormal<ESC>')
-    command('inoremenu Test.Test insert')
-    command('vnoremenu Test.Test x')
-    command('cnoremenu Test.Test cmdmode')
-    command('menu Test.Nested.test level1')
-    command('menu Test.Nested.Nested2 level2')
+    command([=[
+      nnoremenu &Test.Test inormal<ESC>
+      inoremenu Test.Test insert
+      vnoremenu Test.Test x
+      cnoremenu Test.Test cmdmode
+      menu Test.Nested.test level1
+      menu Test.Nested.Nested2 level2
 
-    command('nnoremenu <script> Export.Script p')
-    command('tmenu Export.Script This is the tooltip')
-    command('menu ]Export.hidden thisoneshouldbehidden')
+      nnoremenu <script> Export.Script p
+      tmenu Export.Script This is the tooltip
+      menu ]Export.hidden thisoneshouldbehidden
 
-    command('nnoremenu Edit.Paste p')
-    command('cnoremenu Edit.Paste <C-R>"')
+      nnoremenu Edit.Paste p
+      cnoremenu Edit.Paste <C-R>"
+    ]=])
   end)
 
   it("path='', modes='a'", function()
@@ -306,7 +308,7 @@ describe('menu_get', function()
     eq(expected, m)
   end)
 
-  it('matching path, default modes', function()
+  it('matching path, all modes', function()
     local m = funcs.menu_get("Export", "a")
     local expected = {
       {
@@ -349,8 +351,6 @@ describe('menu_get', function()
             name = "Test",
             hidden = 0
           },
-          {
-          }
         },
         priority = 500,
         name = "Test"
@@ -378,8 +378,6 @@ describe('menu_get', function()
             priority = 500,
             name = "Test",
             hidden = 0
-          },
-          {
           },
         },
         priority = 500,

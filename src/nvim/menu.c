@@ -660,7 +660,8 @@ static void free_menu_string(vimmenu_T *menu, int idx)
 ///
 /// @param[in] menu if null, starts from root_menu
 /// @param modes, a choice of \ref MENU_MODES
-/// @return a dict with name/commands
+/// @return dict with name/commands
+/// @see show_menus_recursive
 /// @see menu_get
 static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 {
@@ -715,10 +716,10 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     // visit recursively all children
     list_T *const children_list = tv_list_alloc(kListLenMayKnow);
     for (menu = menu->children; menu != NULL; menu = menu->next) {
-        dict_T *dic = menu_get_recursive(menu, modes);
-        if (tv_dict_len(dict) > 0) {
-          tv_list_append_dict(children_list, dic);
-        }
+      dict_T *d = menu_get_recursive(menu, modes);
+      if (tv_dict_len(d) > 0) {
+        tv_list_append_dict(children_list, d);
+      }
     }
     tv_dict_add_list(dict, S_LEN("submenus"), children_list);
   }
