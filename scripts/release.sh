@@ -93,7 +93,7 @@ Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt
     - Push the tag:
         git push --follow-tags
-    - Empty-merge (if this is a maintenance release):
-        git checkout upstream/master
-        git merge -s ours upstream/release-x.y
+    - Update the 'stable' tag:
+        git push --force upstream HEAD^:refs/tags/stable
+        git fetch --tags
     - Update website: index.html"

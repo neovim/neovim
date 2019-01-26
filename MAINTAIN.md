@@ -5,6 +5,15 @@ Notes on maintaining the Neovim project.
 
 See also: https://github.com/git/git/blob/master/Documentation/howto/maintain-git.txt
 
+General guidelines
+------------------
+
+* Decide by cost-benefit
+* Write down what was decided
+* Constraints are good
+* Use automation to solve problems
+* Never break the API
+
 Ticket Triage
 -------------
 
@@ -19,9 +28,9 @@ The forecasting problem might be solved with an explicit priority system (like
 Bram's todo.txt). Meanwhile the Neovim priority system is defined by:
 
 - PRs nearing completion (RDY).
-- Issue labels. E.g. the +plan label increases the ticket's priority merely for
-  having a plan written down: it is _closer to completion_ than tickets without
-  a plan.
+- Issue labels. E.g. the `+plan` label increases the ticket's priority merely
+  for having a plan written down: it is _closer to completion_ than tickets
+  without a plan.
 - Comment activity or new information.
 
 Anything that isn't in the next milestone, and doesn't have a RDY PR ... is
@@ -32,17 +41,17 @@ full :)
 Release Policy
 --------------
 
-The goal is "early and often".
+Release "often", but not "early".
 
-Up to now we use only one branch, the `master` branch.
+The (unreleased) `master` branch is the "early" channel; it should not be
+released if it's not stable. Medium-risk changes may be merged to `master` if
+the next feature-release is not imminent.
 
-- If `master` is unstable we don't release.
-- If the last release has a major bug, we:
-  1. Fix the bug on `master`.
-  2. Disable or remove any known risks present on `master`.
-  3. Cut a release from `master`.
+For maintenance releases, create a `release-x.y` branch. If the current stable
+release has a major bug:
 
-This is a bit silly, but it works ok. And it keeps `master` from biting off
-more feature-creep than it can chew.
+1. Fix the bug on `master`.
+2. Cherry-pick the fix to `release-x.y`.
+3. Cut a release from `release-x.y` (run `scripts/release.sh`).
 
 See also: https://github.com/neovim/neovim/issues/862

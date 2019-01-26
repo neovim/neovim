@@ -4,9 +4,30 @@
 			    NVIM REFERENCE MANUAL
 
 
-Lua Interface to Nvim					*lua* *Lua*
+Lua engine						*lua* *Lua*
 
                                       Type |gO| to see the table of contents.
+
+==============================================================================
+Introduction						*lua-intro*
+
+The Lua 5.1 language is builtin and always available.  Try this command to get
+an idea of what lurks beneath: >
+
+    :lua print(vim.inspect(package.loaded))
+
+Nvim includes a "standard library" |lua-stdlib| for Lua.  This library
+complements the Nvim editor |functions| and Ex commands (the editor "stdlib"),
+which can also be used from Lua code.
+
+Nvim resolves module conflicts by "last wins".  For example if both of these
+are on 'runtimepath':
+    runtime/lua/foo.lua
+    ~/.config/nvim/lua/foo.lua
+then `require('foo')` loads "~/.config/nvim/lua/foo.lua", and
+"runtime/lua/foo.lua" is not used.  See |lua-require| to understand how Nvim
+finds and loads Lua modules.  The conventions are similar to VimL plugins,
+with some extra features.  See |lua-require-example| for a walkthrough.
 
 ==============================================================================
 Importing modules					*lua-require*
@@ -54,25 +75,27 @@ The result will look like this:
 
     = `/foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`
 
-Note: to keep up with 'runtimepath' updates paths added at previous update are 
-remembered and removed at the next update, while all paths derived from the 
-new 'runtimepath' are prepended as described above.  This allows removing 
-paths when path is removed from 'runtimepath', adding paths when they are 
-added and reordering `package.path`/`package.cpath` content if 'runtimepath' 
-was reordered.
+Note:
 
-Note 2: even though adjustments happens automatically Nvim does not track 
-current values of `package.path` or `package.cpath`.  If you happened to 
-delete some paths from there you need to reset 'runtimepath' to make them 
-readded.  Just running `let &runtimepath = &runtimepath` should work.
+- To track 'runtimepath' updates, paths added at previous update are
+  remembered and removed at the next update, while all paths derived from the
+  new 'runtimepath' are prepended as described above.  This allows removing
+  paths when path is removed from 'runtimepath', adding paths when they are
+  added and reordering `package.path`/`package.cpath` content if 'runtimepath'
+  was reordered.
 
-Note 3: skipping paths from 'runtimepath' which contain semicolons applies 
-both to `package.path` and `package.cpath`.  Given that there is a number of 
-badly written plugins using shell which will not work with paths containing 
-semicolons it is better to not have them in 'runtimepath' at all.
+- Although adjustments happen automatically, Nvim does not track current
+  values of `package.path` or `package.cpath`.  If you happen to delete some
+  paths from there you can set 'runtimepath' to trigger an update: >
+      let &runtimepath = &runtimepath
+
+- Skipping paths from 'runtimepath' which contain semicolons applies both to
+  `package.path` and `package.cpath`.  Given that there are some badly written
+  plugins using shell which will not work with paths containing semicolons it
+  is better to not have them in 'runtimepath' at all.
 
 ------------------------------------------------------------------------------
-Example of a plugin that uses lua modules		*lua-require-example*
+LUA PLUGIN EXAMPLE					*lua-require-example*
 
 The following example plugin adds a command `:MakeCharBlob` which transforms 
 current buffer into a long `unsigned char` array.  Lua contains transformation 
@@ -83,70 +106,70 @@ this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
 
 autoload/charblob.vim: >
 
-	function charblob#encode_buffer()
-	  call setline(1, luaeval(
-	  \    'require("charblob").encode(unpack(_A))',
-	  \    [getline(1, '$'), &textwidth, '  ']))
-	endfunction
+    function charblob#encode_buffer()
+      call setline(1, luaeval(
+      \    'require("charblob").encode(unpack(_A))',
+      \    [getline(1, '$'), &textwidth, '  ']))
+    endfunction
 
 plugin/charblob.vim: >
 
-	if exists('g:charblob_loaded')
-	  finish
-	endif
-	let g:charblob_loaded = 1
+    if exists('g:charblob_loaded')
+      finish
+    endif
+    let g:charblob_loaded = 1
 
-	command MakeCharBlob :call charblob#encode_buffer()
+    command MakeCharBlob :call charblob#encode_buffer()
 
 lua/charblob.lua: >
 
-	local function charblob_bytes_iter(lines)
-	  local init_s = {
-	    next_line_idx = 1,
-	    next_byte_idx = 1,
-	    lines = lines,
-	  }
-	  local function next(s, _)
-	    if lines[s.next_line_idx] == nil then
-	      return nil
-	    end
-	    if s.next_byte_idx > #(lines[s.next_line_idx]) then
-	      s.next_line_idx = s.next_line_idx + 1
-	      s.next_byte_idx = 1
-	      return ('\n'):byte()
-	    end
-	    local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
-	    if ret == ('\n'):byte() then
-	      ret = 0  -- See :h NL-used-for-NUL.
-	    end
-	    s.next_byte_idx = s.next_byte_idx + 1
-	    return ret
-	  end
-	  return next, init_s, nil
-	end
+    local function charblob_bytes_iter(lines)
+      local init_s = {
+        next_line_idx = 1,
+        next_byte_idx = 1,
+        lines = lines,
+      }
+      local function next(s, _)
+        if lines[s.next_line_idx] == nil then
+          return nil
+        end
+        if s.next_byte_idx > #(lines[s.next_line_idx]) then
+          s.next_line_idx = s.next_line_idx + 1
+          s.next_byte_idx = 1
+          return ('\n'):byte()
+        end
+        local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
+        if ret == ('\n'):byte() then
+          ret = 0  -- See :h NL-used-for-NUL.
+        end
+        s.next_byte_idx = s.next_byte_idx + 1
+        return ret
+      end
+      return next, init_s, nil
+    end
 
-	local function charblob_encode(lines, textwidth, indent)
-	  local ret = {
-	    'const unsigned char blob[] = {',
-	    indent,
-	  }
-	  for byte in charblob_bytes_iter(lines) do
-	    --                .- space + number (width 3) + comma
-	    if #(ret[#ret]) + 5 > textwidth then
-	      ret[#ret + 1] = indent
-	    else
-	      ret[#ret] = ret[#ret] .. ' '
-	    end
-	    ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
-	  end
-	  ret[#ret + 1] = '};'
-	  return ret
-	end
+    local function charblob_encode(lines, textwidth, indent)
+      local ret = {
+        'const unsigned char blob[] = {',
+        indent,
+      }
+      for byte in charblob_bytes_iter(lines) do
+        --                .- space + number (width 3) + comma
+        if #(ret[#ret]) + 5 > textwidth then
+          ret[#ret + 1] = indent
+        else
+          ret[#ret] = ret[#ret] .. ' '
+        end
+        ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
+      end
+      ret[#ret + 1] = '};'
+      return ret
+    end
 
-	return {
-	  bytes_iter = charblob_bytes_iter,
-	  encode = charblob_encode,
-	}
+    return {
+      bytes_iter = charblob_bytes_iter,
+      encode = charblob_encode,
+    }
 
 ==============================================================================
 Commands						*lua-commands*
@@ -157,13 +180,13 @@ Commands						*lua-commands*
 
 Examples:
 >
-	:lua vim.api.nvim_command('echo "Hello, Nvim!"')
+    :lua vim.api.nvim_command('echo "Hello, Nvim!"')
 <
 To see the Lua version: >
-	:lua print(_VERSION)
+    :lua print(_VERSION)
 
 To see the LuaJIT version: >
-	:lua print(jit.version)
+    :lua print(jit.version)
 <
 
 :[range]lua << {endmarker}
@@ -179,15 +202,15 @@ in Vim scripts.
 
 Example:
 >
-	function! CurrentLineInfo()
-	lua << EOF
-	local linenr = vim.api.nvim_win_get_cursor(0)[1]
-	local curline = vim.api.nvim_buf_get_lines(
-		0, linenr, linenr + 1, false)[1]
-	print(string.format("Current line [%d] has %d bytes",
-		linenr, #curline))
-	EOF
-	endfunction
+    function! CurrentLineInfo()
+    lua << EOF
+    local linenr = vim.api.nvim_win_get_cursor(0)[1]
+    local curline = vim.api.nvim_buf_get_lines(
+            0, linenr, linenr + 1, false)[1]
+    print(string.format("Current line [%d] has %d bytes",
+            linenr, #curline))
+    EOF
+    endfunction
 
 Note that the `local` variables will disappear when block finishes. This is
 not the case for globals.
@@ -203,12 +226,12 @@ not the case for globals.
 
 Examples:
 >
-	:luado return string.format("%s\t%d", line:reverse(), #line)
+    :luado return string.format("%s\t%d", line:reverse(), #line)
 
-	:lua require"lpeg"
-	:lua -- balanced parenthesis grammar:
-	:lua bp = lpeg.P{ "(" * ((1 - lpeg.S"()") + lpeg.V(1))^0 * ")" }
-	:luado if bp:match(line) then return "-->\t" .. line end
+    :lua require"lpeg"
+    :lua -- balanced parenthesis grammar:
+    :lua bp = lpeg.P{ "(" * ((1 - lpeg.S"()") + lpeg.V(1))^0 * ")" }
+    :luado if bp:match(line) then return "-->\t" .. line end
 <
 
 							*:luafile*
@@ -218,8 +241,8 @@ Examples:
 
 Examples:
 >
-	:luafile script.lua
-	:luafile %
+    :luafile script.lua
+    :luafile %
 <
 
 All these commands execute a Lua chunk from either the command line (:lua and
@@ -235,21 +258,48 @@ position are restricted when the command is executed in the |sandbox|.
 
 
 ==============================================================================
-The vim module						*lua-vim*
+vim.*							*lua-vim* *lua-stdlib*
 
-Lua interfaces Nvim through the "vim" module. Currently it has the `api`
-submodule and some Nvim-specific utilities.
+The "standard library" (stdlib) of Nvim Lua is the `vim` module, which exposes
+various functions and sub-modules.  The module is implicitly loaded, thus
+require("vim") is unnecessary.
+
+You can peek at the module properties: >
+
+    :lua print(vim.inspect(vim))
+
+Result is something like this: >
+
+    {
+      _os_proc_children = <function 1>,
+      _os_proc_info = <function 2>,
+      ...
+      api = {
+        nvim__id = <function 5>,
+        nvim__id_array = <function 6>,
+        ...
+      },
+      deepcopy = <function 106>,
+      gsplit = <function 107>,
+      ...
+    }
+
+To find documentation on e.g. the "deepcopy" function: >
+
+    :help vim.deepcopy
+
+Note: Underscore-prefixed functions (e.g. "_os_proc_children") are
+internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
 vim.api.* functions
 
-`vim.api` exposes the Nvim |API| as a table of Lua functions. All functions
-are available.
+`vim.api` exposes the full Nvim |API| as a table of Lua functions.
 
 For example, to use the "nvim_get_current_line()" API function, call
 "vim.api.nvim_get_current_line()": >
 
-	print(tostring(vim.api.nvim_get_current_line()))
+    print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
 vim.* builtin functions
@@ -311,10 +361,10 @@ vim.type_idx						*lua-vim.type_idx*
 vim.val_idx						*lua-vim.val_idx*
 	Value index for tables representing |Float|s.  A table representing 
 	floating-point value 1.0 looks like this: >
-		{
-		  [vim.type_idx] = vim.types.float,
-		  [vim.val_idx] = 1.0,
-		}
+            {
+              [vim.type_idx] = vim.types.float,
+              [vim.val_idx] = 1.0,
+            }
 <	See also |lua-vim.type_idx| and |lua-special-tbl|.
 
 vim.types						*lua-vim.types*
@@ -346,8 +396,9 @@ vim.inspect({object}, {options})                                 *vim.inspect*
 	Return a human-readable representation of the passed object. See
 	         https://github.com/kikito/inspect.lua
 	for details and possible options.
+
 ==============================================================================
-The luaeval function					*lua-luaeval* *lua-eval*
+luaeval()						*lua-luaeval* *lua-eval*
 							*luaeval()*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
@@ -355,11 +406,11 @@ The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
 for _A inside expression and returns the result of the expression. It is 
 semantically equivalent in Lua to:
 >
-	local chunkheader = "local _A = select(1, ...) return "
-	function luaeval (expstr, arg)
-	    local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
-	    return chunk(arg) -- return typval
-	end
+    local chunkheader = "local _A = select(1, ...) return "
+    function luaeval (expstr, arg)
+        local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
+        return chunk(arg) -- return typval
+    end
 
 Lua nils, numbers, strings, tables and booleans are converted to their
 respective VimL types. An error is thrown if conversion of any other Lua types
@@ -368,10 +419,10 @@ is attempted.
 The magic global "_A" contains the second argument to luaeval().
 
 Example: >
-	 :echo luaeval('_A[1] + _A[2]', [40, 2])
-	 42
-	 :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
-	 foo
+    :echo luaeval('_A[1] + _A[2]', [40, 2])
+    42
+    :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
+    foo
 
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
@@ -405,11 +456,11 @@ cases there is the following agreement:
 
 Examples: >
 
-	:echo luaeval('math.pi')
-	:function Rand(x,y) " random uniform between x and y
-	:  return luaeval('(_A.y-_A.x)*math.random()+_A.x', {'x':a:x,'y':a:y})
-	:  endfunction
-	:echo Rand(1,10)
+    :echo luaeval('math.pi')
+    :function Rand(x,y) " random uniform between x and y
+    :  return luaeval('(_A.y-_A.x)*math.random()+_A.x', {'x':a:x,'y':a:y})
+    :  endfunction
+    :echo Rand(1,10)
 
 Note that currently second argument to `luaeval` undergoes VimL to lua 
 conversion, so changing containers in lua do not affect values in VimL. Return 
@@ -417,4 +468,4 @@ value is also always converted. When converting, |msgpack-special-dict|s are
 treated specially.
 
 ==============================================================================
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:ft=help:norl:

@@ -33,9 +33,10 @@ Features
 --------
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
-- [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  access from any language including Clojure, Lisp, Go, Haskell, Lua,
-  JavaScript, Perl, Python, Ruby, and Rust
+- [API access](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
+  from any language including C/C++, C#, Clojure, D, Elixir, Lisp, Go,
+  Haskell, Java, JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket,
+  Ruby, Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances

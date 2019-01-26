@@ -104,7 +104,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        the whole buffer. If so, the first notification will be a
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`
-/// @param  opts  Optional parameters. Currently not used.
+/// @param  opts  Optional parameters. Reserved for future use.
 /// @param[out] err Details of an error that may have occurred
 /// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded or `opts` contained an invalid key; otherwise True.
