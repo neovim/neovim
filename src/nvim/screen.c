@@ -5909,14 +5909,18 @@ void win_grid_alloc(win_T *wp)
     grid_invalidate(grid);
   }
 
+  if (grid->Rows != rows) {
+    wp->w_lines_valid = 0;
+    xfree(wp->w_lines);
+    wp->w_lines = xcalloc(rows+1, sizeof(wline_T));
+  }
+
   int was_resized = false;
   if ((has_allocation != want_allocation)
       || grid->Rows != rows
       || grid->Columns != cols) {
     if (want_allocation) {
       grid_alloc(grid, rows, cols, true);
-      win_free_lsize(wp);
-      win_alloc_lines(wp);
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
       // Only keep track of the size and offset of the window.
@@ -6007,22 +6011,10 @@ retry:
   // If anything fails, make grid arrays NULL, so we don't do anything!
   // Continuing with the old arrays may result in a crash, because the
   // size is wrong.
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    win_free_lsize(wp);
-  }
-  if (aucmd_win != NULL)
-    win_free_lsize(aucmd_win);
 
   grid_alloc(&default_grid, Rows, Columns, !doclear);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    win_alloc_lines(wp);
-  }
-  if (aucmd_win != NULL && aucmd_win->w_lines == NULL) {
-    win_alloc_lines(aucmd_win);
-  }
 
   clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
   xfree(tab_page_click_defs);

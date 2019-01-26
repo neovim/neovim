@@ -3891,7 +3891,6 @@ static win_T *win_alloc(win_T *after, int hidden)
 
   // allocate window structure and linesizes arrays
   win_T *new_wp = xcalloc(1, sizeof(win_T));
-  win_alloc_lines(new_wp);
 
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
@@ -3972,7 +3971,7 @@ win_free (
     }
   }
 
-  win_free_lsize(wp);
+  xfree(wp->w_lines);
 
   for (i = 0; i < wp->w_tagstacklen; ++i)
     xfree(wp->w_tagstack[i].tagname);
@@ -4118,30 +4117,6 @@ static void frame_remove(frame_T *frp)
   }
 }
 
-
-/*
- * Allocate w_lines[] for window "wp".
- */
-void win_alloc_lines(win_T *wp)
-{
-  wp->w_lines_valid = 0;
-  assert(wp->w_height_inner >= 0);
-  // TODO(bfredl): this should work, add call to win_set_inner_size?
-  // wp->w_lines = xcalloc(wp->w_height_inner+1, sizeof(wline_T));
-  wp->w_lines = xcalloc(MAX(wp->w_height_inner + 1, Rows), sizeof(wline_T));
-}
-
-/*
- * free lsize arrays for a window
- */
-void win_free_lsize(win_T *wp)
-{
-  // TODO: why would wp be NULL here?
-  if (wp != NULL) {
-    xfree(wp->w_lines);
-    wp->w_lines = NULL;
-  }
-}
 
 /*
  * Called from win_new_shellsize() after Rows changed.
