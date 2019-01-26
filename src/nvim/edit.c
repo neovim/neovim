@@ -2486,9 +2486,9 @@ void set_completion(colnr_T startcol, list_T *list)
 
 
 // complete_mode() implementation.
-char *ins_compl_mode(void)
+const char *ins_compl_mode(void)
 {
-  char *mode = NULL;
+  char_u *mode = NULL;
   switch (ctrl_x_mode) {
     case 0:
       // Keyword completion

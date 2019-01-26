@@ -7557,8 +7557,7 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "complete_mode()" function
 static void f_complete_mode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char *mode = ins_compl_mode();
-  rettv->vval.v_string = (char_u *)mode;
+  rettv->vval.v_string = ins_compl_mode();
   rettv->v_type = VAR_STRING;
 }
 
