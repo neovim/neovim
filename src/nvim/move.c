@@ -1452,7 +1452,8 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
          curwin->w_topline = loff.lnum) {
       loff.lnum = curwin->w_topline;
       topline_back(&loff);
-      if (loff.height == MAXCOL || used + loff.height > curwin->w_height_inner) {
+      if (loff.height == MAXCOL
+          || used + loff.height > curwin->w_height_inner) {
         break;
       }
       used += loff.height;

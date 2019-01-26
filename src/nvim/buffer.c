@@ -1472,6 +1472,10 @@ void set_curbuf(buf_T *buf, int action)
     if (old_tw != curbuf->b_p_tw)
       check_colorcolumn(curwin);
   }
+
+  if (bufref_valid(&prevbufref) && prevbuf->terminal != NULL) {
+    terminal_check_size(prevbuf->terminal);
+  }
 }
 
 /*

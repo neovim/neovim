@@ -2678,6 +2678,10 @@ int do_ecmd(
 
 
 theend:
+  if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->terminal != NULL) {
+    terminal_check_size(old_curbuf.br_buf->terminal);
+  }
+
   if (did_inc_redrawing_disabled) {
     RedrawingDisabled--;
   }

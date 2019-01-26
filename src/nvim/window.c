@@ -4126,7 +4126,7 @@ void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
   assert(wp->w_height_inner >= 0);
-  // TODO(bfredl) :this should work, add call to win_set_inner_size?
+  // TODO(bfredl): this should work, add call to win_set_inner_size?
   // wp->w_lines = xcalloc(wp->w_height_inner+1, sizeof(wline_T));
   wp->w_lines = xcalloc(MAX(wp->w_height_inner + 1, Rows), sizeof(wline_T));
 }

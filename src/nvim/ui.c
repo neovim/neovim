@@ -453,7 +453,7 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
   }
 
   // non-positive indicates no request
-  wp->w_height_request = (int)MAX(height,0);
-  wp->w_width_request = (int)MAX(width,0);
+  wp->w_height_request = (int)MAX(height, 0);
+  wp->w_width_request = (int)MAX(width, 0);
   win_set_inner_size(wp);
 }
