@@ -2488,54 +2488,51 @@ void set_completion(colnr_T startcol, list_T *list)
 // complete_mode() implementation.
 const char *ins_compl_mode(void)
 {
-  char_u *mode = NULL;
+  const char *mode = "unknown";
   switch (ctrl_x_mode) {
     case 0:
       // Keyword completion
-      mode = xstrdup("keyword");
+      mode = "keyword";
       break;
     case CTRL_X_NOT_DEFINED_YET:
       // Just press Ctrl_X
-      mode = xstrdup("ctrl_x");
+      mode = "ctrl_x";
       break;
     case CTRL_X_WHOLE_LINE:
-      mode = xstrdup("whole_line");
+      mode = "whole_line";
       break;
     case CTRL_X_FILES:
-      mode = xstrdup("files");
+      mode = "files";
       break;
     case CTRL_X_TAGS:
-      mode = xstrdup("tags");
+      mode = "tags";
       break;
     case CTRL_X_PATH_PATTERNS:
-      mode = xstrdup("path_patterns");
+      mode = "path_patterns";
       break;
     case CTRL_X_PATH_DEFINES:
-      mode = xstrdup("path_defines");
+      mode = "path_defines";
       break;
     case CTRL_X_DICTIONARY:
-      mode = xstrdup("dictionary");
+      mode = "dictionary";
       break;
     case CTRL_X_THESAURUS:
-      mode = xstrdup("thesaurus");
+      mode = "thesaurus";
       break;
     case CTRL_X_CMDLINE:
-      mode = xstrdup("cmdline");
+      mode = "cmdline";
       break;
     case CTRL_X_FUNCTION:
-      mode = xstrdup("function");
+      mode = "function";
       break;
     case CTRL_X_OMNI:
-      mode = xstrdup("omni");
+      mode = "omni";
       break;
     case CTRL_X_SPELL:
-      mode = xstrdup("spell");
+      mode = "spell";
       break;
     case CTRL_X_EVAL:
-      mode = xstrdup("eval");
-      break;
-    default:
-      mode = xstrdup("unknown");
+      mode = "eval";
       break;
   }
 
