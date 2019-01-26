@@ -23,7 +23,7 @@ func Test_translate_menu()
 
   set langmenu=de_de
   source $VIMRUNTIME/menu.vim
-  call assert_match(':browse tabnew', execute(':menu File.In\ neuem\ Tab\ öffnen\.\.\.'))
+  call assert_match('browse confirm w', execute(':menu Datei.Speichern'))
 
   source $VIMRUNTIME/delmenu.vim
 endfunc
