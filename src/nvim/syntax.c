@@ -5970,6 +5970,10 @@ static const char *highlight_init_both[] = {
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
   "default link NormalFloat Pmenu",
+  "RedrawDebugNormal cterm=reverse gui=reverse",
+  "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
+  "RedrawDebugComposed ctermbg=Green guibg=Green",
+  "RedrawDebugRecompose ctermbg=Red guibg=Red",
   NULL
 };
 
