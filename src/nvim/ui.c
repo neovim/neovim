@@ -452,8 +452,8 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
     return;
   }
 
-  wp->w_grid.requested_rows = (int)height;
-  wp->w_grid.requested_cols = (int)width;
-  win_inner_width_changed(wp);
-  redraw_win_later(wp, SOME_VALID);
+  // non-positive indicates no request
+  wp->w_height_request = (int)MAX(height, 0);
+  wp->w_width_request = (int)MAX(width, 0);
+  win_set_inner_size(wp);
 }

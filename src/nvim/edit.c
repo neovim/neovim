@@ -566,7 +566,7 @@ static int insert_check(VimState *state)
 
     if (curwin->w_wcol < s->mincol - curbuf->b_p_ts
         && curwin->w_wrow == curwin->w_winrow
-        + curwin->w_grid.Rows - 1 - p_so
+        + curwin->w_height_inner - 1 - p_so
         && (curwin->w_cursor.lnum != curwin->w_topline
             || curwin->w_topfill > 0)) {
       if (curwin->w_topfill > 0) {
@@ -5868,7 +5868,7 @@ static void check_auto_format(
 /*
  * Find out textwidth to be used for formatting:
  *	if 'textwidth' option is set, use it
- *	else if 'wrapmargin' option is set, use curwin->w_grid.Columns-'wrapmargin'
+ *	else if 'wrapmargin' option is set, use curwin->w_width_inner-'wrapmargin'
  *	if invalid value, use 0.
  *	Set default to window width (maximum 79) for "gq" operator.
  */
@@ -5883,7 +5883,7 @@ comp_textwidth (
   if (textwidth == 0 && curbuf->b_p_wm) {
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
-    textwidth = curwin->w_grid.Columns - curbuf->b_p_wm;
+    textwidth = curwin->w_width_inner - curbuf->b_p_wm;
     if (cmdwin_type != 0) {
       textwidth -= 1;
     }
@@ -5899,7 +5899,7 @@ comp_textwidth (
   if (textwidth < 0)
     textwidth = 0;
   if (ff && textwidth == 0) {
-    textwidth = curwin->w_grid.Columns - 1;
+    textwidth = curwin->w_width_inner - 1;
     if (textwidth > 79) {
       textwidth = 79;
     }

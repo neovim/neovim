@@ -1034,6 +1034,13 @@ struct window_S {
   int w_width;                      /* Width of window, excluding separation. */
   int w_vsep_width;                 /* Number of separator columns (0 or 1). */
 
+  // inner size of window, which can be overriden by external UI
+  int w_height_inner;
+  int w_width_inner;
+  // external UI request. If non-zero, the inner size will use this.
+  int w_height_request;
+  int w_width_request;
+
   /*
    * === start of cached values ====
    */

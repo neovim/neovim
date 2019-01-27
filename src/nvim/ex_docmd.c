@@ -9201,7 +9201,7 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
           && (fprintf(fd,
                       "exe '%dresize ' . ((&lines * %" PRId64
                       " + %" PRId64 ") / %" PRId64 ")",
-                      n, (int64_t)wp->w_grid.Rows,
+                      n, (int64_t)wp->w_height,
                       (int64_t)Rows / 2, (int64_t)Rows) < 0
               || put_eol(fd) == FAIL)) {
         return FAIL;
@@ -9469,8 +9469,8 @@ put_view(
                 " * winheight(0) + %" PRId64 ") / %" PRId64 ")",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)(wp->w_grid.Rows / 2),
-                (int64_t)wp->w_grid.Rows) < 0
+                (int64_t)(wp->w_height_inner / 2),
+                (int64_t)wp->w_height_inner) < 0
         || put_eol(fd) == FAIL
         || put_line(fd, "if s:l < 1 | let s:l = 1 | endif") == FAIL
         || put_line(fd, "exe s:l") == FAIL

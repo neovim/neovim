@@ -2123,8 +2123,8 @@ static int vgetorpeek(int advance)
                     ++col;
                 }
                 curwin->w_wrow = curwin->w_cline_row
-                                 + curwin->w_wcol / curwin->w_grid.Columns;
-                curwin->w_wcol %= curwin->w_grid.Columns;
+                                 + curwin->w_wcol / curwin->w_width_inner;
+                curwin->w_wcol %= curwin->w_width_inner;
                 curwin->w_wcol += curwin_col_off();
                 col = 0;                        /* no correction needed */
               } else {
@@ -2133,7 +2133,7 @@ static int vgetorpeek(int advance)
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
               curwin->w_wrow--;
-              curwin->w_wcol = curwin->w_grid.Columns - 1;
+              curwin->w_wcol = curwin->w_width_inner - 1;
               col = curwin->w_cursor.col - 1;
             }
             if (col > 0 && curwin->w_wcol > 0) {

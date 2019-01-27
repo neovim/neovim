@@ -324,7 +324,7 @@ void update_screen(int type)
           wp->w_redr_status = true;
         }
       }
-    } else if (msg_scrolled > default_grid.Rows - 5) {  // clearing is faster
+    } else if (msg_scrolled > Rows - 5) {  // clearing is faster
       type = CLEAR;
     } else if (type != CLEAR) {
       check_for_delay(false);
@@ -629,9 +629,7 @@ static void win_update(win_T *wp)
     wp->w_nrwidth = i;
 
     if (buf->terminal) {
-      terminal_resize(buf->terminal,
-                      (uint16_t)(MAX(0, wp->w_grid.Columns - win_col_off(wp))),
-                      (uint16_t)wp->w_grid.Rows);
+      terminal_check_size(buf->terminal);
     }
   } else if (buf->b_mod_set
              && buf->b_mod_xlines != 0
@@ -4629,8 +4627,7 @@ win_redr_status_matches (
   if (matches == NULL)          /* interrupted completion? */
     return;
 
-  buf = xmalloc(has_mbyte ? default_grid.Columns * MB_MAXBYTES + 1
-                : default_grid.Columns + 1);
+  buf = xmalloc(Columns * MB_MAXBYTES + 1);
 
   if (match == -1) {    /* don't show match but original text */
     match = 0;
@@ -4651,13 +4648,13 @@ win_redr_status_matches (
     if (first_match > 0)
       clen += 2;
     // jumping right, put match at the left
-    if ((long)clen > default_grid.Columns) {
+    if ((long)clen > Columns) {
       first_match = match;
       /* if showing the last match, we can add some on the left */
       clen = 2;
       for (i = match; i < num_matches; ++i) {
         clen += status_match_len(xp, L_MATCH(i)) + 2;
-        if ((long)clen >= default_grid.Columns) {
+        if ((long)clen >= Columns) {
           break;
         }
       }
@@ -4668,7 +4665,7 @@ win_redr_status_matches (
   if (add_left)
     while (first_match > 0) {
       clen += status_match_len(xp, L_MATCH(first_match - 1)) + 2;
-      if ((long)clen >= default_grid.Columns) {
+      if ((long)clen >= Columns) {
         break;
       }
       first_match--;
@@ -4686,8 +4683,7 @@ win_redr_status_matches (
   clen = len;
 
   i = first_match;
-  while ((long)(clen + status_match_len(xp, L_MATCH(i)) + 2)
-         < default_grid.Columns) {
+  while ((long)(clen + status_match_len(xp, L_MATCH(i)) + 2) < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
@@ -4738,7 +4734,7 @@ win_redr_status_matches (
       if (msg_scrolled > 0) {
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
-        if (cmdline_row == default_grid.Rows - 1) {
+        if (cmdline_row == Rows - 1) {
           grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
           msg_scrolled++;
         } else {
@@ -4767,7 +4763,7 @@ win_redr_status_matches (
       grid_puts(&default_grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
-    grid_fill(&default_grid, row, row + 1, clen, (int)default_grid.Columns,
+    grid_fill(&default_grid, row, row + 1, clen, (int)Columns,
               fillchar, fillchar, attr);
   }
 
@@ -5033,7 +5029,7 @@ win_redr_custom (
     row = 0;
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
-    maxwidth = default_grid.Columns;
+    maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
     row = W_ENDROW(wp);
@@ -5052,13 +5048,13 @@ win_redr_custom (
         if (*stl++ != '(')
           stl = p_ruf;
       }
-      col = ru_col - (default_grid.Columns - wp->w_width);
+      col = ru_col - (Columns - wp->w_width);
       if (col < (wp->w_width + 1) / 2) {
         col = (wp->w_width + 1) / 2;
       }
       maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
-        row = default_grid.Rows - 1;
+        row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = ' ';
         attr = 0;
@@ -5152,7 +5148,7 @@ win_redr_custom (
       p = (char_u *) tabtab[n].start;
       cur_click_def = tabtab[n].def;
     }
-    while (col < default_grid.Columns) {
+    while (col < Columns) {
       tab_page_click_defs[col++] = cur_click_def;
     }
   }
@@ -5851,7 +5847,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
     }
 
     // TODO(bfredl): The relevant caller should do this
-    if (row == default_grid.Rows - 1) {  // overwritten the command line
+    if (row == Rows - 1) {  // overwritten the command line
       redraw_cmdline = true;
       if (start_col == 0 && end_col == Columns
           && c1 == ' ' && c2 == ' ' && attr == 0) {
@@ -5902,15 +5898,8 @@ void win_grid_alloc(win_T *wp)
 {
   ScreenGrid *grid = &wp->w_grid;
 
-  int rows = grid->requested_rows;
-  if (rows == 0) {
-    rows = wp->w_height;
-  }
-
-  int columns = grid->requested_cols;
-  if (columns == 0) {
-    columns = wp->w_width;
-  }
+  int rows = wp->w_height_inner;
+  int cols = wp->w_width_inner;
 
   // TODO(bfredl): floating windows should force this to true
   bool want_allocation = ui_is_external(kUIMultigrid);
@@ -5920,20 +5909,24 @@ void win_grid_alloc(win_T *wp)
     grid_invalidate(grid);
   }
 
+  if (grid->Rows != rows) {
+    wp->w_lines_valid = 0;
+    xfree(wp->w_lines);
+    wp->w_lines = xcalloc(rows+1, sizeof(wline_T));
+  }
+
   int was_resized = false;
   if ((has_allocation != want_allocation)
       || grid->Rows != rows
-      || grid->Columns != columns) {
+      || grid->Columns != cols) {
     if (want_allocation) {
-      grid_alloc(grid, rows, columns, true);
-      win_free_lsize(wp);
-      win_alloc_lines(wp);
+      grid_alloc(grid, rows, cols, true);
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
       // Only keep track of the size and offset of the window.
       grid_free(grid);
       grid->Rows = rows;
-      grid->Columns = columns;
+      grid->Columns = cols;
     }
     was_resized = true;
   }
@@ -6018,28 +6011,16 @@ retry:
   // If anything fails, make grid arrays NULL, so we don't do anything!
   // Continuing with the old arrays may result in a crash, because the
   // size is wrong.
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    win_free_lsize(wp);
-  }
-  if (aucmd_win != NULL)
-    win_free_lsize(aucmd_win);
 
   grid_alloc(&default_grid, Rows, Columns, !doclear);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    win_alloc_lines(wp);
-  }
-  if (aucmd_win != NULL && aucmd_win->w_lines == NULL) {
-    win_alloc_lines(aucmd_win);
-  }
-
   clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
   xfree(tab_page_click_defs);
 
   tab_page_click_defs = new_tab_page_click_defs;
-  tab_page_click_defs_size = default_grid.Columns;
+  tab_page_click_defs_size = Columns;
 
   default_grid.row_offset = 0;
   default_grid.col_offset = 0;
@@ -6237,7 +6218,7 @@ void setcursor(void)
     if (curwin->w_p_rl) {
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
-      col = curwin->w_grid.Columns - curwin->w_wcol
+      col = curwin->w_width_inner - curwin->w_wcol
                     - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
                         && vim_isprintc(gchar_cursor())) ? 2 : 1);
     }
@@ -6445,7 +6426,7 @@ int showmode(void)
 
     /* if the cmdline is more than one line high, erase top lines */
     need_clear = clear_cmdline;
-    if (clear_cmdline && cmdline_row < default_grid.Rows - 1) {
+    if (clear_cmdline && cmdline_row < Rows - 1) {
       msg_clr_cmdline();  // will reset clear_cmdline
     }
 
@@ -6465,7 +6446,7 @@ int showmode(void)
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
         /* These messages can get long, avoid a wrap in a narrow
          * window.  Prefer showing edit_submode_extra. */
-        length = (default_grid.Rows - msg_row) * default_grid.Columns - 3;
+        length = (Rows - msg_row) * Columns - 3;
         if (edit_submode_extra != NULL) {
           length -= vim_strsize(edit_submode_extra);
         }
@@ -6589,7 +6570,7 @@ int showmode(void)
 static void msg_pos_mode(void)
 {
   msg_col = 0;
-  msg_row = default_grid.Rows - 1;
+  msg_row = Rows - 1;
 }
 
 /// Delete mode message.  Used when ESC is typed which is expected to end
@@ -6663,7 +6644,7 @@ static void draw_tabline(void)
 
 
   // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
-  assert(default_grid.Columns == tab_page_click_defs_size);
+  assert(Columns == tab_page_click_defs_size);
   clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
 
   /* Use the 'tabline' option if it's set. */
@@ -6685,7 +6666,7 @@ static void draw_tabline(void)
     }
 
     if (tabcount > 0) {
-      tabwidth = (default_grid.Columns - 1 + tabcount / 2) / tabcount;
+      tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
     }
 
     if (tabwidth < 6) {
@@ -6696,7 +6677,7 @@ static void draw_tabline(void)
     tabcount = 0;
 
     FOR_ALL_TABS(tp) {
-      if (col >= default_grid.Columns - 4) {
+      if (col >= Columns - 4) {
         break;
       }
 
@@ -6737,7 +6718,7 @@ static void draw_tabline(void)
         if (wincount > 1) {
           vim_snprintf((char *)NameBuff, MAXPATHL, "%d", wincount);
           len = (int)STRLEN(NameBuff);
-          if (col + len >= default_grid.Columns - 3) {
+          if (col + len >= Columns - 3) {
             break;
           }
           grid_puts_len(&default_grid, NameBuff, len, 0, col,
@@ -6766,8 +6747,8 @@ static void draw_tabline(void)
           p += len - room;
           len = room;
         }
-        if (len > default_grid.Columns - col - 1) {
-          len = default_grid.Columns - col - 1;
+        if (len > Columns - col - 1) {
+          len = Columns - col - 1;
         }
 
         grid_puts_len(&default_grid, p, (int)STRLEN(p), 0, col, attr);
@@ -6791,14 +6772,14 @@ static void draw_tabline(void)
       c = '_';
     else
       c = ' ';
-    grid_fill(&default_grid, 0, 1, col, (int)default_grid.Columns, c, c,
+    grid_fill(&default_grid, 0, 1, col, (int)Columns, c, c,
               attr_fill);
 
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
-      grid_putchar(&default_grid, 'X', 0, (int)default_grid.Columns - 1,
+      grid_putchar(&default_grid, 'X', 0, (int)Columns - 1,
                    attr_nosel);
-      tab_page_click_defs[default_grid.Columns - 1] = (StlClickDefinition) {
+      tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
         .func = NULL,
@@ -6994,10 +6975,10 @@ static void win_redr_ruler(win_T *wp, int always)
       off = wp->w_wincol;
       width = wp->w_width;
     } else {
-      row = default_grid.Rows - 1;
+      row = Rows - 1;
       fillchar = ' ';
       attr = 0;
-      width = default_grid.Columns;
+      width = Columns;
       off = 0;
     }
 
@@ -7035,7 +7016,7 @@ static void win_redr_ruler(win_T *wp, int always)
     if (wp->w_status_height == 0) {  // can't use last char of screen
       o++;
     }
-    int this_ru_col = ru_col - (default_grid.Columns - width);
+    int this_ru_col = ru_col - (Columns - width);
     if (this_ru_col < 0) {
       this_ru_col = 0;
     }
@@ -7090,7 +7071,7 @@ int number_width(win_T *wp)
 
   if (wp->w_p_rnu && !wp->w_p_nu) {
     // cursor line shows "0"
-    lnum = wp->w_grid.Rows;
+    lnum = wp->w_height_inner;
   } else {
     // cursor line shows absolute line number
     lnum = wp->w_buffer->b_ml.ml_line_count;
