@@ -11,6 +11,7 @@ describe('ui/mouse/input', function()
   before_each(function()
     clear()
     meths.set_option('mouse', 'a')
+    meths.set_option('list', true)
     meths.set_option('listchars', 'eol:$')
     screen = Screen.new(25, 5)
     screen:attach()
@@ -82,7 +83,7 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     screen:expect([[
-      ^t{1:esting}{3: }                 |
+      ^t{1:esting}                  |
       mouse                    |
       support and selection    |
       {0:~                        }|
@@ -125,7 +126,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -162,7 +163,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -170,7 +171,7 @@ describe('ui/mouse/input', function()
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -178,7 +179,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><6,0>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -192,7 +193,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -222,7 +223,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -260,7 +261,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -268,7 +269,7 @@ describe('ui/mouse/input', function()
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -276,7 +277,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><11,1>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -284,7 +285,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><6,1>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -298,7 +299,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -347,7 +348,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -370,7 +371,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -393,7 +394,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -401,7 +402,7 @@ describe('ui/mouse/input', function()
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
-        ^                         |
+        {0:^$}                        |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -517,14 +518,14 @@ describe('ui/mouse/input', function()
     feed('<LeftDrag><2,2>')
     screen:expect([[
       testing                  |
-      mo{1:use}{3: }                   |
+      mo{1:use}                    |
       {1:su}^pport and selection    |
       {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
     screen:expect([[
-      ^t{1:esting}{3: }                 |
+      ^t{1:esting}                  |
       {1:mou}se                    |
       support and selection    |
       {0:~                        }|
@@ -555,7 +556,7 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><0,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-      ^this is bar              |
+      ^this is bar{0:$}             |
       {0:~                        }|
       {0:~                        }|
       :tabprevious             |
@@ -563,7 +564,7 @@ describe('ui/mouse/input', function()
     feed('<LeftDrag><4,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-      {vis:this}^ is bar              |
+      {vis:this}^ is bar{0:$}             |
       {0:~                        }|
       {0:~                        }|
       {sel:-- VISUAL --}             |
@@ -586,7 +587,7 @@ describe('ui/mouse/input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      {1:su}^p{1:port and selection}{3: }   |
+      {1:su}^p{1:port and selection}    |
       {0:~                        }|
       {2:-- VISUAL LINE --}        |
     ]])
@@ -614,8 +615,8 @@ describe('ui/mouse/input', function()
     ]])
     feed('<RightMouse><2,2>')
     screen:expect([[
-      {1:testing}{3: }                 |
-      {1:mouse}{3: }                   |
+      {1:testing}                  |
+      {1:mouse}                    |
       {1:su}^pport and selection    |
       {0:~                        }|
       {2:-- VISUAL --}             |

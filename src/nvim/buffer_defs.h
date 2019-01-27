@@ -248,6 +248,10 @@ typedef struct {
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
   char_u *wo_winhl;
 # define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
+  char_u *wo_fcs;
+# define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
+  char_u *wo_lcs;
+# define w_p_lcs w_onebuf_opt.wo_lcs    // 'listchars'
 
   LastSet wo_scriptID[WV_COUNT];        // SIDs for window-local options
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
@@ -1002,6 +1006,31 @@ struct window_S {
   linenr_T w_old_visual_lnum;       ///< last known start of visual part
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
+
+  // 'listchars' characters. Defaults set in set_chars_option().
+  struct {
+    int eol;
+    int ext;
+    int prec;
+    int nbsp;
+    int space;
+    int tab1;                       ///< first tab character
+    int tab2;                       ///< second tab character
+    int tab3;                       ///< third tab character
+    int trail;
+    int conceal;
+  } w_p_lcs_chars;
+
+  // 'fillchars' characters. Defaults set in set_chars_option().
+  struct {
+    int stl;
+    int stlnc;
+    int vert;
+    int fold;
+    int diff;
+    int msgsep;
+    int eob;
+  } w_p_fcs_chars;
 
   /*
    * "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for

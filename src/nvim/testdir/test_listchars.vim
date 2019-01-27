@@ -42,6 +42,38 @@ func Test_listchars()
     call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
   endfor
 
+  " tab with 3rd character.
+  set listchars-=tab:>-
+  set listchars+=tab:<=>,trail:-
+  let expected = [
+	      \ '<======>aa<====>$',
+	      \ '..bb<==>--$',
+	      \ '...cccc>-$',
+	      \ 'dd........ee--<>$',
+	      \ '-$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  set listchars-=trail:-
+  let expected = [
+	      \ '<======>aa<====>$',
+	      \ '..bb<==>..$',
+	      \ '...cccc>.$',
+	      \ 'dd........ee..<>$',
+	      \ '.$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  set listchars-=tab:<=>
+  set listchars+=tab:>-
   set listchars+=trail:<
   set nolist
   normal ggdG

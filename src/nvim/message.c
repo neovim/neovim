@@ -1517,31 +1517,36 @@ void msg_prt_line(char_u *s, int list)
   int col = 0;
   int n_extra = 0;
   int c_extra = 0;
-  char_u      *p_extra = NULL;              /* init to make SASC shut up */
+  int c_final = 0;
+  char_u *p_extra = NULL;  // init to make SASC shut up
   int n;
   int attr = 0;
-  char_u      *trail = NULL;
+  char_u *trail = NULL;
   int l;
 
-  if (curwin->w_p_list)
-    list = TRUE;
-
-  /* find start of trailing whitespace */
-  if (list && lcs_trail) {
-    trail = s + STRLEN(s);
-    while (trail > s && ascii_iswhite(trail[-1]))
-      --trail;
+  if (curwin->w_p_list) {
+    list = true;
   }
 
-  /* output a space for an empty line, otherwise the line will be
-   * overwritten */
-  if (*s == NUL && !(list && lcs_eol != NUL))
+  // find start of trailing whitespace
+  if (list && curwin->w_p_lcs_chars.trail) {
+    trail = s + STRLEN(s);
+    while (trail > s && ascii_iswhite(trail[-1])) {
+      trail--;
+    }
+  }
+
+  // output a space for an empty line, otherwise the line will be overwritten
+  if (*s == NUL && !(list && curwin->w_p_lcs_chars.eol != NUL)) {
     msg_putchar(' ');
+  }
 
   while (!got_int) {
     if (n_extra > 0) {
       n_extra--;
-      if (c_extra) {
+      if (n_extra == 0 && c_final) {
+        c = c_final;
+      } else if (c_extra) {
         c = c_extra;
       } else {
         assert(p_extra != NULL);
@@ -1550,9 +1555,9 @@ void msg_prt_line(char_u *s, int list)
     } else if ((l = utfc_ptr2len(s)) > 1) {
       col += utf_ptr2cells(s);
       char buf[MB_MAXBYTES + 1];
-      if (lcs_nbsp != NUL && list
+      if (curwin->w_p_lcs_chars.nbsp != NUL && list
           && (utf_ptr2char(s) == 160 || utf_ptr2char(s) == 0x202f)) {
-        utf_char2bytes(lcs_nbsp, (char_u *)buf);
+        utf_char2bytes(curwin->w_p_lcs_chars.nbsp, (char_u *)buf);
         buf[utfc_ptr2len((char_u *)buf)] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
@@ -1564,40 +1569,46 @@ void msg_prt_line(char_u *s, int list)
     } else {
       attr = 0;
       c = *s++;
-      if (c == TAB && (!list || lcs_tab1)) {
-        /* tab amount depends on current column */
+      if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
+        // tab amount depends on current column
         n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
         if (!list) {
           c = ' ';
           c_extra = ' ';
+          c_final = NUL;
         } else {
-          c = lcs_tab1;
-          c_extra = lcs_tab2;
+          c = (n_extra == 0 && curwin->w_p_lcs_chars.tab3)
+              ? curwin->w_p_lcs_chars.tab3
+              : curwin->w_p_lcs_chars.tab1;
+          c_extra = curwin->w_p_lcs_chars.tab2;
+          c_final = curwin->w_p_lcs_chars.tab3;
           attr = HL_ATTR(HLF_8);
         }
-      } else if (c == 160 && list && lcs_nbsp != NUL) {
-        c = lcs_nbsp;
+      } else if (c == 160 && list && curwin->w_p_lcs_chars.nbsp != NUL) {
+        c = curwin->w_p_lcs_chars.nbsp;
         attr = HL_ATTR(HLF_8);
-      } else if (c == NUL && list && lcs_eol != NUL) {
+      } else if (c == NUL && list && curwin->w_p_lcs_chars.eol != NUL) {
         p_extra = (char_u *)"";
         c_extra = NUL;
+        c_final = NUL;
         n_extra = 1;
-        c = lcs_eol;
+        c = curwin->w_p_lcs_chars.eol;
         attr = HL_ATTR(HLF_AT);
         s--;
       } else if (c != NUL && (n = byte2cells(c)) > 1) {
         n_extra = n - 1;
         p_extra = transchar_byte(c);
         c_extra = NUL;
+        c_final = NUL;
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
         attr = HL_ATTR(HLF_8);
       } else if (c == ' ' && trail != NULL && s > trail) {
-        c = lcs_trail;
+        c = curwin->w_p_lcs_chars.trail;
         attr = HL_ATTR(HLF_8);
-      } else if (c == ' ' && list && lcs_space != NUL) {
-        c = lcs_space;
+      } else if (c == ' ' && list && curwin->w_p_lcs_chars.space != NUL) {
+        c = curwin->w_p_lcs_chars.space;
         attr = HL_ATTR(HLF_8);
       }
     }
@@ -1955,7 +1966,8 @@ static void msg_scroll_up(void)
   if (dy_flags & DY_MSGSEP) {
     if (msg_scrolled == 0) {
       grid_fill(&default_grid, Rows-p_ch-1, Rows-p_ch, 0, (int)Columns,
-                fill_msgsep, fill_msgsep, HL_ATTR(HLF_MSGSEP));
+                curwin->w_p_fcs_chars.msgsep, curwin->w_p_fcs_chars.msgsep,
+                HL_ATTR(HLF_MSGSEP));
     }
     int nscroll = MIN(msg_scrollsize()+1, Rows);
     grid_del_lines(&default_grid, Rows-nscroll, 1, Rows, 0, Columns);

@@ -4,6 +4,8 @@ local clear, command = helpers.clear, helpers.command
 local eval = helpers.eval
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
+local insert = helpers.insert
+local feed = helpers.feed
 
 describe("'fillchars'", function()
   local screen
@@ -69,5 +71,51 @@ describe("'fillchars'", function()
       shouldfail('eob:xy') -- two ascii chars
       shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
+    it('is local to window', function()
+      clear()
+      screen = Screen.new(50, 5)
+      screen:attach()
+      insert("foo\nbar")
+      command('set laststatus=0')
+      command('1,2fold')
+      command('vsplit')
+      command('set fillchars=fold:x')
+      screen:expect([[
+        ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
+        ~                        │~                       |
+        ~                        │~                       |
+        ~                        │~                       |
+                                                          |
+      ]])
+    end)
+  end)
+end)
+
+describe("'listchars'", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 5)
+    screen:attach()
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('is local to window', function()
+    feed('i<tab><tab><tab><esc>')
+    command('set laststatus=0')
+    command('set list listchars=tab:<->')
+    command('vsplit')
+    command('set listchars&')
+    screen:expect([[
+      >       >       ^>        │<------><------><------>|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
   end)
 end)

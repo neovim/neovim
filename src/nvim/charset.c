@@ -749,8 +749,8 @@ int vim_strnsize(char_u *s, int len)
 ///
 /// @return Number of characters.
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
-  if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) { \
-    const int ts = (int) (buf)->b_p_ts; \
+  if (*(p) == TAB && (!(wp)->w_p_list || wp->w_p_lcs_chars.tab1)) { \
+    const int ts = (int)(buf)->b_p_ts; \
     return (ts - (int)(col % ts)); \
   } else { \
     return ptr2cells(p); \
@@ -1149,7 +1149,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 {
   int n;
 
-  if ((*s == TAB) && (!wp->w_p_list || lcs_tab1)) {
+  if ((*s == TAB) && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     n = (int)wp->w_buffer->b_p_ts;
     return n - (col % n);
   }
@@ -1241,7 +1241,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set
   // use a simple loop.
   // Also use this when 'list' is set but tabs take their normal size.
-  if ((!wp->w_p_list || (lcs_tab1 != NUL))
+  if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
       && !wp->w_p_lbr
       && (*p_sbr == NUL)
       && !wp->w_p_bri ) {

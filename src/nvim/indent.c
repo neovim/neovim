@@ -61,7 +61,8 @@ int get_indent_str(char_u *ptr, int ts, int list)
   for (; *ptr; ++ptr) {
     // Count a tab for what it is worth.
     if (*ptr == TAB) {
-      if (!list || lcs_tab1) {  // count a tab for what it is worth
+      if (!list || curwin->w_p_lcs_chars.tab1) {
+        // count a tab for what it is worth
         count += ts - (count % ts);
       } else {
         // In list mode, when tab is not set, count screen char width

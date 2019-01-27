@@ -842,26 +842,6 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
-// 'listchars' characters. Defaults are overridden in set_chars_option().
-EXTERN int lcs_eol INIT(= '$');
-EXTERN int lcs_ext INIT(= NUL);
-EXTERN int lcs_prec INIT(= NUL);
-EXTERN int lcs_nbsp INIT(= NUL);
-EXTERN int lcs_space INIT(= NUL);
-EXTERN int lcs_tab1 INIT(= NUL);
-EXTERN int lcs_tab2 INIT(= NUL);
-EXTERN int lcs_trail INIT(= NUL);
-EXTERN int lcs_conceal INIT(= ' ');
-
-// 'fillchars' characters. Defaults are overridden in set_chars_option().
-EXTERN int fill_stl INIT(= ' ');
-EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= 9474);  // │
-EXTERN int fill_fold INIT(= 183);   // ·
-EXTERN int fill_diff INIT(= '-');
-EXTERN int fill_msgsep INIT(= ' ');
-EXTERN int fill_eob INIT(= '~');
-
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);
 EXTERN int km_startsel INIT(= FALSE);
