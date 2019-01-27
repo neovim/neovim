@@ -70,7 +70,7 @@ enum { NUMBUFLEN = 65 };
 #define SHOWMATCH       (0x700 + INSERT)  // show matching paren
 #define CONFIRM         0x800   // ":confirm" prompt
 #define SELECTMODE      0x1000  // Select mode, only for mappings
-#define TERM_FOCUS      0x2000  // Terminal focus mode
+#define TERM_FOCUS      0x2000  // Terminal-mode
 #define CMDPREVIEW      0x4000  // Showing 'inccommand' command "live" preview.
 
 // all mode bits used for mapping

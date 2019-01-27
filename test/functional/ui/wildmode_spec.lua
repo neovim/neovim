@@ -7,6 +7,7 @@ local iswin = helpers.iswin
 local funcs = helpers.funcs
 local eq = helpers.eq
 local eval = helpers.eval
+local sleep = helpers.sleep
 local retry = helpers.retry
 
 describe("'wildmenu'", function()
@@ -92,6 +93,7 @@ describe("'wildmenu'", function()
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
     end
+    sleep(50)  -- Allow some terminal activity.
 
     feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
@@ -140,8 +142,8 @@ describe("'wildmenu'", function()
   end)
 
   it('with laststatus=0, :vsplit, :term #2255', function()
-    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
-    -- must wait the full timeout. So make it reasonable.
+    -- Because this test verifies a _lack_ of activity, we must wait the full
+    -- timeout. So make it reasonable.
     screen.timeout = 1000
 
     if not iswin() then

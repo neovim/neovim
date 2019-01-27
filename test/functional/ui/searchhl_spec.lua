@@ -153,6 +153,7 @@ describe('search highlighting', function()
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
     end
+    sleep(50)  -- Allow some terminal activity.
 
     feed(':file term<CR>')
     feed(':vnew<CR>')
@@ -162,7 +163,6 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
-    sleep(50)  -- Allow some terminal activity.
     screen:expect([[
         {3:foo} bar baz       {3:│}xxx                |
         bar baz {2:foo}       {3:│}xxx                |
