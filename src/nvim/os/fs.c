@@ -282,11 +282,11 @@ static const char *get_pathext(void)
   return pathext;
 }
 
-/// Returns true if extension of `name` is executable file exteinsion.
+/// Returns true if extension of `name` is executable file extension.
 static bool is_extension_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Don't check extensions, when a Unix-shell like 'shell'.
+  // Don't check extension for Unix-style 'shell'.
   const char_u *shell_end = p_sh + STRLEN(p_sh);
   while (true) {
     if (*shell_end == '.') {
@@ -303,31 +303,21 @@ static bool is_extension_executable(const char *name)
   }
 
   const char *pathext = get_pathext();
-  const char *ext_pos = name + STRLEN(name) - 1;
-  while (name != ext_pos) {
-    if (*ext_pos == '\\' || *ext_pos == '/') {
-      ext_pos = name;
-      break;
-    }
-    if (*ext_pos == '.') {
-      break;
-    }
-    ext_pos--;
-  }
-
   const char *cur_pos = pathext;
   while (true) {
-    // Don't check extension, if $PATHEXT contain dot itself.
+    // Don't check extension if $PATHEXT itself contains dot.
     if (*cur_pos == '.'
         && (*(cur_pos + 1) == ENV_SEPCHAR || *(cur_pos + 1) == NUL)) {
       return true;
     }
     const char *ext_end = strchr(cur_pos, ENV_SEPCHAR);
-    size_t ext_len = ext_end ?
-      (size_t)(ext_end - cur_pos) :
-      (STRLEN(pathext) - (size_t)(cur_pos - pathext));
-    if (ext_pos != name && mb_strnicmp((const char_u *)ext_pos,
-                                       (const char_u *)cur_pos, ext_len) == 0) {
+    size_t ext_len = ext_end
+      ? (size_t)(ext_end - cur_pos)
+      : (strlen(pathext) - (size_t)(cur_pos - pathext));
+    size_t name_len = STRLEN(name);
+    if (name_len > ext_len && mb_strnicmp(
+        (char_u *)(name + name_len - ext_len),
+        (char_u *)cur_pos, ext_len) == 0) {
       return true;
     }
     if (ext_end == NULL) {
