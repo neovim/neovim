@@ -2560,6 +2560,7 @@ it(':substitute with inccommand during :terminal activity', function()
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
     end
+    sleep(20)  -- Allow some terminal activity.
     command('file term')
     command('new')
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
