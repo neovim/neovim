@@ -89,18 +89,16 @@ describe("'wildmenu'", function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
     if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo & ping -n 10 127.0.0.1)<cr>G]])
     else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
+      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.01; done<cr>G]])
     end
-    sleep(50)  -- Allow some terminal activity.
 
-    feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
-    expect_stay_unchanged{grid=[[
+    screen:expect{grid=[[
       foo                      |
       foo                      |
-      foo                      |
+                               |
       define  jump  list  >    |
       :sign define^             |
     ]]}
@@ -119,10 +117,10 @@ describe("'wildmenu'", function()
     -- Exiting cmdline should show the buffer.
     feed([[<C-\><C-N>]])
     screen:expect([[
-      ^foo                      |
       foo                      |
       foo                      |
       foo                      |
+      ^                         |
                                |
     ]])
   end)

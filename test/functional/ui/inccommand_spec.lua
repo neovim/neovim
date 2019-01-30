@@ -2560,7 +2560,6 @@ it(':substitute with inccommand during :terminal activity', function()
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; sleep 0.01; done<cr>G]])
     end
-    sleep(20)  -- Allow some terminal activity.
     command('file term')
     command('new')
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
@@ -2580,7 +2579,7 @@ it(':substitute with inccommand during :terminal activity', function()
       xxx                           |
       xxx                           |
       xxx                           |
-      xxx                           |
+                                    |
       {10:term                          }|
                                     |
     ]])
@@ -2597,7 +2596,7 @@ it(':substitute with inccommand during :terminal activity', function()
       {15:~                             }|
       {11:[No Name] [+]                 }|
       xxx                           |
-      xxx                           |
+                                    |
       {10:term                          }|
       |1| {12:ZZZ} bar baz               |
       |3| bar {12:ZZZ} baz               |
