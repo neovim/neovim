@@ -6,7 +6,6 @@ local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
 local iswin = helpers.iswin
-local sleep = helpers.sleep
 
 describe('search highlighting', function()
   local screen

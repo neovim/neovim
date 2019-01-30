@@ -7,7 +7,6 @@ local iswin = helpers.iswin
 local funcs = helpers.funcs
 local eq = helpers.eq
 local eval = helpers.eval
-local sleep = helpers.sleep
 local retry = helpers.retry
 
 describe("'wildmenu'", function()
