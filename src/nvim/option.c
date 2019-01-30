@@ -4240,8 +4240,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
     errmsg = e_invarg;
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (value < -1 || value > SB_MAX
-        || (value != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+    if (value < -1 || value > SB_MAX) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
@@ -4433,11 +4432,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   // May set global value for local option.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
-  }
-
-  if (pp == &curbuf->b_p_scbk && !curbuf->terminal) {
-    // Normal buffer: reset local 'scrollback' after updating the global value.
-    curbuf->b_p_scbk = -1;
   }
 
   options[opt_idx].flags |= P_WAS_SET;
@@ -5862,7 +5856,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ai = p_ai;
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
-      buf->b_p_scbk = -1;
+      buf->b_p_scbk = p_scbk;
       buf->b_p_tw = p_tw;
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;

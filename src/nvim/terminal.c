@@ -236,7 +236,7 @@ Terminal *terminal_open(TerminalOptions opts)
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;     // 'nomodifiable'
   curbuf->b_p_ul = -1;        // 'undolevels'
-  curbuf->b_p_scbk = p_scbk;  // 'scrollback'
+  curbuf->b_p_scbk = (p_scbk == -1) ? 10000 : MAX(1, p_scbk);  // 'scrollback'
   curbuf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
@@ -249,8 +249,7 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0
-                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+  rv->sb_size = (size_t)curbuf->b_p_scbk;
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
@@ -1162,8 +1161,10 @@ static void refresh_size(Terminal *term, buf_T *buf)
 /// Adjusts scrollback storage after 'scrollback' option changed.
 static void on_scrollback_option_changed(Terminal *term, buf_T *buf)
 {
-  const size_t scbk = curbuf->b_p_scbk < 0
-                      ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+  if (buf->b_p_scbk < 1) {
+    buf->b_p_scbk = SB_MAX;
+  }
+  const size_t scbk = (size_t)buf->b_p_scbk;
   assert(term->sb_current < SIZE_MAX);
   if (term->sb_pending > 0) {  // Pending rows must be processed first.
     abort();
