@@ -2556,9 +2556,9 @@ it(':substitute with inccommand during :terminal activity', function()
 
     command("set cmdwinheight=3")
     if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx & ping -n 10 127.0.0.1)<cr>G]])
     else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
+      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; sleep 0.01; done<cr>G]])
     end
     sleep(20)  -- Allow some terminal activity.
     command('file term')
