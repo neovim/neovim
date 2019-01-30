@@ -448,6 +448,7 @@ for _, fn in ipairs(functions) do
 end
 
 output:write(string.format([[
+void nlua_add_api_functions(lua_State *lstate);  // silence -Wmissing-prototypes
 void nlua_add_api_functions(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {

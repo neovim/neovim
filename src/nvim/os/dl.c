@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "nvim/os/dl.h"
 #include "nvim/os/os.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"

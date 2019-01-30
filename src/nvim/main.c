@@ -222,6 +222,7 @@ void early_init(void)
 }
 
 #ifdef MAKE_LIB
+int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
 #elif defined(WIN32)
 int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
