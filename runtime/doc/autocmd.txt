@@ -353,6 +353,8 @@ Name			triggered by ~
 |CompleteDone|		after Insert mode completion is done
 
 |User|			to be used in combination with ":doautocmd"
+|Signal|		after the nvim process received a signal
+
 
 
 The alphabetical list of autocommand events:		*autocmd-events-abc*
@@ -914,6 +916,10 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 				any changed files.
 				For non-blocking shell commands, see
 				|job-control|.
+							*Signal*
+Signal				After the nvim process received a signal.
+				The pattern is matched against the name of the
+				received signal. Only "SIGUSR1" is supported.
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
