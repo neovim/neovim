@@ -246,6 +246,38 @@ func! Test_popup_completion_insertmode()
   iunmap <F5>
 endfunc
 
+func Test_complete_no_filter()
+  func! s:complTest1() abort
+    call complete(1, [{'word': 'foobar'}])
+    return ''
+  endfunc
+  func! s:complTest2() abort
+    call complete(1, [{'word': 'foobar', 'equal': 1}])
+    return ''
+  endfunc
+
+  let completeopt = &completeopt
+
+  " without equal=1
+  new
+  set completeopt=menuone,noinsert,menu
+  inoremap <F5>  <C-R>=s:complTest1()<CR>
+  call feedkeys("i\<F5>z\<CR>\<CR>\<ESC>.", 'tx')
+  call assert_equal('z', getline(1))
+  bwipe!
+
+  " with equal=1
+  new
+  set completeopt=menuone,noinsert,menu
+  inoremap <F5>  <C-R>=s:complTest2()<CR>
+  call feedkeys("i\<F5>z\<CR>\<CR>\<ESC>.", 'tx')
+  call assert_equal('foobar', getline(1))
+  bwipe!
+
+  let &completeopt = completeopt
+  iunmap <F5>
+endfunc
+
 " TODO: Fix what breaks after this line.
 " - Do not use "q!", it may exit Vim if there is an error
 finish

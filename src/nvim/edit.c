@@ -118,6 +118,7 @@ struct compl_S {
   compl_T     *cp_prev;
   char_u      *cp_str;          /* matched text */
   char cp_icase;                /* TRUE or FALSE: ignore case */
+  char cp_equal;                /* TRUE or FALSE: ins_compl_equal always ok */
   char_u      *(cp_text[CPT_COUNT]);    /* text for the menu */
   char_u      *cp_fname;        /* file containing the match, allocated when
                                  * cp_flags has FREE_FNAME */
@@ -2157,9 +2158,10 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
     xfree(wca);
 
     return ins_compl_add(IObuff, len, icase, fname, NULL, false, dir, flags,
-                         false);
+                         false, false);
   }
-  return ins_compl_add(str, len, icase, fname, NULL, false, dir, flags, false);
+  return ins_compl_add(str, len, icase, fname, NULL, false, dir, flags, false,
+          false);
 }
 
 /// Add a match to the list of matches
@@ -2176,6 +2178,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 ///                                     cptext itself will not be freed.
 /// @param[in]  cdir  Completion direction.
 /// @param[in]  adup  True if duplicate matches are to be accepted.
+/// @param[in]  equal True if match is always accepted by ins_compl_equal
 ///
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
@@ -2184,7 +2187,8 @@ static int ins_compl_add(char_u *const str, int len,
                          const bool icase, char_u *const fname,
                          char_u *const *const cptext,
                          const bool cptext_allocated,
-                         const Direction cdir, int flags, const bool adup)
+                         const Direction cdir, int flags, const bool adup,
+                         const bool equal)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T     *match;
@@ -2236,6 +2240,7 @@ static int ins_compl_add(char_u *const str, int len,
     match->cp_number = 0;
   match->cp_str = vim_strnsave(str, len);
   match->cp_icase = icase;
+  match->cp_equal = equal;
 
   /* match-fname is:
    * - compl_curr_match->cp_fname if it is a string equal to fname.
@@ -2309,6 +2314,9 @@ static int ins_compl_add(char_u *const str, int len,
 static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
+  if (match->cp_equal) {
+      return TRUE;
+  }
   if (match->cp_icase) {
     return STRNICMP(match->cp_str, str, len) == 0;
   }
@@ -2382,7 +2390,7 @@ static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
 
   for (i = 0; i < num_matches && add_r != FAIL; i++)
     if ((add_r = ins_compl_add(matches[i], -1, icase,
-                               NULL, NULL, false, dir, 0, false)) == OK) {
+                               NULL, NULL, false, dir, 0, false, false)) == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
     }
@@ -2451,7 +2459,7 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
                                  compl_length);
   if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, false, 0,
-                    ORIGINAL_TEXT, false) != OK) {
+                    ORIGINAL_TEXT, false, false) != OK) {
     return;
   }
 
@@ -3648,6 +3656,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
   bool icase = false;
   bool adup = false;
   bool aempty = false;
+  bool equal = false;
   char *(cptext[CPT_COUNT]);
 
   if (tv->v_type == VAR_DICT && tv->vval.v_dict != NULL) {
@@ -3660,6 +3669,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
                                                "user_data", true);
 
     icase = (bool)tv_dict_get_number(tv->vval.v_dict, "icase");
+    equal = (bool)tv_dict_get_number(tv->vval.v_dict, "equal");
     adup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
     aempty = (bool)tv_dict_get_number(tv->vval.v_dict, "empty");
   } else {
@@ -3673,7 +3683,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     return FAIL;
   }
   return ins_compl_add((char_u *)word, -1, icase, NULL,
-                       (char_u **)cptext, true, dir, 0, adup);
+                       (char_u **)cptext, true, dir, 0, adup, equal);
 }
 
 /*
@@ -4831,7 +4841,7 @@ static int ins_complete(int c, bool enable_pum)
     xfree(compl_orig_text);
     compl_orig_text = vim_strnsave(line + compl_col, compl_length);
     if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, false, 0,
-                      ORIGINAL_TEXT, false) != OK) {
+                      ORIGINAL_TEXT, false, false) != OK) {
       xfree(compl_pattern);
       compl_pattern = NULL;
       xfree(compl_orig_text);
