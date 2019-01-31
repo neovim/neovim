@@ -1151,7 +1151,7 @@ describe(":substitute, inccommand=split", function()
     eq("split", eval("&inccommand"))
   end)
 
-  it('deactivates if folding is slow', function()
+  it("deactivates if 'foldexpr' is slow #9557", function()
     insert([[
       a
       a
