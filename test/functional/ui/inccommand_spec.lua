@@ -1151,7 +1151,7 @@ describe(":substitute, inccommand=split", function()
     eq("split", eval("&inccommand"))
   end)
 
-  it("deactivates if folding is slow", function()
+  it('deactivates if folding is slow', function()
     insert([[
       a
       a
@@ -1161,25 +1161,27 @@ describe(":substitute, inccommand=split", function()
       a
       a
       a
-      ]])
+    ]])
+    source([[
+      function! Slowfold(lnum)
+        sleep 5m
+        return a:lnum % 3
+      endfun
+    ]])
+    command('set redrawtime=1 inccommand=split')
+    command('set foldmethod=expr foldexpr=Slowfold(v:lnum)')
+    feed(':%s/a/bcdef')
 
-      source([[
-        function! Slowfold(lnum)
-          sleep 5m
-          return a:lnum % 3
-        endfun
-        set foldexpr=Slowfold(v:lnum)
-      ]])
+    -- Assert that 'inccommand' is DISABLED in cmdline mode.
+    retry(nil, nil, function()
+      eq('', eval('&inccommand'))
+    end)
 
-      command("set redrawtime=1")
-      command("set foldmethod=expr")
-      command("set icm=split")
-      helpers.sleep(100)
-      feed(":%s/a/bcdef")
-      helpers.sleep(1000)
-
-      -- Assert that 'inccommand' is DISABLED in cmdline mode.
-      eq("", eval("&inccommand"))
+    -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
+    feed([[<C-\><C-N>]])
+    retry(nil, nil, function()
+      eq('split', eval('&inccommand'))
+    end)
   end)
 
   it("clears preview if non-previewable command is edited #5585", function()
