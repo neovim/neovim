@@ -11,11 +11,12 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let b:undo_ftplugin = "setl com< cms< inc< fo< ofu<"
+let b:undo_ftplugin = "setl com< cms< inc< fo< ofu< isk<"
 
 setlocal comments=s1:/*,mb:*,ex:*/ commentstring&
 setlocal formatoptions-=t formatoptions+=croql
 setlocal omnifunc=csscomplete#CompleteCSS
+setlocal iskeyword=@,48-57,_,-,192-255
 
 let &l:include = '^\s*@import\s\+\%(url(\)\='
 
