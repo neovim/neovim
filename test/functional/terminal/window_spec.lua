@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local feed_data = thelpers.feed_data
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
 local iswin = helpers.iswin
@@ -19,11 +20,10 @@ describe(':terminal window', function()
   it('sets topline correctly #8556', function()
     -- Test has hardcoded assumptions of dimensions.
     eq(7, eval('&lines'))
-    command('set shell=sh')
-    command('terminal')
-    retry(nil, nil, function() assert(nil ~= eval('b:terminal_job_pid')) end)
+    feed_data('\n\n\n')  -- Add blank lines.
     -- Terminal/shell contents must exceed the height of this window.
     command('topleft 1split')
+    eq('terminal', eval('&buftype'))
     feed([[i<cr>]])
     -- Check topline _while_ in terminal-mode.
     retry(nil, nil, function() eq(6, eval('winsaveview()["topline"]')) end)
@@ -42,7 +42,7 @@ describe(':terminal window', function()
         {7:6 }                                                |
         {3:-- TERMINAL --}                                    |
       ]])
-      thelpers.feed_data({'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      feed_data({'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
       screen:expect([[
         {7:1 }tty ready                                       |
         {7:2 }rows: 6, cols: 48                               |
@@ -69,7 +69,7 @@ describe(':terminal window', function()
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
       ]])
-      thelpers.feed_data({' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      feed_data({' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
       screen:expect([[
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
@@ -113,7 +113,7 @@ describe(':terminal window', function()
   describe('with fold set', function()
     before_each(function()
       feed([[<C-\><C-N>:set foldenable foldmethod=manual<CR>i]])
-      thelpers.feed_data({'line1', 'line2', 'line3', 'line4', ''})
+      feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
         tty ready                                         |
         line1                                             |

@@ -145,8 +145,9 @@ describe('timers', function()
     local count2 = eval("g:val")
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
-    assert(3 <= count and count <= 7,
-           'expected (3 <= count <= 7), got: '..tostring(count))
+    assert((3 <= count and count <= load_adjust(7)),
+           string.format('expected (3 <= count <= %s), got: %s',
+                         load_adjust(7), tostring(count)))
   end)
 
   it('can be stopped from the handler', function()
