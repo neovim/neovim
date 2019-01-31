@@ -4125,6 +4125,10 @@ skip:
     changed_window_setting();
   }
 
+  if (profile_passed_limit(timeout)) {
+    got_quit = true;
+  }
+
   vim_regfree(regmatch.regprog);
 
   // Restore the flag values, they can be used for ":&&".
