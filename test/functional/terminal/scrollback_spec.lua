@@ -481,25 +481,10 @@ describe("'scrollback' option", function()
     eq(-1, curbufmeths.get_option('scrollback'))
   end)
 
-  it(':setlocal in a normal buffer is an error', function()
-    command('new')
-
-    -- :setlocal to -1 is NOT an error.
-    feed_command('setlocal scrollback=-1')
-    eq(nil, string.match(eval("v:errmsg"), "E%d*:"))
-    feed('<CR>')
-
-    -- :setlocal to anything except -1 is an error.
-    feed_command('setlocal scrollback=42')
-    feed('<CR>')
-    eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
-    eq(-1, curbufmeths.get_option('scrollback'))
-  end)
-
   it(':set updates local value and global default', function()
     set_fake_shell()
-    command('set scrollback=42')                  -- set global and (attempt) local
-    eq(-1, curbufmeths.get_option('scrollback'))  -- normal buffer: -1
+    command('set scrollback=42')                  -- set global value
+    eq(42, curbufmeths.get_option('scrollback'))
     command('terminal')
     eq(42, curbufmeths.get_option('scrollback'))  -- inherits global default
     command('setlocal scrollback=99')
