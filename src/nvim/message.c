@@ -1960,8 +1960,9 @@ int msg_scrollsize(void)
  */
 static void msg_scroll_up(void)
 {
-  if (msg_scrolled == 0) {
+  if (!msg_did_scroll) {
     ui_call_win_scroll_over_start();
+    msg_did_scroll = true;
   }
   if (dy_flags & DY_MSGSEP) {
     if (msg_scrolled == 0) {

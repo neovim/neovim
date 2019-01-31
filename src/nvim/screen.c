@@ -307,11 +307,15 @@ void update_screen(int type)
   ++display_tick;           /* let syntax code know we're in a next round of
                              * display updating */
 
-  /*
-   * if the screen was scrolled up when displaying a message, scroll it down
-   */
-  if (msg_scrolled) {
+  // Tricky: vim code can reset msg_scrolled behind our back, so need
+  // separate bookkeeping for now.
+  if (msg_did_scroll) {
     ui_call_win_scroll_over_reset();
+    msg_did_scroll = false;
+  }
+
+  // if the screen was scrolled up when displaying a message, scroll it down
+  if (msg_scrolled) {
     clear_cmdline = true;
     if (dy_flags & DY_MSGSEP) {
       int valid = MAX(Rows - msg_scrollsize(), 0);
