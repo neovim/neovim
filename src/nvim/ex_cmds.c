@@ -4125,10 +4125,6 @@ skip:
     changed_window_setting();
   }
 
-  if (profile_passed_limit(timeout)) {
-    got_quit = true;
-  }
-
   vim_regfree(regmatch.regprog);
 
   // Restore the flag values, they can be used for ":&&".
@@ -4139,7 +4135,7 @@ skip:
   buf_T *preview_buf = NULL;
   size_t subsize = preview_lines.subresults.size;
   if (preview && !aborting()) {
-    if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
+    if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
     } else if (*p_icm != NUL &&  pat != NULL) {
