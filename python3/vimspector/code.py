@@ -94,6 +94,10 @@ class CodeView( object  ):
 
     self._UndisplaySigns()
 
+  def Reset( self ):
+    self.ClearBreakpoints()
+    self.Clear()
+
   def AddBreakpoints( self, source, breakpoints ):
     for breakpoint in breakpoints:
       if 'source' not in breakpoint:
