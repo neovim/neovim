@@ -76,6 +76,8 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
         \                    'out_cb': funcref( 's:_OnServerData' ),
         \                    'err_cb': funcref( 's:_OnServerError' ),
         \                    'stoponexit': 'term',
+        \                    'env': a:config[ 'env' ],
+        \                    'cwd': a:config[ 'cwd' ],
         \                }
         \              )
 

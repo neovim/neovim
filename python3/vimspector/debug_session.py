@@ -368,6 +368,15 @@ class DebugSession( object ):
         port = utils.AskForInput( 'Enter port to connect to: ' )
         self._adapter[ 'port' ] = port
 
+    # TODO: Do we actually need to copy and update or does Vim do that?
+    env = os.environ.copy()
+    if 'env' in self._adapter:
+      env.update( self._adapter[ 'env' ] )
+    self._adapter[ 'env' ] = env
+
+    if 'cwd' not in self._adapter:
+      self._adapter[ 'cwd' ] = os.getcwd()
+
     channel_send_func = vim.bindeval(
       "vimspector#internal#{}#StartDebugSession( {} )".format(
         self._connection_type,
