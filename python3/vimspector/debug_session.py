@@ -574,10 +574,8 @@ class DebugSession( object ):
     self._variablesView.Clear()
 
   def OnEvent_terminated( self, message ):
-    utils.UserMessage( "The program was terminated because: {0}".format(
-      message.get( 'body', {} ).get( 'reason', "No specific reason" ) ) )
-
     self.Clear()
+    utils.UserMessage( "Debugging was terminated." )
 
   def _RemoveBreakpoints( self ):
     for breakpoints in self._line_breakpoints.values():
