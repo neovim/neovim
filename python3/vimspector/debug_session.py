@@ -260,7 +260,10 @@ class DebugSession( object ):
     } )
 
   def Continue( self ):
-    self._stackTraceView.Continue()
+    if self._connection:
+      self._stackTraceView.Continue()
+    else:
+      self.Start()
 
   def Pause( self ):
     self._stackTraceView.Pause()
