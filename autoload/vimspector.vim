@@ -22,9 +22,12 @@ set cpo&vim
 
 call vimspector#internal#state#Reset()
 
-" TODO: Test function
 function! vimspector#Launch() abort
   py3 _vimspector_session.Start()
+endfunction
+
+function! vimspector#LaunchWithSettings( settings ) abort
+  py3 _vimspector_session.Start( launch_variables = vim.eval( 'a:settings' ) )
 endfunction
 
 function! vimspector#Reset() abort

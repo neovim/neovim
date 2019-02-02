@@ -106,7 +106,7 @@ class DebugSession( object ):
     # have a UI list of them we should update that at this point
     self._UpdateUIBreakpoints()
 
-  def Start( self, configuration = None ):
+  def Start( self, launch_variables = {} ):
     self._configuration = None
     self._adapter = None
 
@@ -123,29 +123,27 @@ class DebugSession( object ):
     launch_config = database.get( 'configurations' )
     adapters = database.get( 'adapters' )
 
-    if not configuration:
-      if len( launch_config ) == 1:
-        configuration = next( iter( launch_config.keys() ) )
-      else:
-        configuration = utils.SelectFromList( 'Which launch configuration?',
-                                              list( launch_config.keys() ) )
-
+    if len( launch_config ) == 1:
+      configuration = next( iter( launch_config.keys() ) )
+    else:
+      configuration = utils.SelectFromList( 'Which launch configuration?',
+                                            list( launch_config.keys() ) )
     if not configuration:
       return
 
     self._workspace_root = os.path.dirname( launch_config_file )
 
-    utils.ExpandReferencesInDict( launch_config[ configuration ], {
+    variables = {
+      'dollar': '$', # HAAACK: work around not having a way to include a literal
       'workspaceRoot': self._workspace_root
-    } )
+    }
+    variables.update( launch_variables )
+    utils.ExpandReferencesInDict( launch_config[ configuration ], variables  )
 
     adapter = launch_config[ configuration ].get( 'adapter' )
     if isinstance( adapter, str ):
       adapter = adapters.get( adapter )
-      utils.ExpandReferencesInDict( adapter, {
-        'workspaceRoot': os.path.dirname( launch_config_file )
-      } )
-
+      utils.ExpandReferencesInDict( adapter, variables )
 
     self._StartWithConfiguration( launch_config[ configuration ],
                                   adapter )
