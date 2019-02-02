@@ -18,6 +18,7 @@ import vim
 import json
 import os
 import functools
+import subprocess
 
 from collections import defaultdict
 
@@ -54,6 +55,8 @@ class DebugSession( object ):
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
     self._configuration = None
+
+    self._attach_process = None
 
     vim.command( 'sign define vimspectorBP text==> texthl=Error' )
     vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
@@ -221,6 +224,11 @@ class DebugSession( object ):
       self._Reset()
 
   def _Reset( self ):
+    if self._attach_process:
+      vim.eval( 'vimspector#internal#job#KillCommand( {} )'.format(
+        json.dumps( self._attach_process ) ) )
+      self._attach_process = None
+
     if self._uiTab:
       self._stackTraceView.Reset()
       self._variablesView.Reset()
@@ -456,17 +464,64 @@ class DebugSession( object ):
       },
     }, failure_handler = handler, timeout = 5000 )
 
-  def _SelectProcess( self, adapter_config, launch_config ):
-    atttach_config = adapter_config[ 'attach' ]
-    if atttach_config[ 'pidSelect' ] == 'ask':
-      pid = utils.AskForInput( 'Enter PID to attach to: ' )
-      launch_config[ atttach_config[ 'pidProperty' ] ] = pid
-      return
-    elif atttach_config[ 'pidSelect' ] == 'none':
-      return
+  def _PrepareAttach( self, adapter_config, launch_config ):
 
-    raise ValueError( 'Unrecognised pidSelect {0}'.format(
-      atttach_config[ 'pidSelect' ] ) )
+    atttach_config = adapter_config[ 'attach' ]
+
+    if 'remote' in atttach_config:
+      remote = atttach_config[ 'remote' ]
+      ssh = [ 'ssh' ]
+
+      if 'account' in remote:
+        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
+      else:
+        ssh.append( remote[ 'host' ] )
+
+      cmd = ssh + remote[ 'pidCommand' ]
+
+      self._logger.debug( 'Getting PID: %s', cmd )
+      pid = subprocess.check_output( ssh + remote[ 'pidCommand' ] ).decode(
+        'utf-8' ).strip()
+      self._logger.debug( 'Got PID: %s', pid )
+
+      cmd = ssh + remote[ 'attachCommand' ][:]
+
+      for index, item in enumerate( cmd ):
+        cmd[ index ] = item.replace( '%PID%', pid )
+
+      # TODO: Log files, etc. ?
+      self._logger.debug( 'Running remote app: %s', cmd )
+      self._attach_process = vim.eval(
+        'vimspector#internal#job#RunCommand( {} )'.format(
+          json.dumps( cmd ) ) )
+    else:
+      if atttach_config[ 'pidSelect' ] == 'ask':
+        pid = utils.AskForInput( 'Enter PID to attach to: ' )
+        launch_config[ atttach_config[ 'pidProperty' ] ] = pid
+        return
+      elif atttach_config[ 'pidSelect' ] == 'none':
+        return
+
+      raise ValueError( 'Unrecognised pidSelect {0}'.format(
+        atttach_config[ 'pidSelect' ] ) )
+
+
+  def _PrepareRun( self, adapter_config, launch_config ):
+    run_config = adapter_config.get( 'launch', {} ) 
+
+    if 'remote' in run_config:
+      remote = run_config[ 'remote' ]
+      ssh = [ 'ssh' ]
+      if 'account' in remote:
+        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
+      else:
+        ssh.append( remote[ 'host' ] )
+
+      cmd = ssh + remote[ 'runCommand' ][:]
+      self._logger.debug( 'Running remote app: %s', cmd )
+      self._attach_process = vim.eval(
+        'vimspector#internal#job#RunCommand( {} )'.format(
+          json.dumps( cmd ) ) )
 
 
   def _Initialise( self ):
@@ -499,7 +554,9 @@ class DebugSession( object ):
     launch_config = self._configuration[ 'configuration' ]
 
     if launch_config.get( 'request' ) == "attach":
-      self._SelectProcess( adapter_config, launch_config )
+      self._PrepareAttach( adapter_config, launch_config )
+    elif launch_config.get( 'request' ) == "run":
+      self._PrepareRun( adapter_config, launch_config )
 
     # FIXME: name is mandatory. Forcefully add it (we should really use the
     # _actual_ name, but that isn't actually remembered at this point)
