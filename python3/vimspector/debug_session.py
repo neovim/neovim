@@ -459,7 +459,7 @@ class DebugSession( object ):
 
   def _Initialise( self ):
     adapter_config = self._adapter
-    self._connection.DoRequest( None, {
+    self._connection.DoRequest( lambda msg: self._Launch(), {
       'command': 'initialize',
       'arguments': {
         'adapterID': adapter_config.get( 'name', 'adapter' ),
@@ -519,7 +519,7 @@ class DebugSession( object ):
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
     self._connection.DoRequest(
-      lambda msg: self._Launch(),
+      None,
       {
         'command': 'configurationDone',
       }
