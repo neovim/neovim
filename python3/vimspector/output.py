@@ -22,7 +22,7 @@ import json
 BUFFER_MAP = {
   'console': 'Console',
   'stdout': 'Console',
-  'stderr': 'Errors',
+  'stderr': 'stderr',
   'telemetry': 'Telemetry',
 }
 

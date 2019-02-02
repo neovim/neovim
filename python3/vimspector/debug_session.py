@@ -478,6 +478,9 @@ class DebugSession( object ):
     } )
 
 
+  def OnFailure( self, reason, message ):
+    self._outputView.ServerEcho( reason )
+
   def _Launch( self ):
     self._logger.debug( "LAUNCH!" )
     adapter_config = self._adapter
