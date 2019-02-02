@@ -190,7 +190,7 @@ class DebugAdapterConnection( object ):
     payload = str( self._buffer[ : content_length  ], 'utf-8' )
     self._buffer = self._buffer[ content_length : ]
 
-    self._logger.debug( 'Message received (raw): %s', payload )
+    # self._logger.debug( 'Message received (raw): %s', payload )
 
     message = json.loads( payload )
 
