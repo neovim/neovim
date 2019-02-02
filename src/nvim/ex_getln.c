@@ -51,6 +51,7 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
@@ -6051,7 +6052,12 @@ static int open_cmdwin(void)
 
   /* Don't execute autocommands while creating the window. */
   block_autocmds();
-  /* don't use a new tab page */
+
+  // When using completion in Insert mode with <C-R>=<C-F> one can open the
+  // command line window, but we don't want the popup menu then.
+  pum_undisplay(true);
+
+  // don't use a new tab page
   cmdmod.tab = 0;
   cmdmod.noswapfile = 1;
 

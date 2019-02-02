@@ -154,6 +154,7 @@ void event_init(void)
   remote_ui_init();
   api_vim_init();
   terminal_init();
+  ui_init();
 }
 
 /// @returns false if main_loop could not be closed gracefully

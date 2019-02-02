@@ -3412,7 +3412,9 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
 # endif
             xfree(name);
 
-            /* pretend screen didn't scroll, need redraw anyway */
+            // pretend screen didn't scroll, need redraw anyway
+            // TODO(bfredl): when doing the message grid refactor,
+            // simplify this special case.
             msg_scrolled = 0;
             redraw_all_later(NOT_VALID);
           }

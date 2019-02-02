@@ -54,7 +54,7 @@ for i = 1, #events do
   ev = events[i]
   assert(ev.return_type == 'void')
 
-  if ev.since == nil then
+  if ev.since == nil and not ev.noexport then
     print("Ui event "..ev.name.." lacks since field.\n")
     os.exit(1)
   end
@@ -65,7 +65,7 @@ for i = 1, #events do
     write_signature(proto_output, ev, 'UI *ui')
     proto_output:write(';\n')
 
-    if not ev.remote_impl then
+    if not ev.remote_impl and not ev.noexport then
       remote_output:write('static void remote_ui_'..ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
@@ -74,8 +74,7 @@ for i = 1, #events do
       remote_output:write('}\n\n')
     end
 
-    if not ev.bridge_impl then
-
+    if not ev.bridge_impl and not ev.noexport then
       send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
       argc = 1
       for j = 1, #ev.parameters do
@@ -138,13 +137,27 @@ for i = 1, #events do
     call_output:write('\n{\n')
     if ev.remote_only then
       write_arglist(call_output, ev, false)
-      call_output:write('  UI_LOG('..ev.name..', 0);\n')
+      call_output:write('  UI_LOG('..ev.name..');\n')
       call_output:write('  ui_event("'..ev.name..'", args);\n')
+    elseif ev.compositor_impl then
+      call_output:write('  UI_CALL')
+      write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)
+      call_output:write(";\n")
     else
       call_output:write('  UI_CALL')
-      write_signature(call_output, ev, ev.name, true)
+      write_signature(call_output, ev, 'true, '..ev.name..', ui', true)
       call_output:write(";\n")
     end
+    call_output:write("}\n\n")
+  end
+
+  if ev.compositor_impl then
+    call_output:write('void ui_composed_call_'..ev.name)
+    write_signature(call_output, ev, '')
+    call_output:write('\n{\n')
+    call_output:write('  UI_CALL')
+    write_signature(call_output, ev, 'ui->composed, '..ev.name..', ui', true)
+    call_output:write(";\n")
     call_output:write("}\n\n")
   end
 
@@ -153,6 +166,7 @@ end
 proto_output:close()
 call_output:close()
 remote_output:close()
+bridge_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
 exported_attributes = {'name', 'parameters',
@@ -168,7 +182,9 @@ for _,ev in ipairs(events) do
       p[1] = 'Dictionary'
     end
   end
-  exported_events[#exported_events+1] = ev_exported
+  if not ev.noexport then
+    exported_events[#exported_events+1] = ev_exported
+  end
 end
 
 packed = mpack.pack(exported_events)

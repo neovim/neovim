@@ -110,6 +110,7 @@
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
@@ -152,6 +153,8 @@ static bool send_grid_resize = false;
 static bool highlights_invalid = false;
 
 static bool conceal_cursor_used = false;
+
+static bool floats_invalid = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
@@ -304,11 +307,15 @@ void update_screen(int type)
   ++display_tick;           /* let syntax code know we're in a next round of
                              * display updating */
 
-  /*
-   * if the screen was scrolled up when displaying a message, scroll it down
-   */
-  if (msg_scrolled) {
+  // Tricky: vim code can reset msg_scrolled behind our back, so need
+  // separate bookkeeping for now.
+  if (msg_did_scroll) {
     ui_call_win_scroll_over_reset();
+    msg_did_scroll = false;
+  }
+
+  // if the screen was scrolled up when displaying a message, scroll it down
+  if (msg_scrolled) {
     clear_cmdline = true;
     if (dy_flags & DY_MSGSEP) {
       int valid = MAX(Rows - msg_scrollsize(), 0);
@@ -453,16 +460,19 @@ void update_screen(int type)
 
     /* redraw status line after the window to minimize cursor movement */
     if (wp->w_redr_status) {
-      win_redr_status(wp, true);  // any popup menu will be redrawn below
+      win_redr_status(wp);
     }
   }
-  send_grid_resize = false;
-  highlights_invalid = false;
+
   end_search_hl();
   // May need to redraw the popup menu.
-  if (pum_drawn()) {
+  if (pum_drawn() && floats_invalid) {
     pum_redraw();
   }
+
+  send_grid_resize = false;
+  highlights_invalid = false;
+  floats_invalid = false;
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
@@ -4287,7 +4297,7 @@ win_line (
 /// screen positions.
 static void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 {
-  if (!ui_is_external(kUIMultigrid) && *grid != &default_grid) {
+  if (!(*grid)->chars && *grid != &default_grid) {
     *row_off += (*grid)->row_offset;
     *col_off += (*grid)->col_offset;
     *grid = &default_grid;
@@ -4537,7 +4547,7 @@ void redraw_statuslines(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
-      win_redr_status(wp, false);
+      win_redr_status(wp);
     }
   }
   if (redraw_tabline)
@@ -4808,7 +4818,7 @@ win_redr_status_matches (
 /// If inversion is possible we use it. Else '=' characters are used.
 /// If "ignore_pum" is true, also redraw statusline when the popup menu is
 /// displayed.
-static void win_redr_status(win_T *wp, int ignore_pum)
+static void win_redr_status(win_T *wp)
 {
   int row;
   char_u      *p;
@@ -4831,7 +4841,7 @@ static void win_redr_status(win_T *wp, int ignore_pum)
   if (wp->w_status_height == 0) {
     // no status line, can only be last window
     redraw_cmdline = true;
-  } else if (!redrawing() || (!ignore_pum && pum_drawn())) {
+  } else if (!redrawing()) {
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
@@ -5310,7 +5320,7 @@ void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
 }
 
 static int put_dirty_row = -1;
-static int put_dirty_first = -1;
+static int put_dirty_first = INT_MAX;
 static int put_dirty_last = 0;
 
 /// Start a group of screen_puts_len calls that builds a single screen line.
@@ -5341,8 +5351,6 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   int prev_c = 0;                       /* previous Arabic character */
   int pc, nc, nc1;
   int pcc[MAX_MCO];
-  int force_redraw_this;
-  int force_redraw_next = FALSE;
   int need_redraw;
   bool do_flush = false;
 
@@ -5365,16 +5373,10 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 
   /* When drawing over the right halve of a double-wide char clear out the
    * left halve.  Only needed in a terminal. */
-  if (col > 0 && col < grid->Columns && grid_fix_col(grid, col, row) != col) {
-    schar_from_ascii(grid->chars[off - 1], ' ');
-    grid->attrs[off - 1] = 0;
+  if (grid != &default_grid && col == 0 && grid_invalid_row(grid, row)) {
     // redraw the previous cell, make it empty
-    if (put_dirty_first == -1) {
-      put_dirty_first = col-1;
-    }
-    put_dirty_last = col+1;
-    // force the cell at "col" to be redrawn
-    force_redraw_next = true;
+    put_dirty_first = -1;
+    put_dirty_last = MAX(put_dirty_last, 1);
   }
 
   max_off = grid->line_offset[row] + grid->Columns;
@@ -5422,15 +5424,12 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
     schar_from_cc(buf, u8c, u8cc);
 
 
-    force_redraw_this = force_redraw_next;
-    force_redraw_next = FALSE;
-
     need_redraw = schar_cmp(grid->chars[off], buf)
                   || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)
                   || grid->attrs[off] != attr
                   || exmode_active;
 
-    if (need_redraw || force_redraw_this) {
+    if (need_redraw) {
       // When at the end of the text and overwriting a two-cell
       // character with a one-cell character, need to clear the next
       // cell.  Also when overwriting the left halve of a two-cell char
@@ -5454,10 +5453,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
         grid->chars[off + 1][0] = 0;
         grid->attrs[off + 1] = attr;
       }
-      if (put_dirty_first == -1) {
-        put_dirty_first = col;
-      }
-      put_dirty_last = col+mbyte_cells;
+      put_dirty_first = MIN(put_dirty_first, col);
+      put_dirty_last = MAX(put_dirty_last, col+mbyte_cells);
     }
 
     off += mbyte_cells;
@@ -5485,14 +5482,14 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 void grid_puts_line_flush(ScreenGrid *grid, bool set_cursor)
 {
   assert(put_dirty_row != -1);
-  if (put_dirty_first != -1) {
+  if (put_dirty_first < put_dirty_last) {
     if (set_cursor) {
       ui_grid_cursor_goto(grid->handle, put_dirty_row,
                           MIN(put_dirty_last, grid->Columns-1));
     }
     ui_line(grid, put_dirty_row, put_dirty_first, put_dirty_last,
             put_dirty_last, 0, false);
-    put_dirty_first = -1;
+    put_dirty_first = INT_MAX;
     put_dirty_last = 0;
   }
   put_dirty_row = -1;
@@ -5864,9 +5861,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
     if (dirty_last > dirty_first) {
       // TODO(bfredl): support a cleared suffix even with a batched line?
       if (put_dirty_row == row) {
-        if (put_dirty_first == -1) {
-          put_dirty_first = dirty_first;
-        }
+        put_dirty_first = MIN(put_dirty_first, dirty_first);
         put_dirty_last = MAX(put_dirty_last, dirty_last);
       } else {
         int last = c2 != ' ' ? dirty_last : dirty_first + (c1 != ' ');
@@ -5952,7 +5947,7 @@ void win_grid_alloc(win_T *wp)
       || grid->Rows != rows
       || grid->Columns != cols) {
     if (want_allocation) {
-      grid_alloc(grid, rows, cols, true);
+      grid_alloc(grid, rows, cols, true, true);
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
       // Only keep track of the size and offset of the window.
@@ -6030,6 +6025,10 @@ retry:
    */
   ++RedrawingDisabled;
 
+  // win_new_shellsize will recompute floats posititon, but tell the
+  // compositor to now redraw them yet
+  ui_comp_invalidate_screen();
+
   win_new_shellsize();      /* fit the windows in the new sized shell */
 
   comp_col();           /* recompute columns for shown command and ruler */
@@ -6044,7 +6043,7 @@ retry:
   // Continuing with the old arrays may result in a crash, because the
   // size is wrong.
 
-  grid_alloc(&default_grid, Rows, Columns, !doclear);
+  grid_alloc(&default_grid, Rows, Columns, !doclear, true);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
@@ -6078,7 +6077,7 @@ retry:
   }
 }
 
-void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
+void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
   ScreenGrid new = *grid;
@@ -6096,7 +6095,7 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy)
     new.line_offset[new_row] = new_row * new.Columns;
     new.line_wraps[new_row] = false;
 
-    grid_clear_line(&new, new.line_offset[new_row], columns, true);
+    grid_clear_line(&new, new.line_offset[new_row], columns, valid);
 
     if (copy) {
       // If the screen is not going to be cleared, copy as much as
@@ -6188,6 +6187,7 @@ static void screenclear2(void)
     default_grid.line_wraps[i] = false;
   }
 
+  floats_invalid = true;
   ui_call_grid_clear(1);  // clear the display
   clear_cmdline = false;
   mode_displayed = false;
@@ -6218,10 +6218,16 @@ static void grid_clear_line(ScreenGrid *grid, unsigned off, int width,
   (void)memset(grid->attrs + off, fill, (size_t)width * sizeof(sattr_T));
 }
 
-static void grid_invalidate(ScreenGrid *grid)
+void grid_invalidate(ScreenGrid *grid)
 {
   (void)memset(grid->attrs, -1, grid->Rows * grid->Columns * sizeof(sattr_T));
 }
+
+bool grid_invalid_row(ScreenGrid *grid, int row)
+{
+  return grid->attrs[grid->line_offset[row]] < 0;
+}
+
 
 
 /// Copy part of a grid line for vertically split window.
@@ -6916,11 +6922,6 @@ void showruler(int always)
 {
   if (!always && !redrawing())
     return;
-  if (pum_drawn()) {
-    // Don't redraw right now, do it later.
-    curwin->w_redr_status = true;
-    return;
-  }
   if ((*p_stl != NUL || *curwin->w_p_stl != NUL) && curwin->w_status_height) {
     redraw_custom_statusline(curwin);
   } else {
@@ -6955,10 +6956,6 @@ static void win_redr_ruler(win_T *wp, int always)
   if (wp == lastwin && lastwin->w_status_height == 0)
     if (edit_submode != NULL)
       return;
-  // Don't draw the ruler when the popup menu is visible, it may overlap.
-  if (pum_drawn()) {
-    return;
-  }
 
   if (*p_ruf) {
     int save_called_emsg = called_emsg;
@@ -7201,7 +7198,6 @@ void screen_resize(int width, int height)
       } else {
         update_topline();
         if (pum_drawn()) {
-          redraw_later(NOT_VALID);
           ins_compl_show_pum();
         }
         update_screen(NOT_VALID);

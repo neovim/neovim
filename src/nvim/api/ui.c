@@ -113,6 +113,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->set_title = remote_ui_set_title;
   ui->set_icon = remote_ui_set_icon;
   ui->option_set = remote_ui_option_set;
+  ui->win_scroll_over_start = remote_ui_win_scroll_over_start;
+  ui->win_scroll_over_reset = remote_ui_win_scroll_over_reset;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
 
@@ -459,7 +461,7 @@ static void remote_ui_put(UI *ui, const char *cell)
 static void remote_ui_raw_line(UI *ui, Integer grid, Integer row,
                                Integer startcol, Integer endcol,
                                Integer clearcol, Integer clearattr,
-                               Boolean wrap, const schar_T *chunk,
+                               LineFlags flags, const schar_T *chunk,
                                const sattr_T *attrs)
 {
   UIData *data = ui->data;

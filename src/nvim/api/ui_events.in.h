@@ -38,6 +38,9 @@ void set_icon(String icon)
   FUNC_API_SINCE(3);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
+// Stop event is not exported as such, represented by EOF in the msgpack stream.
+void stop(void)
+  FUNC_API_NOEXPORT;
 
 // First revison of the grid protocol, used by default
 void update_fg(Integer fg)
@@ -71,18 +74,29 @@ void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
                     Array info)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
 void grid_resize(Integer grid, Integer width, Integer height)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_clear(Integer grid)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_cursor_goto(Integer grid, Integer row, Integer col)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_line(Integer grid, Integer row, Integer col_start, Array data)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
 void grid_scroll(Integer grid, Integer top, Integer bot,
                  Integer left, Integer right, Integer rows, Integer cols)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_destroy(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+
+// For perfomance and simplicity, we use the dense screen representation
+// in internal code, such as compositor and TUI. The remote_ui module will
+// translate this in to the public grid_line format.
+void raw_line(Integer grid, Integer row, Integer startcol,
+              Integer endcol, Integer clearcol, Integer clearattr,
+              LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
+  FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
+
+void event(char *name, Array args, bool *args_consumed)
+  FUNC_API_NOEXPORT;
 
 void win_pos(Integer grid, Integer win, Integer startrow,
              Integer startcol, Integer width, Integer height)
@@ -90,9 +104,9 @@ void win_pos(Integer grid, Integer win, Integer startrow,
 void win_hide(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_scroll_over_start(void)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void win_scroll_over_reset(void)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
 
 void popupmenu_show(Array items, Integer selected,
                     Integer row, Integer col, Integer grid)
