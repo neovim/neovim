@@ -477,7 +477,9 @@ class DebugSession( object ):
 
 
   def OnFailure( self, reason, message ):
-    self._outputView.ServerEcho( reason )
+    msg = "Request for '{}' failed: {}".format( message[ 'command' ],
+                                                reason )
+    self._outputView.ServerEcho( msg )
 
   def _Launch( self ):
     self._logger.debug( "LAUNCH!" )
