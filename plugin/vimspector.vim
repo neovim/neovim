@@ -33,6 +33,30 @@ endif
 "   - Add commands/mappings/menus?
 
 let g:loaded_vimpector = 1
+
+let s:mappings = get( g:, 'vimspector_enable_mappings', '' )
+
+if s:mappings == 'VISUAL_STUDIO'
+  nnoremap <F5>         :call vimspector#Continue()<CR>
+  nnoremap <S-F5>       :call vimspector#Stop()<CR>
+  nnoremap <C-S-F5>     :call vimspector#Restart()<CR>
+  nnoremap <F6>         :call vimspector#Pause()<CR>
+  nnoremap <F9>         :call vimspector#ToggleBreakpoint()<CR>
+  nnoremap <S-F9>       :call vimspector#AddFunctionBreakpoint( '<cexpr>' )<CR>
+  nnoremap <F10>        :call vimspector#StepOver()<CR>
+  nnoremap <F11>        :call vimspector#StepInto()<CR>
+  nnoremap <S-F11>      :call vimspector#StepOut()<CR>
+elseif s:mappings == 'HUMAN'
+  nnoremap <F5>         :call vimspector#Continue()<CR>
+  nnoremap <F3>         :call vimspector#Stop()<CR>
+  nnoremap <F4>         :call vimspector#Restart()<CR>
+  nnoremap <F6>         :call vimspector#Pause()<CR>
+  nnoremap <F9>         :call vimspector#ToggleBreakpoint()<CR>
+  nnoremap <F8>         :call vimspector#AddFunctionBreakpoint( '<cexpr>' )<CR>
+  nnoremap <F10>        :call vimspector#StepOver()<CR>
+  nnoremap <F11>        :call vimspector#StepInto()<CR>
+  nnoremap <F12>        :call vimspector#StepOut()<CR>
+endif
 "}}}
 
 

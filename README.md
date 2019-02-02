@@ -83,6 +83,69 @@ Please note the entire UI is placeholder. These are just proofs-of-concept.
 
 # Features and Usage
 
+# Mappings
+
+By default, vimspector does not change any of your mappings. Mappings are very
+personal and so you should work out what you like and use vim's powerful mapping
+features to set your own mappings. For example, if you want `<F5>` to
+start/continue debugging, add this to some appropriate place, such as your
+`vimrc` (hint: run `:e $MYVIMRC`).
+
+```viml
+nnoremap <F5> :call vimspector#Continue()<CR>
+```
+
+That said, many people are familiar with particular debuggers, so the following
+mappings can be enabled by setting `g:vimspector_enable_mappings` to the
+specified value.
+
+## Visual Studio / VSCode
+
+To use Visual Studio-like mappings, add the following to your `vimrc` before
+loading vimspector:
+
+```viml
+let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
+```
+
+| Key               | Function                                                  | API |
+| ---               | ---                                                       | --- |
+| `F5`              | When debugging, continue. Otherwise start debugging.      | `vimspector#Continue()` |
+| `Shift F5`        | Stop debugging.                                           | `vimspector#Stop()` |
+| `Ctrl Shift F5`   | Restart debugging with the same configuration.            | `vimspector#Restart()` |
+| `F6`              | Pause debugee.                                            | `vimspector#Pause()` |
+| `F9`              | Toggle line breakpoint on the current line.               | `vimspector#ToggleBreakpoint()` |
+| `Shift F9`        | Add a function breakpoint for the expression under cursor | `vimspector#AddFunctionBreakpoint( '<cexpr>' )` |
+| `F10`             | Step Over                                                 | `vimspector#StepOver()` |
+| `F11`             | Step Into                                                 | `vimspector#StepInto()` |
+| `Shift F11`       | Step out of current function scope                        | `vimspector#StepOut()` |
+
+## Human Mode
+
+If, like me, you only have 2 hands and 10 fingers, you probably don't like
+Ctrl-Shift-F keys. Also, if you're running in a terminal, there's a real
+possibility of terminfo being wrong for shifted-F-keys, particularly if your
+`TERM` is `screen-256color`. If these issues (number of hands, `TERM` variables)
+are unfixable, try the following mappings:
+
+```viml
+let g:vimspector_enable_mappings = 'HUMAN'
+```
+
+| Key   | Function                                                  | API |
+| ---   | ---                                                       | --- |
+| `F5`  | When debugging, continue. Otherwise start debugging.      | `vimspector#Continue()` |
+| `F4`  | Stop debugging.                                           | `vimspector#Stop()` |
+| `F3`  | Restart debugging with the same configuration.            | `vimspector#Restart()` |
+| `F6`  | Pause debugee.                                            | `vimspector#Pause()` |
+| `F9`  | Toggle line breakpoint on the current line.               | `vimspector#ToggleBreakpoint()` |
+| `F8`  | Add a function breakpoint for the expression under cursor | `vimspector#AddFunctionBreakpoint( '<cexpr>' )` |
+| `F10` | Step Over                                                 | `vimspector#StepOver()` |
+| `F11` | Step Into                                                 | `vimspector#StepInto()` |
+| `F12` | Step out of current function scope                        | `vimspector#StepOut()` |
+
+
+
 ## Launch and attach by PID:
 
 * Create `vimspector.json`. See [below](#supported-languages).
