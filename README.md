@@ -135,8 +135,8 @@ let g:vimspector_enable_mappings = 'HUMAN'
 | Key   | Function                                                  | API |
 | ---   | ---                                                       | --- |
 | `F5`  | When debugging, continue. Otherwise start debugging.      | `vimspector#Continue()` |
-| `F4`  | Stop debugging.                                           | `vimspector#Stop()` |
-| `F3`  | Restart debugging with the same configuration.            | `vimspector#Restart()` |
+| `F3`  | Stop debugging.                                           | `vimspector#Stop()` |
+| `F4`  | Restart debugging with the same configuration.            | `vimspector#Restart()` |
 | `F6`  | Pause debugee.                                            | `vimspector#Pause()` |
 | `F9`  | Toggle line breakpoint on the current line.               | `vimspector#ToggleBreakpoint()` |
 | `F8`  | Add a function breakpoint for the expression under cursor | `vimspector#AddFunctionBreakpoint( '<cexpr>' )` |
