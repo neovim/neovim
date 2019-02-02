@@ -43,21 +43,22 @@ endfunction
 function! s:_Send( msg ) abort
   if ! exists( 's:job' )
     echom "Can't send message: Job was not initialised correctly"
-    return
+    return 0
   endif
 
   if job_status( s:job ) != 'run'
     echom "Can't send message: Job is not running"
-    return
+    return 0
   endif
 
   let ch = job_getchannel( s:job )
   if ch == 'channel fail'
     echom "Channel was closed unexpectedly!"
-    return
+    return 0
   endif
 
   call ch_sendraw( ch, a:msg )
+  return 1
 endfunction
 
 function! vimspector#internal#job#StartDebugSession( config ) abort

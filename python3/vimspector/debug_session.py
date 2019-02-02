@@ -578,6 +578,7 @@ class DebugSession( object ):
 
   def OnEvent_terminated( self, message ):
     self.Clear()
+    self._connection = None
     utils.UserMessage( "Debugging was terminated." )
 
   def _RemoveBreakpoints( self ):

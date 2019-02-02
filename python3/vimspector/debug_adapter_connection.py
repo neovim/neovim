@@ -56,11 +56,14 @@ class DebugAdapterConnection( object ):
       'timer_start( {}, "vimspector#internal#channel#Timeout" )'.format(
         timeout ) )
 
-    self._outstanding_requests[ this_id ] = PendingRequest( msg,
-                                                            handler,
-                                                            failure_handler,
-                                                            expiry_id )
-    self._SendMessage( msg )
+    request = PendingRequest( msg,
+                              handler,
+                              failure_handler,
+                              expiry_id )
+    self._outstanding_requests[ this_id ] = request
+
+    if not self._SendMessage( msg ):
+      self._AbortRequest( request, 'Unable to send message' )
 
   def OnRequestTimeout( self, timer_id ):
     request_id = None
@@ -144,7 +147,7 @@ class DebugAdapterConnection( object ):
 
     data = 'Content-Length: {0}\r\n\r\n{1}'.format( len( msg ), msg )
     # self._logger.debug( 'Sending: {0}'.format( data ) )
-    self._Write( data )
+    return self._Write( data )
 
   def _ReadHeaders( self ):
     parts = self._buffer.split( bytes( '\r\n\r\n', 'utf-8' ), 1 )

@@ -40,6 +40,7 @@ endfunction
 
 function! s:_Send( msg ) abort
   call ch_sendraw( s:ch, a:msg )
+  return 1
 endfunction
 
 function! vimspector#internal#channel#Timeout( id ) abort
