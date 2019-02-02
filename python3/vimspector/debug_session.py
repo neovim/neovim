@@ -120,33 +120,45 @@ class DebugSession( object ):
     with open( launch_config_file, 'r' ) as f:
       database = json.load( f )
 
-    launch_config = database.get( 'configurations' )
+    configurations = database.get( 'configurations' )
     adapters = database.get( 'adapters' )
 
-    if len( launch_config ) == 1:
-      configuration = next( iter( launch_config.keys() ) )
+    if len( configurations ) == 1:
+      configuration_name = next( iter( configurations.keys() ) )
     else:
-      configuration = utils.SelectFromList( 'Which launch configuration?',
-                                            list( launch_config.keys() ) )
-    if not configuration:
+      configuration_name = utils.SelectFromList(
+        'Which launch configuration?',
+        list( configurations.keys() ) )
+
+    if not configuration_name or configuration_name not in configurations:
       return
 
     self._workspace_root = os.path.dirname( launch_config_file )
 
-    variables = {
-      'dollar': '$', # HAAACK: work around not having a way to include a literal
-      'workspaceRoot': self._workspace_root
-    }
-    variables.update( launch_variables )
-    utils.ExpandReferencesInDict( launch_config[ configuration ], variables  )
-
-    adapter = launch_config[ configuration ].get( 'adapter' )
+    configuration = configurations[ configuration_name ]
+    adapter = configuration.get( 'adapter' )
     if isinstance( adapter, str ):
       adapter = adapters.get( adapter )
-      utils.ExpandReferencesInDict( adapter, variables )
 
-    self._StartWithConfiguration( launch_config[ configuration ],
-                                  adapter )
+    # TODO: Do we want some form of persistence ? e.g. self._staticVariables,
+    # set from an api call like SetLaunchParam( 'var', 'value' ), perhaps also a
+    # way to load .vimspector.local.json which just sets variables
+    self._variables = {
+      'dollar': '$', # HACK
+      'workspaceRoot': self._workspace_root
+    }
+    self._variables.update( adapter.get( 'variables', {} ) )
+    self._variables.update( configuration.get( 'variables', {} ) )
+
+    utils.ExpandReferencesInDict( configuration, self._variables )
+    utils.ExpandReferencesInDict( adapter, self._variables )
+
+    if not adapter:
+      utils.UserMessage( 'No adapter configured for {}'.format(
+        configuration_name ), persist=True  )
+      return
+
+    self._StartWithConfiguration( configuration, adapter )
 
   def _StartWithConfiguration( self, configuration, adapter ):
     self._configuration = configuration
