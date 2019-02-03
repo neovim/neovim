@@ -517,7 +517,7 @@ void pum_redraw(void)
       } else {
         grid_fill(&pum_grid, row, row + 1, col,
                   col_off + pum_base_width + n, ' ', ' ', attr);
-        col = pum_base_width + n;
+        col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
