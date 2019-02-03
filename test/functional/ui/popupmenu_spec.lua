@@ -1178,5 +1178,56 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
+  it('works with kind, menu and abbr attributes', function()
+    screen:try_resize(40,8)
+    feed('ixx ')
+    funcs.complete(4, {{word='wordey', kind= 'x', menu='extrainfo'}, 'thing', {word='secret', abbr='sneaky', menu='bar'}})
+    screen:expect([[
+      xx wordey^                               |
+      {1:~ }{s: wordey x extrainfo }{1:                  }|
+      {1:~ }{n: thing              }{1:                  }|
+      {1:~ }{n: sneaky   bar       }{1:                  }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:-- INSERT --}                            |
+    ]])
+
+    feed('<c-p>')
+    screen:expect([[
+      xx ^                                     |
+      {1:~ }{n: wordey x extrainfo }{1:                  }|
+      {1:~ }{n: thing              }{1:                  }|
+      {1:~ }{n: sneaky   bar       }{1:                  }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:-- INSERT --}                            |
+    ]])
+
+    feed('<c-p>')
+    screen:expect([[
+      xx secret^                               |
+      {1:~ }{n: wordey x extrainfo }{1:                  }|
+      {1:~ }{n: thing              }{1:                  }|
+      {1:~ }{s: sneaky   bar       }{1:                  }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:-- INSERT --}                            |
+    ]])
+
+    feed('<esc>')
+    screen:expect([[
+      xx secre^t                               |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+  end)
 
 end)
