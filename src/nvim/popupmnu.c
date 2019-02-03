@@ -82,7 +82,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
-    pum_external = ui_is_external(kUIPopupmenu);
+    pum_external = ui_has(kUIPopupmenu);
   }
 
   do {
@@ -103,7 +103,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     }
 
     int grid = (int)curwin->w_grid.handle;
-    if (!ui_is_external(kUIMultigrid)) {
+    if (!ui_has(kUIMultigrid)) {
       grid = (int)default_grid.handle;
       row += curwin->w_winrow;
       col += curwin->w_wincol;

@@ -413,10 +413,10 @@ void ui_cursor_shape(void)
   conceal_check_cursor_line();
 }
 
-/// Returns true if `widget` is externalized.
-bool ui_is_external(UIExtension widget)
+/// Returns true if the given UI extension is enabled.
+bool ui_has(UIExtension ext)
 {
-  return ui_ext[widget];
+  return ui_ext[ext];
 }
 
 Array ui_array(void)
