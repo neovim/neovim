@@ -2495,10 +2495,6 @@ static int compl_match_arraysize;
 
 
 /*
- * Update the screen and when there is any scrolling remove the popup menu.
- */
-
-/*
  * Remove any popup menu.
  */
 static void ins_compl_del_pum(void)

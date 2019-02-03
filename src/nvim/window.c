@@ -3120,7 +3120,7 @@ int win_new_tabpage(int after, char_u *filename)
 
     redraw_all_later(NOT_VALID);
 
-    if (ui_is_external(kUIMultigrid)) {
+    if (ui_has(kUIMultigrid)) {
         tabpage_check_windows(tp);
     }
 
@@ -3321,7 +3321,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   lastwin = tp->tp_lastwin;
   topframe = tp->tp_topframe;
 
-  if (old_curtab != curtab && ui_is_external(kUIMultigrid)) {
+  if (old_curtab != curtab && ui_has(kUIMultigrid)) {
      tabpage_check_windows(old_curtab);
   }
 
@@ -4011,7 +4011,7 @@ win_free (
 
 void win_free_grid(win_T *wp, bool reinit)
 {
-  if (wp->w_grid.handle != 0 && ui_is_external(kUIMultigrid)) {
+  if (wp->w_grid.handle != 0 && ui_has(kUIMultigrid)) {
     ui_call_grid_destroy(wp->w_grid.handle);
     wp->w_grid.handle = 0;
   }
@@ -5349,7 +5349,7 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
-  if (ui_is_external(kUITabline)) {
+  if (ui_has(kUITabline)) {
     return 0;
   }
   assert(first_tabpage);
@@ -6086,7 +6086,7 @@ void win_findbuf(typval_T *argvars, list_T *list)
 
 void win_ui_flush(void)
 {
-  if (!ui_is_external(kUIMultigrid)) {
+  if (!ui_has(kUIMultigrid)) {
     return;
   }
 

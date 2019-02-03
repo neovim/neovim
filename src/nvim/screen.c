@@ -4209,7 +4209,7 @@ win_line (
         && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
         && row != endrow - 1         // Not the last line being displayed.
         && (grid->Columns == Columns  // Window spans the width of the screen,
-            || ui_is_external(kUIMultigrid))  // or has dedicated grid.
+            || ui_has(kUIMultigrid))  // or has dedicated grid.
         && !wp->w_p_rl;              // Not right-to-left.
       grid_put_linebuf(grid, row, 0, col - boguscols, grid->Columns, wp->w_p_rl,
                        wp, wp->w_hl_attr_normal, wrap);
@@ -4816,8 +4816,6 @@ win_redr_status_matches (
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
-/// If "ignore_pum" is true, also redraw statusline when the popup menu is
-/// displayed.
 static void win_redr_status(win_T *wp)
 {
   int row;
@@ -4832,7 +4830,7 @@ static void win_redr_status(win_T *wp)
   // invokes ":redrawstatus".  Simply ignore the call then.
   if (busy
       // Also ignore if wildmenu is showing.
-      || (wild_menu_showing != 0 && !ui_is_external(kUIWildmenu))) {
+      || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
   busy = true;
@@ -5929,7 +5927,7 @@ void win_grid_alloc(win_T *wp)
   int cols = wp->w_width_inner;
 
   // TODO(bfredl): floating windows should force this to true
-  bool want_allocation = ui_is_external(kUIMultigrid);
+  bool want_allocation = ui_has(kUIMultigrid);
   bool has_allocation = (grid->chars != NULL);
 
   if (want_allocation && has_allocation && highlights_invalid) {
@@ -5965,7 +5963,7 @@ void win_grid_alloc(win_T *wp)
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent
   // - the UI wants multigrid event (necessary)
-  if ((send_grid_resize || was_resized) && ui_is_external(kUIMultigrid)) {
+  if ((send_grid_resize || was_resized) && ui_has(kUIMultigrid)) {
     ui_call_grid_resize(grid->handle, grid->Columns, grid->Rows);
   }
 }
@@ -6025,8 +6023,8 @@ retry:
    */
   ++RedrawingDisabled;
 
-  // win_new_shellsize will recompute floats posititon, but tell the
-  // compositor to now redraw them yet
+  // win_new_shellsize will recompute floats position, but tell the
+  // compositor to not redraw them yet
   ui_comp_invalidate_screen();
 
   win_new_shellsize();      /* fit the windows in the new sized shell */
@@ -6672,7 +6670,7 @@ static void draw_tabline(void)
   }
   redraw_tabline = false;
 
-  if (ui_is_external(kUITabline)) {
+  if (ui_has(kUITabline)) {
     ui_ext_tabline_update();
     return;
   }

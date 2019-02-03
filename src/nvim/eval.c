@@ -11265,7 +11265,7 @@ void get_user_input(const typval_T *const argvars,
   // Only the part of the message after the last NL is considered as
   // prompt for the command line, unlsess cmdline is externalized
   const char *p = prompt;
-  if (!ui_is_external(kUICmdline)) {
+  if (!ui_has(kUICmdline)) {
     const char *lastnl = strrchr(prompt, '\n');
     if (lastnl != NULL) {
       p = lastnl+1;
@@ -19951,7 +19951,7 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
-  if (KeyTyped && ui_is_external(kUICmdline)) {
+  if (KeyTyped && ui_has(kUICmdline)) {
     show_block = true;
     ui_ext_cmdline_block_append(0, (const char *)eap->cmd);
   }
@@ -20007,7 +20007,7 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && did_emsg)
       goto erret;
 
-    if (!ui_is_external(kUICmdline)) {
+    if (!ui_has(kUICmdline)) {
       msg_putchar('\n');              // don't overwrite the function name
     }
     cmdline_row = msg_row;
