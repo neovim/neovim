@@ -3134,7 +3134,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	may change in later releases.
 
 						*'iminsert'* *'imi'*
-'iminsert' 'imi'	number (default 0, 2 when an input method is supported)
+'iminsert' 'imi'	number (default 0)
 			local to buffer
 	Specifies whether :lmap or an Input Method (IM) is to be used in
 	Insert mode.  Valid values:
@@ -3154,7 +3154,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It is also used for the argument of commands like "r" and "f".
 
 						*'imsearch'* *'ims'*
-'imsearch' 'ims'	number (default 0, 2 when an input method is supported)
+'imsearch' 'ims'	number (default -1)
 			local to buffer
 	Specifies whether :lmap or an Input Method (IM) is to be used when
 	entering a search pattern.  Valid values:

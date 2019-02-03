@@ -24,6 +24,9 @@ let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
 let &packpath = &rtp
 
+" Avoid storing shell history.
+let $HISTFILE = ""
+
 " Make sure $HOME does not get read or written.
 let $HOME = expand(getcwd() . '/XfakeHOME')
 if !isdirectory($HOME)
