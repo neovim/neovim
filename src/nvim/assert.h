@@ -80,7 +80,7 @@
 
 # undef STATIC_ASSERT_PRAGMA_END
 # define STATIC_ASSERT_PRAGMA_END \
-    _Pragma("GCC diagnostic pop") \
+    _Pragma("GCC diagnostic pop")
 
 // the same goes for clang in C99 mode, but we suppress a different warning
 #elif defined(__clang__) && __has_extension(c_static_assert)
@@ -90,11 +90,11 @@
 # undef STATIC_ASSERT_PRAGMA_START
 # define STATIC_ASSERT_PRAGMA_START \
     _Pragma("clang diagnostic push") \
-    _Pragma("clang diagnostic ignored \"-Wc11-extensions\"") \
+    _Pragma("clang diagnostic ignored \"-Wc11-extensions\"")
 
 # undef STATIC_ASSERT_PRAGMA_END
 # define STATIC_ASSERT_PRAGMA_END \
-    _Pragma("clang diagnostic pop") \
+    _Pragma("clang diagnostic pop")
 
 // TODO(aktau): verify that this works, don't have MSVC on hand.
 #elif _MSC_VER >= 1600

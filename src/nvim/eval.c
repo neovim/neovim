@@ -5958,11 +5958,9 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 #pragma function (floor)
 #endif
 
-// silence -Wmissing-prototypes for funcs.generated.h
-const VimLFuncDef *find_internal_func_gperf(register const char *str,
-                                            register size_t len);
-
+PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 # include "funcs.generated.h"
+PRAGMA_DIAG_POP
 #endif
 
 /*
