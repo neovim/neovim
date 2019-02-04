@@ -232,6 +232,7 @@ class DebugSession( object ):
         json.dumps( self._attach_process ) ) )
       self._attach_process = None
 
+    self._connection = None
     self._init_complete = False
     self._launch_complete = False
 
@@ -242,10 +243,6 @@ class DebugSession( object ):
       self._codeView.Reset()
       vim.current.tabpage = self._uiTab
       vim.command( 'tabclose!' )
-
-    vim.eval( 'vimspector#internal#{}#Reset()'.format(
-      self._connection_type ) )
-    vim.eval( 'vimspector#internal#state#Reset()' )
 
     # make sure that we're displaying signs in any still-open buffers
     self._UpdateUIBreakpoints()
@@ -421,45 +418,12 @@ class DebugSession( object ):
 
       self._logger.info( 'Debug Adapter Started' )
 
-      vim.command( 'augroup vimspector_cleanup' )
-      vim.command(   'autocmd!' )
-      vim.command(   'autocmd VimLeavePre * py3 '
-                     '_vimspector_session.CloseDown()' )
-      vim.command( 'augroup END' )
-
-  def CloseDown( self ):
-    # We have to use a dict because of python's scoping/assignment rules (state
-    # = False would touch a state variable in handler, not in the enclosing
-    # scope)
-    state = { 'done': False }
-
-    def handler( *args ):
-      state[ 'done' ] = True
-
-    self._connection.DoRequest( handler, {
-      'command': 'disconnect',
-      'arguments': {
-        'terminateDebugee': True
-      },
-    }, failure_handler = handler, timeout = 5000 )
-
-    # This request times out after 5 seconds
-    while not state[ 'done' ]:
-      vim.eval( 'vimspector#internal#{}#ForceRead()'.format(
-        self._connection_type ) )
-
-    vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
-      self._connection_type ) )
-
   def _StopDebugAdapter( self, callback = None ):
     def handler( *args ):
       vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
         self._connection_type ) )
 
-      vim.command( 'au! vimspector_cleanup' )
-
       self._connection.Reset()
-      self._connection = None
       self._stackTraceView.ConnectionClosed()
       self._variablesView.ConnectionClosed()
       self._outputView.ConnectionClosed()
