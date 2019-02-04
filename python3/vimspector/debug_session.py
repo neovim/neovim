@@ -154,6 +154,7 @@ class DebugSession( object ):
     }
     self._variables.update( adapter.get( 'variables', {} ) )
     self._variables.update( configuration.get( 'variables', {} ) )
+    self._variables.update( launch_variables )
 
     utils.ExpandReferencesInDict( configuration, self._variables )
     utils.ExpandReferencesInDict( adapter, self._variables )
@@ -515,7 +516,7 @@ class DebugSession( object ):
 
 
   def _PrepareRun( self, adapter_config, launch_config ):
-    run_config = adapter_config.get( 'launch', {} ) 
+    run_config = adapter_config.get( 'launch', {} )
 
     if 'remote' in run_config:
       remote = run_config[ 'remote' ]
