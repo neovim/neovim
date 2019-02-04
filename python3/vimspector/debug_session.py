@@ -57,6 +57,8 @@ class DebugSession( object ):
     self._configuration = None
 
     self._attach_process = None
+    self._init_complete = False
+    self._launch_complete = False
 
     vim.command( 'sign define vimspectorBP text==> texthl=Error' )
     vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
@@ -229,6 +231,9 @@ class DebugSession( object ):
         json.dumps( self._attach_process ) ) )
       self._attach_process = None
 
+    self._init_complete = False
+    self._launch_complete = False
+
     if self._uiTab:
       self._stackTraceView.Reset()
       self._variablesView.Reset()
@@ -380,6 +385,9 @@ class DebugSession( object ):
   def _StartDebugAdapter( self ):
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
       self._adapter ) ) )
+
+    self._init_complete = False
+    self._launch_complete = False
 
     self._connection_type = 'job'
     if 'port' in self._adapter:
@@ -572,7 +580,7 @@ class DebugSession( object ):
       #   then starts to listen for thread events to detect new or terminated
       #   threads.
       #
-      lambda msg: self._stackTraceView.LoadThreads( True ),
+      lambda msg: self._OnLaunchComplete(),
       {
         'command': launch_config[ 'request' ],
         'arguments': launch_config
@@ -586,11 +594,22 @@ class DebugSession( object ):
     self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
     self._codeView.ShowBreakpoints()
 
+  def _OnLaunchComplete( self ):
+    self._launch_complete = True
+    self._LoadThreadsIfReady()
+
+  def _OnInitializeComplete( self ):
+    self._init_complete = True
+    self._LoadThreadsIfReady()
+
+  def _LoadThreadsIfReady( self ):
+    if self._launch_complete and self._init_complete:
+      self._stackTraceView.LoadThreads( True )
 
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
     self._connection.DoRequest(
-      None,
+      self._OnInitializeComplete(),
       {
         'command': 'configurationDone',
       }
