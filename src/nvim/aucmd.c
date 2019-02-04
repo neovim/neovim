@@ -6,6 +6,7 @@
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/ui.h"
+#include "nvim/aucmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "aucmd.c.generated.h"

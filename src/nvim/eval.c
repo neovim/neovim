@@ -5958,7 +5958,9 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 #pragma function (floor)
 #endif
 
+PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 # include "funcs.generated.h"
+PRAGMA_DIAG_POP
 #endif
 
 /*

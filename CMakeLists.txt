@@ -172,11 +172,6 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
-# Enable -Wconversion.
-if(NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wshadow -Wconversion")
-endif()
-
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # https://github.com/neovim/neovim/issues/223
@@ -264,7 +259,8 @@ if(MSVC)
   add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99)
+    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
+    -Wmissing-prototypes)
 
   check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
   if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
