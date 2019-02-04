@@ -527,7 +527,7 @@ func Test_setting_cursor()
   new Xtest2
   put =range(1,100)
   wq
-  
+
   tabe Xtest2
   $
   diffsp Xtest1
@@ -668,6 +668,31 @@ func Test_diff_filler()
   call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'diff_filler(v:val)'))
   wincmd w
   call assert_equal([0, 0, 0, 0, 2, 0, 0, 0], map(range(-1, 6), 'diff_filler(v:val)'))
+
+  %bwipe!
+endfunc
+
+func Test_diff_hlID()
+  new
+  call setline(1, [1, 2, 3])
+  diffthis
+  vnew
+  call setline(1, ['1x', 2, 'x', 3])
+  diffthis
+  redraw
+
+  call assert_equal(synIDattr(diff_hlID(-1, 1), "name"), "")
+
+  call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
+  call assert_equal(synIDattr(diff_hlID(1, 2), "name"), "DiffText")
+  call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
+  call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "DiffAdd")
+  call assert_equal(synIDattr(diff_hlID(4, 1), "name"), "")
+
+  wincmd w
+  call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
+  call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
+  call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "")
 
   %bwipe!
 endfunc
