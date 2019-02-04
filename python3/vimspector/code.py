@@ -64,18 +64,14 @@ class CodeView( object  ):
 
     vim.current.window = self._window
 
-    buffer_number = int( vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ][ 'path' ] ) ) )
-
     try:
-      vim.command( 'bu {0}'.format( buffer_number ) )
-      self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
-    except vim.error as e:
-      if 'E325' not in str( e ):
-        self._logger.exception(
-          'Unexpected error from vim: loading buffer {}'.format(
-            buffer_number ) )
-        return False
+      utils.OpenFileInCurrentWindow( frame[ 'source' ][ 'path' ] )
+    except vim.error:
+      self._logger.exception( 'Unexpected vim error opening file {}'.format(
+        frame[ 'source' ][ 'path' ] ) )
+      return False
+
+    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1

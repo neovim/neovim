@@ -725,9 +725,12 @@ class DebugSession( object ):
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]
-
-    utils.UserMessage( 'Paused in thread {0} due to {1}'.format(
+    msg = 'Paused in thread {0} due to {1}'.format(
       event.get( 'threadId', '<unknown>' ),
-      event.get( 'description', event.get( 'reason', '' ) ) ) )
+      event.get( 'description', event.get( 'reason', '' ) ) )
+    utils.UserMessage( msg, persist = True )
+
+    if self._outputView:
+      self._outputView.ServerEcho( msg )
 
     self._stackTraceView.OnStopped( event )

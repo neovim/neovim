@@ -32,6 +32,41 @@ def SetUpLogging( logger ):
       logger.addHandler( _log_handler )
 
 
+def BufferNumberForFile( file_name ):
+  return int( vim.eval( 'bufnr( "{0}", 1 )'.format( file_name ) ) )
+
+
+def BufferForFile( file_name ):
+  return vim.buffers[ BufferNumberForFile( file_name ) ]
+
+
+def OpenFileInCurrentWindow( file_name ):
+  buffer_number = BufferNumberForFile( file_name )
+  try:
+    vim.command( 'bu {0}'.format( buffer_number ) )
+  except vim.error as e:
+    if 'E325' not in str( e ):
+      raise
+
+  return vim.buffers[ buffer_number ]
+
+
+def SetUpTailBuffer( buf, path ):
+  cmd = [ 'tail', '-F', '-n', '0', '--', path ]
+  return vim.eval( 'job_start( {}, {{ "out_io": "buffer",'
+                                   ' "out_buf": {},'
+                                   ' "in_io": "null",'
+                                   ' "err_io": "null",'
+                                   ' "stoponexit": "term",'
+                                   ' "out_modifiable": 0  }} )'.format(
+                                     json.dumps( cmd ), buf.number ) )
+
+
+def TerminateJob( job ):
+  if vim.eval( 'job_status( {} )'.format( job ) ) == 'run':
+    vim.eval( 'job_stop( {} )'.format( job ) )
+
+
 def SetUpScratchBuffer( buf, name ):
   buf.options[ 'buftype' ] = 'nofile'
   buf.options[ 'swapfile' ] = False
@@ -199,7 +234,10 @@ def SelectFromList( prompt, options ):
 def AskForInput( prompt ):
   # TODO: Handle the ctrl-c and such responses returning empty or something
   with InputSave():
-    return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
+    try:
+      return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
+    except KeyboardInterrupt:
+      return ''
 
 
 def AppendToBuffer( buf, line_or_lines, modified=False ):
