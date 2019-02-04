@@ -16,11 +16,11 @@ an idea of what lurks beneath: >
 
     :lua print(vim.inspect(package.loaded))
 
-Nvim includes a "standard library" |lua-stdlib| for Lua.  This library
-complements the Nvim editor |functions| and Ex commands (the editor "stdlib"),
-which can also be used from Lua code.
+Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
+"editor stdlib" (|functions| and Ex commands) and the |API|, all of which can
+be used from Lua code.
 
-Nvim resolves module conflicts by "last wins".  For example if both of these
+Module conflicts are resolved by "last wins".  For example if both of these
 are on 'runtimepath':
     runtime/lua/foo.lua
     ~/.config/nvim/lua/foo.lua
@@ -260,9 +260,9 @@ position are restricted when the command is executed in the |sandbox|.
 ==============================================================================
 vim.*							*lua-vim* *lua-stdlib*
 
-The "standard library" (stdlib) of Nvim Lua is the `vim` module, which exposes
-various functions and sub-modules.  The module is implicitly loaded, thus
-require("vim") is unnecessary.
+The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes
+various functions and sub-modules.  It is always loaded, thus require("vim")
+is unnecessary.
 
 You can peek at the module properties: >
 
@@ -288,7 +288,7 @@ To find documentation on e.g. the "deepcopy" function: >
 
     :help vim.deepcopy
 
-Note: Underscore-prefixed functions (e.g. "_os_proc_children") are
+Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------

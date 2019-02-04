@@ -78,7 +78,7 @@
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
 
-/* whether ":lcd" was produced for a session */
+/// Whether ":lcd" or ":tcd" was produced for a session.
 static int did_lcd;
 
 typedef struct ucmd {

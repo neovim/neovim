@@ -29,8 +29,8 @@ typedef struct {
   uint64_t channel_id;
   Array buffer;
 
-  int hl_id;  // current higlight for legacy put event
-  Integer cursor_row, cursor_col;  // Intended visibule cursor position
+  int hl_id;  // Current highlight for legacy put event.
+  Integer cursor_row, cursor_col;  // Intended visible cursor position.
 
   // Position of legacy cursor, used both for drawing and visible user cursor.
   Integer client_row, client_col;
@@ -264,20 +264,22 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
 ///
 /// On invalid grid handle, fails with error.
 ///
+/// @param channel_id
 /// @param grid    The handle of the grid to be changed.
 /// @param width   The new requested width.
 /// @param height  The new requested height.
+/// @param[out] err Error details, if any
 void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
-                             Integer height, Error *error)
+                             Integer height, Error *err)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException,
+    api_set_error(err, kErrorTypeException,
                   "UI not attached to channel: %" PRId64, channel_id);
     return;
   }
 
-  ui_grid_resize((handle_T)grid, (int)width, (int)height, error);
+  ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().

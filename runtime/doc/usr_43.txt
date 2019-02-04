@@ -94,7 +94,7 @@ unless it was set already.  This will make sure that 'filetype' isn't set
 twice.
 
 You can use many different patterns to match the name of your file.  Directory
-names can also be included.  See |autocmd-patterns|.  For example, the files
+names can also be included.  See |autocmd-pattern|.  For example, the files
 under "/usr/share/scripts/" are all "ruby" files, but don't have the expected
 file name extension.  Adding this to the example above: >
 

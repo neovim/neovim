@@ -214,8 +214,8 @@ Integer nvim_input(String keys)
 
 /// Send mouse event from GUI.
 ///
-/// The call is non-blocking. It doesn't wait on any resulting action, but
-/// queues the event to be processed soon by the event loop.
+/// Non-blocking: does not wait on any result, but queues the event to be
+/// processed soon by the event loop.
 ///
 /// @note Currently this doesn't support "scripting" multiple mouse events
 ///       by calling it multiple times in a loop: the intermediate mouse
@@ -233,6 +233,7 @@ Integer nvim_input(String keys)
 /// @param grid Grid number if the client uses |ui-multigrid|, else 0.
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
+/// @param[out] err Error details, if any
 void nvim_input_mouse(String button, String action, String modifier,
                       Integer grid, Integer row, Integer col, Error *err)
   FUNC_API_SINCE(6) FUNC_API_ASYNC
@@ -756,9 +757,9 @@ void nvim_del_var(String name, Error *err)
 
 /// @deprecated
 /// @see nvim_set_var
-/// @return Old value or nil if there was no previous value.
 /// @warning May return nil if there was no previous value
 ///          OR if previous value was `v:null`.
+/// @return Old value or nil if there was no previous value.
 Object vim_set_var(String name, Object value, Error *err)
 {
   return dict_set_var(&globvardict, name, value, false, true, err);
@@ -806,6 +807,7 @@ Object nvim_get_option(String name, Error *err)
 
 /// Sets an option value.
 ///
+/// @param channel_id
 /// @param name     Option name
 /// @param value    New option value
 /// @param[out] err Error details, if any
@@ -938,6 +940,7 @@ Window nvim_get_current_win(void)
 /// Sets the current window.
 ///
 /// @param window Window handle
+/// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -959,7 +962,7 @@ void nvim_set_current_win(Window window, Error *err)
 
 /// Creates a new, empty, unnamed buffer.
 ///
-/// @param listed Controls 'buflisted'
+/// @param listed Sets 'buflisted'
 /// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
 ///                (always 'nomodified')
 /// @param[out] err Error details, if any
@@ -1002,37 +1005,6 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// Exactly one of `external` and `relative` must be specified.
 ///
-/// @param buffer handle of buffer to be displayed in the window
-/// @param enter  whether the window should be entered (made the current window)
-/// @param config Dictionary for the window configuration accepts these keys:
-///
-///     `relative`: If set, the window becomes a floating window. The window
-///         will be placed with row,col coordinates relative to one of the
-///         following:
-///        "editor" the global editor grid
-///        "win"    a window. Use `win` to specify a window id,
-///                 or the current window will be used by default.
-///        "cursor" the cursor position in current window.
-///     `win`: When using relative='win', window id of the window where the
-///         position is defined.
-///     `anchor`: The corner of the float that the row,col position defines:
-///        "NW" north-west (default)
-///        "NE" north-east
-///        "SW" south-west
-///        "SE" south-east
-///     `height`: window height (in character cells). Minimum of 1.
-///     `width`: window width (in character cells). Minimum of 2.
-///     `row`: row position. Screen cell height are used as unit. Can be
-///         floating point.
-///     `col`: column position. Screen cell width is used as unit. Can be
-///         floating point.
-///     `focusable`: Whether window can be focused by wincmds and
-///         mouse events. Defaults to true. Even if set to false, the window
-///         can still be entered using |nvim_set_current_win()| API call.
-///     `external`: GUI should display the window as an external
-///         top-level window. Currently accepts no other positioning
-///         configuration together with this.
-///
 /// With editor positioning row=0, col=0 refers to the top-left corner of the
 /// screen-grid and row=Lines-1, Columns-1 refers to the bottom-right corner.
 /// Floating point values are allowed, but the builtin implementation (used by
@@ -1045,8 +1017,38 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// could let floats hover outside of the main window like a tooltip, but
 /// this should not be used to specify arbitrary WM screen positions.
 ///
+/// @param buffer handle of buffer to be displayed in the window
+/// @param enter  whether the window should be entered (made the current window)
+/// @param config Dictionary for the window configuration accepts these keys:
+///   - `relative`: If set, the window becomes a floating window. The window
+///       will be placed with row,col coordinates relative to one of the
+///       following:
+///      - "editor" the global editor grid
+///      - "win"    a window. Use `win` to specify a window id,
+///                 or the current window will be used by default.
+///      "cursor" the cursor position in current window.
+///   - `win`: When using relative='win', window id of the window where the
+///       position is defined.
+///   - `anchor`: The corner of the float that the row,col position defines:
+///      - "NW" north-west (default)
+///      - "NE" north-east
+///      - "SW" south-west
+///      - "SE" south-east
+///   - `height`: window height (in character cells). Minimum of 1.
+///   - `width`: window width (in character cells). Minimum of 2.
+///   - `row`: row position. Screen cell height are used as unit. Can be
+///       floating point.
+///   - `col`: column position. Screen cell width is used as unit. Can be
+///       floating point.
+///   - `focusable`: Whether window can be focused by wincmds and
+///       mouse events. Defaults to true. Even if set to false, the window
+///       can still be entered using |nvim_set_current_win()| API call.
+///   - `external`: GUI should display the window as an external
+///       top-level window. Currently accepts no other positioning
+///       configuration together with this.
 /// @param[out] err Error details, if any
-/// @return the window handle or 0 when error
+///
+/// @return Window handle, or 0 on error
 Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
                      Error *err)
   FUNC_API_SINCE(6)
@@ -1273,47 +1275,48 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
-/// Identify the client for nvim. Can be called more than once, but subsequent
-/// calls will remove earlier info, which should be resent if it is still
-/// valid. (This could happen if a library first identifies the channel, and a
+/// Identifies the client. Can be called more than once; subsequent calls
+/// remove earlier info, which should be included by the caller if it is
+/// still valid. (E.g. if a library first identifies the channel, then a
 /// plugin using that library later overrides that info)
 ///
-/// @param name short name for the connected client
-/// @param version  Dictionary describing the version, with the following
-///                 possible keys (all optional)
+/// @param channel_id
+/// @param name Short name for the connected client
+/// @param version  Dictionary describing the version, with these
+///                 (optional) keys:
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
 ///     - "minor" minor version
 ///     - "patch" patch number
 ///     - "prerelease" string describing a prerelease, like "dev" or "beta1"
 ///     - "commit" hash or similar identifier of commit
-/// @param type Must be one of the following values. A client library should
-///             use "remote" if the library user hasn't specified other value.
-///     - "remote" remote client that connected to nvim.
+/// @param type Must be one of the following values. Client libraries should
+///             default to "remote" unless overridden by the user.
+///     - "remote" remote client connected to Nvim.
 ///     - "ui" gui frontend
-///     - "embedder" application using nvim as a component, for instance
-///                  IDE/editor implementing a vim mode.
+///     - "embedder" application using Nvim as a component (for example,
+///                  IDE/editor implementing a vim mode).
 ///     - "host" plugin host, typically started by nvim
 ///     - "plugin" single plugin, started by nvim
 /// @param methods Builtin methods in the client. For a host, this does not
 ///                include plugin methods which will be discovered later.
 ///                The key should be the method name, the values are dicts with
-///                the following (optional) keys:
+///                these (optional) keys (more keys may be added in future
+///                versions of Nvim, thus unknown keys are ignored. Clients
+///                must only use keys defined in this or later versions of
+///                Nvim):
 ///     - "async"  if true, send as a notification. If false or unspecified,
 ///                use a blocking request
 ///     - "nargs" Number of arguments. Could be a single integer or an array
-///                two integers, minimum and maximum inclusive.
-///     Further keys might be added in later versions of nvim and unknown keys
-///     are thus ignored. Clients must only use keys defined in this or later
-///     versions of nvim!
+///                of two integers, minimum and maximum inclusive.
 ///
-/// @param attributes Informal attributes describing the client. Clients might
-///                   define their own keys, but the following are suggested:
-///     - "website" Website of client (for instance github repository)
-///     - "license" Informal description of the license, such as "Apache 2",
-///                 "GPLv3" or "MIT"
-///     - "logo"    URI or path to image, preferably small logo or icon.
-///                 .png or .svg format is preferred.
+/// @param attributes Arbitrary string:string map of informal client properties.
+///     Suggested keys:
+///     - "website": Client homepage URL (e.g. GitHub repository)
+///     - "license": License description ("Apache 2", "GPLv3", "MIT", …)
+///     - "logo":    URI or path to image, preferably small logo or icon.
+///                  .png or .svg format is preferred.
 ///
+/// @param[out] err Error details, if any
 void nvim_set_client_info(uint64_t channel_id, String name,
                           Dictionary version, String type,
                           Dictionary methods, Dictionary attributes,
@@ -1345,15 +1348,14 @@ void nvim_set_client_info(uint64_t channel_id, String name,
 
 /// Get information about a channel.
 ///
-/// @returns a Dictionary, describing a channel with the
-/// following keys:
-///     - "stream"  the stream underlying the channel
+/// @returns Dictionary describing a channel, with these keys:
+///    - "stream"  the stream underlying the channel
 ///         - "stdio"      stdin and stdout of this Nvim instance
 ///         - "stderr"     stderr of this Nvim instance
 ///         - "socket"     TCP/IP socket or named pipe
 ///         - "job"        job with communication over its stdio
 ///    -  "mode"    how data received on the channel is interpreted
-///         - "bytes"      send and recieve raw bytes
+///         - "bytes"      send and receive raw bytes
 ///         - "terminal"   a |terminal| instance interprets ASCII sequences
 ///         - "rpc"        |RPC| communication on the channel is active
 ///    -  "pty"     Name of pseudoterminal, if one is used (optional).
@@ -1394,13 +1396,13 @@ Array nvim_list_chans(void)
 ///    processing which have such side-effects, e.g. |:sleep| may wake timers).
 /// 2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
 ///
+/// @param channel_id
 /// @param calls an array of calls, where each call is described by an array
-/// with two elements: the request name, and an array of arguments.
-/// @param[out] err Details of a validation error of the nvim_multi_request call
-/// itself, i.e. malformed `calls` parameter. Errors from called methods will
-/// be indicated in the return value, see below.
+///              with two elements: the request name, and an array of arguments.
+/// @param[out] err Validation error details (malformed `calls` parameter),
+///             if any. Errors from batched calls are given in the return value.
 ///
-/// @return an array with two elements. The first is an array of return
+/// @return Array of two elements. The first is an array of return
 /// values. The second is NIL if all calls succeeded. If a call resulted in
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
@@ -1491,9 +1493,8 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 
 /// Parse a VimL expression.
 ///
-/// @param[in]  expr  Expression to parse. Is always treated as a single line.
-/// @param[in]  flags  Flags:
-///
+/// @param[in]  expr  Expression to parse. Always treated as a single line.
+/// @param[in]  flags Flags:
 ///                    - "m" if multiple expressions in a row are allowed (only
 ///                      the first one will be parsed),
 ///                    - "E" if EOC tokens are not allowed (determines whether
@@ -1501,7 +1502,6 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                      operator/space, though also yielding an error).
 ///                    - "l" when needing to start parsing with lvalues for
 ///                      ":let" or ":for".
-///
 ///                    Common flag sets:
 ///                    - "m" to parse like for ":echo".
 ///                    - "E" to parse like for "<C-r>=".
@@ -1514,63 +1514,57 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                        starting column and ending column (latter exclusive:
 ///                        one should highlight region [start_col, end_col)).
 ///
-/// @return AST: top-level dictionary with these keys:
-///
-///         "error": Dictionary with error, present only if parser saw some
-///                  error. Contains the following keys:
-///
-///           "message": String, error message in printf format, translated.
-///                      Must contain exactly one "%.*s".
-///           "arg": String, error message argument.
-///
-///         "len": Amount of bytes successfully parsed. With flags equal to ""
-///                that should be equal to the length of expr string.
-///
-///                @note: “Sucessfully parsed” here means “participated in AST
-///                       creation”, not “till the first error”.
-///
-///         "ast": AST, either nil or a dictionary with these keys:
-///
-///           "type": node type, one of the value names from ExprASTNodeType
-///                   stringified without "kExprNode" prefix.
-///           "start": a pair [line, column] describing where node is “started”
-///                    where "line" is always 0 (will not be 0 if you will be
-///                    using nvim_parse_viml() on e.g. ":let", but that is not
-///                    present yet). Both elements are Integers.
-///           "len": “length” of the node. This and "start" are there for
-///                  debugging purposes primary (debugging parser and providing
-///                  debug information).
-///           "children": a list of nodes described in top/"ast". There always
-///                       is zero, one or two children, key will not be present
-///                       if node has no children. Maximum number of children
-///                       may be found in node_maxchildren array.
-///
-///           Local values (present only for certain nodes):
-///
-///           "scope": a single Integer, specifies scope for "Option" and
-///                    "PlainIdentifier" nodes. For "Option" it is one of
-///                    ExprOptScope values, for "PlainIdentifier" it is one of
-///                    ExprVarScope values.
-///           "ident": identifier (without scope, if any), present for "Option",
-///                    "PlainIdentifier", "PlainKey" and "Environment" nodes.
-///           "name": Integer, register name (one character) or -1. Only present
-///                   for "Register" nodes.
-///           "cmp_type": String, comparison type, one of the value names from
-///                       ExprComparisonType, stringified without "kExprCmp"
-///                       prefix. Only present for "Comparison" nodes.
-///           "ccs_strategy": String, case comparison strategy, one of the
-///                           value names from ExprCaseCompareStrategy,
-///                           stringified without "kCCStrategy" prefix. Only
-///                           present for "Comparison" nodes.
-///           "augmentation": String, augmentation type for "Assignment" nodes.
-///                           Is either an empty string, "Add", "Subtract" or
-///                           "Concat" for "=", "+=", "-=" or ".=" respectively.
-///           "invert": Boolean, true if result of comparison needs to be
-///                     inverted. Only present for "Comparison" nodes.
-///           "ivalue": Integer, integer value for "Integer" nodes.
-///           "fvalue": Float, floating-point value for "Float" nodes.
-///           "svalue": String, value for "SingleQuotedString" and
-///                     "DoubleQuotedString" nodes.
+/// @return
+///      - AST: top-level dictionary with these keys:
+///        - "error": Dictionary with error, present only if parser saw some
+///                 error. Contains the following keys:
+///          - "message": String, error message in printf format, translated.
+///                       Must contain exactly one "%.*s".
+///          - "arg": String, error message argument.
+///        - "len": Amount of bytes successfully parsed. With flags equal to ""
+///                 that should be equal to the length of expr string.
+///                 (“Sucessfully parsed” here means “participated in AST
+///                  creation”, not “till the first error”.)
+///        - "ast": AST, either nil or a dictionary with these keys:
+///          - "type": node type, one of the value names from ExprASTNodeType
+///                    stringified without "kExprNode" prefix.
+///          - "start": a pair [line, column] describing where node is "started"
+///                     where "line" is always 0 (will not be 0 if you will be
+///                     using nvim_parse_viml() on e.g. ":let", but that is not
+///                     present yet). Both elements are Integers.
+///          - "len": “length” of the node. This and "start" are there for
+///                   debugging purposes primary (debugging parser and providing
+///                   debug information).
+///          - "children": a list of nodes described in top/"ast". There always
+///                        is zero, one or two children, key will not be present
+///                        if node has no children. Maximum number of children
+///                        may be found in node_maxchildren array.
+///      - Local values (present only for certain nodes):
+///        - "scope": a single Integer, specifies scope for "Option" and
+///                   "PlainIdentifier" nodes. For "Option" it is one of
+///                   ExprOptScope values, for "PlainIdentifier" it is one of
+///                   ExprVarScope values.
+///        - "ident": identifier (without scope, if any), present for "Option",
+///                   "PlainIdentifier", "PlainKey" and "Environment" nodes.
+///        - "name": Integer, register name (one character) or -1. Only present
+///                for "Register" nodes.
+///        - "cmp_type": String, comparison type, one of the value names from
+///                      ExprComparisonType, stringified without "kExprCmp"
+///                      prefix. Only present for "Comparison" nodes.
+///        - "ccs_strategy": String, case comparison strategy, one of the
+///                          value names from ExprCaseCompareStrategy,
+///                          stringified without "kCCStrategy" prefix. Only
+///                          present for "Comparison" nodes.
+///        - "augmentation": String, augmentation type for "Assignment" nodes.
+///                          Is either an empty string, "Add", "Subtract" or
+///                          "Concat" for "=", "+=", "-=" or ".=" respectively.
+///        - "invert": Boolean, true if result of comparison needs to be
+///                    inverted. Only present for "Comparison" nodes.
+///        - "ivalue": Integer, integer value for "Integer" nodes.
+///        - "fvalue": Float, floating-point value for "Float" nodes.
+///        - "svalue": String, value for "SingleQuotedString" and
+///                    "DoubleQuotedString" nodes.
+/// @param[out] err Error details, if any
 Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
                                  Error *err)
   FUNC_API_SINCE(4) FUNC_API_ASYNC
@@ -2035,15 +2029,13 @@ Dictionary nvim__stats(void)
 
 /// Gets a list of dictionaries representing attached UIs.
 ///
-/// @return Array of UI dictionaries
-///
-/// Each dictionary has the following keys:
-///     - "height"  requested height of the UI
-///     - "width"   requested width of the UI
-///     - "rgb"     whether the UI uses rgb colors (false implies cterm colors)
-///     - "ext_..." Requested UI extensions, see |ui-options|
-///     - "chan"    Channel id of remote UI (not present for TUI)
-///
+/// @return
+///   Array of UI dictionaries, each with these keys:
+///       - "height"  requested height of the UI
+///       - "width"   requested width of the UI
+///       - "rgb"     whether the UI uses rgb colors (false implies cterm colors)
+///       - "ext_..." Requested UI extensions, see |ui-options|
+///       - "chan"    Channel id of remote UI (not present for TUI)
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)
 {
@@ -2146,6 +2138,7 @@ Object nvim_get_proc(Integer pid, Error *err)
 /// @param finish Finish the completion and dismiss the popupmenu. Implies
 ///               `insert`.
 /// @param  opts  Optional parameters. Reserved for future use.
+/// @param[out] err Error details, if any
 void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish,
                                 Dictionary opts, Error *err)
   FUNC_API_SINCE(6)

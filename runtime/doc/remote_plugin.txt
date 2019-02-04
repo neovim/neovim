@@ -122,10 +122,10 @@ the example, say the Java plugin is a semantic completion engine for Java code.
 If it defines the autocommand "BufEnter *.java", then the Java host is spawned
 only when Nvim loads a buffer matching "*.java".
 
-If the explicit call to |:UpdateRemotePlugins| seems incovenient, try to see it
-like this: It's a way to provide IDE capabilities in Nvim while still keeping
-it fast and lightweight for general use. It's also analogous to the |:helptags|
-command.
+If the explicit call to |:UpdateRemotePlugins| seems inconvenient, try to see
+it like this: It's a way to provide IDE capabilities in Nvim while still
+keeping it fast and lightweight for general use. It's also analogous to the
+|:helptags| command.
 
 						*$NVIM_RPLUGIN_MANIFEST*
 Unless $NVIM_RPLUGIN_MANIFEST is set the manifest will be written to a file

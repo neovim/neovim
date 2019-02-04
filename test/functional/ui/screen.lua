@@ -259,22 +259,19 @@ local ext_keys = {
   'messages', 'showmode', 'showcmd', 'ruler', 'float_pos',
 }
 
--- Asserts that the screen state eventually matches an expected state
+-- Asserts that the screen state eventually matches an expected state.
 --
--- This function can either be called with the positional forms
---
---  screen:expect(grid, [attr_ids, attr_ignore])
---  screen:expect(condition)
---
--- or to use additional arguments (or grid and condition at the same time)
--- the keyword form has to be used:
---
--- screen:expect{grid=[[...]], cmdline={...}, condition=function() ... end}
+-- Can be called with positional args:
+--    screen:expect(grid, [attr_ids, attr_ignore])
+--    screen:expect(condition)
+-- or keyword args (supports more options):
+--    screen:expect{grid=[[...]], cmdline={...}, condition=function() ... end}
 --
 --
 -- grid:        Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
+--              Lines containing only "{IGNORE}|" are skipped.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
