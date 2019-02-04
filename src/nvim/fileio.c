@@ -6917,6 +6917,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
         || event == EVENT_REMOTEREPLY
         || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX
+        || event == EVENT_SIGNAL
         || event == EVENT_TABCLOSED) {
       fname = vim_strsave(fname);
     } else {

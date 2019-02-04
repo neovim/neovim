@@ -142,6 +142,7 @@ Commands:
 
 Events:
   |DirChanged|
+  |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
