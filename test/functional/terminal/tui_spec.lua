@@ -256,13 +256,13 @@ describe('TUI', function()
   end)
 
   it('shows up in nvim_list_uis', function()
-    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(v))})\013')
+    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\013')
     screen:expect([=[
-      [[['ext_cmdline', v:false], ['ext_hlstate', v:fals|
-      e], ['ext_linegrid', v:true], ['ext_multigrid', v:|
-      false], ['ext_popupmenu', v:false], ['ext_tabline'|
-      , v:false], ['ext_wildmenu', v:false], ['height', |
-      6], ['rgb', v:false], ['width', 50]]]             |
+                                                        |
+      {4:~                                                 }|
+      {5:                                                  }|
+      [[['height', 6], ['rgb', v:false], ['width', 50]]]|
+                                                        |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]=])

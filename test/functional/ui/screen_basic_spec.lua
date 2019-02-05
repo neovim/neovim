@@ -960,3 +960,46 @@ end)
 describe("Screen (line-based)", function()
   screen_tests(true)
 end)
+
+describe('Screen default colors', function()
+  local screen
+  local function startup(light, termcolors)
+    local extra = (light and ' background=light') or ''
+
+    local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+                       '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler'..extra,
+                       '--embed'}
+    local screen_nvim = spawn(nvim_argv)
+    set_session(screen_nvim)
+    screen = Screen.new()
+    screen:attach(termcolors and {rgb=true,ext_termcolors=true} or {rgb=true})
+  end
+
+  it('are dark per default', function()
+    startup(false, false)
+    screen:expect{condition=function()
+      eq({rgb_bg=0, rgb_fg=Screen.colors.White, rgb_sp=Screen.colors.Red,
+          cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
+
+  it('can be set to light', function()
+    startup(true, false)
+    screen:expect{condition=function()
+      eq({rgb_bg=Screen.colors.White, rgb_fg=0, rgb_sp=Screen.colors.Red,
+          cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
+
+  it('can be handled by external terminal', function()
+    startup(false, true)
+    screen:expect{condition=function()
+      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+
+    startup(true, true)
+    screen:expect{condition=function()
+      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
+end)

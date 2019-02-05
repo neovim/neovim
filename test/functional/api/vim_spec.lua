@@ -1278,6 +1278,7 @@ describe('API', function()
           ext_linegrid = screen._options.ext_linegrid or false,
           ext_multigrid = false,
           ext_hlstate=false,
+          ext_termcolors=false,
           height = 4,
           rgb = true,
           width = 20,
