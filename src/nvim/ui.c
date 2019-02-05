@@ -310,6 +310,9 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
     ui->option_set(ui, cstr_as_string((char *)ui_ext_names[ext]),
                    BOOLEAN_OBJ(active));
   }
+  if (ext == kUITermColors) {
+    ui_default_colors_set();
+  }
 }
 
 void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,

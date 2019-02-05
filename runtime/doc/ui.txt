@@ -35,6 +35,7 @@ a dictionary with these (optional) keys:
 	`ext_linegrid`		Use new revision of the grid events. |ui-linegrid|
 	`ext_multigrid`		Use per-window grid based events. |ui-multigrid|
 	`ext_hlstate`		Use detailed highlight state. |ui-hlstate|
+	`ext_termcolors`	Use external default colors.
 
 Specifying a non-existent option is an error. UIs can check the |api-metadata|
 `ui_options` key for supported options. Additionally Nvim (currently) requires
@@ -238,6 +239,13 @@ numerical highlight `id`:s to the actual attributes.
 	The first three arguments set the default foreground, background and
 	special colors respectively. `cterm_fg` and `cterm_bg` specifies the
 	default color codes to use in a 256-color terminal.
+
+	The rgb values will always be valid colors, by default. If no
+	colors have been set, they will default to black and white, depending
+	on 'background'. By setting the `ext_termcolors` option, instead
+	-1 will be used for unset colors. This is mostly useful for a
+	TUI implementation, where using the terminal emulators builitn
+	defaults are expected.
 
 	Note: unlike the corresponding events in the first revision, the
 	screen is not always cleared after sending this event. The GUI has to

@@ -210,8 +210,9 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
       return;
     }
     ui->rgb = value.data.boolean;
-    // A little drastic, but only legacy uis need to use this option
-    if (!init) {
+    // A little drastic, but only takes effect for legacy uis. For linegrid UI
+    // only changes metadata for nvim_list_uis(), no refresh needed.
+    if (!init && !ui->ui_ext[kUILinegrid]) {
       ui_refresh();
     }
     return;
@@ -355,6 +356,12 @@ static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
                                          Integer rgb_bg, Integer rgb_sp,
                                          Integer cterm_fg, Integer cterm_bg)
 {
+  if (!ui->ui_ext[kUITermColors]) {
+    bool dark = (*p_bg == 'd');
+    rgb_fg = rgb_fg != -1 ? rgb_fg : (dark ? 0xFFFFFF : 0x000000);
+    rgb_bg = rgb_bg != -1 ? rgb_bg : (dark ? 0x000000 : 0xFFFFFF);
+    rgb_sp = rgb_sp != -1 ? rgb_sp : 0xFF0000;
+  }
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(rgb_fg));
   ADD(args, INTEGER_OBJ(rgb_bg));
