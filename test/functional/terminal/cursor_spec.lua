@@ -7,7 +7,7 @@ local feed_command = helpers.feed_command
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 
-describe('terminal cursor', function()
+describe(':terminal cursor', function()
   local screen
 
   before_each(function()

@@ -12,7 +12,7 @@ local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 
-describe('terminal scrollback', function()
+describe(':terminal scrollback', function()
   local screen
 
   before_each(function()
@@ -344,7 +344,7 @@ describe('terminal scrollback', function()
   end)
 end)
 
-describe('terminal prints more lines than the screen height and exits', function()
+describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
     clear()
     local screen = Screen.new(30, 7)
@@ -460,7 +460,7 @@ describe("'scrollback' option", function()
     screen:detach()
   end)
 
-  it('defaults to 10000 in terminal buffers', function()
+  it('defaults to 10000 in :terminal buffers', function()
     set_fake_shell()
     command('terminal')
     eq(10000, curbufmeths.get_option('scrollback'))
