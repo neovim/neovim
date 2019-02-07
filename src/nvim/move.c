@@ -152,7 +152,7 @@ void update_topline(void)
 
   // If there is no valid screen and when the window height is zero just use
   // the cursor line.
-  if (!screen_valid(true) || curwin->w_height_inner == 0) {
+  if (!default_grid.chars || curwin->w_height_inner == 0) {
     curwin->w_topline = curwin->w_cursor.lnum;
     curwin->w_botline = curwin->w_topline;
     curwin->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
@@ -925,12 +925,9 @@ void curs_columns(
       curwin->w_wrow -= extra;
     }
 
+    // extra could be either positive or negative
     extra = ((int)prev_skipcol - (int)curwin->w_skipcol) / width;
-    if (extra > 0) {
-      win_ins_lines(curwin, 0, extra);
-    } else if (extra < 0) {
-      win_del_lines(curwin, 0, -extra);
-    }
+    win_scroll_lines(curwin, 0, extra);
   } else {
     curwin->w_skipcol = 0;
   }
