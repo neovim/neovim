@@ -2392,9 +2392,8 @@ static int do_more_prompt(int typed_char)
               mp_last = msg_sb_start(mp_last->sb_prev);
           }
 
-          if (toscroll == -1
-              && grid_ins_lines(&default_grid, 0, 1, (int)Rows,
-                                0, (int)Columns) == OK) {
+          if (toscroll == -1) {
+            grid_ins_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
             grid_fill(&default_grid, 0, 1, 0, (int)Columns, ' ', ' ', 0);
             // display line at top
             (void)disp_sb_line(0, mp);

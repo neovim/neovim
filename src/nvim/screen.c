@@ -335,10 +335,8 @@ void update_screen(int type)
       type = CLEAR;
     } else if (type != CLEAR) {
       check_for_delay(false);
-      if (grid_ins_lines(&default_grid, 0, msg_scrolled, (int)Rows,
-                         0, (int)Columns) == FAIL) {
-        type = CLEAR;
-      }
+      grid_ins_lines(&default_grid, 0, msg_scrolled, (int)Rows,
+                     0, (int)Columns);
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_winrow < msg_scrolled) {
           if (W_ENDROW(wp) > msg_scrolled
@@ -828,31 +826,31 @@ static void win_update(win_T *wp)
           // Try to insert the correct number of lines.
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
-          if (win_ins_lines(wp, 0, i) == OK) {
-            if (wp->w_lines_valid != 0) {
-              /* Need to update rows that are new, stop at the
-               * first one that scrolled down. */
-              top_end = i;
-              scrolled_down = TRUE;
+          win_scroll_lines(wp, 0, i);
+          if (wp->w_lines_valid != 0) {
+            // Need to update rows that are new, stop at the
+            // first one that scrolled down.
+            top_end = i;
+            scrolled_down = true;
 
-              /* Move the entries that were scrolled, disable
-               * the entries for the lines to be redrawn. */
-              if ((wp->w_lines_valid += j) > wp->w_grid.Rows) {
-                wp->w_lines_valid = wp->w_grid.Rows;
-              }
-              for (idx = wp->w_lines_valid; idx - j >= 0; idx--) {
-                wp->w_lines[idx] = wp->w_lines[idx - j];
-              }
-              while (idx >= 0) {
-                wp->w_lines[idx--].wl_valid = false;
-              }
+            // Move the entries that were scrolled, disable
+            // the entries for the lines to be redrawn.
+            if ((wp->w_lines_valid += j) > wp->w_grid.Rows) {
+              wp->w_lines_valid = wp->w_grid.Rows;
             }
-          } else
-            mid_start = 0;                      /* redraw all lines */
-        } else
-          mid_start = 0;                        /* redraw all lines */
-      } else
-        mid_start = 0;                  /* redraw all lines */
+            for (idx = wp->w_lines_valid; idx - j >= 0; idx--) {
+              wp->w_lines[idx] = wp->w_lines[idx - j];
+            }
+            while (idx >= 0) {
+              wp->w_lines[idx--].wl_valid = false;
+            }
+          }
+        } else {
+          mid_start = 0;  // redraw all lines
+        }
+      } else {
+        mid_start = 0;  // redraw all lines
+      }
     } else {
       /*
        * New topline is at or below old topline: May scroll up.
@@ -889,11 +887,8 @@ static void win_update(win_T *wp)
         /* ... but don't delete new filler lines. */
         row -= wp->w_topfill;
         if (row > 0) {
-          if (win_del_lines(wp, 0, row) == OK) {
-            bot_start = wp->w_grid.Rows - row;
-          } else {
-            mid_start = 0;                      // redraw all lines
-          }
+          win_scroll_lines(wp, 0, -row);
+          bot_start = wp->w_grid.Rows - row;
         }
         if ((row == 0 || bot_start < 999) && wp->w_lines_valid != 0) {
           /*
@@ -1148,7 +1143,7 @@ static void win_update(win_T *wp)
     // Update a line when it is in an area that needs updating, when it
     // has changes or w_lines[idx] is invalid.
     // "bot_start" may be halfway a wrapped line after using
-    // win_del_lines(), check if the current line includes it.
+    // win_scroll_lines(), check if the current line includes it.
     // When syntax folding is being used, the saved syntax states will
     // already have been updated, we can't see where the syntax state is
     // the same again, just update until the end of the window.
@@ -1244,11 +1239,8 @@ static void win_update(win_T *wp)
             if (row - xtra_rows >= wp->w_grid.Rows - 2) {
               mod_bot = MAXLNUM;
             } else {
-              if (win_del_lines(wp, row, -xtra_rows) == FAIL) {
-                mod_bot = MAXLNUM;
-              } else {
-                bot_start = wp->w_grid.Rows + xtra_rows;
-              }
+              win_scroll_lines(wp, row, xtra_rows);
+              bot_start = wp->w_grid.Rows + xtra_rows;
             }
           } else if (xtra_rows > 0) {
             /* May scroll text down.  If there is not enough
@@ -1257,9 +1249,8 @@ static void win_update(win_T *wp)
             if (row + xtra_rows >= wp->w_grid.Rows - 2) {
               mod_bot = MAXLNUM;
             } else {
-              if (win_ins_lines(wp, row + old_rows, xtra_rows) == FAIL) {
-                mod_bot = MAXLNUM;
-              } else if (top_end > row + old_rows) {
+              win_scroll_lines(wp, row + old_rows, xtra_rows);
+              if (top_end > row + old_rows) {
                 // Scrolled the part at the top that requires
                 // updating down.
                 top_end += xtra_rows;
@@ -6265,42 +6256,28 @@ void setcursor(void)
   }
 }
 
-/// Insert 'line_count' lines at 'row' in window 'wp'.
-/// Returns FAIL if the lines are not inserted, OK for success.
-int win_ins_lines(win_T *wp, int row, int line_count)
+/// Scroll 'line_count' lines at 'row' in window 'wp'.
+///
+/// Positive `line_count' means scrolling down, so that more space is available
+/// at 'row'. Negative `line_count` implies deleting lines at `row`.
+void win_scroll_lines(win_T *wp, int row, int line_count)
 {
-  return win_do_lines(wp, row, line_count, false);
-}
-
-/// Delete "line_count" window lines at "row" in window "wp".
-/// Return OK for success, FAIL if the lines are not deleted.
-int win_del_lines(win_T *wp, int row, int line_count)
-{
-  return win_do_lines(wp, row, line_count, true);
-}
-
-// Common code for win_ins_lines() and win_del_lines().
-// Returns OK or FAIL when the work has been done.
-static int win_do_lines(win_T *wp, int row, int line_count, int del)
-{
-  if (!redrawing() || line_count <= 0) {
-    return FAIL;
+  if (!redrawing() || line_count == 0) {
+    return;
   }
 
   // No lines are being moved, just draw over the entire area
-  if (row + line_count >= wp->w_grid.Rows) {
-    return OK;
+  if (row + abs(line_count) >= wp->w_grid.Rows) {
+    return;
   }
 
-  int retval;
-  if (del) {
-    retval = grid_del_lines(&wp->w_grid, row, line_count,
-                            wp->w_grid.Rows, 0, wp->w_grid.Columns);
+  if (line_count < 0) {
+    grid_del_lines(&wp->w_grid, row, -line_count,
+                   wp->w_grid.Rows, 0, wp->w_grid.Columns);
   } else {
-    retval = grid_ins_lines(&wp->w_grid, row, line_count,
-                            wp->w_grid.Rows, 0, wp->w_grid.Columns);
+    grid_ins_lines(&wp->w_grid, row, line_count,
+                   wp->w_grid.Rows, 0, wp->w_grid.Columns);
   }
-  return retval;
 }
 
 /*
@@ -6320,10 +6297,8 @@ static int win_do_lines(win_T *wp, int row, int line_count, int del)
 /// 'col' is the column from with we start inserting.
 //
 /// 'row', 'col' and 'end' are relative to the start of the region.
-///
-/// @return FAIL for failure, OK for success.
-int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
-                   int width)
+void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
+                    int width)
 {
   int i;
   int j;
@@ -6334,8 +6309,8 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   row += row_off;
   end += row_off;
 
-  if (!screen_valid(TRUE) || line_count <= 0) {
-    return FAIL;
+  if (!screen_valid(true) || line_count <= 0) {
+    return;
   }
 
   // Shift line_offset[] line_count down to reflect the inserted lines.
@@ -6365,17 +6340,15 @@ int grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
 
-  return OK;
+  return;
 }
 
 /// delete lines on the screen and move lines up.
 /// 'end' is the line after the scrolled part. Normally it is Rows.
 /// When scrolling region used 'off' is the offset from the top for the region.
 /// 'row' and 'end' are relative to the start of the region.
-///
-/// Return OK for success, FAIL if the lines are not deleted.
-int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
-                   int width)
+void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
+                    int width)
 {
   int j;
   int i;
@@ -6386,8 +6359,8 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   row += row_off;
   end += row_off;
 
-  if (!screen_valid(TRUE) || line_count <= 0) {
-    return FAIL;
+  if (!screen_valid(true) || line_count <= 0) {
+    return;
   }
 
   // Now shift line_offset[] line_count up to reflect the deleted lines.
@@ -6418,7 +6391,7 @@ int grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
   ui_call_grid_scroll(grid->handle, row, end, col, col+width, line_count, 0);
 
-  return OK;
+  return;
 }
 
 
