@@ -189,6 +189,7 @@ Options:
               for |hl-EndOfBuffer| marker
   'inccommand' shows interactive results for |:substitute|-like commands
   'listchars' local to window
+  'pumblend' semi-transparent popupmenu
   'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click

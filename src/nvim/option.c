@@ -50,6 +50,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hardcopy.h"
+#include "nvim/highlight.h"
 #include "nvim/indent_c.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
@@ -65,6 +66,7 @@
 #include "nvim/normal.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
@@ -4337,6 +4339,14 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     // when 'updatecount' changes from zero to non-zero, open swap files
     if (p_uc && !old_value) {
       ml_open_files();
+    }
+  } else if (pp == &p_pb) {
+    p_pb = MAX(MIN(p_pb, 100), 0);
+    if (old_value != 0) {
+      hl_invalidate_blends();
+    }
+    if (pum_drawn()) {
+      pum_recompose();
     }
   } else if (pp == &p_pyx) {
     if (p_pyx != 0 && p_pyx != 2 && p_pyx != 3) {

@@ -23,11 +23,15 @@ static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
 
 static Map(HlEntry, int) *attr_entry_ids;
 static Map(int, int) *combine_attr_entries;
+static Map(int, int) *blend_attr_entries;
+static Map(int, int) *blendthrough_attr_entries;
 
 void highlight_init(void)
 {
   attr_entry_ids = map_new(HlEntry, int)();
   combine_attr_entries = map_new(int, int)();
+  blend_attr_entries = map_new(int, int)();
+  blendthrough_attr_entries = map_new(int, int)();
 
   // index 0 is no attribute, add dummy entry:
   kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
@@ -213,6 +217,8 @@ void clear_hl_tables(bool reinit)
     kv_size(attr_entries) = 1;
     map_clear(HlEntry, int)(attr_entry_ids);
     map_clear(int, int)(combine_attr_entries);
+    map_clear(int, int)(blend_attr_entries);
+    map_clear(int, int)(blendthrough_attr_entries);
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();
@@ -220,15 +226,22 @@ void clear_hl_tables(bool reinit)
     kv_destroy(attr_entries);
     map_free(HlEntry, int)(attr_entry_ids);
     map_free(int, int)(combine_attr_entries);
+    map_free(int, int)(blend_attr_entries);
+    map_free(int, int)(blendthrough_attr_entries);
   }
+}
+
+void hl_invalidate_blends(void)
+{
+  map_clear(int, int)(blend_attr_entries);
+  map_clear(int, int)(blendthrough_attr_entries);
 }
 
 // Combine special attributes (e.g., for spelling) with other attributes
 // (e.g., for syntax highlighting).
 // "prim_attr" overrules "char_attr".
 // This creates a new group when required.
-// Since we expect there to be few spelling mistakes we don't cache the
-// result.
+// Since we expect there to be a lot of spelling mistakes we cache the result.
 // Return the resulting attributes.
 int hl_combine_attr(int char_attr, int prim_attr)
 {
@@ -281,6 +294,85 @@ int hl_combine_attr(int char_attr, int prim_attr)
   }
 
   return id;
+}
+
+/// Get the used rgb colors for an attr group.
+///
+/// If colors are unset, use builtin default colors. Never returns -1
+/// Cterm colors are unchanged.
+static HlAttrs get_colors_force(int attr)
+{
+  HlAttrs attrs = syn_attr2entry(attr);
+  if (attrs.rgb_bg_color == -1) {
+    attrs.rgb_bg_color = normal_bg;
+  }
+  if (attrs.rgb_fg_color == -1) {
+    attrs.rgb_fg_color = normal_fg;
+  }
+  if (attrs.rgb_sp_color == -1) {
+    attrs.rgb_sp_color = normal_sp;
+  }
+  HL_SET_DEFAULT_COLORS(attrs.rgb_fg_color, attrs.rgb_bg_color,
+                        attrs.rgb_sp_color);
+  return attrs;
+}
+
+/// Blend overlay attributes (for popupmenu) with other attributes
+///
+/// This creates a new group when required.
+/// This will be called on a per-cell basis when in use, so cache the result.
+/// @return the resulting attributes.
+int hl_blend_attrs(int back_attr, int front_attr, bool through)
+{
+  int combine_tag = (back_attr << 16) + front_attr;
+  Map(int, int) *map = through ? blendthrough_attr_entries : blend_attr_entries;
+  int id = map_get(int, int)(map, combine_tag);
+  if (id > 0) {
+    return id;
+  }
+
+  HlAttrs battrs = get_colors_force(back_attr);
+  HlAttrs fattrs = get_colors_force(front_attr);
+  HlAttrs cattrs;
+  if (through) {
+    cattrs = battrs;
+    cattrs.rgb_fg_color = rgb_blend((int)p_pb, battrs.rgb_fg_color,
+                                    fattrs.rgb_bg_color);
+    cattrs.cterm_bg_color = fattrs.cterm_bg_color;
+    cattrs.cterm_fg_color = fattrs.cterm_bg_color;
+  } else {
+    cattrs = fattrs;
+    if (p_pb >= 50) {
+      cattrs.rgb_ae_attr |= battrs.rgb_ae_attr;
+    }
+    cattrs.rgb_fg_color = rgb_blend((int)p_pb/2, battrs.rgb_fg_color,
+                                    fattrs.rgb_fg_color);
+  }
+  cattrs.rgb_bg_color = rgb_blend((int)p_pb, battrs.rgb_bg_color,
+                                  fattrs.rgb_bg_color);
+
+  HlKind kind = through ? kHlBlendThrough : kHlBlend;
+  id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
+                                 .id1 = back_attr, .id2 = front_attr });
+  if (id > 0) {
+    map_put(int, int)(map, combine_tag, id);
+  }
+  return id;
+}
+
+static int rgb_blend(int ratio, int rgb1, int rgb2)
+{
+  int a = ratio, b = 100-ratio;
+  int r1 = (rgb1 & 0xFF0000) >> 16;
+  int g1 = (rgb1 & 0x00FF00) >> 8;
+  int b1 = (rgb1 & 0x0000FF) >> 0;
+  int r2 = (rgb2 & 0xFF0000) >> 16;
+  int g2 = (rgb2 & 0x00FF00) >> 8;
+  int b2 = (rgb2 & 0x0000FF) >> 0;
+  int mr = (a * r1 + b * r2)/100;
+  int mg = (a * g1 + b * g2)/100;
+  int mb = (a * b1 + b * b2)/100;
+  return (mr << 16) + (mg << 8) + mb;
 }
 
 /// Get highlight attributes for a attribute code
@@ -406,6 +498,8 @@ static void hl_inspect_impl(Array *arr, int attr)
       break;
 
     case kHlCombine:
+    case kHlBlend:
+    case kHlBlendThrough:
       // attribute combination is associative, so flatten to an array
       hl_inspect_impl(arr, e.id1);
       hl_inspect_impl(arr, e.id2);

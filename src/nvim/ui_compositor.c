@@ -15,6 +15,7 @@
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
+#include "nvim/highlight.h"
 #include "nvim/memory.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/ugrid.h"
@@ -169,11 +170,9 @@ void ui_comp_remove_grid(ScreenGrid *grid)
   (void)kv_pop(layers);
   grid->comp_index = 0;
 
-  if (ui_comp_should_draw()) {
-    // inefficent: only draw up to grid->comp_index
-    compose_area(grid->comp_row, grid->comp_row+grid->Rows,
-                 grid->comp_col, grid->comp_col+grid->Columns);
-  }
+  // recompose the area under the grid
+  // inefficent when being overlapped: only draw up to grid->comp_index
+  ui_comp_compose_grid(grid);
 }
 
 bool ui_comp_set_grid(handle_T handle)
@@ -229,6 +228,10 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
 
   int col = (int)startcol;
   ScreenGrid *grid = NULL;
+  schar_T *bg_line = &default_grid.chars[default_grid.line_offset[row]
+                                         +(size_t)startcol];
+  sattr_T *bg_attrs = &default_grid.attrs[default_grid.line_offset[row]
+                                          +(size_t)startcol];
 
   while (col < endcol) {
     int until = 0;
@@ -256,6 +259,16 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     memcpy(linebuf+(col-startcol), grid->chars+off, n * sizeof(*linebuf));
     memcpy(attrbuf+(col-startcol), grid->attrs+off, n * sizeof(*attrbuf));
 
+    if (grid != &default_grid && p_pb) {
+      for (int i = col-(int)startcol; i < until-startcol; i++) {
+        bool thru = strequal((char *)linebuf[i], " ");
+        attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], thru);
+        if (thru) {
+          memcpy(linebuf[i], bg_line[i], sizeof(linebuf[i]));
+        }
+      }
+    }
+
     // Tricky: if overlap caused a doublewidth char to get cut-off, must
     // replace the visible half with a space.
     if (linebuf[col-startcol][0] == NUL) {
@@ -272,6 +285,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
         skip = 0;
       }
     }
+
     col = until;
   }
   assert(endcol <= chk_width);
@@ -293,11 +307,25 @@ static void compose_area(Integer startrow, Integer endrow,
 {
   endrow = MIN(endrow, default_grid.Rows);
   endcol = MIN(endcol, default_grid.Columns);
+  if (endcol <= startcol) {
+    return;
+  }
   for (int r = (int)startrow; r < endrow; r++) {
     compose_line(r, startcol, endcol, kLineFlagInvalid);
   }
 }
 
+/// compose the area under the grid.
+///
+/// This is needed when some option affecting composition is changed,
+/// such as 'pumblend' for popupmenu grid.
+void ui_comp_compose_grid(ScreenGrid *grid)
+{
+  if (ui_comp_should_draw()) {
+    compose_area(grid->comp_row, grid->comp_row+grid->Rows,
+                 grid->comp_col, grid->comp_col+grid->Columns);
+  }
+}
 
 static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
                              Integer startcol, Integer endcol,
@@ -316,8 +344,10 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
   if (curgrid != &default_grid) {
     flags = flags & ~kLineFlagWrap;
   }
+  assert(row < default_grid.Rows);
   assert(clearcol <= default_grid.Columns);
-  if (flags & kLineFlagInvalid || kv_size(layers) > curgrid->comp_index+1) {
+  if (flags & kLineFlagInvalid
+      || kv_size(layers) > (p_pb ? 1 : curgrid->comp_index+1)) {
     compose_line(row, startcol, clearcol, flags);
   } else {
     ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,

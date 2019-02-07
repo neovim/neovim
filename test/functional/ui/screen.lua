@@ -1303,6 +1303,8 @@ function Screen:_pprint_attrs(attrs)
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        else
+          desc = string.format("tonumber('0x%06x')",v)
         end
       end
       table.insert(items, f.." = "..desc)

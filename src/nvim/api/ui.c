@@ -357,10 +357,7 @@ static void remote_ui_default_colors_set(UI *ui, Integer rgb_fg,
                                          Integer cterm_fg, Integer cterm_bg)
 {
   if (!ui->ui_ext[kUITermColors]) {
-    bool dark = (*p_bg == 'd');
-    rgb_fg = rgb_fg != -1 ? rgb_fg : (dark ? 0xFFFFFF : 0x000000);
-    rgb_bg = rgb_bg != -1 ? rgb_bg : (dark ? 0x000000 : 0xFFFFFF);
-    rgb_sp = rgb_sp != -1 ? rgb_sp : 0xFF0000;
+    HL_SET_DEFAULT_COLORS(rgb_fg, rgb_bg, rgb_sp);
   }
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(rgb_fg));
