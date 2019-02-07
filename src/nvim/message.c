@@ -946,9 +946,9 @@ void wait_return(int redraw)
     c = CAR;                    /* no need for a return in ex mode */
     got_int = FALSE;
   } else {
-    /* Make sure the hit-return prompt is on screen when 'guioptions' was
-     * just changed. */
-    screenalloc(false);
+    // Make sure the hit-return prompt is on screen when 'guioptions' was
+    // just changed.
+    screenalloc();
 
     State = HITRETURN;
     setmouse();

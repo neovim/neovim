@@ -300,7 +300,7 @@ int main(int argc, char **argv)
   assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
   cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
-  screenalloc(false);  // allocate screen buffers
+  screenalloc();  // allocate screen buffers
   set_init_2(headless_mode);
   TIME_MSG("inits 2");
 

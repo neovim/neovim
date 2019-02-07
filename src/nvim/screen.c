@@ -274,9 +274,10 @@ void update_screen(int type)
   static int did_intro = FALSE;
   int did_one;
 
-  /* Don't do anything if the screen structures are (not yet) valid. */
-  if (!screen_valid(TRUE))
+  // Don't do anything if the screen structures are (not yet) valid.
+  if (!default_grid.chars) {
     return;
+  }
 
   if (must_redraw) {
     if (type < must_redraw)         /* use maximal type */
@@ -5804,7 +5805,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
   }
 
   // nothing to do
-  if (grid->chars == NULL || start_row >= end_row || start_col >= end_col) {
+  if (start_row >= end_row || start_col >= end_col) {
     return;
   }
 
@@ -5893,18 +5894,6 @@ void check_for_delay(int check_msg_scroll)
   }
 }
 
-/*
- * screen_valid -  allocate screen buffers if size changed
- *   If "doclear" is TRUE: clear screen if it has been resized.
- *	Returns TRUE if there is a valid screen to write to.
- *	Returns FALSE when starting up and screen not initialized yet.
- */
-int screen_valid(int doclear)
-{
-  screenalloc(doclear);  // allocate screen buffers if size changed
-  return default_grid.chars != NULL;
-}
-
 /// (Re)allocates a window grid if size changed while in ext_multigrid mode.
 /// Updates size, offsets and handle for the grid regardless.
 ///
@@ -5980,7 +5969,7 @@ void grid_assign_handle(ScreenGrid *grid)
 /// default_grid.Columns to access items in default_grid.chars[].  Use Rows
 /// and Columns for positioning text etc. where the final size of the shell is
 /// needed.
-void screenalloc(bool doclear)
+void screenalloc(void)
 {
   static bool entered = false;  // avoid recursiveness
   int retry_count = 0;
@@ -6032,7 +6021,7 @@ retry:
   // Continuing with the old arrays may result in a crash, because the
   // size is wrong.
 
-  grid_alloc(&default_grid, Rows, Columns, !doclear, true);
+  grid_alloc(&default_grid, Rows, Columns, true, true);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
@@ -6046,10 +6035,7 @@ retry:
   default_grid.col_offset = 0;
   default_grid.handle = DEFAULT_GRID_HANDLE;
 
-  must_redraw = CLEAR;          /* need to clear the screen later */
-  if (doclear)
-    screenclear2();
-
+  must_redraw = CLEAR;  // need to clear the screen later
 
   entered = FALSE;
   --RedrawingDisabled;
@@ -6156,13 +6142,9 @@ void clear_tab_page_click_defs(StlClickDefinition *const tpcd,
 
 void screenclear(void)
 {
-  check_for_delay(FALSE);
-  screenalloc(false);       /* allocate screen buffers if size changed */
-  screenclear2();           /* clear the screen */
-}
+  check_for_delay(false);
+  screenalloc();  // allocate screen buffers if size changed
 
-static void screenclear2(void)
-{
   int i;
 
   if (starting == NO_SCREEN || default_grid.chars == NULL) {
@@ -6309,7 +6291,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   row += row_off;
   end += row_off;
 
-  if (!screen_valid(true) || line_count <= 0) {
+  if (line_count <= 0) {
     return;
   }
 
@@ -6359,7 +6341,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   row += row_off;
   end += row_off;
 
-  if (!screen_valid(true) || line_count <= 0) {
+  if (line_count <= 0) {
     return;
   }
 
@@ -7159,7 +7141,7 @@ void screen_resize(int width, int height)
      */
     if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
         || exmode_active) {
-      screenalloc(false);
+      screenalloc();
       repeat_message();
     } else {
       if (curwin->w_p_scb)
