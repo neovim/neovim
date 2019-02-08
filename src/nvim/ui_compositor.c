@@ -259,9 +259,10 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     memcpy(linebuf+(col-startcol), grid->chars+off, n * sizeof(*linebuf));
     memcpy(attrbuf+(col-startcol), grid->attrs+off, n * sizeof(*attrbuf));
 
+    // 'pumblend'
     if (grid != &default_grid && p_pb) {
       for (int i = col-(int)startcol; i < until-startcol; i++) {
-        bool thru = strequal((char *)linebuf[i], " ");
+        bool thru = strequal((char *)linebuf[i], " ");  // negative space
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], thru);
         if (thru) {
           memcpy(linebuf[i], bg_line[i], sizeof(linebuf[i]));

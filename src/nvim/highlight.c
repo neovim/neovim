@@ -328,7 +328,8 @@ static HlAttrs get_colors_force(int attr)
 /// Blend overlay attributes (for popupmenu) with other attributes
 ///
 /// This creates a new group when required.
-/// This will be called on a per-cell basis when in use, so cache the result.
+/// This is called per-cell, so cache the result.
+///
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool through)
 {
@@ -354,7 +355,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool through)
     }
 
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
-    cattrs.cterm_fg_color = fattrs.cterm_bg_color;
+    cattrs.cterm_fg_color = cterm_blend((int)p_pb, battrs.cterm_fg_color,
+                                        fattrs.cterm_bg_color);
   } else {
     cattrs = fattrs;
     if (p_pb >= 50) {
@@ -394,6 +396,135 @@ static int rgb_blend(int ratio, int rgb1, int rgb2)
   int mg = (a * g1 + b * g2)/100;
   int mb = (a * b1 + b * b2)/100;
   return (mr << 16) + (mg << 8) + mb;
+}
+
+static int cterm_blend(int ratio, int c1, int c2)
+{
+  // 1. Convert cterm color numbers to RGB.
+  // 2. Blend the RGB colors.
+  // 3. Convert the RGB result to a cterm color.
+  int rgb1 = hl_cterm2rgb_color(c1);
+  int rgb2 = hl_cterm2rgb_color(c2);
+  int rgb_blended = rgb_blend(ratio, rgb1, rgb2);
+  return hl_rgb2cterm_color(rgb_blended);
+}
+
+/// Converts RGB color to 8-bit color (0-255).
+/// Reverse engineer the RGB value into a cterm color index.
+/// First color is 1.  Return 0 if no match found (default color).
+static int hl_rgb2cterm_color(int rgb)
+{
+  int red = (rgb & 0xFF0000) >> 16;
+  int green = (rgb & 0x00FF00) >> 8;
+  int blue = (rgb & 0x0000FF) >> 0;
+
+  if (red == blue && red == green) {
+    // 24-color greyscale plus white and black.
+    static int cutoff[23] = {
+      0x0D, 0x17, 0x21, 0x2B, 0x35, 0x3F, 0x49, 0x53, 0x5D, 0x67,
+      0x71, 0x7B, 0x85, 0x8F, 0x99, 0xA3, 0xAD, 0xB7, 0xC1, 0xCB,
+      0xD5, 0xDF, 0xE9};
+    int i;
+
+    if (red < 5) {
+      return 17;  // 00/00/00
+    }
+    if (red > 245) {  // ff/ff/ff
+      return 232;
+    }
+    for (i = 0; i < 23; ++i) {
+      if (red < cutoff[i]) {
+        return i + 233;
+      }
+    }
+    return 256;
+  }
+  {
+    static int cutoff[5] = {0x2F, 0x73, 0x9B, 0xC3, 0xEB};
+    int ri, gi, bi;
+
+    // 216-color cube.
+    for (ri = 0; ri < 5; ++ri) {
+      if (red < cutoff[ri]) {
+        break;
+      }
+    }
+    for (gi = 0; gi < 5; ++gi) {
+      if (green < cutoff[gi]) {
+        break;
+      }
+    }
+    for (bi = 0; bi < 5; ++bi) {
+      if (blue < cutoff[bi]) {
+        break;
+      }
+    }
+    return 17 + ri * 36 + gi * 6 + bi;
+  }
+  return 0;
+}
+
+/// Converts 8-bit color (0-255) to RGB color.
+/// This is compatible with xterm.
+static int hl_cterm2rgb_color(int nr)
+{
+  static int cube_value[] = {
+    0x00, 0x5F, 0x87, 0xAF, 0xD7, 0xFF
+  };
+  static int grey_ramp[] = {
+    0x08, 0x12, 0x1C, 0x26, 0x30, 0x3A, 0x44, 0x4E, 0x58, 0x62, 0x6C, 0x76,
+    0x80, 0x8A, 0x94, 0x9E, 0xA8, 0xB2, 0xBC, 0xC6, 0xD0, 0xDA, 0xE4, 0xEE
+  };
+  static char_u ansi_table[16][4] = {
+    //  R    G    B   idx
+    {   0,   0,   0,  1 } ,  // black
+    { 224,   0,   0,  2 } ,  // dark red
+    {   0, 224,   0,  3 } ,  // dark green
+    { 224, 224,   0,  4 } ,  // dark yellow / brown
+    {   0,   0, 224,  5 } ,  // dark blue
+    { 224,   0, 224,  6 } ,  // dark magenta
+    {   0, 224, 224,  7 } ,  // dark cyan
+    { 224, 224, 224,  8 } ,  // light grey
+
+    { 128, 128, 128,  9 } ,  // dark grey
+    { 255,  64,  64, 10 } ,  // light red
+    {  64, 255,  64, 11 } ,  // light green
+    { 255, 255,  64, 12 } ,  // yellow
+    {  64,  64, 255, 13 } ,  // light blue
+    { 255,  64, 255, 14 } ,  // light magenta
+    {  64, 255, 255, 15 } ,  // light cyan
+    { 255, 255, 255, 16 } ,  // white
+  };
+
+  int r;
+  int g;
+  int b;
+  int idx;
+
+  if (nr < 16) {
+    r = ansi_table[nr][0];
+    g = ansi_table[nr][1];
+    b = ansi_table[nr][2];
+    // *ansi_idx = ansi_table[nr][3];
+  } else if (nr < 232) {  // 216 color-cube
+    idx = nr - 16;
+    r = cube_value[idx / 36 % 6];
+    g = cube_value[idx / 6  % 6];
+    b = cube_value[idx      % 6];
+    // *ansi_idx = -1;
+  } else if (nr < 256) {  // 24 greyscale ramp
+    idx = nr - 232;
+    r = grey_ramp[idx];
+    g = grey_ramp[idx];
+    b = grey_ramp[idx];
+    // *ansi_idx = -1;
+  } else {
+    r = 0;
+    g = 0;
+    b = 0;
+    // *ansi_idx = 0;
+  }
+  return (r << 16) + (g << 8) + b;
 }
 
 /// Get highlight attributes for a attribute code
