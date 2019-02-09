@@ -97,6 +97,7 @@ typedef struct {
   size_t size, capacity;
 } Dictionary;
 
+// NOTE: be sure to keep this in sync with the object_type_names array
 typedef enum {
   kObjectTypeNil = 0,
   kObjectTypeBoolean,
@@ -110,6 +111,8 @@ typedef enum {
   kObjectTypeWindow,
   kObjectTypeTabpage,
 } ObjectType;
+
+char *get_object_type_name(ObjectType type);
 
 struct object {
   ObjectType type;

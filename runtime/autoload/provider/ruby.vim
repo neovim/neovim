@@ -20,7 +20,7 @@ function! provider#ruby#Require(host) abort
     let prog .= " " . shellescape(plugin.path)
   endfor
 
-  return provider#Poll(prog, a:host.orig_name, '$NVIM_RUBY_LOG_FILE')
+  return provider#Poll(prog, a:host.long_name, '$NVIM_RUBY_LOG_FILE')
 endfunction
 
 function! provider#ruby#Call(method, args) abort
@@ -67,5 +67,5 @@ if empty(s:prog)
   let s:err = 'Cannot find the neovim RubyGem. Try :checkhealth'
 endif
 
-call remote#host#RegisterClone('legacy-ruby-provider', 'ruby')
+call remote#host#RegisterClone('legacy-ruby-provider', 'ruby', 'legacy ruby provider')
 call remote#host#RegisterPlugin('legacy-ruby-provider', s:plugin_path, [])

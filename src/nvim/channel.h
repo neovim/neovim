@@ -57,6 +57,7 @@ static inline bool callback_reader_set(CallbackReader reader)
 struct Channel {
   uint64_t id;
   size_t refcount;
+  char *name;
   MultiQueue *events;
 
   ChannelStreamType streamtype;

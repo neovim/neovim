@@ -18,6 +18,7 @@ struct process {
   ProcessType type;
   Loop *loop;
   void *data;
+  char *label;
   int pid, status, refcount;
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;

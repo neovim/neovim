@@ -33,6 +33,26 @@ static uv_mutex_t mutex;
 # include <execinfo.h>
 #endif
 
+#define LOCAL_TIME_STRING_LEN 20
+
+void get_local_time_string(char *out, size_t out_len)
+{
+  // Populate 'out' with the current date/time. If this fails we don't get a
+  // meaningful error so we just use a blank timestamp to avoid interruptting
+  // the logging features. The *out buffer size should be LOCAL_TIME_STRING_LEN
+  // to ensure there is sufficient space for the full timestamp.
+
+  struct tm local_time;
+  if (os_localtime(&local_time) != NULL) {
+    if (strftime(out, out_len, "%Y-%m-%dT%H:%M:%S", &local_time) != 0) {
+      return;  // success
+    }
+  }
+
+  // couldn't get or format local time - use "0000-00-00 00:00:00"
+  xstrlcpy(out, "0000-00-00T00:00:00", out_len);
+}
+
 static bool log_try_create(char *fname)
 {
   if (fname == NULL || fname[0] == '\0') {
@@ -45,6 +65,13 @@ static bool log_try_create(char *fname)
   fclose(log_file);
   return true;
 }
+
+static char *log_levels[] = {
+  [DEBUG_LOG_LEVEL]   = "DEBUG",
+  [INFO_LOG_LEVEL]    = "INFO ",
+  [WARN_LOG_LEVEL]    = "WARN ",
+  [ERROR_LOG_LEVEL]   = "ERROR",
+};
 
 /// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
 ///
@@ -136,6 +163,96 @@ bool logmsg(int log_level, const char *context, const char *func_name,
 end:
   log_unlock();
   return ret;
+}
+
+/// Log an array of lines to $NVIM_LOG_FILE. The only failure condition is that
+/// the log file can't be opened. Any other errors are written to the log file.
+bool do_log_array(char *log_level, Array lines, Dictionary opt)
+{
+  bool success = true;
+
+  log_lock();
+
+  FILE *log_file = open_log_file();
+
+  if (log_file == NULL) {
+    success = false;
+    goto unlock;
+  }
+
+  // get the current time
+  char date_time[LOCAL_TIME_STRING_LEN];
+  get_local_time_string(date_time, LOCAL_TIME_STRING_LEN);
+
+  // make an err_prefix for error lines that already contains the date and error
+  // level. We make it a generous size because we'll populate it with opt[who]
+  // further down and we can't know how big that will be.
+  size_t error_max = 1000;
+  char *err_prefix = xmalloc(sizeof(char) * error_max);
+  snprintf(err_prefix, error_max, "%s %s nvim_log():",
+           date_time, log_levels[ERROR_LOG_LEVEL]);
+
+  // extract char *who
+  char *who = "";
+  bool who_needs_freeing = false;
+  for (size_t i = 0; i < opt.size; i++) {
+    String k = opt.items[i].key;
+    Object v = opt.items[i].value;
+    if (strequal("who", k.data)) {
+      if (v.type == kObjectTypeString) {
+        size_t who_len = v.data.string.size + 3;
+        who = xmalloc(who_len);
+        who_needs_freeing = true;
+        snprintf(who, who_len, "[%s]", v.data.string.data);
+
+        // also rewrite our err_prefix to include *who
+        snprintf(err_prefix, error_max, "%s %s %s nvim_log():",
+                 date_time, log_levels[ERROR_LOG_LEVEL], who);
+      } else {
+        fprintf(log_file, "%s opt[who] must be a string\n", err_prefix);
+      }
+    } else {
+      fprintf(log_file, "%s unexpected key: opt[%s]\n", err_prefix, k.data);
+    }
+  }
+
+  // work out whether the provided log level is valid; if not, use 'ERROR'
+  char *log_level_str;
+
+  if (strequal(log_level, "ERROR")
+      || strequal(log_level, "WARN")
+      || strequal(log_level, "INFO")
+      || strequal(log_level, "DEBUG")) {
+    log_level_str = log_level;
+  } else {
+    log_level_str = log_levels[ERROR_LOG_LEVEL];
+    fprintf(log_file, "%s invalid log level '%s'\n",  err_prefix, log_level);
+  }
+
+  for (size_t i = 0; i < lines.size; i++) {
+    Object item = lines.items[i];
+    if (item.type == kObjectTypeString) {
+      fprintf(log_file, "%s %s %s %s\n", date_time, log_level_str, who,
+              item.data.string.data);
+    } else {
+      // issue a generic error message for invalid line items
+      fprintf(log_file, "%s lines[%d] should be a string; got %s instead\n",
+              err_prefix, (int)i, get_object_type_name(item.type));
+    }
+  }
+
+  if (log_file != stderr && log_file != stdout) {
+    fclose(log_file);
+  }
+
+  if (who_needs_freeing) {
+    xfree(who);
+  }
+  xfree(err_prefix);
+unlock:
+  log_unlock();
+
+  return success;
 }
 
 void log_uv_handles(void *loop)
@@ -263,24 +380,11 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
                              int line_num, bool eol, const char *fmt,
                              va_list args)
 {
-  static const char *log_levels[] = {
-    [DEBUG_LOG_LEVEL]   = "DEBUG",
-    [INFO_LOG_LEVEL]    = "INFO ",
-    [WARN_LOG_LEVEL]    = "WARN ",
-    [ERROR_LOG_LEVEL]   = "ERROR",
-  };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
-  // Format the timestamp.
-  struct tm local_time;
-  if (os_localtime(&local_time) == NULL) {
-    return false;
-  }
-  char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
-               &local_time) == 0) {
-    return false;
-  }
+  // format current timestamp in local time
+  char date_time[LOCAL_TIME_STRING_LEN];
+  get_local_time_string(date_time, LOCAL_TIME_STRING_LEN);
 
   int millis = 0;
 #if !defined(WIN32)

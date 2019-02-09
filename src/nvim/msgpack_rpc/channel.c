@@ -362,6 +362,10 @@ static void on_request_event(void **argv)
   Array args = e->args;
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
+
+  // TODO: store the channel id in a global somewhere so it can be accessed from
+  // inside the API method
+
   Object result = handler.fn(channel->id, args, &error);
   if (request_id != NO_RESPONSE) {
     // send the response
