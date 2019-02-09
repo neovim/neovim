@@ -2351,7 +2351,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
-			global
+			local to window
 	Characters to fill the statuslines and vertical separators.
 	It is a comma separated list of items:
 
