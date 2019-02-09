@@ -27,6 +27,7 @@
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/getchar.h"
+#include "nvim/fileio.h"
 #include "nvim/ui.h"
 
 /// Helper structure for vim_to_object
@@ -1094,7 +1095,7 @@ static void set_option_value_for(char *key,
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  bufref_T save_curbuf =  { NULL, 0, 0 };
+  aco_save_T aco;
 
   try_start();
   switch (opt_type)
@@ -1115,9 +1116,9 @@ static void set_option_value_for(char *key,
       restore_win(save_curwin, save_curtab, true);
       break;
     case SREQ_BUF:
-      switch_buffer(&save_curbuf, (buf_T *)from);
+      aucmd_prepbuf(&aco, (buf_T *)from);
       set_option_value_err(key, numval, stringval, opt_flags, err);
-      restore_buffer(&save_curbuf);
+      aucmd_restbuf(&aco);
       break;
     case SREQ_GLOBAL:
       set_option_value_err(key, numval, stringval, opt_flags, err);

@@ -31,7 +31,7 @@ enum bln_values {
   BLN_CURBUF = 1,   // May re-use curbuf for new buffer
   BLN_LISTED = 2,   // Put new buffer in buffer list
   BLN_DUMMY  = 4,   // Allocating dummy buffer
-  // TODO(mhinz): merge patch that introduces BLN_NEW
+  BLN_NEW    = 8,   // create a new buffer
   BLN_NOOPT  = 16,  // Don't copy options to existing buffer
 };
 
