@@ -18,6 +18,7 @@ typedef struct growarray {
 } garray_T;
 
 #define GA_EMPTY_INIT_VALUE { 0, 0, 0, 1, NULL }
+#define GA_INIT(itemsize, growsize) { 0, 0, (itemsize), (growsize), NULL }
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 

@@ -200,6 +200,10 @@ void ui_refresh(void)
   screen_resize(width, height);
   p_lz = save_p_lz;
 
+  if (ext_widgets[kUIMessages]) {
+    p_ch = 0;
+    command_height();
+  }
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
@@ -380,6 +384,8 @@ void ui_flush(void)
 {
   cmdline_ui_flush();
   win_ui_flush();
+  msg_ext_ui_flush();
+
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;

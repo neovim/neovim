@@ -44,6 +44,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#include "nvim/api/private/helpers.h"
 
 
 struct dir_stack_T {
@@ -2155,6 +2156,7 @@ win_found:
       } else if (!msg_scrolled && shortmess(SHM_OVERALL)) {
         msg_scroll = false;
       }
+      msg_ext_set_kind("quickfix");
       msg_attr_keep(IObuff, 0, true, false);
       msg_scroll = (int)i;
     }

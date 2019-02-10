@@ -34,11 +34,13 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/mouse.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -107,6 +109,19 @@ static int verbose_did_open = FALSE;
  *		    main_loop().
  *		    This is an allocated string or NULL when not used.
  */
+
+
+// Extended msg state, currently used for external UIs with ext_messages
+static const char *msg_ext_kind = NULL;
+static Array msg_ext_chunks = ARRAY_DICT_INIT;
+static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
+static sattr_T msg_ext_last_attr = -1;
+
+static bool msg_ext_overwrite = false;  ///< will overwrite last message
+static int msg_ext_visible = 0;  ///< number of messages currently visible
+
+/// Shouldn't clear message after leaving cmdline
+static bool msg_ext_keep_after_cmdline = false;
 
 /*
  * msg(s) - displays the string 's' on the status line
@@ -256,7 +271,8 @@ msg_strtrunc (
 
   /* May truncate message to avoid a hit-return prompt */
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
-       && !exmode_active && msg_silent == 0) || force) {
+       && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
+      || force) {
     len = vim_strsize(s);
     if (msg_scrolled != 0)
       /* Use all the columns. */
@@ -594,6 +610,9 @@ static bool emsg_multiline(const char *s, bool multiline)
   }                           // wait_return has reset need_wait_return
                               // and a redraw is expected because
                               // msg_scrolled is non-zero
+  if (msg_ext_kind == NULL) {
+    msg_ext_set_kind("emsg");
+  }
 
   /*
    * Display name and line number for the source of the error.
@@ -802,6 +821,7 @@ static void add_msg_hist(const char *s, int len, int attr, bool multiline)
   p->next = NULL;
   p->attr = attr;
   p->multiline = multiline;
+  p->kind = msg_ext_kind;
   if (last_msg_hist != NULL) {
     last_msg_hist->next = p;
   }
@@ -856,7 +876,6 @@ void ex_messages(void *const eap_p)
     return;
   }
 
-  msg_hist_off = true;
 
   p = first_msg_hist;
 
@@ -874,13 +893,31 @@ void ex_messages(void *const eap_p)
   }
 
   // Display what was not skipped.
-  for (; p != NULL && !got_int; p = p->next) {
-    if (p->msg != NULL) {
-      msg_attr_keep(p->msg, p->attr, false, p->multiline);
+  if (ui_has(kUIMessages)) {
+    Array entries = ARRAY_DICT_INIT;
+    for (; p != NULL; p = p->next) {
+      if (p->msg != NULL && p->msg[0] != NUL) {
+        Array entry = ARRAY_DICT_INIT;
+        ADD(entry, STRING_OBJ(cstr_to_string(p->kind)));
+        Array content_entry = ARRAY_DICT_INIT;
+        ADD(content_entry, INTEGER_OBJ(p->attr));
+        ADD(content_entry, STRING_OBJ(cstr_to_string((char *)(p->msg))));
+        Array content = ARRAY_DICT_INIT;
+        ADD(content, ARRAY_OBJ(content_entry));
+        ADD(entry, ARRAY_OBJ(content));
+        ADD(entries, ARRAY_OBJ(entry));
+      }
     }
+    ui_call_msg_history_show(entries);
+  } else {
+    msg_hist_off = true;
+    for (; p != NULL && !got_int; p = p->next) {
+      if (p->msg != NULL) {
+        msg_attr_keep(p->msg, p->attr, false, p->multiline);
+      }
+    }
+    msg_hist_off = false;
   }
-
-  msg_hist_off = false;
 }
 
 /*
@@ -1058,8 +1095,9 @@ void wait_return(int redraw)
   if (c == ':' || c == '?' || c == '/') {
     if (!exmode_active)
       cmdline_row = msg_row;
-    skip_redraw = TRUE;             /* skip redraw once */
-    do_redraw = FALSE;
+    skip_redraw = true;  // skip redraw once
+    do_redraw = false;
+    msg_ext_keep_after_cmdline = true;
   }
 
   /*
@@ -1084,9 +1122,13 @@ void wait_return(int redraw)
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
     ui_refresh();
-  } else if (!skip_redraw
-             && (redraw == TRUE || (msg_scrolled != 0 && redraw != -1))) {
-    redraw_later(VALID);
+  } else if (!skip_redraw) {
+    if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
+      redraw_later(VALID);
+    }
+    if (ui_has(kUIMessages)) {
+      msg_ext_clear(true);
+    }
   }
 }
 
@@ -1100,8 +1142,10 @@ static void hit_return_msg(void)
   p_more = FALSE;       /* don't want see this message when scrolling back */
   if (msg_didout)       /* start on a new line */
     msg_putchar('\n');
-  if (got_int)
+  msg_ext_set_kind("return_prompt");
+  if (got_int) {
     MSG_PUTS(_("Interrupt: "));
+  }
 
   MSG_PUTS_ATTR(_("Press ENTER or type command to continue"), HL_ATTR(HLF_R));
   if (!msg_use_printf()) {
@@ -1122,6 +1166,17 @@ void set_keep_msg(char_u *s, int attr)
     keep_msg = NULL;
   keep_msg_more = FALSE;
   keep_msg_attr = attr;
+}
+
+void msg_ext_set_kind(const char *msg_kind)
+{
+  // Don't change the label of an existing batch:
+  msg_ext_ui_flush();
+
+  // TODO(bfredl): would be nice to avoid dynamic scoping, but that would
+  // need refactoring the msg_ interface to not be "please pretend nvim is
+  // a terminal for a moment"
+  msg_ext_kind = msg_kind;
 }
 
 /*
@@ -1158,6 +1213,14 @@ void msg_start(void)
     msg_starthere();
   if (msg_silent == 0) {
     msg_didout = FALSE;                     /* no output on current line yet */
+  }
+
+  if (ui_has(kUIMessages)) {
+    msg_ext_ui_flush();
+    if (!msg_scroll && msg_ext_visible) {
+      // Will overwrite last message.
+      msg_ext_overwrite = true;
+    }
   }
 
   // When redirecting, may need to start a new line.
@@ -1727,7 +1790,18 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   // wait-return prompt later.  Needed when scrolling, resetting
   // need_wait_return after some prompt, and then outputting something
   // without scrolling
-  if (msg_scrolled != 0 && !msg_scrolled_ign) {
+  bool overflow = false;
+  if (ui_has(kUIMessages)) {
+    int count = msg_ext_visible + (msg_ext_overwrite ? 0 : 1);
+    // TODO(bfredl): possible extension point, let external UI control this
+    if (count > 1) {
+      overflow = true;
+    }
+  } else {
+    overflow = msg_scrolled != 0;
+  }
+
+  if (overflow && !msg_scrolled_ign) {
     need_wait_return = true;
   }
   msg_didany = true;  // remember that something was outputted
@@ -1765,6 +1839,20 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
   msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
 }
 
+static void msg_ext_emit_chunk(void)
+{
+  // Color was changed or a message flushed, end current chunk.
+  if (msg_ext_last_attr == -1) {
+    return;  // no chunk
+  }
+  Array chunk = ARRAY_DICT_INIT;
+  ADD(chunk, INTEGER_OBJ(msg_ext_last_attr));
+  msg_ext_last_attr = -1;
+  String text = ga_take_string(&msg_ext_last_chunk);
+  ADD(chunk, STRING_OBJ(text));
+  ADD(msg_ext_chunks, ARRAY_OBJ(chunk));
+}
+
 /*
  * The display part of msg_puts_attr_len().
  * May be called recursively to display scroll-back text.
@@ -1783,6 +1871,18 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
   int did_last_char;
 
   did_wait_return = false;
+
+  if (ui_has(kUIMessages)) {
+    if (attr != msg_ext_last_attr) {
+      msg_ext_emit_chunk();
+      msg_ext_last_attr = attr;
+    }
+    // Concat pieces with the same highlight
+    ga_concat_len(&msg_ext_last_chunk, (char *)str,
+                  strnlen((char *)str, maxlen));
+    return;
+  }
+
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
     // We are at the end of the screen line when:
     // - When outputting a newline.
@@ -2607,6 +2707,9 @@ void msg_clr_eos(void)
  */
 void msg_clr_eos_force(void)
 {
+  if (ui_has(kUIMessages)) {
+    return;
+  }
   int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
   int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : (int)Columns;
 
@@ -2643,8 +2746,66 @@ int msg_end(void)
     wait_return(FALSE);
     return FALSE;
   }
-  ui_flush();
-  return TRUE;
+
+  // @TODO(bfredl): calling flush here inhibits substantial performance
+  // improvements. Caller should call ui_flush before waiting on user input or
+  // CPU busywork.
+  ui_flush();  // calls msg_ext_ui_flush
+  return true;
+}
+
+void msg_ext_ui_flush(void)
+{
+  if (!ui_has(kUIMessages)) {
+    return;
+  }
+
+  msg_ext_emit_chunk();
+  if (msg_ext_chunks.size > 0) {
+    ui_call_msg_show(cstr_to_string(msg_ext_kind),
+                     msg_ext_chunks, msg_ext_overwrite);
+    if (!msg_ext_overwrite) {
+      msg_ext_visible++;
+    }
+    msg_ext_kind = NULL;
+    msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+    msg_ext_overwrite = false;
+  }
+}
+
+void msg_ext_flush_showmode(void)
+{
+  // Showmode messages doesn't interrupt normal message flow, so we use
+  // separate event. Still reuse the same chunking logic, for simplicity.
+  msg_ext_emit_chunk();
+  ui_call_msg_showmode(msg_ext_chunks);
+  msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+}
+
+void msg_ext_clear(bool force)
+{
+  if (msg_ext_visible && (!msg_ext_keep_after_cmdline || force)) {
+    ui_call_msg_clear();
+    msg_ext_visible = 0;
+    msg_ext_overwrite = false;  // nothing to overwrite
+  }
+
+  // Only keep once.
+  msg_ext_keep_after_cmdline = false;
+}
+
+void msg_ext_check_prompt(void)
+{
+  // Redraw after cmdline is expected to clear messages.
+  if (msg_ext_did_cmdline) {
+    msg_ext_clear(true);
+    msg_ext_did_cmdline = false;
+  }
+}
+
+bool msg_ext_is_visible(void)
+{
+  return ui_has(kUIMessages) && msg_ext_visible > 0;
 }
 
 /*
@@ -2653,6 +2814,9 @@ int msg_end(void)
  */
 void msg_check(void)
 {
+  if (ui_has(kUIMessages)) {
+    return;
+  }
   if (msg_row == Rows - 1 && msg_col >= sc_col) {
     need_wait_return = TRUE;
     redraw_cmdline = TRUE;

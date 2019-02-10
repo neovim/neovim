@@ -61,6 +61,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
+#include "nvim/api/private/helpers.h"
 
 typedef struct normal_state {
   VimState state;
@@ -1258,8 +1259,9 @@ static void normal_redraw(NormalState *s)
     maketitle();
   }
 
-  // display message after redraw
-  if (keep_msg != NULL) {
+  // Display message after redraw. If an external message is still visible,
+  // it contains the kept message already.
+  if (keep_msg != NULL && !msg_ext_is_visible()) {
     // msg_attr_keep() will set keep_msg to NULL, must free the string here.
     // Don't reset keep_msg, msg_attr_keep() uses it to check for duplicates.
     char *p = (char *)keep_msg;
@@ -3317,7 +3319,8 @@ void clear_showcmd(void)
       else
         sprintf((char *)showcmd_buf, "%d-%d", chars, bytes);
     }
-    showcmd_buf[SHOWCMD_COLS] = NUL;            /* truncate */
+    int limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+    showcmd_buf[limit] = NUL;  // truncate
     showcmd_visual = true;
   } else {
     showcmd_buf[0] = NUL;
@@ -3370,8 +3373,9 @@ bool add_to_showcmd(int c)
     STRCPY(p, "<20>");
   size_t old_len = STRLEN(showcmd_buf);
   size_t extra_len = STRLEN(p);
-  if (old_len + extra_len > SHOWCMD_COLS) {
-    size_t overflow = old_len + extra_len - SHOWCMD_COLS;
+  size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+  if (old_len + extra_len > limit) {
+    size_t overflow = old_len + extra_len - limit;
     memmove(showcmd_buf, showcmd_buf + overflow, old_len - overflow + 1);
   }
   STRCAT(showcmd_buf, p);
@@ -3432,13 +3436,24 @@ void pop_showcmd(void)
 static void display_showcmd(void)
 {
   int len;
-
   len = (int)STRLEN(showcmd_buf);
-  if (len == 0) {
-    showcmd_is_clear = true;
-  } else {
+  showcmd_is_clear = (len == 0);
+
+  if (ui_has(kUIMessages)) {
+    Array content = ARRAY_DICT_INIT;
+    if (len > 0) {
+      Array chunk = ARRAY_DICT_INIT;
+      // placeholder for future highlight support
+      ADD(chunk, INTEGER_OBJ(0));
+      ADD(chunk, STRING_OBJ(cstr_to_string((char *)showcmd_buf)));
+      ADD(content, ARRAY_OBJ(chunk));
+    }
+    ui_call_msg_showcmd(content);
+    return;
+  }
+
+  if (!showcmd_is_clear) {
     grid_puts(&default_grid, showcmd_buf, (int)Rows - 1, sc_col, 0);
-    showcmd_is_clear = false;
   }
 
   /*
