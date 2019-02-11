@@ -1517,7 +1517,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool konsole_pretending_xterm = xterm && konsolev;
   bool gnome_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
@@ -1571,26 +1570,18 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // claim to be xterm.  Or they would mimic xterm properly enough to be
     // treatable as xterm.
 
-    // 2017-04 terminfo.src lacks these.  genuine Xterm has them, as have
-    // the false claimants.
+    // 2017-04 terminfo.src lacks these.  Xterm-likes have them.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
 
     if (true_xterm) {
       // 2017-04 terminfo.src lacks these.  genuine Xterm has them.
       unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
-    }
-    if (true_xterm
-        || iterm_pretending_xterm
-        || gnome_pretending_xterm
-        || konsole_pretending_xterm
-        || nsterm) {
-      // Apple's outdated copy of terminfo.src for MacOS lacks these.
-      unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-      unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     }
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
