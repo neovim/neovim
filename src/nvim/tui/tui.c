@@ -1494,9 +1494,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 #if 0   // We don't need to identify this specifically, for now.
   bool roxterm = !!os_getenv("ROXTERM_ID");
 #endif
+  bool nsterm = terminfo_is_term_family(term, "nsterm");
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
-    || terminfo_is_term_family(term, "nsterm");
+    || nsterm;
   bool kitty = terminfo_is_term_family(term, "xterm-kitty");
   bool linuxvt = terminfo_is_term_family(term, "linux");
   bool bsdvt = terminfo_is_bsd_console(term);
@@ -1584,9 +1585,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     if (true_xterm
         || iterm_pretending_xterm
         || gnome_pretending_xterm
-        || konsole_pretending_xterm) {
+        || konsole_pretending_xterm
+        || nsterm) {
       // Apple's outdated copy of terminfo.src for MacOS lacks these.
-      // genuine Xterm and three false claimants have them.
       unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
       unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     }
@@ -1610,7 +1611,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // 2017-04 terminfo.src lacks this.
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
-    // Apple's outdated copy of terminfo.src for MacOS lacks these.
     unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
     unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
     unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
@@ -1778,9 +1778,10 @@ static void augment_terminfo(TUIData *data, const char *term,
                              long konsolev, bool iterm_env)
 {
   unibi_term *ut = data->ut;
+  bool nsterm = terminfo_is_term_family(term, "nsterm");
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
-    || terminfo_is_term_family(term, "nsterm");
+    || nsterm;
   bool bsdvt = terminfo_is_bsd_console(term);
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
