@@ -238,6 +238,8 @@ static void terminfo_start(UI *ui)
   const char *vte_version_env = os_getenv("VTE_VERSION");
   long vtev = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
+  bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
+    || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
@@ -245,8 +247,8 @@ static void terminfo_start(UI *ui)
   long konsolev = konsolev_env ? strtol(konsolev_env, NULL, 10)
                                : (konsole ? 1 : 0);
 
-  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env);
-  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env);
+  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
+  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -1487,14 +1489,13 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                long konsolev, bool iterm_env)
+                                long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
   const char *xterm_version = os_getenv("XTERM_VERSION");
 #if 0   // We don't need to identify this specifically, for now.
   bool roxterm = !!os_getenv("ROXTERM_ID");
 #endif
-  bool nsterm = terminfo_is_term_family(term, "nsterm");
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
     || nsterm;
@@ -1777,10 +1778,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
                              const char *colorterm, long vte_version,
-                             long konsolev, bool iterm_env)
+                             long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
-  bool nsterm = terminfo_is_term_family(term, "nsterm");
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
     || nsterm;
