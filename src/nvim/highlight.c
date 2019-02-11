@@ -314,6 +314,14 @@ static HlAttrs get_colors_force(int attr)
   }
   HL_SET_DEFAULT_COLORS(attrs.rgb_fg_color, attrs.rgb_bg_color,
                         attrs.rgb_sp_color);
+
+  if (attrs.rgb_ae_attr & HL_INVERSE) {
+    int temp = attrs.rgb_bg_color;
+    attrs.rgb_bg_color = attrs.rgb_fg_color;
+    attrs.rgb_fg_color = temp;
+    attrs.rgb_ae_attr &= ~HL_INVERSE;
+  }
+
   return attrs;
 }
 
@@ -338,6 +346,13 @@ int hl_blend_attrs(int back_attr, int front_attr, bool through)
     cattrs = battrs;
     cattrs.rgb_fg_color = rgb_blend((int)p_pb, battrs.rgb_fg_color,
                                     fattrs.rgb_bg_color);
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
+      cattrs.rgb_sp_color = rgb_blend((int)p_pb, battrs.rgb_sp_color,
+                                      fattrs.rgb_bg_color);
+    } else {
+      cattrs.rgb_sp_color = -1;
+    }
+
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
     cattrs.cterm_fg_color = fattrs.cterm_bg_color;
   } else {
@@ -347,6 +362,12 @@ int hl_blend_attrs(int back_attr, int front_attr, bool through)
     }
     cattrs.rgb_fg_color = rgb_blend((int)p_pb/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
+    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
+      cattrs.rgb_sp_color = rgb_blend((int)p_pb/2, battrs.rgb_bg_color,
+                                      fattrs.rgb_sp_color);
+    } else {
+      cattrs.rgb_sp_color = -1;
+    }
   }
   cattrs.rgb_bg_color = rgb_blend((int)p_pb, battrs.rgb_bg_color,
                                   fattrs.rgb_bg_color);
