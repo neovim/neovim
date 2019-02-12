@@ -168,6 +168,22 @@ class CodeView( object  ):
             file_name ) )
 
 
+  def BreakpointsAsQuickFix( self ):
+    qf = []
+    for file_name, breakpoints in self._breakpoints.items():
+      for breakpoint in breakpoints:
+        qf.append( {
+            'filename': file_name,
+            'lnum': breakpoint.get( 'line', 1 ),
+            'col': 1,
+            'type': 'L',
+            'valid': 1 if breakpoint.get( 'verified' ) else 0,
+            'text': "Line breakpoint - {}".format(
+              'VERIFIED' if breakpoint.get( 'verified' ) else 'INVALID' )
+        } )
+    return qf
+
+
   def LaunchTerminal( self, params ):
     # kind = params.get( 'kind', 'integrated' )
 

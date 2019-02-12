@@ -66,6 +66,39 @@ class DebugSession( object ):
     self._init_complete = False
     self._launch_complete = False
 
+  def ListBreakpoints( self ):
+    # FIXME: Handling of breakpoints is a mess, split between _codeView and this
+    # object. This makes no sense and should be centralised so that we don't
+    # have this duplication and bug factory.
+    qf = []
+    if self._connection and self._codeView:
+      qf = self._codeView.BreakpointsAsQuickFix()
+    else:
+      for file_name, breakpoints in self._line_breakpoints.items():
+        for bp in breakpoints:
+          qf.append( {
+            'filename': file_name,
+            'lnum': bp[ 'line' ],
+            'col': 1,
+            'type': 'L',
+            'valid': 1 if bp[ 'state' ] == 'ENABLED' else 0,
+            'text': "Line breakpoint - {}".format(
+              bp[ 'state' ] )
+          } )
+      # I think this shows that the qf list is not right for this.
+      for bp in self._func_breakpoints:
+        qf.append( {
+          'filename': '',
+          'lnum': 1,
+          'col': 1,
+          'type': 'F',
+          'valid': 1,
+          'text': "Function breakpoint: {}".format( bp[ 'function' ] ),
+        } )
+
+    vim.eval( 'setqflist( {} )'.format( json.dumps( qf ) ) )
+
+
   def ToggleBreakpoint( self ):
     line, column = vim.current.window.cursor
     file_name = vim.current.buffer.name
