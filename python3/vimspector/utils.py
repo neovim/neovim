@@ -51,15 +51,39 @@ def OpenFileInCurrentWindow( file_name ):
   return vim.buffers[ buffer_number ]
 
 
-def SetUpTailBuffer( buf, path ):
-  cmd = [ 'tail', '-F', '-n', '0', '--', path ]
-  return vim.eval( 'job_start( {}, {{ "out_io": "buffer",'
-                                   ' "out_buf": {},'
-                                   ' "in_io": "null",'
-                                   ' "err_io": "null",'
-                                   ' "stoponexit": "term",'
-                                   ' "out_modifiable": 0  }} )'.format(
-                                     json.dumps( cmd ), buf.number ) )
+def SetUpCommandBuffer( cmd, name ):
+  vim.command(
+    'let g:vimspector_command_job_{name} = job_start('
+    '    {cmd},'
+    '    {{'
+    '      "out_io": "buffer",'
+    '      "in_io": "null",'
+    '      "err_io": "buffer",'
+    '      "out_name": "_vimspector_log_{name}",'
+    '      "err_name": "_vimspector_log_{name}",'
+    '      "out_modifiable": 0,'
+    '      "err_modifiable": 0,'
+    '      "stoponexit": "term",'
+    '    }} )'.format( name = name,
+                       cmd = json.dumps( cmd ) ) )
+
+  stdout = vim.eval( 'ch_getbufnr( '
+                     '  job_getchannel( g:vimspector_command_job_{name} ), '
+                     '  "out"'
+                     ')'.format( name = name ) )
+  stderr = vim.eval( 'ch_getbufnr( '
+                     '  job_getchannel( g:vimspector_command_job_{name} ), '
+                     '  "err"'
+                     ')'.format( name = name ) )
+
+  assert stdout == stderr
+  return vim.buffers[ int( stdout ) ]
+
+
+def CleanUpCommand( name ):
+  cmd =  'job_stop(  g:vimspector_command_job_{name}, "kill" )'.format(
+    name = name ) 
+  vim.eval( cmd )
 
 
 def TerminateJob( job ):
@@ -253,14 +277,11 @@ def AppendToBuffer( buf, line_or_lines, modified=False ):
     else:
       line = 1
       buf[:] = line_or_lines
-  except vim.error as e:
+  except:
     # There seem to be a lot of Vim bugs that lead to E351, whose help says that
     # this is an internal error. Ignore the error, but write a trace to the log.
-    if 'E315' in str( e ):
-      logging.getLogger( __name__ ).exception(
-        'Internal error while updating buffer' )
-    else:
-      raise e
+    logging.getLogger( __name__ ).exception(
+      'Internal error while updating buffer %s (%s)', buf.name, buf.number )
   finally:
     if not modified:
       buf.options[ 'modified' ] = False

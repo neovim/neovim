@@ -24,7 +24,7 @@ class TabBuffer( object ):
     self.buf = buf
     self.index = index
     self.flag = False
-    self.job = None
+    self.is_job = False
 
 
 BUFFER_MAP = {
@@ -54,7 +54,7 @@ class OutputView( object ):
 
     self._ShowOutput( 'Console' )
 
-  def ServerEcho( self, text ):
+  def Print( self, categroy, text ):
     self._Print( 'server', text.splitlines() )
 
   def OnOutput( self, event ):
@@ -93,12 +93,10 @@ class OutputView( object ):
     self.Clear()
 
   def Clear( self ):
-    for buf in self._buffers:
-      vim.command( 'bwipeout! {0}'.format( self._buffers[ buf ].buf.name ) )
-
-    if 'Vimspector' in self._buffers:
-      if self._buffers[ 'Vimspector' ].job is not None:
-        utils.TerminateJob( self._buffers[ 'Vimspector' ].job )
+    for category, tab_buffer in self._buffers.items():
+      if tab_buffer.is_job:
+        utils.CleanUpCommand( category )
+      vim.command( 'bdelete! {0}'.format( tab_buffer.buf.number ) )
 
     self._buffers.clear()
 
@@ -113,6 +111,7 @@ class OutputView( object ):
 
   def Evaluate( self, frame, expression ):
     if not frame:
+      self.Print( 'Console', 'There is no current stack frame' )
       return
 
     console = self._buffers[ 'Console' ].buf
@@ -144,17 +143,26 @@ class OutputView( object ):
         vim.current.window = self._window
         self._RenderWinBar( category )
 
-  def _CreateBuffer( self, category, file_name = None ):
+
+  def RunJobWithOutput( self, category, cmd ):
+    self._CreateBuffer( category, cmd = cmd )
+
+
+  def _CreateBuffer( self, category, file_name = None, cmd = None ):
     with utils.RestoreCurrentWindow():
       vim.current.window = self._window
 
       with utils.RestoreCurrentBuffer( self._window ):
 
         if file_name is not None:
-          tab_buffer = TabBuffer( utils.BufferForFile( file_name ),
-                                  len( self._buffers ) )
-          tab_buffer.job = utils.SetUpTailBuffer( tab_buffer.buf, file_name )
-          self._buffers[ category ] = tab_buffer
+          assert cmd is None
+          cmd = [ 'tail', '-F', '-n', '+1', '--', file_name ]
+
+        if cmd is not None:
+          buf = utils.SetUpCommandBuffer( cmd, category )
+          self._buffers[ category ] = TabBuffer( buf, len( self._buffers ) )
+          self._buffers[ category ].is_job = True
+          self._RenderWinBar( category )
         else:
           vim.command( 'enew' )
           tab_buffer = TabBuffer( vim.current.buffer, len( self._buffers ) )
@@ -170,7 +178,7 @@ class OutputView( object ):
               tab_buffer.buf,
               'vimspector.Output:{0}'.format( category ) )
 
-        self._RenderWinBar( category )
+          self._RenderWinBar( category )
 
   def _RenderWinBar( self, category ):
     tab_buffer = self._buffers[ category ]

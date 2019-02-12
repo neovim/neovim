@@ -58,25 +58,6 @@ function! s:_Send( msg ) abort
   return 1
 endfunction
 
-function! vimspector#internal#job#RunCommand( cmd ) abort
-  return job_start( a:cmd,
-        \           {
-        \               'in_mode': 'raw',
-        \               'out_mode': 'raw',
-        \               'err_mode': 'raw',
-        \               'out_cb': funcref( 's:_OnServerError' ),
-        \               'err_cb': funcref( 's:_OnServerError' ),
-        \               'stoponexit': 'term',
-        \           }
-        \         )
-endfunction
-
-function! vimspector#internal#job#KillCommand( job ) abort
-  if job_status( a:job ) == 'run'
-    call job_stop( a:job, 'term' )
-  endif
-endfunction
-
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
     echom "Not starging: Job is already running"

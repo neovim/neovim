@@ -211,7 +211,8 @@ class DebugSession( object ):
   def OnServerStderr( self, data ):
     self._logger.info( "Server stderr: %s", data )
     if self._outputView:
-      self._outputView.ServerEcho( data )
+      self._outputView.Print( 'server', data )
+
 
   def OnRequestTimeout( self, timer_id ):
     if self._connection:
@@ -461,11 +462,8 @@ class DebugSession( object ):
       for index, item in enumerate( cmd ):
         cmd[ index ] = item.replace( '%PID%', pid )
 
-      # TODO: Log files, etc. ?
       self._logger.debug( 'Running remote app: %s', cmd )
-      self._attach_process = vim.eval(
-        'vimspector#internal#job#RunCommand( {} )'.format(
-          json.dumps( cmd ) ) )
+      self._outputView.RunJobWithOutput( 'Remote', cmd )
     else:
       if atttach_config[ 'pidSelect' ] == 'ask':
         pid = utils.AskForInput( 'Enter PID to attach to: ' )
@@ -478,7 +476,7 @@ class DebugSession( object ):
         atttach_config[ 'pidSelect' ] ) )
 
 
-  def _PrepareRun( self, adapter_config, launch_config ):
+  def _PrepareLaunch( self, command_line, adapter_config, launch_config ):
     run_config = adapter_config.get( 'launch', {} )
 
     if 'remote' in run_config:
@@ -490,10 +488,18 @@ class DebugSession( object ):
         ssh.append( remote[ 'host' ] )
 
       cmd = ssh + remote[ 'runCommand' ][:]
-      self._logger.debug( 'Running remote app: %s', cmd )
-      self._attach_process = vim.eval(
-        'vimspector#internal#job#RunCommand( {} )'.format(
-          json.dumps( cmd ) ) )
+      full_cmd = []
+      for item in cmd:
+        if isinstance( command_line, list ):
+          if item == '%CMD%':
+            full_cmd.extend( command_line )
+          else:
+            full_cmd.append( item )
+        else:
+          full_cmd.append( item.replace( '%CMD%', command_line ) )
+
+      self._logger.debug( 'Running remote app: %s', full_cmd )
+      self._outputView.RunJobWithOutput( 'Remote', full_cmd )
 
 
   def _Initialise( self ):
@@ -518,17 +524,24 @@ class DebugSession( object ):
   def OnFailure( self, reason, message ):
     msg = "Request for '{}' failed: {}".format( message[ 'command' ],
                                                 reason )
-    self._outputView.ServerEcho( msg )
+    self._outputView.Print( 'server', msg )
 
   def _Launch( self ):
     self._logger.debug( "LAUNCH!" )
     adapter_config = self._adapter
     launch_config = self._configuration[ 'configuration' ]
 
-    if launch_config.get( 'request' ) == "attach":
+    request = self._configuration.get(
+      'remote-request',
+      launch_config.get( 'request', 'launch' ) )
+
+    if request == "attach":
       self._PrepareAttach( adapter_config, launch_config )
-    elif launch_config.get( 'request' ) == "run":
-      self._PrepareRun( adapter_config, launch_config )
+    elif request == "launch":
+      # FIXME: This cmdLine hack is not fun. 
+      self._PrepareLaunch( self._configuration.get( 'remote-cmdLine', [] ),
+                           adapter_config,
+                           launch_config )
 
     # FIXME: name is mandatory. Forcefully add it (we should really use the
     # _actual_ name, but that isn't actually remembered at this point)
@@ -730,6 +743,6 @@ class DebugSession( object ):
     utils.UserMessage( msg, persist = True )
 
     if self._outputView:
-      self._outputView.ServerEcho( msg )
+      self._outputView.Print( 'server', msg )
 
     self._stackTraceView.OnStopped( event )
