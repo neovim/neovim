@@ -1273,7 +1273,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('works with pumblend', function()
+  it("'pumblend' RGB-color", function()
     screen:try_resize(60,14)
     screen:set_default_attr_ids({
       [1] = {background = Screen.colors.Yellow},
@@ -1446,6 +1446,43 @@ describe('builtin popupmenu', function()
       reprehenderit in v{1:ol}uptate v{3:el}it esse cillum                |
       {5:[No Name] [+]                                               }|
       {20:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it("'pumblend' 256-color (non-RGB)", function()
+    screen:detach()
+    screen = Screen.new(60, 8)
+    screen:attach({rgb=false, ext_popupmenu=false})
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Grey0, background = tonumber('0x000007')},
+      [2] = {foreground = tonumber('0x000055'), background = tonumber('0x000007')},
+      [3] = {foreground = tonumber('0x00008f'), background = Screen.colors.Grey0},
+      [4] = {foreground = Screen.colors.Grey0, background = tonumber('0x0000e1')},
+      [5] = {foreground = tonumber('0x0000d1'), background = tonumber('0x0000e1')},
+      [6] = {foreground = Screen.colors.NavyBlue, background = tonumber('0x0000f8')},
+      [7] = {foreground = tonumber('0x0000a5'), background = tonumber('0x0000f8')},
+      [8] = {foreground = tonumber('0x00000c')},
+      [9] = {bold = true},
+      [10] = {foreground = tonumber('0x000002')},
+    })
+    command('set notermguicolors pumblend=10')
+    insert([[
+      Lorem ipsum dolor sit amet, consectetur
+      adipisicing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua.
+      Ut enim ad minim veniam, quis nostrud
+      laborum.]])
+
+    feed('ggOdo<c-x><c-n>')
+    screen:expect([[
+      dolor^                                                       |
+      {1:dolor}{2: ipsum dol}or sit amet, consectetur                     |
+      {4:do}{5:ipisicing eli}t, sed do eiusmod tempor                     |
+      {4:dolore}{5:dunt ut l}abore et dolore magna aliqua.                |
+      Ut enim ad minim veniam, quis nostrud                       |
+      laborum.                                                    |
+      {8:~                                                           }|
+      {9:-- Keyword Local completion (^N^P) }{10:match 1 of 3}             |
     ]])
   end)
 end)

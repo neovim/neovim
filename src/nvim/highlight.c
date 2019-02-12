@@ -410,58 +410,13 @@ static int cterm_blend(int ratio, int c1, int c2)
 }
 
 /// Converts RGB color to 8-bit color (0-255).
-/// Reverse engineer the RGB value into a cterm color index.
-/// First color is 1.  Return 0 if no match found (default color).
 static int hl_rgb2cterm_color(int rgb)
 {
-  int red = (rgb & 0xFF0000) >> 16;
-  int green = (rgb & 0x00FF00) >> 8;
-  int blue = (rgb & 0x0000FF) >> 0;
+  int r = (rgb & 0xFF0000) >> 16;
+  int g = (rgb & 0x00FF00) >> 8;
+  int b = (rgb & 0x0000FF) >> 0;
 
-  if (red == blue && red == green) {
-    // 24-color greyscale plus white and black.
-    static int cutoff[23] = {
-      0x0D, 0x17, 0x21, 0x2B, 0x35, 0x3F, 0x49, 0x53, 0x5D, 0x67,
-      0x71, 0x7B, 0x85, 0x8F, 0x99, 0xA3, 0xAD, 0xB7, 0xC1, 0xCB,
-      0xD5, 0xDF, 0xE9};
-    int i;
-
-    if (red < 5) {
-      return 17;  // 00/00/00
-    }
-    if (red > 245) {  // ff/ff/ff
-      return 232;
-    }
-    for (i = 0; i < 23; ++i) {
-      if (red < cutoff[i]) {
-        return i + 233;
-      }
-    }
-    return 256;
-  }
-  {
-    static int cutoff[5] = {0x2F, 0x73, 0x9B, 0xC3, 0xEB};
-    int ri, gi, bi;
-
-    // 216-color cube.
-    for (ri = 0; ri < 5; ++ri) {
-      if (red < cutoff[ri]) {
-        break;
-      }
-    }
-    for (gi = 0; gi < 5; ++gi) {
-      if (green < cutoff[gi]) {
-        break;
-      }
-    }
-    for (bi = 0; bi < 5; ++bi) {
-      if (blue < cutoff[bi]) {
-        break;
-      }
-    }
-    return 17 + ri * 36 + gi * 6 + bi;
-  }
-  return 0;
+  return (r * 6 / 256) * 36 + (g * 6 / 256) * 6 + (b * 6 / 256);
 }
 
 /// Converts 8-bit color (0-255) to RGB color.
@@ -496,10 +451,11 @@ static int hl_cterm2rgb_color(int nr)
     { 255, 255, 255, 16 } ,  // white
   };
 
-  int r;
-  int g;
-  int b;
+  int r = 0;
+  int g = 0;
+  int b = 0;
   int idx;
+  // *ansi_idx = 0;
 
   if (nr < 16) {
     r = ansi_table[nr][0];
@@ -518,11 +474,6 @@ static int hl_cterm2rgb_color(int nr)
     g = grey_ramp[idx];
     b = grey_ramp[idx];
     // *ansi_idx = -1;
-  } else {
-    r = 0;
-    g = 0;
-    b = 0;
-    // *ansi_idx = 0;
   }
   return (r << 16) + (g << 8) + b;
 }
