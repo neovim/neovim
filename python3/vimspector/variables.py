@@ -92,6 +92,9 @@ class VariablesView( object ):
     with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
       utils.ClearBuffer( self._watch.win.buffer )
 
+  def ConnectionUp( self, connection ):
+      self._connection = connection
+
   def ConnectionClosed( self ):
     self.Clear()
     self._connection = None

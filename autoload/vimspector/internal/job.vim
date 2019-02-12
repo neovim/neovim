@@ -20,24 +20,21 @@ set cpo&vim
 " }}}
 
 function! s:_OnServerData( channel, data ) abort
-  py3 << EOF
-_vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
-EOF
+  py3 _vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
 endfunction
 
 function! s:_OnServerError( channel, data ) abort
-  py3 << EOF
-_vimspector_session.OnServerStderr( vim.eval( 'a:data' ) )
-EOF
+  py3 _vimspector_session.OnServerStderr( vim.eval( 'a:data' ) )
 endfunction
 
 function! s:_OnExit( channel, status ) abort
   echom "Channel exit with status " . a:status
+  unlet s:job 
+  py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
 function! s:_OnClose( channel ) abort
   echom "Channel closed"
-  " py3 _vimspector_session.OnChannelClosed()
 endfunction
 
 function! s:_Send( msg ) abort
@@ -120,8 +117,6 @@ function! vimspector#internal#job#StopDebugSession() abort
   if job_status( s:job ) == 'run'
     call job_stop( s:job, 'term' )
   endif
-
-  unlet s:job
 endfunction
 
 function! vimspector#internal#job#Reset() abort

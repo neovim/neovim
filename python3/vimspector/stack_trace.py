@@ -37,6 +37,12 @@ class StackTraceView( object ):
     self._line_to_frame = {}
     self._line_to_thread = {}
 
+    # TODO: We really need a proper state model
+    # 
+    # AWAIT_CONNECTION -- OnServerReady / RequestThreads --> REQUESTING_THREADS
+    # REQUESTING -- OnGotThreads / RequestScopes --> REQUESTING_SCOPES
+    #
+
 
   def GetCurrentThreadId( self ):
     return self._currentThread
@@ -50,6 +56,9 @@ class StackTraceView( object ):
     self._threads = []
     with utils.ModifiableScratchBuffer( self._buf ):
       utils.ClearBuffer( self._buf )
+
+  def ConnectionUp( self, connection ):
+      self._connection = connection
 
   def ConnectionClosed( self ):
     self.Clear()

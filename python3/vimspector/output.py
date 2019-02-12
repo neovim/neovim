@@ -82,7 +82,11 @@ class OutputView( object ):
       with utils.RestoreCurrentBuffer( self._window ):
         self._ShowOutput( category )
 
+  def ConnectionUp( self, connection ):
+      self._connection = connection
+
   def ConnectionClosed( self ):
+    # Don't clear because output is probably still useful
     self._connection = None
 
   def Reset( self ):

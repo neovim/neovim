@@ -37,12 +37,12 @@ class DebugSession( object ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
-    self._connection = None
-
     self._uiTab = None
     self._stackTraceView = None
     self._variablesView = None
     self._outputView = None
+
+    self._run_on_server_exit = None
 
     self._next_sign_id = SIGN_ID_OFFSET
 
@@ -54,14 +54,17 @@ class DebugSession( object ):
     #    messy and ill-defined.
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
-    self._configuration = None
 
-    self._attach_process = None
-    self._init_complete = False
-    self._launch_complete = False
+    self._ResetServerState()
 
     vim.command( 'sign define vimspectorBP text==> texthl=Error' )
     vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
+
+  def _ResetServerState( self ):
+    self._connection = None
+    self._configuration = None
+    self._init_complete = False
+    self._launch_complete = False
 
   def ToggleBreakpoint( self ):
     line, column = vim.current.window.cursor
@@ -167,26 +170,26 @@ class DebugSession( object ):
     self._StartWithConfiguration( configuration, adapter )
 
   def _StartWithConfiguration( self, configuration, adapter ):
-    self._configuration = configuration
-    self._adapter = adapter
-
-    self._logger.info( 'Configuration: {0}'.format( json.dumps(
-      self._configuration ) ) )
-    self._logger.info( 'Adapter: {0}'.format( json.dumps(
-      self._adapter ) ) )
-
     def start():
-      self._StartDebugAdapter()
-      self._Initialise()
+      self._configuration = configuration
+      self._adapter = adapter
+
+      self._logger.info( 'Configuration: {0}'.format( json.dumps(
+        self._configuration ) ) )
+      self._logger.info( 'Adapter: {0}'.format( json.dumps(
+        self._adapter ) ) )
 
       if not self._uiTab:
         self._SetUpUI()
       else:
         vim.current.tabpage = self._uiTab
-        # FIXME: Encapsulation
-        self._stackTraceView._connection = self._connection
-        self._variablesView._connection = self._connection
-        self._outputView._connection = self._connection
+
+      self._StartDebugAdapter()
+      self._Initialise()
+
+      self._stackTraceView.ConnectionUp( self._connection )
+      self._variablesView.ConnectionUp( self._connection )
+      self._outputView.ConnectionUp( self._connection )
 
     if self._connection:
       self._StopDebugAdapter( start )
@@ -215,6 +218,7 @@ class DebugSession( object ):
       self._connection.OnRequestTimeout( timer_id )
 
   def OnChannelClosed( self ):
+    # TODO: Not calld
     self._connection = None
 
   def Stop( self ):
@@ -227,15 +231,6 @@ class DebugSession( object ):
       self._Reset()
 
   def _Reset( self ):
-    if self._attach_process:
-      vim.eval( 'vimspector#internal#job#KillCommand( {} )'.format(
-        json.dumps( self._attach_process ) ) )
-      self._attach_process = None
-
-    self._connection = None
-    self._init_complete = False
-    self._launch_complete = False
-
     if self._uiTab:
       self._stackTraceView.Reset()
       self._variablesView.Reset()
@@ -243,6 +238,7 @@ class DebugSession( object ):
       self._codeView.Reset()
       vim.current.tabpage = self._uiTab
       vim.command( 'tabclose!' )
+      self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers
     self._UpdateUIBreakpoints()
@@ -381,11 +377,17 @@ class DebugSession( object ):
     return True
 
   def _StartDebugAdapter( self ):
+    if self._connection:
+      utils.UserMessage( 'The connection is already created. Please try again',
+                         persist = True )
+      return
+
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
       self._adapter ) ) )
 
     self._init_complete = False
     self._launch_complete = False
+    self._run_on_server_exit = None
 
     self._connection_type = 'job'
     if 'port' in self._adapter:
@@ -423,12 +425,9 @@ class DebugSession( object ):
       vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
         self._connection_type ) )
 
-      self._connection.Reset()
-      self._stackTraceView.ConnectionClosed()
-      self._variablesView.ConnectionClosed()
-      self._outputView.ConnectionClosed()
       if callback:
-        callback()
+        assert not self._run_on_server_exit
+        self._run_on_server_exit = callback
 
     self._connection.DoRequest( handler, {
       'command': 'disconnect',
@@ -537,14 +536,6 @@ class DebugSession( object ):
       launch_config[ 'name' ] = 'test'
 
     self._connection.DoRequest(
-      # NOTE: You might think we should only load threads on a stopped event,
-      # but the spec is clear:
-      #
-      #   After a successful launch or attach the development tool requests the
-      #   baseline of currently existing threads with the threads request and
-      #   then starts to listen for thread events to detect new or terminated
-      #   threads.
-      #
       lambda msg: self._OnLaunchComplete(),
       {
         'command': launch_config[ 'request' ],
@@ -568,13 +559,25 @@ class DebugSession( object ):
     self._LoadThreadsIfReady()
 
   def _LoadThreadsIfReady( self ):
+    # NOTE: You might think we should only load threads on a stopped event,
+    # but the spec is clear:
+    #
+    #   After a successful launch or attach the development tool requests the
+    #   baseline of currently existing threads with the threads request and
+    #   then starts to listen for thread events to detect new or terminated
+    #   threads.
+    #
+    # Of course, specs are basically guidelines. MS's own cpptools simply
+    # doesn't respond top threads request when attaching via gdbserver. At
+    # least it would apear that way.
+    #
     if self._launch_complete and self._init_complete:
       self._stackTraceView.LoadThreads( True )
 
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
     self._connection.DoRequest(
-      self._OnInitializeComplete(),
+      lambda msg: self._OnInitializeComplete(),
       {
         'command': 'configurationDone',
       }
@@ -629,9 +632,21 @@ class DebugSession( object ):
     self._stackTraceView.Clear()
     self._variablesView.Clear()
 
-  def OnEvent_terminated( self, message ):
+  def OnServerExit( self, status ):
     self.Clear()
-    self._connection = None
+
+    self._connection.Reset()
+    self._stackTraceView.ConnectionClosed()
+    self._variablesView.ConnectionClosed()
+    self._outputView.ConnectionClosed()
+
+    self._ResetServerState()
+
+    if self._run_on_server_exit:
+      self._run_on_server_exit()
+
+  def OnEvent_terminated( self, message ):
+    # We will handle this when the server actually exists
     utils.UserMessage( "Debugging was terminated." )
 
   def _RemoveBreakpoints( self ):
