@@ -238,6 +238,8 @@ static void terminfo_start(UI *ui)
   const char *vte_version_env = os_getenv("VTE_VERSION");
   long vtev = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
+  bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
+    || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
     || os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
@@ -245,8 +247,8 @@ static void terminfo_start(UI *ui)
   long konsolev = konsolev_env ? strtol(konsolev_env, NULL, 10)
                                : (konsole ? 1 : 0);
 
-  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env);
-  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env);
+  patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
+  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -1487,7 +1489,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
-                                long konsolev, bool iterm_env)
+                                long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
   const char *xterm_version = os_getenv("XTERM_VERSION");
@@ -1496,7 +1498,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 #endif
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
-    || terminfo_is_term_family(term, "nsterm");
+    || nsterm;
   bool kitty = terminfo_is_term_family(term, "xterm-kitty");
   bool linuxvt = terminfo_is_term_family(term, "linux");
   bool bsdvt = terminfo_is_bsd_console(term);
@@ -1515,7 +1517,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool konsole_pretending_xterm = xterm && konsolev;
   bool gnome_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
@@ -1569,26 +1570,18 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // claim to be xterm.  Or they would mimic xterm properly enough to be
     // treatable as xterm.
 
-    // 2017-04 terminfo.src lacks these.  genuine Xterm has them, as have
-    // the false claimants.
+    // 2017-04 terminfo.src lacks these.  Xterm-likes have them.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
 
     if (true_xterm) {
       // 2017-04 terminfo.src lacks these.  genuine Xterm has them.
       unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
-    }
-    if (true_xterm
-        || iterm_pretending_xterm
-        || gnome_pretending_xterm
-        || konsole_pretending_xterm) {
-      // Apple's outdated copy of terminfo.src for MacOS lacks these.
-      // genuine Xterm and three false claimants have them.
-      unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
-      unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     }
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
@@ -1606,11 +1599,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
   } else if (terminfo_is_term_family(term, "interix")) {
     // 2017-04 terminfo.src lacks this.
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
-    // Apple's outdated copy of terminfo.src for MacOS lacks these.
     unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
     unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
     unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
@@ -1775,12 +1769,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
                              const char *colorterm, long vte_version,
-                             long konsolev, bool iterm_env)
+                             long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
   bool xterm = terminfo_is_term_family(term, "xterm")
     // Treat Terminal.app as generic xterm-like, for now.
-    || terminfo_is_term_family(term, "nsterm");
+    || nsterm;
   bool bsdvt = terminfo_is_bsd_console(term);
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
