@@ -236,7 +236,8 @@ Terminal *terminal_open(TerminalOptions opts)
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;     // 'nomodifiable'
   curbuf->b_p_ul = -1;        // 'undolevels'
-  curbuf->b_p_scbk = (p_scbk == -1) ? 10000 : MAX(1, p_scbk);  // 'scrollback'
+  curbuf->b_p_scbk =          // 'scrollback' (initialize local from global)
+    (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
   curbuf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
@@ -244,9 +245,10 @@ Terminal *terminal_open(TerminalOptions opts)
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
-
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
+  // Local 'scrollback' _after_ autocmds.
+  curbuf->b_p_scbk = (curbuf->b_p_scbk < 1) ? SB_MAX : curbuf->b_p_scbk;
 
   // Configure the scrollback buffer.
   rv->sb_size = (size_t)curbuf->b_p_scbk;
@@ -1161,7 +1163,7 @@ static void refresh_size(Terminal *term, buf_T *buf)
 /// Adjusts scrollback storage after 'scrollback' option changed.
 static void on_scrollback_option_changed(Terminal *term, buf_T *buf)
 {
-  if (buf->b_p_scbk < 1) {
+  if (buf->b_p_scbk < 1) {  // Local 'scrollback' was set to -1.
     buf->b_p_scbk = SB_MAX;
   }
   const size_t scbk = (size_t)buf->b_p_scbk;
