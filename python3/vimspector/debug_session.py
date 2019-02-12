@@ -136,7 +136,7 @@ class DebugSession( object ):
     else:
       configuration_name = utils.SelectFromList(
         'Which launch configuration?',
-        list( configurations.keys() ) )
+        sorted( list( configurations.keys() ) ) )
 
     if not configuration_name or configuration_name not in configurations:
       return
