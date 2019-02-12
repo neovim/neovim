@@ -160,6 +160,7 @@ the editor.
 	'guifontset'
 	'guifontwide'
 	'linespace'
+	'pumblend'
 	'showtabline'
 	'termguicolors'
 	"ext_*" (all |ui-ext-options|)
