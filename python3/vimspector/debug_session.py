@@ -457,6 +457,11 @@ class DebugSession( object ):
         'utf-8' ).strip()
       self._logger.debug( 'Got PID: %s', pid )
 
+      if not pid:
+        # FIXME: We should raise an exception here or something
+        utils.UserMessage( 'Unable to get PID', persist = True )
+        return
+
       cmd = ssh + remote[ 'attachCommand' ][:]
 
       for index, item in enumerate( cmd ):
