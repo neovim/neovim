@@ -21,7 +21,8 @@ import vim
 import json
 import string
 
-_log_handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ) )
+_log_handler = logging.FileHandler( os.path.expanduser( '~/.vimspector.log' ),
+                                    mode = 'w' )
 _log_handler.setFormatter(
     logging.Formatter( '%(asctime)s - %(levelname)s - %(message)s' ) )
 
