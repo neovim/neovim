@@ -614,8 +614,10 @@ class DebugSession( object ):
   def OnRequest_runInTerminal( self, message ):
     params = message[ 'arguments' ]
 
-    if 'cwd' not in params:
+    if not params.get( 'cwd' ) :
       params[ 'cwd' ] = self._workspace_root
+      self._logger.debug( 'Defaulting working directory to %s',
+                          params[ 'cwd' ] )
 
     buffer_number = self._codeView.LaunchTerminal( params )
 
