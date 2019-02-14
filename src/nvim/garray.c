@@ -91,8 +91,8 @@ void ga_grow(garray_T *gap, int n)
   }
   int new_maxlen = gap->ga_len + n;
 
-  size_t new_size = (size_t)(gap->ga_itemsize * new_maxlen);
-  size_t old_size = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
+  size_t new_size = (size_t)gap->ga_itemsize * (size_t)new_maxlen;
+  size_t old_size = (size_t)gap->ga_itemsize * (size_t)gap->ga_maxlen;
 
   // reallocate and clear the new memory
   char *pp = xrealloc(gap->ga_data, new_size);
