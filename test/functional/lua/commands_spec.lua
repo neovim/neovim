@@ -19,7 +19,8 @@ local curbufmeths = helpers.curbufmeths
 
 before_each(clear)
 
-local empty_screen = [[
+local empty_screen =
+[[
       ^                                                  |
       {1:~                                                 }|
       {1:~                                                 }|
@@ -33,59 +34,59 @@ local empty_screen = [[
 ]]
 
 local disptest = function(args)
-	describe(args.descrip, function()
-		it(args.descrip, function()
-			local screen = Screen.new(50,10)
-			screen:attach()
-			screen:set_default_attr_ids({
-				[1] = {bold = true, foreground = Screen.colors.Blue1},
-				[2] = {bold = true, reverse = true},
-				[3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-				[4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-			})
+  describe(args.descrip, function()
+  it(args.descrip, function()
+  local screen = Screen.new(50,10)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue1},
+    [2] = {bold = true, reverse = true},
+    [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+  })
 
-			feed(args.cmd)
-			screen:expect(args.expected_scr)
-			feed('<cr>')
-			screen:expect(empty_screen)
-			eq(args.expected_msg, eval('v:errmsg'))
+  feed(args.cmd)
+  screen:expect(args.expected_scr)
+  feed('<cr>')
+  screen:expect(empty_screen)
+  eq(args.expected_msg, eval('v:errmsg'))
 
-			local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
-			local expected = 'Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: some error\nin a\nAPI command'
-			eq(false, status)
-			eq(expected, string.sub(err, -string.len(expected)))
+  local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
+  local expected = 'Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: some error\nin a\nAPI command'
+  eq(false, status)
+  eq(expected, string.sub(err, -string.len(expected)))
 
-			feed(':messages<cr>')
-			screen:expect(args.expected_scr)
-		end)
-	end)
+  feed(':messages<cr>')
+  screen:expect(args.expected_scr)
+    end)
+  end)
 end
 
-disptest{ descrip      = 'can show multiline error messages',
-				  cmd          = ':lua error("fail\\nmuch error\\nsuch details")<cr>',
-					expected_msg = 'E5105: Error while calling lua chunk: [string ' ..
-												 '"<VimL compiled string>"]:1: fail\nmuch error\n' ..
-												 'such details',
-					expected_scr = [[
-					                                                  |
-     {1:~                                                 }|
-     {1:~                                                 }|
-     {1:~                                                 }|
-     {2:                                                  }|
-     {3:E5105: Error while calling lua chunk: [string "<Vi}|
-     {3:mL compiled string>"]:1: fail}                     |
-     {3:much error}                                        |
-     {3:such details}                                      |
-     {4:Press ENTER or type command to continue}^           |
-					]]
+disptest{ descrip = 'can show multiline error messages',
+          cmd     = ':lua error("fail\\nmuch error\\nsuch details")<cr>',
+	  expected_msg = 'E5105: Error while calling lua chunk: [string ' ..
+	                 '"<VimL compiled string>"]:1: fail\nmuch error\n' ..
+			 'such details',
+	  expected_scr = [[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:E5105: Error while calling lua chunk: [string "<Vi}|
+      {3:mL compiled string>"]:1: fail}                     |
+      {3:much error}                                        |
+      {3:such details}                                      |
+      {4:Press ENTER or type command to continue}^           |
+          ]]
 }
 
 disptest{ descrip = 'can show empty string error message',
-					cmd     = ':lua error("")<cr>',
-					expected_msg = 'E5105: Error while calling lua chunk: [string ' ..
-												 '"<VimL compiled string>"]:1: ',
-					expected_scr = [[
-					                                                  |
+	  cmd     = ':lua error("")<cr>',
+	  expected_msg = 'E5105: Error while calling lua chunk: [string ' ..
+			 '"<VimL compiled string>"]:1: ',
+	  expected_scr = [[
+				                                                   |
      {1:~                                                 }|
      {1:~                                                 }|
      {1:~                                                 }|
@@ -95,7 +96,7 @@ disptest{ descrip = 'can show empty string error message',
      {3:E5105: Error while calling lua chunk: [string "<Vi}|
      {3:mL compiled string>"]:1: }                         |
      {4:Press ENTER or type command to continue}^           |
-					]]
+          ]]
 }
 
 
