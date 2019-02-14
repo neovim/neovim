@@ -375,6 +375,7 @@ EXTERN int p_confirm;           // 'confirm'
 EXTERN int p_cp;                // 'compatible'
 EXTERN char_u   *p_cot;         // 'completeopt'
 EXTERN long p_ph;               // 'pumheight'
+EXTERN long p_pb;               // 'pumblend'
 EXTERN char_u   *p_cpo;         // 'cpoptions'
 EXTERN char_u   *p_csprg;       // 'cscopeprg'
 EXTERN int p_csre;              // 'cscoperelative'
@@ -486,7 +487,6 @@ EXTERN long     *p_linespace;   // 'linespace'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
 EXTERN long p_stal;             // 'showtabline'
-EXTERN char_u   *p_lcs;         // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
@@ -638,7 +638,6 @@ EXTERN long p_ul;               ///< 'undolevels'
 EXTERN long p_ur;               ///< 'undoreload'
 EXTERN long p_uc;               ///< 'updatecount'
 EXTERN long p_ut;               ///< 'updatetime'
-EXTERN char_u *p_fcs;           ///< 'fillchar'
 EXTERN char_u *p_shada;         ///< 'shada'
 EXTERN char_u *p_vdir;          ///< 'viewdir'
 EXTERN char_u *p_vop;           ///< 'viewoptions'
@@ -814,6 +813,8 @@ enum {
   , WV_WRAP
   , WV_SCL
   , WV_WINHL
+  , WV_FCS
+  , WV_LCS
   , WV_COUNT        // must be the last one
 };
 

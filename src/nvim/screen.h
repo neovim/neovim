@@ -28,8 +28,7 @@
 ///
 /// Note: before the screen is initialized and when out of memory these can be
 /// NULL.
-EXTERN ScreenGrid default_grid INIT(= { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0,
-                                        0, 0, 0 });
+EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 

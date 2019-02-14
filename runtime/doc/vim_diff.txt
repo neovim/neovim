@@ -37,8 +37,8 @@ a complete and centralized reference of those differences.
 - 'display' defaults to "lastline,msgsep"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·"
-- 'fsync' is disabled
 - 'formatoptions' defaults to "tcqj"
+- 'fsync' is disabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
@@ -142,6 +142,7 @@ Commands:
 
 Events:
   |DirChanged|
+  |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
@@ -184,9 +185,11 @@ Options:
   'cpoptions' flags: |cpo-_|
   'display' flag `msgsep` to minimize scrolling when showing messages
   'guicursor' works in the terminal
-  'fillchars' flags: `msgsep` (see 'display' above)
-	      and `eob` for |hl-EndOfBuffer| marker
+  'fillchars' local to window. flags: `msgsep` (see 'display' above) and `eob`
+              for |hl-EndOfBuffer| marker
   'inccommand' shows interactive results for |:substitute|-like commands
+  'listchars' local to window
+  'pumblend' pseudo-transparent popupmenu
   'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
@@ -371,7 +374,7 @@ VimL (Vim script) compatibility:
 
 Some legacy Vim features are not implemented:
 
-- |if_py|: vim.bindeval() and vim.Function() are not supported
+- |if_py|: *python-bindeval* *python-Function* are not supported
 - |if_lua|: the `vim` object is missing some legacy methods
 - *if_perl*
 - *if_mzscheme*

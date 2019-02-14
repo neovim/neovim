@@ -159,6 +159,11 @@ function Screen.new(width, height)
     wildmenu_selected = nil,
     win_position = {},
     _session = nil,
+    messages = {},
+    msg_history = {},
+    showmode = {},
+    showcmd = {},
+    ruler = {},
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
@@ -250,7 +255,8 @@ end
 
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
-  'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos'
+  'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
+  'messages', 'showmode', 'showcmd', 'ruler',
 }
 
 -- Asserts that the screen state eventually matches an expected state
@@ -392,7 +398,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
         .. ') differs from configured height(' .. #actual_rows .. ') of Screen.'
       end
       for i = 1, #actual_rows do
-        if expected_rows[i] ~= actual_rows[i] then
+        if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
           local msg_expected_rows = {}
           for j = 1, #expected_rows do
             msg_expected_rows[j] = expected_rows[j]
@@ -917,7 +923,7 @@ function Screen:_handle_option_set(name, value)
 end
 
 function Screen:_handle_popupmenu_show(items, selected, row, col)
-  self.popupmenu = {items=items,pos=selected, anchor={row, col}}
+  self.popupmenu = {items=items, pos=selected, anchor={row, col}}
 end
 
 function Screen:_handle_popupmenu_select(selected)
@@ -971,6 +977,34 @@ end
 
 function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
+end
+
+function Screen:_handle_msg_show(kind, chunks, replace_last)
+  local pos = #self.messages
+  if not replace_last or pos == 0 then
+    pos = pos + 1
+  end
+  self.messages[pos] = {kind=kind, content=chunks}
+end
+
+function Screen:_handle_msg_clear()
+  self.messages = {}
+end
+
+function Screen:_handle_msg_showcmd(msg)
+  self.showcmd = msg
+end
+
+function Screen:_handle_msg_showmode(msg)
+  self.showmode = msg
+end
+
+function Screen:_handle_msg_ruler(msg)
+  self.ruler = msg
+end
+
+function Screen:_handle_msg_history_show(entries)
+  self.msg_history = entries
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)
@@ -1057,12 +1091,27 @@ function Screen:_extstate_repr(attr_state)
     cmdline_block[i] = self:_chunks_repr(entry, attr_state)
   end
 
+  local messages = {}
+  for i, entry in ipairs(self.messages) do
+    messages[i] = {kind=entry.kind, content=self:_chunks_repr(entry.content, attr_state)}
+  end
+
+  local msg_history = {}
+  for i, entry in ipairs(self.msg_history) do
+    messages[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
+  end
+
   return {
     popupmenu=self.popupmenu,
     cmdline=cmdline,
     cmdline_block=cmdline_block,
     wildmenu_items=self.wildmenu_items,
     wildmenu_pos=self.wildmenu_pos,
+    messages=messages,
+    showmode=self:_chunks_repr(self.showmode, attr_state),
+    showcmd=self:_chunks_repr(self.showcmd, attr_state),
+    ruler=self:_chunks_repr(self.ruler, attr_state),
+    msg_history=msg_history,
   }
 end
 
@@ -1303,6 +1352,8 @@ function Screen:_pprint_attrs(attrs)
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        else
+          desc = string.format("tonumber('0x%06x')",v)
         end
       end
       table.insert(items, f.." = "..desc)

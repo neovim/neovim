@@ -806,11 +806,11 @@ return {
     },
     {
       full_name='fillchars', abbreviation='fcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'all_windows'},
-      varname='p_fcs',
+      alloced=true,
+      redraw={'current_window'},
       defaults={if_true={vi=''}}
     },
     {
@@ -1173,9 +1173,7 @@ return {
       vi_def=true,
       varname='p_iminsert', pv_name='p_imi',
       defaults={
-        condition='B_IMODE_IM',
-        if_true={vi=macros('B_IMODE_IM')},
-        if_false={vi=macros('B_IMODE_NONE')},
+        if_true={vi=macros('B_IMODE_NONE')},
       }
     },
     {
@@ -1184,9 +1182,7 @@ return {
       vi_def=true,
       varname='p_imsearch', pv_name='p_ims',
       defaults={
-        condition='B_IMODE_IM',
-        if_true={vi=macros('B_IMODE_IM')},
-        if_false={vi=macros('B_IMODE_NONE')},
+        if_true={vi=macros('B_IMODE_USE_INSERT')},
       }
     },
     {
@@ -1425,11 +1421,11 @@ return {
     },
     {
       full_name='listchars', abbreviation='lcs',
-      type='string', list='onecomma', scope={'global'},
+      type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vim=true,
-      redraw={'all_windows'},
-      varname='p_lcs',
+      alloced=true,
+      redraw={'current_window'},
       defaults={if_true={vi="eol:$", vim="tab:> ,trail:-,nbsp:+"}}
     },
     {
@@ -1810,6 +1806,14 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='pumblend', abbreviation='pb',
+      type='number', scope={'global'},
+      vi_def=true,
+      redraw={'ui_option'},
+      varname='p_pb',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pyxversion', abbreviation='pyx',
       type='number', scope={'global'},
       secure=true,
@@ -1934,7 +1938,7 @@ return {
       vi_def=true,
       varname='p_scbk',
       redraw={'current_buffer'},
-      defaults={if_true={vi=10000}}
+      defaults={if_true={vi=-1}}
     },
     {
       full_name='scrollbind', abbreviation='scb',

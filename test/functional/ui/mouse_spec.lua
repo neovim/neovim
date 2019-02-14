@@ -11,6 +11,7 @@ describe('ui/mouse/input', function()
   before_each(function()
     clear()
     meths.set_option('mouse', 'a')
+    meths.set_option('list', true)
     meths.set_option('listchars', 'eol:$')
     screen = Screen.new(25, 5)
     screen:attach()
@@ -82,7 +83,7 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><0,0>')
     feed('<LeftRelease><0,0>')
     screen:expect([[
-      ^t{1:esting}{3: }                 |
+      ^t{1:esting}                  |
       mouse                    |
       support and selection    |
       {0:~                        }|
@@ -125,7 +126,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -162,7 +163,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -170,7 +171,7 @@ describe('ui/mouse/input', function()
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -178,7 +179,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><6,0>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -192,7 +193,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -222,7 +223,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -260,7 +261,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -268,7 +269,7 @@ describe('ui/mouse/input', function()
       feed('<LeftMouse><11,0>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -276,7 +277,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><11,1>')
       screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -284,7 +285,7 @@ describe('ui/mouse/input', function()
       feed('<LeftDrag><6,1>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -298,7 +299,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -347,7 +348,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -370,7 +371,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -393,7 +394,7 @@ describe('ui/mouse/input', function()
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-        this is ba^r              |
+        this is ba^r{0:$}             |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -401,7 +402,7 @@ describe('ui/mouse/input', function()
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
-        ^                         |
+        {0:^$}                        |
         {0:~                        }|
         {0:~                        }|
                                  |
@@ -440,16 +441,34 @@ describe('ui/mouse/input', function()
 
       local test_click = function(name, click_str, click_num, mouse_button,
                                   modifiers)
-        it(name .. ' works', function()
+
+        local function doit(do_click)
           eq(1, funcs.has('tablineat'))
-          feed(click_str .. '<3,0>')
+          do_click(0,3)
           check_reply({0, click_num, mouse_button, modifiers})
-          feed(click_str .. '<4,0>')
+          do_click(0,4)
           check_reply({})
-          feed(click_str .. '<6,0>')
+          do_click(0,6)
           check_reply({5, click_num, mouse_button, modifiers, 2})
-          feed(click_str .. '<13,0>')
+          do_click(0,13)
           check_reply({5, click_num, mouse_button, modifiers, 2})
+        end
+
+        it(name .. ' works (pseudokey)', function()
+          doit(function (row,col)
+              feed(click_str .. '<' .. col .. ',' .. row .. '>')
+          end)
+        end)
+
+        it(name .. ' works (nvim_input_mouse)', function()
+          doit(function (row,col)
+            local buttons = {l='left',m='middle',r='right'}
+            local modstr = (click_num > 1) and tostring(click_num) or ''
+            for char in string.gmatch(modifiers, '%w') do
+              modstr = modstr .. char .. '-' -- - not needed but should be accepted
+            end
+            meths.input_mouse(buttons[mouse_button], 'press', modstr, 0, row, col)
+          end)
         end)
       end
 
@@ -499,14 +518,14 @@ describe('ui/mouse/input', function()
     feed('<LeftDrag><2,2>')
     screen:expect([[
       testing                  |
-      mo{1:use}{3: }                   |
+      mo{1:use}                    |
       {1:su}^pport and selection    |
       {0:~                        }|
       {2:-- VISUAL --}             |
     ]])
     feed('<LeftDrag><0,0>')
     screen:expect([[
-      ^t{1:esting}{3: }                 |
+      ^t{1:esting}                  |
       {1:mou}se                    |
       support and selection    |
       {0:~                        }|
@@ -537,7 +556,7 @@ describe('ui/mouse/input', function()
     feed('<LeftMouse><0,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-      ^this is bar              |
+      ^this is bar{0:$}             |
       {0:~                        }|
       {0:~                        }|
       :tabprevious             |
@@ -545,7 +564,7 @@ describe('ui/mouse/input', function()
     feed('<LeftDrag><4,1>')
     screen:expect([[
       {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
-      {vis:this}^ is bar              |
+      {vis:this}^ is bar{0:$}             |
       {0:~                        }|
       {0:~                        }|
       {sel:-- VISUAL --}             |
@@ -568,7 +587,7 @@ describe('ui/mouse/input', function()
     screen:expect([[
       testing                  |
       mouse                    |
-      {1:su}^p{1:port and selection}{3: }   |
+      {1:su}^p{1:port and selection}    |
       {0:~                        }|
       {2:-- VISUAL LINE --}        |
     ]])
@@ -596,8 +615,8 @@ describe('ui/mouse/input', function()
     ]])
     feed('<RightMouse><2,2>')
     screen:expect([[
-      {1:testing}{3: }                 |
-      {1:mouse}{3: }                   |
+      {1:testing}                  |
+      {1:mouse}                    |
       {1:su}^pport and selection    |
       {0:~                        }|
       {2:-- VISUAL --}             |
@@ -617,7 +636,7 @@ describe('ui/mouse/input', function()
     feed('<cr>')
   end)
 
-  it('mouse whell will target the hovered window', function()
+  local function wheel(use_api)
     feed('ggdG')
     insert([[
     Inserting
@@ -647,7 +666,11 @@ describe('ui/mouse/input', function()
       {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
-    feed('<ScrollWheelDown><0,0>')
+    if use_api then
+      meths.input_mouse('wheel', 'down', '', 0, 0, 0)
+    else
+      feed('<ScrollWheelDown><0,0>')
+    end
     screen:expect([[
       mouse scrolling           {4:│}lines                     |
       ^                          {4:│}to                        |
@@ -662,9 +685,13 @@ describe('ui/mouse/input', function()
                                                            |
       {0:~                                                    }|
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
-    feed('<ScrollWheelUp><27,0>')
+    if use_api then
+      meths.input_mouse('wheel', 'up', '', 0, 0, 27)
+    else
+      feed('<ScrollWheelUp><27,0>')
+    end
     screen:expect([[
       mouse scrolling           {4:│}text                      |
       ^                          {4:│}with                      |
@@ -679,9 +706,14 @@ describe('ui/mouse/input', function()
                                                            |
       {0:~                                                    }|
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
-    feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
+    if use_api then
+      meths.input_mouse('wheel', 'up', '', 0, 7, 27)
+      meths.input_mouse('wheel', 'up', '', 0, 7, 27)
+    else
+      feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
+    end
     screen:expect([[
       mouse scrolling           {4:│}text                      |
       ^                          {4:│}with                      |
@@ -696,11 +728,19 @@ describe('ui/mouse/input', function()
       many                                                 |
       lines                                                |
       {4:[No Name] [+]                                        }|
-                                                           |
+      :vsp                                                 |
     ]])
+  end
+
+  it('mouse wheel will target the hovered window (pseudokey)', function()
+    wheel(false)
   end)
 
-  it('horizontal scrolling', function()
+  it('mouse wheel will target the hovered window (nvim_input_mouse)', function()
+    wheel(true)
+  end)
+
+  it('horizontal scrolling (pseudokey)', function()
     command('set sidescroll=0')
     feed("<esc>:set nowrap<cr>")
 
@@ -723,6 +763,39 @@ describe('ui/mouse/input', function()
     ]])
 
     feed("^<ScrollWheelRight><0,0>")
+    screen:expect([[
+      g                        |
+                               |
+      ^t and selection bbbbbbbbb|
+      {0:~                        }|
+                               |
+    ]])
+  end)
+
+  it('horizontal scrolling (nvim_input_mouse)', function()
+    command('set sidescroll=0')
+    feed("<esc>:set nowrap<cr>")
+
+    feed("a <esc>20Ab<esc>")
+    screen:expect([[
+                               |
+                               |
+      bbbbbbbbbbbbbbb^b         |
+      {0:~                        }|
+                               |
+    ]])
+
+    meths.input_mouse('wheel', 'left', '', 0, 0, 27)
+    screen:expect([[
+                               |
+                               |
+      n bbbbbbbbbbbbbbbbbbb^b   |
+      {0:~                        }|
+                               |
+    ]])
+
+    feed("^")
+    meths.input_mouse('wheel', 'right', '', 0, 0, 0)
     screen:expect([[
       g                        |
                                |

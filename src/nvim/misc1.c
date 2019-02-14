@@ -1251,7 +1251,7 @@ int plines_win_nofill(
     return 1;
   }
 
-  if (wp->w_grid.Columns == 0) {
+  if (wp->w_width_inner == 0) {
     return 1;
   }
 
@@ -1261,8 +1261,8 @@ int plines_win_nofill(
   }
 
   const int lines = plines_win_nofold(wp, lnum);
-  if (winheight && lines > wp->w_grid.Rows) {
-    return wp->w_grid.Rows;
+  if (winheight && lines > wp->w_height_inner) {
+    return wp->w_height_inner;
   }
   return lines;
 }
@@ -1282,17 +1282,16 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     return 1;
   col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
 
-  /*
-   * If list mode is on, then the '$' at the end of the line may take up one
-   * extra column.
-   */
-  if (wp->w_p_list && lcs_eol != NUL)
+  // If list mode is on, then the '$' at the end of the line may take up one
+  // extra column.
+  if (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL) {
     col += 1;
+  }
 
   /*
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
-  width = wp->w_grid.Columns - win_col_off(wp);
+  width = wp->w_width_inner - win_col_off(wp);
   if (width <= 0 || col > 32000) {
     return 32000;  // bigger than the number of screen columns
   }
@@ -1318,7 +1317,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (!wp->w_p_wrap)
     return lines + 1;
 
-  if (wp->w_grid.Columns == 0) {
+  if (wp->w_width_inner == 0) {
     return lines + 1;
   }
 
@@ -1336,12 +1335,13 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   // screen position of the TAB.  This only fixes an error when the TAB wraps
   // from one screen line to the next (when 'columns' is not a multiple of
   // 'ts') -- webb.
-  if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1)) {
+  if (*s == TAB && (State & NORMAL)
+      && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL) - 1;
   }
 
   // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
-  int width = wp->w_grid.Columns - win_col_off(wp);
+  int width = wp->w_width_inner - win_col_off(wp);
   if (width <= 0) {
     return 9999;
   }

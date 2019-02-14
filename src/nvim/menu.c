@@ -660,7 +660,8 @@ static void free_menu_string(vimmenu_T *menu, int idx)
 ///
 /// @param[in] menu if null, starts from root_menu
 /// @param modes, a choice of \ref MENU_MODES
-/// @return a dict with name/commands
+/// @return dict with name/commands
+/// @see show_menus_recursive
 /// @see menu_get
 static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 {
@@ -715,10 +716,10 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     // visit recursively all children
     list_T *const children_list = tv_list_alloc(kListLenMayKnow);
     for (menu = menu->children; menu != NULL; menu = menu->next) {
-        dict_T *dic = menu_get_recursive(menu, modes);
-        if (tv_dict_len(dict) > 0) {
-          tv_list_append_dict(children_list, dic);
-        }
+      dict_T *d = menu_get_recursive(menu, modes);
+      if (tv_dict_len(d) > 0) {
+        tv_list_append_dict(children_list, d);
+      }
     }
     tv_dict_add_list(dict, S_LEN("submenus"), children_list);
   }
@@ -734,42 +735,51 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 /// @return false if could not find path_name
 bool menu_get(char_u *const path_name, int modes, list_T *list)
 {
-  vimmenu_T   *menu;
-  menu = find_menu(root_menu, path_name, modes);
+  vimmenu_T *menu = find_menu(root_menu, path_name, modes);
   if (!menu) {
     return false;
   }
   for (; menu != NULL; menu = menu->next) {
-    dict_T *dict = menu_get_recursive(menu, modes);
-    if (dict && tv_dict_len(dict) > 0) {
-      tv_list_append_dict(list, dict);
+    dict_T *d = menu_get_recursive(menu, modes);
+    if (d && tv_dict_len(d) > 0) {
+      tv_list_append_dict(list, d);
+    }
+    if (*path_name != NUL) {
+      // If a (non-empty) path query was given, only the first node in the
+      // find_menu() result is relevant.  Else we want all nodes.
+      break;
     }
   }
   return true;
 }
 
 
-/// Find menu matching required name and modes
+/// Find menu matching `name` and `modes`.
 ///
 /// @param menu top menu to start looking from
 /// @param name path towards the menu
 /// @return menu if \p name is null, found menu or NULL
-vimmenu_T *
-find_menu(vimmenu_T *menu, char_u * name, int modes)
+static vimmenu_T *find_menu(vimmenu_T *menu, char_u *name, int modes)
 {
   char_u *p;
 
   while (*name) {
+    // find the end of one dot-separated name and put a NUL at the dot
     p = menu_name_skip(name);
     while (menu != NULL) {
       if (menu_name_equal(name, menu)) {
-        /* Found menu */
+        // Found menu
         if (*p != NUL && menu->children == NULL) {
-          EMSG(_(e_notsubmenu));
-          return NULL;
-        } else if ((menu->modes & modes) == 0x0) {
-          EMSG(_(e_othermode));
-          return NULL;
+          if (*p != NUL) {
+            EMSG(_(e_notsubmenu));
+            return NULL;
+          } else if ((menu->modes & modes) == 0x0) {
+            EMSG(_(e_othermode));
+            return NULL;
+          }
+        }
+        if (*p == NUL) {  // found a full match
+          return menu;
         }
         break;
       }
@@ -780,6 +790,7 @@ find_menu(vimmenu_T *menu, char_u * name, int modes)
       EMSG2(_(e_nomenu), name);
       return NULL;
     }
+    // Found a match, search the sub-menu.
     name = p;
     menu = menu->children;
   }
@@ -1235,7 +1246,7 @@ static char_u *popup_mode_name(char_u *name, int idx)
 ///
 /// @return a pointer to allocated memory.
 static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
@@ -1520,7 +1531,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   char_u              *dname;
 
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
+    if (STRNICMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
     }
   }
@@ -1531,7 +1542,7 @@ static char_u *menutrans_lookup(char_u *name, int len)
   dname = menu_text(name, NULL, NULL);
   name[len] = c;
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRCMP(dname, tp[i].from_noamp) == 0) {
+    if (STRICMP(dname, tp[i].from_noamp) == 0) {
       xfree(dname);
       return tp[i].to;
     }

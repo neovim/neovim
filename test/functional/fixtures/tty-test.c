@@ -20,6 +20,7 @@
 uv_tty_t tty;
 uv_tty_t tty_out;
 
+bool owns_tty(void);  // silence -Wmissing-prototypes
 bool owns_tty(void)
 {
 #ifdef _WIN32

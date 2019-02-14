@@ -1,4 +1,3 @@
-require('vim.compat')
 require('coxpcall')
 local luv = require('luv')
 local lfs = require('lfs')
@@ -679,6 +678,44 @@ local function alter_slashes(obj)
   end
 end
 
+local function compute_load_factor()
+  local timeout = 200
+  local times = {}
+
+  clear()
+
+  for _ = 1, 5 do
+    source([[
+      let g:val = 0
+      call timer_start(200, {-> nvim_set_var('val', 1)})
+      let start = reltime()
+      while 1
+        sleep 10m
+        if g:val == 1
+          let g:waited_in_ms = float2nr(reltimefloat(reltime(start)) * 1000)
+          break
+        endif
+      endwhile
+    ]])
+    table.insert(times, nvim_eval('g:waited_in_ms'))
+  end
+
+  session:close()
+  session = nil
+
+  local longest = math.max(unpack(times))
+  local factor = (longest + 50.0) / timeout
+
+  return factor
+end
+
+-- Compute load factor only once.
+local load_factor = compute_load_factor()
+
+local function load_adjust(num)
+  return math.ceil(num * load_factor)
+end
+
 local module = {
   NIL = mpack.NIL,
   alter_slashes = alter_slashes,
@@ -720,6 +757,7 @@ local module = {
   meths = meths,
   missing_provider = missing_provider,
   mkdir = lfs.mkdir,
+  load_adjust = load_adjust,
   near = near,
   neq = neq,
   new_pipename = new_pipename,

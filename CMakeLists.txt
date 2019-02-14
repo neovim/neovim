@@ -172,11 +172,6 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
-# Enable -Wconversion.
-if(NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wshadow -Wconversion")
-endif()
-
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # https://github.com/neovim/neovim/issues/223
@@ -264,7 +259,8 @@ if(MSVC)
   add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99)
+    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
+    -Wmissing-prototypes)
 
   check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
   if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
@@ -454,22 +450,6 @@ endif()
 
 if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD|Windows")  # see #5318
-  message(STATUS "skipping jemalloc on this system: ${CMAKE_SYSTEM_NAME}")
-  option(ENABLE_JEMALLOC "enable jemalloc" OFF)
-else()
-  option(ENABLE_JEMALLOC "enable jemalloc" ON)
-endif()
-
-if(ENABLE_JEMALLOC)
-  if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
-    message(STATUS "Sanitizers enabled; disabling jemalloc")
-  else()
-    find_package(JeMalloc REQUIRED)
-    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
-  endif()
 endif()
 
 if(ENABLE_LIBINTL)

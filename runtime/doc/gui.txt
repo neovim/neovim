@@ -29,25 +29,6 @@ When the GUI starts up initializations are carried out, in this order:
   The path names are truncated to 35 characters.  You can truncate them at a
   different length, for example 50, like this: >
 	:let bmenu_max_pathlen = 50
-- If the "-U {gvimrc}" command-line option has been used when starting Vim,
-  the {gvimrc} file will be read for initializations.  The following
-  initializations are skipped.  When {gvimrc} is "NONE" no file will be read
-  for initializations.
-- For Unix and MS-Windows, if the system gvimrc exists, it is sourced.  The
-  name of this file is normally "$VIM/ginit.vim".  You can check this with
-  ":version".  Also see |$VIM|.
-- The following are tried, and only the first one that exists is used:
-  - If the GVIMINIT environment variable exists and is not empty, it is
-    executed as an Ex command.
-  - If the user gvimrc file exists, it is sourced.  The name of this file is
-    normally "$XDG_CONFIG_HOME/nvim/ginit.vim" ($XDG_CONFIG_HOME defaults to 
-    ~/.config).
-  The name of the first file found is stored in $MYGVIMRC, unless it was
-  already set.
-
-NOTE: All but the first one are not carried out if Vim was started with
-"-u NONE" or "-u DEFAULTS" and no "-U" argument was given, or when started
-with "-U NONE".
 
 All this happens AFTER the normal Vim initializations, like reading your
 vimrc file.  See |initialization|.
@@ -55,17 +36,7 @@ But the GUI window is only opened after all the initializations have been
 carried out.  If you want some commands to be executed just after opening the
 GUI window, use the |GUIEnter| autocommand event.  Example: >
 	:autocmd GUIEnter * winpos 100 50
-
-You can use the gvimrc files to set up your own customized menus (see |:menu|)
-and initialize other things that you may want to set up differently from the
-terminal version.
-
-Recommended place for your personal GUI initializations:
-	Unix		$XDG_CONFIG_HOME/.config/nvim/ginit.vim
-			(default for $XDG_CONFIG_HOME is ~/.config)
-
-The personal initialization files are searched in the order specified above
-and only the first one that is found is read.
+<
 
 						*:winp* *:winpos* *E188*
 :winp[os]

@@ -257,7 +257,7 @@ void ex_align(exarg_T *eap)
     if (width <= 0)
       width = curbuf->b_p_tw;
     if (width == 0 && curbuf->b_p_wm > 0) {
-      width = curwin->w_grid.Columns - curbuf->b_p_wm;
+      width = curwin->w_width_inner - curbuf->b_p_wm;
     }
     if (width <= 0) {
       width = 80;
@@ -2678,6 +2678,10 @@ int do_ecmd(
 
 
 theend:
+  if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->terminal != NULL) {
+    terminal_check_size(old_curbuf.br_buf->terminal);
+  }
+
   if (did_inc_redrawing_disabled) {
     RedrawingDisabled--;
   }
@@ -2872,11 +2876,11 @@ void ex_z(exarg_T *eap)
   // Vi compatible: ":z!" uses display height, without a count uses
   // 'scroll'
   if (eap->forceit) {
-    bigness = curwin->w_grid.Rows;
+    bigness = curwin->w_height_inner;
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
-    bigness = curwin->w_grid.Rows - 3;
+    bigness = curwin->w_height_inner - 3;
   }
   if (bigness < 1) {
     bigness = 1;
@@ -4131,7 +4135,7 @@ skip:
   buf_T *preview_buf = NULL;
   size_t subsize = preview_lines.subresults.size;
   if (preview && !aborting()) {
-    if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
+    if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
     } else if (*p_icm != NUL &&  pat != NULL) {
@@ -4895,7 +4899,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
     }
   }
 
-  *matches = (char_u **)"";
+  *matches = NULL;
   *num_matches = 0;
   int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
   if (keep_lang) {

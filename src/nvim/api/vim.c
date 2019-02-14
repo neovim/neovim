@@ -198,6 +198,9 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// @note |keycodes| like <CR> are translated, so "<" is special.
 ///       To input a literal "<", send <LT>.
 ///
+/// @note For mouse events use |nvim_input_mouse()|. The pseudokey form
+///       "<LeftMouse><col,row>" is deprecated since |api-level| 6.
+///
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
 ///         requested if the buffer becomes full).
@@ -205,6 +208,96 @@ Integer nvim_input(String keys)
   FUNC_API_SINCE(1) FUNC_API_ASYNC
 {
   return (Integer)input_enqueue(keys);
+}
+
+/// Send mouse event from GUI.
+///
+/// The call is non-blocking. It doesn't wait on any resulting action, but
+/// queues the event to be processed soon by the event loop.
+///
+/// @note Currently this doesn't support "scripting" multiple mouse events
+///       by calling it multiple times in a loop: the intermediate mouse
+///       positions will be ignored. It should be used to implement real-time
+///       mouse input in a GUI. The deprecated pseudokey form
+///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitiation.
+///
+/// @param button Mouse button: one of "left", "right", "middle", "wheel".
+/// @param action For ordinary buttons, one of "press", "drag", "release".
+///               For the wheel, one of "up", "down", "left", "right".
+/// @param modifier String of modifiers each represented by a single char.
+///                 The same specifiers are used as for a key press, except
+///                 that the "-" separator is optional, so "C-A-", "c-a"
+///                 and "CA" can all be used to specify Ctrl+Alt+click.
+/// @param grid Grid number if the client uses |ui-multigrid|, else 0.
+/// @param row Mouse row-position (zero-based, like redraw events)
+/// @param col Mouse column-position (zero-based, like redraw events)
+void nvim_input_mouse(String button, String action, String modifier,
+                      Integer grid, Integer row, Integer col, Error *err)
+  FUNC_API_SINCE(6) FUNC_API_ASYNC
+{
+  if (button.data == NULL || action.data == NULL) {
+    goto error;
+  }
+
+  int code = 0;
+
+  if (strequal(button.data, "left")) {
+    code = KE_LEFTMOUSE;
+  } else if (strequal(button.data, "middle")) {
+    code = KE_MIDDLEMOUSE;
+  } else if (strequal(button.data, "right")) {
+    code = KE_RIGHTMOUSE;
+  } else if (strequal(button.data, "wheel")) {
+    code = KE_MOUSEDOWN;
+  } else {
+    goto error;
+  }
+
+  if (code == KE_MOUSEDOWN) {
+    if (strequal(action.data, "down")) {
+      code = KE_MOUSEUP;
+    } else if (strequal(action.data, "up")) {
+      code = KE_MOUSEDOWN;
+    } else if (strequal(action.data, "left")) {
+      code = KE_MOUSERIGHT;
+    } else if (strequal(action.data, "right")) {
+      code = KE_MOUSELEFT;
+    } else {
+      goto error;
+    }
+  } else {
+    if (strequal(action.data, "press")) {
+      // pass
+    } else if (strequal(action.data, "drag")) {
+      code += KE_LEFTDRAG - KE_LEFTMOUSE;
+    } else if (strequal(action.data, "release")) {
+      code += KE_LEFTRELEASE - KE_LEFTMOUSE;
+    } else {
+      goto error;
+    }
+  }
+
+  int modmask = 0;
+  for (size_t i = 0; i < modifier.size; i++) {
+    char byte = modifier.data[i];
+    if (byte == '-') {
+      continue;
+    }
+    int mod = name_to_mod_mask(byte);
+    if (mod == 0) {
+      api_set_error(err, kErrorTypeValidation,
+                    "invalid modifier %c", byte);
+      return;
+    }
+    modmask |= mod;
+  }
+
+  input_enqueue_mouse(code, (uint8_t)modmask, (int)grid, (int)row, (int)col);
+  return;
+
+error:
+  api_set_error(err, kErrorTypeValidation,
+                "invalid button or action");
 }
 
 /// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
@@ -598,7 +691,7 @@ void nvim_set_current_dir(String dir, Error *err)
   try_end(err);
 }
 
-/// Gets the current line
+/// Gets the current line.
 ///
 /// @param[out] err Error details, if any
 /// @return Current line string
@@ -608,7 +701,7 @@ String nvim_get_current_line(Error *err)
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
 
-/// Sets the current line
+/// Sets the current line.
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
@@ -618,7 +711,7 @@ void nvim_set_current_line(String line, Error *err)
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
 
-/// Deletes the current line
+/// Deletes the current line.
 ///
 /// @param[out] err Error details, if any
 void nvim_del_current_line(Error *err)
@@ -627,7 +720,7 @@ void nvim_del_current_line(Error *err)
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
 
-/// Gets a global (g:) variable
+/// Gets a global (g:) variable.
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -638,7 +731,7 @@ Object nvim_get_var(String name, Error *err)
   return dict_get_value(&globvardict, name, err);
 }
 
-/// Sets a global (g:) variable
+/// Sets a global (g:) variable.
 ///
 /// @param name     Variable name
 /// @param value    Variable value
@@ -649,7 +742,7 @@ void nvim_set_var(String name, Object value, Error *err)
   dict_set_var(&globvardict, name, value, false, false, err);
 }
 
-/// Removes a global (g:) variable
+/// Removes a global (g:) variable.
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -676,7 +769,7 @@ Object vim_del_var(String name, Error *err)
   return dict_set_var(&globvardict, name, NIL, true, true, err);
 }
 
-/// Gets a v: variable
+/// Gets a v: variable.
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
@@ -687,7 +780,18 @@ Object nvim_get_vvar(String name, Error *err)
   return dict_get_value(&vimvardict, name, err);
 }
 
-/// Gets an option value string
+/// Sets a v: variable, if it is not readonly.
+///
+/// @param name     Variable name
+/// @param value    Variable value
+/// @param[out] err Error details, if any
+void nvim_set_vvar(String name, Object value, Error *err)
+  FUNC_API_SINCE(6)
+{
+  dict_set_var(&vimvardict, name, value, false, false, err);
+}
+
+/// Gets an option value string.
 ///
 /// @param name     Option name
 /// @param[out] err Error details, if any
@@ -698,7 +802,7 @@ Object nvim_get_option(String name, Error *err)
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
 
-/// Sets an option value
+/// Sets an option value.
 ///
 /// @param name     Option name
 /// @param value    New option value
@@ -766,7 +870,7 @@ ArrayOf(Buffer) nvim_list_bufs(void)
   return rv;
 }
 
-/// Gets the current buffer
+/// Gets the current buffer.
 ///
 /// @return Buffer handle
 Buffer nvim_get_current_buf(void)
@@ -775,7 +879,7 @@ Buffer nvim_get_current_buf(void)
   return curbuf->handle;
 }
 
-/// Sets the current buffer
+/// Sets the current buffer.
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
@@ -798,7 +902,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   }
 }
 
-/// Gets the current list of window handles
+/// Gets the current list of window handles.
 ///
 /// @return List of window handles
 ArrayOf(Window) nvim_list_wins(void)
@@ -820,7 +924,7 @@ ArrayOf(Window) nvim_list_wins(void)
   return rv;
 }
 
-/// Gets the current window
+/// Gets the current window.
 ///
 /// @return Window handle
 Window nvim_get_current_win(void)
@@ -829,7 +933,7 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window
+/// Sets the current window.
 ///
 /// @param window Window handle
 void nvim_set_current_win(Window window, Error *err)
@@ -851,7 +955,26 @@ void nvim_set_current_win(Window window, Error *err)
   }
 }
 
-/// Gets the current list of tabpage handles
+/// Create new empty buffer
+///
+/// @param listed whether the buffer should be listed
+/// @param[out] err Error details, if any
+/// @return the buffer handle or 0 when error
+Buffer nvim_create_buf(Boolean listed, Error *err)
+  FUNC_API_SINCE(6)
+{
+  try_start();
+  Buffer buffer = buflist_add(NULL,
+                              BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
+  if (!try_end(err) && buffer == 0) {
+    api_set_error(err,
+                  kErrorTypeException,
+                  "Failed to create buffer");
+  }
+  return buffer;
+}
+
+/// Gets the current list of tabpage handles.
 ///
 /// @return List of tabpage handles
 ArrayOf(Tabpage) nvim_list_tabpages(void)
@@ -873,7 +996,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(void)
   return rv;
 }
 
-/// Gets the current tabpage
+/// Gets the current tabpage.
 ///
 /// @return Tabpage handle
 Tabpage nvim_get_current_tabpage(void)
@@ -882,7 +1005,7 @@ Tabpage nvim_get_current_tabpage(void)
   return curtab->handle;
 }
 
-/// Sets the current tabpage
+/// Sets the current tabpage.
 ///
 /// @param tabpage  Tabpage handle
 /// @param[out] err Error details, if any
@@ -905,7 +1028,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   }
 }
 
-/// Creates a new namespace, or gets an existing one
+/// Creates a new namespace, or gets an existing one.
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
 /// |nvim_buf_add_highlight()| and |nvim_buf_set_virtual_text()|.
@@ -931,7 +1054,7 @@ Integer nvim_create_namespace(String name)
   return (Integer)id;
 }
 
-/// Gets existing, non-anonymous namespaces
+/// Gets existing, non-anonymous namespaces.
 ///
 /// @return dict that maps from names to namespace ids.
 Dictionary nvim_get_namespaces(void)
@@ -948,7 +1071,7 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
-/// Subscribes to event broadcasts
+/// Subscribes to event broadcasts.
 ///
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
@@ -962,7 +1085,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
   rpc_subscribe(channel_id, e);
 }
 
-/// Unsubscribes to event broadcasts
+/// Unsubscribes to event broadcasts.
 ///
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
@@ -1272,7 +1395,7 @@ typedef struct {
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 /// @endcond
 
-/// Parse a VimL expression
+/// Parse a VimL expression.
 ///
 /// @param[in]  expr  Expression to parse. Is always treated as a single line.
 /// @param[in]  flags  Flags:
@@ -1753,7 +1876,7 @@ static void write_msg(String message, bool to_err)
 
 // Functions used for testing purposes
 
-/// Returns object given as argument
+/// Returns object given as argument.
 ///
 /// This API function is used for testing. One should not rely on its presence
 /// in plugins.
@@ -1766,7 +1889,7 @@ Object nvim__id(Object obj)
   return copy_object(obj);
 }
 
-/// Returns array given as argument
+/// Returns array given as argument.
 ///
 /// This API function is used for testing. One should not rely on its presence
 /// in plugins.
@@ -1779,7 +1902,7 @@ Array nvim__id_array(Array arr)
   return copy_object(ARRAY_OBJ(arr)).data.array;
 }
 
-/// Returns dictionary given as argument
+/// Returns dictionary given as argument.
 ///
 /// This API function is used for testing. One should not rely on its presence
 /// in plugins.
@@ -1792,7 +1915,7 @@ Dictionary nvim__id_dictionary(Dictionary dct)
   return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
 }
 
-/// Returns floating-point value given as argument
+/// Returns floating-point value given as argument.
 ///
 /// This API function is used for testing. One should not rely on its presence
 /// in plugins.
@@ -1916,19 +2039,19 @@ Object nvim_get_proc(Integer pid, Error *err)
   return rvobj;
 }
 
-/// Selects an item in the completion popupmenu
+/// Selects an item in the completion popupmenu.
 ///
-/// When insert completion is not active, this API call is silently ignored.
-/// It is mostly useful for an external UI using |ui-popupmenu| for instance
-/// to control the popupmenu with the mouse. But it can also be used in an
-/// insert mode mapping, use <cmd> mapping |:map-cmd| to ensure the mapping
-/// doesn't end completion mode.
+/// If |ins-completion| is not active this API call is silently ignored.
+/// Useful for an external UI using |ui-popupmenu| to control the popupmenu
+/// with the mouse. Can also be used in a mapping; use <cmd> |:map-cmd| to
+/// ensure the mapping doesn't end completion mode.
 ///
-/// @param item   Index of the item to select, starting with zero. Pass in "-1"
-///               to select no item (restore original text).
+/// @param item   Index (zero-based) of the item to select. Value of -1 selects
+///               nothing and restores the original text.
 /// @param insert Whether the selection should be inserted in the buffer.
-/// @param finish If true, completion will be finished with this item, and the
-///               popupmenu dissmissed. Implies `insert`.
+/// @param finish Finish the completion and dismiss the popupmenu. Implies
+///               `insert`.
+/// @param  opts  Optional parameters. Reserved for future use.
 void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish,
                                 Dictionary opts, Error *err)
   FUNC_API_SINCE(6)

@@ -61,7 +61,8 @@ int get_indent_str(char_u *ptr, int ts, int list)
   for (; *ptr; ++ptr) {
     // Count a tab for what it is worth.
     if (*ptr == TAB) {
-      if (!list || lcs_tab1) {  // count a tab for what it is worth
+      if (!list || curwin->w_p_lcs_chars.tab1) {
+        // count a tab for what it is worth
         count += ts - (count % ts);
       } else {
         // In list mode, when tab is not set, count screen char width
@@ -204,13 +205,12 @@ int set_indent(int size, int flags)
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
-    assert(orig_char_len + size - ind_done + line_len >= 0);
-    size_t n;  // = orig_char_len + size - ind_done + line_len
-    size_t n2;
-    STRICT_ADD(orig_char_len, size, &n, size_t);
-    STRICT_ADD(ind_done, line_len, &n2, size_t);
-    STRICT_SUB(n, n2, &n, size_t);
-    newline = xmalloc(n);
+    int newline_size;  // = orig_char_len + size - ind_done + line_len
+    STRICT_ADD(orig_char_len, size, &newline_size, int);
+    STRICT_SUB(newline_size, ind_done, &newline_size, int);
+    STRICT_ADD(newline_size, line_len, &newline_size, int);
+    assert(newline_size >= 0);
+    newline = xmalloc((size_t)newline_size);
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -474,7 +474,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
   static varnumber_T prev_tick = 0;  // Changedtick of cached value.
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
-  const int eff_wwidth = wp->w_grid.Columns
+  const int eff_wwidth = wp->w_width_inner
     - ((wp->w_p_nu || wp->w_p_rnu)
         && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
         ? number_width(wp) + 1 : 0);

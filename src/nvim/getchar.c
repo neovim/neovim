@@ -1187,10 +1187,11 @@ void save_typebuf(void)
   alloc_typebuf();
 }
 
-static int old_char = -1;       /* character put back by vungetc() */
-static int old_mod_mask;        /* mod_mask for ungotten character */
-static int old_mouse_row;       /* mouse_row related to old_char */
-static int old_mouse_col;       /* mouse_col related to old_char */
+static int old_char = -1;   // character put back by vungetc()
+static int old_mod_mask;    // mod_mask for ungotten character
+static int old_mouse_grid;  // mouse_grid related to old_char
+static int old_mouse_row;   // mouse_row related to old_char
+static int old_mouse_col;   // mouse_col related to old_char
 
 
 /*
@@ -1391,6 +1392,7 @@ int vgetc(void)
     c = old_char;
     old_char = -1;
     mod_mask = old_mod_mask;
+    mouse_grid = old_mouse_grid;
     mouse_row = old_mouse_row;
     mouse_col = old_mouse_col;
   } else {
@@ -1585,6 +1587,7 @@ vungetc ( /* unget one character (can only be done once!) */
 {
   old_char = c;
   old_mod_mask = mod_mask;
+  old_mouse_grid = mouse_grid;
   old_mouse_row = mouse_row;
   old_mouse_col = mouse_col;
 }
@@ -2120,8 +2123,8 @@ static int vgetorpeek(int advance)
                     ++col;
                 }
                 curwin->w_wrow = curwin->w_cline_row
-                                 + curwin->w_wcol / curwin->w_grid.Columns;
-                curwin->w_wcol %= curwin->w_grid.Columns;
+                                 + curwin->w_wcol / curwin->w_width_inner;
+                curwin->w_wcol %= curwin->w_width_inner;
                 curwin->w_wcol += curwin_col_off();
                 col = 0;                        /* no correction needed */
               } else {
@@ -2130,7 +2133,7 @@ static int vgetorpeek(int advance)
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
               curwin->w_wrow--;
-              curwin->w_wcol = curwin->w_grid.Columns - 1;
+              curwin->w_wcol = curwin->w_width_inner - 1;
               col = curwin->w_cursor.col - 1;
             }
             if (col > 0 && curwin->w_wcol > 0) {

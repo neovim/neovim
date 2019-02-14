@@ -5958,7 +5958,9 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 #pragma function (floor)
 #endif
 
+PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 # include "funcs.generated.h"
+PRAGMA_DIAG_POP
 #endif
 
 /*
@@ -9521,6 +9523,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (is_mouse_key(n)) {
       int row = mouse_row;
       int col = mouse_col;
+      int grid = mouse_grid;
       win_T       *win;
       linenr_T lnum;
       win_T       *wp;
@@ -9529,7 +9532,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (row >= 0 && col >= 0) {
         /* Find the window at the mouse coordinates and compute the
          * text position. */
-        win = mouse_find_win(&row, &col);
+        win = mouse_find_win(&grid, &row, &col);
         if (win == NULL) {
           return;
         }
@@ -11264,7 +11267,7 @@ void get_user_input(const typval_T *const argvars,
   // Only the part of the message after the last NL is considered as
   // prompt for the command line, unlsess cmdline is externalized
   const char *p = prompt;
-  if (!ui_is_external(kUICmdline)) {
+  if (!ui_has(kUICmdline)) {
     const char *lastnl = strrchr(prompt, '\n');
     if (lastnl != NULL) {
       p = lastnl+1;
@@ -16424,7 +16427,9 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
       cchar = syn_get_sub_char();
       if (cchar == NUL && curwin->w_p_cole == 1) {
-        cchar = (lcs_conceal == NUL) ? ' ' : lcs_conceal;
+        cchar = (curwin->w_p_lcs_chars.conceal == NUL)
+          ? ' '
+          : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
         utf_char2bytes(cchar, str);
@@ -16795,10 +16800,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  uint16_t term_width = MAX(0, curwin->w_grid.Columns - win_col_off(curwin));
+  uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     true, false, false, cwd,
-                                    term_width, curwin->w_grid.Rows,
+                                    term_width, curwin->w_height_inner,
                                     xstrdup("xterm-256color"),
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
@@ -19592,23 +19597,9 @@ void ex_echo(exarg_T *eap)
         msg_puts_attr(" ", echo_attr);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      const char *p = tofree;
-      if (p != NULL) {
-        for (; *p != NUL && !got_int; ++p) {
-          if (*p == '\n' || *p == '\r' || *p == TAB) {
-            if (*p != TAB && needclr) {
-              /* remove any text still there from the command */
-              msg_clr_eos();
-              needclr = false;
-            }
-            msg_putchar_attr((uint8_t)(*p), echo_attr);
-          } else {
-            int i = (*mb_ptr2len)((const char_u *)p);
-
-            (void)msg_outtrans_len_attr((char_u *)p, i, echo_attr);
-            p += i - 1;
-          }
-        }
+      if (*tofree != NUL) {
+        msg_ext_set_kind("echo");
+        msg_multiline_attr(tofree, echo_attr);
       }
       xfree(tofree);
     }
@@ -19701,11 +19692,13 @@ void ex_execute(exarg_T *eap)
     }
 
     if (eap->cmdidx == CMD_echomsg) {
+      msg_ext_set_kind("echomsg");
       MSG_ATTR(ga.ga_data, echo_attr);
       ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
       /* We don't want to abort following commands, restore did_emsg. */
       save_did_emsg = did_emsg;
+      msg_ext_set_kind("echoerr");
       EMSG((char_u *)ga.ga_data);
       if (!force_abort)
         did_emsg = save_did_emsg;
@@ -19902,13 +19895,15 @@ void ex_function(exarg_T *eap)
           if (FUNCLINE(fp, j) == NULL)
             continue;
           msg_putchar('\n');
-          msg_outnum((long)(j + 1));
-          if (j < 9)
+          msg_outnum((long)j + 1);
+          if (j < 9) {
             msg_putchar(' ');
-          if (j < 99)
+          }
+          if (j < 99) {
             msg_putchar(' ');
-          msg_prt_line(FUNCLINE(fp, j), FALSE);
-          ui_flush();                  /* show a line at a time */
+          }
+          msg_prt_line(FUNCLINE(fp, j), false);
+          ui_flush();                  // show a line at a time
           os_breakcheck();
         }
         if (!got_int) {
@@ -19963,7 +19958,7 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
-  if (KeyTyped && ui_is_external(kUICmdline)) {
+  if (KeyTyped && ui_has(kUICmdline)) {
     show_block = true;
     ui_ext_cmdline_block_append(0, (const char *)eap->cmd);
   }
@@ -20019,7 +20014,7 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && did_emsg)
       goto erret;
 
-    if (!ui_is_external(kUICmdline)) {
+    if (!ui_has(kUICmdline)) {
       msg_putchar('\n');              // don't overwrite the function name
     }
     cmdline_row = msg_row;

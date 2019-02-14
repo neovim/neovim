@@ -318,6 +318,10 @@ describe('API', function()
       eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
                  "attempt to call global 'bork' (a nil value)"},
          meth_pcall(meths.execute_lua, 'bork()', {}))
+
+      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
+                 "did\nthe\nfail"},
+         meth_pcall(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
     end)
   end)
 
@@ -351,8 +355,8 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_get_var, nvim_set_var, nvim_del_var', function()
-    it('works', function()
+  describe('set/get/del variables', function()
+    it('nvim_get_var, nvim_set_var, nvim_del_var', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'g:lua'))
@@ -361,9 +365,20 @@ describe('API', function()
       eq(0, funcs.exists('g:lua'))
       eq({false, "Key not found: lua"}, meth_pcall(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
+
+      -- Set locked g: var.
       command('lockvar lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.set_var, 'lua', 1))
+    end)
+
+    it('nvim_get_vvar, nvim_set_vvar', function()
+      -- Set readonly v: var.
+      expect_err('Key is read%-only: count$', request,
+                 'nvim_set_vvar', 'count', 42)
+      -- Set writable v: var.
+      meths.set_vvar('errmsg', 'set by API')
+      eq('set by API', meths.get_vvar('errmsg'))
     end)
 
     it('vim_set_var returns the old value', function()
@@ -1262,7 +1277,9 @@ describe('API', function()
           ext_wildmenu = false,
           ext_linegrid = screen._options.ext_linegrid or false,
           ext_multigrid = false,
-          ext_hlstate=false,
+          ext_hlstate = false,
+          ext_termcolors = false,
+          ext_messages = false,
           height = 4,
           rgb = true,
           width = 20,
@@ -1290,6 +1307,43 @@ describe('API', function()
       eq(3, meths.create_namespace(""))
       eq(4, meths.create_namespace(""))
       eq({["ns-1"]=1, ["ns-2"]=2}, meths.get_namespaces())
+    end)
+  end)
+
+  describe('nvim_create_buf', function()
+    it('works', function()
+      eq({id=2}, meths.create_buf(true))
+      eq({id=3}, meths.create_buf(false))
+      eq('  1 %a   "[No Name]"                    line 1\n'..
+         '  2      "[No Name]"                    line 0',
+         meths.command_output("ls"))
+      -- current buffer didn't change
+      eq({id=1}, meths.get_current_buf())
+
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      meths.buf_set_lines(2, 0, -1, true, {"some text"})
+      meths.set_current_buf(2)
+      screen:expect([[
+        ^some text           |
+        {1:~                   }|
+        {1:~                   }|
+                            |
+      ]], {
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+      })
+    end)
+
+    it('can change buftype before visiting', function()
+      meths.set_option("hidden", false)
+      eq({id=2}, meths.create_buf(true))
+      meths.buf_set_option(2, "buftype", "nofile")
+      meths.buf_set_lines(2, 0, -1, true, {"test text"})
+      command("split | buffer 2")
+      eq({id=2}, meths.get_current_buf())
+      -- if the buf_set_option("buftype") didn't work, this would error out.
+      command("close")
+      eq({id=1}, meths.get_current_buf())
     end)
   end)
 end)

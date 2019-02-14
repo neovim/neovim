@@ -230,6 +230,7 @@
 #define UPPER           47      /*	Match uppercase char */
 #define NUPPER          48      /*	Match non-uppercase char */
 #define LAST_NL         NUPPER + ADD_NL
+// -V:WITH_NL:560
 #define WITH_NL(op)     ((op) >= FIRST_NL && (op) <= LAST_NL)
 
 #define MOPEN           80   // -89 Mark this point in input as start of

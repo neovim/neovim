@@ -6,7 +6,7 @@ local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.s
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 
-describe('terminal buffer', function()
+describe(':terminal buffer', function()
   local screen
 
   before_each(function()

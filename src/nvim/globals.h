@@ -194,12 +194,15 @@ EXTERN int compl_cont_status INIT(= 0);
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
 EXTERN int msg_row;
-EXTERN int msg_scrolled;        /* Number of screen lines that windows have
-                                * scrolled because of printing messages. */
-EXTERN int msg_scrolled_ign INIT(= FALSE);
-/* when TRUE don't set need_wait_return in
-   msg_puts_attr() when msg_scrolled is
-   non-zero */
+EXTERN int msg_scrolled;        // Number of screen lines that windows have
+                                // scrolled because of printing messages.
+// when true don't set need_wait_return in msg_puts_attr()
+// when msg_scrolled is non-zero
+EXTERN bool msg_scrolled_ign INIT(= false);
+// Whether the screen is damaged due to scrolling. Sometimes msg_scrolled
+// is reset before the screen is redrawn, so we need to keep track of this.
+EXTERN bool msg_did_scroll INIT(= false);
+
 
 EXTERN char_u   *keep_msg INIT(= NULL);     /* msg to be shown after redraw */
 EXTERN int keep_msg_attr INIT(= 0);         /* highlight attr for keep_msg */
@@ -394,9 +397,8 @@ EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
 EXTERN buf_T *au_pending_free_buf INIT(= NULL);
 EXTERN win_T *au_pending_free_win INIT(= NULL);
 
-/*
- * Mouse coordinates, set by check_termcode()
- */
+// Mouse coordinates, set by handle_mouse_event()
+EXTERN int mouse_grid;
 EXTERN int mouse_row;
 EXTERN int mouse_col;
 EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
@@ -843,26 +845,6 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
-// 'listchars' characters. Defaults are overridden in set_chars_option().
-EXTERN int lcs_eol INIT(= '$');
-EXTERN int lcs_ext INIT(= NUL);
-EXTERN int lcs_prec INIT(= NUL);
-EXTERN int lcs_nbsp INIT(= NUL);
-EXTERN int lcs_space INIT(= NUL);
-EXTERN int lcs_tab1 INIT(= NUL);
-EXTERN int lcs_tab2 INIT(= NUL);
-EXTERN int lcs_trail INIT(= NUL);
-EXTERN int lcs_conceal INIT(= ' ');
-
-// 'fillchars' characters. Defaults are overridden in set_chars_option().
-EXTERN int fill_stl INIT(= ' ');
-EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= 9474);  // │
-EXTERN int fill_fold INIT(= 183);   // ·
-EXTERN int fill_diff INIT(= '-');
-EXTERN int fill_msgsep INIT(= ' ');
-EXTERN int fill_eob INIT(= '~');
-
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);
 EXTERN int km_startsel INIT(= FALSE);
@@ -1072,16 +1054,14 @@ EXTERN char_u e_cmdmap_key[] INIT(=N_(
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 
-/* For undo we need to know the lowest time possible. */
+// For undo we need to know the lowest time possible.
 EXTERN time_t starttime;
 
 EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 
-/*
- * Some compilers warn for not using a return value, but in some situations we
- * can't do anything useful with the value.  Assign to this variable to avoid
- * the warning.
- */
+// Some compilers warn for not using a return value, but in some situations we
+// can't do anything useful with the value.  Assign to this variable to avoid
+// the warning.
 EXTERN int vim_ignored;
 
 // Start a msgpack-rpc channel over stdin/stdout.

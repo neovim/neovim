@@ -40,9 +40,9 @@ API metadata							 *api-metadata*
 Nvim exposes API metadata as a Dictionary. Some items are described below:
 
 version			Nvim version, API level/compatibility
-version.api_level	Current API level
+version.api_level	API version integer *api-level*
 version.api_compatible	API is backwards-compatible with this level
-version.api_prerelease	Declares the current API level as unstable >
+version.api_prerelease	Declares the API as unstable/unreleased >
 			(version.api_prerelease && fn.since == version.api_level)
 functions		API function signatures
 ui_events		UI event signatures |ui|
@@ -164,7 +164,7 @@ nvim_buf_detach_event[{buf}]                           *nvim_buf_detach_event*
 EXAMPLE ~
 
 Calling |nvim_buf_attach()| with send_buffer=true on an empty buffer, emits: >
-  nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, [""], v:false]
+  nvim_buf_lines_event[{buf}, {changedtick}, 0, -1, [""], v:false]
 
 User adds two lines to the buffer, emits: >
   nvim_buf_lines_event[{buf}, {changedtick}, 0, 0, ["line1", "line2"], v:false]
@@ -289,6 +289,11 @@ nvim_input({keys})                                              *nvim_input()*
                     |keycodes| like <CR> are translated, so "<" is special. To
                     input a literal "<", send <LT>.
 
+                Note:
+                    For mouse events use |nvim_input_mouse()|. The pseudokey
+                    form "<LeftMouse><col,row>" is deprecated since
+                    |api-level| 6.
+
                 Attributes: ~
                     {async}
 
@@ -298,6 +303,43 @@ nvim_input({keys})                                              *nvim_input()*
                 Return: ~
                     Number of bytes actually written (can be fewer than
                     requested if the buffer becomes full).
+
+                                                          *nvim_input_mouse()*
+nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
+                Send mouse event from GUI.
+
+                The call is non-blocking. It doesn't wait on any resulting
+                action, but queues the event to be processed soon by the event
+                loop.
+
+                Note:
+                    Currently this doesn't support "scripting" multiple mouse
+                    events by calling it multiple times in a loop: the
+                    intermediate mouse positions will be ignored. It should be
+                    used to implement real-time mouse input in a GUI. The
+                    deprecated pseudokey form ("<LeftMouse><col,row>") of
+                    |nvim_input()| has the same limitiation.
+
+                Attributes: ~
+                    {async}
+
+                Parameters: ~
+                    {button}    Mouse button: one of "left", "right",
+                                "middle", "wheel".
+                    {action}    For ordinary buttons, one of "press", "drag",
+                                "release". For the wheel, one of "up", "down",
+                                "left", "right".
+                    {modifier}  String of modifiers each represented by a
+                                single char. The same specifiers are used as
+                                for a key press, except that the "-" separator
+                                is optional, so "C-A-", "c-a" and "CA" can all
+                                be used to specify Ctrl+Alt+click.
+                    {grid}      Grid number if the client uses |ui-multigrid|,
+                                else 0.
+                    {row}       Mouse row-position (zero-based, like redraw
+                                events)
+                    {col}       Mouse column-position (zero-based, like redraw
+                                events)
 
                                                     *nvim_replace_termcodes()*
 nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
@@ -400,7 +442,7 @@ nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
                     {dir}  Directory path
 
 nvim_get_current_line()                              *nvim_get_current_line()*
-                Gets the current line
+                Gets the current line.
 
                 Parameters: ~
 
@@ -408,18 +450,18 @@ nvim_get_current_line()                              *nvim_get_current_line()*
                     Current line string
 
 nvim_set_current_line({line})                        *nvim_set_current_line()*
-                Sets the current line
+                Sets the current line.
 
                 Parameters: ~
                     {line}  Line contents
 
 nvim_del_current_line()                              *nvim_del_current_line()*
-                Deletes the current line
+                Deletes the current line.
 
                 Parameters: ~
 
 nvim_get_var({name})                                          *nvim_get_var()*
-                Gets a global (g:) variable
+                Gets a global (g:) variable.
 
                 Parameters: ~
                     {name}  Variable name
@@ -428,20 +470,20 @@ nvim_get_var({name})                                          *nvim_get_var()*
                     Variable value
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
-                Sets a global (g:) variable
+                Sets a global (g:) variable.
 
                 Parameters: ~
                     {name}   Variable name
                     {value}  Variable value
 
 nvim_del_var({name})                                          *nvim_del_var()*
-                Removes a global (g:) variable
+                Removes a global (g:) variable.
 
                 Parameters: ~
                     {name}  Variable name
 
 nvim_get_vvar({name})                                        *nvim_get_vvar()*
-                Gets a v: variable
+                Gets a v: variable.
 
                 Parameters: ~
                     {name}  Variable name
@@ -449,8 +491,15 @@ nvim_get_vvar({name})                                        *nvim_get_vvar()*
                 Return: ~
                     Variable value
 
+nvim_set_vvar({name}, {value})                               *nvim_set_vvar()*
+                Sets a v: variable, if it is not readonly.
+
+                Parameters: ~
+                    {name}   Variable name
+                    {value}  Variable value
+
 nvim_get_option({name})                                    *nvim_get_option()*
-                Gets an option value string
+                Gets an option value string.
 
                 Parameters: ~
                     {name}  Option name
@@ -459,7 +508,7 @@ nvim_get_option({name})                                    *nvim_get_option()*
                     Option value (global)
 
 nvim_set_option({name}, {value})                           *nvim_set_option()*
-                Sets an option value
+                Sets an option value.
 
                 Parameters: ~
                     {name}   Option name
@@ -498,55 +547,55 @@ nvim_list_bufs()                                            *nvim_list_bufs()*
                     List of buffer handles
 
 nvim_get_current_buf()                                *nvim_get_current_buf()*
-                Gets the current buffer
+                Gets the current buffer.
 
                 Return: ~
                     Buffer handle
 
 nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
-                Sets the current buffer
+                Sets the current buffer.
 
                 Parameters: ~
                     {buffer}  Buffer handle
 
 nvim_list_wins()                                            *nvim_list_wins()*
-                Gets the current list of window handles
+                Gets the current list of window handles.
 
                 Return: ~
                     List of window handles
 
 nvim_get_current_win()                                *nvim_get_current_win()*
-                Gets the current window
+                Gets the current window.
 
                 Return: ~
                     Window handle
 
 nvim_set_current_win({window})                        *nvim_set_current_win()*
-                Sets the current window
+                Sets the current window.
 
                 Parameters: ~
                     {window}  Window handle
 
 nvim_list_tabpages()                                    *nvim_list_tabpages()*
-                Gets the current list of tabpage handles
+                Gets the current list of tabpage handles.
 
                 Return: ~
                     List of tabpage handles
 
 nvim_get_current_tabpage()                        *nvim_get_current_tabpage()*
-                Gets the current tabpage
+                Gets the current tabpage.
 
                 Return: ~
                     Tabpage handle
 
 nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
-                Sets the current tabpage
+                Sets the current tabpage.
 
                 Parameters: ~
                     {tabpage}  Tabpage handle
 
 nvim_create_namespace({name})                        *nvim_create_namespace()*
-                Creates a new namespace, or gets an existing one
+                Creates a new namespace, or gets an existing one.
 
                 Namespaces are used for buffer highlights and virtual text,
                 see |nvim_buf_add_highlight()| and
@@ -563,19 +612,19 @@ nvim_create_namespace({name})                        *nvim_create_namespace()*
                     Namespace id
 
 nvim_get_namespaces()                                  *nvim_get_namespaces()*
-                Gets existing, non-anonymous namespaces
+                Gets existing, non-anonymous namespaces.
 
                 Return: ~
                     dict that maps from names to namespace ids.
 
 nvim_subscribe({event})                                     *nvim_subscribe()*
-                Subscribes to event broadcasts
+                Subscribes to event broadcasts.
 
                 Parameters: ~
                     {event}  Event type string
 
 nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
-                Unsubscribes to event broadcasts
+                Unsubscribes to event broadcasts.
 
                 Parameters: ~
                     {event}  Event type string
@@ -724,7 +773,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
-                Parse a VimL expression
+                Parse a VimL expression.
 
                 Attributes: ~
                     {async}
@@ -801,7 +850,7 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                     "SingleQuotedString" and "DoubleQuotedString" nodes.
 
 nvim__id({obj})                                                   *nvim__id()*
-                Returns object given as argument
+                Returns object given as argument.
 
                 This API function is used for testing. One should not rely on
                 its presence in plugins.
@@ -813,7 +862,7 @@ nvim__id({obj})                                                   *nvim__id()*
                     its argument.
 
 nvim__id_array({arr})                                       *nvim__id_array()*
-                Returns array given as argument
+                Returns array given as argument.
 
                 This API function is used for testing. One should not rely on
                 its presence in plugins.
@@ -825,7 +874,7 @@ nvim__id_array({arr})                                       *nvim__id_array()*
                     its argument.
 
 nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
-                Returns dictionary given as argument
+                Returns dictionary given as argument.
 
                 This API function is used for testing. One should not rely on
                 its presence in plugins.
@@ -837,7 +886,7 @@ nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
                     its argument.
 
 nvim__id_float({flt})                                       *nvim__id_float()*
-                Returns floating-point value given as argument
+                Returns floating-point value given as argument.
 
                 This API function is used for testing. One should not rely on
                 its presence in plugins.
@@ -873,6 +922,26 @@ nvim_get_proc({pid})                                         *nvim_get_proc()*
 
                 Return: ~
                     Map of process properties, or NIL if process not found.
+
+                                                *nvim_select_popupmenu_item()*
+nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
+                Selects an item in the completion popupmenu.
+
+                If |ins-completion| is not active this API call is silently
+                ignored. Useful for an external UI using |ui-popupmenu| to
+                control the popupmenu with the mouse. Can also be used in a
+                mapping; use <cmd> |:map-cmd| to ensure the mapping doesn't
+                end completion mode.
+
+                Parameters: ~
+                    {item}    Index (zero-based) of the item to select. Value
+                              of -1 selects nothing and restores the original
+                              text.
+                    {insert}  Whether the selection should be inserted in the
+                              buffer.
+                    {finish}  Finish the completion and dismiss the popupmenu.
+                              Implies `insert`.
+                    {opts}    Optional parameters. Reserved for future use.
 
 nvim__inspect_cell({row}, {col})                        *nvim__inspect_cell()*
                 TODO: Documentation
@@ -914,7 +983,8 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                    `nvim_buf_lines_event`. Otherwise, the
                                    first notification will be a
                                    `nvim_buf_changedtick_event`
-                    {opts}         Optional parameters. Currently not used.
+                    {opts}         Optional parameters. Reserved for future
+                                   use.
 
                 Return: ~
                     False when updates couldn't be enabled because the buffer
@@ -1184,8 +1254,8 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 By default (and currently the only option) the text will be
                 placed after the buffer text. Virtual text will never cause
                 reflow, rather virtual text will be truncated at the end of
-                the screen line. The virtual text will begin one cell (|lcs-
-                eol| or space) after the ordinary text.
+                the screen line. The virtual text will begin one cell
+                (|lcs-eol| or space) after the ordinary text.
 
                 Namespaces are used to support batch deletion/updating of
                 virtual text. To create a namespace, use
@@ -1204,8 +1274,8 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                     {buffer}  Buffer handle
                     {ns_id}   Namespace to use or 0 to create a namespace, or
                               -1 for a ungrouped annotation
-                    {line}    Line to annotate with virtual text (zero-
-                              indexed)
+                    {line}    Line to annotate with virtual text
+                              (zero-indexed)
                     {chunks}  A list of [text, hl_group] arrays, each
                               representing a text chunk with specified
                               highlight. `hl_group` element can be omitted for
@@ -1446,5 +1516,18 @@ nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
 
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation
+
+                                                   *nvim_ui_try_resize_grid()*
+nvim_ui_try_resize_grid({grid}, {width}, {height})
+                Tell Nvim to resize a grid. Triggers a grid_resize event with
+                the requested grid size or the maximum size if it exceeds size
+                limits.
+
+                On invalid grid handle, fails with error.
+
+                Parameters: ~
+                    {grid}    The handle of the grid to be changed.
+                    {width}   The new requested width.
+                    {height}  The new requested height.
 
  vim:tw=78:ts=8:ft=help:norl:

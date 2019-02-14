@@ -1,3 +1,4 @@
+require('vim.compat')
 local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')

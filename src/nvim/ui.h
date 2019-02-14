@@ -14,10 +14,12 @@ typedef enum {
   kUIPopupmenu,
   kUITabline,
   kUIWildmenu,
-#define kUIGlobalCount (kUIWildmenu+1)
+  kUIMessages,
+#define kUIGlobalCount kUILinegrid
   kUILinegrid,
   kUIMultigrid,
   kUIHlState,
+  kUITermColors,
   kUIExtCount,
 } UIExtension;
 
@@ -26,16 +28,26 @@ EXTERN const char *ui_ext_names[] INIT(= {
   "ext_popupmenu",
   "ext_tabline",
   "ext_wildmenu",
+  "ext_messages",
   "ext_linegrid",
   "ext_multigrid",
   "ext_hlstate",
+  "ext_termcolors",
 });
 
 
 typedef struct ui_t UI;
 
+enum {
+  kLineFlagWrap = 1,
+  kLineFlagInvalid = 2,
+};
+
+typedef int LineFlags;
+
 struct ui_t {
   bool rgb;
+  bool composed;
   bool ui_ext[kUIExtCount];  ///< Externalized widgets
   int width, height;
   void *data;
@@ -44,14 +56,6 @@ struct ui_t {
 # include "ui_events.generated.h"
 #endif
 
-  // For perfomance and simplicity, we use the dense screen representation
-  // in the bridge and the TUI. The remote_ui module will translate this
-  // in to the public grid_line format.
-  void (*raw_line)(UI *ui, Integer grid, Integer row, Integer startcol,
-                   Integer endcol, Integer clearcol, Integer clearattr,
-                   Boolean wrap, const schar_T *chunk, const sattr_T *attrs);
-  void (*event)(UI *ui, char *name, Array args, bool *args_consumed);
-  void (*stop)(UI *ui);
   void (*inspect)(UI *ui, Dictionary *info);
 };
 

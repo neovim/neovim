@@ -51,6 +51,7 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
@@ -307,6 +308,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     gotocmdline(true);
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
+    if (!msg_scroll) {
+      msg_ext_clear(false);
+    }
   }
   s->xpc.xp_context = EXPAND_NOTHING;
   s->xpc.xp_backslash = XP_BS_NONE;
@@ -493,8 +497,14 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   char_u *p = ccline.cmdbuff;
 
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     ui_call_cmdline_hide(ccline.level);
+    if (msg_ext_is_visible()) {
+      msg_ext_did_cmdline = true;
+      if (must_redraw < VALID) {
+        must_redraw = VALID;
+      }
+    }
   }
 
   cmdline_level--;
@@ -613,7 +623,7 @@ static int command_line_execute(VimState *state, int key)
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    if (ui_is_external(kUIWildmenu)) {
+    if (ui_has(kUIWildmenu)) {
       ui_call_wildmenu_hide();
     }
     if (s->xpc.xp_numfiles != -1) {
@@ -895,7 +905,7 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (!cmd_silent) {
-        if (!ui_is_external(kUICmdline)) {
+        if (!ui_has(kUICmdline)) {
           ui_cursor_goto(msg_row, 0);
         }
         ui_flush();
@@ -1253,7 +1263,7 @@ static int command_line_handle_key(CommandLineState *s)
 
       xfree(ccline.cmdbuff);               // no commandline to return
       ccline.cmdbuff = NULL;
-      if (!cmd_silent && !ui_is_external(kUICmdline)) {
+      if (!cmd_silent && !ui_has(kUICmdline)) {
         if (cmdmsg_rl) {
           msg_col = Columns;
         } else {
@@ -1703,7 +1713,7 @@ static int command_line_handle_key(CommandLineState *s)
     s->do_abbr = false;                   // don't do abbreviation now
     // may need to remove ^ when composing char was typed
     if (enc_utf8 && utf_iscomposing(s->c) && !cmd_silent) {
-      if (ui_is_external(kUICmdline)) {
+      if (ui_has(kUICmdline)) {
         // TODO(bfredl): why not make unputcmdline also work with true?
         unputcmdline();
       } else {
@@ -1967,7 +1977,7 @@ static int command_line_changed(CommandLineState *s)
     // Do it only when there are no characters left to read
     // to avoid useless intermediate redraws.
     // if cmdline is external the ui handles shaping, no redraw needed.
-    if (!ui_is_external(kUICmdline) && vpeekc() == NUL) {
+    if (!ui_has(kUICmdline) && vpeekc() == NUL) {
       redrawcmd();
     }
   }
@@ -2834,7 +2844,7 @@ static void draw_cmdline(int start, int len)
     return;
   }
 
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     ccline.special_char = NUL;
     ccline.redraw_state = kCmdRedrawAll;
     return;
@@ -3027,7 +3037,7 @@ void ui_ext_cmdline_block_leave(void)
 /// assumes "redrawcmdline()" will already be invoked
 void cmdline_screen_cleared(void)
 {
-  if (!ui_is_external(kUICmdline)) {
+  if (!ui_has(kUICmdline)) {
     return;
   }
 
@@ -3052,7 +3062,7 @@ void cmdline_screen_cleared(void)
 /// called by ui_flush, do what redraws neccessary to keep cmdline updated.
 void cmdline_ui_flush(void)
 {
-  if (!ui_is_external(kUICmdline)) {
+  if (!ui_has(kUICmdline)) {
     return;
   }
   int level = ccline.level;
@@ -3081,7 +3091,7 @@ void putcmdline(int c, int shift)
   if (cmd_silent) {
     return;
   }
-  if (!ui_is_external(kUICmdline)) {
+  if (!ui_has(kUICmdline)) {
     msg_no_more = true;
     msg_putchar(c);
     if (shift) {
@@ -3107,7 +3117,7 @@ void unputcmdline(void)
     return;
   }
   msg_no_more = true;
-  if (ccline.cmdlen == ccline.cmdpos && !ui_is_external(kUICmdline)) {
+  if (ccline.cmdlen == ccline.cmdpos && !ui_has(kUICmdline)) {
     msg_putchar(' ');
   } else {
     draw_cmdline(ccline.cmdpos, mb_ptr2len(ccline.cmdbuff + ccline.cmdpos));
@@ -3393,14 +3403,11 @@ void cmdline_paste_str(char_u *s, int literally)
     }
 }
 
-/*
- * Delete characters on the command line, from "from" to the current
- * position.
- */
+/// Delete characters on the command line, from "from" to the current position.
 static void cmdline_del(int from)
 {
   memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
-      (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+          (size_t)ccline.cmdlen - ccline.cmdpos + 1);
   ccline.cmdlen -= ccline.cmdpos - from;
   ccline.cmdpos = from;
 }
@@ -3425,7 +3432,7 @@ static void redrawcmdprompt(void)
 
   if (cmd_silent)
     return;
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     ccline.redraw_state = kCmdRedrawAll;
     return;
   }
@@ -3454,7 +3461,7 @@ void redrawcmd(void)
   if (cmd_silent)
     return;
 
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     draw_cmdline(0, ccline.cmdlen);
     return;
   }
@@ -3502,7 +3509,7 @@ static void cursorcmd(void)
   if (cmd_silent)
     return;
 
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     if (ccline.redraw_state < kCmdRedrawPos) {
       ccline.redraw_state = kCmdRedrawPos;
     }
@@ -3527,7 +3534,7 @@ static void cursorcmd(void)
 
 void gotocmdline(int clr)
 {
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     return;
   }
   msg_start();
@@ -3615,7 +3622,7 @@ nextwild (
     return FAIL;
   }
 
-  if (!ui_is_external(kUIWildmenu)) {
+  if (!(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
     MSG_PUTS("...");  // show that we are busy
     ui_flush();
   }
@@ -3661,8 +3668,8 @@ nextwild (
       xp->xp_pattern = ccline.cmdbuff + i;
     }
     memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
-        &ccline.cmdbuff[ccline.cmdpos],
-        (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+            &ccline.cmdbuff[ccline.cmdpos],
+            (size_t)ccline.cmdlen - ccline.cmdpos + 1);
     memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
     ccline.cmdlen += difflen;
     ccline.cmdpos += difflen;
@@ -3765,7 +3772,7 @@ ExpandOne (
           findex = -1;
       }
       if (p_wmnu) {
-        if (ui_is_external(kUIWildmenu)) {
+        if (ui_has(kUIWildmenu)) {
           ui_call_wildmenu_select(findex);
         } else {
           win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
@@ -4120,7 +4127,7 @@ static int showmatches(expand_T *xp, int wildmenu)
     showtail = cmd_showtail;
   }
 
-  if (ui_is_external(kUIWildmenu)) {
+  if (ui_has(kUIWildmenu)) {
     Array args = ARRAY_DICT_INIT;
     for (i = 0; i < num_files; i++) {
       ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
@@ -4705,7 +4712,7 @@ ExpandFromContext (
     return ret;
   }
 
-  *file = (char_u **)"";
+  *file = NULL;
   *num_file = 0;
   if (xp->xp_context == EXPAND_HELP) {
     /* With an empty argument we would get all the help tags, which is
@@ -6054,7 +6061,12 @@ static int open_cmdwin(void)
 
   /* Don't execute autocommands while creating the window. */
   block_autocmds();
-  /* don't use a new tab page */
+
+  // When using completion in Insert mode with <C-R>=<C-F> one can open the
+  // command line window, but we don't want the popup menu then.
+  pum_undisplay(true);
+
+  // don't use a new tab page
   cmdmod.tab = 0;
   cmdmod.noswapfile = 1;
 
@@ -6121,7 +6133,7 @@ static int open_cmdwin(void)
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
   invalidate_botline();
-  if (ui_is_external(kUICmdline)) {
+  if (ui_has(kUICmdline)) {
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }

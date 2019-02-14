@@ -5,7 +5,7 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, command = helpers.nvim_dir, helpers.command
 local eq, eval = helpers.eq, helpers.eval
 
-describe('terminal window highlighting', function()
+describe(':terminal window highlighting', function()
   local screen
 
   before_each(function()

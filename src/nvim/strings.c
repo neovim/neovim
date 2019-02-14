@@ -27,6 +27,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -50,16 +51,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/eval/encode.h"
 
-#ifdef __MINGW32__
-# undef fpclassify
-# define fpclassify __fpclassify
-# undef isnan
-# define isnan _isnan
-#endif
-
-/*
- * Copy "string" into newly allocated memory.
- */
+/// Copy "string" into newly allocated memory.
 char_u *vim_strsave(const char_u *string)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
@@ -1214,14 +1206,14 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               remove_trailing_zeroes = true;
             }
 
-            if (isinf(f)
+            if (xisinf(f)
                 || (strchr("fF", fmt_spec) != NULL && abs_f > 1.0e307)) {
               xstrlcpy(tmp, infinity_str(f > 0.0, fmt_spec,
                                          force_sign, space_for_positive),
                        sizeof(tmp));
               str_arg_l = strlen(tmp);
               zero_padding = 0;
-            } else if (isnan(f)) {
+            } else if (xisnan(f)) {
               // Not a number: nan or NAN
               memmove(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan", 4);
               str_arg_l = 3;

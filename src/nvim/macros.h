@@ -198,4 +198,25 @@
 # define IO_COUNT(x)  (x)
 #endif
 
+///
+/// PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+///
+#if defined(__clang__) && __clang__ == 1
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
+# define PRAGMA_DIAG_POP \
+    _Pragma("clang diagnostic pop")
+#elif defined(__GNUC__)
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
+  _Pragma("GCC diagnostic push") \
+  _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+# define PRAGMA_DIAG_POP \
+  _Pragma("GCC diagnostic pop")
+#else
+# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+# define PRAGMA_DIAG_POP
+#endif
+
+
 #endif  // NVIM_MACROS_H

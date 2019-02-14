@@ -1472,6 +1472,10 @@ void set_curbuf(buf_T *buf, int action)
     if (old_tw != curbuf->b_p_tw)
       check_colorcolumn(curwin);
   }
+
+  if (bufref_valid(&prevbufref) && prevbuf->terminal != NULL) {
+    terminal_check_size(prevbuf->terminal);
+  }
 }
 
 /*
@@ -1625,7 +1629,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   FileID file_id;
   bool file_id_valid = (sfname != NULL
                         && os_fileid((char *)sfname, &file_id));
-  if (ffname != NULL && !(flags & BLN_DUMMY)
+  if (ffname != NULL && !(flags & (BLN_DUMMY | BLN_NEW))
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
     xfree(ffname);
@@ -3221,6 +3225,9 @@ int build_stl_str_hl(
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
+  const int save_must_redraw = must_redraw;
+  const int save_redr_type = curwin->w_redr_type;
+  const int save_highlight_shcnaged = need_highlight_changed;
 
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.
@@ -3629,16 +3636,16 @@ int build_stl_str_hl(
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
       set_internal_string_var((char_u *)"g:actual_curbuf", tmp);
 
-      buf_T *o_curbuf = curbuf;
-      win_T *o_curwin = curwin;
+      buf_T *const save_curbuf = curbuf;
+      win_T *const save_curwin = curwin;
       curwin = wp;
       curbuf = wp->w_buffer;
 
       // Note: The result stored in `t` is unused.
       str = eval_to_string_safe(out_p, &t, use_sandbox);
 
-      curwin = o_curwin;
-      curbuf = o_curbuf;
+      curwin = save_curwin;
+      curbuf = save_curbuf;
 
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);
@@ -3677,10 +3684,10 @@ int build_stl_str_hl(
     {
       // In list mode virtcol needs to be recomputed
       colnr_T virtcol = wp->w_virtcol;
-      if (wp->w_p_list && lcs_tab1 == NUL) {
-        wp->w_p_list = FALSE;
+      if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
+        wp->w_p_list = false;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-        wp->w_p_list = TRUE;
+        wp->w_p_list = true;
       }
       ++virtcol;
       // Don't display %V if it's the same as %c.
@@ -4258,6 +4265,13 @@ int build_stl_str_hl(
     cur_tab_rec->def.tabnr = 0;
     cur_tab_rec->def.func = NULL;
   }
+
+  // We do not want redrawing a stausline, ruler, title, etc. to trigger
+  // another redraw, it may cause an endless loop.  This happens when a
+  // statusline changes a highlight group.
+  must_redraw = save_must_redraw;
+  curwin->w_redr_type = save_redr_type;
+  need_highlight_changed = save_highlight_shcnaged;
 
   return width;
 }

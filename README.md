@@ -33,9 +33,10 @@ Features
 --------
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
-- [API](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  access from any language including Clojure, Lisp, Go, Haskell, Lua,
-  JavaScript, Perl, Python, Ruby, and Rust
+- [API access](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
+  from any language including C/C++, C#, Clojure, D, Elixir, Lisp, Go,
+  Haskell, Java, JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket,
+  Ruby, Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
@@ -68,7 +69,7 @@ To skip bundled (`third-party/*`) dependencies:
 
 1. Install the dependencies using a package manager.
    ```
-   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libjemalloc-dev
+   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev
    sudo luarocks build mpack
    sudo luarocks build lpeg
    sudo luarocks build inspect

@@ -1,10 +1,11 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local feed_command, eq, eval, expect, source =
-  helpers.feed_command, helpers.eq, helpers.eval, helpers.expect, helpers.source
+local eq, eval, expect, source =
+  helpers.eq, helpers.eval, helpers.expect, helpers.source
 local clear = helpers.clear
 local command = helpers.command
+local expect_err = helpers.expect_err
 local feed = helpers.feed
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
@@ -17,9 +18,14 @@ describe(':recover', function()
   before_each(clear)
 
   it('fails if given a non-existent swapfile', function()
-    local swapname = 'bogus-swapfile'
-    feed_command('recover '..swapname) -- This should not segfault. #2117
-    eq('E305: No swap file found for '..swapname, eval('v:errmsg'))
+    local swapname = 'bogus_swapfile'
+    local swapname2 = 'bogus_swapfile.swp'
+    expect_err('E305: No swap file found for '..swapname,
+               command, 'recover '..swapname)  -- Should not segfault. #2117
+    -- Also check filename ending with ".swp". #9504
+    expect_err('Vim%(recover%):E306: Cannot open '..swapname2,
+               command, 'recover '..swapname2)  -- Should not segfault. #2117
+    eq(2, eval('1+1'))  -- Still alive?
   end)
 
 end)

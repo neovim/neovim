@@ -384,8 +384,8 @@ run_analysis() {(
 detect_url() {
   local url="${1:-detect}"
   if test "$url" = detect ; then
-    curl --silent -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
-    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz' \
+    curl --silent -L 'https://www.viva64.com/en/pvs-studio-download/' \
+    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*-x86_64\.tgz' \
     || echo FAILED
   else
     printf '%s' "$url"
@@ -472,8 +472,6 @@ main() {
     help
     return 0
   fi
-
-  # set -x
 
   if test -n "$patch" ; then
     patch_sources "$tgt" "$only_build"

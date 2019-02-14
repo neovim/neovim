@@ -74,6 +74,7 @@ return {
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
+    'Signal',                 -- after nvim process received a signal
     'SourceCmd',              -- sourcing a Vim script using command
     'SourcePre',              -- before sourcing a Vim script
     'SpellFileMissing',       -- spell file missing
@@ -115,6 +116,7 @@ return {
   -- syntax file
   nvim_specific = {
     DirChanged=true,
+    Signal=true,
     TabClosed=true,
     TabNew=true,
     TabNewEntered=true,

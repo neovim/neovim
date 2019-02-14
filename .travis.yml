@@ -70,10 +70,10 @@ jobs:
       env: BUILD_32BIT=ON
     - os: osx
       compiler: clang
-      osx_image: xcode9.4  # macOS 10.13
+      osx_image: xcode10.1  # macOS 10.13
     - os: osx
       compiler: gcc
-      osx_image: xcode9.4  # macOS 10.13
+      osx_image: xcode10.1  # macOS 10.13
     - if: branch = master
       os: linux
       env: CI_TARGET=lint

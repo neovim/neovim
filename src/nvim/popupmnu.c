@@ -19,6 +19,7 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/memory.h"
@@ -41,7 +42,11 @@ static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
 static bool pum_is_visible = false;
+static bool pum_is_drawn = false;
 static bool pum_external = false;
+static bool pum_invalid = false;  // the screen was just cleared
+
+static ScreenGrid pum_grid = SCREEN_GRID_INIT;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -78,13 +83,14 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
-    pum_external = ui_is_external(kUIPopupmenu);
+    pum_external = ui_has(kUIPopupmenu);
   }
 
   do {
     // Mark the pum as visible already here,
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
     pum_is_visible = true;
+    pum_is_drawn = true;
     validate_cursor_col();
     above_row = 0;
     below_row = cmdline_row;
@@ -98,7 +104,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     }
 
     int grid = (int)curwin->w_grid.handle;
-    if (!ui_is_external(kUIMultigrid)) {
+    if (!ui_has(kUIMultigrid)) {
       grid = (int)default_grid.handle;
       row += curwin->w_winrow;
       col += curwin->w_wincol;
@@ -317,7 +323,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
-  int row = pum_row;
+  int row = 0;
   int col;
   int attr_norm = win_hl_attr(curwin, HLF_PNI);
   int attr_select = win_hl_attr(curwin, HLF_PSI);
@@ -333,6 +339,39 @@ void pum_redraw(void)
   int thumb_heigth = 1;
   int round;
   int n;
+
+  int grid_width = pum_width;
+  int col_off = 0;
+  bool extra_space = false;
+  if (curwin->w_p_rl) {
+    col_off = pum_width;
+    if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
+      grid_width += 1;
+      extra_space = true;
+    }
+  } else if (pum_col > 0) {
+    grid_width += 1;
+    col_off = 1;
+    extra_space = true;
+  }
+  if (pum_scrollbar > 0) {
+    grid_width++;
+  }
+
+  grid_assign_handle(&pum_grid);
+  bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col-col_off,
+                                pum_height, grid_width);
+  bool invalid_grid = moved || pum_invalid;
+  pum_invalid = false;
+
+  if (!pum_grid.chars
+      || pum_grid.Rows != pum_height || pum_grid.Columns != grid_width) {
+    grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
+    ui_call_grid_resize(pum_grid.handle, pum_grid.Columns, pum_grid.Rows);
+  } else if (invalid_grid) {
+    grid_invalidate(&pum_grid);
+  }
+
 
   // Never display more than we have
   if (pum_first > pum_size - pum_height) {
@@ -356,17 +395,17 @@ void pum_redraw(void)
     screen_puts_line_start(row);
 
     // prepend a space if there is room
-    if (curwin->w_p_rl) {
-      if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
-        grid_putchar(&default_grid, ' ', row, pum_col + 1, attr);
+    if (extra_space) {
+      if (curwin->w_p_rl) {
+        grid_putchar(&pum_grid, ' ', row, col_off + 1, attr);
+      } else {
+        grid_putchar(&pum_grid, ' ', row, col_off - 1, attr);
       }
-    } else if (pum_col > 0) {
-      grid_putchar(&default_grid, ' ', row, pum_col - 1, attr);
     }
 
     // Display each entry, use two spaces for a Tab.
     // Do this 3 times: For the main text, kind and extra info
-    col = pum_col;
+    col = col_off;
     totwidth = 0;
 
     for (round = 1; round <= 3; ++round) {
@@ -423,13 +462,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&default_grid, rt, (int)STRLEN(rt), row,
+              grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row,
                             col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               col -= width;
             } else {
-              grid_puts_len(&default_grid, st, (int)STRLEN(st), row, col, attr);
+              grid_puts_len(&pum_grid, st, (int)STRLEN(st), row, col, attr);
               xfree(st);
               col += width;
             }
@@ -440,11 +479,11 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (curwin->w_p_rl) {
-              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col - 1,
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col - 1,
                             attr);
               col -= 2;
             } else {
-              grid_puts_len(&default_grid, (char_u *)"  ", 2, row, col, attr);
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
             totwidth += 2;
@@ -475,37 +514,37 @@ void pum_redraw(void)
       }
 
       if (curwin->w_p_rl) {
-        grid_fill(&default_grid, row, row + 1, pum_col - pum_base_width - n + 1,
+        grid_fill(&pum_grid, row, row + 1, col_off - pum_base_width - n + 1,
                   col + 1, ' ', ' ', attr);
-        col = pum_col - pum_base_width - n + 1;
+        col = col_off - pum_base_width - n + 1;
       } else {
-        grid_fill(&default_grid, row, row + 1, col,
-                  pum_col + pum_base_width + n, ' ', ' ', attr);
-        col = pum_col + pum_base_width + n;
+        grid_fill(&pum_grid, row, row + 1, col,
+                  col_off + pum_base_width + n, ' ', ' ', attr);
+        col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (curwin->w_p_rl) {
-      grid_fill(&default_grid, row, row + 1, pum_col - pum_width + 1, col + 1,
+      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, col + 1,
                 ' ', ' ', attr);
     } else {
-      grid_fill(&default_grid, row, row + 1, col, pum_col + pum_width, ' ', ' ',
+      grid_fill(&pum_grid, row, row + 1, col, col_off + pum_width, ' ', ' ',
                 attr);
     }
 
     if (pum_scrollbar > 0) {
       if (curwin->w_p_rl) {
-        grid_putchar(&default_grid, ' ', row, pum_col - pum_width,
+        grid_putchar(&pum_grid, ' ', row, col_off - pum_width,
                      i >= thumb_pos && i < thumb_pos + thumb_heigth
                      ? attr_thumb : attr_scroll);
       } else {
-        grid_putchar(&default_grid, ' ', row, pum_col + pum_width,
+        grid_putchar(&pum_grid, ' ', row, col_off + pum_width,
                      i >= thumb_pos && i < thumb_pos + thumb_heigth
                      ? attr_thumb : attr_scroll);
       }
     }
-    grid_puts_line_flush(&default_grid, false);
+    grid_puts_line_flush(&pum_grid, false);
     row++;
   }
 }
@@ -696,6 +735,8 @@ static int pum_set_selected(int n, int repeat)
 
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
+            // TODO(bfredl): can simplify, get rid of the flag munging?
+            // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
             update_screen(0);
             pum_is_visible = true;
@@ -725,17 +766,27 @@ static int pum_set_selected(int n, int repeat)
 }
 
 /// Undisplay the popup menu (later).
-void pum_undisplay(void)
+void pum_undisplay(bool immediate)
 {
   pum_is_visible = false;
   pum_array = NULL;
 
-  if (pum_external) {
-    ui_call_popupmenu_hide();
-  } else {
-    redraw_all_later(SOME_VALID);
-    redraw_tabline = true;
-    status_redraw_all();
+  if (immediate) {
+    pum_check_clear();
+  }
+}
+
+void pum_check_clear(void)
+{
+  if (!pum_is_visible && pum_is_drawn) {
+    if (pum_external) {
+      ui_call_popupmenu_hide();
+    } else {
+      ui_comp_remove_grid(&pum_grid);
+      // TODO(bfredl): consider keeping float grids allocated.
+      grid_free(&pum_grid);
+    }
+    pum_is_drawn = false;
   }
 }
 
@@ -756,6 +807,17 @@ bool pum_visible(void)
 bool pum_drawn(void)
 {
   return pum_visible() && !pum_external;
+}
+
+/// Screen was cleared, need to redraw next time
+void pum_invalidate(void)
+{
+  pum_invalid = true;
+}
+
+void pum_recompose(void)
+{
+  ui_comp_compose_grid(&pum_grid);
 }
 
 /// Gets the height of the menu.

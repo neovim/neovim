@@ -12,7 +12,7 @@ local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 
-describe('terminal scrollback', function()
+describe(':terminal scrollback', function()
   local screen
 
   before_each(function()
@@ -344,7 +344,7 @@ describe('terminal scrollback', function()
   end)
 end)
 
-describe('terminal prints more lines than the screen height and exits', function()
+describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
     clear()
     local screen = Screen.new(30, 7)
@@ -460,7 +460,7 @@ describe("'scrollback' option", function()
     screen:detach()
   end)
 
-  it('defaults to 10000 in terminal buffers', function()
+  it('defaults to 10000 in :terminal buffers', function()
     set_fake_shell()
     command('terminal')
     eq(10000, curbufmeths.get_option('scrollback'))
@@ -481,25 +481,10 @@ describe("'scrollback' option", function()
     eq(-1, curbufmeths.get_option('scrollback'))
   end)
 
-  it(':setlocal in a normal buffer is an error', function()
-    command('new')
-
-    -- :setlocal to -1 is NOT an error.
-    feed_command('setlocal scrollback=-1')
-    eq(nil, string.match(eval("v:errmsg"), "E%d*:"))
-    feed('<CR>')
-
-    -- :setlocal to anything except -1 is an error.
-    feed_command('setlocal scrollback=42')
-    feed('<CR>')
-    eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
-    eq(-1, curbufmeths.get_option('scrollback'))
-  end)
-
   it(':set updates local value and global default', function()
     set_fake_shell()
-    command('set scrollback=42')                  -- set global and (attempt) local
-    eq(-1, curbufmeths.get_option('scrollback'))  -- normal buffer: -1
+    command('set scrollback=42')                  -- set global value
+    eq(42, curbufmeths.get_option('scrollback'))
     command('terminal')
     eq(42, curbufmeths.get_option('scrollback'))  -- inherits global default
     command('setlocal scrollback=99')

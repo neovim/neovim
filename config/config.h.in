@@ -62,7 +62,6 @@
 #cmakedefine FEAT_TUI
 
 #ifndef UNIT_TESTING
-#cmakedefine HAVE_JEMALLOC
 #cmakedefine LOG_LIST_ACTIONS
 #endif
 
@@ -71,5 +70,6 @@
 #define ENDIAN_INCLUDE_FILE <@ENDIAN_INCLUDE_FILE@>
 
 #cmakedefine HAVE_EXECINFO_BACKTRACE
+#cmakedefine HAVE_BUILTIN_ADD_OVERFLOW
 
 #endif  // AUTO_CONFIG_H

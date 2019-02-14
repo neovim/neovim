@@ -409,8 +409,8 @@ accordingly.  Vim proceeds in this order:
 	useful for debugging the initializations.
 
 3. Execute Ex commands, from environment variables and/or files
-	An environment variable is read as one Ex command line, where multiple
-	commands must be separated with '|' or <NL>.
+	An environment variable (e.g. $VIMINIT) is read as one Ex command
+	line, where multiple commands must be separated with '|' or <NL>.
 					*config* *init.vim* *vimrc* *exrc*
 	A file that contains initialization commands is generically called
 	a "vimrc" or config file.  Each line in a vimrc file is executed as an
@@ -422,20 +422,15 @@ accordingly.  Vim proceeds in this order:
 	Or if |$XDG_CONFIG_HOME| is defined:
 				$XDG_CONFIG_HOME/nvim/init.vim
 
-	RECOMMENDATION: Put all your Vim configuration stuff in the 
-	$HOME/.config/nvim/ directory. That makes it easy to copy it to 
-	another system.
-
-	If Vim was started with "-u filename", the file "filename" is used.
+	If Nvim was started with "-u filename", the file "filename" is used.
 	All following initializations until 4. are skipped. $MYVIMRC is not
 	set.
-	"vim -u NORC" can be used to skip these initializations without
-	reading a file.  "vim -u NONE" also skips plugins and syntax
+	"nvim -u NORC" can be used to skip these initializations without
+	reading a file.  "nvim -u NONE" also skips plugins and syntax
 	highlighting.  |-u|
 
-	If Vim was started in Ex mode with the "-s" argument, all following
-	initializations until 4. are skipped.  Only the "-u" option is
-	interpreted.
+	If Nvim was started with |-es|, all following initializations until 4.
+	are skipped.
 						*system-vimrc* *sysinit.vim*
      a. The system vimrc file is read for initializations.  If
 	nvim/sysinit.vim file exists in one of $XDG_CONFIG_DIRS, it will be
@@ -447,13 +442,11 @@ accordingly.  Vim proceeds in this order:
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
 	and when using VIMINIT.
-	-  The environment variable VIMINIT
-	   The value of $VIMINIT is used as an Ex command line.
-	-  The user vimrc file: $XDG_CONFIG_HOME/nvim/init.vim.
-	-  Other vimrc file: {xdg_config_dir}/nvim/init.vim where 
+	-  Environment variable $VIMINIT, used as an Ex command line.
+	-  User |config| file: $XDG_CONFIG_HOME/nvim/init.vim.
+	-  Other config file: {xdg_config_dir}/nvim/init.vim where 
 	   {xdg_config_dir} is one of the directories in $XDG_CONFIG_DIRS.
-	-  The environment variable EXINIT.
-	   The value of $EXINIT is used as an Ex command line.
+	-  Environment variable $EXINIT, used as an Ex command line.
 
      c. If the 'exrc' option is on (which is NOT the default), the current
 	directory is searched for three files.  The first that exists is used,
@@ -519,18 +512,14 @@ accordingly.  Vim proceeds in this order:
 	If the "-b" flag was given to Vim, the options for binary editing will
 	be set now.  See |-b|.
 
-10. Perform GUI initializations
-	Only when starting "gvim", the GUI initializations will be done.  See
-	|gui-init|.
-
-11. Read the ShaDa file
+10. Read the ShaDa file
 	See |shada-file|.
 
-12. Read the quickfix file
+11. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
 	fails, Vim exits.
 
-13. Open all windows
+12. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -539,7 +528,7 @@ accordingly.  Vim proceeds in this order:
 	If the "-q" flag was given to Vim, the first error is jumped to.
 	Buffers for all windows will be loaded.
 
-14. Execute startup commands
+13. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
 	If the 'insertmode' option is set, Insert mode is entered.
@@ -590,9 +579,6 @@ MS-DOS line separators: ~
 On Windows systems Vim assumes that all the vimrc files have <CR> <NL> pairs
 as line separators.  This will give problems if you have a file with only
 <NL>s and have a line like ":map xx yy^M".  The trailing ^M will be ignored.
-
-The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
-gvimrc file.
 
 
 Avoiding trojan horses ~

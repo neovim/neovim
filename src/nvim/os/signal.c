@@ -15,6 +15,7 @@
 #include "nvim/globals.h"
 #include "nvim/memline.h"
 #include "nvim/eval.h"
+#include "nvim/fileio.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -22,7 +23,7 @@
 #include "nvim/os/signal.h"
 #include "nvim/event/loop.h"
 
-static SignalWatcher spipe, shup, squit, sterm;
+static SignalWatcher spipe, shup, squit, sterm, susr1;
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -61,6 +62,10 @@ void signal_init(void)
   signal_watcher_init(&main_loop, &spwr, NULL);
   signal_watcher_start(&spwr, on_signal, SIGPWR);
 #endif
+#ifdef SIGUSR1
+  signal_watcher_init(&main_loop, &susr1, NULL);
+  signal_watcher_start(&susr1, on_signal, SIGUSR1);
+#endif
 }
 
 void signal_teardown(void)
@@ -73,6 +78,9 @@ void signal_teardown(void)
 #ifdef SIGPWR
   signal_watcher_close(&spwr, NULL);
 #endif
+#ifdef SIGUSR1
+  signal_watcher_close(&susr1, NULL);
+#endif
 }
 
 void signal_stop(void)
@@ -83,6 +91,9 @@ void signal_stop(void)
   signal_watcher_stop(&sterm);
 #ifdef SIGPWR
   signal_watcher_stop(&spwr);
+#endif
+#ifdef SIGUSR1
+  signal_watcher_stop(&susr1);
 #endif
 }
 
@@ -115,6 +126,10 @@ static char * signal_name(int signum)
 #endif
     case SIGHUP:
       return "SIGHUP";
+#ifdef SIGUSR1
+    case SIGUSR1:
+      return "SIGUSR1";
+#endif
     default:
       return "Unknown";
   }
@@ -162,6 +177,12 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
         deadly_signal(signum);
       }
       break;
+#ifdef SIGUSR1
+    case SIGUSR1:
+      apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGUSR1", curbuf->b_fname, true,
+                     curbuf);
+      break;
+#endif
     default:
       ELOG("invalid signal: %d", signum);
       break;

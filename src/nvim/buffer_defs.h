@@ -248,6 +248,10 @@ typedef struct {
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
   char_u *wo_winhl;
 # define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
+  char_u *wo_fcs;
+# define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
+  char_u *wo_lcs;
+# define w_p_lcs w_onebuf_opt.wo_lcs    // 'listchars'
 
   LastSet wo_scriptID[WV_COUNT];        // SIDs for window-local options
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
@@ -1006,6 +1010,31 @@ struct window_S {
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
 
+  // 'listchars' characters. Defaults set in set_chars_option().
+  struct {
+    int eol;
+    int ext;
+    int prec;
+    int nbsp;
+    int space;
+    int tab1;                       ///< first tab character
+    int tab2;                       ///< second tab character
+    int tab3;                       ///< third tab character
+    int trail;
+    int conceal;
+  } w_p_lcs_chars;
+
+  // 'fillchars' characters. Defaults set in set_chars_option().
+  struct {
+    int stl;
+    int stlnc;
+    int vert;
+    int fold;
+    int diff;
+    int msgsep;
+    int eob;
+  } w_p_fcs_chars;
+
   /*
    * "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for
    * displaying the buffer.
@@ -1036,6 +1065,13 @@ struct window_S {
   int w_wincol;                     /* Leftmost column of window in screen. */
   int w_width;                      /* Width of window, excluding separation. */
   int w_vsep_width;                 /* Number of separator columns (0 or 1). */
+
+  // inner size of window, which can be overridden by external UI
+  int w_height_inner;
+  int w_width_inner;
+  // external UI request. If non-zero, the inner size will use this.
+  int w_height_request;
+  int w_width_request;
 
   /*
    * === start of cached values ====

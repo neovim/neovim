@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Development of Nvim					*development*
+Development of Nvim					*development* *dev*
 
 This reference describes design constraints and guidelines, for developing
 Nvim applications or Nvim itself.
@@ -79,7 +79,7 @@ include the kitchen sink... but it's good for plumbing."
 
 
 ==============================================================================
-Developer guidelines				        *dev*
+Developer guidelines				        *dev-guidelines*
 
 
 PROVIDERS 						*dev-provider*
@@ -209,10 +209,12 @@ Examples of API-client package names:
 
 Implementation ~
 
-Consider using libmpack instead of the msgpack.org C/C++ library. libmpack is
-small (can be inlined into your C/C++ project) and efficient (no allocations).
-It also implements msgpack-RPC.
-https://github.com/libmpack/libmpack/
+For C/C++ projects, consider libmpack instead of the msgpack.org library.
+    https://github.com/libmpack/libmpack/
+libmpack is small (no dependencies, can inline into your C/C++ project) and
+efficient (no allocations). It also implements msgpack-RPC, the protocol
+required by Nvim.
+    https://github.com/msgpack-rpc/msgpack-rpc
 
 EXTERNAL UI 						*dev-ui*
 
