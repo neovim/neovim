@@ -7,13 +7,31 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
-
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+# Extra CMake flags which extend the default set
+CMAKE_EXTRA_FLAGS ?=
+
+# CMAKE_INSTALL_PREFIX
+#   - May be passed directly or as part of CMAKE_EXTRA_FLAGS.
+#   - Fail if the given value does not match the CMake cached value. #9615
+CACHED_PREFIX := $(shell $(CMAKE_PRG) -L -N build | 2>/dev/null \
+    grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2)
+CMAKE_INSTALL_PREFIX ?= $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
+    grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
+ifneq (,$(CMAKE_INSTALL_PREFIX))
+  ifneq (,$(CACHED_PREFIX))
+    ifneq ($(CMAKE_INSTALL_PREFIX),$(CACHED_PREFIX))
+      $(info error: CMAKE_INSTALL_PREFIX "$(CMAKE_INSTALL_PREFIX)" does not match cached value "$(CACHED_PREFIX)")
+      $(info .      Run this command, then try again:)
+      $(info .        cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX))
+      $(error error)
+    endif
+  endif
+endif
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
 DEPS_BUILD_DIR ?= .deps
-
 ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
   $(error DEPS_BUILD_DIR must not contain whitespace)
 endif
@@ -41,8 +59,6 @@ endif
 
 BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
 
-# Extra CMake flags which extend the default set
-CMAKE_EXTRA_FLAGS ?=
 DEPS_CMAKE_FLAGS ?=
 # Back-compat: USE_BUNDLED_DEPS was the old name.
 USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
@@ -153,8 +169,9 @@ generated-sources: build/.ran-cmake
 appimage:
 	bash scripts/genappimage.sh
 
-# Build an appimage with embedded update information appimage-nightly for
-# nightly builds or appimage-latest for a release
+# Build an appimage with embedded update information.
+#   appimage-nightly: for nightly builds
+#   appimage-latest: for a release
 appimage-%:
 	bash scripts/genappimage.sh $*
 
