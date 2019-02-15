@@ -343,3 +343,11 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
 
   for k in obj.keys():
     obj[ k ] = expand_refs_in_object( obj[ k ] )
+
+
+def DisplayBaloon( is_term, display ):
+  if not is_term:
+    display = '\n'.join( display )
+
+  vim.eval( "balloon_show( {0} )".format(
+    json.dumps( display ) ) )

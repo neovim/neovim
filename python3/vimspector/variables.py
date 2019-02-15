@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import vim
-import json
 import logging
 from collections import namedtuple
 from functools import partial
@@ -85,6 +84,7 @@ class VariablesView( object ):
       self._oldoptions[ 'balloonevalterm' ] = vim.options[ 'balloonevalterm' ]
       vim.options[ 'balloonevalterm' ] = True
 
+    self._is_term = not bool( int( vim.eval( "has( 'gui_running' )" ) ) )
 
   def Clear( self ):
     with utils.ModifiableScratchBuffer( self._vars.win.buffer ):
@@ -356,13 +356,11 @@ class VariablesView( object ):
         'Type: ' + body.get( 'type', '<unknown>' ),
         'Value: ' + result
       ]
-      vim.eval( "balloon_show( {0} )".format(
-        json.dumps( display ) ) )
+      utils.DisplayBaloon( self._is_term, display )
 
     def failure_handler( reason, message ):
       display = [ reason ]
-      vim.eval( "balloon_show( {0} )".format(
-        json.dumps( display ) ) )
+      utils.DisplayBaloon( self._is_term, display )
 
 
     self._connection.DoRequest( handler, {
