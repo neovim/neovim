@@ -2658,6 +2658,23 @@ void ins_compl_show_pum(void)
   pum_selected_item = cur;
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed);
   curwin->w_cursor.col = col;
+
+  if (!has_event(EVENT_MENUPOPUPCHANGED)) {
+    return;
+  }
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  if (cur < 0) {
+    tv_dict_add_dict(dict, S_LEN("completed_item"), tv_dict_alloc());
+  } else {
+    dict_T *item = ins_compl_dict_alloc(compl_curr_match);
+    tv_dict_add_dict(dict, S_LEN("completed_item"), item);
+  }
+  pum_set_boundings(dict);
+  tv_dict_set_keys_readonly(dict);
+  textlock++;
+  apply_autocmds(EVENT_MENUPOPUPCHANGED, NULL, NULL, false, curbuf);
+  textlock--;
+  tv_dict_clear(dict);
 }
 
 #define DICT_FIRST      (1)     /* use just first element in "dict" */
@@ -4096,31 +4113,37 @@ static void ins_compl_insert(int in_compl_func)
   else
     compl_used_match = TRUE;
 
-  // Set completed item.
-  // { word, abbr, menu, kind, info }
-  dict_T *dict = tv_dict_alloc();
-  tv_dict_add_str(
-      dict, S_LEN("word"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
-  tv_dict_add_str(
-      dict, S_LEN("abbr"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
-  tv_dict_add_str(
-      dict, S_LEN("menu"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_MENU]));
-  tv_dict_add_str(
-      dict, S_LEN("kind"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_KIND]));
-  tv_dict_add_str(
-      dict, S_LEN("info"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
-  tv_dict_add_str(
-      dict, S_LEN("user_data"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_USER_DATA]));
+  dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
   if (!in_compl_func) {
     compl_curr_match = compl_shown_match;
   }
+}
+
+// Convert to complete item dict
+static dict_T *ins_compl_dict_alloc(compl_T *match)
+{
+  // { word, abbr, menu, kind, info }
+  dict_T *dict = tv_dict_alloc();
+  tv_dict_add_str(
+      dict, S_LEN("word"),
+      (const char *)EMPTY_IF_NULL(match->cp_str));
+  tv_dict_add_str(
+      dict, S_LEN("abbr"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
+  tv_dict_add_str(
+      dict, S_LEN("menu"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
+  tv_dict_add_str(
+      dict, S_LEN("kind"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
+  tv_dict_add_str(
+      dict, S_LEN("info"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+  tv_dict_add_str(
+      dict, S_LEN("user_data"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_USER_DATA]));
+  return dict;
 }
 
 /*

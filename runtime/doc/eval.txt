@@ -1552,6 +1552,19 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 					operation.
 			regtype		Type of register as returned by
 					|getregtype()|.
+			completed_item    Current selected complete item on
+					|MenuPopupChanged|, Is `{}` when no complete
+					item selected.
+			height 		Height of popup menu on |MenuPopupChanged|
+			width   	width of popup menu on |MenuPopupChanged|
+			row  	 	Row count of popup menu on |MenuPopupChanged|,
+					relative to screen.
+			col  	 	Col count of popup menu on |MenuPopupChanged|,
+					relative to screen.
+			size 		Total number of completion items on
+					|MenuPopupChanged|.
+			scrollbar 	Is |v:true| if popup menu have scrollbar, or
+					|v:false| if not.
 
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not
