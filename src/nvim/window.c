@@ -1300,6 +1300,7 @@ static void win_rotate(int upwards, int count)
     if (upwards) {              /* first window becomes last window */
       /* remove first window/frame from the list */
       frp = curwin->w_frame->fr_parent->fr_child;
+      assert(frp != NULL);
       wp1 = frp->fr_win;
       win_remove(wp1, NULL);
       frame_remove(frp);
