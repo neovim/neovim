@@ -115,6 +115,99 @@ describe('Signs', function()
       ]])
     end)
 
+    it('multiple signs', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number')
+      command('set signcolumn=yes:2')
+      command('sign define pietSearch text=>> texthl=Search')
+      command('sign define pietError text=XX texthl=Error')
+      command('sign define pietWarn text=WW texthl=Warning')
+      command('sign place 1 line=1 name=pietSearch buffer=1')
+      command('sign place 2 line=1 name=pietError buffer=1')
+      -- Line 2 helps checking that signs in the same line are ordered by Id.
+      command('sign place 4 line=2 name=pietSearch buffer=1')
+      command('sign place 3 line=2 name=pietError buffer=1')
+      -- Line 3 checks that with a limit over the maximum number
+      -- of signs, the ones with the highest Ids are being picked,
+      -- and presented by their sorted Id order.
+      command('sign place 4 line=3 name=pietSearch buffer=1')
+      command('sign place 5 line=3 name=pietWarn buffer=1')
+      command('sign place 3 line=3 name=pietError buffer=1')
+      screen:expect([[
+        {1:>>}XX{6:  1 }a                                            |
+        XX{1:>>}{6:  2 }b                                            |
+        {1:>>}WW{6:  3 }c                                            |
+        {2:    }{6:  4 }^                                             |
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+        {2:    }{0:~                                                }|
+                                                             |
+      ]])
+      -- Checking to see that with the standard setting, we are getting
+      -- the sign with the top Id.
+      command('set signcolumn=yes:1')
+      screen:expect([[
+        XX{6:  1 }a                                              |
+        {1:>>}{6:  2 }b                                              |
+        WW{6:  3 }c                                              |
+        {2:  }{6:  4 }^                                               |
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+        {2:  }{0:~                                                  }|
+                                                             |
+      ]])
+      -- Checking to see that auto:3 commodates the all the signs we
+      -- defined so far.
+      command('set signcolumn=auto:3')
+      screen:expect([[
+        {1:>>}XX{2:  }{6:  1 }a                                          |
+        XX{1:>>}{2:  }{6:  2 }b                                          |
+        XX{1:>>}WW{6:  3 }c                                          |
+        {2:      }{6:  4 }^                                           |
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+                                                             |
+      ]])
+      -- Checking with an `auto:` setting that is larger than the maximum
+      -- number of signs in a single line used in this test.
+      command('set signcolumn=auto:4')
+      screen:expect{grid=[[
+        {1:>>}XX{2:  }{6:  1 }a                                          |
+        XX{1:>>}{2:  }{6:  2 }b                                          |
+        XX{1:>>}WW{6:  3 }c                                          |
+        {2:      }{6:  4 }^                                           |
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+        {2:      }{0:~                                              }|
+                                                             |
+      ]], unchanged=true}
+    end)
+
     it('can have 32bit sign IDs', function()
       command('sign define piet text=>> texthl=Search')
       command('sign place 100000 line=1 name=piet buffer=1')
