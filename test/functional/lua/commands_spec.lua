@@ -81,7 +81,7 @@ describe(':lua command', function()
     eq({'', s}, curbufmeths.get_lines(0, -1, false))
   end)
 
-  it('can show empty error message', function()
+  it('can display special characters in error messages', function()
     local screen = Screen.new(50,10)
     screen:attach()
     screen:set_default_attr_ids({
@@ -90,7 +90,18 @@ describe(':lua command', function()
       [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
-
+    local empty_screen = [[
+    ^                                                  |
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+    {1:~                                                 }|
+                                                      |
+    ]]
     feed(':lua error("")<cr>')
     screen:expect([[
                                                         |
@@ -105,26 +116,12 @@ describe(':lua command', function()
       {4:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
-    screen:expect([[
-      ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
-    ]])
-    eq('E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: ', eval('v:errmsg'))
-
-    local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
-    local expected = 'Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: some error\nin a\nAPI command'
-    eq(false, status)
-    eq(expected, string.sub(err, -string.len(expected)))
-
-    feed(':messages<cr>')
+    screen:expect(empty_screen)
+    feed(':lua error("\n\n\n")<cr>')
+    screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
+    feed(':lua error("\t\t\t")<cr>')
     screen:expect([[
                                                         |
       {1:~                                                 }|
@@ -134,21 +131,15 @@ describe(':lua command', function()
       {1:~                                                 }|
       {2:                                                  }|
       {3:E5105: Error while calling lua chunk: [string "<Vi}|
-      {3:mL compiled string>"]:1: }                         |
+      {3:mL compiled string>"]:1:                        }  |
       {4:Press ENTER or type command to continue}^           |
     ]])
-  end)
-
-  it('can show multiline error messages', function()
-    local screen = Screen.new(50,10)
-    screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
-
+    feed('<cr>')
+    screen:expect(empty_screen)
+    feed(':lua error("\r\r\r")<cr>')
+    screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
     feed(':lua error("fail\\nmuch error\\nsuch details")<cr>')
     screen:expect([[
                                                         |
@@ -163,18 +154,8 @@ describe(':lua command', function()
       {4:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
-    screen:expect([[
-      ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
-    ]])
+    screen:expect(empty_screen)
+
     eq('E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: fail\nmuch error\nsuch details', eval('v:errmsg'))
 
     local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
@@ -182,19 +163,8 @@ describe(':lua command', function()
     eq(false, status)
     eq(expected, string.sub(err, -string.len(expected)))
 
-    feed(':messages<cr>')
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {2:                                                  }|
-      {3:E5105: Error while calling lua chunk: [string "<Vi}|
-      {3:mL compiled string>"]:1: fail}                     |
-      {3:much error}                                        |
-      {3:such details}                                      |
-      {4:Press ENTER or type command to continue}^           |
-    ]])
+    --feed(':messages<cr>')
+    --screen:expect(empty_screen)
   end)
 end)
 
