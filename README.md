@@ -57,12 +57,14 @@ and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Install from source
 -------------------
 
+The build is CMake-based, but a Makefile is provided as a convenience.
+
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
 
-To install to a non-default location, set `CMAKE_INSTALL_PREFIX`:
+To install to a non-default location:
 
-    make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/full/path/"
+    make CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
 To skip bundled (`third-party/*`) dependencies:
@@ -80,17 +82,10 @@ To skip bundled (`third-party/*`) dependencies:
    sudo make install
    ```
 
-CMake features:
+To inspect the build, these CMake features are useful:
 
-- List all build targets:
-  ```
-  cmake --build build --target help
-  ```
-- Print all variable definitions:
-  ```
-  cmake -LAH
-  ```
-- `build/CMakeCache.txt` contains the resolved values of all CMake variables.
+- `cmake --build build --target help` lists all build targets.
+- `build/CMakeCache.txt` (or `cmake -LAH build/`) contains the resolved values of all CMake variables.
 - `build/compile_commands.json` shows the full compiler invocations for each translation unit.
 
 See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.

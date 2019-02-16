@@ -97,14 +97,22 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 
-# Set default build type.
-if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Debug'")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build" FORCE)
-endif()
+message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
+# Build type.
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "CMAKE_BUILD_TYPE not specified, default is 'Debug'")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build" FORCE)
+else()
+  message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  set(DEBUG 1)
+else()
+  set(DEBUG 0)
+endif()
 # Set available build types for CMake GUIs.
-# A different build type can still be set by -DCMAKE_BUILD_TYPE=...
+# Other build types can still be set by -DCMAKE_BUILD_TYPE=...
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
   STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
@@ -138,12 +146,6 @@ set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Default to -O2 on release builds.
-if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
-  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
-  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
-
 # Minimize logging for release-type builds.
 if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
@@ -153,6 +155,22 @@ if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
 endif()
 if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
+endif()
+
+# Log level (MIN_LOG_LEVEL in log.h)
+if("${MIN_LOG_LEVEL}" MATCHES "^$")
+  message(STATUS "MIN_LOG_LEVEL not specified, default is 0 (DEBUG)")
+else()
+  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
+    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
+  endif()
+  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
+endif()
+
+# Default to -O2 on release builds.
+if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
+  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
+  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -327,12 +345,6 @@ if(TRAVIS_CI_BUILD)
     # Get some test coverage for unsigned char
     add_definitions(-funsigned-char)
   endif()
-endif()
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(DEBUG 1)
-else()
-  set(DEBUG 0)
 endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
@@ -525,17 +537,9 @@ install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-# MIN_LOG_LEVEL for log.h
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  message(STATUS "MIN_LOG_LEVEL not specified")
-else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL set to ${MIN_LOG_LEVEL}")
-endif()
-
+#
 # Go down the tree.
+#
 
 add_subdirectory(src/nvim)
 # Read compilation flags from src/nvim, used in config subdirectory below.
