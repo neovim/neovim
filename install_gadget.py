@@ -157,7 +157,7 @@ def DownloadFileTo( url, destination, file_name = None, checksum = None ):
           checksum ) )
   else:
     print( "Checksum for {}: {}".format( file_path,
-                                          ) )
+                                         GetChecksumSHA254( file_path ) ) )
 
   return file_path
 

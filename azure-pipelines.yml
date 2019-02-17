@@ -3,23 +3,14 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-pool:
-  vmImage: 'Ubuntu-16.04'
+jobs:
+- job: 'linux'
+  pool:
+    vimImage: 'ubuntu-16.04'
+  container: 'puremourning/vimspector:test'
+  steps:
+  - script: python3 install_gadget.py
+    displayName: 'Install gadgets'
 
-container: 'ubuntu:18.04'
-
-steps:
-- script: printenv
-  displayName: 'Print environment'
-
-- script: whoami
-  displayName: 'Print user'
-
-- script: apt-get install python3-dev vim
-  displayName: 'Install vim'
-
-- script: python3 install_gadget.py
-  displayName: 'Install gadgets'
-
-- script: ./run_tests
-  displayName: 'Run the tests'
+  - script: ./run_tests
+    displayName: 'Run the tests'
