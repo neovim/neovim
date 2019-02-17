@@ -22,15 +22,13 @@ import subprocess
 
 from collections import defaultdict
 
-from vimspector import ( code,
+from vimspector import ( breakpoints,
+                         code,
                          debug_adapter_connection,
                          output,
                          stack_trace,
                          utils,
                          variables )
-
-SIGN_ID_OFFSET = 10005000
-
 
 class DebugSession( object ):
   def __init__( self ):
@@ -41,111 +39,17 @@ class DebugSession( object ):
     self._stackTraceView = None
     self._variablesView = None
     self._outputView = None
+    self._breakpoints = breakpoints.ProjectBreakpoints()
 
     self._run_on_server_exit = None
 
-    self._next_sign_id = SIGN_ID_OFFSET
-
-    # FIXME: This needs redesigning. There are a number of problems:
-    #  - breakpoints don't have to be line-wise (e.g. method/exception)
-    #  - when the server moves/changes a breakpoint, this is not updated,
-    #    leading to them getting out of sync
-    #  - the split of responsibility between this object and the CodeView is
-    #    messy and ill-defined.
-    self._line_breakpoints = defaultdict( list )
-    self._func_breakpoints = []
-
     self._ResetServerState()
-
-    vim.command( 'sign define vimspectorBP text==> texthl=Error' )
-    vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
 
   def _ResetServerState( self ):
     self._connection = None
     self._configuration = None
     self._init_complete = False
     self._launch_complete = False
-
-  def ListBreakpoints( self ):
-    # FIXME: Handling of breakpoints is a mess, split between _codeView and this
-    # object. This makes no sense and should be centralised so that we don't
-    # have this duplication and bug factory.
-    qf = []
-    if self._connection and self._codeView:
-      qf = self._codeView.BreakpointsAsQuickFix()
-    else:
-      for file_name, breakpoints in self._line_breakpoints.items():
-        for bp in breakpoints:
-          qf.append( {
-            'filename': file_name,
-            'lnum': bp[ 'line' ],
-            'col': 1,
-            'type': 'L',
-            'valid': 1 if bp[ 'state' ] == 'ENABLED' else 0,
-            'text': "Line breakpoint - {}".format(
-              bp[ 'state' ] )
-          } )
-      # I think this shows that the qf list is not right for this.
-      for bp in self._func_breakpoints:
-        qf.append( {
-          'filename': '',
-          'lnum': 1,
-          'col': 1,
-          'type': 'F',
-          'valid': 1,
-          'text': "Function breakpoint: {}".format( bp[ 'function' ] ),
-        } )
-
-    vim.eval( 'setqflist( {} )'.format( json.dumps( qf ) ) )
-
-
-  def ToggleBreakpoint( self ):
-    line, column = vim.current.window.cursor
-    file_name = vim.current.buffer.name
-
-    if not file_name:
-      return
-
-    found_bp = False
-    for index, bp in enumerate( self._line_breakpoints[ file_name]  ):
-      if bp[ 'line' ] == line:
-        found_bp = True
-        if bp[ 'state' ] == 'ENABLED':
-          bp[ 'state' ] = 'DISABLED'
-        else:
-          if 'sign_id' in bp:
-            vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del self._line_breakpoints[ file_name ][ index ]
-
-    if not found_bp:
-      self._line_breakpoints[ file_name ].append( {
-        'state': 'ENABLED',
-        'line': line,
-        # 'sign_id': <filled in when placed>,
-        #
-        # Used by other breakpoint types:
-        # 'condition': ...,
-        # 'hitCondition': ...,
-        # 'logMessage': ...
-      } )
-
-    self._UpdateUIBreakpoints()
-
-  def _UpdateUIBreakpoints( self ):
-    if self._connection:
-      self._SendBreakpoints()
-    else:
-      self._ShowBreakpoints()
-
-  def AddFunctionBreakpoint( self, function ):
-    self._func_breakpoints.append( {
-        'state': 'ENABLED',
-        'function': function,
-    } )
-
-    # TODO: We don't really have aanything to update here, but if we're going to
-    # have a UI list of them we should update that at this point
-    self._UpdateUIBreakpoints()
 
   def Start( self, launch_variables = {} ):
     self._configuration = None
@@ -275,7 +179,7 @@ class DebugSession( object ):
       self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers
-    self._UpdateUIBreakpoints()
+    self._breakpoints.UpdateUI()
 
   def StepOver( self ):
     if self._stackTraceView.GetCurrentThreadId() is None:
@@ -590,12 +494,6 @@ class DebugSession( object ):
     )
 
 
-  def _UpdateBreakpoints( self, source, message ):
-    if 'body' not in message:
-      return
-    self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
-    self._codeView.ShowBreakpoints()
-
   def _OnLaunchComplete( self ):
     self._launch_complete = True
     self._LoadThreadsIfReady()
@@ -621,7 +519,16 @@ class DebugSession( object ):
       self._stackTraceView.LoadThreads( True )
 
   def OnEvent_initialized( self, message ):
-    self._SendBreakpoints()
+    def update_breakpoints( source, message ):
+      if 'body' not in message:
+        return
+      self._codeView.AddBreakpoints( source,
+                                     message[ 'body' ][ 'breakpoints' ] )
+      self._codeView.ShowBreakpoints()
+
+    self._codeView.ClearBreakpoints()
+    self._breakpoints.SendBreakpoints( update_breakpoints )
+
     self._connection.DoRequest(
       lambda msg: self._OnInitializeComplete(),
       {
@@ -697,75 +604,6 @@ class DebugSession( object ):
     # We will handle this when the server actually exists
     utils.UserMessage( "Debugging was terminated." )
 
-  def _RemoveBreakpoints( self ):
-    for breakpoints in self._line_breakpoints.values():
-      for bp in breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-  def _SendBreakpoints( self ):
-    self._codeView.ClearBreakpoints()
-
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      breakpoints = []
-      for bp in line_breakpoints:
-        if bp[ 'state' ] != 'ENABLED':
-          continue
-
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-        breakpoints.append( { 'line': bp[ 'line' ] } )
-
-      source = {
-        'name': os.path.basename( file_name ),
-        'path': file_name,
-      }
-
-      self._connection.DoRequest(
-        functools.partial( self._UpdateBreakpoints, source ),
-        {
-          'command': 'setBreakpoints',
-          'arguments': {
-            'source': source,
-            'breakpoints': breakpoints,
-          },
-          'sourceModified': False, # TODO: We can actually check this
-        }
-      )
-
-    self._connection.DoRequest(
-      functools.partial( self._UpdateBreakpoints, None ),
-      {
-        'command': 'setFunctionBreakpoints',
-        'arguments': {
-          'breakpoints': [
-            { 'name': bp[ 'function' ] }
-            for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
-          ],
-        }
-      }
-    )
-
-  def _ShowBreakpoints( self ):
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      for bp in line_breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-        else:
-          bp[ 'sign_id' ] = self._next_sign_id
-          self._next_sign_id += 1
-
-        vim.command(
-          'sign place {0} line={1} name={2} file={3}'.format(
-            bp[ 'sign_id' ] ,
-            bp[ 'line' ],
-            'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
-                           else 'vimspectorBPDisabled',
-            file_name ) )
-
   def OnEvent_output( self, message ):
     if self._outputView:
       self._outputView.OnOutput( message[ 'body' ] )
@@ -781,3 +619,12 @@ class DebugSession( object ):
       self._outputView.Print( 'server', msg )
 
     self._stackTraceView.OnStopped( event )
+
+  def ListBreakpoints( self ):
+    return self._breakpoints.ListBreakpoints()
+
+  def ToggleBreakpoint( self ):
+    return self._breakpoints.ToggleBreakpoint()
+
+  def AddFunctionBreakpoint( self, function ):
+    return self._breakpoints.AddFunctionBreakpoint( function )

@@ -1,3 +1,9 @@
 *.un~
 *.sw[op]
 __pycache__
+.vscode
+tests/*.res
+tests/messages
+tests/debuglog
+test.log
+gadgets/

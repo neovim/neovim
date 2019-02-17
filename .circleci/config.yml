@@ -1,0 +1,45 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+aliases:
+  cache: &cache
+    key: v1-vimspector-{{ .Environment.CIRCLE_JOB }}
+  update-submodules: &update-submodules
+    run:
+      name: Update submodules
+      command: git submodule update --init --recursive
+  install-vim: &install-vim
+  install-gadgets: &install-gadgets
+    run:
+      name: Install gadgets
+      command: 'python3 ./install_gadget.py'
+  run-tests: &run-tests
+    run:
+      name: Run tests
+      command: './run_tests'
+  # Increase the version key to clear the cache.
+  save-cache: &save-cache
+    save_cache:
+      <<: *cache
+      paths:
+        - 'gadgets/download/*/*/*/*.vsix'
+        - 'gadgets/download/*/*/*/*.gz'
+  restore-cache: &restore-cache
+    restore_cache:
+      <<: *cache
+jobs:
+  build-macos:
+    macos:
+      xcode: "9.0"
+    steps:
+      - checkout
+      - *update-submodules
+      - *restore-cache
+      - run:
+          name: Install vim
+          command: .circleci/install_vim.macos.sh
+      - *install-gadgets
+      - *run-tests
+      - *save-cache
