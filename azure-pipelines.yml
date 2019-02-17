@@ -3,14 +3,13 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- master
-
 pool:
   vmImage: 'Ubuntu-16.04'
 
+container: 'ubuntu:18.04'
+
 steps:
-- script: sudo apt-get install vim
+- script: sudo apt-get install python3-dev vim
   displayName: 'Install vim'
 
 - script: python3 install_gadget.py
