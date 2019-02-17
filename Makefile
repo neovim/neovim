@@ -167,7 +167,7 @@ lint: check-single-includes clint testlint lualint
 
 checkprefix:
 	@cached_prefix=$$($(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
-	if [ -n "$(CMAKE_INSTALL_PREFIX)" ] && ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
+	if [ -n "$(CMAKE_INSTALL_PREFIX)" ] && [ -n "$$cached_prefix" ] && ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
 		printf "\nerror: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'\n" "$$cached_prefix"; \
 		printf "       Run this command, then try again:\n"; \
 		printf "         cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)\n"; \
