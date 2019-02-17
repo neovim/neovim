@@ -3945,51 +3945,6 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
       if (errmsg != NULL)
         EMSG(_(errmsg));
     }
-  } else if ((int *)varp == &p_altkeymap) {
-    if (old_value != p_altkeymap) {
-      if (!p_altkeymap) {
-        p_hkmap = p_fkmap;
-        p_fkmap = 0;
-      } else {
-        p_fkmap = p_hkmap;
-        p_hkmap = 0;
-      }
-      (void)init_chartab();
-    }
-  }
-
-  /*
-   * In case some second language keymapping options have changed, check
-   * and correct the setting in a consistent way.
-   */
-
-  /*
-   * If hkmap or fkmap are set, reset Arabic keymapping.
-   */
-  if ((p_hkmap || p_fkmap) && p_altkeymap) {
-    p_altkeymap = p_fkmap;
-    curwin->w_p_arab = FALSE;
-    (void)init_chartab();
-  }
-
-  /*
-   * If hkmap set, reset Farsi keymapping.
-   */
-  if (p_hkmap && p_altkeymap) {
-    p_altkeymap = 0;
-    p_fkmap = 0;
-    curwin->w_p_arab = FALSE;
-    (void)init_chartab();
-  }
-
-  /*
-   * If fkmap set, reset Hebrew keymapping.
-   */
-  if (p_fkmap && !p_altkeymap) {
-    p_altkeymap = 1;
-    p_hkmap = 0;
-    curwin->w_p_arab = FALSE;
-    (void)init_chartab();
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
@@ -4027,10 +3982,6 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
 
       // Force-set the necessary keymap for arabic.
       set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
-      p_altkeymap = 0;
-      p_hkmap = 0;
-      p_fkmap = 0;
-      (void)init_chartab();
     } else {
       /*
        * 'arabic' is reset, handle various sub-settings.
@@ -5664,8 +5615,6 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
-  /* Is this right? */
-  wp_to->w_farsi = wp_from->w_farsi;
 }
 
 /*

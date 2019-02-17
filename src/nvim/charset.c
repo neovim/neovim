@@ -14,7 +14,6 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/farsi.h"
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
@@ -110,12 +109,6 @@ int buf_init_chartab(buf_T *buf, int global)
 
     while (c <= '~') {
       g_chartab[c++] = 1 + CT_PRINT_CHAR;
-    }
-
-    if (p_altkeymap) {
-      while (c < YE) {
-        g_chartab[c++] = 1 + CT_PRINT_CHAR;
-      }
     }
 
     while (c < 256) {
@@ -217,8 +210,7 @@ int buf_init_chartab(buf_T *buf, int global)
         // "C".
         if (!do_isalpha
             || mb_islower(c)
-            || mb_isupper(c)
-            || (p_altkeymap && (F_isalpha(c) || F_isdigit(c)))) {
+            || mb_isupper(c)) {
           if (i == 0) {
             // (re)set ID flag
             if (tilde) {
@@ -230,9 +222,7 @@ int buf_init_chartab(buf_T *buf, int global)
             // (re)set printable
             // For double-byte we keep the cell width, so
             // that we can detect it from the first byte.
-            if (((c < ' ')
-                 || (c > '~')
-                 || (p_altkeymap && (F_isalpha(c) || F_isdigit(c))))) {
+            if (((c < ' ') || (c > '~'))) {
               if (tilde) {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
                                          + ((dy_flags & DY_UHEX) ? 4 : 2));
@@ -540,8 +530,7 @@ char_u *transchar(int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))
-                                || (p_altkeymap && F_ischar(c))))
+  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))))
       || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = (char_u)c;

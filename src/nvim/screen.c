@@ -80,7 +80,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/edit.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/indent.h"
@@ -6498,9 +6497,6 @@ int showmode(void)
         }
         if (p_hkmap) {
           MSG_PUTS_ATTR(_(" Hebrew"), attr);
-        }
-        if (p_fkmap) {
-          MSG_PUTS_ATTR(farsi_text_5, attr);
         }
         if (State & LANGMAP) {
           if (curwin->w_p_arab) {

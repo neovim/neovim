@@ -21,7 +21,6 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/func_attr.h"
@@ -1198,18 +1197,14 @@ int do_search(
       }
     }
 
-    if (p_altkeymap && curwin->w_p_rl)
-      lrFswap(searchstr,0);
-
     c = searchit(curwin, curbuf, &pos, dirc == '/' ? FORWARD : BACKWARD,
-        searchstr, count, (spats[0].off.end * SEARCH_END
-                           + (options &
-                              (SEARCH_KEEP + SEARCH_PEEK +
-                               SEARCH_HIS
-                               + SEARCH_MSG + SEARCH_START
-                               + ((pat != NULL && *pat ==
-                                   ';') ? 0 : SEARCH_NOOF)))),
-        RE_LAST, (linenr_T)0, tm);
+                 searchstr, count,
+                 (spats[0].off.end * SEARCH_END
+                  + (options
+                     & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
+                        + SEARCH_START
+                        + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
+                 RE_LAST, (linenr_T)0, tm);
 
     if (dircp != NULL)
       *dircp = dirc;            /* restore second '/' or '?' for normal_cmd() */
@@ -2470,9 +2465,6 @@ static int cls(void)
   int c;
 
   c = gchar_cursor();
-  if (p_altkeymap && c == F_BLANK) {
-    return 0;
-  }
   if (c == ' ' || c == '\t' || c == NUL) {
     return 0;
   }

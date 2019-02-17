@@ -25,7 +25,6 @@
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/func_attr.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -2689,16 +2688,9 @@ do_map (
     }
   }
 
-  /*
-   * When in right-to-left mode and alternate keymap option set,
-   * reverse the character flow in the rhs in Farsi.
-   */
-  if (p_altkeymap && curwin->w_p_rl)
-    lrswap(rhs);
-
-  /*
-   * check arguments and translate function keys
-   */
+  //
+  // check arguments and translate function keys
+  //
   if (haskey) {
     len = (int)STRLEN(keys);
     if (len > MAXMAPLEN) {              /* maximum length of MAXMAPLEN chars */

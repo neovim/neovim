@@ -1141,12 +1141,6 @@ if has("rightleft")
   call append("$", "hkmapp\tuse phonetic Hebrew keyboard mapping")
   call <SID>BinOptionG("hkp", &hkp)
 endif
-if has("farsi")
-  call append("$", "altkeymap\tuse Farsi as the second language when 'revins' is set")
-  call <SID>BinOptionG("akm", &akm)
-  call append("$", "fkmap\tuse Farsi keyboard mapping")
-  call <SID>BinOptionG("fk", &fk)
-endif
 if has("arabic")
   call append("$", "arabic\tprepare for editing Arabic text")
   call append("$", "\t(local to window)")

@@ -53,8 +53,7 @@ o  No special terminal with right-to-left capabilities is required.  The
 o  Many languages use and require right-to-left support.  These languages
    can quite easily be supported given the inclusion of their required
    keyboard mappings and some possible minor code change.  Some of the
-   current supported languages include - |arabic.txt|, |farsi.txt| and
-   |hebrew.txt|.
+   current supported languages include - |arabic.txt| and |hebrew.txt|.
 
 
 Of Interest...

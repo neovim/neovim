@@ -8488,7 +8488,6 @@ eval			Compiled with expression evaluation support.  Always
 ex_extra		|+ex_extra|, always true now
 extra_search		Compiled with support for |'incsearch'| and
 			|'hlsearch'|
-farsi			Compiled with Farsi support |farsi|.
 file_in_path		Compiled with support for |gf| and |<cfile>|
 filterpipe		When 'shelltemp' is off pipes are used for shell
 			read/write/filter commands

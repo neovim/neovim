@@ -92,7 +92,7 @@ tag		char		action in Insert mode	~
 |i_CTRL-]|	CTRL-]		trigger abbreviation
 |i_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |i_CTRL-_|	CTRL-_		When 'allowrevins' set: change language
-				(Hebrew, Farsi)
+				(Hebrew)
 
 		<Space> to '~'	not used, except '0' and '^' followed by
 				CTRL-D
@@ -1029,7 +1029,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-]|	CTRL-]		trigger abbreviation
 |c_CTRL-^|	CTRL-^		toggle use of |:lmap| mappings
 |c_CTRL-_|	CTRL-_		when 'allowrevins' set: change language
-				(Hebrew, Farsi)
+				(Hebrew)
 |c_<Del>|	<Del>		delete the character under the cursor
 
 |c_<Left>|	<Left>		cursor left

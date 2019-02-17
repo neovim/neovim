@@ -137,7 +137,6 @@ Special issues ~
 |mbyte.txt|	multi-byte text support
 |mlang.txt|	non-English language support
 |arabic.txt|	Arabic language support and editing
-|farsi.txt|	Farsi (Persian) editing
 |hebrew.txt|	Hebrew language support and editing
 |russian.txt|	Russian language support and editing
 |ft_ada.txt|	Ada (the programming language) support
