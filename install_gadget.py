@@ -220,6 +220,7 @@ else:
 
 gadget_dir = os.path.join( os.path.dirname( __file__ ), 'gadgets', OS )
 
+failed = []
 for name, gadget in GADGETS.items():
   try:
     v = {}
@@ -260,4 +261,10 @@ for name, gadget in GADGETS.items():
     print( "Done installing {}".format( name ) )
   except Exception as e:
     traceback.print_exc()
+    failed.append( name )
     print( "FAILED installing {}: {}".format( name, e ) )
+
+
+if failed:
+  raise RuntimeError( 'Failed to install gadgets: {}'.format(
+    ','.join( failed ) ) )
