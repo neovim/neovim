@@ -238,4 +238,18 @@ func Test_mkview_no_file_name()
   %bwipe
 endfunc
 
+func Test_mksession_quote_in_filename()
+  let v:errmsg = ''
+  %bwipe!
+  split another
+  split x'y\"z
+  mksession! Xtest_mks_quoted.out
+  %bwipe!
+  source Xtest_mks_quoted.out
+  call assert_true(bufexists("x'y\"z"))
+
+  %bwipe!
+  call delete('Xtest_mks_quoted.out')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
