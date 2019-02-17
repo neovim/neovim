@@ -836,6 +836,28 @@ describe('TUI background color', function()
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
   end)
 
+  it("triggers OptionSet event on terminal-response", function()
+    feed_data('\027:autocmd OptionSet background echo "did OptionSet, yay!"\n')
+
+    -- The child Nvim is running asynchronously; wait for it to register the
+    -- OptionSet handler.
+    feed_data('\027:autocmd OptionSet\n')
+    screen:expect({any='--- Autocommands ---'})
+
+    feed_data('\012')  -- CTRL-L: clear the screen
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
+    screen:expect{any='did OptionSet, yay!'}
+  end)
+
   local function assert_bg(color, bg)
     it('handles '..color..' as '..bg, function()
       feed_data('\027]11;rgb:'..color..'\007:echo &background\n')
