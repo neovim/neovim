@@ -9,6 +9,12 @@ pool:
 container: 'ubuntu:18.04'
 
 steps:
+- script: printenv
+  displayName: 'Print environment'
+
+- script: whoami
+  displayName: 'Print user'
+
 - script: apt-get install python3-dev vim
   displayName: 'Install vim'
 
