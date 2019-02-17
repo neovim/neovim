@@ -955,23 +955,36 @@ void nvim_set_current_win(Window window, Error *err)
   }
 }
 
-/// Create new empty buffer
+/// Creates a new, empty, unnamed buffer.
 ///
-/// @param listed whether the buffer should be listed
+/// @param listed Controls 'buflisted'
+/// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
+///                (always 'nomodified')
 /// @param[out] err Error details, if any
-/// @return the buffer handle or 0 when error
-Buffer nvim_create_buf(Boolean listed, Error *err)
+/// @return Buffer handle, or 0 on error
+///
+/// @see buf_open_scratch
+Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   FUNC_API_SINCE(6)
 {
   try_start();
-  Buffer buffer = buflist_add(NULL,
-                              BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
-  if (!try_end(err) && buffer == 0) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to create buffer");
+  buf_T *buf = buflist_new(NULL, NULL, (linenr_T)0,
+                           BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
+  try_end(err);
+  if (buf == NULL) {
+    if (!ERROR_SET(err)) {
+      api_set_error(err, kErrorTypeException, "Failed to create buffer");
+    }
+    return 0;
   }
-  return buffer;
+  if (scratch) {
+    WITH_BUFFER(buf, {
+      set_option_value("bh", 0L, "hide", OPT_LOCAL);
+      set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+      set_option_value("swf", 0L, NULL, OPT_LOCAL);
+    });
+  }
+  return buf->b_fnum;
 }
 
 /// Gets the current list of tabpage handles.

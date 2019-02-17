@@ -1312,8 +1312,8 @@ describe('API', function()
 
   describe('nvim_create_buf', function()
     it('works', function()
-      eq({id=2}, meths.create_buf(true))
-      eq({id=3}, meths.create_buf(false))
+      eq({id=2}, meths.create_buf(true, false))
+      eq({id=3}, meths.create_buf(false, false))
       eq('  1 %a   "[No Name]"                    line 1\n'..
          '  2      "[No Name]"                    line 0',
          meths.command_output("ls"))
@@ -1336,7 +1336,7 @@ describe('API', function()
 
     it('can change buftype before visiting', function()
       meths.set_option("hidden", false)
-      eq({id=2}, meths.create_buf(true))
+      eq({id=2}, meths.create_buf(true, false))
       meths.buf_set_option(2, "buftype", "nofile")
       meths.buf_set_lines(2, 0, -1, true, {"test text"})
       command("split | buffer 2")
@@ -1344,6 +1344,49 @@ describe('API', function()
       -- if the buf_set_option("buftype") didn't work, this would error out.
       command("close")
       eq({id=1}, meths.get_current_buf())
+    end)
+
+    it('|scratch-buffer|', function()
+      eq({id=2}, meths.create_buf(false, true))
+      eq({id=3}, meths.create_buf(true, true))
+      eq({id=4}, meths.create_buf(true, true))
+      local scratch_bufs = { 2, 3, 4 }
+      eq('  1 %a   "[No Name]"                    line 1\n'..
+         '  3      "[Scratch]"                    line 0\n'..
+         '  4      "[Scratch]"                    line 0',
+         meths.command_output("ls"))
+      -- current buffer didn't change
+      eq({id=1}, meths.get_current_buf())
+
+      local screen = Screen.new(20, 4)
+      screen:attach()
+
+      --
+      -- Editing a scratch-buffer does NOT change its properties.
+      --
+      local edited_buf = 2
+      meths.buf_set_lines(edited_buf, 0, -1, true, {"some text"})
+      for _,b in ipairs(scratch_bufs) do
+        eq('nofile', meths.buf_get_option(b, 'buftype'))
+        eq('hide', meths.buf_get_option(b, 'bufhidden'))
+        eq(false, meths.buf_get_option(b, 'swapfile'))
+      end
+
+      --
+      -- Visiting a scratch-buffer DOES change its properties.
+      --
+      meths.set_current_buf(edited_buf)
+      screen:expect([[
+        ^some text           |
+        {1:~                   }|
+        {1:~                   }|
+                            |
+      ]], {
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+      })
+      eq('', meths.buf_get_option(edited_buf, 'buftype'))
+      eq('', meths.buf_get_option(edited_buf, 'bufhidden'))
+      eq(false, meths.buf_get_option(edited_buf, 'swapfile'))
     end)
   end)
 end)
