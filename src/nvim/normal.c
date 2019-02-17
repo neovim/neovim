@@ -28,7 +28,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -340,8 +339,6 @@ static const struct nv_cmd {
   { K_F1,      nv_help,        NV_NCW,                 0 },
   { K_XF1,     nv_help,        NV_NCW,                 0 },
   { K_SELECT,  nv_select,      0,                      0 },
-  { K_F8,      farsi_f8,       0,                      0 },
-  { K_F9,      farsi_f9,       0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
   { K_COMMAND, nv_colon,       0,                      0 },
 };
@@ -718,10 +715,6 @@ static void normal_get_additional_char(NormalState *s)
       // adjust Hebrew mapped char
       if (p_hkmap && lang && KeyTyped) {
         *cp = hkmap(*cp);
-      }
-      // adjust Farsi mapped char
-      if (p_fkmap && lang && KeyTyped) {
-        *cp = fkmap(*cp);
       }
     }
 

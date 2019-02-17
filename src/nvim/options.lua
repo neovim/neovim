@@ -82,13 +82,6 @@ return {
       defaults={if_true={vi=false}}
     },
     {
-      full_name='altkeymap', abbreviation='akm',
-      type='bool', scope={'global'},
-      vi_def=true,
-      varname='p_altkeymap',
-      defaults={if_true={vi=false}}
-    },
-    {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
@@ -820,13 +813,6 @@ return {
       redraw={'statuslines'},
       varname='p_fixeol',
       defaults={if_true={vi=true}}
-    },
-    {
-      full_name='fkmap', abbreviation='fk',
-      type='bool', scope={'global'},
-      vi_def=true,
-      varname='p_fkmap',
-      defaults={if_true={vi=false}}
     },
     {
       full_name='foldclose', abbreviation='fcl',

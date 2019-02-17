@@ -330,7 +330,6 @@ N  *+digraphs*		|digraphs| *E196*
 N  *+eval*		expression evaluation |eval.txt|
 N  *+ex_extra*		always on now, used to be for Vim's extra Ex commands
 N  *+extra_search*	|'hlsearch'| and |'incsearch'| options.
-B  *+farsi*		|farsi| language
 N  *+file_in_path*	|gf|, |CTRL-W_f| and |<cfile>|
 N  *+find_in_path*	include file searches: |[I|, |:isearch|,
 			|CTRL-W_CTRL-I|, |:checkpath|, etc.

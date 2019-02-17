@@ -231,9 +231,6 @@ argument.
 							*-A*
 -A		Arabic mode.  Sets the 'arabic' option on.
 
-							*-F*
--F		Farsi mode.  Sets the 'fkmap' and 'rightleft' options on.
-
 							*-H*
 -H		Hebrew mode.  Sets the 'hkmap' and 'rightleft' options on.
 

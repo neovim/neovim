@@ -30,7 +30,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -3295,9 +3294,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
       delimiter = *cmd++;                   // remember delimiter character
       has_second_delim = true;
     } else {          // find the end of the regexp
-      if (p_altkeymap && curwin->w_p_rl) {
-        lrF_sub(cmd);
-      }
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = *cmd++;                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
@@ -4297,9 +4293,6 @@ void ex_global(exarg_T *eap)
     if (cmd[0] == delim)                    /* end delimiter found */
       *cmd++ = NUL;                         /* replace it with a NUL */
   }
-
-  if (p_altkeymap && curwin->w_p_rl)
-    lrFswap(pat,0);
 
   if (search_regcomp(pat, RE_BOTH, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
     EMSG(_(e_invcmd));

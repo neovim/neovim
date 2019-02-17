@@ -21,7 +21,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -342,13 +341,7 @@ static void insert_enter(InsertState *s)
   }
 
   if (s->cmdchar == 'R') {
-    if (p_fkmap && p_ri) {
-      beep_flush();
-      EMSG(farsi_text_3);           // encoded in Farsi
-      State = INSERT;
-    } else {
-      State = REPLACE;
-    }
+    State = REPLACE;
   } else if (s->cmdchar == 'V' || s->cmdchar == 'v') {
     State = VREPLACE;
     s->replaceState = VREPLACE;
@@ -628,10 +621,6 @@ static int insert_execute(VimState *state, int key)
 
   if (p_hkmap && KeyTyped) {
     s->c = hkmap(s->c);  // Hebrew mode mapping
-  }
-
-  if (p_fkmap && KeyTyped) {
-    s->c = fkmap(s->c);  // Farsi mode mapping
   }
 
   // Special handling of keys while the popup menu is visible or wanted
@@ -5344,7 +5333,6 @@ insertchar (
            && !ISSPECIAL(c)
            && MB_BYTE2LEN(c) == 1
            && i < INPUT_BUFLEN
-           && !(p_fkmap && KeyTyped)  // Farsi mode mapping moves cursor
            && (textwidth == 0
                || (virtcol += byte2cells(buf[i - 1])) < (colnr_T)textwidth)
            && !(!no_abbr && !vim_iswordc(c) && vim_iswordc(buf[i - 1]))) {
@@ -7379,19 +7367,7 @@ static void ins_ctrl_(void)
     undisplay_dollar();
   } else
     revins_scol = -1;
-  if (p_altkeymap) {
-    /*
-     * to be consistent also for redo command, using '.'
-     * set arrow_used to true and stop it - causing to redo
-     * characters entered in one mode (normal/reverse insert).
-     */
-    arrow_used = TRUE;
-    (void)stop_arrow();
-    p_fkmap = curwin->w_p_rl ^ p_ri;
-    if (p_fkmap && p_ri)
-      State = INSERT;
-  } else
-    p_hkmap = curwin->w_p_rl ^ p_ri;        /* be consistent! */
+  p_hkmap = curwin->w_p_rl ^ p_ri;        // be consistent!
   showmode();
 }
 
@@ -7444,12 +7420,6 @@ static bool ins_start_select(int c)
  */
 static void ins_insert(int replaceState)
 {
-  if (p_fkmap && p_ri) {
-    beep_flush();
-    EMSG(farsi_text_3);         /* encoded in Farsi */
-    return;
-  }
-
   set_vim_var_string(VV_INSERTMODE, ((State & REPLACE_FLAG) ? "i" :
                                      replaceState == VREPLACE ? "v" :
                                      "r"), 1);
@@ -8423,12 +8393,10 @@ static bool ins_eol(int c)
   if (virtual_active() && curwin->w_cursor.coladd > 0)
     coladvance(getviscol());
 
-  if (p_altkeymap && p_fkmap)
-    fkmap(NL);
-  /* NL in reverse insert will always start in the end of
-   * current line. */
-  if (revins_on)
+  // NL in reverse insert will always start in the end of current line.
+  if (revins_on) {
     curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
+  }
 
   AppendToRedobuff(NL_STR);
   bool i = open_line(FORWARD,

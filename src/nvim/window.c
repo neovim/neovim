@@ -20,7 +20,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -2934,10 +2933,6 @@ void win_init_empty(win_T *wp)
   wp->w_topline = 1;
   wp->w_topfill = 0;
   wp->w_botline = 2;
-  if (wp->w_p_rl)
-    wp->w_farsi = W_CONV + W_R_L;
-  else
-    wp->w_farsi = W_CONV;
   wp->w_s = &wp->w_buffer->b_s;
 }
 

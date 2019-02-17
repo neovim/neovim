@@ -1189,8 +1189,6 @@ struct window_S {
   ScopeDictDictItem w_winvar;  ///< Variable for "w:" dictionary.
   dict_T *w_vars;  ///< Dictionary with w: variables.
 
-  int w_farsi;                  /* for the window dependent Farsi functions */
-
   /*
    * The w_prev_pcmark field is used to check whether we really did jump to
    * a new line after setting the w_pcmark.  If not, then we revert to

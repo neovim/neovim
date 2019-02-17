@@ -561,17 +561,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	into reverse Insert mode, and don't know how to get out.  See
 	'revins'.
 
-			 *'altkeymap'* *'akm'* *'noaltkeymap'* *'noakm'*
-'altkeymap' 'akm'	boolean (default off)
-			global
-	When on, the second language is Farsi.  In editing mode CTRL-_ toggles
-	the keyboard map between Farsi and English, when 'allowrevins' set.
-
-	When off, the keyboard map toggles between Hebrew and English.  This
-	is useful to start the Vim in native mode i.e. English (left-to-right
-	mode) and have default second language Farsi or Hebrew (right-to-left
-	mode).  See |farsi.txt|.
-
 						*'ambiwidth'* *'ambw'*
 'ambiwidth' 'ambw'	string (default: "single")
 			global
@@ -2396,13 +2385,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the 'binary' option is set the value of this option doesn't
 	matter.
 	See the 'endofline' option.
-
-					*'fkmap'* *'fk'* *'nofkmap'* *'nofk'*
-'fkmap' 'fk'		boolean (default off)			*E198*
-			global
-	When on, the keyboard is mapped for the Farsi character set.
-	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
-	toggle this option |i_CTRL-_|.  See |farsi.txt|.
 
 						*'foldclose'* *'fcl'*
 'foldclose' 'fcl'	string (default "")
@@ -4635,7 +4617,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		search		"/" and "?" commands
 
-	This is useful for languages such as Hebrew, Arabic and Farsi.
+	This is useful for languages such as Hebrew and Arabic.
 	The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 
 					 *'ruler'* *'ru'* *'noruler'* *'noru'*

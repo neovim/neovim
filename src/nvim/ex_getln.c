@@ -27,7 +27,6 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
@@ -221,7 +220,6 @@ static bool getln_interrupted_highlight = false;
 #endif
 
 static int cmd_hkmap = 0;  // Hebrew mapping during command line
-static int cmd_fkmap = 0;  // Farsi mapping during command line
 
 /// Internal entry point for cmdline mode.
 ///
@@ -421,8 +419,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   cmdmsg_rl = false;
 
-  cmd_fkmap = 0;
-
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
 
@@ -550,10 +546,6 @@ static int command_line_execute(VimState *state, int key)
     s->some_key_typed = true;
     if (cmd_hkmap) {
       s->c = hkmap(s->c);
-    }
-
-    if (cmd_fkmap) {
-      s->c = cmdl_fkmap(s->c);
     }
 
     if (cmdmsg_rl && !KeyStuffed) {
@@ -1180,10 +1172,6 @@ static int command_line_handle_key(CommandLineState *s)
   case K_DEL:
   case K_KDEL:
   case Ctrl_W:
-    if (cmd_fkmap && s->c == K_BS) {
-      s->c = K_DEL;
-    }
-
     if (s->c == K_KDEL) {
       s->c = K_DEL;
     }
@@ -1279,13 +1267,7 @@ static int command_line_handle_key(CommandLineState *s)
 
   case K_INS:
   case K_KINS:
-    // if Farsi mode set, we are in reverse insert mode -
-    // Do not change the mode
-    if (cmd_fkmap) {
-      beep_flush();
-    } else {
-      ccline.overstrike = !ccline.overstrike;
-    }
+    ccline.overstrike = !ccline.overstrike;
 
     ui_cursor_shape();                // may show different cursor shape
     return command_line_not_changed(s);
@@ -1740,16 +1722,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (!p_ari) {
       break;
     }
-    if (p_altkeymap) {
-      cmd_fkmap = !cmd_fkmap;
-      if (cmd_fkmap) {
-        // in Farsi always in Insert mode
-        ccline.overstrike = false;
-      }
-    } else {
-      // Hebrew is default
-      cmd_hkmap = !cmd_hkmap;
-    }
+    cmd_hkmap = !cmd_hkmap;
     return command_line_not_changed(s);
 
   default:
@@ -3217,40 +3190,40 @@ void put_on_cmdline(char_u *str, int len, int redraw)
       msg_clr_eos();
     msg_no_more = FALSE;
   }
-  /*
-   * If we are in Farsi command mode, the character input must be in
-   * Insert mode. So do not advance the cmdpos.
-   */
-  if (!cmd_fkmap) {
-    if (KeyTyped) {
-      m = Columns * Rows;
-      if (m < 0)              /* overflow, Columns or Rows at weird value */
-        m = MAXCOL;
-    } else
+  if (KeyTyped) {
+    m = Columns * Rows;
+    if (m < 0) {            // overflow, Columns or Rows at weird value
       m = MAXCOL;
-    for (i = 0; i < len; ++i) {
-      c = cmdline_charsize(ccline.cmdpos);
-      /* count ">" for a double-wide char that doesn't fit. */
-      if (has_mbyte)
-        correct_cmdspos(ccline.cmdpos, c);
-      /* Stop cursor at the end of the screen, but do increment the
-       * insert position, so that entering a very long command
-       * works, even though you can't see it. */
-      if (ccline.cmdspos + c < m)
-        ccline.cmdspos += c;
-      if (has_mbyte) {
-        c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
-        if (c > len - i - 1)
-          c = len - i - 1;
-        ccline.cmdpos += c;
-        i += c;
-      }
-      ++ccline.cmdpos;
     }
+  } else {
+    m = MAXCOL;
+  }
+  for (i = 0; i < len; i++) {
+    c = cmdline_charsize(ccline.cmdpos);
+    // count ">" for a double-wide char that doesn't fit.
+    if (has_mbyte) {
+      correct_cmdspos(ccline.cmdpos, c);
+    }
+    // Stop cursor at the end of the screen, but do increment the
+    // insert position, so that entering a very long command
+    // works, even though you can't see it.
+    if (ccline.cmdspos + c < m) {
+      ccline.cmdspos += c;
+    }
+    if (has_mbyte) {
+      c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
+      if (c > len - i - 1) {
+        c = len - i - 1;
+      }
+      ccline.cmdpos += c;
+      i += c;
+    }
+    ccline.cmdpos++;
   }
 
-  if (redraw)
+  if (redraw) {
     msg_check();
+  }
 }
 
 /*
@@ -5999,37 +5972,12 @@ int hist_type2char(int type)
   return NUL;
 }
 
-/*
- * Write a character at the current cursor+offset position.
- * It is directly written into the command buffer block.
- */
-void cmd_pchar(int c, int offset)
-{
-  if (ccline.cmdpos + offset >= ccline.cmdlen || ccline.cmdpos + offset < 0) {
-    EMSG(_("E198: cmd_pchar beyond the command length"));
-    return;
-  }
-  ccline.cmdbuff[ccline.cmdpos + offset] = (char_u)c;
-  ccline.cmdbuff[ccline.cmdlen] = NUL;
-}
-
-int cmd_gchar(int offset)
-{
-  if (ccline.cmdpos + offset >= ccline.cmdlen || ccline.cmdpos + offset < 0) {
-    /*  EMSG(_("cmd_gchar beyond the command length")); */
-    return NUL;
-  }
-  return (int)ccline.cmdbuff[ccline.cmdpos + offset];
-}
-
-/*
- * Open a window on the current command line and history.  Allow editing in
- * the window.  Returns when the window is closed.
- * Returns:
- *	CR	 if the command is to be executed
- *	Ctrl_C	 if it is to be abandoned
- *	K_IGNORE if editing continues
- */
+/// Open a window on the current command line and history.  Allow editing in
+/// the window.  Returns when the window is closed.
+/// Returns:
+///     CR       if the command is to be executed
+///     Ctrl_C   if it is to be abandoned
+///     K_IGNORE if editing continues
 static int open_cmdwin(void)
 {
   struct cmdline_info save_ccline;

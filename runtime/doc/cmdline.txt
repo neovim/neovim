@@ -250,19 +250,12 @@ CTRL-A		command-line completion (see |cmdline-completion|)
 CTRL-L		command-line completion (see |cmdline-completion|)
 
 							*c_CTRL-_*
-CTRL-_		a - switch between Hebrew and English keyboard mode, which is
+CTRL-_		Switch between Hebrew and English keyboard mode, which is
 		private to the command-line and not related to hkmap.
 		This is useful when Hebrew text entry is required in the
 		command-line, searches, abbreviations, etc.  Applies only if
 		the 'allowrevins' option is set.
 		See |rileft.txt|.
-
-		b - switch between Farsi and English keyboard mode, which is
-		private to the command-line and not related to fkmap.  In
-		Farsi keyboard mode the characters are inserted in reverse
-		insert manner.  This is useful when Farsi text entry is
-		required in the command-line, searches, abbreviations, etc.
-		See |farsi.txt|.
 
 							*c_CTRL-^*
 CTRL-^		Toggle the use of language |:lmap| mappings and/or Input

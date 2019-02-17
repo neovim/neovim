@@ -424,16 +424,10 @@ int main(int argc, char **argv)
     p_ut = 1;
   }
 
-  if (curwin->w_p_rl && p_altkeymap) {
-    p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
-    curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
-    p_fkmap = TRUE;               /* Set the Farsi keymap mode */
-  }
-
-  /*
-   * Read in registers, history etc, from the ShaDa file.
-   * This is where v:oldfiles gets filled.
-   */
+  //
+  // Read in registers, history etc, from the ShaDa file.
+  // This is where v:oldfiles gets filled.
+  //
   if (*p_shada != NUL) {
     shada_read_everything(NULL, false, true);
     TIME_MSG("reading ShaDa");
@@ -913,11 +907,6 @@ static void command_line_scan(mparm_T *parmp)
           break;
         }
         case 'f': {  // "-f"  GUI: run in foreground.
-          break;
-        }
-        case 'F': {  // "-F" start in Farsi mode: rl + fkmap set.
-          p_fkmap = true;
-          set_option_value("rl", 1L, NULL, 0);
           break;
         }
         case '?':    // "-?" give help message (for MS-Windows)
