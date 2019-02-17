@@ -123,6 +123,7 @@ typedef struct {
     int set_cursor_style, reset_cursor_style;
     int save_title, restore_title;
     int enter_undercurl_mode, exit_undercurl_mode, set_underline_color;
+    int get_bg;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -211,6 +212,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_scroll_region = -1;
   data->unibi_ext.set_cursor_style = -1;
   data->unibi_ext.reset_cursor_style = -1;
+  data->unibi_ext.get_bg = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
 
@@ -281,6 +283,8 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.save_title);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
+  // Ask the terminal to send us the background color.
+  unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
@@ -1647,6 +1651,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
+
+  data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
+                                                  "\x1b]11;?\x07");
 
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
