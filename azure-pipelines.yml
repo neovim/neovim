@@ -9,7 +9,7 @@ pool:
 container: 'ubuntu:18.04'
 
 steps:
-- script: sudo apt-get install python3-dev vim
+- script: apt-get install python3-dev vim
   displayName: 'Install vim'
 
 - script: python3 install_gadget.py
