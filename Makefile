@@ -13,21 +13,9 @@ CMAKE_EXTRA_FLAGS ?=
 
 # CMAKE_INSTALL_PREFIX
 #   - May be passed directly or as part of CMAKE_EXTRA_FLAGS.
-#   - Fail if the given value does not match the CMake cached value. #9615
-CACHED_PREFIX := $(shell $(CMAKE_PRG) -L -N build | 2>/dev/null \
-    grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2)
+#   - `checkprefix` target checks that it matches the CMake-cached value. #9615
 CMAKE_INSTALL_PREFIX ?= $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
     grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
-ifneq (,$(CMAKE_INSTALL_PREFIX))
-  ifneq (,$(CACHED_PREFIX))
-    ifneq ($(CMAKE_INSTALL_PREFIX),$(CACHED_PREFIX))
-      $(info error: CMAKE_INSTALL_PREFIX "$(CMAKE_INSTALL_PREFIX)" does not match cached value "$(CACHED_PREFIX)")
-      $(info .      Run this command, then try again:)
-      $(info .        cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX))
-      $(error error)
-    endif
-  endif
-endif
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
@@ -78,7 +66,7 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 all: nvim
 
-nvim: build/.ran-cmake deps
+nvim: checkprefix build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
 libnvim: build/.ran-cmake deps
@@ -177,4 +165,13 @@ appimage-%:
 
 lint: check-single-includes clint testlint lualint
 
-.PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage
+checkprefix:
+	@cached_prefix=$$($(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
+	if [ -n "$(CMAKE_INSTALL_PREFIX)" ] && ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
+		printf "\nerror: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'\n" "$$cached_prefix"; \
+		printf "       Run this command, then try again:\n"; \
+		printf "         cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)\n"; \
+		exit 1; \
+	fi;
+
+.PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
