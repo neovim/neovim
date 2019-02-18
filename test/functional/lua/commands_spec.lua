@@ -102,6 +102,21 @@ describe(':lua command', function()
     {1:~                                                 }|
                                                       |
     ]]
+		feed(':lua error("this is \t\t a really \t\t long \t\t string \t\t.")<cr>')
+		screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:E5105: Error while calling lua chunk: [string "<Vi}|
+      {3:mL compiled string>"]:1: this is                 a}|
+      {3: really                  long            string   }|
+      {3:        .}                                         |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+		feed('<cr>')
+		screen:expect(empty_screen)
     feed(':lua error("")<cr>')
     screen:expect([[
                                                         |
