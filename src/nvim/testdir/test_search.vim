@@ -454,6 +454,41 @@ func Test_search_multibyte()
   let &encoding = save_enc
 endfunc
 
+" Similar to Test_incsearch_substitute() but with a screendump halfway.
+func Test_incsearch_substitute_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'for n in range(1, 10)',
+	\ '  call setline(n, "foo " . n)',
+	\ 'endfor',
+	\ '3',
+	\ ], 'Xis_subst_script')
+  let buf = RunVimInTerminal('-S Xis_subst_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':.,.+2s/')
+  sleep 100m
+  call term_sendkeys(buf, 'f')
+  sleep 100m
+  call term_sendkeys(buf, 'o')
+  sleep 100m
+  call term_sendkeys(buf, 'o')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_01', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xis_subst_script')
+endfunc
+
 func Test_search_undefined_behaviour()
   if !has("terminal")
     return

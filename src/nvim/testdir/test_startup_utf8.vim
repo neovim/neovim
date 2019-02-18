@@ -4,6 +4,7 @@ if !has('multi_byte')
 endif
 
 source shared.vim
+" source screendump.vim
 
 func Test_read_stdin_utf8()
   let linesin = ['テスト', '€ÀÈÌÒÙ']
@@ -61,4 +62,25 @@ func Test_read_fifo_utf8()
   endif
   call delete('Xtestout')
   call delete('Xtestin')
+endfunc
+
+func Test_detect_ambiwidth()
+  if !CanRunVimInTerminal()
+    return
+  endif
+
+  " Use the title termcap entries to output the escape sequence.
+  call writefile([
+	\ 'set enc=utf-8',
+	\ 'set ambiwidth=double',
+	\ 'call test_option_not_set("ambiwidth")',
+	\ 'redraw',
+	\ ], 'Xscript')
+  let buf = RunVimInTerminal('-S Xscript', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "S\<C-R>=&ambiwidth\<CR>\<Esc>")
+  call WaitForAssert({-> assert_match('single', term_getline(buf, 1))})
+
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
 endfunc
