@@ -1692,7 +1692,8 @@ collection:
           MB_PTR_ADV(regparse);
 
           if (*regparse == 'n')
-            startc = reg_string ? NL : NFA_NEWL;
+            startc = (reg_string || emit_range || regparse[1] == '-')
+              ? NL : NFA_NEWL;
           else if  (*regparse == 'd'
                     || *regparse == 'o'
                     || *regparse == 'x'
