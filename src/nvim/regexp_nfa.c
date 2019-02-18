@@ -1691,15 +1691,16 @@ collection:
             ) {
           MB_PTR_ADV(regparse);
 
-          if (*regparse == 'n')
-            startc = reg_string ? NL : NFA_NEWL;
-          else if  (*regparse == 'd'
-                    || *regparse == 'o'
-                    || *regparse == 'x'
-                    || *regparse == 'u'
-                    || *regparse == 'U'
-                    ) {
-            /* TODO(RE) This needs more testing */
+          if (*regparse == 'n') {
+            startc = (reg_string || emit_range || regparse[1] == '-')
+              ? NL : NFA_NEWL;
+          } else if  (*regparse == 'd'
+                      || *regparse == 'o'
+                      || *regparse == 'x'
+                      || *regparse == 'u'
+                      || *regparse == 'U'
+                      ) {
+            // TODO(RE): This needs more testing
             startc = coll_get_char();
             got_coll_char = true;
             MB_PTR_BACK(old_regparse, regparse);

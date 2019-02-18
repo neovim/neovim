@@ -30,3 +30,20 @@ func Test_equivalence_re2()
   set re=2
   call s:equivalence_test()
 endfunc
+
+func Test_range_with_newline()
+  new
+  call setline(1, "a")
+  call assert_equal(0, search("[ -*\\n- ]"))
+  call assert_equal(0, search("[ -*\\t-\\n]"))
+  bwipe!
+endfunc
+
+func Test_get_equi_class()
+  new
+  " Incomplete equivalence class caused invalid memory access
+  s/^/[[=
+  call assert_equal(1, search(getline(1)))
+  s/.*/[[.
+  call assert_equal(1, search(getline(1)))
+endfunc
