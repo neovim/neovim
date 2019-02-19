@@ -5338,10 +5338,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     schar_from_ascii(ScreenLines[off - 1], ' ');
     ScreenAttrs[off - 1] = 0;
     // redraw the previous cell, make it empty
-    if (put_dirty_first == -1) {
+    if (put_dirty_first == -1 || col-1 < put_dirty_first) {
       put_dirty_first = col-1;
     }
     put_dirty_last = col+1;
+    put_dirty_last = MAX(put_dirty_last, col+1);
     // force the cell at "col" to be redrawn
     force_redraw_next = true;
   }
@@ -5422,10 +5423,10 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
         ScreenLines[off + 1][0] = 0;
         ScreenAttrs[off + 1] = attr;
       }
-      if (put_dirty_first == -1) {
+      if (put_dirty_first == -1 || col < put_dirty_first) {
         put_dirty_first = col;
       }
-      put_dirty_last = col+mbyte_cells;
+      put_dirty_last = MAX(put_dirty_last, col+mbyte_cells);
     }
 
     off += mbyte_cells;
