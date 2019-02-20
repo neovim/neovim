@@ -649,13 +649,6 @@ int os_fsync(int fd)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
   g_stats.fsync++;
-#ifdef __APPLE__
-  // TODO(justinmk): Remove this after it is fixed in libuv. #6725
-  if (r == UV_ENOTSUP) {
-    int rv = fsync(fd);
-    return rv ? -rv : rv;
-  }
-#endif
   return r;
 }
 
