@@ -9,8 +9,11 @@ jobs:
     vimImage: 'ubuntu-16.04'
   container: 'puremourning/vimspector:test'
   steps:
-  - script: python3 install_gadget.py
+  - bash: python3 install_gadget.py
     displayName: 'Install gadgets'
 
-  - script: ./run_tests
+  - bash: vim --version
+    displayName: 'Print vim version information'
+
+  - bash: ./run_tests
     displayName: 'Run the tests'
