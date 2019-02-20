@@ -22,7 +22,7 @@ jobs:
   pool:
     vmImage: 'macOS-10.13'
   steps:
-  - bash: brew install vim --with-override-system-vim
+  - bash: brew install macvim
     displayName: 'Install vim'
 
   - bash: python3 install_gadget.py
