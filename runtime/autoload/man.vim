@@ -152,6 +152,10 @@ function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " We use soft wrap: ftplugin/man.vim sets wrap/breakindent/….
   let manwidth = 999
+  if exists('g:man_hard_wrap')
+    " Respect $MANWIDTH or default to window width.
+    let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
+  endif
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
