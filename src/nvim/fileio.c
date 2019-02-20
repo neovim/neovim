@@ -3405,7 +3405,9 @@ restore_backup:
     // (could be a pipe).
     // If the 'fsync' option is FALSE, don't fsync().  Useful for laptops.
     int error;
-    if (p_fs && (error = os_fsync(fd)) != 0 && !device) {
+    if (p_fs && (error = os_fsync(fd)) != 0 && !device
+        // fsync not supported on this storage.
+        && error != UV_ENOTSUP) {
       SET_ERRMSG_ARG(_("E667: Fsync failed: %s"), error);
       end = 0;
     }
