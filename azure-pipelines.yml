@@ -17,3 +17,19 @@ jobs:
 
   - bash: ./run_tests
     displayName: 'Run the tests'
+
+- job: 'macos'
+  pool:
+    vmImage: 'macOS-10.13'
+  steps:
+  - bash: brew install vim --with-override-system-vim
+    displayName: 'Install vim'
+
+  - bash: python3 install_gadget.py
+    displayName: 'Install gadgets'
+
+  - bash: vim --version
+    displayName: 'Print vim version information'
+
+  - bash: ./run_tests
+    displayName: 'Run the tests'
