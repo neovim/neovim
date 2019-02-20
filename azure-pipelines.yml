@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 jobs:
-- job: 'linux'
+- job: 'lina-ux'
   pool:
     vimImage: 'ubuntu-16.04'
   container: 'puremourning/vimspector:test'
