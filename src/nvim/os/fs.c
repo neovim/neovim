@@ -643,12 +643,19 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
 ///
 /// @param fd the file descriptor of the file to flush to disk.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or libuv error code on failure.
 int os_fsync(int fd)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_fsync, fd, NULL);
   g_stats.fsync++;
+#ifdef __APPLE__
+  // TODO(justinmk): Remove this after it is fixed in libuv. #6725
+  if (r == UV_ENOTSUP) {
+    int rv = fsync(fd);
+    return rv ? -rv : rv;
+  }
+#endif
   return r;
 }
 
