@@ -58,6 +58,7 @@ GADGETS = {
     'do': lambda root: InstallTclProDebug( root )
   },
   'vscode-mono-debug': {
+    'enabled': False,
     'download': {
       'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
              'publishers/ms-vscode/vsextensions/mono-debug/${version}/'
@@ -71,6 +72,17 @@ GADGETS = {
       'checksum': '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
     }
   },
+  'vscode-bash-debug': {
+    'download': {
+      'url': ( 'https://github.com/rogalmic/vscode-bash-debug/releases/'
+               'download/${version}/${file_name}' ),
+    },
+    'all': {
+      'file_name': 'bash-debug-0.3.3.vsix',
+      'version': 'untagged-3c529a47de44a70c9c76',
+      'checksum': '',
+    }
+  }
 }
 
 @contextlib.contextmanager
@@ -222,6 +234,9 @@ gadget_dir = os.path.join( os.path.dirname( __file__ ), 'gadgets', OS )
 
 failed = []
 for name, gadget in GADGETS.items():
+  if not gadget.get( 'enabled', True ):
+    continue
+
   try:
     v = {}
     v.update( gadget.get( 'all', {} ) )
