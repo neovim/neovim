@@ -552,6 +552,7 @@ Variables:
 *b:man_default_sects*       Comma-separated, ordered list of preferred sections.
                           For example in C one usually wants section 3 or 2: >
                                :let b:man_default_sections = '3,2'
+*g:man_hardwrap*            Hard-wrap to $MANWIDTH. May improve layout.
 
 PDF							*ft-pdf-plugin*
 
