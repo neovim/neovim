@@ -366,7 +366,10 @@ typedef struct {
       varnumber_T start_col_nr;  ///< starting column number
       varnumber_T end_col_nr;    ///< ending column number
     } line;
-    varnumber_T value;           ///< value if sorting by integer
+    struct {
+      varnumber_T value;         ///< value if sorting by integer
+      bool is_number;            ///< true when line contains a number
+    } num;
     float_T value_flt;    ///< value if sorting by float
   } st_u;
 } sorti_T;
@@ -390,9 +393,15 @@ static int sort_compare(const void *s1, const void *s2)
   // When sorting numbers "start_col_nr" is the number, not the column
   // number.
   if (sort_nr) {
-    result = l1.st_u.value == l2.st_u.value
-             ? 0 : l1.st_u.value > l2.st_u.value
-             ? 1 : -1;
+    if (l1.st_u.num.is_number != l2.st_u.num.is_number) {
+      result = l1.st_u.num.is_number - l2.st_u.num.is_number;
+    } else {
+      result = l1.st_u.num.value == l2.st_u.num.value
+        ? 0
+        : l1.st_u.num.value > l2.st_u.num.value
+          ? 1
+          : -1;
+    }
   } else if (sort_flt) {
     result = l1.st_u.value_flt == l2.st_u.value_flt
              ? 0 : l1.st_u.value_flt > l2.st_u.value_flt
@@ -567,11 +576,13 @@ void ex_sort(exarg_T *eap)
           s--;  // include preceding negative sign
         }
         if (*s == NUL) {
-          // empty line should sort before any number
-          nrs[lnum - eap->line1].st_u.value = -MAXLNUM;
+          // line without number should sort before any number
+          nrs[lnum - eap->line1].st_u.num.is_number = false;
+          nrs[lnum - eap->line1].st_u.num.value = 0;
         } else {
+          nrs[lnum - eap->line1].st_u.num.is_number = true;
           vim_str2nr(s, NULL, NULL, sort_what,
-                     &nrs[lnum - eap->line1].st_u.value, NULL, 0);
+                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0);
         }
       } else {
         s = skipwhite(p);
