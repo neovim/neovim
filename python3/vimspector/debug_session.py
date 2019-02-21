@@ -66,6 +66,7 @@ class DebugSession( object ):
     self._configuration = None
     self._init_complete = False
     self._launch_complete = False
+    self._server_capabilities = {}
 
   def ToggleBreakpoint( self ):
     line, column = vim.current.window.cursor
@@ -437,10 +438,10 @@ class DebugSession( object ):
 
     self._connection.DoRequest( handler, {
       'command': 'disconnect',
-      'arguments': {
-        'terminateDebugee': True
-      },
+      'arguments': arguments,
     }, failure_handler = handler, timeout = 5000 )
+
+    # TODO: Use the 'tarminate' request if supportsTerminateRequest set
 
   def _PrepareAttach( self, adapter_config, launch_config ):
 
@@ -548,11 +549,14 @@ class DebugSession( object ):
     return commands
 
   def _Initialise( self ):
-    adapter_config = self._adapter
-    self._connection.DoRequest( lambda msg: self._Launch(), {
+    def handle_initialize_response( msg ):
+        self._server_capabilities = msg.get( 'body' ) or {}
+        self._Launch()
+
+    self._connection.DoRequest( handle_initialize_response, {
       'command': 'initialize',
       'arguments': {
-        'adapterID': adapter_config.get( 'name', 'adapter' ),
+        'adapterID': self._adapter.get( 'name', 'adapter' ),
         'clientID': 'vimspector',
         'clientName': 'vimspector',
         'linesStartAt1': True,
@@ -632,17 +636,29 @@ class DebugSession( object ):
     if self._launch_complete and self._init_complete:
       self._stackTraceView.LoadThreads( True )
 
+
+  def OnEvent_capabiilities( self, msg ):
+    self._server_capabilities.update(
+      ( msg.get( 'body' ) or {} ).get( 'capabilities' ) or {} )
+
+
   def OnEvent_initialized( self, message ):
     self._SendBreakpoints()
-    self._connection.DoRequest(
-      lambda msg: self._OnInitializeComplete(),
-      {
-        'command': 'configurationDone',
-      }
-    )
+
+    if self._server_capabilities.get( 'supportsConfigurationDoneRequest' ):
+      self._connection.DoRequest(
+        lambda msg: self._OnInitializeComplete(),
+        {
+          'command': 'configurationDone',
+        }
+      )
+    else:
+      self._OnInitializeComplete()
+
 
   def OnEvent_thread( self, message ):
     self._stackTraceView.OnThreadEvent( message[ 'body' ] )
+
 
   def OnEvent_breakpoint( self, message ):
     reason = message[ 'body' ][ 'reason' ]
@@ -748,18 +764,19 @@ class DebugSession( object ):
         }
       )
 
-    self._connection.DoRequest(
-      functools.partial( self._UpdateBreakpoints, None ),
-      {
-        'command': 'setFunctionBreakpoints',
-        'arguments': {
-          'breakpoints': [
-            { 'name': bp[ 'function' ] }
-            for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
-          ],
+    if self._server_capabilities.get( 'supportsFunctionBreakpoints' ):
+      self._connection.DoRequest(
+        functools.partial( self._UpdateBreakpoints, None ),
+        {
+          'command': 'setFunctionBreakpoints',
+          'arguments': {
+            'breakpoints': [
+              { 'name': bp[ 'function' ] }
+              for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
+            ],
+          }
         }
-      }
-    )
+      )
 
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
