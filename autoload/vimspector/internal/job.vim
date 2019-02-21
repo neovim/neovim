@@ -96,7 +96,8 @@ function! vimspector#internal#job#StopDebugSession() abort
   endif
 
   if job_status( s:job ) == 'run'
-    call job_stop( s:job, 'term' )
+      echom "Terminating job"
+    call job_stop( s:job, 'kill' )
   endif
 endfunction
 
