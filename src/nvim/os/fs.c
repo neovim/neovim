@@ -643,7 +643,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
 ///
 /// @param fd the file descriptor of the file to flush to disk.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or libuv error code on failure.
 int os_fsync(int fd)
 {
   int r;
