@@ -113,6 +113,55 @@ function! vimspector#internal#job#ForceRead() abort
   endif
 endfunction
 
+function! vimspector#internal#job#StartCommandWithLog( cmd, category )
+  if ! exists( 's:commands' )
+    let s:commands = {}
+  endif
+
+  if ! has_key( s:commands, a:category )
+    let s:commands[ a:category ] = []
+  endif
+
+  let l:index = len( s:commands[ a:category ] )
+
+  call add( s:commands[ a:category ], job_start(
+        \ a:cmd, 
+        \ {
+        \   'out_io': 'buffer',
+        \   'in_io': 'null',
+        \   'err_io': 'buffer',
+        \   'out_name': '_vimspector_log_' . a:category . '_out',
+        \   'err_name': '_vimspector_log_' . a:category . '_err',
+        \   'out_modifiable': 0,
+        \   'err_modifiable': 0,
+        \   'stoponexit': 'kill'
+        \ } ) )
+
+  let l:stdout = ch_getbufnr(
+        \ job_getchannel( s:commands[ a:category ][ index ] ), 'out' )
+  let l:stderr = ch_getbufnr(
+        \ job_getchannel( s:commands[ a:category ][ index ] ), 'err' )
+
+
+  return [ l:stdout, l:stderr ]
+endfunction
+
+
+function! vimspector#internal#job#CleanUpCommand( category )
+  if ! exists( 's:commands' )
+    let s:commands = {}
+  endif
+
+  if ! has_key( s:commands, a:category )
+    return
+  endif
+  for j in s:commands[ a:category ]
+    call job_stop( j, 'kill' )
+  endfor
+
+  unlet s:commands[ a:category ]
+endfunction
+
 " Boilerplate {{{
 let &cpo=s:save_cpo
 unlet s:save_cpo

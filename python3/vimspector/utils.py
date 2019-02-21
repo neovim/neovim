@@ -53,43 +53,17 @@ def OpenFileInCurrentWindow( file_name ):
 
 
 def SetUpCommandBuffer( cmd, name ):
-  vim.command(
-    'let g:vimspector_command_job_{name} = job_start('
-    '    {cmd},'
-    '    {{'
-    '      "out_io": "buffer",'
-    '      "in_io": "null",'
-    '      "err_io": "buffer",'
-    '      "out_name": "_vimspector_log_{name}",'
-    '      "err_name": "_vimspector_log_{name}",'
-    '      "out_modifiable": 0,'
-    '      "err_modifiable": 0,'
-    '      "stoponexit": "term",'
-    '    }} )'.format( name = name,
-                       cmd = json.dumps( cmd ) ) )
+  bufs = vim.bindeval(
+    'vimspector#internal#job#StartCommandWithLog( {}, "{}" )'.format(
+      json.dumps( cmd ),
+      name ) )
 
-  stdout = vim.eval( 'ch_getbufnr( '
-                     '  job_getchannel( g:vimspector_command_job_{name} ), '
-                     '  "out"'
-                     ')'.format( name = name ) )
-  stderr = vim.eval( 'ch_getbufnr( '
-                     '  job_getchannel( g:vimspector_command_job_{name} ), '
-                     '  "err"'
-                     ')'.format( name = name ) )
-
-  assert stdout == stderr
-  return vim.buffers[ int( stdout ) ]
+  return ( vim.buffers[ bufnr ] for bufnr in bufs )
 
 
 def CleanUpCommand( name ):
-  cmd =  'job_stop(  g:vimspector_command_job_{name}, "kill" )'.format(
-    name = name ) 
-  vim.eval( cmd )
-
-
-def TerminateJob( job ):
-  if vim.eval( 'job_status( {} )'.format( job ) ) == 'run':
-    vim.eval( 'job_stop( {} )'.format( job ) )
+  return vim.eval( 'vimspector#internal#job#CleanUpCommand( "{}" )'.format(
+    name ) )
 
 
 def SetUpScratchBuffer( buf, name ):

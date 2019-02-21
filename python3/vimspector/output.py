@@ -96,7 +96,12 @@ class OutputView( object ):
     for category, tab_buffer in self._buffers.items():
       if tab_buffer.is_job:
         utils.CleanUpCommand( category )
-      vim.command( 'bdelete! {0}'.format( tab_buffer.buf.number ) )
+      try:
+        vim.command( 'bdelete! {0}'.format( tab_buffer.buf.number ) )
+      except vim.error as e:
+        # FIXME: For now just ignore the "no buffers were deleted" error
+        if 'E516' not in e:
+          raise
 
     self._buffers.clear()
 
@@ -159,10 +164,15 @@ class OutputView( object ):
           cmd = [ 'tail', '-F', '-n', '+1', '--', file_name ]
 
         if cmd is not None:
-          buf = utils.SetUpCommandBuffer( cmd, category )
-          self._buffers[ category ] = TabBuffer( buf, len( self._buffers ) )
-          self._buffers[ category ].is_job = True
-          self._RenderWinBar( category )
+          out, err = utils.SetUpCommandBuffer( cmd, category )
+          self._buffers[ category + '-out' ] = TabBuffer( out,
+                                                           len( self._buffers ) )
+          self._buffers[ category + '-out' ].is_job = True
+          self._buffers[ category + '-err' ] = TabBuffer( err,
+                                                          len( self._buffers ) )
+          self._buffers[ category + '-err' ].is_job = False
+          self._RenderWinBar( category + '-out' )
+          self._RenderWinBar( category + '-err' )
         else:
           vim.command( 'enew' )
           tab_buffer = TabBuffer( vim.current.buffer, len( self._buffers ) )

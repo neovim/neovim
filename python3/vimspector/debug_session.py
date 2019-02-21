@@ -19,6 +19,7 @@ import json
 import os
 import functools
 import subprocess
+import shlex
 
 from collections import defaultdict
 
@@ -430,6 +431,10 @@ class DebugSession( object ):
         assert not self._run_on_server_exit
         self._run_on_server_exit = callback
 
+    arguments = {}
+    if self._server_capabilities.get( 'supportTerminateDebuggee' ):
+      arguments[ 'terminateDebugee' ] = True
+
     self._connection.DoRequest( handler, {
       'command': 'disconnect',
       'arguments': {
@@ -439,9 +444,15 @@ class DebugSession( object ):
 
   def _PrepareAttach( self, adapter_config, launch_config ):
 
-    atttach_config = adapter_config[ 'attach' ]
+    atttach_config = adapter_config.get( 'attach' )
+
+    if not atttach_config:
+        return
 
     if 'remote' in atttach_config:
+      # FIXME: We almost want this to feed-back variables to be expanded later,
+      # e.g. expand variables when we use them, not all at once. This would
+      # remove the whole %PID% hack.
       remote = atttach_config[ 'remote' ]
       ssh = [ 'ssh' ]
 
@@ -462,13 +473,16 @@ class DebugSession( object ):
         utils.UserMessage( 'Unable to get PID', persist = True )
         return
 
-      cmd = ssh + remote[ 'attachCommand' ][:]
+      commands = self._GetCommands( remote, 'attach' )
 
-      for index, item in enumerate( cmd ):
-        cmd[ index ] = item.replace( '%PID%', pid )
+      for command in commands:
+        cmd = ssh + command[:]
 
-      self._logger.debug( 'Running remote app: %s', cmd )
-      self._outputView.RunJobWithOutput( 'Remote', cmd )
+        for index, item in enumerate( cmd ):
+          cmd[ index ] = item.replace( '%PID%', pid )
+
+        self._logger.debug( 'Running remote app: %s', cmd )
+        self._outputView.RunJobWithOutput( 'Remote', cmd )
     else:
       if atttach_config[ 'pidSelect' ] == 'ask':
         pid = utils.AskForInput( 'Enter PID to attach to: ' )
@@ -479,6 +493,7 @@ class DebugSession( object ):
 
       raise ValueError( 'Unrecognised pidSelect {0}'.format(
         atttach_config[ 'pidSelect' ] ) )
+
 
 
   def _PrepareLaunch( self, command_line, adapter_config, launch_config ):
@@ -492,20 +507,45 @@ class DebugSession( object ):
       else:
         ssh.append( remote[ 'host' ] )
 
-      cmd = ssh + remote[ 'runCommand' ][:]
-      full_cmd = []
-      for item in cmd:
-        if isinstance( command_line, list ):
-          if item == '%CMD%':
-            full_cmd.extend( command_line )
+      commands = self._GetCommands( remote, 'run' )
+
+      for index, command in enumerate( commands ):
+        cmd = ssh + command[:]
+        full_cmd = []
+        for item in cmd:
+          if isinstance( command_line, list ):
+            if item == '%CMD%':
+              full_cmd.extend( command_line )
+            else:
+              full_cmd.append( item )
           else:
-            full_cmd.append( item )
-        else:
-          full_cmd.append( item.replace( '%CMD%', command_line ) )
+            full_cmd.append( item.replace( '%CMD%', command_line ) )
 
-      self._logger.debug( 'Running remote app: %s', full_cmd )
-      self._outputView.RunJobWithOutput( 'Remote', full_cmd )
+        self._logger.debug( 'Running remote app: %s', full_cmd )
+        self._outputView.RunJobWithOutput( 'Remote{}'.format( index ),
+                                           full_cmd )
 
+
+  def _GetCommands( self, remote, pfx ):
+    commands = remote.get( pfx + 'Commands', None )
+
+    if isinstance( commands, list ):
+      return commands
+    elif commands is not None:
+      raise ValueError( "Invalid commands; must be list" )
+
+    commands = remote[ pfx + 'Command' ]
+
+    if isinstance( commands, str ):
+      commands = shlex.split( commands )
+
+    if not isinstance( commands, list ):
+      raise ValueError( "Invalid command; must be list/string" )
+
+    if not commands:
+      raise ValueError( 'Could not determine commands for ' + pfx )
+
+    return commands
 
   def _Initialise( self ):
     adapter_config = self._adapter
