@@ -269,7 +269,7 @@ describe('TUI', function()
   end)
 end)
 
-describe('tui with non-tty file descriptors', function()
+describe('TUI with non-tty file descriptors', function()
   before_each(helpers.clear)
 
   after_each(function()
@@ -277,7 +277,7 @@ describe('tui with non-tty file descriptors', function()
   end)
 
   it('can handle pipes as stdout and stderr', function()
-    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog
+    local screen = thelpers.screen_setup(0, '"'..nvim_prog
       ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
     feed_data(':w testF\n:q\n')
     screen:expect([[
@@ -292,12 +292,12 @@ describe('tui with non-tty file descriptors', function()
   end)
 end)
 
-describe('tui FocusGained/FocusLost', function()
+describe('TUI FocusGained/FocusLost', function()
   local screen
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     feed_data(":autocmd FocusGained * echo 'gained'\n")
     feed_data(":autocmd FocusLost * echo 'lost'\n")
@@ -459,7 +459,7 @@ end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
-describe("tui 't_Co' (terminal colors)", function()
+describe("TUI 't_Co' (terminal colors)", function()
   local screen
   local is_freebsd = (string.lower(uname()) == 'freebsd')
 
@@ -731,7 +731,7 @@ end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
-describe("tui 'term' option", function()
+describe("TUI 'term' option", function()
   local screen
   local is_bsd = not not string.find(string.lower(uname()), 'bsd')
   local is_macos = not not string.find(string.lower(uname()), 'darwin')
@@ -783,7 +783,7 @@ end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
-describe("tui", function()
+describe("TUI", function()
   local screen
   local logfile = 'Xtest_tui_verbose_log'
   after_each(function()
@@ -825,4 +825,90 @@ describe("tui", function()
     end)
   end)
 
+end)
+
+describe('TUI background color', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+  end)
+
+  it("triggers OptionSet event on terminal-response", function()
+    feed_data('\027:autocmd OptionSet background echo "did OptionSet, yay!"\n')
+
+    -- The child Nvim is running asynchronously; wait for it to register the
+    -- OptionSet handler.
+    feed_data('\027:autocmd OptionSet\n')
+    screen:expect({any='--- Autocommands ---'})
+
+    feed_data('\012')  -- CTRL-L: clear the screen
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
+    screen:expect{any='did OptionSet, yay!'}
+  end)
+
+  local function assert_bg(color, bg)
+    it('handles '..color..' as '..bg, function()
+      feed_data('\027]11;rgb:'..color..'\007:echo &background\n')
+      screen:expect(string.format([[
+        {1: }                                                 |
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {4:~                                                 }|
+        {5:[No Name]                       0,0-1          All}|
+        %-5s                                             |
+        {3:-- TERMINAL --}                                    |
+      ]], bg))
+    end)
+  end
+
+  assert_bg('0000/0000/0000', 'dark')
+  assert_bg('ffff/ffff/ffff', 'light')
+  assert_bg('000/000/000', 'dark')
+  assert_bg('fff/fff/fff', 'light')
+  assert_bg('00/00/00', 'dark')
+  assert_bg('ff/ff/ff', 'light')
+  assert_bg('0/0/0', 'dark')
+  assert_bg('f/f/f', 'light')
+
+  assert_bg('f/0/0', 'dark')
+  assert_bg('0/f/0', 'light')
+  assert_bg('0/0/f', 'dark')
+
+  assert_bg('1/1/1', 'dark')
+  assert_bg('2/2/2', 'dark')
+  assert_bg('3/3/3', 'dark')
+  assert_bg('4/4/4', 'dark')
+  assert_bg('5/5/5', 'dark')
+  assert_bg('6/6/6', 'dark')
+  assert_bg('7/7/7', 'dark')
+  assert_bg('8/8/8', 'light')
+  assert_bg('9/9/9', 'light')
+  assert_bg('a/a/a', 'light')
+  assert_bg('b/b/b', 'light')
+  assert_bg('c/c/c', 'light')
+  assert_bg('d/d/d', 'light')
+  assert_bg('e/e/e', 'light')
+
+  assert_bg('0/e/0', 'light')
+  assert_bg('0/d/0', 'light')
+  assert_bg('0/c/0', 'dark')
+  assert_bg('0/b/0', 'dark')
+
+  assert_bg('f/0/f', 'dark')
+  assert_bg('f/1/f', 'dark')
+  assert_bg('f/2/f', 'dark')
+  assert_bg('f/3/f', 'light')
+  assert_bg('f/4/f', 'light')
 end)

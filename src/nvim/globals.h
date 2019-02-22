@@ -83,10 +83,10 @@ EXTERN struct nvim_stats_s {
   int64_t redraw;
 } g_stats INIT(= { 0, 0 });
 
-/* Values for "starting" */
-#define NO_SCREEN       2       /* no screen updating yet */
-#define NO_BUFFERS      1       /* not all buffers loaded yet */
-/*                      0          not starting anymore */
+// Values for "starting".
+#define NO_SCREEN       2       // no screen updating yet
+#define NO_BUFFERS      1       // not all buffers loaded yet
+//                      0          not starting anymore
 
 /*
  * Number of Rows and Columns in the screen.

@@ -7,8 +7,10 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/charset.h"
 #include "nvim/main.h"
 #include "nvim/aucmd.h"
+#include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
@@ -352,6 +354,85 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
+static void set_bg_deferred(void **argv)
+{
+  char *bgvalue = argv[0];
+  if (starting) {
+    // Wait until after startup, so OptionSet is triggered.
+    loop_schedule(&main_loop, event_create(set_bg_deferred, 1, bgvalue));
+    return;
+  }
+  if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
+    // Value differs, apply it.
+    set_option_value("bg", 0L, bgvalue, 0);
+    reset_option_was_set("bg");
+  }
+}
+
+// During startup, tui.c requests the background color (see `ext.get_bg`).
+//
+// Here in input.c, we watch for the terminal response `\e]11;COLOR\a`.  If
+// COLOR matches `rgb:RRRR/GGGG/BBBB` where R, G, and B are hex digits, then
+// compute the luminance[1] of the RGB color and classify it as light/dark
+// accordingly. Note that the color components may have anywhere from one to
+// four hex digits, and require scaling accordingly as values out of 4, 8, 12,
+// or 16 bits.
+//
+// [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+static bool handle_background_color(TermInput *input)
+{
+  size_t count = 0;
+  size_t component = 0;
+  uint16_t rgb[] = { 0, 0, 0 };
+  uint16_t rgb_max[] = { 0, 0, 0 };
+  bool eat_backslash = false;
+  bool done = false;
+  bool bad = false;
+  if (rbuffer_size(input->read_stream.buffer) >= 9
+      && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgb:", 9)) {
+    rbuffer_consumed(input->read_stream.buffer, 9);
+    RBUFFER_EACH(input->read_stream.buffer, c, i) {
+      count = i + 1;
+      if (eat_backslash) {
+        done = true;
+        break;
+      } else if (c == '\x07') {
+        done = true;
+        break;
+      } else if (c == '\x1b') {
+        eat_backslash = true;
+      } else if (bad) {
+        // ignore
+      } else if (c == '/') {
+        if (component < 3) {
+          component++;
+        }
+      } else if (ascii_isxdigit(c)) {
+        if (component < 3 && rgb_max[component] != 0xffff) {
+          rgb_max[component] = (uint16_t)((rgb_max[component] << 4) | 0xf);
+          rgb[component] = (uint16_t)((rgb[component] << 4) | hex2nr(c));
+        }
+      } else {
+        bad = true;
+      }
+    }
+    rbuffer_consumed(input->read_stream.buffer, count);
+    if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
+      double r = (double)rgb[0] / (double)rgb_max[0];
+      double g = (double)rgb[1] / (double)rgb_max[1];
+      double b = (double)rgb[2] / (double)rgb_max[2];
+      double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
+      char *bgvalue = luminance < 0.5 ? "dark" : "light";
+      DLOG("bg response: %s", bgvalue);
+      loop_schedule(&main_loop, event_create(set_bg_deferred, 1, bgvalue));
+    } else {
+      DLOG("failed to parse bg response");
+    }
+    return true;
+  }
+  return false;
+}
+
 static void read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data,
                     bool eof)
 {
@@ -381,7 +462,8 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data,
   do {
     if (handle_focus_event(input)
         || handle_bracketed_paste(input)
-        || handle_forced_escape(input)) {
+        || handle_forced_escape(input)
+        || handle_background_color(input)) {
       continue;
     }
 
