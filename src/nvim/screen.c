@@ -2390,7 +2390,7 @@ win_line (
   }
 
   // If this line has a sign with line highlighting set line_attr.
-  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
+  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL, 0, 1);
   if (v != 0) {
     line_attr = sign_get_attr((int)v, SIGN_LINEHL);
   }
@@ -2691,8 +2691,8 @@ win_line (
               n_extra = win_signcol_width(wp);
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
-                  text_sign = buf_getsigntype_ext(wp->w_buffer, lnum, SIGN_TEXT,
-                                                  sign_idx, count);
+                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
+                                              sign_idx, count);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
                       int symbol_blen = (int)STRLEN(p_extra);
@@ -2763,7 +2763,8 @@ win_line (
           n_extra = number_width(wp) + 1;
           char_attr = win_hl_attr(wp, HLF_N);
 
-          int num_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_NUMHL);
+          int num_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_NUMHL,
+                                         0, 1);
           if (num_sign != 0) {
             // :sign defined with "numhl" highlight.
             char_attr = sign_get_attr(num_sign, SIGN_NUMHL);

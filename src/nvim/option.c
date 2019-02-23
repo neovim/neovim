@@ -7156,7 +7156,7 @@ int win_signcol_count(win_T *wp)
   if (*scl == 'n') {
     return 0;
   }
-  needed_signcols = buf_get_needed_signcols(wp->w_buffer);
+  needed_signcols = buf_signcols(wp->w_buffer);
 
   // yes or yes
   if (!strncmp(scl, "yes:", 4)) {
