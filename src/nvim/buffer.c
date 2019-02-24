@@ -592,6 +592,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   do_autochdir();
 
   // disable buffer updates for the current buffer
+  // no need to check unload_buf b/c in that case the function returned above
   buf_updates_unregister_all(buf);
 
   /*
