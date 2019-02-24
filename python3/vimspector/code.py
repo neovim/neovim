@@ -75,7 +75,7 @@ class CodeView( object  ):
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1
 
-    vim.command( 'sign place {0} group=VimspectorCode priority=20'
+    vim.command( 'sign place {0} group=VimspectorCode priority=20 '
                                  'line={1} name=vimspectorPC '
                                  'file={2}'.format(
       self._signs[ 'vimspectorPC' ],
@@ -162,7 +162,7 @@ class CodeView( object  ):
         self._next_sign_id += 1
         self._signs[ 'breakpoints' ].append( sign_id )
         vim.command(
-          'sign place {0} group=VimspectorCode priority=9'
+          'sign place {0} group=VimspectorCode priority=9 '
                           'line={1} '
                           'name={2} '
                           'file={3}'.format(
