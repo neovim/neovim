@@ -5774,6 +5774,9 @@ mode([expr])	Return a string that indicates the current mode.
 		This is useful in the 'statusline' option or when used
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
+		Note that in the future more modes and more specific modes may
+		be added. It's better not to compare the whole string but only
+		the leading character(s).
 		Also see |visualmode()|.
 
 msgpackdump({list})					*msgpackdump()*

@@ -162,6 +162,10 @@ char *get_mode(void)
       buf[1] = 'o';
       // to be able to detect force-linewise/blockwise/characterwise operations
       buf[2] = (char)motion_force;
+    } else if (restart_edit == 'I' || restart_edit == 'R'
+               || restart_edit == 'V') {
+      buf[1] = 'i';
+      buf[2] = (char)restart_edit;
     }
   }
 
