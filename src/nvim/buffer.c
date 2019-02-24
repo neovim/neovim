@@ -591,7 +591,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
-  // disable buffer updates for the current buffer
+  // Disable buffer-updates for the current buffer.
+  // No need to check `unload_buf`: in that case the function returned above.
   buf_updates_unregister_all(buf);
 
   /*

@@ -678,6 +678,32 @@ describe('API: buffer events:', function()
     expectn('Hello There', {})
   end)
 
+  it(':edit! (reload) causes detach #9642', function()
+    local b, tick = editoriginal(true, {'AAA', 'BBB'})
+    command('set undoreload=1')
+
+    command('normal! x')
+    tick = tick + 1
+    expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'AA'}, false})
+
+    command('edit!')
+    expectn('nvim_buf_detach_event', {b})
+  end)
+
+  it(':enew! does not detach hidden buffer', function()
+    local b, tick = editoriginal(true, {'AAA', 'BBB'})
+    local channel = nvim('get_api_info')[1]
+
+    command('set undoreload=1 hidden')
+    command('normal! x')
+    tick = tick + 1
+    expectn('nvim_buf_lines_event', {b, tick, 0, 1, {'AA'}, false})
+
+    command('enew!')
+    eval('rpcnotify('..channel..', "Hello There")')
+    expectn('Hello There', {})
+  end)
+
   it('stays attached if the buffer is hidden', function()
     local b, tick = editoriginal(true, {'AAA'})
     local channel = nvim('get_api_info')[1]

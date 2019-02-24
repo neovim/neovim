@@ -2476,8 +2476,8 @@ int do_ecmd(
     }
     set_bufref(&bufref, buf);
     if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-      /* Save all the text, so that the reload can be undone.
-       * Sync first so that this is a separate undo-able action. */
+      // Save all the text, so that the reload can be undone.
+      // Sync first so that this is a separate undo-able action.
       u_sync(false);
       if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
@@ -2491,6 +2491,7 @@ int do_ecmd(
       // Tell readfile() not to clear or reload undo info.
       readfile_flags = READ_KEEP_UNDO;
     } else {
+      buf_updates_unregister_all(curbuf);
       buf_freeall(curbuf, 0);  // Free all things for buffer.
     }
     // If autocommands deleted the buffer we were going to re-edit, give
