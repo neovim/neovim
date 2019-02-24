@@ -147,6 +147,16 @@ class DebugSession( object ):
       self._stackTraceView.ConnectionUp( self._connection )
       self._variablesView.ConnectionUp( self._connection )
       self._outputView.ConnectionUp( self._connection )
+      self._breakpoints.ConnectionUp( self._connection )
+
+      def update_breakpoints( source, message ):
+        if 'body' not in message:
+          return
+        self._codeView.AddBreakpoints( source,
+                                       message[ 'body' ][ 'breakpoints' ] )
+        self._codeView.ShowBreakpoints()
+
+      self._breakpoints.SetBreakpointsHandler( update_breakpoints )
 
     if self._connection:
       self._StopDebugAdapter( start )
@@ -539,15 +549,8 @@ class DebugSession( object ):
       self._stackTraceView.LoadThreads( True )
 
   def OnEvent_initialized( self, message ):
-    def update_breakpoints( source, message ):
-      if 'body' not in message:
-        return
-      self._codeView.AddBreakpoints( source,
-                                     message[ 'body' ][ 'breakpoints' ] )
-      self._codeView.ShowBreakpoints()
-
     self._codeView.ClearBreakpoints()
-    self._breakpoints.SendBreakpoints( update_breakpoints )
+    self._breakpoints.SendBreakpoints()
 
     self._connection.DoRequest(
       lambda msg: self._OnInitializeComplete(),
@@ -614,6 +617,8 @@ class DebugSession( object ):
     self._stackTraceView.ConnectionClosed()
     self._variablesView.ConnectionClosed()
     self._outputView.ConnectionClosed()
+    self._breakpoints.ConnectionClosed()
+    self._breakpoints.SetBreakpointsHandler( None )
 
     self._ResetServerState()
 

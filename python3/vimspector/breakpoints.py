@@ -16,7 +16,7 @@
 from collections import defaultdict
 
 import vim
-import functools
+import os
 
 
 class ProjectBreakpoints( object ):
@@ -26,6 +26,9 @@ class ProjectBreakpoints( object ):
     # These are the user-entered breakpoints.
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
+
+    # FIXME: Remove this. Remove breakpoints nonesense from code.py
+    self._breakpoints_handler = None
 
     self._next_sign_id = 1
 
@@ -127,7 +130,17 @@ class ProjectBreakpoints( object ):
     else:
       self._ShowBreakpoints()
 
-  def SendBreakpoints( self, handler ):
+
+  # FIXME: Remove this temporary compat .layer
+  def SetBreakpointsHandler( self, handler ):
+    self._breakpoints_handler = handler
+
+  def SendBreakpoints( self ):
+    if not self._breakpoints_handler:
+      handler = lambda source, msg: self._ShowBreakpoints()
+    else:
+      handler = self._breakpoints_handler
+
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
       for bp in line_breakpoints:
@@ -147,7 +160,7 @@ class ProjectBreakpoints( object ):
       }
 
       self._connection.DoRequest(
-        functools.partial( self._UpdateBreakpoints, source ),
+        lambda msg: handler( source, msg ),
         {
           'command': 'setBreakpoints',
           'arguments': {
@@ -159,7 +172,7 @@ class ProjectBreakpoints( object ):
       )
 
     self._connection.DoRequest(
-      functools.partial( self._UpdateBreakpoints, None ),
+      lambda msg: handler( None, msg ),
       {
         'command': 'setFunctionBreakpoints',
         'arguments': {
