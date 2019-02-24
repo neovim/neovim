@@ -779,9 +779,8 @@ struct file_buffer {
                                  * may use a different synblock_T. */
 
   signlist_T *b_signlist;       // list of signs to draw
-  int b_signcols_max;           // cached maximum number of signs in a line
-  int b_signcols;               // last calculated maximum number of signs
-                                // in a line
+  int b_signcols_max;           // cached maximum number of sign columns
+  int b_signcols;               // last calculated number of sign columns
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
