@@ -1,6 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+///
+/// map.c: khash.h wrapper
+///
+/// NOTE: Callers must manage memory (allocate) for keys and values.
+///       khash.h does not make its own copy of the key or value.
+///
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -72,6 +79,16 @@
     return kh_get(T##_##U##_map, map->table, key) != kh_end(map->table); \
   } \
   \
+  T map_##T##_##U##_key(Map(T, U) *map, T key) \
+  { \
+    khiter_t k; \
+    \
+    if ((k = kh_get(T##_##U##_map, map->table, key)) == kh_end(map->table)) { \
+      abort();  /* Caller must check map_has(). */ \
+    } \
+    \
+    return kh_key(map->table, k); \
+  } \
   U map_##T##_##U##_put(Map(T, U) *map, T key, U value) \
   { \
     int ret; \
@@ -167,3 +184,18 @@ MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
 #define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }
 MAP_IMPL(HlEntry, int, DEFAULT_INITIALIZER)
 MAP_IMPL(String, handle_T, 0)
+
+
+/// Deletes a key:value pair from a string:pointer map, and frees the
+/// storage of both key and value.
+///
+void pmap_del2(PMap(cstr_t) *map, const char *key)
+{
+  if (pmap_has(cstr_t)(map, key)) {
+    void *k = (void *)pmap_key(cstr_t)(map, key);
+    void *v = pmap_get(cstr_t)(map, key);
+    pmap_del(cstr_t)(map, key);
+    xfree(k);
+    xfree(v);
+  }
+}

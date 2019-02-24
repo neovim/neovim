@@ -19,6 +19,7 @@
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/version.h"
+#include "nvim/map.h"
 
 #ifdef WIN32
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
@@ -32,53 +33,119 @@
 #include <sys/utsname.h>
 #endif
 
+// Because `uv_os_getenv` requires allocating, we must manage a map to maintain
+// the behavior of `os_getenv`.
+static PMap(cstr_t) *envmap;
+static uv_mutex_t mutex;
+
+void env_init(void)
+{
+  envmap = pmap_new(cstr_t)();
+  uv_mutex_init(&mutex);
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *e = getenv(name);
-  return e == NULL || *e == NUL ? NULL : e;
+  char *e;
+  size_t size = 64;
+  if (name[0] == '\0') {
+    return NULL;
+  }
+  uv_mutex_lock(&mutex);
+  if (pmap_has(cstr_t)(envmap, name)
+      && !!(e = (char *)pmap_get(cstr_t)(envmap, name))) {
+    if (e[0] != '\0') {
+      // Found non-empty cached env var.
+      // NOTE: This risks incoherence if an in-process library changes the
+      //       environment without going through our os_setenv() wrapper.  If
+      //       that turns out to be a problem, we can just remove this codepath.
+      goto end;
+    }
+    pmap_del2(envmap, name);
+  }
+  e = xmalloc(size);
+  int r = uv_os_getenv(name, e, &size);
+  if (r == UV_ENOBUFS) {
+    e = xrealloc(e, size);
+    r = uv_os_getenv(name, e, &size);
+  }
+  if (r != 0 || size == 0 || e[0] == '\0') {
+    xfree(e);
+    e = NULL;
+    if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
+      ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    }
+    goto end;
+  }
+  pmap_put(cstr_t)(envmap, xstrdup(name), e);
+end:
+  uv_mutex_unlock(&mutex);
+  return (e == NULL || size == 0 || e[0] == '\0') ? NULL : e;
 }
 
-/// Returns `true` if the environment variable, `name`, has been defined
-/// (even if empty).
+/// Returns true if environment variable `name` is defined (even if empty).
+/// Returns false if not found (UV_ENOENT) or other failure.
 bool os_env_exists(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return getenv(name) != NULL;
+  if (name[0] == '\0') {
+    return false;
+  }
+  // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
+  // returns UV_ENOBUFS, the env var was found.
+  char buf[1];
+  size_t size = sizeof(buf);
+  int r = uv_os_getenv(name, buf, &size);
+  assert(r != UV_EINVAL);
+  if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
+    ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+  }
+  return (r == 0 || r == UV_ENOBUFS);
 }
 
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (name[0] == '\0') {
+    return -1;
+  }
 #ifdef WIN32
   if (!overwrite && os_getenv(name) != NULL) {
     return 0;
   }
-  int rv = (int)_putenv_s(name, value);
-  if (rv != 0) {
-    ELOG("_putenv_s failed: %d: %s", rv, uv_strerror(rv));
-    return -1;
-  }
-  return 0;
-#elif defined(HAVE_SETENV)
-  return setenv(name, value, overwrite);
 #else
-# error "This system has no implementation available for os_setenv()"
+  if (!overwrite && os_env_exists(name)) {
+    return 0;
+  }
 #endif
+  uv_mutex_lock(&mutex);
+  pmap_del2(envmap, name);
+  int r = uv_os_setenv(name, value);
+  assert(r != UV_EINVAL);
+  if (r != 0) {
+    ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
+  }
+  uv_mutex_unlock(&mutex);
+  return r == 0 ? 0 : -1;
 }
 
 /// Unset environment variable
-///
-/// For systems where unsetenv() is not available the value will be set as an
-/// empty string
 int os_unsetenv(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
-#ifdef HAVE_UNSETENV
-  return unsetenv(name);
-#else
-  return os_setenv(name, "", 1);
-#endif
+  if (name[0] == '\0') {
+    return -1;
+  }
+  uv_mutex_lock(&mutex);
+  pmap_del2(envmap, name);
+  int r = uv_os_unsetenv(name);
+  if (r != 0) {
+    ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
+  }
+  uv_mutex_unlock(&mutex);
+  return r == 0 ? 0 : -1;
 }
 
 char *os_getenvname_at_index(size_t index)
@@ -515,7 +582,7 @@ static char *remove_tail(char *path, char *pend, char *dirname)
   return pend;
 }
 
-/// Iterate over a delimited list.
+/// Iterates $PATH-like delimited list `val`.
 ///
 /// @note Environment variables must not be modified during iteration.
 ///
@@ -550,7 +617,7 @@ const void *vim_env_iter(const char delim,
   }
 }
 
-/// Iterate over a delimited list in reverse order.
+/// Iterates $PATH-like delimited list `val` in reverse order.
 ///
 /// @note Environment variables must not be modified during iteration.
 ///
@@ -587,11 +654,12 @@ const void *vim_env_iter_rev(const char delim,
   }
 }
 
-/// Vim's version of getenv().
-/// Special handling of $HOME, $VIM and $VIMRUNTIME, allowing the user to
-/// override the vim runtime directory at runtime.  Also does ACP to 'enc'
-/// conversion for Win32.  Result must be freed by the caller.
+/// Vim getenv() wrapper with special handling of $HOME, $VIM, $VIMRUNTIME,
+/// allowing the user to override the Nvim runtime directory at runtime.
+/// Result must be freed by the caller.
+///
 /// @param name Environment variable to expand
+/// @return [allocated] Expanded environment variable, or NULL
 char *vim_getenv(const char *name)
 {
   // init_path() should have been called before now.
@@ -857,9 +925,8 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
   return dst;
 }
 
-/// Our portable version of setenv.
-/// Has special handling for $VIMRUNTIME to keep the localization machinery
-/// sane.
+/// Vim setenv() wrapper with special handling for $VIMRUNTIME to keep the
+/// localization machinery sane.
 void vim_setenv(const char *name, const char *val)
 {
   os_setenv(name, val, 1);

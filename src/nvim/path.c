@@ -2271,7 +2271,7 @@ int path_is_absolute(const char_u *fname)
 void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *path = getenv("PATH");
+  const char *path = os_getenv("PATH");
 
   if (path == NULL || path_is_absolute((char_u *)argv0)) {
     xstrlcpy(buf, argv0, bufsize);
