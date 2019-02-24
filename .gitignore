@@ -7,3 +7,4 @@ tests/messages
 tests/debuglog
 test.log
 gadgets/
+*.pyc

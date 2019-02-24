@@ -25,15 +25,26 @@ from collections import defaultdict
 from vimspector import ( breakpoints,
                          code,
                          debug_adapter_connection,
+                         install,
                          output,
                          stack_trace,
                          utils,
                          variables )
 
+VIMSPECTOR_HOME = os.path.abspath( os.path.join( os.path.dirname( __file__ ),
+                                                 '..',
+                                                 '..' ) )
+
+
 class DebugSession( object ):
   def __init__( self ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
+
+    self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
+    self._logger.info( 'gadgetDir = %s',
+                       install.GetGadgetDir( VIMSPECTOR_HOME,
+                                             install.GetOS() ) )
 
     self._uiTab = None
     self._stackTraceView = None
@@ -66,7 +77,15 @@ class DebugSession( object ):
       database = json.load( f )
 
     configurations = database.get( 'configurations' )
-    adapters = database.get( 'adapters' )
+    adapters = {}
+
+    for gadget_config_file in [ install.GetGadgetConfigFile( VIMSPECTOR_HOME ),
+                                utils.PathToConfigFile( '.gadgets.json' ) ]:
+      if gadget_config_file and os.path.exists( gadget_config_file ):
+        with open( gadget_config_file, 'r' ) as f:
+          adapters.update( json.load( f ).get( 'adapters' ) or {} )
+
+    adapters.update( database.get( 'adapters' ) or {} )
 
     if len( configurations ) == 1:
       configuration_name = next( iter( configurations.keys() ) )
@@ -90,7 +109,8 @@ class DebugSession( object ):
     # way to load .vimspector.local.json which just sets variables
     self._variables = {
       'dollar': '$', # HACK
-      'workspaceRoot': self._workspace_root
+      'workspaceRoot': self._workspace_root,
+      'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
     }
     self._variables.update( adapter.get( 'variables', {} ) )
     self._variables.update( configuration.get( 'variables', {} ) )

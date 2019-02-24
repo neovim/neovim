@@ -20,7 +20,6 @@ function! SetUp_Test_Mappings_Are_Added_HUMAN()
 endfunction
 
 function! Test_Mappings_Are_Added_HUMAN()
-
   call assert_true( hasmapto( 'vimspector#Continue()' ) )
   call assert_false( hasmapto( 'vimspector#Launch()' ) )
   call assert_true( hasmapto( 'vimspector#Stop()' ) )
@@ -89,4 +88,6 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
 
   call assert_true( len( signs ) == 1 )
   call assert_true( len( signs[ 0 ].signs ) == 0 )
+
+  " TODO: Use the screen dump test ?
 endfunction

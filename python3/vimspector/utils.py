@@ -279,7 +279,7 @@ def AppendToBuffer( buf, line_or_lines, modified=False ):
       line = 1
       buf[:] = line_or_lines
   except:
-    # There seem to be a lot of Vim bugs that lead to E351, whose help says that
+    # There seem to be a lot of Vim bugs that lead to E315, whose help says that
     # this is an internal error. Ignore the error, but write a trace to the log.
     logging.getLogger( __name__ ).exception(
       'Internal error while updating buffer %s (%s)', buf.name, buf.number )

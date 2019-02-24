@@ -1,5 +1,20 @@
 #!/usr/bin/env python
 
+# vimspector - A multi-language debugging system for Vim
+# Copyright 2019 Ben Jackson
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 try:
   import urllib.request as urllib2
 except ImportError:
@@ -8,7 +23,6 @@ except ImportError:
 import contextlib
 import os
 import collections
-import platform
 import string
 import zipfile
 import shutil
@@ -16,6 +30,14 @@ import subprocess
 import traceback
 import tarfile
 import hashlib
+import sys
+import json
+
+# Include vimspector source, for utils
+sys.path.insert( 1, os.path.join( os.path.dirname( __file__ ),
+                                  'python3' ) )
+
+from vimspector import install
 
 GADGETS = {
   'vscode-cpptools': {
@@ -23,6 +45,7 @@ GADGETS = {
       'url': ( 'https://github.com/Microsoft/vscode-cpptools/releases/download/'
                '${version}/${file_name}' ),
     },
+    'do': lambda name, root: InstallCppTools( name, root ),
     'all': {
       'version': '0.21.0',
     },
@@ -37,6 +60,18 @@ GADGETS = {
     'windows': {
       'file_name': 'cpptools-win32.vsix',
       'checksum': None,
+    },
+    "adapters": {
+      "vscode-cpptools": {
+        "name": "cppdbg",
+        "command": [
+          "${gadgetDir}/vscode-cpptools/debugAdapters/OpenDebugAD7"
+        ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        },
+      },
     },
   },
   'vscode-python': {
@@ -55,7 +90,7 @@ GADGETS = {
       'url': 'https://github.com/puremourning/TclProDebug',
       'ref': 'master',
     },
-    'do': lambda root: InstallTclProDebug( root )
+    'do': lambda name, root: InstallTclProDebug( name, root )
   },
   'vscode-mono-debug': {
     'enabled': False,
@@ -94,7 +129,33 @@ def CurrentWorkingDir( d ):
   finally:
     os.chdir( cur_d )
 
-def InstallTclProDebug( root ):
+
+def MakeExecutable( file_path ):
+  # TODO: import stat and use them by _just_ adding the X bit.
+  print( 'Making executable: {}'.format( file_path ) )
+  os.chmod( file_path, 0o755 )
+
+
+def InstallCppTools( name, root ):
+  extension = os.path.join( root, 'extension' )
+
+  # It's hilarious, but the execute bits aren't set in the vsix. So they
+  # actually have javascript code which does this. It's just a horrible horrible
+  # hoke that really is not funny.
+  MakeExecutable( os.path.join( extension, 'debugAdapters', 'OpenDebugAD7' ) )
+  with open( os.path.join( extension, 'package.json' ) ) as f:
+    package = json.load( f )
+    runtime_dependencies = package[ 'runtimeDependencies' ]
+    for dependency in runtime_dependencies:
+      for binary in dependency.get( 'binaries' ):
+        file_path = os.path.abspath( os.path.join( extension, binary ) )
+        if os.path.exists( file_path ):
+          MakeExecutable( os.path.join( extension, binary ) )
+
+  MakeExtensionSymlink( name, root )
+
+
+def InstallTclProDebug( name, root ):
   configure = [ './configure' ]
 
   if OS == 'macos':
@@ -127,7 +188,7 @@ def InstallTclProDebug( root ):
     subprocess.check_call( configure  )
     subprocess.check_call( [ 'make' ] )
 
-  MakeSymlink( gadget_dir, 'tclpro', root )
+  MakeSymlink( gadget_dir, name, root )
 
 
 def DownloadFileTo( url, destination, file_name = None, checksum = None ):
@@ -186,11 +247,28 @@ def ValidateCheckSumSHA256( file_path, checksum ):
 
 def RemoveIfExists( destination ):
   if os.path.exists( destination ) or os.path.islink( destination ):
-    print( "Removing existing {}".format( destination ) )
-    if os.path.isdir( destination ):
-      shutil.rmtree( destination )
-    else:
+    if os.path.islink( destination ):
+      print( "Removing file {}".format( destination ) )
       os.remove( destination )
+    else:
+      print( "Removing dir {}".format( destination ) )
+      shutil.rmtree( destination )
+
+
+# Python's ZipFile module strips execute bits from files, for no good reason
+# other than crappy code. Let's do it's job for it.
+class ModePreservingZipFile( zipfile.ZipFile ):
+  def extract( self, member, path = None, pwd = None ):
+    if not isinstance(member, zipfile.ZipInfo):
+      member = self.getinfo(member)
+
+    if path is None:
+      path = os.getcwd()
+
+    ret_val = self._extract_member(member, path, pwd)
+    attr = member.external_attr >> 16
+    os.chmod(ret_val, attr)
+    return ret_val
 
 
 def ExtractZipTo( file_path, destination, format ):
@@ -198,7 +276,7 @@ def ExtractZipTo( file_path, destination, format ):
   RemoveIfExists( destination )
 
   if format == 'zip':
-    with zipfile.ZipFile( file_path ) as f:
+    with ModePreservingZipFile( file_path ) as f:
       f.extractall( path = destination )
     return
   elif format == 'tar':
@@ -213,8 +291,16 @@ def ExtractZipTo( file_path, destination, format ):
         subprocess.check_call( [ 'tar', 'zxvf', file_path ] )
 
 
+def MakeExtensionSymlink( name, root ):
+  MakeSymlink( gadget_dir, name, os.path.join( root, 'extension' ) ),
+
+
 def MakeSymlink( in_folder, link, pointing_to ):
   RemoveIfExists( os.path.join( in_folder, link ) )
+
+  in_folder = os.path.abspath( in_folder )
+  pointing_to = os.path.relpath( os.path.abspath( pointing_to ),
+                                 in_folder )
   os.symlink( pointing_to, os.path.join( in_folder, link ) )
 
 
@@ -223,16 +309,14 @@ def CloneRepoTo( url, ref, destination ):
   subprocess.check_call( [ 'git', 'clone', url, destination ] )
   subprocess.check_call( [ 'git', '-C', destination, 'checkout', ref ] )
 
-if platform.system() == 'Darwin':
-  OS = 'macos'
-elif platform.system() == 'Winwdows':
-  OS = 'windows'
-else:
-  OS = 'linux'
+OS = install.GetOS()
+gadget_dir = install.GetGadgetDir( os.path.dirname( __file__ ), OS )
 
-gadget_dir = os.path.join( os.path.dirname( __file__ ), 'gadgets', OS )
+print( 'OS = ' + OS )
+print( 'gadget_dir = ' + gadget_dir )
 
 failed = []
+all_adapters = {}
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
     continue
@@ -269,9 +353,12 @@ for name, gadget in GADGETS.items():
       root = destination
 
     if 'do' in gadget:
-      gadget[ 'do' ]( root )
+      gadget[ 'do' ]( name, root )
     else:
-      MakeSymlink( gadget_dir, name, os.path.join( root, 'extenstion') ),
+      MakeExtensionSymlink( name, root )
+
+    all_adapters.update( gadget.get( 'adapters', {} ) )
+
 
     print( "Done installing {}".format( name ) )
   except Exception as e:
@@ -280,6 +367,12 @@ for name, gadget in GADGETS.items():
     print( "FAILED installing {}: {}".format( name, e ) )
 
 
+with open( install.GetGadgetConfigFile( os.path.dirname( __file__ ) ),
+           'w' ) as f:
+  json.dump( { 'adapters': all_adapters }, f, indent=2, sort_keys=True )
+
 if failed:
   raise RuntimeError( 'Failed to install gadgets: {}'.format(
     ','.join( failed ) ) )
+
+
