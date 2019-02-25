@@ -635,17 +635,67 @@ func Test_listdict_compare_complex()
 endfunc
 
 func Test_listdict_extend()
+  " Test extend() with lists
+
   " Pass the same List to extend()
-  let l = [1, 2, 3, 4, 5]
-  call extend(l, l)
-  call assert_equal([1, 2, 3, 4, 5, 1, 2, 3, 4, 5], l)
+  let l = [1, 2, 3]
+  call assert_equal([1, 2, 3, 1, 2, 3], extend(l, l))
+  call assert_equal([1, 2, 3, 1, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call assert_equal([1, 2, 3, 4, 5, 6], extend(l, [4, 5, 6]))
+  call assert_equal([1, 2, 3, 4, 5, 6], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 0)
+  call assert_equal([4, 5, 6, 1, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 1)
+  call assert_equal([1, 4, 5, 6, 2, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], 3)
+  call assert_equal([1, 2, 3, 4, 5, 6], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], -1)
+  call assert_equal([1, 2, 4, 5, 6, 3], l)
+
+  let l = [1, 2, 3]
+  call extend(l, [4, 5, 6], -3)
+  call assert_equal([4, 5, 6, 1, 2,  3], l)
+
+  let l = [1, 2, 3]
+  call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
+  call assert_fails("call extend(l, [4, 5, 6], -4)", 'E684:')
+  call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+
+  " Test extend() with dictionaries.
 
   " Pass the same Dict to extend()
   let d = { 'a': {'b': 'B'}}
   call extend(d, d)
   call assert_equal({'a': {'b': 'B'}}, d)
 
-  " Pass the same Dict to extend() with "error"
-  call assert_fails("call extend(d, d, 'error')", 'E737:')
-  call assert_equal({'a': {'b': 'B'}}, d)
+  let d = {'a': 'A', 'b': 'B'}
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, extend(d, {'b': 0, 'c':'C'}))
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call extend(d, {'a': 'A', 'b': 0, 'c': 'C'}, "force")
+  call assert_equal({'a': 'A', 'b': 0, 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call extend(d, {'b': 0, 'c':'C'}, "keep")
+  call assert_equal({'a': 'A', 'b': 'B', 'c': 'C'}, d)
+
+  let d = {'a': 'A', 'b': 'B'}
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
+  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  call assert_equal({'a': 'A', 'b': 'B'}, d)
+
+  call assert_fails("call extend([1, 2], 1)", 'E712:')
+  call assert_fails("call extend([1, 2], {})", 'E712:')
 endfunc
