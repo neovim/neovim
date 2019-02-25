@@ -129,6 +129,7 @@ typedef struct {
 } TUIData;
 
 static bool volatile got_winch = false;
+static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -338,7 +339,7 @@ static void tui_terminal_start(UI *ui)
   data->print_attr_id = -1;
   ugrid_init(&data->grid);
   terminfo_start(ui);
-  update_size(ui);
+  tui_guess_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
 }
@@ -465,7 +466,7 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
     return;
   }
 
-  update_size(ui);
+  tui_guess_size(ui);
   ui_schedule_refresh();
 }
 
@@ -889,7 +890,8 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
     r->right = MIN(r->right, grid->width);
   }
 
-  if (!got_winch) {  // Try to resize the terminal window.
+  if (!got_winch && (!starting || did_user_set_dimensions)) {
+    // Resize the _host_ terminal.
     UNIBI_SET_NUM_VAR(data->params[0], (int)height);
     UNIBI_SET_NUM_VAR(data->params[1], (int)width);
     unibi_out_ext(ui, data->unibi_ext.resize_screen);
@@ -1347,13 +1349,16 @@ static void invalidate(UI *ui, int top, int bot, int left, int right)
   }
 }
 
-static void update_size(UI *ui)
+/// Tries to get the user's wanted dimensions (columns and rows) for the entire
+/// application (i.e., the host terminal).
+static void tui_guess_size(UI *ui)
 {
   TUIData *data = ui->data;
   int width = 0, height = 0;
 
   // 1 - look for non-default 'columns' and 'lines' options during startup
-  if (starting != 0 && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
+  if (starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
+    did_user_set_dimensions = true;
     assert(Columns >= INT_MIN && Columns <= INT_MAX);
     assert(Rows >= INT_MIN && Rows <= INT_MAX);
     width = (int)Columns;
