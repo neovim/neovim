@@ -157,11 +157,11 @@ static void init_child(PtyProcess *ptyproc)
   // New session/process-group. #6530
   setsid();
 
-  unsetenv("COLUMNS");
-  unsetenv("LINES");
-  unsetenv("TERMCAP");
-  unsetenv("COLORTERM");
-  unsetenv("COLORFGBG");
+  os_unsetenv("COLUMNS");
+  os_unsetenv("LINES");
+  os_unsetenv("TERMCAP");
+  os_unsetenv("COLORTERM");
+  os_unsetenv("COLORFGBG");
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
