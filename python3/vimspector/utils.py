@@ -58,7 +58,16 @@ def SetUpCommandBuffer( cmd, name ):
       json.dumps( cmd ),
       name ) )
 
-  return ( vim.buffers[ bufnr ] for bufnr in bufs )
+  if bufs is None:
+    raise RuntimeError( "Unable to start job {}: {}".format( cmd, name ) )
+  elif not all( [ b > 0 for b in bufs ] ):
+    raise RuntimeError( "Unable to get all streams for job {}: {}".format(
+      name,
+      cmd ) )
+
+  UserMessage( 'Bufs: {}'.format( [ int(b) for b in bufs ] ), persist = True )
+
+  return [ vim.buffers[ b ] for b in bufs ]
 
 
 def CleanUpCommand( name ):

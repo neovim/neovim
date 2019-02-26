@@ -138,11 +138,15 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category )
         \   'stoponexit': 'kill'
         \ } ) )
 
+  if job_status( s:commands[ a:category ][ index ] ) !=# 'run'
+    echom "Unable to start job for " . a:cmd
+    return v:none
+  endif
+
   let l:stdout = ch_getbufnr(
         \ job_getchannel( s:commands[ a:category ][ index ] ), 'out' )
   let l:stderr = ch_getbufnr(
         \ job_getchannel( s:commands[ a:category ][ index ] ), 'err' )
-
 
   return [ l:stdout, l:stderr ]
 endfunction
