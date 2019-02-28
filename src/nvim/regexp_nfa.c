@@ -1420,12 +1420,12 @@ static int nfa_regatom(void)
       default:  nr = -1; break;
       }
 
-      if (nr < 0)
-        EMSG2_RET_FAIL(
-            _("E678: Invalid character after %s%%[dxouU]"),
-            reg_magic == MAGIC_ALL);
-      /* A NUL is stored in the text as NL */
-      /* TODO: what if a composing character follows? */
+      if (nr < 0 || nr > INT_MAX) {
+        EMSG2_RET_FAIL(_("E678: Invalid character after %s%%[dxouU]"),
+                       reg_magic == MAGIC_ALL);
+      }
+      // A NUL is stored in the text as NL
+      // TODO(vim): what if a composing character follows?
       EMIT(nr == 0 ? 0x0a : nr);
     }
     break;
