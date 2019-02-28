@@ -6476,16 +6476,10 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 
   nfa_regcomp_start(expr, re_flags);
 
-  /* Build postfix form of the regexp. Needed to build the NFA
-   * (and count its size). */
+  // Build postfix form of the regexp. Needed to build the NFA
+  // (and count its size).
   postfix = re2post();
   if (postfix == NULL) {
-    // TODO(vim): only give this error for debugging?
-    if (post_ptr >= post_end) {
-      IEMSGN("Internal error: estimated max number "
-             "of states insufficient: %" PRId64,
-             post_end - post_start);
-    }
     goto fail;              // Cascaded (syntax?) error
   }
 

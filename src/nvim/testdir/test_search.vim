@@ -580,3 +580,8 @@ func Test_large_hex_chars2()
   endtry
   set re&
 endfunc
+
+func Test_one_error_msg()
+  " This  was also giving an internal error
+  call assert_fails('call search(" \\((\\v[[=P=]]){185}+             ")', 'E871:')
+endfunc
