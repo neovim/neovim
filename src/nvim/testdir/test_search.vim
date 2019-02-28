@@ -524,3 +524,35 @@ func Test_search_sentence()
   /\%'(
   /
 endfunc
+
+func Test_large_hex_chars1()
+  " This used to cause a crash, the character becomes an NFA state.
+  try
+    /\%Ufffffc23
+  catch
+    call assert_match('E678:', v:exception)
+  endtry
+  try
+    set re=1
+    /\%Ufffffc23
+  catch
+    call assert_match('E678:', v:exception)
+  endtry
+  set re&
+endfunc
+
+func Test_large_hex_chars2()
+  " This used to cause a crash, the character becomes an NFA state.
+  try
+    /[\Ufffffc1f]
+  catch
+    call assert_match('E486:', v:exception)
+  endtry
+  try
+    set re=1
+    /[\Ufffffc1f]
+  catch
+    call assert_match('E486:', v:exception)
+  endtry
+  set re&
+endfunc
