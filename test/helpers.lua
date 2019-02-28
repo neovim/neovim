@@ -751,6 +751,7 @@ local module = {
   hasenv = hasenv,
   hexdump = hexdump,
   intchar2lua = intchar2lua,
+  isCI = isCI,
   map = map,
   matches = matches,
   mergedicts_copy = mergedicts_copy,

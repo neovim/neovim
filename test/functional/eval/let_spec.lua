@@ -7,6 +7,7 @@ local eval = helpers.eval
 local meths = helpers.meths
 local redir_exec = helpers.redir_exec
 local source = helpers.source
+local nvim_dir = helpers.nvim_dir
 
 before_each(clear)
 
@@ -45,7 +46,7 @@ describe(':let', function()
     ]=])
   end)
 
-  it("multibyte environment variables", function()
+  it("multibyte env var #8398 #9267", function()
     command("let $NVIM_TEST = 'AìaB'")
     eq('AìaB', eval('$NVIM_TEST'))
     command("let $NVIM_TEST = 'AaあB'")
@@ -55,5 +56,27 @@ describe(':let', function()
                     .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
     command("let $NVIM_TEST = '"..mbyte.."'")
     eq(mbyte, eval('$NVIM_TEST'))
+  end)
+
+  it("multibyte env var to child process #8398 #9267",  function()
+    if (not helpers.iswin()) and require('test.helpers').isCI() then
+      -- Fails on non-Windows CI. Buffering/timing issue?
+      pending('fails on unix CI', function() end)
+    end
+    local cmd_get_child_env = "let g:env_from_child = system(['"..nvim_dir.."/printenv-test', 'NVIM_TEST'])"
+    command("let $NVIM_TEST = 'AìaB'")
+    command(cmd_get_child_env)
+    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+
+    command("let $NVIM_TEST = 'AaあB'")
+    command(cmd_get_child_env)
+    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+
+    local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
+                    .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
+                    .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
+    command("let $NVIM_TEST = '"..mbyte.."'")
+    command(cmd_get_child_env)
+    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
   end)
 end)
