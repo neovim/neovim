@@ -489,6 +489,30 @@ func Test_incsearch_substitute_dump()
   call delete('Xis_subst_script')
 endfunc
 
+func Test_incsearch_with_change()
+  if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
+    return
+  endif
+
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["one", "two ------ X", "three"])',
+	\ 'call timer_start(200, { _ -> setline(2, "x")})',
+	\ ], 'Xis_change_script')
+  let buf = RunVimInTerminal('-S Xis_change_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Highlight X, it will be deleted by the timer callback.
+  call term_sendkeys(buf, ':%s/X')
+  call VerifyScreenDump(buf, 'Test_incsearch_change_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_change_script')
+endfunc
+
 func Test_search_undefined_behaviour()
   if !has("terminal")
     return
