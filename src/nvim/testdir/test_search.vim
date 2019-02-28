@@ -502,7 +502,7 @@ func Test_incsearch_with_change()
   let buf = RunVimInTerminal('-S Xis_change_script', {'rows': 9, 'cols': 70})
   " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
   " the 'ambiwidth' check.
-  sleep 100m
+  sleep 300m
 
   " Highlight X, it will be deleted by the timer callback.
   call term_sendkeys(buf, ':%s/X')
