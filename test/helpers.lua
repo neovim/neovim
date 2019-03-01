@@ -708,7 +708,7 @@ end
 local function isCI()
   local is_travis = nil ~= os.getenv('TRAVIS')
   local is_appveyor = nil ~= os.getenv('APPVEYOR')
-  local is_quickbuild = nil ~= os.getenv('PR_NUMBER')
+  local is_quickbuild = nil ~= lfs.attributes('/usr/home/quickbuild')
   return is_travis or is_appveyor or is_quickbuild
 end
 
