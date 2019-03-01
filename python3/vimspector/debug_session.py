@@ -541,23 +541,23 @@ class DebugSession( object ):
     elif commands is not None:
       raise ValueError( "Invalid commands; must be list" )
 
-    commands = remote[ pfx + 'Command' ]
+    command = remote[ pfx + 'Command' ]
 
-    if isinstance( commands, str ):
-      commands = shlex.split( commands )
+    if isinstance( command, str ):
+      command = shlex.split( command )
 
-    if not isinstance( commands, list ):
+    if not isinstance( command, list ):
       raise ValueError( "Invalid command; must be list/string" )
 
-    if not commands:
+    if not command:
       raise ValueError( 'Could not determine commands for ' + pfx )
 
-    return commands
+    return [ command ]
 
   def _Initialise( self ):
     def handle_initialize_response( msg ):
-        self._server_capabilities = msg.get( 'body' ) or {}
-        self._Launch()
+      self._server_capabilities = msg.get( 'body' ) or {}
+      self._Launch()
 
     self._connection.DoRequest( handle_initialize_response, {
       'command': 'initialize',
