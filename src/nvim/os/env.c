@@ -150,28 +150,47 @@ int os_unsetenv(const char *name)
 
 char *os_getenvname_at_index(size_t index)
 {
+#ifdef _WIN32
+  // Check if index is inside the environ array and is not the last element.
+  for (size_t i = 0; i <= index; i++) {
+    if (_wenviron[i] == NULL) {
+      return NULL;
+    }
+  }
+  wchar_t *utf16_str = _wenviron[index];
+  char *utf8_str;
+  int conversion_result = utf16_to_utf8(utf16_str, &utf8_str);
+  if (conversion_result != 0) {
+    EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+    return NULL;
+  }
+  size_t namesize = 0;
+  while (utf8_str[namesize] != '=' && utf8_str[namesize] != NUL) {
+    namesize++;
+  }
+  char *name = (char *)vim_strnsave((char_u *)utf8_str, namesize);
+  xfree(utf8_str);
+  return name;
+#else
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
-# elif !defined(__WIN32__)
-  // Borland C++ 5.2 has this in a header file.
+# else
   extern char         **environ;
 # endif
-  // check if index is inside the environ array
-  for (size_t i = 0; i < index; i++) {
+  // Check if index is inside the environ array and is not the last element.
+  for (size_t i = 0; i <= index; i++) {
     if (environ[i] == NULL) {
       return NULL;
     }
   }
   char *str = environ[index];
-  if (str == NULL) {
-    return NULL;
-  }
   size_t namesize = 0;
   while (str[namesize] != '=' && str[namesize] != NUL) {
     namesize++;
   }
   char *name = (char *)vim_strnsave((char_u *)str, namesize);
   return name;
+#endif
 }
 
 /// Get the process ID of the Neovim process.
@@ -404,7 +423,7 @@ void expand_env_esc(char_u *restrict srcp,
           var = NULL;
         } else {
           if (src[1] == '{') {
-            ++tail;
+            tail++;
           }
 #endif
         *var = NUL;
