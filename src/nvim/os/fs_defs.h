@@ -21,9 +21,7 @@ typedef struct {
   uv_dirent_t ent;  ///< @private The entry information.
 } Directory;
 
-/// Function to convert libuv error to char * error description
-///
-/// negative libuv error codes are returned by a number of os functions.
+/// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror
 
 // Values returned by os_nodetype()

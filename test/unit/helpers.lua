@@ -645,16 +645,16 @@ local function itp_child(wr, func)
     s = s:sub(1, hook_msglen - 2)
     sc.write(wr, '>' .. s .. (' '):rep(hook_msglen - 2 - #s) .. '\n')
   end
-  local err, emsg = pcall(init)
-  if err then
+  local status, result = pcall(init)
+  if status then
     collectgarbage('stop')
     child_sethook(wr)
-    err, emsg = pcall(func)
+    status, result = pcall(func)
     debug.sethook()
   end
-  emsg = tostring(emsg)
   sc.write(wr, trace_end_msg)
-  if not err then
+  if not status then
+    local emsg = tostring(result)
     if #emsg > 99999 then
       emsg = emsg:sub(1, 99999)
     end
@@ -668,7 +668,7 @@ local function itp_child(wr, func)
   collectgarbage()
   sc.write(wr, '$\n')
   sc.close(wr)
-  sc.exit(err and 0 or 1)
+  sc.exit(status and 0 or 1)
 end
 
 local function check_child_err(rd)

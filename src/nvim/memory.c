@@ -109,7 +109,7 @@ void *xmalloc(size_t size)
   return ret;
 }
 
-/// free wrapper that returns delegates to the backing memory manager
+/// free() wrapper that delegates to the backing memory manager
 void xfree(void *ptr)
 {
   free(ptr);

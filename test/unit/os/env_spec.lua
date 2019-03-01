@@ -8,17 +8,22 @@ local ffi = helpers.ffi
 local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
+local OK = 0
 
 require('lfs')
 
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()
+  local function os_env_exists(name)
+    return cimp.os_env_exists(to_cstr(name))
+  end
+
   local function os_setenv(name, value, override)
     return cimp.os_setenv(to_cstr(name), to_cstr(value), override)
   end
 
-  local function os_unsetenv(name, _, _)
+  local function os_unsetenv(name)
     return cimp.os_unsetenv(to_cstr(name))
   end
 
@@ -31,25 +36,44 @@ describe('env.c', function()
     end
   end
 
-  describe('os_setenv', function()
-    local OK = 0
+  itp('os_env_exists', function()
+    eq(false, os_env_exists(''))
+    eq(false, os_env_exists('      '))
+    eq(false, os_env_exists('\t'))
+    eq(false, os_env_exists('\n'))
+    eq(false, os_env_exists('AaあB <= very weird name...'))
 
-    itp('sets an env variable and returns OK', function()
+    local varname = 'NVIM_UNIT_TEST_os_env_exists'
+    eq(false, os_env_exists(varname))
+    eq(OK, os_setenv(varname, 'foo bar baz ...', 1))
+    eq(true, os_env_exists(varname))
+  end)
+
+  describe('os_setenv', function()
+    itp('sets an env var and returns success', function()
       local name = 'NVIM_UNIT_TEST_SETENV_1N'
       local value = 'NVIM_UNIT_TEST_SETENV_1V'
       eq(nil, os.getenv(name))
-      eq(OK, (os_setenv(name, value, 1)))
+      eq(OK, os_setenv(name, value, 1))
       eq(value, os.getenv(name))
+
+      -- Set empty, then set non-empty, then retrieve.
+      eq(OK, os_setenv(name, '', 1))
+      eq('', os.getenv(name))
+      eq(OK, os_setenv(name, 'non-empty', 1))
+      eq('non-empty', os.getenv(name))
     end)
 
-    itp("dosn't overwrite an env variable if overwrite is 0", function()
+    itp("`overwrite` behavior", function()
       local name = 'NVIM_UNIT_TEST_SETENV_2N'
       local value = 'NVIM_UNIT_TEST_SETENV_2V'
       local value_updated = 'NVIM_UNIT_TEST_SETENV_2V_UPDATED'
-      eq(OK, (os_setenv(name, value, 0)))
+      eq(OK, os_setenv(name, value, 0))
       eq(value, os.getenv(name))
-      eq(OK, (os_setenv(name, value_updated, 0)))
+      eq(OK, os_setenv(name, value_updated, 0))
       eq(value, os.getenv(name))
+      eq(OK, os_setenv(name, value_updated, 1))
+      eq(value_updated, os.getenv(name))
     end)
   end)
 
@@ -93,31 +117,42 @@ describe('env.c', function()
   end)
 
   describe('os_getenv', function()
-    itp('reads an env variable', function()
+    itp('reads an env var', function()
       local name = 'NVIM_UNIT_TEST_GETENV_1N'
       local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
       -- Use os_setenv because Lua dosen't have setenv.
       os_setenv(name, value, 1)
       eq(value, os_getenv(name))
+
+      -- Get a big value.
+      local bigval = ('x'):rep(256)
+      eq(OK, os_setenv(name, bigval, 1))
+      eq(bigval, os_getenv(name))
+
+      -- Set non-empty, then set empty.
+      eq(OK, os_setenv(name, 'non-empty', 1))
+      eq('non-empty', os_getenv(name))
+      eq(OK, os_setenv(name, '', 1))
+      eq(NULL, os_getenv(name))
     end)
 
-    itp('returns NULL if the env variable is not found', function()
-      local name = 'NVIM_UNIT_TEST_GETENV_NOTFOUND'
-      return eq(NULL, os_getenv(name))
+    itp('returns NULL if the env var is not found', function()
+      eq(NULL, os_getenv('NVIM_UNIT_TEST_GETENV_NOTFOUND'))
     end)
   end)
 
-  describe('os_unsetenv', function()
-    itp('unsets environment variable', function()
-      local name = 'TEST_UNSETENV'
-      local value = 'TESTVALUE'
-      os_setenv(name, value, 1)
-      os_unsetenv(name)
-      neq(os_getenv(name), value)
-      -- Depending on the platform the var might be unset or set as ''
-      assert.True(os_getenv(name) == nil or os_getenv(name) == '')
-    end)
+  itp('os_unsetenv', function()
+    local name = 'TEST_UNSETENV'
+    local value = 'TESTVALUE'
+    os_setenv(name, value, 1)
+    eq(OK, os_unsetenv(name))
+    neq(os_getenv(name), value)
+    -- Depending on the platform the var might be unset or set as ''
+    assert.True(os_getenv(name) == nil or os_getenv(name) == '')
+    if os_getenv(name) == nil then
+      eq(false, os_env_exists(name))
+    end
   end)
 
   describe('os_getenvname_at_index', function()

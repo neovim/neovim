@@ -184,6 +184,7 @@ bool event_teardown(void)
 void early_init(void)
 {
   log_init();
+  env_init();
   fs_init();
   handle_init();
   eval_init();          // init global variables
@@ -1769,7 +1770,7 @@ static bool do_user_initialization(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool do_exrc = p_exrc;
-  if (process_env("VIMINIT") == OK) {
+  if (execute_env("VIMINIT") == OK) {
     do_exrc = p_exrc;
     return do_exrc;
   }
@@ -1814,7 +1815,7 @@ static bool do_user_initialization(void)
     } while (iter != NULL);
     xfree(config_dirs);
   }
-  if (process_env("EXINIT") == OK) {
+  if (execute_env("EXINIT") == OK) {
     do_exrc = p_exrc;
     return do_exrc;
   }
@@ -1878,7 +1879,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 ///
 /// @return FAIL if the environment variable was not executed,
 ///         OK otherwise.
-static int process_env(char *env)
+static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *initstr = os_getenv(env);

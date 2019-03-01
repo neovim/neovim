@@ -27,14 +27,11 @@
 #cmakedefine HAVE_LOCALE_H
 #cmakedefine HAVE_NL_LANGINFO_CODESET
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
-#cmakedefine HAVE_PUTENV_S
 #cmakedefine HAVE_PWD_H
 #cmakedefine HAVE_READLINK
 #cmakedefine HAVE_UV_TRANSLATE_SYS_ERROR
 // TODO: add proper cmake check
 // #define HAVE_SELINUX 1
-#cmakedefine HAVE_SETENV
-#cmakedefine HAVE_UNSETENV
 #cmakedefine HAVE_SETPGID
 #cmakedefine HAVE_SETSID
 #cmakedefine HAVE_SIGACTION

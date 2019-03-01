@@ -29,10 +29,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Does neovim-lint on c files.
+"""Lints C files in the Neovim source tree.
 
 The goal of this script is to identify places in the code that *may*
-be in non-compliance with neovim style.  It does not attempt to fix
+be in non-compliance with Neovim style.  It does not attempt to fix
 up these problems -- the point is to educate.  It does also not
 attempt to find all problems, or to ensure that everything it does
 find is legitimately a problem.
@@ -88,7 +88,7 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
    * [whitespace/braces] { should almost always be at the end of the previous
      line
    * [build/include] Include the directory when naming .h files
-   * [runtime/int] Use int16/int64/etc, rather than the C type.
+   * [runtime/int] Use int16_t/int64_t/etc, rather than the C type.
 
   Every problem is given a confidence score from 1-5, with 5 meaning we are
   certain of the problem, and 1 meaning it could be a legitimate construct.
@@ -1483,6 +1483,37 @@ def CheckMemoryFunctions(filename, clean_lines, linenum, error):
         if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
                                     line[ix - 1] not in ('_', '.', '>'))):
             error(filename, linenum, 'runtime/memory_fn', 2,
+                  'Use ' + suggested_function +
+                  '...) instead of ' + function + '...).')
+
+
+os_functions = (
+    ('setenv(', 'os_setenv('),
+    ('getenv(', 'os_getenv('),
+    ('_wputenv(', 'os_setenv('),
+    ('_putenv_s(', 'os_setenv('),
+    ('putenv(', 'os_setenv('),
+    ('unsetenv(', 'os_unsetenv('),
+)
+
+
+def CheckOSFunctions(filename, clean_lines, linenum, error):
+    """Checks for calls to invalid functions.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    line = clean_lines.elided[linenum]
+    for function, suggested_function in os_functions:
+        ix = line.find(function)
+        # Comparisons made explicit for clarity -- pylint:
+        # disable=g-explicit-bool-comparison
+        if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
+                                    line[ix - 1] not in ('_', '.', '>'))):
+            error(filename, linenum, 'runtime/os_fn', 2,
                   'Use ' + suggested_function +
                   '...) instead of ' + function + '...).')
 
@@ -3370,6 +3401,7 @@ def ProcessLine(filename, file_extension, clean_lines, line,
                                   nesting_state, error)
     CheckPosixThreading(filename, clean_lines, line, error)
     CheckMemoryFunctions(filename, clean_lines, line, error)
+    CheckOSFunctions(filename, clean_lines, line, error)
     for check_fn in extra_check_functions:
         check_fn(filename, clean_lines, line, error)
 

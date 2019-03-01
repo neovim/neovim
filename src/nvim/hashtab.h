@@ -19,7 +19,7 @@ typedef size_t hash_T;
 #define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL \
                             || (hi)->hi_key == (char_u *)&hash_removed)
 
-/// A hastable item.
+/// Hashtable item.
 ///
 /// Each item has a NUL terminated string key.
 /// A key can appear only once in the table.
