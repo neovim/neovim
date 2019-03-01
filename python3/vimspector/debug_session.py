@@ -64,6 +64,7 @@ class DebugSession( object ):
   def _ResetServerState( self ):
     self._connection = None
     self._configuration = None
+    self._exceptionBreakpoints = None
     self._init_complete = False
     self._launch_complete = False
     self._server_capabilities = {}
@@ -778,6 +779,58 @@ class DebugSession( object ):
         }
       )
 
+    if self._exceptionBreakpoints is None:
+      self._SetUpExceptionBreakpoints()
+
+    if self._exceptionBreakpoints:
+      self._connection.DoRequest(
+        None, # There is nothing on the response to this
+        {
+          'command': 'setExceptionBreakpoints',
+          'arguments': self._exceptionBreakpoints
+        }
+      )
+
+  def _SetUpExceptionBreakpoints( self ):
+    exceptionBreakpointFilters = self._server_capabilities.get(
+        'exceptionBreakpointFilters',
+        [] )
+
+    if exceptionBreakpointFilters or not self._server_capabilities.get(
+      'supportsConfigurationDoneRequest' ):
+      exceptionFilters = []
+      if exceptionBreakpointFilters:
+        for f in exceptionBreakpointFilters:
+          response = utils.AskForInput(
+            "Enable exception filter '{}'? (Y/N)".format( f[ 'label' ] ) )
+
+          if response == 'Y':
+            exceptionFilters.append( f[ 'filter' ] )
+          elif not response and f.get( 'default' ):
+            exceptionFilters.append( f[ 'filter' ] )
+
+      self._exceptionBreakpoints = {
+        'filters': exceptionFilters
+      }
+
+      if self._server_capabilities.get( 'supportsExceptionOptions' ):
+        # FIXME Sigh. The python debug adapter requires this 
+        #       key to exist. Even though it is optional.
+        break_mode = utils.SelectFromList( 'When to break on exception?',
+                                           [ 'never',
+                                             'always',
+                                             'unhandled',
+                                             'userHandled' ] )
+
+        if not break_mode:
+          break_mode = 'unhandled'
+
+        path = [ { 'nagate': True, 'names': [ 'DO_NOT_MATCH' ] } ]
+        self._exceptionBreakpoints[ 'exceptionOptions' ] = [ {
+          'path': path,
+          'breakMode': break_mode
+        } ]
+
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
       for bp in line_breakpoints:
@@ -801,9 +854,21 @@ class DebugSession( object ):
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]
+    reason = event.get( 'reason' ) or '<protocol error>'
+    description = event.get( 'description' )
+    text = event.get( 'text' )
+
+    if description:
+      explanation = description + '(' + reason + ')'
+    else:
+      explanation = reason
+
+    if text:
+      explanation += ': ' + text
+
     msg = 'Paused in thread {0} due to {1}'.format(
       event.get( 'threadId', '<unknown>' ),
-      event.get( 'description', event.get( 'reason', '' ) ) )
+      explanation )
     utils.UserMessage( msg, persist = True )
 
     if self._outputView:
