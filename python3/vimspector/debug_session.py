@@ -158,8 +158,10 @@ class DebugSession( object ):
       'dollar': '$', # HACK
       'workspaceRoot': self._workspace_root
     }
-    self._variables.update( adapter.get( 'variables', {} ) )
-    self._variables.update( configuration.get( 'variables', {} ) )
+    self._variables.update( 
+      utils.ParseVariables( adapter.get( 'variables', {} ) ) )
+    self._variables.update(
+      utils.ParseVariables( configuration.get( 'variables', {} ) ) )
     self._variables.update( launch_variables )
 
     utils.ExpandReferencesInDict( configuration, self._variables )

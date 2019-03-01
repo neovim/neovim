@@ -328,6 +328,37 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
     obj[ k ] = expand_refs_in_object( obj[ k ] )
 
 
+def ParseVariables( variables ):
+  new_variables = {}
+  for n,v in variables.items():
+    if isinstance( v, dict ):
+      if 'shell' in v:
+        import subprocess
+        import shlex
+
+        new_v = v.copy()
+        # Bit of a hack. Allows environment variables to be used.
+        ExpandReferencesInDict( new_v, {} )
+
+        env = os.environ.copy()
+        env.update( new_v.get( 'env' ) or {} )
+        cmd = new_v[ 'shell' ]
+        if not isinstance( cmd, list ):
+          cmd = shlex.split( cmd )
+
+        new_variables[ n ] = subprocess.check_output(
+          cmd,
+          cwd = new_v.get( 'cwd' ) or os.getcwd(),
+          env = env ).decode( 'utf-8' ).strip()
+      else:
+        raise ValueError(
+          "Unsupported variable defn {}: Missing 'shell'".format( n ) )
+    else:
+      new_variables[ n ] = v
+
+  return new_variables
+
+
 def DisplayBaloon( is_term, display ):
   if not is_term:
     display = '\n'.join( display )
