@@ -24,6 +24,9 @@ typedef struct {
 /// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror
 
+/// Converts system error code to libuv error code.
+#define os_translate_sys_error uv_translate_sys_error
+
 // Values returned by os_nodetype()
 #define NODE_NORMAL     0  // file or directory, check with os_isdir()
 #define NODE_WRITABLE   1  // something we can write to (character
