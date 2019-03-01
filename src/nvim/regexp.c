@@ -2098,18 +2098,20 @@ static char_u *regatom(int *flagp)
       default:  i = -1; break;
       }
 
-      if (i < 0)
-        EMSG2_RET_NULL(
-            _("E678: Invalid character after %s%%[dxouU]"),
-            reg_magic == MAGIC_ALL);
-      if (use_multibytecode(i))
+      if (i < 0 || i > INT_MAX) {
+        EMSG2_RET_NULL(_("E678: Invalid character after %s%%[dxouU]"),
+                       reg_magic == MAGIC_ALL);
+      }
+      if (use_multibytecode(i)) {
         ret = regnode(MULTIBYTECODE);
-      else
+      } else {
         ret = regnode(EXACTLY);
-      if (i == 0)
+      }
+      if (i == 0) {
         regc(0x0a);
-      else
+      } else {
         regmbc(i);
+      }
       regc(NUL);
       *flagp |= HASWIDTH;
       break;
@@ -3063,10 +3065,10 @@ static int coll_get_char(void)
   case 'u': nr = gethexchrs(4); break;
   case 'U': nr = gethexchrs(8); break;
   }
-  if (nr < 0) {
-    /* If getting the number fails be backwards compatible: the character
-     * is a backslash. */
-    --regparse;
+  if (nr < 0 || nr > INT_MAX) {
+    // If getting the number fails be backwards compatible: the character
+    // is a backslash.
+    regparse--;
     nr = '\\';
   }
   return nr;
@@ -7088,6 +7090,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
 {
   regprog_T   *prog = NULL;
   char_u      *expr = expr_arg;
+  int          save_called_emsg;
 
   regexp_engine = p_re;
 
@@ -7114,9 +7117,11 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
   bt_regengine.expr = expr;
   nfa_regengine.expr = expr;
 
-  /*
-   * First try the NFA engine, unless backtracking was requested.
-   */
+  //
+  // First try the NFA engine, unless backtracking was requested.
+  //
+  save_called_emsg = called_emsg;
+  called_emsg = false;
   if (regexp_engine != BACKTRACKING_ENGINE) {
     prog = nfa_regengine.regcomp(expr,
         re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
@@ -7141,11 +7146,13 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
     // If the NFA engine failed, try the backtracking engine. The NFA engine
     // also fails for patterns that it can't handle well but are still valid
     // patterns, thus a retry should work.
-    if (regexp_engine == AUTOMATIC_ENGINE) {
+    // But don't try if an error message was given.
+    if (regexp_engine == AUTOMATIC_ENGINE && !called_emsg) {
       regexp_engine = BACKTRACKING_ENGINE;
       prog = bt_regengine.regcomp(expr, re_flags);
     }
   }
+  called_emsg |= save_called_emsg;
 
   if (prog != NULL) {
     // Store the info needed to call regcomp() again when the engine turns out

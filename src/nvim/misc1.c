@@ -1819,6 +1819,9 @@ void changed(void)
     changed_int();
   }
   buf_inc_changedtick(curbuf);
+
+  // If a pattern is highlighted, the position may now be invalid.
+  highlight_match = false;
 }
 
 /*

@@ -1420,12 +1420,12 @@ static int nfa_regatom(void)
       default:  nr = -1; break;
       }
 
-      if (nr < 0)
-        EMSG2_RET_FAIL(
-            _("E678: Invalid character after %s%%[dxouU]"),
-            reg_magic == MAGIC_ALL);
-      /* A NUL is stored in the text as NL */
-      /* TODO: what if a composing character follows? */
+      if (nr < 0 || nr > INT_MAX) {
+        EMSG2_RET_FAIL(_("E678: Invalid character after %s%%[dxouU]"),
+                       reg_magic == MAGIC_ALL);
+      }
+      // A NUL is stored in the text as NL
+      // TODO(vim): what if a composing character follows?
       EMIT(nr == 0 ? 0x0a : nr);
     }
     break;
@@ -6476,16 +6476,10 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 
   nfa_regcomp_start(expr, re_flags);
 
-  /* Build postfix form of the regexp. Needed to build the NFA
-   * (and count its size). */
+  // Build postfix form of the regexp. Needed to build the NFA
+  // (and count its size).
   postfix = re2post();
   if (postfix == NULL) {
-    // TODO(vim): only give this error for debugging?
-    if (post_ptr >= post_end) {
-      IEMSGN("Internal error: estimated max number "
-             "of states insufficient: %" PRId64,
-             post_end - post_start);
-    }
     goto fail;              // Cascaded (syntax?) error
   }
 
