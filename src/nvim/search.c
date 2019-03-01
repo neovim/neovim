@@ -3717,11 +3717,12 @@ current_quote(
   int col_end;
   int col_start = curwin->w_cursor.col;
   bool inclusive = false;
-  int vis_empty = TRUE;                 /* Visual selection <= 1 char */
-  int vis_bef_curs = FALSE;             /* Visual starts before cursor */
-  int inside_quotes = FALSE;            /* Looks like "i'" done before */
-  int selected_quote = FALSE;           /* Has quote inside selection */
+  int vis_empty = TRUE;                 // Visual selection <= 1 char
+  int vis_bef_curs = FALSE;             // Visual starts before cursor
+  int inside_quotes = FALSE;            // Looks like "i'" done before
+  int selected_quote = FALSE;           // Has quote inside selection
   int i;
+  int restore_vis_bef = FALSE;          // resotre VIsual on abort
 
   // Correct cursor when 'selection' is "exclusive".
   if (VIsual_active) {
@@ -3738,7 +3739,8 @@ current_quote(
 
         curwin->w_cursor = VIsual;
         VIsual = t;
-        vis_bef_curs = true;
+        vis_bef_curs = TRUE;
+        restore_vis_bef = TRUE;
       }
       dec_cursor();
     }
@@ -3780,7 +3782,7 @@ current_quote(
        * opening quote. */
       col_start = find_next_quote(line, col_start + 1, quotechar, NULL);
       if (col_start < 0)
-        return FALSE;
+        goto abort_search;
       col_end = find_next_quote(line, col_start + 1, quotechar,
           curbuf->b_p_qe);
       if (col_end < 0) {
@@ -3791,7 +3793,7 @@ current_quote(
     } else {
       col_end = find_prev_quote(line, col_start, quotechar, NULL);
       if (line[col_end] != quotechar)
-        return FALSE;
+        goto abort_search;
       col_start = find_prev_quote(line, col_end, quotechar,
           curbuf->b_p_qe);
       if (line[col_start] != quotechar) {
@@ -3820,12 +3822,12 @@ current_quote(
       /* Find open quote character. */
       col_start = find_next_quote(line, col_start, quotechar, NULL);
       if (col_start < 0 || col_start > first_col)
-        return FALSE;
+        goto abort_search;
       /* Find close quote character. */
       col_end = find_next_quote(line, col_start + 1, quotechar,
           curbuf->b_p_qe);
       if (col_end < 0)
-        return FALSE;
+        goto abort_search;
       /* If is cursor between start and end quote character, it is
        * target text object. */
       if (col_start <= first_col && first_col <= col_end)
@@ -3839,14 +3841,14 @@ current_quote(
       /* No quote before the cursor, look after the cursor. */
       col_start = find_next_quote(line, col_start, quotechar, NULL);
       if (col_start < 0)
-        return FALSE;
+        goto abort_search;
     }
 
     /* Find close quote character. */
     col_end = find_next_quote(line, col_start + 1, quotechar,
         curbuf->b_p_qe);
     if (col_end < 0)
-      return FALSE;
+      goto abort_search;
   }
 
   /* When "include" is TRUE, include spaces after closing quote or before
@@ -3923,6 +3925,20 @@ current_quote(
   }
 
   return OK;
+
+abort_search:
+  if (VIsual_active && *p_sel == 'e')
+  {
+    inc_cursor();
+    if (restore_vis_bef)
+    {
+       pos_T t = curwin->w_cursor;
+
+       curwin->w_cursor = VIsual;
+       VIsual = t;
+    }
+  }
+  return FALSE;
 }
 
 
