@@ -3229,36 +3229,17 @@ static int in_html_tag(int end_tag)
   int lc = NUL;
   pos_T pos;
 
-  if (enc_dbcs) {
-    char_u  *lp = NULL;
-
-    /* We search forward until the cursor, because searching backwards is
-     * very slow for DBCS encodings. */
-    for (p = line; p < line + curwin->w_cursor.col; MB_PTR_ADV(p)) {
-      if (*p == '>' || *p == '<') {
-        lc = *p;
-        lp = p;
-      }
+  for (p = line + curwin->w_cursor.col; p > line; ) {
+    if (*p == '<') {           // find '<' under/before cursor
+      break;
     }
-    if (*p != '<') {        // check for '<' under cursor
-      if (lc != '<') {
-        return false;
-      }
-      p = lp;
+    MB_PTR_BACK(line, p);
+    if (*p == '>') {           // find '>' before cursor
+      break;
     }
-  } else {
-    for (p = line + curwin->w_cursor.col; p > line; ) {
-      if (*p == '<') {           // find '<' under/before cursor
-        break;
-      }
-      MB_PTR_BACK(line, p);
-      if (*p == '>') {           // find '>' before cursor
-        break;
-      }
-    }
-    if (*p != '<') {
-      return false;
-    }
+  }
+  if (*p != '<') {
+    return false;
   }
 
   pos.lnum = curwin->w_cursor.lnum;

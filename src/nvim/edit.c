@@ -5110,11 +5110,9 @@ int get_literal(void)
     }
   }
 
-  if (cc == 0)          /* NUL is stored as NL */
+  if (cc == 0) {        // NUL is stored as NL
     cc = '\n';
-  if (enc_dbcs && (cc & 0xff) == 0)
-    cc = '?';           /* don't accept an illegal DBCS char, the NUL in the
-                           second byte will cause trouble! */
+  }
 
   --no_mapping;
   if (nc)

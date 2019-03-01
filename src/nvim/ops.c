@@ -1974,8 +1974,6 @@ int swapchar(int op_type, pos_T *pos)
     inc(pos);
   }
 
-  if (enc_dbcs != 0 && c >= 0x100)      /* No lower/uppercase letter */
-    return FALSE;
   nc = c;
   if (mb_islower(c)) {
     if (op_type == OP_ROT13) {

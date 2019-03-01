@@ -4,9 +4,8 @@
 /// mbyte.c: Code specifically for handling multi-byte characters.
 /// Multibyte extensions partly by Sung-Hoon Baek
 ///
-/// The encoding used in nvim is always UTF-8. "enc_utf8" and "has_mbyte" is
-/// thus always true. "enc_dbcs" is always zero. The 'encoding' option is
-/// read-only and always reads "utf-8".
+/// Strings internal to Nvim are always encoded as UTF-8 (thus the legacy
+/// 'encoding' option is always "utf-8").
 ///
 /// The cell width on the display needs to be determined from the character
 /// value. Recognizing UTF-8 bytes is easy: 0xxx.xxxx is a single-byte char,
