@@ -207,6 +207,9 @@ class DebugSession( object ):
     # FIXME: For some reason this doesn't work when run from the WinBar. It just
     # beeps and doesn't display the config selector. One option is to just not
     # display the selector and restart with the same opitons.
+    if not self._configuration or not self._adapter:
+      return Start()
+
     self._StartWithConfiguration( self._configuration, self._adapter )
 
   def OnChannelData( self, data ):
