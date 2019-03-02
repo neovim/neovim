@@ -281,15 +281,9 @@ msg_strtrunc (
       /* Use up to 'showcmd' column. */
       room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
     if (len > room && room > 0) {
-      if (enc_utf8)
-        /* may have up to 18 bytes per cell (6 per char, up to two
-         * composing chars) */
-        len = (room + 2) * 18;
-      else if (enc_dbcs == DBCS_JPNU)
-        /* may have up to 2 bytes per cell for euc-jp */
-        len = (room + 2) * 2;
-      else
-        len = room + 2;
+      // may have up to 18 bytes per cell (6 per char, up to two
+      // composing chars)
+      len = (room + 2) * 18;
       buf = xmalloc(len);
       trunc_string(s, buf, room, len);
     }

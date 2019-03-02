@@ -5489,24 +5489,18 @@ uc_check_code(
       break;
     case 1:     /* Quote, but don't split */
       result = STRLEN(eap->arg) + 2;
-      for (p = eap->arg; *p; ++p) {
-        if (enc_dbcs != 0 && (*mb_ptr2len)(p) == 2)
-          /* DBCS can contain \ in a trail byte, skip the
-           * double-byte character. */
-          ++p;
-        else if (*p == '\\' || *p == '"')
-          ++result;
+      for (p = eap->arg; *p; p++) {
+        if (*p == '\\' || *p == '"') {
+          result++;
+        }
       }
 
       if (buf != NULL) {
         *buf++ = '"';
-        for (p = eap->arg; *p; ++p) {
-          if (enc_dbcs != 0 && (*mb_ptr2len)(p) == 2)
-            /* DBCS can contain \ in a trail byte, copy the
-             * double-byte character to avoid escaping. */
-            *buf++ = *p++;
-          else if (*p == '\\' || *p == '"')
+        for (p = eap->arg; *p; p++) {
+          if (*p == '\\' || *p == '"') {
             *buf++ = '\\';
+          }
           *buf++ = *p;
         }
         *buf = '"';
