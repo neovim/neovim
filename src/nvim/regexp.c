@@ -1210,6 +1210,31 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
   return p;
 }
 
+/*
+ * Return TRUE if the back reference is legal. We must have seen the close
+ * brace.
+ * TODO: Should also check that we don't refer to something that is repeated
+ * (+*=): what instance of the repetition should we match?
+ */
+static int seen_endbrace(int refnum)
+{
+  if (!had_endbrace[refnum]) {
+      char_u *p;
+
+      /* Trick: check if "@<=" or "@<!" follows, in which case
+       * the \1 can appear before the referenced match. */
+      for (p = regparse; *p != NUL; ++p)
+        if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '='))
+          break;
+
+    if (*p == NUL) {
+      EMSG(_("E65: Illegal back reference"));
+      rc_did_emsg = TRUE;
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
 
 /*
  * bt_regcomp() - compile a regular expression into internal code for the
@@ -1928,23 +1953,8 @@ static char_u *regatom(int *flagp)
     int refnum;
 
     refnum = c - Magic('0');
-    /*
-     * Check if the back reference is legal. We must have seen the
-     * close brace.
-     * TODO: Should also check that we don't refer to something
-     * that is repeated (+*=): what instance of the repetition
-     * should we match?
-     */
-    if (!had_endbrace[refnum]) {
-      /* Trick: check if "@<=" or "@<!" follows, in which case
-       * the \1 can appear before the referenced match. */
-      for (p = regparse; *p != NUL; ++p)
-        if (p[0] == '@' && p[1] == '<'
-            && (p[2] == '!' || p[2] == '='))
-          break;
-      if (*p == NUL)
-        EMSG_RET_NULL(_("E65: Illegal back reference"));
-    }
+    if (!seen_endbrace(refnum))
+      return NULL;
     ret = regnode(BACKREF + refnum);
   }
   break;

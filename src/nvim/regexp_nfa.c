@@ -1338,8 +1338,14 @@ static int nfa_regatom(void)
   case Magic('7'):
   case Magic('8'):
   case Magic('9'):
-    EMIT(NFA_BACKREF1 + (no_Magic(c) - '1'));
-    nfa_has_backref = TRUE;
+    {
+      int refnum = no_Magic(c) - '1';
+
+      if (!seen_endbrace(refnum + 1))
+          return FAIL;
+      EMIT(NFA_BACKREF1 + refnum);
+      nfa_has_backref = TRUE;
+    }
     break;
 
   case Magic('z'):
