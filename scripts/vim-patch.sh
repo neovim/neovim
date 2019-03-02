@@ -297,6 +297,8 @@ submit_pr() {
     submit_fn="git_hub_pr"
   else
     >&2 echo "${BASENAME}: 'hub' or 'git-hub' not found in PATH or not executable."
+    echo "Try to install https://github.com/github/hub."
+    echo "Refer to https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim#pull-requests"
     exit 1
   fi
 
