@@ -7,4 +7,5 @@ func! OnEvent(id, data, event)
   endif
 endfunc
 
+set rtp+=./runtime
 call stdioopen({'on_stdin': 'OnEvent'})

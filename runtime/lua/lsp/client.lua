@@ -241,7 +241,7 @@ client.on_stdout = function(self, data)
 
   -- Concatenate the data that we have read previously onto the data that we just read
   self._read_data = self._read_data .. table.concat(data, '\n')
-  self:on_error(error_level.info,'[['..self._read_data..']]')
+  --self:on_error(error_level.info,'[['..self._read_data..']]')
 
   while true do
     if self._read_state == read_state.init then
