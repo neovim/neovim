@@ -38,15 +38,15 @@ static int pum_base_width;          // width of pum items base
 static int pum_kind_width;          // width of pum items kind column
 static int pum_scrollbar;           // TRUE when scrollbar present
 
+static int pum_anchor_grid;         // grid where position is defined
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
+static bool pum_above;              // pum is drawn above cursor line
 
 static bool pum_is_visible = false;
 static bool pum_is_drawn = false;
 static bool pum_external = false;
 static bool pum_invalid = false;  // the screen was just cleared
-
-static ScreenGrid pum_grid = SCREEN_GRID_INIT;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -103,9 +103,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
       col = curwin->w_wcol;
     }
 
-    int grid = (int)curwin->w_grid.handle;
+    pum_anchor_grid = (int)curwin->w_grid.handle;
     if (!ui_has(kUIMultigrid)) {
-      grid = (int)default_grid.handle;
+      pum_anchor_grid = (int)default_grid.handle;
       row += curwin->w_winrow;
       col += curwin->w_wincol;
     }
@@ -121,7 +121,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
           ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
           ADD(arr, ARRAY_OBJ(item));
         }
-        ui_call_popupmenu_show(arr, selected, row, col, grid);
+        ui_call_popupmenu_show(arr, selected, row, col, pum_anchor_grid);
       } else {
         ui_call_popupmenu_select(selected);
       }
@@ -165,6 +165,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     if (row + 2 >= below_row - pum_height
         && row - above_row > (below_row - above_row) / 2) {
       // pum above "row"
+      pum_above = true;
 
       // Leave two lines of context if possible
       if (curwin->w_wrow - curwin->w_cline_row >= 2) {
@@ -187,6 +188,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
       }
     } else {
       // pum below "row"
+      pum_above = false;
 
       // Leave two lines of context if possible
       if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
@@ -360,7 +362,7 @@ void pum_redraw(void)
 
   grid_assign_handle(&pum_grid);
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col-col_off,
-                                pum_height, grid_width);
+                                pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
 
@@ -370,6 +372,13 @@ void pum_redraw(void)
     ui_call_grid_resize(pum_grid.handle, pum_grid.Columns, pum_grid.Rows);
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
+  }
+  if (ui_has(kUIMultigrid)) {
+    const char *anchor = pum_above ? "SW" : "NW";
+    int row_off = pum_above ? pum_height : 0;
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_to_string(anchor),
+                          pum_anchor_grid, pum_row-row_off, pum_col-col_off,
+                          false);
   }
 
 
@@ -783,6 +792,10 @@ void pum_check_clear(void)
       ui_call_popupmenu_hide();
     } else {
       ui_comp_remove_grid(&pum_grid);
+      if (ui_has(kUIMultigrid)) {
+        ui_call_win_close(pum_grid.handle);
+        ui_call_grid_destroy(pum_grid.handle);
+      }
       // TODO(bfredl): consider keeping float grids allocated.
       grid_free(&pum_grid);
     }

@@ -165,6 +165,7 @@ UI *tui_start(void)
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
   ui->ui_ext[kUILinegrid] = true;
+  ui->ui_ext[kUITermColors] = true;
 
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }

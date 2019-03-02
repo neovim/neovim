@@ -148,9 +148,6 @@ typedef struct {
 /// Whether to call "ui_call_grid_resize" in win_grid_alloc
 static bool send_grid_resize = false;
 
-/// Highlight ids are no longer valid. Force retransmission
-static bool highlights_invalid = false;
-
 static bool conceal_cursor_used = false;
 
 static bool redraw_popupmenu = false;
@@ -197,8 +194,10 @@ void redraw_all_later(int type)
 
 void screen_invalidate_highlights(void)
 {
-  redraw_all_later(NOT_VALID);
-  highlights_invalid = true;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    redraw_win_later(wp, NOT_VALID);
+    wp->w_grid.valid = false;
+  }
 }
 
 /*
@@ -338,6 +337,9 @@ void update_screen(int type)
       grid_ins_lines(&default_grid, 0, msg_scrolled, (int)Rows,
                      0, (int)Columns);
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (wp->w_floating) {
+          continue;
+        }
         if (wp->w_winrow < msg_scrolled) {
           if (W_ENDROW(wp) > msg_scrolled
               && wp->w_redr_type < REDRAW_TOP
@@ -361,6 +363,10 @@ void update_screen(int type)
     need_wait_return = FALSE;
   }
 
+  if (type >= NOT_VALID) {
+    ui_comp_set_screen_valid(false);
+  }
+  win_ui_flush_positions();
   msg_ext_check_prompt();
 
   /* reset cmdline_row now (may have been changed temporarily) */
@@ -376,9 +382,11 @@ void update_screen(int type)
     type = NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
     must_redraw = 0;
-  } else if (highlights_invalid) {
+  } else if (!default_grid.valid) {
     grid_invalidate(&default_grid);
+    default_grid.valid = true;
   }
+  ui_comp_set_screen_valid(true);
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
     check_for_delay(FALSE);
@@ -449,7 +457,14 @@ void update_screen(int type)
    */
   did_one = FALSE;
   search_hl.rm.regprog = NULL;
+
+
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
+      grid_invalidate(&wp->w_grid);
+      wp->w_redr_type = NOT_VALID;
+    }
+
     if (wp->w_redr_type != 0) {
       if (!did_one) {
         did_one = TRUE;
@@ -471,7 +486,6 @@ void update_screen(int type)
   }
 
   send_grid_resize = false;
-  highlights_invalid = false;
   redraw_popupmenu = false;
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
@@ -4236,9 +4250,12 @@ win_line (
 /// If UI did not request multigrid support, draw all windows on the
 /// default_grid.
 ///
+/// NB: this function can only been used with window grids in a context where
+/// win_grid_alloc already has been called!
+///
 /// If the default_grid is used, adjust window relative positions to global
 /// screen positions.
-static void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
+void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 {
   if (!(*grid)->chars && *grid != &default_grid) {
     *row_off += (*grid)->row_offset;
@@ -5242,7 +5259,6 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes,
 
   screen_adjust_grid(&grid, &row, &col);
 
-
   // safety check
   if (grid->chars != NULL && row < grid->Rows && col < grid->Columns) {
     off = grid->line_offset[row] + col;
@@ -5855,13 +5871,8 @@ void win_grid_alloc(win_T *wp)
   int rows = wp->w_height_inner;
   int cols = wp->w_width_inner;
 
-  // TODO(bfredl): floating windows should force this to true
-  bool want_allocation = ui_has(kUIMultigrid);
+  bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
   bool has_allocation = (grid->chars != NULL);
-
-  if (want_allocation && has_allocation && highlights_invalid) {
-    grid_invalidate(grid);
-  }
 
   if (grid->Rows != rows) {
     wp->w_lines_valid = 0;
@@ -5874,15 +5885,20 @@ void win_grid_alloc(win_T *wp)
       || grid->Rows != rows
       || grid->Columns != cols) {
     if (want_allocation) {
-      grid_alloc(grid, rows, cols, true, true);
+      grid_alloc(grid, rows, cols, wp->w_grid.valid, wp->w_grid.valid);
+      grid->valid = true;
     } else {
       // Single grid mode, all rendering will be redirected to default_grid.
       // Only keep track of the size and offset of the window.
       grid_free(grid);
       grid->Rows = rows;
       grid->Columns = cols;
+      grid->valid = false;
     }
     was_resized = true;
+  } else if (want_allocation && has_allocation && !wp->w_grid.valid) {
+    grid_invalidate(grid);
+    grid->valid = true;
   }
 
   grid->row_offset = wp->w_winrow;
@@ -5892,7 +5908,7 @@ void win_grid_alloc(win_T *wp)
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent
   // - the UI wants multigrid event (necessary)
-  if ((send_grid_resize || was_resized) && ui_has(kUIMultigrid)) {
+  if ((send_grid_resize || was_resized) && want_allocation) {
     ui_call_grid_resize(grid->handle, grid->Columns, grid->Rows);
   }
 }
@@ -5954,7 +5970,7 @@ retry:
 
   // win_new_shellsize will recompute floats position, but tell the
   // compositor to not redraw them yet
-  ui_comp_invalidate_screen();
+  ui_comp_set_screen_valid(false);
 
   win_new_shellsize();      /* fit the windows in the new sized shell */
 
@@ -6108,6 +6124,8 @@ void screenclear(void)
   }
 
   ui_call_grid_clear(1);  // clear the display
+  ui_comp_set_screen_valid(true);
+
   clear_cmdline = false;
   mode_displayed = false;
 
@@ -6116,6 +6134,11 @@ void screenclear(void)
   redraw_tabline = true;
   redraw_popupmenu = true;
   pum_invalidate();
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_floating) {
+      wp->w_redr_type = CLEAR;
+    }
+  }
   if (must_redraw == CLEAR) {
     must_redraw = NOT_VALID;  // no need to clear again
   }
@@ -6505,14 +6528,14 @@ int showmode(void)
   if (VIsual_active)
     clear_showcmd();
 
-  /* If the last window has no status line, the ruler is after the mode
-   * message and must be redrawn */
-  if (redrawing()
-      && lastwin->w_status_height == 0
-      )
-    win_redr_ruler(lastwin, TRUE);
-  redraw_cmdline = FALSE;
-  clear_cmdline = FALSE;
+  // If the last window has no status line, the ruler is after the mode
+  // message and must be redrawn
+  win_T *last = lastwin_nofloating();
+  if (redrawing() && last->w_status_height == 0) {
+    win_redr_ruler(last, true);
+  }
+  redraw_cmdline = false;
+  clear_cmdline = false;
 
   return length;
 }
@@ -7091,7 +7114,7 @@ void screen_resize(int width, int height)
   check_shellsize();
   height = Rows;
   width = Columns;
-  ui_resize(width, height);
+  ui_call_grid_resize(1, width, height);
 
   send_grid_resize = true;
 

@@ -520,18 +520,32 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, focusable]
+	Display or reconfigure floating window `win`. The window should be
+	displayed above another grid `anchor_grid` at the specified position
+	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more
+	details of positioning, see |nvim_open_win()|.
+
+["win_external_pos", grid, win]
+	Display or reconfigure external window `win`. The window should be
+	displayed as a separate top-level window in the desktop envirionment,
+	or something similar.
+
 ["win_hide", grid]
-	Stop displaying the window.
+	Stop displaying the window. The window can be shown again later.
 
 ["win_scroll_over_start"]
 	Hint that following `grid_scroll` on the default grid should
 	scroll over windows. This is a temporary workaround to allow
 	UIs to use the builtin message drawing. Later on, messages will be
-	drawn on a dedicated grid.
+	drawn on a dedicated grid. Using |ui-messages| also avoids this issue.
 
 ["win_scroll_over_reset"]
 	Hint that scrolled over windows should be redrawn again, and not be
 	overdrawn by default grid scrolling anymore.
+
+["win_close", grid]
+	Close the window.
 
 See |ui-linegrid| for grid events.
 See |nvim_ui_try_resize_grid| in |api-ui| to request changing the grid size.

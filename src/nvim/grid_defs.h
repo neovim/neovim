@@ -47,6 +47,9 @@ typedef struct {
   int Rows;
   int Columns;
 
+  // The state of the grid is valid. Otherwise it needs to be redrawn.
+  bool valid;
+
   // offsets for the grid relative to the global screen
   int row_offset;
   int col_offset;
@@ -58,7 +61,7 @@ typedef struct {
   bool comp_disabled;
 } ScreenGrid;
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, \
-                           false }
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, false, 0, 0, 0, \
+                           0, 0,  false }
 
 #endif  // NVIM_GRID_DEFS_H

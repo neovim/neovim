@@ -2771,9 +2771,11 @@ void msg_ext_flush_showmode(void)
 {
   // Showmode messages doesn't interrupt normal message flow, so we use
   // separate event. Still reuse the same chunking logic, for simplicity.
-  msg_ext_emit_chunk();
-  ui_call_msg_showmode(msg_ext_chunks);
-  msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+  if (ui_has(kUIMessages)) {
+    msg_ext_emit_chunk();
+    ui_call_msg_showmode(msg_ext_chunks);
+    msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+  }
 }
 
 void msg_ext_clear(bool force)

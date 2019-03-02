@@ -1004,7 +1004,9 @@ static void init_ui_event_metadata(Dictionary *metadata)
   Array ui_options = ARRAY_DICT_INIT;
   ADD(ui_options, STRING_OBJ(cstr_to_string("rgb")));
   for (UIExtension i = 0; i < kUIExtCount; i++) {
-    ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+    if (ui_ext_names[i][0] != '_') {
+      ADD(ui_options, STRING_OBJ(cstr_to_string(ui_ext_names[i])));
+    }
   }
   PUT(*metadata, "ui_options", ARRAY_OBJ(ui_options));
 }
