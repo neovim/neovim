@@ -360,17 +360,16 @@ int ignorecase_opt(char_u *pat, int ic_in, int scs)
   return ic;
 }
 
-/*
- * Return TRUE if pattern "pat" has an uppercase character.
- */
-int pat_has_uppercase(char_u *pat)
+/// Returns true if pattern `pat` has an uppercase character.
+bool pat_has_uppercase(char_u *pat)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *p = pat;
 
   while (*p != NUL) {
-    int l;
+    const int l = mb_ptr2len(p);
 
-    if ((l = mb_ptr2len(p)) > 1) {
+    if (l > 1) {
       if (mb_isupper(utf_ptr2char(p))) {
         return true;
       }
@@ -391,7 +390,7 @@ int pat_has_uppercase(char_u *pat)
       p++;
     }
   }
-  return FALSE;
+  return false;
 }
 
 const char *last_csearch(void)
@@ -744,37 +743,29 @@ int searchit(
               } else
                 break;
 
-              /*
-               * We found a valid match, now check if there is
-               * another one after it.
-               * If vi-compatible searching, continue at the end
-               * of the match, otherwise continue one position
-               * forward.
-               */
+              // We found a valid match, now check if there is
+              // another one after it.
+              // If vi-compatible searching, continue at the end
+              // of the match, otherwise continue one position
+              // forward.
               if (vim_strchr(p_cpo, CPO_SEARCH) != NULL) {
-                if (nmatched > 1)
+                if (nmatched > 1) {
                   break;
+                }
                 matchcol = endpos.col;
-                /* for empty match: advance one char */
+                // for empty match: advance one char
                 if (matchcol == matchpos.col
                     && ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol +=
-                      (*mb_ptr2len)(ptr + matchcol);
-                  else
-                    ++matchcol;
+                  matchcol += mb_ptr2len(ptr + matchcol);
                 }
               } else {
-                /* Stop when the match is in a next line. */
-                if (matchpos.lnum > 0)
+                // Stop when the match is in a next line.
+                if (matchpos.lnum > 0) {
                   break;
+                }
                 matchcol = matchpos.col;
                 if (ptr[matchcol] != NUL) {
-                  if (has_mbyte)
-                    matchcol +=
-                      (*mb_ptr2len)(ptr + matchcol);
-                  else
-                    ++matchcol;
+                  matchcol += mb_ptr2len(ptr + matchcol);
                 }
               }
               if (ptr[matchcol] == NUL
@@ -3636,16 +3627,14 @@ find_next_quote(
 
   for (;; ) {
     c = line[col];
-    if (c == NUL)
+    if (c == NUL) {
       return -1;
-    else if (escape != NULL && vim_strchr(escape, c))
-      ++col;
-    else if (c == quotechar)
+    } else if (escape != NULL && vim_strchr(escape, c)) {
+      col++;
+    } else if (c == quotechar) {
       break;
-    if (has_mbyte)
-      col += (*mb_ptr2len)(line + col);
-    else
-      ++col;
+    }
+    col += mb_ptr2len(line + col);
   }
   return col;
 }
