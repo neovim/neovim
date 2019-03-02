@@ -187,6 +187,7 @@ client.request_async = function(self, method, params, cb)
 
   if should_send_message(self, req) then
     lsp_doautocmd(method, 'pre')
+    log.debug("Sending Request: [["..req:data().."]]")
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
     lsp_doautocmd(method, 'post')
   else
@@ -240,6 +241,7 @@ client.on_stdout = function(self, data)
 
   -- Concatenate the data that we have read previously onto the data that we just read
   self._read_data = self._read_data .. table.concat(data, '\n')
+  self:on_error(error_level.info,'[['..self._read_data..']]')
 
   while true do
     if self._read_state == read_state.init then
@@ -298,9 +300,10 @@ client.on_stdout = function(self, data)
 
       if not ok then
         log.info('Not a valid message. Calling self:on_error')
+        -- TODO(KillTheMule): Is self.__read_data the thing to print here?
         self:on_error(
           error_level.reset_state,
-          string.format('_on_read error: bad json_message (%s)', self._read_data)
+          string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
         )
         return
       end
