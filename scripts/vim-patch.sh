@@ -297,6 +297,7 @@ submit_pr() {
     submit_fn="git_hub_pr"
   else
     >&2 echo "${BASENAME}: 'hub' or 'git-hub' not found in PATH or not executable."
+    >&2 echo "              Get it here: https://hub.github.com/"
     exit 1
   fi
 
