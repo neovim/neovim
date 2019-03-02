@@ -2603,7 +2603,7 @@ win_line (
       }
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
-          if (has_mbyte && line[shl->endcol] != NUL) {
+          if (line[shl->endcol] != NUL) {
               shl->endcol += (*mb_ptr2len)(line + shl->endcol);
           } else {
               ++shl->endcol;
@@ -2949,13 +2949,8 @@ win_line (
                   shl->endcol = MAXCOL;
 
                 if (shl->startcol == shl->endcol) {
-                  /* highlight empty match, try again after
-                   * it */
-                  if (has_mbyte)
-                    shl->endcol += (*mb_ptr2len)(line
-                                                 + shl->endcol);
-                  else
-                    ++shl->endcol;
+                  // highlight empty match, try again after it
+                  shl->endcol += (*mb_ptr2len)(line + shl->endcol);
                 }
 
                 /* Loop to check if the match starts at the
@@ -3055,7 +3050,7 @@ win_line (
       if (c_extra != NUL || (n_extra == 1 && c_final != NUL)) {
         c = (n_extra == 1 && c_final != NUL) ? c_final : c_extra;
         mb_c = c;               // doesn't handle non-utf-8 multi-byte!
-        if (enc_utf8 && utf_char2len(c) > 1) {
+        if (utf_char2len(c) > 1) {
           mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
@@ -3064,43 +3059,38 @@ win_line (
         }
       } else {
         c = *p_extra;
-        if (has_mbyte) {
+        mb_c = c;
+        // If the UTF-8 character is more than one byte:
+        // Decode it into "mb_c".
+        mb_l = utfc_ptr2len(p_extra);
+        mb_utf8 = false;
+        if (mb_l > n_extra) {
+          mb_l = 1;
+        } else if (mb_l > 1) {
+          mb_c = utfc_ptr2char(p_extra, u8cc);
+          mb_utf8 = true;
+          c = 0xc0;
+        }
+        if (mb_l == 0) {          // at the NUL at end-of-line
+          mb_l = 1;
+        }
+
+        // If a double-width char doesn't fit display a '>' in the last column.
+        if ((wp->w_p_rl ? (col <= 0) : (col >= grid->Columns - 1))
+            && (*mb_char2cells)(mb_c) == 2) {
+          c = '>';
           mb_c = c;
-          if (enc_utf8) {
-            // If the UTF-8 character is more than one byte:
-            // Decode it into "mb_c".
-            mb_l = utfc_ptr2len(p_extra);
-            mb_utf8 = false;
-            if (mb_l > n_extra) {
-              mb_l = 1;
-            } else if (mb_l > 1) {
-              mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = true;
-              c = 0xc0;
-            }
-          }
-          if (mb_l == 0)            /* at the NUL at end-of-line */
-            mb_l = 1;
+          mb_l = 1;
+          mb_utf8 = false;
+          multi_attr = win_hl_attr(wp, HLF_AT);
 
-          /* If a double-width char doesn't fit display a '>' in the
-           * last column. */
-          if ((wp->w_p_rl ? (col <= 0) :
-               (col >= grid->Columns - 1))
-              && (*mb_char2cells)(mb_c) == 2) {
-            c = '>';
-            mb_c = c;
-            mb_l = 1;
-            mb_utf8 = false;
-            multi_attr = win_hl_attr(wp, HLF_AT);
-
-            // put the pointer back to output the double-width
-            // character at the start of the next line.
-            n_extra++;
-            p_extra--;
-          } else {
-            n_extra -= mb_l - 1;
-            p_extra += mb_l - 1;
-          }
+          // put the pointer back to output the double-width
+          // character at the start of the next line.
+          n_extra++;
+          p_extra--;
+        } else {
+          n_extra -= mb_l - 1;
+          p_extra += mb_l - 1;
         }
         ++p_extra;
       }
@@ -3115,151 +3105,113 @@ win_line (
 
       // Get a character from the line itself.
       c0 = c = *ptr;
-      if (has_mbyte) {
+      mb_c = c;
+      // If the UTF-8 character is more than one byte: Decode it
+      // into "mb_c".
+      mb_l = utfc_ptr2len(ptr);
+      mb_utf8 = false;
+      if (mb_l > 1) {
+        mb_c = utfc_ptr2char(ptr, u8cc);
+        // Overlong encoded ASCII or ASCII with composing char
+        // is displayed normally, except a NUL.
+        if (mb_c < 0x80) {
+          c0 = c = mb_c;
+        }
+        mb_utf8 = true;
+
+        // At start of the line we can have a composing char.
+        // Draw it as a space with a composing char.
+        if (utf_iscomposing(mb_c)) {
+          int i;
+
+          for (i = MAX_MCO - 1; i > 0; i--) {
+            u8cc[i] = u8cc[i - 1];
+          }
+          u8cc[0] = mb_c;
+          mb_c = ' ';
+        }
+      }
+
+      if ((mb_l == 1 && c >= 0x80)
+          || (mb_l >= 1 && mb_c == 0)
+          || (mb_l > 1 && (!vim_isprintc(mb_c)))) {
+        // Illegal UTF-8 byte: display as <xx>.
+        // Non-BMP character : display as ? or fullwidth ?.
+        transchar_hex((char *)extra, mb_c);
+        if (wp->w_p_rl) {  // reverse
+          rl_mirror(extra);
+        }
+
+        p_extra = extra;
+        c = *p_extra;
+        mb_c = mb_ptr2char_adv((const char_u **)&p_extra);
+        mb_utf8 = (c >= 0x80);
+        n_extra = (int)STRLEN(p_extra);
+        c_extra = NUL;
+        c_final = NUL;
+        if (area_attr == 0 && search_attr == 0) {
+          n_attr = n_extra + 1;
+          extra_attr = win_hl_attr(wp, HLF_8);
+          saved_attr2 = char_attr;               // save current attr
+        }
+      } else if (mb_l == 0) {        // at the NUL at end-of-line
+        mb_l = 1;
+      } else if (p_arshape && !p_tbidi && arabic_char(mb_c)) {
+        // Do Arabic shaping.
+        int pc, pc1, nc;
+        int pcc[MAX_MCO];
+
+        // The idea of what is the previous and next
+        // character depends on 'rightleft'.
+        if (wp->w_p_rl) {
+          pc = prev_c;
+          pc1 = prev_c1;
+          nc = utf_ptr2char(ptr + mb_l);
+          prev_c1 = u8cc[0];
+        } else {
+          pc = utfc_ptr2char(ptr + mb_l, pcc);
+          nc = prev_c;
+          pc1 = pcc[0];
+        }
+        prev_c = mb_c;
+
+        mb_c = arabic_shape(mb_c, &c, &u8cc[0], pc, pc1, nc);
+      } else {
+        prev_c = mb_c;
+      }
+      // If a double-width char doesn't fit display a '>' in the
+      // last column; the character is displayed at the start of the
+      // next line.
+      if ((wp->w_p_rl ? (col <= 0) :
+           (col >= grid->Columns - 1))
+          && (*mb_char2cells)(mb_c) == 2) {
+        c = '>';
         mb_c = c;
-        if (enc_utf8) {
-          // If the UTF-8 character is more than one byte: Decode it
-          // into "mb_c".
-          mb_l = utfc_ptr2len(ptr);
-          mb_utf8 = false;
-          if (mb_l > 1) {
-            mb_c = utfc_ptr2char(ptr, u8cc);
-            // Overlong encoded ASCII or ASCII with composing char
-            // is displayed normally, except a NUL.
-            if (mb_c < 0x80) {
-              c0 = c = mb_c;
-            }
-            mb_utf8 = true;
+        mb_utf8 = false;
+        mb_l = 1;
+        multi_attr = win_hl_attr(wp, HLF_AT);
+        // Put pointer back so that the character will be
+        // displayed at the start of the next line.
+        ptr--;
+      } else if (*ptr != NUL) {
+        ptr += mb_l - 1;
+      }
 
-            /* At start of the line we can have a composing char.
-             * Draw it as a space with a composing char. */
-            if (utf_iscomposing(mb_c)) {
-              int i;
-
-              for (i = MAX_MCO - 1; i > 0; i--) {
-                u8cc[i] = u8cc[i - 1];
-              }
-              u8cc[0] = mb_c;
-              mb_c = ' ';
-            }
-          }
-
-          if ((mb_l == 1 && c >= 0x80)
-              || (mb_l >= 1 && mb_c == 0)
-              || (mb_l > 1 && (!vim_isprintc(mb_c)))) {
-            // Illegal UTF-8 byte: display as <xx>.
-            // Non-BMP character : display as ? or fullwidth ?.
-            transchar_hex((char *)extra, mb_c);
-            if (wp->w_p_rl) {  // reverse
-              rl_mirror(extra);
-            }
-
-            p_extra = extra;
-            c = *p_extra;
-            mb_c = mb_ptr2char_adv((const char_u **)&p_extra);
-            mb_utf8 = (c >= 0x80);
-            n_extra = (int)STRLEN(p_extra);
-            c_extra = NUL;
-            c_final = NUL;
-            if (area_attr == 0 && search_attr == 0) {
-              n_attr = n_extra + 1;
-              extra_attr = win_hl_attr(wp, HLF_8);
-              saved_attr2 = char_attr;               // save current attr
-            }
-          } else if (mb_l == 0)          /* at the NUL at end-of-line */
-            mb_l = 1;
-          else if (p_arshape && !p_tbidi && arabic_char(mb_c)) {
-            /* Do Arabic shaping. */
-            int pc, pc1, nc;
-            int pcc[MAX_MCO];
-
-            /* The idea of what is the previous and next
-             * character depends on 'rightleft'. */
-            if (wp->w_p_rl) {
-              pc = prev_c;
-              pc1 = prev_c1;
-              nc = utf_ptr2char(ptr + mb_l);
-              prev_c1 = u8cc[0];
-            } else {
-              pc = utfc_ptr2char(ptr + mb_l, pcc);
-              nc = prev_c;
-              pc1 = pcc[0];
-            }
-            prev_c = mb_c;
-
-            mb_c = arabic_shape(mb_c, &c, &u8cc[0], pc, pc1, nc);
-          } else
-            prev_c = mb_c;
-        } else {      /* enc_dbcs */
-          mb_l = MB_BYTE2LEN(c);
-          if (mb_l == 0)            /* at the NUL at end-of-line */
-            mb_l = 1;
-          else if (mb_l > 1) {
-            /* We assume a second byte below 32 is illegal.
-             * Hopefully this is OK for all double-byte encodings!
-             */
-            if (ptr[1] >= 32)
-              mb_c = (c << 8) + ptr[1];
-            else {
-              if (ptr[1] == NUL) {
-                /* head byte at end of line */
-                mb_l = 1;
-                transchar_nonprint(extra, c);
-              } else {
-                /* illegal tail byte */
-                mb_l = 2;
-                STRCPY(extra, "XX");
-              }
-              p_extra = extra;
-              n_extra = (int)STRLEN(extra) - 1;
-              c_extra = NUL;
-              c_final = NUL;
-              c = *p_extra++;
-              if (area_attr == 0 && search_attr == 0) {
-                n_attr = n_extra + 1;
-                extra_attr = win_hl_attr(wp, HLF_8);
-                saved_attr2 = char_attr;                 // save current attr
-              }
-              mb_c = c;
-            }
-          }
+      // If a double-width char doesn't fit at the left side display a '<' in
+      // the first column.  Don't do this for unprintable characters.
+      if (n_skip > 0 && mb_l > 1 && n_extra == 0) {
+        n_extra = 1;
+        c_extra = MB_FILLER_CHAR;
+        c_final = NUL;
+        c = ' ';
+        if (area_attr == 0 && search_attr == 0) {
+          n_attr = n_extra + 1;
+          extra_attr = win_hl_attr(wp, HLF_AT);
+          saved_attr2 = char_attr;             // save current attr
         }
-        /* If a double-width char doesn't fit display a '>' in the
-         * last column; the character is displayed at the start of the
-         * next line. */
-        if ((wp->w_p_rl ? (col <= 0) :
-             (col >= grid->Columns - 1))
-            && (*mb_char2cells)(mb_c) == 2) {
-          c = '>';
-          mb_c = c;
-          mb_utf8 = false;
-          mb_l = 1;
-          multi_attr = win_hl_attr(wp, HLF_AT);
-          // Put pointer back so that the character will be
-          // displayed at the start of the next line.
-          ptr--;
-        } else if (*ptr != NUL) {
-          ptr += mb_l - 1;
-        }
-
-        /* If a double-width char doesn't fit at the left side display
-         * a '<' in the first column.  Don't do this for unprintable
-         * characters. */
-        if (n_skip > 0 && mb_l > 1 && n_extra == 0) {
-          n_extra = 1;
-          c_extra = MB_FILLER_CHAR;
-          c_final = NUL;
-          c = ' ';
-          if (area_attr == 0 && search_attr == 0) {
-            n_attr = n_extra + 1;
-            extra_attr = win_hl_attr(wp, HLF_AT);
-            saved_attr2 = char_attr;             // save current attr
-          }
-          mb_c = c;
-          mb_utf8 = false;
-          mb_l = 1;
-        }
-
+        mb_c = c;
+        mb_utf8 = false;
+        mb_l = 1;
       }
       ptr++;
 
@@ -3317,11 +3269,8 @@ win_line (
             char_u *p;
             int len;
             hlf_T spell_hlf = HLF_COUNT;
-            if (has_mbyte) {
-              prev_ptr = ptr - mb_l;
-              v -= mb_l - 1;
-            } else
-              prev_ptr = ptr - 1;
+            prev_ptr = ptr - mb_l;
+            v -= mb_l - 1;
 
             /* Use nextline[] if possible, it has the start of the
              * next line concatenated. */
@@ -3431,7 +3380,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && utf_char2len(c) > 1) {
+          if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
@@ -3446,7 +3395,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (enc_utf8 && utf_char2len(c) > 1) {
+          if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
@@ -3553,7 +3502,7 @@ win_line (
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
-            if (enc_utf8 && utf_char2len(c) > 1) {
+            if (utf_char2len(c) > 1) {
               mb_utf8 = true;
               u8cc[0] = 0;
               c = 0xc0;
@@ -3600,7 +3549,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
-          if (enc_utf8 && utf_char2len(c) > 1) {
+          if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
@@ -3689,7 +3638,7 @@ win_line (
           n_skip = 1;
         }
         mb_c = c;
-        if (enc_utf8 && utf_char2len(c) > 1) {
+        if (utf_char2len(c) > 1) {
           mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
@@ -3735,9 +3684,9 @@ win_line (
         && c != NUL) {
       c = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
-      if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
-        /* Double-width character being overwritten by the "precedes"
-         * character, need to fill up half the character. */
+      if ((*mb_char2cells)(mb_c) > 1) {
+        // Double-width character being overwritten by the "precedes"
+        // character, need to fill up half the character.
         c_extra = MB_FILLER_CHAR;
         c_final = NUL;
         n_extra = 1;
@@ -3745,7 +3694,7 @@ win_line (
         extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
-      if (enc_utf8 && utf_char2len(c) > 1) {
+      if (utf_char2len(c) > 1) {
         mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
@@ -4019,7 +3968,7 @@ win_line (
       c = wp->w_p_lcs_chars.ext;
       char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
-      if (enc_utf8 && utf_char2len(c) > 1) {
+      if (utf_char2len(c) > 1) {
         mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
@@ -4060,13 +4009,13 @@ win_line (
      */
     vcol_prev = vcol;
     if (draw_state < WL_LINE || n_skip <= 0) {
-      /*
-       * Store the character.
-       */
-      if (has_mbyte && wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
-        /* A double-wide character is: put first halve in left cell. */
-        --off;
-        --col;
+      //
+      // Store the character.
+      //
+      if (wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
+        // A double-wide character is: put first halve in left cell.
+        off--;
+        col--;
       }
       if (mb_utf8) {
         schar_from_cc(linebuf_char[off], mb_c, u8cc);
@@ -4080,7 +4029,7 @@ win_line (
         linebuf_attr[off] = char_attr;
       }
 
-      if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
+      if ((*mb_char2cells)(mb_c) > 1) {
         // Need to fill two screen columns.
         off++;
         col++;
@@ -4140,8 +4089,8 @@ win_line (
         }
 
 
-        if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
-          /* Need to fill two screen columns. */
+        if ((*mb_char2cells)(mb_c) > 1) {
+          // Need to fill two screen columns.
           if (wp->w_p_rl) {
             --boguscols;
             --col;
@@ -4738,8 +4687,8 @@ win_redr_status_matches (
       for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
-        if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
-          STRNCPY(buf + len, s, l);
+        if ((l = (*mb_ptr2len)(s)) > 1) {
+          STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
         } else {
@@ -5007,10 +4956,11 @@ get_keymap_str (
     curbuf = old_curbuf;
     curwin = old_curwin;
     if (p == NULL || *p == NUL) {
-      if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED)
+      if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
         p = wp->w_buffer->b_p_keymap;
-      else
+      } else {
         p = (char_u *)"lang";
+      }
     }
     if (vim_snprintf((char *)buf, len, (char *)fmt, p) > len - 1) {
       buf[0] = NUL;
@@ -5672,12 +5622,10 @@ next_search_hl (
         shl->lnum = 0;
         break;
       }
-      if (has_mbyte)
-        matchcol += mb_ptr2len(ml);
-      else
-        ++matchcol;
-    } else
+      matchcol += mb_ptr2len(ml);
+    } else {
       matchcol = shl->rm.endpos[0].col;
+    }
 
     shl->lnum = lnum;
     if (shl->rm.regprog != NULL) {
@@ -5812,18 +5760,16 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
   }
 
   for (int row = start_row; row < end_row; row++) {
-    if (has_mbyte) {
-      // When drawing over the right halve of a double-wide char clear
-      // out the left halve.  When drawing over the left halve of a
-      // double wide-char clear out the right halve.  Only needed in a
-      // terminal.
-      if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
-        grid_puts_len(grid, (char_u *)" ", 1, row, start_col - 1, 0);
-      }
-      if (end_col < grid->Columns
-          && grid_fix_col(grid, end_col, row) != end_col) {
-        grid_puts_len(grid, (char_u *)" ", 1, row, end_col, 0);
-      }
+    // When drawing over the right halve of a double-wide char clear
+    // out the left halve.  When drawing over the left halve of a
+    // double wide-char clear out the right halve.  Only needed in a
+    // terminal.
+    if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
+      grid_puts_len(grid, (char_u *)" ", 1, row, start_col - 1, 0);
+    }
+    if (end_col < grid->Columns
+        && grid_fix_col(grid, end_col, row) != end_col) {
+      grid_puts_len(grid, (char_u *)" ", 1, row, end_col, 0);
     }
 
     // if grid was resized (in ext_multigrid mode), the UI has no redraw updates
@@ -6747,14 +6693,9 @@ static void draw_tabline(void)
         (void)shorten_dir(NameBuff);
         len = vim_strsize(NameBuff);
         p = NameBuff;
-        if (has_mbyte)
-          while (len > room) {
-            len -= ptr2cells(p);
-            MB_PTR_ADV(p);
-          }
-        else if (len > room) {
-          p += len - room;
-          len = room;
+        while (len > room) {
+          len -= ptr2cells(p);
+          MB_PTR_ADV(p);
         }
         if (len > Columns - col - 1) {
           len = Columns - col - 1;
