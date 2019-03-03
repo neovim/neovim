@@ -998,6 +998,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// GUI with the |ui-multigrid| extension. External windows are only supported
 /// with multigrid GUIs, and are displayed as separate top-level windows.
 ///
+/// For a general overview of floats, see |api-floatwin|.
+///
 /// Exactly one of `external` and `relative` must be specified.
 ///
 /// @param buffer handle of buffer to be displayed in the window

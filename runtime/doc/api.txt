@@ -232,7 +232,45 @@ An example of calling the api from vimscript: >
 
     " later
     call nvim_buf_clear_namespace(0, src, 0, -1)
+
+
+==============================================================================
+Floating windows						 *api-floatwin*
+
+Nvim allows plugins to display windows that float over the ordinary windows.
+This is useful to implement simple widgets, such as tooltips displaying
+information next to cursor text. Floating windows are fully functional
+buffer windows and supports user editing. They support the standard
+|api-window| calls and almost all window options (with some exceptions such as
+'statusline' is not supported currently).
+
+Floating windows are created either by |nvim_open_win()| to create a new
+window, or |nvim_win_config()| which can reconfigure a normal window into a
+float. Currently the position can either be grid coordinates relative the
+top-left of some window, or a position relative to the current window cursor.
+The parameters for positioning are described in detail at |nvim_open_win()| help.
+
+|nvim_open_win()| assumes an existing buffer to display in the float. To create a
+scratch buffer for the float, |nvim_create_buffer()| can be used. The text in
+the buffer can be highlight using standard functionality, such as syntax
+highlighting, or |api-highlights|.
+
+Per default, floats will use |hl-NormalFloat| as normal highlight, which
+links to |hl-Pmenu| in the builtin color scheme.  The 'winhighlight' option can
+be used to override it.  Currently floating windows doesn't support any visual
+decoratons like border or widgets like scrollbar.
+
+Here is an example for creating a float with scratch buffer: >
+
+    let buf = nvim_create_buf(v:false, v:true)
+    call nvim_buf_set_lines(buf,0,-1,v:true,["test", "text"])
+    call nvim_buf_add_highlight(buf,-1, "ErrorMsg", 1, 0, 4)
+    let opts = {'relative': 'cursor', 'col':0, 'row':1, 'anchor': 'NW'}
+    let win =  nvim_open_win(buf,0,10,2,opts)
+    " optional: change highlight, otherwise Pmenu is used
+    call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
 >
+To close the float, |nvim_win_close()| can be used.
 ==============================================================================
 Global Functions                                                  *api-global*
 
