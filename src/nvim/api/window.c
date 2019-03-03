@@ -9,6 +9,7 @@
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
@@ -469,4 +470,30 @@ void nvim_win_config(Window window, Integer width, Integer height,
     win_config_float(win, (int)width, (int)height, config);
     win->w_pos_changed = true;
   }
+}
+
+/// Close a window.
+///
+/// This is equivalent to |:close| with count except that it takes a window id.
+///
+/// @param window   Window handle
+/// @param force    Behave like `:close!` The last window of a buffer with
+///                 unwritten changes can be closed. The buffer will become
+///                 hidden, even if 'hidden' is not set.
+///
+/// @param[out] err Error details, if any
+/// @return Window number
+void nvim_win_close(Window window, Boolean force, Error *err)
+  FUNC_API_SINCE(6)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+  tabpage_T *tabpage = win_find_tabpage(win);
+
+  TryState tstate;
+  try_enter(&tstate);
+  ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
+  vim_ignored = try_leave(&tstate, err);
 }

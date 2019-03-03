@@ -6170,7 +6170,7 @@ static void ex_pclose(exarg_T *eap)
  * Close window "win" and take care of handling closing the last window for a
  * modified buffer.
  */
-static void
+void
 ex_win_close(
     int forceit,
     win_T *win,
