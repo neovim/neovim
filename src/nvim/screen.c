@@ -608,6 +608,11 @@ static void win_update(win_T *wp)
   linenr_T mod_bot = 0;
   int save_got_int;
 
+  // If we can compute a change in the automatic sizing of the sign column
+  // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
+  // figuring it out here so we can redraw the entire screen for it.
+  buf_signcols(buf);
+
   type = wp->w_redr_type;
 
   win_grid_alloc(wp);
