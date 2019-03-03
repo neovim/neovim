@@ -38,7 +38,8 @@ func Test_hlsearch_hangs()
   endif
 
   " This pattern takes a long time to match, it should timeout.
-  help
+  new
+  call setline(1, ['aaa', repeat('abc ', 100000), 'ccc'])
   let start = reltime()
   set hlsearch nolazyredraw redrawtime=101
   let @/ = '\%#=1a*.*X\@<=b*'
@@ -47,7 +48,7 @@ func Test_hlsearch_hangs()
   call assert_true(elapsed > 0.1)
   call assert_true(elapsed < 1.0)
   set nohlsearch redrawtime&
-  quit
+  bwipe!
 endfunc
 
 func Test_hlsearch_eol_highlight()

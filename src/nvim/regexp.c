@@ -3496,7 +3496,7 @@ static long bt_regexec_both(char_u *line,
             && (utf_fold(prog->regstart) == utf_fold(c)
                 || (c < 255 && prog->regstart < 255
                     && mb_tolower(prog->regstart) == mb_tolower(c))))) {
-      retval = regtry(prog, col);
+      retval = regtry(prog, col, tm, timed_out);
     } else {
       retval = 0;
     }
@@ -3520,9 +3520,10 @@ static long bt_regexec_both(char_u *line,
         break;
       }
 
-      retval = regtry(prog, col);
-      if (retval > 0)
+      retval = regtry(prog, col, tm, timed_out);
+      if (retval > 0) {
         break;
+      }
 
       /* if not currently on the first line, get it again */
       if (reglnum != 0) {
@@ -3603,7 +3604,8 @@ void unref_extmatch(reg_extmatch_T *em)
  * regtry - try match of "prog" with at regline["col"].
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long regtry(bt_regprog_T *prog, colnr_T col)
+static long regtry(bt_regprog_T *prog, colnr_T col,
+                   proftime_T *tm, int *timed_out)
 {
   reginput = regline + col;
   need_clear_subexpr = TRUE;
@@ -3611,8 +3613,9 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
   if (prog->reghasz == REX_SET)
     need_clear_zsubexpr = TRUE;
 
-  if (regmatch(prog->program + 1) == 0)
+  if (regmatch(prog->program + 1, tm, timed_out) == 0) {
     return 0;
+  }
 
   cleanup_subexpr();
   if (REG_MULTI) {
@@ -3768,9 +3771,11 @@ static long bl_maxval;
  * Returns FALSE when there is no match.  Leaves reginput and reglnum in an
  * undefined state!
  */
-static int 
-regmatch (
-    char_u *scan              /* Current node. */
+static int
+regmatch(
+    char_u *scan,               // Current node.
+    proftime_T *tm,
+    int     *timed_out
 )
 {
   char_u        *next;          /* Next node. */
@@ -3779,12 +3784,14 @@ regmatch (
   regitem_T     *rp;
   int no;
   int status;                   /* one of the RA_ values: */
+  int tm_count;                 /* counter for checking timeout */
 #define RA_FAIL         1       /* something failed, abort */
 #define RA_CONT         2       /* continue in inner loop */
 #define RA_BREAK        3       /* break inner loop */
 #define RA_MATCH        4       /* successful match */
 #define RA_NOMATCH      5       /* didn't match */
 
+  tm_count = 0;
   /* Make "regstack" and "backpos" empty.  They are allocated and freed in
    * bt_regexec_both() to reduce malloc()/free() calls. */
   regstack.ga_len = 0;
@@ -3813,6 +3820,13 @@ regmatch (
       if (got_int || scan == NULL) {
         status = RA_FAIL;
         break;
+      }
+      if (tm != NULL && ++tm_count == 100) {
+        tm_count = 0;
+        if (profile_passed_limit(*tm)) {
+          status = RA_FAIL;
+          break;
+        }
       }
       status = RA_CONT;
 
