@@ -494,7 +494,7 @@ static int insert_check(VimState *state)
     s->inserted_space = false;
   }
 
-  if (can_cindent && cindent_on() && ctrl_x_mode == 0) {
+  if (can_cindent && cindent_on() && ctrl_x_mode == 0 && !compl_started) {
     insert_do_cindent(s);
   }
 
