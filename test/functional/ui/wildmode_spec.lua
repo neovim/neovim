@@ -171,19 +171,21 @@ end)
 
 describe('command line completion', function()
   local screen
-
   before_each(function()
-    clear()
     screen = Screen.new(40, 5)
-    screen:attach()
-    screen:set_default_attr_ids({[1]={bold=true, foreground=Screen.colors.Blue}})
+    screen:set_default_attr_ids({
+     [1] = {bold = true, foreground = Screen.colors.Blue1},
+     [2] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
+     [3] = {bold = true, reverse = true},
+    })
   end)
-
   after_each(function()
     os.remove('Xtest-functional-viml-compl-dir')
   end)
 
   it('lists directories with empty PATH', function()
+    clear()
+    screen:attach()
     local tmp = funcs.tempname()
     command('e '.. tmp)
     command('cd %:h')
@@ -196,6 +198,24 @@ describe('command line completion', function()
       {1:~                                       }|
       {1:~                                       }|
       :!Xtest-functional-viml-compl-dir^       |
+    ]])
+  end)
+
+  it('completes (multibyte) env var names #9655', function()
+    clear({env={
+      ['XTEST_1AaあB']='foo',
+      ['XTEST_2']='bar',
+    }})
+    screen:attach()
+    command('set wildmode=full')
+    command('set wildmenu')
+    feed(':!echo $XTEST_<tab>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:XTEST_1AaあB}{3:  XTEST_2                   }|
+      :!echo $XTEST_1AaあB^                    |
     ]])
   end)
 end)

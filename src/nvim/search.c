@@ -3913,7 +3913,7 @@ abort_search:
        VIsual = t;
     }
   }
-  return FALSE;
+  return false;
 }
 
 
