@@ -7151,8 +7151,12 @@ void screen_resize(int width, int height)
       if (curwin->w_p_scb)
         do_check_scrollbind(TRUE);
       if (State & CMDLINE) {
+        redraw_popupmenu = false;
         update_screen(NOT_VALID);
         redrawcmdline();
+        if (pum_drawn()) {
+          cmdline_pum_display(false);
+        }
       } else {
         update_topline();
         if (pum_drawn()) {

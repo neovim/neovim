@@ -937,10 +937,7 @@ function Screen:_handle_option_set(name, value)
 end
 
 function Screen:_handle_popupmenu_show(items, selected, row, col, grid)
-  if (not self._options.ext_multigrid) and grid == 1 then
-    grid = nil
-  end
-  self.popupmenu = {items=items, pos=selected, anchor={row, col, grid}}
+  self.popupmenu = {items=items, pos=selected, anchor={grid, row, col}}
 end
 
 function Screen:_handle_popupmenu_select(selected)

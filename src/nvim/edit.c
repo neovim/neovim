@@ -2656,7 +2656,7 @@ void ins_compl_show_pum(void)
   col = curwin->w_cursor.col;
   curwin->w_cursor.col = compl_col;
   pum_selected_item = cur;
-  pum_display(compl_match_array, compl_match_arraysize, cur, array_changed);
+  pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
 
   if (!has_event(EVENT_MENUPOPUPCHANGED)) {

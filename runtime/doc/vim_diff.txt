@@ -195,6 +195,7 @@ Options:
   'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'wildoptions' `pum` flag to use popupmenu for wildmode completion
   'winhighlight' window-local highlights
 
 Variables:

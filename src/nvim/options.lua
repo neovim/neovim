@@ -2699,7 +2699,7 @@ return {
     },
     {
       full_name='wildoptions', abbreviation='wop',
-      type='string', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_wop',
       defaults={if_true={vi=""}}

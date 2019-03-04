@@ -284,7 +284,6 @@ static char *(p_ambw_values[]) =      { "single", "double", NULL };
 static char *(p_bg_values[]) =        { "light", "dark", NULL };
 static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha", NULL };
 static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, NULL };
-static char *(p_wop_values[]) =       { "tagfile", NULL };
 static char *(p_wak_values[]) =       { "yes", "menu", "no", NULL };
 static char *(p_mousem_values[]) =    { "extend", "popup", "popup_setpos",
                                         "mac", NULL };
@@ -2608,11 +2607,11 @@ ambw_end:
   else if (varp == &p_wim) {
     if (check_opt_wim() == FAIL)
       errmsg = e_invarg;
-  }
-  /* 'wildoptions' */
-  else if (varp == &p_wop) {
-    if (check_opt_strings(p_wop, p_wop_values, TRUE) != OK)
+  // 'wildoptions'
+  } else if (varp == &p_wop) {
+    if (opt_strings_flags(p_wop, p_wop_values, &wop_flags, true) != OK) {
       errmsg = e_invarg;
+    }
   }
   /* 'winaltkeys' */
   else if (varp == &p_wak) {

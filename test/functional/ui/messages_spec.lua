@@ -179,7 +179,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], popupmenu={
-      anchor = { 2, 0 },
+      anchor = { 1, 2, 0 },
       items = { { "alphpabet", "", "", "" }, { "alphanum", "", "", "" } },
       pos = 1
     }, showmode={ { "-- Keyword Local completion (^N^P) ", 3 }, { "match 1 of 2", 4 } }}
@@ -194,7 +194,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], popupmenu={
-      anchor = { 2, 0 },
+      anchor = { 1, 2, 0 },
       items = { { "alphpabet", "", "", "" }, { "alphanum", "", "", "" } },
       pos = 1
     }, messages={ {
@@ -210,7 +210,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], popupmenu={
-      anchor = { 2, 0 },
+      anchor = { 1, 2, 0 },
       items = { { "alphpabet", "", "", "" }, { "alphanum", "", "", "" } },
       pos = 0
     }, messages={ {

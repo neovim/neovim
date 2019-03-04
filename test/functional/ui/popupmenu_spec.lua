@@ -50,7 +50,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=0,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     feed('<c-p>')
@@ -66,7 +66,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=-1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     -- down moves the selection in the menu, but does not insert anything
@@ -83,7 +83,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     feed('<cr>')
@@ -113,7 +113,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=0,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(1,false,false,{})
@@ -129,7 +129,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(2,true,false,{})
@@ -145,7 +145,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=2,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(0,true,true,{})
@@ -174,7 +174,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=0,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(-1,false,false,{})
@@ -190,7 +190,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=-1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(1,true,false,{})
@@ -206,7 +206,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(-1,true,false,{})
@@ -222,7 +222,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=-1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(0,true,false,{})
@@ -238,7 +238,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=0,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     meths.select_popupmenu_item(-1,true,true,{})
@@ -269,7 +269,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=0,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     feed('<f1>')
@@ -285,7 +285,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=2,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     feed('<f2>')
@@ -301,7 +301,7 @@ describe('ui/ext_popupmenu', function()
     ]], popupmenu={
       items=expected,
       pos=-1,
-      anchor={1,0},
+      anchor={1,1,0},
     }}
 
     feed('<f3>')
@@ -365,6 +365,113 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
     ]])
+  end)
+
+  it('works with wildoptions=pum', function()
+    screen:try_resize(32,10)
+    command('set wildmenu')
+    command('set wildoptions=pum')
+
+    local wild_expected = {
+        {'define', '', '', ''},
+        {'jump', '', '', ''},
+        {'list', '', '', ''},
+        {'place', '', '', ''},
+        {'undefine', '', '', ''},
+        {'unplace', '', '', ''},
+    }
+
+    feed(':sign ')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+    ]])
+
+    feed('<tab>')
+    screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+    ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+
+    feed('<left>')
+    screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+
+    feed('<left>')
+    screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+
+    feed('x')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplacex^                  |
+    ]])
+    feed('<esc>')
+
+    -- check positioning with multibyte char in pattern
+    command("e långfile1")
+    command("sp långfile2")
+    feed(':b lå<tab>')
+    screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:långfile2                       }|
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {3:långfile1                       }|
+      :b långfile1^                    |
+    ]], popupmenu={
+      anchor = {1, 9, 3},
+      items = {{"långfile1", "", "", "" }, {"långfile2", "", "", ""}},
+      pos = 0,
+    }}
   end)
 end)
 
@@ -1209,7 +1316,7 @@ describe('builtin popupmenu', function()
     ]])
 
     meths.input_mouse('wheel', 'down', '', 0, 6, 15)
-    screen:expect([[
+    screen:expect{grid=[[
       choice^                                  |
       {1:~                                       }|
       {n:word           }{1:                         }|
@@ -1218,7 +1325,7 @@ describe('builtin popupmenu', function()
       {n:thing          }{1:                         }|
       {3:[No Name] [+]                           }|
       {2:-- INSERT --}                            |
-    ]])
+    ]], unchanged=true}
   end)
 
   it('works with kind, menu and abbr attributes', function()
@@ -1270,6 +1377,131 @@ describe('builtin popupmenu', function()
       {1:~                                       }|
       {1:~                                       }|
                                               |
+    ]])
+  end)
+
+  it('works with wildoptions=pum', function()
+    screen:try_resize(32,10)
+    command('set wildmenu')
+    command('set wildoptions=pum')
+
+    feed(':sign ')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+    ]])
+
+    feed('<tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{s: define         }{1:           }|
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{n: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign define^                    |
+    ]])
+
+    feed('<left>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: define         }{1:           }|
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{n: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign ^                          |
+    ]])
+
+    feed('<left>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: define         }{1:           }|
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{n: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{s: unplace        }{1:           }|
+      :sign unplace^                   |
+    ]])
+
+    feed('x')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplacex^                  |
+    ]])
+
+    feed('<esc>')
+
+    -- check positioning with multibyte char in pattern
+    command("e långfile1")
+    command("sp långfile2")
+    feed(':b lå<tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:långfile2                       }|
+                                      |
+      {1:~                               }|
+      {1:~ }{s: långfile1      }{1:              }|
+      {3:lå}{n: långfile2      }{3:              }|
+      :b långfile1^                    |
+    ]])
+
+    -- check doesn't crash on screen resize
+    screen:try_resize(20,6)
+    screen:expect([[
+                          |
+      {1:~                   }|
+      {4:långfile2           }|
+        {s: långfile1      }  |
+      {3:lå}{n: långfile2      }{3:  }|
+      :b långfile1^        |
+    ]])
+
+    screen:try_resize(50,15)
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {4:långfile2                                         }|
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~ }{s: långfile1      }{1:                                }|
+      {3:lå}{n: långfile2      }{3:                                }|
+      :b långfile1^                                      |
     ]])
   end)
 
