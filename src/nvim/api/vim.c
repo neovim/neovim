@@ -15,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
+#include "nvim/api/window.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -1049,7 +1050,6 @@ Window nvim_open_win(Buffer buffer, Boolean enter,
                      Dictionary options, Error *err)
   FUNC_API_SINCE(6)
 {
-  win_T *old = curwin;
   FloatConfig config = FLOAT_CONFIG_INIT;
   if (!parse_float_config(options, &config, false, err)) {
     return 0;
@@ -1058,11 +1058,11 @@ Window nvim_open_win(Buffer buffer, Boolean enter,
   if (!wp) {
     return 0;
   }
-  if (buffer > 0) {
-    nvim_set_current_buf(buffer, err);
+  if (enter) {
+    win_enter(wp, false);
   }
-  if (!enter) {
-    win_enter(old, false);
+  if (buffer > 0) {
+    nvim_win_set_buf(wp->handle, buffer, err);
   }
   return wp->handle;
 }

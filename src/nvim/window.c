@@ -541,9 +541,7 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
 win_T *win_new_float(win_T *wp, int width, int height, FloatConfig config,
                      Error *err)
 {
-  bool new = false;
   if (wp == NULL) {
-    new = true;
     wp = win_alloc(lastwin_nofloating(), false);
     win_init(wp, curwin, 0);
   } else {
@@ -572,9 +570,6 @@ win_T *win_new_float(win_T *wp, int width, int height, FloatConfig config,
   win_config_float(wp, width, height, config);
   wp->w_pos_changed = true;
   redraw_win_later(wp, VALID);
-  if (new) {
-    win_enter(wp, false);
-  }
   return wp;
 }
 
